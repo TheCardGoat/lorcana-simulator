@@ -1,0 +1,63 @@
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { skullRockIsolatedFortress } from "./136-skull-rock-isolated-fortress";
+
+const visitingPirate = createMockCharacter({
+  id: "skull-rock-pirate",
+  name: "Visiting Pirate",
+  cost: 2,
+  classifications: ["Storyborn", "Pirate"],
+  strength: 2,
+  willpower: 3,
+});
+
+const outsider = createMockCharacter({
+  id: "skull-rock-outsider",
+  name: "Outsider",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+});
+
+describe("Skull Rock - Isolated Fortress", () => {
+  it("gives characters here +1 strength", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [
+        skullRockIsolatedFortress,
+        { card: visitingPirate, atLocation: skullRockIsolatedFortress },
+        outsider,
+      ],
+    });
+
+    expect(testEngine.asPlayerOne().getCard(visitingPirate)?.strength).toBe(
+      visitingPirate.strength + 1,
+    );
+    expect(testEngine.asPlayerOne().getCard(outsider)?.strength).toBe(outsider.strength);
+  });
+
+  it("gains 1 lore at the start of your turn if you have a Pirate here", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [
+          skullRockIsolatedFortress,
+          { card: visitingPirate, atLocation: skullRockIsolatedFortress },
+        ],
+        deck: 1,
+      },
+      {
+        deck: 2,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
+    ).toBe(true);
+    expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
+  });
+});

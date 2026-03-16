@@ -1,0 +1,103 @@
+import type { CharacterCard } from "@tcg/lorcana-types";
+
+export const princeAchmedRivalSuitor: CharacterCard = {
+  id: "cUt",
+  canonicalId: "ci_cUt",
+  reprints: ["set8-184"],
+  cardType: "character",
+  name: "Prince Achmed",
+  version: "Rival Suitor",
+  i18n: {
+    en: {
+      name: "Prince Achmed",
+      version: "Rival Suitor",
+      text: [
+        {
+          title: "UNWELCOME PROPOSAL",
+          description: "When you play this character, you may exert chosen Princess character.",
+        },
+      ],
+    },
+    de: {
+      name: "Prinz Achmed",
+      version: "Rivalisierender Verehrer",
+      text: [
+        {
+          title: "UNERWÜNSCHTER ANTRAG",
+          description:
+            "Wenn du diesen Charakter ausspielst, darfst du eine Prinzessin deiner Wahl erschöpfen.",
+        },
+      ],
+    },
+    fr: {
+      name: "Prince Achmed",
+      version: "Soupirant rival",
+      text: [
+        {
+          title: "PROPOSITION INDÉSIRABLE",
+          description:
+            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage Princesse et l'épuiser.",
+        },
+      ],
+    },
+    it: {
+      name: "Principe Achmed",
+      version: "Pretendente Rivale",
+      text: [
+        {
+          title: "PROPOSTA NON DESIDERATA",
+          description:
+            "Quando giochi questo personaggio, puoi impegnare un personaggio Principessa a tua scelta.",
+        },
+      ],
+    },
+  },
+  inkType: ["steel"],
+  franchise: "Aladdin",
+  set: "008",
+  cardNumber: 184,
+  rarity: "common",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+  inkable: true,
+  externalIds: {
+    lorcast: "crd_7330464a904f4bc48287806c802ca7f1",
+    tcgPlayer: 631684,
+  },
+  text: [
+    {
+      title: "UNWELCOME PROPOSAL",
+      description: "When you play this character, you may exert chosen Princess character.",
+    },
+  ],
+  classifications: ["Storyborn", "Prince"],
+  abilities: [
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["character"],
+          },
+          type: "exert",
+        },
+        type: "optional",
+      },
+      id: "148-1",
+      name: "UNWELCOME PROPOSAL",
+      text: "UNWELCOME PROPOSAL When you play this character, you may exert chosen Princess character.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
+  ],
+};

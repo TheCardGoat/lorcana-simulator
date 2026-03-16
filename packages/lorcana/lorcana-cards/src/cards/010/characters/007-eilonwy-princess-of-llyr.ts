@@ -1,0 +1,56 @@
+import type { CharacterCard } from "@tcg/lorcana-types";
+
+export const eilonwyPrincessOfLlyr: CharacterCard = {
+  id: "B00",
+  canonicalId: "ci_B00",
+  reprints: ["set10-007"],
+  cardType: "character",
+  name: "Eilonwy",
+  version: "Princess of Llyr",
+  i18n: {
+    en: {
+      name: "Eilonwy",
+      version: "Princess of Llyr",
+      text: "Support",
+    },
+    de: {
+      name: "Eilonwy",
+      version: "Prinzessin von Llyr",
+      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
+    },
+    fr: {
+      name: "Eilonwy",
+      version: "Princesse de Llyr",
+      text: "Soutien",
+    },
+    it: {
+      name: "Ailin",
+      version: "Principessa di Llyr",
+      text: "Aiutante",
+    },
+  },
+  inkType: ["amber"],
+  franchise: "Black Cauldron",
+  set: "010",
+  cardNumber: 7,
+  rarity: "common",
+  cost: 1,
+  strength: 2,
+  willpower: 1,
+  lore: 1,
+  inkable: true,
+  externalIds: {
+    lorcast: "crd_495426e5c16b4039977439b3c7a9b9e2",
+    tcgPlayer: 659763,
+  },
+  text: "Support",
+  classifications: ["Storyborn", "Ally", "Princess"],
+  abilities: [
+    {
+      id: "49a-1",
+      keyword: "Support",
+      type: "keyword",
+      text: "Support",
+    },
+  ],
+};

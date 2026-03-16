@@ -1,0 +1,44 @@
+import type { CharacterCard } from "@tcg/lorcana-types";
+
+export const penumbraMoonAlien: CharacterCard = {
+  id: "tak",
+  canonicalId: "ci_tak",
+  reprints: ["set10-084"],
+  cardType: "character",
+  name: "Penumbra",
+  version: "Moon Alien",
+  i18n: {
+    en: {
+      name: "Penumbra",
+      version: "Moon Alien",
+    },
+    de: {
+      name: "Penumbra",
+      version: "Alien vom Mond",
+    },
+    fr: {
+      name: "Pénombre",
+      version: "Extraterrestre lunaire",
+    },
+    it: {
+      name: "Penumbra",
+      version: "Aliena Lunare",
+    },
+  },
+  inkType: ["emerald"],
+  franchise: "Ducktales",
+  set: "010",
+  cardNumber: 84,
+  rarity: "rare",
+  cost: 5,
+  strength: 7,
+  willpower: 6,
+  lore: 2,
+  inkable: false,
+  vanilla: true,
+  externalIds: {
+    lorcast: "crd_b3484a7d91f949b485eb269bcb2d9975",
+    tcgPlayer: 660366,
+  },
+  classifications: ["Storyborn", "Alien"],
+};

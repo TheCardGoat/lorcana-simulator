@@ -1,0 +1,77 @@
+import type { CharacterCard } from "@tcg/lorcana-types";
+
+export const diabloSpitefulRaven: CharacterCard = {
+  id: "4Ff",
+  canonicalId: "ci_4Ff",
+  reprints: ["set7-066"],
+  cardType: "character",
+  name: "Diablo",
+  version: "Spiteful Raven",
+  i18n: {
+    en: {
+      name: "Diablo",
+      version: "Spiteful Raven",
+      text: [
+        {
+          title: "Evasive",
+        },
+        {
+          title: "Challenger +2 (While challenging, this character gets +2 {S})",
+        },
+      ],
+    },
+    de: {
+      name: "Diablo",
+      version: "Boshafter Rabe",
+      text: "Wendig Herausfordern +2",
+    },
+    fr: {
+      name: "Diablo",
+      version: "Corbeau malveillant",
+      text: "Insaisissable Offensif +2",
+    },
+    it: {
+      name: "Diablo",
+      version: "Corvo Malevolo",
+      text: "Sfuggente Sfidante +2",
+    },
+  },
+  inkType: ["amethyst", "emerald"],
+  franchise: "Sleeping Beauty",
+  set: "007",
+  cardNumber: 66,
+  rarity: "uncommon",
+  cost: 2,
+  strength: 1,
+  willpower: 2,
+  lore: 1,
+  inkable: true,
+  externalIds: {
+    lorcast: "crd_f13e08ae1efd4ae4be493361797a3497",
+    tcgPlayer: 618721,
+  },
+  text: [
+    {
+      title: "Evasive",
+    },
+    {
+      title: "Challenger +2 (While challenging, this character gets +2 {S})",
+    },
+  ],
+  classifications: ["Storyborn", "Ally"],
+  abilities: [
+    {
+      id: "1v4-1",
+      keyword: "Evasive",
+      type: "keyword",
+      text: "Evasive",
+    },
+    {
+      id: "1v4-2",
+      keyword: "Challenger",
+      type: "keyword",
+      value: 2,
+      text: "Challenger +2",
+    },
+  ],
+};

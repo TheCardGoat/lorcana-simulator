@@ -1,0 +1,78 @@
+import type { ActionCard } from "@tcg/lorcana-types";
+
+export const theColdNeverBotheredMe: ActionCard = {
+  id: "bJE",
+  canonicalId: "ci_Vdn",
+  reprints: ["set11-130"],
+  cardType: "action",
+  name: "The Cold Never Bothered Me",
+  i18n: {
+    en: {
+      name: "The Cold Never Bothered Me",
+      text: "Look at the top 4 cards of your deck. You may reveal a location card and put it into your hand. Put the rest into your discard. You pay 3 {I} less for the next location you play this turn.",
+    },
+    de: {
+      name: "Die Kälte, sie ist nun ein Teil von mir",
+      text: "Schaue dir die obersten 4 Karten deines Decks an. Du darfst 1 Ortskarte daraus aufdecken und auf deine Hand nehmen. Lege die restlichen Karten auf deinen Ablagestapel. Du zahlst 3 weniger für den nächsten Ort, den du in diesem Zug ausspielst.",
+    },
+    fr: {
+      name: "Le prix de la liberté",
+      text: "Regardez les 4 cartes du dessus de votre pioche. Vous pouvez révéler une carte Lieu parmi elles et l'ajouter à votre main. Placez les autres cartes dans votre défausse. Le prochain lieu que vous jouez ce tour-ci vous coûte 3 de moins.",
+    },
+    it: {
+      name: "Da Oggi il Freddo è Casa Mia",
+      text: "Guarda le prime 4 carte del tuo mazzo. Puoi rivelare una carta luogo e aggiungerla alla tua mano. Metti il resto nei tuoi scarti. Paga 3 in meno per giocare il tuo prossimo luogo per questo turno.",
+    },
+  },
+  inkType: ["ruby"],
+  franchise: "Frozen",
+  set: "011",
+  cardNumber: 130,
+  rarity: "rare",
+  cost: 3,
+  inkable: false,
+  externalIds: {
+    lorcast: "crd_e3dbc3e8ae3543059ee67af1d144c576",
+    tcgPlayer: 677165,
+  },
+  text: "Look at the top 4 cards of your deck. You may reveal a location card and put it into your hand. Put the rest into your discard. You pay 3 {I} less for the next location you play this turn.",
+  actionSubtype: "song",
+  abilities: [
+    {
+      type: "action",
+      text: "Look at the top 4 cards of your deck. You may reveal a location card and put it into your hand. Put the rest into your discard. You pay 3 {I} less for the next location you play this turn.",
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "scry",
+            amount: 4,
+            target: "CONTROLLER",
+            destinations: [
+              {
+                zone: "hand",
+                max: 1,
+                reveal: true,
+                filter: {
+                  type: "card-type",
+                  cardType: "location",
+                },
+              },
+              {
+                zone: "discard",
+                remainder: true,
+              },
+            ],
+          },
+          {
+            type: "cost-reduction",
+            amount: 3,
+            cardType: "location",
+            duration: "next-play-this-turn",
+            target: "CONTROLLER",
+          },
+        ],
+      },
+    },
+  ],
+};

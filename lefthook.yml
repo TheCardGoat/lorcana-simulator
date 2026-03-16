@@ -1,0 +1,16 @@
+pre-commit:
+  parallel: false
+  commands:
+    oxfmt:
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,yaml,yml}"
+      run: bunx oxfmt --write {staged_files}
+      stage_fixed: true
+    oxlint:
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,yaml,yml,svelte}"
+      run: bunx oxlint --fix {staged_files}
+      stage_fixed: true
+
+# pre-push:
+#   commands:
+#     format:
+#       run: bun run quality

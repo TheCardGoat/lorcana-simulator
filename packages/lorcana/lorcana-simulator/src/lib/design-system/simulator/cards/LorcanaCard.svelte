@@ -1,0 +1,262 @@
+<script lang="ts">
+  import type { LorcanaCardSnapshot } from "$lib/lorcana-simulator";
+  import * as HoverCard from "$lib/design-system/primitives/hover-card/index.js";
+  import CardBack from "@/design-system/simulator/cards/CardBack.svelte";
+  import CardFace from "@/design-system/simulator/cards/CardFace.svelte";
+  import CardHoverCardContent from "@/design-system/simulator/cards/CardHoverCardContent.svelte";
+  import {SimulatorLayoutModeObserver} from "@/features/simulator/model/layout-mode.svelte.js";
+  import {useLorcanaSidebarPresenter} from "@/features/simulator/context/game-context.svelte.js";
+  import {
+    useCardInteractionContext,
+    type CardInteractionMeta,
+  } from "@/features/simulator/context/card-interaction-context.svelte.js";
+
+  type ImageFormat = "full" | "art_only" | "art_and_name";
+
+  // Aspect ratios calculated from asset dimensions
+  const ASPECT_RATIOS: Record<ImageFormat, number> = {
+    full: 734 / 1024, // ~0.717
+    art_only: 734 / 602, // ~1.219
+    art_and_name: 734 / 766, // ~0.958
+  };
+
+  const DIMENSIONS: Record<ImageFormat, { width: number; height: number }> = {
+    full: { width: 734, height: 1024 },
+    art_only: { width: 734, height: 602 },
+    art_and_name: { width: 734, height: 766 },
+  };
+
+  // Size scale factors (based on full card 734x1024)
+  // These scale the actual dimensions to the desired display size
+  type CardSize = "micro" | "tiny" | "small" | "small-plus" | "medium" | "large" | "x-large";
+  const SIZE_SCALES: Record<CardSize, number> = {
+    micro: 1 / 12,
+    tiny: 1 / 8,
+    small: 1 / 6,
+    "small-plus": 1 / 4,
+    medium: 1 / 2,
+    large: 1,
+    "x-large": 5 / 4,
+  };
+
+  interface LorcanaCardProps {
+    // Card data
+    card?: LorcanaCardSnapshot;
+    ownerId?: string | null;
+
+    // Display mode - if true, shows card back (for masked/face-down cards)
+    isMasked?: boolean;
+
+    // Size variant
+    size?: CardSize;
+
+    // Use CSS variables from parent container for sizing (--zone-card-width/height)
+    useContainerSize?: boolean;
+
+    // Image format (for card face with images)
+    imageFormat?: ImageFormat;
+
+    // Visual states
+    isSelected?: boolean;
+    isExerted?: boolean;
+    isGhost?: boolean;
+    isDraggable?: boolean;
+    isPlayable?: boolean;
+    isInvalidTarget?: boolean;
+    isBanishedPreview?: boolean;
+    isQuesting?: boolean;
+    isDrying?: boolean;
+    tagCollapseMode?: "none" | "hover-stack";
+
+    // Card properties (can be derived from card or overridden)
+    damage?: number;
+
+    // Unified interaction metadata for global context dispatch
+    interactionMeta?: CardInteractionMeta;
+
+    // Hover card configuration
+    showHoverCard?: boolean;
+    hoverShowActions?: boolean;
+    hoverAvailableInk?: number;
+    onDragStart?: (event: DragEvent) => void;
+  }
+
+  let {
+    card,
+    ownerId,
+    isMasked = false,
+    size = "medium",
+    useContainerSize = false,
+    imageFormat = "full",
+    isSelected = false,
+    isExerted = false,
+    isGhost = false,
+    isDraggable: _isDraggable = false,
+    isPlayable = false,
+    isInvalidTarget = false,
+    isBanishedPreview = false,
+    isQuesting = false,
+    isDrying = false,
+    tagCollapseMode = "none",
+    damage: propDamage,
+    interactionMeta,
+    showHoverCard = true,
+    hoverShowActions = false,
+    hoverAvailableInk = 0,
+    onDragStart: _onDragStart,
+  }: LorcanaCardProps = $props();
+
+  // Derived values from card if available
+  const damage = $derived(propDamage ?? card?.damage ?? 0);
+  const isDryingState = $derived(isDrying || card?.isDrying || false);
+  const isExertedState = $derived(isExerted || card?.readyState === "exerted" || false);
+  const cardInteraction = useCardInteractionContext();
+  const layout = new SimulatorLayoutModeObserver();
+  const sidebar = useLorcanaSidebarPresenter();
+  const resolvedInteractionMeta = $derived<CardInteractionMeta | undefined>(
+    card
+      ? {
+          cardId: card.cardId,
+          ownerSide: card.ownerSide,
+          zoneId: card.zoneId,
+          ...interactionMeta,
+        }
+      : interactionMeta,
+  );
+  const shouldUseTouchInspect = $derived(layout.current === "mobile");
+  const hoverActions = $derived(card ? sidebar.getCardActionViews(card) : []);
+  const hoverContextMessage = $derived(
+    card ? sidebar.getActionSessionCardReason(card.cardId) : null,
+  );
+  const isChallengeTargetSelectionActive = $derived(
+    sidebar.actionSelectionSession?.categoryId === "challenge" &&
+      sidebar.actionSelectionSession.phase === "choose-target",
+  );
+  const shouldRenderHoverCard = $derived(
+    showHoverCard && !shouldUseTouchInspect && !isChallengeTargetSelectionActive,
+  );
+
+
+  // Calculate actual display dimensions based on image format and size
+  const { width, height } = $derived(DIMENSIONS[imageFormat]);
+  const scale = $derived(SIZE_SCALES[size]);
+  const displayWidth = $derived(Math.round(width * scale));
+  const displayHeight = $derived(Math.round(height * scale));
+
+  function handlePointerEnter(event: MouseEvent): void {
+    if (!card) {
+      return;
+    }
+
+    cardInteraction?.handleHover({
+      card,
+      event,
+      meta: resolvedInteractionMeta,
+    });
+  }
+
+  function handlePointerLeave(): void {
+    cardInteraction?.handleLeave({
+      card,
+      meta: resolvedInteractionMeta,
+    });
+  }
+
+  function handleSelect(event: MouseEvent): void {
+    if (!card) {
+      return;
+    }
+
+    cardInteraction?.handleSelect({
+      card,
+      event,
+      meta: resolvedInteractionMeta,
+    });
+  }
+
+  function handleCardFacePointerEnter(event: CustomEvent<{ event: MouseEvent }>): void {
+    handlePointerEnter(event.detail.event);
+  }
+
+  function handleCardFacePointerLeave(): void {
+    handlePointerLeave();
+  }
+
+  function handleCardFaceSelect(event: CustomEvent<{ event: MouseEvent }>): void {
+    handleSelect(event.detail.event);
+  }
+</script>
+
+{#if isMasked}
+  <CardBack
+    ownerId={ownerId ?? card?.ownerId}
+    {displayWidth}
+    {displayHeight}
+    {useContainerSize}
+    {imageFormat}
+    {isGhost}
+    {isPlayable}
+    isExerted={isExertedState}
+    aspectRatio={ASPECT_RATIOS[imageFormat]}
+  />
+{:else if shouldRenderHoverCard && card}
+  <HoverCard.Root openDelay={200}>
+    <HoverCard.Trigger class="block">
+      <CardFace
+        {card}
+        {displayWidth}
+        {displayHeight}
+        {useContainerSize}
+        {size}
+        {imageFormat}
+        {isSelected}
+        isExerted={isExertedState}
+        {isGhost}
+        {isPlayable}
+        {isInvalidTarget}
+        {isBanishedPreview}
+        {isQuesting}
+        isDrying={isDryingState}
+        {damage}
+        {tagCollapseMode}
+        aspectRatio={ASPECT_RATIOS[imageFormat]}
+        on:pointerenter={handleCardFacePointerEnter}
+        on:pointerleave={handleCardFacePointerLeave}
+        on:select={handleCardFaceSelect}
+      />
+    </HoverCard.Trigger>
+    <HoverCard.Content class="w-auto p-0 border-0 bg-transparent">
+      <CardHoverCardContent
+        {card}
+        actions={hoverShowActions ? hoverActions : []}
+        contextMessage={hoverContextMessage}
+        onAction={(action) => {
+          sidebar.handleCardActionClick(action);
+        }}
+      />
+    </HoverCard.Content>
+  </HoverCard.Root>
+{:else}
+  <CardFace
+    {card}
+    {displayWidth}
+    {displayHeight}
+    {useContainerSize}
+    {size}
+    {imageFormat}
+    {isSelected}
+    isExerted={isExertedState}
+    {isGhost}
+    {isPlayable}
+    {isInvalidTarget}
+    {isBanishedPreview}
+    {isQuesting}
+    isDrying={isDryingState}
+    {damage}
+    {tagCollapseMode}
+    aspectRatio={ASPECT_RATIOS[imageFormat]}
+    on:pointerenter={handleCardFacePointerEnter}
+    on:pointerleave={handleCardFacePointerLeave}
+    on:select={handleCardFaceSelect}
+  />
+{/if}

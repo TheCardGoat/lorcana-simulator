@@ -1,0 +1,125 @@
+import type { CharacterCard } from "@tcg/lorcana-types";
+
+export const mulanChargingAhead: CharacterCard = {
+  id: "KZj",
+  canonicalId: "ci_KZj",
+  reprints: ["set8-141"],
+  cardType: "character",
+  name: "Mulan",
+  version: "Charging Ahead",
+  i18n: {
+    en: {
+      name: "Mulan",
+      version: "Charging Ahead",
+      text: [
+        {
+          title: "Reckless",
+        },
+        {
+          title: "BURST OF SPEED",
+          description:
+            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
+        },
+        {
+          title: "LONG RANGE",
+          description: "This character can challenge ready characters.",
+        },
+      ],
+    },
+    de: {
+      name: "Mulan",
+      version: "Charging Ahead",
+      text: [
+        {
+          title: "Reckless",
+          description:
+            "(This character can't quest and must challenge each turn if able.) BURST OF SPEED During your turn, this character gains Evasive. (They can challenge characters with Evasive.) LONG RANGE This character can challenge ready characters.",
+        },
+      ],
+    },
+    fr: {
+      name: "Mulan",
+      version: "Charging Ahead",
+      text: [
+        {
+          title: "Reckless",
+          description:
+            "(This character can't quest and must challenge each turn if able.) BURST OF SPEED During your turn, this character gains Evasive. (They can challenge characters with Evasive.) LONG RANGE This character can challenge ready characters.",
+        },
+      ],
+    },
+    it: {
+      name: "Mulan",
+      version: "Charging Ahead",
+      text: [
+        {
+          title: "Reckless",
+          description:
+            "(This character can't quest and must challenge each turn if able.) BURST OF SPEED During your turn, this character gains Evasive. (They can challenge characters with Evasive.) LONG RANGE This character can challenge ready characters.",
+        },
+      ],
+    },
+  },
+  inkType: ["ruby", "steel"],
+  franchise: "Mulan",
+  set: "008",
+  cardNumber: 141,
+  rarity: "common",
+  cost: 4,
+  strength: 3,
+  willpower: 3,
+  lore: 0,
+  inkable: false,
+  externalIds: {
+    lorcast: "crd_460e1f2d54244710902cf898533beaa8",
+    tcgPlayer: 631442,
+  },
+  text: [
+    {
+      title: "Reckless",
+    },
+    {
+      title: "BURST OF SPEED",
+      description:
+        "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
+    },
+    {
+      title: "LONG RANGE",
+      description: "This character can challenge ready characters.",
+    },
+  ],
+  classifications: ["Storyborn", "Hero", "Princess"],
+  abilities: [
+    {
+      id: "17c-1",
+      keyword: "Reckless",
+      text: "Reckless",
+      type: "keyword",
+    },
+    {
+      condition: {
+        type: "turn",
+        whose: "your",
+      },
+      effect: {
+        keyword: "Evasive",
+        target: "SELF",
+        type: "gain-keyword",
+      },
+      id: "17c-2",
+      text: "BURST OF SPEED During your turn, this character gains Evasive.",
+      type: "static",
+    },
+    {
+      effect: {
+        ability: "can-challenge-ready",
+        target: "SELF",
+        type: "grant-ability",
+      },
+      id: "17c-3",
+      name: "LONG RANGE",
+      text: "LONG RANGE This character can challenge ready characters.",
+      type: "static",
+    },
+  ],
+};

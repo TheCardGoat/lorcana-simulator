@@ -1,0 +1,135 @@
+<script lang="ts">
+  import { m } from "$lib/paraglide/messages.js";
+  import {AspectRatio} from "$lib/design-system/primitives/aspect-ratio/index.js";
+  import {maybeUseLorcanaBoardPresenter} from "@/features/simulator/context/game-context.svelte.js";
+  import {resolveLorcanaCardBack} from "@/features/simulator/model/player-visual-settings.js";
+
+  type ImageFormat = "full" | "art_only" | "art_and_name";
+
+  interface CardBackProps {
+    // Sizing
+    displayWidth: number;
+    displayHeight: number;
+    useContainerSize?: boolean;
+    imageFormat?: ImageFormat;
+
+    // Visual states
+    isGhost?: boolean;
+    isPlayable?: boolean;
+    isExerted?: boolean;
+    ownerId?: string | null;
+    cardBackSrc?: string;
+    cardBackSquareSrc?: string;
+    cardBackId?: string;
+
+    // Aspect ratio
+    aspectRatio?: number;
+  }
+
+  let {
+    displayWidth,
+    displayHeight,
+    useContainerSize = false,
+    imageFormat = "full",
+    isGhost = false,
+    isPlayable = false,
+    isExerted = false,
+    ownerId,
+    cardBackSrc,
+    cardBackSquareSrc,
+    cardBackId,
+    aspectRatio = 63 / 88,
+  }: CardBackProps = $props();
+
+  const board = maybeUseLorcanaBoardPresenter();
+  const resolvedCardBack = $derived.by(() => {
+    if (cardBackSrc) {
+      return {
+        id: cardBackId ?? cardBackSrc,
+        src: cardBackSrc,
+        artOnlySrc: cardBackSquareSrc ?? cardBackSrc,
+      };
+    }
+
+    if (ownerId && board) {
+      return board.getPlayerVisualSettingsByOwnerId(ownerId).cardBack;
+    }
+
+    return resolveLorcanaCardBack();
+  });
+  const backImageSrc = $derived(
+    imageFormat === "art_only" ? resolvedCardBack.artOnlySrc : resolvedCardBack.src,
+  );
+</script>
+
+<div
+  class="card-back relative overflow-hidden shadow-lg"
+  class:card-back--playable={isPlayable}
+  class:card-back--exerted={isExerted}
+  class:opacity-50={isGhost}
+  style:width={useContainerSize ? "var(--zone-card-width, 90px)" : `${displayWidth}px`}
+  style:height={useContainerSize ? "var(--zone-card-height, 128px)" : `${displayHeight}px`}
+  role="img"
+  aria-label={m["sim.card.faceDownAria"]({})}
+  data-card-back-id={resolvedCardBack.id}
+  data-owner-id={ownerId}
+>
+  <AspectRatio ratio={aspectRatio} class="w-full h-full">
+    <img
+      src={backImageSrc}
+      alt={m["sim.card.backAlt"]({})}
+      class="w-full h-full object-cover"
+      loading="lazy"
+      data-card-back-src={backImageSrc}
+    />
+  </AspectRatio>
+
+  {#if isPlayable}
+    <div class="playable-indicator"></div>
+  {/if}
+</div>
+
+<style>
+  .card-back {
+    border-radius: 10px;
+    border: 2px solid rgba(100, 150, 200, 0.3);
+    background: radial-gradient(circle at 50% 50%, #1e4a6e 0%, #0f2847 60%, #061220 100%);
+    transform-origin: center center;
+    transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+  }
+
+  .card-back--playable {
+    box-shadow: 0 0 18px rgba(250, 204, 21, 0.38);
+  }
+
+  .playable-indicator {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background: #facc15;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.88);
+    animation: playable-pulse 2s ease-in-out infinite;
+    z-index: 10;
+  }
+
+  @keyframes playable-pulse {
+    0%,
+    100% {
+      opacity: 0.6;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .playable-indicator {
+      animation: none;
+    }
+  }
+</style>

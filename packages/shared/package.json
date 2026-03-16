@@ -1,0 +1,36 @@
+{
+  "name": "@tcg/shared",
+  "version": "0.1.0",
+  "private": true,
+  "files": [
+    "src/"
+  ],
+  "main": "./src/index.ts",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./utils": "./src/utils.ts",
+    "./types": "./src/types.ts",
+    "./auth": "./src/auth/index.ts",
+    "./cards": "./src/cards/index.ts",
+    "./cards/images": "./src/cards/images.ts",
+    "./deck-list-normalize": "./src/deck-list-normalize.ts",
+    "./deck-list-parse": "./src/deck-list-parse.ts",
+    "./deck-list-errors": "./src/deck-list-errors.ts",
+    "./display-name-normalize": "./src/display-name-normalize.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "format": "bun x oxfmt --write ./src",
+    "lint": "bun x oxlint --fix ./src",
+    "check-types": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@logtape/logtape": "^2.0.4"
+  },
+  "devDependencies": {
+    "@tcg/typescript-config": "workspace:*",
+    "@types/node": "^22.13.4"
+  }
+}

@@ -1,0 +1,105 @@
+import type { CharacterCard } from "@tcg/lorcana-types";
+
+export const mulanImperialGeneral: CharacterCard = {
+  id: "jFo",
+  canonicalId: "ci_jFo",
+  reprints: ["set7-141"],
+  cardType: "character",
+  name: "Mulan",
+  version: "Imperial General",
+  i18n: {
+    en: {
+      name: "Mulan",
+      version: "Imperial General",
+      text: [
+        {
+          title: "Shift 5",
+        },
+        {
+          title: "Evasive",
+        },
+        {
+          title: "EXCEPTIONAL LEADER",
+          description:
+            'Whenever this character challenges another character, your other characters gain "This character can challenge ready characters" this turn.',
+        },
+      ],
+    },
+    de: {
+      name: "Mulan",
+      version: "Kaiserliche Generalin",
+      text: 'Gestaltwandel 5 Wendig AUSSERGEWÖHNLICHE ANFÜHRERIN Jedes Mal, wenn dieser Charakter einen anderen Charakter herausfordert, erhalten deine anderen Charaktere in diesem Zug "Dieser Charakter kann bereite Charaktere herausfordern".',
+    },
+    fr: {
+      name: "Mulan",
+      version: "Générale impériale",
+      text: 'Alter 5 Insaisissable MENEUSE EXCEPTIONNELLE Chaque fois que ce personnage en défie un autre, vos autres personnages gagnent "Ce personnage peut défier des personnages redressés." pour le reste de ce tour.',
+    },
+    it: {
+      name: "Mulan",
+      version: "Generale Imperiale",
+      text: 'Trasformazione 5 Sfuggente LEADER ECCEZIONALE Ogni volta che questo personaggio sfida un altro personaggio, i tuoi altri personaggi ottengono "Questo personaggio può sfidare i personaggi preparati" per questo turno.',
+    },
+  },
+  inkType: ["ruby", "steel"],
+  franchise: "Mulan",
+  set: "007",
+  cardNumber: 141,
+  rarity: "common",
+  cost: 7,
+  strength: 5,
+  willpower: 6,
+  lore: 2,
+  inkable: true,
+  externalIds: {
+    lorcast: "crd_5d754111355845818b81e2a9a506bab4",
+    tcgPlayer: 619486,
+  },
+  text: [
+    {
+      title: "Shift 5",
+    },
+    {
+      title: "Evasive",
+    },
+    {
+      title: "EXCEPTIONAL LEADER",
+      description:
+        'Whenever this character challenges another character, your other characters gain "This character can challenge ready characters" this turn.',
+    },
+  ],
+  classifications: ["Floodborn", "Hero", "Princess"],
+  abilities: [
+    {
+      cost: {
+        ink: 5,
+      },
+      id: "17b-1",
+      keyword: "Shift",
+      text: "Shift 5",
+      type: "keyword",
+    },
+    {
+      id: "17b-2",
+      keyword: "Evasive",
+      text: "Evasive",
+      type: "keyword",
+    },
+    {
+      effect: {
+        ability: "can-challenge-ready",
+        target: "SELF",
+        type: "grant-ability",
+      },
+      id: "17b-3",
+      name: "EXCEPTIONAL LEADER",
+      text: "EXCEPTIONAL LEADER Whenever this character challenges another character, your other characters gain “This character can challenge ready characters” this turn.",
+      trigger: {
+        event: "challenge",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
+};

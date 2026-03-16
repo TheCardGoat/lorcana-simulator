@@ -1,0 +1,6 @@
+[test]
+preload = [
+  "./src/testing/register-svelte-bun.ts",
+  "../lorcana-engine/src/testing/register-matchers.ts",
+  "../lorcana-engine/src/testing/configure-logger.ts",
+]

@@ -1,0 +1,44 @@
+import type { CharacterCard } from "@tcg/lorcana-types";
+
+export const liShangImperialCaptain: CharacterCard = {
+  id: "dWX",
+  canonicalId: "ci_8Te",
+  reprints: ["set4-182", "set9-193"],
+  cardType: "character",
+  name: "Li Shang",
+  version: "Imperial Captain",
+  i18n: {
+    en: {
+      name: "Li Shang",
+      version: "Imperial Captain",
+    },
+    de: {
+      name: "Li Shang",
+      version: "Hauptmann des Kaisers",
+    },
+    fr: {
+      name: "Li Shang",
+      version: "Capitaine Impérial",
+    },
+    it: {
+      name: "Li Shang",
+      version: "Capitano Imperiale",
+    },
+  },
+  inkType: ["steel"],
+  franchise: "Mulan",
+  set: "009",
+  cardNumber: 193,
+  rarity: "uncommon",
+  cost: 5,
+  strength: 5,
+  willpower: 5,
+  lore: 2,
+  inkable: true,
+  vanilla: true,
+  externalIds: {
+    lorcast: "crd_3a743f412ff34cd38bd9896f146950f4",
+    tcgPlayer: 650126,
+  },
+  classifications: ["Dreamborn", "Hero", "Captain"],
+};

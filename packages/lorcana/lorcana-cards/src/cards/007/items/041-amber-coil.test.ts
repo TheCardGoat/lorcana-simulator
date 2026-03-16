@@ -1,0 +1,37 @@
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { amberCoil } from "./041-amber-coil";
+
+const inkCard = createMockCharacter({
+  id: "amber-coil-ink-card",
+  name: "Amber Coil Ink Card",
+  cost: 1,
+});
+
+const damagedTarget = createMockCharacter({
+  id: "amber-coil-damaged-target",
+  name: "Amber Coil Damaged Target",
+  cost: 2,
+});
+
+describe("Amber Coil", () => {
+  it("removes up to 2 damage when you ink a card during your turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [inkCard],
+      play: [amberCoil, damagedTarget],
+    });
+
+    testEngine.asServer().manualSetDamage(damagedTarget, 3);
+
+    expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: true,
+        targets: [damagedTarget],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne()).toHaveDamage({ card: damagedTarget, value: 1 });
+  });
+});

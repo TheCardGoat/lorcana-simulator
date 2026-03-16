@@ -1,0 +1,208 @@
+/**
+ * Lorcana Client Runtime
+ *
+ * Client-first wrapper around GameEngine<LorcanaProjectedBoardView>.
+ * Provides player-scoped move execution and projected board access.
+ */
+
+import { LorcanaEngineBase } from "./lorcana-engine-base";
+import {
+  ClientEngine,
+  type ClientEngineConfig,
+  type DeepReadonly,
+  type InMemoryTransport,
+  type PlayerId,
+  type CommandResult,
+} from "#core";
+import type { CardInput } from "./types";
+import { lorcanaRuntimeConfig } from "./runtime-game";
+import type { LorcanaCard } from "@tcg/lorcana-types";
+import type { LorcanaG, LorcanaMatchState, LorcanaProjectedBoardView } from "./types";
+import type { LorcanaRuntimeCardDerivedMethods } from "./runtime-moves";
+import { type LorcanaBaseEngineParams } from "./engine-initialization";
+
+type LorcanaClientParams = {
+  playerId: string;
+  role?: "player" | "spectator";
+  transport?: InMemoryTransport;
+  identifier?: string;
+  debugMode?: boolean;
+};
+
+export class LorcanaClient extends LorcanaEngineBase {
+  private readonly _playerId: string;
+
+  private previousProjectedBoard?: LorcanaProjectedBoardView;
+  private projectedBoard?: LorcanaProjectedBoardView;
+  private nextProjectedBoard?: LorcanaProjectedBoardView;
+
+  engine: ClientEngine<
+    LorcanaG,
+    LorcanaCard,
+    LorcanaRuntimeCardDerivedMethods,
+    LorcanaProjectedBoardView,
+    typeof lorcanaRuntimeConfig.moves
+  >;
+
+  constructor(params: LorcanaBaseEngineParams & LorcanaClientParams) {
+    super(params);
+    this._playerId = params.playerId;
+    const staticResources = this.getResolvedStaticResources();
+
+    const clientEngineConfig: ClientEngineConfig<
+      LorcanaG,
+      LorcanaCard,
+      LorcanaRuntimeCardDerivedMethods,
+      LorcanaProjectedBoardView,
+      typeof lorcanaRuntimeConfig.moves
+    > = {
+      playerId: params.playerId,
+      role: params.role || "spectator",
+      runtimeConfig: lorcanaRuntimeConfig,
+      staticResources: staticResources,
+      players: params.players,
+      seed: params.seed,
+      debugMode: params.debugMode ?? false,
+      transport: params.transport,
+      identifier: params.identifier,
+    };
+
+    this.engine = new ClientEngine(clientEngineConfig);
+
+    this.engine.onStateUpdate((board) => {
+      this.cacheProjectedBoardUpdate(board);
+    });
+  }
+
+  getClientPlayerId(): string {
+    return this._playerId;
+  }
+
+  connectSync(): void {
+    this.engine.connectSync();
+  }
+
+  getActorContext() {
+    return this.engine.getActorContext();
+  }
+
+  getLastPacketUpdate() {
+    return this.engine.getLastPacketUpdate();
+  }
+
+  getBoard(): LorcanaProjectedBoardView {
+    const state = this.engine.getState();
+    if (state && typeof state === "object" && "G" in state && "ctx" in state) {
+      const projected = this.projectState(state as LorcanaMatchState);
+      this.projectedBoard = projected;
+      return projected;
+    }
+
+    return this.projectedBoard ?? this.normalizeProjectedBoardPayload(this.engine.getBoard());
+  }
+
+  protected loadStateViaEngine(state: LorcanaMatchState): void {
+    this.engine.loadState(state);
+
+    // When loaded directly, we don't run the latest animation
+    this.projectedBoard = this.normalizeProjectedBoardPayload(state);
+  }
+
+  protected normalizeProjectedBoardPayload(
+    board:
+      | LorcanaProjectedBoardView
+      | DeepReadonly<LorcanaProjectedBoardView>
+      | DeepReadonly<LorcanaMatchState>,
+  ): LorcanaProjectedBoardView {
+    if ("G" in board && "ctx" in board) {
+      return this.projectState(board);
+    }
+
+    return board as LorcanaProjectedBoardView;
+  }
+
+  private cacheProjectedBoardUpdate(
+    board: LorcanaProjectedBoardView | DeepReadonly<LorcanaMatchState>,
+  ): void {
+    this.previousProjectedBoard = this.projectedBoard;
+    this.nextProjectedBoard = this.normalizeProjectedBoardPayload(board);
+
+    // TODO: We should only update this.projectedBoard after we run the animation from this.nextProjectedBoard
+    this.projectedBoard = this.nextProjectedBoard;
+  }
+
+  private projectState(state: DeepReadonly<LorcanaMatchState>): LorcanaProjectedBoardView {
+    const actorContext = this.getActorContext();
+    const roleCtx =
+      actorContext.role === "player"
+        ? { role: "player" as const, playerID: this.getClientPlayerId() }
+        : { role: actorContext.role };
+
+    const board: LorcanaProjectedBoardView = lorcanaRuntimeConfig.projectBoard(
+      state as LorcanaMatchState,
+      roleCtx,
+      this.staticResources,
+      {
+        serverTimestamp: Date.now(),
+      },
+    );
+
+    return board;
+  }
+
+  protected override enumerateMovesForPlayerViaEngine(playerId: string) {
+    if (playerId !== this.getClientPlayerId()) {
+      return [];
+    }
+
+    return this.enumerateMoves();
+  }
+
+  private rejectManualMove(): CommandResult {
+    return this.createErrorResult("Manual Moves can Only be executed by the server");
+  }
+
+  // Override manual methods to execute via the engine
+  // These methods directly call the engine with proper MoveInput format
+  override manualSetLore(playerId: PlayerId, amount: number): CommandResult {
+    void playerId;
+    void amount;
+    return this.rejectManualMove();
+  }
+
+  override manualSetDamage(card: CardInput, damage: number): CommandResult {
+    void card;
+    void damage;
+    return this.rejectManualMove();
+  }
+
+  override manualExertCard(card: CardInput): CommandResult {
+    void card;
+    return this.rejectManualMove();
+  }
+
+  override manualReadyCard(card: CardInput): CommandResult {
+    void card;
+    return this.rejectManualMove();
+  }
+
+  override manualDryCard(card: CardInput): CommandResult {
+    void card;
+    return this.rejectManualMove();
+  }
+
+  override manualShuffleDeck(playerId: PlayerId): CommandResult {
+    void playerId;
+    return this.rejectManualMove();
+  }
+
+  override manualPassTurn(): CommandResult {
+    return this.rejectManualMove();
+  }
+}
+
+export function createLorcanaClient(
+  params: LorcanaBaseEngineParams & LorcanaClientParams,
+): LorcanaClient {
+  return new LorcanaClient(params);
+}

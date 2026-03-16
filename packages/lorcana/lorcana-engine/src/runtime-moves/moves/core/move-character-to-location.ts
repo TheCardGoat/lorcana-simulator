@@ -1,0 +1,349 @@
+// .agents/skills/lorcana-rules/SKILL.md
+// .agents/skills/lorcana-rules/indexes/by-topic/turn-actions.md
+
+import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
+import type { LorcanaCard } from "@tcg/lorcana-types";
+import { getMoveCost, isCharacter, isLocation } from "../../../card-utils";
+import { createLorcanaLogMessage, type Classification, type LorcanaMoveDefinition } from "../../../types";
+import {
+  EFFECT_PENDING_ERROR_CODE,
+  hasPendingActionEffectResolution,
+} from "../../resolution/action-effects/pending-action-effects";
+import { getAvailableInk, spendInk } from "../../rules/play-card-rules";
+import {
+  emitTriggeredLorcanaEvent,
+  flushTriggeredEventsToBag,
+  hasPendingBagItems,
+} from "../../effects/triggered-abilities";
+import { evaluateStaticCondition } from "../../rules/static-ability-utils";
+
+type MoveExecutionContext = Parameters<
+  LorcanaMoveDefinition<"moveCharacterToLocation">["execute"]
+>[0];
+type MoveValidationContext = Parameters<
+  NonNullable<LorcanaMoveDefinition<"moveCharacterToLocation">["validate"]>
+>[0];
+type MoveEnumerationContext = Parameters<
+  NonNullable<LorcanaMoveDefinition<"moveCharacterToLocation">["available"]>
+>[0];
+type MoveReadableContext = Pick<
+  MoveExecutionContext | MoveValidationContext | MoveEnumerationContext,
+  "framework" | "cards"
+>;
+
+type StaticMoveCostReductionEffect = {
+  type: "move-cost-reduction";
+  location?: "here";
+  reduction?: number | "free";
+  filter?: {
+    name?: string;
+    classification?: Classification;
+  };
+};
+
+function getCardOwnerId(ctx: MoveReadableContext, cardId: CardInstanceId): PlayerId | undefined {
+  return ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID;
+}
+
+function getCurrentPlayerId(ctx: MoveReadableContext): PlayerId | undefined {
+  return ctx.framework.state.currentPlayer;
+}
+
+function getCardDefinition(
+  ctx: MoveReadableContext,
+  cardId: CardInstanceId,
+): LorcanaCard | undefined {
+  return ctx.cards.getDefinition(cardId) as LorcanaCard | undefined;
+}
+
+function getStaticMoveCostReduction(
+  ctx: MoveReadableContext,
+  characterId: CardInstanceId,
+  locationId: CardInstanceId,
+  currentPlayer: PlayerId,
+): number {
+  const characterDefinition = getCardDefinition(ctx, characterId);
+  let reduction = 0;
+
+  for (const sourceId of Object.keys(
+    ctx.framework.state.ctx.zones.private.cardIndex ?? {},
+  ) as CardInstanceId[]) {
+    const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[sourceId]?.zoneKey;
+    if (!(zoneKey === "play" || zoneKey?.startsWith("play:"))) {
+      continue;
+    }
+
+    if (getCardOwnerId(ctx, sourceId) !== currentPlayer) {
+      continue;
+    }
+
+    const sourceDefinition = getCardDefinition(ctx, sourceId);
+    if (!sourceDefinition) {
+      continue;
+    }
+
+    for (const ability of sourceDefinition.abilities ?? []) {
+      if (ability.type !== "static" || ability.effect?.type !== "move-cost-reduction") {
+        continue;
+      }
+
+      const effect = ability.effect as StaticMoveCostReductionEffect;
+      const targetLocationId =
+        effect.location === "here" || effect.location === undefined ? sourceId : undefined;
+      if (targetLocationId !== locationId) {
+        continue;
+      }
+
+      if (
+        !evaluateStaticCondition({
+          condition: ability.condition,
+          state: ctx.framework.state,
+          controllerId: currentPlayer,
+          sourceId,
+          getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+        })
+      ) {
+        continue;
+      }
+
+      if (effect.filter?.name && characterDefinition?.name !== effect.filter.name) {
+        continue;
+      }
+
+      if (
+        effect.filter?.classification &&
+        (!characterDefinition ||
+          characterDefinition.cardType !== "character" ||
+          !(characterDefinition.classifications ?? []).includes(effect.filter.classification))
+      ) {
+        continue;
+      }
+
+      reduction = Math.max(
+        reduction,
+        effect.reduction === "free" ? Number.MAX_SAFE_INTEGER : (effect.reduction ?? 0),
+      );
+    }
+  }
+
+  return reduction;
+}
+
+function validateMoveCharacterToLocation(
+  ctx: MoveReadableContext,
+  characterId: CardInstanceId,
+  locationId: CardInstanceId,
+): RuntimeValidationResult {
+  const currentPlayer = getCurrentPlayerId(ctx);
+  if (!currentPlayer) {
+    return {
+      valid: false,
+      error: "No active player is set",
+      errorCode: "NO_ACTIVE_PLAYER",
+    };
+  }
+
+  const characterZoneKey = ctx.framework.state.ctx.zones.private.cardIndex[characterId]?.zoneKey;
+  const locationZoneKey = ctx.framework.state.ctx.zones.private.cardIndex[locationId]?.zoneKey;
+  if (!characterZoneKey?.startsWith("play:")) {
+    return {
+      valid: false,
+      error: "Character must be in play to move",
+      errorCode: "CHARACTER_NOT_IN_PLAY",
+    };
+  }
+  if (!locationZoneKey?.startsWith("play:")) {
+    return {
+      valid: false,
+      error: "Location must be in play",
+      errorCode: "LOCATION_NOT_IN_PLAY",
+    };
+  }
+
+  const characterDefinition = getCardDefinition(ctx, characterId);
+  if (!characterDefinition || !isCharacter(characterDefinition)) {
+    return {
+      valid: false,
+      error: "Only characters can move to locations",
+      errorCode: "NOT_A_CHARACTER",
+    };
+  }
+
+  const locationDefinition = getCardDefinition(ctx, locationId);
+  if (!locationDefinition || !isLocation(locationDefinition)) {
+    return {
+      valid: false,
+      error: "Destination must be a location",
+      errorCode: "NOT_A_LOCATION",
+    };
+  }
+
+  if (getCardOwnerId(ctx, characterId) !== currentPlayer) {
+    return {
+      valid: false,
+      error: "You can move only your own characters",
+      errorCode: "CHARACTER_NOT_CONTROLLED",
+    };
+  }
+
+  if (getCardOwnerId(ctx, locationId) !== currentPlayer) {
+    return {
+      valid: false,
+      error: "You can move characters only to your own locations",
+      errorCode: "LOCATION_NOT_CONTROLLED",
+    };
+  }
+
+  const currentLocationId = ctx.cards.require(characterId).meta?.atLocationId as
+    | CardInstanceId
+    | undefined;
+  if (currentLocationId === locationId) {
+    return {
+      valid: false,
+      error: "A character at a location must move to another location",
+      errorCode: "SAME_LOCATION",
+    };
+  }
+
+  const baseMoveCost = getMoveCost(locationDefinition) ?? 0;
+  const moveCost = Math.max(
+    0,
+    baseMoveCost - getStaticMoveCostReduction(ctx, characterId, locationId, currentPlayer),
+  );
+  const availableInk = getAvailableInk({ framework: ctx.framework }, currentPlayer);
+  if (availableInk < moveCost) {
+    return {
+      valid: false,
+      error: "Not enough ready ink to pay the move cost",
+      errorCode: "INSUFFICIENT_INK",
+    };
+  }
+
+  return { valid: true };
+}
+
+export const moveCharacterToLocation: LorcanaMoveDefinition<"moveCharacterToLocation"> = {
+  validate: (ctx): RuntimeValidationResult => {
+    const { characterId, locationId } = ctx.args;
+    if (ctx.validationMode === "preflight" && (characterId == null || locationId == null)) {
+      return { valid: true };
+    }
+
+    if (hasPendingActionEffectResolution(ctx)) {
+      return {
+        valid: false,
+        error: "Cannot move a character while an action effect is pending",
+        errorCode: EFFECT_PENDING_ERROR_CODE,
+      };
+    }
+
+    if (hasPendingBagItems(ctx)) {
+      return {
+        valid: false,
+        error: "Cannot move a character while bag effects are pending",
+        errorCode: "BAG_PENDING",
+      };
+    }
+
+    return validateMoveCharacterToLocation(
+      ctx,
+      characterId as CardInstanceId,
+      locationId as CardInstanceId,
+    );
+  },
+
+  execute: (ctx) => {
+    const { characterId, locationId } = ctx.args;
+    const currentPlayer = getCurrentPlayerId(ctx);
+    if (!currentPlayer) {
+      return;
+    }
+
+    const locationDefinition = getCardDefinition(ctx, locationId as CardInstanceId);
+    const baseMoveCost = locationDefinition ? (getMoveCost(locationDefinition) ?? 0) : 0;
+    const moveCost = Math.max(
+      0,
+      baseMoveCost -
+        getStaticMoveCostReduction(
+          ctx,
+          characterId as CardInstanceId,
+          locationId as CardInstanceId,
+          currentPlayer,
+        ),
+    );
+    const currentLocationId = ctx.cards.require(characterId as CardInstanceId).meta?.atLocationId as
+      | CardInstanceId
+      | undefined;
+
+    if (moveCost > 0) {
+      spendInk(ctx, currentPlayer, moveCost);
+    }
+
+    ctx.cards.patchMeta(characterId as CardInstanceId, {
+      atLocationId: locationId as CardInstanceId,
+    });
+
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "cardMoved",
+      {
+        cardId: characterId as CardInstanceId,
+        fromZone: currentLocationId ? `location:${currentLocationId}` : "play",
+        toZone: `location:${locationId as CardInstanceId}`,
+        playerId: currentPlayer,
+      },
+      {
+        event: "move",
+        fromZone: currentLocationId ? `location:${currentLocationId}` : "play",
+        toZone: `location:${locationId as CardInstanceId}`,
+        playerId: currentPlayer,
+        subjectCardId: characterId as CardInstanceId,
+      },
+    );
+    ctx.framework.log({
+      category: "action",
+      visibility: { mode: "PUBLIC" },
+      defaultMessage: createLorcanaLogMessage("lorcana.move.moveCharacterToLocation", {
+        playerId: currentPlayer,
+        characterId: characterId as CardInstanceId,
+        locationId: locationId as CardInstanceId,
+      }),
+    });
+
+    flushTriggeredEventsToBag(ctx);
+  },
+
+  available: (ctx) => {
+    if (hasPendingActionEffectResolution(ctx)) {
+      return false;
+    }
+
+    if (hasPendingBagItems(ctx)) {
+      return false;
+    }
+
+    const currentPlayer = getCurrentPlayerId(ctx);
+    if (!currentPlayer || ctx.playerId !== currentPlayer) {
+      return false;
+    }
+
+    const playCards = ctx.framework.zones.getCards({
+      zone: "play",
+      playerId: currentPlayer,
+    }) as CardInstanceId[];
+    const characterIds = playCards.filter((cardId) => {
+      const definition = getCardDefinition(ctx, cardId);
+      return Boolean(definition && isCharacter(definition));
+    });
+    const locationIds = playCards.filter((cardId) => {
+      const definition = getCardDefinition(ctx, cardId);
+      return Boolean(definition && isLocation(definition));
+    });
+
+    return characterIds.some((characterId) =>
+      locationIds.some(
+        (locationId) => validateMoveCharacterToLocation(ctx, characterId, locationId).valid,
+      ),
+    );
+  },
+};

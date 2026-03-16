@@ -1,0 +1,113 @@
+import type { CharacterCard } from "@tcg/lorcana-types";
+
+export const goofyMusketeer: CharacterCard = {
+  id: "BTg",
+  canonicalId: "ci_BTg",
+  reprints: ["set1-004"],
+  cardType: "character",
+  name: "Goofy",
+  version: "Musketeer",
+  i18n: {
+    en: {
+      name: "Goofy",
+      version: "Musketeer",
+      text: [
+        {
+          title: "Bodyguard",
+        },
+        {
+          title: "AND TWO FOR TEA!",
+          description:
+            "When you play this character, you may remove up to 2 damage from each of your Musketeer characters.",
+        },
+      ],
+    },
+    de: {
+      name: "Goofy",
+      version: "Musketeer",
+      text: [
+        {
+          title: "Bodyguard",
+          description:
+            "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.) AND TWO FOR TEA! When you play this character, you may remove up to 2 damage from each of your Musketeer characters.",
+        },
+      ],
+    },
+    fr: {
+      name: "Goofy",
+      version: "Musketeer",
+      text: [
+        {
+          title: "Bodyguard",
+          description:
+            "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.) AND TWO FOR TEA! When you play this character, you may remove up to 2 damage from each of your Musketeer characters.",
+        },
+      ],
+    },
+    it: {
+      name: "Goofy",
+      version: "Musketeer",
+      text: [
+        {
+          title: "Bodyguard",
+          description:
+            "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.) AND TWO FOR TEA! When you play this character, you may remove up to 2 damage from each of your Musketeer characters.",
+        },
+      ],
+    },
+  },
+  inkType: ["amber"],
+  set: "001",
+  cardNumber: 4,
+  rarity: "uncommon",
+  cost: 5,
+  strength: 3,
+  willpower: 6,
+  lore: 1,
+  inkable: true,
+  missingTests: true,
+  externalIds: {
+    lorcast: "crd_9bd583ab207a4366a12f37ab94ed8619",
+    tcgPlayer: 501751,
+  },
+  text: [
+    {
+      title: "Bodyguard",
+    },
+    {
+      title: "AND TWO FOR TEA!",
+      description:
+        "When you play this character, you may remove up to 2 damage from each of your Musketeer characters.",
+    },
+  ],
+  classifications: ["Dreamborn", "Hero", "Musketeer"],
+  abilities: [
+    {
+      id: "11w-1",
+      keyword: "Bodyguard",
+      text: "Bodyguard",
+      type: "keyword",
+    },
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          amount: 2,
+          target: "CHOSEN_CHARACTER",
+          type: "remove-damage",
+          upTo: true,
+        },
+        type: "optional",
+      },
+      id: "11w-2",
+      name: "AND TWO FOR TEA!",
+      text: "AND TWO FOR TEA! When you play this character, you may remove up to 2 damage from each of your Musketeer characters.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
+  ],
+};

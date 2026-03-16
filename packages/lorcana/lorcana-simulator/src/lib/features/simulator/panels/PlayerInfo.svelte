@@ -1,0 +1,354 @@
+<script lang="ts">
+    import type {LorcanaPlayerSide, LorcanaTableSeat} from "@/features/simulator/model/contracts.js";
+  import { m } from "$lib/paraglide/messages.js";
+    import {useLorcanaBoardPresenter} from "@/features/simulator/context/game-context.svelte.js";
+    import LoreBadge from "@/design-system/simulator/display/LoreBadge.svelte";
+  import { Settings, Trash2, Layers, Hand, PaintBucket } from "@lucide/svelte";
+  interface PlayerInfoProps {
+    name: string;
+    seat?: LorcanaTableSeat;
+    side: LorcanaPlayerSide;
+    lore: number;
+    deckCount: number;
+    handCount: number;
+    discardCount: number;
+    inkwellCount: number;
+    availableInk?: number | null;
+    isActive?: boolean;
+    isOpponent?: boolean;
+    showSettings?: boolean;
+    onSettingsClick?: () => void;
+  }
+
+  let {
+    name,
+    seat = "bottom",
+    side,
+    lore,
+    deckCount,
+    handCount,
+    discardCount,
+    inkwellCount,
+    availableInk = null,
+    isActive = false,
+    isOpponent = false,
+    showSettings = false,
+    onSettingsClick,
+  }: PlayerInfoProps = $props();
+
+  const unknownInkLabel = $derived(m["sim.player.stats.inkUnknown"]({}));
+  const board = (() => {
+    try {
+      return useLorcanaBoardPresenter();
+    } catch {
+      return null;
+    }
+  })();
+  const boardSummary = $derived(board?.getPlayerSummary(side) ?? null);
+  const inkwellCards = $derived(board?.getZoneCards(side, "inkwell") ?? []);
+  const displayLore = $derived(boardSummary?.lore ?? lore);
+  const displayDeckCount = $derived(boardSummary?.deckCount ?? deckCount);
+  const displayHandCount = $derived(boardSummary?.handCount ?? handCount);
+  const displayDiscardCount = $derived(boardSummary?.discardCount ?? discardCount);
+  const summaryInkwellCount = $derived(boardSummary?.inkwellCount ?? inkwellCount);
+  const summaryAvailableInk = $derived(boardSummary?.availableInk ?? availableInk);
+  const hasRevealedInkwellCards = $derived(inkwellCards.length > 0);
+  const displayInkwellCount = $derived(Math.max(summaryInkwellCount, inkwellCards.length));
+  const displayTotalInk = $derived(hasRevealedInkwellCards ? inkwellCards.length : displayInkwellCount);
+  const displayAvailableInk = $derived.by<number | null>(() => {
+    if (!hasRevealedInkwellCards) {
+      return summaryAvailableInk;
+    }
+
+    return inkwellCards.reduce(
+      (count, card) => count + (card.readyState === "exerted" ? 0 : 1),
+      0,
+    );
+  });
+  const inkSummary = $derived.by(() => {
+    if (displayAvailableInk === null && displayInkwellCount > 0) {
+      return `${unknownInkLabel}/${displayInkwellCount}`;
+    }
+
+    return `${displayAvailableInk ?? 0}/${displayTotalInk}`;
+  });
+
+  const sideColors = {
+    playerOne: "#7cc4ff",
+    playerTwo: "#ea0000",
+  };
+
+  function getSideLabel(side: LorcanaPlayerSide): string {
+    return side === "playerOne"
+      ? m["sim.player.side.playerOne"]({})
+      : m["sim.player.side.playerTwo"]({});
+  }
+
+  function handleSettingsClick() {
+    onSettingsClick?.();
+  }
+</script>
+
+<div
+  class="player-info"
+  class:player-info--active={isActive}
+  class:player-info--opponent={isOpponent}
+  data-testid={`player-panel-${seat}`}
+  data-player-seat={seat}
+  style:--side-color={sideColors[side]}
+>
+  <div class="player-header">
+    <div class="lore-status">
+      <LoreBadge value={displayLore} max={20} size="small" variant={isOpponent ? "losing" : "default"} />
+      <span
+              class="status-indicator"
+              class:status-indicator--active={isActive}
+              title={isActive ? m["sim.player.active.title"]({}) : undefined}
+              aria-hidden="true"
+      ></span>
+    </div>
+    <div class="player-identity">
+      <div class="player-details">
+        <span class="player-name">{name}</span>
+        <span class="player-side">{getSideLabel(side)}</span>
+      </div>
+    </div>
+
+    {#if showSettings}
+      <button
+        type="button"
+        class="settings-trigger"
+        aria-label={m["sim.player.settings.openAria"]({})}
+        onclick={handleSettingsClick}
+      >
+        <Settings/>
+      </button>
+    {/if}
+  </div>
+
+  <div class="player-stats">
+    <div class="stat-group">
+      <div class="stat-item" aria-label={m["sim.player.stats.deckAria"]({ count: displayDeckCount })}>
+        <span class="stat-value">{displayDeckCount}</span>
+        <span class="stat-icon"><Layers /></span>
+      </div>
+      <div class="stat-item" aria-label={m["sim.player.stats.handAria"]({ count: displayHandCount })}>
+        <span class="stat-value">{displayHandCount}</span>
+        <span class="stat-icon"><Hand /></span>
+      </div>
+      <div class="stat-item" aria-label={m["sim.player.stats.discardAria"]({ count: displayDiscardCount })}>
+        <span class="stat-value">{displayDiscardCount}</span>
+        <span class="stat-icon"><Trash2 /></span>
+      </div>
+      <div class="stat-item" aria-label={m["sim.player.stats.inkAria"]({ available: displayAvailableInk ?? unknownInkLabel, total: displayInkwellCount })}>
+        <span class="stat-value">{inkSummary}</span>
+        <span class="stat-icon"><PaintBucket /></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .player-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.28rem;
+    padding: 0.38rem 0.5rem;
+    background:
+      linear-gradient(180deg, rgba(16, 28, 44, 0.9), rgba(11, 20, 32, 0.92));
+    border: 1px solid rgba(109, 149, 195, 0.22);
+    border-radius: 9px;
+    border-left: 2px solid transparent;
+    transition: border-color 200ms ease;
+  }
+
+  .player-info--active {
+    border-left-color: var(--side-color, #7cc4ff);
+    box-shadow: 0 0 15px rgba(124, 196, 255, 0.1);
+  }
+
+  .player-info--opponent {
+    opacity: 0.9;
+  }
+
+  .player-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+  }
+
+  .player-identity {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .player-details {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.22rem 0.38rem;
+    min-width: 0;
+  }
+
+  .player-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #f8fafc;
+    line-height: 1.1;
+  }
+
+  .player-side {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1rem;
+    padding: 0 0.32rem;
+    border-radius: 999px;
+    background: rgba(20, 40, 64, 0.72);
+    border: 1px solid rgba(109, 149, 195, 0.18);
+    font-size: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9db1c8;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .player-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: center;
+    min-width: 0;
+    gap: 0.2rem;
+    overflow: hidden;
+  }
+
+  .lore-status {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .status-indicator {
+    position: absolute;
+    right: -1px;
+    bottom: 1px;
+    width: 0.7rem;
+    height: 0.7rem;
+    background: rgba(71, 85, 105, 0.95);
+    border-radius: 50%;
+    border: 2px solid rgba(12, 22, 36, 0.95);
+    box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.18);
+    transition:
+      background-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
+  }
+
+  .status-indicator--active {
+    background: #10b981;
+    box-shadow:
+      0 0 0 1px rgba(16, 185, 129, 0.22),
+      0 0 12px rgba(16, 185, 129, 0.35);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.78;
+      transform: scale(0.9);
+    }
+  }
+
+  .stat-group {
+    display: contents;
+    align-items: center;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.18rem;
+    line-height: 1;
+    min-width: 0;
+    padding: 0.08rem 0;
+  }
+
+  .stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.72rem;
+    height: 0.72rem;
+    opacity: 0.72;
+    flex-shrink: 0;
+  }
+
+  .stat-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+    stroke-width: 2;
+  }
+
+  .stat-value {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  :global(.lore-badge.badge--small) {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  :global(.lore-badge.badge--small .badge-label) {
+    display: none;
+  }
+
+  .settings-trigger {
+    width: 1.05rem;
+    height: 1.05rem;
+    padding: 0.12rem;
+    border-radius: 0.25rem;
+    border: 1px solid rgba(124, 196, 255, 0.28);
+    background: rgba(18, 38, 61, 0.68);
+    color: #dbeafe;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 140ms ease, border-color 140ms ease;
+  }
+
+  .settings-trigger :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .settings-trigger:hover,
+  .settings-trigger:focus-visible {
+    background: rgba(33, 63, 96, 0.9);
+    border-color: rgba(125, 211, 252, 0.75);
+    outline: none;
+  }
+
+</style>

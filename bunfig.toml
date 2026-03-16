@@ -1,0 +1,11 @@
+[install]
+linker = "isolated"
+
+[test]
+# E2E tests use .e2e.ts extension to avoid being picked up by Bun's test runner
+# Playwright E2E tests are run separately with: bun run test:e2e
+
+preload = [
+  "./packages/lorcana/lorcana-engine/src/testing/register-matchers.ts",
+  "./packages/lorcana/lorcana-engine/src/testing/configure-logger.ts",
+]
