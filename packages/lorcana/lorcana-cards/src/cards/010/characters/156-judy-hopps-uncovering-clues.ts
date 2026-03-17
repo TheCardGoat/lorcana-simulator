@@ -78,20 +78,73 @@ export const judyHoppsUncoveringClues: CharacterCard = {
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: "CHOSEN_CHARACTER",
-          type: "put-on-bottom",
-        },
-        type: "optional",
+        amount: 3,
+        destinations: [
+          {
+            filter: {
+              type: "and",
+              filters: [
+                { type: "card-type", cardType: "character" },
+                { type: "classification", classification: "Detective" },
+              ],
+            },
+            max: 1,
+            min: 0,
+            reveal: true,
+            zone: "hand",
+          },
+          {
+            ordering: "player-choice",
+            remainder: true,
+            zone: "deck-bottom",
+          },
+        ],
+        target: "CONTROLLER",
+        type: "scry",
       },
       id: "1mf-1",
-      name: "THOROUGH INVESTIGATION When you play this character and",
-      text: "THOROUGH INVESTIGATION When you play this character and whenever she quests, look at the top 3 cards of your deck. You may reveal a Detective character card and put it into your hand. Put the rest on the bottom of your deck in any order.",
+      name: "THOROUGH INVESTIGATION",
+      text: "THOROUGH INVESTIGATION When you play this character, look at the top 3 cards of your deck. You may reveal a Detective character card and put it into your hand. Put the rest on the bottom of your deck in any order.",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
+      },
+      type: "triggered",
+    },
+    {
+      effect: {
+        amount: 3,
+        destinations: [
+          {
+            filter: {
+              type: "and",
+              filters: [
+                { type: "card-type", cardType: "character" },
+                { type: "classification", classification: "Detective" },
+              ],
+            },
+            max: 1,
+            min: 0,
+            reveal: true,
+            zone: "hand",
+          },
+          {
+            ordering: "player-choice",
+            remainder: true,
+            zone: "deck-bottom",
+          },
+        ],
+        target: "CONTROLLER",
+        type: "scry",
+      },
+      id: "1mf-2",
+      name: "THOROUGH INVESTIGATION",
+      text: "THOROUGH INVESTIGATION Whenever she quests, look at the top 3 cards of your deck. You may reveal a Detective character card and put it into your hand. Put the rest on the bottom of your deck in any order.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
       },
       type: "triggered",
     },
