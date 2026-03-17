@@ -99,12 +99,12 @@ export const daisyDuckSapphireChampion: CharacterCard = {
     {
       effect: {
         keyword: "Resist",
-        target: "CHOSEN_CHARACTER",
+        target: "YOUR_OTHER_SAPPHIRE_CHARACTERS",
         type: "gain-keyword",
         value: 1,
       },
       id: "107-1",
-      name: "STAND FAST Your other Sapphire",
+      name: "STAND FAST",
       text: "STAND FAST Your other Sapphire characters gain Resist +1.",
       type: "static",
     },
@@ -112,8 +112,12 @@ export const daisyDuckSapphireChampion: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: "CHOSEN_CHARACTER",
-          type: "put-on-bottom",
+          type: "scry",
+          amount: 1,
+          destinations: [
+            { zone: "deck-top", max: 1 },
+            { zone: "deck-bottom", remainder: true },
+          ],
         },
         type: "optional",
       },
@@ -121,8 +125,8 @@ export const daisyDuckSapphireChampion: CharacterCard = {
       name: "LOOK AHEAD",
       text: "LOOK AHEAD Whenever one of your other Sapphire characters quests, you may look at the top card of your deck. Put it on either the top or the bottom of your deck.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "quest",
+        on: "YOUR_OTHER_SAPPHIRE_CHARACTERS",
         timing: "whenever",
       },
       type: "triggered",

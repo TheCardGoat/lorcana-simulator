@@ -154,6 +154,7 @@ export type TriggerSubjectEnum =
   | "SONG" // Song (singular)
   | "YOUR_CHARACTERS_OR_LOCATIONS" // Your characters or locations
   | "YOUR_OTHER_AMETHYST_CHARACTERS" // Your other Amethyst characters
+  | "YOUR_OTHER_SAPPHIRE_CHARACTERS" // Your other Sapphire characters
   | "YOUR_CHARACTERS_OR_LOCATIONS_WITH_CARD_UNDER"; // Your characters or locations with card under
 
 /**
