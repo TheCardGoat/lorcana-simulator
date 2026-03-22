@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { monsieurDarqueDespicableProprietorI18n } from "./157-monsieur-darque-despicable-proprietor.i18n";
 
 export const monsieurDarqueDespicableProprietor: CharacterCard = {
   id: "TnS",
@@ -7,52 +8,6 @@ export const monsieurDarqueDespicableProprietor: CharacterCard = {
   cardType: "character",
   name: "Monsieur D'Arque",
   version: "Despicable Proprietor",
-  i18n: {
-    en: {
-      name: "Monsieur D'Arque",
-      version: "Despicable Proprietor",
-      text: [
-        {
-          title: "I'VE COME TO COLLECT",
-          description:
-            "Whenever this character quests, you may banish chosen item of yours to draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Monsieur D'Arque",
-      version: "Verachtenswerter Inhaber",
-      text: [
-        {
-          title: "ICH KOMME ZUR ABHOLUNG",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du einen deiner Gegenstände wählen und verbannen, um 1 Karte zu ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Monsieur D'Arque",
-      version: "Propriétaire méprisable",
-      text: [
-        {
-          title: "JE VIENS RÉCUPÉRER MON DÛ",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez choisir l'un de vos objets et le bannir pour piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Monsieur D'Arque",
-      version: "Proprietario Spregevole",
-      text: [
-        {
-          title: "SONO VENUTO A PORTAR VIA",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi esiliare un tuo oggetto a tua scelta per pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "007",
@@ -102,4 +57,5 @@ export const monsieurDarqueDespicableProprietor: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: monsieurDarqueDespicableProprietorI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { shereKhanKeeneyedHunterI18n } from "./108-shere-khan-keen-eyed-hunter.i18n";
 
 export const shereKhanKeeneyedHunter: CharacterCard = {
   id: "601",
@@ -7,24 +8,6 @@ export const shereKhanKeeneyedHunter: CharacterCard = {
   cardType: "character",
   name: "Shere Khan",
   version: "Keen-Eyed Hunter",
-  i18n: {
-    en: {
-      name: "Shere Khan",
-      version: "Keen-Eyed Hunter",
-    },
-    de: {
-      name: "Shir Khan",
-      version: "Scharfäugiger Jäger",
-    },
-    fr: {
-      name: "Shere Khan",
-      version: "Chasseur aux aguets",
-    },
-    it: {
-      name: "Shere Khan",
-      version: "Cacciatore dallo Sguardo Acuto",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Jungle Book",
   set: "010",
@@ -41,4 +24,5 @@ export const shereKhanKeeneyedHunter: CharacterCard = {
     tcgPlayer: 659599,
   },
   classifications: ["Storyborn", "Villain"],
+  i18n: shereKhanKeeneyedHunterI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { viranaFangChiefI18n } from "./082-virana-fang-chief.i18n";
 
 export const viranaFangChief: CharacterCard = {
   id: "T9y",
@@ -7,24 +8,6 @@ export const viranaFangChief: CharacterCard = {
   cardType: "character",
   name: "Virana",
   version: "Fang Chief",
-  i18n: {
-    en: {
-      name: "Virana",
-      version: "Fang Chief",
-    },
-    de: {
-      name: "Virana",
-      version: "Oberhaupt von Zahn",
-    },
-    fr: {
-      name: "Virana",
-      version: "Cheffe de Croc du Dragon",
-    },
-    it: {
-      name: "Virana",
-      version: "Fang Chief",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Raya and the Last Dragon",
   set: "009",
@@ -41,4 +24,5 @@ export const viranaFangChief: CharacterCard = {
     tcgPlayer: 650022,
   },
   classifications: ["Storyborn", "Villain", "Queen"],
+  i18n: viranaFangChiefI18n,
 };

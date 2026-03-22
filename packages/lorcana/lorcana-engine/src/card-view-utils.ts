@@ -1,20 +1,17 @@
-import type { CardInstanceId, RuntimeCardWithDefinition } from "#core";
+import type { CardInstanceId, PlayerId, RuntimeCardWithDefinition } from "#core";
 import type {
   LorcanaCard,
   LorcanaCardDefinition,
   LorcanaCardMeta,
   LorcanaMatchState,
 } from "./types";
-import { createRuntimeCardDerivedMethods } from "./runtime-moves/state/runtime-card-derived-methods";
-import type { LorcanaRuntimeCardDerivedMethods } from "./runtime-moves/state/runtime-card-derived-methods";
+import type { LorcanaCardDerived } from "./types/projected-board";
+import { projectLorcanaCardDerived } from "./projection/card-derived";
 
 /**
  * Build a runtime card view for a Lorcana card instance.
  *
- * **Note:** The `meta` property is captured at creation time and will not reflect
- * subsequent changes to card metadata. If you need live metadata updates,
- * call the getter functions directly (e.g., `hasSupport()`, `hasRush()`) or
- * create a new view object.
+ * Returns a flat card object with all derived properties computed from current state.
  */
 export function buildLorcanaRuntimeCardView(args: {
   cardInstanceId: CardInstanceId;
@@ -27,7 +24,7 @@ export function buildLorcanaRuntimeCardView(args: {
   getState: () => LorcanaMatchState;
   actorPlayerId?: string;
   getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
-}): RuntimeCardWithDefinition<LorcanaCard, LorcanaCardMeta, LorcanaRuntimeCardDerivedMethods> {
+}): RuntimeCardWithDefinition {
   const {
     cardInstanceId,
     definition,
@@ -41,27 +38,47 @@ export function buildLorcanaRuntimeCardView(args: {
     getDefinitionByInstanceId,
   } = args;
 
-  const getCurrentMeta = (): LorcanaCardMeta =>
-    (getState().ctx?.zones?.private?.cardMeta?.[cardInstanceId] as LorcanaCardMeta) ?? {};
-  const getCurrentCard = (): RuntimeCardWithDefinition<LorcanaCard, LorcanaCardMeta> => ({
-    instanceId: cardInstanceId,
-    definitionId,
-    definition: definition as LorcanaCard,
-    ownerID,
-    controllerID,
+  const state = getState();
+  const meta: LorcanaCardMeta =
+    (state.ctx?.zones?.private?.cardMeta?.[cardInstanceId] as LorcanaCardMeta) ?? {};
+
+  const projected = projectLorcanaCardDerived({
+    definition,
+    meta,
+    state,
+    cardInstanceId,
+    ownerID: ownerID as PlayerId,
+    controllerID: controllerID as PlayerId,
     zoneID,
-    zoneIndex,
-    meta: getCurrentMeta(),
+    actorPlayerId: actorPlayerId as PlayerId | undefined,
+    getDefinitionByInstanceId,
   });
-  const getDerived = () =>
-    createRuntimeCardDerivedMethods({
-      card: getCurrentCard(),
-      state: getState(),
-      actorPlayerId,
-      getDefinitionByInstanceId,
-    });
 
   return {
+    // Derived values (spread first so base fields win)
+    strength: projected.strength ?? 0,
+    willpower: projected.willpower ?? 0,
+    lore: projected.lore ?? 0,
+    playCost: projected.playCost ?? 0,
+    moveCost: projected.moveCost ?? 0,
+    damage: projected.damage ?? 0,
+    exerted: projected.exerted ?? false,
+    drying: projected.drying ?? false,
+    canBePutInInkwell: projected.canBePutInInkwell ?? false,
+    hasSupport: projected.hasSupport ?? false,
+    hasRush: projected.hasRush ?? false,
+    hasReckless: projected.hasReckless ?? false,
+    hasEvasive: projected.hasEvasive ?? false,
+    hasQuestRestriction: projected.hasQuestRestriction ?? false,
+    fullName: projected.fullName ?? "",
+    keywords: projected.keywords ?? [],
+    keywordValues: projected.keywordValues ?? {},
+    classifications: projected.classifications ?? [],
+    temporaryAbilities: projected.temporaryAbilities ?? {},
+    temporaryAbilityStarts: projected.temporaryAbilityStarts ?? {},
+    temporaryRestrictions: projected.temporaryRestrictions ?? {},
+    temporaryRestrictionStarts: projected.temporaryRestrictionStarts ?? {},
+    // Base fields (always win)
     instanceId: cardInstanceId,
     definitionId,
     definition: definition as LorcanaCard,
@@ -69,16 +86,6 @@ export function buildLorcanaRuntimeCardView(args: {
     controllerID,
     zoneID,
     zoneIndex,
-    meta: getCurrentMeta(),
-    canBePutInInkwell: () => getDerived().canBePutInInkwell(),
-    getStrength: () => getDerived().getStrength(),
-    getLore: () => getDerived().getLore(),
-    getWillpower: () => getDerived().getWillpower(),
-    hasSupport: () => getDerived().hasSupport(),
-    hasReckless: () => getDerived().hasReckless(),
-    hasRush: () => getDerived().hasRush(),
-    hasQuestRestriction: () => getDerived().hasQuestRestriction(),
-    getFullName: () => getDerived().getFullName(),
-    getKeywords: () => getDerived().getKeywords(),
-  };
+    meta,
+  } as RuntimeCardWithDefinition;
 }

@@ -1,98 +1,42 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   BroadwaySturdyAndStrong,
-//   DemonaScourgeOfTheWyvernClan,
-//   HudsonDeterminedReader,
-//   LexingtonSmallInStature,
-// } from "@lorcanito/lorcana-engine/cards/010";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Demona - Scourge of the Wyvern Clan", () => {
-//   Describe("AD SAXUM COMMUTATE When you play this character, exert all opposing characters. Then, each player with fewer than 3 cards in their hand draws until they have 3. STONE BY DAY If you have 3 or more cards in your hand, this character can't ready.", () => {
-//     It("Exerts all opponsing characters.", async () => {
-//       Const cardsInPlay = [hudsonDeterminedReader, lexingtonSmallInStature];
-//
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: demonaScourgeOfTheWyvernClan.cost,
-//           Hand: [demonaScourgeOfTheWyvernClan],
-//         },
-//         {
-//           Play: cardsInPlay,
-//         },
-//       );
-//
-//       For (const card of cardsInPlay) {
-//         Expect(testEngine.getCardModel(card).exerted).toBe(false);
-//       }
-//
-//       Await testEngine.playCard(demonaScourgeOfTheWyvernClan);
-//
-//       For (const card of cardsInPlay) {
-//         Expect(testEngine.getCardModel(card).exerted).toBe(true);
-//       }
-//     });
-//
-//     It("Both Players 0 cards in hand", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: demonaScourgeOfTheWyvernClan.cost,
-//           Hand: [demonaScourgeOfTheWyvernClan],
-//         },
-//         {
-//           Hand: [],
-//         },
-//       );
-//
-//       Await testEngine.playCard(demonaScourgeOfTheWyvernClan);
-//
-//       Expect(testEngine.getZonesCardCount("player_one").hand).toBe(3);
-//       Expect(testEngine.getZonesCardCount("player_two").hand).toBe(3);
-//     });
-//
-//     It("Both Players 3 cards in hand", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: demonaScourgeOfTheWyvernClan.cost,
-//           Hand: [
-//             BroadwaySturdyAndStrong,
-//             DemonaScourgeOfTheWyvernClan,
-//             HudsonDeterminedReader,
-//             LexingtonSmallInStature,
-//           ],
-//         },
-//         {
-//           Hand: 3,
-//         },
-//       );
-//
-//       Await testEngine.playCard(demonaScourgeOfTheWyvernClan);
-//
-//       Expect(testEngine.getZonesCardCount("player_one").hand).toBe(3);
-//       Expect(testEngine.getZonesCardCount("player_two").hand).toBe(3);
-//     });
-//
-//     It("Mixture of hand sizes", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: demonaScourgeOfTheWyvernClan.cost,
-//           Hand: [demonaScourgeOfTheWyvernClan],
-//         },
-//         {
-//           Hand: 4,
-//         },
-//       );
-//
-//       Await testEngine.playCard(demonaScourgeOfTheWyvernClan);
-//
-//       Expect(testEngine.getZonesCardCount("player_one").hand).toBe(3);
-//       Expect(testEngine.getZonesCardCount("player_two").hand).toBe(4);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { demonaScourgeOfTheWyvernClan } from "./055-demona-scourge-of-the-wyvern-clan";
+
+const opposingCharacterA = createMockCharacter({
+  id: "demona-scourge-opposing-a",
+  name: "Opposing A",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+});
+
+const opposingCharacterB = createMockCharacter({
+  id: "demona-scourge-opposing-b",
+  name: "Opposing B",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+});
+
+describe("Demona - Scourge of the Wyvern Clan", () => {
+  it("AD SAXUM COMMUTATE - exerts all opposing characters and each player draws until they have 3 cards", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [demonaScourgeOfTheWyvernClan],
+        inkwell: demonaScourgeOfTheWyvernClan.cost,
+        deck: [opposingCharacterA, opposingCharacterA, opposingCharacterA],
+      },
+      {
+        play: [opposingCharacterA, opposingCharacterB],
+        deck: [opposingCharacterB, opposingCharacterB, opposingCharacterB],
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(demonaScourgeOfTheWyvernClan)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().isExerted(opposingCharacterA)).toBe(true);
+    expect(testEngine.asPlayerTwo().isExerted(opposingCharacterB)).toBe(true);
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(3);
+    expect(testEngine.asPlayerTwo().getZonesCardCount().hand).toBe(3);
+  });
+});

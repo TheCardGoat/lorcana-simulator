@@ -1,5 +1,39 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "extends": ["//"],
+  "tasks": {
+    "check-types": {
+      "dependsOn": ["^build", "i18n:compile"]
+    },
+    "test": {
+      "dependsOn": ["^build", "i18n:compile"]
+    },
+    "build": {
+      "dependsOn": ["^build", "i18n:compile"],
+      "outputs": ["build/**", ".svelte-kit/output/**"],
+      "inputs": [
+        "src/**",
+        "static/**",
+        "package.json",
+        "tsconfig.json",
+        "svelte.config.js",
+        "vite.config.ts"
+      ],
+      "env": ["PLATFORM", "NODE_ENV"]
+    },
+    "build:node": {
+      "dependsOn": ["^build", "i18n:compile"],
+      "outputs": ["build/**", ".svelte-kit/output/**"],
+      "inputs": [
+        "src/**",
+        "static/**",
+        "package.json",
+        "tsconfig.json",
+        "svelte.config.js",
+        "vite.config.ts"
+      ],
+      "env": ["PLATFORM", "NODE_ENV"]
+    }
+  },
   "tags": ["lorcana"]
 }

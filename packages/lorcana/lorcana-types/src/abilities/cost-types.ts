@@ -175,11 +175,14 @@ export interface AbilityCost {
   /** Banish this card (mutually exclusive with banishItem/banishCharacter) */
   banishSelf?: boolean;
 
-  /** Banish one of your items (mutually exclusive with banishSelf/banishCharacter) */
-  banishItem?: boolean;
+  /** Banish your items (mutually exclusive with banishSelf/banishCharacter). Use `true` for 1 item, or a number for multiple. */
+  banishItem?: boolean | number;
 
   /** Banish one of your characters (mutually exclusive with banishSelf/banishItem) */
   banishCharacter?: boolean;
+
+  /** Restricts which of your characters can be banished to pay the cost */
+  banishCharacterTarget?: "another";
 
   /** Banish another card (generic) */
   banishOther?: boolean;
@@ -213,6 +216,9 @@ export interface AbilityCost {
 
   /** Number of characters to exert (other than self) */
   exertCharacters?: number;
+
+  /** Restricts which characters can be exerted to pay the cost (requires exertCharacters or exertCharacter) */
+  exertCharactersClassification?: string;
 
   /** Exert a single character (singular form) */
   exertCharacter?: boolean;
@@ -300,7 +306,7 @@ export function requiresInk(cost: AbilityCost): boolean {
  * Check if a cost requires banishing something
  */
 export function requiresBanish(cost: AbilityCost): boolean {
-  return cost.banishSelf === true || cost.banishItem === true || cost.banishCharacter === true;
+  return cost.banishSelf === true || !!cost.banishItem || cost.banishCharacter === true;
 }
 
 /**

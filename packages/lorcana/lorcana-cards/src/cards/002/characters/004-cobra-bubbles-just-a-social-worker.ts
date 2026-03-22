@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cobraBubblesJustASocialWorkerI18n } from "./004-cobra-bubbles-just-a-social-worker.i18n";
 
 export const cobraBubblesJustASocialWorker: CharacterCard = {
   id: "2vT",
@@ -7,24 +8,6 @@ export const cobraBubblesJustASocialWorker: CharacterCard = {
   cardType: "character",
   name: "Cobra Bubbles",
   version: "Just a Social Worker",
-  i18n: {
-    en: {
-      name: "Cobra Bubbles",
-      version: "Just a Social Worker",
-    },
-    de: {
-      name: "Cobra Bobo",
-      version: "Nur einer vom Jugendamt",
-    },
-    fr: {
-      name: "Cobra Bubbles",
-      version: "Simple éducateur",
-    },
-    it: {
-      name: "Cobra Bubbles",
-      version: "Un Semplice Assistente Sociale",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "002",
@@ -41,4 +24,5 @@ export const cobraBubblesJustASocialWorker: CharacterCard = {
     tcgPlayer: 525118,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: cobraBubblesJustASocialWorkerI18n,
 };

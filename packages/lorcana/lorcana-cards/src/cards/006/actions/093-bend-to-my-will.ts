@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { bendToMyWillI18n } from "./093-bend-to-my-will.i18n";
 
 export const bendToMyWill: ActionCard = {
   id: "7l9",
@@ -6,24 +7,6 @@ export const bendToMyWill: ActionCard = {
   reprints: ["set6-093"],
   cardType: "action",
   name: "Bend to My Will",
-  i18n: {
-    en: {
-      name: "Bend to My Will",
-      text: "Each opponent discards all cards in their hand.",
-    },
-    de: {
-      name: "Beuge dich meinem Willen",
-      text: "Alle gegnerischen Mitspielenden werfen alle Karten aus ihrer Hand ab.",
-    },
-    fr: {
-      name: "Soumettez-vous à ma volonté",
-      text: "Chaque adversaire défausse toutes les cartes de sa main.",
-    },
-    it: {
-      name: "Piegati al Mio Volere",
-      text: "Ogni avversario scarta tutte le carte che ha in mano.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aladdin",
   set: "006",
@@ -48,4 +31,5 @@ export const bendToMyWill: ActionCard = {
       },
     },
   ],
+  i18n: bendToMyWillI18n,
 };

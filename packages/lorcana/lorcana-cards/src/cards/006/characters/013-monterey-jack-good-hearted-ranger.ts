@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { montereyJackGoodheartedRangerI18n } from "./013-monterey-jack-good-hearted-ranger.i18n";
 
 export const montereyJackGoodheartedRanger: CharacterCard = {
   id: "uAr",
@@ -7,24 +8,6 @@ export const montereyJackGoodheartedRanger: CharacterCard = {
   cardType: "character",
   name: "Monterey Jack",
   version: "Good-Hearted Ranger",
-  i18n: {
-    en: {
-      name: "Monterey Jack",
-      version: "Good-Hearted Ranger",
-    },
-    de: {
-      name: "Samson",
-      version: "Gutherziger Ritter des Rechts",
-    },
-    fr: {
-      name: "Jack le Costaud",
-      version: "Ranger au grand cœur",
-    },
-    it: {
-      name: "Monterey Jack",
-      version: "Agente Speciale di Buon Cuore",
-    },
-  },
   inkType: ["amber"],
   franchise: "Rescue Rangers",
   set: "006",
@@ -41,4 +24,5 @@ export const montereyJackGoodheartedRanger: CharacterCard = {
     tcgPlayer: 591996,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: montereyJackGoodheartedRangerI18n,
 };

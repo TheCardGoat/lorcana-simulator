@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { findersKeepersEnchantedI18n } from "./210-finders-keepers-enchanted.i18n";
 
 export const findersKeepersEnchanted: ActionCard = {
   id: "b01",
@@ -6,24 +7,6 @@ export const findersKeepersEnchanted: ActionCard = {
   reprints: ["set5-060"],
   cardType: "action",
   name: "Finders Keepers",
-  i18n: {
-    en: {
-      name: "Finders Keepers",
-      text: "Draw 3 cards.",
-    },
-    de: {
-      name: "Wer's findet, darf's behalten",
-      text: "Ziehe 3 Karten.",
-    },
-    fr: {
-      name: "Force hypnotique",
-      text: "Piochez une carte. Choisissez un personnage qui gagne Offensif +2 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Chi Trova Tiene",
-      text: "Pesca 3 carte.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "005",
@@ -49,4 +32,5 @@ export const findersKeepersEnchanted: ActionCard = {
       text: "Draw 3 cards.",
     },
   ],
+  i18n: findersKeepersEnchantedI18n,
 };

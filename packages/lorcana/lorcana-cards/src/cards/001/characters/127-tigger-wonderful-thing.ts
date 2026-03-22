@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tiggerWonderfulThingI18n } from "./127-tigger-wonderful-thing.i18n";
 
 export const tiggerWonderfulThing: CharacterCard = {
   id: "H06",
@@ -7,28 +8,6 @@ export const tiggerWonderfulThing: CharacterCard = {
   cardType: "character",
   name: "Tigger",
   version: "Wonderful Thing",
-  i18n: {
-    en: {
-      name: "Tigger",
-      version: "Wonderful Thing",
-      text: "Evasive",
-    },
-    de: {
-      name: "Tigger",
-      version: "Superste Sache",
-      text: "Wendig",
-    },
-    fr: {
-      name: "TIGROU",
-      version: "Merveilleux d'être un tigrou",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Tigro",
-      version: "Pieno di Elettricità",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Winnie the Pooh",
   set: "001",
@@ -39,7 +18,6 @@ export const tiggerWonderfulThing: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_f1f7e5ef15f04872a721d1792aa677d1",
     tcgPlayer: 489638,
@@ -54,4 +32,5 @@ export const tiggerWonderfulThing: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: tiggerWonderfulThingI18n,
 };

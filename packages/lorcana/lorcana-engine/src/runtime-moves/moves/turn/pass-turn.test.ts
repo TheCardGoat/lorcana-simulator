@@ -104,6 +104,41 @@ describe("passTurn", () => {
 
     expect(turnStarted).toBeDefined();
     expect(turnPassed).toBeDefined();
+    expect(
+      engine
+        .getServerEngine()
+        .getRuntime()
+        .getGameLog()
+        .some(
+          (entry) =>
+            entry.defaultMessage?.key === "lorcana.move.passTurn" &&
+            entry.defaultMessage.values?.playerId === PLAYER_ONE,
+        ),
+    ).toBe(true);
+  });
+
+  it("updates projected turn ownership after passing from the opening turn", () => {
+    engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      { deck: 10 },
+      { deck: 10 },
+      { skipPreGame: false },
+    );
+
+    expect(engine.asLorcanaPlayerOne().chooseFirstPlayer(PLAYER_ONE).success).toBe(true);
+    expect(engine.asLorcanaPlayerOne().mulligan([]).success).toBe(true);
+    expect(engine.asLorcanaPlayerTwo().mulligan([]).success).toBe(true);
+
+    const openingBoard = engine.asServer().getBoard();
+    expect(openingBoard.turnNumber).toBe(1);
+    expect(openingBoard.turnPlayer).toBe(PLAYER_ONE);
+    expect(openingBoard.priorityPlayer).toBe(PLAYER_ONE);
+
+    expect(engine.asLorcanaPlayerOne().passTurn().success).toBe(true);
+
+    const boardAfterPass = engine.asServer().getBoard();
+    expect(boardAfterPass.turnNumber).toBe(2);
+    expect(boardAfterPass.turnPlayer).toBe(PLAYER_TWO);
+    expect(boardAfterPass.priorityPlayer).toBe(PLAYER_TWO);
   });
 
   it("defaults omitted deck fixtures to 10 stub cards", () => {

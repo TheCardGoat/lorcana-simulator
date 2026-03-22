@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { baboomI18n } from "./196-ba-boom.i18n";
 
 export const baboom: ActionCard = {
   id: "GSJ",
@@ -6,24 +7,6 @@ export const baboom: ActionCard = {
   reprints: ["set3-196"],
   cardType: "action",
   name: "Ba-Boom!",
-  i18n: {
-    en: {
-      name: "Ba-Boom!",
-      text: "Deal 2 damage to chosen character or location.",
-    },
-    de: {
-      name: "Baa-Bumm!",
-      text: "Füge einem Charakter oder Ort deiner Wahl 2 Schaden zu.",
-    },
-    fr: {
-      name: "Ba-boum !",
-      text: "Choisissez un personnage ou un lieu et infligez-lui 2 dommages.",
-    },
-    it: {
-      name: "Ba-Bum!",
-      text: "Infliggi 2 danni a un personaggio o a un luogo a tua scelta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Treasure Planet",
   set: "003",
@@ -46,4 +29,5 @@ export const baboom: ActionCard = {
       type: "action",
     },
   ],
+  i18n: baboomI18n,
 };

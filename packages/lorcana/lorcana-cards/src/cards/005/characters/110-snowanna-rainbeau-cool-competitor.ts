@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { snowannaRainbeauCoolCompetitorI18n } from "./110-snowanna-rainbeau-cool-competitor.i18n";
 
 export const snowannaRainbeauCoolCompetitor: CharacterCard = {
   id: "3sJ",
@@ -7,33 +8,6 @@ export const snowannaRainbeauCoolCompetitor: CharacterCard = {
   cardType: "character",
   name: "Snowanna Rainbeau",
   version: "Cool Competitor",
-  i18n: {
-    en: {
-      name: "Snowanna Rainbeau",
-      version: "Cool Competitor",
-      text: "Rush",
-    },
-    de: {
-      name: "Snowanna Rainbeau",
-      version: "Coole Konkurrenz",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Ninou Gatine",
-      version: "Compétitrice glacée",
-      text: "Charge",
-    },
-    it: {
-      name: "Snowanna Rainbeau",
-      version: "Avversaria Glaciale",
-      text: [
-        {
-          title: "Lesto",
-          description: "(Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -58,4 +32,5 @@ export const snowannaRainbeauCoolCompetitor: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: snowannaRainbeauCoolCompetitorI18n,
 };

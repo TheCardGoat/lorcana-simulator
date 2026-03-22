@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { judyHoppsLeadDetectiveI18n } from "./150-judy-hopps-lead-detective.i18n";
 
 export const judyHoppsLeadDetective: CharacterCard = {
   id: "7DY",
@@ -7,37 +8,6 @@ export const judyHoppsLeadDetective: CharacterCard = {
   cardType: "character",
   name: "Judy Hopps",
   version: "Lead Detective",
-  i18n: {
-    en: {
-      name: "Judy Hopps",
-      version: "Lead Detective",
-      text: [
-        {
-          title: "Shift 4 {I}",
-        },
-        {
-          title: "LATERAL THINKING",
-          description:
-            "During your turn, your Detective characters gain Alert and Resist +2. (They can challenge as if they had Evasive. Damage dealt to them is reduced by 2.)",
-        },
-      ],
-    },
-    de: {
-      name: "Judy Hopps",
-      version: "Hauptkommissarin",
-      text: "Gestaltwandel 4 LATERALES DENKEN In deinem Zug erhalten deine Detektive Alarmiert und Robust +2. (Sie können herausfordern, als hätten sie Wendig. Reduziere jeglichen Schaden, der ihnen zugefügt wird, um 2.)",
-    },
-    fr: {
-      name: "Judy Hopps",
-      version: "Détective en charge",
-      text: "Alter 4 PENSÉE LATÉRALE Durant votre tour, vos personnages Détective gagnent Agilité et Résistance +2.",
-    },
-    it: {
-      name: "Judy Hopps",
-      version: "Capo Detective",
-      text: "Trasformazione 4 PENSIERO LATERALE Durante il tuo turno, i tuoi personaggi Detective ottengono Vigile e Resistere +2.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Zootropolis",
   set: "010",
@@ -74,14 +44,60 @@ export const judyHoppsLeadDetective: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        type: "turn",
+        whose: "your",
+      },
       effect: {
         keyword: "Alert",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Detective",
+            },
+          ],
+        },
         type: "gain-keyword",
       },
       id: "1c8-2",
+      name: "LATERAL THINKING",
+      text: "LATERAL THINKING During your turn, your Detective characters gain Alert and Resist +2.",
+      type: "static",
+    },
+    {
+      condition: {
+        type: "turn",
+        whose: "your",
+      },
+      effect: {
+        keyword: "Resist",
+        value: 2,
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Detective",
+            },
+          ],
+        },
+        type: "gain-keyword",
+      },
+      id: "1c8-3",
+      name: "LATERAL THINKING",
       text: "LATERAL THINKING During your turn, your Detective characters gain Alert and Resist +2.",
       type: "static",
     },
   ],
+  i18n: judyHoppsLeadDetectiveI18n,
 };

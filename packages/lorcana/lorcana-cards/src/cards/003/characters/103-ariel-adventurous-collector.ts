@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arielAdventurousCollectorI18n } from "./103-ariel-adventurous-collector.i18n";
 
 export const arielAdventurousCollector: CharacterCard = {
   id: "pA8",
@@ -7,37 +8,6 @@ export const arielAdventurousCollector: CharacterCard = {
   cardType: "character",
   name: "Ariel",
   version: "Adventurous Collector",
-  i18n: {
-    en: {
-      name: "Ariel",
-      version: "Adventurous Collector",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "INSPIRING VOICE",
-          description:
-            "Whenever you play a song, chosen character of yours gains Evasive until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Arielle",
-      version: "Abenteuerlustige Sammlerin",
-      text: "Wendig BEGEISTERNDE STIMME Jedes Mal, wenn du ein Lied ausspielst, wähle einen deiner Charaktere, er erhält bis zu Beginn deines nächsten Zuges Wendig.",
-    },
-    fr: {
-      name: "Ariel",
-      version: "Collectionneuse intrépide",
-      text: "Insaisissable VOIX INSPIRANTE Chaque fois que vous jouez une chanson, choisissez l'un de vos personnages qui gagne Insaisissable jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Ariel",
-      version: "Collezionista Avventurosa",
-      text: "Sfuggente VOCE MOTIVANTE Ogni volta che giochi una canzone, uno dei tuoi personaggi a tua scelta ottiene Sfuggente fino all'inizio del tuo prossimo turno.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Little Mermaid",
   set: "003",
@@ -63,15 +33,15 @@ export const arielAdventurousCollector: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Princess"],
-  missingTests: true,
   abilities: [
     {
       effect: {
         keyword: "Evasive",
+        duration: "until-start-of-next-turn",
         target: {
           cardTypes: ["character"],
           count: 1,
-          owner: "any",
+          owner: "you",
           selector: "chosen",
           zones: ["play"],
         },
@@ -83,7 +53,7 @@ export const arielAdventurousCollector: CharacterCard = {
       trigger: {
         event: "play",
         on: {
-          cardType: "action",
+          cardType: "song",
           controller: "you",
         },
         timing: "whenever",
@@ -91,4 +61,5 @@ export const arielAdventurousCollector: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: arielAdventurousCollectorI18n,
 };

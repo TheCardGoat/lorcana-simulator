@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { swordInTheStoneI18n } from "./136-sword-in-the-stone.i18n";
 
 export const swordInTheStone: ItemCard = {
   id: "zL0",
@@ -6,29 +7,6 @@ export const swordInTheStone: ItemCard = {
   reprints: ["set2-136"],
   cardType: "item",
   name: "Sword in the Stone",
-  i18n: {
-    en: {
-      name: "Sword in the Stone",
-      text: [
-        {
-          title: "{E},",
-          description: "2 {I} — Chosen character gets +1 {S} this turn for each 1 damage on them.",
-        },
-      ],
-    },
-    de: {
-      name: "Das Schwert in dem Stein",
-      text: ", 2 — Gib einem Charakter deiner Wahl in diesem Zug +1 für jeden Schaden auf ihm.",
-    },
-    fr: {
-      name: "L'épée dans l'enclume",
-      text: ", 2 — Choisissez un personnage, il gagne +1 pour chaque jeton Dommage sur lui, pour le reste de ce tour.",
-    },
-    it: {
-      name: "Sword in the Stone",
-      text: ", 2 — Chosen character gets +1 this turn for each 1 damage on them.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -40,12 +18,7 @@ export const swordInTheStone: ItemCard = {
     lorcast: "crd_24945449688b42f699bff7a47b3f282b",
     tcgPlayer: 525105,
   },
-  text: [
-    {
-      title: "{E},",
-      description: "2 {I} — Chosen character gets +1 {S} this turn for each 1 damage on them.",
-    },
-  ],
+  text: "{E}, 2 {I} — Chosen character gets +1 {S} this turn for each 1 damage on them.",
   abilities: [
     {
       cost: {
@@ -67,4 +40,5 @@ export const swordInTheStone: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: swordInTheStoneI18n,
 };

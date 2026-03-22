@@ -32,9 +32,9 @@
 import type { MatchState } from "./types";
 import type { DeepReadonly, Player } from "./match-runtime.types";
 import type { MatchStaticResources, StaticResourceRefs } from "./static-resources";
-import type { MatchRuntimeConfig, MoveDefinition } from "./match-runtime.types";
+import type { MatchRuntimeConfig } from "./match-runtime.types";
 import type { MultiplayerEngine } from "./multiplayer-engine";
-import type { BaseCardDefinition } from "./card-contracts";
+import type { LorcanaG } from "../../types/runtime-state";
 
 // =============================================================================
 // Serialized State Contract
@@ -55,7 +55,7 @@ export const SERIALIZATION_FORMAT_VERSION = 1;
  *
  * @template G - Game-specific state type
  */
-export interface SerializedMatchState<G = unknown> {
+export interface SerializedMatchState {
   /** Serialization format version for migration support */
   version: number;
 
@@ -69,7 +69,7 @@ export interface SerializedMatchState<G = unknown> {
   timestamp: number;
 
   /** The actual match state (G + ctx) */
-  state: MatchState<G>;
+  state: MatchState;
 
   /** References to static resources (not the full resources) */
   resourceRefs: StaticResourceRefs;
@@ -102,14 +102,14 @@ export interface SerializedStateMetadata {
 /**
  * Validates that a serialized state matches the expected contract.
  */
-export function validateSerializedMatchState<G>(
+export function validateSerializedMatchState(
   serialized: unknown,
-): serialized is SerializedMatchState<G> {
+): serialized is SerializedMatchState {
   if (!serialized || typeof serialized !== "object") {
     return false;
   }
 
-  const s = serialized as Partial<SerializedMatchState<G>>;
+  const s = serialized as Partial<SerializedMatchState>;
 
   // Check required fields
   if (typeof s.version !== "number") return false;
@@ -143,13 +143,13 @@ export function isSerializationVersionSupported(version: number): boolean {
 /**
  * Creates a SerializedMatchState from a MatchState and related metadata.
  */
-export function createSerializedMatchState<G>(
+export function createSerializedMatchState(
   gameType: string,
-  state: MatchState<G>,
-  resources: MatchStaticResources<BaseCardDefinition>,
+  state: MatchState,
+  resources: MatchStaticResources,
   players: Player[],
   seed?: string,
-): SerializedMatchState<G> {
+): SerializedMatchState {
   return {
     version: SERIALIZATION_FORMAT_VERSION,
     gameType,
@@ -168,8 +168,8 @@ export function createSerializedMatchState<G>(
 /**
  * Extracts metadata from a serialized state without the full payload.
  */
-export function extractSerializedStateMetadata<G>(
-  serialized: SerializedMatchState<G>,
+export function extractSerializedStateMetadata(
+  serialized: SerializedMatchState,
 ): SerializedStateMetadata {
   return {
     version: serialized.version,
@@ -196,15 +196,15 @@ export function extractSerializedStateMetadata<G>(
  * Test-only fixture setup is a separate concept in game-specific
  * testing packages.
  */
-export interface SerializableEngine<G = unknown> {
+export interface SerializableEngine {
   /** Get the full authoritative state for serialization */
-  getAuthoritativeState(): DeepReadonly<MatchState<G>>;
+  getAuthoritativeState(): DeepReadonly<MatchState>;
 
   /** Get the current state ID */
   getStateID(): number;
 
   /** Load a state into the engine (restores from serialized) */
-  loadState(state: MatchState<G>): void;
+  loadState(state: MatchState): void;
 }
 
 /**
@@ -212,10 +212,7 @@ export interface SerializableEngine<G = unknown> {
  *
  * This is the production serializer entrypoint for generic multiplayer engines.
  */
-export function getMultiplayerEngineAuthoritativeState<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any>>,
->(engine: MultiplayerEngine<G, Moves>): MatchState<G> {
+export function getMultiplayerEngineAuthoritativeState(engine: MultiplayerEngine): MatchState {
   return engine.getMatchState();
 }
 
@@ -224,20 +221,20 @@ export function getMultiplayerEngineAuthoritativeState<
  *
  * This is the production deserializer entrypoint for generic multiplayer engines.
  */
-export function loadMultiplayerEngineAuthoritativeState<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any>>,
->(engine: MultiplayerEngine<G, Moves>, state: MatchState<G>): void {
+export function loadMultiplayerEngineAuthoritativeState(
+  engine: MultiplayerEngine,
+  state: MatchState,
+): void {
   engine.loadState(state);
 }
 
 /**
  * Type guard to check if an engine supports serialization.
  */
-export function isSerializableEngine<G>(engine: unknown): engine is SerializableEngine<G> {
+export function isSerializableEngine(engine: unknown): engine is SerializableEngine {
   if (!engine || typeof engine !== "object") return false;
 
-  const e = engine as Partial<SerializableEngine<G>>;
+  const e = engine as Partial<SerializableEngine>;
   return (
     typeof e.getAuthoritativeState === "function" &&
     typeof e.getStateID === "function" &&
@@ -252,22 +249,15 @@ export function isSerializableEngine<G>(engine: unknown): engine is Serializable
 /**
  * Configuration for restoring a MatchRuntime from serialized state.
  */
-export interface RuntimeRestoreConfig<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  Moves extends Record<string, MoveDefinition<G, TCardDefinition, any>> = Record<
-    string,
-    MoveDefinition<G, TCardDefinition, any>
-  >,
-> {
+export interface RuntimeRestoreConfig {
   /** The serialized state to restore */
-  serializedState: SerializedMatchState<G>;
+  serializedState: SerializedMatchState;
 
   /** Runtime config for the game */
-  runtimeConfig: MatchRuntimeConfig<G, Moves, TCardDefinition>;
+  runtimeConfig: MatchRuntimeConfig;
 
   /** Static resources (card catalog and instance registry) */
-  staticResources: MatchStaticResources<TCardDefinition>;
+  staticResources: MatchStaticResources;
 
   /** Optional new seed (uses original if not provided) */
   seed?: string;
@@ -276,9 +266,9 @@ export interface RuntimeRestoreConfig<
 /**
  * Result of a state restoration operation.
  */
-export interface StateRestoreResult<G> {
+export interface StateRestoreResult {
   success: true;
-  state: MatchState<G>;
+  state: MatchState;
   stateID: number;
 }
 
@@ -288,7 +278,7 @@ export interface StateRestoreError {
   errorCode: string;
 }
 
-export type RestoreResult<G> = StateRestoreResult<G> | StateRestoreError;
+export type RestoreResult = StateRestoreResult | StateRestoreError;
 
 // =============================================================================
 // Version Migration
@@ -297,7 +287,7 @@ export type RestoreResult<G> = StateRestoreResult<G> | StateRestoreError;
 /**
  * Migration function type for upgrading serialized states.
  */
-export type StateMigration = <G>(state: unknown, fromVersion: number) => SerializedMatchState<G>;
+export type StateMigration = (state: unknown, fromVersion: number) => SerializedMatchState;
 
 /**
  * Registry of migrations from older versions.
@@ -314,9 +304,9 @@ export function registerStateMigration(fromVersion: number, migration: StateMigr
 /**
  * Attempts to migrate a serialized state to the current version.
  */
-export function migrateSerializedState<G>(serialized: unknown): RestoreResult<G> {
+export function migrateSerializedState(serialized: unknown): RestoreResult {
   // First, check if it's already valid
-  if (validateSerializedMatchState<G>(serialized)) {
+  if (validateSerializedMatchState(serialized)) {
     if (serialized.version === SERIALIZATION_FORMAT_VERSION) {
       return {
         success: true,
@@ -327,7 +317,7 @@ export function migrateSerializedState<G>(serialized: unknown): RestoreResult<G>
   }
 
   // Try to extract version from the serialized data
-  const s = serialized as Partial<SerializedMatchState<G>>;
+  const s = serialized as Partial<SerializedMatchState>;
   const fromVersion = s.version;
 
   if (typeof fromVersion !== "number") {
@@ -349,7 +339,7 @@ export function migrateSerializedState<G>(serialized: unknown): RestoreResult<G>
   }
 
   try {
-    const migrated = migration<G>(serialized, fromVersion);
+    const migrated = migration(serialized, fromVersion);
     return {
       success: true,
       state: migrated.state,

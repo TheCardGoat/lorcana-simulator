@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gadgetHackwrenchBrilliantBosunEnchantedI18n } from "./217-gadget-hackwrench-brilliant-bosun-enchanted.i18n";
 
 export const gadgetHackwrenchBrilliantBosunEnchanted: CharacterCard = {
   id: "WXx",
@@ -7,37 +8,6 @@ export const gadgetHackwrenchBrilliantBosunEnchanted: CharacterCard = {
   cardType: "character",
   name: "Gadget Hackwrench",
   version: "Brilliant Bosun",
-  i18n: {
-    en: {
-      name: "Gadget Hackwrench",
-      version: "Brilliant Bosun",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "MECHANICALLY SAVVY",
-          description:
-            "While you have 3 or more items in play, you pay 1 {I} less to play Inventor characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Trixi",
-      version: "Geniale Bootsführerin",
-      text: "Gestaltwandel 4 MECHANISCH VERSIERT Solange du mindestens 3 Gegenstände im Spiel hast, zahlst du 1 weniger, um Erfinder auszuspielen.",
-    },
-    fr: {
-      name: "Gadget",
-      version: "Bosco brillante",
-      text: "Alter 4 MÉCANIQUEMENT FUTÉE Tant que vous avez 3 objets ou plus en jeu, jouer des personnages Inventeur vous coûte 1 de moins.",
-    },
-    it: {
-      name: "Scheggia Hackwrench",
-      version: "Brillante Nostroma",
-      text: "Trasformazione 4 ESPERTA DI MECCANICA Mentre hai in gioco 3 o più oggetti, paga 1 in meno per giocare i personaggi Inventore.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Rescue Rangers",
   set: "006",
@@ -94,4 +64,5 @@ export const gadgetHackwrenchBrilliantBosunEnchanted: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: gadgetHackwrenchBrilliantBosunEnchantedI18n,
 };

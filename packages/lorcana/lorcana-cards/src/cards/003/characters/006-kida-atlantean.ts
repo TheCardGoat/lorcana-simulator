@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kidaAtlanteanI18n } from "./006-kida-atlantean.i18n";
 
 export const kidaAtlantean: CharacterCard = {
   id: "6Uk",
@@ -7,24 +8,6 @@ export const kidaAtlantean: CharacterCard = {
   cardType: "character",
   name: "Kida",
   version: "Atlantean",
-  i18n: {
-    en: {
-      name: "Kida",
-      version: "Atlantean",
-    },
-    de: {
-      name: "Kida",
-      version: "Atlanterin",
-    },
-    fr: {
-      name: "Kida",
-      version: "Atlante",
-    },
-    it: {
-      name: "Kida",
-      version: "Atlantidese",
-    },
-  },
   inkType: ["amber"],
   franchise: "Atlantis",
   set: "003",
@@ -41,4 +24,5 @@ export const kidaAtlantean: CharacterCard = {
     tcgPlayer: 536275,
   },
   classifications: ["Storyborn", "Hero", "Princess"],
+  i18n: kidaAtlanteanI18n,
 };

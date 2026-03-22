@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { rubyCoilI18n } from "./149-ruby-coil.i18n";
 
 export const rubyCoil: ItemCard = {
   id: "Twc",
@@ -6,48 +7,6 @@ export const rubyCoil: ItemCard = {
   reprints: ["set7-149"],
   cardType: "item",
   name: "Ruby Coil",
-  i18n: {
-    en: {
-      name: "Ruby Coil",
-      text: [
-        {
-          title: "CRIMSON SPARK",
-          description:
-            "During your turn, whenever a card is put into your inkwell, chosen character gets +2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Rubin-Reif",
-      text: [
-        {
-          title: "KARMINROTER FUNKE",
-          description:
-            "Jedes Mal während deines Zuges, wenn eine Karte in deinen Tintenvorrat gelegt wird, gib einem Charakter deiner Wahl in diesem Zug +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Spirale de Rubis",
-      text: [
-        {
-          title: "ÉTINCELLE POURPRE",
-          description:
-            "Durant votre tour, chaque fois qu'une carte est placée dans votre réserve d'encre, choisissez un personnage qui gagne +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Spira di Rubino",
-      text: [
-        {
-          title: "SCINTILLA SCARLATTA",
-          description:
-            "Durante il tuo turno, ogni volta che una carta viene aggiunta al tuo calamaio, un personaggio a tua scelta riceve +2 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lorcana",
   set: "007",
@@ -98,4 +57,5 @@ export const rubyCoil: ItemCard = {
       type: "triggered",
     },
   ],
+  i18n: rubyCoilI18n,
 };

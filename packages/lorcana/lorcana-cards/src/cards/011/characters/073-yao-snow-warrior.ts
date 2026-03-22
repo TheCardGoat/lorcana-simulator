@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yaoSnowWarriorI18n } from "./073-yao-snow-warrior.i18n";
 
 export const yaoSnowWarrior: CharacterCard = {
   id: "SFC",
@@ -7,49 +8,6 @@ export const yaoSnowWarrior: CharacterCard = {
   cardType: "character",
   name: "Yao",
   version: "Snow Warrior",
-  i18n: {
-    en: {
-      name: "Yao",
-      version: "Snow Warrior",
-      text: [
-        {
-          title: "OOH, I'M SCARED",
-          description: "During opponents' turns, this character gains Resist +2.",
-        },
-      ],
-    },
-    de: {
-      name: "Yao",
-      version: "Schneekrieger",
-      text: [
-        {
-          title: "OOH, ICH HABE ANGST",
-          description:
-            "Dieser Charakter erhält im Zug einer gegnerischen Person Robust +2. (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 2.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Yao",
-      version: "Guerrier des neiges",
-      text: [
-        {
-          title: "OOH, J'AI PEUR",
-          description: "Durant le tour de vos adversaires, ce personnage gagne Résistance +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Yao",
-      version: "Guerriero delle Nevi",
-      text: [
-        {
-          title: "OOH, CHE PAURA",
-          description: "Durante i turni degli avversari, questo personaggio ottiene Resistere +2.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Mulan",
   set: "011",
@@ -74,14 +32,20 @@ export const yaoSnowWarrior: CharacterCard = {
   abilities: [
     {
       id: "18z-1",
-      effect: {
-        keyword: "Resist",
-        target: "SELF",
-        type: "gain-keyword",
-        value: 2,
+      name: "OOH, I'M SCARED",
+      type: "static",
+      condition: {
+        type: "during-turn",
+        whose: "opponent",
       },
-      type: "action",
+      effect: {
+        type: "gain-keyword",
+        keyword: "Resist",
+        value: 2,
+        target: "SELF",
+      },
       text: "OOH, I'M SCARED During opponents' turns, this character gains Resist +2.",
     },
   ],
+  i18n: yaoSnowWarriorI18n,
 };

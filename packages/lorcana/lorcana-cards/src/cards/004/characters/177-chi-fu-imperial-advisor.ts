@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chifuImperialAdvisorI18n } from "./177-chi-fu-imperial-advisor.i18n";
 
 export const chifuImperialAdvisor: CharacterCard = {
   id: "XGm",
@@ -7,48 +8,6 @@ export const chifuImperialAdvisor: CharacterCard = {
   cardType: "character",
   name: "Chi-Fu",
   version: "Imperial Advisor",
-  i18n: {
-    en: {
-      name: "Chi-Fu",
-      version: "Imperial Advisor",
-      text: [
-        {
-          title: "OVERLY CAUTIOUS",
-          description: "While this character has no damage, he gets +2 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Chi-Fu",
-      version: "Berater des Kaisers",
-      text: [
-        {
-          title: "ÜBERVORSICHTIG",
-          description: "Solange dieser Charakter unbeschädigt ist, erhält er +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Chi Fu",
-      version: "Conseiller Impérial",
-      text: [
-        {
-          title: "EXCESSIVEMENT PRUDENT",
-          description: "Tant que ce personnage n'a aucun jeton Dommage sur lui, il gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Chi Fu",
-      version: "Consigliere Imperiale",
-      text: [
-        {
-          title: "ESTREMAMENTE CAUTO",
-          description: "Mentre questo personaggio non ha danno, riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "004",
@@ -83,4 +42,5 @@ export const chifuImperialAdvisor: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: chifuImperialAdvisorI18n,
 };

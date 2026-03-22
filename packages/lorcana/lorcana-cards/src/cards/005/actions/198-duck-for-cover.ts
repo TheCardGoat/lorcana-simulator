@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { duckForCoverI18n } from "./198-duck-for-cover.i18n";
 
 export const duckForCover: ActionCard = {
   id: "WBj",
@@ -6,24 +7,6 @@ export const duckForCover: ActionCard = {
   reprints: ["set5-198"],
   cardType: "action",
   name: "Duck for Cover!",
-  i18n: {
-    en: {
-      name: "Duck for Cover!",
-      text: "Chosen character gains Resist +1 and Evasive this turn. (Damage dealt to them is reduced by 1. They can challenge characters with Evasive.)",
-    },
-    de: {
-      name: "Duckt euch weg!",
-      text: "Ein Charakter deiner Wahl erhält in diesem Zug Robust +1 und Wendig. (Reduziere jeglichen Schaden, der dem Charakter zugefügt wird, um 1. Er kann Charaktere mit Wendig herausfordern.)",
-    },
-    fr: {
-      name: "Éviter le canardage",
-      text: "Choisissez un personnage qui gagne Résistance +1 et Insaisissable pour le reste de ce tour. (Les dommages qui lui sont infligés sont réduits de 1 et il peut défier les personnages avec Insaisissable.)",
-    },
-    it: {
-      name: "Al Riparo!",
-      text: "Un personaggio a tua scelta ottiene Resistere +1 e Sfuggente per questo turno. (Il danno che gli viene inflitto è ridotto di 1. Può sfidare altri personaggi con Sfuggente.)",
-    },
-  },
   inkType: ["steel"],
   set: "005",
   cardNumber: 198,
@@ -68,4 +51,5 @@ export const duckForCover: ActionCard = {
       type: "action",
     },
   ],
+  i18n: duckForCoverI18n,
 };

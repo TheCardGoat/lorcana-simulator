@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { scuttleBirdbrainedI18n } from "./147-scuttle-birdbrained.i18n";
 
 export const scuttleBirdbrained: CharacterCard = {
   id: "z8J",
@@ -7,28 +8,6 @@ export const scuttleBirdbrained: CharacterCard = {
   cardType: "character",
   name: "Scuttle",
   version: "Birdbrained",
-  i18n: {
-    en: {
-      name: "Scuttle",
-      version: "Birdbrained",
-      text: "Ward",
-    },
-    de: {
-      name: "Scuttle",
-      version: "Spatzenhirn",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Eurêka",
-      version: "Tête de linotte",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Scuttle",
-      version: "Cervello di Gallina",
-      text: "Protetto",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Little Mermaid",
   set: "010",
@@ -53,4 +32,5 @@ export const scuttleBirdbrained: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: scuttleBirdbrainedI18n,
 };

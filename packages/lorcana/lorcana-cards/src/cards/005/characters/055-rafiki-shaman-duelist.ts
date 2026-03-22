@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rafikiShamanDuelistI18n } from "./055-rafiki-shaman-duelist.i18n";
 
 export const rafikiShamanDuelist: CharacterCard = {
   id: "q4q",
@@ -7,43 +8,6 @@ export const rafikiShamanDuelist: CharacterCard = {
   cardType: "character",
   name: "Rafiki",
   version: "Shaman Duelist",
-  i18n: {
-    en: {
-      name: "Rafiki",
-      version: "Shaman Duelist",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "SURPRISING SKILL",
-          description:
-            "When you play this character, he gains Challenger +4 this turn. (They get +4 {S} while challenging.)",
-        },
-      ],
-    },
-    de: {
-      name: "Rafiki",
-      version: "Schamanischer Duellant",
-      text: "Rasant ÜBERRASCHENDE FÄHIGKEITEN Wenn du diesen Charakter ausspielst, erhält er in diesem Zug Herausfordern +4. (Während dieser Charakter herausfordert, erhält er +4).",
-    },
-    fr: {
-      name: "Rafiki",
-      version: "Chamane duelliste",
-      text: "Charge PRENDRE PAR SURPRISE Lorsque vous jouez ce personnage, il gagne Offensif +4 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Rafiki",
-      version: "Sciamano Duellante",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) ABILITÀ SORPRENDENTE Quando giochi questo personaggio, ottiene Sfidante +4 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Lion King",
   set: "005",
@@ -95,4 +59,5 @@ export const rafikiShamanDuelist: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: rafikiShamanDuelistI18n,
 };

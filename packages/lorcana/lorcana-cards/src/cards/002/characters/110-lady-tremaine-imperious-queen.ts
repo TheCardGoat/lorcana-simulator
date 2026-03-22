@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ladyTremaineImperiousQueenI18n } from "./110-lady-tremaine-imperious-queen.i18n";
 
 export const ladyTremaineImperiousQueen: CharacterCard = {
   id: "h4L",
@@ -7,43 +8,6 @@ export const ladyTremaineImperiousQueen: CharacterCard = {
   cardType: "character",
   name: "Lady Tremaine",
   version: "Imperious Queen",
-  i18n: {
-    en: {
-      name: "Lady Tremaine",
-      version: "Imperious Queen",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "POWER TO RULE AT LAST",
-          description:
-            "When you play this character, each opponent chooses and banishes one of their characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Gräfin Tremaine",
-      version: "Gebieterische Königin",
-      text: "Gestaltwandel 4 ENDLICH AN DER MACHT Wenn du diesen Charakter ausspielst, wählen alle gegnerischen Mitspielenden je einen ihrer Charaktere und verbannen ihn.",
-    },
-    fr: {
-      name: "Madame de Trémaine",
-      version: "Reine impérieuse",
-      text: "Alter 4 ENFIN, LE POUVOIR DE RÉGNER Lorsque vous jouez ce personnage, chaque adversaire choisit l'un de ses personnages et le bannit.",
-    },
-    it: {
-      name: "Lady Tremaine",
-      version: "Imperious Queen",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Lady Tremaine.) POWER TO RULE AT LAST When you play this character, each opponent chooses and banishes one of their characters.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Cinderella",
   set: "002",
@@ -68,8 +32,6 @@ export const ladyTremaineImperiousQueen: CharacterCard = {
         "When you play this character, each opponent chooses and banishes one of their characters.",
     },
   ],
-  missingImplementation: true,
-  missingTests: true,
   classifications: ["Floodborn", "Villain", "Queen"],
   abilities: [
     {
@@ -92,9 +54,20 @@ export const ladyTremaineImperiousQueen: CharacterCard = {
         timing: "when",
       },
       effect: {
-        target: "THEIR_CHOSEN_CHARACTER",
-        type: "banish",
+        type: "for-each-opponent",
+        effect: {
+          type: "banish",
+          chosenBy: "opponent",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "opponent",
+            zones: ["play"],
+            cardTypes: ["character"],
+          },
+        },
       },
     },
   ],
+  i18n: ladyTremaineImperiousQueenI18n,
 };

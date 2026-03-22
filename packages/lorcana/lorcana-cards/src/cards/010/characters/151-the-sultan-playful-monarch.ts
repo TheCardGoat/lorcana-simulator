@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theSultanPlayfulMonarchI18n } from "./151-the-sultan-playful-monarch.i18n";
 
 export const theSultanPlayfulMonarch: CharacterCard = {
   id: "pU6",
@@ -7,24 +8,6 @@ export const theSultanPlayfulMonarch: CharacterCard = {
   cardType: "character",
   name: "The Sultan",
   version: "Playful Monarch",
-  i18n: {
-    en: {
-      name: "The Sultan",
-      version: "Playful Monarch",
-    },
-    de: {
-      name: "Der Sultan",
-      version: "Verspielter Monarch",
-    },
-    fr: {
-      name: "Le Sultan",
-      version: "Monarque espiègle",
-    },
-    it: {
-      name: "Il Sultano",
-      version: "Sovrano Giocoso",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Aladdin",
   set: "010",
@@ -41,4 +24,5 @@ export const theSultanPlayfulMonarch: CharacterCard = {
     tcgPlayer: 659416,
   },
   classifications: ["Storyborn", "Ally", "King"],
+  i18n: theSultanPlayfulMonarchI18n,
 };

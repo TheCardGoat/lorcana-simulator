@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sirKayUnrulyKnightI18n } from "./144-sir-kay-unruly-knight.i18n";
 
 export const sirKayUnrulyKnight: CharacterCard = {
   id: "1bB",
@@ -7,24 +8,6 @@ export const sirKayUnrulyKnight: CharacterCard = {
   cardType: "character",
   name: "Sir Kay",
   version: "Unruly Knight",
-  i18n: {
-    en: {
-      name: "Sir Kay",
-      version: "Unruly Knight",
-    },
-    de: {
-      name: "Sir Kay",
-      version: "Widerspenstiger Ritter",
-    },
-    fr: {
-      name: "Seigneur Kay",
-      version: "Chevalier indiscipliné",
-    },
-    it: {
-      name: "Ser Caio",
-      version: "Cavaliere Indisciplinato",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Sword in the Stone",
   set: "007",
@@ -41,4 +24,5 @@ export const sirKayUnrulyKnight: CharacterCard = {
     tcgPlayer: 619488,
   },
   classifications: ["Storyborn", "Knight"],
+  i18n: sirKayUnrulyKnightI18n,
 };

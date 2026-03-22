@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { snowWhiteFairheartedEnchantedI18n } from "./220-snow-white-fair-hearted-enchanted.i18n";
 
 export const snowWhiteFairheartedEnchanted: CharacterCard = {
   id: "nk1",
@@ -7,52 +8,6 @@ export const snowWhiteFairheartedEnchanted: CharacterCard = {
   cardType: "character",
   name: "Snow White",
   version: "Fair-Hearted",
-  i18n: {
-    en: {
-      name: "Snow White",
-      version: "Fair-Hearted",
-      text: [
-        {
-          title: "NATURAL LEADER",
-          description:
-            "This character gains Resist +1 for each other Knight character you have in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Schneewittchen",
-      version: "Ein gutes Herz",
-      text: [
-        {
-          title: "SELBSTVERSTÄNDLICHE ANFÜHRERIN",
-          description:
-            "Dieser Charakter erhält Robust +1 für jeden anderen Ritter, den du im Spiel hast. (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1 pro anderen Ritter.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Blanche-Neige",
-      version: "Cœur juste",
-      text: [
-        {
-          title: "MENEUSE-NÉE",
-          description:
-            "Ce personnage gagne Résistance +1 pour chaque autre personnage Chevalier que vous avez en jeu. (Les dommages qui lui sont infligés sont réduits de 1 pour chaque autre Chevalier.)",
-        },
-      ],
-    },
-    it: {
-      name: "Biancaneve",
-      version: "Giusta di Cuore",
-      text: [
-        {
-          title: "LEADER NATA",
-          description:
-            "Questo personaggio ottiene Resistere +1 per ogni altro personaggio Cavaliere che hai in gioco.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Snow White",
   set: "005",
@@ -89,4 +44,5 @@ export const snowWhiteFairheartedEnchanted: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: snowWhiteFairheartedEnchantedI18n,
 };

@@ -6,7 +6,7 @@ import type {
   Effect,
   ItemCard,
   LocationCard,
-  LorcanaCard,
+  LorcanaCardDefinition,
 } from "@tcg/lorcana-types";
 import { createCardI18n } from "../card-i18n";
 import type {
@@ -25,6 +25,7 @@ import {
 } from "../testing";
 
 import { resolveServerCurrentActor } from "./actor-resolution";
+import { boardControlLoreRaceAutomatedActionStrategy } from "./default-strategy";
 import { takeAutomatedActionWithAdapter } from "./planner";
 
 function createMockActionCard(params: {
@@ -122,7 +123,7 @@ function getCardPlayedPayload(args: {
 function getDefinitionByInstanceId(
   engine: LorcanaMultiplayerTestEngine,
   cardId: string,
-): LorcanaCard | undefined {
+): LorcanaCardDefinition | undefined {
   const definitionId = engine.asServer().staticResources.instances.get(cardId)?.definitionId;
   return definitionId ? engine.asServer().staticResources.cards.get(definitionId) : undefined;
 }
@@ -217,6 +218,7 @@ function createSuccessResult() {
       move: "test-move",
     },
     animations: [],
+    undoable: false,
   };
 }
 
@@ -342,8 +344,12 @@ describe("automated actions", () => {
     });
   });
 
-  it("keeps a resolveBag candidate when the bag effect no longer has legal explicit targets", () => {
-    const source = createMockCharacter({ id: "bag-empty-source", name: "Bag Empty Source", cost: 2 });
+  it("keeps a resolveBag candidate with empty targets when no valid candidates exist — effect fizzles", () => {
+    const source = createMockCharacter({
+      id: "bag-empty-source",
+      name: "Bag Empty Source",
+      cost: 2,
+    });
     const engine = LorcanaMultiplayerTestEngine.createWithFixture({
       play: [{ card: source, isDrying: false }],
       deck: 1,
@@ -381,11 +387,12 @@ describe("automated actions", () => {
       .enumerateAutomatedActions()
       .candidates.filter((candidate) => candidate.family === "resolveBag");
 
+    // When no valid targets exist, the fizzle path is valid — automation enumerates an empty-target candidate
     expect(bagCandidates).toEqual([
-      {
+      expect.objectContaining({
         family: "resolveBag",
         bagId: "bag:automation:empty-targets",
-      },
+      }),
     ]);
   });
 
@@ -446,6 +453,91 @@ describe("automated actions", () => {
     ]);
   });
 
+  it("reports unsupported scry-selection pending effects without resolveEffect candidates", () => {
+    const source = createMockCharacter({ id: "scry-source", name: "Scry Source", cost: 2 });
+    const revealedOne = createMockCharacter({
+      id: "revealed-one",
+      name: "Revealed One",
+      cost: 1,
+    });
+    const revealedTwo = createMockCharacter({
+      id: "revealed-two",
+      name: "Revealed Two",
+      cost: 2,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: source, isDrying: false }],
+      deck: [revealedOne, revealedTwo],
+    });
+    const sourceId = engine.asPlayerOne().getCard(source).id as CardInstanceId;
+    const revealedCardIds = [revealedOne, revealedTwo].map(
+      (card) => engine.asPlayerOne().getCard(card).id as CardInstanceId,
+    );
+
+    loadMutatedState(engine, (state) => {
+      state.G.pendingEffects = [
+        {
+          id: "pending:scry:1",
+          type: "action-effect",
+          kind: "scry-selection",
+          sourceId,
+          sourceCardId: sourceId,
+          controllerId: PLAYER_ONE,
+          chooserId: PLAYER_ONE,
+          cardPlayed: getCardPlayedPayload({
+            playerId: PLAYER_ONE,
+            cardId: sourceId,
+            cardType: "character",
+          }),
+          effect: {
+            type: "scry",
+            amount: 2,
+          } satisfies Effect,
+          resolutionInput: {},
+          selectionContext: {
+            amount: 2,
+            chooserId: PLAYER_ONE,
+            currentSelection: {},
+            destinationRules: [
+              {
+                id: "hand",
+                max: 1,
+                min: 0,
+                remainder: false,
+                zone: "hand",
+              },
+              {
+                id: "deck-bottom",
+                max: null,
+                min: 0,
+                remainder: true,
+                zone: "deck-bottom",
+              },
+            ],
+            kind: "scry-selection",
+            origin: "pending-effect",
+            requestId: "pending:scry:1",
+            revealedCardIds,
+            sourceCardId: sourceId,
+            submitField: "destinations",
+          },
+        } satisfies PendingActionEffect,
+      ];
+      setPendingActionChoice(state, "pending:scry:1", PLAYER_ONE);
+    });
+
+    const result = engine.asPlayerOne().enumerateAutomatedActions();
+
+    expect(result.candidates.some((candidate) => candidate.family === "resolveEffect")).toBe(false);
+    expect(result.unsupportedSkips).toContainEqual(
+      expect.objectContaining({
+        effectId: "pending:scry:1",
+        family: "resolveEffect",
+        kind: "unsupported-shape",
+      }),
+    );
+  });
+
   it("emits overflow diagnostics when target pools exceed the search cap", () => {
     const source = createMockCharacter({
       id: "overflow-source",
@@ -492,7 +584,7 @@ describe("automated actions", () => {
     );
   });
 
-  it("ranks inkwell candidates by higher cost then lower lore", () => {
+  it("ranks inkwell candidates by lower cost then lower lore", () => {
     const expensiveLowLore = createMockCharacter({
       id: "expensive-low-lore",
       name: "Expensive Low Lore",
@@ -522,9 +614,9 @@ describe("automated actions", () => {
       .candidates.filter((candidate) => candidate.family === "putCardIntoInkwell");
 
     expect(inkCandidates.map((candidate) => candidate.cardId)).toEqual([
+      engine.asPlayerOne().getCard(cheapCard).id,
       engine.asPlayerOne().getCard(expensiveLowLore).id,
       engine.asPlayerOne().getCard(expensiveHighLore).id,
-      engine.asPlayerOne().getCard(cheapCard).id,
     ]);
   });
 
@@ -1008,6 +1100,107 @@ describe("automated actions", () => {
     });
     expect(result.finalResult.success).toBe(true);
     expect(engine.asPlayerOne().getLore(PLAYER_ONE)).toBe(20);
+  });
+
+  it("lets board-control-lore-race challenge a lore threat before taking a smaller quest", () => {
+    const quester = createMockCharacter({
+      id: "board-control-quester",
+      name: "Board Control Quester",
+      cost: 2,
+      strength: 2,
+      willpower: 2,
+      lore: 1,
+    });
+    const challenger = createMockCharacter({
+      id: "board-control-challenger",
+      name: "Board Control Challenger",
+      cost: 3,
+      strength: 3,
+      willpower: 3,
+      lore: 0,
+    });
+    const defender = createMockCharacter({
+      id: "board-control-defender",
+      name: "Board Control Defender",
+      cost: 3,
+      strength: 1,
+      willpower: 1,
+      lore: 1,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [
+          { card: quester, isDrying: false },
+          { card: challenger, isDrying: false },
+        ],
+        deck: 1,
+        lore: 8,
+      },
+      {
+        play: [{ card: defender, exerted: true, isDrying: false }],
+        deck: 1,
+        lore: 8,
+      },
+    );
+
+    loadMutatedState(engine, (state) => {
+      state.ctx.priority.holder = PLAYER_ONE;
+    });
+
+    const baselineState = structuredClone(engine.asServer().getState()) as LorcanaMatchState;
+    const defaultResult = engine.asPlayerOne().takeAutomatedAction();
+
+    expect(defaultResult.selectedCandidate).toMatchObject({
+      family: "quest",
+      cardId: engine.asPlayerOne().getCard(quester).id,
+    });
+
+    engine.loadState(baselineState);
+
+    const boardControlResult = engine.asPlayerOne().takeAutomatedAction({
+      strategy: boardControlLoreRaceAutomatedActionStrategy,
+    });
+
+    expect(boardControlResult.selectedCandidate).toMatchObject({
+      family: "challenge",
+      attackerId: engine.asPlayerOne().getCard(challenger).id,
+      defenderId: engine.asPlayerTwo().getCard(defender).id,
+    });
+    expect(boardControlResult.finalResult.success).toBe(true);
+  });
+
+  it("lets board-control-lore-race spend available ink on a simple permanent play", () => {
+    const efficientPermanent = createMockCharacter({
+      id: "board-control-efficient-permanent",
+      name: "Board Control Permanent",
+      cost: 2,
+      strength: 2,
+      willpower: 2,
+      lore: 1,
+    });
+    const expensiveInkCard = createMockCharacter({
+      id: "board-control-expensive-ink-card",
+      name: "Board Control Expensive Ink Card",
+      cost: 6,
+      strength: 3,
+      willpower: 5,
+      lore: 2,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [efficientPermanent, expensiveInkCard],
+      inkwell: 2,
+      deck: 1,
+    });
+
+    const result = engine.asPlayerOne().takeAutomatedAction({
+      strategy: boardControlLoreRaceAutomatedActionStrategy,
+    });
+
+    expect(result.selectedCandidate).toMatchObject({
+      family: "playCard",
+      cardId: engine.asPlayerOne().getCard(efficientPermanent).id,
+    });
+    expect(result.finalResult.success).toBe(true);
   });
 
   it("takes automated actions through the server current-actor surface", () => {

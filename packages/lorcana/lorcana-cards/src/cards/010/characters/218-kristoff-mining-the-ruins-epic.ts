@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kristoffMiningTheRuinsEpicI18n } from "./218-kristoff-mining-the-ruins-epic.i18n";
 
 export const kristoffMiningTheRuinsEpic: CharacterCard = {
   id: "lsw",
@@ -7,34 +8,6 @@ export const kristoffMiningTheRuinsEpic: CharacterCard = {
   cardType: "character",
   name: "Kristoff",
   version: "Mining the Ruins",
-  i18n: {
-    en: {
-      name: "Kristoff",
-      version: "Mining the Ruins",
-      text: "Boost 1 {I} WORTH MINING Whenever this character quests, if there's a card under him, put the top card of your deck into your inkwell facedown and exerted.",
-    },
-    de: {
-      name: "Kristoff",
-      version: "Baut die Ruinen ab",
-      text: "Stärken 1 EIN GUTER FUND Jedes Mal, wenn dieser Charakter erkundet, falls er mindestens eine Karte unter sich hat, lege die oberste Karte deines Decks verdeckt und erschöpft in deinen Tintenvorrat.",
-    },
-    fr: {
-      name: "Kristoff",
-      version: "Minant les ruines",
-      text: "Boost 1 UN TRÉSOR QU'IL FAUT MÉRITER Chaque fois que ce personnage est envoyé à l'aventure, s'il y a une carte sous lui, placez la carte du dessus de votre pioche dans votre réserve d'encre, face cachée et épuisée.",
-    },
-    it: {
-      name: "Kristoff",
-      version: "Minatore nelle Rovine",
-      text: [
-        {
-          title: "Potenziamento 1",
-          description:
-            "(Una volta durante il tuo turno, puoi pagare 1 per mettere la prima carta del tuo mazzo a faccia in giù sotto a questo personaggio.) CUORE FREDDO Ogni volta che questo personaggio va all'avventura, se c'è una carta sotto di esso, aggiungi la prima carta del tuo mazzo al tuo calamaio, a faccia in giù e impegnata.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Frozen",
   set: "010",
@@ -86,4 +59,5 @@ export const kristoffMiningTheRuinsEpic: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: kristoffMiningTheRuinsEpicI18n,
 };

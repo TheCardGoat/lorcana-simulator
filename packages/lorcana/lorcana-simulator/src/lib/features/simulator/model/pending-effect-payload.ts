@@ -83,9 +83,66 @@ export function getBagEffectPayloadMeta(payload: unknown): BagEffectPayloadMeta 
 }
 
 export function parseScryPendingEffect(
-  pendingEffect: EnginePendingEffectProjection<unknown>,
+  pendingEffect: EnginePendingEffectProjection,
   cardSnapshotsById: CardSnapshotMap,
 ): ScryPendingEffectView | null {
+  const selectionContext = asRecord(
+    (
+      pendingEffect as EnginePendingEffectProjection & {
+        selectionContext?: unknown;
+      }
+    ).selectionContext ?? null,
+  );
+  if (getRecordString(selectionContext, "kind") === "scry-selection") {
+    const chooserId = getRecordString(selectionContext, "chooserId");
+    const sourceCardId =
+      getRecordString(selectionContext, "sourceCardId") ?? pendingEffect.sourceId;
+    const amount = getRecordNumber(selectionContext, "amount");
+    const revealedCardIds = getStringArray(selectionContext, "revealedCardIds");
+    const destinationRules = Array.isArray(selectionContext?.destinationRules)
+      ? selectionContext.destinationRules
+          .map((entry) => asRecord(entry))
+          .filter((entry): entry is Record<string, unknown> => entry !== null)
+          .map<ScryDestinationRuleView | null>((entry, index) => {
+            const zone = getRecordString(entry, "zone");
+            if (!zone) {
+              return null;
+            }
+
+            return {
+              id: getRecordString(entry, "id") ?? `${pendingEffect.id}:${zone}:${index}`,
+              zone,
+              min: getRecordNumber(entry, "min") ?? 0,
+              max: getRecordNumber(entry, "max") ?? null,
+              remainder: entry.remainder === true,
+            };
+          })
+          .filter((entry): entry is ScryDestinationRuleView => entry !== null)
+      : [];
+
+    if (!chooserId || !amount || revealedCardIds.length === 0 || destinationRules.length === 0) {
+      return null;
+    }
+
+    const revealedCards = revealedCardIds
+      .map((cardId) => cardSnapshotsById[cardId] ?? null)
+      .filter((card): card is LorcanaCardSnapshot => card !== null);
+    if (revealedCards.length !== revealedCardIds.length) {
+      return null;
+    }
+
+    return {
+      effectId: pendingEffect.id,
+      chooserId,
+      sourceCardId: sourceCardId ?? null,
+      sourceCard: sourceCardId ? (cardSnapshotsById[sourceCardId] ?? null) : null,
+      amount,
+      revealedCardIds,
+      revealedCards,
+      destinationRules,
+    };
+  }
+
   const payloadRecord = asRecord(pendingEffect.payload);
   if (getRecordString(payloadRecord, "kind") !== "scry-selection") {
     return null;

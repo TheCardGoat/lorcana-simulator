@@ -1,7 +1,15 @@
 // .agents/skills/lorcana-rules/SKILL.md
 // .agents/skills/lorcana-rules/indexes/by-topic/turn-actions.md
 
-import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
+import type {
+  CardInstanceId,
+  PlayerId,
+  RuntimeCardWithDefinition,
+  RuntimeValidationResult,
+} from "#core";
+import type { LorcanaCardDerived } from "../../../types/projected-board";
+
+type LorcanaRuntimeCard = RuntimeCardWithDefinition & LorcanaCardDerived;
 import { type LorcanaMoveDefinition } from "../../../types";
 import { createLorcanaLogMessage } from "../../../types";
 import { INKWELL_CANDIDATE_QUERY_DSL, canInkThisTurn } from "../../state/runtime-card-derived";
@@ -21,20 +29,19 @@ function buildTurnActionInkState(ctx: {
   };
   framework: {
     state: {
-      ctx: {
-        priority?: { holder?: string };
-        zones: {
-          private: {
-            cardIndex: Record<string, { controllerID?: string; zoneKey?: string } | undefined>;
-          };
-        };
+      priority?: { holder?: string };
+      _zonesPrivate: {
+        cardIndex: Record<string, { controllerID?: string; zoneKey?: string } | undefined>;
       };
     };
   };
 }) {
   return {
     G: ctx.G,
-    ctx: ctx.framework.state.ctx,
+    ctx: {
+      priority: ctx.framework.state.priority,
+      zones: { private: ctx.framework.state._zonesPrivate },
+    },
   };
 }
 
@@ -60,7 +67,7 @@ export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
     }
 
     const { cardId } = ctx.args;
-    const currentPlayer = (ctx.framework.state.ctx.priority.holder ?? ctx.playerId) as PlayerId;
+    const currentPlayer = (ctx.framework.state.priority.holder ?? ctx.playerId) as PlayerId;
 
     // Enforce once-per-turn inkwell rule (Rule 4.3.3)
     if (
@@ -76,9 +83,10 @@ export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
       return { valid: true };
     }
 
-    // Check card is in hand
+    // Check card is in hand (or discard, when a static grants discard inkability)
     const handCards = ctx.framework.zones.getCards({ zone: "hand", playerId: currentPlayer });
-    if (!handCards.includes(cardId)) {
+    const discardCards = ctx.framework.zones.getCards({ zone: "discard", playerId: currentPlayer });
+    if (!handCards.includes(cardId) && !discardCards.includes(cardId)) {
       return { valid: false, error: "Card not in hand", errorCode: "CARD_NOT_IN_HAND" };
     }
 
@@ -91,7 +99,7 @@ export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
       };
     }
 
-    if (!runtimeCard.canBePutInInkwell()) {
+    if (!(runtimeCard as LorcanaRuntimeCard).canBePutInInkwell) {
       return { valid: false, error: "Card is not inkable", errorCode: "NOT_INKABLE" };
     }
 
@@ -101,8 +109,12 @@ export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
   execute: (ctx) => {
     const { args, G } = ctx;
     const { cardId } = args;
-    const ownerId = ctx.framework.state.ctx.priority.holder as PlayerId;
-    const revealUntilStateID = (ctx.framework.state.ctx._stateID ?? 0) + 3;
+    const ownerId = ctx.framework.state.priority.holder as PlayerId;
+    const revealUntilStateID = (ctx.framework.state.stateID ?? 0) + 3;
+
+    // Determine source zone before moving
+    const discardCards = ctx.framework.zones.getCards({ zone: "discard", playerId: ownerId });
+    const sourceZone = discardCards.includes(cardId) ? "discard" : "hand";
 
     const inkwellZoneRef = { zone: "inkwell", playerId: ownerId };
     ctx.framework.zones.moveCard(cardId, inkwellZoneRef);
@@ -125,7 +137,7 @@ export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
       {
         playerId: ownerId,
         cardId,
-        from: `hand:${ownerId}`,
+        from: `${sourceZone}:${ownerId}`,
         to: `inkwell:${ownerId}`,
       },
       {
@@ -157,8 +169,8 @@ export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
     }
 
     const queryByTarget = ctx.cards.queryTargetDsl ?? ctx.cards.queryRuntime;
-    const validCardsRuntime = queryByTarget(INKWELL_CANDIDATE_QUERY_DSL).filter((card) =>
-      card.canBePutInInkwell(),
+    const validCardsRuntime = queryByTarget(INKWELL_CANDIDATE_QUERY_DSL).filter(
+      (card) => (card as LorcanaRuntimeCard).canBePutInInkwell,
     );
 
     return validCardsRuntime.length > 0;

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kangaPeacefulGathererI18n } from "./138-kanga-peaceful-gatherer.i18n";
 
 export const kangaPeacefulGatherer: CharacterCard = {
   id: "Nld",
@@ -7,42 +8,6 @@ export const kangaPeacefulGatherer: CharacterCard = {
   cardType: "character",
   name: "Kanga",
   version: "Peaceful Gatherer",
-  i18n: {
-    en: {
-      name: "Kanga",
-      version: "Peaceful Gatherer",
-      text: [
-        {
-          title: "Boost 2 {I}",
-        },
-        {
-          title: "EXTRA HELP",
-          description: "While there's a card under this character, she gets +1 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Kanga",
-      version: "Friedliche Sammlerin",
-      text: "Stärken 2 ZUSÄTZLICHE HILFE Solange dieser Charakter mindestens eine Karte unter sich hat, erhält er +1.",
-    },
-    fr: {
-      name: "Maman Gourou",
-      version: "Cueilleuse paisible",
-      text: "Boost 2 PETITE AIDE EN PLUS Tant qu'il y a une carte sous ce personnage, il gagne +1.",
-    },
-    it: {
-      name: "Kanga",
-      version: "Raccoglitrice Serena",
-      text: [
-        {
-          title: "Potenziamento 2",
-          description:
-            "(Una volta durante il tuo turno, puoi pagare 2 per mettere la prima carta del tuo mazzo a faccia in giù sotto a questo personaggio.) AIUTO AGGIUNTIVO Mentre c'è una carta sotto a questo personaggio, riceve +1.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Winnie the Pooh",
   set: "011",
@@ -77,14 +42,19 @@ export const kangaPeacefulGatherer: CharacterCard = {
     },
     {
       id: "i6v-2",
+      name: "EXTRA HELP",
+      type: "static",
+      condition: {
+        type: "has-card-under",
+      },
       effect: {
         modifier: 1,
         stat: "lore",
         target: "SELF",
         type: "modify-stat",
       },
-      type: "action",
       text: "EXTRA HELP While there’s a card under this character, she gets +1 {L}.",
     },
   ],
+  i18n: kangaPeacefulGathererI18n,
 };

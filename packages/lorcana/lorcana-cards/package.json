@@ -2,10 +2,11 @@
   "name": "@tcg/lorcana-cards",
   "version": "0.1.0",
   "private": true,
-  "description": "Lorcana card definitions, parser, and tooling",
+  "description": "Lorcana card definitions and tooling",
   "files": [
     "src/"
   ],
+  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
@@ -16,10 +17,6 @@
     "./deck-list-resolver": {
       "types": "./src/utils/deck-list-resolver.ts",
       "default": "./src/utils/deck-list-resolver.ts"
-    },
-    "./parser": {
-      "types": "./src/parser/index.ts",
-      "default": "./src/parser/index.ts"
     },
     "./data": {
       "types": "./src/data/index.ts",
@@ -92,17 +89,16 @@
     "fetch:all-locales": "bun scripts/fetch-inputs.ts",
     "generate": "bun scripts/generate-cards.ts && bun run format",
     "generate-cards:all": "bun scripts/generate-cards-all.ts",
+    "generate-legacy-card-map": "bun scripts/generate-legacy-card-map.ts",
     "embed-card-i18n": "bun scripts/embed-card-i18n.ts",
     "generate:all": "bun run generate-cards:all",
     "generate-localization": "bun scripts/generate-localization.ts",
     "update-translations": "bun run fetch:all-locales && bun run generate-localization"
   },
   "dependencies": {
-    "@tcg/core": "workspace:*",
     "@tcg/lorcana-engine": "workspace:*",
     "@tcg/lorcana-types": "workspace:*",
-    "@tcg/shared": "workspace:*",
-    "chevrotain": "^11.0.3"
+    "@tcg/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "1.2.14",

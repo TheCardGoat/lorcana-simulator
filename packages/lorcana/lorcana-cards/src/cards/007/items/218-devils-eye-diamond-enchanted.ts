@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { devilsEyeDiamondEnchantedI18n } from "./218-devils-eye-diamond-enchanted.i18n";
 
 export const devilsEyeDiamondEnchanted: ItemCard = {
   id: "6Y4",
@@ -6,47 +7,6 @@ export const devilsEyeDiamondEnchanted: ItemCard = {
   reprints: ["set7-152"],
   cardType: "item",
   name: "Devil's Eye Diamond",
-  i18n: {
-    en: {
-      name: "Devil's Eye Diamond",
-      text: [
-        {
-          title: "THE PRICE OF POWER",
-          description: "{E} — If one of your characters was damaged this turn, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Teufelsaugen Diamant",
-      text: [
-        {
-          title: "DER PREIS DER MACHT",
-          description:
-            "— Falls einer deiner Charaktere in diesem Zug Schaden erhalten hat, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le Diamant Œil-du-Diable",
-      text: [
-        {
-          title: "LE PRIX DU POUVOIR",
-          description:
-            "— Si l'un de vos personnages s'est vu infliger des dommages ce tour-ci, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Diamante Occhio del Diavolo",
-      text: [
-        {
-          title: "IL PREZZO DEL POTERE",
-          description:
-            "— Se uno dei tuoi personaggi è stato danneggiato in questo turno, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Rescuers",
   set: "007",
@@ -92,4 +52,5 @@ export const devilsEyeDiamondEnchanted: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: devilsEyeDiamondEnchantedI18n,
 };

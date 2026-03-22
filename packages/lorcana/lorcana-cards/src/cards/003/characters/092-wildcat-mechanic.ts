@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { wildcatMechanicI18n } from "./092-wildcat-mechanic.i18n";
 
 export const wildcatMechanic: CharacterCard = {
   id: "m0B",
@@ -7,36 +8,6 @@ export const wildcatMechanic: CharacterCard = {
   cardType: "character",
   name: "Wildcat",
   version: "Mechanic",
-  i18n: {
-    en: {
-      name: "Wildcat",
-      version: "Mechanic",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "DISASSEMBLE",
-          description: "{E} — Banish chosen item.",
-        },
-      ],
-    },
-    de: {
-      name: "Wildkatz",
-      version: "Mechaniker",
-      text: "Wendig DEMONTIEREN — Verbanne einen Gegenstand deiner Wahl.",
-    },
-    fr: {
-      name: "Turbo",
-      version: "Mécanicien",
-      text: "Insaisissable DÉSASSEMBLAGE — Choisissez un objet et bannissez-le.",
-    },
-    it: {
-      name: "Valvola",
-      version: "Meccanico",
-      text: "Sfuggente SMONTARE — Esilia un oggetto a tua scelta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Talespin",
   set: "003",
@@ -61,7 +32,32 @@ export const wildcatMechanic: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingImplementation: true,
-  missingTests: true,
-  abilities: [],
+  abilities: [
+    {
+      id: "m0B-1",
+      keyword: "Evasive",
+      type: "keyword",
+      text: "Evasive",
+    },
+    {
+      id: "m0B-2",
+      name: "DISASSEMBLE",
+      type: "activated",
+      cost: {
+        exert: true,
+      },
+      effect: {
+        type: "banish",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["item"],
+        },
+      },
+      text: "DISASSEMBLE {E} — Banish chosen item.",
+    },
+  ],
+  i18n: wildcatMechanicI18n,
 };

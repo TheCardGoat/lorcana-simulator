@@ -1,78 +1,109 @@
 <script lang="ts">
-    import type {LorcanaPlayerSide, LorcanaTableSeat} from "@/features/simulator/model/contracts.js";
-    import CardBack from "@/design-system/simulator/cards/CardBack.svelte";
-    import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
-  import autoAnimate from "@formkit/auto-animate";
-    import {createCardAnchorId, createZoneAnchorId} from "@/features/simulator/animations/board-move-animations.js";
-    import {useLorcanaBoardPresenter} from "@/features/simulator/context/game-context.svelte.js";
-    import {
-        createOptionalDroppable,
-        useLorcanaSimulatorDndContext
-    } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
+import type {
+	LorcanaPlayerSide,
+	LorcanaTableSeat,
+} from "@/features/simulator/model/contracts.js";
+import CardBack from "@/design-system/simulator/cards/CardBack.svelte";
+import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+import InkwellReminder from "@/features/simulator/board/InkwellReminder.svelte";
+import autoAnimate from "@formkit/auto-animate";
+import {
+	createCardAnchorId,
+	createZoneAnchorId,
+} from "@/features/simulator/animations/board-move-animations.js";
+import { useLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
+import {
+	createOptionalDroppable,
+	useLorcanaSimulatorDndContext,
+} from "@/features/simulator/context/simulator-dnd-context.svelte.js";
+import * as Tooltip from "$lib/design-system/primitives/tooltip/index.js";
+import { m } from "$lib/i18n/messages.js";
 
-  interface InkwellZoneProps {
-    isOpponent: boolean;
-    playerSide: LorcanaPlayerSide;
-    seat: LorcanaTableSeat;
-    onClick?: () => void;
-  }
+interface InkwellZoneProps {
+	isOpponent: boolean;
+	playerSide: LorcanaPlayerSide;
+	seat: LorcanaTableSeat;
+	onClick?: () => void;
+	onCounterClick?: () => void;
+	hasItemsInPlay?: boolean;
+}
 
-  let {
-    isOpponent,
-    playerSide,
-    seat,
-    onClick,
-  }: InkwellZoneProps = $props();
+let {
+	isOpponent,
+	playerSide,
+	seat,
+	onClick,
+	onCounterClick,
+	hasItemsInPlay,
+}: InkwellZoneProps = $props();
 
-  const board = useLorcanaBoardPresenter();
-  const dnd = useLorcanaSimulatorDndContext();
-  const cards = $derived(board.getZoneCards(playerSide, "inkwell"));
-  const playerSummary = $derived(board.getPlayerSummary(playerSide));
-  const ownerId = $derived(board.getOwnerIdForSide(playerSide));
-  const totalCards = $derived(playerSummary?.inkwellCount ?? 0);
-  const availableInk = $derived(playerSummary?.availableInk ?? null);
-  const isMasked = $derived(board.isZoneMasked(playerSide, "inkwell"));
-  const droppable = createOptionalDroppable({
-    zone: "inkwell",
-    get player() {
-      return playerSide;
-    },
-  });
+const board = useLorcanaBoardPresenter();
+const dnd = useLorcanaSimulatorDndContext();
+const cards = $derived(board.getZoneCards(playerSide, "inkwell"));
+const playerSummary = $derived(board.getPlayerSummary(playerSide));
+const boardSnapshot = $derived(board.boardSnapshot);
+const ownerId = $derived(board.getOwnerIdForSide(playerSide));
+const totalCards = $derived(playerSummary?.inkwellCount ?? 0);
+const availableInk = $derived(playerSummary?.availableInk ?? null);
+const isMasked = $derived(board.isZoneMasked(playerSide, "inkwell"));
+const droppable = createOptionalDroppable({
+	zone: "inkwell",
+	get player() {
+		return playerSide;
+	},
+});
 
-  const MAX_VISIBLE_HIDDEN_CARDS = 8;
-  const effectiveTotal = $derived(Math.max(totalCards, cards.length));
-  const hasRevealedCards = $derived(cards.length > 0);
-  const visibleRevealedCards = $derived.by(() => cards.slice(-6).reverse());
-  const hiddenPlaceholderCount = $derived(
-    hasRevealedCards ? 0 : Math.min(effectiveTotal, MAX_VISIBLE_HIDDEN_CARDS),
-  );
-  const hiddenOverflowCount = $derived(Math.max(0, effectiveTotal - hiddenPlaceholderCount));
-  const totalInk = $derived(hasRevealedCards ? cards.length : effectiveTotal);
-  const readyInk = $derived.by<number | null>(() => {
-    if (!hasRevealedCards) {
-      return availableInk;
-    }
-    return cards.reduce((count, card) => count + (card.readyState === "exerted" ? 0 : 1), 0);
-  });
-  const inkCounterLabel = $derived.by(() => {
-    if (readyInk === null && effectiveTotal > 0) {
-      return `?/${effectiveTotal}`;
-    }
-    return `${readyInk ?? 0}/${totalInk}`;
-  });
-  const inferredHiddenReadyCount = $derived.by(() => {
-    if (hasRevealedCards || availableInk === null) {
-      return 0;
-    }
+const MAX_VISIBLE_HIDDEN_CARDS = hasItemsInPlay ? 6 : 12;
+const effectiveTotal = $derived(Math.max(totalCards, cards.length));
+const hasRevealedCards = $derived(cards.length > 0);
+const visibleRevealedCards = $derived.by(() =>
+	cards.slice(-MAX_VISIBLE_HIDDEN_CARDS).reverse(),
+);
+const hiddenPlaceholderCount = $derived(
+	hasRevealedCards ? 0 : Math.min(effectiveTotal, MAX_VISIBLE_HIDDEN_CARDS),
+);
+const hiddenOverflowCount = $derived(
+	Math.max(0, effectiveTotal - hiddenPlaceholderCount),
+);
+const totalInk = $derived(hasRevealedCards ? cards.length : effectiveTotal);
+const readyInk = $derived.by<number | null>(() => {
+	if (!hasRevealedCards) {
+		return availableInk;
+	}
+	return cards.reduce(
+		(count, card) => count + (card.readyState === "exerted" ? 0 : 1),
+		0,
+	);
+});
+const inkCounterLabel = $derived.by(() => {
+	if (readyInk === null && effectiveTotal > 0) {
+		return `?/${effectiveTotal}`;
+	}
+	return `${readyInk ?? 0}/${totalInk}`;
+});
+const inferredHiddenReadyCount = $derived.by(() => {
+	if (hasRevealedCards || availableInk === null) {
+		return 0;
+	}
 
-    return Math.max(0, Math.min(hiddenPlaceholderCount, availableInk));
-  });
-  const inferredHiddenExertedCount = $derived.by(() =>
-          Math.max(0, hiddenPlaceholderCount - inferredHiddenReadyCount),
-  );
-  const dropState = $derived(dnd.getZoneDropState("inkwell", playerSide));
-  const showDropIndicator = $derived(dropState === "valid" || dropState === "invalid");
+	return Math.max(0, Math.min(hiddenPlaceholderCount, availableInk));
+});
+const inferredHiddenExertedCount = $derived.by(() =>
+	Math.max(0, hiddenPlaceholderCount - inferredHiddenReadyCount),
+);
+const dropState = $derived(dnd.getZoneDropState("inkwell", playerSide));
+const showDropIndicator = $derived(
+	dropState === "valid" || dropState === "invalid",
+);
+const showInkwellReminder = $derived.by(() => {
+	if (!boardSnapshot || !ownerId || board.turnSide !== playerSide) {
+		return false;
+	}
 
+	return boardSnapshot.players[ownerId]?.canAddCardToInkwell ?? false;
+});
+
+const ART_ONLY_ASPECT_RATIO = 734 / 602;
 </script>
 
 <div
@@ -89,9 +120,27 @@
   {@attach droppable.attach}
 >
   <!-- Ink Counter Badge -->
-  <div class="ink-counter">
-    <span class="ink-counter-value">{inkCounterLabel}</span>
-  </div>
+  <Tooltip.Root>
+    <Tooltip.Trigger>
+      {#snippet child({ props })}
+        <button
+          type="button"
+          {...props}
+          class="ink-counter"
+          onclick={(e) => { e.stopPropagation(); onCounterClick?.(); }}
+        >
+          <span class="ink-counter-value">{inkCounterLabel}</span>
+        </button>
+      {/snippet}
+    </Tooltip.Trigger>
+    <Tooltip.Content
+      side="top"
+      sideOffset={6}
+      class="rounded-md border border-white/10 bg-slate-950/95 px-2 py-1 text-[0.65rem] text-slate-200 shadow-lg"
+    >
+      {m["sim.inkwell.tooltip"]({})}
+    </Tooltip.Content>
+  </Tooltip.Root>
 
   <!-- Ink Cards Display -->
   {#if hasRevealedCards}
@@ -99,10 +148,14 @@
       type="button"
       class="inkwell-cards"
       data-board-anchor-id={createZoneAnchorId(playerSide, "inkwell")}
+      data-board-scroll-sync
       onclick={onClick}
     >
       <!-- Revealed view from snapshot cards -->
       <div  class="ink-cards-revealed">
+        {#if showInkwellReminder}
+          <InkwellReminder {isOpponent} />
+        {/if}
         {#each visibleRevealedCards as card (card.cardId)}
           <div
             class="ink-card"
@@ -117,22 +170,24 @@
               <LorcanaCard
                 {card}
                 useContainerSize
+                imageFormat="art_only"
                 isMasked={isMasked}
                 isExerted={card.readyState === "exerted"}
               />
             {:else}
               <CardBack
                 {ownerId}
-                displayWidth={26}
+                displayWidth={44}
                 displayHeight={36}
-                aspectRatio={26 / 36}
+                aspectRatio={ART_ONLY_ASPECT_RATIO}
                 useContainerSize={true}
+                imageFormat="art_only"
               />
             {/if}
           </div>
         {/each}
-        {#if cards.length > 6}
-          <div class="more-ink">+{cards.length - 6}</div>
+        {#if cards.length > MAX_VISIBLE_HIDDEN_CARDS}
+          <div class="more-ink">+{cards.length - MAX_VISIBLE_HIDDEN_CARDS}</div>
         {/if}
       </div>
 
@@ -145,10 +200,14 @@
       type="button"
       class="inkwell-cards"
       data-board-anchor-id={createZoneAnchorId(playerSide, "inkwell")}
+      data-board-scroll-sync
       onclick={onClick}
     >
       <!-- Normal view: show card backs in horizontal layout -->
       <div  class="ink-cards-stack">
+        {#if showInkwellReminder}
+          <InkwellReminder {isOpponent} />
+        {/if}
         {#each Array.from({ length: hiddenPlaceholderCount }) as _, index (`ink-hidden-${index}`)}
           {@const isInferredExerted = index < inferredHiddenExertedCount}
           <div
@@ -158,10 +217,11 @@
           >
             <CardBack
               {ownerId}
-              displayWidth={26}
+              displayWidth={44}
               displayHeight={36}
-              aspectRatio={26 / 36}
+              aspectRatio={ART_ONLY_ASPECT_RATIO}
               useContainerSize={true}
+              imageFormat="art_only"
               isExerted={isInferredExerted}
             />
           </div>
@@ -189,9 +249,7 @@
     /* Card dimensions */
     --ink-card-width: var(--zone-card-width, 26px);
     --ink-card-height: var(--zone-card-height, 36px);
-    --ink-card-overlap: -12px;
-    --ink-revealed-overlap: 10px;
-    --ink-exerted-overlap: 22px;
+    --ink-card-gap: 4px;
     --ink-stack-height: var(--zone-card-height, 36px);
     --ink-stack-padding: 0px;
 
@@ -202,6 +260,8 @@
     /* Counter dimensions */
     --ink-counter-size: 28px;
     --ink-counter-offset: -6px;
+    --ink-counter-translate-x: -50%;
+    --ink-counter-translate-y: -50%;
 
     position: relative;
     display: flex;
@@ -264,8 +324,8 @@
   /* Ink Counter Badge */
   .ink-counter {
     position: absolute;
-    top: var(--ink-counter-offset);
-    left: var(--ink-counter-offset);
+    top: 0;
+    left: 0;
     background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
     border: 1px solid rgba(100, 150, 200, 0.4);
     border-radius: 50%;
@@ -276,6 +336,15 @@
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     z-index: 10;
+    padding: 0;
+    cursor: pointer;
+    transform: translate(var(--ink-counter-translate-x), var(--ink-counter-translate-y));
+    transition: transform 100ms ease, box-shadow 100ms ease;
+  }
+
+  .ink-counter:hover {
+    transform: translate(var(--ink-counter-translate-x), var(--ink-counter-translate-y)) scale(1.1);
+    box-shadow: 0 2px 12px rgba(100, 150, 200, 0.5);
   }
 
   .ink-counter-value {
@@ -288,40 +357,57 @@
   /* Ink Cards Stack - Horizontal layout */
   .inkwell-cards {
     display: flex;
-    align-items: stretch;
+    align-items: flex-start;
     justify-content: flex-start;
     width: 100%;
     flex: 1 1 auto;
-    min-height: 0;
+    min-width: 0;
+    min-height: calc(var(--ink-card-height) + 6px);
     background: transparent;
     border: none;
     cursor: pointer;
     padding: 0;
     position: relative;
-    overflow: visible;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(180, 160, 220, 0.55) rgba(0, 0, 0, 0.18);
+  }
+
+  .inkwell-cards::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .inkwell-cards::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 999px;
+  }
+
+  .inkwell-cards::-webkit-scrollbar-thumb {
+    background: rgba(180, 160, 220, 0.5);
+    border-radius: 999px;
   }
 
   .ink-cards-stack {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    gap: var(--ink-card-gap);
     justify-content: flex-start;
     position: relative;
-    width: 100%;
-    height: 100%;
+    width: max-content;
+    min-width: max-content;
+    height: auto;
     min-height: var(--ink-stack-height);
+    padding-top: 6px;
     padding-left: var(--ink-stack-padding);
   }
 
   .ink-card-back {
     width: var(--ink-card-width);
     height: var(--ink-card-height);
-    margin-left: var(--ink-card-overlap);
     transition: all 150ms ease;
     filter: brightness(0.9);
-  }
-
-  .ink-card-back:first-child {
-    margin-left: 0;
+    flex: 0 0 auto;
   }
 
   .ink-card-back:hover {
@@ -330,8 +416,7 @@
   }
 
   .ink-card-back--exerted {
-    margin-left: calc(var(--ink-exerted-overlap) * -1);
-    z-index: 2;
+    filter: brightness(0.72) grayscale(0.25);
   }
 
   .ink-count-more {
@@ -349,14 +434,14 @@
   /* Revealed Cards View */
   .ink-cards-revealed {
     display: flex;
-    gap: 0;
+    gap: var(--ink-card-gap);
     flex-wrap: nowrap;
     justify-content: flex-start;
-    align-items: flex-end;
-    width: 100%;
-    max-width: 100%;
-    min-height: 0;
-    padding: 2px;
+    align-items: flex-start;
+    width: max-content;
+    min-width: max-content;
+    min-height: var(--ink-card-height);
+    padding: 6px 0 0;
     overflow: visible;
   }
 
@@ -365,18 +450,13 @@
     width: var(--zone-card-width, 28px);
     height: var(--zone-card-height, 40px);
     flex: 0 0 auto;
+    display: flex;
     position: relative;
     overflow: visible;
   }
 
-  .ink-card + .ink-card {
-    margin-left: calc(var(--ink-revealed-overlap) * -1);
-  }
-
   .ink-card--exerted {
     filter: brightness(0.6) grayscale(0.4);
-    margin-left: calc(var(--ink-exerted-overlap) * -1);
-    z-index: 2;
   }
 
   .more-ink {
@@ -386,7 +466,7 @@
     padding: 4px 6px;
     background: rgba(0, 0, 0, 0.5);
     border-radius: 4px;
-    align-self: flex-end;
+    align-self: flex-start;
     margin-left: 0.25rem;
   }
 
@@ -419,9 +499,7 @@
     .inkwell-container {
       --ink-container-min-width: 60px;
       --ink-container-padding: 4px;
-      --ink-card-overlap: -10px;
-      --ink-revealed-overlap: 8px;
-      --ink-exerted-overlap: 16px;
+      --ink-card-gap: 3px;
       --ink-counter-size: 24px;
       --ink-counter-offset: -4px;
     }
@@ -433,9 +511,7 @@
 
   @media (max-width: 700px) {
     .inkwell-container {
-      --ink-card-overlap: -8px;
-      --ink-revealed-overlap: 6px;
-      --ink-exerted-overlap: 12px;
+      --ink-card-gap: 2px;
     }
   }
 </style>

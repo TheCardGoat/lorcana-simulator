@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { arielOnHumanLegs } from "../../001";
-import { smash_set9 as smash } from "./198-smash";
+import { smash } from "./198-smash";
 
 describe("Smash", () => {
   it("deals 3 damage to a chosen character", () => {

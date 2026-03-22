@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chacaImpressiveDaughterI18n } from "./138-chaca-impressive-daughter.i18n";
 
 export const chacaImpressiveDaughter: CharacterCard = {
   id: "y9B",
@@ -7,24 +8,6 @@ export const chacaImpressiveDaughter: CharacterCard = {
   cardType: "character",
   name: "Chaca",
   version: "Impressive Daughter",
-  i18n: {
-    en: {
-      name: "Chaca",
-      version: "Impressive Daughter",
-    },
-    de: {
-      name: "Chaca",
-      version: "Eindrucksvolle Tochter",
-    },
-    fr: {
-      name: "Chaca",
-      version: "Fille impressionnante",
-    },
-    it: {
-      name: "Chaca",
-      version: "Figlia Straordinaria",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Emperors New Groove",
   set: "005",
@@ -41,4 +24,5 @@ export const chacaImpressiveDaughter: CharacterCard = {
     tcgPlayer: 560507,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: chacaImpressiveDaughterI18n,
 };

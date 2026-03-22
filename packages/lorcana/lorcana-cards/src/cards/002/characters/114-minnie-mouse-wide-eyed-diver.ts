@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseWideeyedDiverI18n } from "./114-minnie-mouse-wide-eyed-diver.i18n";
 
 export const minnieMouseWideeyedDiver: CharacterCard = {
   id: "8gH",
@@ -7,58 +8,6 @@ export const minnieMouseWideeyedDiver: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Wide-Eyed Diver",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Wide-Eyed Diver",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "UNDERSEA ADVENTURE",
-          description:
-            "Whenever you play a second action in a turn, this character gets +2 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Minnie Mouse",
-      version: "Wide-Eyed Diver",
-      text: [
-        {
-          title: "Shift 2",
-          description:
-            "(You may pay 2 to play this on top of one of your characters named Minnie Mouse.) Evasive (Only characters with Evasive can challenge this character.) UNDERSEA ADVENTURE Whenever you play a second action in a turn, this character gets +2 this turn.",
-        },
-      ],
-    },
-    fr: {
-      name: "Minnie Mouse",
-      version: "Wide-Eyed Diver",
-      text: [
-        {
-          title: "Shift 2",
-          description:
-            "(You may pay 2 to play this on top of one of your characters named Minnie Mouse.) Evasive (Only characters with Evasive can challenge this character.) UNDERSEA ADVENTURE Whenever you play a second action in a turn, this character gets +2 this turn.",
-        },
-      ],
-    },
-    it: {
-      name: "Minnie Mouse",
-      version: "Wide-Eyed Diver",
-      text: [
-        {
-          title: "Shift 2",
-          description:
-            "(You may pay 2 to play this on top of one of your characters named Minnie Mouse.) Evasive (Only characters with Evasive can challenge this character.) UNDERSEA ADVENTURE Whenever you play a second action in a turn, this character gets +2 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "002",
   cardNumber: 114,
@@ -86,7 +35,6 @@ export const minnieMouseWideeyedDiver: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -122,4 +70,6 @@ export const minnieMouseWideeyedDiver: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: minnieMouseWideeyedDiverI18n,
 };

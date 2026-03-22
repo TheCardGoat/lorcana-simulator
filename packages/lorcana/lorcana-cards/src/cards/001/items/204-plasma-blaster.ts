@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { plasmaBlasterI18n } from "./204-plasma-blaster.i18n";
 
 export const plasmaBlaster: ItemCard = {
   id: "zJQ",
@@ -6,44 +7,6 @@ export const plasmaBlaster: ItemCard = {
   reprints: ["set1-204"],
   cardType: "item",
   name: "Plasma Blaster",
-  i18n: {
-    en: {
-      name: "Plasma Blaster",
-      text: [
-        {
-          title: "QUICK SHOT",
-          description: "{E}, 2 {I} — Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Plasma-Kanone",
-      text: [
-        {
-          title: "SCHNELLFEUER, 2",
-          description: "— Füge einem Charakter deiner Wahl 1 Schaden zu.",
-        },
-      ],
-    },
-    fr: {
-      name: "PISTOLET À PLASMA",
-      text: [
-        {
-          title: "TIR RAPIDE, 2",
-          description: "— Choisissez un personnage et infligez-lui 1 dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Plasma Blaster",
-      text: [
-        {
-          title: "QUICK SHOT, 2",
-          description: "— Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "001",
@@ -78,4 +41,5 @@ export const plasmaBlaster: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: plasmaBlasterI18n,
 };

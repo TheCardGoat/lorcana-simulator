@@ -2,10 +2,11 @@ import type { CardInstanceId, DeepReadonly, PlayerId } from "#core";
 import type {
   ActivatedAbilityDefinition,
   Condition,
+  Effect,
   LorcanaCardDefinition,
   VariableAmount,
 } from "@tcg/lorcana-types";
-import { hasKeyword } from "../../card-utils";
+import { cardHasName, hasKeyword } from "../../card-utils";
 import { normalizeTargetDescriptor, resolveCandidateTargets } from "../../targeting/runtime";
 import type {
   LorcanaG,
@@ -15,38 +16,40 @@ import type {
 import { isClassification } from "../../types";
 
 type StaticAbilityState = {
-  readonly ctx: {
-    readonly priority?: {
-      readonly holder?: string;
-    };
-    readonly status?: {
-      readonly turn?: number;
-    };
-    readonly zones?: {
-      readonly private?: {
-        readonly cardIndex?: Record<
-          string,
-          | {
-              readonly zoneKey?: string;
-              readonly ownerID?: string;
-              readonly controllerID?: string;
-            }
-          | undefined
-        >;
-        readonly cardMeta?: Record<
-          string,
-          | {
-              readonly atLocationId?: CardInstanceId;
-              readonly state?: string;
-              readonly damage?: number;
-            }
-          | undefined
-        >;
-        readonly zoneCards?: Record<string, readonly string[] | undefined>;
-      };
-    };
+  readonly priority?: {
+    readonly holder?: string;
+  };
+  readonly status?: {
+    readonly turn?: number;
+    readonly otp?: string;
+  };
+  readonly _zonesPrivate?: {
+    readonly cardIndex?: Record<
+      string,
+      | {
+          readonly zoneKey?: string;
+          readonly ownerID?: string;
+          readonly controllerID?: string;
+        }
+      | undefined
+    >;
+    readonly cardMeta?: Record<
+      string,
+      | {
+          readonly atLocationId?: CardInstanceId;
+          readonly state?: string;
+          readonly damage?: number;
+        }
+      | undefined
+    >;
+    readonly zoneCards?: Record<string, readonly string[] | undefined>;
+  };
+  /** Public zone summaries — available on both server and client (counts only, no card IDs for hidden zones). */
+  readonly _zonesPublic?: {
+    readonly zoneSummaries?: Record<string, { readonly count?: number } | undefined>;
   };
   readonly G?: DeepReadonly<{
+    readonly lore?: LorcanaG["lore"];
     readonly turnMetadata?: Partial<LorcanaG["turnMetadata"]>;
     readonly challengeState?: LorcanaG["challengeState"];
   }>;
@@ -57,8 +60,8 @@ function getTemporaryGrantedActivatedAbilities(args: {
   cardId: CardInstanceId;
 }): Array<{ ability: ActivatedAbilityDefinition; sourceId: CardInstanceId }> {
   const { state, cardId } = args;
-  const currentTurn = state.ctx.status?.turn ?? 1;
-  const meta = state.ctx.zones?.private?.cardMeta?.[cardId] as
+  const currentTurn = state.status?.turn ?? 1;
+  const meta = state._zonesPrivate?.cardMeta?.[cardId] as
     | {
         readonly temporaryAbilities?: Record<string, number>;
         readonly temporaryAbilityStarts?: Record<string, number>;
@@ -66,13 +69,14 @@ function getTemporaryGrantedActivatedAbilities(args: {
       }
     | undefined;
   const temporaryAbilities = meta?.temporaryAbilities;
-
   if (!temporaryAbilities) {
     return [];
   }
 
-  const grantedAbilities: Array<{ ability: ActivatedAbilityDefinition; sourceId: CardInstanceId }> =
-    [];
+  const grantedAbilities: Array<{
+    ability: ActivatedAbilityDefinition;
+    sourceId: CardInstanceId;
+  }> = [];
 
   for (const [abilityKey, expiryTurn] of Object.entries(temporaryAbilities)) {
     const startsAtTurn = meta?.temporaryAbilityStarts?.[abilityKey] ?? 1;
@@ -169,20 +173,26 @@ const temporaryGrantedActivatedAbilityRegistry: Record<
 
 function compareLegacyNumbers(left: number, operator: string | undefined, right: number): boolean {
   switch (operator) {
+    case "eq":
     case "equal":
       return left === right;
+    case "ne":
     case "not-equal":
       return left !== right;
+    case "gt":
     case "greater":
     case "greater-than":
     case "more-than":
       return left > right;
+    case "gte":
     case "greater-or-equal":
     case "or-more":
       return left >= right;
+    case "lt":
     case "less":
     case "less-than":
       return left < right;
+    case "lte":
     case "less-or-equal":
     case "or-less":
       return left <= right;
@@ -226,14 +236,14 @@ function countCardsPlayedThisTurnMatching(args: {
 }
 
 function getActivePlayerId(state: StaticAbilityState): PlayerId | undefined {
-  return state.ctx.priority?.holder as PlayerId | undefined;
+  return state.priority?.holder as PlayerId | undefined;
 }
 
 export function getCardZoneKey(
   state: StaticAbilityState,
   cardId: CardInstanceId,
 ): string | undefined {
-  const entry = state.ctx.zones?.private?.cardIndex?.[cardId];
+  const entry = state._zonesPrivate?.cardIndex?.[cardId];
   const zoneKey = entry?.zoneKey;
   return typeof zoneKey === "string" && zoneKey.length > 0 ? zoneKey : undefined;
 }
@@ -243,10 +253,202 @@ export function isCardInPlay(state: StaticAbilityState, cardId: CardInstanceId):
   return zoneKey !== undefined && (zoneKey === "play" || zoneKey.startsWith("play:"));
 }
 
+function staticEffectContainsRestriction(args: {
+  effect: StaticAbilityDefinition["effect"] | Effect;
+  restriction: string;
+  target?: "SELF" | "CONTROLLER";
+}): boolean {
+  const { effect, restriction, target } = args;
+
+  if (effect.type === "restriction") {
+    return effect.restriction === restriction && (target === undefined || effect.target === target);
+  }
+
+  if (effect.type === "sequence") {
+    const steps = effect.steps ?? effect.effects ?? [];
+    return steps.some((step) =>
+      staticEffectContainsRestriction({ effect: step, restriction, target }),
+    );
+  }
+
+  if (effect.type === "conditional") {
+    const thenEffect = effect.then ?? effect.effect ?? effect.ifTrue;
+    const elseEffect = effect.else ?? effect.ifFalse;
+    return (
+      (thenEffect
+        ? staticEffectContainsRestriction({
+            effect: thenEffect,
+            restriction,
+            target,
+          })
+        : false) ||
+      (elseEffect
+        ? staticEffectContainsRestriction({
+            effect: elseEffect,
+            restriction,
+            target,
+          })
+        : false)
+    );
+  }
+
+  if (effect.type === "optional" && effect.effect) {
+    return staticEffectContainsRestriction({
+      effect: effect.effect,
+      restriction,
+      target,
+    });
+  }
+
+  if (effect.type === "or") {
+    const options = effect.options ?? effect.choices ?? [];
+    return options.some((option) =>
+      staticEffectContainsRestriction({ effect: option, restriction, target }),
+    );
+  }
+
+  if (effect.type === "for-each" && effect.effect) {
+    return staticEffectContainsRestriction({
+      effect: effect.effect,
+      restriction,
+      target,
+    });
+  }
+
+  return false;
+}
+
+function staticEffectAppliesCardRestriction(args: {
+  effect: StaticAbilityDefinition["effect"] | Effect;
+  restriction: string;
+  state: StaticAbilityState;
+  sourceId: CardInstanceId;
+  targetCardId: CardInstanceId;
+  controllerId?: PlayerId;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+}): boolean {
+  const {
+    effect,
+    restriction,
+    state,
+    sourceId,
+    targetCardId,
+    controllerId,
+    getDefinitionByInstanceId,
+  } = args;
+
+  if (effect.type === "restriction") {
+    return (
+      effect.restriction === restriction &&
+      matchesStaticAbilityTarget({
+        state,
+        target: effect.target,
+        sourceId,
+        targetCardId,
+        controllerId,
+        getDefinitionByInstanceId,
+      })
+    );
+  }
+
+  if (effect.type === "sequence") {
+    const steps = effect.steps ?? effect.effects ?? [];
+    return steps.some((step) =>
+      staticEffectAppliesCardRestriction({
+        effect: step,
+        restriction,
+        state,
+        sourceId,
+        targetCardId,
+        controllerId,
+        getDefinitionByInstanceId,
+      }),
+    );
+  }
+
+  if (effect.type === "conditional") {
+    const thenEffect = effect.then ?? effect.effect ?? effect.ifTrue;
+    const elseEffect = effect.else ?? effect.ifFalse;
+    return (
+      (thenEffect
+        ? staticEffectAppliesCardRestriction({
+            effect: thenEffect,
+            restriction,
+            state,
+            sourceId,
+            targetCardId,
+            controllerId,
+            getDefinitionByInstanceId,
+          })
+        : false) ||
+      (elseEffect
+        ? staticEffectAppliesCardRestriction({
+            effect: elseEffect,
+            restriction,
+            state,
+            sourceId,
+            targetCardId,
+            controllerId,
+            getDefinitionByInstanceId,
+          })
+        : false)
+    );
+  }
+
+  if (effect.type === "optional" && effect.effect) {
+    return staticEffectAppliesCardRestriction({
+      effect: effect.effect,
+      restriction,
+      state,
+      sourceId,
+      targetCardId,
+      controllerId,
+      getDefinitionByInstanceId,
+    });
+  }
+
+  if (effect.type === "or") {
+    const options = effect.options ?? effect.choices ?? [];
+    return options.some((option) =>
+      staticEffectAppliesCardRestriction({
+        effect: option,
+        restriction,
+        state,
+        sourceId,
+        targetCardId,
+        controllerId,
+        getDefinitionByInstanceId,
+      }),
+    );
+  }
+
+  if (effect.type === "for-each" && effect.effect) {
+    return staticEffectAppliesCardRestriction({
+      effect: effect.effect,
+      restriction,
+      state,
+      sourceId,
+      targetCardId,
+      controllerId,
+      getDefinitionByInstanceId,
+    });
+  }
+
+  return false;
+}
+
+function staticEffectAppliesPlayerRestriction(args: {
+  effect: StaticAbilityDefinition["effect"];
+  restriction: string;
+  target: "CONTROLLER";
+}): boolean {
+  return staticEffectContainsRestriction(args);
+}
+
 function getStatePlayerIds(state: StaticAbilityState): PlayerId[] {
   const playerIds = new Set<PlayerId>();
 
-  for (const entry of Object.values(state.ctx.zones?.private?.cardIndex ?? {})) {
+  for (const entry of Object.values(state._zonesPrivate?.cardIndex ?? {})) {
     if (!entry || typeof entry !== "object") {
       continue;
     }
@@ -261,6 +463,11 @@ function getStatePlayerIds(state: StaticAbilityState): PlayerId[] {
     if (controllerId) {
       playerIds.add(controllerId);
     }
+  }
+
+  // Include all players tracked in G.lore (covers opponents with no cards in play)
+  for (const playerId of Object.keys(state.G?.lore ?? {})) {
+    playerIds.add(playerId as PlayerId);
   }
 
   const activePlayerId = getActivePlayerId(state);
@@ -282,32 +489,38 @@ function createStaticAbilityTargetContext(args: {
     cards: {
       getDefinition: getDefinitionByInstanceId,
       require: (cardId: CardInstanceId) => ({
-        meta: state.ctx.zones?.private?.cardMeta?.[cardId] ?? {},
+        meta: state._zonesPrivate?.cardMeta?.[cardId] ?? {},
       }),
     },
     framework: {
       state: {
-        ctx: state.ctx as any,
+        priority: state.priority as ConditionEvaluationContext["framework"]["state"]["priority"],
+        status: state.status as ConditionEvaluationContext["framework"]["state"]["status"],
+        _zonesPrivate:
+          state._zonesPrivate as ConditionEvaluationContext["framework"]["state"]["_zonesPrivate"],
         currentPlayer: getActivePlayerId(state),
         playerIds: getStatePlayerIds(state),
       },
       zones: {
         getCards: ({ zone, playerId }: { zone: string; playerId: PlayerId }) => {
           if (zone === "play") {
-            const playerZone = state.ctx.zones?.private?.zoneCards?.[`play:${playerId}`];
+            const playerZone = state._zonesPrivate?.zoneCards?.[`play:${playerId}`];
             if (playerZone) return playerZone as CardInstanceId[];
 
-            const globalPlay = state.ctx.zones?.private?.zoneCards?.play;
+            const globalPlay = state._zonesPrivate?.zoneCards?.play;
             if (globalPlay) {
               return globalPlay.filter(
-                (id) => state.ctx.zones?.private?.cardIndex?.[id]?.controllerID === playerId,
+                (id) => state._zonesPrivate?.cardIndex?.[id]?.controllerID === playerId,
               ) as CardInstanceId[];
             }
             return [];
           }
-          return (state.ctx.zones?.private?.zoneCards?.[`${zone}:${playerId}`] ??
+          return (state._zonesPrivate?.zoneCards?.[`${zone}:${playerId}`] ??
             []) as CardInstanceId[];
         },
+        getCardZone: (cardId: CardInstanceId) => state._zonesPrivate?.cardIndex?.[cardId]?.zoneKey,
+        getCardOwner: (cardId: CardInstanceId) =>
+          state._zonesPrivate?.cardIndex?.[cardId]?.controllerID,
       },
     },
   };
@@ -327,13 +540,13 @@ function matchesLegacyStaticTarget(args: {
   }
 
   const targetDefinition = getDefinitionByInstanceId(targetCardId);
-  const targetControllerId = state.ctx.zones?.private?.cardIndex?.[targetCardId]?.controllerID as
+  const targetControllerId = state._zonesPrivate?.cardIndex?.[targetCardId]?.controllerID as
     | PlayerId
     | undefined;
-  const sourceLocationId = state.ctx.zones?.private?.cardMeta?.[sourceId]?.atLocationId as
+  const sourceLocationId = state._zonesPrivate?.cardMeta?.[sourceId]?.atLocationId as
     | CardInstanceId
     | undefined;
-  const targetLocationId = state.ctx.zones?.private?.cardMeta?.[targetCardId]?.atLocationId as
+  const targetLocationId = state._zonesPrivate?.cardMeta?.[targetCardId]?.atLocationId as
     | CardInstanceId
     | undefined;
 
@@ -348,6 +561,20 @@ function matchesLegacyStaticTarget(args: {
         targetControllerId === controllerId &&
         targetDefinition?.cardType === "character" &&
         (targetDefinition.classifications ?? []).includes("Seven Dwarfs")
+      );
+    case "YOUR_OTHER_SAPPHIRE_CHARACTERS":
+      return (
+        targetCardId !== sourceId &&
+        targetControllerId === controllerId &&
+        targetDefinition?.cardType === "character" &&
+        (targetDefinition.inkType ?? []).includes("sapphire")
+      );
+    case "YOUR_OTHER_EVASIVE_CHARACTERS":
+      return (
+        targetCardId !== sourceId &&
+        targetControllerId === controllerId &&
+        targetDefinition?.cardType === "character" &&
+        hasKeyword(targetDefinition, "Evasive")
       );
     case "CHARACTERS_HERE":
       return (
@@ -432,33 +659,61 @@ export function evaluateStaticCondition(args: {
   const evaluationContext: ConditionEvaluationContext = {
     framework: {
       state: {
-        ctx: state.ctx as any,
+        priority: state.priority as ConditionEvaluationContext["framework"]["state"]["priority"],
+        status: state.status as ConditionEvaluationContext["framework"]["state"]["status"],
+        _zonesPrivate:
+          state._zonesPrivate as ConditionEvaluationContext["framework"]["state"]["_zonesPrivate"],
         currentPlayer: getActivePlayerId(state),
         playerIds: getStatePlayerIds(state),
       },
       zones: {
         getCards: ({ zone, playerId }: { zone: string; playerId: PlayerId }) => {
-          if (zone === "play") {
-            const playerZone = state.ctx.zones?.private?.zoneCards?.[`play:${playerId}`];
-            if (playerZone) return playerZone as CardInstanceId[];
-
-            const globalPlay = state.ctx.zones?.private?.zoneCards?.play;
-            if (globalPlay) {
-              return globalPlay.filter(
-                (id) => state.ctx.zones?.private?.cardIndex?.[id]?.controllerID === playerId,
-              ) as CardInstanceId[];
-            }
-            return [];
+          // Try player-scoped zone first (e.g. "play:player_two", "hand:player_two")
+          const scopedKey = `${zone}:${playerId}`;
+          const allZones = state._zonesPrivate?.zoneCards as
+            | Record<string, readonly string[] | undefined>
+            | undefined;
+          const scopedCards = allZones?.[scopedKey];
+          if (scopedCards !== undefined) {
+            return scopedCards as CardInstanceId[];
           }
-          return (state.ctx.zones?.private?.zoneCards?.[`${zone}:${playerId}`] ??
-            []) as CardInstanceId[];
+
+          // Fall back to a global (unscoped) zone, filtering by owner/controller.
+          // Only use this path if the global zone has entries that actually belong to this player.
+          const globalCards = allZones?.[zone];
+          if (globalCards) {
+            const ownerFiltered = globalCards.filter(
+              (id) =>
+                state._zonesPrivate?.cardIndex?.[id]?.controllerID === playerId ||
+                state._zonesPrivate?.cardIndex?.[id]?.ownerID === playerId,
+            ) as CardInstanceId[];
+            if (ownerFiltered.length > 0) {
+              return ownerFiltered;
+            }
+          }
+
+          // Last resort: use public zone summaries to synthesize a count-only placeholder array.
+          // This handles the case where a private zone (e.g. opponent's hand) is filtered out
+          // of the client-side state view, but we still need to evaluate a count-based condition.
+          // The public zone summary is available on both server and client for all zones.
+          const summary = state._zonesPublic?.zoneSummaries?.[scopedKey];
+          if (summary !== undefined) {
+            const count = summary?.count ?? 0;
+            return Array.from(
+              { length: count },
+              (_, i) => `__summary_${scopedKey}_${i}` as CardInstanceId,
+            );
+          }
+
+          return [];
         },
+        getCardZone: (cardId: CardInstanceId) => state._zonesPrivate?.cardIndex?.[cardId]?.zoneKey,
       },
     },
     cards: {
       getDefinition: getDefinitionByInstanceId,
       require: (cardId: CardInstanceId) => ({
-        meta: state.ctx.zones?.private?.cardMeta?.[cardId] ?? {},
+        meta: state._zonesPrivate?.cardMeta?.[cardId] ?? {},
       }),
       get: (cardId: CardInstanceId) => ({
         definition: getDefinitionByInstanceId(cardId),
@@ -488,16 +743,18 @@ export function hasStaticSelfRestriction(args: {
     return false;
   }
 
-  const controllerId = state.ctx.zones?.private?.cardIndex?.[cardId]?.controllerID as
+  const controllerId = state._zonesPrivate?.cardIndex?.[cardId]?.controllerID as
     | PlayerId
     | undefined;
 
   return (definition.abilities ?? []).some(
     (ability) =>
       ability.type === "static" &&
-      ability.effect.type === "restriction" &&
-      ability.effect.target === "SELF" &&
-      ability.effect.restriction === restriction &&
+      staticEffectContainsRestriction({
+        effect: ability.effect,
+        restriction,
+        target: "SELF",
+      }) &&
       evaluateStaticCondition({
         condition: ability.condition,
         state,
@@ -506,6 +763,75 @@ export function hasStaticSelfRestriction(args: {
         getDefinitionByInstanceId,
       }),
   );
+}
+
+/**
+ * Check whether a named ability on a target card is suppressed by a
+ * `suppress-ability` static effect from another card in play.
+ *
+ * @example Angela - Night Warrior: "Your Gargoyle characters lose the Stone by Day ability."
+ */
+function isAbilitySuppressed(args: {
+  state: StaticAbilityState;
+  targetCardId: CardInstanceId;
+  abilityName: string;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+}): boolean {
+  const { state, targetCardId, abilityName, getDefinitionByInstanceId } = args;
+
+  for (const suppressorId of Object.keys(
+    state._zonesPrivate?.cardIndex ?? {},
+  ) as CardInstanceId[]) {
+    if (!isCardInPlay(state, suppressorId)) {
+      continue;
+    }
+
+    const suppressorDef = getDefinitionByInstanceId(suppressorId);
+    if (!suppressorDef) {
+      continue;
+    }
+
+    const controllerId = state._zonesPrivate?.cardIndex?.[suppressorId]?.controllerID as
+      | PlayerId
+      | undefined;
+
+    for (const ability of suppressorDef.abilities ?? []) {
+      if (
+        ability.type !== "static" ||
+        ability.effect.type !== "suppress-ability" ||
+        ability.effect.abilityName !== abilityName
+      ) {
+        continue;
+      }
+
+      if (
+        !evaluateStaticCondition({
+          condition: ability.condition,
+          state,
+          controllerId,
+          sourceId: suppressorId,
+          getDefinitionByInstanceId,
+        })
+      ) {
+        continue;
+      }
+
+      if (
+        matchesStaticAbilityTarget({
+          state,
+          target: ability.effect.target,
+          sourceId: suppressorId,
+          targetCardId,
+          controllerId,
+          getDefinitionByInstanceId,
+        })
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 export function hasStaticCardRestriction(args: {
@@ -519,9 +845,7 @@ export function hasStaticCardRestriction(args: {
     return false;
   }
 
-  for (const sourceId of Object.keys(
-    state.ctx.zones?.private?.cardIndex ?? {},
-  ) as CardInstanceId[]) {
+  for (const sourceId of Object.keys(state._zonesPrivate?.cardIndex ?? {}) as CardInstanceId[]) {
     if (!isCardInPlay(state, sourceId)) {
       continue;
     }
@@ -531,31 +855,161 @@ export function hasStaticCardRestriction(args: {
       continue;
     }
 
-    const controllerId = state.ctx.zones?.private?.cardIndex?.[sourceId]?.controllerID as
+    const controllerId = state._zonesPrivate?.cardIndex?.[sourceId]?.controllerID as
       | PlayerId
       | undefined;
 
-    const matches = (sourceDefinition.abilities ?? []).some(
-      (ability) =>
-        ability.type === "static" &&
-        ability.effect.type === "restriction" &&
-        ability.effect.restriction === restriction &&
-        matchesStaticAbilityTarget({
+    const matches = (sourceDefinition.abilities ?? []).some((ability) => {
+      if (
+        ability.type !== "static" ||
+        !staticEffectAppliesCardRestriction({
+          effect: ability.effect,
+          restriction,
+          state,
+          sourceId,
+          targetCardId: cardId,
+          controllerId,
+          getDefinitionByInstanceId,
+        })
+      ) {
+        return false;
+      }
+
+      if (
+        !evaluateStaticCondition({
+          condition: ability.condition,
+          state,
+          controllerId,
+          sourceId,
+          getDefinitionByInstanceId,
+        })
+      ) {
+        return false;
+      }
+
+      // Check if this ability is suppressed by another card (e.g., ETERNAL NIGHT)
+      if (
+        ability.name &&
+        isAbilitySuppressed({
+          state,
+          targetCardId: cardId,
+          abilityName: ability.name,
+          getDefinitionByInstanceId,
+        })
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
+    if (matches) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function hasStaticChallengerFilteredRestriction(args: {
+  state: StaticAbilityState;
+  cardId: CardInstanceId;
+  attackerId?: CardInstanceId;
+  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+}): boolean {
+  const { state, cardId, attackerId, getDefinitionByInstanceId } = args;
+  if (!isCardInPlay(state, cardId) || !getDefinitionByInstanceId) {
+    return false;
+  }
+
+  const attackerDefinition = attackerId ? getDefinitionByInstanceId(attackerId) : undefined;
+  const attackerCost =
+    attackerDefinition && typeof attackerDefinition.cost === "number"
+      ? attackerDefinition.cost
+      : undefined;
+  const attackerDamage =
+    typeof attackerId === "string"
+      ? Number(state._zonesPrivate?.cardMeta?.[attackerId]?.damage ?? 0)
+      : 0;
+
+  for (const sourceId of Object.keys(state._zonesPrivate?.cardIndex ?? {}) as CardInstanceId[]) {
+    if (!isCardInPlay(state, sourceId)) {
+      continue;
+    }
+
+    const sourceDefinition = getDefinitionByInstanceId(sourceId);
+    if (!sourceDefinition) {
+      continue;
+    }
+
+    const controllerId = state._zonesPrivate?.cardIndex?.[sourceId]?.controllerID as
+      | PlayerId
+      | undefined;
+
+    const matches = (sourceDefinition.abilities ?? []).some((ability) => {
+      if (
+        ability.type !== "static" ||
+        ability.effect.type !== "restriction" ||
+        ability.effect.restriction !== "cant-be-challenged"
+      ) {
+        return false;
+      }
+
+      if (
+        !matchesStaticAbilityTarget({
           state,
           target: ability.effect.target,
           sourceId,
           targetCardId: cardId,
           controllerId,
           getDefinitionByInstanceId,
-        }) &&
-        evaluateStaticCondition({
+        })
+      ) {
+        return false;
+      }
+
+      if (
+        !evaluateStaticCondition({
           condition: ability.condition,
           state,
           controllerId,
           sourceId,
           getDefinitionByInstanceId,
-        }),
-    );
+        })
+      ) {
+        return false;
+      }
+
+      const challengerFilter = ability.effect.challengerFilter;
+      if (!challengerFilter) {
+        return true;
+      }
+
+      switch (challengerFilter.type) {
+        case "cost-comparison":
+          if (typeof attackerCost !== "number") {
+            return false;
+          }
+          return compareLegacyNumbers(
+            attackerCost,
+            challengerFilter.operator,
+            challengerFilter.value,
+          );
+        case "has-classification":
+          if (
+            !isClassification(challengerFilter.classification) ||
+            !Array.isArray(attackerDefinition?.classifications)
+          ) {
+            return false;
+          }
+
+          return attackerDefinition.classifications.includes(challengerFilter.classification);
+        case "is-damaged":
+          return attackerDamage > 0;
+        default:
+          return false;
+      }
+    });
 
     if (matches) {
       return true;
@@ -579,14 +1033,19 @@ export function resolveStaticVariableAmount(args: {
 
   switch (amount.type) {
     case "classification-character-count":
-      return Object.keys(state.ctx.zones?.private?.cardIndex ?? {}).reduce((total, cardId) => {
+      return Object.keys(state._zonesPrivate?.cardIndex ?? {}).reduce((total, cardId) => {
         const candidateId = cardId as CardInstanceId;
         if (!isCardInPlay(state, candidateId)) {
           return total;
         }
 
-        const candidateControllerId = state.ctx.zones?.private?.cardIndex?.[candidateId]
-          ?.controllerID as PlayerId | undefined;
+        if (amount.excludeSelf && sourceId && candidateId === sourceId) {
+          return total;
+        }
+
+        const candidateControllerId = state._zonesPrivate?.cardIndex?.[candidateId]?.controllerID as
+          | PlayerId
+          | undefined;
         if (amount.controller === "you" && candidateControllerId !== controllerId) {
           return total;
         }
@@ -606,8 +1065,37 @@ export function resolveStaticVariableAmount(args: {
           : total;
       }, 0);
 
+    case "name-character-count":
+      return Object.keys(state._zonesPrivate?.cardIndex ?? {}).reduce((total, cardId) => {
+        const candidateId = cardId as CardInstanceId;
+        if (!isCardInPlay(state, candidateId)) {
+          return total;
+        }
+
+        if (amount.excludeSelf && sourceId && candidateId === sourceId) {
+          return total;
+        }
+
+        const candidateControllerId = state._zonesPrivate?.cardIndex?.[candidateId]?.controllerID as
+          | PlayerId
+          | undefined;
+        if (amount.controller === "you" && candidateControllerId !== controllerId) {
+          return total;
+        }
+        if (amount.controller === "opponent" && candidateControllerId === controllerId) {
+          return total;
+        }
+
+        const definition = getDefinitionByInstanceId?.(candidateId);
+        if (definition?.cardType !== "character") {
+          return total;
+        }
+
+        return cardHasName(definition, amount.name) ? total + 1 : total;
+      }, 0);
+
     case "filtered-count":
-      return Object.keys(state.ctx.zones?.private?.cardIndex ?? {}).reduce((total, cardId) => {
+      return Object.keys(state._zonesPrivate?.cardIndex ?? {}).reduce((total, cardId) => {
         const candidateId = cardId as CardInstanceId;
         const zoneKey = getCardZoneKey(state, candidateId);
         const zone = zoneKey?.split(":")[0];
@@ -618,10 +1106,8 @@ export function resolveStaticVariableAmount(args: {
 
         const comparisonPlayerId =
           zone === "play"
-            ? (state.ctx.zones?.private?.cardIndex?.[candidateId]?.controllerID as
-                | PlayerId
-                | undefined)
-            : (state.ctx.zones?.private?.cardIndex?.[candidateId]?.ownerID as PlayerId | undefined);
+            ? (state._zonesPrivate?.cardIndex?.[candidateId]?.controllerID as PlayerId | undefined)
+            : (state._zonesPrivate?.cardIndex?.[candidateId]?.ownerID as PlayerId | undefined);
         if (amount.owner === "you" && comparisonPlayerId !== controllerId) {
           return total;
         }
@@ -650,7 +1136,7 @@ export function resolveStaticVariableAmount(args: {
                 return false;
               }
               return (
-                (state.ctx.zones?.private?.cardMeta?.[candidateId]?.atLocationId as
+                (state._zonesPrivate?.cardMeta?.[candidateId]?.atLocationId as
                   | CardInstanceId
                   | undefined) === sourceId
               );
@@ -659,22 +1145,62 @@ export function resolveStaticVariableAmount(args: {
               return typeof filter.classification === "string"
                 ? (definition.classifications ?? []).includes(filter.classification as never)
                 : false;
+            case "has-name":
+              return typeof filter.name === "string" ? cardHasName(definition, filter.name) : false;
+            case "exerted":
+              return (
+                (state._zonesPrivate?.cardMeta?.[candidateId]?.state as string | undefined) ===
+                "exerted"
+              );
+            case "status": {
+              const damage = Number(state._zonesPrivate?.cardMeta?.[candidateId]?.damage ?? 0);
+              if (filter.status === "damaged") {
+                return damage > 0;
+              }
+              if (filter.status === "undamaged") {
+                return damage === 0;
+              }
+              return false;
+            }
+            case "song":
+              return definition.cardType === "action" && definition.actionSubtype === "song";
             default:
               return false;
           }
         });
 
-        return matchesFilters ? total + 1 : total;
+        const increment = typeof amount.multiplier === "number" ? amount.multiplier : 1;
+        return matchesFilters ? total + increment : total;
       }, 0);
+    case "clamp": {
+      const resolveOperand = (operand: typeof amount.value): number => {
+        if (typeof operand === "number") {
+          return operand;
+        }
+        return resolveStaticVariableAmount({
+          amount: operand,
+          state,
+          controllerId,
+          sourceId,
+          getDefinitionByInstanceId,
+        });
+      };
+      const rawValue = resolveOperand(amount.value);
+      const maxValue = resolveOperand(amount.max);
+      const minValue = amount.min === undefined ? 0 : resolveOperand(amount.min);
+      const resolvedMax = Math.max(minValue, maxValue);
+      return Math.max(minValue, Math.min(rawValue, resolvedMax));
+    }
     case "characters-in-play":
-      return Object.keys(state.ctx.zones?.private?.cardIndex ?? {}).reduce((total, cardId) => {
+      return Object.keys(state._zonesPrivate?.cardIndex ?? {}).reduce((total, cardId) => {
         const candidateId = cardId as CardInstanceId;
         if (!isCardInPlay(state, candidateId)) {
           return total;
         }
 
-        const candidateControllerId = state.ctx.zones?.private?.cardIndex?.[candidateId]
-          ?.controllerID as PlayerId | undefined;
+        const candidateControllerId = state._zonesPrivate?.cardIndex?.[candidateId]?.controllerID as
+          | PlayerId
+          | undefined;
         if (amount.controller === "you" && candidateControllerId !== controllerId) {
           return total;
         }
@@ -701,12 +1227,12 @@ export function hasStaticPlayerRestriction(args: {
     return false;
   }
 
-  for (const cardId of Object.keys(state.ctx.zones?.private?.cardIndex ?? {}) as CardInstanceId[]) {
+  for (const cardId of Object.keys(state._zonesPrivate?.cardIndex ?? {}) as CardInstanceId[]) {
     if (!isCardInPlay(state, cardId)) {
       continue;
     }
 
-    const controllerId = state.ctx.zones?.private?.cardIndex?.[cardId]?.controllerID as
+    const controllerId = state._zonesPrivate?.cardIndex?.[cardId]?.controllerID as
       | PlayerId
       | undefined;
     if (controllerId !== playerId) {
@@ -721,9 +1247,11 @@ export function hasStaticPlayerRestriction(args: {
     const matches = (definition.abilities ?? []).some(
       (ability) =>
         ability.type === "static" &&
-        ability.effect.type === "restriction" &&
-        ability.effect.target === "CONTROLLER" &&
-        ability.effect.restriction === restriction &&
+        staticEffectAppliesPlayerRestriction({
+          effect: ability.effect,
+          restriction,
+          target: "CONTROLLER",
+        }) &&
         evaluateStaticCondition({
           condition: ability.condition,
           state,
@@ -732,6 +1260,73 @@ export function hasStaticPlayerRestriction(args: {
           getDefinitionByInstanceId,
         }),
     );
+
+    if (matches) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Check whether an opponent's in-play card has a static ability that restricts
+ * the given player (i.e. target is "OPPONENTS") for the specified restriction,
+ * and that the ability's conditions are currently met.
+ *
+ * @example Tiana - Celebrating Princess: "While this character is exerted and
+ * you have no cards in your hand, opponents can't play actions."
+ */
+export function hasOpponentStaticPlayRestriction(args: {
+  state: StaticAbilityState;
+  playerId: PlayerId;
+  restriction: string;
+  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+}): boolean {
+  const { state, playerId, restriction, getDefinitionByInstanceId } = args;
+  if (!getDefinitionByInstanceId) {
+    return false;
+  }
+
+  for (const cardId of Object.keys(state._zonesPrivate?.cardIndex ?? {}) as CardInstanceId[]) {
+    if (!isCardInPlay(state, cardId)) {
+      continue;
+    }
+
+    const controllerId = state._zonesPrivate?.cardIndex?.[cardId]?.controllerID as
+      | PlayerId
+      | undefined;
+    // Only consider cards controlled by opponents of the player we are checking
+    if (!controllerId || controllerId === playerId) {
+      continue;
+    }
+
+    const definition = getDefinitionByInstanceId(cardId);
+    if (!definition) {
+      continue;
+    }
+
+    const matches = (definition.abilities ?? []).some((ability) => {
+      if (ability.type !== "static") {
+        return false;
+      }
+      const { effect } = ability;
+      const hasOpponentRestriction =
+        effect.type === "restriction" &&
+        effect.restriction === restriction &&
+        effect.target === "OPPONENTS";
+      if (!hasOpponentRestriction) {
+        return false;
+      }
+      const condResult = evaluateStaticCondition({
+        condition: ability.condition,
+        state,
+        controllerId,
+        sourceId: cardId,
+        getDefinitionByInstanceId,
+      });
+      return condResult;
+    });
 
     if (matches) {
       return true;
@@ -754,9 +1349,7 @@ export function getStaticPropertyModifierTotal(args: {
 
   let total = 0;
 
-  for (const sourceId of Object.keys(
-    state.ctx.zones?.private?.cardIndex ?? {},
-  ) as CardInstanceId[]) {
+  for (const sourceId of Object.keys(state._zonesPrivate?.cardIndex ?? {}) as CardInstanceId[]) {
     if (!isCardInPlay(state, sourceId)) {
       continue;
     }
@@ -766,7 +1359,7 @@ export function getStaticPropertyModifierTotal(args: {
       continue;
     }
 
-    const controllerId = state.ctx.zones?.private?.cardIndex?.[sourceId]?.controllerID as
+    const controllerId = state._zonesPrivate?.cardIndex?.[sourceId]?.controllerID as
       | PlayerId
       | undefined;
 
@@ -821,7 +1414,10 @@ export function getGrantedActivatedAbilities(args: {
     return [];
   }
 
-  const granted: Array<{ ability: ActivatedAbilityDefinition; sourceId: CardInstanceId }> = [];
+  const granted: Array<{
+    ability: ActivatedAbilityDefinition;
+    sourceId: CardInstanceId;
+  }> = [];
   const cardDefinition = getDefinitionByInstanceId(cardId);
 
   for (const ability of cardDefinition?.abilities ?? []) {
@@ -852,9 +1448,7 @@ export function getGrantedActivatedAbilities(args: {
     }
   }
 
-  for (const sourceId of Object.keys(
-    state.ctx.zones?.private?.cardIndex ?? {},
-  ) as CardInstanceId[]) {
+  for (const sourceId of Object.keys(state._zonesPrivate?.cardIndex ?? {}) as CardInstanceId[]) {
     if (!isCardInPlay(state, sourceId)) {
       continue;
     }
@@ -864,7 +1458,7 @@ export function getGrantedActivatedAbilities(args: {
       continue;
     }
 
-    const controllerId = state.ctx.zones?.private?.cardIndex?.[sourceId]?.controllerID as
+    const controllerId = state._zonesPrivate?.cardIndex?.[sourceId]?.controllerID as
       | PlayerId
       | undefined;
 
@@ -922,6 +1516,55 @@ export function getGrantedActivatedAbilities(args: {
           sourceId,
         });
       }
+    }
+
+    for (const ability of sourceDefinition.abilities ?? []) {
+      if (ability.type !== "static" || ability.effect.type !== "grant-ability") {
+        continue;
+      }
+
+      if (
+        !evaluateStaticCondition({
+          condition: ability.condition,
+          state,
+          controllerId,
+          sourceId,
+          getDefinitionByInstanceId,
+        })
+      ) {
+        continue;
+      }
+
+      if (
+        !matchesStaticAbilityTarget({
+          state,
+          target: ability.effect.target ?? "SELF",
+          sourceId,
+          targetCardId: cardId,
+          controllerId,
+          getDefinitionByInstanceId,
+        })
+      ) {
+        continue;
+      }
+
+      const grantedAbility = ability.effect.ability;
+      if (
+        !grantedAbility ||
+        typeof grantedAbility !== "object" ||
+        Array.isArray(grantedAbility) ||
+        grantedAbility.type !== "activated"
+      ) {
+        continue;
+      }
+
+      granted.push({
+        ability: {
+          ...grantedAbility,
+          id: grantedAbility.id ?? `${sourceId}-granted-${granted.length}`,
+        } as ActivatedAbilityDefinition,
+        sourceId,
+      });
     }
   }
 
@@ -1006,4 +1649,34 @@ export function getSelfStaticCostReductionAmount(args: {
 
     return total + Math.max(0, effectAmount);
   }, 0);
+}
+
+/**
+ * Converts a full match state (with `ctx.zones.private`) to the flattened
+ * `StaticAbilityState` shape expected by static ability utility functions.
+ *
+ * Use this when calling `getGrantedActivatedAbilities` and similar functions
+ * from code that holds the full authoritative match state rather than a
+ * `FrameworkStateSnapshot`.
+ */
+export function toStaticAbilityState(matchState: {
+  readonly ctx: {
+    readonly priority?: { readonly holder?: string };
+    readonly status?: { readonly turn?: number };
+    readonly zones: {
+      readonly private: {
+        readonly cardIndex?: Record<string, unknown>;
+        readonly cardMeta?: Record<string, unknown>;
+        readonly zoneCards?: Record<string, readonly string[] | undefined>;
+      };
+    };
+  };
+  readonly G?: unknown;
+}): StaticAbilityState {
+  return {
+    priority: matchState.ctx.priority,
+    status: matchState.ctx.status,
+    _zonesPrivate: matchState.ctx.zones.private as StaticAbilityState["_zonesPrivate"],
+    G: matchState.G as StaticAbilityState["G"],
+  };
 }

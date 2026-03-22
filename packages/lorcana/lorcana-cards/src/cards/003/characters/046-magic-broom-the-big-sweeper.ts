@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicBroomTheBigSweeperI18n } from "./046-magic-broom-the-big-sweeper.i18n";
 
 export const magicBroomTheBigSweeper: CharacterCard = {
   id: "W8m",
@@ -7,48 +8,6 @@ export const magicBroomTheBigSweeper: CharacterCard = {
   cardType: "character",
   name: "Magic Broom",
   version: "The Big Sweeper",
-  i18n: {
-    en: {
-      name: "Magic Broom",
-      version: "The Big Sweeper",
-      text: [
-        {
-          title: "CLEAN SWEEP",
-          description: "While this character is at a location, it gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Zauberbesen",
-      version: "Der große Feger",
-      text: [
-        {
-          title: "SAUBERER FEGER",
-          description: "Solange dieser Charakter an einem Ort ist, erhält er +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Balais magiques",
-      version: "Le grand nettoyeur",
-      text: [
-        {
-          title: "NETTOYEUR DE GRANDES SURFACES",
-          description: "Tant que ce personnage se trouve sur un lieu, il gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Scopa Magica",
-      version: "Il Grande Spazzino",
-      text: [
-        {
-          title: "PULIZIA PROFONDA",
-          description: "Mentre questo personaggio si trova in un luogo, riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Fantasia",
   set: "003",
@@ -70,9 +29,11 @@ export const magicBroomTheBigSweeper: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Broom"],
-  missingTests: true,
   abilities: [
     {
+      condition: {
+        type: "at-location",
+      },
       effect: {
         modifier: 2,
         stat: "strength",
@@ -80,8 +41,10 @@ export const magicBroomTheBigSweeper: CharacterCard = {
         type: "modify-stat",
       },
       id: "xj7-1",
+      name: "CLEAN SWEEP",
       text: "CLEAN SWEEP While this character is at a location, it gets +2 {S}.",
       type: "static",
     },
   ],
+  i18n: magicBroomTheBigSweeperI18n,
 };

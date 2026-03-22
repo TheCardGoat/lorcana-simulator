@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kronkHeadOfSecurityI18n } from "./185-kronk-head-of-security.i18n";
 
 export const kronkHeadOfSecurity: CharacterCard = {
   id: "qAr",
@@ -7,37 +8,6 @@ export const kronkHeadOfSecurity: CharacterCard = {
   cardType: "character",
   name: "Kronk",
   version: "Head of Security",
-  i18n: {
-    en: {
-      name: "Kronk",
-      version: "Head of Security",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "ARE YOU ON THE LIST?",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, you may play a character with cost 5 or less for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Kronk",
-      version: "Sicherheitschef",
-      text: "Gestaltwandel 5 STEHST DU AUF DER LISTE? Jedes Mal, wenn dieser Charakter in deinem Zug durch eine Herausforderung einen anderen Charakter verbannt, darfst du einen Charakter, der 5 oder weniger kostet, kostenlos ausspielen.",
-    },
-    fr: {
-      name: "Kronk",
-      version: "Chef de la sécurité",
-      text: "Alter 5 ÊTES-VOUS SUR LA LISTE? Durant votre tour, chaque fois que ce personnage bannit un autre personnage via un défi, vous pouvez jouer gratuitement un personnage de votre main avec un coût de 5 ou moins.",
-    },
-    it: {
-      name: "Kronk",
-      version: "Capo della Sicurezza",
-      text: "Trasformazione 5 SEI IN LISTA? Durante il tuo turno, ogni volta che questo personaggio esilia un altro personaggio in una sfida, puoi giocare un personaggio con costo 5 o inferiore gratis.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Emperors New Groove",
   set: "005",
@@ -77,6 +47,7 @@ export const kronkHeadOfSecurity: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
+          cardType: "character",
           cost: "free",
           costRestriction: {
             comparison: "less-or-equal",
@@ -91,11 +62,18 @@ export const kronkHeadOfSecurity: CharacterCard = {
       name: "ARE YOU ON THE LIST?",
       text: "ARE YOU ON THE LIST? During your turn, whenever this character banishes another character in a challenge, you may play a character with cost 5 or less for free.",
       trigger: {
-        event: "banish",
-        on: "OPPONENT_CHARACTERS",
+        event: "banish-in-challenge",
+        on: "SELF",
         timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
       },
       type: "triggered",
     },
   ],
+  i18n: kronkHeadOfSecurityI18n,
 };

@@ -13,7 +13,9 @@ import {
   type EnginePendingEffectProjection,
   type CardInstanceId,
   type PlayerId,
+  type FilteredMatchView,
   type MatchState,
+  type MatchRuntimeConfig,
   type GameEngine,
   type CardCatalog,
   type MatchStaticResources,
@@ -24,13 +26,25 @@ import {
   type ZoneId,
   asPlayerIdOptional,
 } from "#core";
+import type {
+  AvailableMove,
+  AvailableMoveId,
+  MoveOption,
+  EffectTargetInfo,
+} from "./available-moves";
 import type { CommandFailure } from "#core";
+import { hasShift, isSong } from "./card-utils";
+import {
+  getShiftRules,
+  getSingerThresholdForInstance,
+  isSongCard,
+  resolveShiftTargetCandidates,
+} from "./runtime-moves/rules/play-card-rules";
 import type { Effect } from "@tcg/lorcana-types";
 import type {
   ActivatedAbilityDefinition,
   BagEffectEntry,
   CardInput,
-  PendingActionEffect,
   LorcanaCard,
   LorcanaCardDefinition,
   LorcanaG,
@@ -40,7 +54,9 @@ import type {
   LorcanaProjectedBagEffect,
   LorcanaProjectedBoardView,
   LorcanaProjectedCard,
+  LorcanaProjectedPendingEffect,
   LorcanaProjectedPendingChoice,
+  PendingActionEffect,
   LorcanaRuntimeMoveInputs,
   LorcanaRuntimeMoveParams,
   LorcanaStaticCard,
@@ -56,11 +72,20 @@ import {
   normalizeBoardPlayerId,
 } from "./engine-initialization";
 import { type PlayCardCostInput, normalizePlayCardCost } from "./lorcana-engine-normalization";
-import { getGrantedActivatedAbilities } from "./runtime-moves/rules/static-ability-utils";
+import {
+  getGrantedActivatedAbilities,
+  toStaticAbilityState,
+} from "./runtime-moves/rules/static-ability-utils";
 import { buildValidationContext } from "./core/runtime/match-runtime.utils";
 import { lorcanaRuntimeConfig } from "./runtime-game";
 import { computeChallengeDamageResult } from "./runtime-moves/rules/challenge-rules";
-import { analyzeEffectTargets } from "./targeting/targeting-service";
+import {
+  analyzeEffectTargets,
+  analyzeResolutionRequirements,
+  analyzeTargetSelectionAvailability,
+  type ActionTargetResolutionContext,
+} from "./targeting/targeting-service";
+import { buildResolutionSelectionContext } from "./runtime-moves/resolution/action-effects/selection-context";
 import { getNextBagResolver } from "./runtime-moves/effects/triggered-abilities";
 import {
   enumerateAutomatedActionsWithAdapter,
@@ -77,11 +102,90 @@ import type {
 } from "./automation";
 import type { DynamicAmountEventSnapshot } from "./types/domain-events";
 
+/**
+ * Checks whether an effect record is an "or"-type effect (has options or choices array).
+ */
+function isOrLikeEffectRecord(
+  effect: unknown,
+): effect is { type: "or"; options?: unknown[]; choices?: unknown[] } {
+  if (!effect || typeof effect !== "object") {
+    return false;
+  }
+  const record = effect as Record<string, unknown>;
+  return record.type === "or";
+}
+
+/**
+ * Counts the number of currently legal options in an "or"-like effect.
+ * Uses lightweight checks available without full PlayCardExecutionContext.
+ * Per CR 6.1.5.2, if only one option is legal, the choice is forced.
+ */
+function countLegalOrOptions(
+  effect: { options?: unknown[]; choices?: unknown[] },
+  chooserId: string,
+  ctx: ActionTargetResolutionContext,
+): number {
+  const options = effect.options ?? effect.choices ?? [];
+  let legalCount = 0;
+  for (const option of options) {
+    if (isOrOptionCurrentlyLegal(option, chooserId, ctx)) {
+      legalCount++;
+    }
+  }
+  return legalCount;
+}
+
+/**
+ * Lightweight legality check for an "or" option.
+ * Handles discard (requires cards in hand) and defaults to legal for other types.
+ * This intentionally stays lenient because callers may not have the full execution
+ * context needed to prove more complex options legal without false negatives.
+ */
+function isOrOptionCurrentlyLegal(
+  option: unknown,
+  chooserId: string,
+  ctx: ActionTargetResolutionContext,
+): boolean {
+  if (!option || typeof option !== "object") {
+    return false;
+  }
+  const record = option as Record<string, unknown>;
+
+  if (record.type === "discard") {
+    const target = record.target;
+    const isControllerTarget = target === "CONTROLLER" || target === "SELF" || target === "you";
+    if (isControllerTarget) {
+      const rawAmount = typeof record.amount === "number" && record.amount > 0 ? record.amount : 1;
+      const handCards = ctx.framework.zones.getCards({
+        zone: "hand",
+        playerId: chooserId,
+      }) as CardInstanceId[];
+      return handCards.length >= rawAmount;
+    }
+  }
+
+  // For sequence effects starting with a discard, check the first step
+  if (record.type === "sequence" || record.type === "then") {
+    const steps = Array.isArray(record.steps)
+      ? record.steps
+      : Array.isArray(record.effects)
+        ? record.effects
+        : [];
+    if (steps.length > 0) {
+      return isOrOptionCurrentlyLegal(steps[0], chooserId, ctx);
+    }
+  }
+
+  // Default: assume legal (conservative — only auto-force when we can confirm illegality)
+  return true;
+}
+
 type CardRef = CardInput;
 type ZoneCounts = Record<"hand" | "deck" | "play" | "inkwell" | "discard", number>;
 type ManualActingPlayerPreference = "active-first" | "scoped-first";
 export type ResolutionExecutionOptions = {
   targets?: CardInput[];
+  playerTargets?: PlayerId | PlayerId[];
   amount?: number;
   namedCard?: string;
   resolveOptional?: boolean;
@@ -99,15 +203,23 @@ export type PlayCardDestinationInput = {
   zone: string;
   cards: CardInput | CardInput[];
 };
+type PlayCardMoveArgs = LorcanaRuntimeMoveParams["playCard"];
+type PlayCardMoveCost = PlayCardMoveArgs["cost"];
+type PlayCardMoveCostParams<TCost extends PlayCardMoveCost> = Omit<
+  Extract<PlayCardMoveArgs, { cost: TCost }>,
+  "cardId" | "cost"
+>;
 export type ActivateAbilityExecutionOptions = {
   ability?: string;
   abilityIndex?: number;
   targets?: CardInput[];
   choiceIndex?: number;
+  preventAutoResolveTriggeredEffects?: boolean;
   costs?: {
     banishCharacters?: CardInput[];
     banishItems?: CardInput[];
     exertCharacters?: CardInput[];
+    exertItems?: CardInput[];
     discardCards?: CardInput[];
   };
 };
@@ -129,111 +241,18 @@ export interface ChallengePreviewResult {
   defenderWouldBeBanished: boolean;
 }
 
-type AutoResolveInspectionNode = {
-  type?: unknown;
-  effect?: unknown;
-  then?: unknown;
-  else?: unknown;
-  ifTrue?: unknown;
-  ifFalse?: unknown;
-  trueEffect?: unknown;
-  falseEffect?: unknown;
-  effects?: unknown[];
-  steps?: unknown[];
-  options?: unknown[];
-  choices?: unknown[];
-  destinations?: unknown[];
-  ordering?: unknown;
-};
-
-type AutoResolveDecisionShape = {
-  hasOptionalDecision: boolean;
-  hasChoiceDecision: boolean;
-  needsNamedCard: boolean;
-  needsDestinations: boolean;
-  requiresOrderedTargets: boolean;
-};
-
-function inspectAutoResolveDecisionShape(effect: Effect | undefined): AutoResolveDecisionShape {
-  const shape: AutoResolveDecisionShape = {
-    hasOptionalDecision: false,
-    hasChoiceDecision: false,
-    needsNamedCard: false,
-    needsDestinations: false,
-    requiresOrderedTargets: false,
-  };
-
-  const visit = (current: unknown): void => {
-    if (!current || typeof current !== "object" || Array.isArray(current)) {
-      return;
-    }
-
-    const node = current as AutoResolveInspectionNode;
-    switch (node.type) {
-      case "optional":
-        shape.hasOptionalDecision = true;
-        break;
-      case "choice":
-      case "or":
-        shape.hasChoiceDecision = true;
-        break;
-      case "name-a-card":
-        shape.needsNamedCard = true;
-        break;
-      case "scry":
-        if ((node.destinations?.length ?? 0) > 0) {
-          shape.needsDestinations = true;
-        }
-        break;
-      case "put-on-bottom":
-        if (node.ordering === "player-choice") {
-          shape.requiresOrderedTargets = true;
-        }
-        break;
-    }
-
-    const nestedEffects = [
-      node.effect,
-      node.then,
-      node.else,
-      node.ifTrue,
-      node.ifFalse,
-      node.trueEffect,
-      node.falseEffect,
-      ...(node.effects ?? []),
-      ...(node.steps ?? []),
-      ...(node.options ?? []),
-      ...(node.choices ?? []),
-    ];
-    for (const nestedEffect of nestedEffects) {
-      visit(nestedEffect);
-    }
-  };
-
-  visit(effect);
-  return shape;
-}
-
-function normalizeResolutionTargets(
-  targets: BagEffectEntry["resolutionInput"]["targets"],
-): Array<CardInstanceId | PlayerId> {
-  if (Array.isArray(targets)) {
-    return [...targets];
-  }
-
-  return typeof targets === "string" ? [targets] : [];
-}
-
 export abstract class LorcanaEngineBase {
-  abstract engine: GameEngine<
-    LorcanaMatchState,
-    LorcanaProjectedBoardView,
-    LorcanaRuntimeMoveInputs
-  >;
+  abstract engine: GameEngine;
   protected players: Player[];
   protected cardInstanceToDefinitionId: Map<string, string>;
-  protected cardCatalog: CardCatalog<LorcanaCard>;
-  staticResources: MatchStaticResources<LorcanaCard>;
+  protected cardCatalog: CardCatalog;
+  staticResources: MatchStaticResources;
+
+  // Perf: getAvailableMoves() is pure for a given stateID — same state always
+  // produces the same result. Caching eliminates redundant O(n×m) validateMove()
+  // calls across all callers (UI refresh, DnD checks, card hover, etc.).
+  private _cachedAvailableMoves: AvailableMove[] | null = null;
+  private _cachedAvailableMovesStateID: number = -1;
 
   protected constructor(init: LorcanaBaseEngineParams) {
     const initialized = initializeLorcanaEngineBase(init);
@@ -276,7 +295,7 @@ export abstract class LorcanaEngineBase {
     return this.enumerateMoves();
   }
 
-  protected getResolvedStaticResources(): MatchStaticResources<LorcanaCard> {
+  protected getResolvedStaticResources(): MatchStaticResources {
     return this.staticResources;
   }
 
@@ -284,7 +303,7 @@ export abstract class LorcanaEngineBase {
     return this.getBoard();
   }
 
-  protected loadStateViaEngine(_state: MatchState<LorcanaG>): void {
+  protected loadStateViaEngine(_state: MatchState): void {
     throw new Error("loadState is not supported by this engine implementation");
   }
 
@@ -299,6 +318,13 @@ export abstract class LorcanaEngineBase {
       );
     }
 
+    if (moveId === "activateAbility") {
+      return (
+        (input as LorcanaRuntimeMoveInputs["activateAbility"]).args
+          .preventAutoResolveTriggeredEffects === true
+      );
+    }
+
     if (moveId === "resolveEffect") {
       const effectId = (input as LorcanaRuntimeMoveInputs["resolveEffect"]).args.effectId;
       const pendingEffect = (this.getState().G.pendingEffects ?? []).find(
@@ -310,54 +336,46 @@ export abstract class LorcanaEngineBase {
     return false;
   }
 
-  private bagEffectNeedsPlayerDecision(bagEffect: BagEffectEntry, playerId: PlayerId): boolean {
-    const shape = inspectAutoResolveDecisionShape(bagEffect.effect as Effect | undefined);
+  private bagEffectNeedsPlayerDecision(
+    bagEffect: BagEffectEntry,
+    playerId: PlayerId,
+    ctx: ActionTargetResolutionContext,
+  ): boolean {
+    const requirements = analyzeResolutionRequirements(bagEffect.effect as Effect | undefined);
+    if (requirements.canAutoResolve) {
+      return false;
+    }
+
+    // CR 6.1.5.2: If an "or" effect has only one currently legal option, the choice is forced
+    // and no player decision is needed — auto-resolve to the only legal branch.
+    if (requirements.requiresChoiceSelection && isOrLikeEffectRecord(bagEffect.effect)) {
+      const legalCount = countLegalOrOptions(bagEffect.effect, bagEffect.chooserId, ctx);
+      if (legalCount <= 1) {
+        return false;
+      }
+    }
+
     if (
-      shape.hasOptionalDecision &&
-      typeof bagEffect.resolutionInput.resolveOptional !== "boolean"
+      requirements.isOptional ||
+      requirements.requiresChoiceSelection ||
+      requirements.requiresNamedCardSelection ||
+      requirements.requiresDestinationSelection ||
+      requirements.requiresOrderedTargetSelection ||
+      requirements.requiresAmountSelection
     ) {
       return true;
     }
-    if (shape.hasChoiceDecision && typeof bagEffect.resolutionInput.choiceIndex !== "number") {
-      return true;
-    }
-    if (
-      shape.needsNamedCard &&
-      (typeof bagEffect.resolutionInput.namedCard !== "string" ||
-        bagEffect.resolutionInput.namedCard.trim().length === 0)
-    ) {
-      return true;
-    }
-    if (shape.needsDestinations && (bagEffect.resolutionInput.destinations?.length ?? 0) === 0) {
-      return true;
-    }
-    if (shape.requiresOrderedTargets) {
+
+    if (!requirements.requiresExplicitTargetSelection) {
       return true;
     }
 
-    const validationContext = buildValidationContext(
-      this.getState() as LorcanaMatchState,
+    return !analyzeTargetSelectionAvailability(
+      bagEffect.effect as Effect | undefined,
       playerId,
-      { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-      lorcanaRuntimeConfig,
-      this.getResolvedStaticResources(),
-      !!this.getState().ctx.status.gameEnded,
-      "preflight",
-    );
-    const analysis = analyzeEffectTargets(
-      bagEffect.effect as Effect,
-      playerId,
-      validationContext,
-      bagEffect.sourceId,
-    );
-    const availableSelectionCount =
-      analysis.cardCandidates.length + analysis.playerCandidates.length;
-    const hasPreselectedTargets =
-      normalizeResolutionTargets(bagEffect.resolutionInput.targets).length > 0;
-
-    return (
-      analysis.requiresExplicitSelection && availableSelectionCount > 0 && !hasPreselectedTargets
-    );
+      ctx,
+      bagEffect.sourceId as CardInstanceId,
+    ).shouldAutoRejectForNoValidTargets;
   }
 
   private getAutoResolvableBagId(playerId: string): string | undefined {
@@ -376,12 +394,16 @@ export abstract class LorcanaEngineBase {
       state as LorcanaMatchState,
       playerId,
       { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-      lorcanaRuntimeConfig,
+      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
       this.getResolvedStaticResources(),
       !!state.ctx.status.gameEnded,
       "preflight",
     );
-    if (getNextBagResolver(validationContext) !== playerId) {
+    if (
+      getNextBagResolver(
+        validationContext as unknown as Parameters<typeof getNextBagResolver>[0],
+      ) !== playerId
+    ) {
       return undefined;
     }
 
@@ -396,7 +418,13 @@ export abstract class LorcanaEngineBase {
     if (!bagEntry) {
       return undefined;
     }
-    if (this.bagEffectNeedsPlayerDecision(bagEntry, playerId as PlayerId)) {
+    if (
+      this.bagEffectNeedsPlayerDecision(
+        bagEntry,
+        playerId as PlayerId,
+        validationContext as unknown as ActionTargetResolutionContext,
+      )
+    ) {
       return undefined;
     }
 
@@ -418,12 +446,14 @@ export abstract class LorcanaEngineBase {
         state as LorcanaMatchState,
         playerId,
         { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-        lorcanaRuntimeConfig,
+        lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
         this.getResolvedStaticResources(),
         !!state.ctx.status.gameEnded,
         "preflight",
       );
-      const nextResolver = getNextBagResolver(validationContext);
+      const nextResolver = getNextBagResolver(
+        validationContext as unknown as Parameters<typeof getNextBagResolver>[0],
+      );
       const bagId = nextResolver ? this.getAutoResolvableBagId(nextResolver) : undefined;
       const scopedPlayerId = this.getScopedPlayerId();
       if (!nextResolver || !bagId || (scopedPlayerId && nextResolver !== scopedPlayerId)) {
@@ -460,7 +490,9 @@ export abstract class LorcanaEngineBase {
     moveId: K,
     input: LorcanaRuntimeMoveInputs[K],
   ): EngineMoveValidationResult {
-    const engineResult = this.validateMoveForPlayerViaEngine(moveId, input, { playerId });
+    const engineResult = this.validateMoveForPlayerViaEngine(moveId, input, {
+      playerId,
+    });
     if (engineResult) {
       return engineResult;
     }
@@ -484,7 +516,10 @@ export abstract class LorcanaEngineBase {
     prevStateID?: number,
     options: { skipAutoBagDrain?: boolean } = {},
   ): CommandResult {
-    const engineResult = this.executeMoveViaEngine(moveId, input, { playerId, prevStateID });
+    const engineResult = this.executeMoveViaEngine(moveId, input, {
+      playerId,
+      prevStateID,
+    });
     const skipAutoBagDrain =
       options.skipAutoBagDrain || this.shouldSkipImmediateAutoBagDrain(moveId, input);
 
@@ -598,7 +633,9 @@ export abstract class LorcanaEngineBase {
         getDefinitionByInstanceId: (cardId) =>
           this.getCardDefinitionByInstanceId(cardId) as LorcanaCard,
         passTurn: (resolvedActorId) =>
-          this.executeMoveInputForPlayer("passTurn", resolvedActorId, { args: {} }),
+          this.executeMoveInputForPlayer("passTurn", resolvedActorId, {
+            args: {},
+          }),
         previewChallenge: (attackerId, defenderId) => this.previewChallenge(attackerId, defenderId),
         state: this.getState(),
         staticResources: this.getResolvedStaticResources(),
@@ -633,7 +670,9 @@ export abstract class LorcanaEngineBase {
         getDefinitionByInstanceId: (cardId) =>
           this.getCardDefinitionByInstanceId(cardId) as LorcanaCard,
         passTurn: (resolvedActorId) =>
-          this.executeMoveInputForPlayer("passTurn", resolvedActorId, { args: {} }),
+          this.executeMoveInputForPlayer("passTurn", resolvedActorId, {
+            args: {},
+          }),
         previewChallenge: (attackerId, defenderId) => this.previewChallenge(attackerId, defenderId),
         state: this.getState(),
         staticResources: this.getResolvedStaticResources(),
@@ -722,6 +761,47 @@ export abstract class LorcanaEngineBase {
     return this.engine.getMoveHistory(limit);
   }
 
+  canUndo(playerId?: string): boolean {
+    const resolvedPlayerId =
+      playerId ?? this.getScopedPlayerId() ?? String(this.getActivePlayer() ?? "");
+    if (!resolvedPlayerId) {
+      return false;
+    }
+
+    return this.engine.canUndo?.(resolvedPlayerId) ?? false;
+  }
+
+  undo(playerId?: string): CommandResult {
+    const resolvedPlayerId =
+      playerId ?? this.getScopedPlayerId() ?? String(this.getActivePlayer() ?? "");
+    if (!resolvedPlayerId) {
+      return this.createErrorResult(
+        "undo requires a player id when used from a non-player-scoped engine.",
+        "PLAYER_ID_REQUIRED",
+      );
+    }
+
+    const wasAccepted = this.engine.undo?.(resolvedPlayerId, this.getStateID()) ?? false;
+    if (!wasAccepted) {
+      return this.createErrorResult("Cannot undo right now.", "UNDO_NOT_AVAILABLE");
+    }
+
+    return {
+      success: true,
+      stateID: this.getStateID(),
+      state: structuredClone(this.getState()) as LorcanaMatchState,
+      patches: [],
+      gameEvents: [],
+      logEntries: [],
+      processedCommand: {
+        commandID: `undo-${resolvedPlayerId}-${Date.now()}`,
+        move: "undo",
+      },
+      animations: [],
+      undoable: false,
+    };
+  }
+
   validateMove<K extends keyof LorcanaRuntimeMoveInputs & string>(
     moveId: K,
     input: LorcanaRuntimeMoveInputs[K],
@@ -734,7 +814,7 @@ export abstract class LorcanaEngineBase {
   }
 
   getBoard(): LorcanaProjectedBoardView {
-    return this.engine.getBoard() as LorcanaProjectedBoardView;
+    return this.engine.getBoard() as unknown as LorcanaProjectedBoardView;
   }
 
   getGameState(): DeepReadonly<LorcanaG> {
@@ -753,7 +833,7 @@ export abstract class LorcanaEngineBase {
     return this.getBoard().activeEffects ?? [];
   }
 
-  getPendingEffects(): EnginePendingEffectProjection[] {
+  getPendingEffects(): LorcanaProjectedPendingEffect[] {
     return this.getBoard().pendingEffects ?? [];
   }
 
@@ -794,12 +874,12 @@ export abstract class LorcanaEngineBase {
   }
 
   hasGameEnded(): boolean {
-    return !!this.engine.getBoard().winner;
+    return !!this.engine.getState().ctx.status.gameEnded;
   }
 
   getGameEndResult() {
     // TODO THIS IS NOT QUITE RIGHT
-    return this.engine.getBoard().winner;
+    return this.engine.getState().ctx.status.winner;
   }
 
   getLore(playerId: string | PlayerId): number {
@@ -957,14 +1037,23 @@ export abstract class LorcanaEngineBase {
     );
   }
 
+  playCardByInstance<TCost extends PlayCardMoveCost>(
+    playerId: string,
+    cardId: CardInstanceId,
+    cost: TCost,
+    costParams?: PlayCardMoveCostParams<TCost>,
+    prevStateID?: number,
+    opts?: { returnProcessedMove?: boolean },
+  ): CommandResult;
   playCardByInstance(
     playerId: string,
     cardId: CardInstanceId,
-    cost: LorcanaRuntimeMoveParams["playCard"]["cost"] = "standard",
-    costParams?: Omit<LorcanaRuntimeMoveParams["playCard"], "cardId" | "cost">,
+    cost: PlayCardMoveCost = "standard",
+    costParams?: PlayCardMoveCostParams<PlayCardMoveCost>,
     prevStateID?: number,
     opts?: { returnProcessedMove?: boolean },
   ): CommandResult {
+    void opts;
     return this.executeMove(
       "playCard",
       playerId,
@@ -972,7 +1061,6 @@ export abstract class LorcanaEngineBase {
         cardId,
         cost,
         ...costParams,
-        returnProcessedMove: opts?.returnProcessedMove,
       } as LorcanaRuntimeMoveParams["playCard"],
       prevStateID,
     );
@@ -1088,10 +1176,10 @@ export abstract class LorcanaEngineBase {
   }
 
   enumerateMoves(): Array<keyof LorcanaRuntimeMoveInputs & string> {
-    return this.engine.enumerateMoves();
+    return this.engine.enumerateMoves() as Array<keyof LorcanaRuntimeMoveInputs & string>;
   }
 
-  loadState(state: MatchState<LorcanaG>): void {
+  loadState(state: MatchState): void {
     this.loadStateViaEngine(state);
   }
 
@@ -1236,11 +1324,15 @@ export abstract class LorcanaEngineBase {
       this.getState() as LorcanaMatchState,
       String(actorId),
       moveInput,
-      lorcanaRuntimeConfig,
+      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
       this.getResolvedStaticResources(),
       this.hasGameEnded(),
     );
-    const result = computeChallengeDamageResult(previewContext, attackerId, defenderId);
+    const result = computeChallengeDamageResult(
+      previewContext as unknown as Parameters<typeof computeChallengeDamageResult>[0],
+      attackerId,
+      defenderId,
+    );
 
     return {
       attackerId,
@@ -1408,7 +1500,9 @@ export abstract class LorcanaEngineBase {
   }
 
   manualShuffleDeck(playerId: PlayerId): CommandResult {
-    return this.executeManualMoveForActingPlayer("manualShuffleDeck", { playerId });
+    return this.executeManualMoveForActingPlayer("manualShuffleDeck", {
+      playerId,
+    });
   }
 
   manualPassTurn(): CommandResult {
@@ -1564,6 +1658,30 @@ export abstract class LorcanaEngineBase {
       }
     }
 
+    const resolvedDestinations: LorcanaRuntimeMoveParams["playCard"]["destinations"] =
+      Array.isArray(opts.destinations) && opts.destinations.length > 0
+        ? opts.destinations.reduce<
+            NonNullable<LorcanaRuntimeMoveParams["playCard"]["destinations"]>
+          >((acc, destination) => {
+            const requestedCards = Array.isArray(destination.cards)
+              ? destination.cards
+              : [destination.cards];
+            let resolvedCards: CardInstanceId[] = [];
+            try {
+              resolvedCards = this.resolveCardInputs(requestedCards);
+            } catch {
+              resolvedCards = [];
+            }
+
+            acc.push({
+              cards: resolvedCards,
+              zone: destination.zone,
+            });
+
+            return acc;
+          }, [])
+        : undefined;
+
     const params: Record<string, unknown> = {};
     if (typeof opts.amount === "number") {
       params.amount = opts.amount;
@@ -1576,6 +1694,14 @@ export abstract class LorcanaEngineBase {
     }
     if (typeof opts.resolveOptional === "boolean") {
       params.resolveOptional = opts.resolveOptional;
+    }
+    if (resolvedDestinations) {
+      params.destinations = resolvedDestinations;
+    }
+    if (opts.playerTargets !== undefined) {
+      params.playerTargets = Array.isArray(opts.playerTargets)
+        ? opts.playerTargets
+        : [opts.playerTargets];
     }
 
     if (!this.enumerateMoves().includes("resolveBag")) {
@@ -1694,7 +1820,9 @@ export abstract class LorcanaEngineBase {
   }
 
   singSong(card: CardInput, singer: CardInput): CommandResult {
-    return this.playCard(card, { cost: { cost: "sing", singer: singer as CardInstanceId } });
+    return this.playCard(card, {
+      cost: { cost: "sing", singer: singer as CardInstanceId },
+    });
   }
 
   playSongTogether(card: CardInput, singers: CardInput[]): CommandResult {
@@ -1771,7 +1899,29 @@ export abstract class LorcanaEngineBase {
     }) as unknown as Record<string, unknown>;
 
     const moveInput = this.composeMoveByFixedArgs("playCard", args);
-    return this.validateMove("playCard", moveInput as LorcanaRuntimeMoveInputs["playCard"]).valid;
+    const isValid = this.validateMove(
+      "playCard",
+      moveInput as LorcanaRuntimeMoveInputs["playCard"],
+    ).valid;
+
+    if (isValid) {
+      return true;
+    }
+
+    // When using "standard" cost and the card is a song,
+    // also check if it can be played by singing (exerting a character).
+    if (cost === "standard") {
+      const cardDef = this.getCardDefinitionByInstanceId(playableCardId) as LorcanaCard;
+      if (isSongCard(cardDef)) {
+        const playerId = this.getScopedPlayerId() ?? String(this.getActivePlayer() ?? "");
+        const singers = this.getAvailableSingersForSong(playableCardId, playerId);
+        if (singers.length > 0) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   protected resolveCardInputs(inputs: CardInput[]): CardInstanceId[] {
@@ -1809,6 +1959,10 @@ export abstract class LorcanaEngineBase {
           .map((singer) => this.resolveCardId(singer))
           .filter((singer): singer is CardInstanceId => Boolean(singer));
         return singers.length === cost.singers.length ? { ...cost, singers } : cost;
+      }
+      case "sacrifice": {
+        const sacrificeTarget = this.resolveCardId(cost.sacrificeTarget);
+        return sacrificeTarget ? { ...cost, sacrificeTarget } : cost;
       }
       default:
         return cost;
@@ -1865,7 +2019,7 @@ export abstract class LorcanaEngineBase {
       (entry): entry is ActivatedAbilityDefinition => entry.type === "activated",
     );
     const grantedAbilities = getGrantedActivatedAbilities({
-      state: this.getAuthoritativeState(),
+      state: toStaticAbilityState(this.getAuthoritativeState()),
       cardId,
       getDefinitionByInstanceId: (instanceId) => this.getCardDefinitionByInstanceId(instanceId),
     }).map((entry) => entry.ability);
@@ -1923,7 +2077,7 @@ export abstract class LorcanaEngineBase {
       (entry): entry is ActivatedAbilityDefinition => entry.type === "activated",
     );
     const grantedAbilities = getGrantedActivatedAbilities({
-      state: this.getAuthoritativeState(),
+      state: toStaticAbilityState(this.getAuthoritativeState()),
       cardId,
       getDefinitionByInstanceId: (instanceId) => this.getCardDefinitionByInstanceId(instanceId),
     }).map((entry) => entry.ability);
@@ -1935,6 +2089,162 @@ export abstract class LorcanaEngineBase {
     );
 
     return activatedAbilities[abilityIndex] ?? null;
+  }
+
+  private getPlayCardTargetSelectionContext(
+    cardId: CardInstanceId,
+    playerId: PlayerId,
+    options?: { allowEmptyCandidates?: boolean },
+  ) {
+    const cardDef = this.getCardDefinitionByInstanceId(cardId) as LorcanaCard;
+    if (cardDef.cardType !== "action" || !this.canPlayCard(cardId)) {
+      return undefined;
+    }
+
+    const availableMoves = this.getAvailableMoves();
+    const hasAlternatePlayMode = availableMoves.some(
+      (move) =>
+        (move.moveId === "shiftCard" || move.moveId === "singCard") &&
+        move.selectableCardIds.some((selectableCardId) => String(selectableCardId) === cardId),
+    );
+    if (hasAlternatePlayMode) {
+      return undefined;
+    }
+
+    const actionAbility = cardDef.abilities?.find(
+      (
+        ability,
+      ): ability is Extract<NonNullable<LorcanaCard["abilities"]>[number], { type: "action" }> =>
+        ability.type === "action" && "effect" in ability,
+    );
+    if (!actionAbility?.effect) {
+      return undefined;
+    }
+
+    const validationContext = buildValidationContext(
+      this.getState() as LorcanaMatchState,
+      String(playerId),
+      { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      this.getResolvedStaticResources(),
+      !!this.getState().ctx.status.gameEnded,
+      "preflight",
+    );
+
+    const selectionContext = buildResolutionSelectionContext({
+      origin: "pending-effect",
+      requestId: `play-card:preview:${cardId}`,
+      sourceCardId: cardId,
+      chooserId: playerId,
+      cardPlayed: {
+        cardId,
+        cardType: "action",
+        costType: "standard",
+        playerId,
+      },
+      effect: actionAbility.effect,
+      resolutionInput: {},
+      ctx: {
+        ...validationContext,
+        playerId,
+      },
+    });
+
+    if (
+      !selectionContext ||
+      selectionContext.kind !== "target-selection" ||
+      selectionContext.playerCandidateIds.length > 0 ||
+      selectionContext.maxSelections !== 1 ||
+      selectionContext.ordered
+    ) {
+      return undefined;
+    }
+
+    const cardCandidateIds = selectionContext.cardCandidateIds.filter((candidateId) => {
+      const zoneKey = validationContext.framework.zones.getCardZone(candidateId);
+      return zoneKey?.split(":")[0] === "play";
+    });
+    if (
+      (!options?.allowEmptyCandidates && cardCandidateIds.length === 0) ||
+      cardCandidateIds.length !== selectionContext.cardCandidateIds.length
+    ) {
+      return undefined;
+    }
+
+    return {
+      ...selectionContext,
+      cardCandidateIds,
+    };
+  }
+
+  hasTargetedPlayCardPreview(card: CardInput): boolean {
+    const cardId = this.resolveCardId(card);
+    if (!cardId) {
+      return false;
+    }
+
+    const ownerId = this.findProjectedCardById(cardId)?.ownerId as PlayerId | undefined;
+    if (!ownerId) {
+      return false;
+    }
+
+    const cardDef = this.getCardDefinitionByInstanceId(cardId) as LorcanaCard;
+    if (cardDef.cardType !== "action" || !this.canPlayCard(cardId)) {
+      return false;
+    }
+
+    const availableMoves = this.getAvailableMoves();
+    const hasAlternatePlayMode = availableMoves.some(
+      (move) =>
+        (move.moveId === "shiftCard" || move.moveId === "singCard") &&
+        move.selectableCardIds.some((selectableCardId) => String(selectableCardId) === cardId),
+    );
+    if (hasAlternatePlayMode) {
+      return false;
+    }
+
+    const actionAbility = cardDef.abilities?.find(
+      (
+        ability,
+      ): ability is Extract<NonNullable<LorcanaCard["abilities"]>[number], { type: "action" }> =>
+        ability.type === "action" && "effect" in ability,
+    );
+    if (!actionAbility?.effect) {
+      return false;
+    }
+
+    const requirements = analyzeResolutionRequirements(actionAbility.effect);
+    if (
+      !requirements.requiresExplicitTargetSelection ||
+      requirements.allowsExplicitEmptyTargetSelection
+    ) {
+      return false;
+    }
+
+    const validationContext = buildValidationContext(
+      this.getState() as LorcanaMatchState,
+      String(ownerId),
+      { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      this.getResolvedStaticResources(),
+      !!this.getState().ctx.status.gameEnded,
+      "preflight",
+    );
+
+    const targetAnalysis = analyzeEffectTargets(
+      actionAbility.effect,
+      ownerId,
+      validationContext,
+      cardId,
+    );
+
+    return (
+      targetAnalysis.requiresExplicitSelection &&
+      targetAnalysis.playerCandidates.length === 0 &&
+      targetAnalysis.maxSelections === 1 &&
+      targetAnalysis.allowedZones.length > 0 &&
+      targetAnalysis.allowedZones.every((zone) => zone === "play")
+    );
   }
 
   isCardUnder(parent: CardInput, child: CardInput): boolean {
@@ -1985,13 +2295,7 @@ export abstract class LorcanaEngineBase {
     if (keyword === "Resist") {
       return (projected.keywordValues?.resist ?? 0) > 0;
     }
-
-    const definition = this.getCardDefinitionByInstanceId(cardInstanceId);
-    return (
-      definition?.abilities?.some(
-        (ability) => ability.type === "keyword" && ability.keyword === keyword,
-      ) ?? false
-    );
+    return false;
   }
 
   getKeywordValue(card: CardInput, keyword: "Challenger" | "Resist"): number | null {
@@ -2317,7 +2621,7 @@ export abstract class LorcanaEngineBase {
     }
 
     const resolvedDestinations: LorcanaRuntimeMoveParams["playCard"]["destinations"] =
-      Array.isArray(opts.destinations) && opts.destinations.length > 0
+      Array.isArray(opts.destinations)
         ? opts.destinations.reduce<
             NonNullable<LorcanaRuntimeMoveParams["playCard"]["destinations"]>
           >((acc, destination) => {
@@ -2331,12 +2635,10 @@ export abstract class LorcanaEngineBase {
               resolvedCards = [];
             }
 
-            if (resolvedCards.length > 0) {
-              acc.push({
-                cards: resolvedCards,
-                zone: destination.zone,
-              });
-            }
+            acc.push({
+              cards: resolvedCards,
+              zone: destination.zone,
+            });
 
             return acc;
           }, [])
@@ -2355,8 +2657,8 @@ export abstract class LorcanaEngineBase {
     if (typeof opts.resolveOptional === "boolean") {
       params.resolveOptional = opts.resolveOptional;
     }
-    if (resolvedDestinations && resolvedDestinations.length > 0) {
-      params.destinations = resolvedDestinations;
+    if (Array.isArray(opts.destinations)) {
+      params.destinations = resolvedDestinations ?? [];
     }
 
     // Build args - only effectId is needed to match the intent
@@ -2508,7 +2810,7 @@ export abstract class LorcanaEngineBase {
       },
     };
 
-    return this.playCardByInstance(
+    const result = this.playCardByInstance(
       String(playerId),
       cardId,
       costString as LorcanaRuntimeMoveParams["playCard"]["cost"],
@@ -2518,6 +2820,33 @@ export abstract class LorcanaEngineBase {
         returnProcessedMove: resolvedOpts?.returnProcessedMove,
       },
     );
+
+    // When standard cost fails for a song card and no explicit cost was specified,
+    // auto-select a singer to sing the song.
+    if (!result.success && costString === "standard" && !resolvedOpts?.cost) {
+      const cardDef = this.getCardDefinitionByInstanceId(cardId) as LorcanaCard;
+      if (isSongCard(cardDef)) {
+        const resolvedPlayerId = String(playerId);
+        const singers = this.getAvailableSingersForSong(cardId, resolvedPlayerId);
+        if (singers.length > 0) {
+          return this.playCardByInstance(
+            resolvedPlayerId,
+            cardId,
+            "sing",
+            {
+              ...costParams,
+              singer: singers[0]!,
+            },
+            undefined,
+            {
+              returnProcessedMove: resolvedOpts?.returnProcessedMove,
+            },
+          );
+        }
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -2780,6 +3109,20 @@ export abstract class LorcanaEngineBase {
       }
     }
 
+    let resolvedExertItemCosts: CardInstanceId[] | undefined;
+    if (resolvedOptions.costs?.exertItems !== undefined) {
+      try {
+        resolvedExertItemCosts = this.resolveCardInputs(resolvedOptions.costs.exertItems);
+      } catch (error) {
+        return this.createErrorResult(
+          error instanceof Error
+            ? error.message
+            : "Failed to resolve activateAbility exert-item costs",
+          "CARD_RESOLVE_FAILED",
+        );
+      }
+    }
+
     let resolvedDiscardCardCosts: CardInstanceId[] | undefined;
     if (resolvedOptions.costs?.discardCards !== undefined) {
       try {
@@ -2808,6 +3151,22 @@ export abstract class LorcanaEngineBase {
       }
     }
 
+    let resolvedBanishCharacterCosts: CardInstanceId[] | undefined;
+    if (resolvedOptions.costs?.banishCharacters !== undefined) {
+      try {
+        resolvedBanishCharacterCosts = this.resolveCardInputs(
+          resolvedOptions.costs.banishCharacters,
+        );
+      } catch (error) {
+        return this.createErrorResult(
+          error instanceof Error
+            ? error.message
+            : "Failed to resolve activateAbility banish-character costs",
+          "CARD_RESOLVE_FAILED",
+        );
+      }
+    }
+
     return this.executeMove("activateAbility", playerId, {
       cardId,
       abilityIndex: resolvedAbility.abilityIndex,
@@ -2815,16 +3174,27 @@ export abstract class LorcanaEngineBase {
       ...(resolvedOptions.choiceIndex !== undefined
         ? { choiceIndex: resolvedOptions.choiceIndex }
         : {}),
+      ...(resolvedOptions.preventAutoResolveTriggeredEffects !== undefined
+        ? { preventAutoResolveTriggeredEffects: resolvedOptions.preventAutoResolveTriggeredEffects }
+        : {}),
       ...(resolvedBanishItemCosts !== undefined ||
+      resolvedBanishCharacterCosts !== undefined ||
       resolvedExertCharacterCosts !== undefined ||
+      resolvedExertItemCosts !== undefined ||
       resolvedDiscardCardCosts !== undefined
         ? {
             costs: {
               ...(resolvedBanishItemCosts !== undefined
                 ? { banishItems: resolvedBanishItemCosts }
                 : {}),
+              ...(resolvedBanishCharacterCosts !== undefined
+                ? { banishCharacters: resolvedBanishCharacterCosts }
+                : {}),
               ...(resolvedExertCharacterCosts !== undefined
                 ? { exertCharacters: resolvedExertCharacterCosts }
+                : {}),
+              ...(resolvedExertItemCosts !== undefined
+                ? { exertItems: resolvedExertItemCosts }
                 : {}),
               ...(resolvedDiscardCardCosts !== undefined
                 ? { discardCards: resolvedDiscardCardCosts }
@@ -2908,5 +3278,490 @@ export abstract class LorcanaEngineBase {
     return typeof params.playerId === "string" && params.playerId.length > 0
       ? params.playerId
       : null;
+  }
+
+  // ============================================================================
+  // Available Moves API — Structured move enumeration for UI consumption
+  // ============================================================================
+
+  /**
+   * Layer 1: Returns all available moves and which cards can start each move.
+   * playCard is split into playCard (standard/free), singCard, and shiftCard.
+   */
+  getAvailableMoves(): AvailableMove[] {
+    const currentStateID = this.getStateID();
+    if (this._cachedAvailableMoves && this._cachedAvailableMovesStateID === currentStateID) {
+      return this._cachedAvailableMoves;
+    }
+
+    const clientPlayerId = this.getClientPlayerId();
+    if (!clientPlayerId) {
+      return [];
+    }
+
+    const legalMoveIds = this.enumerateMoves();
+    const board = this.getBoard();
+    const playerBoard = board.players[clientPlayerId];
+    if (!playerBoard) {
+      return [];
+    }
+
+    const moves: AvailableMove[] = [];
+
+    for (const moveId of legalMoveIds) {
+      if (moveId === "alterHand") {
+        continue;
+      }
+      if (moveId.startsWith("manual") || moveId === "resolveBag" || moveId === "resolveEffect") {
+        continue;
+      }
+
+      if (moveId === "playCard") {
+        const playCardIds: CardInstanceId[] = [];
+        const singCardIds: CardInstanceId[] = [];
+        const shiftCardIds: CardInstanceId[] = [];
+
+        for (const cardId of playerBoard.hand) {
+          const id = cardId as CardInstanceId;
+          const definition = this.getCardDefinitionByInstanceId(id);
+          const card = definition as LorcanaCard;
+
+          // Check standard/free play (includes songs paid with ink)
+          if (this.canPlayCard(id)) {
+            playCardIds.push(id);
+          }
+
+          // Check shift — need at least one valid shift target on board
+          if (hasShift(definition)) {
+            const shiftRules = getShiftRules(card);
+            if (shiftRules) {
+              const playCandidates = playerBoard.play.map((pid) => pid as CardInstanceId);
+              const shiftTargets = resolveShiftTargetCandidates(
+                shiftRules,
+                playCandidates,
+                (cid) => this.getCardDefinitionByInstanceId(cid) as LorcanaCard,
+              );
+              const hasValidShiftTarget = shiftTargets.some((targetId) =>
+                this.canPlayCard(id, {
+                  cost: { cost: "shift", shiftTarget: targetId },
+                }),
+              );
+              if (hasValidShiftTarget) {
+                shiftCardIds.push(id);
+              }
+            }
+          }
+
+          // Check sing — songs can be sung by characters
+          if (isSongCard(card)) {
+            // We check if ANY singer could sing this song
+            const singerCandidates = this.getAvailableSingersForSong(id, clientPlayerId);
+            if (singerCandidates.length > 0) {
+              singCardIds.push(id);
+            }
+          }
+        }
+
+        // Check limbo cards that can be played via play-from-under permissions
+        const currentTurnForLimbo = this.getState().ctx.status.turn ?? 1;
+        const pendingPlayFromUnder = this.getState().G.turnMetadata?.pendingPlayFromUnder ?? [];
+        const validPermissions = pendingPlayFromUnder.filter(
+          (p) => p.expiresAtTurn >= currentTurnForLimbo && p.controllerId === clientPlayerId,
+        );
+        for (const permission of validPermissions) {
+          const sourceItemCard = this.getBoard().cards[String(permission.sourceItemId)];
+          const underCardIds = Array.isArray(sourceItemCard?.cardsUnder)
+            ? (sourceItemCard.cardsUnder as CardInstanceId[])
+            : [];
+          for (const underCardId of underCardIds) {
+            if (!playCardIds.includes(underCardId) && this.canPlayCard(underCardId)) {
+              playCardIds.push(underCardId);
+            }
+          }
+        }
+
+        if (playCardIds.length > 0) {
+          moves.push({ moveId: "playCard", selectableCardIds: playCardIds });
+        }
+        if (singCardIds.length > 0) {
+          moves.push({ moveId: "singCard", selectableCardIds: singCardIds });
+        }
+        if (shiftCardIds.length > 0) {
+          moves.push({ moveId: "shiftCard", selectableCardIds: shiftCardIds });
+        }
+        continue;
+      }
+
+      if (moveId === "putCardIntoInkwell") {
+        const inkableCardIds: CardInstanceId[] = [];
+        for (const cardId of playerBoard.hand) {
+          const id = cardId as CardInstanceId;
+          if (
+            this.validateMove("putCardIntoInkwell", {
+              args: { cardId: id },
+            }).valid
+          ) {
+            inkableCardIds.push(id);
+          }
+        }
+        if (inkableCardIds.length > 0) {
+          moves.push({
+            moveId: "putCardIntoInkwell",
+            selectableCardIds: inkableCardIds,
+          });
+        }
+        continue;
+      }
+
+      if (moveId === "quest") {
+        const questableCardIds: CardInstanceId[] = [];
+        for (const cardId of playerBoard.play) {
+          const id = cardId as CardInstanceId;
+          if (this.validateMove("quest", { args: { cardId: id } }).valid) {
+            questableCardIds.push(id);
+          }
+        }
+        if (questableCardIds.length > 0) {
+          moves.push({ moveId: "quest", selectableCardIds: questableCardIds });
+        }
+        continue;
+      }
+
+      if (moveId === "challenge") {
+        const challengerCardIds: CardInstanceId[] = [];
+        const opponentPlayerIds = board.playerOrder.filter((pid) => pid !== clientPlayerId);
+
+        for (const cardId of playerBoard.play) {
+          const attackerId = cardId as CardInstanceId;
+          // Check if this card can challenge ANY opponent card
+          const canChallengeAny = opponentPlayerIds.some((opponentId) => {
+            const opponentBoard = board.players[opponentId];
+            if (!opponentBoard) return false;
+            return opponentBoard.play.some(
+              (defenderId) =>
+                this.validateMove("challenge", {
+                  args: {
+                    attackerId,
+                    defenderId: defenderId as CardInstanceId,
+                  },
+                }).valid,
+            );
+          });
+          if (canChallengeAny) {
+            challengerCardIds.push(attackerId);
+          }
+        }
+        if (challengerCardIds.length > 0) {
+          moves.push({
+            moveId: "challenge",
+            selectableCardIds: challengerCardIds,
+          });
+        }
+        continue;
+      }
+
+      if (moveId === "moveCharacterToLocation") {
+        const movableCharacterIds: CardInstanceId[] = [];
+        for (const cardId of playerBoard.play) {
+          const id = cardId as CardInstanceId;
+          const definition = this.getCardDefinitionByInstanceId(id);
+          if (definition.cardType !== "character") continue;
+
+          // Check if this character can move to ANY location
+          const canMoveToAny = playerBoard.play.some((locationId) => {
+            const locDef = this.getCardDefinitionByInstanceId(locationId as CardInstanceId);
+            if (locDef.cardType !== "location") return false;
+            return this.validateMove("moveCharacterToLocation", {
+              args: {
+                characterId: id,
+                locationId: locationId as CardInstanceId,
+              },
+            }).valid;
+          });
+          if (canMoveToAny) {
+            movableCharacterIds.push(id);
+          }
+        }
+        if (movableCharacterIds.length > 0) {
+          moves.push({
+            moveId: "moveCharacterToLocation",
+            selectableCardIds: movableCharacterIds,
+          });
+        }
+        continue;
+      }
+
+      if (moveId === "activateAbility") {
+        const activatableCardIds: CardInstanceId[] = [];
+        for (const cardId of playerBoard.play) {
+          const id = cardId as CardInstanceId;
+          const definition = this.getCardDefinitionByInstanceId(id);
+          const abilityEntryCount = (definition.abilities ?? []).filter(
+            (a: { type: string }) => a.type === "activated",
+          ).length;
+          const grantedCount = getGrantedActivatedAbilities({
+            state: toStaticAbilityState(this.getAuthoritativeState()),
+            cardId: id,
+            getDefinitionByInstanceId: (instanceId) =>
+              this.getCardDefinitionByInstanceId(instanceId),
+          }).length;
+          const totalAbilities = abilityEntryCount + grantedCount;
+
+          for (let abilityIndex = 0; abilityIndex < totalAbilities; abilityIndex++) {
+            if (
+              this.validateMove("activateAbility", {
+                args: { cardId: id, abilityIndex },
+              }).valid
+            ) {
+              activatableCardIds.push(id);
+              break; // At least one ability is activatable
+            }
+          }
+        }
+        if (activatableCardIds.length > 0) {
+          moves.push({
+            moveId: "activateAbility",
+            selectableCardIds: activatableCardIds,
+          });
+        }
+        continue;
+      }
+
+      if (moveId === "passTurn") {
+        moves.push({ moveId: "passTurn", selectableCardIds: [] });
+        continue;
+      }
+
+      if (moveId === "questWithAll") {
+        moves.push({ moveId: "questWithAll", selectableCardIds: [] });
+        continue;
+      }
+
+      if (moveId === "chooseWhoGoesFirst") {
+        moves.push({ moveId: "chooseWhoGoesFirst", selectableCardIds: [] });
+        continue;
+      }
+
+      if (moveId === "concede") {
+        moves.push({ moveId: "concede", selectableCardIds: [] });
+        continue;
+      }
+    }
+
+    this._cachedAvailableMoves = moves;
+    this._cachedAvailableMovesStateID = currentStateID;
+    return moves;
+  }
+
+  /**
+   * Layer 2: Given a move and first card selection, returns second-layer options.
+   * Returns empty array if the move needs no second selection (ready to execute).
+   */
+  getMoveOptions(moveId: AvailableMoveId, cardId: CardInstanceId): MoveOption[] {
+    const clientPlayerId = this.getClientPlayerId();
+    if (!clientPlayerId) {
+      return [];
+    }
+
+    const board = this.getBoard();
+
+    switch (moveId) {
+      case "quest":
+      case "putCardIntoInkwell":
+      case "passTurn":
+      case "questWithAll":
+        return [];
+
+      case "playCard": {
+        const typedClientPlayerId = asPlayerIdOptional(clientPlayerId);
+        if (!typedClientPlayerId) {
+          return [];
+        }
+
+        const selectionContext = this.getPlayCardTargetSelectionContext(
+          cardId,
+          typedClientPlayerId,
+        );
+        if (!selectionContext) {
+          return [];
+        }
+
+        return selectionContext.cardCandidateIds.map((targetCardId) => ({
+          kind: "card" as const,
+          cardId: targetCardId,
+        }));
+      }
+
+      case "challenge": {
+        const options: MoveOption[] = [];
+        const opponentPlayerIds = board.playerOrder.filter((pid) => pid !== clientPlayerId);
+        for (const opponentId of opponentPlayerIds) {
+          const opponentBoard = board.players[opponentId];
+          if (!opponentBoard) continue;
+          for (const defenderId of opponentBoard.play) {
+            const id = defenderId as CardInstanceId;
+            if (
+              this.validateMove("challenge", {
+                args: { attackerId: cardId, defenderId: id },
+              }).valid
+            ) {
+              options.push({ kind: "card", cardId: id });
+            }
+          }
+        }
+        return options;
+      }
+
+      case "moveCharacterToLocation": {
+        const options: MoveOption[] = [];
+        const playerBoard = board.players[clientPlayerId];
+        if (!playerBoard) return [];
+        for (const locationId of playerBoard.play) {
+          const id = locationId as CardInstanceId;
+          const definition = this.getCardDefinitionByInstanceId(id);
+          if (definition.cardType !== "location") continue;
+          if (
+            this.validateMove("moveCharacterToLocation", {
+              args: { characterId: cardId, locationId: id },
+            }).valid
+          ) {
+            options.push({ kind: "card", cardId: id });
+          }
+        }
+        return options;
+      }
+
+      case "activateAbility": {
+        const options: MoveOption[] = [];
+        const definition = this.getCardDefinitionByInstanceId(cardId);
+        const printedAbilities = (definition.abilities ?? []).filter(
+          (a: { type: string }) => a.type === "activated",
+        );
+        const grantedAbilities = getGrantedActivatedAbilities({
+          state: toStaticAbilityState(this.getAuthoritativeState()),
+          cardId,
+          getDefinitionByInstanceId: (instanceId) => this.getCardDefinitionByInstanceId(instanceId),
+        }).map((entry) => entry.ability);
+        const allAbilities = [...printedAbilities, ...grantedAbilities];
+
+        for (let abilityIndex = 0; abilityIndex < allAbilities.length; abilityIndex++) {
+          if (
+            this.validateMove("activateAbility", {
+              args: { cardId, abilityIndex },
+            }).valid
+          ) {
+            const ability = allAbilities[abilityIndex];
+            const label = ability.name || ability.text || `Ability ${abilityIndex + 1}`;
+            options.push({
+              kind: "ability",
+              abilityIndex,
+              abilityLabel: label,
+            });
+          }
+        }
+        return options;
+      }
+
+      case "singCard": {
+        return this.getAvailableSingersForSong(cardId, clientPlayerId).map((singerId) => ({
+          kind: "card" as const,
+          cardId: singerId,
+        }));
+      }
+
+      case "shiftCard": {
+        const options: MoveOption[] = [];
+        const definition = this.getCardDefinitionByInstanceId(cardId);
+        const shiftRules = getShiftRules(definition as LorcanaCard);
+        if (!shiftRules) return [];
+
+        const playerBoard = board.players[clientPlayerId];
+        if (!playerBoard) return [];
+
+        const playCandidates = playerBoard.play.map((id) => id as CardInstanceId);
+        const validTargets = resolveShiftTargetCandidates(
+          shiftRules,
+          playCandidates,
+          (id) => this.getCardDefinitionByInstanceId(id) as LorcanaCard,
+        );
+
+        for (const targetId of validTargets) {
+          // Validate the full shift move
+          if (
+            this.canPlayCard(cardId, {
+              cost: { cost: "shift", shiftTarget: targetId },
+            })
+          ) {
+            options.push({ kind: "card", cardId: targetId });
+          }
+        }
+        return options;
+      }
+
+      default:
+        return [];
+    }
+  }
+
+  /**
+   * Layer 3: Returns valid target card IDs for a pending bag effect resolution.
+   */
+  getEffectTargetInfo(bagId: string): EffectTargetInfo | null {
+    const clientPlayerId = this.getClientPlayerId();
+    if (!clientPlayerId) {
+      return null;
+    }
+
+    const bagEffect = this.getBagEffects().find((b) => b.id === bagId);
+    if (!bagEffect) {
+      return null;
+    }
+
+    const validationContext = buildValidationContext(
+      this.getState() as LorcanaMatchState,
+      String(clientPlayerId),
+      { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      this.getResolvedStaticResources(),
+      !!this.getState().ctx.status.gameEnded,
+      "preflight",
+    );
+
+    const analysis = analyzeEffectTargets(
+      bagEffect.payload as Effect,
+      clientPlayerId as PlayerId,
+      validationContext as unknown as Parameters<typeof analyzeEffectTargets>[2],
+      bagEffect.sourceId as CardInstanceId | undefined,
+    );
+
+    return {
+      cardCandidates: analysis.cardCandidates,
+      minSelections: analysis.minSelections,
+      maxSelections: analysis.maxSelections,
+    };
+  }
+
+  /**
+   * Helper: finds characters in play that can sing a given song card.
+   */
+  private getAvailableSingersForSong(
+    songCardId: CardInstanceId,
+    playerId: string,
+  ): CardInstanceId[] {
+    const playerBoard = this.getBoard().players[playerId];
+    if (!playerBoard) return [];
+
+    const singers: CardInstanceId[] = [];
+    for (const candidateId of playerBoard.play) {
+      const id = candidateId as CardInstanceId;
+      if (
+        this.canPlayCard(songCardId, {
+          cost: { cost: "sing", singer: id },
+        })
+      ) {
+        singers.push(id);
+      }
+    }
+    return singers;
   }
 }

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { diabloFaithfulPetI18n } from "./037-diablo-faithful-pet.i18n";
 
 export const diabloFaithfulPet: CharacterCard = {
   id: "6Jh",
@@ -7,52 +8,6 @@ export const diabloFaithfulPet: CharacterCard = {
   cardType: "character",
   name: "Diablo",
   version: "Faithful Pet",
-  i18n: {
-    en: {
-      name: "Diablo",
-      version: "Faithful Pet",
-      text: [
-        {
-          title: "LOOKING FOR AURORA",
-          description:
-            "Whenever you play a character named Maleficent, you may look at the top card of your deck. Put it on either the top or the bottom of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Diablo",
-      version: "Treues Haustier",
-      text: [
-        {
-          title: "SUCHE NACH AURORA",
-          description:
-            "Jedes Mal, wenn du einen Malefiz-Charakter ausspielst, darfst du dir die oberste Karte deines Decks anschauen. Lege sie anschließend entweder auf dein Deck oder darunter.",
-        },
-      ],
-    },
-    fr: {
-      name: "Diablo",
-      version: "Animal de compagnie fidèle",
-      text: [
-        {
-          title: "À LA RECHERCHE D'AURORE",
-          description:
-            "Chaque fois que vous jouez un personnage Maléfique, vous pouvez regarder la première carte de votre pioche. Remettez-la soit sur le dessus de votre pioche, soit en dessous.",
-        },
-      ],
-    },
-    it: {
-      name: "Diablo",
-      version: "Famiglio Fedele",
-      text: [
-        {
-          title: "IN CERCA DI AURORA",
-          description:
-            "Ogni volta che giochi un personaggio chiamato Malefica, puoi guardare la prima carta del tuo mazzo. Mettila in cima o in fondo al tuo mazzo.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sleeping Beauty",
   set: "003",
@@ -75,14 +30,24 @@ export const diabloFaithfulPet: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: "CHOSEN_CHARACTER",
-          type: "put-on-bottom",
+          type: "scry",
+          amount: 1,
+          destinations: [
+            {
+              zone: "deck-top",
+              min: 0,
+              max: 1,
+            },
+            {
+              zone: "deck-bottom",
+              remainder: true,
+            },
+          ],
         },
         type: "optional",
       },
@@ -100,4 +65,5 @@ export const diabloFaithfulPet: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: diabloFaithfulPetI18n,
 };

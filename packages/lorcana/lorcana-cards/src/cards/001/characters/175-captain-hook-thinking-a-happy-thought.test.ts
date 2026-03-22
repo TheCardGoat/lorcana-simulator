@@ -1,176 +1,157 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
 import { captainHookThinkingAHappyThought } from "./175-captain-hook-thinking-a-happy-thought";
+import { captainHookForcefulDuelist } from "./174-captain-hook-forceful-duelist";
+import { moanaOfMotunui } from "./014-moana-of-motunui";
 
-describe("Captain Hook - Thinking a Happy Thought", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [captainHookThinkingAHappyThought] });
-  //   Expect(testEngine.getCardModel(captainHookThinkingAHappyThought).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const cheapAttacker = createMockCharacter({
+  id: "cheap-attacker-cost-3",
+  name: "Cheap Attacker",
+  cost: 3,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   CaptainHookForcefulDuelist,
-//   CaptainHookThinkingAHappyThought,
-//   HansSchemingPrince,
-//   MaleficentSorceress,
-//   MoanaOfMotunui,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Captain Hook - Thinking a Happy Thought", () => {
-//   Describe("**STOLEN DUST** Characters with cost 3 or less can't challenge this character.", () => {
-//     It("Characters with cost 3 or less can't challenge THIS character.", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [maleficentSorceress],
-//         },
-//         {
-//           Play: [captainHookThinkingAHappyThought],
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         CaptainHookThinkingAHappyThought.id,
-//         "player_two",
-//       );
-//       Const attacker = testStore.getByZoneAndId("play", maleficentSorceress.id);
-//
-//       CardUnderTest.updateCardMeta({ exerted: true });
-//
-//       Attacker.challenge(cardUnderTest);
-//
-//       Expect(cardUnderTest.zone).toEqual("play");
-//       Expect(cardUnderTest.meta.damage).toBeFalsy();
-//
-//       Expect(attacker.zone).toEqual("play");
-//       Expect(attacker.meta.damage).toBeFalsy();
-//       Expect(attacker.lorcanitoCard.cost).toEqual(3);
-//     });
-//
-//     It("Characters with cost 3 or less can challenge OTHER character.", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [maleficentSorceress],
-//         },
-//         {
-//           Play: [captainHookThinkingAHappyThought, moanaOfMotunui],
-//         },
-//       );
-//
-//       Const defender = testStore.getByZoneAndId(
-//         "play",
-//         MoanaOfMotunui.id,
-//         "player_two",
-//       );
-//       Const attacker = testStore.getByZoneAndId("play", maleficentSorceress.id);
-//
-//       Defender.updateCardMeta({ exerted: true });
-//
-//       Attacker.challenge(defender);
-//
-//       Expect(defender.zone).toEqual("play");
-//       Expect(defender.meta.damage).toBeTruthy();
-//
-//       Expect(attacker.zone).toEqual("play");
-//       Expect(attacker.meta.damage).toBeTruthy();
-//       Expect(attacker.lorcanitoCard.cost).toEqual(3);
-//     });
-//
-//     It("Characters with cost 4 or more can challenge this character.", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [hansSchemingPrince],
-//         },
-//         {
-//           Play: [captainHookThinkingAHappyThought],
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         CaptainHookThinkingAHappyThought.id,
-//         "player_two",
-//       );
-//       Const attacker = testStore.getByZoneAndId("play", hansSchemingPrince.id);
-//
-//       CardUnderTest.updateCardMeta({ exerted: true });
-//
-//       Attacker.challenge(cardUnderTest);
-//
-//       Expect(cardUnderTest.zone).toEqual("play");
-//       Expect(cardUnderTest.meta.damage).toBeTruthy();
-//
-//       Expect(attacker.zone).toEqual("play");
-//       Expect(attacker.meta.damage).toBeTruthy();
-//       Expect(attacker.lorcanitoCard.cost).toEqual(4);
-//     });
-//   });
-//
-//   It("**Shift** 3 _(You may pay 3 {I} to play this on top of one of your characters named Captain Hook.)_", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: 3,
-//       Hand: [captainHookThinkingAHappyThought],
-//       Play: [captainHookForcefulDuelist],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "hand",
-//       CaptainHookThinkingAHappyThought.id,
-//     );
-//     Const target = testStore.getByZoneAndId(
-//       "play",
-//       CaptainHookForcefulDuelist.id,
-//     );
-//
-//     TestStore.store.shiftCard(cardUnderTest.instanceId, target.instanceId);
-//
-//     Expect(cardUnderTest.zone).toEqual("play");
-//     Expect(cardUnderTest.meta.shifted).toEqual(target.instanceId);
-//     Expect(target.meta.shifter).toEqual(cardUnderTest.instanceId);
-//     Expect(
-//       TestStore.store.tableStore.getTable("player_one").inkAvailable(),
-//     ).toEqual(0);
-//   });
-//
-//   It("**Challenger** +3 _(While challenging, this character gets +3 {S}.)_", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Play: [captainHookThinkingAHappyThought],
-//       },
-//       {
-//         Play: [moanaOfMotunui],
-//       },
-//     );
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       CaptainHookThinkingAHappyThought.id,
-//     );
-//     Const defender = testStore.getByZoneAndId(
-//       "play",
-//       MoanaOfMotunui.id,
-//       "player_two",
-//     );
-//
-//     Defender.updateCardMeta({ exerted: true });
-//
-//     CardUnderTest.challenge(defender);
-//
-//     Expect(defender.meta.damage).toEqual(
-//       (cardUnderTest.lorcanitoCard.strength || 0) + 3,
-//     );
-//     Expect(cardUnderTest.hasChallenger).toEqual(true);
-//   });
-// });
-//
+const expensiveAttacker = createMockCharacter({
+  id: "expensive-attacker-cost-4",
+  name: "Expensive Attacker",
+  cost: 4,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Captain Hook - Thinking a Happy Thought", () => {
+  describe("STOLEN DUST: Characters with cost 3 or less can't challenge this character.", () => {
+    it("Characters with cost 3 or less can't challenge THIS character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: cheapAttacker, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [{ card: captainHookThinkingAHappyThought, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      const result = testEngine
+        .asPlayerOne()
+        .challenge(cheapAttacker, captainHookThinkingAHappyThought);
+
+      // Challenge should be rejected - cheap attacker can't challenge Captain Hook
+      expect(result).not.toBeSuccessfulCommand();
+    });
+
+    it("Characters with cost 3 or less can challenge OTHER characters", () => {
+      const otherDefender = createMockCharacter({
+        id: "other-defender",
+        name: "Other Defender",
+        cost: 2,
+        strength: 1,
+        willpower: 6,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: cheapAttacker, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [
+            { card: captainHookThinkingAHappyThought, exerted: false },
+            { card: otherDefender, exerted: true },
+          ],
+          deck: 1,
+        },
+      );
+
+      const result = testEngine.asPlayerOne().challenge(cheapAttacker, otherDefender);
+
+      // Challenge should succeed - cheap attacker CAN challenge other characters
+      expect(result).toBeSuccessfulCommand();
+    });
+
+    it("Characters with cost 4 or more can challenge this character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: expensiveAttacker, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [{ card: captainHookThinkingAHappyThought, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      const result = testEngine
+        .asPlayerOne()
+        .challenge(expensiveAttacker, captainHookThinkingAHappyThought);
+
+      // Challenge should succeed - expensive attacker CAN challenge Captain Hook
+      expect(result).toBeSuccessfulCommand();
+    });
+  });
+
+  it("Challenger +3: While challenging, this character gets +3 strength", () => {
+    const weakDefender = createMockCharacter({
+      id: "weak-defender",
+      name: "Weak Defender",
+      cost: 1,
+      strength: 1,
+      willpower: 10,
+      lore: 1,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: weakDefender, exerted: true }],
+        deck: 1,
+      },
+      {
+        play: [{ card: captainHookThinkingAHappyThought, isDrying: false }],
+        deck: 1,
+      },
+    );
+
+    // Pass turn so player_two gets priority
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    const result = testEngine
+      .asPlayerTwo()
+      .challenge(captainHookThinkingAHappyThought, weakDefender);
+    expect(result).toBeSuccessfulCommand();
+
+    // Captain Hook has 2 strength + 3 Challenger bonus = 5 damage dealt to defender
+    const defenderCard = testEngine.getCard(weakDefender);
+    expect(defenderCard.damage).toBe(5);
+  });
+
+  it("Shift 3: Can be played on top of Captain Hook for 3 ink", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [captainHookThinkingAHappyThought],
+      play: [{ card: captainHookForcefulDuelist, isDrying: false }],
+      inkwell: 3,
+      deck: 1,
+    });
+
+    const shiftTarget = testEngine.findCardInstanceId(captainHookForcefulDuelist, "play");
+
+    const result = testEngine.asPlayerOne().playCard(captainHookThinkingAHappyThought, {
+      cost: { cost: "shift", shiftTarget },
+    });
+
+    expect(result).toBeSuccessfulCommand();
+
+    // Captain Hook should be in play after shifting
+    const hookCard = testEngine.getCard(captainHookThinkingAHappyThought);
+    expect(hookCard.zone).toBe("play");
+  });
+});

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goofyGhostHunterI18n } from "./021-goofy-ghost-hunter.i18n";
 
 export const goofyGhostHunter: CharacterCard = {
   id: "LuA",
@@ -7,52 +8,6 @@ export const goofyGhostHunter: CharacterCard = {
   cardType: "character",
   name: "Goofy",
   version: "Ghost Hunter",
-  i18n: {
-    en: {
-      name: "Goofy",
-      version: "Ghost Hunter",
-      text: [
-        {
-          title: "PERFECT TRAP",
-          description:
-            "When you play this character, chosen opposing character gets -1 {S} until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Goofy",
-      version: "Geisterjäger",
-      text: [
-        {
-          title: "PERFEKTE FALLE",
-          description:
-            "Wenn du diesen Charakter ausspielst, erhält ein gegnerischer Charakter deiner Wahl bis zu Beginn deines nächsten Zuges -1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Dingo",
-      version: "Chasseur de fantômes",
-      text: [
-        {
-          title: "LE PIÈGE PARFAIT",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage adverse qui subit -1 jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Pippo",
-      version: "Cacciatore di Fantasmi",
-      text: [
-        {
-          title: "TRAPPOLA PERFETTA",
-          description:
-            "Quando giochi questo personaggio, un personaggio avversario a tua scelta riceve -1 fino all'inizio del tuo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   set: "010",
   cardNumber: 21,
@@ -77,9 +32,10 @@ export const goofyGhostHunter: CharacterCard = {
   abilities: [
     {
       effect: {
+        duration: "until-start-of-next-turn",
         modifier: -1,
         stat: "strength",
-        target: "CHOSEN_CHARACTER",
+        target: "CHOSEN_OPPOSING_CHARACTER",
         type: "modify-stat",
       },
       id: "1mg-1",
@@ -93,4 +49,5 @@ export const goofyGhostHunter: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: goofyGhostHunterI18n,
 };

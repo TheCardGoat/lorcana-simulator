@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { swoopingStrikeI18n } from "./063-swooping-strike.i18n";
 
 export const swoopingStrike: ActionCard = {
   id: "uRz",
@@ -6,24 +7,6 @@ export const swoopingStrike: ActionCard = {
   reprints: ["set10-063"],
   cardType: "action",
   name: "Swooping Strike",
-  i18n: {
-    en: {
-      name: "Swooping Strike",
-      text: "Each opponent chooses and exerts one of their ready characters.",
-    },
-    de: {
-      name: "Sturzflug",
-      text: "Alle gegnerischen Mitspielenden wählen je einen ihrer bereiten Charaktere und erschöpfen ihn.",
-    },
-    fr: {
-      name: "Attaque en piqué",
-      text: "Chaque adversaire choisit l'un de ses personnages redressés et l'épuise.",
-    },
-    it: {
-      name: "Attacco in Picchiata",
-      text: "Ogni avversario sceglie e impegna uno dei suoi personaggi preparati.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Black Cauldron",
   set: "010",
@@ -57,4 +40,5 @@ export const swoopingStrike: ActionCard = {
       },
     },
   ],
+  i18n: swoopingStrikeI18n,
 };

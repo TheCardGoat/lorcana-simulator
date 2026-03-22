@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckPieSlingerEnchantedI18n } from "./214-donald-duck-pie-slinger-enchanted.i18n";
 
 export const donaldDuckPieSlingerEnchanted: CharacterCard = {
   id: "LmE",
@@ -7,41 +8,6 @@ export const donaldDuckPieSlingerEnchanted: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Pie Slinger",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Pie Slinger",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "HUMBLE PIE",
-          description:
-            "When you play this character, if you used Shift to play him, each opponent loses 2 lore.",
-        },
-        {
-          title: "RAGING DUCK",
-          description: "While an opponent has 10 or more lore, this character gets +6 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Kuchenschleuderer",
-      text: "Gestaltwandel 4 PUSTEKUCHEN Wenn du diesen Charakter ausspielst, falls du Gestaltwandel benutzt hast, um diesen Charakter auszuspielen, verlieren alle gegnerischen Mitspielenden je 2 Legenden. WÜTENDE ENTE Solange mindestens eine gegnerische Person 10 oder mehr Legenden hat, erhält dieser Charakter +6.",
-    },
-    fr: {
-      name: "Donald",
-      version: "Lanceur de tartes",
-      text: "Alter 4 UNE SIMPLE TARTE Si vous jouez ce personnage en utilisant sa capacité Alter, chaque adversaire perd 2 éclats de Lore. CANARD ENRAGÉ Tant qu'un adversaire a 10 éclats de Lore ou plus, ce personnage gagne +6.",
-    },
-    it: {
-      name: "Paperino",
-      version: "Lanciatore di Torte",
-      text: "Trasformazione 4 TORTA DI UMILTÀ Quando giochi questo personaggio, se hai usato Trasformazione per giocarlo, ogni avversario perde 2 leggenda. PAPERO IRACONDO Mentre un avversario ha 10 o più leggenda, questo personaggio riceve +6.",
-    },
-  },
   inkType: ["ruby"],
   set: "005",
   cardNumber: 214,
@@ -73,6 +39,15 @@ export const donaldDuckPieSlingerEnchanted: CharacterCard = {
   classifications: ["Floodborn", "Hero", "Knight"],
   abilities: [
     {
+      cost: {
+        ink: 4,
+      },
+      id: "14s-0",
+      keyword: "Shift",
+      text: "Shift 4",
+      type: "keyword",
+    },
+    {
       id: "14s-1",
       text: "HUMBLE PIE When you play this character, if you used Shift to play him, each opponent loses {d} lore.",
       name: "HUMBLE PIE",
@@ -83,7 +58,7 @@ export const donaldDuckPieSlingerEnchanted: CharacterCard = {
         timing: "when",
       },
       effect: {
-        amount: 0,
+        amount: 2,
         target: "EACH_OPPONENT",
         type: "lose-lore",
       },
@@ -97,7 +72,7 @@ export const donaldDuckPieSlingerEnchanted: CharacterCard = {
       name: "RAGING DUCK",
       type: "static",
       effect: {
-        modifier: 0,
+        modifier: 6,
         stat: "strength",
         target: "SELF",
         type: "modify-stat",
@@ -110,10 +85,11 @@ export const donaldDuckPieSlingerEnchanted: CharacterCard = {
         },
         right: {
           type: "constant",
-          value: 0,
+          value: 10,
         },
         type: "comparison",
       },
     },
   ],
+  i18n: donaldDuckPieSlingerEnchantedI18n,
 };

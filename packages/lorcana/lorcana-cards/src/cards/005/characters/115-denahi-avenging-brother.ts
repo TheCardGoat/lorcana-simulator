@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { denahiAvengingBrotherI18n } from "./115-denahi-avenging-brother.i18n";
 
 export const denahiAvengingBrother: CharacterCard = {
   id: "UbD",
@@ -7,24 +8,6 @@ export const denahiAvengingBrother: CharacterCard = {
   cardType: "character",
   name: "Denahi",
   version: "Avenging Brother",
-  i18n: {
-    en: {
-      name: "Denahi",
-      version: "Avenging Brother",
-    },
-    de: {
-      name: "Denahi",
-      version: "Rächender Bruder",
-    },
-    fr: {
-      name: "Denahi",
-      version: "Frère vengeur",
-    },
-    it: {
-      name: "Denahi",
-      version: "Fratello Vendicatore",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Brother Bear",
   set: "005",
@@ -41,4 +24,5 @@ export const denahiAvengingBrother: CharacterCard = {
     tcgPlayer: 560491,
   },
   classifications: ["Storyborn"],
+  i18n: denahiAvengingBrotherI18n,
 };

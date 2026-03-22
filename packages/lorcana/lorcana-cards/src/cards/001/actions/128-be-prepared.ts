@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { bePreparedI18n } from "./128-be-prepared.i18n";
 
 export const bePrepared: ActionCard = {
   id: "4Sx",
@@ -6,24 +7,6 @@ export const bePrepared: ActionCard = {
   reprints: ["set1-128"],
   cardType: "action",
   name: "Be Prepared",
-  i18n: {
-    en: {
-      name: "Be Prepared",
-      text: "Banish all characters.",
-    },
-    de: {
-      name: "Seid bereit!",
-      text: "Verbanne alle Charaktere.",
-    },
-    fr: {
-      name: "SOYEZ PRÊTES !",
-      text: "Bannissez tous les personnages.",
-    },
-    it: {
-      name: "Be Prepared",
-      text: "Banish all characters.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lion King",
   set: "001",
@@ -46,4 +29,5 @@ export const bePrepared: ActionCard = {
       },
     },
   ],
+  i18n: bePreparedI18n,
 };

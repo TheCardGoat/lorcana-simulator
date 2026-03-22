@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 3 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_02.md) | [Next →](AUDIT_INVENTORY_CHUNK_04.md)
-
 
 - [ ] **003/actions/197-olympus-would-be-that-way.test.ts**
   - Card: `003/actions/197-olympus-would-be-that-way.ts`

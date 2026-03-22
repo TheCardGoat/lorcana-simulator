@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { dumboTheFlyingElephantI18n } from "./046-dumbo-the-flying-elephant.i18n";
 
 export const dumboTheFlyingElephant: CharacterCard = {
   id: "nnC",
@@ -7,37 +8,6 @@ export const dumboTheFlyingElephant: CharacterCard = {
   cardType: "character",
   name: "Dumbo",
   version: "The Flying Elephant",
-  i18n: {
-    en: {
-      name: "Dumbo",
-      version: "The Flying Elephant",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "AERIAL DUO",
-          description:
-            "When you play this character, chosen character gains Evasive until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Dumbo",
-      version: "Der fliegende Elefant",
-      text: "Wendig LUFT-DUO Wenn du diesen Charakter ausspielst, erhält ein Charakter deiner Wahl bis zu Beginn deines nächsten Zuges Wendig.",
-    },
-    fr: {
-      name: "Dumbo",
-      version: "L’éléphant volant",
-      text: "Insaisissable DUO AÉRIEN Lorsque vous jouez ce personnage, choisissez un personnage qui gagne Insaisissable jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Dumbo",
-      version: "L'Elefante Volante",
-      text: "Sfuggente COPPIA AEREA Quando giochi questo personaggio, un personaggio a tua scelta ottiene Sfuggente fino all'inizio del tuo prossimo turno.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Dumbo",
   set: "009",
@@ -73,6 +43,7 @@ export const dumboTheFlyingElephant: CharacterCard = {
     {
       effect: {
         keyword: "Evasive",
+        duration: "until-start-of-next-turn",
         target: {
           cardTypes: ["character"],
           count: 1,
@@ -93,4 +64,5 @@ export const dumboTheFlyingElephant: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: dumboTheFlyingElephantI18n,
 };

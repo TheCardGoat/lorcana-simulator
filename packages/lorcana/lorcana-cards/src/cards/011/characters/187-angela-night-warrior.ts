@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { angelaNightWarriorI18n } from "./187-angela-night-warrior.i18n";
 
 export const angelaNightWarrior: CharacterCard = {
   id: "BIL",
@@ -7,68 +8,6 @@ export const angelaNightWarrior: CharacterCard = {
   cardType: "character",
   name: "Angela",
   version: "Night Warrior",
-  i18n: {
-    en: {
-      name: "Angela",
-      version: "Night Warrior",
-      text: [
-        {
-          title: "SHADOW POWER",
-          description:
-            "When you play this character, you may give chosen character Challenger +2 and Resist +2 until the start of your next turn. (They get +2 {S} while challenging. Damage dealt to them is reduced by 2.)",
-        },
-        {
-          title: "ETERNAL NIGHT",
-          description: "Your Gargoyle characters lose the Stone by Day ability.",
-        },
-      ],
-    },
-    de: {
-      name: "Angela",
-      version: "Kriegerin der Nacht",
-      text: [
-        {
-          title: "SCHATTENHAFTE MACHT",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einem Charakter deiner Wahl bis zu Beginn deines nächsten Zuges Herausfordern +2 und Robust +2 geben. (Während der Charakter herausfordert, erhält er +2. Reduziere jeglichen Schaden, der ihm zugefügt wird, um 2.)",
-        },
-        {
-          title: "EWIGE NACHT",
-          description: 'Deine Gargoyles verlieren ihre "Am Tage aus Stein"-Fähigkeit.',
-        },
-      ],
-    },
-    fr: {
-      name: "Angela",
-      version: "Guerrière de la nuit",
-      text: [
-        {
-          title: "PUISSANCE DE L'OMBRE",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage qui gagne Offensif +2 et Résistance +2 jusqu'au début de votre prochain tour. (Lorsqu'il défie, ce personnage gagne +2. Les dommages qui lui sont infligés sont réduits de 2.)",
-        },
-        {
-          title: "NUIT ÉTERNELLE",
-          description: "Vos personnages Gargouille perdent la capacité Statue le jour.",
-        },
-      ],
-    },
-    it: {
-      name: "Angela",
-      version: "Guerriera Notturna",
-      text: [
-        {
-          title: "POTERE DELL'OMBRA",
-          description:
-            "Quando giochi questo personaggio, puoi dare Sfidante +2 e Resistere +2 a un personaggio a tua scelta fino all'inizio del tuo prossimo turno. (Riceve +2 mentre sta sfidando. Il danno che gli viene inflitto è ridotto di 2.)",
-        },
-        {
-          title: "NOTTE ETERNA I",
-          description: "tuoi personaggi Gargoyle perdono l'abilità Statue di Giorno.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Gargoyles",
   set: "011",
@@ -95,5 +34,66 @@ export const angelaNightWarrior: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally", "Gargoyle"],
-  abilities: [],
+  abilities: [
+    {
+      id: "BIL-1",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          type: "gain-keywords",
+          keywords: [
+            {
+              keyword: "Challenger",
+              value: 2,
+            },
+            {
+              keyword: "Resist",
+              value: 2,
+            },
+          ],
+          target: {
+            selector: "chosen",
+            cardTypes: ["character"],
+            owner: "any",
+            zones: ["play"],
+            count: 1,
+          },
+          duration: "until-start-of-next-turn",
+        },
+        type: "optional",
+      },
+      name: "SHADOW POWER",
+      type: "triggered",
+      text: "SHADOW POWER When you play this character, you may give chosen character Challenger +2 and Resist +2 until the start of your next turn.",
+    },
+    {
+      id: "BIL-2",
+      name: "ETERNAL NIGHT",
+      text: "ETERNAL NIGHT Your Gargoyle characters lose the Stone by Day ability.",
+      type: "static",
+      effect: {
+        type: "suppress-ability",
+        abilityName: "STONE BY DAY",
+        target: {
+          count: "all",
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Gargoyle",
+            },
+          ],
+        },
+      },
+    },
+  ],
+  i18n: angelaNightWarriorI18n,
 };

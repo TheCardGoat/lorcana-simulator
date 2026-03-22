@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lumpyPlayfulHeffalumpI18n } from "./056-lumpy-playful-heffalump.i18n";
 
 export const lumpyPlayfulHeffalump: CharacterCard = {
   id: "RK4",
@@ -7,28 +8,6 @@ export const lumpyPlayfulHeffalump: CharacterCard = {
   cardType: "character",
   name: "Lumpy",
   version: "Playful Heffalump",
-  i18n: {
-    en: {
-      name: "Lumpy",
-      version: "Playful Heffalump",
-      text: "Evasive",
-    },
-    de: {
-      name: "Lumpi",
-      version: "Verspielter Heffalump",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Lumpy",
-      version: "Éfélant joueur",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Effy",
-      version: "Efelante Giocoso",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Winnie the Pooh",
   set: "011",
@@ -53,4 +32,5 @@ export const lumpyPlayfulHeffalump: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: lumpyPlayfulHeffalumpI18n,
 };

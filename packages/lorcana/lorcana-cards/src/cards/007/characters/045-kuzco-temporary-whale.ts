@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kuzcoTemporaryWhaleI18n } from "./045-kuzco-temporary-whale.i18n";
 
 export const kuzcoTemporaryWhale: CharacterCard = {
   id: "0mo",
@@ -7,52 +8,6 @@ export const kuzcoTemporaryWhale: CharacterCard = {
   cardType: "character",
   name: "Kuzco",
   version: "Temporary Whale",
-  i18n: {
-    en: {
-      name: "Kuzco",
-      version: "Temporary Whale",
-      text: [
-        {
-          title: "DON'T YOU SAY A WORD",
-          description:
-            "Once during your turn, whenever a card is put into your inkwell, you may return chosen character, item, or location with cost 2 or less to their player's hand, then that player draws a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Kusco",
-      version: "Vorübergehender Wal",
-      text: [
-        {
-          title: "WEHE, DU SAGST JETZT WAS",
-          description:
-            "Einmal während deines Zuges, wenn eine Karte in deinen Tintenvorrat gelegt wird, darfst du einen Charakter, Gegenstand oder Ort deiner Wahl, der 2 oder weniger kostet, zurück auf die zugehörige Hand schicken. Wer jenen im Spiel hatte, zieht 1 Karte.",
-        },
-      ],
-    },
-    fr: {
-      name: "Kuzco",
-      version: "Provisoirement en baleine",
-      text: [
-        {
-          title: "SANS COMMENTAIRE",
-          description:
-            "Une seule fois durant votre tour, lorsqu'une carte est placée dans votre réserve d'encre, vous pouvez choisir un personnage, un objet ou un lieu coûtant 2 ou moins et le renvoyer dans la main de son propriétaire. Ce joueur pioche ensuite une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Kuzco",
-      version: "Balena per Poco",
-      text: [
-        {
-          title: "NON DIRE NULLA",
-          description:
-            "Una volta durante il tuo turno, ogni volta che una carta viene aggiunta al tuo calamaio, puoi far riprendere in mano al suo giocatore un personaggio, un oggetto o un luogo a tua scelta con costo 2 o inferiore, poi quel giocatore pesca una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Emperors New Groove",
   set: "007",
@@ -69,9 +24,9 @@ export const kuzcoTemporaryWhale: CharacterCard = {
   },
   text: [
     {
-      title: "DON'T YOU SAY A WORD",
+      title: "DON'T YOU SAY",
       description:
-        "Once during your turn, whenever a card is put into your inkwell, you may return chosen character, item, or location with cost 2 or less to their player's hand, then that player draws a card.",
+        "A WORD Once during your turn, whenever a card is put into your inkwell, you may return chosen character, item, or location with cost 2 or less to their player's hand, then that player draws a card.",
     },
   ],
   classifications: ["Storyborn", "King"],
@@ -80,26 +35,53 @@ export const kuzcoTemporaryWhale: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "return-to-hand",
+          type: "sequence",
+          steps: [
+            {
+              type: "return-to-hand",
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "any",
+                zones: ["play"],
+                cardTypes: ["character", "item", "location"],
+                filter: [
+                  {
+                    type: "cost-comparison",
+                    comparison: "less-or-equal",
+                    value: 2,
+                  },
+                ],
+              },
+            },
+            {
+              type: "draw",
+              amount: 1,
+              target: "CARD_OWNER",
+            },
+          ],
         },
         type: "optional",
       },
       id: "122-1",
-      name: "DON'T YOU SAY A WORD Once",
+      name: "DON'T YOU SAY A WORD",
       text: "DON'T YOU SAY A WORD Once during your turn, whenever a card is put into your inkwell, you may return chosen character, item, or location with cost 2 or less to their player's hand, then that player draws a card.",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "ink",
+        on: "CONTROLLER",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+          {
+            type: "once-per-turn",
+          },
+        ],
       },
       type: "triggered",
     },
   ],
+  i18n: kuzcoTemporaryWhaleI18n,
 };

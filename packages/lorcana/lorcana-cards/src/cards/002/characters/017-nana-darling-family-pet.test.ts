@@ -27,14 +27,8 @@ describe("Nana - Darling Family Pet", () => {
     // Should have trigger
     testEngine.asPlayerOne().resolveNextBag();
 
-    // It's optional, confirm
-    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
-    if (pendingChoice) {
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true });
-    }
-
     // Target a character to heal (Gaston)
-    pendingChoice = testEngine.asPlayerOne().getPendingChoice();
+    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
     if (pendingChoice) {
       testEngine.asPlayerOne().resolveNextPending({ targets: [gastonId] });
     }

@@ -6,7 +6,7 @@ import {
   cleanupDanglingTargetEffects,
   cleanupExpiredEffects,
 } from "../../effects/continuous-effects";
-import { getEffectiveStrength, type DerivedStateContext } from "../../../rules/derived-state";
+import { createProjectionState, getEffectiveStrength } from "../../../rules/derived-state";
 import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
 import { resolveEffectTargets } from "../../../targeting/runtime";
@@ -37,7 +37,7 @@ export function resolveSupportEffect(
 
   const supportAmount = getEffectiveStrength(
     ctx.cards.getDefinition(cardPlayed.cardId) as any,
-    ctx.framework.state as unknown as DerivedStateContext,
+    createProjectionState(ctx.framework.state, ctx.G),
     cardPlayed.cardId,
     (id) => ctx.cards.getDefinition(id) as any,
   );
@@ -46,7 +46,7 @@ export function resolveSupportEffect(
     return;
   }
 
-  const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+  const currentTurn = ctx.framework.state.status.turn ?? 1;
   cleanupExpiredEffects(ctx, currentTurn);
   cleanupDanglingTargetEffects(ctx);
   addStatModifierEffect(ctx, {

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { brunoMadrigalUndetectedUncleI18n } from "./000-bruno-madrigal-undetected-uncle.i18n";
 
 export const brunoMadrigalUndetectedUncle: CharacterCard = {
   id: "Plh",
@@ -7,55 +8,6 @@ export const brunoMadrigalUndetectedUncle: CharacterCard = {
   cardType: "character",
   name: "Bruno Madrigal",
   version: "Undetected Uncle",
-  i18n: {
-    en: {
-      name: "Bruno Madrigal",
-      version: "Undetected Uncle",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "YOU JUST HAVE TO SEE IT",
-          description:
-            "{E} — Name a card, then reveal the top card of your deck. If it's the named card, put it into your hand and gain 3 lore. Otherwise, put it on the top of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Bruno Madrigal",
-      version: "Undetected Uncle",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) YOU JUST HAVE TO SEE IT — Name a card, then reveal the top card of your deck. If it's the named card, put that card into your hand and gain 3 lore. Otherwise, put it on the top of your deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "Bruno Madrigal",
-      version: "Undetected Uncle",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) YOU JUST HAVE TO SEE IT — Name a card, then reveal the top card of your deck. If it's the named card, put that card into your hand and gain 3 lore. Otherwise, put it on the top of your deck.",
-        },
-      ],
-    },
-    it: {
-      name: "Bruno Madrigal",
-      version: "Undetected Uncle",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) YOU JUST HAVE TO SEE IT — Name a card, then reveal the top card of your deck. If it's the named card, put that card into your hand and gain 3 lore. Otherwise, put it on the top of your deck.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "009",
@@ -93,19 +45,47 @@ export const brunoMadrigalUndetectedUncle: CharacterCard = {
         exert: true,
       },
       effect: {
-        condition: {
-          expression: "it's the named card",
-          type: "if",
-        },
-        then: {
-          amount: 3,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        type: "sequence",
+        steps: [
+          {
+            type: "name-a-card",
+          },
+          {
+            type: "reveal-top-card",
+            target: "CONTROLLER",
+          },
+          {
+            type: "conditional",
+            condition: {
+              type: "revealed-matches-named",
+            },
+            then: {
+              type: "sequence",
+              steps: [
+                {
+                  type: "put-in-hand",
+                  source: "revealed",
+                  target: "CONTROLLER",
+                },
+                {
+                  type: "gain-lore",
+                  amount: 3,
+                  target: "CONTROLLER",
+                },
+              ],
+            },
+            else: {
+              type: "put-on-top",
+              source: "revealed",
+            },
+          },
+        ],
       },
       id: "13f-2",
+      name: "YOU JUST HAVE TO SEE IT",
       text: "YOU JUST HAVE TO SEE IT {E} — Name a card, then reveal the top card of your deck. If it's the named card, put it into your hand and gain 3 lore. Otherwise, put it on the top of your deck.",
       type: "activated",
     },
   ],
+  i18n: brunoMadrigalUndetectedUncleI18n,
 };

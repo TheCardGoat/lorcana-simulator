@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { druunRavenousPlagueI18n } from "./046-druun-ravenous-plague.i18n";
 
 export const druunRavenousPlague: CharacterCard = {
   id: "puQ",
@@ -7,28 +8,6 @@ export const druunRavenousPlague: CharacterCard = {
   cardType: "character",
   name: "Druun",
   version: "Ravenous Plague",
-  i18n: {
-    en: {
-      name: "Druun",
-      version: "Ravenous Plague",
-      text: "Challenger +4",
-    },
-    de: {
-      name: "Druun",
-      version: "Gefräßige Plage",
-      text: "Herausfordern +4",
-    },
-    fr: {
-      name: "Druun",
-      version: "Fléau vorace",
-      text: "Offensif +4",
-    },
-    it: {
-      name: "Druun",
-      version: "Flagello Famelico",
-      text: "Sfidante +4",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Raya and the Last Dragon",
   set: "008",
@@ -54,4 +33,5 @@ export const druunRavenousPlague: CharacterCard = {
       text: "Challenger +4",
     },
   ],
+  i18n: druunRavenousPlagueI18n,
 };

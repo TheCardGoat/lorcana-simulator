@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseTinyTimsMotherI18n } from "./141-minnie-mouse-tiny-tims-mother.i18n";
 
 export const minnieMouseTinyTimsMother: CharacterCard = {
   id: "4Kj",
@@ -7,28 +8,6 @@ export const minnieMouseTinyTimsMother: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Tiny Tim's Mother",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Tiny Tim's Mother",
-      text: "Support",
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Mutter des kleinen Tim",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Minnie",
-      version: "Mère de Tiny Tim",
-      text: "Soutien",
-    },
-    it: {
-      name: "Minni",
-      version: "Mamma del Piccolo Tim",
-      text: "Aiutante",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Mickey's Christmas Carol",
   set: "011",
@@ -52,5 +31,24 @@ export const minnieMouseTinyTimsMother: CharacterCard = {
       type: "keyword",
       text: "Support",
     },
+    {
+      id: "8ol-2",
+      type: "triggered",
+      text: "Support (Whenever this character quests, you may add their {S} to another chosen character's {S} this turn.)",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "support",
+          target: "ANOTHER_CHOSEN_CHARACTER_OF_YOURS",
+        },
+      },
+    },
   ],
+  i18n: minnieMouseTinyTimsMotherI18n,
 };

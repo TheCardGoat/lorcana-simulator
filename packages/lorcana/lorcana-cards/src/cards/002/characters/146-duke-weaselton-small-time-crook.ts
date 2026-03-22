@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { dukeWeaseltonSmalltimeCrookI18n } from "./146-duke-weaselton-small-time-crook.i18n";
 
 export const dukeWeaseltonSmalltimeCrook: CharacterCard = {
   id: "MRG",
@@ -7,28 +8,6 @@ export const dukeWeaseltonSmalltimeCrook: CharacterCard = {
   cardType: "character",
   name: "Duke Weaselton",
   version: "Small-Time Crook",
-  i18n: {
-    en: {
-      name: "Duke Weaselton",
-      version: "Small-Time Crook",
-      text: "Ward",
-    },
-    de: {
-      name: "Herzog von Pitzbühl",
-      version: "Kleinkrimineller",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Duke Weaselton",
-      version: "Escroc à la petite semaine",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Duke Weaselton",
-      version: "Ladruncolo da Quattro Soldi",
-      text: "Protetto",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Zootropolis",
   set: "002",
@@ -53,4 +32,5 @@ export const dukeWeaseltonSmalltimeCrook: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: dukeWeaseltonSmalltimeCrookI18n,
 };

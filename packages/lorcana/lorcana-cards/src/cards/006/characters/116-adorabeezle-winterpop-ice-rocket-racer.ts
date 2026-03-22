@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { adorabeezleWinterpopIceRocketRacerI18n } from "./116-adorabeezle-winterpop-ice-rocket-racer.i18n";
 
 export const adorabeezleWinterpopIceRocketRacer: CharacterCard = {
   id: "cN0",
@@ -7,48 +8,6 @@ export const adorabeezleWinterpopIceRocketRacer: CharacterCard = {
   cardType: "character",
   name: "Adorabeezle Winterpop",
   version: "Ice Rocket Racer",
-  i18n: {
-    en: {
-      name: "Adorabeezle Winterpop",
-      version: "Ice Rocket Racer",
-      text: [
-        {
-          title: "KEEP DRIVING",
-          description: "While this character has damage, she gets +1 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Adorabeezle Winterpop",
-      version: "Eisraketen-Rennfahrerin",
-      text: [
-        {
-          title: "FAHR WEITER",
-          description: "Solange dieser Charakter beschädigt ist, erhält er +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Barbara Pappas",
-      version: "Fusée glacée",
-      text: [
-        {
-          title: "RESTE DANS LA COURSE",
-          description: "Tant que ce personnage a au moins 1 dommage sur lui, il gagne +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Adorabeezle Winterpop",
-      version: "Pilota di Ghiaccioli",
-      text: [
-        {
-          title: "CONTINUA A GUIDARE",
-          description: "Mentre questo personaggio ha danno, riceve +1.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Wreck It Ralph",
   set: "006",
@@ -72,6 +31,9 @@ export const adorabeezleWinterpopIceRocketRacer: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Racer"],
   abilities: [
     {
+      condition: {
+        type: "self-has-damage",
+      },
       effect: {
         modifier: 1,
         stat: "lore",
@@ -83,4 +45,5 @@ export const adorabeezleWinterpopIceRocketRacer: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: adorabeezleWinterpopIceRocketRacerI18n,
 };

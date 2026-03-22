@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tongSurvivorI18n } from "./126-tong-survivor.i18n";
 
 export const tongSurvivor: CharacterCard = {
   id: "S7p",
@@ -7,28 +8,6 @@ export const tongSurvivor: CharacterCard = {
   cardType: "character",
   name: "Tong",
   version: "Survivor",
-  i18n: {
-    en: {
-      name: "Tong",
-      version: "Survivor",
-      text: "Reckless",
-    },
-    de: {
-      name: "Tong",
-      version: "Überlebender",
-      text: "Impulsiv",
-    },
-    fr: {
-      name: "Tong",
-      version: "Survivant",
-      text: "Combattant",
-    },
-    it: {
-      name: "Tong",
-      version: "Sopravvissuto",
-      text: "Attaccabrighe",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "004",
@@ -53,4 +32,5 @@ export const tongSurvivor: CharacterCard = {
       text: "Reckless",
     },
   ],
+  i18n: tongSurvivorI18n,
 };

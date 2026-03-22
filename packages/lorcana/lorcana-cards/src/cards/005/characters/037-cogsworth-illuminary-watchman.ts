@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cogsworthIlluminaryWatchmanI18n } from "./037-cogsworth-illuminary-watchman.i18n";
 
 export const cogsworthIlluminaryWatchman: CharacterCard = {
   id: "Usw",
@@ -7,52 +8,6 @@ export const cogsworthIlluminaryWatchman: CharacterCard = {
   cardType: "character",
   name: "Cogsworth",
   version: "Illuminary Watchman",
-  i18n: {
-    en: {
-      name: "Cogsworth",
-      version: "Illuminary Watchman",
-      text: [
-        {
-          title: "TIME TO MOVE IT!",
-          description:
-            "When you play this character, chosen character gains Rush this turn. (They can challenge the turn they're played.)",
-        },
-      ],
-    },
-    de: {
-      name: "Von Unruh",
-      version: "Uhralter Wächter des Illuminariums",
-      text: [
-        {
-          title: "ZEIT, SICH ZU BEWEGEN!",
-          description:
-            "Wenn du diesen Charakter ausspielst, erhält ein Charakter deiner Wahl in diesem Zug Rasant. (Der Charakter kann im selben Zug herausfordern, in dem er ausgespielt wird.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Big Ben",
-      version: "Gardien de l'Illuminarium",
-      text: [
-        {
-          title: "IL FAUT ARRÊTER ÇA!",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage qui gagne Charge pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Tockins",
-      version: "Sentinella dell'Illuminarium",
-      text: [
-        {
-          title: "È ORA DI MUOVERSI!",
-          description:
-            "Quando giochi questo personaggio, un personaggio a tua scelta ottiene Lesto per questo turno. (Può sfidare nel turno in cui viene giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Beauty and the Beast",
   set: "005",
@@ -80,7 +35,7 @@ export const cogsworthIlluminaryWatchman: CharacterCard = {
       effect: {
         duration: "this-turn",
         keyword: "Rush",
-        target: "SELF",
+        target: "CHOSEN_CHARACTER",
         type: "gain-keyword",
       },
       id: "1n5-1",
@@ -94,4 +49,5 @@ export const cogsworthIlluminaryWatchman: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: cogsworthIlluminaryWatchmanI18n,
 };

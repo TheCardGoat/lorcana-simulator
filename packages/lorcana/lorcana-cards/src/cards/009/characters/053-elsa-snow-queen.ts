@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { elsaSnowQueenI18n } from "./053-elsa-snow-queen.i18n";
 
 export const elsaSnowQueen: CharacterCard = {
   id: "pIt",
@@ -7,48 +8,6 @@ export const elsaSnowQueen: CharacterCard = {
   cardType: "character",
   name: "Elsa",
   version: "Snow Queen",
-  i18n: {
-    en: {
-      name: "Elsa",
-      version: "Snow Queen",
-      text: [
-        {
-          title: "FREEZE",
-          description: "{E} — Exert chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Elsa",
-      version: "Snow Queen",
-      text: [
-        {
-          title: "FREEZE",
-          description: "— Exert chosen opposing character.",
-        },
-      ],
-    },
-    fr: {
-      name: "Elsa",
-      version: "Snow Queen",
-      text: [
-        {
-          title: "FREEZE",
-          description: "— Exert chosen opposing character.",
-        },
-      ],
-    },
-    it: {
-      name: "Elsa",
-      version: "Snow Queen",
-      text: [
-        {
-          title: "FREEZE",
-          description: "— Exert chosen opposing character.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "009",
@@ -70,5 +29,26 @@ export const elsaSnowQueen: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Queen", "Sorcerer"],
-  abilities: [],
+  abilities: [
+    {
+      cost: {
+        exert: true,
+      },
+      effect: {
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          owner: "opponent",
+          selector: "chosen",
+          zones: ["play"],
+        },
+        type: "exert",
+      },
+      id: "pIt-1",
+      name: "FREEZE",
+      text: "FREEZE {E} — Exert chosen opposing character.",
+      type: "activated",
+    },
+  ],
+  i18n: elsaSnowQueenI18n,
 };

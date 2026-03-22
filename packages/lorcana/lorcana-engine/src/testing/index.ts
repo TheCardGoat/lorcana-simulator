@@ -22,7 +22,10 @@ export { cardRef } from "../types";
 export type { CardInput, LorcanaStaticCard } from "../types";
 
 export {
+  createMockAction,
   createMockCharacter,
+  createMockItem,
+  createMockLocation,
   createMockSong,
   createTestCard,
   createTestCardCatalog,
@@ -241,6 +244,20 @@ export interface TestEngineConfig {
 }
 
 /**
+ * Check if a card definition has a static self-restriction of the given type.
+ * Used by the lightweight test engine to evaluate restrictions without full game state.
+ */
+function hasSelfRestriction(cardDef: LorcanaCard, restriction: string): boolean {
+  return (cardDef.abilities ?? []).some(
+    (ability) =>
+      ability.type === "static" &&
+      ability.effect.type === "restriction" &&
+      (ability.effect.target === "SELF" || ability.effect.target === "THIS_CHARACTER") &&
+      ability.effect.restriction === restriction,
+  );
+}
+
+/**
  * Test engine for Lorcana card testing
  *
  * Provides a simplified testing environment for verifying
@@ -252,7 +269,7 @@ export interface TestEngineConfig {
  *   play: [heiheiBoatSnack],
  * });
  * const cardUnderTest = testEngine.getCardModel(heiheiBoatSnack);
- * expect(cardUnderTest.hasSupport()).toBe(true);
+ * expect(cardUnderTest.hasSupport).toBe(true);
  * ```
  */
 export class LorcanaTestEngine {
@@ -402,7 +419,8 @@ export class LorcanaTestEngine {
 
       // Other method-style checks
       canBeChallenged: () => isCharacterCard(cardDef) && !hasKeywordAbility("Evasive"),
-      canChallenge: () => isCharacterCard(cardDef),
+      canChallenge: () =>
+        isCharacterCard(cardDef) && !hasSelfRestriction(cardDef, "cant-challenge"),
       canQuest: () => isCharacterCard(cardDef) || isLocationCard(cardDef),
       isAtLocation: (locationId?: string) => {
         const modelZone = cardModel.zone;

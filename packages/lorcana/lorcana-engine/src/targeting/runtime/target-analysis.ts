@@ -1,10 +1,11 @@
 import { getLogger } from "@logtape/logtape";
-import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
-import type { LorcanaCard, LorcanaCardTarget } from "@tcg/lorcana-types";
+import type { CardInstanceId, MoveInput, PlayerId, RuntimeValidationResult } from "#core";
+import type { LorcanaCard, LorcanaCardTarget, LorcanaTargetDSL } from "@tcg/lorcana-types";
 import type { MoveEnumerationContext, MoveValidationContext } from "#core";
 import type { LorcanaG } from "../../types";
 import { hasKeyword } from "../../card-utils";
 import { normalizeTargetDescriptor, resolveCandidateTargets } from "./target-resolver";
+import type { TargetDescriptor } from "./target-resolver";
 
 type DiscardTargetSourceZone = "deck" | "hand" | "play" | "discard" | "inkwell";
 type ActionSelectionZone = "deck" | "hand" | "play" | "discard" | "inkwell" | "limbo";
@@ -12,11 +13,15 @@ type ActionSelectionZone = "deck" | "hand" | "play" | "discard" | "inkwell" | "l
 type RemoveDamageTargetDescriptor = {
   owner: "you" | "opponent" | "any";
   cardTypes?: string[];
+  filter?: TargetDescriptor["filter"];
+  filters?: TargetDescriptor["filters"];
 };
 
 type ReturnToHandTargetDescriptor = {
   owner: "you" | "opponent" | "any";
   cardTypes?: string[];
+  filter?: TargetDescriptor["filter"];
+  filters?: TargetDescriptor["filters"];
 };
 
 type ReturnFromDiscardTargetDescriptor = {
@@ -53,6 +58,8 @@ type PlayCardSelectionDescriptor = {
     maxCost?: number;
     classification?: string;
     name?: string;
+    sameNameAsSource?: boolean;
+    sameNameAsChosenCard?: boolean;
   };
 };
 
@@ -65,11 +72,18 @@ type ActionTargetCardDefinition = {
 };
 
 type ActionTargetRuntimeContext = Pick<
-  MoveValidationContext<LorcanaG, LorcanaCard> | MoveEnumerationContext<LorcanaG, LorcanaCard>,
+  MoveValidationContext<MoveInput> | MoveEnumerationContext,
   "framework" | "cards"
->;
+> & {
+  args?: unknown;
+};
+
+type TargetAnalysisOptions = {
+  includeDeferredChosenSelections?: boolean;
+};
 
 export type TargetAnalysis = {
+  targetDsl: LorcanaTargetDSL[];
   cardCandidates: CardInstanceId[];
   playerCandidates: PlayerId[];
   allowedZones: ActionSelectionZone[];
@@ -77,6 +91,10 @@ export type TargetAnalysis = {
   maxSelections: number;
   requiresExplicitSelection: boolean;
   allowsDeferredResolutionWithoutInitialSelection: boolean;
+  // True when the effect has multiple independent "chosen" descriptors (e.g. a sequence with two
+  // separate "chosen" steps). In that case the same card may appear more than once in the target
+  // list because each slot is an independent selection (Lorcana rule 6.1.3).
+  allowDuplicateTargets: boolean;
 };
 
 export type NormalizedTargetSelection = {
@@ -120,7 +138,7 @@ function getCardDefinition(
 }
 
 function getCardZone(ctx: ActionTargetRuntimeContext, cardId: CardInstanceId): string | undefined {
-  const zoneKey = ctx.framework.state.ctx.zones?.private?.cardIndex?.[cardId]?.zoneKey;
+  const zoneKey = ctx.framework.state._zonesPrivate?.cardIndex?.[cardId]?.zoneKey;
   if (typeof zoneKey !== "string") {
     return undefined;
   }
@@ -132,7 +150,7 @@ function getCardControllerId(
   ctx: ActionTargetRuntimeContext,
   cardId: CardInstanceId,
 ): PlayerId | undefined {
-  return ctx.framework.state.ctx.zones?.private?.cardIndex?.[cardId]?.controllerID as
+  return ctx.framework.state._zonesPrivate?.cardIndex?.[cardId]?.controllerID as
     | PlayerId
     | undefined;
 }
@@ -188,7 +206,10 @@ function validateForcedEffectTargetSelection(args: {
     return undefined;
   }
 
-  const forcedTargetsByController = getForcedEffectTargetCandidates({ analysis, context });
+  const forcedTargetsByController = getForcedEffectTargetCandidates({
+    analysis,
+    context,
+  });
   if (forcedTargetsByController.size === 0) {
     return undefined;
   }
@@ -228,6 +249,10 @@ function normalizeTargetOwner(target: unknown): "you" | "opponent" | "any" {
     case "OPPONENT":
     case "OPPONENTS":
     case "EACH_OPPONENT":
+    // CHALLENGING_PLAYER is always the opponent of the triggered ability's controller
+    // (the challenged card's controller). From the perspective of target candidate
+    // generation, cards in the challenging player's hand belong to the opponent.
+    case "CHALLENGING_PLAYER":
       return "opponent";
     case "EACH_PLAYER":
     case "ALL_PLAYERS":
@@ -239,6 +264,193 @@ function normalizeTargetOwner(target: unknown): "you" | "opponent" | "any" {
   }
 }
 
+function appendTargetFilter(target: LorcanaCardTarget, filter: unknown): LorcanaCardTarget {
+  if (!filter || typeof filter !== "object" || Array.isArray(filter)) {
+    return target;
+  }
+
+  const normalizedFilters = Array.isArray(target.filters) ? [...target.filters] : [];
+  normalizedFilters.push(filter as NonNullable<LorcanaCardTarget["filters"]>[number]);
+  return {
+    ...target,
+    filters: normalizedFilters,
+  };
+}
+
+function canonicalizeTargetSignatureValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((entry) => canonicalizeTargetSignatureValue(entry));
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  const record = value as Record<string, unknown>;
+  const canonicalRecord: Record<string, unknown> = {};
+  for (const key of Object.keys(record).sort()) {
+    const entry = record[key];
+    if (entry === undefined || entry === false) {
+      continue;
+    }
+    canonicalRecord[key] = canonicalizeTargetSignatureValue(entry);
+  }
+
+  return canonicalRecord;
+}
+
+function dedupeChosenCardTargetDescriptors(
+  descriptors: readonly LorcanaCardTarget[],
+): LorcanaCardTarget[] {
+  const uniqueDescriptors = new Map<string, LorcanaCardTarget>();
+
+  for (const descriptor of descriptors) {
+    const signature = JSON.stringify(canonicalizeTargetSignatureValue(descriptor));
+    if (!uniqueDescriptors.has(signature)) {
+      uniqueDescriptors.set(signature, descriptor);
+    }
+  }
+
+  return [...uniqueDescriptors.values()];
+}
+
+function buildReturnFromDiscardTargetDsl(
+  descriptor: ReturnFromDiscardTargetDescriptor,
+): LorcanaCardTarget {
+  let target: LorcanaCardTarget = {
+    selector: "chosen",
+    count: 1,
+    owner: descriptor.owner,
+    zones: ["discard"],
+    cardTypes: descriptor.cardTypes,
+  };
+
+  if (descriptor.cardName) {
+    target = appendTargetFilter(target, {
+      type: "name",
+      name: descriptor.cardName,
+    });
+  }
+  if (descriptor.filter?.maxCost !== undefined) {
+    target = appendTargetFilter(target, {
+      type: "cost",
+      comparison: "lte",
+      value: descriptor.filter.maxCost,
+    });
+  }
+  if (descriptor.filter?.classification) {
+    target = appendTargetFilter(target, {
+      type: "classification",
+      classification: descriptor.filter.classification,
+    });
+  }
+  if (descriptor.filter?.keyword) {
+    target = appendTargetFilter(target, {
+      type: "keyword",
+      keyword: descriptor.filter.keyword,
+    });
+  }
+
+  return target;
+}
+
+function buildDiscardTargetDsl(descriptor: DiscardTargetDescriptor): LorcanaCardTarget {
+  let target: LorcanaCardTarget = {
+    selector: "chosen",
+    count:
+      descriptor.minAmount === descriptor.maxAmount
+        ? descriptor.minAmount
+        : { between: [descriptor.minAmount, descriptor.maxAmount] },
+    owner: descriptor.owner,
+    zones: [descriptor.sourceZone],
+  };
+
+  if (descriptor.filter?.cardType) {
+    target = {
+      ...target,
+      cardType: descriptor.filter.cardType as LorcanaCardTarget["cardType"],
+    };
+  }
+  if (descriptor.filter?.notCardType) {
+    target = appendTargetFilter(target, {
+      type: "card-type",
+      cardType: descriptor.filter.notCardType,
+      comparison: "ne",
+    });
+  }
+  if (descriptor.filter?.maxCost !== undefined) {
+    target = appendTargetFilter(target, {
+      type: "cost",
+      comparison: "lte",
+      value: descriptor.filter.maxCost,
+    });
+  }
+  if (descriptor.filter?.classification) {
+    target = appendTargetFilter(target, {
+      type: "classification",
+      classification: descriptor.filter.classification,
+    });
+  }
+
+  return target;
+}
+
+function buildPlayCardSelectionTargetDsl(
+  descriptor: PlayCardSelectionDescriptor,
+): LorcanaCardTarget {
+  let target: LorcanaCardTarget = {
+    selector: "chosen",
+    count: 1,
+    owner: descriptor.owner,
+    zones: [descriptor.sourceZone],
+  };
+
+  const cardType = descriptor.cardType ?? descriptor.filter?.cardType;
+  if (cardType && cardType !== "song" && cardType !== "floodborn") {
+    target = {
+      ...target,
+      cardType: cardType as LorcanaCardTarget["cardType"],
+    };
+  }
+  if (cardType === "song") {
+    target = {
+      ...target,
+      cardType: "action",
+    };
+    target = appendTargetFilter(target, {
+      type: "subtype",
+      subtype: "song",
+    });
+  }
+  if (cardType === "floodborn") {
+    target = appendTargetFilter(target, {
+      type: "floodborn",
+      value: true,
+    });
+  }
+  if (descriptor.filter?.maxCost !== undefined) {
+    target = appendTargetFilter(target, {
+      type: "cost",
+      comparison: "lte",
+      value: descriptor.filter.maxCost,
+    });
+  }
+  if (descriptor.filter?.classification) {
+    target = appendTargetFilter(target, {
+      type: "classification",
+      classification: descriptor.filter.classification,
+    });
+  }
+  if (descriptor.filter?.name) {
+    target = appendTargetFilter(target, {
+      type: "name",
+      name: descriptor.filter.name,
+    });
+  }
+
+  return target;
+}
+
 function collectRemoveDamageTargetDescriptors(effect: unknown): RemoveDamageTargetDescriptor[] {
   if (!effect || typeof effect !== "object") {
     return [];
@@ -246,10 +458,16 @@ function collectRemoveDamageTargetDescriptors(effect: unknown): RemoveDamageTarg
 
   const effectRecord = effect as Record<string, unknown>;
   if (effectRecord.type === "remove-damage") {
+    const targetRecord =
+      effectRecord.target && typeof effectRecord.target === "object"
+        ? (effectRecord.target as Record<string, unknown>)
+        : undefined;
     return [
       {
         owner: normalizeTargetOwner(effectRecord.target),
         cardTypes: ["character", "location"],
+        filter: targetRecord?.filter,
+        filters: targetRecord?.filters,
       },
     ];
   }
@@ -286,6 +504,8 @@ function collectReturnToHandTargetDescriptors(effect: unknown): ReturnToHandTarg
           {
             owner: (normalizedTarget.owner ?? "any") as "you" | "opponent" | "any",
             cardTypes: normalizedTarget.cardTypes,
+            filter: normalizedTarget.filter,
+            filters: normalizedTarget.filters,
           },
         ]
       : [];
@@ -375,6 +595,19 @@ function collectReturnFromDiscardTargetDescriptors(
     return descriptor ? [descriptor] : [];
   }
 
+  if (
+    effectRecord.type === "put-under" &&
+    effectRecord.source === "discard" &&
+    effectRecord.under === "self"
+  ) {
+    const cardType = typeof effectRecord.cardType === "string" ? effectRecord.cardType : undefined;
+    const descriptor: ReturnFromDiscardTargetDescriptor = {
+      owner: "you",
+      cardTypes: cardType ? [cardType] : undefined,
+    };
+    return [descriptor];
+  }
+
   const nestedEffects = [
     effectRecord.effect,
     ...(Array.isArray(effectRecord.effects) ? effectRecord.effects : []),
@@ -415,8 +648,11 @@ function normalizeDiscardTargetDescriptor(
 ): DiscardTargetDescriptor {
   const owner = normalizeTargetOwner(effect.target);
   const sourceZone = normalizeDiscardTargetSourceZone(effect.from);
-  const amount =
-    typeof effect.amount === "number" && Number.isFinite(effect.amount) && effect.amount > 0
+  const isComputedAmount =
+    effect.amount !== null && typeof effect.amount === "object" && !Array.isArray(effect.amount);
+  const amount = isComputedAmount
+    ? 1 // placeholder; actual value resolved at execution time
+    : typeof effect.amount === "number" && Number.isFinite(effect.amount) && effect.amount > 0
       ? Math.floor(effect.amount)
       : 1;
   const anyNumberChosen = effect.chosen === true && effect.amount === "DISCARDED_COUNT";
@@ -441,8 +677,8 @@ function normalizeDiscardTargetDescriptor(
   return {
     owner,
     sourceZone,
-    minAmount: anyNumberChosen ? 0 : amount,
-    maxAmount: anyNumberChosen ? Number.MAX_SAFE_INTEGER : amount,
+    minAmount: anyNumberChosen || isComputedAmount ? 0 : amount,
+    maxAmount: anyNumberChosen || isComputedAmount ? Number.MAX_SAFE_INTEGER : amount,
     ...(normalizedFilter ? { filter: normalizedFilter } : {}),
   };
 }
@@ -454,6 +690,10 @@ function collectDiscardTargetDescriptors(effect: unknown): DiscardTargetDescript
 
   const effectRecord = effect as Record<string, unknown>;
   if (effectRecord.type === "discard") {
+    // Random discards do not require explicit player selection — skip them.
+    if (effectRecord.random === true) {
+      return [];
+    }
     return [normalizeDiscardTargetDescriptor(effectRecord)];
   }
 
@@ -472,6 +712,52 @@ function collectDiscardTargetDescriptors(effect: unknown): DiscardTargetDescript
   ];
 
   return nestedEffects.flatMap((nestedEffect) => collectDiscardTargetDescriptors(nestedEffect));
+}
+
+function collectInkwellSourceTargetDescriptors(effect: unknown): DiscardTargetDescriptor[] {
+  if (!effect || typeof effect !== "object") {
+    return [];
+  }
+
+  const effectRecord = effect as Record<string, unknown>;
+  if (effectRecord.type === "put-into-inkwell") {
+    const source = effectRecord.source;
+    if (source === "hand" || source === "discard" || source === "deck") {
+      return [
+        {
+          owner:
+            effectRecord.target === "CHOSEN_PLAYER"
+              ? "any"
+              : normalizeTargetOwner(effectRecord.target),
+          sourceZone: source,
+          minAmount: 1,
+          maxAmount: 1,
+          filter:
+            typeof effectRecord.cardType === "string"
+              ? { cardType: effectRecord.cardType }
+              : undefined,
+        },
+      ];
+    }
+  }
+
+  const nestedEffects = [
+    effectRecord.effect,
+    ...(Array.isArray(effectRecord.effects) ? effectRecord.effects : []),
+    ...(Array.isArray(effectRecord.steps) ? effectRecord.steps : []),
+    ...(Array.isArray(effectRecord.options) ? effectRecord.options : []),
+    ...(Array.isArray(effectRecord.choices) ? effectRecord.choices : []),
+    effectRecord.trueEffect,
+    effectRecord.falseEffect,
+    effectRecord.ifTrue,
+    effectRecord.ifFalse,
+    effectRecord.then,
+    effectRecord.else,
+  ];
+
+  return nestedEffects.flatMap((nestedEffect) =>
+    collectInkwellSourceTargetDescriptors(nestedEffect),
+  );
 }
 
 function normalizePlayCardSelectionDescriptor(
@@ -549,7 +835,10 @@ function collectPlayCardSelectionDescriptors(effect: unknown): PlayCardSelection
   ];
 }
 
-function collectChosenCardTargetDescriptors(effect: unknown): LorcanaCardTarget[] {
+function collectChosenCardTargetDescriptors(
+  effect: unknown,
+  options?: TargetAnalysisOptions,
+): LorcanaCardTarget[] {
   if (!effect || typeof effect !== "object") {
     return [];
   }
@@ -557,7 +846,9 @@ function collectChosenCardTargetDescriptors(effect: unknown): LorcanaCardTarget[
   const effectRecord = effect as Record<string, unknown>;
   const descriptors: LorcanaCardTarget[] = [];
   const defersTargetSelection =
-    effectRecord.chosenBy === "opponent" || effectRecord.chosenBy === "TARGET";
+    options?.includeDeferredChosenSelections === true
+      ? false
+      : effectRecord.chosenBy === "opponent" || effectRecord.chosenBy === "TARGET";
   const normalizedTarget =
     effectRecord.target === "chosen-for-effect" ||
     (typeof effectRecord.target === "object" &&
@@ -622,6 +913,28 @@ function collectChosenCardTargetDescriptors(effect: unknown): LorcanaCardTarget[
   if (putUnderTarget?.selector === "chosen") {
     descriptors.push(putUnderTarget as LorcanaCardTarget);
   }
+  const underTarget =
+    typeof effectRecord.underTarget === "object" &&
+    effectRecord.underTarget !== null &&
+    ("ref" in effectRecord.underTarget || "reference" in effectRecord.underTarget)
+      ? undefined
+      : normalizeTargetDescriptor(effectRecord.underTarget);
+  if (underTarget?.selector === "chosen") {
+    descriptors.push(underTarget as LorcanaCardTarget);
+  }
+
+  // Check amount.target for variable amounts that reference a chosen card
+  // (e.g. lore-value-of, strength-of, willpower-of, cost-of with CHOSEN_* targets)
+  const amount = effectRecord.amount;
+  if (amount && typeof amount === "object" && !Array.isArray(amount)) {
+    const amountRecord = amount as Record<string, unknown>;
+    if (amountRecord.target !== undefined) {
+      const amountTarget = normalizeTargetDescriptor(amountRecord.target);
+      if (amountTarget?.selector === "chosen") {
+        descriptors.push(amountTarget as LorcanaCardTarget);
+      }
+    }
+  }
 
   const nestedEffects = [
     effectRecord.effect,
@@ -639,7 +952,9 @@ function collectChosenCardTargetDescriptors(effect: unknown): LorcanaCardTarget[
 
   return [
     ...descriptors,
-    ...nestedEffects.flatMap((nestedEffect) => collectChosenCardTargetDescriptors(nestedEffect)),
+    ...nestedEffects.flatMap((nestedEffect) =>
+      collectChosenCardTargetDescriptors(nestedEffect, options),
+    ),
   ];
 }
 
@@ -687,6 +1002,8 @@ function resolveActionTargetCandidates(
       owner: targetDescriptor.owner,
       zones: ["play"],
       cardTypes: targetDescriptor.cardTypes,
+      filter: targetDescriptor.filter,
+      filters: targetDescriptor.filters,
     });
     const resolved = resolveCandidateTargets(ctx, descriptor, {
       controllerId: playerId,
@@ -782,10 +1099,10 @@ function resolveActionDiscardSelectionCandidates(
           : [...playerIds];
 
     for (const ownerId of owners) {
-      const sourceCards =
-        ctx.framework.state.ctx.zones.private.zoneCards[
-          `${targetDescriptor.sourceZone}:${ownerId}`
-        ] ?? [];
+      const sourceCards = ctx.framework.zones.getCards({
+        zone: targetDescriptor.sourceZone,
+        playerId: ownerId,
+      }) as CardInstanceId[];
       for (const cardId of sourceCards) {
         if (targetDescriptor.sourceZone === "hand" && cardId === sourceCardId) {
           continue;
@@ -877,6 +1194,8 @@ function matchesPlayCardSelectionTypeConstraint(
 function matchesPlayCardSelectionCriteria(
   definition: ActionTargetCardDefinition,
   descriptor: PlayCardSelectionDescriptor,
+  sourceDefinition?: ActionTargetCardDefinition,
+  chosenDefinition?: ActionTargetCardDefinition,
 ): boolean {
   if (!matchesPlayCardSelectionTypeConstraint(definition, descriptor.cardType)) {
     return false;
@@ -909,13 +1228,36 @@ function matchesPlayCardSelectionCriteria(
     return false;
   }
 
+  if (filter.sameNameAsSource === true) {
+    if (!sourceDefinition?.name || definition.name !== sourceDefinition.name) {
+      return false;
+    }
+  }
+
+  if (filter.sameNameAsChosenCard === true) {
+    if (chosenDefinition?.name && definition.name !== chosenDefinition.name) {
+      return false;
+    }
+  }
+
   return true;
+}
+
+function extractRequestedChosenCardId(ctx: ActionTargetRuntimeContext): CardInstanceId | undefined {
+  const args = ctx.args as { costs?: { banishCharacters?: string[] } } | undefined;
+  const banishCharacters = args?.costs?.banishCharacters;
+  if (!Array.isArray(banishCharacters) || typeof banishCharacters[0] !== "string") {
+    return undefined;
+  }
+
+  return banishCharacters[0] as CardInstanceId;
 }
 
 function resolveActionPlayCardSelectionCandidates(
   targetDescriptors: PlayCardSelectionDescriptor[],
   playerId: PlayerId,
   ctx: ActionTargetRuntimeContext,
+  sourceCardId?: CardInstanceId,
 ): CardInstanceId[] {
   if (targetDescriptors.length === 0) {
     return [];
@@ -923,6 +1265,9 @@ function resolveActionPlayCardSelectionCandidates(
 
   const playerIds = (ctx.framework.state.playerIds ?? []) as PlayerId[];
   const candidates = new Set<CardInstanceId>();
+  const sourceDefinition = sourceCardId ? getCardDefinition(ctx, sourceCardId) : undefined;
+  const chosenCardId = extractRequestedChosenCardId(ctx);
+  const chosenDefinition = chosenCardId ? getCardDefinition(ctx, chosenCardId) : undefined;
 
   for (const targetDescriptor of targetDescriptors) {
     const sourcePlayerIds =
@@ -943,7 +1288,14 @@ function resolveActionPlayCardSelectionCandidates(
         if (!definition) {
           continue;
         }
-        if (!matchesPlayCardSelectionCriteria(definition, targetDescriptor)) {
+        if (
+          !matchesPlayCardSelectionCriteria(
+            definition,
+            targetDescriptor,
+            sourceDefinition,
+            chosenDefinition,
+          )
+        ) {
           continue;
         }
         candidates.add(cardId as CardInstanceId);
@@ -1023,17 +1375,33 @@ export function analyzeEffectTargets(
   playerId: PlayerId,
   ctx: ActionTargetRuntimeContext,
   sourceCardId?: CardInstanceId,
+  options?: TargetAnalysisOptions,
 ): TargetAnalysis {
   const removeDamageTargetDescriptors = collectRemoveDamageTargetDescriptors(effect);
   const returnToHandTargetDescriptors = collectReturnToHandTargetDescriptors(effect);
   const returnFromDiscardTargetDescriptors = collectReturnFromDiscardTargetDescriptors(effect);
   const discardTargetDescriptors = collectDiscardTargetDescriptors(effect);
+  const inkwellSourceTargetDescriptors = collectInkwellSourceTargetDescriptors(effect);
   const hasDeferredHandDiscardSelection = discardTargetDescriptors.some(
     (descriptor) => descriptor.sourceZone === "hand",
   );
-  const chosenCardTargetDescriptors = collectChosenCardTargetDescriptors(effect);
+  const chosenCardTargetDescriptors = dedupeChosenCardTargetDescriptors(
+    collectChosenCardTargetDescriptors(effect, options),
+  );
   const playCardSelectionDescriptors = collectPlayCardSelectionDescriptors(effect);
   const chosenPlayerTarget = hasChosenPlayerTarget(effect);
+  const targetDsl = [
+    ...chosenCardTargetDescriptors,
+    ...returnFromDiscardTargetDescriptors.map((descriptor) =>
+      buildReturnFromDiscardTargetDsl(descriptor),
+    ),
+    ...discardTargetDescriptors.map((descriptor) => buildDiscardTargetDsl(descriptor)),
+    ...inkwellSourceTargetDescriptors.map((descriptor) => buildDiscardTargetDsl(descriptor)),
+    ...playCardSelectionDescriptors.map((descriptor) =>
+      buildPlayCardSelectionTargetDsl(descriptor),
+    ),
+    ...(chosenPlayerTarget ? [{ selector: "chosen", count: 1 } satisfies LorcanaTargetDSL] : []),
+  ];
 
   const playCandidates = resolveActionTargetCandidates(
     [...removeDamageTargetDescriptors, ...returnToHandTargetDescriptors],
@@ -1058,10 +1426,18 @@ export function analyzeEffectTargets(
     ctx,
     sourceCardId,
   );
+  const inkwellSourceCandidates = resolveActionDiscardSelectionCandidates(
+    inkwellSourceTargetDescriptors,
+    playerId,
+    ctx.framework.state.playerIds,
+    ctx,
+    sourceCardId,
+  );
   const playCardSelectionCandidates = resolveActionPlayCardSelectionCandidates(
     playCardSelectionDescriptors,
     playerId,
     ctx,
+    sourceCardId,
   );
   const playerCandidates = chosenPlayerTarget ? [...ctx.framework.state.playerIds] : [];
 
@@ -1071,6 +1447,7 @@ export function analyzeEffectTargets(
       ...chosenTargetCandidates,
       ...discardCandidates,
       ...discardSelectionCandidates,
+      ...inkwellSourceCandidates,
       ...playCardSelectionCandidates,
     ]),
   ];
@@ -1084,6 +1461,11 @@ export function analyzeEffectTargets(
   }
   if (discardTargetDescriptors.length > 0) {
     for (const descriptor of discardTargetDescriptors) {
+      allowedZones.add(descriptor.sourceZone);
+    }
+  }
+  if (inkwellSourceTargetDescriptors.length > 0) {
+    for (const descriptor of inkwellSourceTargetDescriptors) {
       allowedZones.add(descriptor.sourceZone);
     }
   }
@@ -1107,7 +1489,9 @@ export function analyzeEffectTargets(
 
   const explicitDescriptorCount =
     chosenCardTargetDescriptors.length +
+    returnFromDiscardTargetDescriptors.length +
     discardTargetDescriptors.length +
+    inkwellSourceTargetDescriptors.length +
     playCardSelectionDescriptors.length +
     (chosenPlayerTarget ? 1 : 0);
 
@@ -1116,7 +1500,9 @@ export function analyzeEffectTargets(
       (total, descriptor) => total + descriptorMinSelections(descriptor),
       0,
     ) +
+    returnFromDiscardTargetDescriptors.length +
     discardTargetDescriptors.reduce((total, descriptor) => total + descriptor.minAmount, 0) +
+    inkwellSourceTargetDescriptors.reduce((total, descriptor) => total + descriptor.minAmount, 0) +
     playCardSelectionDescriptors.length +
     (chosenPlayerTarget ? 1 : 0);
 
@@ -1125,7 +1511,27 @@ export function analyzeEffectTargets(
       (total, descriptor) => total + descriptorMaxSelections(descriptor, cardCandidates.length),
       0,
     ) +
+    returnFromDiscardTargetDescriptors.reduce(
+      (total, descriptor) =>
+        total + resolveActionDiscardTargetCandidates([descriptor], playerId, ctx).length,
+      0,
+    ) +
     discardTargetDescriptors.reduce(
+      (total, descriptor) =>
+        total +
+        Math.min(
+          descriptor.maxAmount,
+          resolveActionDiscardSelectionCandidates(
+            [descriptor],
+            playerId,
+            ctx.framework.state.playerIds,
+            ctx,
+            sourceCardId,
+          ).length,
+        ),
+      0,
+    ) +
+    inkwellSourceTargetDescriptors.reduce(
       (total, descriptor) =>
         total +
         Math.min(
@@ -1144,6 +1550,7 @@ export function analyzeEffectTargets(
     (chosenPlayerTarget ? 1 : 0);
 
   return {
+    targetDsl,
     cardCandidates,
     playerCandidates,
     allowedZones: [...allowedZones],
@@ -1154,6 +1561,12 @@ export function analyzeEffectTargets(
         : 0,
     requiresExplicitSelection: explicitDescriptorCount > 0,
     allowsDeferredResolutionWithoutInitialSelection: hasDeferredHandDiscardSelection,
+    // Multiple independent chosen descriptors means each slot is its own selection —
+    // the same card may legally appear in more than one slot (rule 6.1.3).
+    // However, if any descriptor has requireDifferentTargets, duplicates are still forbidden.
+    allowDuplicateTargets:
+      chosenCardTargetDescriptors.length > 1 &&
+      !chosenCardTargetDescriptors.some((d) => d.requireDifferentTargets === true),
   };
 }
 
@@ -1188,7 +1601,7 @@ export function validateAndNormalizeTargetSelection(
       };
     }
 
-    if (seen.has(target)) {
+    if (!analysis.allowDuplicateTargets && seen.has(target)) {
       return {
         valid: false,
         error: "Targets must be unique",
@@ -1215,11 +1628,14 @@ export function validateAndNormalizeTargetSelection(
   }
 
   const totalSelections = cardIds.length + playerIds.length;
-  if (analysis.requiresExplicitSelection && totalSelections === 0 && rawTargets.length > 0) {
+  if (analysis.minSelections > 0 && totalSelections < analysis.minSelections) {
     return {
       valid: false,
-      error: "Target selection cannot be empty",
-      errorCode: "INVALID_ACTION_TARGETS",
+      error:
+        analysis.minSelections === 1
+          ? "At least 1 target must be selected"
+          : `At least ${analysis.minSelections} targets must be selected`,
+      errorCode: "TOO_FEW_TARGETS",
     };
   }
 

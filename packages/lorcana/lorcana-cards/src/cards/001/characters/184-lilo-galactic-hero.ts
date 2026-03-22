@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liloGalacticHeroI18n } from "./184-lilo-galactic-hero.i18n";
 
 export const liloGalacticHero: CharacterCard = {
   id: "NhZ",
@@ -7,24 +8,6 @@ export const liloGalacticHero: CharacterCard = {
   cardType: "character",
   name: "Lilo",
   version: "Galactic Hero",
-  i18n: {
-    en: {
-      name: "Lilo",
-      version: "Galactic Hero",
-    },
-    de: {
-      name: "Lilo",
-      version: "Galaktische Heldin",
-    },
-    fr: {
-      name: "LILO",
-      version: "Héroïne galactique",
-    },
-    it: {
-      name: "Lilo",
-      version: "Galactic Hero",
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "001",
@@ -35,11 +18,11 @@ export const liloGalacticHero: CharacterCard = {
   willpower: 2,
   lore: 2,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_6a986375d35444ad9660332cda624a14",
     tcgPlayer: 508920,
   },
   classifications: ["Dreamborn", "Hero"],
+  i18n: liloGalacticHeroI18n,
 };

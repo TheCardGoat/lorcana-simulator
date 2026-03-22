@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { dopeyAlwaysPlayfulI18n } from "./006-dopey-always-playful.i18n";
 
 export const dopeyAlwaysPlayful: CharacterCard = {
   id: "2Jv",
@@ -7,40 +8,6 @@ export const dopeyAlwaysPlayful: CharacterCard = {
   cardType: "character",
   name: "Dopey",
   version: "Always Playful",
-  i18n: {
-    en: {
-      name: "Dopey",
-      version: "Always Playful",
-      text: [
-        {
-          title: "ODD ONE OUT",
-          description:
-            "When this character is banished, your other Seven Dwarfs characters get +2 {S} until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Seppl",
-      version: "Immer verspielt",
-      text: "Sonderling\\ Wenn dieser Charakter verbannt wird, erhalten deine anderen Sieben Zwerge bis zu Beginn deines nächsten Zuges +2.",
-    },
-    fr: {
-      name: "Simplet",
-      version: "Toujours enjoué",
-      text: [
-        {
-          title: "UN CAS À PART",
-          description:
-            "Lorsque ce personnage est banni, vos autres personnages Sept Nains gagnent +2 jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Dopey",
-      version: "Always Playful",
-      text: "Odd One Out\\ When this character is banished, your other Seven Dwarfs characters get +2 until the start of your next turn.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "002",
@@ -63,7 +30,6 @@ export const dopeyAlwaysPlayful: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Seven Dwarfs"],
-  missingTests: false,
   abilities: [
     {
       effect: {
@@ -84,4 +50,5 @@ export const dopeyAlwaysPlayful: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: dopeyAlwaysPlayfulI18n,
 };

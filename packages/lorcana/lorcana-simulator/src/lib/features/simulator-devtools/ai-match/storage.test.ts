@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { DEFAULT_AUTOMATED_ACTION_STRATEGY_ID } from "@tcg/lorcana-engine";
 import { DECK_FIXTURES } from "../deck-fixtures/index.js";
 import {
   AUTOMATED_MATCH_STORAGE_KEY,
@@ -31,7 +32,8 @@ describe("automated match storage", () => {
 
     expect(config.playerOneDeckText).toBe(DECK_FIXTURES[0]?.cards);
     expect(config.playerTwoDeckText).toBe(DECK_FIXTURES[1]?.cards ?? DECK_FIXTURES[0]?.cards);
-    expect(config.strategyId).toBe("default-lore-race");
+    expect(config.playerOneStrategyId).toBe(DEFAULT_AUTOMATED_ACTION_STRATEGY_ID);
+    expect(config.playerTwoStrategyId).toBe(DEFAULT_AUTOMATED_ACTION_STRATEGY_ID);
   });
 
   it("restores saved deck texts and strategy", () => {
@@ -39,9 +41,10 @@ describe("automated match storage", () => {
     const savedConfig = {
       playerOneDeckText: "1 Sail The Azurite Sea",
       playerTwoDeckText: "1 Grab Your Bow",
-      playerOneFixtureName: "Custom One",
-      playerTwoFixtureName: "Custom Two",
-      strategyId: "default-lore-race",
+      playerOneFixtureId: "custom-one",
+      playerTwoFixtureId: "custom-two",
+      playerOneStrategyId: "default-lore-race",
+      playerTwoStrategyId: "board-control-lore-race",
       seed: "ai-match:123",
     };
 

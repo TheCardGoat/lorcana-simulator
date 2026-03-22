@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tiggerInTheCrowsNestEnchantedI18n } from "./215-tigger-in-the-crows-nest-enchanted.i18n";
 
 export const tiggerInTheCrowsNestEnchanted: CharacterCard = {
   id: "xKa",
@@ -7,37 +8,6 @@ export const tiggerInTheCrowsNestEnchanted: CharacterCard = {
   cardType: "character",
   name: "Tigger",
   version: "In the Crow's Nest",
-  i18n: {
-    en: {
-      name: "Tigger",
-      version: "In the Crow's Nest",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "SWASH YOUR BUCKLES",
-          description:
-            "Whenever you play an action, this character gets +1 {S} and +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Tigger",
-      version: "Im Krähennest",
-      text: "Wendig SCHWINGT EURE SCHNALLEN Jedes Mal, wenn du eine Aktion ausspielst, erhält dieser Charakter in diesem Zug +1 und +1.",
-    },
-    fr: {
-      name: "Tigrou",
-      version: "Dans le nid-de-pie",
-      text: "Insaisissable FANFARON Chaque fois que vous jouez une action, ce personnage gagne +1 et +1 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Tigro",
-      version: "Nella Coffa",
-      text: "Sfuggente MOZZO, STAI ATTENTO Ogni volta che giochi un'azione, questo personaggio riceve +1 e +1 per questo turno.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Winnie the Pooh",
   set: "006",
@@ -72,11 +42,23 @@ export const tiggerInTheCrowsNestEnchanted: CharacterCard = {
     },
     {
       effect: {
-        duration: "this-turn",
-        modifier: 1,
-        stat: "strength",
-        target: "SELF",
-        type: "modify-stat",
+        steps: [
+          {
+            duration: "this-turn",
+            modifier: 1,
+            stat: "strength",
+            target: "SELF",
+            type: "modify-stat",
+          },
+          {
+            duration: "this-turn",
+            modifier: 1,
+            stat: "lore",
+            target: "SELF",
+            type: "modify-stat",
+          },
+        ],
+        type: "sequence",
       },
       id: "1q4-2",
       name: "SWASH YOUR BUCKLES",
@@ -92,4 +74,5 @@ export const tiggerInTheCrowsNestEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: tiggerInTheCrowsNestEnchantedI18n,
 };

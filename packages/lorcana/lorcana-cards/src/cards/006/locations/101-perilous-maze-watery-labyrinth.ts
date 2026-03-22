@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { perilousMazeWateryLabyrinthI18n } from "./101-perilous-maze-watery-labyrinth.i18n";
 
 export const perilousMazeWateryLabyrinth: LocationCard = {
   id: "e5W",
@@ -7,52 +8,6 @@ export const perilousMazeWateryLabyrinth: LocationCard = {
   cardType: "location",
   name: "Perilous Maze",
   version: "Watery Labyrinth",
-  i18n: {
-    en: {
-      name: "Perilous Maze",
-      version: "Watery Labyrinth",
-      text: [
-        {
-          title: "LOST IN THE WAVES",
-          description:
-            "Whenever a character is challenged while here, each opponent chooses and discards a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Gefährliches Labyrinth",
-      version: "Wasserlabyrinth",
-      text: [
-        {
-          title: "VERLOREN IN DEN WELLEN",
-          description:
-            "Jedes Mal, wenn einer deiner Charaktere an diesem Ort herausgefordert wird, wählen alle gegnerischen Mitspielenden je 1 Karte aus ihrer Hand und werfen sie ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "Labyrinthe périlleux",
-      version: "Dédale aquatique",
-      text: [
-        {
-          title: "PERDUS DANS LES VAGUES",
-          description:
-            "Chaque fois qu'un personnage sur ce lieu est défié, chaque adversaire défausse une carte de sa main au choix.",
-        },
-      ],
-    },
-    it: {
-      name: "Labirinto Insidioso",
-      version: "Dedalo Acquatico",
-      text: [
-        {
-          title: "PERSI TRA LE ONDE",
-          description:
-            "Ogni volta che un personaggio viene sfidato mentre si trova in questo luogo, ogni avversario sceglie e scarta una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lorcana",
   set: "006",
@@ -94,4 +49,5 @@ export const perilousMazeWateryLabyrinth: LocationCard = {
       type: "triggered",
     },
   ],
+  i18n: perilousMazeWateryLabyrinthI18n,
 };

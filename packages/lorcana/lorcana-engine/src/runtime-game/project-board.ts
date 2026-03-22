@@ -7,7 +7,14 @@ import {
   type CardInstanceId,
   type PlayerId,
 } from "#core";
+import type { FrameworkStateSnapshot, RuntimeCardWithDefinition } from "../core/runtime";
+import {
+  createCardQueryAPIForState,
+  createTimeQueryAPI,
+  createZoneQueryAPI,
+} from "../core/runtime/match-runtime.apis";
 import type {
+  LorcanaCard,
   LorcanaCardDefinition,
   LorcanaCardMeta,
   LorcanaG,
@@ -17,21 +24,35 @@ import type {
   LorcanaProjectedCardId,
   LorcanaProjectedPlayerBoard,
 } from "../types";
+import { buildResolutionSelectionContext } from "../runtime-moves/resolution/action-effects/selection-context";
+import type { ResolutionSelectionRuntimeContext } from "../runtime-moves/resolution/action-effects/selection-context";
 import {
   projectLorcanaCardDerived,
   createDefaultProjectedLorcanaCardDerived,
 } from "../projection/card-derived";
+import { canInkThisTurn } from "../runtime-moves/state/runtime-card-derived";
 
-export type LorcanaBoardProjection = EngineBoardProjection<LorcanaCardMeta>;
+export type LorcanaBoardProjection = EngineBoardProjection;
 
 function resolveTurnPlayer(state: LorcanaMatchState): PlayerId | null {
   const otp = state.ctx.status.otp as PlayerId | undefined;
   if (!otp) {
-    return null;
+    return (state.ctx.priority.holder as PlayerId | undefined) ?? null;
   }
 
   const turnNumber = state.ctx.status.turn ?? 0;
   if (turnNumber <= 0) {
+    return otp;
+  }
+
+  // Count completed turns across all players to determine if any passes have occurred.
+  // When no turns have been completed (e.g. skipPreGame fixtures), the OTP is the turn player
+  // regardless of the turn counter value, since the formula below only applies after actual passes.
+  const turnsCompleted = state.G?.turnsCompletedByPlayer as Record<string, number> | undefined;
+  const totalCompletedTurns = turnsCompleted
+    ? Object.values(turnsCompleted).reduce((sum, count) => sum + (count ?? 0), 0)
+    : 0;
+  if (totalCompletedTurns === 0) {
     return otp;
   }
 
@@ -41,12 +62,12 @@ function resolveTurnPlayer(state: LorcanaMatchState): PlayerId | null {
     return otp;
   }
 
-  const offset = (turnNumber - 1) % playerIds.length;
+  const offset = totalCompletedTurns % playerIds.length;
   return playerIds[(otpIndex + offset) % playerIds.length] as PlayerId;
 }
 
 function getDefinitionForInstance(
-  staticResources: MatchStaticResources<LorcanaCardDefinition>,
+  staticResources: MatchStaticResources,
   instanceId: string,
 ): { definitionId?: string; definition?: LorcanaCardDefinition } {
   const record = staticResources.instances.get(instanceId);
@@ -59,8 +80,91 @@ function getDefinitionForInstance(
   };
 }
 
+function createSelectionRuntimeContext(
+  state: LorcanaMatchState,
+  staticResources: MatchStaticResources,
+  roleCtx: ViewRoleContext,
+): ResolutionSelectionRuntimeContext {
+  const actorPlayerId =
+    roleCtx.role === "player" ? (roleCtx.playerID as PlayerId | undefined) : undefined;
+  const frameworkState: FrameworkStateSnapshot = {
+    priority: state.ctx.priority,
+    status: state.ctx.status,
+    _zonesPrivate: state.ctx.zones.private,
+    _zonesPublic: state.ctx.zones.public,
+    playerIds: [...state.ctx.playerIds] as PlayerId[],
+    turn: state.ctx.status.turn ?? 0,
+    phase: state.ctx.status.phase,
+    step: state.ctx.status.step,
+    gameSegment: state.ctx.status.gameSegment,
+    currentPlayer: resolveTurnPlayer(state) ?? (state.ctx.priority.holder as PlayerId | undefined),
+    stateID: state.ctx._stateID,
+    matchID: state.ctx.matchID,
+    gameID: state.ctx.gameID,
+    gameEnded: state.ctx.status.gameEnded,
+  };
+  const rawCards = createCardQueryAPIForState(state, staticResources, () => ({}), actorPlayerId);
+  const adaptRuntimeCard = (runtimeCard: RuntimeCardWithDefinition): RuntimeCardWithDefinition => ({
+    ...runtimeCard,
+    definition: runtimeCard.definition as LorcanaCard,
+  });
+  const projectRuntimeCard = <TResult>(
+    runtimeCard: RuntimeCardWithDefinition,
+    projector?: (card: RuntimeCardWithDefinition) => TResult,
+  ): TResult => {
+    const adaptedRuntimeCard = adaptRuntimeCard(runtimeCard);
+    return projector ? projector(adaptedRuntimeCard) : (adaptedRuntimeCard as TResult);
+  };
+  const cards: ResolutionSelectionRuntimeContext["cards"] = {
+    get: (cardId) => {
+      const runtimeCard = rawCards.get(cardId);
+      return runtimeCard ? adaptRuntimeCard(runtimeCard as RuntimeCardWithDefinition) : undefined;
+    },
+    require: (cardId) => {
+      const runtimeCard = rawCards.get(cardId);
+      if (!runtimeCard) {
+        throw new Error(`Unknown card: ${cardId}`);
+      }
+      return adaptRuntimeCard(runtimeCard as RuntimeCardWithDefinition);
+    },
+    getDefinition: (cardId) => rawCards.getDefinition(cardId) as LorcanaCard | undefined,
+    getDefinitionById: (definitionId) =>
+      rawCards.getDefinitionById(definitionId) as LorcanaCard | undefined,
+    getMeta: (cardId) => rawCards.getMeta(cardId),
+    inZone: (zoneId) =>
+      rawCards
+        .inZone(zoneId)
+        .map((runtimeCard) => adaptRuntimeCard(runtimeCard as RuntimeCardWithDefinition)),
+    queryTargetDsl: rawCards.queryTargetDsl
+      ? (targetDsl, projector) =>
+          rawCards.queryTargetDsl?.(targetDsl, (runtimeCard) =>
+            projectRuntimeCard(runtimeCard as RuntimeCardWithDefinition, projector),
+          ) ?? []
+      : undefined,
+    queryRuntime: (targetDsl, projector) =>
+      rawCards.queryRuntime(targetDsl, (runtimeCard) =>
+        projectRuntimeCard(runtimeCard as RuntimeCardWithDefinition, projector),
+      ),
+  };
+  const zones = createZoneQueryAPI(state, rawCards);
+  const time = createTimeQueryAPI(state);
+  const framework: ResolutionSelectionRuntimeContext["framework"] = {
+    state: frameworkState,
+    zones,
+    time,
+    cards,
+  };
+
+  return {
+    G: state.G,
+    playerId: actorPlayerId,
+    framework,
+    cards,
+  };
+}
+
 function buildVisibleCard(args: {
-  staticResources: MatchStaticResources<LorcanaCardDefinition>;
+  staticResources: MatchStaticResources;
   state: LorcanaMatchState;
   cardId: string;
   zone: LorcanaProjectedCard["zone"];
@@ -219,7 +323,7 @@ function staticRevealAffectsPlayer(args: {
 
 function isTopDeckCardVisibleViaStaticEffect(args: {
   state: LorcanaMatchState;
-  staticResources: MatchStaticResources<LorcanaCardDefinition>;
+  staticResources: MatchStaticResources;
   rawBoard: LorcanaBoardProjection;
   targetPlayerId: PlayerId;
 }): boolean {
@@ -270,7 +374,7 @@ function isTopDeckCardVisibleViaStaticEffect(args: {
 function projectPlayerBoard(args: {
   state: LorcanaMatchState;
   rawBoard: LorcanaBoardProjection;
-  staticResources: MatchStaticResources<LorcanaCardDefinition>;
+  staticResources: MatchStaticResources;
   roleCtx: ViewRoleContext;
   playerId: PlayerId;
   cards: Record<string, LorcanaProjectedCard>;
@@ -428,6 +532,17 @@ function projectPlayerBoard(args: {
 
   return {
     lore: state.G.lore[playerId] ?? 0,
+    canAddCardToInkwell:
+      actorPlayerId === playerId
+        ? canInkThisTurn({
+            state,
+            getDefinitionByInstanceId: (cardId) => {
+              const definitionId = staticResources.instances.get(cardId)?.definitionId;
+              return definitionId ? staticResources.cards.get(definitionId) : undefined;
+            },
+            playerId,
+          })
+        : false,
     handCount: handZone?.count ?? hand.length,
     deckCount: deckZone?.count ?? 0,
     deckTop,
@@ -441,9 +556,10 @@ function projectPlayerBoard(args: {
 export function projectLorcanaBoardView(
   state: LorcanaMatchState,
   roleCtx: ViewRoleContext,
-  staticResources: MatchStaticResources<LorcanaCardDefinition>,
+  staticResources: MatchStaticResources,
   projectionCtx?: RuntimeBoardProjectionContext,
 ): LorcanaProjectedBoardView {
+  const selectionRuntimeContext = createSelectionRuntimeContext(state, staticResources, roleCtx);
   const projection = buildEngineProjectionSnapshot(
     state,
     {
@@ -493,9 +609,22 @@ export function projectLorcanaBoardView(
     reason: state.ctx.status.reason ?? null,
     timerView: projectTimerView(state, projectionCtx?.serverTimestamp ?? Date.now()),
     activeEffects: projection.activeEffects,
-    pendingEffects: projection.pendingEffects.filter(
-      (pendingEffect) => pendingEffect.source !== "priority",
-    ),
+    pendingEffects: projection.pendingEffects
+      .filter((pendingEffect) => pendingEffect.source !== "priority")
+      .map((pendingEffect) => ({
+        ...pendingEffect,
+        selectionContext:
+          pendingEffect.source === "game" &&
+          pendingEffect.payload &&
+          typeof pendingEffect.payload === "object" &&
+          "selectionContext" in pendingEffect.payload
+            ? ((
+                pendingEffect.payload as {
+                  selectionContext?: LorcanaProjectedBoardView["bagEffects"][number]["selectionContext"];
+                }
+              ).selectionContext ?? undefined)
+            : undefined,
+      })),
     pendingChoice: pendingChoice
       ? {
           type: pendingChoice.type,
@@ -510,6 +639,17 @@ export function projectLorcanaBoardView(
       chooserId: entry.chooserId,
       sourceId: entry.sourceId,
       payload: entry,
+      selectionContext: buildResolutionSelectionContext({
+        origin: "bag",
+        requestId: entry.id,
+        sourceCardId: entry.sourceId,
+        chooserId: entry.chooserId,
+        cardPlayed: entry.cardPlayed,
+        effect: entry.effect,
+        condition: entry.condition,
+        resolutionInput: entry.resolutionInput,
+        ctx: selectionRuntimeContext,
+      }),
     })),
     temporaryPlayerRestrictions:
       state.G.temporaryPlayerRestrictions?.restrictionsByPlayer ?? undefined,

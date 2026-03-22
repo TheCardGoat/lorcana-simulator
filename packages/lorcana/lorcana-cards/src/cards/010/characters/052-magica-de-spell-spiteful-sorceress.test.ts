@@ -1,163 +1,184 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   MagicaDeSpellSpitefulSorceress,
-//   MickeyMouseDetective,
-// } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Magica De Spell - Spiteful Sorceress", () => {
-//   It("Character should have correct base stats", async () => {
-//     Const testEngine = new TestEngine({
-//       Hand: [magicaDeSpellSpitefulSorceress],
-//     });
-//
-//     Const cardUnderTest = testEngine.getByZoneAndId(
-//       "hand",
-//       MagicaDeSpellSpitefulSorceress.id,
-//     );
-//
-//     // Check base stats
-//     Expect(cardUnderTest.cost).toBe(5);
-//     Expect(cardUnderTest.strength).toBe(3);
-//     Expect(cardUnderTest.willpower).toBe(6);
-//     Expect(cardUnderTest.lore).toBe(2);
-//     Expect(cardUnderTest.characteristics).toEqual([
-//       "storyborn",
-//       "villain",
-//       "sorcerer",
-//     ]);
-//   });
-//
-//   It("Character can be played with correct cost", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: magicaDeSpellSpitefulSorceress.cost,
-//       Hand: [magicaDeSpellSpitefulSorceress],
-//     });
-//
-//     Const cardUnderTest = testEngine.getByZoneAndId(
-//       "hand",
-//       MagicaDeSpellSpitefulSorceress.id,
-//     );
-//
-//     Await testEngine.playCard(cardUnderTest);
-//     Const magicaInPlay = testEngine.getByZoneAndId(
-//       "play",
-//       MagicaDeSpellSpitefulSorceress.id,
-//     );
-//     Expect(magicaInPlay.zone).toBe("play");
-//   });
-//
-//   It("Should have inkwell ability", async () => {
-//     Const testEngine = new TestEngine({
-//       Hand: [magicaDeSpellSpitefulSorceress],
-//     });
-//
-//     Const cardUnderTest = testEngine.getByZoneAndId(
-//       "hand",
-//       MagicaDeSpellSpitefulSorceress.id,
-//     );
-//
-//     Expect(cardUnderTest.inkwell).toBe(true);
-//   });
-//
-//   It("MYSTICAL MANIPULATION - Should have the ability defined", () => {
-//     Const mysticalManipulation = magicaDeSpellSpitefulSorceress.abilities?.find(
-//       (a) => "name" in a && a.name === "MYSTICAL MANIPULATION",
-//     );
-//
-//     Expect(mysticalManipulation).toBeDefined();
-//   });
-//
-//   It("MYSTICAL MANIPULATION - Should have move damage effect", () => {
-//     Const mysticalManipulation = magicaDeSpellSpitefulSorceress.abilities?.find(
-//       (a) => "name" in a && a.name === "MYSTICAL MANIPULATION",
-//     );
-//
-//     Expect(mysticalManipulation).toBeDefined();
-//
-//     If (
-//       MysticalManipulation &&
-//       "effects" in mysticalManipulation &&
-//       Array.isArray(mysticalManipulation.effects)
-//     ) {
-//       // Should have move damage effect
-//       Expect(mysticalManipulation.effects).toHaveLength(1);
-//       Const effect = mysticalManipulation.effects[0] as any;
-//       Expect(effect.type).toBe("move-damage");
-//       Expect(effect.amount).toBe(1);
-//       Expect(effect.target).toBeDefined();
-//       Expect(effect.to).toBeDefined();
-//     }
-//   });
-//
-//   It("MYSTICAL MANIPULATION - Should be optional", () => {
-//     Const mysticalManipulation = magicaDeSpellSpitefulSorceress.abilities?.find(
-//       (a) => "name" in a && a.name === "MYSTICAL MANIPULATION",
-//     );
-//
-//     Expect(mysticalManipulation).toBeDefined();
-//     If (
-//       MysticalManipulation &&
-//       "optional" in mysticalManipulation &&
-//       MysticalManipulation.optional !== undefined
-//     ) {
-//       Expect(mysticalManipulation.optional).toBe(true);
-//     }
-//   });
-//
-//   It("Should have correct rarity and set info", () => {
-//     Expect(magicaDeSpellSpitefulSorceress.rarity).toBe("rare");
-//     Expect(magicaDeSpellSpitefulSorceress.set).toBe("010");
-//     Expect(magicaDeSpellSpitefulSorceress.number).toBe(52);
-//     Expect(magicaDeSpellSpitefulSorceress.inkwell).toBe(true);
-//     Expect(magicaDeSpellSpitefulSorceress.colors).toEqual(["amethyst"]);
-//   });
-//
-//   It("Should have the MYSTICAL MANIPULATION ability present", () => {
-//     Expect(magicaDeSpellSpitefulSorceress.abilities).toBeDefined();
-//     Expect(magicaDeSpellSpitefulSorceress.abilities?.length).toBe(1);
-//
-//     Const abilityNames = magicaDeSpellSpitefulSorceress.abilities?.map((a) =>
-//       "name" in a ? a.name : "unknown",
-//     );
-//
-//     Expect(abilityNames).toContain("MYSTICAL MANIPULATION");
-//   });
-//
-//   It("MYSTICAL MANIPULATION - Should have correct text", () => {
-//     Const mysticalManipulation = magicaDeSpellSpitefulSorceress.abilities?.find(
-//       (a) => "name" in a && a.name === "MYSTICAL MANIPULATION",
-//     );
-//
-//     Expect(mysticalManipulation).toBeDefined();
-//     If (mysticalManipulation && "text" in mysticalManipulation) {
-//       Expect(mysticalManipulation.text).toContain(
-//         "Whenever you put a card under one of your characters or locations",
-//       );
-//       Expect(mysticalManipulation.text).toContain(
-//         "you may move 1 damage counter",
-//       );
-//       Expect(mysticalManipulation.text).toContain(
-//         "from chosen character to chosen opposing character",
-//       );
-//     }
-//   });
-//
-//   It("Should have correct trigger text", () => {
-//     Expect(magicaDeSpellSpitefulSorceress.text).toContain(
-//       "MYSTICAL MANIPULATION",
-//     );
-//     Expect(magicaDeSpellSpitefulSorceress.text).toContain(
-//       "Whenever you put a card under one of your characters or locations",
-//     );
-//     Expect(magicaDeSpellSpitefulSorceress.text).toContain(
-//       "you may move 1 damage counter",
-//     );
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { magicaDeSpellSpitefulSorceress } from "./052-magica-de-spell-spiteful-sorceress";
+import { megaraSecretKeeper } from "./086-megara-secret-keeper";
+import { blessedBagpipes } from "../items/101-blessed-bagpipes";
+
+const topDeckCard = createMockCharacter({
+  id: "magica-test-top-deck",
+  name: "Top Deck Card",
+  cost: 1,
+});
+
+const damagedAlly = createMockCharacter({
+  id: "magica-test-damaged-ally",
+  name: "Damaged Ally",
+  cost: 2,
+  willpower: 5,
+});
+
+const opposingCharacter = createMockCharacter({
+  id: "magica-test-opposing",
+  name: "Opposing Character",
+  cost: 2,
+  willpower: 5,
+});
+
+describe("Magica De Spell - Spiteful Sorceress", () => {
+  it("should have correct base stats", () => {
+    expect(magicaDeSpellSpitefulSorceress.cost).toBe(5);
+    expect(magicaDeSpellSpitefulSorceress.strength).toBe(3);
+    expect(magicaDeSpellSpitefulSorceress.willpower).toBe(6);
+    expect(magicaDeSpellSpitefulSorceress.lore).toBe(2);
+    expect(magicaDeSpellSpitefulSorceress.inkable).toBe(true);
+    expect(magicaDeSpellSpitefulSorceress.inkType).toEqual(["amethyst"]);
+    expect(magicaDeSpellSpitefulSorceress.classifications).toEqual([
+      "Storyborn",
+      "Villain",
+      "Sorcerer",
+    ]);
+  });
+
+  describe("MYSTICAL MANIPULATION - Whenever you put a card under one of your characters or locations, you may move 1 damage counter from chosen character to chosen opposing character.", () => {
+    it("should trigger when a card is put under a character and move 1 damage from chosen character to chosen opposing character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            magicaDeSpellSpitefulSorceress,
+            megaraSecretKeeper,
+            { card: damagedAlly, damage: 2 },
+          ],
+          hand: [blessedBagpipes],
+          inkwell: blessedBagpipes.cost,
+          deck: [topDeckCard],
+        },
+        {
+          play: [opposingCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(blessedBagpipes)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({
+          resolveOptional: true,
+          targets: [megaraSecretKeeper],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({
+          resolveOptional: true,
+          targets: [damagedAlly, opposingCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getDamage(damagedAlly)).toBe(1);
+      expect(testEngine.asPlayerTwo().getDamage(opposingCharacter)).toBe(1);
+    });
+
+    it("should be optional - can decline to move damage", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            magicaDeSpellSpitefulSorceress,
+            megaraSecretKeeper,
+            { card: damagedAlly, damage: 2 },
+          ],
+          hand: [blessedBagpipes],
+          inkwell: blessedBagpipes.cost,
+          deck: [topDeckCard],
+        },
+        {
+          play: [opposingCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(blessedBagpipes)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({
+          resolveOptional: true,
+          targets: [megaraSecretKeeper],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getDamage(damagedAlly)).toBe(2);
+      expect(testEngine.asPlayerTwo().getDamage(opposingCharacter)).toBe(0);
+    });
+
+    it("can target Magica herself as the damage source", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: magicaDeSpellSpitefulSorceress, damage: 2 }, megaraSecretKeeper],
+          hand: [blessedBagpipes],
+          inkwell: blessedBagpipes.cost,
+          deck: [topDeckCard],
+        },
+        {
+          play: [opposingCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(blessedBagpipes)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({
+          resolveOptional: true,
+          targets: [megaraSecretKeeper],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({
+          resolveOptional: true,
+          targets: [magicaDeSpellSpitefulSorceress, opposingCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getDamage(magicaDeSpellSpitefulSorceress)).toBe(1);
+      expect(testEngine.asPlayerTwo().getDamage(opposingCharacter)).toBe(1);
+    });
+
+    it("does NOT trigger when opponent puts a card under their character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [magicaDeSpellSpitefulSorceress, { card: damagedAlly, damage: 2 }],
+          deck: [topDeckCard],
+        },
+        {
+          play: [megaraSecretKeeper, opposingCharacter],
+          hand: [blessedBagpipes],
+          inkwell: blessedBagpipes.cost,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().playCard(blessedBagpipes)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().resolveOnlyBag({
+          resolveOptional: true,
+          targets: [megaraSecretKeeper],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+
+      expect(testEngine.asPlayerOne().getDamage(damagedAlly)).toBe(2);
+      expect(testEngine.asPlayerTwo().getDamage(opposingCharacter)).toBe(0);
+    });
+  });
+});

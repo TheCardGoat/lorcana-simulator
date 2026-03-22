@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pocahontasFindingTheWayI18n } from "./008-pocahontas-finding-the-way.i18n";
 
 export const pocahontasFindingTheWay: CharacterCard = {
   id: "3Q8",
@@ -7,51 +8,6 @@ export const pocahontasFindingTheWay: CharacterCard = {
   cardType: "character",
   name: "Pocahontas",
   version: "Finding the Way",
-  i18n: {
-    en: {
-      name: "Pocahontas",
-      version: "Finding the Way",
-      text: [
-        {
-          title: "DISCOVERY AWAITS",
-          description: "When you play this character, chosen character gets +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Pocahontas",
-      version: "Findet den Weg",
-      text: [
-        {
-          title: "DIE ENTDECKUNG WARTET",
-          description:
-            "Wenn du diesen Charakter ausspielst, erhält ein Charakter deiner Wahl in diesem Zug +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Pocahontas",
-      version: "Trouve le bon chemin",
-      text: [
-        {
-          title: "DES DÉCOUVERTES NOUS ATTENDENT",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage qui gagne +1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Pocahontas",
-      version: "Che Trova la Via",
-      text: [
-        {
-          title: "LA SCOPERTA CI ATTENDE",
-          description:
-            "Quando giochi questo personaggio, un personaggio a tua scelta riceve +1 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Pocahontas",
   set: "011",
@@ -99,4 +55,5 @@ export const pocahontasFindingTheWay: CharacterCard = {
       text: "DISCOVERY AWAITS When you play this character, chosen character gets +1 {L} this turn.",
     },
   ],
+  i18n: pocahontasFindingTheWayI18n,
 };

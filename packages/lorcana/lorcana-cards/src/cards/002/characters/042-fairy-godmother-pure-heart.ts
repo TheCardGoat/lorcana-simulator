@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { fairyGodmotherPureHeartI18n } from "./042-fairy-godmother-pure-heart.i18n";
 
 export const fairyGodmotherPureHeart: CharacterCard = {
   id: "4li",
@@ -7,52 +8,6 @@ export const fairyGodmotherPureHeart: CharacterCard = {
   cardType: "character",
   name: "Fairy Godmother",
   version: "Pure Heart",
-  i18n: {
-    en: {
-      name: "Fairy Godmother",
-      version: "Pure Heart",
-      text: [
-        {
-          title: "JUST LEAVE IT TO ME",
-          description:
-            "Whenever you play a character named Cinderella, you may exert chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Gute Fee",
-      version: "Reinen Herzens",
-      text: [
-        {
-          title: "VERLASS DICH GANZ AUF MICH!",
-          description:
-            "Jedes Mal, wenn du einen Cinderella-Charakter ausspielst, darfst du einen Charakter deiner Wahl erschöpfen.",
-        },
-      ],
-    },
-    fr: {
-      name: "La Bonne Fée",
-      version: "Au cœur pur",
-      text: [
-        {
-          title: "ÇA Y EST, JE CROIS QUE J'Y SUIS",
-          description:
-            "Lorsque vous jouez un personnage Cendrillon, vous pouvez choisir un personnage et l'épuiser.",
-        },
-      ],
-    },
-    it: {
-      name: "Fairy Godmother",
-      version: "Pure Heart",
-      text: [
-        {
-          title: "JUST LEAVE IT TO ME",
-          description:
-            "Whenever you play a character named Cinderella, you may exert chosen character.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Cinderella",
   set: "002",
@@ -75,7 +30,6 @@ export const fairyGodmotherPureHeart: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Fairy"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -100,10 +54,12 @@ export const fairyGodmotherPureHeart: CharacterCard = {
         on: {
           cardType: "character",
           controller: "you",
+          name: "Cinderella",
         },
         timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: fairyGodmotherPureHeartI18n,
 };

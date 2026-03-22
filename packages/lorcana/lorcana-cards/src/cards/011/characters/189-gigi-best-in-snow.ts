@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gigiBestInSnowI18n } from "./189-gigi-best-in-snow.i18n";
 
 export const gigiBestInSnow: CharacterCard = {
   id: "keA",
@@ -7,49 +8,6 @@ export const gigiBestInSnow: CharacterCard = {
   cardType: "character",
   name: "Gigi",
   version: "Best in Snow",
-  i18n: {
-    en: {
-      name: "Gigi",
-      version: "Best in Snow",
-      text: [
-        {
-          title: "Alert",
-          description: "(This character can challenge as if they had Evasive.)",
-        },
-        {
-          title: "SO PRETTY",
-          description: "While this character has no damage, she gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Gigi",
-      version: "Die Beste im Schnee",
-      text: [
-        {
-          title: "Alarmiert",
-          description:
-            "(Dieser Charakter kann herausfordern, als hätte er Wendig.) SO HÜBSCH Solange dieser Charakter unbeschädigt ist, erhält er +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Gigi",
-      version: "Premier prix de la neige",
-      text: "Agilité (Ce personnage peut défier comme s'il était Insaisissable.) SI MIGNONNE Tant que ce personnage n'a aucun dommage sur lui, il gagne +2.",
-    },
-    it: {
-      name: "Gigi",
-      version: "La Migliore sulla Neve",
-      text: [
-        {
-          title: "Vigile",
-          description:
-            "(Questo personaggio può sfidare come se avesse Sfuggente.) COSÌ CARINA Mentre questo personaggio non ha danno, riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "011",
@@ -84,6 +42,9 @@ export const gigiBestInSnow: CharacterCard = {
     },
     {
       id: "5r3-2",
+      condition: {
+        type: "no-damage",
+      },
       effect: {
         modifier: 2,
         stat: "strength",
@@ -94,4 +55,5 @@ export const gigiBestInSnow: CharacterCard = {
       text: "SO PRETTY While this character has no damage, she gets +2 {S}.",
     },
   ],
+  i18n: gigiBestInSnowI18n,
 };

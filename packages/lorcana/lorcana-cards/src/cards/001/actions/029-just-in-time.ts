@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { justInTimeI18n } from "./029-just-in-time.i18n";
 
 export const justInTime: ActionCard = {
   id: "TAp",
@@ -6,24 +7,6 @@ export const justInTime: ActionCard = {
   reprints: ["set1-029"],
   cardType: "action",
   name: "Just in Time",
-  i18n: {
-    en: {
-      name: "Just in Time",
-      text: "You may play a character with cost 5 or less for free.",
-    },
-    de: {
-      name: "Gerade Rechtzeitig",
-      text: "Du darfst einen Charakter, der 5 oder weniger kostet, kostenlos ausspielen.",
-    },
-    fr: {
-      name: "JUSTE À TEMPS",
-      text: "Vous pouvez jouer gratuitement un personnage coûtant 5 ou moins.",
-    },
-    it: {
-      name: "Just in Time",
-      text: "You may play a character with cost 5 or less for free.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Moana",
   set: "001",
@@ -54,4 +37,5 @@ export const justInTime: ActionCard = {
       },
     },
   ],
+  i18n: justInTimeI18n,
 };

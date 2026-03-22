@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { casaMadrigalCasitaI18n } from "./068-casa-madrigal-casita.i18n";
 
 export const casaMadrigalCasita: LocationCard = {
   id: "9E7",
@@ -7,51 +8,6 @@ export const casaMadrigalCasita: LocationCard = {
   cardType: "location",
   name: "Casa Madrigal",
   version: "Casita",
-  i18n: {
-    en: {
-      name: "Casa Madrigal",
-      version: "Casita",
-      text: [
-        {
-          title: "OUR HOME",
-          description: "At the start of your turn, if you have a character here, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Casa Madrigal",
-      version: "Casita",
-      text: [
-        {
-          title: "UNSER ZUHAUSE",
-          description:
-            "Zu Beginn deines Zuges, wenn du mindestens einen Charakter an diesem Ort hast, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Casa Madrigal",
-      version: "Casita",
-      text: [
-        {
-          title: "NOTRE MAISON",
-          description:
-            "Au début de votre tour, si vous avez un personnage sur ce lieu, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Casa Madrigal",
-      version: "Casita",
-      text: [
-        {
-          title: "CASA NOSTRA",
-          description:
-            "All'inizio del tuo turno, se hai un personaggio in questo luogo, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "009",
@@ -110,4 +66,5 @@ export const casaMadrigalCasita: LocationCard = {
       },
     },
   ],
+  i18n: casaMadrigalCasitaI18n,
 };

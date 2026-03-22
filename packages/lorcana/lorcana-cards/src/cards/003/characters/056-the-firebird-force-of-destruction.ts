@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theFirebirdForceOfDestructionI18n } from "./056-the-firebird-force-of-destruction.i18n";
 
 export const theFirebirdForceOfDestruction: CharacterCard = {
   id: "RNV",
@@ -7,24 +8,6 @@ export const theFirebirdForceOfDestruction: CharacterCard = {
   cardType: "character",
   name: "The Firebird",
   version: "Force of Destruction",
-  i18n: {
-    en: {
-      name: "The Firebird",
-      version: "Force of Destruction",
-    },
-    de: {
-      name: "Der Feuervogel",
-      version: "Macht der Zerstörung",
-    },
-    fr: {
-      name: "L'Oiseau de Feu",
-      version: "Force destructrice",
-    },
-    it: {
-      name: "L'Uccello di Fuoco",
-      version: "Forza di Distruzione",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Fantasia",
   set: "003",
@@ -41,4 +24,5 @@ export const theFirebirdForceOfDestruction: CharacterCard = {
     tcgPlayer: 537826,
   },
   classifications: ["Dreamborn", "Villain"],
+  i18n: theFirebirdForceOfDestructionI18n,
 };

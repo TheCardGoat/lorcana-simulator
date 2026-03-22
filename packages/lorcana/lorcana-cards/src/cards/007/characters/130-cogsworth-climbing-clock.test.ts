@@ -1,37 +1,36 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { dingleHopper } from "@lorcanito/lorcana-engine/cards/001/items/items";
-// Import { cogsworthClimbingClock } from "@lorcanito/lorcana-engine/cards/007";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Cogsworth - Climbing Clock", () => {
-//   It("STILL USEFUL While you have an item card in your discard, this character gets +2 {S}.", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [cogsworthClimbingClock],
-//       Discard: [dingleHopper],
-//     });
-//
-//     Await testEngine.playCard(cogsworthClimbingClock);
-//
-//     Expect(testEngine.getCardModel(cogsworthClimbingClock).strength).toBe(
-//       CogsworthClimbingClock.strength + 2,
-//     );
-//   });
-//
-//   It("No item in discard", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [cogsworthClimbingClock],
-//     });
-//
-//     Await testEngine.playCard(cogsworthClimbingClock);
-//
-//     Expect(testEngine.getCardModel(cogsworthClimbingClock).strength).toBe(
-//       CogsworthClimbingClock.strength,
-//     );
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockItem } from "@tcg/lorcana-engine/testing";
+import { cogsworthClimbingClock } from "./130-cogsworth-climbing-clock";
+
+const discardItem = createMockItem({
+  id: "cogsworth-test-item",
+  name: "Test Item",
+  cost: 1,
+});
+
+describe("Cogsworth - Climbing Clock", () => {
+  describe("STILL USEFUL - While you have an item card in your discard, this character gets +2 {S}.", () => {
+    it("gets +2 strength while an item card is in your discard", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [cogsworthClimbingClock],
+        discard: [discardItem],
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(cogsworthClimbingClock)).toBe(
+        cogsworthClimbingClock.strength + 2,
+      );
+    });
+
+    it("stays at base strength when there is no item card in your discard", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [cogsworthClimbingClock],
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(cogsworthClimbingClock)).toBe(
+        cogsworthClimbingClock.strength,
+      );
+    });
+  });
+});

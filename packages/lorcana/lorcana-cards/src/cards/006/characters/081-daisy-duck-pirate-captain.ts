@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daisyDuckPirateCaptainI18n } from "./081-daisy-duck-pirate-captain.i18n";
 
 export const daisyDuckPirateCaptain: CharacterCard = {
   id: "dpv",
@@ -7,52 +8,6 @@ export const daisyDuckPirateCaptain: CharacterCard = {
   cardType: "character",
   name: "Daisy Duck",
   version: "Pirate Captain",
-  i18n: {
-    en: {
-      name: "Daisy Duck",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "DISTANT SHORES",
-          description:
-            "Whenever one of your Pirate characters quests while at a location, draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Daisy Duck",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "DISTANT SHORES",
-          description:
-            "Whenever one of your Pirate characters quests while at a location, draw a card.",
-        },
-      ],
-    },
-    fr: {
-      name: "Daisy Duck",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "DISTANT SHORES",
-          description:
-            "Whenever one of your Pirate characters quests while at a location, draw a card.",
-        },
-      ],
-    },
-    it: {
-      name: "Daisy Duck",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "DISTANT SHORES",
-          description:
-            "Whenever one of your Pirate characters quests while at a location, draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "006",
   cardNumber: 81,
@@ -85,11 +40,32 @@ export const daisyDuckPirateCaptain: CharacterCard = {
       name: "DISTANT SHORES",
       text: "DISTANT SHORES Whenever one of your Pirate characters quests while at a location, draw a card.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "quest",
+        on: {
+          cardType: "character",
+          classification: "Pirate",
+          controller: "you",
+        },
         timing: "whenever",
+      },
+      condition: {
+        type: "target-query",
+        query: {
+          filters: [
+            {
+              type: "at-location",
+            },
+          ],
+          reference: "trigger-subject",
+          selector: "all",
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
       },
       type: "triggered",
     },
   ],
+  i18n: daisyDuckPirateCaptainI18n,
 };

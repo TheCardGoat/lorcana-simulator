@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rayaWarriorOfKumandraI18n } from "./124-raya-warrior-of-kumandra.i18n";
 
 export const rayaWarriorOfKumandra: CharacterCard = {
   id: "NXq",
@@ -7,24 +8,6 @@ export const rayaWarriorOfKumandra: CharacterCard = {
   cardType: "character",
   name: "Raya",
   version: "Warrior of Kumandra",
-  i18n: {
-    en: {
-      name: "Raya",
-      version: "Warrior of Kumandra",
-    },
-    de: {
-      name: "Raya",
-      version: "Kriegerin von Kumandra",
-    },
-    fr: {
-      name: "Raya",
-      version: "Combattante de Kumandra",
-    },
-    it: {
-      name: "Raya",
-      version: "Warrior of Kumandra",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "002",
@@ -41,4 +24,5 @@ export const rayaWarriorOfKumandra: CharacterCard = {
     tcgPlayer: 516427,
   },
   classifications: ["Storyborn", "Hero", "Princess"],
+  i18n: rayaWarriorOfKumandraI18n,
 };

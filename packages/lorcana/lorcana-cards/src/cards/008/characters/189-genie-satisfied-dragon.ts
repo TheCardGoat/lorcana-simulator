@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { genieSatisfiedDragonI18n } from "./189-genie-satisfied-dragon.i18n";
 
 export const genieSatisfiedDragon: CharacterCard = {
   id: "0kv",
@@ -7,52 +8,6 @@ export const genieSatisfiedDragon: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "Satisfied Dragon",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "Satisfied Dragon",
-      text: [
-        {
-          title: "BUG CATCHER",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Dschinni",
-      version: "Zufriedener Drache",
-      text: [
-        {
-          title: "INSEKTENFÄNGER",
-          description:
-            "In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Génie",
-      version: "Dragon satisfait",
-      text: [
-        {
-          title: "CHASSEUR D'INSECTES",
-          description:
-            "Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier des personnages avec Insaisissable.)",
-        },
-      ],
-    },
-    it: {
-      name: "Genio",
-      version: "Drago Soddisfatto",
-      text: [
-        {
-          title: "ACCHIAPPA INSETTI",
-          description:
-            "Durante il tuo turno, questo personaggio ottiene Sfuggente. (Può sfidare altri personaggi con Sfuggente.)",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Aladdin",
   set: "008",
@@ -91,4 +46,5 @@ export const genieSatisfiedDragon: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: genieSatisfiedDragonI18n,
 };

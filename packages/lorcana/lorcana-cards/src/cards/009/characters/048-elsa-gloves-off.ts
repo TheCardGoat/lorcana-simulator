@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { elsaGlovesOffI18n } from "./048-elsa-gloves-off.i18n";
 
 export const elsaGlovesOff: CharacterCard = {
   id: "Cbk",
@@ -7,28 +8,6 @@ export const elsaGlovesOff: CharacterCard = {
   cardType: "character",
   name: "Elsa",
   version: "Gloves Off",
-  i18n: {
-    en: {
-      name: "Elsa",
-      version: "Gloves Off",
-      text: "Challenger +3 (While challenging, this character gets +3 {S})",
-    },
-    de: {
-      name: "Elsa",
-      version: "Ohne Handschuhe",
-      text: "Herausfordern +3",
-    },
-    fr: {
-      name: "Elsa",
-      version: "Sans gants",
-      text: "Offensif +3",
-    },
-    it: {
-      name: "Elsa",
-      version: "Gloves Off",
-      text: "Challenger +3 (While challenging, this character gets +3.)",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "009",
@@ -54,4 +33,5 @@ export const elsaGlovesOff: CharacterCard = {
       text: "Challenger +3",
     },
   ],
+  i18n: elsaGlovesOffI18n,
 };

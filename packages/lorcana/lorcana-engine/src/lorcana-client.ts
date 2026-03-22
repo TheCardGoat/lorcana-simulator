@@ -1,7 +1,7 @@
 /**
  * Lorcana Client Runtime
  *
- * Client-first wrapper around GameEngine<LorcanaProjectedBoardView>.
+ * Client-first wrapper around .
  * Provides player-scoped move execution and projected board access.
  */
 
@@ -11,14 +11,13 @@ import {
   type ClientEngineConfig,
   type DeepReadonly,
   type InMemoryTransport,
+  type MatchRuntimeConfig,
   type PlayerId,
   type CommandResult,
 } from "#core";
 import type { CardInput } from "./types";
 import { lorcanaRuntimeConfig } from "./runtime-game";
-import type { LorcanaCard } from "@tcg/lorcana-types";
 import type { LorcanaG, LorcanaMatchState, LorcanaProjectedBoardView } from "./types";
-import type { LorcanaRuntimeCardDerivedMethods } from "./runtime-moves";
 import { type LorcanaBaseEngineParams } from "./engine-initialization";
 
 type LorcanaClientParams = {
@@ -36,29 +35,17 @@ export class LorcanaClient extends LorcanaEngineBase {
   private projectedBoard?: LorcanaProjectedBoardView;
   private nextProjectedBoard?: LorcanaProjectedBoardView;
 
-  engine: ClientEngine<
-    LorcanaG,
-    LorcanaCard,
-    LorcanaRuntimeCardDerivedMethods,
-    LorcanaProjectedBoardView,
-    typeof lorcanaRuntimeConfig.moves
-  >;
+  engine: ClientEngine;
 
   constructor(params: LorcanaBaseEngineParams & LorcanaClientParams) {
     super(params);
     this._playerId = params.playerId;
     const staticResources = this.getResolvedStaticResources();
 
-    const clientEngineConfig: ClientEngineConfig<
-      LorcanaG,
-      LorcanaCard,
-      LorcanaRuntimeCardDerivedMethods,
-      LorcanaProjectedBoardView,
-      typeof lorcanaRuntimeConfig.moves
-    > = {
+    const clientEngineConfig: ClientEngineConfig = {
       playerId: params.playerId,
       role: params.role || "spectator",
-      runtimeConfig: lorcanaRuntimeConfig,
+      runtimeConfig: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
       staticResources: staticResources,
       players: params.players,
       seed: params.seed,
@@ -70,7 +57,7 @@ export class LorcanaClient extends LorcanaEngineBase {
     this.engine = new ClientEngine(clientEngineConfig);
 
     this.engine.onStateUpdate((board) => {
-      this.cacheProjectedBoardUpdate(board);
+      this.cacheProjectedBoardUpdate(board as unknown as LorcanaProjectedBoardView);
     });
   }
 
@@ -98,7 +85,12 @@ export class LorcanaClient extends LorcanaEngineBase {
       return projected;
     }
 
-    return this.projectedBoard ?? this.normalizeProjectedBoardPayload(this.engine.getBoard());
+    return (
+      this.projectedBoard ??
+      this.normalizeProjectedBoardPayload(
+        this.engine.getBoard() as unknown as LorcanaProjectedBoardView,
+      )
+    );
   }
 
   protected loadStateViaEngine(state: LorcanaMatchState): void {
@@ -138,14 +130,14 @@ export class LorcanaClient extends LorcanaEngineBase {
         ? { role: "player" as const, playerID: this.getClientPlayerId() }
         : { role: actorContext.role };
 
-    const board: LorcanaProjectedBoardView = lorcanaRuntimeConfig.projectBoard(
+    const board = lorcanaRuntimeConfig.projectBoard(
       state as LorcanaMatchState,
       roleCtx,
       this.staticResources,
       {
         serverTimestamp: Date.now(),
       },
-    );
+    ) as unknown as LorcanaProjectedBoardView;
 
     return board;
   }

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { headlessManhorseMannyI18n } from "./004-headless-manhorse-manny.i18n";
 
 export const headlessManhorseManny: CharacterCard = {
   id: "foC",
@@ -7,24 +8,6 @@ export const headlessManhorseManny: CharacterCard = {
   cardType: "character",
   name: "Headless Manhorse",
   version: "Manny",
-  i18n: {
-    en: {
-      name: "Headless Manhorse",
-      version: "Manny",
-    },
-    de: {
-      name: "Kopfloser Pferdemensch",
-      version: "Manny",
-    },
-    fr: {
-      name: "Le destrier sans tête",
-      version: "Manny",
-    },
-    it: {
-      name: "Uomo-Cavallo Senza Testa",
-      version: "Manny",
-    },
-  },
   inkType: ["amber"],
   franchise: "Ducktales",
   set: "010",
@@ -41,4 +24,5 @@ export const headlessManhorseManny: CharacterCard = {
     tcgPlayer: 660014,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: headlessManhorseMannyI18n,
 };

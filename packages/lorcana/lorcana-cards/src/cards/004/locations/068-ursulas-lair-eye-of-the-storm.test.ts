@@ -58,11 +58,6 @@ describe("Ursula's Lair - Eye of the Storm", () => {
     expect(
       testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
     ).toBe(true);
-    expect(
-      testEngine
-        .asPlayerOne()
-        .resolveNextPending({ resolveOptional: true, targets: [banishedResident] }).success,
-    ).toBe(true);
     expect(testEngine.asPlayerOne().getCardZone(banishedResident)).toBe("hand");
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
   });

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { captainHookForcefulDuelistI18n } from "./186-captain-hook-forceful-duelist.i18n";
 
 export const captainHookForcefulDuelist: CharacterCard = {
   id: "WLW",
@@ -7,28 +8,6 @@ export const captainHookForcefulDuelist: CharacterCard = {
   cardType: "character",
   name: "Captain Hook",
   version: "Forceful Duelist",
-  i18n: {
-    en: {
-      name: "Captain Hook",
-      version: "Forceful Duelist",
-      text: "Challenger +2",
-    },
-    de: {
-      name: "Captain Hook",
-      version: "Forceful Duelist",
-      text: "Challenger +2 (While challenging, this character gets +2.)",
-    },
-    fr: {
-      name: "Captain Hook",
-      version: "Forceful Duelist",
-      text: "Challenger +2 (While challenging, this character gets +2.)",
-    },
-    it: {
-      name: "Captain Hook",
-      version: "Forceful Duelist",
-      text: "Challenger +2 (While challenging, this character gets +2.)",
-    },
-  },
   inkType: ["steel"],
   franchise: "Peter Pan",
   set: "008",
@@ -54,4 +33,5 @@ export const captainHookForcefulDuelist: CharacterCard = {
       text: "Challenger +2",
     },
   ],
+  i18n: captainHookForcefulDuelistI18n,
 };

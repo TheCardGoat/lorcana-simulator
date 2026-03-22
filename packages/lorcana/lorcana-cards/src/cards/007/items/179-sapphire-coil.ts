@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { sapphireCoilI18n } from "./179-sapphire-coil.i18n";
 
 export const sapphireCoil: ItemCard = {
   id: "jrq",
@@ -6,48 +7,6 @@ export const sapphireCoil: ItemCard = {
   reprints: ["set7-179"],
   cardType: "item",
   name: "Sapphire Coil",
-  i18n: {
-    en: {
-      name: "Sapphire Coil",
-      text: [
-        {
-          title: "BRILLIANT SHINE",
-          description:
-            "During your turn, whenever a card is put into your inkwell, you may give chosen character -2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Saphir-Reif",
-      text: [
-        {
-          title: "STRAHLENDER GLANZ",
-          description:
-            "Jedes Mal während deines Zuges, wenn eine Karte in deinen Tintenvorrat gelegt wird, darfst du einem Charakter deiner Wahl in diesem Zug -2 geben.",
-        },
-      ],
-    },
-    fr: {
-      name: "Spirale de Saphir",
-      text: [
-        {
-          title: "ÉCLAT LUSTRÉ",
-          description:
-            "Durant votre tour, chaque fois qu'une carte est placée dans votre réserve d'encre, vous pouvez choisir un personnage qui subit -2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Spira di Zaffiro",
-      text: [
-        {
-          title: "SPLENDORE LUCENTE",
-          description:
-            "Durante il tuo turno, ogni volta che una carta viene aggiunta al tuo calamaio, puoi dare -2 a un personaggio a tua scelta per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Lorcana",
   set: "007",
@@ -102,4 +61,5 @@ export const sapphireCoil: ItemCard = {
       },
     },
   ],
+  i18n: sapphireCoilI18n,
 };

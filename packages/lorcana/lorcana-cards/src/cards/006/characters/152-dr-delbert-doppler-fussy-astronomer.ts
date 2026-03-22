@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { drDelbertDopplerFussyAstronomerI18n } from "./152-dr-delbert-doppler-fussy-astronomer.i18n";
 
 export const drDelbertDopplerFussyAstronomer: CharacterCard = {
   id: "CFc",
@@ -7,24 +8,6 @@ export const drDelbertDopplerFussyAstronomer: CharacterCard = {
   cardType: "character",
   name: "Dr. Delbert Doppler",
   version: "Fussy Astronomer",
-  i18n: {
-    en: {
-      name: "Dr. Delbert Doppler",
-      version: "Fussy Astronomer",
-    },
-    de: {
-      name: "Dr. Doppler",
-      version: "Aufgeregter Astronom",
-    },
-    fr: {
-      name: "Dr. Delber Doppler",
-      version: "Astronome pointilleux",
-    },
-    it: {
-      name: "Dr. Delbert Doppler",
-      version: "Astronomo Pignolo",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Treasure Planet",
   set: "006",
@@ -41,4 +24,5 @@ export const drDelbertDopplerFussyAstronomer: CharacterCard = {
     tcgPlayer: 593003,
   },
   classifications: ["Storyborn", "Ally", "Alien"],
+  i18n: drDelbertDopplerFussyAstronomerI18n,
 };

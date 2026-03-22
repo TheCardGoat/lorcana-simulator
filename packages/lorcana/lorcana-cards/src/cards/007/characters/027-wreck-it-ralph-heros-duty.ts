@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { wreckitRalphHerosDutyI18n } from "./027-wreck-it-ralph-heros-duty.i18n";
 
 export const wreckitRalphHerosDuty: CharacterCard = {
   id: "16Q",
@@ -7,52 +8,6 @@ export const wreckitRalphHerosDuty: CharacterCard = {
   cardType: "character",
   name: "Wreck-It Ralph",
   version: "Hero's Duty",
-  i18n: {
-    en: {
-      name: "Wreck-It Ralph",
-      version: "Hero's Duty",
-      text: [
-        {
-          title: "OUTFLANK",
-          description:
-            "During your turn, whenever one of your other characters is banished, this character gets +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Randale Ralph",
-      version: "Hero's Duty",
-      text: [
-        {
-          title: "ÜBERFLÜGELN",
-          description:
-            "Jedes Mal, wenn einer deiner anderen Charaktere in deinem Zug verbannt wird, erhält dieser Charakter in diesem Zug +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Ralph la Casse",
-      version: "Hero's Duty",
-      text: [
-        {
-          title: "CONTOURNEMENT",
-          description:
-            "Durant votre tour, chaque fois que l'un de vos autres personnages est banni, ce personnage-ci gagne +1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Ralph Spaccatutto",
-      version: "In Hero's Duty",
-      text: [
-        {
-          title: "AGGIRARE",
-          description:
-            "Durante il tuo turno, ogni volta che uno dei tuoi altri personaggi viene esiliato, questo personaggio riceve +1 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Wreck It Ralph",
   set: "007",
@@ -91,8 +46,15 @@ export const wreckitRalphHerosDuty: CharacterCard = {
         event: "banish",
         on: "YOUR_OTHER_CHARACTERS",
         timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
       },
       type: "triggered",
     },
   ],
+  i18n: wreckitRalphHerosDutyI18n,
 };

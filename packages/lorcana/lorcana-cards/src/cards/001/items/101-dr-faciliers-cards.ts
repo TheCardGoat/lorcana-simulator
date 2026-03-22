@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { drFaciliersCardsI18n } from "./101-dr-faciliers-cards.i18n";
 
 export const drFaciliersCards: ItemCard = {
   id: "flR",
@@ -6,46 +7,6 @@ export const drFaciliersCards: ItemCard = {
   reprints: ["set1-101"],
   cardType: "item",
   name: "Dr. Facilier’s Cards",
-  i18n: {
-    en: {
-      name: "Dr. Facilier’s Cards",
-      text: [
-        {
-          title: "THE CARDS WILL TELL",
-          description: "— You pay 1 less for the next action you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Dr. Faciliers Karten",
-      text: [
-        {
-          title: "IN DEN KARTEN STEHT'S",
-          description:
-            "— Du zahlst 1 weniger für die nächste Aktion, die du in diesem Zug ausspielst.",
-        },
-      ],
-    },
-    fr: {
-      name: "CARTES DU DR. FACILIER",
-      text: [
-        {
-          title: "DIVINATION",
-          description:
-            "— La prochaine carte action que vous jouez durant ce tour coûte 1 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Dr. Facilier’s Cards",
-      text: [
-        {
-          title: "THE CARDS WILL TELL",
-          description: "— You pay 1 less for the next action you play this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Princess and the Frog",
   set: "001",
@@ -81,4 +42,5 @@ export const drFaciliersCards: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: drFaciliersCardsI18n,
 };

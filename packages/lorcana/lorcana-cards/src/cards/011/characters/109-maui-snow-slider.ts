@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mauiSnowSliderI18n } from "./109-maui-snow-slider.i18n";
 
 export const mauiSnowSlider: CharacterCard = {
   id: "1ji",
@@ -7,33 +8,6 @@ export const mauiSnowSlider: CharacterCard = {
   cardType: "character",
   name: "Maui",
   version: "Snow Slider",
-  i18n: {
-    en: {
-      name: "Maui",
-      version: "Snow Slider",
-      text: "Rush",
-    },
-    de: {
-      name: "Maui",
-      version: "Schneerutscher",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Maui",
-      version: "Glisseur des neiges",
-      text: "Charge",
-    },
-    it: {
-      name: "Maui",
-      version: "Scivolatore su Neve",
-      text: [
-        {
-          title: "Lesto",
-          description: "(Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "011",
@@ -58,4 +32,5 @@ export const mauiSnowSlider: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: mauiSnowSliderI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { thePrinceVigilantSuitorI18n } from "./024-the-prince-vigilant-suitor.i18n";
 
 export const thePrinceVigilantSuitor: CharacterCard = {
   id: "cGm",
@@ -7,34 +8,6 @@ export const thePrinceVigilantSuitor: CharacterCard = {
   cardType: "character",
   name: "The Prince",
   version: "Vigilant Suitor",
-  i18n: {
-    en: {
-      name: "The Prince",
-      version: "Vigilant Suitor",
-      text: "Bodyguard",
-    },
-    de: {
-      name: "Der Prinz",
-      version: "Wachsamer Verehrer",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "Le Prince",
-      version: "Prétendant vigilant",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "Il Principe",
-      version: "Pretendente all'Erta",
-      text: "Guardiano",
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "007",
@@ -59,4 +32,5 @@ export const thePrinceVigilantSuitor: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: thePrinceVigilantSuitorI18n,
 };

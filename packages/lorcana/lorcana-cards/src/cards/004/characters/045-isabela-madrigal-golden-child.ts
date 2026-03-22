@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { isabelaMadrigalGoldenChildI18n } from "./045-isabela-madrigal-golden-child.i18n";
 
 export const isabelaMadrigalGoldenChild: CharacterCard = {
   id: "Kq0",
@@ -7,42 +8,6 @@ export const isabelaMadrigalGoldenChild: CharacterCard = {
   cardType: "character",
   name: "Isabela Madrigal",
   version: "Golden Child",
-  i18n: {
-    en: {
-      name: "Isabela Madrigal",
-      version: "Golden Child",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "LADIES FIRST",
-          description:
-            "During your turn, if no other character has quested this turn, this character gets +3 {L}.",
-        },
-        {
-          title: "LEAVE IT TO ME",
-          description:
-            "Whenever this character quests, your other characters can't quest for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Isabela Madrigal",
-      version: "Perfekt, nicht ohne Grund",
-      text: "Wendig LADIES FIRST Solange in deinem Zug noch keiner deiner anderen Charaktere erkundet hat, erhält dieser Charakter +3. ÜBERLASST DAS MIR Jedes Mal, wenn dieser Charakter erkundet, können deine anderen Charakere in diesem Zug nicht mehr erkunden.",
-    },
-    fr: {
-      name: "Isabela Madrigal",
-      version: "Enfant chérie",
-      text: "Insaisissable LES FEMMES D'ABORD Tant qu'aucun autre personnage n'a été envoyé à l'aventure durant ce tour, ce personnage gagne +3. LAISSEZ-MOI FAIRE Chaque fois que ce personnage est envoyé à l'aventure, vos autres personnages ne peuvent pas être envoyés à l'aventure pour le reste de ce tour.",
-    },
-    it: {
-      name: "Isabela Madrigal",
-      version: "Il Più Bel Fiore",
-      text: "Sfuggente PRIMA LE SIGNORE Durante il tuo turno, se nessun altro personaggio è andato all'avventura in questo turno, questo personaggio riceve +3. LASCIA FARE A ME Ogni volta che questo personaggio va all'avventura, i tuoi altri personaggi non possono andare all'avventura per il resto di questo turno.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "004",
@@ -122,4 +87,5 @@ export const isabelaMadrigalGoldenChild: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: isabelaMadrigalGoldenChildI18n,
 };

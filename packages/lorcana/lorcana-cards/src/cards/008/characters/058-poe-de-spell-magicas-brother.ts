@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { poeDeSpellMagicasBrotherI18n } from "./058-poe-de-spell-magicas-brother.i18n";
 
 export const poeDeSpellMagicasBrother: CharacterCard = {
   id: "J4k",
@@ -7,24 +8,6 @@ export const poeDeSpellMagicasBrother: CharacterCard = {
   cardType: "character",
   name: "Poe De Spell",
   version: "Magica's Brother",
-  i18n: {
-    en: {
-      name: "Poe De Spell",
-      version: "Magica's Brother",
-    },
-    de: {
-      name: "Poe Gaukeley",
-      version: "Gundels Bruder",
-    },
-    fr: {
-      name: "Poe De Sortilège",
-      version: "Frère de Miss Tick",
-    },
-    it: {
-      name: "Gennarino",
-      version: "Fratello di Amelia",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Ducktales",
   set: "008",
@@ -41,4 +24,5 @@ export const poeDeSpellMagicasBrother: CharacterCard = {
     tcgPlayer: 631389,
   },
   classifications: ["Storyborn", "Ally", "Sorcerer"],
+  i18n: poeDeSpellMagicasBrotherI18n,
 };

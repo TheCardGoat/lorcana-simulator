@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { dinglehopperI18n } from "./032-dinglehopper.i18n";
 
 export const dinglehopper: ItemCard = {
   id: "hoX",
@@ -6,44 +7,6 @@ export const dinglehopper: ItemCard = {
   reprints: ["set1-032"],
   cardType: "item",
   name: "Dinglehopper",
-  i18n: {
-    en: {
-      name: "Dinglehopper",
-      text: [
-        {
-          title: "STRAIGHTEN HAIR",
-          description: "{E} — Remove up to 1 damage from chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Dingelhopper",
-      text: [
-        {
-          title: "HAARE STRIEGELN",
-          description: "— Entferne bis zu 1 Schaden von einem Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "ZIRGOUFLEX",
-      text: [
-        {
-          title: "RATISSER LES POILS DE",
-          description: "TÊTE — Choisissez un personnage et retirez-lui 1 jeton Dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Arricciaspiccia",
-      text: [
-        {
-          title: "SISTEMARE I CAPELLI",
-          description: "— Rimuovi fino a 1 danno da un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Little Mermaid",
   set: "001",
@@ -78,4 +41,5 @@ export const dinglehopper: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: dinglehopperI18n,
 };

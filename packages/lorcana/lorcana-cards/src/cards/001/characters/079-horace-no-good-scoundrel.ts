@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { horaceNogoodScoundrelI18n } from "./079-horace-no-good-scoundrel.i18n";
 
 export const horaceNogoodScoundrel: CharacterCard = {
   id: "dBe",
@@ -7,24 +8,6 @@ export const horaceNogoodScoundrel: CharacterCard = {
   cardType: "character",
   name: "Horace",
   version: "No-Good Scoundrel",
-  i18n: {
-    en: {
-      name: "Horace",
-      version: "No-Good Scoundrel",
-    },
-    de: {
-      name: "Horace",
-      version: "Nichtsnutziger Halunke",
-    },
-    fr: {
-      name: "HORACE",
-      version: "Crapule bonne à rien",
-    },
-    it: {
-      name: "Orazio",
-      version: "Losca Canaglia",
-    },
-  },
   inkType: ["emerald"],
   franchise: "101 Dalmatians",
   set: "001",
@@ -41,4 +24,5 @@ export const horaceNogoodScoundrel: CharacterCard = {
     tcgPlayer: 507494,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: horaceNogoodScoundrelI18n,
 };

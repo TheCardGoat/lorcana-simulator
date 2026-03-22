@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pegasusGiftForHerculesEpicI18n } from "./212-pegasus-gift-for-hercules-epic.i18n";
 
 export const pegasusGiftForHerculesEpic: CharacterCard = {
   id: "fMf",
@@ -7,28 +8,6 @@ export const pegasusGiftForHerculesEpic: CharacterCard = {
   cardType: "character",
   name: "Pegasus",
   version: "Gift for Hercules",
-  i18n: {
-    en: {
-      name: "Pegasus",
-      version: "Gift for Hercules",
-      text: "Evasive",
-    },
-    de: {
-      name: "Pegasus",
-      version: "Geschenk für Hercules",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Pégase",
-      version: "Présent pour Hercule",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Pegaso",
-      version: "Dono per Ercole",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "009",
@@ -54,4 +33,5 @@ export const pegasusGiftForHerculesEpic: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: pegasusGiftForHerculesEpicI18n,
 };

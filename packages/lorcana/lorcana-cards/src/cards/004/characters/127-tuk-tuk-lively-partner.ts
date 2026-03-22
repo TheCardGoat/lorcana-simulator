@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tukTukLivelyPartnerI18n } from "./127-tuk-tuk-lively-partner.i18n";
 
 export const tukTukLivelyPartner: CharacterCard = {
   id: "PQN",
@@ -7,37 +8,6 @@ export const tukTukLivelyPartner: CharacterCard = {
   cardType: "character",
   name: "Tuk Tuk",
   version: "Lively Partner",
-  i18n: {
-    en: {
-      name: "Tuk Tuk",
-      version: "Lively Partner",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "ON A ROLL",
-          description:
-            "When you play this character, you may move him and one of your other characters to the same location for free. The other character gets +2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Tuktuk",
-      version: "Lebendiger Verbündeter",
-      text: "Wendig AUFGEDREHT Wenn du diesen Charakter ausspielst, darfst du ihn und einen deiner anderen Charaktere kostenlos zu dem selben Ort bewegen. Der andere Charakter erhält in diesem Zug +2.",
-    },
-    fr: {
-      name: "Tuk Tuk",
-      version: "Partenaire percutant",
-      text: "Insaisissable ÇA ROULE Lorsque vous jouez ce personnage, vous pouvez choisir un autre personnage et les déplacer tous les deux gratuitement sur un même lieu. Le personnage choisi gagne +2 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Tuk Tuk",
-      version: "Compagno Vivace",
-      text: "Sfuggente ROTOLAMENTO Quando giochi questo personaggio, puoi spostare lui e uno dei tuoi altri personaggi in uno stesso luogo, gratis. L'altro personaggio riceve +2 per questo turno.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "004",
@@ -57,30 +27,69 @@ export const tukTukLivelyPartner: CharacterCard = {
       title: "Evasive",
     },
     {
-      title: "ON A ROLL",
+      title: "ON",
       description:
-        "When you play this character, you may move him and one of your other characters to the same location for free. The other character gets +2 {S} this turn.",
+        "A ROLL When you play this character, you may move him and one of your other characters to the same location for free. The other character gets +2 {S} this turn.",
     },
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
-      effect: {
-        duration: "this-turn",
-        modifier: 2,
-        stat: "strength",
-        target: "YOUR_CHARACTERS",
-        type: "modify-stat",
-      },
-      id: "1qb-1",
-      name: "Evasive ON A ROLL",
-      text: "Evasive ON A ROLL When you play this character, you may move him and one of your other characters to the same location for free. If you do, the other character gets +2 {S} this turn.",
+      id: "PQN-1",
+      name: "Evasive",
+      text: "Evasive",
+      type: "keyword",
+      keyword: "Evasive",
+    },
+    {
+      id: "PQN-2",
+      name: "ON A ROLL",
+      text: "ON A ROLL When you play this character, you may move him and one of your other characters to the same location for free. The other character gets +2 {S} this turn.",
+      type: "triggered",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
       },
-      type: "triggered",
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "sequence",
+          steps: [
+            {
+              type: "move-to-location",
+              character: "ANOTHER_CHOSEN_CHARACTER_OF_YOURS",
+              location: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["location"],
+              },
+              cost: "free",
+            },
+            {
+              type: "move-to-location",
+              character: "SELF",
+              location: {
+                ref: "previous-target",
+              },
+              cost: "free",
+            },
+            {
+              type: "modify-stat",
+              stat: "strength",
+              modifier: 2,
+              duration: "this-turn",
+              target: {
+                reference: "selected-first",
+              },
+            },
+          ],
+        },
+      },
     },
   ],
+  i18n: tukTukLivelyPartnerI18n,
 };

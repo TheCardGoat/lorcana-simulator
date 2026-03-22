@@ -1,3 +1,145 @@
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  createMockAction,
+} from "@tcg/lorcana-engine/testing";
+import { simbaKingInTheMaking } from "./020-simba-king-in-the-making";
+
+const topDeckCharacter = createMockCharacter({
+  id: "simba-test-top-character",
+  name: "Top Deck Character",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+const topDeckAction = createMockAction({
+  id: "simba-test-top-action",
+  name: "Top Deck Action",
+  cost: 2,
+  text: "Draw a card.",
+});
+
+const deckFiller = createMockCharacter({
+  id: "simba-test-deck-filler",
+  name: "Deck Filler",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+  lore: 1,
+});
+
+describe("Simba - King in the Making", () => {
+  it("has the Boost 3 keyword ability", () => {
+    const boostAbility = simbaKingInTheMaking.abilities?.find(
+      (a) => a.type === "keyword" && a.keyword === "Boost",
+    );
+    expect(boostAbility).toBeDefined();
+    expect(
+      boostAbility?.type === "keyword" && "value" in boostAbility ? boostAbility.value : undefined,
+    ).toBe(3);
+  });
+
+  it("has TIMELY ALLIANCE triggered ability with correct put-card-under trigger", () => {
+    const timelyAlliance = simbaKingInTheMaking.abilities?.find(
+      (a) => a.type === "triggered" && "name" in a && a.name === "TIMELY ALLIANCE",
+    );
+    expect(timelyAlliance).toBeDefined();
+    expect(timelyAlliance?.type).toBe("triggered");
+    const trigger = (timelyAlliance as { trigger?: { event?: string; timing?: string } }).trigger;
+    expect(trigger?.event).toBe("put-card-under");
+    expect(trigger?.timing).toBe("whenever");
+  });
+
+  describe("TIMELY ALLIANCE - Whenever you put a card under this character", () => {
+    it("triggers when Boost puts a card under Simba and top card is a character - player can play it for free exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [simbaKingInTheMaking],
+        inkwell: 3,
+        deck: [topDeckCharacter, deckFiller, deckFiller],
+      });
+
+      const playerOne = testEngine.asPlayerOne();
+
+      // Activate Boost 3 - pay 3 ink to put top deck card under Simba
+      expect(playerOne.activateAbility(simbaKingInTheMaking, "Boost 3")).toBeSuccessfulCommand();
+
+      // TIMELY ALLIANCE should trigger (optional bag)
+      const bagCount = playerOne.getBagCount();
+      expect(bagCount).toBeGreaterThanOrEqual(1);
+
+      // Accept the optional trigger
+      const [bagEffect] = playerOne.getBagEffects();
+      expect(
+        playerOne.resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+          destinations: [{ zone: "play", cards: [topDeckCharacter] }],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // The character should now be in play and exerted
+      expect(playerOne.getCardZone(topDeckCharacter)).toBe("play");
+      expect(playerOne.isExerted(topDeckCharacter)).toBe(true);
+    });
+
+    it("triggers when Boost puts a card under Simba and top card is NOT a character - put on bottom of deck", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [simbaKingInTheMaking],
+        inkwell: 3,
+        deck: [topDeckAction, deckFiller, deckFiller],
+      });
+
+      const playerOne = testEngine.asPlayerOne();
+      const initialDeckSize = playerOne.getCardsInZone("deck", "player_one").count;
+
+      // Activate Boost 3
+      expect(playerOne.activateAbility(simbaKingInTheMaking, "Boost 3")).toBeSuccessfulCommand();
+
+      // TIMELY ALLIANCE should trigger (optional bag)
+      const bagCount = playerOne.getBagCount();
+      expect(bagCount).toBeGreaterThanOrEqual(1);
+
+      // Accept the optional trigger - put non-character on bottom
+      const [bagEffect] = playerOne.getBagEffects();
+      expect(
+        playerOne.resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+          destinations: [{ zone: "deck-bottom", cards: [topDeckAction] }],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Action card should remain in deck (put on bottom)
+      expect(playerOne.getCardZone(topDeckAction)).toBe("deck");
+      // Deck size should be same as before (Boost took one card from deck, action was put back)
+      expect(playerOne.getCardsInZone("deck", "player_one").count).toBe(initialDeckSize - 1);
+    });
+
+    it("can decline TIMELY ALLIANCE optional trigger", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [simbaKingInTheMaking],
+        inkwell: 3,
+        deck: [topDeckCharacter, deckFiller, deckFiller],
+      });
+
+      const playerOne = testEngine.asPlayerOne();
+
+      // Activate Boost 3
+      expect(playerOne.activateAbility(simbaKingInTheMaking, "Boost 3")).toBeSuccessfulCommand();
+
+      // TIMELY ALLIANCE should trigger (optional bag)
+      const [bagEffect] = playerOne.getBagEffects();
+      expect(
+        playerOne.resolveBag(bagEffect!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // Character should still be in deck
+      expect(playerOne.getCardZone(topDeckCharacter)).toBe("deck");
+    });
+  });
+});
+
 // LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
 // /**
 //  * @jest-environment node

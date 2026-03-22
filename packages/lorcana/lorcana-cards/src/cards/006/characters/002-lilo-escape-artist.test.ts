@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { CANONICAL_PLAYER_ONE } from "@tcg/core/testing";
+import { CANONICAL_PLAYER_ONE } from "@tcg/shared/testing";
 import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { simbaProtectiveCub } from "../../001";
 import { liloRockStar } from "../../011";
@@ -63,9 +63,7 @@ describe("Lilo - Escape Artist", () => {
     );
 
     const [firstBagEffect, secondBagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(
-      testEngine.asPlayerOne().resolveBag(firstBagEffect!.id, { resolveOptional: true }).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolveBag(firstBagEffect!.id).success).toBe(true);
     expect(testEngine.asPlayerOne().getAvailableInk(CANONICAL_PLAYER_ONE)).toBe(
       liloEscapeArtist.cost,
     );
@@ -76,9 +74,7 @@ describe("Lilo - Escape Artist", () => {
       }),
     );
 
-    expect(
-      testEngine.asPlayerOne().resolveBag(secondBagEffect!.id, { resolveOptional: true }).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolveBag(secondBagEffect!.id).success).toBe(true);
     expect(testEngine.asPlayerOne().getAvailableInk(CANONICAL_PLAYER_ONE)).toBe(0);
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
       expect.objectContaining({
@@ -104,9 +100,7 @@ describe("Lilo - Escape Artist", () => {
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id).success).toBe(true);
 
     expect(testEngine.asPlayerOne().getCardZone(liloEscapeArtist)).toBe("play");
     expect(testEngine.asPlayerOne().getCardZone(liloRockStar)).toBe("discard");
@@ -127,9 +121,7 @@ describe("Lilo - Escape Artist", () => {
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id).success).toBe(true);
 
     expect(testEngine.asPlayerOne().getAvailableInk(CANONICAL_PLAYER_ONE)).toBe(0);
     expect(testEngine.asPlayerOne().getCardZone(liloEscapeArtist)).toBe("discard");

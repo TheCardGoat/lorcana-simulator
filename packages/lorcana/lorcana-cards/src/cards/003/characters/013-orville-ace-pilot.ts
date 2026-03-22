@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { orvilleAcePilotI18n } from "./013-orville-ace-pilot.i18n";
 
 export const orvilleAcePilot: CharacterCard = {
   id: "Rcs",
@@ -7,24 +8,6 @@ export const orvilleAcePilot: CharacterCard = {
   cardType: "character",
   name: "Orville",
   version: "Ace Pilot",
-  i18n: {
-    en: {
-      name: "Orville",
-      version: "Ace Pilot",
-    },
-    de: {
-      name: "Orville",
-      version: "Flieger-Ass",
-    },
-    fr: {
-      name: "Orville",
-      version: "As de l'aviation",
-    },
-    it: {
-      name: "Orville",
-      version: "Asso del Volo",
-    },
-  },
   inkType: ["amber"],
   franchise: "Rescuers",
   set: "003",
@@ -41,4 +24,5 @@ export const orvilleAcePilot: CharacterCard = {
     tcgPlayer: 539065,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: orvilleAcePilotI18n,
 };

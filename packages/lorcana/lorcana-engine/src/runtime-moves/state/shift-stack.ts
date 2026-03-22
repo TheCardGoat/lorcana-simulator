@@ -1,12 +1,9 @@
-import type { CardInstanceId, MoveExecutionContext, PlayerId } from "#core";
+import type { CardInstanceId, MoveExecutionContext, MoveInput, PlayerId } from "#core";
 import type { LorcanaCard, LorcanaCardMeta, LorcanaG } from "../../types";
 
 type ZoneRefLike = { zone: string; playerId?: PlayerId | string };
 
-type ShiftStackRuntimeContext = Pick<
-  MoveExecutionContext<LorcanaG, LorcanaCard>,
-  "cards" | "framework"
->;
+type ShiftStackRuntimeContext = Pick<MoveExecutionContext<MoveInput>, "cards" | "framework">;
 
 function getCardsUnder(meta: LorcanaCardMeta | undefined): CardInstanceId[] {
   return Array.isArray(meta?.cardsUnder) ? [...meta.cardsUnder] : [];
@@ -77,6 +74,67 @@ export function attachShiftStack(
   }
 }
 
+/**
+ * Returns the card IDs of characters currently at the given location.
+ */
+export function getCharacterIdsAtLocation(
+  ctx: ShiftStackRuntimeContext,
+  locationCardId: CardInstanceId,
+): CardInstanceId[] {
+  const playerIds = ctx.framework.state.playerIds ?? [];
+  const result: CardInstanceId[] = [];
+
+  for (const playerId of playerIds) {
+    const playCards = ctx.framework.zones.getCards({
+      zone: "play",
+      playerId,
+    }) as CardInstanceId[];
+
+    for (const cardId of playCards) {
+      const meta = ctx.cards.getMeta(String(cardId)) as LorcanaCardMeta | undefined;
+      if (meta?.atLocationId === locationCardId) {
+        result.push(cardId);
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * When a location leaves play, characters that were at that location
+ * must have their `atLocationId` cleared (Lorcana rule: characters
+ * simply lose their location association when the location is banished).
+ */
+function evacuateCharactersFromLocation(
+  ctx: ShiftStackRuntimeContext,
+  locationCardId: CardInstanceId,
+): void {
+  const playerIds = ctx.framework.state.playerIds ?? [];
+
+  for (const playerId of playerIds) {
+    const playCards = ctx.framework.zones.getCards({
+      zone: "play",
+      playerId,
+    }) as CardInstanceId[];
+
+    for (const cardId of playCards) {
+      const meta = ctx.cards.getMeta(String(cardId)) as LorcanaCardMeta | undefined;
+      if (meta?.atLocationId === locationCardId) {
+        ctx.cards.setMeta(String(cardId), {
+          ...meta,
+          atLocationId: undefined,
+        });
+      }
+    }
+  }
+}
+
+function isLocationDefinition(ctx: ShiftStackRuntimeContext, cardId: CardInstanceId): boolean {
+  const definition = ctx.cards.getDefinition(cardId) as { cardType?: string } | undefined;
+  return definition?.cardType === "location";
+}
+
 export function moveCardOutOfPlayWithStack(
   ctx: ShiftStackRuntimeContext,
   cardId: CardInstanceId,
@@ -85,6 +143,14 @@ export function moveCardOutOfPlayWithStack(
 ): CardInstanceId[] {
   const movedCardIds = getStackedCardIds(ctx, cardId);
   const startIndex = options?.index;
+
+  // Before moving, check if any card in the stack is a location.
+  // Characters at that location need their association cleared.
+  for (const movedCardId of movedCardIds) {
+    if (isLocationDefinition(ctx, movedCardId)) {
+      evacuateCharactersFromLocation(ctx, movedCardId);
+    }
+  }
 
   for (let index = 0; index < movedCardIds.length; index++) {
     const moveOptions = startIndex === undefined ? undefined : { index: startIndex + index };

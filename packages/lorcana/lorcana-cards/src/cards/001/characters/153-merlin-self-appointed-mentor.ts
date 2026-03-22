@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { merlinSelfappointedMentorI18n } from "./153-merlin-self-appointed-mentor.i18n";
 
 export const merlinSelfappointedMentor: CharacterCard = {
   id: "m4N",
@@ -7,34 +8,6 @@ export const merlinSelfappointedMentor: CharacterCard = {
   cardType: "character",
   name: "Merlin",
   version: "Self-Appointed Mentor",
-  i18n: {
-    en: {
-      name: "Merlin",
-      version: "Self-Appointed Mentor",
-      text: "Support",
-    },
-    de: {
-      name: "Merlin",
-      version: "Selbsternannter Mentor",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "MERLIN",
-      version: "Mentor autoproclamé",
-      text: "Soutien",
-    },
-    it: {
-      name: "Merlin",
-      version: "Self-Appointed Mentor",
-      text: [
-        {
-          title: "Support",
-          description:
-            "(Whenever this character quests, you may add their to another chosen character's this turn.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sword in the Stone",
   set: "001",
@@ -45,7 +18,6 @@ export const merlinSelfappointedMentor: CharacterCard = {
   willpower: 4,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_47e91685dd1f4021908561ca134dfe94",
     tcgPlayer: 503354,
@@ -60,4 +32,5 @@ export const merlinSelfappointedMentor: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: merlinSelfappointedMentorI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { taurusBulbaSteerminatorI18n } from "./106-taurus-bulba-steerminator.i18n";
 
 export const taurusBulbaSteerminator: CharacterCard = {
   id: "QuQ",
@@ -7,24 +8,6 @@ export const taurusBulbaSteerminator: CharacterCard = {
   cardType: "character",
   name: "Taurus Bulba",
   version: "Steerminator",
-  i18n: {
-    en: {
-      name: "Taurus Bulba",
-      version: "Steerminator",
-    },
-    de: {
-      name: "Torro Bulba",
-      version: "Stierminator",
-    },
-    fr: {
-      name: "Toros Bulba",
-      version: "Taurominator",
-    },
-    it: {
-      name: "Toros Bulba",
-      version: "Sterminatore",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -41,4 +24,5 @@ export const taurusBulbaSteerminator: CharacterCard = {
     tcgPlayer: 676210,
   },
   classifications: ["Storyborn", "Super", "Villain"],
+  i18n: taurusBulbaSteerminatorI18n,
 };

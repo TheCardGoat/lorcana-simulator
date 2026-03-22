@@ -125,6 +125,11 @@ export interface StaticAbilityDefinition
 export interface ActionAbilityDefinition
   extends BaseAbilityDefinition, Omit<ActionAbility, "type"> {
   type: "action";
+  /**
+   * When set, this action ability represents an alternative cost for playing the card.
+   * "sacrifice-item" = banish an item you control to play this card for free.
+   */
+  alternativeCost?: "sacrifice-item";
 }
 
 /**
@@ -372,28 +377,28 @@ export type LorcanaCard = CharacterCard | ActionCard | ItemCard | LocationCard;
 /**
  * Check if a card is a character
  */
-export function isCharacterCard(card: LorcanaCard): card is CharacterCard {
+export function isCharacterCard(card: LorcanaCardDefinition): card is CharacterCard {
   return card.cardType === "character";
 }
 
 /**
  * Check if a card is an action
  */
-export function isActionCard(card: LorcanaCard): card is ActionCard {
+export function isActionCard(card: LorcanaCardDefinition): card is ActionCard {
   return card.cardType === "action";
 }
 
 /**
  * Check if a card is an item
  */
-export function isItemCard(card: LorcanaCard): card is ItemCard {
+export function isItemCard(card: LorcanaCardDefinition): card is ItemCard {
   return card.cardType === "item";
 }
 
 /**
  * Check if a card is a location
  */
-export function isLocationCard(card: LorcanaCard): card is LocationCard {
+export function isLocationCard(card: LorcanaCardDefinition): card is LocationCard {
   return card.cardType === "location";
 }
 

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { theyNeverComeBackI18n } from "./078-they-never-come-back.i18n";
 
 export const theyNeverComeBack: ActionCard = {
   id: "Ql7",
@@ -6,24 +7,6 @@ export const theyNeverComeBack: ActionCard = {
   reprints: ["set8-078"],
   cardType: "action",
   name: "They Never Come Back",
-  i18n: {
-    en: {
-      name: "They Never Come Back",
-      text: "Up to 2 chosen characters can't ready at the start of their next turn. Draw a card.",
-    },
-    de: {
-      name: "Die kommen nie zurück",
-      text: "Bis zu 2 Charaktere deiner Wahl werden zu Beginn ihres nächsten Zuges nicht bereit gemacht. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Jamais plus des enfants",
-      text: "Choisissez jusqu'à 2 personnages qui ne se redressent pas au début de leur prochain tour. Piochez une carte.",
-    },
-    it: {
-      name: "Non Tornano Mai Più",
-      text: "Fino a 2 personaggi a tua scelta non si possono preparare all'inizio del loro prossimo turno. Pesca una carta.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Pinocchio",
   set: "008",
@@ -67,4 +50,5 @@ export const theyNeverComeBack: ActionCard = {
       type: "action",
     },
   ],
+  i18n: theyNeverComeBackI18n,
 };

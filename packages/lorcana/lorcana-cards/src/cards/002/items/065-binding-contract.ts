@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { bindingContractI18n } from "./065-binding-contract.i18n";
 
 export const bindingContract: ItemCard = {
   id: "DNe",
@@ -6,45 +7,6 @@ export const bindingContract: ItemCard = {
   reprints: ["set2-065"],
   cardType: "item",
   name: "Binding Contract",
-  i18n: {
-    en: {
-      name: "Binding Contract",
-      text: [
-        {
-          title: "FOR ALL ETERNITY",
-          description: "{E}, {E} one of your characters — Exert chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Verbindlicher Vertrag",
-      text: [
-        {
-          title: "IN ALLE EWIGKEIT,",
-          description: "einen deiner Charaktere — Erschöpfe einen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Contrat irrévocable",
-      text: [
-        {
-          title: "POUR TOUTE",
-          description:
-            "L'ÉTERNITÉ, l'un de vos personnages — Choisissez un personnage et épuisez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Binding Contract",
-      text: [
-        {
-          title: "FOR ALL ETERNITY,",
-          description: "one of your characters — Exert chosen character.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Little Mermaid",
   set: "002",
@@ -78,4 +40,5 @@ export const bindingContract: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: bindingContractI18n,
 };

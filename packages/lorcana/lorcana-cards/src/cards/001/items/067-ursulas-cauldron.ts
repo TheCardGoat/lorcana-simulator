@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { ursulasCauldronI18n } from "./067-ursulas-cauldron.i18n";
 
 export const ursulasCauldron: ItemCard = {
   id: "5L3",
@@ -6,48 +7,6 @@ export const ursulasCauldron: ItemCard = {
   reprints: ["set1-067"],
   cardType: "item",
   name: "Ursula’s Cauldron",
-  i18n: {
-    en: {
-      name: "Ursula’s Cauldron",
-      text: [
-        {
-          title: "PEER INTO THE DEPTHS",
-          description:
-            "— Look at the top 2 cards of your deck. Put one on the top of your deck and the other on the bottom.",
-        },
-      ],
-    },
-    de: {
-      name: "Ursulas Kessel",
-      text: [
-        {
-          title: "BLICKE IN DIE TIEFE",
-          description:
-            "— Schaue dir die obersten 2 Karten deines Decks an. Lege 1 davon auf dein Deck und die andere unter dein Deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "CHAUDRON D'URSULA",
-      text: [
-        {
-          title: "SURVEILLANCE DES PROFONDEURS",
-          description:
-            "— Regardez les 2 premières cartes de votre pioche. Remettez-en une sur le dessus de votre pioche et l'autre en dessous.",
-        },
-      ],
-    },
-    it: {
-      name: "Il Calderone di Ursula",
-      text: [
-        {
-          title: "SCRUTARE NEGLI ABISSI",
-          description:
-            "— Guarda le prime 2 carte del tuo mazzo. Mettine una in cima al tuo mazzo e l'altra in fondo.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Little Mermaid",
   set: "001",
@@ -72,29 +31,26 @@ export const ursulasCauldron: ItemCard = {
         exert: true,
       },
       effect: {
-        steps: [
+        amount: 2,
+        destinations: [
           {
-            amount: 2,
-            destinations: [
-              {
-                zone: "deck-bottom",
-                remainder: true,
-                ordering: "player-choice",
-              },
-            ],
-            target: "CONTROLLER",
-            type: "scry",
+            zone: "deck-top",
+            min: 1,
+            max: 1,
           },
           {
-            target: "CHOSEN_CHARACTER",
-            type: "put-on-bottom",
+            zone: "deck-bottom",
+            remainder: true,
+            ordering: "player-choice",
           },
         ],
-        type: "sequence",
+        target: "CONTROLLER",
+        type: "scry",
       },
       id: "1ad-1",
       text: "PEER INTO THE DEPTHS {E} — Look at the top 2 cards of your deck. Put one on the top of your deck and the other on the bottom.",
       type: "activated",
     },
   ],
+  i18n: ursulasCauldronI18n,
 };

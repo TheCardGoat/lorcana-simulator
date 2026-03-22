@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gastonSchemingSuitorI18n } from "./083-gaston-scheming-suitor.i18n";
 
 export const gastonSchemingSuitor: CharacterCard = {
   id: "yh1",
@@ -7,51 +8,6 @@ export const gastonSchemingSuitor: CharacterCard = {
   cardType: "character",
   name: "Gaston",
   version: "Scheming Suitor",
-  i18n: {
-    en: {
-      name: "Gaston",
-      version: "Scheming Suitor",
-      text: [
-        {
-          title: "YES, I'M INTIMIDATING",
-          description:
-            "While one or more opponents have no cards in their hands, this character gets +3 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Gaston",
-      version: "Intriganter Verehrer",
-      text: [
-        {
-          title: "ICH BIN FURCHTERREGEND",
-          description:
-            "Solange mindestens eine gegnerische Person keine Handkarten hat, erhält dieser Charakter +3.",
-        },
-      ],
-    },
-    fr: {
-      name: "Gaston",
-      version: "Prétendant fourbe",
-      text: [
-        {
-          title: "UN CORPS D'APOLLON, DU PLOMB DANS LA TÊTE",
-          description: "Tant qu'un adversaire n'a plus de carte en main, ce personnage gagne +3.",
-        },
-      ],
-    },
-    it: {
-      name: "Gaston",
-      version: "Scheming Suitor",
-      text: [
-        {
-          title: "YES, I'M INTIMIDATING",
-          description:
-            "While one or more opponents have no cards in their hands, this character gets +3.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -74,8 +30,6 @@ export const gastonSchemingSuitor: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain"],
-  missingImplementation: true,
-  missingTests: true,
   abilities: [
     {
       id: "1xf-1",
@@ -97,4 +51,5 @@ export const gastonSchemingSuitor: CharacterCard = {
       },
     },
   ],
+  i18n: gastonSchemingSuitorI18n,
 };

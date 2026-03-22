@@ -1,11 +1,12 @@
 /**
  * MatchRuntime Validation
  *
- * Command validation logic.
+ * Command validation logic — pure function, no class dependencies.
  */
 
 import type { MatchState, MoveInput } from "./types";
 import type {
+  MatchRuntimeConfig,
   MoveDefinition,
   MoveValidationContext,
   RuntimeActorRole,
@@ -13,42 +14,30 @@ import type {
 } from "./match-runtime.types";
 import { isMoveAllowedByFlow, getFlowDisallowReason } from "./match-runtime.flow";
 import { canPlayerTakeActions } from "./match-runtime.apis";
-import { inferQueryPlayerId } from "./match-runtime.utils";
+import { buildValidationContext as buildValidationContextFromUtils } from "./match-runtime.utils";
+import type { MatchStaticResources } from "./static-resources";
 import type { BaseCardDefinition } from "./card-contracts";
+import type { LorcanaG } from "../../types/runtime-state";
 
-export interface ValidationContext<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-> {
-  state: MatchState<G>;
-  config: { moves: Moves; flow?: RuntimeFlowDefinition<G, TCardDefinition, TCardDerived> };
+export interface ValidationContext {
+  state: MatchState;
+  config: MatchRuntimeConfig;
+  staticResources: MatchStaticResources;
   actorRole: RuntimeActorRole;
   gameEnded: boolean;
   currentStateID: number;
-  buildValidationContext: (
-    playerId: string,
-    input: MoveInput,
-    validationMode: "preflight" | "final",
-  ) => MoveValidationContext<G, TCardDefinition, MoveInput, TCardDerived>;
 }
 
-export function validateCommand<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
->(
+export function validateCommand(
   command: { move: string; input?: MoveInput },
   playerId: string,
   prevStateID: number,
-  ctx: ValidationContext<G, Moves, TCardDefinition, TCardDerived>,
+  ctx: ValidationContext,
 ): {
   valid: boolean;
   reason?: string;
   code?: string;
-  moveDef?: MoveDefinition<G, TCardDefinition, any, any, TCardDerived>;
+  moveDef?: MoveDefinition;
   actingPlayerId?: string;
 } {
   const commandInput = command.input;
@@ -72,7 +61,7 @@ export function validateCommand<
     return { valid: false, reason: "Game has already ended", code: "GAME_ENDED" };
   }
 
-  const moveDef = ctx.config.moves[command.move as keyof Moves];
+  const moveDef = ctx.config.moves[command.move];
   if (!moveDef) {
     return {
       valid: false,
@@ -89,9 +78,11 @@ export function validateCommand<
     };
   }
 
+  const flow = ctx.config.flow as RuntimeFlowDefinition | undefined;
+
   if (
-    !isMoveAllowedByFlow<G, TCardDefinition, TCardDerived>(
-      ctx.config.flow,
+    !isMoveAllowedByFlow(
+      flow,
       ctx.state.ctx.status.phase,
       command.move,
       ctx.state.ctx.status.gameSegment,
@@ -99,8 +90,8 @@ export function validateCommand<
   ) {
     return {
       valid: false,
-      reason: getFlowDisallowReason<G, TCardDefinition, TCardDerived>(
-        ctx.config.flow,
+      reason: getFlowDisallowReason(
+        flow,
         ctx.state.ctx.status.phase,
         command.move,
         ctx.state.ctx.status.gameSegment,
@@ -109,11 +100,13 @@ export function validateCommand<
     };
   }
 
+  const inferActingPlayerId = (): string | undefined => {
+    if (ctx.actorRole === "player") return playerId;
+    return ctx.state.ctx.priority.holder ?? ctx.state.ctx.playerIds[0];
+  };
+
   if (!moveDef.serverOnly) {
-    const actingPlayerId =
-      ctx.actorRole === "player"
-        ? playerId
-        : (inferQueryPlayerId(ctx.state) ?? ctx.state.ctx.playerIds[0]);
+    const actingPlayerId = inferActingPlayerId();
 
     if (!actingPlayerId) {
       return {
@@ -135,7 +128,15 @@ export function validateCommand<
       return { valid: true, moveDef, actingPlayerId };
     }
 
-    const validationContext = ctx.buildValidationContext(actingPlayerId, commandInput, "final");
+    const validationContext = buildValidationContextFromUtils(
+      ctx.state,
+      actingPlayerId,
+      commandInput,
+      ctx.config,
+      ctx.staticResources,
+      ctx.gameEnded,
+      "final",
+    );
     const validation = moveDef.validate(validationContext);
     if (!validation.valid) {
       return {
@@ -152,7 +153,17 @@ export function validateCommand<
     return { valid: true, moveDef, actingPlayerId: playerId };
   }
 
-  const validation = moveDef.validate(ctx.buildValidationContext(playerId, commandInput, "final"));
+  const validation = moveDef.validate(
+    buildValidationContextFromUtils(
+      ctx.state,
+      playerId,
+      commandInput,
+      ctx.config,
+      ctx.staticResources,
+      ctx.gameEnded,
+      "final",
+    ),
+  );
   if (!validation.valid) {
     return {
       valid: false,

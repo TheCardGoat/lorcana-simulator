@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cubbyMightyLostBoyI18n } from "./069-cubby-mighty-lost-boy.i18n";
 
 export const cubbyMightyLostBoy: CharacterCard = {
   id: "3Fn",
@@ -7,51 +8,6 @@ export const cubbyMightyLostBoy: CharacterCard = {
   cardType: "character",
   name: "Cubby",
   version: "Mighty Lost Boy",
-  i18n: {
-    en: {
-      name: "Cubby",
-      version: "Mighty Lost Boy",
-      text: [
-        {
-          title: "THE BEAR",
-          description: "Whenever this character moves to a location, he gets +3 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Curly",
-      version: "Stärkster der verwunschenen Kinder",
-      text: [
-        {
-          title: "DER BÄR",
-          description:
-            "Jedes Mal, wenn dieser Charakter zu einem Ort bewegt wird, erhält er in diesem Zug +3.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le Frisé",
-      version: "Enfant perdu très costaud",
-      text: [
-        {
-          title: "L'OURS",
-          description:
-            "Chaque fois que vous déplacez ce personnage sur un lieu, il gagne +3 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Cubby",
-      version: "Possente Bimbo Sperduto",
-      text: [
-        {
-          title: "L'ORSO",
-          description:
-            "Ogni volta che questo personaggio si sposta in un luogo, riceve +3 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Peter Pan",
   set: "003",
@@ -73,25 +29,25 @@ export const cubbyMightyLostBoy: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       effect: {
         duration: "this-turn",
         modifier: 3,
         stat: "strength",
-        target: "CHOSEN_CHARACTER",
+        target: "SELF",
         type: "modify-stat",
       },
       id: "1y3-1",
       name: "THE BEAR",
       text: "THE BEAR Whenever this character moves to a location, he gets +3 {S} this turn.",
       trigger: {
-        event: "play",
+        event: "move",
         on: "SELF",
-        timing: "when",
+        timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: cubbyMightyLostBoyI18n,
 };

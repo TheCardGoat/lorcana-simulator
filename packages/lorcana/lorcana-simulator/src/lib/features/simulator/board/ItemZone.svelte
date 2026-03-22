@@ -1,65 +1,181 @@
 <script lang="ts">
-    import type {LorcanaPlayerSide, LorcanaTableSeat} from "@/features/simulator/model/contracts.js";
-    import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
-    import {createCardAnchorId} from "@/features/simulator/animations/board-move-animations.js";
-    import {
-        useLorcanaBoardPresenter,
-        useLorcanaSidebarPresenter
-    } from "@/features/simulator/context/game-context.svelte.js";
+import ChevronLeftIcon from "@lucide/svelte/icons/chevron-left";
+import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
+import type {
+	LorcanaPlayerSide,
+	LorcanaTableSeat,
+} from "@/features/simulator/model/contracts.js";
+import type { SimulatorLayoutMode } from "@/features/simulator/model/layout-mode.svelte.js";
+import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+import {
+	useLorcanaBoardPresenter,
+	useLorcanaSidebarPresenter,
+} from "@/features/simulator/context/game-context.svelte.js";
+import {
+	countHiddenScrollableItems,
+	getInitialHiddenItemsToRight,
+	getScrollableItemStep,
+} from "./item-zone-mobile.js";
 
-  interface ItemZoneProps {
-    isOpponent: boolean;
-    playerSide: LorcanaPlayerSide;
-    seat: LorcanaTableSeat;
-  }
+interface ItemZoneProps {
+	layoutMode?: SimulatorLayoutMode;
+	isOpponent: boolean;
+	playerSide: LorcanaPlayerSide;
+	seat: LorcanaTableSeat;
+}
 
-  let {isOpponent, playerSide, seat}: ItemZoneProps = $props();
+let { layoutMode = "desktop", isOpponent, playerSide, seat }: ItemZoneProps = $props();
 
-  const board = useLorcanaBoardPresenter();
-  const sidebar = useLorcanaSidebarPresenter();
-  const items = $derived.by(() =>
-          board.getZoneCards(playerSide, "play").filter((card) => card.cardType === "item"),
-  );
+const board = useLorcanaBoardPresenter();
+const sidebar = useLorcanaSidebarPresenter();
+const items = $derived.by(() =>
+	board
+		.getZoneCards(playerSide, "play")
+		.filter((card) => card.cardType === "item"),
+);
+
+let itemContainerEl = $state<HTMLDivElement | null>(null);
+let hiddenItemsToLeft = $state(0);
+let hiddenItemsToRight = $state(0);
+const showMobileItemControls = $derived(layoutMode === "mobile" && items.length > 0);
+
+function getScrollableItemCards(): HTMLElement[] {
+	if (!itemContainerEl) {
+		return [];
+	}
+
+	return Array.from(itemContainerEl.querySelectorAll<HTMLElement>(".item-card"));
+}
+
+function updateHiddenItems(): void {
+	if (layoutMode !== "mobile" || !itemContainerEl) {
+		hiddenItemsToLeft = 0;
+		hiddenItemsToRight = 0;
+		return;
+	}
+
+	const counts = countHiddenScrollableItems({
+		viewportLeft: itemContainerEl.scrollLeft,
+		viewportWidth: itemContainerEl.clientWidth,
+		elements: getScrollableItemCards().map((cardEl) => ({
+			offsetLeft: cardEl.offsetLeft,
+			offsetWidth: cardEl.offsetWidth,
+		})),
+	});
+	hiddenItemsToLeft = counts.left;
+	hiddenItemsToRight = counts.right;
+}
+
+function scrollItems(direction: "left" | "right"): void {
+	if (!itemContainerEl) {
+		return;
+	}
+
+	const step = getScrollableItemStep({
+		viewportWidth: itemContainerEl.clientWidth,
+		elements: getScrollableItemCards().map((cardEl) => ({
+			offsetLeft: cardEl.offsetLeft,
+			offsetWidth: cardEl.offsetWidth,
+		})),
+	});
+	if (step <= 0) {
+		return;
+	}
+
+	itemContainerEl.scrollBy({
+		left: direction === "left" ? -step : step,
+		behavior: "smooth",
+	});
+}
+
+$effect(() => {
+	if (layoutMode !== "mobile" || !itemContainerEl) {
+		hiddenItemsToLeft = 0;
+		hiddenItemsToRight = getInitialHiddenItemsToRight(layoutMode, items.length);
+		return;
+	}
+
+	items.length;
+
+	const container = itemContainerEl;
+	const resizeObserver =
+		typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateHiddenItems);
+	const cardElements = Array.from(container.querySelectorAll<HTMLElement>(".item-card"));
+
+	updateHiddenItems();
+	container.addEventListener("scroll", updateHiddenItems, { passive: true });
+	resizeObserver?.observe(container);
+
+	for (const cardEl of cardElements) {
+		resizeObserver?.observe(cardEl);
+	}
+
+	return () => {
+		container.removeEventListener("scroll", updateHiddenItems);
+		resizeObserver?.disconnect();
+	};
+});
 </script>
 
 <div
-        class="item-zone"
-        class:item-zone--opponent={isOpponent}
-        data-player-seat={seat}
-        data-player-side={playerSide}
+	class="item-zone"
+	class:item-zone--opponent={isOpponent}
+	data-layout-mode={layoutMode}
+	data-player-seat={seat}
+	data-player-side={playerSide}
 >
   <div class="item-counter">
     <span class="item-counter-value">{items.length}</span>
   </div>
 
   <div class="item-zone-cards">
-    <div class="item-cards">
+    <div class="item-cards" bind:this={itemContainerEl}>
       {#each items as card (card.cardId)}
-        <div
-                class="item-card"
-                class:item-card--exerted={card.readyState === "exerted"}
-                data-card-id={card.cardId}
-                data-player-seat={seat}
-                data-player-id={card.ownerId}
-                data-zone-id={card.zoneId}
-                data-board-anchor-id={createCardAnchorId(playerSide, "play", card.cardId)}
-        >
+        <div class="item-card">
           <LorcanaCard
-                  {card}
-                  useContainerSize
-                  imageFormat="art_only"
-                  hoverShowActions
-                  isMasked={false}
-                  isSelected={sidebar.getActionSessionCardState(card.cardId).isSelected}
-                  isPlayable={sidebar.getActionSessionCardState(card.cardId).isSelectable}
-                  isInvalidTarget={sidebar.getActionSessionCardState(card.cardId).isInvalidTarget}
-                  isExerted={card.readyState === "exerted"}
-                  damage={card.damage ?? 0}
+            {card}
+            useContainerSize
+            imageFormat="art_only"
+            hoverShowActions
+            isMasked={false}
+            isSelected={sidebar.getActionSessionCardState(card.cardId).isSelected}
+            isPlayable={sidebar.getActionSessionCardState(card.cardId).isSelectable}
+            isInvalidTarget={sidebar.getActionSessionCardState(card.cardId).isInvalidTarget}
+            isExerted={card.readyState === "exerted"}
+            damage={card.damage ?? 0}
           />
         </div>
       {/each}
     </div>
   </div>
+
+  {#if showMobileItemControls && hiddenItemsToLeft > 0}
+    <button
+      type="button"
+      class="mobile-item-scroll-button mobile-item-scroll-button--left"
+      aria-label="Scroll items left"
+      data-testid={`item-scroll-left-${playerSide}`}
+      onclick={() => {
+        scrollItems("left");
+      }}
+    >
+      <ChevronLeftIcon class="size-4" />
+    </button>
+  {/if}
+
+  {#if showMobileItemControls && hiddenItemsToRight > 0}
+    <button
+      type="button"
+      class="mobile-item-scroll-button mobile-item-scroll-button--right"
+      aria-label="Scroll items right"
+      data-testid={`item-scroll-right-${playerSide}`}
+      onclick={() => {
+        scrollItems("right");
+      }}
+    >
+      <ChevronRightIcon class="size-4" />
+    </button>
+  {/if}
 </div>
 
 <style>
@@ -69,7 +185,17 @@
     --item-accent: rgba(243, 210, 129, 0.92);
     --item-container-padding: 6px;
     --item-counter-size: 28px;
-    --item-counter-offset: -6px;
+    --item-counter-offset: 4px;
+    --item-counter-translate-x: 50%;
+    --item-counter-translate-y: -50%;
+    --item-grid-gap: 0.22rem;
+    --item-card-aspect: 1.21927;
+    --item-card-height: var(--item-zone-card-height, calc(100cqh - (var(--item-container-padding) * 2)));
+    --item-card-width: var(--item-zone-card-width, calc(var(--item-card-height) * var(--item-card-aspect)));
+    --zone-card-height: var(--item-card-height);
+    --zone-card-width: var(--item-card-width);
+
+    container-type: size;
 
     position: relative;
     display: flex;
@@ -95,8 +221,9 @@
 
   .item-counter {
     position: absolute;
-    top: var(--item-counter-offset);
-    right: var(--item-counter-offset);
+    top: 0;
+    right: 0;
+    transform: translate(var(--item-counter-translate-x), var(--item-counter-translate-y));
     z-index: 10;
     display: flex;
     align-items: center;
@@ -107,6 +234,7 @@
     border-radius: 999px;
     background: linear-gradient(135deg, rgba(107, 76, 18, 0.98) 0%, rgba(70, 50, 11, 0.98) 100%);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
   }
 
   .item-counter-value {
@@ -118,8 +246,8 @@
 
   .item-zone-cards {
     display: flex;
-    align-items: stretch;
-    justify-content: flex-start;
+    align-items: center;
+    justify-content: flex-end;
     width: 100%;
     flex: 1 1 auto;
     min-height: 0;
@@ -127,53 +255,42 @@
     border: none;
     padding: 0;
     position: relative;
-      overflow: visible;
+    overflow: hidden;
   }
 
   .item-cards {
     display: flex;
-    flex-wrap: nowrap;
+    flex-direction: column;
+    flex-wrap: wrap;
     flex: 1 1 auto;
-    min-width: 0;
+    min-width: 100%;
     min-height: 0;
-    align-items: stretch;
-    justify-content: flex-end;
-      gap: 0;
-    width: 100%;
+    align-items: center;
+    align-content: flex-end;
+    justify-content: center;
+    gap: var(--item-grid-gap);
+    width: max-content;
     height: 100%;
-    padding: 2px;
+    padding: 0;
     overflow-x: auto;
-      overflow-y: visible;
+    overflow-y: hidden;
     scrollbar-width: thin;
     scrollbar-color: rgba(243, 210, 129, 0.55) rgba(0, 0, 0, 0.18);
   }
 
   .item-card {
-    --zone-card-width: 100%;
-    --zone-card-height: 100%;
-
-    height: 100%;
-    aspect-ratio: 734 / 602;
     flex: 0 0 auto;
+    width: var(--zone-card-width);
+    height: var(--zone-card-height);
     transition: filter 150ms ease;
-      position: relative;
-      overflow: visible;
-  }
-
-  .item-card + .item-card {
-      margin-left: -1rem;
+    overflow: visible;
+    border-radius: 0.55rem;
   }
 
   .item-card :global(a[data-slot="hover-card-trigger"]) {
     display: block;
     width: 100%;
     height: 100%;
-  }
-
-  .item-card--exerted {
-    filter: brightness(0.6) grayscale(0.4);
-      margin-left: -2.4rem;
-      z-index: 2;
   }
 
   .item-cards::-webkit-scrollbar {
@@ -190,13 +307,96 @@
     border-radius: 999px;
   }
 
+  .mobile-item-scroll-button {
+    display: none;
+  }
+
   @media (max-width: 900px) {
     .item-zone {
       --item-container-padding: 4px;
       --item-counter-size: 24px;
-      --item-counter-offset: -4px;
+      --item-counter-offset: 3px;
+      --item-grid-gap: 0.18rem;
 
       min-width: 60px;
+    }
+
+    .item-zone[data-layout-mode="mobile"] {
+      --item-card-height: var(
+        --item-zone-card-height,
+        calc(100cqh - (var(--item-container-padding) * 2))
+      );
+      --item-card-width: var(
+        --item-zone-card-width,
+        calc(var(--item-card-height) * var(--item-card-aspect))
+      );
+      padding-inline: 0.1rem;
+    }
+
+    .item-zone[data-layout-mode="mobile"] .item-zone-cards {
+      overflow: visible;
+      align-items: center;
+      justify-content: stretch;
+    }
+
+    .item-zone[data-layout-mode="mobile"] .item-cards {
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      align-content: stretch;
+      justify-content: flex-start;
+      gap: 0.28rem;
+      min-width: 0;
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      padding: 0 0.8rem;
+      scrollbar-width: none;
+      scroll-snap-type: x proximity;
+    }
+
+    .item-zone[data-layout-mode="mobile"] .item-cards::-webkit-scrollbar {
+      display: none;
+    }
+
+    .item-zone[data-layout-mode="mobile"] .item-card {
+      width: var(--zone-card-width);
+      height: var(--zone-card-height);
+      min-width: var(--zone-card-width);
+      min-height: var(--zone-card-height);
+      scroll-snap-align: center;
+      touch-action: pan-x pinch-zoom;
+    }
+
+    .item-zone[data-layout-mode="mobile"] .mobile-item-scroll-button {
+      position: absolute;
+      top: 50%;
+      z-index: 12;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.65rem;
+      height: 2.8rem;
+      border-radius: 999px;
+      border: 1px solid rgba(243, 210, 129, 0.3);
+      background:
+        linear-gradient(180deg, rgba(55, 39, 13, 0.96), rgba(35, 24, 8, 0.94)),
+        rgba(27, 20, 8, 0.92);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+      color: #fff1cf;
+      transform: translateY(-50%);
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+
+    .item-zone[data-layout-mode="mobile"] .mobile-item-scroll-button--left {
+      left: -0.05rem;
+    }
+
+    .item-zone[data-layout-mode="mobile"] .mobile-item-scroll-button--right {
+      right: -0.05rem;
     }
 
     .item-counter {
@@ -207,13 +407,5 @@
     .item-counter-value {
       font-size: 0.6rem;
     }
-
-      .item-card + .item-card {
-          margin-left: -0.75rem;
-      }
-
-      .item-card--exerted {
-          margin-left: -1.75rem;
-      }
   }
 </style>

@@ -91,7 +91,7 @@ export function resolvePutInHandEffect(
   }
 
   const chosenCardId = sourceCards[sourceCards.length - 1]!;
-  const sourceZoneKey = ctx.framework.state.ctx.zones.private.cardIndex[chosenCardId]?.zoneKey;
+  const sourceZoneKey = ctx.framework.zones.getCardZone(chosenCardId);
 
   for (const targetPlayerId of targetPlayerIds) {
     ctx.framework.zones.moveCard(chosenCardId, {

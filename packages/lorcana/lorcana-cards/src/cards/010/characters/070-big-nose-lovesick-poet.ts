@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { bigNoseLovesickPoetI18n } from "./070-big-nose-lovesick-poet.i18n";
 
 export const bigNoseLovesickPoet: CharacterCard = {
   id: "Z2b",
@@ -7,24 +8,6 @@ export const bigNoseLovesickPoet: CharacterCard = {
   cardType: "character",
   name: "Big Nose",
   version: "Lovesick Poet",
-  i18n: {
-    en: {
-      name: "Big Nose",
-      version: "Lovesick Poet",
-    },
-    de: {
-      name: "Zinken",
-      version: "Liebeskranker Dichter",
-    },
-    fr: {
-      name: "L’amoureux",
-      version: "Poète éperdu d'amour",
-    },
-    it: {
-      name: "Nasone",
-      version: "Poeta Innamorato",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Tangled",
   set: "010",
@@ -41,4 +24,5 @@ export const bigNoseLovesickPoet: CharacterCard = {
     tcgPlayer: 659183,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: bigNoseLovesickPoetI18n,
 };

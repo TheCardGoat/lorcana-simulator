@@ -19,14 +19,8 @@ describe("Sneezy - Very Allergic", () => {
 
     testEngine.asPlayerOne().resolveNextBag();
 
-    // Optional trigger
-    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
-    if (pendingChoice) {
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true });
-    }
-
     // Target a character
-    pendingChoice = testEngine.asPlayerOne().getPendingChoice();
+    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
     if (pendingChoice) {
       testEngine.asPlayerOne().resolveNextPending({ targets: [gastonId] });
     }
@@ -49,14 +43,8 @@ describe("Sneezy - Very Allergic", () => {
 
     testEngine.asPlayerOne().resolveNextBag();
 
-    // Optional trigger
-    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
-    if (pendingChoice) {
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true });
-    }
-
     // Target a character
-    pendingChoice = testEngine.asPlayerOne().getPendingChoice();
+    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
     if (pendingChoice) {
       testEngine.asPlayerOne().resolveNextPending({ targets: [gastonId] });
     }

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rudyGrooveDisrupterI18n } from "./174-rudy-groove-disrupter.i18n";
 
 export const rudyGrooveDisrupter: CharacterCard = {
   id: "SOG",
@@ -7,24 +8,6 @@ export const rudyGrooveDisrupter: CharacterCard = {
   cardType: "character",
   name: "Rudy",
   version: "Groove Disrupter",
-  i18n: {
-    en: {
-      name: "Rudy",
-      version: "Groove Disrupter",
-    },
-    de: {
-      name: "Rudy",
-      version: "Unterbrecher des Grooves",
-    },
-    fr: {
-      name: "Rudy",
-      version: "Pourrisseur de groove",
-    },
-    it: {
-      name: "Rudy",
-      version: "Rompiritmo",
-    },
-  },
   inkType: ["steel"],
   franchise: "Emperors New Groove",
   set: "005",
@@ -41,4 +24,5 @@ export const rudyGrooveDisrupter: CharacterCard = {
     tcgPlayer: 559791,
   },
   classifications: ["Storyborn"],
+  i18n: rudyGrooveDisrupterI18n,
 };

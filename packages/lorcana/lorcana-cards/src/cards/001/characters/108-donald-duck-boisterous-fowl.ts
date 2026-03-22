@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckBoisterousFowlI18n } from "./108-donald-duck-boisterous-fowl.i18n";
 
 export const donaldDuckBoisterousFowl: CharacterCard = {
   id: "Blq",
@@ -7,24 +8,6 @@ export const donaldDuckBoisterousFowl: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Boisterous Fowl",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Boisterous Fowl",
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Aufbrausender Vogel",
-    },
-    fr: {
-      name: "DONALD",
-      version: "Volatile colérique",
-    },
-    it: {
-      name: "Paperino",
-      version: "Pennuto Turbolento",
-    },
-  },
   inkType: ["ruby"],
   set: "001",
   cardNumber: 108,
@@ -34,11 +17,11 @@ export const donaldDuckBoisterousFowl: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_9db4390c3200400db02bf38305508d38",
     tcgPlayer: 493487,
   },
   classifications: ["Storyborn"],
+  i18n: donaldDuckBoisterousFowlI18n,
 };

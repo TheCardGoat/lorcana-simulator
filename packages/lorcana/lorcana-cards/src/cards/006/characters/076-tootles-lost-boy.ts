@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tootlesLostBoyI18n } from "./076-tootles-lost-boy.i18n";
 
 export const tootlesLostBoy: CharacterCard = {
   id: "YhD",
@@ -7,24 +8,6 @@ export const tootlesLostBoy: CharacterCard = {
   cardType: "character",
   name: "Tootles",
   version: "Lost Boy",
-  i18n: {
-    en: {
-      name: "Tootles",
-      version: "Lost Boy",
-    },
-    de: {
-      name: "Tootles",
-      version: "Verwunschenes Kind",
-    },
-    fr: {
-      name: "Putois",
-      version: "Enfant perdu",
-    },
-    it: {
-      name: "Tootles",
-      version: "Bimbo Sperduto",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Peter Pan",
   set: "006",
@@ -41,4 +24,5 @@ export const tootlesLostBoy: CharacterCard = {
     tcgPlayer: 588068,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: tootlesLostBoyI18n,
 };

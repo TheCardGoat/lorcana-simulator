@@ -21,7 +21,7 @@ function moveCardIntoDeck(
   cardId: CardInstanceId,
   deckPlayerId: PlayerId,
 ): void {
-  const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+  const zoneKey = ctx.framework.zones.getCardZone(cardId);
   if (typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"))) {
     moveCardOutOfPlayWithStack(ctx, cardId, {
       zone: "deck",
@@ -70,10 +70,8 @@ export function resolveShuffleIntoDeckEffect(
   }
 
   for (const targetId of targets) {
-    const sourceZoneKey = ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.zoneKey;
-    const ownerId = ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.ownerID as
-      | PlayerId
-      | undefined;
+    const sourceZoneKey = ctx.framework.zones.getCardZone(targetId);
+    const ownerId = ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined;
     const deckPlayerId =
       effect.intoDeck === "controller" ? cardPlayed.playerId : (ownerId ?? cardPlayed.playerId);
 
@@ -89,5 +87,13 @@ export function resolveShuffleIntoDeckEffect(
       zone: "deck",
       playerId,
     });
+  }
+
+  if (
+    resolutionInput.eventSnapshot &&
+    targets.length > 0 &&
+    !resolutionInput.eventSnapshot.chosenCardId
+  ) {
+    resolutionInput.eventSnapshot.chosenCardId = targets[0];
   }
 }

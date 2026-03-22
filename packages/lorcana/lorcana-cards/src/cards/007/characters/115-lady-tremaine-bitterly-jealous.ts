@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ladyTremaineBitterlyJealousI18n } from "./115-lady-tremaine-bitterly-jealous.i18n";
 
 export const ladyTremaineBitterlyJealous: CharacterCard = {
   id: "KTu",
@@ -7,52 +8,6 @@ export const ladyTremaineBitterlyJealous: CharacterCard = {
   cardType: "character",
   name: "Lady Tremaine",
   version: "Bitterly Jealous",
-  i18n: {
-    en: {
-      name: "Lady Tremaine",
-      version: "Bitterly Jealous",
-      text: [
-        {
-          title: "THAT'S QUITE ENOUGH",
-          description:
-            "{E} — Return chosen damaged character to their player's hand. Then, each opponent discards a card at random.",
-        },
-      ],
-    },
-    de: {
-      name: "Gräfin Tremaine",
-      version: "Zutiefst neidisch",
-      text: [
-        {
-          title: "JETZT",
-          description:
-            "HÖRT IHR AUF — Schicke einen beschädigten Charakter deiner Wahl auf die zugehörige Hand zurück. Danach müssen alle gegnerischen Mitspielenden je eine zufällig ausgewählte Karte von ihrer Hand abwerfen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Madame de Trémaine",
-      version: "Amèrement jalouse",
-      text: [
-        {
-          title: "CELA SUFFIT",
-          description:
-            "— Choisissez un personnage avec au moins un dommage et renvoyez-le dans la main de son propriétaire. Ensuite, chaque adversaire défausse une carte au hasard.",
-        },
-      ],
-    },
-    it: {
-      name: "La Matrigna",
-      version: "Tremendamente Invidiosa",
-      text: [
-        {
-          title: "ADESSO BASTA",
-          description:
-            "— Fai riprendere in mano al suo giocatore un personaggio danneggiato a tua scelta. Poi, ogni avversario scarta una carta a caso.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Cinderella",
   set: "007",
@@ -81,18 +36,36 @@ export const ladyTremaineBitterlyJealous: CharacterCard = {
         exert: true,
       },
       effect: {
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
-        },
-        type: "return-to-hand",
+        type: "sequence",
+        steps: [
+          {
+            type: "return-to-hand",
+            target: {
+              cardTypes: ["character"],
+              count: 1,
+              filter: [
+                {
+                  type: "damaged",
+                },
+              ],
+              owner: "any",
+              selector: "chosen",
+              zones: ["play"],
+            },
+          },
+          {
+            type: "discard",
+            amount: 1,
+            random: true,
+            target: "EACH_OPPONENT",
+          },
+        ],
       },
       id: "1n1-1",
+      name: "THAT'S QUITE ENOUGH",
       text: "THAT'S QUITE ENOUGH {E} — Return chosen damaged character to their player's hand. Then, each opponent discards a card at random.",
       type: "activated",
     },
   ],
+  i18n: ladyTremaineBitterlyJealousI18n,
 };

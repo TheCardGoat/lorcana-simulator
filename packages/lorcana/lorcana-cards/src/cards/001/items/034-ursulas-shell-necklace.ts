@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { ursulasShellNecklaceI18n } from "./034-ursulas-shell-necklace.i18n";
 
 export const ursulasShellNecklace: ItemCard = {
   id: "0CY",
@@ -6,46 +7,6 @@ export const ursulasShellNecklace: ItemCard = {
   reprints: ["set1-034", "set9-033"],
   cardType: "item",
   name: "Ursula’s Shell Necklace",
-  i18n: {
-    en: {
-      name: "Ursula’s Shell Necklace",
-      text: [
-        {
-          title: "NOW, SING!",
-          description: "Whenever you play a song, you may pay 1 to draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Ursulas Muschel-Halskette",
-      text: [
-        {
-          title: "UND JETZT SING!",
-          description:
-            "Jedes Mal, wenn du ein Lied ausspielst, darfst du 1 zahlen, um 1 Karte zu ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "PENDENTIF EN COQUILLAGE D'URSULA",
-      text: [
-        {
-          title: "MAINTENANT, CHANTE!",
-          description:
-            "Chaque fois que vous jouez une chanson, vous pouvez payer 1 pour piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Ursula’s Shell Necklace",
-      text: [
-        {
-          title: "NOW, SING!",
-          description: "Whenever you play a song, you may pay 1 to draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Little Mermaid",
   set: "001",
@@ -94,4 +55,5 @@ export const ursulasShellNecklace: ItemCard = {
       type: "triggered",
     },
   ],
+  i18n: ursulasShellNecklaceI18n,
 };

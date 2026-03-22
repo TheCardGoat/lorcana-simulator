@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kidaProtectorOfAtlantisI18n } from "./007-kida-protector-of-atlantis.i18n";
 
 export const kidaProtectorOfAtlantis: CharacterCard = {
   id: "lw9",
@@ -7,37 +8,6 @@ export const kidaProtectorOfAtlantis: CharacterCard = {
   cardType: "character",
   name: "Kida",
   version: "Protector of Atlantis",
-  i18n: {
-    en: {
-      name: "Kida",
-      version: "Protector of Atlantis",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "PERHAPS WE CAN SAVE OUR FUTURE",
-          description:
-            "When you play this character, all characters get -3 {S} until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Kida",
-      version: "Wächterin von Atlantis",
-      text: "Gestaltwandel 3 VIELLEICHT KÖNNEN WIR UNSERE ZUKUNFT RETTEN Wenn du diesen Charakter ausspielst, gib allen Charakteren bis zu Beginn deines nächsten Zuges -3.",
-    },
-    fr: {
-      name: "Kida",
-      version: "Protectrice de l'Atlantide",
-      text: "Alter 3 PEUT-ÊTRE POURRONS-NOUS SAUVER NOTRE AVENIR Lorsque vous jouez ce personnage, tous les personnages subissent -3 jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Kida",
-      version: "Protettrice di Atlantide",
-      text: "Trasformazione 3 FORSE RIUSCIREMO A SALVARE IL NOSTRO FUTURO Quando giochi questo personaggio, tutti i personaggi ricevono -3 fino all'inizio del tuo prossimo turno.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Atlantis",
   set: "003",
@@ -63,7 +33,6 @@ export const kidaProtectorOfAtlantis: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -93,4 +62,5 @@ export const kidaProtectorOfAtlantis: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: kidaProtectorOfAtlantisI18n,
 };

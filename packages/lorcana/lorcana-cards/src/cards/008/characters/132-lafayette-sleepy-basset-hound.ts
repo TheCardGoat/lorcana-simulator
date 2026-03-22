@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lafayetteSleepyBassetHoundI18n } from "./132-lafayette-sleepy-basset-hound.i18n";
 
 export const lafayetteSleepyBassetHound: CharacterCard = {
   id: "hVs",
@@ -7,24 +8,6 @@ export const lafayetteSleepyBassetHound: CharacterCard = {
   cardType: "character",
   name: "Lafayette",
   version: "Sleepy Basset Hound",
-  i18n: {
-    en: {
-      name: "Lafayette",
-      version: "Sleepy Basset Hound",
-    },
-    de: {
-      name: "Lafayette",
-      version: "Schläfriger Basset-Hund",
-    },
-    fr: {
-      name: "Lafayette",
-      version: "Basset somnolent",
-    },
-    it: {
-      name: "Lafayette",
-      version: "Bassotto Assonnato",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aristocats",
   set: "008",
@@ -41,4 +24,5 @@ export const lafayetteSleepyBassetHound: CharacterCard = {
     tcgPlayer: 631437,
   },
   classifications: ["Storyborn"],
+  i18n: lafayetteSleepyBassetHoundI18n,
 };

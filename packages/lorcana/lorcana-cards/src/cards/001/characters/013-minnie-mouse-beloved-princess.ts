@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseBelovedPrincessI18n } from "./013-minnie-mouse-beloved-princess.i18n";
 
 export const minnieMouseBelovedPrincess: CharacterCard = {
   id: "c9i",
@@ -7,24 +8,6 @@ export const minnieMouseBelovedPrincess: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Beloved Princess",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Beloved Princess",
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Geliebte Prinzessin",
-    },
-    fr: {
-      name: "MINNIE",
-      version: "Princesse adorée",
-    },
-    it: {
-      name: "Minni",
-      version: "Beneamata Principessa",
-    },
-  },
   inkType: ["amber"],
   set: "001",
   cardNumber: 13,
@@ -40,4 +23,5 @@ export const minnieMouseBelovedPrincess: CharacterCard = {
     tcgPlayer: 493498,
   },
   classifications: ["Dreamborn", "Princess"],
+  i18n: minnieMouseBelovedPrincessI18n,
 };

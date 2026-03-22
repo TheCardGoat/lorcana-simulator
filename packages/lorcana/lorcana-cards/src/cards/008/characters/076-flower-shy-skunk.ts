@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flowerShySkunkI18n } from "./076-flower-shy-skunk.i18n";
 
 export const flowerShySkunk: CharacterCard = {
   id: "1FG",
@@ -7,52 +8,6 @@ export const flowerShySkunk: CharacterCard = {
   cardType: "character",
   name: "Flower",
   version: "Shy Skunk",
-  i18n: {
-    en: {
-      name: "Flower",
-      version: "Shy Skunk",
-      text: [
-        {
-          title: "LOOKING FOR FRIENDS",
-          description:
-            "Whenever you play another character, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Blume",
-      version: "Schüchternes Stinktier",
-      text: [
-        {
-          title: "AUF DER SUCHE NACH FREUNDEN",
-          description:
-            "Jedes Mal, wenn du einen anderen Charakter ausspielst, darfst du dir die oberste Karte deines Decks anschauen. Lege sie anschließend entweder auf dein Deck oder darunter.",
-        },
-      ],
-    },
-    fr: {
-      name: "Fleur",
-      version: "Mouffette timide",
-      text: [
-        {
-          title: "À LA RECHERCHE D'AMIS",
-          description:
-            "Chaque fois que vous jouez un autre personnage, regardez la carte du dessus de votre pioche. Placez-la sur ou sous votre pioche.",
-        },
-      ],
-    },
-    it: {
-      name: "Fiore",
-      version: "Puzzola Timida",
-      text: [
-        {
-          title: "IN CERCA DI AMICI",
-          description:
-            "Ogni volta che giochi un altro personaggio, guarda la prima carta del tuo mazzo. Mettila in cima o in fondo al tuo mazzo.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Bambi",
   set: "008",
@@ -78,18 +33,34 @@ export const flowerShySkunk: CharacterCard = {
   abilities: [
     {
       effect: {
-        target: "CHOSEN_CHARACTER",
-        type: "put-on-bottom",
+        type: "scry",
+        amount: 1,
+        destinations: [
+          {
+            zone: "deck-top",
+            min: 0,
+            max: 1,
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+          },
+        ],
       },
       id: "ry8-1",
       name: "LOOKING FOR FRIENDS",
       text: "LOOKING FOR FRIENDS Whenever you play another character, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
       trigger: {
         event: "play",
-        on: "SELF",
-        timing: "when",
+        on: {
+          controller: "you",
+          cardType: "character",
+          excludeSelf: true,
+        },
+        timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: flowerShySkunkI18n,
 };

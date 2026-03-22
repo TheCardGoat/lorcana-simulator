@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { grandmotherWillowAncientAdvisorI18n } from "./013-grandmother-willow-ancient-advisor.i18n";
 
 export const grandmotherWillowAncientAdvisor: CharacterCard = {
   id: "bN7",
@@ -7,52 +8,6 @@ export const grandmotherWillowAncientAdvisor: CharacterCard = {
   cardType: "character",
   name: "Grandmother Willow",
   version: "Ancient Advisor",
-  i18n: {
-    en: {
-      name: "Grandmother Willow",
-      version: "Ancient Advisor",
-      text: [
-        {
-          title: "SMOOTH THE WAY",
-          description:
-            "Once during your turn, you pay 1 {I} less for the next character you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Großmutter Weide",
-      version: "Uralte Ratgeberin",
-      text: [
-        {
-          title: "DEN WEG EBNEN",
-          description:
-            "Einmal während deines Zuges zahlst du 1 weniger für den nächsten Charakter, den du in diesem Zug ausspielst.",
-        },
-      ],
-    },
-    fr: {
-      name: "Grand-Mère Feuillage",
-      version: "Conseillère ancestrale",
-      text: [
-        {
-          title: "FACILITE LES CHOSES",
-          description:
-            "Une fois durant votre tour, le prochain personnage que vous jouez ce tour-ci vous coûte 1 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Nonna Salice",
-      version: "Antica Consigliera",
-      text: [
-        {
-          title: "SPIANARE LA STRADA",
-          description:
-            "Una volta durante il tuo turno, paga 1 in meno per giocare il tuo prossimo personaggio per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Pocahontas",
   set: "011",
@@ -78,12 +33,22 @@ export const grandmotherWillowAncientAdvisor: CharacterCard = {
   abilities: [
     {
       id: "r79-1",
+      type: "activated",
+      name: "SMOOTH THE WAY",
+      cost: {},
+      restrictions: [
+        {
+          type: "once-per-turn",
+        },
+      ],
       effect: {
-        from: "hand",
-        type: "play-card",
+        type: "cost-reduction",
+        amount: 1,
+        cardType: "character",
+        duration: "next-play-this-turn",
       },
-      type: "action",
       text: "SMOOTH THE WAY Once during your turn, you pay 1 {I} less for the next character you play this turn.",
     },
   ],
+  i18n: grandmotherWillowAncientAdvisorI18n,
 };

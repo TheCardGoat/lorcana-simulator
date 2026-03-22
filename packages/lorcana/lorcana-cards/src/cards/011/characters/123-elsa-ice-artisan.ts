@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { elsaIceArtisanI18n } from "./123-elsa-ice-artisan.i18n";
 
 export const elsaIceArtisan: CharacterCard = {
   id: "TnE",
@@ -7,41 +8,6 @@ export const elsaIceArtisan: CharacterCard = {
   cardType: "character",
   name: "Elsa",
   version: "Ice Artisan",
-  i18n: {
-    en: {
-      name: "Elsa",
-      version: "Ice Artisan",
-      text: [
-        {
-          title: "Shift 4 {I}",
-        },
-        {
-          title: "ENDLESS WINTER",
-          description:
-            "When you play this character and whenever you play a location, you may exert chosen character with 3 {S} or less.",
-        },
-        {
-          title: "DISTANT CALL",
-          description: "While this character is at a location, she gets +3 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Elsa",
-      version: "Eiskünstlerin",
-      text: "Gestaltwandel 4 ENDLOSER WINTER Wenn du diesen Charakter ausspielst und jedes Mal, wenn du einen Ort ausspielst, darfst du einen Charakter deiner Wahl mit 3 oder weniger erschöpfen. RUF AUS DER FERNE Solange dieser Charakter an einem Ort ist, erhält er +3.",
-    },
-    fr: {
-      name: "Elsa",
-      version: "Artisane de la glace",
-      text: "Alter 4 HIVER SANS FIN Lorsque vous jouez ce personnage et chaque fois que vous jouez un lieu, vous pouvez choisir un personnage ayant 3 ou moins et l'épuiser. APPEL LOINTAIN Tant que ce personnage est sur un lieu, il gagne +3.",
-    },
-    it: {
-      name: "Elsa",
-      version: "Artigiana del Ghiaccio",
-      text: "Trasformazione 4 INVERNO SENZA FINE Quando giochi questo personaggio e ogni volta che giochi un luogo, puoi impegnare un personaggio a tua scelta con 3 o inferiore. RICHIAMO LONTANO Mentre questo personaggio si trova in un luogo, riceve +3.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Frozen",
   set: "011",
@@ -121,4 +87,5 @@ export const elsaIceArtisan: CharacterCard = {
       text: "DISTANT CALL While this character is at a location, she gets +3 {L}.",
     },
   ],
+  i18n: elsaIceArtisanI18n,
 };

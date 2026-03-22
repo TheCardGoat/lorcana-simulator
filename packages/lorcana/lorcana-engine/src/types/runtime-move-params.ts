@@ -13,12 +13,11 @@ import type {
   PlayerTargetDSL,
   ZoneId,
 } from "#core";
-import type { LorcanaG } from "./runtime-state";
 import type { LorcanaCard } from "@tcg/lorcana-types";
 import type { LorcanaTargetDSL } from "../targeting";
 import type { Amount } from "@tcg/lorcana-types";
 
-import type { LorcanaRuntimeCardDerivedMethods } from "../runtime-moves";
+import type { LorcanaCardDerived } from "./projected-board";
 import type { ActionResolutionInput } from "../runtime-moves/resolution/action-effects/types";
 import type { DynamicAmountEventSnapshot } from "./domain-events";
 
@@ -49,10 +48,15 @@ export interface PlayCardActionResolutionInput {
 
 export type PlayCardCost =
   | { cost: "standard" }
-  | { cost: "shift"; shiftTarget: CardInstanceId }
+  | {
+      cost: "shift";
+      shiftTarget: CardInstanceId;
+      discardCards?: CardInstanceId[];
+    }
   | { cost: "sing"; singer: CardInstanceId }
   | { cost: "singTogether"; singers: CardInstanceId[] }
-  | { cost: "free" };
+  | { cost: "free" }
+  | { cost: "sacrifice"; sacrificeTarget: CardInstanceId };
 
 /**
  * Lorcana Move Parameters
@@ -79,7 +83,10 @@ export interface LorcanaRuntimeMoveParams {
   singTogether: { singerIds: CardInstanceId[]; songId: CardInstanceId };
 
   // ===== Location Moves =====
-  moveCharacterToLocation: { characterId: CardInstanceId; locationId: CardInstanceId };
+  moveCharacterToLocation: {
+    characterId: CardInstanceId;
+    locationId: CardInstanceId;
+  };
 
   // ===== Ability Moves =====
   activateAbility: {
@@ -88,10 +95,12 @@ export interface LorcanaRuntimeMoveParams {
     abilityText?: string;
     targets?: CardInstanceId[];
     choiceIndex?: number;
+    preventAutoResolveTriggeredEffects?: boolean;
     costs?: {
       banishCharacters?: CardInstanceId[];
       banishItems?: CardInstanceId[];
       exertCharacters?: CardInstanceId[];
+      exertItems?: CardInstanceId[];
       discardCards?: CardInstanceId[];
     };
   };
@@ -126,9 +135,6 @@ export type LorcanaRuntimeMoveInputs = {
 };
 
 export type LorcanaMoveDefinition<T extends keyof LorcanaRuntimeMoveInputs> = MoveDefinition<
-  LorcanaG,
-  LorcanaCard,
   LorcanaRuntimeMoveInputs[T],
-  LorcanaMoveTargetDSL,
-  LorcanaRuntimeCardDerivedMethods
+  LorcanaMoveTargetDSL
 >;

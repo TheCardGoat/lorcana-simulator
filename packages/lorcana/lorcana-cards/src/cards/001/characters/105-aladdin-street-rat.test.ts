@@ -1,45 +1,57 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, PLAYER_ONE, PLAYER_TWO } from "@tcg/lorcana-engine/testing";
 import { aladdinStreetRat } from "./105-aladdin-street-rat";
 
 describe("Aladdin - Street Rat", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [aladdinStreetRat] });
-  //   Expect(testEngine.getCardModel(aladdinStreetRat).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
-});
+  describe("**IMPROVISE** When you play this character, each opponent loses 1 lore.", () => {
+    it("Opponent loses 1 lore when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [aladdinStreetRat],
+          inkwell: aladdinStreetRat.cost,
+        },
+        {
+          lore: 5,
+        },
+      );
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { aladdinStreetRat } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Aladdin - Street Rat", () => {
-//   Describe("**IMPROVISE** When you play this character each opponent loses 1 lore.", () => {
-//     It("Opponent loses lore", () => {
-//       Const testStore = new TestStore({
-//         Inkwell: aladdinStreetRat.cost,
-//         Hand: [aladdinStreetRat],
-//       });
-//
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "hand",
-//         AladdinStreetRat.id,
-//       );
-//
-//       TestStore.store.tableStore.getTable("player_two").lore = 5;
-//
-//       CardUnderTest.playFromHand();
-//
-//       Expect(testStore.store.tableStore.getTable("player_two").lore).toBe(4);
-//     });
-//   });
-// });
-//
+      expect(testEngine.asPlayerOne().playCard(aladdinStreetRat)).toBeSuccessfulCommand();
+
+      expect(testEngine.getLore(PLAYER_TWO)).toBe(4);
+    });
+
+    it("Opponent lore does not go below 0", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [aladdinStreetRat],
+          inkwell: aladdinStreetRat.cost,
+        },
+        {
+          lore: 0,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(aladdinStreetRat)).toBeSuccessfulCommand();
+
+      expect(testEngine.getLore(PLAYER_TWO)).toBe(0);
+    });
+
+    it("Does not affect own lore", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [aladdinStreetRat],
+          inkwell: aladdinStreetRat.cost,
+          lore: 5,
+        },
+        {
+          lore: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(aladdinStreetRat)).toBeSuccessfulCommand();
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(5);
+      expect(testEngine.getLore(PLAYER_TWO)).toBe(4);
+    });
+  });
+});

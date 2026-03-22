@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { musketeerTabardI18n } from "./203-musketeer-tabard.i18n";
 
 export const musketeerTabard: ItemCard = {
   id: "Srb",
@@ -6,48 +7,6 @@ export const musketeerTabard: ItemCard = {
   reprints: ["set1-203"],
   cardType: "item",
   name: "Musketeer Tabard",
-  i18n: {
-    en: {
-      name: "Musketeer Tabard",
-      text: [
-        {
-          title: "ALL FOR ONE AND ONE FOR ALL",
-          description:
-            "Whenever one of your characters with Bodyguard is banished, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Wappenrock der Musketiere",
-      text: [
-        {
-          title: "ALLE FÜR EINEN UND EINER FÜR ALLE",
-          description:
-            "Jedes Mal, wenn einer deiner Charaktere mit Beschützen verbannt wird, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "TABARD DE MOUSQUETAIRE",
-      text: [
-        {
-          title: "UN POUR TOUS, TOUS POUR UN",
-          description:
-            "Chaque fois qu'un de vos personnages avec Rempart est banni, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Musketeer Tabard",
-      text: [
-        {
-          title: "ALL FOR ONE AND ONE FOR ALL",
-          description:
-            "Whenever one of your characters with Bodyguard is banished, you may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   set: "001",
   cardNumber: 203,
@@ -81,10 +40,15 @@ export const musketeerTabard: ItemCard = {
       text: "ALL FOR ONE AND ONE FOR ALL Whenever one of your characters with Bodyguard is banished, you may draw a card.",
       trigger: {
         event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        on: {
+          controller: "you",
+          cardType: "character",
+          hasKeyword: "Bodyguard",
+        },
         timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: musketeerTabardI18n,
 };

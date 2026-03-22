@@ -27,7 +27,16 @@ export interface GameTestEngine<
   TMoveMap extends Record<string, MoveInput>,
   TAuthoritativeState = TVisibleState,
   TBoard = unknown,
-> extends GameEngine<TVisibleState, TBoard, TMoveMap> {
+> {
+  getState(): DeepReadonly<TVisibleState>;
+  getBoard(): DeepReadonly<TBoard>;
+  getStateID(): number;
+  validateMove(moveId: string, input: MoveInput): EngineMoveValidationResult;
+  executeMove(moveId: string, input: MoveInput): EngineMoveExecutionResult;
+  enumerateMoves(): string[];
+  getMoveHistory(limit?: number): EngineMoveHistoryEntry[];
+  getActorContext(): EngineActorContext;
+  dispose(): void | Promise<void>;
   getCurrentView(): GameTestView;
   setCurrentView(view: GameTestView): void;
   getAvailableViews(): readonly GameTestView[];
@@ -43,7 +52,7 @@ export interface GameTestEngine<
     params: TMoveMap[K],
   ): EngineMoveExecutionResult;
 
-  getEngineForView(view: GameTestView): GameEngine<TVisibleState, TBoard, TMoveMap>;
+  getEngineForView(view: GameTestView): GameEngine;
   getAuthoritativeState(): DeepReadonly<TAuthoritativeState>;
 }
 
@@ -81,7 +90,7 @@ export type HiddenInfoResult = {
 
 /** Player-scoped action interface for test engines */
 export interface PlayerActionInterface<
-  TState = MatchState<unknown>,
+  TState = MatchState,
   TBoard = unknown,
   TMoveMap extends Record<string, MoveInput> = Record<string, MoveInput>,
 > {
@@ -153,11 +162,11 @@ export abstract class CoreTestEngine<
   }
 
   getBoard(): DeepReadonly<TBoard> {
-    return this.getEngineForView(this.#currentView).getBoard();
+    return this.getEngineForView(this.#currentView).getBoard() as DeepReadonly<TBoard>;
   }
 
-  getProjection() {
-    return this.getEngineForView(this.#currentView).getBoard();
+  getProjection(): DeepReadonly<TBoard> {
+    return this.getEngineForView(this.#currentView).getBoard() as DeepReadonly<TBoard>;
   }
 
   validateMove<K extends keyof TMoveMap & string>(
@@ -187,15 +196,11 @@ export abstract class CoreTestEngine<
     return this.getAuthoritativeState();
   }
 
-  getServerEngine(): GameEngine<TAuthoritativeState, TBoard, TMoveMap> {
-    return this.getEngineForView("authoritative") as unknown as GameEngine<
-      TAuthoritativeState,
-      TBoard,
-      TMoveMap
-    >;
+  getServerEngine(): GameEngine {
+    return this.getEngineForView("authoritative") as unknown as GameEngine;
   }
 
-  getClientEngine(playerId: string): GameEngine<TVisibleState, TBoard, TMoveMap> | undefined {
+  getClientEngine(playerId: string): GameEngine | undefined {
     const view = this.resolveViewForPlayerId(playerId);
     return view ? this.getEngineForView(view) : undefined;
   }
@@ -286,7 +291,7 @@ export abstract class CoreTestEngine<
     params: TMoveMap[K],
   ): EngineMoveExecutionResult;
 
-  abstract getEngineForView(view: GameTestView): GameEngine<TVisibleState, TBoard, TMoveMap>;
+  abstract getEngineForView(view: GameTestView): GameEngine;
   abstract getAuthoritativeState(): DeepReadonly<TAuthoritativeState>;
   abstract getMoveHistory(limit?: number): EngineMoveHistoryEntry[];
   abstract dispose(): void | Promise<void>;

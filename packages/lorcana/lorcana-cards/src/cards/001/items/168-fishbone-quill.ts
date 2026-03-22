@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { fishboneQuillI18n } from "./168-fishbone-quill.i18n";
 
 export const fishboneQuill: ItemCard = {
   id: "UUs",
@@ -6,44 +7,6 @@ export const fishboneQuill: ItemCard = {
   reprints: ["set1-168"],
   cardType: "item",
   name: "Fishbone Quill",
-  i18n: {
-    en: {
-      name: "Fishbone Quill",
-      text: [
-        {
-          title: "GO AHEAD AND SIGN",
-          description: "{E} — Put any card from your hand into your inkwell facedown.",
-        },
-      ],
-    },
-    de: {
-      name: "Fischgrätenfeder",
-      text: [
-        {
-          title: "UNTERSCHREIB DIE ROLLE, LOS!",
-          description: "— Lege 1 beliebige Karte aus deiner Hand verdeckt in deinen Tintenvorrat.",
-        },
-      ],
-    },
-    fr: {
-      name: "PLUME EN FORME D'ARÊTE",
-      text: [
-        {
-          title: "SIGNE!",
-          description: "— Placez une carte de votre main dans votre réserve d'encre, face cachée.",
-        },
-      ],
-    },
-    it: {
-      name: "Fishbone Quill",
-      text: [
-        {
-          title: "GO AHEAD AND SIGN",
-          description: "— Put any card from your hand into your inkwell facedown.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Little Mermaid",
   set: "001",
@@ -78,4 +41,5 @@ export const fishboneQuill: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: fishboneQuillI18n,
 };

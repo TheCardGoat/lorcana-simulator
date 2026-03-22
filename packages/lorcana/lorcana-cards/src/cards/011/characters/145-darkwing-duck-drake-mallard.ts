@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { darkwingDuckDrakeMallardI18n } from "./145-darkwing-duck-drake-mallard.i18n";
 
 export const darkwingDuckDrakeMallard: CharacterCard = {
   id: "oJV",
@@ -7,28 +8,6 @@ export const darkwingDuckDrakeMallard: CharacterCard = {
   cardType: "character",
   name: "Darkwing Duck",
   version: "Drake Mallard",
-  i18n: {
-    en: {
-      name: "Darkwing Duck",
-      version: "Drake Mallard",
-      text: "Ward",
-    },
-    de: {
-      name: "Darkwing Duck",
-      version: "Eddie Erpel",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Myster Mask",
-      version: "Albert Colvert",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Darkwing Duck",
-      version: "Drake Mallard",
-      text: "Protetto",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -53,4 +32,5 @@ export const darkwingDuckDrakeMallard: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: darkwingDuckDrakeMallardI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ursulaVoiceStealerI18n } from "./044-ursula-voice-stealer.i18n";
 
 export const ursulaVoiceStealer: CharacterCard = {
   id: "JPS",
@@ -7,52 +8,6 @@ export const ursulaVoiceStealer: CharacterCard = {
   cardType: "character",
   name: "Ursula",
   version: "Voice Stealer",
-  i18n: {
-    en: {
-      name: "Ursula",
-      version: "Voice Stealer",
-      text: [
-        {
-          title: "SING FOR ME",
-          description:
-            "When you play this character, exert chosen opposing ready character. Then, you may play a song with cost equal to or less than the exerted character's cost for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Ursula",
-      version: "Stimmendiebin",
-      text: [
-        {
-          title: "SING FÜR MICH",
-          description:
-            "Wenn du diesen Charakter ausspielst, erschöpfe einen gegnerischen, bereiten Charakter deiner Wahl. Dann darfst du ein Lied, das maximal so viel wie der erschöpfte Charakter kostet, kostenlos ausspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Ursula",
-      version: "Voleuse de voix",
-      text: [
-        {
-          title: "CHANTE POUR MOI",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage redressé adverse et épuisez-le. Ensuite, vous pouvez jouer gratuitement une chanson avec un coût égal ou inférieur au coût du personnage ainsi épuisé.",
-        },
-      ],
-    },
-    it: {
-      name: "Ursula",
-      version: "Ladra di Voci",
-      text: [
-        {
-          title: "CANTA PER ME",
-          description:
-            "Quando giochi questo personaggio, impegna un personaggio avversario preparato a tua scelta. Poi, puoi giocare una canzone con costo pari o inferiore al costo del personaggio impegnato, gratis.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Little Mermaid",
   set: "009",
@@ -77,25 +32,48 @@ export const ursulaVoiceStealer: CharacterCard = {
   classifications: ["Storyborn", "Villain", "Sorcerer"],
   abilities: [
     {
-      effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          cardType: "action",
-          cost: "free",
-          from: "hand",
-          type: "play-card",
-        },
-        type: "optional",
-      },
       id: "19w-1",
       name: "SING FOR ME",
       text: "SING FOR ME When you play this character, exert chosen opposing ready character. Then, you may play a song with cost equal to or less than the exerted character's cost for free.",
+      type: "triggered",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
       },
-      type: "triggered",
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "exert",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "opponent",
+              zones: ["play"],
+              cardTypes: ["character"],
+              filter: [
+                {
+                  type: "ready",
+                },
+              ],
+            },
+          },
+          {
+            type: "optional",
+            effect: {
+              type: "play-card",
+              from: "hand",
+              cardType: "song",
+              cost: "free",
+              filter: {
+                maxCost: "chosen-card-cost",
+              },
+            },
+          },
+        ],
+      },
     },
   ],
+  i18n: ursulaVoiceStealerI18n,
 };

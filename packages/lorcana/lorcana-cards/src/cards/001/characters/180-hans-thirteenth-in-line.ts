@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hansThirteenthInLineI18n } from "./180-hans-thirteenth-in-line.i18n";
 
 export const hansThirteenthInLine: CharacterCard = {
   id: "jUh",
@@ -7,50 +8,6 @@ export const hansThirteenthInLine: CharacterCard = {
   cardType: "character",
   name: "Hans",
   version: "Thirteenth in Line",
-  i18n: {
-    en: {
-      name: "Hans",
-      version: "Thirteenth in Line",
-      text: [
-        {
-          title: "STAGE A LITTLE ACCIDENT",
-          description: "Whenever this character quests, you may deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Hans",
-      version: "Dreizehnter in der Thronfolge",
-      text: [
-        {
-          title: "KLEINER UNFALL",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du einem Charakter deiner Wahl 1 Schaden zufügen.",
-        },
-      ],
-    },
-    fr: {
-      name: "HANS",
-      version: "Treizième héritier",
-      text: [
-        {
-          title: "UN PETIT ACCIDENT",
-          description:
-            "Lorsque ce personnage est envoyé à l'aventure, vous pouvez choisir un personnage et lui infliger 1 dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Hans",
-      version: "Thirteenth in Line",
-      text: [
-        {
-          title: "STAGE A LITTLE ACCIDENT",
-          description: "Whenever this character quests, you may deal 1 damage to chosen character.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Frozen",
   set: "001",
@@ -67,8 +24,9 @@ export const hansThirteenthInLine: CharacterCard = {
   },
   text: [
     {
-      title: "STAGE A LITTLE ACCIDENT",
-      description: "Whenever this character quests, you may deal 1 damage to chosen character.",
+      title: "STAGE",
+      description:
+        "A LITTLE ACCIDENT Whenever this character quests, you may deal 1 damage to chosen character.",
     },
   ],
   classifications: ["Storyborn", "Villain", "Prince"],
@@ -94,4 +52,5 @@ export const hansThirteenthInLine: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: hansThirteenthInLineI18n,
 };

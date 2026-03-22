@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { turboRoyalHackI18n } from "./106-turbo-royal-hack.i18n";
 
 export const turboRoyalHack: CharacterCard = {
   id: "42e",
@@ -7,42 +8,6 @@ export const turboRoyalHack: CharacterCard = {
   cardType: "character",
   name: "Turbo",
   version: "Royal Hack",
-  i18n: {
-    en: {
-      name: "Turbo",
-      version: "Royal Hack",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "GAME JUMP",
-          description: "This character also counts as being named King Candy for Shift.",
-        },
-      ],
-    },
-    de: {
-      name: "Turbo",
-      version: "Königlicher Hack",
-      text: "Rasant SPRUNG INS SPIEL Du kannst einen King-Candy-Charakter mit der Gestaltwandel-Fähigkeit auf diesen Charakter ausspielen.",
-    },
-    fr: {
-      name: "Turbo le Pilote",
-      version: "Hack royal",
-      text: "Charge SAUT DE JEU Lorsque vous utilisez une capacité Alter, ce personnage peut aussi être considéré comme un personnage nommé Sa Sucrerie.",
-    },
-    it: {
-      name: "Turbo",
-      version: "Impostore Regale",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) SCAMBIOGIOCHISTA Questo personaggio conta come se si chiamasse anche Re Candito per Trasformazione.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -67,5 +32,26 @@ export const turboRoyalHack: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Racer"],
-  abilities: [],
+  abilities: [
+    {
+      id: "42e-1",
+      keyword: "Rush",
+      text: "Rush",
+      type: "keyword",
+    },
+    {
+      id: "42e-2",
+      name: "GAME JUMP",
+      text: "GAME JUMP This character also counts as being named King Candy for Shift.",
+      type: "static",
+      effect: {
+        type: "property-modification",
+        property: "name",
+        operation: "add-alias",
+        value: "King Candy",
+        target: "SELF",
+      },
+    },
+  ],
+  i18n: turboRoyalHackI18n,
 };

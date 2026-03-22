@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { mostEveryonesMadHereI18n } from "./151-most-everyones-mad-here.i18n";
 
 export const mostEveryonesMadHere: ActionCard = {
   id: "FLL",
@@ -6,24 +7,6 @@ export const mostEveryonesMadHere: ActionCard = {
   reprints: ["set8-151"],
   cardType: "action",
   name: "Most Everyone's Mad Here",
-  i18n: {
-    en: {
-      name: "Most Everyone's Mad Here",
-      text: "Gain lore equal to the damage on chosen character, then banish them.",
-    },
-    de: {
-      name: "Die meisten von uns hier sind verrückt",
-      text: "Wähle einen Charakter und zähle den Schaden auf ihm. Sammle diese Anzahl an Legenden und verbanne ihn.",
-    },
-    fr: {
-      name: "Tout le monde est fou ici",
-      text: "Choisissez un personnage et gagnez autant d'éclats de Lore qu'il a de dommages sur lui, puis bannissez-le.",
-    },
-    it: {
-      name: "Sono Quasi Tutti Matti Qui",
-      text: "Ottieni leggenda pari al danno su un personaggio a tua scelta, poi esilialo.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Alice in Wonderland",
   set: "008",
@@ -64,4 +47,5 @@ export const mostEveryonesMadHere: ActionCard = {
       },
     },
   ],
+  i18n: mostEveryonesMadHereI18n,
 };

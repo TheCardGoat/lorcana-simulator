@@ -70,10 +70,9 @@ describe("EventLogPanel", () => {
     });
 
     expect(body).toContain("Event Log");
-    expect(body).toContain("Last 2 turns");
     expect(body).toContain("Turn 2");
     expect(body).toContain("You");
-    expect(body).toContain("Inked");
+    expect(body).toContain("into the inkwell");
     expect(body).toContain("Mickey Mouse - Brave Little Tailor");
   });
 

@@ -1,7 +1,7 @@
 /**
  * Runtime Types Tests
  *
- * Tests for MatchState<G> and TCGCtx types per PLAN.md Phase 1
+ * Tests for MatchState and TCGCtx types per PLAN.md Phase 1
  */
 
 import { describe, it, expect } from "bun:test";

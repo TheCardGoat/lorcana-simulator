@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { maximusRelentlessPursuerI18n } from "./011-maximus-relentless-pursuer.i18n";
 
 export const maximusRelentlessPursuer: CharacterCard = {
   id: "bqd",
@@ -7,50 +8,6 @@ export const maximusRelentlessPursuer: CharacterCard = {
   cardType: "character",
   name: "Maximus",
   version: "Relentless Pursuer",
-  i18n: {
-    en: {
-      name: "Maximus",
-      version: "Relentless Pursuer",
-      text: [
-        {
-          title: "HORSE KICK",
-          description: "When you play this character, chosen character gets -2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Maximus",
-      version: "Gnadenloser Verfolger",
-      text: [
-        {
-          title: "PFERDETRITT",
-          description:
-            "Wenn du diesen Charakter ausspielst, gib einem Charakter deiner Wahl in diesem Zug -2.",
-        },
-      ],
-    },
-    fr: {
-      name: "MAXIMUS",
-      version: "Infatigable poursuivant",
-      text: [
-        {
-          title: "COUP DE SABOT",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage qui subit -2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Maximus",
-      version: "Relentless Pursuer",
-      text: [
-        {
-          title: "HORSE KICK",
-          description: "When you play this character, chosen character gets –2 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Tangled",
   set: "001",
@@ -61,7 +18,6 @@ export const maximusRelentlessPursuer: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_dbc44ab9437a44568efdf23b37f3f278",
     tcgPlayer: 494101,
@@ -99,4 +55,5 @@ export const maximusRelentlessPursuer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: maximusRelentlessPursuerI18n,
 };

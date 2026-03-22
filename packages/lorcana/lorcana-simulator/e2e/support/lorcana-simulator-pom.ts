@@ -1,20 +1,29 @@
 import type { Page } from "@playwright/test";
+import type { LorcanaProjectedBoardView, LorcanaProjectedCard } from "@tcg/lorcana-engine";
 import type {
   LorcanaBrowserHarnessConfig,
   LorcanaBrowserHarnessExecuteResult,
   LorcanaBrowserStatus,
   CanonicalPlayerId,
-} from "../../src/lib/lorcana-simulator/testing/browser-harness.js";
+} from "../../src/lib/features/simulator-devtools/harness/browser-harness";
 import {
   LORCANA_HARNESS_DEFAULT_FIXTURE_ID,
   LORCANA_HARNESS_DEFAULT_VIEW,
+  toCanonicalPlayerId,
   toSimulatorView,
-} from "../../src/lib/lorcana-simulator/testing/browser-harness.js";
+} from "../../src/lib/features/simulator-devtools/harness/browser-harness";
+import {
+  encodeInlineFixtureParam,
+  serializeInlineFixture,
+  type LorcanaBrowserFixtureInput,
+} from "../../src/lib/features/simulator-devtools/harness/browser-fixture";
+import { LORCANA_SIMULATOR_FIXTURES } from "../../src/lib/features/simulator-devtools/fixtures/index";
 import type {
+  LorcanaSimulatorFixture,
   LorcanaTableSeat,
   LorcanaSimulatorView,
   LorcanaZoneId,
-} from "../../src/lib/lorcana-simulator/types.js";
+} from "../../src/lib/features/simulator/model/contracts";
 
 type OwnedSimulatorView = Extract<LorcanaSimulatorView, "playerOne" | "playerTwo">;
 
@@ -33,6 +42,7 @@ interface LorcanaHarnessWindow extends Window {
 
 export interface LorcanaSimulatorPomLike {
   getStatus(): Promise<LorcanaBrowserStatus>;
+  getBoard(): Promise<LorcanaProjectedBoardView>;
   getZoneCardCount(expected: { zone: LorcanaZoneId; player: string }): Promise<number>;
 }
 
@@ -41,15 +51,31 @@ export class LorcanaSimulatorPom {
 
   constructor(readonly page: Page) {}
 
-  async goto(options?: { fixtureId?: string; view?: LorcanaSimulatorView }): Promise<void> {
-    const fixtureId = options?.fixtureId ?? LORCANA_HARNESS_DEFAULT_FIXTURE_ID;
+  async goto(options?: {
+    fixture?: LorcanaBrowserFixtureInput | LorcanaSimulatorFixture;
+    fixtureId?: string;
+    view?: LorcanaSimulatorView;
+  }): Promise<void> {
     const view = options?.view ?? LORCANA_HARNESS_DEFAULT_VIEW;
-    const params = new URLSearchParams({ fixtureId, view });
-    const url = `/test-harness/lorcana?${params.toString()}`;
+    const params = new URLSearchParams({ view });
+    const registeredFixtureId = resolveRegisteredFixtureId(options?.fixture);
+    const fixtureId =
+      options?.fixtureId ?? registeredFixtureId ?? LORCANA_HARNESS_DEFAULT_FIXTURE_ID;
 
+    if (options?.fixture && !registeredFixtureId && !options.fixtureId) {
+      params.set("fixture", encodeInlineFixtureParam(serializeInlineFixture(options.fixture)));
+    } else {
+      params.set("fixtureId", fixtureId);
+    }
+
+    const url = `/?${params.toString()}`;
+    await this.gotoPath(url);
+  }
+
+  async gotoPath(path: string): Promise<void> {
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       try {
-        await this.page.goto(url, { waitUntil: "domcontentloaded" });
+        await this.page.goto(path, { waitUntil: "domcontentloaded" });
         break;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -75,6 +101,12 @@ export class LorcanaSimulatorPom {
 
   asBottomPlayer(): LorcanaSimulatorSeatPom {
     return new LorcanaSimulatorSeatPom(this, "bottom");
+  }
+
+  async swapPlayers(): Promise<void> {
+    await this.page.getByLabel("Open simulator debug actions").click();
+    await this.page.getByText("Swap players").click();
+    this.currentView = await this.getCurrentOwnedView();
   }
 
   async reset(): Promise<void> {
@@ -111,6 +143,17 @@ export class LorcanaSimulatorPom {
       },
       { targetView: view, targetMoveId: moveId, targetParams: params },
     );
+  }
+
+  async getBoard(view?: LorcanaSimulatorView): Promise<LorcanaProjectedBoardView> {
+    return this.page.evaluate(async (targetView) => {
+      const harness = (window as LorcanaHarnessWindow).__lorcanaTestHarness;
+      if (!harness) {
+        throw new Error("Lorcana test harness is unavailable in the page.");
+      }
+
+      return harness.getBoard(targetView ?? "authoritative");
+    }, view);
   }
 
   async waitForStateChange(previousStateID: number, view: LorcanaSimulatorView): Promise<void> {
@@ -165,6 +208,17 @@ export class LorcanaSimulatorPom {
   }
 }
 
+function resolveRegisteredFixtureId(
+  fixture: LorcanaBrowserFixtureInput | LorcanaSimulatorFixture | undefined,
+): string | undefined {
+  if (!fixture?.id) {
+    return undefined;
+  }
+
+  const registeredFixture = LORCANA_SIMULATOR_FIXTURES[fixture.id];
+  return registeredFixture === fixture ? registeredFixture.id : undefined;
+}
+
 export class LorcanaSimulatorSeatPom implements LorcanaSimulatorPomLike {
   constructor(
     private readonly pom: LorcanaSimulatorPom,
@@ -200,11 +254,87 @@ export class LorcanaSimulatorSeatPom implements LorcanaSimulatorPomLike {
   }
 
   async getStatus(): Promise<LorcanaBrowserStatus> {
-    return this.pom.getStatus();
+    const view = await this.pom.resolveViewForSeat(this.seat);
+    return this.pom.getStatus(view);
+  }
+
+  async getBoard(): Promise<LorcanaProjectedBoardView> {
+    const view = await this.pom.resolveViewForSeat(this.seat);
+    return this.pom.getBoard(view);
   }
 
   async getZoneCardCount(expected: { zone: LorcanaZoneId; player: string }): Promise<number> {
     const status = await this.getStatus();
     return status.zoneCounts[expected.player]?.[expected.zone] ?? 0;
+  }
+
+  async getHandCardIds(player: CanonicalPlayerId): Promise<string[]> {
+    const view = await this.pom.resolveViewForSeat(this.seat);
+    const board = await this.pom.getBoard(view);
+    const playerBoard = board.players[player];
+
+    if (!playerBoard) {
+      return [];
+    }
+
+    return playerBoard.hand.map(String);
+  }
+
+  async mulligan(cardsToMulligan: string[]): Promise<void> {
+    const view = await this.pom.resolveViewForSeat(this.seat);
+    const previousStatus = await this.getStatus();
+    const playerId = toCanonicalPlayerId(view);
+
+    const result = await this.pom.execute(view, "alterHand", {
+      playerId,
+      cardsToMulligan,
+    });
+
+    if (!result.success) {
+      throw new Error(result.reason ?? `Failed to execute alterHand for ${playerId}.`);
+    }
+
+    await this.pom.waitForStateChange(previousStatus.stateID, view);
+  }
+
+  async inkCard(cardId: string): Promise<void> {
+    const view = await this.pom.resolveViewForSeat(this.seat);
+    const previousStatus = await this.getStatus();
+
+    const result = await this.pom.execute(view, "putCardIntoInkwell", { cardId });
+
+    if (!result.success) {
+      throw new Error(result.reason ?? `Failed to execute putCardIntoInkwell for card ${cardId}.`);
+    }
+
+    await this.pom.waitForStateChange(previousStatus.stateID, view);
+  }
+
+  async passTurn(): Promise<void> {
+    const view = await this.pom.resolveViewForSeat(this.seat);
+    const previousStatus = await this.getStatus();
+
+    const result = await this.pom.execute(view, "passTurn", {});
+
+    if (!result.success) {
+      throw new Error(result.reason ?? "Failed to execute passTurn.");
+    }
+
+    await this.pom.waitForStateChange(previousStatus.stateID, view);
+  }
+
+  async findCard(label: string): Promise<LorcanaProjectedCard> {
+    const board = await this.getBoard();
+    const matchingCards = Object.values(board.cards).filter((card) => card.fullName === label);
+
+    if (matchingCards.length === 1) {
+      return matchingCards[0];
+    }
+
+    if (matchingCards.length === 0) {
+      throw new Error(`Could not find card with label '${label}' in projected board.`);
+    }
+
+    throw new Error(`Found multiple cards with label '${label}' in projected board.`);
   }
 }

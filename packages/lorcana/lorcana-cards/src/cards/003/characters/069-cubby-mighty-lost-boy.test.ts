@@ -1,27 +1,44 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { cubbyMightyLostBoy } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Cubby - Mighty Lost Boy", () => {
-//   It.skip("**THE BEAR** Whenever this character moves to a location, he gets +3 {S} this turn.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: cubbyMightyLostBoy.cost,
-//       Play: [cubbyMightyLostBoy],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       CubbyMightyLostBoy.id,
-//     );
-//
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockLocation } from "@tcg/lorcana-engine/testing";
+import { cubbyMightyLostBoy } from "./069-cubby-mighty-lost-boy";
+
+const firstLocation = createMockLocation({
+  id: "cubby-first-location",
+  name: "Cubby First Location",
+  cost: 2,
+  moveCost: 1,
+});
+
+const secondLocation = createMockLocation({
+  id: "cubby-second-location",
+  name: "Cubby Second Location",
+  cost: 2,
+  moveCost: 1,
+});
+
+describe("Cubby - Mighty Lost Boy", () => {
+  it("gets +3 strength each time he moves to a location, then loses the bonus at end of turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [cubbyMightyLostBoy, firstLocation, secondLocation],
+      inkwell: 2,
+      deck: 1,
+    });
+
+    const baseStrength = cubbyMightyLostBoy.strength;
+
+    expect(testEngine.asPlayerOne().getCard(cubbyMightyLostBoy)?.strength).toBe(baseStrength);
+
+    expect(
+      testEngine.asPlayerOne().moveCharacterToLocation(cubbyMightyLostBoy, firstLocation).success,
+    ).toBe(true);
+    expect(testEngine.asPlayerOne().getCard(cubbyMightyLostBoy)?.strength).toBe(baseStrength + 3);
+
+    expect(
+      testEngine.asPlayerOne().moveCharacterToLocation(cubbyMightyLostBoy, secondLocation).success,
+    ).toBe(true);
+    expect(testEngine.asPlayerOne().getCard(cubbyMightyLostBoy)?.strength).toBe(baseStrength + 6);
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCard(cubbyMightyLostBoy)?.strength).toBe(baseStrength);
+  });
+});

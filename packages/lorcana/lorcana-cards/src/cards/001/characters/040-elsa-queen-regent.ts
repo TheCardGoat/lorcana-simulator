@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { elsaQueenRegentI18n } from "./040-elsa-queen-regent.i18n";
 
 export const elsaQueenRegent: CharacterCard = {
   id: "qQ5",
@@ -7,24 +8,6 @@ export const elsaQueenRegent: CharacterCard = {
   cardType: "character",
   name: "Elsa",
   version: "Queen Regent",
-  i18n: {
-    en: {
-      name: "Elsa",
-      version: "Queen Regent",
-    },
-    de: {
-      name: "Elsa",
-      version: "Amtierende Königin",
-    },
-    fr: {
-      name: "ELSA",
-      version: "Reine régente",
-    },
-    it: {
-      name: "Elsa",
-      version: "Regina Reggente",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "001",
@@ -41,4 +24,5 @@ export const elsaQueenRegent: CharacterCard = {
     tcgPlayer: 507276,
   },
   classifications: ["Storyborn", "Hero", "Queen", "Sorcerer"],
+  i18n: elsaQueenRegentI18n,
 };

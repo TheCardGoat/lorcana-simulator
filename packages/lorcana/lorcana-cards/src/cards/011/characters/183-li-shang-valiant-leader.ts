@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liShangValiantLeaderI18n } from "./183-li-shang-valiant-leader.i18n";
 
 export const liShangValiantLeader: CharacterCard = {
   id: "qoa",
@@ -7,28 +8,6 @@ export const liShangValiantLeader: CharacterCard = {
   cardType: "character",
   name: "Li Shang",
   version: "Valiant Leader",
-  i18n: {
-    en: {
-      name: "Li Shang",
-      version: "Valiant Leader",
-      text: "Shift 4 {I}",
-    },
-    de: {
-      name: "Li Shang",
-      version: "Tapferer Anführer",
-      text: "Gestaltwandel 4",
-    },
-    fr: {
-      name: "Li Shang",
-      version: "Meneur vaillant",
-      text: "Alter 4",
-    },
-    it: {
-      name: "Li Shang",
-      version: "Leader Valoroso",
-      text: "Trasformazione 4",
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "011",
@@ -56,4 +35,5 @@ export const liShangValiantLeader: CharacterCard = {
       text: "Shift 4 {I}",
     },
   ],
+  i18n: liShangValiantLeaderI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { healingTouchI18n } from "./026-healing-touch.i18n";
 
 export const healingTouch: ActionCard = {
   id: "b5J",
@@ -6,24 +7,6 @@ export const healingTouch: ActionCard = {
   reprints: ["set5-026"],
   cardType: "action",
   name: "Healing Touch",
-  i18n: {
-    en: {
-      name: "Healing Touch",
-      text: "Remove up to 4 damage from chosen character. Draw a card.",
-    },
-    de: {
-      name: "Heilende Berührung",
-      text: "Entferne bis zu 4 Schaden von einem Charakter deiner Wahl. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Toucher guérisseur",
-      text: "Choisissez un personnage et retirez-lui jusqu'à 4 dommages. Piochez une carte.",
-    },
-    it: {
-      name: "Tocco Curativo",
-      text: "Rimuovi fino a 4 danni da un personaggio a tua scelta. Pesca una carta.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Frozen",
   set: "005",
@@ -65,4 +48,5 @@ export const healingTouch: ActionCard = {
       type: "action",
     },
   ],
+  i18n: healingTouchI18n,
 };

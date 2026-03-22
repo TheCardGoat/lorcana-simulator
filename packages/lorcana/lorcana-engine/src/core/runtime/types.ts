@@ -7,6 +7,7 @@
  */
 
 import type { LorcanaDomainEvent } from "../../types/domain-events";
+import type { LorcanaG } from "../../types/runtime-state";
 import type { PlayerId } from "../types";
 import type { Player } from "./match-runtime.types";
 
@@ -22,12 +23,9 @@ type CardInstanceId = string;
 
 /**
  * Unified authoritative match state envelope
- *
- * This replaces the current split where framework internals live outside
- * the synced state. Everything is now serializable and versioned.
  */
-export type MatchState<G> = {
-  G: G; // game-specific state (developer-owned)
+export type MatchState = {
+  G: LorcanaG; // game-specific state (developer-owned)
   ctx: TCGCtx; // framework-owned runtime state (engine-owned)
 };
 
@@ -527,8 +525,8 @@ export type GameLogEntry = {
  *
  * Secret information is removed based on visibility rules.
  */
-export type FilteredMatchView<G> = {
-  G: G;
+export type FilteredMatchView = {
+  G: LorcanaG;
   ctx: FilteredTCGCtx;
 };
 

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pleakleyScientificExpertI18n } from "./144-pleakley-scientific-expert.i18n";
 
 export const pleakleyScientificExpert: CharacterCard = {
   id: "ron",
@@ -7,52 +8,6 @@ export const pleakleyScientificExpert: CharacterCard = {
   cardType: "character",
   name: "Pleakley",
   version: "Scientific Expert",
-  i18n: {
-    en: {
-      name: "Pleakley",
-      version: "Scientific Expert",
-      text: [
-        {
-          title: "REPORTING FOR DUTY",
-          description:
-            "When you play this character, put chosen character of yours into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Pliiklii",
-      version: "Wissenschaftlicher Experte",
-      text: [
-        {
-          title: "MELDUNG ZUM DIENST",
-          description:
-            "Wenn du diesen Charakter ausspielst, wähle einen deiner Charaktere und lege ihn verdeckt und erschöpft in deinen Tintenvorrat.",
-        },
-      ],
-    },
-    fr: {
-      name: "Pikly",
-      version: "Expert scientifique",
-      text: [
-        {
-          title: "AU RAPPORT",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez l'un de vos personnages et placez-le dans votre réserve d'encre, face cachée et épuisé.",
-        },
-      ],
-    },
-    it: {
-      name: "Pleakley",
-      version: "Esperto Scientifico",
-      text: [
-        {
-          title: "A RAPPORTO, SIGNORE",
-          description:
-            "Quando giochi questo personaggio, aggiungi un tuo personaggio a tua scelta al tuo calamaio, a faccia in giù e impegnato.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Lilo and Stitch",
   set: "006",
@@ -101,4 +56,5 @@ export const pleakleyScientificExpert: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: pleakleyScientificExpertI18n,
 };

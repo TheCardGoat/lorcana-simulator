@@ -1,10 +1,15 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type { ReturnToHandEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
+import {
+  emitTriggeredLorcanaEvent,
+  snapshotTriggeredCandidatesForCard,
+} from "../../../triggered-abilities";
 import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
 import { resolveEffectTargets } from "../../../targeting/runtime";
+import { getEffectTargetSelectionInput } from "./selection-state";
 
 export function isReturnToHandEffect(effect: unknown): effect is ReturnToHandEffect {
   return (
@@ -21,15 +26,28 @@ function moveCardToOwnerHand(
   fallbackPlayerId: PlayerId,
 ): void {
   const ownerId =
-    (ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID as PlayerId | undefined) ??
-    fallbackPlayerId;
-  const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+    (ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined) ?? fallbackPlayerId;
+  const zoneKey = ctx.framework.zones.getCardZone(cardId);
 
   if (typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"))) {
+    const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId);
     moveCardOutOfPlayWithStack(ctx, cardId, {
       zone: "hand",
       playerId: ownerId,
     });
+
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "cardReturnedToHand",
+      { cardId, ownerId, fromZone: zoneKey },
+      {
+        event: "return-to-hand",
+        playerId: ownerId,
+        subjectCardId: cardId,
+        fromZone: zoneKey,
+        triggerCandidates,
+      },
+    );
     return;
   }
 
@@ -50,7 +68,7 @@ export function resolveReturnToHandEffect(
       ctx,
       cardPlayed,
       effect.target,
-      resolutionInput.targets,
+      getEffectTargetSelectionInput(effect.target, resolutionInput),
       resolutionInput.eventSnapshot,
     ) ?? [];
 

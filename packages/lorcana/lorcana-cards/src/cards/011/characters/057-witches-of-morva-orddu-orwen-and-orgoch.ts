@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { witchesOfMorvaOrdduOrwenAndOrgochI18n } from "./057-witches-of-morva-orddu-orwen-and-orgoch.i18n";
 
 export const witchesOfMorvaOrdduOrwenAndOrgoch: CharacterCard = {
   id: "JTw",
@@ -7,52 +8,6 @@ export const witchesOfMorvaOrdduOrwenAndOrgoch: CharacterCard = {
   cardType: "character",
   name: "Witches of Morva",
   version: "Orddu, Orwen, and Orgoch",
-  i18n: {
-    en: {
-      name: "Witches of Morva",
-      version: "Orddu, Orwen, and Orgoch",
-      text: [
-        {
-          title: "QUITE A BARGAIN",
-          description:
-            "When you play this character, you may return another chosen character of yours to your hand. If you do, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Hexen von Morva",
-      version: "Orddu, Orwen und Orgoch",
-      text: [
-        {
-          title: "EIN GUTER TAUSCH",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen deiner anderen Charaktere wählen und zurück auf deine Hand nehmen. Wenn du dies tust, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Les sorcières de Morva",
-      version: "Grièche, Griotte et Goulue",
-      text: [
-        {
-          title: "QUELLE BONNE AFFAIRE",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir l'un de vos autres personnages et le renvoyer dans votre main. Si vous le faites, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Streghe di Morva",
-      version: "Orchina, Orcona e Orvina",
-      text: [
-        {
-          title: "UN VERO AFFARE",
-          description:
-            "Quando giochi questo personaggio, puoi riprendere in mano un tuo altro personaggio a tua scelta. Se lo fai, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Black Cauldron",
   set: "011",
@@ -69,9 +24,9 @@ export const witchesOfMorvaOrdduOrwenAndOrgoch: CharacterCard = {
   },
   text: [
     {
-      title: "QUITE A BARGAIN",
+      title: "QUITE",
       description:
-        "When you play this character, you may return another chosen character of yours to your hand. If you do, gain 1 lore.",
+        "A BARGAIN When you play this character, you may return another chosen character of yours to your hand. If you do, gain 1 lore.",
     },
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer"],
@@ -83,20 +38,32 @@ export const witchesOfMorvaOrdduOrwenAndOrgoch: CharacterCard = {
           {
             chooser: "CONTROLLER",
             effect: {
-              target: {
-                cardTypes: ["character"],
-                count: 1,
-                owner: "any",
-                selector: "chosen",
-                zones: ["play"],
-              },
-              type: "return-to-hand",
+              steps: [
+                {
+                  target: {
+                    cardTypes: ["character"],
+                    count: 1,
+                    excludeSelf: true,
+                    owner: "you",
+                    selector: "chosen",
+                    zones: ["play"],
+                  },
+                  type: "return-to-hand",
+                },
+                {
+                  condition: {
+                    type: "if-you-do",
+                  },
+                  then: {
+                    amount: 1,
+                    type: "gain-lore",
+                  },
+                  type: "conditional",
+                },
+              ],
+              type: "sequence",
             },
             type: "optional",
-          },
-          {
-            amount: 1,
-            type: "gain-lore",
           },
         ],
         type: "sequence",
@@ -111,4 +78,5 @@ export const witchesOfMorvaOrdduOrwenAndOrgoch: CharacterCard = {
       text: "QUITE A BARGAIN When you play this character, you may return another chosen character of yours to your hand. If you do, gain 1 lore.",
     },
   ],
+  i18n: witchesOfMorvaOrdduOrwenAndOrgochI18n,
 };

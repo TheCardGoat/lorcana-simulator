@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { legendOfTheSwordInTheStoneI18n } from "./064-legend-of-the-sword-in-the-stone.i18n";
 
 export const legendOfTheSwordInTheStone: ActionCard = {
   id: "Sw8",
@@ -6,24 +7,6 @@ export const legendOfTheSwordInTheStone: ActionCard = {
   reprints: ["set2-064"],
   cardType: "action",
   name: "Legend of the Sword in the Stone",
-  i18n: {
-    en: {
-      name: "Legend of the Sword in the Stone",
-      text: "Chosen character gains Challenger +3 this turn. (They get +3 {S} while challenging.)",
-    },
-    de: {
-      name: "Die Legende vom Schwert in dem Stein",
-      text: "Ein Charakter deiner Wahl erhält in diesem Zug Herausfordern +3. (Während der Charakter herausfordert, erhält er +3.)",
-    },
-    fr: {
-      name: "La légende de l'épée dans l'enclume",
-      text: "Choisissez un personnage, il gagne Offensif + 3 pour le reste de ce tour.",
-    },
-    it: {
-      name: "La Leggenda della Spada nella Roccia",
-      text: "(Un personaggio con costo 2 o superiore può per cantare questa canzone gratis.) Un personaggio a tua scelta ottiene Sfidante +3 per questo turno.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -49,4 +32,5 @@ export const legendOfTheSwordInTheStone: ActionCard = {
       },
     },
   ],
+  i18n: legendOfTheSwordInTheStoneI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { reviveEnchantedI18n } from "./207-revive-enchanted.i18n";
 
 export const reviveEnchanted: ActionCard = {
   id: "Q4x",
@@ -6,24 +7,6 @@ export const reviveEnchanted: ActionCard = {
   reprints: ["set5-027"],
   cardType: "action",
   name: "Revive",
-  i18n: {
-    en: {
-      name: "Revive",
-      text: "Play a character with cost 5 or less from your discard for free.",
-    },
-    de: {
-      name: "Wiedererwachen",
-      text: "Spiele eine Charakterkarte, die 5 oder weniger kostet, kostenlos aus deinem Ablagestapel aus.",
-    },
-    fr: {
-      name: "Ranimer",
-      text: "Jouez gratuitement une carte Personnage de votre défausse ayant un coût de 5 ou moins.",
-    },
-    it: {
-      name: "Rivitalizzare",
-      text: "Gioca una carta personaggio con costo 5 o inferiore dai tuoi scarti, gratis.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Tangled",
   set: "005",
@@ -54,4 +37,5 @@ export const reviveEnchanted: ActionCard = {
       type: "action",
     },
   ],
+  i18n: reviveEnchantedI18n,
 };

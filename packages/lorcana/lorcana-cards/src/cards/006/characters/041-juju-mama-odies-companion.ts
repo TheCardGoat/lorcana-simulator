@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jujuMamaOdiesCompanionI18n } from "./041-juju-mama-odies-companion.i18n";
 
 export const jujuMamaOdiesCompanion: CharacterCard = {
   id: "N2e",
@@ -7,52 +8,6 @@ export const jujuMamaOdiesCompanion: CharacterCard = {
   cardType: "character",
   name: "Juju",
   version: "Mama Odie's Companion",
-  i18n: {
-    en: {
-      name: "Juju",
-      version: "Mama Odie's Companion",
-      text: [
-        {
-          title: "BEES' KNEES",
-          description:
-            "When you play this character, move 1 damage counter from chosen character to chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Juju",
-      version: "Mama Odies Gefährte",
-      text: [
-        {
-          title: "ABSOLUT HIMMLISCH",
-          description:
-            "Wenn du diesen Charakter ausspielst, verschiebe 1 Schadensmarker von einem Charakter deiner Wahl zu einem gegnerischen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Juju",
-      version: "Compagnon de Mama Odie",
-      text: [
-        {
-          title: "IL SERAIT PARFAIT",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage et déplacez 1 de ses dommages sur un personnage adverse de votre choix.",
-        },
-      ],
-    },
-    it: {
-      name: "Juju",
-      version: "Compagno di Mamma Odie",
-      text: [
-        {
-          title: "ZUPPA PERFETTA",
-          description:
-            "Quando giochi questo personaggio, sposta 1 segnalino danno da un personaggio a tua scelta a un personaggio avversario a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Princess and the Frog",
   set: "006",
@@ -78,8 +33,10 @@ export const jujuMamaOdiesCompanion: CharacterCard = {
   abilities: [
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        type: "move-damage",
+        amount: 1,
+        from: "CHOSEN_CHARACTER",
+        to: "CHOSEN_OPPOSING_CHARACTER",
       },
       id: "fzy-1",
       name: "BEES' KNEES",
@@ -92,4 +49,5 @@ export const jujuMamaOdiesCompanion: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: jujuMamaOdiesCompanionI18n,
 };

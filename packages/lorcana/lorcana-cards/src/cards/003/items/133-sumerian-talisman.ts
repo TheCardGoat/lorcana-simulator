@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { sumerianTalismanI18n } from "./133-sumerian-talisman.i18n";
 
 export const sumerianTalisman: ItemCard = {
   id: "zQ8",
@@ -6,48 +7,6 @@ export const sumerianTalisman: ItemCard = {
   reprints: ["set3-133"],
   cardType: "item",
   name: "Sumerian Talisman",
-  i18n: {
-    en: {
-      name: "Sumerian Talisman",
-      text: [
-        {
-          title: "SOURCE OF MAGIC",
-          description:
-            "During your turn, whenever one of your characters is banished in a challenge, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Sumerischer Talisman",
-      text: [
-        {
-          title: "DIE QUELLE DER MAGIE",
-          description:
-            "Jedes Mal, wenn einer deiner Charaktere in deinem Zug durch eine Herausforderung verbannt wird, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Talisman sumérien",
-      text: [
-        {
-          title: "SOURCE DE MAGIE",
-          description:
-            "Chaque fois que l'un de vos personnages est banni via un défi durant votre tour, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Talismano Sumero",
-      text: [
-        {
-          title: "FONTE DI MAGIA",
-          description:
-            "Durante il tuo turno, ogni volta che uno dei tuoi personaggi viene esiliato in una sfida, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Ducktales",
   set: "003",
@@ -82,10 +41,20 @@ export const sumerianTalisman: ItemCard = {
       trigger: {
         event: "banish",
         timing: "whenever",
-        on: "YOUR_OTHER_CHARACTERS",
+        on: "YOUR_CHARACTERS",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+          {
+            type: "in-challenge",
+          },
+        ],
       },
       type: "triggered",
       text: "SOURCE OF MAGIC During your turn, whenever one of your characters is banished in a challenge, you may draw a card.",
     },
   ],
+  i18n: sumerianTalismanI18n,
 };

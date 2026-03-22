@@ -4,6 +4,7 @@ import { getLogger, type Logger } from "@logtape/logtape";
 const logger = getLogger(["lorcana-engine", "multiplayer-test-engine"]);
 
 import {
+  type CardsMaps,
   type EngineMoveExecutionResult,
   type EngineMoveHistoryEntry,
   type DeepReadonly,
@@ -23,7 +24,6 @@ import {
   CANONICAL_PLAYER_ONE,
   CANONICAL_PLAYER_TWO,
 } from "#core/testing";
-import type { LorcanaCard } from "@tcg/lorcana-types";
 
 import { LorcanaClient } from "../lorcana-client";
 import type {
@@ -53,6 +53,7 @@ import {
   FALLBACK_LORCANA_PROJECTED_CARD,
 } from "../fallback-card-definition";
 import { LorcanaEngineBase } from "../lorcana-engine-base";
+import { recomputeLoreToWin } from "../runtime-moves/effects/win-condition-effects";
 
 type CardRef = CardInput;
 
@@ -97,7 +98,7 @@ export interface LorcanaTestEngineConfig {
   startingInk?: Record<string, number>;
   initialView?: GameTestView;
   /** Pre-built static resources (e.g. from fromInitialStates). When not set, an empty bundle is used. */
-  staticResources?: MatchStaticResources<LorcanaCard>;
+  staticResources?: MatchStaticResources;
 }
 
 export interface LorcanaFixtureInitOptions extends LorcanaTestEngineConfig {
@@ -122,6 +123,8 @@ export class LorcanaMultiplayerTestEngine {
   private fixtureOptions: LorcanaFixtureInitOptions;
   /** Instance ID -> definition ID for simulator/tooling (card definitions live in staticResources) */
   private instanceIdToDefinitionId = new Map<string, string>();
+  /** CardsMaps snapshot captured at construction time for serialization/restoration. */
+  private _cardsMaps: CardsMaps;
   /** Definition ID -> card definition for client helper lookups */
   private definitionIdToCard = new Map<string, LorcanaCardDefinition>();
   logger: Logger;
@@ -133,13 +136,14 @@ export class LorcanaMultiplayerTestEngine {
     }
     this.currentView = config.initialView ?? "authoritative";
 
-    const staticResources: MatchStaticResources<LorcanaCard> =
+    const staticResources: MatchStaticResources =
       config.staticResources ?? createEmptyLorcanaStaticResources();
     const players = [...TEST_PLAYERS];
     const includeSpectator = config.includeSpectator ?? true;
     const debugMode = fixtureOptions.debugServerCommunication ?? false;
     const seed = config.seed ?? "lorcana-multiplayer-test-engine";
     const cardsMaps = createCardsMapsFromStaticResources(staticResources);
+    this._cardsMaps = cardsMaps;
 
     const serverInitParams = {
       players,
@@ -301,7 +305,7 @@ export class LorcanaMultiplayerTestEngine {
     return this.getBoard(view);
   }
 
-  getAuthoritativeState(): DeepReadonly<MatchState<LorcanaG>> {
+  getAuthoritativeState(): DeepReadonly<MatchState> {
     return this.serverEngine.getState();
   }
 
@@ -344,7 +348,7 @@ export class LorcanaMultiplayerTestEngine {
     return this.serverEngine.getMoveHistory(limit);
   }
 
-  getServerState(): DeepReadonly<MatchState<LorcanaG>> {
+  getServerState(): DeepReadonly<MatchState> {
     return this.getAuthoritativeState();
   }
 
@@ -552,11 +556,30 @@ export class LorcanaMultiplayerTestEngine {
       }
     }
 
+    // Derive win-condition-modification overrides from cards currently in play
+    // (e.g. Donald Duck - Flustered Sorcerer raises the lore threshold for opponents).
+    // Must run before winner detection so the correct threshold is used.
+    recomputeLoreToWin({
+      G: state.G as Parameters<typeof recomputeLoreToWin>[0]["G"],
+      framework: {
+        state: {
+          _zonesPrivate: state.ctx.zones.private as Parameters<
+            typeof recomputeLoreToWin
+          >[0]["framework"]["state"]["_zonesPrivate"],
+        },
+      },
+      cards: {
+        getDefinition: (cardId: string) => bundle.cardDefinitionsByInstanceId[cardId],
+      },
+    });
+
     // Check for winner by lore; game end lives on ctx only
-    const winner = detectWinnerByLore(state.G.lore);
+    const winner = detectWinnerByLore(state.G.lore, state.G.loreToWin);
     state.ctx.status.gameEnded = Boolean(winner);
     state.ctx.status.winner = winner;
-    state.ctx.status.reason = winner ? "Reached 20 lore" : undefined;
+    state.ctx.status.reason = winner
+      ? `Reached ${String((state.G.loreToWin as Record<string, number> | undefined)?.[winner] ?? 20)} lore`
+      : undefined;
 
     // Refresh zone summaries
     this.refreshZoneSummaries(state);
@@ -576,7 +599,7 @@ export class LorcanaMultiplayerTestEngine {
    *
    * @internal Used by serialization helpers; prefer restoreEngineFromState() for external use
    */
-  loadState(state: MatchState<LorcanaG>): void {
+  loadState(state: MatchState): void {
     // Access the server engine's runtime and load the state
     const serverEngine = this.getServerEngine();
     const runtime = serverEngine.getRuntime();
@@ -584,7 +607,7 @@ export class LorcanaMultiplayerTestEngine {
     this.syncLoadedStateToViews(state);
   }
 
-  private syncLoadedStateToViews(state: MatchState<LorcanaG>): void {
+  private syncLoadedStateToViews(state: MatchState): void {
     for (const view of ["playerOne", "playerTwo", "spectator"] as const) {
       this.resolveOptionalClient(view)?.loadState(state);
     }
@@ -655,6 +678,8 @@ export class LorcanaMultiplayerTestEngine {
     state.ctx.status.gameSegment = "mainGame";
     state.ctx.priority.holder = CANONICAL_PLAYER_ONE;
     state.ctx.priority.windowOpen = true;
+    // Player one goes first by default; set otp so first-turn-non-otp conditions evaluate correctly.
+    state.ctx.status.otp = CANONICAL_PLAYER_ONE as PlayerId;
   }
 
   /**
@@ -702,6 +727,11 @@ export class LorcanaMultiplayerTestEngine {
 
   asServer(): LorcanaServer {
     return this.getServerEngine();
+  }
+
+  /** Get the CardsMaps snapshot captured at engine construction time. */
+  getCardsMaps(): CardsMaps {
+    return this._cardsMaps;
   }
 
   /**

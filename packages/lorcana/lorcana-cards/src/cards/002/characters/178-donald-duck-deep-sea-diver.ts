@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckDeepseaDiverI18n } from "./178-donald-duck-deep-sea-diver.i18n";
 
 export const donaldDuckDeepseaDiver: CharacterCard = {
   id: "iVk",
@@ -7,24 +8,6 @@ export const donaldDuckDeepseaDiver: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Deep-Sea Diver",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Deep-Sea Diver",
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Tiefseetaucher",
-    },
-    fr: {
-      name: "Donald",
-      version: "Plongeur en eau profonde",
-    },
-    it: {
-      name: "Donald Duck",
-      version: "Deep-Sea Diver",
-    },
-  },
   inkType: ["steel"],
   set: "002",
   cardNumber: 178,
@@ -40,4 +23,5 @@ export const donaldDuckDeepseaDiver: CharacterCard = {
     tcgPlayer: 524218,
   },
   classifications: ["Dreamborn", "Hero"],
+  i18n: donaldDuckDeepseaDiverI18n,
 };

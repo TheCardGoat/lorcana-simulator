@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { akelaForestRunnerI18n } from "./090-akela-forest-runner.i18n";
 
 export const akelaForestRunner: CharacterCard = {
   id: "iHw",
@@ -7,48 +8,6 @@ export const akelaForestRunner: CharacterCard = {
   cardType: "character",
   name: "Akela",
   version: "Forest Runner",
-  i18n: {
-    en: {
-      name: "Akela",
-      version: "Forest Runner",
-      text: [
-        {
-          title: "AHEAD OF THE PACK 1",
-          description: "{I} — This character gets +1 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Akela",
-      version: "Waldläufer",
-      text: [
-        {
-          title: "DEM RUDEL VORAUS 1",
-          description: "— Dieser Charakter erhält in diesem Zug +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Akela",
-      version: "Court dans la forêt",
-      text: [
-        {
-          title: "À L'AVANT DE LA MEUTE",
-          description: "1 — Ce personnage gagne +1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Akela",
-      version: "Corridore Silvano",
-      text: [
-        {
-          title: "DAVANTI AL BRANCO 1",
-          description: "— Questo personaggio riceve +1 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Jungle Book",
   set: "010",
@@ -88,4 +47,5 @@ export const akelaForestRunner: CharacterCard = {
       type: "activated",
     },
   ],
+  i18n: akelaForestRunnerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princePhillipRoyalExplorerI18n } from "./083-prince-phillip-royal-explorer.i18n";
 
 export const princePhillipRoyalExplorer: CharacterCard = {
   id: "ccM",
@@ -7,28 +8,6 @@ export const princePhillipRoyalExplorer: CharacterCard = {
   cardType: "character",
   name: "Prince Phillip",
   version: "Royal Explorer",
-  i18n: {
-    en: {
-      name: "Prince Phillip",
-      version: "Royal Explorer",
-      text: "Ward",
-    },
-    de: {
-      name: "Prinz Phillip",
-      version: "Königlicher Entdecker",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Prince Philippe",
-      version: "Explorateur royal",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Principe Filippo",
-      version: "Esploratore Reale",
-      text: "Protetto",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Sleeping Beauty",
   set: "006",
@@ -53,4 +32,5 @@ export const princePhillipRoyalExplorer: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: princePhillipRoyalExplorerI18n,
 };

@@ -23,10 +23,7 @@ describe("Sleepy Hollow - The Bridge", () => {
 
     expect(testEngine.asPlayerOne().quest(bridgeRunner)).toBeSuccessfulCommand();
     expect(
-      testEngine
-        .asPlayerOne()
-        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: true })
-        .success,
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
     ).toBe(true);
     expect(testEngine.asPlayerOne().getCardZone(sleepyHollowTheBridge)).toBe("discard");
     expect(testEngine.asPlayerOne().hasKeyword(bridgeRunner, "Evasive")).toBe(true);

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { deweyLovableShowoffI18n } from "./002-dewey-lovable-showoff.i18n";
 
 export const deweyLovableShowoff: CharacterCard = {
   id: "nfh",
@@ -7,24 +8,6 @@ export const deweyLovableShowoff: CharacterCard = {
   cardType: "character",
   name: "Dewey",
   version: "Lovable Showoff",
-  i18n: {
-    en: {
-      name: "Dewey",
-      version: "Lovable Showoff",
-    },
-    de: {
-      name: "Trick Duck",
-      version: "Liebenswerter Angeber",
-    },
-    fr: {
-      name: "Fifi",
-      version: "Adorable frimeur",
-    },
-    it: {
-      name: "Quo",
-      version: "Amabile Spaccone",
-    },
-  },
   inkType: ["amber"],
   franchise: "Ducktales",
   set: "008",
@@ -41,4 +24,5 @@ export const deweyLovableShowoff: CharacterCard = {
     tcgPlayer: 633428,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: deweyLovableShowoffI18n,
 };

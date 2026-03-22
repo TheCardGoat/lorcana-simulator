@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 15 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_14.md) | [Next →](AUDIT_INVENTORY_CHUNK_16.md)
-
 
 - [ ] **009/locations/steel/204-maui-s-place-of-exile-hidden-island.test.ts**
   - Card: `009/locations/steel/204-maui-s-place-of-exile-hidden-island.ts`

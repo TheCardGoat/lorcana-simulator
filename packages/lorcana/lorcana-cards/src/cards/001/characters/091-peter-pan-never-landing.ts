@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { peterPanNeverLandingI18n } from "./091-peter-pan-never-landing.i18n";
 
 export const peterPanNeverLanding: CharacterCard = {
   id: "k9e",
@@ -7,33 +8,6 @@ export const peterPanNeverLanding: CharacterCard = {
   cardType: "character",
   name: "Peter Pan",
   version: "Never Landing",
-  i18n: {
-    en: {
-      name: "Peter Pan",
-      version: "Never Landing",
-      text: "Evasive",
-    },
-    de: {
-      name: "Peter Pan",
-      version: "Landet nimmer",
-      text: "Wendig",
-    },
-    fr: {
-      name: "PETER PAN",
-      version: "Toujours dans les airs",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Peter Pan",
-      version: "Never Landing",
-      text: [
-        {
-          title: "Evasive",
-          description: "(Only characters with Evasive can challenge this character.)",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Peter Pan",
   set: "001",
@@ -44,7 +18,6 @@ export const peterPanNeverLanding: CharacterCard = {
   willpower: 2,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_91d042c887b54b7098c9044a36816008",
     tcgPlayer: 502535,
@@ -59,4 +32,5 @@ export const peterPanNeverLanding: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: peterPanNeverLandingI18n,
 };

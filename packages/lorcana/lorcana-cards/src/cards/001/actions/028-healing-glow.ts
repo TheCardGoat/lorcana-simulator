@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { healingGlowI18n } from "./028-healing-glow.i18n";
 
 export const healingGlow: ActionCard = {
   id: "S50",
@@ -6,24 +7,6 @@ export const healingGlow: ActionCard = {
   reprints: ["set1-028"],
   cardType: "action",
   name: "Healing Glow",
-  i18n: {
-    en: {
-      name: "Healing Glow",
-      text: "Remove up to 2 damage from chosen character.",
-    },
-    de: {
-      name: "Heilendes Leuchten",
-      text: "Entferne bis zu 2 Schaden von einem Charakter deiner Wahl.",
-    },
-    fr: {
-      name: "LUEUR RÉPARATRICE",
-      text: "Choisissez un personnage et retirez-lui jusqu'à 2 jetons Dommage.",
-    },
-    it: {
-      name: "Bagliore Curativo",
-      text: "Rimuovi fino a 2 danni da un personaggio a tua scelta.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Tangled",
   set: "001",
@@ -49,4 +32,5 @@ export const healingGlow: ActionCard = {
       type: "action",
     },
   ],
+  i18n: healingGlowI18n,
 };

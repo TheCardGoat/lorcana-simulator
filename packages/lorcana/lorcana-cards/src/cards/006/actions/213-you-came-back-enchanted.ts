@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { youCameBackEnchantedI18n } from "./213-you-came-back-enchanted.i18n";
 
 export const youCameBackEnchanted: ActionCard = {
   id: "8ys",
@@ -6,24 +7,6 @@ export const youCameBackEnchanted: ActionCard = {
   reprints: ["set6-097"],
   cardType: "action",
   name: "You Came Back",
-  i18n: {
-    en: {
-      name: "You Came Back",
-      text: "Ready chosen character.",
-    },
-    de: {
-      name: "Du bist zurückgekommen",
-      text: "Mache einen Charakter deiner Wahl bereit.",
-    },
-    fr: {
-      name: "Tu es revenu",
-      text: "Choisissez un personnage et redressez-le.",
-    },
-    it: {
-      name: "Sei Tornato",
-      text: "Prepara un personaggio a tua scelta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lilo and Stitch",
   set: "006",
@@ -54,4 +37,5 @@ export const youCameBackEnchanted: ActionCard = {
       type: "action",
     },
   ],
+  i18n: youCameBackEnchantedI18n,
 };

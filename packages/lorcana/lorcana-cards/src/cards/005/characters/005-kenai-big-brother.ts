@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kenaiBigBrotherI18n } from "./005-kenai-big-brother.i18n";
 
 export const kenaiBigBrother: CharacterCard = {
   id: "6WD",
@@ -7,52 +8,6 @@ export const kenaiBigBrother: CharacterCard = {
   cardType: "character",
   name: "Kenai",
   version: "Big Brother",
-  i18n: {
-    en: {
-      name: "Kenai",
-      version: "Big Brother",
-      text: [
-        {
-          title: "BROTHERS FOREVER",
-          description:
-            "While this character is exerted, your characters named Koda can't be challenged.",
-        },
-      ],
-    },
-    de: {
-      name: "Kenai",
-      version: "Großer Bruder",
-      text: [
-        {
-          title: "BRÜDER AUF EWIG",
-          description:
-            "Solange dieser Charakter erschöpft ist, können deine Koda-Charaktere nicht herausgefordert werden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Kenaï",
-      version: "Grand frère",
-      text: [
-        {
-          title: "FRÈRES POUR TOUJOURS",
-          description:
-            "Tant que ce personnage est épuisé, vos personnages Koda ne peuvent pas être défiés.",
-        },
-      ],
-    },
-    it: {
-      name: "Kenai",
-      version: "Fratello Grande",
-      text: [
-        {
-          title: "FRATELLI PER SEMPRE",
-          description:
-            "Mentre questo personaggio è impegnato, i tuoi personaggi chiamati Koda non possono essere sfidati.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Brother Bear",
   set: "005",
@@ -77,14 +32,26 @@ export const kenaiBigBrother: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      condition: {
+        type: "is-exerted",
+      },
       effect: {
         restriction: "cant-be-challenged",
-        target: "SELF",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [{ type: "attribute", attribute: "name", comparison: "equals", value: "Koda" }],
+        },
         type: "restriction",
       },
       id: "a82-1",
+      name: "BROTHERS FOREVER",
       text: "BROTHERS FOREVER While this character is exerted, your characters named Koda can't be challenged.",
       type: "static",
     },
   ],
+  i18n: kenaiBigBrotherI18n,
 };

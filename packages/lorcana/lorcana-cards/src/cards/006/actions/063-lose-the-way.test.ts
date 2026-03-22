@@ -25,7 +25,11 @@ describe("Lose the Way", () => {
     expect(
       testEngine.asPlayerOne().resolvePendingEffect(loseTheWay, {
         resolveOptional: true,
-        targets: [targetId, iWontGiveIn],
+      }).success,
+    ).toBe(true);
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        targets: [iWontGiveIn],
       }).success,
     ).toBe(true);
     expect(testEngine.asPlayerOne().getCardZone(iWontGiveIn)).toBe("discard");
@@ -54,7 +58,11 @@ describe("Lose the Way", () => {
     expect(
       testEngine.asPlayerOne().resolvePendingEffect(loseTheWay, {
         resolveOptional: true,
-        targets: [targetId, iWontGiveIn],
+      }).success,
+    ).toBe(true);
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        targets: [iWontGiveIn],
       }).success,
     ).toBe(true);
     expect(testEngine.asPlayerOne().getCardZone(iWontGiveIn)).toBe("discard");

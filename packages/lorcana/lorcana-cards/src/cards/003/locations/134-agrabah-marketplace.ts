@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { agrabahMarketplaceI18n } from "./134-agrabah-marketplace.i18n";
 
 export const agrabahMarketplace: LocationCard = {
   id: "42F",
@@ -7,24 +8,6 @@ export const agrabahMarketplace: LocationCard = {
   cardType: "location",
   name: "Agrabah",
   version: "Marketplace",
-  i18n: {
-    en: {
-      name: "Agrabah",
-      version: "Marketplace",
-    },
-    de: {
-      name: "Agrabah",
-      version: "Marktplatz",
-    },
-    fr: {
-      name: "Agrabah",
-      version: "Place du marché",
-    },
-    it: {
-      name: "Agrabah",
-      version: "Mercato",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aladdin",
   set: "003",
@@ -40,4 +23,5 @@ export const agrabahMarketplace: LocationCard = {
     lorcast: "crd_6e330a06c76a4a15b2a62a2b5d25369f",
     tcgPlayer: 650071,
   },
+  i18n: agrabahMarketplaceI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sergeantTibbsCourageousCatI18n } from "./124-sergeant-tibbs-courageous-cat.i18n";
 
 export const sergeantTibbsCourageousCat: CharacterCard = {
   id: "Dn2",
@@ -7,24 +8,6 @@ export const sergeantTibbsCourageousCat: CharacterCard = {
   cardType: "character",
   name: "Sergeant Tibbs",
   version: "Courageous Cat",
-  i18n: {
-    en: {
-      name: "Sergeant Tibbs",
-      version: "Courageous Cat",
-    },
-    de: {
-      name: "Sergeant Tibs",
-      version: "Mutige Katze",
-    },
-    fr: {
-      name: "SERGENT TIBS",
-      version: "Chat courageux",
-    },
-    it: {
-      name: "Sergeant Tibbs",
-      version: "Courageous Cat",
-    },
-  },
   inkType: ["ruby"],
   franchise: "101 Dalmatians",
   set: "001",
@@ -41,4 +24,5 @@ export const sergeantTibbsCourageousCat: CharacterCard = {
     tcgPlayer: 650063,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: sergeantTibbsCourageousCatI18n,
 };

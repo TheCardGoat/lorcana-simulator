@@ -16,7 +16,9 @@ import type {
   ActionCard,
   CardType,
   CharacterCard,
+  I18nProperties,
   ItemCard,
+  Languages,
   LocationCard,
 } from "@tcg/lorcana-types";
 import { splitCardText } from "../utils/structured-card-text";
@@ -221,7 +223,7 @@ function extractAbilitiesFromExistingFile(content: string): unknown[] | undefine
 
 /**
  * Property order for generated card objects.
- * id first, canonicalId second, reprints third, then rest; abilities last.
+ * id first, canonicalId second, reprints third, then rest; i18n last.
  * Exported for tests that assert output order.
  */
 export const CARD_PROPERTY_ORDER = [
@@ -231,13 +233,13 @@ export const CARD_PROPERTY_ORDER = [
   "cardType",
   "name",
   "version",
-  "i18n",
   "inkType",
   "franchise",
   "set",
   "cardNumber",
   "rarity",
   "specialRarity",
+  "cardCopyLimit",
   "cost",
   "strength",
   "willpower",
@@ -252,11 +254,29 @@ export const CARD_PROPERTY_ORDER = [
   "classifications",
   "actionSubtype",
   "abilities",
+  "i18n",
 ] as const;
+
+function deriveCardCopyLimit(rulesText?: string): number | "no-limit" | undefined {
+  if (!rulesText) {
+    return undefined;
+  }
+
+  if (/you may have any number of cards named\b/i.test(rulesText)) {
+    return "no-limit";
+  }
+
+  const limitedMatch = rulesText.match(/you may have up to (\d+) copies of\b/i);
+  if (!limitedMatch) {
+    return undefined;
+  }
+
+  return Number.parseInt(limitedMatch[1], 10);
+}
 
 /**
  * Convert canonical card to LorcanaCard format with deterministic property order.
- * Order: id, canonicalId, reprints, then rest; abilities last.
+ * Order: id, canonicalId, reprints, then rest; i18n last.
  * Uses setFolderName (e.g. "001") for the set field so cards under 001/ get set "001" not raw id like "gateway1".
  * Exported for tests that assert property order.
  */
@@ -266,6 +286,8 @@ export function convertToLorcanaCard(
   setFolderName?: string,
   existingAbilities?: unknown[],
   reprintIds?: string[],
+  useExternalI18n?: boolean,
+  exportName?: string,
 ): Record<string, unknown> {
   const set = setFolderName ?? firstPrinting?.set;
   const cardNumber = firstPrinting?.cardNumber;
@@ -297,7 +319,6 @@ export function convertToLorcanaCard(
   if (card.version && card.version !== "undefined") {
     values.version = card.version;
   }
-  values.i18n = card.i18n;
   values.inkType = card.inkType;
   if (card.franchise) values.franchise = card.franchise;
   if (set) values.set = set;
@@ -306,6 +327,8 @@ export function convertToLorcanaCard(
     values.rarity = firstPrinting.rarity;
     if (firstPrinting.specialRarity) values.specialRarity = firstPrinting.specialRarity;
   }
+  const cardCopyLimit = deriveCardCopyLimit(card.rulesText);
+  if (cardCopyLimit !== undefined) values.cardCopyLimit = cardCopyLimit;
   values.cost = card.cost;
   if ("strength" in card) values.strength = card.strength;
   if ("willpower" in card) values.willpower = card.willpower;
@@ -330,6 +353,13 @@ export function convertToLorcanaCard(
     values.missingTests = true;
   }
 
+  // i18n: use external reference or inline object
+  if (useExternalI18n && exportName) {
+    values.i18n = `${exportName}I18n`;
+  } else {
+    values.i18n = card.i18n;
+  }
+
   const result: Record<string, unknown> = {};
   for (const key of CARD_PROPERTY_ORDER) {
     if (key in values && values[key] !== undefined) {
@@ -340,6 +370,23 @@ export function convertToLorcanaCard(
 }
 
 /**
+ * Generate content for an i18n file (colocated with card).
+ */
+export function generateI18nFileContent(
+  exportName: string,
+  i18n: Record<Languages, I18nProperties>,
+): string {
+  const i18nJson = JSON.stringify(i18n, null, 2)
+    .replace(/"([^"]+)":/g, "$1:")
+    .replace(/"/g, '"');
+
+  return `import type { I18nProperties, Languages } from "@tcg/lorcana-types";
+
+export const ${exportName}I18n: Record<Languages, I18nProperties> = ${i18nJson};
+`;
+}
+
+/**
  * Generate content for an individual card file.
  * When existingAbilities is provided (e.g. from existing file), it is preserved and not overwritten.
  */
@@ -347,6 +394,7 @@ export function generateCardFileContent(
   card: CanonicalCard,
   exportName: string,
   depth: number,
+  i18nImportFileName?: string,
   firstPrinting?: CardPrinting,
   setFolderName?: string,
   existingAbilities?: unknown[],
@@ -359,14 +407,24 @@ export function generateCardFileContent(
     setFolderName,
     existingAbilities,
     reprintIds,
+    true,
+    exportName,
   );
 
   // Serialize the card object to TypeScript
-  const cardJson = JSON.stringify(lorcanaCard, null, 2)
-    .replace(/"([^"]+)":/g, "$1:") // Remove quotes from keys
-    .replace(/"/g, '"'); // Use double quotes for strings
+  // Note: i18n will be serialized as a string reference (e.g., "rhinoPowerHamsterI18n")
+  // We need to handle this specially to avoid quoting it as a string
+  let cardJson = JSON.stringify(lorcanaCard, null, 2)
+    .replace(/"([^"]+)":/g, "$1:")
+    .replace(/"/g, '"');
+
+  // Replace the quoted i18n reference with unquoted identifier
+  cardJson = cardJson.replace(`i18n: "${exportName}I18n"`, `i18n: ${exportName}I18n`);
+
+  const i18nModuleName = i18nImportFileName ?? exportName;
 
   return `import type { ${typeName} } from "@tcg/lorcana-types";
+import { ${exportName}I18n } from "./${i18nModuleName}.i18n";
 
 export const ${exportName}: ${typeName} = ${cardJson};
 `;
@@ -436,7 +494,7 @@ ${reExports}
 }
 
 /**
- * Generate content for main cards.ts aggregator
+ * Generate content for main catalog-data.ts aggregator
  */
 export function generateMainCardsContent(setFolderNames: string[]): string {
   const imports = setFolderNames
@@ -464,7 +522,7 @@ ${byIdSpreads}
  * Generate content for index.ts entry point
  */
 export function generateEntryPointContent(): string {
-  return `import { createRecordCardCatalog, type CardCatalog } from "@tcg/core";
+  return `import { createRecordCardCatalog, type CardCatalog } from "@tcg/shared";
 import type { CharacterCard, ActionCard, ItemCard, LocationCard } from "@tcg/lorcana-types";
 
 let allCardsCache: (CharacterCard | ActionCard | ItemCard | LocationCard)[] | null = null;
@@ -473,14 +531,14 @@ let cardCatalogCache: CardCatalog<CharacterCard | ActionCard | ItemCard | Locati
 
 export async function getAllCards(): Promise<(CharacterCard | ActionCard | ItemCard | LocationCard)[]> {
   if (allCardsCache) return allCardsCache;
-  const { allCards } = await import("./cards");
+  const { allCards } = await import("./catalog-data");
   allCardsCache = allCards;
   return allCardsCache;
 }
 
 export async function getAllCardsById(): Promise<Record<string, CharacterCard | ActionCard | ItemCard | LocationCard>> {
   if (allCardsByIdCache) return allCardsByIdCache;
-  const { allCardsById } = await import("./cards");
+  const { allCardsById } = await import("./catalog-data");
   allCardsByIdCache = allCardsById;
   return allCardsByIdCache;
 }
@@ -670,10 +728,28 @@ function removeOrphanCardFiles(typeDir: string, currentFileNames: Set<string>): 
   for (const ent of entries) {
     if (!ent.isFile() || !CARD_FILE_PATTERN.test(ent.name)) continue;
     if (ent.name.endsWith(".test.ts")) continue;
+    if (ent.name.endsWith(".i18n.ts")) continue;
     if (currentFileNames.has(ent.name)) continue;
     const filePath = path.join(typeDir, ent.name);
     fs.unlinkSync(filePath);
     console.log(`  Removed orphan: ${path.relative(path.join(typeDir, "../.."), filePath)}`);
+  }
+}
+
+/**
+ * Remove orphan i18n files that no longer have corresponding card files.
+ */
+function removeOrphanI18nFiles(typeDir: string, currentCardBaseNames: Set<string>): void {
+  if (!fs.existsSync(typeDir)) return;
+  const entries = fs.readdirSync(typeDir, { withFileTypes: true });
+  for (const ent of entries) {
+    if (!ent.isFile() || !ent.name.endsWith(".i18n.ts")) continue;
+    // Extract base name: "030-rhino-power-hamster.i18n.ts" -> "030-rhino-power-hamster"
+    const baseName = ent.name.replace(".i18n.ts", "");
+    if (currentCardBaseNames.has(baseName)) continue;
+    const filePath = path.join(typeDir, ent.name);
+    fs.unlinkSync(filePath);
+    console.log(`  Removed orphan i18n: ${path.relative(path.join(typeDir, "../.."), filePath)}`);
   }
 }
 
@@ -994,6 +1070,7 @@ export function generateCardFiles(
   // Track all set folder names for main aggregator
   const setFolderNames: string[] = [];
   let totalTestFilesGenerated = 0;
+  let totalI18nFilesGenerated = 0;
 
   // Generate files for each set
   for (const [setFolderName, cardTypeMap] of organized) {
@@ -1010,10 +1087,14 @@ export function generateCardFiles(
       const typeFolder = getCardTypeFolderName(cardType);
       const typeDir = path.join(setDir, typeFolder);
 
-      // Generate individual card files and test files
+      // Track current card base names for orphan cleanup
+      const currentCardBaseNames = new Set<string>();
+
+      // Generate individual card files, i18n files, and test files
       let testFilesGenerated = 0;
       for (const cardInfo of cards) {
         const filePath = path.join(typeDir, cardInfo.fileName);
+        const i18nFilePath = filePath.replace(".ts", ".i18n.ts");
         const printing = printings[cardInfo.printingId];
         const reprintIds = printingIdsByCanonicalId.get(cardInfo.card.canonicalId);
         let existingAbilities: unknown[] | undefined;
@@ -1025,10 +1106,21 @@ export function generateCardFiles(
           cardInfo.card.canonicalId,
         );
         existingAbilities ??= sharedAbilitySource?.abilities;
+
+        // Generate i18n file
+        const i18nContent = generateI18nFileContent(cardInfo.exportName, cardInfo.card.i18n);
+        writeFile(i18nFilePath, i18nContent);
+        totalI18nFilesGenerated++;
+
+        // Track base name for orphan cleanup
+        currentCardBaseNames.add(cardInfo.fileName.replace(".ts", ""));
+
+        // Generate card file
         const content = generateCardFileContent(
           cardInfo.card,
           cardInfo.exportName,
           2, // Depth: set/type/card.ts -> types.ts is 2 levels up
+          cardInfo.fileName.replace(".ts", ""),
           printing,
           cardInfo.setFolderName,
           existingAbilities,
@@ -1058,6 +1150,9 @@ export function generateCardFiles(
       const currentFileNames = new Set(cards.map((c) => c.fileName));
       removeOrphanCardFiles(typeDir, currentFileNames);
 
+      // Remove orphan i18n files
+      removeOrphanI18nFiles(typeDir, currentCardBaseNames);
+
       // Generate card type index file
       const indexContent = generateCardTypeIndexContent(
         cards.map((c) => ({ fileName: c.fileName, exportName: c.exportName })),
@@ -1073,9 +1168,9 @@ export function generateCardFiles(
   // Sort set folder names numerically
   setFolderNames.sort((a, b) => Number.parseInt(a, 10) - Number.parseInt(b, 10));
 
-  // Generate main cards.ts aggregator
+  // Generate main catalog-data.ts aggregator
   const mainCardsContent = generateMainCardsContent(setFolderNames);
-  writeFile(path.join(outputDir, "cards.ts"), mainCardsContent);
+  writeFile(path.join(outputDir, "catalog-data.ts"), mainCardsContent);
 
   // Generate entry point index.ts
   const entryPointContent = generateEntryPointContent();
@@ -1086,7 +1181,8 @@ export function generateCardFiles(
   writeFile(path.join(outputDir, "types.ts"), typesContent);
 
   console.log(`  Generated ${Object.keys(canonicalCards).length} card files`);
+  console.log(`  Generated ${totalI18nFilesGenerated} i18n files`);
   console.log(`  Generated ${totalTestFilesGenerated} test files`);
   console.log(`  Generated ${setFolderNames.length} set index files`);
-  console.log("  Generated main cards.ts, index.ts, and types.ts");
+  console.log("  Generated catalog-data.ts, index.ts, and types.ts");
 }

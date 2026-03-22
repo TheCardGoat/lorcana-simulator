@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { diabloSpitefulRavenI18n } from "./066-diablo-spiteful-raven.i18n";
 
 export const diabloSpitefulRaven: CharacterCard = {
   id: "4Ff",
@@ -7,35 +8,6 @@ export const diabloSpitefulRaven: CharacterCard = {
   cardType: "character",
   name: "Diablo",
   version: "Spiteful Raven",
-  i18n: {
-    en: {
-      name: "Diablo",
-      version: "Spiteful Raven",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "Challenger +2 (While challenging, this character gets +2 {S})",
-        },
-      ],
-    },
-    de: {
-      name: "Diablo",
-      version: "Boshafter Rabe",
-      text: "Wendig Herausfordern +2",
-    },
-    fr: {
-      name: "Diablo",
-      version: "Corbeau malveillant",
-      text: "Insaisissable Offensif +2",
-    },
-    it: {
-      name: "Diablo",
-      version: "Corvo Malevolo",
-      text: "Sfuggente Sfidante +2",
-    },
-  },
   inkType: ["amethyst", "emerald"],
   franchise: "Sleeping Beauty",
   set: "007",
@@ -74,4 +46,5 @@ export const diabloSpitefulRaven: CharacterCard = {
       text: "Challenger +2",
     },
   ],
+  i18n: diabloSpitefulRavenI18n,
 };

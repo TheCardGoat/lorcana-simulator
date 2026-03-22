@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tukeNorthernMooseI18n } from "./007-tuke-northern-moose.i18n";
 
 export const tukeNorthernMoose: CharacterCard = {
   id: "GYp",
@@ -7,24 +8,6 @@ export const tukeNorthernMoose: CharacterCard = {
   cardType: "character",
   name: "Tuke",
   version: "Northern Moose",
-  i18n: {
-    en: {
-      name: "Tuke",
-      version: "Northern Moose",
-    },
-    de: {
-      name: "Björn",
-      version: "Elch aus dem Norden",
-    },
-    fr: {
-      name: "Muche",
-      version: "Élan nordique",
-    },
-    it: {
-      name: "Rocco",
-      version: "Alce del Nord",
-    },
-  },
   inkType: ["amber"],
   franchise: "Brother Bear",
   set: "005",
@@ -41,4 +24,5 @@ export const tukeNorthernMoose: CharacterCard = {
     tcgPlayer: 560496,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: tukeNorthernMooseI18n,
 };

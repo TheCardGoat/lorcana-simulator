@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { hakunaMatataI18n } from "./027-hakuna-matata.i18n";
 
 export const hakunaMatata: ActionCard = {
   id: "2U7",
@@ -6,24 +7,6 @@ export const hakunaMatata: ActionCard = {
   reprints: ["set1-027"],
   cardType: "action",
   name: "Hakuna Matata",
-  i18n: {
-    en: {
-      name: "Hakuna Matata",
-      text: "Remove up to 3 damage from each of your characters.",
-    },
-    de: {
-      name: "Hakuna Matata",
-      text: "Entferne bis zu 3 Schaden von jedem deiner Charaktere.",
-    },
-    fr: {
-      name: "HAKUNA MATATA",
-      text: "Retirez jusqu'à 3 jetons Dommage de chacun de vos personnages.",
-    },
-    it: {
-      name: "Hakuna Matata",
-      text: "(Un personaggio con costo 4 o superiore può per cantare questa canzone gratis.) Rimuovi fino a 3 danni da ogni tuo personaggio.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lion King",
   set: "001",
@@ -57,4 +40,5 @@ export const hakunaMatata: ActionCard = {
       type: "action",
     },
   ],
+  i18n: hakunaMatataI18n,
 };

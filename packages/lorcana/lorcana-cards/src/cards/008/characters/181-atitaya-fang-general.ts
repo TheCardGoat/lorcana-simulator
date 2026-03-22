@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { atitayaFangGeneralI18n } from "./181-atitaya-fang-general.i18n";
 
 export const atitayaFangGeneral: CharacterCard = {
   id: "jID",
@@ -7,24 +8,6 @@ export const atitayaFangGeneral: CharacterCard = {
   cardType: "character",
   name: "Atitaya",
   version: "Fang General",
-  i18n: {
-    en: {
-      name: "Atitaya",
-      version: "Fang General",
-    },
-    de: {
-      name: "Atitaya",
-      version: "Generalin aus Zahn",
-    },
-    fr: {
-      name: "Atitaya",
-      version: "Générale de Croc du Dragon",
-    },
-    it: {
-      name: "Atitāya",
-      version: "Generale di Zanna",
-    },
-  },
   inkType: ["steel"],
   franchise: "Raya and the Last Dragon",
   set: "008",
@@ -41,4 +24,5 @@ export const atitayaFangGeneral: CharacterCard = {
     tcgPlayer: 633101,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: atitayaFangGeneralI18n,
 };

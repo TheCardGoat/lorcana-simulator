@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kaaSuspiciousSerpentI18n } from "./072-kaa-suspicious-serpent.i18n";
 
 export const kaaSuspiciousSerpent: CharacterCard = {
   id: "88q",
@@ -7,28 +8,6 @@ export const kaaSuspiciousSerpent: CharacterCard = {
   cardType: "character",
   name: "Kaa",
   version: "Suspicious Serpent",
-  i18n: {
-    en: {
-      name: "Kaa",
-      version: "Suspicious Serpent",
-      text: "Ward",
-    },
-    de: {
-      name: "Kaa",
-      version: "Suspekte Schlange",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Kaa",
-      version: "Serpent suspicieux",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Kaa",
-      version: "Serpente Sospettoso",
-      text: "Protetto",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Jungle Book",
   set: "010",
@@ -53,4 +32,5 @@ export const kaaSuspiciousSerpent: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: kaaSuspiciousSerpentI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { billyBonesKeeperOfTheMapI18n } from "./104-billy-bones-keeper-of-the-map.i18n";
 
 export const billyBonesKeeperOfTheMap: CharacterCard = {
   id: "Wmg",
@@ -7,24 +8,6 @@ export const billyBonesKeeperOfTheMap: CharacterCard = {
   cardType: "character",
   name: "Billy Bones",
   version: "Keeper of the Map",
-  i18n: {
-    en: {
-      name: "Billy Bones",
-      version: "Keeper of the Map",
-    },
-    de: {
-      name: "Billy Bones",
-      version: "Flints Erster Offizier",
-    },
-    fr: {
-      name: "Billy Bones",
-      version: "Gardien de la carte",
-    },
-    it: {
-      name: "Billy Bones",
-      version: "Custode della Mappa",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Treasure Planet",
   set: "003",
@@ -41,4 +24,5 @@ export const billyBonesKeeperOfTheMap: CharacterCard = {
     tcgPlayer: 539087,
   },
   classifications: ["Storyborn", "Alien", "Pirate"],
+  i18n: billyBonesKeeperOfTheMapI18n,
 };

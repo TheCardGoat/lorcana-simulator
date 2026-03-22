@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { splatterPhoenixRejectedArtistI18n } from "./153-splatter-phoenix-rejected-artist.i18n";
 
 export const splatterPhoenixRejectedArtist: CharacterCard = {
   id: "q39",
@@ -7,55 +8,6 @@ export const splatterPhoenixRejectedArtist: CharacterCard = {
   cardType: "character",
   name: "Splatter Phoenix",
   version: "Rejected Artist",
-  i18n: {
-    en: {
-      name: "Splatter Phoenix",
-      version: "Rejected Artist",
-      text: [
-        {
-          title: "UNDERDOG",
-          description:
-            "If this is your first turn and you're not the first player, you pay 1 {I} less to play this character.",
-        },
-        {
-          title: "Ward",
-        },
-      ],
-    },
-    de: {
-      name: "Splatter Phoenix",
-      version: "Zurückgewiesene Künstlerin",
-      text: [
-        {
-          title: "UNDERDOG",
-          description:
-            "Falls dies dein erster Zug ist und du das Spiel nicht begonnen hast, zahlst du 1 weniger, um diesen Charakter auszuspielen. Behütet",
-        },
-      ],
-    },
-    fr: {
-      name: "Calamity Fresque",
-      version: "Artiste rejetée",
-      text: [
-        {
-          title: "OUTSIDER",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins si c'est votre premier tour et que vous n'êtes pas le premier joueur. Hors d'atteinte",
-        },
-      ],
-    },
-    it: {
-      name: "Miranda Van Quack",
-      version: "Artista Incompresa",
-      text: [
-        {
-          title: "SFAVORITO",
-          description:
-            "Se questo è il tuo primo turno e non sei il primo giocatore, paga 1 in meno per giocare questo personaggio. Protetto",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -84,17 +36,17 @@ export const splatterPhoenixRejectedArtist: CharacterCard = {
   abilities: [
     {
       id: "k08-1",
-      effect: {
-        condition: {
-          type: "first-turn-non-otp",
-        },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+      name: "UNDERDOG",
+      type: "static",
+      condition: {
+        type: "first-turn-non-otp",
       },
-      type: "action",
+      effect: {
+        type: "cost-reduction",
+        amount: 1,
+        cardType: "character",
+      },
+      sourceZones: ["hand"],
       text: "UNDERDOG If this is your first turn and you're not the first player, you pay 1 {I} less to play this character.",
     },
     {
@@ -104,4 +56,5 @@ export const splatterPhoenixRejectedArtist: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: splatterPhoenixRejectedArtistI18n,
 };

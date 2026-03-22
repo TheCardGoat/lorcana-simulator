@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tadashiHamadaBaymaxInventorI18n } from "./153-tadashi-hamada-baymax-inventor.i18n";
 
 export const tadashiHamadaBaymaxInventor: CharacterCard = {
   id: "AMb",
@@ -7,49 +8,6 @@ export const tadashiHamadaBaymaxInventor: CharacterCard = {
   cardType: "character",
   name: "Tadashi Hamada",
   version: "Baymax Inventor",
-  i18n: {
-    en: {
-      name: "Tadashi Hamada",
-      version: "Baymax Inventor",
-      text: [
-        {
-          title: "LET'S GET BACK TO WORK",
-          description: "This character gets +1 {S} and +1 {W} for each item you have in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Tadashi Hamada",
-      version: "Erfinder von Baymax",
-      text: [
-        {
-          title: "ZURÜCK AN DIE ARBEIT",
-          description:
-            "Dieser Charakter erhält +1 und +1 für jeden Gegenstand, den du im Spiel hast.",
-        },
-      ],
-    },
-    fr: {
-      name: "Tadashi Hamada",
-      version: "Concepteur de Baymax",
-      text: [
-        {
-          title: "REMETTONS-NOUS AU BOULOT",
-          description: "Ce personnage gagne +1 et +1 pour chaque objet que vous avez en jeu.",
-        },
-      ],
-    },
-    it: {
-      name: "Tadashi Hamada",
-      version: "Inventore di Baymax",
-      text: [
-        {
-          title: "TORNIAMO AL LAVORO",
-          description: "Questo personaggio riceve +1 e +1 per ogni oggetto che hai in gioco.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "006",
@@ -74,14 +32,28 @@ export const tadashiHamadaBaymaxInventor: CharacterCard = {
   abilities: [
     {
       effect: {
-        modifier: 1,
+        modifier: { type: "items-in-play", controller: "you" },
         stat: "strength",
         target: "SELF",
         type: "modify-stat",
       },
       id: "16i-1",
+      name: "LET'S GET BACK TO WORK",
+      text: "LET'S GET BACK TO WORK This character gets +1 {S} and +1 {W} for each item you have in play.",
+      type: "static",
+    },
+    {
+      effect: {
+        modifier: { type: "items-in-play", controller: "you" },
+        stat: "willpower",
+        target: "SELF",
+        type: "modify-stat",
+      },
+      id: "16i-2",
+      name: "LET'S GET BACK TO WORK",
       text: "LET'S GET BACK TO WORK This character gets +1 {S} and +1 {W} for each item you have in play.",
       type: "static",
     },
   ],
+  i18n: tadashiHamadaBaymaxInventorI18n,
 };

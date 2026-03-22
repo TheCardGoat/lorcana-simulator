@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { negaduckPublicEnemyNumberOneI18n } from "./116-negaduck-public-enemy-number-one.i18n";
 
 export const negaduckPublicEnemyNumberOne: CharacterCard = {
   id: "iMq",
@@ -7,37 +8,6 @@ export const negaduckPublicEnemyNumberOne: CharacterCard = {
   cardType: "character",
   name: "Negaduck",
   version: "Public Enemy Number One",
-  i18n: {
-    en: {
-      name: "Negaduck",
-      version: "Public Enemy Number One",
-      text: [
-        {
-          title: "Shift 3 {I}",
-        },
-        {
-          title: "STICKY FINGERS",
-          description:
-            "Whenever this character challenges another character, each opponent loses 1 lore and you gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Fiesoduck",
-      version: "Bösewicht Nummer Eins",
-      text: "Gestaltwandel 3 LANGFINGER Jedes Mal, wenn dieser Charakter einen anderen Charakter herausfordert, verlieren alle gegnerischen Mitspielenden je 1 Legende und du sammelst 1 Legende.",
-    },
-    fr: {
-      name: "Sinister Mask",
-      version: "Ennemi public numéro un",
-      text: "Alter 3 CLEPTOMANE Chaque fois que ce personnage en défie un autre, chaque adversaire perd 1 éclat de Lore et vous gagnez 1 éclat de Lore.",
-    },
-    it: {
-      name: "Negaduck",
-      version: "Nemico Pubblico Numero Uno",
-      text: "Trasformazione 3 MANI LUNGHE Ogni volta che questo personaggio sfida un altro personaggio, ogni avversario perde 1 leggenda e tu ottieni 1 leggenda.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -99,4 +69,5 @@ export const negaduckPublicEnemyNumberOne: CharacterCard = {
       text: "STICKY FINGERS Whenever this character challenges another character, each opponent loses 1 lore and you gain 1 lore.",
     },
   ],
+  i18n: negaduckPublicEnemyNumberOneI18n,
 };

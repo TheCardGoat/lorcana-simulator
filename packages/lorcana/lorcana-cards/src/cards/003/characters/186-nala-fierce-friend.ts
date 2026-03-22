@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { nalaFierceFriendI18n } from "./186-nala-fierce-friend.i18n";
 
 export const nalaFierceFriend: CharacterCard = {
   id: "LbB",
@@ -7,24 +8,6 @@ export const nalaFierceFriend: CharacterCard = {
   cardType: "character",
   name: "Nala",
   version: "Fierce Friend",
-  i18n: {
-    en: {
-      name: "Nala",
-      version: "Fierce Friend",
-    },
-    de: {
-      name: "Nala",
-      version: "Treue Freundin",
-    },
-    fr: {
-      name: "Nala",
-      version: "Amie farouche",
-    },
-    it: {
-      name: "Nala",
-      version: "Fiera Amica",
-    },
-  },
   inkType: ["steel"],
   franchise: "Lion King",
   set: "003",
@@ -41,4 +24,5 @@ export const nalaFierceFriend: CharacterCard = {
     tcgPlayer: 538013,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: nalaFierceFriendI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pigletSturdySwordsmanI18n } from "./191-piglet-sturdy-swordsman.i18n";
 
 export const pigletSturdySwordsman: CharacterCard = {
   id: "ATc",
@@ -7,37 +8,6 @@ export const pigletSturdySwordsman: CharacterCard = {
   cardType: "character",
   name: "Piglet",
   version: "Sturdy Swordsman",
-  i18n: {
-    en: {
-      name: "Piglet",
-      version: "Sturdy Swordsman",
-      text: [
-        {
-          title: "Resist +1",
-        },
-        {
-          title: "NOT SO SMALL ANYMORE",
-          description:
-            "While you have no cards in your hand, this character can challenge ready characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Ferkel",
-      version: "Tapferer Schwertkämpfer",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.) NICHT MEHR GANZ SO KLEIN Solange du keine Karten auf der Hand hast, kann dieser Charakter bereite Charaktere herausfordern.",
-    },
-    fr: {
-      name: "Porcinet",
-      version: "Épéiste costaud",
-      text: "Résistance +1 PLUS SI PETIT Tant que vous n'avez aucune carte en main, ce personnage peut défier des personnages redressés.",
-    },
-    it: {
-      name: "Pimpi",
-      version: "Spadaccino Robusto",
-      text: "Resistere +1 NON PIÙ COSÌ PICCOLO Mentre non hai carte in mano, questo personaggio può sfidare i personaggi preparati.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Winnie the Pooh",
   set: "004",
@@ -82,4 +52,5 @@ export const pigletSturdySwordsman: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: pigletSturdySwordsmanI18n,
 };

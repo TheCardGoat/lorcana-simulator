@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { m } from "$lib/paraglide/messages.js";
+  import { m } from "$lib/i18n/messages.js";
   import { cn } from "$lib/utils.js";
+  import * as HoverCard from "$lib/design-system/primitives/hover-card/index.js";
   import type {LorcanaPlayerSide, LorcanaTableSeat} from "@/features/simulator/model/contracts.js";
   import {createCardAnchorId, createZoneAnchorId} from "@/features/simulator/animations/board-move-animations.js";
   import {useLorcanaBoardPresenter} from "@/features/simulator/context/game-context.svelte.js";
@@ -19,8 +20,11 @@
   const cards = $derived(board.getZoneCards(playerSide, "discard"));
   const isMasked = $derived(board.isZoneMasked(playerSide, "discard"));
   const topCard = $derived(cards.length > 0 ? cards[cards.length - 1] : null);
+  const recentCards = $derived(cards.slice(-5).toReversed());
 </script>
 
+<HoverCard.Root openDelay={300}>
+<HoverCard.Trigger class="block">
 <button
   type="button"
   class={cn(
@@ -49,7 +53,13 @@
       data-zone-id={topCard.zoneId}
       data-board-anchor-id={createCardAnchorId(playerSide, "discard", topCard.cardId)}
     >
-      <LorcanaCard card={topCard} useContainerSize isMasked={isMasked} />
+      <LorcanaCard
+        card={topCard}
+        useContainerSize
+        imageFormat="art_only"
+        isMasked={isMasked}
+        showHoverCard={false}
+      />
     </div>
 
 
@@ -69,6 +79,26 @@
   {/if}
 
 </button>
+</HoverCard.Trigger>
+{#if recentCards.length > 0}
+  <HoverCard.Content side="top" sideOffset={8} class="w-auto p-0 border-slate-700/80 bg-slate-900/95 backdrop-blur-sm">
+    <button type="button" class="block cursor-pointer border-0 bg-transparent p-0 text-left" onclick={onClick}>
+      <div class="flex gap-1.5 p-2" style="--zone-card-width: 80px; --zone-card-height: 112px;">
+        {#each recentCards as card (card.cardId)}
+          <div style="width: 80px; height: 112px;">
+            <LorcanaCard card={card} useContainerSize showHoverCard={false} />
+          </div>
+        {/each}
+      </div>
+      {#if cards.length > 5}
+        <div class="text-xs text-slate-400 text-center pb-1.5">
+          +{cards.length - 5} more — click to see all
+        </div>
+      {/if}
+    </button>
+  </HoverCard.Content>
+{/if}
+</HoverCard.Root>
 
 <style>
   .discard-zone {

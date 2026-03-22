@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { gizmosuitI18n } from "./200-gizmosuit.i18n";
 
 export const gizmosuit: ItemCard = {
   id: "Ip9",
@@ -6,48 +7,6 @@ export const gizmosuit: ItemCard = {
   reprints: ["set3-200"],
   cardType: "item",
   name: "Gizmosuit",
-  i18n: {
-    en: {
-      name: "Gizmosuit",
-      text: [
-        {
-          title: "CYBERNETIC ARMOR",
-          description:
-            "Banish this item — Chosen character gains Resist +2 until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Krachbumm-Anzug",
-      text: [
-        {
-          title: "CYBERNETISCHE",
-          description:
-            "RÜSTUNG Verbanne diesen Gegenstand — Ein Charakter deiner Wahl erhält bis zu Beginn deines nächsten Zuges Robust +2. (Reduziere jeglichen Schaden, der dem Charakter zugefügt wird, um 2.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Le costume de Robotik",
-      text: [
-        {
-          title: "ARMURE",
-          description:
-            "CYBERNÉTIQUE Bannissez cet objet — Choisissez un personnage, il gagne Résistance +2 jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Armatura di Robopap",
-      text: [
-        {
-          title: "CORAZZA CIBERNETICA",
-          description:
-            "Esilia questo oggetto — Un personaggio a tua scelta ottiene Resistere +2 fino all'inizio del tuo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Ducktales",
   set: "003",
@@ -90,4 +49,5 @@ export const gizmosuit: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: gizmosuitI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gastonPureParagonI18n } from "./119-gaston-pure-paragon.i18n";
 
 export const gastonPureParagon: CharacterCard = {
   id: "JSc",
@@ -7,55 +8,6 @@ export const gastonPureParagon: CharacterCard = {
   cardType: "character",
   name: "Gaston",
   version: "Pure Paragon",
-  i18n: {
-    en: {
-      name: "Gaston",
-      version: "Pure Paragon",
-      text: [
-        {
-          title: "A MAN AMONG MEN!",
-          description:
-            "For each damaged character you have in play, you pay 2 {I} less to play this character.",
-        },
-        {
-          title: "Rush",
-        },
-      ],
-    },
-    de: {
-      name: "Gaston",
-      version: "Redlich, solid, tadellos",
-      text: [
-        {
-          title: "DER MANN UNTER DEN MÄNNERN!",
-          description:
-            "Für jeden beschädigten Charakter den du im Spiel hast, zahlst du 2 weniger, um diesen Charakter auszuspielen. Rasant",
-        },
-      ],
-    },
-    fr: {
-      name: "Gaston",
-      version: "Du chic et de la prestance",
-      text: [
-        {
-          title: "LE PLUS CLASSE, C'EST GASTON!",
-          description:
-            "Jouer ce personnage vous coûte 2 de moins pour chacun de vos personnages ayant au moins un dommage sur lui. Charge",
-        },
-      ],
-    },
-    it: {
-      name: "Gaston",
-      version: "Ganzo Più Ganzo",
-      text: [
-        {
-          title: "L'UOMO PERFETTO!",
-          description:
-            "Per ogni personaggio danneggiato che hai in gioco, paga 2 in meno per giocare questo personaggio. Lesto (Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Beauty and the Beast",
   set: "005",
@@ -72,9 +24,8 @@ export const gastonPureParagon: CharacterCard = {
   },
   text: [
     {
-      title: "A MAN AMONG MEN!",
-      description:
-        "For each damaged character you have in play, you pay 2 {I} less to play this character.",
+      title:
+        "A MAN AMONG MEN! For each damaged character you have in play, you pay 2 {I} less to play this character.",
     },
     {
       title: "Rush",
@@ -83,13 +34,28 @@ export const gastonPureParagon: CharacterCard = {
   classifications: ["Dreamborn", "Villain"],
   abilities: [
     {
-      effect: {
-        from: "hand",
-        type: "play-card",
-      },
       id: "z5u-1",
+      name: "A MAN AMONG MEN!",
+      effect: {
+        type: "cost-reduction",
+        amount: {
+          type: "filtered-count",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          filters: [
+            {
+              type: "status",
+              status: "damaged",
+            },
+          ],
+          multiplier: 2,
+        },
+        cardType: "character",
+      },
+      sourceZones: ["hand"],
       text: "A MAN AMONG MEN! For each damaged character you have in play, you pay 2 {I} less to play this character.",
-      type: "action",
+      type: "static",
     },
     {
       id: "z5u-2",
@@ -98,4 +64,5 @@ export const gastonPureParagon: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: gastonPureParagonI18n,
 };

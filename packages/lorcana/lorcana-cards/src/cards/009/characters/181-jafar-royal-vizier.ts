@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jafarRoyalVizierI18n } from "./181-jafar-royal-vizier.i18n";
 
 export const jafarRoyalVizier: CharacterCard = {
   id: "6qK",
@@ -7,52 +8,6 @@ export const jafarRoyalVizier: CharacterCard = {
   cardType: "character",
   name: "Jafar",
   version: "Royal Vizier",
-  i18n: {
-    en: {
-      name: "Jafar",
-      version: "Royal Vizier",
-      text: [
-        {
-          title: "I DON'T TRUST HIM, SIRE",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Dschafar",
-      version: "Großwesir",
-      text: [
-        {
-          title: "ICH TRAU IHM NICHT, HOHEIT",
-          description:
-            "In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Jafar",
-      version: "Grand Vizir",
-      text: [
-        {
-          title: "IL NE M'INSPIRE PAS CONFIANCE",
-          description:
-            "Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier les personnages avec Insaisissable.)",
-        },
-      ],
-    },
-    it: {
-      name: "Jafar",
-      version: "Royal Vizier",
-      text: [
-        {
-          title: "I DON'T TRUST HIM, SIRE",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Aladdin",
   set: "009",
@@ -91,4 +46,5 @@ export const jafarRoyalVizier: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: jafarRoyalVizierI18n,
 };

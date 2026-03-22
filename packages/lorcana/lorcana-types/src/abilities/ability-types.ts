@@ -168,6 +168,8 @@ export interface ShiftKeywordAbility {
   keyword: "Shift";
   /** The cost to use Shift - REQUIRED, uses generic AbilityCost */
   cost: AbilityCost;
+  /** Optional condition for when this card can use Shift */
+  condition?: Condition;
   /**
    * Target character name that this can shift onto
    * If not specified, can shift onto any character with matching name
@@ -418,7 +420,9 @@ export interface ReplacementAbility {
     | "banish-self"
     | "draw-card"
     | "gain-lore"
-    | "lose-lore";
+    | "lose-lore"
+    | "remove-damage"
+    | "discard";
 
   /** Condition for replacement to apply */
   condition?: Condition;

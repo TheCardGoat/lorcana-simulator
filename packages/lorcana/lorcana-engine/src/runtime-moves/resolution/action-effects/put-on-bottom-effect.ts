@@ -5,6 +5,9 @@ import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
 import { normalizeSelectedTargets, resolveEffectTargets } from "../../../targeting/runtime";
+import { getCurrentSelectionInput, getEffectTargetSelectionInput } from "./selection-state";
+import { emitTriggeredLorcanaEvent } from "../../../triggered-abilities";
+import { isDiscardZoneKey, recordDiscardExitThisTurn } from "../../state/turn-metrics";
 
 export function isPutOnBottomEffect(effect: unknown): effect is PutOnBottomEffect {
   return (
@@ -21,9 +24,9 @@ function putCardOnBottomOfOwnerDeck(
   fallbackPlayerId: PlayerId,
 ): void {
   const ownerId =
-    (ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID as PlayerId | undefined) ??
-    fallbackPlayerId;
-  const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+    (ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined) ?? fallbackPlayerId;
+  const zoneKey = ctx.framework.zones.getCardZone(cardId);
+  const fromDiscard = typeof zoneKey === "string" && isDiscardZoneKey(zoneKey);
 
   if (typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"))) {
     moveCardOutOfPlayWithStack(
@@ -50,6 +53,22 @@ function putCardOnBottomOfOwnerDeck(
       index: 0,
     },
   );
+
+  if (fromDiscard) {
+    recordDiscardExitThisTurn(ctx);
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "cardLeftDiscard",
+      { cardId, ownerId, toZone: "deck" },
+      {
+        event: "leave-discard",
+        playerId: ownerId,
+        subjectCardId: cardId,
+        fromZone: "discard",
+        toZone: "deck",
+      },
+    );
+  }
 }
 
 export function resolvePutOnBottomEffect(
@@ -59,8 +78,13 @@ export function resolvePutOnBottomEffect(
   resolutionInput: ActionResolutionInput,
 ): void {
   const candidateTargets =
-    resolveEffectTargets(ctx, cardPlayed, effect.target, resolutionInput.targets) ?? [];
-  const selectedTargets = normalizeSelectedTargets(resolutionInput.targets) ?? [];
+    resolveEffectTargets(
+      ctx,
+      cardPlayed,
+      effect.target,
+      getEffectTargetSelectionInput(effect.target, resolutionInput),
+    ) ?? [];
+  const selectedTargets = normalizeSelectedTargets(getCurrentSelectionInput(resolutionInput)) ?? [];
   const resolvedTargets =
     effect.ordering === "player-choice" && selectedTargets.length === candidateTargets.length
       ? selectedTargets
@@ -70,9 +94,7 @@ export function resolvePutOnBottomEffect(
     const targetsByOwner = new Map<PlayerId, CardInstanceId[]>();
     for (const targetId of resolvedTargets) {
       const ownerId =
-        (ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.ownerID as
-          | PlayerId
-          | undefined) ?? cardPlayed.playerId;
+        (ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined) ?? cardPlayed.playerId;
       const existing = targetsByOwner.get(ownerId) ?? [];
       existing.push(targetId);
       targetsByOwner.set(ownerId, existing);
@@ -90,4 +112,12 @@ export function resolvePutOnBottomEffect(
   }
 
   markLastEffectPerformed(resolutionInput.eventSnapshot, resolvedTargets.length > 0);
+
+  // Track how many cards were moved for downstream effects (e.g., "gain 1 lore for each")
+  if (resolutionInput.eventSnapshot) {
+    resolutionInput.eventSnapshot.lastEffectTargetCount = resolvedTargets.length;
+    if (resolvedTargets.length > 0) {
+      resolutionInput.eventSnapshot.triggerAmount = resolvedTargets.length;
+    }
+  }
 }

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { grandmotherFaSpiritedElderI18n } from "./121-grandmother-fa-spirited-elder.i18n";
 
 export const grandmotherFaSpiritedElder: CharacterCard = {
   id: "XL5",
@@ -7,52 +8,6 @@ export const grandmotherFaSpiritedElder: CharacterCard = {
   cardType: "character",
   name: "Grandmother Fa",
   version: "Spirited Elder",
-  i18n: {
-    en: {
-      name: "Grandmother Fa",
-      version: "Spirited Elder",
-      text: [
-        {
-          title: "I'VE GOT ALL THE LUCK WE'LL NEED",
-          description:
-            "Whenever this character quests, you may give chosen character of yours +2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Großmutter Fa",
-      version: "Weise Älteste",
-      text: [
-        {
-          title: "ICH HABE ALL DAS GLÜCK, DAS WIR BRAUCHEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du einen deiner Charaktere wählen und jenem in diesem Zug +2 geben.",
-        },
-      ],
-    },
-    fr: {
-      name: "Grand-Mère Fa",
-      version: "Ancienne pleine d'entrain",
-      text: [
-        {
-          title: "J'AI TOUTE LA CHANCE QU'IL NOUS FAUT",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez choisir l'un de vos personnages qui gagne +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Nonna Fa",
-      version: "Anziana Vivace",
-      text: [
-        {
-          title: "HO TUTTA LA FORTUNA CHE CI SERVE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi dare +2 a un tuo personaggio a tua scelta per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mulan",
   set: "007",
@@ -75,5 +30,29 @@ export const grandmotherFaSpiritedElder: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          duration: "this-turn",
+          modifier: 2,
+          stat: "strength",
+          target: "CHOSEN_CHARACTER_OF_YOURS",
+          type: "modify-stat",
+        },
+      },
+      id: "XL5-1",
+      name: "I'VE GOT ALL THE LUCK WE'LL NEED",
+      text: "I'VE GOT ALL THE LUCK WE'LL NEED Whenever this character quests, you may give chosen character of yours +2 {S} this turn.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
+  i18n: grandmotherFaSpiritedElderI18n,
 };

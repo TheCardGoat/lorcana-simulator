@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sisuDaringVisitorI18n } from "./123-sisu-daring-visitor.i18n";
 
 export const sisuDaringVisitor: CharacterCard = {
   id: "W3s",
@@ -7,37 +8,6 @@ export const sisuDaringVisitor: CharacterCard = {
   cardType: "character",
   name: "Sisu",
   version: "Daring Visitor",
-  i18n: {
-    en: {
-      name: "Sisu",
-      version: "Daring Visitor",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "BRING ON THE HEAT!",
-          description:
-            "When you play this character, banish chosen opposing character with 1 {S} or less.",
-        },
-      ],
-    },
-    de: {
-      name: "Sisu",
-      version: "Wagemutige Besucherin",
-      text: "Wendig BRENN MIR DIE ZUNGE WEG! Wenn du diesen Charakter ausspielst, verbanne einen gegnerischen Charakter deiner Wahl mit 1 oder weniger.",
-    },
-    fr: {
-      name: "Sisu",
-      version: "Visiteuse audacieuse",
-      text: "Insaisissable VAS-Y POUR LA DYNAMITE! Lorsque vous jouez ce personnage, choisissez un personnage adverse avec 1 ou moins et bannissez-le.",
-    },
-    it: {
-      name: "Sisu",
-      version: "Visitatrice Audace",
-      text: "Sfuggente SUPER PICCANTE! Quando giochi questo personaggio, esilia un personaggio avversario a tua scelta con 1 o inferiore.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "004",
@@ -72,8 +42,21 @@ export const sisuDaringVisitor: CharacterCard = {
     },
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        type: "banish",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "strength-comparison",
+              comparison: "less-or-equal",
+              value: 1,
+            },
+          ],
+        },
       },
       id: "1y1-2",
       name: "BRING ON THE HEAT!",
@@ -86,4 +69,5 @@ export const sisuDaringVisitor: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: sisuDaringVisitorI18n,
 };

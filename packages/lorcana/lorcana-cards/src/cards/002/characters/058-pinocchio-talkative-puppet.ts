@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pinocchioTalkativePuppetI18n } from "./058-pinocchio-talkative-puppet.i18n";
 
 export const pinocchioTalkativePuppet: CharacterCard = {
   id: "nsa",
@@ -7,48 +8,6 @@ export const pinocchioTalkativePuppet: CharacterCard = {
   cardType: "character",
   name: "Pinocchio",
   version: "Talkative Puppet",
-  i18n: {
-    en: {
-      name: "Pinocchio",
-      version: "Talkative Puppet",
-      text: [
-        {
-          title: "TELLING LIES",
-          description: "When you play this character, you may exert chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Pinocchio",
-      version: "Talkative Puppet",
-      text: [
-        {
-          title: "TELLING LIES",
-          description: "When you play this character, you may exert chosen opposing character.",
-        },
-      ],
-    },
-    fr: {
-      name: "Pinocchio",
-      version: "Talkative Puppet",
-      text: [
-        {
-          title: "TELLING LIES",
-          description: "When you play this character, you may exert chosen opposing character.",
-        },
-      ],
-    },
-    it: {
-      name: "Pinocchio",
-      version: "Talkative Puppet",
-      text: [
-        {
-          title: "TELLING LIES",
-          description: "When you play this character, you may exert chosen opposing character.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Pinocchio",
   set: "002",
@@ -70,7 +29,6 @@ export const pinocchioTalkativePuppet: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -98,4 +56,6 @@ export const pinocchioTalkativePuppet: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: pinocchioTalkativePuppetI18n,
 };

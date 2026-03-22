@@ -16,7 +16,7 @@ import {
 import { createInitialTCGCtx } from "./types";
 import type { MatchState, ZoneRuntimeDef } from "./types";
 
-function createTestState(): MatchState<{ turn: number }> {
+function createTestState() {
   const ctx = createInitialTCGCtx({
     matchID: "match-123",
     gameID: "lorcana",
@@ -84,7 +84,7 @@ function createTestState(): MatchState<{ turn: number }> {
   ctx.zones.public.zoneSummaries.deck.count = 40;
 
   return {
-    G: { turn: 1 },
+    G: { turn: 1 } as any,
     ctx,
   };
 }

@@ -149,8 +149,10 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       );
 
       expect(testEngine.asServer().getCardLore(flynnRiderHisOwnBiggestFan)).toBe(-1);
-      expect(testEngine.asPlayerOne().quest(flynnRiderHisOwnBiggestFan)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+      expect(
+        testEngine.asServer().quest(PLAYER_ONE, flynnRiderHisOwnBiggestFan),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asServer().getLore(PLAYER_ONE)).toBe(0);
     });
 
     it("6.6.4. Elisa's printed-value floor applies after modifiers are combined and stops once the net result rises above printed strength.", () => {

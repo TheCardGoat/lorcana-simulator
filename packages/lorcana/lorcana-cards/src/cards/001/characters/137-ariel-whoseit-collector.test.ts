@@ -1,86 +1,101 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockItem } from "@tcg/lorcana-engine/testing";
 import { arielWhoseitCollector } from "./137-ariel-whoseit-collector";
 
-describe("Ariel - Whoseit Collector", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [arielWhoseitCollector] });
-  //   Expect(testEngine.getCardModel(arielWhoseitCollector).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const itemA = createMockItem({
+  id: "ariel-test-item-a",
+  name: "Test Item A",
+  cost: 2,
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { arielWhoseitCollector } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import {
-//   Coconutbasket,
-//   Lantern,
-// } from "@lorcanito/lorcana-engine/cards/001/items/items";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Ariel - Whoseit Collector", () => {
-//   Describe("**LOOK AT THIS STUFF** Whenever you play an item, you may ready this character.", () => {
-//     It("should ready when an item is played", () => {
-//       Const testStore = new TestStore({
-//         Inkwell: lantern.cost + coconutbasket.cost,
-//         Hand: [coconutbasket, lantern],
-//         Play: [arielWhoseitCollector],
-//       });
-//
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         ArielWhoseitCollector.id,
-//       );
-//       Const target = testStore.getByZoneAndId("hand", coconutbasket.id);
-//       Const _anotherTarget = testStore.getByZoneAndId("hand", lantern.id);
-//
-//       CardUnderTest.quest();
-//       Expect(cardUnderTest.ready).toBeFalsy();
-//
-//       Target.playFromHand();
-//       TestStore.resolveTopOfStack();
-//       Expect(cardUnderTest.ready).toBeTruthy();
-//
-//       CardUnderTest.quest();
-//       Expect(cardUnderTest.ready).toBeFalsy();
-//
-//       _anotherTarget.playFromHand();
-//       TestStore.resolveTopOfStack();
-//       Expect(cardUnderTest.ready).toBeTruthy();
-//     });
-//
-//     It("should NOT ready when an opponent play an item", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Inkwell: lantern.cost + coconutbasket.cost,
-//           Hand: [coconutbasket, lantern],
-//         },
-//         {
-//           Play: [arielWhoseitCollector],
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         ArielWhoseitCollector.id,
-//         "player_two",
-//       );
-//       Const target = testStore.getByZoneAndId("hand", coconutbasket.id);
-//
-//       CardUnderTest.quest();
-//       Expect(cardUnderTest.ready).toBeFalsy();
-//
-//       Target.playFromHand();
-//       Expect(cardUnderTest.ready).toBeFalsy();
-//       Expect(testStore.store.stackLayerStore.layers.length).toBe(0);
-//     });
-//   });
-// });
-//
+const itemB = createMockItem({
+  id: "ariel-test-item-b",
+  name: "Test Item B",
+  cost: 1,
+});
+
+describe("Ariel - Whoseit Collector", () => {
+  describe("LOOK AT THIS STUFF - Whenever you play an item, you may ready this character.", () => {
+    it("should ready when an item is played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [itemA],
+        play: [arielWhoseitCollector],
+        inkwell: itemA.cost,
+        deck: 5,
+      });
+
+      // Quest to exert Ariel
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().quest(arielWhoseitCollector)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCard(arielWhoseitCollector).exerted).toBe(true);
+
+      // Play an item — trigger should fire
+      expect(testEngine.asPlayerOne().playCard(itemA)).toBeSuccessfulCommand();
+
+      // Resolve the optional ability (accept)
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(testEngine.asPlayerOne().resolveOnlyBag()).toBeSuccessfulCommand();
+
+      // Ariel should be ready now
+      expect(testEngine.asPlayerOne().getCard(arielWhoseitCollector).exerted).toBe(false);
+    });
+
+    it("should trigger for each item played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [itemA, itemB],
+        play: [arielWhoseitCollector],
+        inkwell: itemA.cost + itemB.cost,
+        deck: 5,
+      });
+
+      // Quest to exert Ariel
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().quest(arielWhoseitCollector)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCard(arielWhoseitCollector).exerted).toBe(true);
+
+      // Play first item — trigger fires, accept ready
+      expect(testEngine.asPlayerOne().playCard(itemA)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(testEngine.asPlayerOne().resolveOnlyBag()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCard(arielWhoseitCollector).exerted).toBe(false);
+
+      // Play second item — trigger fires again (no once-per-turn restriction)
+      expect(testEngine.asPlayerOne().playCard(itemB)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    });
+
+    it("should NOT trigger when an opponent plays an item", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [arielWhoseitCollector],
+          deck: 5,
+        },
+        {
+          hand: [itemA],
+          inkwell: itemA.cost,
+          deck: 5,
+        },
+      );
+
+      // Quest to exert Ariel
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().quest(arielWhoseitCollector)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCard(arielWhoseitCollector).exerted).toBe(true);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Opponent plays an item
+      expect(testEngine.asPlayerTwo().playCard(itemA)).toBeSuccessfulCommand();
+
+      // No trigger should fire for player one
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getCard(arielWhoseitCollector).exerted).toBe(true);
+    });
+  });
+});

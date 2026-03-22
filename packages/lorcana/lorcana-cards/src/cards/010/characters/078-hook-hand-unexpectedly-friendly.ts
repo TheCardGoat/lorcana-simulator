@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hookHandUnexpectedlyFriendlyI18n } from "./078-hook-hand-unexpectedly-friendly.i18n";
 
 export const hookHandUnexpectedlyFriendly: CharacterCard = {
   id: "80T",
@@ -7,24 +8,6 @@ export const hookHandUnexpectedlyFriendly: CharacterCard = {
   cardType: "character",
   name: "Hook Hand",
   version: "Unexpectedly Friendly",
-  i18n: {
-    en: {
-      name: "Hook Hand",
-      version: "Unexpectedly Friendly",
-    },
-    de: {
-      name: "Hakenhand",
-      version: "Unerwartet freundlich",
-    },
-    fr: {
-      name: "La Main Froide",
-      version: "Étonnement amical",
-    },
-    it: {
-      name: "Uncino",
-      version: "Inaspettatamente Amichevole",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Tangled",
   set: "010",
@@ -41,4 +24,5 @@ export const hookHandUnexpectedlyFriendly: CharacterCard = {
     tcgPlayer: 659185,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: hookHandUnexpectedlyFriendlyI18n,
 };

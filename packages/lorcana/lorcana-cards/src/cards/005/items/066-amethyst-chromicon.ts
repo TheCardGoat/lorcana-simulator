@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { amethystChromiconI18n } from "./066-amethyst-chromicon.i18n";
 
 export const amethystChromicon: ItemCard = {
   id: "12k",
@@ -6,44 +7,6 @@ export const amethystChromicon: ItemCard = {
   reprints: ["set5-066"],
   cardType: "item",
   name: "Amethyst Chromicon",
-  i18n: {
-    en: {
-      name: "Amethyst Chromicon",
-      text: [
-        {
-          title: "AMETHYST LIGHT",
-          description: "{E} — Each player may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Amethyst Chromikon",
-      text: [
-        {
-          title: "AMETHYSTFARBENES LICHT",
-          description: "— Alle Mitspielenden (auch du) dürfen je 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Chromicône d'Améthyste",
-      text: [
-        {
-          title: "LUEUR",
-          description: "D'AMÉTHYSTE — Chaque joueur peut piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Cromicon d'Ametista",
-      text: [
-        {
-          title: "LUCE D'AMETISTA",
-          description: "— Ogni giocatore può pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Lorcana",
   set: "005",
@@ -95,4 +58,5 @@ export const amethystChromicon: ItemCard = {
       text: "AMETHYST LIGHT {E} — Each player may draw a card.",
     },
   ],
+  i18n: amethystChromiconI18n,
 };

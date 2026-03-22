@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cheshireCatFromTheShadowsI18n } from "./075-cheshire-cat-from-the-shadows.i18n";
 
 export const cheshireCatFromTheShadows: CharacterCard = {
   id: "zI1",
@@ -7,45 +8,6 @@ export const cheshireCatFromTheShadows: CharacterCard = {
   cardType: "character",
   name: "Cheshire Cat",
   version: "From the Shadows",
-  i18n: {
-    en: {
-      name: "Cheshire Cat",
-      version: "From the Shadows",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "WICKED SMILE",
-          description: "{E} — Banish chosen damaged character.",
-        },
-      ],
-    },
-    de: {
-      name: "Grinsekatze",
-      version: "Aus den Schatten",
-      text: "Gestaltwandel 5 Wendig FIESES GRINSEN — Verbanne einen beschädigten Charakter deiner Wahl.",
-    },
-    fr: {
-      name: "Chat du Cheshire",
-      version: "Sorti de l'ombre",
-      text: "Alter 5 Insaisissable SOURIRE MALAISANT — Choisissez un personnage blessé et banissez-le.",
-    },
-    it: {
-      name: "Cheshire Cat",
-      version: "From the Shadows",
-      text: [
-        {
-          title: "Shift 5",
-          description:
-            "(You may pay 5 to play this on top of one of your characters named Cheshire Cat.) Evasive (Only characters with Evasive can challenge this character.) WICKED SMILE — Banish chosen damaged character.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Alice in Wonderland",
   set: "002",
@@ -103,4 +65,5 @@ export const cheshireCatFromTheShadows: CharacterCard = {
       },
     },
   ],
+  i18n: cheshireCatFromTheShadowsI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kidaRoyalWarriorI18n } from "./177-kida-royal-warrior.i18n";
 
 export const kidaRoyalWarrior: CharacterCard = {
   id: "wgF",
@@ -7,34 +8,6 @@ export const kidaRoyalWarrior: CharacterCard = {
   cardType: "character",
   name: "Kida",
   version: "Royal Warrior",
-  i18n: {
-    en: {
-      name: "Kida",
-      version: "Royal Warrior",
-      text: "Bodyguard",
-    },
-    de: {
-      name: "Kida",
-      version: "Königliche Kriegerin",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "Kida",
-      version: "Guerrière royale",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il vous défie, un personnage adverse doit, si possible, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "Kida",
-      version: "Guerriera Reale",
-      text: "Guardiano",
-    },
-  },
   inkType: ["steel"],
   franchise: "Atlantis",
   set: "003",
@@ -59,4 +32,5 @@ export const kidaRoyalWarrior: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: kidaRoyalWarriorI18n,
 };

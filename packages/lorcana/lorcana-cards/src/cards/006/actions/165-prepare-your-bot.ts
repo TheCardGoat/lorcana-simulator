@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { prepareYourBotI18n } from "./165-prepare-your-bot.i18n";
 
 export const prepareYourBot: ActionCard = {
   id: "o3v",
@@ -6,34 +7,6 @@ export const prepareYourBot: ActionCard = {
   reprints: ["set6-165"],
   cardType: "action",
   name: "Prepare Your Bot",
-  i18n: {
-    en: {
-      name: "Prepare Your Bot",
-      text: [
-        {
-          title: "Choose one:",
-        },
-        {
-          title: "* Ready chosen item.",
-        },
-        {
-          title: "* Ready chosen Robot character. They can't quest for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Mach deinen Robo bereit",
-      text: "Wähle eine Möglichkeit aus: • Mache einen Gegenstand deiner Wahl bereit. • Mache einen Roboter deiner Wahl bereit. Er kann in diesem Zug nicht mehr erkunden.",
-    },
-    fr: {
-      name: "Prépare ton robot",
-      text: "Choisissez entre: • Choississez un objet et redressez-le. • Choississez un personnage Robot et redressez-le. Ce personnage ne peut pas être envoyé à l'aventure pour le reste de ce tour.",
-    },
-    it: {
-      name: "Prepara il tuo Robot",
-      text: "Scegli uno: • Prepara un oggetto a tua scelta. • Prepara un personaggio Robot a tua scelta. Non può andare all'avventura per il resto di questo turno.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "006",
@@ -99,4 +72,5 @@ export const prepareYourBot: ActionCard = {
       },
     },
   ],
+  i18n: prepareYourBotI18n,
 };

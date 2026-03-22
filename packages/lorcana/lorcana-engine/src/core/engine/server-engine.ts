@@ -19,8 +19,8 @@ import {
   type CommandResult,
   type MoveInput,
   type MatchStaticResources,
-  type MoveDefinition,
   type RuntimeActorRole,
+  type RuntimeSnapshot,
   filterPatches,
   canApplyPatchesToState,
 } from "../runtime";
@@ -37,6 +37,7 @@ import {
   PROTOCOL_VERSION,
   isUpdateActionMessage,
   isSyncRequestMessage,
+  isUndoRequestMessage,
 } from "../runtime/protocol-types";
 import type {
   EngineProjectionSnapshot,
@@ -46,61 +47,54 @@ import type {
   EngineMoveExecutionResult,
   EngineMoveHistoryEntry,
 } from "./contracts";
-import type { BaseCardDefinition } from "../runtime/card-contracts";
-
 import { getLogger } from "@logtape/logtape";
 
 const logger = getLogger(["core-engine", "server-engine"]);
 
-type EngineMoveDefinitions<G, TCardDerived extends object = {}> = Record<
-  string,
-  MoveDefinition<G, any, any, unknown, TCardDerived>
->;
+import type { MoveRecord, RuntimeMoveInputMap } from "../runtime/match-runtime.types";
 
-type InferMoveInputMap<TMoves extends EngineMoveDefinitions<any, any>> = {
-  [K in keyof TMoves]: TMoves[K] extends MoveDefinition<any, any, infer TInput, any, any>
-    ? TInput
-    : MoveInput;
-};
+type InferMoveInputMap<TMoves extends MoveRecord> = RuntimeMoveInputMap<TMoves>;
 
-export interface ServerEngineConfig<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-  TBoardView = FilteredMatchView<G>,
-  TMoves extends EngineMoveDefinitions<G, TCardDerived> = EngineMoveDefinitions<G, TCardDerived>,
-> {
-  runtimeConfig: MatchRuntimeConfig<G, TMoves, TCardDefinition, TCardDerived, TBoardView>;
+export interface ServerEngineConfig {
+  runtimeConfig: MatchRuntimeConfig;
   players: Player[];
   seed?: string;
-  staticResources: MatchStaticResources<TCardDefinition>;
+  staticResources: MatchStaticResources;
   debugMode?: boolean;
 }
 
-export interface StateSnapshot<G> {
+export interface StateSnapshot {
   stateID: number;
-  state: MatchState<G>;
+  state: MatchState;
   timestamp: number;
+  transitionType?: "move" | "undo";
+  undoneStateID?: number;
+  restoredCheckpointStateID?: number;
+  undoneMoveId?: string;
 }
 
-// TO speed up development, we're temporarily disabling patch sending and just sending full state updates on every move. This is because we don't yet have a robust way to generate and filter patches for the complex state updates in our test game, and implementing that is taking more time than expected. Once we have a better patch generation/filtering system in place, we can re-enable patch sending for more efficient updates.
+// To speed up development, we're temporarily disabling patch sending and just sending full state updates on every move. This is because we don't yet have a robust way to generate and filter patches for the complex state updates in our test game, and implementing that is taking more time than expected. TODO: Re-enable patch updates once filtered patch generation is robust enough for multiplayer synchronization.
 const arePatchesDisabled = true;
 
-export class ServerEngine<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-  TBoardView = FilteredMatchView<G>,
-  TMoves extends EngineMoveDefinitions<G, TCardDerived> = EngineMoveDefinitions<G, TCardDerived>,
-> implements GameEngine<MatchState<G>, TBoardView, InferMoveInputMap<TMoves>> {
-  private runtime: MatchRuntime<G, TMoves, TCardDefinition, TCardDerived, TBoardView>;
+export interface UndoCheckpoint {
+  stateID: number;
+  playerId: string;
+  state: MatchState;
+  runtimeSnapshot: RuntimeSnapshot;
+  undoneStateID: number;
+  undoneMoveId?: string;
+}
+
+export class ServerEngine implements GameEngine {
+  private runtime: MatchRuntime;
   private transports: Map<string, InMemoryTransport> = new Map();
-  private stateHistory: StateSnapshot<G>[] = [];
+  private stateHistory: StateSnapshot[] = [];
   private moveHistory: EngineMoveHistoryEntry[] = [];
   private debug: boolean = false;
-  private staticResources: MatchStaticResources<TCardDefinition>;
+  private staticResources: MatchStaticResources;
+  private undoCheckpoint: UndoCheckpoint | null = null;
 
-  constructor(config: ServerEngineConfig<G, TCardDefinition, TCardDerived, TBoardView, TMoves>) {
+  constructor(config: ServerEngineConfig) {
     this.debug = config.debugMode ?? false;
     this.staticResources = config.staticResources;
     this.runtime = new MatchRuntime(config.runtimeConfig, {
@@ -149,6 +143,8 @@ export class ServerEngine<
       }
 
       const previousState = this.runtime.getState();
+      const previousStateID = this.runtime.getCurrentStateID();
+      const runtimeSnapshotBeforeMove = this.runtime.createRuntimeSnapshot();
       const result = this.runtime.processCommand(
         message.command,
         playerId,
@@ -171,6 +167,7 @@ export class ServerEngine<
           stateID: newStateID,
           state: newState,
           timestamp: Date.now(),
+          transitionType: "move",
         });
         this.moveHistory.push({
           moveId: message.command.move,
@@ -179,13 +176,36 @@ export class ServerEngine<
           role: "player",
           timestamp: Date.now(),
           stateID: newStateID,
-          turnNumber: newState.ctx.status.turn,
+          // Attribute the move to the turn it was issued in, even if the move
+          // itself advances the game to the next turn before history is stored.
+          turnNumber: previousState.ctx.status.turn,
+          transitionType: "move",
+          newStateID: newStateID,
         });
+
+        // Undo checkpoint management
+        const hasTurnStarted = result.gameEvents.some((e) => e.event.kind === "TURN_STARTED");
+        if (hasTurnStarted) {
+          this.undoCheckpoint = null;
+        } else if (result.undoable) {
+          this.undoCheckpoint = {
+            stateID: previousStateID,
+            playerId,
+            state: previousState,
+            runtimeSnapshot: runtimeSnapshotBeforeMove,
+            undoneStateID: newStateID,
+            undoneMoveId: message.command.move,
+          };
+        } else {
+          this.undoCheckpoint = null;
+        }
 
         this.broadcastStateUpdate(processedResult, newStateID);
       } else {
         this.sendError(playerId, "INVALID_MOVE", result.error || "Command failed", false);
       }
+    } else if (isUndoRequestMessage(message)) {
+      this.undo(playerId, message.prevStateID);
     } else if (isSyncRequestMessage(message)) {
       this.sendFullSync(playerId);
     }
@@ -225,6 +245,7 @@ export class ServerEngine<
           type: "UPDATE_PATCH",
           stateID,
           prevStateID: stateID - 1, // This doesn't sound right
+          canUndo: this.canUndoForRecipient(playerId),
           protocolVersion: PROTOCOL_VERSION,
           matchID: fullState.ctx.matchID,
           processedCommand: command,
@@ -247,6 +268,7 @@ export class ServerEngine<
           type: "UPDATE_FULL",
           reason: !shouldSendPatch ? "PATCH_DISABLED" : undefined,
           stateID,
+          canUndo: this.canUndoForRecipient(playerId),
           protocolVersion: PROTOCOL_VERSION,
           matchID: fullState.ctx.matchID,
           processedCommand: command,
@@ -279,6 +301,7 @@ export class ServerEngine<
     const message: SyncFullMessage = {
       type: "SYNC_FULL",
       stateID: fullState.ctx._stateID,
+      canUndo: this.canUndoForRecipient(playerId),
       state: filteredView,
       board: projectedView,
       protocolVersion: PROTOCOL_VERSION,
@@ -294,8 +317,8 @@ export class ServerEngine<
   }
 
   private buildRecipientUpdate(playerId: string): {
-    filteredView: FilteredMatchView<G>;
-    projectedView: TBoardView | undefined;
+    filteredView: FilteredMatchView;
+    projectedView: FilteredMatchView | undefined;
   } {
     if (playerId === "spectator") {
       return {
@@ -319,6 +342,10 @@ export class ServerEngine<
     };
   }
 
+  private canUndoForRecipient(playerId: string): boolean {
+    return playerId === "spectator" ? false : this.canUndo(playerId);
+  }
+
   private sendError(
     playerId: string,
     code: ErrorMessage["code"],
@@ -338,24 +365,117 @@ export class ServerEngine<
     } as ErrorMessage);
   }
 
-  getState(): DeepReadonly<MatchState<G>> {
-    return this.runtime.getState() as DeepReadonly<MatchState<G>>;
+  canUndo(playerId: string): boolean {
+    return this.undoCheckpoint !== null && this.undoCheckpoint.playerId === playerId;
+  }
+
+  undo(playerId: string, prevStateID?: number): boolean {
+    if (typeof prevStateID === "number" && prevStateID !== this.runtime.getCurrentStateID()) {
+      this.sendError(
+        playerId,
+        "STALE_STATE",
+        `Expected state ${this.runtime.getCurrentStateID()}`,
+        true,
+      );
+      return false;
+    }
+
+    if (!this.canUndo(playerId)) {
+      this.sendError(
+        playerId,
+        "INVALID_MOVE",
+        "Cannot undo: no undoable checkpoint available",
+        false,
+      );
+      return false;
+    }
+
+    const checkpoint = this.undoCheckpoint!;
+    const previousState = this.runtime.getState();
+    const previousStateID = this.runtime.getCurrentStateID();
+    const timestamp = Date.now();
+    const nextStateID = previousStateID + 1;
+    const undoCommand: CommandEnvelope = {
+      commandID: `undo-${playerId}-${timestamp}`,
+      move: "undo",
+    };
+
+    this.runtime.restoreState(checkpoint.state, checkpoint.runtimeSnapshot, {
+      preserveHistory: true,
+      newStateID: nextStateID,
+    });
+    const { gameEvents, logEntries } = this.runtime.appendSyntheticCommand(
+      undoCommand,
+      playerId,
+      timestamp,
+    );
+    const restoredState = this.runtime.getState();
+
+    this.undoCheckpoint = null;
+    this.stateHistory.push({
+      stateID: nextStateID,
+      state: restoredState,
+      timestamp,
+      transitionType: "undo",
+      undoneStateID: checkpoint.undoneStateID,
+      restoredCheckpointStateID: checkpoint.stateID,
+      undoneMoveId: checkpoint.undoneMoveId,
+    });
+    this.moveHistory.push({
+      moveId: "undo",
+      playerId,
+      role: "player",
+      timestamp,
+      stateID: nextStateID,
+      turnNumber: restoredState.ctx.status.turn,
+      transitionType: "undo",
+      newStateID: nextStateID,
+      undoneStateID: checkpoint.undoneStateID,
+      restoredCheckpointStateID: checkpoint.stateID,
+      undoneMoveId: checkpoint.undoneMoveId,
+    });
+
+    const result = this.withPacketAnimations(
+      {
+        success: true,
+        stateID: nextStateID,
+        state: restoredState,
+        patches: [],
+        gameEvents,
+        logEntries,
+        processedCommand: undoCommand,
+        animations: [],
+        undoable: false,
+      },
+      previousState,
+      undoCommand,
+      playerId,
+      "player",
+    );
+
+    this.broadcastStateUpdate(result, nextStateID);
+
+    return true;
+  }
+
+  getState(): DeepReadonly<MatchState> {
+    return this.runtime.getState() as DeepReadonly<MatchState>;
   }
 
   getStateID(): number {
     return this.runtime.getCurrentStateID();
   }
 
-  getBoard(): DeepReadonly<TBoardView> {
+  getBoard(): DeepReadonly<FilteredMatchView> {
     return this.runtime.getProjectedBoardView(
       { role: "judge" },
       { serverTimestamp: Date.now() },
-    ) as DeepReadonly<TBoardView>;
+    ) as DeepReadonly<FilteredMatchView>;
   }
 
-  validateMove<K extends keyof InferMoveInputMap<TMoves> & string>(
+  validateMove<K extends keyof InferMoveInputMap<MoveRecord> & string>(
     moveId: K,
-    input: InferMoveInputMap<TMoves>[K],
+    input: InferMoveInputMap<MoveRecord>[K],
   ): EngineMoveValidationResult;
   validateMove(moveId: string, input: MoveInput): EngineMoveValidationResult;
   validateMove(moveId: string, input: MoveInput): EngineMoveValidationResult {
@@ -367,10 +487,10 @@ export class ServerEngine<
     );
   }
 
-  validateMoveForPlayer<K extends keyof InferMoveInputMap<TMoves> & string>(
+  validateMoveForPlayer<K extends keyof InferMoveInputMap<MoveRecord> & string>(
     playerId: string,
     moveId: K,
-    input: InferMoveInputMap<TMoves>[K],
+    input: InferMoveInputMap<MoveRecord>[K],
     actorRole?: RuntimeActorRole,
   ): EngineMoveValidationResult;
   validateMoveForPlayer(
@@ -387,7 +507,7 @@ export class ServerEngine<
   ): EngineMoveValidationResult {
     const command: CommandEnvelope = {
       commandID: `validate-${Date.now()}`,
-      move: moveId as keyof InferMoveInputMap<TMoves> & string,
+      move: moveId as keyof InferMoveInputMap<MoveRecord> & string,
       input,
     };
     return this.runtime.validateCommand(
@@ -398,9 +518,9 @@ export class ServerEngine<
     );
   }
 
-  executeMove<K extends keyof InferMoveInputMap<TMoves> & string>(
+  executeMove<K extends keyof InferMoveInputMap<MoveRecord> & string>(
     moveId: K,
-    input: InferMoveInputMap<TMoves>[K],
+    input: InferMoveInputMap<MoveRecord>[K],
   ): EngineMoveExecutionResult;
   executeMove(moveId: string, input: MoveInput): EngineMoveExecutionResult;
   executeMove(moveId: string, input: MoveInput): EngineMoveExecutionResult {
@@ -412,10 +532,10 @@ export class ServerEngine<
     );
   }
 
-  executeMoveForPlayer<K extends keyof InferMoveInputMap<TMoves> & string>(
+  executeMoveForPlayer<K extends keyof InferMoveInputMap<MoveRecord> & string>(
     playerId: string,
     moveId: K,
-    input: InferMoveInputMap<TMoves>[K],
+    input: InferMoveInputMap<MoveRecord>[K],
     actorRole?: RuntimeActorRole,
   ): EngineMoveExecutionResult;
   executeMoveForPlayer(
@@ -432,7 +552,7 @@ export class ServerEngine<
   ): EngineMoveExecutionResult {
     const command: CommandEnvelope = {
       commandID: `server-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      move: moveId as keyof InferMoveInputMap<TMoves> & string,
+      move: moveId as keyof InferMoveInputMap<MoveRecord> & string,
       input,
     };
     const previousState = this.runtime.getState();
@@ -454,6 +574,9 @@ export class ServerEngine<
       );
       this.broadcastStateUpdate(processedResult, this.runtime.getCurrentStateID());
 
+      // Clear undo checkpoint for non-protocol moves so it doesn't go stale
+      this.undoCheckpoint = null;
+
       return { success: true };
     }
 
@@ -461,20 +584,20 @@ export class ServerEngine<
     return { success: false, reason: result.error, code: result.errorCode };
   }
 
-  enumerateMoves(): Array<keyof InferMoveInputMap<TMoves> & string> {
+  enumerateMoves(): Array<keyof InferMoveInputMap<MoveRecord> & string> {
     const playerId = this.resolveAuthoritativeActorPlayerId();
     if (!playerId) {
       return [];
     }
 
     return this.runtime.enumerateMovesForPlayer(playerId, "judge") as Array<
-      keyof InferMoveInputMap<TMoves> & string
+      keyof InferMoveInputMap<MoveRecord> & string
     >;
   }
 
-  enumerateMovesForPlayer(playerId: string): Array<keyof InferMoveInputMap<TMoves> & string> {
+  enumerateMovesForPlayer(playerId: string): Array<keyof InferMoveInputMap<MoveRecord> & string> {
     return this.runtime.enumerateMovesForPlayer(playerId, "player") as Array<
-      keyof InferMoveInputMap<TMoves> & string
+      keyof InferMoveInputMap<MoveRecord> & string
     >;
   }
 
@@ -493,7 +616,7 @@ export class ServerEngine<
     this.transports.clear();
   }
 
-  getRuntime(): MatchRuntime<G, TMoves, TCardDefinition, TCardDerived, TBoardView> {
+  getRuntime(): MatchRuntime {
     return this.runtime;
   }
 
@@ -501,9 +624,39 @@ export class ServerEngine<
     return Array.from(this.transports.keys());
   }
 
+  getUndoCheckpointSnapshot(): UndoCheckpoint | null {
+    return this.undoCheckpoint ? (structuredClone(this.undoCheckpoint) as UndoCheckpoint) : null;
+  }
+
+  restoreUndoCheckpointSnapshot(checkpoint: UndoCheckpoint | null): void {
+    this.undoCheckpoint = checkpoint ? (structuredClone(checkpoint) as UndoCheckpoint) : null;
+  }
+
+  restoreAuthoritativeSnapshot(snapshot: {
+    state: MatchState;
+    undoCheckpoint?: UndoCheckpoint;
+  }): void {
+    this.runtime.loadState(snapshot.state);
+    this.stateHistory = [
+      {
+        stateID: snapshot.state.ctx._stateID,
+        state: this.runtime.getState(),
+        timestamp: Date.now(),
+      },
+    ];
+    this.moveHistory = [];
+    this.undoCheckpoint = snapshot.undoCheckpoint
+      ? (structuredClone(snapshot.undoCheckpoint) as UndoCheckpoint)
+      : null;
+
+    for (const connectedPlayerId of this.transports.keys()) {
+      this.sendFullSync(connectedPlayerId);
+    }
+  }
+
   private withPacketAnimations(
     result: Extract<CommandResult, { success: true }>,
-    previousState: MatchState<G>,
+    previousState: MatchState,
     command: CommandEnvelope,
     playerId: string,
     role: "player" | "judge",
@@ -522,8 +675,8 @@ export class ServerEngine<
   }
 
   private derivePacketAnimations(
-    previousState: MatchState<G>,
-    nextState: MatchState<G>,
+    previousState: MatchState,
+    nextState: MatchState,
     command: CommandEnvelope,
     playerId: string,
     role: "player" | "judge",

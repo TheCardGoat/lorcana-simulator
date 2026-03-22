@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicBroomLivelySweeperI18n } from "./049-magic-broom-lively-sweeper.i18n";
 
 export const magicBroomLivelySweeper: CharacterCard = {
   id: "9ap",
@@ -7,24 +8,6 @@ export const magicBroomLivelySweeper: CharacterCard = {
   cardType: "character",
   name: "Magic Broom",
   version: "Lively Sweeper",
-  i18n: {
-    en: {
-      name: "Magic Broom",
-      version: "Lively Sweeper",
-    },
-    de: {
-      name: "Zauberbesen",
-      version: "Lebendiger Feger",
-    },
-    fr: {
-      name: "Balais Magiques",
-      version: "Balayeur plein de vie",
-    },
-    it: {
-      name: "Scopa Magica",
-      version: "Spazzino Vivace",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Fantasia",
   set: "004",
@@ -41,4 +24,5 @@ export const magicBroomLivelySweeper: CharacterCard = {
     tcgPlayer: 550567,
   },
   classifications: ["Dreamborn", "Broom"],
+  i18n: magicBroomLivelySweeperI18n,
 };

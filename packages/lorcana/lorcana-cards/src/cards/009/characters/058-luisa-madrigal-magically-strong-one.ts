@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { luisaMadrigalMagicallyStrongOneI18n } from "./058-luisa-madrigal-magically-strong-one.i18n";
 
 export const luisaMadrigalMagicallyStrongOne: CharacterCard = {
   id: "6ZH",
@@ -7,33 +8,6 @@ export const luisaMadrigalMagicallyStrongOne: CharacterCard = {
   cardType: "character",
   name: "Luisa Madrigal",
   version: "Magically Strong One",
-  i18n: {
-    en: {
-      name: "Luisa Madrigal",
-      version: "Magically Strong One",
-      text: "Rush",
-    },
-    de: {
-      name: "Luisa Madrigal",
-      version: "Magisch stark",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Luisa Madrigal",
-      version: "Magiquement forte",
-      text: "Charge",
-    },
-    it: {
-      name: "Luisa Madrigal",
-      version: "Magicamente Forzuta",
-      text: [
-        {
-          title: "Lesto",
-          description: "(Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "009",
@@ -58,4 +32,5 @@ export const luisaMadrigalMagicallyStrongOne: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: luisaMadrigalMagicallyStrongOneI18n,
 };

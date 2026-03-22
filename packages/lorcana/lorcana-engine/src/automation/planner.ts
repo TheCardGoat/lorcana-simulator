@@ -2,6 +2,7 @@ import type {
   CommandResult,
   DeepReadonly,
   EngineMoveValidationResult,
+  MatchRuntimeConfig,
   MatchStaticResources,
   CardInstanceId,
   PlayerId,
@@ -18,12 +19,16 @@ import {
   isSongCard,
   resolveShiftTargetCandidates,
 } from "../runtime-moves/rules/play-card-rules";
-import { getGrantedActivatedAbilities } from "../runtime-moves/rules/static-ability-utils";
+import {
+  getGrantedActivatedAbilities,
+  toStaticAbilityState,
+} from "../runtime-moves/rules/static-ability-utils";
+import { cardHasName } from "../card-utils";
 import { analyzeEffectTargets } from "../targeting";
 import type {
   ActivatedAbilityDefinition,
   BagEffectEntry,
-  LorcanaCard,
+  LorcanaCardDefinition,
   LorcanaMatchState,
   LorcanaProjectedBoardView,
   LorcanaProjectedCard,
@@ -65,14 +70,14 @@ type AutomatedActionPlannerAdapter = {
   concede(actorId: PlayerId): CommandResult;
   createErrorResult(error: string, errorCode: string): CommandResult;
   executeCandidate(actorId: PlayerId, candidate: AutomatedActionCandidate): CommandResult;
-  getDefinitionByInstanceId(cardId: CardInstanceId): LorcanaCard | undefined;
+  getDefinitionByInstanceId(cardId: CardInstanceId): LorcanaCardDefinition | undefined;
   passTurn(actorId: PlayerId): CommandResult;
   previewChallenge(
     attackerId: CardInstanceId,
     defenderId: CardInstanceId,
   ): ChallengePreviewResult | null;
   state: DeepReadonly<LorcanaMatchState>;
-  staticResources: MatchStaticResources<LorcanaCard>;
+  staticResources: MatchStaticResources;
   validateCandidate(
     actorId: PlayerId,
     candidate: AutomatedActionCandidate,
@@ -106,7 +111,7 @@ type EffectInspectionNode = Effect & {
 };
 
 type ActionAbilityDefinition = Extract<
-  NonNullable<LorcanaCard["abilities"]>[number],
+  NonNullable<LorcanaCardDefinition["abilities"]>[number],
   { type: "action" }
 >;
 type ResolutionVariantPart = {
@@ -305,7 +310,7 @@ function buildReadContext(adapter: AutomatedActionPlannerAdapter, actorId: Playe
     adapter.state as LorcanaMatchState,
     actorId,
     { args: {} },
-    lorcanaRuntimeConfig,
+    lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
     adapter.staticResources,
     adapter.board.status === "finished",
     "preflight",
@@ -655,7 +660,12 @@ function buildTargetVariants(args: {
   }
 
   const readContext = buildReadContext(adapter, analysisPlayerId);
-  const analysis = analyzeEffectTargets(effect, analysisPlayerId, readContext, sourceCardId);
+  const analysis = analyzeEffectTargets(
+    effect,
+    analysisPlayerId,
+    readContext as unknown as Parameters<typeof analyzeEffectTargets>[2],
+    sourceCardId,
+  );
   if (!analysis.requiresExplicitSelection) {
     return [[]];
   }
@@ -1242,7 +1252,7 @@ function enumeratePutInkCandidates(args: {
 function enumeratePlayCostModes(args: {
   actorId: PlayerId;
   adapter: AutomatedActionPlannerAdapter;
-  cardDef: LorcanaCard;
+  cardDef: LorcanaCardDefinition;
   cardId: CardInstanceId;
   searchCaps: AutomatedActionSearchCaps;
   diagnostics: AutomatedActionDiagnostic[];
@@ -1428,7 +1438,7 @@ function getActivatedAbilitiesForCard(
     (ability): ability is ActivatedAbilityDefinition => ability.type === "activated",
   );
   const grantedAbilities = getGrantedActivatedAbilities({
-    state: adapter.state as LorcanaMatchState,
+    state: toStaticAbilityState(adapter.state as LorcanaMatchState),
     cardId,
     getDefinitionByInstanceId: (candidateId) => adapter.getDefinitionByInstanceId(candidateId),
   }).map((entry) => entry.ability);
@@ -1440,7 +1450,7 @@ function getActivatedAbilitiesForCard(
 }
 
 function matchesDiscardCostRequirements(
-  definition: LorcanaCard | undefined,
+  definition: LorcanaCardDefinition | undefined,
   ability: ActivatedAbilityDefinition,
 ): boolean {
   if (!definition) {
@@ -1467,7 +1477,7 @@ function matchesDiscardCostRequirements(
 
   const discardCardName = ability.cost?.discardCardName;
   if (typeof discardCardName === "string" && discardCardName.length > 0) {
-    return definition.name === discardCardName;
+    return cardHasName(definition, discardCardName);
   }
 
   return true;
@@ -1510,7 +1520,12 @@ function buildAbilityCostSelectionGroups(args: {
       : ability.cost?.exertCharacter
         ? 1
         : 0;
-  const requiredBanishItems = ability.cost?.banishItem ? 1 : 0;
+  const requiredBanishItems =
+    typeof ability.cost?.banishItem === "number"
+      ? Math.max(0, Math.floor(ability.cost.banishItem))
+      : ability.cost?.banishItem
+        ? 1
+        : 0;
   const requiredBanishCharacters = ability.cost?.banishCharacter ? 1 : 0;
   const requiredDiscardCards = getRequiredDiscardCardCostCount(ability);
 
@@ -1520,7 +1535,9 @@ function buildAbilityCostSelectionGroups(args: {
   const banishItemPool = actorPlayCards.filter(
     (candidateId) => adapter.getDefinitionByInstanceId(candidateId)?.cardType === "item",
   );
-  const banishCharacterPool = actorCharacters;
+  const banishCharacterPool = actorCharacters.filter(
+    (candidateId) => !(ability.cost?.banishCharacterTarget === "another" && candidateId === cardId),
+  );
   const discardPool = actorHand.filter((candidateId) =>
     matchesDiscardCostRequirements(adapter.getDefinitionByInstanceId(candidateId), ability),
   );

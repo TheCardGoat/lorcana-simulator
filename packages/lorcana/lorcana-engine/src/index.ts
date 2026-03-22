@@ -22,7 +22,9 @@ export type {
   CardsMaps,
   CommandFailure,
   DeepReadonly,
+  EngineMoveHistoryEntry,
   EngineMoveId,
+  GameLogEntry,
   EnginePacketUpdate,
   EnginePendingEffectProjection,
   MatchRuntime,
@@ -40,6 +42,7 @@ export type {
   ZoneOperationsAPI,
 } from "#core";
 export {
+  createCardsMapsFromStaticResources,
   createEmptyMatchStaticResources,
   createGameId,
   createPlayerId,
@@ -53,11 +56,26 @@ export {
 export { LorcanaClient, createLorcanaClient } from "./lorcana-client";
 export { LorcanaServer, createLorcanaServerGame } from "./lorcana-server";
 export {
+  AUTOMATED_ACTION_STRATEGIES,
+  DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+  boardControlLoreRaceAutomatedActionStrategy,
   computeAutomatedActionStateFingerprint,
   createAutomatedActionBoardSnapshot,
   defaultLoreRaceAutomatedActionStrategy,
+  getAutomatedActionStrategyOption,
   legacyLoreRaceAutomatedActionStrategy,
 } from "./automation";
+export type { AutomatedActionStrategyOption } from "./automation";
+export type {
+  AcceptedMoveRecord,
+  EngineLogRecord,
+  MoveHistorySourceAuthority,
+} from "./history-records";
+export {
+  createAcceptedMoveRecord,
+  createEngineLogRecord,
+  createSyntheticProcessedCommand,
+} from "./history-records";
 
 export type {
   ChallengePreviewResult,
@@ -66,6 +84,15 @@ export type {
   PlayCardDestinationInput,
   ResolutionExecutionOptions,
 } from "./lorcana-engine-base";
+
+export type {
+  AvailableMove,
+  AvailableMoveId,
+  MoveOption,
+  MoveOptionTarget,
+  MoveOptionAbility,
+  EffectTargetInfo,
+} from "./available-moves";
 export type {
   LorcanaEngineDeckEntry,
   LorcanaEnginePlayerInfo,
@@ -78,7 +105,13 @@ export type {
 
 export {
   getLorcanaServerAuthoritativeState,
+  getLorcanaServerAuthoritativeSnapshot,
   loadLorcanaServerAuthoritativeState,
+  loadLorcanaServerAuthoritativeSnapshot,
+} from "./serialization";
+export type {
+  LorcanaServerAuthoritativeSnapshot,
+  LorcanaUndoCheckpointSnapshot,
 } from "./serialization";
 
 // ============================================================================
@@ -177,4 +210,4 @@ export * from "./targeting";
 
 export * from "./types";
 
-export type { LorcanaRuntimeCardDerivedMethods } from "./runtime-moves";
+export type { LorcanaCardDerived } from "./types/projected-board";

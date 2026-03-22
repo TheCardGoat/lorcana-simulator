@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liloJuniorCakeDecoratorI18n } from "./008-lilo-junior-cake-decorator.i18n";
 
 export const liloJuniorCakeDecorator: CharacterCard = {
   id: "s1Y",
@@ -7,28 +8,6 @@ export const liloJuniorCakeDecorator: CharacterCard = {
   cardType: "character",
   name: "Lilo",
   version: "Junior Cake Decorator",
-  i18n: {
-    en: {
-      name: "Lilo",
-      version: "Junior Cake Decorator",
-      text: "Support",
-    },
-    de: {
-      name: "Lilo",
-      version: "Junior-Konditorin",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Lilo",
-      version: "Décoratrice de gâteau junior",
-      text: "Soutien",
-    },
-    it: {
-      name: "Lilo",
-      version: "Decoratrice di Torte Apprendista",
-      text: "Aiutante",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "005",
@@ -53,4 +32,5 @@ export const liloJuniorCakeDecorator: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: liloJuniorCakeDecoratorI18n,
 };

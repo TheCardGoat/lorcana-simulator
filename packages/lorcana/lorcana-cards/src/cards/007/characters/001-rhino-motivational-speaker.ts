@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rhinoMotivationalSpeakerI18n } from "./001-rhino-motivational-speaker.i18n";
 
 export const rhinoMotivationalSpeaker: CharacterCard = {
   id: "ZwR",
@@ -7,48 +8,6 @@ export const rhinoMotivationalSpeaker: CharacterCard = {
   cardType: "character",
   name: "Rhino",
   version: "Motivational Speaker",
-  i18n: {
-    en: {
-      name: "Rhino",
-      version: "Motivational Speaker",
-      text: [
-        {
-          title: "DESTINY CALLING",
-          description: "Your other characters get +2 {W}.",
-        },
-      ],
-    },
-    de: {
-      name: "Dino",
-      version: "Motivationsredner",
-      text: [
-        {
-          title: "DAS SCHICKSAL RUFT",
-          description: "Deine anderen Charaktere erhalten +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Rhino",
-      version: "Orateur motivant",
-      text: [
-        {
-          title: "L'APPEL DU DESTIN",
-          description: "Vos autres personnages gagnent +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Rhino",
-      version: "Motivatore",
-      text: [
-        {
-          title: "CHIAMATA DEL DESTINO I",
-          description: "tuoi altri personaggi ricevono +2.",
-        },
-      ],
-    },
-  },
   inkType: ["amber", "steel"],
   franchise: "Bolt",
   set: "007",
@@ -84,4 +43,5 @@ export const rhinoMotivationalSpeaker: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: rhinoMotivationalSpeakerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { merlinRabbitI18n } from "./052-merlin-rabbit.i18n";
 
 export const merlinRabbit: CharacterCard = {
   id: "LZe",
@@ -7,51 +8,6 @@ export const merlinRabbit: CharacterCard = {
   cardType: "character",
   name: "Merlin",
   version: "Rabbit",
-  i18n: {
-    en: {
-      name: "Merlin",
-      version: "Rabbit",
-      text: [
-        {
-          title: "HOPPITY HIP!",
-          description: "When you play this character and when he leaves play, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Merlin",
-      version: "Hase",
-      text: [
-        {
-          title: "HOPPEDI HIPPEDI!",
-          description:
-            "Wenn du diesen Charakter ausspielst und wenn er das Spiel verlässt, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Merlin",
-      version: "En lapin",
-      text: [
-        {
-          title: "HOPPITY HIP!",
-          description:
-            "Lorsque vous jouez ce personnage et lorsqu'il quitte la zone de jeu, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Merlino",
-      version: "Coniglio",
-      text: [
-        {
-          title: "HOPPITI HIP!",
-          description:
-            "Quando giochi questo personaggio e quando lascia il gioco, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -73,7 +29,6 @@ export const merlinRabbit: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Mentor", "Sorcerer"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -96,4 +51,6 @@ export const merlinRabbit: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: merlinRabbitI18n,
 };

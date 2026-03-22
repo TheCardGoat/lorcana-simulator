@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kitCloudkickerNavigatorI18n } from "./147-kit-cloudkicker-navigator.i18n";
 
 export const kitCloudkickerNavigator: CharacterCard = {
   id: "RK7",
@@ -7,35 +8,6 @@ export const kitCloudkickerNavigator: CharacterCard = {
   cardType: "character",
   name: "Kit Cloudkicker",
   version: "Navigator",
-  i18n: {
-    en: {
-      name: "Kit Cloudkicker",
-      version: "Navigator",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "Ward",
-        },
-      ],
-    },
-    de: {
-      name: "Kit Wolkenflitzer",
-      version: "Navigator",
-      text: "Gestaltwandel 3 Behütet",
-    },
-    fr: {
-      name: "Kit",
-      version: "Copilote",
-      text: "Alter 3 Hors d'atteinte",
-    },
-    it: {
-      name: "Kit Nuvoletta",
-      version: "Navigatore",
-      text: "Trasformazione 3 Protetto",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Talespin",
   set: "003",
@@ -76,4 +48,5 @@ export const kitCloudkickerNavigator: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: kitCloudkickerNavigatorI18n,
 };

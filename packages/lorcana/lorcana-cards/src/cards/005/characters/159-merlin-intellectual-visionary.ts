@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { merlinIntellectualVisionaryI18n } from "./159-merlin-intellectual-visionary.i18n";
 
 export const merlinIntellectualVisionary: CharacterCard = {
   id: "ngW",
@@ -7,37 +8,6 @@ export const merlinIntellectualVisionary: CharacterCard = {
   cardType: "character",
   name: "Merlin",
   version: "Intellectual Visionary",
-  i18n: {
-    en: {
-      name: "Merlin",
-      version: "Intellectual Visionary",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "OVERDEVELOPED BRAIN",
-          description:
-            "When you play this character, if you used Shift to play him, you may search your deck for any card, put that card into your hand, then shuffle your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Merlin",
-      version: "Intellektueller Visionär",
-      text: "Gestaltwandel 5 ÜBERENTWICKELTES GEHIRN Wenn du diesen Charakter ausspielst, falls du Gestaltwandel benutzt hast, um diesen Charakter auszuspielen, darfst du dein Deck nach einer beliebigen Karte durchsuchen und diese auf deine Hand nehmen. Mische danach dein Deck.",
-    },
-    fr: {
-      name: "Merlin",
-      version: "Visionnaire éclairé",
-      text: "Alter 5 CERVEAU SURDÉVELOPPÉ Si vous jouez ce personnage en utilisant sa capacité Alter, vous pouvez chercher une carte dans votre pioche et la placer dans votre main. Ensuite, mélangez votre pioche.",
-    },
-    it: {
-      name: "Merlino",
-      version: "Intellettuale Visionario",
-      text: "Trasformazione 5 INTELLIGENZA SUPERSVILUPPATA Quando giochi questo personaggio, se hai usato Trasformazione per giocarlo, puoi cercare una qualsiasi carta nel tuo mazzo, aggiungere quella carta alla tua mano e poi rimescolare il tuo mazzo.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -97,4 +67,5 @@ export const merlinIntellectualVisionary: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: merlinIntellectualVisionaryI18n,
 };

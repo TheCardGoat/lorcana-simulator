@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseMusketeerI18n } from "./186-mickey-mouse-musketeer.i18n";
 
 export const mickeyMouseMusketeer: CharacterCard = {
   id: "sdI",
@@ -7,54 +8,6 @@ export const mickeyMouseMusketeer: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Musketeer",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Musketeer",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "ALL FOR ONE",
-          description: "Your other Musketeer characters get +1 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Mickey Mouse",
-      version: "Musketeer",
-      text: [
-        {
-          title: "Bodyguard",
-          description:
-            "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.) ALL FOR ONE Your other Musketeer characters get +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Musketeer",
-      text: [
-        {
-          title: "Bodyguard",
-          description:
-            "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.) ALL FOR ONE Your other Musketeer characters get +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Mickey Mouse",
-      version: "Musketeer",
-      text: [
-        {
-          title: "Bodyguard",
-          description:
-            "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.) ALL FOR ONE Your other Musketeer characters get +1.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   set: "001",
   cardNumber: 186,
@@ -64,7 +17,6 @@ export const mickeyMouseMusketeer: CharacterCard = {
   willpower: 7,
   lore: 2,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_94245aa3b4a241379cf9f7fbbf7f6cd7",
     tcgPlayer: 494141,
@@ -88,10 +40,22 @@ export const mickeyMouseMusketeer: CharacterCard = {
     },
     {
       effect: {
-        duration: "this-turn",
         modifier: 1,
         stat: "strength",
-        target: "CHOSEN_CHARACTER",
+        target: {
+          count: "all",
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Musketeer",
+            },
+          ],
+          excludeSelf: true,
+        },
         type: "modify-stat",
       },
       id: "9h9-2",
@@ -100,4 +64,5 @@ export const mickeyMouseMusketeer: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: mickeyMouseMusketeerI18n,
 };

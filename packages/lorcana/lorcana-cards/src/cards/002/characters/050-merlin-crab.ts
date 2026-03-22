@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { merlinCrabI18n } from "./050-merlin-crab.i18n";
 
 export const merlinCrab: CharacterCard = {
   id: "mYZ",
@@ -7,52 +8,6 @@ export const merlinCrab: CharacterCard = {
   cardType: "character",
   name: "Merlin",
   version: "Crab",
-  i18n: {
-    en: {
-      name: "Merlin",
-      version: "Crab",
-      text: [
-        {
-          title: "READY OR NOT!",
-          description:
-            "When you play this character and when he leaves play, chosen character gains Challenger +3 this turn. (They get +3 {S} while challenging.)",
-        },
-      ],
-    },
-    de: {
-      name: "Merlin",
-      version: "Krabbe",
-      text: [
-        {
-          title: "NEHMT EUCH IN ACHT!",
-          description:
-            "Wenn du diesen Charakter ausspielst und wenn er das Spiel verlässt, erhält ein Charakter deiner Wahl in diesem Zug Herausfordern +3 (Während der Charakter herausfordert, erhält er +3).",
-        },
-      ],
-    },
-    fr: {
-      name: "Merlin",
-      version: "En crabe",
-      text: [
-        {
-          title: "J'ESPÈRE QUE VOUS ÊTES PRÊTE!",
-          description:
-            "Lorsque vous jouez ce personnage et lorsqu'il quitte la zone de jeu, choisissez un personnage qui gagne Offensif +3 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Merlin",
-      version: "Crab",
-      text: [
-        {
-          title: "READY OR NOT!",
-          description:
-            "When you play this character and when he leaves play, chosen character gains Challenger +3 this turn. (They get +3 while challenging.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -75,7 +30,6 @@ export const merlinCrab: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Mentor", "Sorcerer"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -117,4 +71,6 @@ export const merlinCrab: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: merlinCrabI18n,
 };

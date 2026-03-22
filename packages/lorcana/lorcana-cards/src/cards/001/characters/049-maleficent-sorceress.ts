@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { maleficentSorceressI18n } from "./049-maleficent-sorceress.i18n";
 
 export const maleficentSorceress: CharacterCard = {
   id: "H9N",
@@ -7,48 +8,6 @@ export const maleficentSorceress: CharacterCard = {
   cardType: "character",
   name: "Maleficent",
   version: "Sorceress",
-  i18n: {
-    en: {
-      name: "Maleficent",
-      version: "Sorceress",
-      text: [
-        {
-          title: "CAST MY SPELL!",
-          description: "When you play this character, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Malefiz",
-      version: "Hexerin",
-      text: [
-        {
-          title: "WIRKE MEINEN ZAUBER!",
-          description: "Wenn du diesen Charakter ausspielst, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "MALÉFIQUE",
-      version: "Sorcière",
-      text: [
-        {
-          title: "SORTILÈGE",
-          description: "Lorsque vous jouez ce personnage, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Malefica",
-      version: "Incantatrice",
-      text: [
-        {
-          title: "OSCURA FORZA",
-          description: "Quando giochi questo personaggio, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sleeping Beauty",
   set: "001",
@@ -59,7 +18,6 @@ export const maleficentSorceress: CharacterCard = {
   willpower: 2,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_ff8bf99d2bd84183bcc4b5d7a18360f0",
     tcgPlayer: 494103,
@@ -93,4 +51,5 @@ export const maleficentSorceress: CharacterCard = {
       text: "CAST MY SPELL! When you play this character, you may draw a card.",
     },
   ],
+  i18n: maleficentSorceressI18n,
 };

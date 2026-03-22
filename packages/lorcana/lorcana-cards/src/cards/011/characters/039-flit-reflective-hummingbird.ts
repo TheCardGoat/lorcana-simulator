@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flitReflectiveHummingbirdI18n } from "./039-flit-reflective-hummingbird.i18n";
 
 export const flitReflectiveHummingbird: CharacterCard = {
   id: "lgw",
@@ -7,52 +8,6 @@ export const flitReflectiveHummingbird: CharacterCard = {
   cardType: "character",
   name: "Flit",
   version: "Reflective Hummingbird",
-  i18n: {
-    en: {
-      name: "Flit",
-      version: "Reflective Hummingbird",
-      text: [
-        {
-          title: "LOOK OUT!",
-          description:
-            "When you play this character, move up to 1 damage from chosen character to chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Flit",
-      version: "Reflektierter Kolibri",
-      text: [
-        {
-          title: "PASS DOCH AUF!",
-          description:
-            "Wenn du diesen Charakter ausspielst, verschiebe bis zu 1 Schaden von einem Charakter deiner Wahl zu einem gegnerischen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Flit",
-      version: "Colibri réfléchissant",
-      text: [
-        {
-          title: "ATTENTION!",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage et déplacer 1 de ses dommages sur un personnage adverse de votre choix.",
-        },
-      ],
-    },
-    it: {
-      name: "Flit",
-      version: "Colibrì Che Si Riflette",
-      text: [
-        {
-          title: "ATTENTO!",
-          description:
-            "Quando giochi questo personaggio, sposta fino a 1 danno da un personaggio a tua scelta a un personaggio avversario a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Pocahontas",
   set: "011",
@@ -78,18 +33,25 @@ export const flitReflectiveHummingbird: CharacterCard = {
   abilities: [
     {
       id: "14k-1",
-      effect: {
-        from: "hand",
-        type: "play-card",
-      },
       name: "LOOK OUT!",
+      text: "LOOK OUT! When you play this character, move up to 1 damage from chosen character to chosen opposing character.",
+      type: "triggered",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
       },
-      type: "triggered",
-      text: "LOOK OUT! When you play this character, move up to 1 damage from chosen character to chosen opposing character.",
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "move-damage",
+          amount: 1,
+          from: "CHOSEN_CHARACTER",
+          to: "CHOSEN_OPPOSING_CHARACTER",
+        },
+      },
     },
   ],
+  i18n: flitReflectiveHummingbirdI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { energyBlastI18n } from "./131-energy-blast.i18n";
 
 export const energyBlast: ActionCard = {
   id: "uDQ",
@@ -6,24 +7,6 @@ export const energyBlast: ActionCard = {
   reprints: ["set6-131"],
   cardType: "action",
   name: "Energy Blast",
-  i18n: {
-    en: {
-      name: "Energy Blast",
-      text: "Banish chosen character. Draw a card.",
-    },
-    de: {
-      name: "Energie-Explosion",
-      text: "Verbanne einen Charakter deiner Wahl. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Souffle d’énergie",
-      text: "Choisissez un personnage et bannissez-le. Piochez une carte.",
-    },
-    it: {
-      name: "Esplosione di Energia",
-      text: "Esilia un personaggio a tua scelta. Pesca una carta.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aladdin",
   set: "006",
@@ -63,4 +46,5 @@ export const energyBlast: ActionCard = {
       type: "action",
     },
   ],
+  i18n: energyBlastI18n,
 };

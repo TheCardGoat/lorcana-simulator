@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ladyTremaineOverbearingMatriarchI18n } from "./111-lady-tremaine-overbearing-matriarch.i18n";
 
 export const ladyTremaineOverbearingMatriarch: CharacterCard = {
   id: "B8N",
@@ -7,52 +8,6 @@ export const ladyTremaineOverbearingMatriarch: CharacterCard = {
   cardType: "character",
   name: "Lady Tremaine",
   version: "Overbearing Matriarch",
-  i18n: {
-    en: {
-      name: "Lady Tremaine",
-      version: "Overbearing Matriarch",
-      text: [
-        {
-          title: "NOT FOR YOU",
-          description:
-            "When you play this character, each opponent with more lore than you loses 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Gräfin Tremaine",
-      version: "Überhebliches Familienoberhaupt",
-      text: [
-        {
-          title: "NICHT FÜR DICH",
-          description:
-            "Wenn du diesen Charakter ausspielst, verlieren alle gegnerischen Mitspielenden, die mehr Legenden als du haben, je 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Madame de Trémaine",
-      version: "Marâtre autoritaire",
-      text: [
-        {
-          title: "PAS POUR TOI",
-          description:
-            "Lorsque vous jouez ce personnage, chaque adversaire ayant plus d'éclats de Lore que vous perd 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Lady Tremaine",
-      version: "Overbearing Matriarch",
-      text: [
-        {
-          title: "NOT FOR YOU",
-          description:
-            "When you play this character, each opponent with more lore than you loses 1 lore.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Cinderella",
   set: "002",
@@ -75,13 +30,21 @@ export const ladyTremaineOverbearingMatriarch: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain"],
-  missingTests: true,
   abilities: [
     {
       effect: {
-        amount: 1,
-        target: "EACH_OPPONENT",
-        type: "lose-lore",
+        type: "for-each-opponent",
+        condition: {
+          type: "comparison",
+          left: { type: "lore", controller: "opponent" },
+          comparison: "greater",
+          right: { type: "lore", controller: "you" },
+        },
+        effect: {
+          type: "lose-lore",
+          amount: 1,
+          target: "OPPONENT",
+        },
       },
       id: "r0v-1",
       name: "NOT FOR YOU",
@@ -94,4 +57,5 @@ export const ladyTremaineOverbearingMatriarch: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: ladyTremaineOverbearingMatriarchI18n,
 };

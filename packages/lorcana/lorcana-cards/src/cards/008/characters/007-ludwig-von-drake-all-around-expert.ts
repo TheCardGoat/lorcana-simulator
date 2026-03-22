@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ludwigVonDrakeAllaroundExpertI18n } from "./007-ludwig-von-drake-all-around-expert.i18n";
 
 export const ludwigVonDrakeAllaroundExpert: CharacterCard = {
   id: "T22",
@@ -7,72 +8,6 @@ export const ludwigVonDrakeAllaroundExpert: CharacterCard = {
   cardType: "character",
   name: "Ludwig Von Drake",
   version: "All-Around Expert",
-  i18n: {
-    en: {
-      name: "Ludwig Von Drake",
-      version: "All-Around Expert",
-      text: [
-        {
-          title: "SUPERIOR MIND",
-          description:
-            "When you play this character, chosen opponent reveals their hand and discards a non-character card of your choice.",
-        },
-        {
-          title: "LASTING LEGACY",
-          description:
-            "When this character is banished, you may put this card into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Primus von Quack",
-      version: "Vielseitiger Experte",
-      text: [
-        {
-          title: "ÜBERLEGENER VERSTAND",
-          description:
-            "Wenn du diesen Charakter ausspielst, zeigt einer der gegnerischen Mitspielenden deiner Wahl alle Handkarten für alle sichtbar vor und wirft eine Karte deiner Wahl, die keine Charakterkarte ist, ab.",
-        },
-        {
-          title: "EWIGES ERBE",
-          description:
-            "Wenn dieser Charakter verbannt wird, darfst du diese Karte verdeckt und erschöpft in deinen Tintenvorrat legen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Ludwig von Drake",
-      version: "Expert polyvalent",
-      text: [
-        {
-          title: "ESPRIT SUPÉRIEUR",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un adversaire qui révèle sa main. Choisissez-y une carte non-Personnage dont il se défausse.",
-        },
-        {
-          title: "HÉRITAGE DURABLE",
-          description:
-            "Lorsque ce personnage est banni, vous pouvez le placer dans votre réserve d'encre, face cachée et épuisé.",
-        },
-      ],
-    },
-    it: {
-      name: "Pico de Paperis",
-      version: "Esperto a Tutto Tondo",
-      text: [
-        {
-          title: "MENTE SUPERIORE",
-          description:
-            "Quando giochi questo personaggio, un avversario a tua scelta rivela la sua mano e scarta una carta non personaggio a tua scelta.",
-        },
-        {
-          title: "EREDITÀ DURATURA",
-          description:
-            "Quando questo personaggio viene esiliato, puoi aggiungere questa carta al tuo calamaio, a faccia in giù e impegnata.",
-        },
-      ],
-    },
-  },
   inkType: ["amber", "sapphire"],
   set: "008",
   cardNumber: 7,
@@ -99,5 +34,60 @@ export const ludwigVonDrakeAllaroundExpert: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "T22-1",
+      type: "triggered",
+      name: "SUPERIOR MIND",
+      text: "SUPERIOR MIND When you play this character, chosen opponent reveals their hand and discards a non-character card of your choice.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "reveal-hand",
+            target: "OPPONENT",
+          },
+          {
+            type: "discard",
+            amount: 1,
+            target: "OPPONENT",
+            from: "hand",
+            chosen: true,
+            chosenBy: "you",
+            filter: {
+              notCardType: "character",
+            },
+          },
+        ],
+      },
+    },
+    {
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          exerted: true,
+          facedown: true,
+          source: "this-card",
+          target: "CONTROLLER",
+          type: "put-into-inkwell",
+        },
+      },
+      id: "T22-2",
+      name: "LASTING LEGACY",
+      text: "LASTING LEGACY When this character is banished, you may put this card into your inkwell facedown and exerted.",
+      type: "triggered",
+      trigger: {
+        event: "banish",
+        on: "SELF",
+        timing: "when",
+      },
+    },
+  ],
+  i18n: ludwigVonDrakeAllaroundExpertI18n,
 };

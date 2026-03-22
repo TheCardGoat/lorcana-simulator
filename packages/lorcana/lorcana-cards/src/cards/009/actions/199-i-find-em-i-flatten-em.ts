@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { iFindEmIFlattenEmI18n } from "./199-i-find-em-i-flatten-em.i18n";
 
 export const iFindEmIFlattenEm: ActionCard = {
   id: "ly1",
@@ -6,24 +7,6 @@ export const iFindEmIFlattenEm: ActionCard = {
   reprints: ["set4-196", "set9-199"],
   cardType: "action",
   name: "I Find ’Em, I Flatten ’Em",
-  i18n: {
-    en: {
-      name: "I Find ’Em, I Flatten ’Em",
-      text: "Banish all items.",
-    },
-    de: {
-      name: "Ja, ich trete es klein",
-      text: "Verbanne alle Gegenstände.",
-    },
-    fr: {
-      name: "Ils cassent en deux comme je veux",
-      text: "Bannissez tous les objets.",
-    },
-    it: {
-      name: "Una Furia Vivente",
-      text: "(Un personaggio con costo 4 o superiore può per cantare questa canzone gratis.) Esilia tutti gli oggetti.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Encanto",
   set: "009",
@@ -52,4 +35,5 @@ export const iFindEmIFlattenEm: ActionCard = {
       },
     },
   ],
+  i18n: iFindEmIFlattenEmI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hueySavvyNephewI18n } from "./145-huey-savvy-nephew.i18n";
 
 export const hueySavvyNephew: CharacterCard = {
   id: "iYO",
@@ -7,37 +8,6 @@ export const hueySavvyNephew: CharacterCard = {
   cardType: "character",
   name: "Huey",
   version: "Savvy Nephew",
-  i18n: {
-    en: {
-      name: "Huey",
-      version: "Savvy Nephew",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "THREE NEPHEWS",
-          description:
-            "Whenever this character quests, if you have characters named Dewey and Louie in play, you may draw 3 cards.",
-        },
-      ],
-    },
-    de: {
-      name: "Tick Duck",
-      version: "Gerissener Neffe",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) DIE DREI NEFFEN Jedes Mal, wenn dieser Charakter erkundet und du einen Trick-Charakter und einen Track-Charakter im Spiel hast, darfst du 3 Karten ziehen.",
-    },
-    fr: {
-      name: "Riri",
-      version: "Neveu astucieux",
-      text: "Soutien TROIS NEVEUX Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez piocher 3 cartes si vous avez au moins un personnage Fifi et un personnage Loulou en jeu.",
-    },
-    it: {
-      name: "Qui",
-      version: "Nipote Esperto",
-      text: "Aiutante TRE NIPOTI Ogni volta che questo personaggio va all'avventura, se hai personaggi chiamati Quo e Qua in gioco, puoi pescare 3 carte.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Ducktales",
   set: "003",
@@ -63,7 +33,6 @@ export const hueySavvyNephew: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       id: "aka-1",
@@ -95,4 +64,5 @@ export const hueySavvyNephew: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: hueySavvyNephewI18n,
 };

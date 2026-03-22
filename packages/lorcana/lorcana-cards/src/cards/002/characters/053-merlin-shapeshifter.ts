@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { merlinShapeshifterI18n } from "./053-merlin-shapeshifter.i18n";
 
 export const merlinShapeshifter: CharacterCard = {
   id: "ijy",
@@ -7,52 +8,6 @@ export const merlinShapeshifter: CharacterCard = {
   cardType: "character",
   name: "Merlin",
   version: "Shapeshifter",
-  i18n: {
-    en: {
-      name: "Merlin",
-      version: "Shapeshifter",
-      text: [
-        {
-          title: "BATTLE OF WITS",
-          description:
-            "Whenever one of your other characters is returned to your hand from play, this character gets +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Merlin",
-      version: "Formwandler",
-      text: [
-        {
-          title: "KAMPF DER GEISTER",
-          description:
-            "Dieser Charakter erhält jedes Mal, wenn einer deiner anderen Charaktere aus dem Spiel auf deine Hand zurückkehrt, in diesem Zug +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Merlin",
-      version: "Métamorphe",
-      text: [
-        {
-          title: "BATAILLE D'ESPRITS",
-          description:
-            "Chaque fois que vous renvoyez l'un de vos autres personnages dans votre main, ce personnage gagne +1 pour le reste du tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Merlin",
-      version: "Shapeshifter",
-      text: [
-        {
-          title: "BATTLE OF WITS",
-          description:
-            "Whenever one of your other characters is returned to your hand from play, this character gets +1 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -75,7 +30,6 @@ export const merlinShapeshifter: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Mentor", "Sorcerer"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -96,4 +50,6 @@ export const merlinShapeshifter: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: merlinShapeshifterI18n,
 };

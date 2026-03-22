@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseStylishSurferI18n } from "./113-minnie-mouse-stylish-surfer.i18n";
 
 export const minnieMouseStylishSurfer: CharacterCard = {
   id: "7jJ",
@@ -7,33 +8,6 @@ export const minnieMouseStylishSurfer: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Stylish Surfer",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Stylish Surfer",
-      text: "Evasive",
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Stylische Surferin",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Minnie",
-      version: "Surfeuse élégante",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Minnie Mouse",
-      version: "Stylish Surfer",
-      text: [
-        {
-          title: "Evasive",
-          description: "(Only characters with Evasive can challenge this character.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "002",
   cardNumber: 113,
@@ -57,4 +31,5 @@ export const minnieMouseStylishSurfer: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: minnieMouseStylishSurferI18n,
 };

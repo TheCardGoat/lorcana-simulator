@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { annaBravingTheStormI18n } from "./146-anna-braving-the-storm.i18n";
 
 export const annaBravingTheStorm: CharacterCard = {
   id: "rAH",
@@ -7,50 +8,6 @@ export const annaBravingTheStorm: CharacterCard = {
   cardType: "character",
   name: "Anna",
   version: "Braving the Storm",
-  i18n: {
-    en: {
-      name: "Anna",
-      version: "Braving the Storm",
-      text: [
-        {
-          title: "I WAS BORN READY",
-          description: "While you have another Hero character in play, this character gets +1 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Anna",
-      version: "Dem Sturm trotzend",
-      text: [
-        {
-          title: "ICH BIN SO WAS VON BEREIT",
-          description:
-            "Wenn du mindestens eine andere Heldin oder einen Held im Spiel hast, erhält dieser Charakter +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Anna",
-      version: "Bravant la tempête",
-      text: [
-        {
-          title: "JE SUIS TOUT À FAIT PRÊTE",
-          description:
-            "Tant que vous avez un autre personnage Héros en jeu, ce personnage-ci gagne +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Anna",
-      version: "Che Affronta la Tempesta",
-      text: [
-        {
-          title: "SONO NATA PRONTA",
-          description: "Se hai in gioco un altro personaggio Eroe, questo personaggio riceve +1.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Frozen",
   set: "009",
@@ -74,15 +31,24 @@ export const annaBravingTheStorm: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Queen"],
   abilities: [
     {
+      type: "static",
       effect: {
-        modifier: 1,
-        stat: "lore",
-        target: "SELF",
         type: "modify-stat",
+        stat: "lore",
+        modifier: 1,
+        target: "SELF",
+      },
+      condition: {
+        type: "has-character-count",
+        classification: "Hero",
+        controller: "you",
+        count: 2,
+        comparison: "greater-or-equal",
       },
       id: "mi9-1",
+      name: "I WAS BORN READY",
       text: "I WAS BORN READY While you have another Hero character in play, this character gets +1 {L}.",
-      type: "action",
     },
   ],
+  i18n: annaBravingTheStormI18n,
 };

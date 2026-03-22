@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rapunzelGiftedWithHealingI18n } from "./018-rapunzel-gifted-with-healing.i18n";
 
 export const rapunzelGiftedWithHealing: CharacterCard = {
   id: "mTY",
@@ -7,52 +8,6 @@ export const rapunzelGiftedWithHealing: CharacterCard = {
   cardType: "character",
   name: "Rapunzel",
   version: "Gifted with Healing",
-  i18n: {
-    en: {
-      name: "Rapunzel",
-      version: "Gifted with Healing",
-      text: [
-        {
-          title: "GLEAM AND GLOW",
-          description:
-            "When you play this character, remove up to 3 damage from one of your characters. Draw a card for each 1 damage removed this way.",
-        },
-      ],
-    },
-    de: {
-      name: "Rapunzel",
-      version: "Gifted with Healing",
-      text: [
-        {
-          title: "GLEAM AND GLOW",
-          description:
-            "When you play this character, remove up to 3 damage from one of your characters. Draw a card for each 1 damage removed this way.",
-        },
-      ],
-    },
-    fr: {
-      name: "Rapunzel",
-      version: "Gifted with Healing",
-      text: [
-        {
-          title: "GLEAM AND GLOW",
-          description:
-            "When you play this character, remove up to 3 damage from one of your characters. Draw a card for each 1 damage removed this way.",
-        },
-      ],
-    },
-    it: {
-      name: "Rapunzel",
-      version: "Gifted with Healing",
-      text: [
-        {
-          title: "GLEAM AND GLOW",
-          description:
-            "When you play this character, remove up to 3 damage from one of your characters. Draw a card for each 1 damage removed this way.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Tangled",
   set: "001",
@@ -104,4 +59,5 @@ export const rapunzelGiftedWithHealing: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: rapunzelGiftedWithHealingI18n,
 };

@@ -1,37 +1,44 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   AladdinIntrepidCommander,
-//   HadesStrongArm,
-//   TootlesLostBoy,
-// } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Hades - Strong Arm", () => {
-//   It("WHAT ARE YOU GONNA DO? {E}, 3 {I}, Banish one of your characters – Banish chosen character.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: 3,
-//         Play: [hadesStrongArm, aladdinIntrepidCommander],
-//       },
-//       {
-//         Play: [tootlesLostBoy],
-//       },
-//     );
-//
-//     Await testEngine.activateCard(hadesStrongArm, {
-//       Costs: [aladdinIntrepidCommander],
-//     });
-//
-//     Await testEngine.resolveTopOfStack({ targets: [tootlesLostBoy] });
-//
-//     Expect(testEngine.getCardModel(hadesStrongArm).exerted).toBe(true);
-//     Expect(testEngine.getCardModel(tootlesLostBoy).isDead).toBe(true);
-//     Expect(testEngine.getCardModel(aladdinIntrepidCommander).isDead).toBe(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { hadesStrongArm } from "./125-hades-strong-arm";
+
+const sacrificialAlly = createMockCharacter({
+  id: "hades-strong-arm-sacrificial-ally",
+  name: "Sacrificial Ally",
+  cost: 2,
+});
+
+const opposingTarget = createMockCharacter({
+  id: "hades-strong-arm-opposing-target",
+  name: "Opposing Target",
+  cost: 3,
+});
+
+describe("Hades - Strong Arm", () => {
+  it("exerts, pays 3 ink, banishes one of your characters, and banishes a chosen character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        inkwell: hadesStrongArm.cost,
+        play: [hadesStrongArm, sacrificialAlly],
+      },
+      {
+        play: [opposingTarget],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(hadesStrongArm, {
+        ability: "WHAT ARE YOU GONNA DO?",
+        costs: {
+          banishCharacters: [testEngine.findCardInstanceId(sacrificialAlly, "play", "player_one")],
+        },
+        targets: [opposingTarget],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().isExerted(hadesStrongArm)).toBe(true);
+    expect(testEngine.asPlayerOne().getAvailableInk("player_one")).toBe(2);
+    expect(testEngine.asPlayerOne().getCardZone(sacrificialAlly)).toBe("discard");
+    expect(testEngine.asPlayerTwo().getCardZone(opposingTarget)).toBe("discard");
+  });
+});

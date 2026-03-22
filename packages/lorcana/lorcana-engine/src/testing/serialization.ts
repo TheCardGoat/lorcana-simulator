@@ -40,7 +40,7 @@ export function buildLorcanaStaticResources(
     playerId: string;
     deck: Array<{ cardId: string; qty: number }>;
   }>,
-): MatchStaticResources<LorcanaCard> {
+): MatchStaticResources {
   // Create card catalog
   const cards = createRecordCardCatalog("lorcana:cards", cardDefinitions);
 
@@ -63,9 +63,9 @@ export function buildLorcanaStaticResources(
  *
  * @returns Empty MatchStaticResources
  */
-export function createEmptyLorcanaStaticResources(): MatchStaticResources<LorcanaCard> {
+export function createEmptyLorcanaStaticResources(): MatchStaticResources {
   return {
-    cards: createRecordCardCatalog<LorcanaCard>("lorcana:empty", {}),
+    cards: createRecordCardCatalog("lorcana:empty", {}),
     instances: createRecordCardInstanceRegistry("lorcana:empty", {}),
     zoneDefinitions: {},
   };

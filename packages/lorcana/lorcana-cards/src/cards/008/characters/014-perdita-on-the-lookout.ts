@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { perditaOnTheLookoutI18n } from "./014-perdita-on-the-lookout.i18n";
 
 export const perditaOnTheLookout: CharacterCard = {
   id: "MrJ",
@@ -7,49 +8,6 @@ export const perditaOnTheLookout: CharacterCard = {
   cardType: "character",
   name: "Perdita",
   version: "On the Lookout",
-  i18n: {
-    en: {
-      name: "Perdita",
-      version: "On the Lookout",
-      text: [
-        {
-          title: "KEEPING WATCH",
-          description: "While you have a Puppy character in play, this character gets +1 {W}.",
-        },
-      ],
-    },
-    de: {
-      name: "Perdi",
-      version: "Auf der Lauer",
-      text: [
-        {
-          title: "HÄLT WACHE",
-          description:
-            "Solange du mindestens einen Welpen im Spiel hast, erhält dieser Charakter +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Perdita",
-      version: "Aux aguets",
-      text: [
-        {
-          title: "MONTER LA GARDE",
-          description: "Tant que vous avez un personnage Chiot en jeu, ce personnage-ci gagne +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Peggy",
-      version: "Di Vedetta",
-      text: [
-        {
-          title: "TENERE D'OCCHIO",
-          description: "Mentre hai in gioco un personaggio Cucciolo, questo personaggio riceve +1.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "101 Dalmatians",
   set: "008",
@@ -84,4 +42,5 @@ export const perditaOnTheLookout: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: perditaOnTheLookoutI18n,
 };

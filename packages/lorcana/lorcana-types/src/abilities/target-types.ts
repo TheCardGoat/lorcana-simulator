@@ -20,6 +20,7 @@
  * ```
  */
 
+import type { InkType } from "../cards/ink-types";
 import type { TargetDSL } from "../targeting/target-dsl";
 
 // ============================================================================
@@ -60,7 +61,9 @@ export type PlayerTarget =
   | "CHARACTERS_COST_3_OR_LESS" // Characters with cost 3 or less
   | "CHARACTERS_COST_2_OR_LESS" // Characters with cost 2 or less
   | "OPPOSING_CHARACTERS" // Alias for ALL_OPPOSING_CHARACTERS
-  | "LOCATIONS"; // All locations (for lore gain effects)
+  | "CHOSEN_OPPONENT" // A chosen opponent (for multiplayer)
+  | "LOCATIONS" // All locations (for lore gain effects)
+  | "TRIGGER_SOURCE_OWNER"; // Owner of the card that triggered the ability
 
 // ============================================================================
 // Card References (Context-Aware)
@@ -88,6 +91,8 @@ export type CardReference =
 
   // Trigger context (for triggered abilities)
   | { ref: "trigger-source" } // Card that triggered the ability
+  | { ref: "trigger-subject" } // Subject card of the trigger event (e.g., the banished/boosted character)
+  | { ref: "trigger-destination" } // Destination card/zone target from the trigger event when applicable
 
   // Challenge context
   | { ref: "attacker" } // Character doing the challenge
@@ -126,6 +131,7 @@ export interface LorcanaContext {
 export type TargetReference =
   | "source"
   | "trigger-subject"
+  | "trigger-destination"
   | "selected-first"
   | "selected-all"
   | "revealed-first"
@@ -183,6 +189,7 @@ export type CharacterTargetEnum =
   | "YOUR_PRINCE_PRINCESS_KING_QUEEN_CHARACTERS" // Your royalty characters
   | "YOUR_EXERTED_CHARACTERS" // Your exerted characters
   | "YOUR_EVASIVE_CHARACTERS" // Your Evasive characters
+  | "YOUR_OTHER_EVASIVE_CHARACTERS" // Your other Evasive characters (excluding self)
   | "YOUR_RECKLESS_CHARACTERS" // Your Reckless characters
   | "CHOSEN_DRAGON_CHARACTER" // Chosen Dragon character
 
@@ -361,6 +368,10 @@ export interface AtLocationFilter {
 
 export interface SameLocationAsSourceFilter {
   type: "same-location-as-source";
+}
+
+export interface IsSongFilter {
+  type: "is-song";
 }
 
 export interface NamedCardFilter {
@@ -546,6 +557,11 @@ export interface AttributeBooleanFilter {
   value: boolean;
 }
 
+export interface InkTypeFilter {
+  type: "ink-type";
+  inkType: InkType;
+}
+
 export interface AndCardFilter {
   type: "and";
   filters: CardFilter[];
@@ -627,6 +643,7 @@ export type CardFilter =
   | WillpowerComparisonFilter
   | LoreComparisonFilter
   | MoveCostComparisonFilter
+  | InkTypeFilter
   // Source/Reference
   | SourceFilter
   | ChallengeRoleFilter
@@ -638,6 +655,7 @@ export type CardFilter =
   | UnderParentFilter
   | AtLocationFilter
   | SameLocationAsSourceFilter
+  | IsSongFilter
   // Generic Attribute
   | AttributeFilter
   // Composite filters
@@ -666,6 +684,7 @@ export type CharacterFilter =
   | StrengthComparisonFilter
   | WillpowerComparisonFilter
   | LoreComparisonFilter
+  | InkTypeFilter
   // Source/Reference
   | SourceFilter
   | ChallengeRoleFilter
@@ -760,7 +779,14 @@ export type CharacterTargetQuery =
 /**
  * Union type for all character targeting options
  */
-export type CharacterTarget = CharacterTargetEnum | CharacterTargetQuery | CardReference;
+/** Refers to a previously-selected target by name (e.g. { reference: "selected-first" }) */
+export type TargetReferenceOnly = { reference: TargetReference };
+
+export type CharacterTarget =
+  | CharacterTargetEnum
+  | CharacterTargetQuery
+  | CardReference
+  | TargetReferenceOnly;
 
 // ============================================================================
 // Location Targeting
@@ -831,7 +857,11 @@ export type LocationTargetQuery =
   | UpToCountLocationQuery
   | AllMatchingLocationQuery;
 
-export type LocationTarget = LocationTargetEnum | LocationTargetQuery | CardReference;
+export type LocationTarget =
+  | LocationTargetEnum
+  | LocationTargetQuery
+  | CardReference
+  | TargetReferenceOnly;
 
 // ============================================================================
 // Item Targeting
@@ -902,7 +932,7 @@ export interface AllMatchingItemQuery extends ItemQueryBase {
  */
 export type ItemTargetQuery = ExactCountItemQuery | UpToCountItemQuery | AllMatchingItemQuery;
 
-export type ItemTarget = ItemTargetEnum | ItemTargetQuery | CardReference;
+export type ItemTarget = ItemTargetEnum | ItemTargetQuery | CardReference | TargetReferenceOnly;
 
 // ============================================================================
 // Card Targeting (any card type)

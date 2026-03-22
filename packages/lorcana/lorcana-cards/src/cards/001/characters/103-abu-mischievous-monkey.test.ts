@@ -1,13 +1,20 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
 import { abuMischievousMonkey } from "./103-abu-mischievous-monkey";
 
 describe("Abu - Mischievous Monkey", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [abuMischievenusMonkey] });
-  //   Expect(testEngine.getCardModel(abuMischievenusMonkey).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+  it("is a vanilla card with no rules text abilities", () => {
+    expect(abuMischievousMonkey.vanilla).toBe(true);
+    expect(abuMischievousMonkey.abilities).toBeUndefined();
+  });
+
+  it("has correct stats", () => {
+    expect(abuMischievousMonkey.cost).toBe(3);
+    expect(abuMischievousMonkey.strength).toBe(3);
+    expect(abuMischievousMonkey.willpower).toBe(2);
+    expect(abuMischievousMonkey.lore).toBe(2);
+  });
+
+  it("is inkable", () => {
+    expect(abuMischievousMonkey.inkable).toBe(true);
+  });
 });

@@ -1,178 +1,177 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { mickeyMouseWaywardSorcerer } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import {
-//   IngeniousDevice,
-//   TheHornedKingTriumphantGhoul,
-// } from "@lorcanito/lorcana-engine/cards/010";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("The Horned King - Triumphant Ghoul", () => {
-//   Describe("GRAND MACHINATIONS - During your turn, if 1 or more cards have left a player's discard this turn, this character gets +2 {L}", () => {
-//     It("should have base lore value when no cards have left any discard pile", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [theHornedKingTriumphantGhoul],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         TheHornedKingTriumphantGhoul,
-//       );
-//
-//       Expect(cardUnderTest.lore).toBe(theHornedKingTriumphantGhoul.lore);
-//     });
-//
-//     It("should get +2 lore when a card leaves own discard pile this turn", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [theHornedKingTriumphantGhoul],
-//         Discard: [mickeyMouseWaywardSorcerer],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         TheHornedKingTriumphantGhoul,
-//       );
-//       Const mickeyCard = testEngine.getCardModel(mickeyMouseWaywardSorcerer);
-//
-//       // Before any card leaves discard
-//       Expect(cardUnderTest.lore).toBe(theHornedKingTriumphantGhoul.lore);
-//       Expect(mickeyCard.zone).toBe("discard");
-//
-//       // Move Mickey from discard to hand (simulating a return effect)
-//       TestEngine.store.tableStore.moveCard(mickeyCard.instanceId, "hand", {
-//         SkipLog: false,
-//       });
-//
-//       // Mickey should be in hand now
-//       Expect(mickeyCard.zone).toBe("hand");
-//
-//       // Horned King should now have +2 lore
-//       Expect(cardUnderTest.lore).toBe(theHornedKingTriumphantGhoul.lore + 2); // 1 + 2 bonus
-//     });
-//
-//     It("should get +2 lore when a card leaves opponent's discard pile this turn", () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [theHornedKingTriumphantGhoul],
-//         },
-//         {
-//           Discard: [mickeyMouseWaywardSorcerer],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         TheHornedKingTriumphantGhoul,
-//       );
-//       Const opponentMickey = testEngine.getCardModel(
-//         MickeyMouseWaywardSorcerer,
-//       );
-//
-//       // Before any card leaves discard
-//       Expect(cardUnderTest.lore).toBe(1);
-//       Expect(opponentMickey.zone).toBe("discard");
-//
-//       // Move opponent's card from discard to hand manually (simulating an effect)
-//       TestEngine.store.tableStore.moveCard(opponentMickey.instanceId, "hand", {
-//         SkipLog: false,
-//       });
-//
-//       // Card should be in opponent's hand now
-//       Expect(opponentMickey.zone).toBe("hand");
-//
-//       // Horned King should now have +2 lore since ANY player's discard was affected
-//       Expect(cardUnderTest.lore).toBe(3); // 1 + 2 bonus
-//     });
-//
-//     It("should get +2 lore when multiple cards leave discard pile (not stacking)", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [theHornedKingTriumphantGhoul],
-//         Discard: [mickeyMouseWaywardSorcerer, ingeniousDevice],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         TheHornedKingTriumphantGhoul,
-//       );
-//       Const mickeyCard = testEngine.getCardModel(mickeyMouseWaywardSorcerer);
-//       Const itemCard = testEngine.getCardModel(ingeniousDevice);
-//
-//       // Before any cards leave discard
-//       Expect(cardUnderTest.lore).toBe(1);
-//
-//       // Move multiple cards from discard to hand
-//       TestEngine.store.tableStore.moveCard(mickeyCard.instanceId, "hand", {
-//         SkipLog: false,
-//       });
-//       TestEngine.store.tableStore.moveCard(itemCard.instanceId, "hand", {
-//         SkipLog: false,
-//       });
-//
-//       // Both cards should be in hand now
-//       Expect(mickeyCard.zone).toBe("hand");
-//       Expect(itemCard.zone).toBe("hand");
-//
-//       // Bonus should still be just +2, not +4 (doesn't stack per card)
-//       Expect(cardUnderTest.lore).toBe(3); // 1 + 2 bonus (not 1 + 4)
-//     });
-//
-//     It("should lose the +2 lore bonus when the turn ends", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [theHornedKingTriumphantGhoul],
-//         Discard: [mickeyMouseWaywardSorcerer],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         TheHornedKingTriumphantGhoul,
-//       );
-//       Const mickeyCard = testEngine.getCardModel(mickeyMouseWaywardSorcerer);
-//
-//       // Move Mickey from discard to hand
-//       TestEngine.store.tableStore.moveCard(mickeyCard.instanceId, "hand", {
-//         SkipLog: false,
-//       });
-//
-//       // Should have bonus during the turn
-//       Expect(cardUnderTest.lore).toBe(3); // 1 + 2 bonus
-//       Expect(mickeyCard.zone).toBe("hand");
-//
-//       // Pass turn
-//       TestEngine.passTurn();
-//
-//       // Bonus should be gone (turn.cardsMoved resets)
-//       Expect(cardUnderTest.lore).toBe(1); // Base lore without bonus
-//     });
-//
-//     It("should not get bonus during opponent's turn", () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [theHornedKingTriumphantGhoul],
-//         },
-//         {
-//           Discard: [mickeyMouseWaywardSorcerer],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         TheHornedKingTriumphantGhoul,
-//       );
-//       Const opponentMickey = testEngine.getCardModel(
-//         MickeyMouseWaywardSorcerer,
-//       );
-//
-//       // Pass turn to opponent
-//       TestEngine.passTurn();
-//
-//       // Opponent moves a card from their discard to hand
-//       TestEngine.store.tableStore.moveCard(opponentMickey.instanceId, "hand", {
-//         SkipLog: false,
-//       });
-//
-//       Expect(opponentMickey.zone).toBe("hand");
-//
-//       // No bonus during opponent's turn (condition requires "during your turn")
-//       Expect(cardUnderTest.lore).toBe(1); // No bonus during opponent's turn
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import type { ZoneId } from "@tcg/lorcana-types";
+import { theHornedKingTriumphantGhoul } from "./049-the-horned-king-triumphant-ghoul";
+
+const plainCharacter = createMockCharacter({
+  id: "plain-char-001",
+  name: "Plain Character",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("The Horned King - Triumphant Ghoul", () => {
+  describe("GRAND MACHINATIONS - During your turn, if 1 or more cards have left a player's discard this turn, this character gets +2 {L}", () => {
+    it("should have base lore value when no cards have left any discard pile", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [theHornedKingTriumphantGhoul],
+          deck: 5,
+        },
+        { deck: 5 },
+      );
+
+      const hornedKing = testEngine.asPlayerOne().getCard(theHornedKingTriumphantGhoul);
+      expect(hornedKing.lore).toBe(theHornedKingTriumphantGhoul.lore);
+    });
+
+    it("should get +2 lore when a card leaves own discard pile this turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [theHornedKingTriumphantGhoul],
+          discard: [plainCharacter],
+          deck: 5,
+        },
+        { deck: 5 },
+      );
+
+      // Before any card leaves discard, base lore
+      const hornedKingBefore = testEngine.asPlayerOne().getCard(theHornedKingTriumphantGhoul);
+      expect(hornedKingBefore.lore).toBe(theHornedKingTriumphantGhoul.lore);
+
+      // Move plain character from discard to hand
+      const plainCharId = testEngine.findCardInstanceId(plainCharacter, "discard", PLAYER_ONE);
+      testEngine.asServer().manualMoveCard(plainCharId, `hand:${PLAYER_ONE}` as ZoneId);
+
+      expect(testEngine.asPlayerOne().getCardZone(plainCharacter)).toBe("hand");
+
+      // Horned King should now have +2 lore
+      const hornedKingAfter = testEngine.asPlayerOne().getCard(theHornedKingTriumphantGhoul);
+      expect(hornedKingAfter.lore).toBe(theHornedKingTriumphantGhoul.lore + 2);
+    });
+
+    it("should get +2 lore when a card leaves opponent's discard pile this turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [theHornedKingTriumphantGhoul],
+          deck: 5,
+        },
+        {
+          discard: [plainCharacter],
+          deck: 5,
+        },
+      );
+
+      // Before any card leaves discard
+      expect(testEngine.asPlayerOne().getCard(theHornedKingTriumphantGhoul).lore).toBe(
+        theHornedKingTriumphantGhoul.lore,
+      );
+
+      // Move opponent's card from discard to hand
+      const opponentPlainCharId = testEngine.findCardInstanceId(
+        plainCharacter,
+        "discard",
+        PLAYER_TWO,
+      );
+      testEngine.asServer().manualMoveCard(opponentPlainCharId, `hand:${PLAYER_TWO}` as ZoneId);
+
+      // Horned King should now have +2 lore since ANY player's discard was affected
+      const hornedKingAfter = testEngine.asPlayerOne().getCard(theHornedKingTriumphantGhoul);
+      expect(hornedKingAfter.lore).toBe(theHornedKingTriumphantGhoul.lore + 2);
+    });
+
+    it("should get +2 lore when multiple cards leave discard pile (not stacking)", () => {
+      const secondPlain = createMockCharacter({
+        id: "plain-char-002",
+        name: "Second Plain Character",
+        cost: 2,
+        strength: 2,
+        willpower: 3,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [theHornedKingTriumphantGhoul],
+          discard: [plainCharacter, secondPlain],
+          deck: 5,
+        },
+        { deck: 5 },
+      );
+
+      expect(testEngine.asPlayerOne().getCard(theHornedKingTriumphantGhoul).lore).toBe(
+        theHornedKingTriumphantGhoul.lore,
+      );
+
+      const plainId = testEngine.findCardInstanceId(plainCharacter, "discard", PLAYER_ONE);
+      const secondId = testEngine.findCardInstanceId(secondPlain, "discard", PLAYER_ONE);
+      testEngine.asServer().manualMoveCard(plainId, `hand:${PLAYER_ONE}` as ZoneId);
+      testEngine.asServer().manualMoveCard(secondId, `hand:${PLAYER_ONE}` as ZoneId);
+
+      // Bonus should still be just +2, not +4 (doesn't stack per card)
+      const hornedKingAfter = testEngine.asPlayerOne().getCard(theHornedKingTriumphantGhoul);
+      expect(hornedKingAfter.lore).toBe(theHornedKingTriumphantGhoul.lore + 2);
+    });
+
+    it("should lose the +2 lore bonus when the turn ends", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [theHornedKingTriumphantGhoul],
+          discard: [plainCharacter],
+          deck: 5,
+        },
+        { deck: 5 },
+      );
+
+      const plainId = testEngine.findCardInstanceId(plainCharacter, "discard", PLAYER_ONE);
+      testEngine.asServer().manualMoveCard(plainId, `hand:${PLAYER_ONE}` as ZoneId);
+
+      // Should have bonus during the turn
+      expect(testEngine.asPlayerOne().getCard(theHornedKingTriumphantGhoul).lore).toBe(
+        theHornedKingTriumphantGhoul.lore + 2,
+      );
+
+      // Pass turn
+      testEngine.asPlayerOne().passTurn();
+
+      // Bonus should be gone after turn passes (metric resets)
+      const hornedKingAfterPass = testEngine.asPlayerTwo().getCard(theHornedKingTriumphantGhoul);
+      expect(hornedKingAfterPass.lore).toBe(theHornedKingTriumphantGhoul.lore);
+    });
+
+    it("should not get bonus during opponent's turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [theHornedKingTriumphantGhoul],
+          deck: 5,
+        },
+        {
+          discard: [plainCharacter],
+          deck: 5,
+        },
+      );
+
+      // Pass turn to opponent
+      testEngine.asPlayerOne().passTurn();
+
+      // Opponent moves a card from their discard to hand
+      const opponentPlainCharId = testEngine.findCardInstanceId(
+        plainCharacter,
+        "discard",
+        PLAYER_TWO,
+      );
+      testEngine.asServer().manualMoveCard(opponentPlainCharId, `hand:${PLAYER_TWO}` as ZoneId);
+
+      // No bonus during opponent's turn (condition requires "during your turn")
+      const hornedKing = testEngine.asPlayerTwo().getCard(theHornedKingTriumphantGhoul);
+      expect(hornedKing.lore).toBe(theHornedKingTriumphantGhoul.lore);
+    });
+  });
+});

@@ -1,95 +1,151 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { fishboneQuill } from "@lorcanito/lorcana-engine/cards/001/items/168-fishbone-quill";
-// Import { tipoGrowingSon } from "@lorcanito/lorcana-engine/cards/005/characters/157-tipo-growing-son";
-// Import { tipoJuniorChipmunk } from "@lorcanito/lorcana-engine/cards/008";
-// Import { daisyDuckParanormalInvestigator } from "@lorcanito/lorcana-engine/cards/010";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Daisy Duck - Paranormal Investigator", () => {
-//   It("does NOT exert opponent cards entering inkwell when Daisy is NOT exerted", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [fishboneQuill],
-//         Hand: [tipoGrowingSon, tipoJuniorChipmunk],
-//       },
-//       {
-//         Play: [daisyDuckParanormalInvestigator],
-//       },
-//     );
-//
-//     // Sanity: ensure Daisy starts not exerted
-//     Expect(
-//       TestEngine.getCardModel(daisyDuckParanormalInvestigator).exerted,
-//     ).toBe(false);
-//
-//     // Put a card into the opponent's inkwell — should NOT be exerted because Daisy is not exerted
-//     Await testEngine.putIntoInkwell(tipoJuniorChipmunk);
-//     Expect(testEngine.getCardModel(tipoJuniorChipmunk).exerted).toBe(false);
-//
-//     // Activate fishbone quill to put card into inkwell again
-//     Const fishboneQuillModel = testEngine.getCardModel(fishboneQuill);
-//     Const tipoGrowingSonModel = testEngine.getCardModel(tipoGrowingSon);
-//     Await fishboneQuillModel.activate();
-//     TestEngine.resolveTopOfStack({ targets: [tipoGrowingSonModel] });
-//     Expect(tipoGrowingSonModel.exerted).toBe(false);
-//   });
-//
-//   It("exerts opponent cards entering inkwell when Daisy IS exerted", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [fishboneQuill],
-//         Hand: [tipoGrowingSon, tipoJuniorChipmunk],
-//       },
-//       {
-//         Play: [daisyDuckParanormalInvestigator],
-//       },
-//     );
-//
-//     // Exert Daisy directly in the test harness
-//     Await testEngine.exertCard(daisyDuckParanormalInvestigator);
-//     Expect(
-//       TestEngine.getCardModel(daisyDuckParanormalInvestigator).exerted,
-//     ).toBe(true);
-//
-//     // Now when a card is put into the opponent's inkwell it should enter exerted
-//     Await testEngine.putIntoInkwell(tipoJuniorChipmunk);
-//     Expect(testEngine.getCardModel(tipoJuniorChipmunk).exerted).toBe(true);
-//
-//     // Activate fishbone quill to put card into inkwell again
-//     Const fishboneQuillModel = testEngine.getCardModel(fishboneQuill);
-//     Const tipoGrowingSonModel = testEngine.getCardModel(tipoGrowingSon);
-//     Await fishboneQuillModel.activate();
-//     TestEngine.resolveTopOfStack({ targets: [tipoGrowingSonModel] });
-//     Expect(tipoGrowingSonModel.exerted).toBe(true);
-//   });
-//
-//   It("does NOT exert opponent cards entering play when Daisy IS exerted", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: tipoJuniorChipmunk.cost,
-//         Play: [fishboneQuill],
-//         Hand: [tipoGrowingSon, tipoJuniorChipmunk],
-//       },
-//       {
-//         Play: [daisyDuckParanormalInvestigator],
-//       },
-//     );
-//
-//     // Exert Daisy directly in the test harness
-//     Await testEngine.exertCard(daisyDuckParanormalInvestigator);
-//     Expect(
-//       TestEngine.getCardModel(daisyDuckParanormalInvestigator).exerted,
-//     ).toBe(true);
-//
-//     Await testEngine.playCard(tipoJuniorChipmunk);
-//
-//     // tipoJuniorChipmunk should NOT be exerted
-//     Expect(testEngine.getCardModel(tipoJuniorChipmunk).exerted).toBe(false);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_TWO,
+  createMockAction,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { daisyDuckParanormalInvestigator } from "./154-daisy-duck-paranormal-investigator";
+
+const opponentInkwellCard = createMockCharacter({
+  id: "daisy-paranormal-investigator-opponent-ink-card",
+  name: "Opponent Ink Card",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+});
+
+const exertOpponentInkAction = createMockAction({
+  id: "daisy-paranormal-investigator-ink-action",
+  name: "Eerie Ink",
+  cost: 1,
+  text: "Put chosen card from an opponent's hand into their inkwell facedown.",
+  abilities: [
+    {
+      id: "daisy-paranormal-investigator-ink-action-1",
+      type: "action",
+      effect: {
+        type: "put-into-inkwell",
+        source: "hand",
+        target: "OPPONENT",
+      },
+    },
+  ],
+});
+
+describe("Daisy Duck - Paranormal Investigator", () => {
+  it("does not exert opponent cards entering inkwells while Daisy is ready", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: daisyDuckParanormalInvestigator, isDrying: false }],
+        deck: 1,
+      },
+      {
+        hand: [opponentInkwellCard],
+        deck: 1,
+      },
+    );
+    const opponentInkwellCardId = testEngine.findCardInstanceId(
+      opponentInkwellCard,
+      "hand",
+      PLAYER_TWO,
+    );
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().ink(opponentInkwellCardId)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffect).toBeDefined();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(opponentInkwellCardId)).toBe("inkwell");
+    expect(testEngine.asServer().getCard(opponentInkwellCardId)).toEqual(
+      expect.objectContaining({
+        exerted: false,
+        zone: "inkwell",
+      }),
+    );
+  });
+
+  it("exerts opponent cards entering inkwells while Daisy is exerted", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [
+          {
+            card: daisyDuckParanormalInvestigator,
+            exerted: true,
+            isDrying: false,
+          },
+        ],
+        deck: 1,
+      },
+      {
+        hand: [opponentInkwellCard],
+        deck: 1,
+      },
+    );
+    const opponentInkwellCardId = testEngine.findCardInstanceId(
+      opponentInkwellCard,
+      "hand",
+      PLAYER_TWO,
+    );
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().ink(opponentInkwellCardId)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffect).toBeDefined();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(opponentInkwellCardId)).toBe("inkwell");
+    expect(testEngine.asServer().getCard(opponentInkwellCardId)).toEqual(
+      expect.objectContaining({
+        exerted: true,
+        zone: "inkwell",
+      }),
+    );
+  });
+
+  it("exerts opponent cards put into inkwells by an effect while Daisy is exerted", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [
+          {
+            card: daisyDuckParanormalInvestigator,
+            exerted: true,
+            isDrying: false,
+          },
+        ],
+        hand: [exertOpponentInkAction],
+        inkwell: exertOpponentInkAction.cost,
+        deck: 1,
+      },
+      {
+        hand: [opponentInkwellCard],
+        deck: 1,
+      },
+    );
+    const opponentInkwellCardId = testEngine.findCardInstanceId(
+      opponentInkwellCard,
+      "hand",
+      PLAYER_TWO,
+    );
+
+    expect(testEngine.asPlayerOne().playCard(exertOpponentInkAction)).toBeSuccessfulCommand();
+
+    // The put-into-inkwell effect requires selecting which opponent card to put in inkwell
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [opponentInkwellCardId] }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getCardZone(opponentInkwellCardId)).toBe("inkwell");
+    expect(testEngine.asServer().getCard(opponentInkwellCardId)).toEqual(
+      expect.objectContaining({
+        exerted: true,
+        zone: "inkwell",
+      }),
+    );
+  });
+});

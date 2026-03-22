@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hadesKingOfOlympusI18n } from "./005-hades-king-of-olympus.i18n";
 
 export const hadesKingOfOlympus: CharacterCard = {
   id: "XhN",
@@ -7,43 +8,6 @@ export const hadesKingOfOlympus: CharacterCard = {
   cardType: "character",
   name: "Hades",
   version: "King of Olympus",
-  i18n: {
-    en: {
-      name: "Hades",
-      version: "King of Olympus",
-      text: [
-        {
-          title: "Shift 6",
-        },
-        {
-          title: "SINISTER PLOT",
-          description:
-            "This character gets +1 {L} for each other Villain character you have in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Hades",
-      version: "König des Olymps",
-      text: "Gestaltwandel 6 FINSTERE VERSCHWÖRUNG Dieser Charakter erhält +1 für jede weitere Schurkin und jeden weiteren Schurken, die du im Spiel hast.",
-    },
-    fr: {
-      name: "HADES",
-      version: "Roi de l'Olympe",
-      text: "Alter 6 SINISTRE COMPLOT Ce personnage a + 1 pour chaque autre personnage Méchant que vous avez en jeu.",
-    },
-    it: {
-      name: "Hades",
-      version: "King of Olympus",
-      text: [
-        {
-          title: "Shift 6",
-          description:
-            "(You may pay 6 to play this on top of one of your characters named Hades.) SINISTER PLOT This character gets +1 for each other Villain character you have in play.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Hercules",
   set: "001",
@@ -54,7 +18,6 @@ export const hadesKingOfOlympus: CharacterCard = {
   willpower: 7,
   lore: 1,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_a9c86e6316084d76a03b32be95977091",
     tcgPlayer: 510148,
@@ -85,6 +48,7 @@ export const hadesKingOfOlympus: CharacterCard = {
           classification: "Villain",
           controller: "you",
           type: "classification-character-count",
+          excludeSelf: true,
         },
         stat: "lore",
         target: "SELF",
@@ -96,4 +60,5 @@ export const hadesKingOfOlympus: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: hadesKingOfOlympusI18n,
 };

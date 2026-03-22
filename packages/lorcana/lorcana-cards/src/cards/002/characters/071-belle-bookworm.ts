@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { belleBookwormI18n } from "./071-belle-bookworm.i18n";
 
 export const belleBookworm: CharacterCard = {
   id: "cql",
@@ -7,49 +8,6 @@ export const belleBookworm: CharacterCard = {
   cardType: "character",
   name: "Belle",
   version: "Bookworm",
-  i18n: {
-    en: {
-      name: "Belle",
-      version: "Bookworm",
-      text: [
-        {
-          title: "USE YOUR IMAGINATION",
-          description: "While an opponent has no cards in their hand, this character gets +2 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Belle",
-      version: "Bücherwurm",
-      text: [
-        {
-          title: "MANCH EINER GEBRAUCHT SEINE FANTASIE",
-          description:
-            "Solange mindestens eine gegnerische Person keine Handkarten hat, erhält dieser Charakter +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Belle",
-      version: "Rat de bibliothèque",
-      text: [
-        {
-          title: "UTILISEZ VOTRE IMAGINATION",
-          description: "Tant qu'un adversaire n'a plus de cartes en main, ce personnage gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Belle",
-      version: "Bookworm",
-      text: [
-        {
-          title: "USE YOUR IMAGINATION",
-          description: "While an opponent has no cards in their hand, this character gets +2.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -71,8 +29,6 @@ export const belleBookworm: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
-  missingImplementation: true,
-  missingTests: true,
   abilities: [
     {
       id: "1rv-1",
@@ -80,11 +36,17 @@ export const belleBookworm: CharacterCard = {
       text: "USE YOUR IMAGINATION While an opponent has no cards in their hand, this character gets +2 {L}.",
       type: "static",
       condition: {
-        type: "resource-count",
-        what: "cards-in-hand",
-        controller: "opponent",
-        comparison: "equal",
-        value: 0,
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "opponent",
+          zones: ["hand"],
+          cardType: "character",
+        },
+        comparison: {
+          operator: "eq",
+          value: 0,
+        },
       },
       effect: {
         modifier: 2,
@@ -94,4 +56,5 @@ export const belleBookworm: CharacterCard = {
       },
     },
   ],
+  i18n: belleBookwormI18n,
 };

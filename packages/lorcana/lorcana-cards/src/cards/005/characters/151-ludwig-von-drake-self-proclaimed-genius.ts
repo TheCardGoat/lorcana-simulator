@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ludwigVonDrakeSelfproclaimedGeniusI18n } from "./151-ludwig-von-drake-self-proclaimed-genius.i18n";
 
 export const ludwigVonDrakeSelfproclaimedGenius: CharacterCard = {
   id: "rsj",
@@ -7,24 +8,6 @@ export const ludwigVonDrakeSelfproclaimedGenius: CharacterCard = {
   cardType: "character",
   name: "Ludwig von Drake",
   version: "Self-Proclaimed Genius",
-  i18n: {
-    en: {
-      name: "Ludwig von Drake",
-      version: "Self-Proclaimed Genius",
-    },
-    de: {
-      name: "Primus von Quack",
-      version: "Selbsternanntes Genie",
-    },
-    fr: {
-      name: "Ludwig von Drake",
-      version: "Génie autoproclamé",
-    },
-    it: {
-      name: "Pico de Paperis",
-      version: "Sedicente Genio",
-    },
-  },
   inkType: ["sapphire"],
   set: "005",
   cardNumber: 151,
@@ -40,4 +23,5 @@ export const ludwigVonDrakeSelfproclaimedGenius: CharacterCard = {
     tcgPlayer: 557728,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: ludwigVonDrakeSelfproclaimedGeniusI18n,
 };

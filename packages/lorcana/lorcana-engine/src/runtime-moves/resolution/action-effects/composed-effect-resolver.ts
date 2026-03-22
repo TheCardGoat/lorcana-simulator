@@ -20,7 +20,9 @@ import type {
   DrawUntilHandSizeEffect,
   ExertEffect,
   ForEachEffect,
+  ForEachOpponentEffect,
   GainKeywordEffect,
+  GainKeywordsEffect,
   GainLoreEffect,
   GrantAbilityEffect,
   LoseLoreEffect,
@@ -36,10 +38,13 @@ import type {
   PutIntoInkwellEffect,
   PutOnTopEffect,
   PutUnderEffect,
+  EnablePlayFromUnderEffect,
   PutOnBottomEffect,
   ReadyEffect,
   RevealHandEffect,
+  RevealUntilMatchEffect,
   RemoveDamageEffect,
+  SelectTargetEffect,
   RestrictionEffect,
   ReturnRandomFromInkwellEffect,
   ReturnFromDiscardEffect,
@@ -50,6 +55,7 @@ import type {
   SequenceEffect,
   ShuffleIntoDeckEffect,
   SupportEffect,
+  PropertyModificationEffect,
 } from "@tcg/lorcana-types";
 import { isCardType, isClassification } from "@tcg/lorcana-types";
 import type { MillEffect } from "@tcg/lorcana-types/abilities";
@@ -96,7 +102,15 @@ import {
 } from "./move-cards-from-under-effect";
 import { isMoveDamageEffect, resolveMoveDamageEffect } from "./move-damage-effect";
 import { isMoveToLocationEffect, resolveMoveToLocationEffect } from "./move-to-location-effect";
-import { isPlayCardEffect, resolvePlayCardEffect } from "./play-card-effect";
+import {
+  executeScryActionCardPlay,
+  isPlayCardEffect,
+  resolvePlayCardEffect,
+} from "./play-card-effect";
+import {
+  isPropertyModificationEffect,
+  resolvePropertyModificationEffect,
+} from "./property-modification-effect";
 import { isPutDamageEffect, resolvePutDamageEffect } from "./put-damage-effect";
 import {
   isPutInHandEffect,
@@ -106,10 +120,18 @@ import {
 import { isPutIntoInkwellEffect, resolvePutIntoInkwellEffect } from "./put-into-inkwell-effect";
 import { isPutOnTopEffect, resolvePutOnTopEffect } from "./put-on-top-effect";
 import { isPutUnderEffect, resolvePutUnderEffect } from "./put-under-effect";
+import {
+  isEnablePlayFromUnderEffect,
+  resolveEnablePlayFromUnderEffect,
+} from "./enable-play-from-under-effect";
 import { isPutOnBottomEffect, resolvePutOnBottomEffect } from "./put-on-bottom-effect";
 import { isReadyEffect, resolveReadyEffect } from "./ready-effect";
 import { payBasicCost, validateBasicCost } from "../../rules/play-card-rules";
 import { isRevealHandEffect, resolveRevealHandEffect } from "./reveal-hand-effect";
+import {
+  isRevealUntilMatchEffect,
+  resolveRevealUntilMatchEffect,
+} from "./reveal-until-match-effect";
 import { isRemoveDamageEffect, resolveRemoveDamageEffect } from "./remove-damage-effect";
 import { isRestrictionEffect, resolveRestrictionEffect } from "./restriction-effect";
 import {
@@ -129,15 +151,19 @@ import {
   resolveScryEffect,
 } from "./scry-effect";
 import { isSearchDeckEffect, resolveSearchDeckEffect } from "./search-deck-effect";
+import { isSelectTargetEffect, resolveSelectTargetEffect } from "./select-target-effect";
 import { isShuffleIntoDeckEffect, resolveShuffleIntoDeckEffect } from "./shuffle-into-deck-effect";
 import { isSupportEffect, resolveSupportEffect } from "./support-effect";
+import { isForEachOpponentEffect, resolveForEachOpponentEffect } from "./for-each-opponent-effect";
 import { markLastEffectPerformed, resetLastEffectPerformed } from "./event-snapshot-utils";
 import { handleUnsupportedActionEffect } from "./unsupported-action-effect";
 import { createPendingActionEffect, enqueuePendingActionEffect } from "./pending-action-effects";
+import { buildResolutionSelectionContext } from "./selection-context";
 import { recordVanishChosenTargets } from "./vanish";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import { applyReplacementEffects } from "../../effects/replacement-effects";
 import {
+  analyzeEffectTargets,
   normalizeSelectedTargets,
   normalizeTargetDescriptor,
   resolveCandidateTargets,
@@ -145,6 +171,19 @@ import {
   resolveSelectedPlayerIds,
   resolveTargetBounds,
 } from "../../../targeting/runtime";
+import {
+  clearCurrentSelectionTargets,
+  getEffectTargetSelectionInput,
+  getCombinedSelectionInput,
+  getCombinedSelectionTargets,
+  getContextSelectionTargets,
+  getCurrentSelectionInput,
+  getCurrentSelectionTargets,
+  promoteCurrentSelectedPlayersToContext,
+  promoteCurrentSelectionTargetsToContext,
+  withContextSelectionTargets,
+  withCurrentSelectionTargets,
+} from "./selection-state";
 
 type SequenceLikeEffect = SequenceEffect & {
   steps?: unknown[];
@@ -182,6 +221,17 @@ type EffectWithType = {
   [key: string]: unknown;
 };
 
+type EffectChosenTargetDescriptor = {
+  descriptor: ReturnType<typeof normalizeTargetDescriptor>;
+  source: unknown;
+  signature?: string;
+};
+
+type ChosenTargetAssignment = {
+  signature?: string;
+  targets: Array<CardInstanceId | PlayerId>;
+};
+
 type ActionEffectResolver = (
   ctx: PlayCardExecutionContext,
   cardPlayed: CardPlayedPayload,
@@ -199,7 +249,424 @@ function mergeContinuationEffects(
   continuation?: ActionEffectResolutionOptions["continuation"],
 ): ActionEffectResolutionOptions["continuation"] {
   const remainingEffects = [...effects, ...(continuation?.remainingEffects ?? [])];
-  return remainingEffects.length > 0 ? { remainingEffects } : undefined;
+  return {
+    ...(continuation?.stagedSequence ? { stagedSequence: continuation.stagedSequence } : {}),
+    ...(remainingEffects.length > 0 ? { remainingEffects } : {}),
+  };
+}
+
+function promoteSelectedPlayersToTargetContext(
+  ctx: PlayCardExecutionContext,
+  resolutionInput: ActionResolutionInput,
+): ActionResolutionInput {
+  return promoteCurrentSelectedPlayersToContext(ctx.framework.state.playerIds, resolutionInput);
+}
+
+function promoteCurrentTargetsToContext(
+  resolutionInput: ActionResolutionInput,
+): ActionResolutionInput {
+  return promoteCurrentSelectionTargetsToContext(resolutionInput);
+}
+
+function effectContainsTargetReference(effect: unknown): boolean {
+  if (typeof effect === "string") {
+    return (
+      effect === "chosen-for-effect" || effect === "previous-target" || effect === "selected-first"
+    );
+  }
+
+  if (!effect || typeof effect !== "object") {
+    return false;
+  }
+
+  if (Array.isArray(effect)) {
+    return effect.some((entry) => effectContainsTargetReference(entry));
+  }
+
+  const record = effect as Record<string, unknown>;
+  if (typeof record.ref === "string" || typeof record.reference === "string") {
+    return true;
+  }
+
+  return Object.values(record).some((value) => effectContainsTargetReference(value));
+}
+
+function effectUsesExistingChosenTarget(effect: unknown): boolean {
+  if (!effect || typeof effect !== "object" || Array.isArray(effect)) {
+    return false;
+  }
+
+  const record = effect as Record<string, unknown>;
+  return typeof record.target === "string" && record.target.startsWith("CHOSEN_");
+}
+
+function hasSatisfiedChosenTargetContext(
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  effect: unknown,
+  resolutionInput: ActionResolutionInput,
+): boolean {
+  if (!effectUsesExistingChosenTarget(effect)) {
+    return false;
+  }
+
+  const effectTarget =
+    effect && typeof effect === "object" && "target" in effect
+      ? (effect as Record<string, unknown>).target
+      : undefined;
+  if (effectTarget === undefined) {
+    return false;
+  }
+
+  const selectionInput = getCombinedSelectionInput(resolutionInput);
+  return (
+    (resolveEffectTargets(
+      ctx,
+      cardPlayed,
+      effectTarget,
+      selectionInput,
+      resolutionInput.eventSnapshot,
+    )?.length ?? 0) > 0 ||
+    resolveTargetPlayerIds(ctx, cardPlayed, effectTarget, selectionInput).length > 0
+  );
+}
+
+function stepRequiresPriorTargetContext(descriptors: EffectChosenTargetDescriptor[]): boolean {
+  return descriptors.some(({ descriptor }) => descriptor?.requireDifferentTargets === true);
+}
+
+function effectRequiresFullTargetContext(effect: unknown): boolean {
+  if (!effect || typeof effect !== "object") {
+    return false;
+  }
+
+  if (Array.isArray(effect)) {
+    return effect.some((entry) => effectRequiresFullTargetContext(entry));
+  }
+
+  const record = effect as Record<string, unknown>;
+  if (
+    effectContainsTargetReference(effect) ||
+    effectUsesExistingChosenTarget(effect) ||
+    effectUsesParentTargetComparison(effect) ||
+    record.target === "CARD_OWNER" ||
+    getEffectType(effect) === "play-card"
+  ) {
+    return true;
+  }
+
+  return Object.values(record).some((value) => effectRequiresFullTargetContext(value));
+}
+
+function resolveSequenceStepEffect(
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  effect: unknown,
+  resolutionInput: ActionResolutionInput,
+): unknown {
+  if (!isConditionalEffect(effect)) {
+    return effect;
+  }
+
+  const conditionMet = evaluateActionCondition(
+    effect.condition,
+    ctx as never,
+    cardPlayed,
+    resolutionInput as never,
+  );
+  const nextEffect = conditionMet
+    ? (effect.then ?? effect.effect ?? effect.ifTrue)
+    : (effect.else ?? effect.ifFalse);
+
+  return nextEffect ?? effect;
+}
+
+function sequenceStepConsumesExplicitTargets(
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  effect: unknown,
+  resolutionInput: ActionResolutionInput,
+): number {
+  const runtimeEffect = resolveSequenceStepEffect(ctx, cardPlayed, effect, resolutionInput);
+  if (
+    getEffectType(runtimeEffect) !== "select-target" &&
+    hasSatisfiedChosenTargetContext(ctx, cardPlayed, runtimeEffect, resolutionInput)
+  ) {
+    return 0;
+  }
+
+  const analysis = analyzeEffectTargets(runtimeEffect, cardPlayed.playerId, ctx, cardPlayed.cardId);
+  if (!analysis.requiresExplicitSelection || analysis.minSelections !== analysis.maxSelections) {
+    return 0;
+  }
+
+  return analysis.maxSelections;
+}
+
+function effectUsesParentTargetComparison(effect: unknown): boolean {
+  if (!effect || typeof effect !== "object") {
+    return false;
+  }
+
+  if (Array.isArray(effect)) {
+    return effect.some((entry) => effectUsesParentTargetComparison(entry));
+  }
+
+  const record = effect as Record<string, unknown>;
+  if (record.compareWithParentsTarget === true) {
+    return true;
+  }
+
+  return Object.values(record).some((value) => effectUsesParentTargetComparison(value));
+}
+
+function canonicalizeTargetSignatureValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((entry) => canonicalizeTargetSignatureValue(entry));
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  const record = value as Record<string, unknown>;
+  const canonicalRecord: Record<string, unknown> = {};
+  for (const key of Object.keys(record).sort()) {
+    const entry = record[key];
+    if (entry === undefined || entry === false) {
+      continue;
+    }
+    canonicalRecord[key] = canonicalizeTargetSignatureValue(entry);
+  }
+
+  return canonicalRecord;
+}
+
+function getExplicitTargetSignature(
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  effect: unknown,
+  resolutionInput: ActionResolutionInput,
+): string | undefined {
+  return getEffectChosenTargetDescriptors(ctx, cardPlayed, effect, resolutionInput)[0]?.signature;
+}
+
+function isTargetReferenceDescriptor(target: unknown): boolean {
+  return (
+    target === "chosen-for-effect" ||
+    (typeof target === "object" &&
+      target !== null &&
+      !Array.isArray(target) &&
+      ("ref" in target || "reference" in target))
+  );
+}
+
+function getEffectChosenTargetDescriptors(
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  effect: unknown,
+  resolutionInput: ActionResolutionInput,
+): EffectChosenTargetDescriptor[] {
+  const runtimeEffect = resolveSequenceStepEffect(ctx, cardPlayed, effect, resolutionInput);
+  if (!runtimeEffect || (typeof runtimeEffect === "object" && Array.isArray(runtimeEffect))) {
+    return [];
+  }
+
+  const effectRecord = runtimeEffect as Record<string, unknown>;
+  const descriptorSources = [
+    effectRecord.type === "put-on-top" && effectRecord.source !== undefined
+      ? effectRecord.source
+      : effectRecord.target,
+    effectRecord.character,
+    effectRecord.location,
+    effectRecord.from,
+    effectRecord.to,
+    effectRecord.source,
+    effectRecord.under,
+  ];
+
+  return descriptorSources.flatMap((descriptorSource) => {
+    if (isTargetReferenceDescriptor(descriptorSource)) {
+      return [];
+    }
+
+    if (descriptorSource === "CHOSEN_PLAYER") {
+      return [
+        {
+          descriptor: { selector: "chosen" as const, count: 1 },
+          source: descriptorSource,
+          signature: JSON.stringify({ selector: "chosen", target: "player" }),
+        },
+      ];
+    }
+
+    const descriptor = normalizeTargetDescriptor(descriptorSource);
+    if (!descriptor || descriptor.selector !== "chosen") {
+      return [];
+    }
+
+    return [
+      {
+        descriptor,
+        source: descriptorSource,
+        signature: JSON.stringify(canonicalizeTargetSignatureValue(descriptor)),
+      },
+    ];
+  });
+}
+
+function resolveChosenTargetAssignments(
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  effect: unknown,
+  resolutionInput: ActionResolutionInput,
+  availableTargets: Array<CardInstanceId | PlayerId>,
+): {
+  assignments: ChosenTargetAssignment[];
+  consumedCount: number;
+  targets: Array<CardInstanceId | PlayerId>;
+} {
+  const descriptorEntries = getEffectChosenTargetDescriptors(
+    ctx,
+    cardPlayed,
+    effect,
+    resolutionInput,
+  );
+  if (descriptorEntries.length === 0) {
+    return {
+      assignments: [],
+      consumedCount: 0,
+      targets: [],
+    };
+  }
+
+  const selectedTargets: CardInstanceId[] = normalizeSelectedTargets(resolutionInput.targets) ?? [];
+  const selectedPlayerIds: PlayerId[] =
+    resolveSelectedPlayerIds(ctx.framework.state.playerIds, resolutionInput.targets) ?? [];
+  const allSelectedTargets: Array<CardInstanceId | PlayerId> = [
+    ...selectedTargets,
+    ...selectedPlayerIds,
+  ];
+  const assignments: ChosenTargetAssignment[] = [];
+  const consumedTargets: Array<CardInstanceId | PlayerId> = [];
+  let cursor = 0;
+
+  descriptorEntries.forEach((entry, index) => {
+    const descriptor = entry.descriptor;
+    if (!descriptor) {
+      return;
+    }
+
+    const { min, max } = resolveTargetBounds(descriptor.count, descriptor.selector);
+    const remainingMinimum = descriptorEntries.slice(index + 1).reduce((sum, nestedEntry) => {
+      const nestedDescriptor = nestedEntry.descriptor;
+      if (!nestedDescriptor) {
+        return sum;
+      }
+
+      return sum + resolveTargetBounds(nestedDescriptor.count, nestedDescriptor.selector).min;
+    }, 0);
+    const cardCandidateIds = new Set(
+      resolveCandidateTargets(ctx, cardPlayed, descriptor, {
+        selectedTargets,
+        sourceCardId: cardPlayed.cardId,
+        eventSnapshot: resolutionInput.eventSnapshot,
+      }),
+    );
+    const playerCandidateIds = new Set(
+      resolveTargetPlayerIds(ctx, cardPlayed, entry.source, allSelectedTargets),
+    );
+    const firstSelectedTarget = selectedTargets[0];
+    const disallowedTargets =
+      descriptor.requireDifferentTargets === true && firstSelectedTarget
+        ? new Set<CardInstanceId | PlayerId>([firstSelectedTarget])
+        : undefined;
+    const assignedTargets: Array<CardInstanceId | PlayerId> = [];
+
+    while (cursor < availableTargets.length && assignedTargets.length < max) {
+      const candidateTarget = availableTargets[cursor];
+      if (!candidateTarget) {
+        break;
+      }
+
+      const isCandidate =
+        !disallowedTargets?.has(candidateTarget) &&
+        (cardCandidateIds.has(candidateTarget as CardInstanceId) ||
+          playerCandidateIds.has(candidateTarget as PlayerId));
+      if (!isCandidate) {
+        cursor += 1;
+        continue;
+      }
+
+      assignedTargets.push(candidateTarget);
+      consumedTargets.push(candidateTarget);
+      cursor += 1;
+
+      const remainingTargets = availableTargets.length - cursor;
+      if (assignedTargets.length >= min && remainingTargets <= remainingMinimum) {
+        break;
+      }
+    }
+
+    assignments.push({
+      signature: entry.signature,
+      targets: assignedTargets,
+    });
+  });
+
+  return {
+    assignments,
+    consumedCount: cursor,
+    targets: assignments.flatMap((assignment) => assignment.targets),
+  };
+}
+
+function canStageSequenceTargetCollection(
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  effect: SequenceLikeEffect,
+): boolean {
+  const nestedEffects = effect.steps ?? effect.effects ?? [];
+  let explicitSelectionSteps = 0;
+  const targetSignatures = new Set<string>();
+
+  for (const nestedEffect of nestedEffects) {
+    const nestedType = getEffectType(nestedEffect);
+    if (
+      !nestedType ||
+      nestedType === "choice" ||
+      nestedType === "conditional" ||
+      nestedType === "discard" ||
+      nestedType === "name-a-card" ||
+      nestedType === "optional" ||
+      nestedType === "or" ||
+      nestedType === "scry" ||
+      nestedType === "sequence"
+    ) {
+      return false;
+    }
+
+    if (
+      effectContainsTargetReference(nestedEffect) ||
+      effectUsesParentTargetComparison(nestedEffect)
+    ) {
+      return false;
+    }
+
+    const consumedTargets = sequenceStepConsumesExplicitTargets(ctx, cardPlayed, nestedEffect, {});
+    if (consumedTargets > 0) {
+      const targetSignature = getExplicitTargetSignature(ctx, cardPlayed, nestedEffect, {});
+      if (targetSignature) {
+        if (targetSignatures.has(targetSignature)) {
+          return false;
+        }
+        targetSignatures.add(targetSignature);
+      }
+      explicitSelectionSteps += 1;
+    }
+  }
+
+  return explicitSelectionSteps > 1;
 }
 
 function getCurrentActionActorId(
@@ -207,7 +674,7 @@ function getCurrentActionActorId(
   cardPlayed: CardPlayedPayload,
 ): PlayerId {
   const actorId =
-    ctx.playerId ?? ctx.framework.state.currentPlayer ?? ctx.framework.state.ctx.priority.holder;
+    ctx.playerId ?? ctx.framework.state.currentPlayer ?? ctx.framework.state.priority.holder;
   return actorId ?? cardPlayed.playerId;
 }
 
@@ -260,17 +727,20 @@ function resolveChoiceChooserId(
   resolutionInput: ActionResolutionInput,
 ): PlayerId {
   if (effect.chooser) {
+    const chooserSelectionInput = getEffectTargetSelectionInput(effect.chooser, resolutionInput);
+
     if (effect.chooser === "CHOSEN_PLAYER") {
       return (
         resolveSelectedPlayerIdsFromTargets(
           ctx.framework.state.playerIds,
-          resolutionInput.targets,
+          chooserSelectionInput,
         )?.[0] ?? cardPlayed.playerId
       );
     }
 
     return (
-      resolveTargetPlayerIds(ctx, cardPlayed, effect.chooser as never)[0] ?? cardPlayed.playerId
+      resolveTargetPlayerIds(ctx, cardPlayed, effect.chooser as never, chooserSelectionInput)[0] ??
+      cardPlayed.playerId
     );
   }
 
@@ -291,12 +761,8 @@ function resolveChoiceChooserId(
     }
 
     const selectedCardOwner = selectedTargets
-      .map(
-        (target) =>
-          ctx.framework.state.ctx.zones.private.cardIndex[target as unknown as CardInstanceId]
-            ?.ownerID,
-      )
-      .find(Boolean);
+      .map((target) => ctx.framework.zones.getCardOwner(target as unknown as CardInstanceId))
+      .find(Boolean) as PlayerId | undefined;
     if (selectedCardOwner) {
       return selectedCardOwner;
     }
@@ -315,16 +781,21 @@ function resolveOptionalChooserId(
     return cardPlayed.playerId;
   }
 
+  const chooserSelectionInput = getEffectTargetSelectionInput(effect.chooser, resolutionInput);
+
   if (effect.chooser === "CHOSEN_PLAYER") {
     return (
       resolveSelectedPlayerIdsFromTargets(
         ctx.framework.state.playerIds,
-        resolutionInput.targets,
+        chooserSelectionInput,
       )?.[0] ?? cardPlayed.playerId
     );
   }
 
-  return resolveTargetPlayerIds(ctx, cardPlayed, effect.chooser as never)[0] ?? cardPlayed.playerId;
+  return (
+    resolveTargetPlayerIds(ctx, cardPlayed, effect.chooser as never, chooserSelectionInput)[0] ??
+    cardPlayed.playerId
+  );
 }
 
 function suspendActionEffect(
@@ -349,57 +820,94 @@ function maybeSuspendForChosenTargets(
     return undefined;
   }
 
+  if (effectUsesExistingChosenTarget(effect)) {
+    if (hasSatisfiedChosenTargetContext(ctx, cardPlayed, effect, resolutionInput)) {
+      return undefined;
+    }
+  }
+
   const effectRecord = effect as Record<string, unknown>;
-  const descriptorSource =
-    effectRecord.type === "put-on-top" && effectRecord.source !== undefined
-      ? effectRecord.source
-      : effectRecord.target;
-  if (descriptorSource === undefined) {
+  if (
+    effectRecord.type === "choice" ||
+    effectRecord.type === "conditional" ||
+    effectRecord.type === "discard" ||
+    effectRecord.type === "for-each-opponent" ||
+    effectRecord.type === "name-a-card" ||
+    effectRecord.type === "optional" ||
+    effectRecord.type === "or" ||
+    effectRecord.type === "sequence" ||
+    effectRecord.type === "scry"
+  ) {
     return undefined;
   }
 
-  const descriptor = normalizeTargetDescriptor(descriptorSource);
-  if (!descriptor || descriptor.selector !== "chosen") {
-    return undefined;
-  }
-
-  const selectedTargets = normalizeSelectedTargets(resolutionInput.targets);
-  const candidates = resolveCandidateTargets(ctx, cardPlayed, descriptor, {
-    selectedTargets,
+  const selectionContext = buildResolutionSelectionContext({
+    origin: "pending-effect",
+    requestId: "pending-effect:preview",
     sourceCardId: cardPlayed.cardId,
+    chooserId: resolveDefaultTargetChooserId(ctx, cardPlayed, effectRecord, resolutionInput),
+    cardPlayed,
+    effect,
+    resolutionInput,
+    ctx,
   });
-  if (candidates.length === 0) {
+  if (
+    !selectionContext ||
+    (selectionContext.kind !== "target-selection" && selectionContext.kind !== "discard-choice")
+  ) {
     return undefined;
   }
-
-  const selectedCandidateCount =
-    selectedTargets?.filter((target) => candidates.includes(target)).length ?? 0;
-  const { min } = resolveTargetBounds(descriptor.count, descriptor.selector);
-  if (selectedCandidateCount >= min) {
-    return undefined;
-  }
-
-  const chosenBy =
-    effect && typeof effect === "object" ? (effect as { chosenBy?: unknown }).chosenBy : undefined;
-  const chooserId =
-    chosenBy === "you"
-      ? cardPlayed.playerId
-      : chosenBy === "opponent"
-        ? ((ctx.framework.state.playerIds.find((playerId) => playerId !== cardPlayed.playerId) ??
-            cardPlayed.playerId) as PlayerId)
-        : getCurrentActionActorId(ctx, cardPlayed);
 
   const pendingEffect = createPendingActionEffect(ctx, {
-    kind: "target-selection",
+    kind: selectionContext.kind,
     sourceCardId: cardPlayed.cardId,
     controllerId: cardPlayed.playerId,
-    chooserId,
+    chooserId: selectionContext.chooserId,
     cardPlayed,
     effect,
     continuation: options?.continuation,
     resolutionInput,
+    selectionContext,
   });
   return suspendActionEffect(ctx, pendingEffect);
+}
+
+function resolveDefaultTargetChooserId(
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  effectRecord: Record<string, unknown>,
+  resolutionInput: ActionResolutionInput,
+): PlayerId {
+  const chosenBy = effectRecord.chosenBy;
+  if (chosenBy === "you") {
+    return cardPlayed.playerId;
+  }
+
+  if (chosenBy === "opponent") {
+    return (
+      ctx.framework.state.playerIds.find((playerId) => playerId !== cardPlayed.playerId) ??
+      cardPlayed.playerId
+    );
+  }
+
+  if (chosenBy === "TARGET") {
+    const selectedTargets = normalizeSelectedTargets(resolutionInput.targets) ?? [];
+    const selectedPlayer = ctx.framework.state.playerIds.find((playerId) =>
+      selectedTargets.some((target) => String(target) === String(playerId)),
+    );
+    if (selectedPlayer) {
+      return selectedPlayer;
+    }
+
+    const selectedCardOwner = selectedTargets
+      .map((target) => ctx.framework.zones.getCardOwner(target as CardInstanceId))
+      .find((ownerId): ownerId is PlayerId => typeof ownerId === "string" && ownerId.length > 0);
+    if (selectedCardOwner) {
+      return selectedCardOwner;
+    }
+  }
+
+  return getCurrentActionActorId(ctx, cardPlayed);
 }
 
 function maybeSuspendForChosenPlayerSelection(
@@ -463,9 +971,7 @@ function maybeSuspendForTargetOrdering(
 
   const targetsByOwner = new Map<PlayerId, number>();
   for (const targetId of candidateTargets) {
-    const ownerId = ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.ownerID as
-      | PlayerId
-      | undefined;
+    const ownerId = ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined;
     if (!ownerId) {
       continue;
     }
@@ -490,12 +996,7 @@ function maybeSuspendForTargetOrdering(
   const chooserId =
     effectRecord.orderBy === "owner"
       ? ((candidateTargets
-          .map(
-            (targetId) =>
-              ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.ownerID as
-                | PlayerId
-                | undefined,
-          )
+          .map((targetId) => ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined)
           .find(Boolean) ?? cardPlayed.playerId) as PlayerId)
       : cardPlayed.playerId;
 
@@ -555,8 +1056,47 @@ function resolveSelectedPlayerIdsFromTargets(
   return resolveSelectedPlayerIds(playerIds, targets);
 }
 
+function resolveTargetPlayerIdsForEffect(
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  effect: unknown,
+  resolutionInput: ActionResolutionInput,
+): PlayerId[] | undefined {
+  const effectTarget =
+    effect && typeof effect === "object" && "target" in effect
+      ? (effect as Record<string, unknown>).target
+      : undefined;
+
+  if (effectTarget === undefined) {
+    return resolveSelectedPlayerIdsFromTargets(
+      ctx.framework.state.playerIds,
+      getCurrentSelectionInput(resolutionInput),
+    );
+  }
+
+  return resolveTargetPlayerIds(
+    ctx,
+    cardPlayed,
+    effectTarget,
+    getEffectTargetSelectionInput(effectTarget, resolutionInput),
+  );
+}
+
+function resolveSelectedCardTargetsForEffect(
+  effect: unknown,
+  resolutionInput: ActionResolutionInput,
+): CardInstanceId[] | undefined {
+  const effectTarget =
+    effect && typeof effect === "object" && "target" in effect
+      ? (effect as Record<string, unknown>).target
+      : undefined;
+
+  return normalizeSelectedTargets(getEffectTargetSelectionInput(effectTarget, resolutionInput));
+}
+
 export const ACTION_EFFECT_RESOLVER_TYPES = [
   "gain-keyword",
+  "gain-keywords",
   "modify-stat",
   "sequence",
   "play-card",
@@ -573,12 +1113,15 @@ export const ACTION_EFFECT_RESOLVER_TYPES = [
   "mill",
   "put-into-inkwell",
   "put-under",
+  "enable-play-from-under",
   "pay-cost",
   "put-on-bottom",
   "put-on-top",
   "ready",
+  "select-target",
   "scry",
   "for-each",
+  "for-each-opponent",
   "return-from-discard",
   "return-random-from-inkwell",
   "exert",
@@ -587,6 +1130,7 @@ export const ACTION_EFFECT_RESOLVER_TYPES = [
   "lose-lore",
   "shuffle-into-deck",
   "reveal-top-card",
+  "reveal-until-match",
   "name-a-card",
   "reveal-hand",
   "search-deck",
@@ -603,6 +1147,7 @@ export const ACTION_EFFECT_RESOLVER_TYPES = [
   "create-triggered-ability",
   "create-replacement-effect",
   "support",
+  "property-modification",
 ] as const;
 
 type SupportedActionEffectType = (typeof ACTION_EFFECT_RESOLVER_TYPES)[number];
@@ -621,17 +1166,34 @@ function resolveEffectExecutionContext(
       ? (effect as Record<string, unknown>).target
       : undefined;
   const hasExplicitTarget = effect && typeof effect === "object" && "target" in effect;
-  const selectedTargets = normalizeSelectedTargets(resolutionInput.targets) ?? [];
+  const selectedTargets = getCurrentSelectionTargets(resolutionInput).filter(
+    (targetId): targetId is CardInstanceId => typeof targetId === "string",
+  );
+  const contextTargets = getContextSelectionTargets(resolutionInput).filter(
+    (targetId): targetId is CardInstanceId => typeof targetId === "string",
+  );
   const resolvedTargets = hasExplicitTarget
     ? (resolveEffectTargets(
         ctx,
         cardPlayed,
         effectTarget,
-        resolutionInput.targets,
+        getEffectTargetSelectionInput(effectTarget, resolutionInput),
         resolutionInput.eventSnapshot,
       ) ?? [])
     : selectedTargets;
-  const dynamicTargets = selectedTargets.length > 0 ? selectedTargets : resolvedTargets;
+  // When there are no current selected targets but there are context targets from a prior
+  // sequence step (e.g. a "select-target" step preceding this effect), and the effect's
+  // dynamic fields reference a prior selection (e.g. { ref: "previous-target" }), use the
+  // context targets for dynamic field resolution so that variable amounts like
+  // "strength-of { ref: 'previous-target' }" correctly resolve to the prior step's selection.
+  const dynamicTargets =
+    selectedTargets.length > 0
+      ? selectedTargets
+      : isTargetReferenceDescriptor(effectTarget) && contextTargets.length > 0
+        ? contextTargets
+        : resolvedTargets.length > 0
+          ? resolvedTargets
+          : contextTargets;
   const resolvedDynamic = resolveEffectDynamicFields(
     effect,
     {
@@ -656,14 +1218,179 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     const nestedEffects = effect.steps ?? effect.effects ?? [];
+    const stagedSequence =
+      options?.continuation?.stagedSequence?.sequenceEffect === effect
+        ? options.continuation.stagedSequence
+        : undefined;
+    const contextTargets = getContextSelectionTargets(resolutionInput);
+    const currentTargets = getCurrentSelectionTargets(resolutionInput);
+    const selectedTargetsBySignature = new Map<string, Array<CardInstanceId | PlayerId>>();
+    let consumedTargets = 0;
+    let stagedTargetCursor = 0;
+
     for (const [index, nestedEffect] of nestedEffects.entries()) {
-      const result = resolveActionEffect(ctx, cardPlayed, nestedEffect, resolutionInput, {
-        continuation: mergeContinuationEffects(
-          nestedEffects.slice(index + 1),
-          options?.continuation,
-        ),
+      const remainingSequenceSteps = nestedEffects.slice(index + 1);
+      const stagedTargetCount = stagedSequence?.collectedTargetCounts[index] ?? 0;
+      const explicitSelections = sequenceStepConsumesExplicitTargets(
+        ctx,
+        cardPlayed,
+        nestedEffect,
+        resolutionInput,
+      );
+      const chosenTargetDescriptors = getEffectChosenTargetDescriptors(
+        ctx,
+        cardPlayed,
+        nestedEffect,
+        resolutionInput,
+      );
+      const targetSignature =
+        chosenTargetDescriptors.length === 1 ? chosenTargetDescriptors[0]?.signature : undefined;
+      const runtimeNestedEffect = resolveSequenceStepEffect(
+        ctx,
+        cardPlayed,
+        nestedEffect,
+        resolutionInput,
+      );
+      const requiresFullTargetContext =
+        effectRequiresFullTargetContext(nestedEffect) ||
+        effectRequiresFullTargetContext(runtimeNestedEffect);
+      const requiresPriorTargetContext =
+        requiresFullTargetContext || stepRequiresPriorTargetContext(chosenTargetDescriptors);
+      const reusedTargets =
+        !stagedSequence && targetSignature
+          ? selectedTargetsBySignature.get(targetSignature)
+          : undefined;
+      const priorStepTargets = currentTargets.slice(0, consumedTargets);
+      const stepContextTargets = [...contextTargets, ...priorStepTargets];
+      const stepSelection = resolveChosenTargetAssignments(
+        ctx,
+        cardPlayed,
+        nestedEffect,
+        resolutionInput,
+        currentTargets.slice(consumedTargets),
+      );
+      const fallbackStepTargets =
+        explicitSelections > 0
+          ? currentTargets.slice(consumedTargets, consumedTargets + explicitSelections)
+          : [];
+      const stepTargets =
+        reusedTargets && reusedTargets.length > 0 ? reusedTargets : stepSelection.targets;
+      const effectiveStepTargets =
+        stepTargets.length > 0 || fallbackStepTargets.length === 0
+          ? stepTargets
+          : fallbackStepTargets;
+      const nestedResolutionInput = (() => {
+        if (stagedSequence && stagedTargetCount > 0) {
+          return withCurrentSelectionTargets(
+            withContextSelectionTargets(
+              clearCurrentSelectionTargets(resolutionInput),
+              stepContextTargets,
+            ),
+            stagedSequence.collectedTargets.slice(
+              stagedTargetCursor,
+              stagedTargetCursor + stagedTargetCount,
+            ),
+          );
+        }
+
+        if (explicitSelections > 0) {
+          return withCurrentSelectionTargets(
+            withContextSelectionTargets(
+              clearCurrentSelectionTargets(resolutionInput),
+              requiresPriorTargetContext ? stepContextTargets : contextTargets,
+            ),
+            effectiveStepTargets,
+          );
+        }
+
+        if (consumedTargets > 0 && !requiresFullTargetContext) {
+          return withCurrentSelectionTargets(
+            withContextSelectionTargets(
+              clearCurrentSelectionTargets(resolutionInput),
+              stepContextTargets,
+            ),
+            currentTargets.slice(consumedTargets),
+          );
+        }
+
+        if (requiresFullTargetContext && stepContextTargets.length > contextTargets.length) {
+          const nextResolutionInput = withContextSelectionTargets(
+            clearCurrentSelectionTargets(resolutionInput),
+            stepContextTargets,
+          );
+          const remainingCurrentTargets = currentTargets.slice(consumedTargets);
+
+          return remainingCurrentTargets.length > 0
+            ? withCurrentSelectionTargets(nextResolutionInput, remainingCurrentTargets)
+            : nextResolutionInput;
+        }
+
+        return resolutionInput;
+      })();
+      const implicitlyConsumesCurrentSelection =
+        hasSatisfiedChosenTargetContext(
+          ctx,
+          cardPlayed,
+          runtimeNestedEffect,
+          nestedResolutionInput,
+        ) || getEffectType(runtimeNestedEffect) === "play-card";
+      const chosenContextConsumptionCount =
+        !stagedSequence &&
+        implicitlyConsumesCurrentSelection &&
+        stepSelection.consumedCount === 0 &&
+        currentTargets.length > consumedTargets
+          ? 1
+          : 0;
+      stagedTargetCursor += stagedSequence?.collectedTargetCounts[index] ?? 0;
+      if (!stagedSequence && explicitSelections > 0) {
+        if (!reusedTargets) {
+          consumedTargets += Math.max(stepSelection.consumedCount, fallbackStepTargets.length);
+        }
+      }
+      if (!stagedSequence && chosenContextConsumptionCount > 0) {
+        consumedTargets += chosenContextConsumptionCount;
+      }
+      if (!stagedSequence && stepSelection.assignments.length > 0) {
+        stepSelection.assignments.forEach((assignment) => {
+          if (
+            assignment.signature &&
+            assignment.targets.length > 0 &&
+            !selectedTargetsBySignature.has(assignment.signature)
+          ) {
+            selectedTargetsBySignature.set(assignment.signature, [...assignment.targets]);
+          }
+        });
+      }
+      const continuation = mergeContinuationEffects(
+        remainingSequenceSteps,
+        options?.continuation?.remainingEffects
+          ? { remainingEffects: options.continuation.remainingEffects }
+          : {},
+      );
+      const result = resolveActionEffect(ctx, cardPlayed, nestedEffect, nestedResolutionInput, {
+        ...options,
+        continuation,
       });
       if (result.status === "suspended") {
+        if (
+          index === 0 &&
+          !stagedSequence &&
+          canStageSequenceTargetCollection(ctx, cardPlayed, effect) &&
+          result.pendingEffect.kind === "target-selection" &&
+          remainingSequenceSteps.length > 0
+        ) {
+          result.pendingEffect.continuation = {
+            ...(options?.continuation?.remainingEffects
+              ? { remainingEffects: [...options.continuation.remainingEffects] }
+              : {}),
+            stagedSequence: {
+              sequenceEffect: effect,
+              collectedTargets: [...currentTargets],
+              collectedTargetCounts: [],
+              remainingSteps: [...remainingSequenceSteps],
+            },
+          };
+        }
         return result;
       }
     }
@@ -710,7 +1437,11 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     if (effect.effect) {
-      return resolveActionEffect(ctx, cardPlayed, effect.effect, resolutionInput, options);
+      const nestedResolutionInput =
+        effect.chooser === "CHOSEN_PLAYER"
+          ? promoteSelectedPlayersToTargetContext(ctx, resolutionInput)
+          : resolutionInput;
+      return resolveActionEffect(ctx, cardPlayed, effect.effect, nestedResolutionInput, options);
     }
 
     return RESOLVED_ACTION_EFFECT;
@@ -761,11 +1492,15 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     const choiceIndex = Math.min(rawChoiceIndex, choiceOptions.length - 1);
+    const nestedResolutionInput =
+      effect.chooser === "CHOSEN_PLAYER"
+        ? promoteSelectedPlayersToTargetContext(ctx, resolutionInput)
+        : resolutionInput;
     return resolveActionEffect(
       ctx,
       cardPlayed,
       choiceOptions[choiceIndex],
-      resolutionInput,
+      nestedResolutionInput,
       options,
     );
   },
@@ -796,6 +1531,28 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     const chooserId = resolveChoiceChooserId(ctx, cardPlayed, effect, resolutionInput);
     const actorId = getCurrentActionActorId(ctx, cardPlayed);
     const rawChoiceIndex = resolutionInput.choiceIndex;
+    const legalOptionIndices = getLegalOrOptionIndices(ctx, cardPlayed, effect, resolutionInput);
+
+    if (legalOptionIndices.length === 0) {
+      markLastEffectPerformed(resolutionInput.eventSnapshot, false);
+      return RESOLVED_ACTION_EFFECT;
+    }
+
+    if (legalOptionIndices.length === 1 && actorId === chooserId) {
+      const forcedChoiceIndex = legalOptionIndices[0]!;
+      const nestedResolutionInput =
+        effect.chooser === "CHOSEN_PLAYER"
+          ? promoteSelectedPlayersToTargetContext(ctx, resolutionInput)
+          : resolutionInput;
+      return resolveActionEffect(
+        ctx,
+        cardPlayed,
+        orOptions[forcedChoiceIndex],
+        nestedResolutionInput,
+        options,
+      );
+    }
+
     if (
       actorId !== chooserId ||
       typeof rawChoiceIndex !== "number" ||
@@ -815,12 +1572,6 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       return suspendActionEffect(ctx, pendingEffect);
     }
 
-    const legalOptionIndices = getLegalOrOptionIndices(ctx, cardPlayed, effect, resolutionInput);
-    if (legalOptionIndices.length === 0) {
-      markLastEffectPerformed(resolutionInput.eventSnapshot, false);
-      return RESOLVED_ACTION_EFFECT;
-    }
-
     const requestedChoiceIndex = Math.min(rawChoiceIndex, orOptions.length - 1);
     const choiceIndex = legalOptionIndices.includes(requestedChoiceIndex)
       ? requestedChoiceIndex
@@ -832,7 +1583,17 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       return RESOLVED_ACTION_EFFECT;
     }
 
-    return resolveActionEffect(ctx, cardPlayed, orOptions[choiceIndex], resolutionInput, options);
+    const nestedResolutionInput =
+      effect.chooser === "CHOSEN_PLAYER"
+        ? promoteSelectedPlayersToTargetContext(ctx, resolutionInput)
+        : resolutionInput;
+    return resolveActionEffect(
+      ctx,
+      cardPlayed,
+      orOptions[choiceIndex],
+      nestedResolutionInput,
+      options,
+    );
   },
 
   "for-each": (ctx, cardPlayed, effect, resolutionInput, options) => {
@@ -890,6 +1651,23 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     return RESOLVED_ACTION_EFFECT;
   },
 
+  "for-each-opponent": (ctx, cardPlayed, effect, resolutionInput) => {
+    if (!isForEachOpponentEffect(effect)) {
+      handleUnsupportedActionEffect(
+        "for-each-opponent",
+        "Malformed for-each-opponent effect payload",
+      );
+      return RESOLVED_ACTION_EFFECT;
+    }
+
+    return resolveForEachOpponentEffect(
+      ctx,
+      cardPlayed,
+      effect as ForEachOpponentEffect,
+      resolutionInput,
+    );
+  },
+
   conditional: (ctx, cardPlayed, effect, resolutionInput, options) => {
     if (!isConditionalEffect(effect)) {
       handleUnsupportedActionEffect("conditional", "Malformed conditional effect payload");
@@ -919,11 +1697,8 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         : resolveAggregateFieldAmount(resolved.resolvedDynamic.amount);
     resolveDrawEffect(ctx, cardPlayed, effect as DrawEffect, {
       drawAmount,
-      selectedPlayerIds: resolveSelectedPlayerIdsFromTargets(
-        ctx.framework.state.playerIds,
-        resolutionInput.targets,
-      ),
-      selectedTargets: normalizeSelectedTargets(resolutionInput.targets),
+      selectedPlayerIds: resolveTargetPlayerIdsForEffect(ctx, cardPlayed, effect, resolutionInput),
+      selectedTargets: resolveSelectedCardTargetsForEffect(effect, resolutionInput),
     });
     return RESOLVED_ACTION_EFFECT;
   },
@@ -941,10 +1716,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         : resolveAggregateFieldAmount(resolved.resolvedDynamic.amount);
     resolveMillEffect(ctx, cardPlayed, effect as MillEffect, {
       millAmount,
-      selectedPlayerIds: resolveSelectedPlayerIdsFromTargets(
-        ctx.framework.state.playerIds,
-        resolutionInput.targets,
-      ),
+      selectedPlayerIds: resolveTargetPlayerIdsForEffect(ctx, cardPlayed, effect, resolutionInput),
     });
     return RESOLVED_ACTION_EFFECT;
   },
@@ -978,9 +1750,11 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       resolved.resolvedDynamic.amount === undefined
         ? 1
         : resolveAggregateFieldAmount(resolved.resolvedDynamic.amount);
-    const selectedPlayerIds = resolveSelectedPlayerIdsFromTargets(
-      ctx.framework.state.playerIds,
-      resolutionInput.targets,
+    const selectedPlayerIds = resolveTargetPlayerIdsForEffect(
+      ctx,
+      cardPlayed,
+      effect,
+      resolutionInput,
     );
     const targetPlayerId = selectedPlayerIds?.[0] ?? cardPlayed.playerId;
     const replacedEvent = applyReplacementEffects(
@@ -1002,7 +1776,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     resolveGainLoreEffect(ctx, cardPlayed, effect as GainLoreEffect, {
       gainAmount: replacedEvent.amount,
       selectedPlayerIds,
-      selectedTargets: normalizeSelectedTargets(resolutionInput.targets),
+      selectedTargets: resolveSelectedCardTargetsForEffect(effect, resolutionInput),
     });
     return RESOLVED_ACTION_EFFECT;
   },
@@ -1018,10 +1792,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     resolveLoseLoreEffect(ctx, cardPlayed, effect as LoseLoreEffect, {
       eventSnapshot: resolutionInput.eventSnapshot,
       loseAmount,
-      selectedPlayerIds: resolveSelectedPlayerIdsFromTargets(
-        ctx.framework.state.playerIds,
-        resolutionInput.targets,
-      ),
+      selectedPlayerIds: resolveTargetPlayerIdsForEffect(ctx, cardPlayed, effect, resolutionInput),
     });
     return RESOLVED_ACTION_EFFECT;
   },
@@ -1034,9 +1805,11 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
 
     const resolved = resolveEffectExecutionContext(ctx, cardPlayed, effect, resolutionInput);
     const scryAmount = resolveAggregateFieldAmount(resolved.resolvedDynamic.amount);
-    const selectedPlayerIds = resolveSelectedPlayerIdsFromTargets(
-      ctx.framework.state.playerIds,
-      resolutionInput.targets,
+    const selectedPlayerIds = resolveTargetPlayerIdsForEffect(
+      ctx,
+      cardPlayed,
+      effect,
+      resolutionInput,
     );
     const hasExplicitDestinations =
       Array.isArray(resolutionInput.destinations) && resolutionInput.destinations.length > 0;
@@ -1050,7 +1823,12 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       const lookedAtCards = getScryLookedAtCards(ctx, deckPlayerId, scryAmount);
 
       if (lookedAtCards.length > 0) {
-        const chooserId = getCurrentActionActorId(ctx, cardPlayed);
+        const defaultChooser = getCurrentActionActorId(ctx, cardPlayed);
+        const effectChooser = (effect as { chooser?: unknown }).chooser;
+        const chooserId =
+          effectChooser != null
+            ? (resolveTargetPlayerIds(ctx, cardPlayed, effectChooser as never)[0] ?? defaultChooser)
+            : defaultChooser;
         const revealWindowIds = [ctx.framework.zones.reveal(lookedAtCards, [chooserId])];
         ctx.framework.logPublicWithOverrides({
           category: "action",
@@ -1094,6 +1872,74 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       scryAmount,
       selectedPlayerIds,
     });
+
+    // Handle repeatOnHandMatch: if any card was placed into hand, re-queue this scry effect.
+    // Used for "repeat this effect" cards (e.g. Sisu - Uniting Dragon).
+    const scryEffect = effect as ScryEffect;
+    if (scryEffect.repeatOnHandMatch === true) {
+      const resolvedDestinations = Array.isArray(resolutionInput.destinations)
+        ? resolutionInput.destinations
+        : [];
+      const handSelection = resolvedDestinations.find((d) => d.zone === "hand");
+      const cardsMovedToHand = Array.isArray(handSelection?.cards) ? handSelection.cards : [];
+
+      if (cardsMovedToHand.length > 0) {
+        const deckPlayerId = resolveScryDeckPlayerId(cardPlayed, selectedPlayerIds);
+        const nextTopCards = getScryLookedAtCards(ctx, deckPlayerId, scryAmount ?? 1);
+
+        if (nextTopCards.length > 0) {
+          const defaultChooser = getCurrentActionActorId(ctx, cardPlayed);
+          const effectChooser = (scryEffect as { chooser?: unknown }).chooser;
+          const chooserId =
+            effectChooser != null
+              ? (resolveTargetPlayerIds(ctx, cardPlayed, effectChooser as never)[0] ??
+                defaultChooser)
+              : defaultChooser;
+          const revealWindowIds = [ctx.framework.zones.reveal(nextTopCards, [chooserId])];
+          const repeatPendingEffect = createPendingActionEffect(ctx, {
+            kind: "scry-selection",
+            sourceCardId: cardPlayed.cardId,
+            controllerId: cardPlayed.playerId,
+            chooserId,
+            cardPlayed,
+            effect: scryEffect,
+            resolutionInput: {
+              ...resolutionInput,
+              destinations: undefined,
+              eventSnapshot: {
+                revealedCardIds: nextTopCards,
+                revealWindowIds,
+              },
+            },
+          });
+          enqueuePendingActionEffect(ctx, repeatPendingEffect);
+        }
+      }
+    }
+
+    // Execute any action cards that were sent to a "play" destination with cost: "free".
+    // The scry resolver already moved them to the play zone; now run their effects and
+    // finalize them to discard, matching the normal action-card play lifecycle.
+    const playDest = (scryEffect.destinations ?? []).find((d) => d.zone === "play");
+    if (playDest && "cost" in playDest && playDest.cost === "free") {
+      const resolvedDestinations = Array.isArray(resolutionInput.destinations)
+        ? resolutionInput.destinations
+        : [];
+      const playSelection = resolvedDestinations.find((d) => d.zone === "play");
+      const playCardIds = Array.isArray(playSelection?.cards) ? playSelection.cards : [];
+      for (const cardId of playCardIds) {
+        const def = ctx.cards.getDefinition(cardId) as { cardType?: string } | undefined;
+        if (def?.cardType === "action") {
+          executeScryActionCardPlay(
+            ctx,
+            cardId as CardInstanceId,
+            cardPlayed.playerId,
+            resolutionInput,
+          );
+        }
+      }
+    }
+
     return RESOLVED_ACTION_EFFECT;
   },
 
@@ -1335,13 +2181,9 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     const resolved = resolveEffectExecutionContext(ctx, cardPlayed, effect, resolutionInput);
-    const selectedTargets = Array.isArray(resolutionInput.targets)
-      ? resolutionInput.targets.filter(
-          (targetId): targetId is CardInstanceId => typeof targetId === "string",
-        )
-      : typeof resolutionInput.targets === "string"
-        ? [resolutionInput.targets as CardInstanceId]
-        : [];
+    const selectedTargets = getCombinedSelectionTargets(resolutionInput).filter(
+      (targetId): targetId is CardInstanceId => typeof targetId === "string",
+    );
     const discardAmount =
       effect.chosen === true && effect.amount === "DISCARDED_COUNT"
         ? selectedTargets.length
@@ -1387,6 +2229,24 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     return RESOLVED_ACTION_EFFECT;
   },
 
+  "enable-play-from-under": (ctx, cardPlayed, effect, resolutionInput) => {
+    if (!isEnablePlayFromUnderEffect(effect)) {
+      handleUnsupportedActionEffect(
+        "enable-play-from-under",
+        "Malformed enable-play-from-under effect payload",
+      );
+      return RESOLVED_ACTION_EFFECT;
+    }
+
+    resolveEnablePlayFromUnderEffect(
+      ctx,
+      cardPlayed,
+      effect as EnablePlayFromUnderEffect,
+      resolutionInput,
+    );
+    return RESOLVED_ACTION_EFFECT;
+  },
+
   "pay-cost": (ctx, cardPlayed, effect, resolutionInput, options) => {
     if (
       !effect ||
@@ -1417,6 +2277,16 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     resolvePutOnTopEffect(ctx, cardPlayed, effect as PutOnTopEffect, resolutionInput);
+    return RESOLVED_ACTION_EFFECT;
+  },
+
+  "select-target": (ctx, cardPlayed, effect, resolutionInput) => {
+    if (!isSelectTargetEffect(effect)) {
+      handleUnsupportedActionEffect("select-target", "Malformed select-target effect payload");
+      return RESOLVED_ACTION_EFFECT;
+    }
+
+    resolveSelectTargetEffect(ctx, cardPlayed, effect as SelectTargetEffect, resolutionInput);
     return RESOLVED_ACTION_EFFECT;
   },
 
@@ -1453,6 +2323,24 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     resolveRevealTopCardEffect(ctx, cardPlayed, effect as RevealTopCardEffect, resolutionInput);
+    return RESOLVED_ACTION_EFFECT;
+  },
+
+  "reveal-until-match": (ctx, cardPlayed, effect, resolutionInput) => {
+    if (!isRevealUntilMatchEffect(effect)) {
+      handleUnsupportedActionEffect(
+        "reveal-until-match",
+        "Malformed reveal-until-match effect payload",
+      );
+      return RESOLVED_ACTION_EFFECT;
+    }
+
+    resolveRevealUntilMatchEffect(
+      ctx,
+      cardPlayed,
+      effect as RevealUntilMatchEffect,
+      resolutionInput,
+    );
     return RESOLVED_ACTION_EFFECT;
   },
 
@@ -1548,6 +2436,62 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     resolveGainKeywordEffect(ctx, cardPlayed, effect as GainKeywordEffect, resolutionInput);
+    return RESOLVED_ACTION_EFFECT;
+  },
+
+  "property-modification": (ctx, cardPlayed, effect, resolutionInput) => {
+    if (!isPropertyModificationEffect(effect)) {
+      handleUnsupportedActionEffect(
+        "property-modification",
+        "Malformed property-modification effect payload",
+      );
+      return RESOLVED_ACTION_EFFECT;
+    }
+
+    resolvePropertyModificationEffect(
+      ctx,
+      cardPlayed,
+      effect as PropertyModificationEffect,
+      resolutionInput,
+    );
+    return RESOLVED_ACTION_EFFECT;
+  },
+
+  "gain-keywords": (ctx, cardPlayed, effect, resolutionInput) => {
+    const gainKeywordsEffect = effect as GainKeywordsEffect;
+    if (
+      !gainKeywordsEffect ||
+      typeof gainKeywordsEffect !== "object" ||
+      !Array.isArray(gainKeywordsEffect.keywords)
+    ) {
+      handleUnsupportedActionEffect("gain-keywords", "Malformed gain-keywords effect payload");
+      return RESOLVED_ACTION_EFFECT;
+    }
+
+    for (const kw of gainKeywordsEffect.keywords) {
+      if (
+        !kw ||
+        typeof kw !== "object" ||
+        !("keyword" in kw) ||
+        !("value" in kw) ||
+        typeof kw.keyword !== "string" ||
+        typeof kw.value !== "number"
+      ) {
+        handleUnsupportedActionEffect(
+          "gain-keywords",
+          "Malformed keyword object in gain-keywords effect",
+        );
+        continue;
+      }
+      const singleEffect: GainKeywordEffect = {
+        type: "gain-keyword",
+        keyword: kw.keyword,
+        value: kw.value,
+        target: gainKeywordsEffect.target,
+        duration: gainKeywordsEffect.duration,
+      };
+      resolveGainKeywordEffect(ctx, cardPlayed, singleEffect, resolutionInput);
+    }
     return RESOLVED_ACTION_EFFECT;
   },
 

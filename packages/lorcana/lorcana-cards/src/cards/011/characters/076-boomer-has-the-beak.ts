@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boomerHasTheBeakI18n } from "./076-boomer-has-the-beak.i18n";
 
 export const boomerHasTheBeak: CharacterCard = {
   id: "8Pv",
@@ -7,51 +8,6 @@ export const boomerHasTheBeak: CharacterCard = {
   cardType: "character",
   name: "Boomer",
   version: "Has the Beak",
-  i18n: {
-    en: {
-      name: "Boomer",
-      version: "Has the Beak",
-      text: [
-        {
-          title: "SPOTTED HIM!",
-          description: "When you play this character, you may exert chosen damaged character.",
-        },
-      ],
-    },
-    de: {
-      name: "Bumer",
-      version: "Der mit dem Schnabel",
-      text: [
-        {
-          title: "HAB IHN GEFUNDEN!",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen beschädigten Charakter deiner Wahl erschöpfen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Piqueur",
-      version: "A le bec",
-      text: [
-        {
-          title: "REPÉRÉ!",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage ayant au moins un dommage et l'épuiser.",
-        },
-      ],
-    },
-    it: {
-      name: "Sbuccia",
-      version: "Quello col Becco",
-      text: [
-        {
-          title: "L'HO TROVATO!",
-          description:
-            "Quando giochi questo personaggio, puoi impegnare un personaggio danneggiato a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Fox and the Hound",
   set: "011",
@@ -85,6 +41,11 @@ export const boomerHasTheBeak: CharacterCard = {
             owner: "any",
             selector: "chosen",
             zones: ["play"],
+            filter: [
+              {
+                type: "damaged",
+              },
+            ],
           },
           type: "exert",
         },
@@ -100,4 +61,5 @@ export const boomerHasTheBeak: CharacterCard = {
       text: "SPOTTED HIM! When you play this character, you may exert chosen damaged character.",
     },
   ],
+  i18n: boomerHasTheBeakI18n,
 };

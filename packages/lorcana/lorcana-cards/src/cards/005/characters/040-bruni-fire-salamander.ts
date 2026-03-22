@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { bruniFireSalamanderI18n } from "./040-bruni-fire-salamander.i18n";
 
 export const bruniFireSalamander: CharacterCard = {
   id: "K4I",
@@ -7,36 +8,6 @@ export const bruniFireSalamander: CharacterCard = {
   cardType: "character",
   name: "Bruni",
   version: "Fire Salamander",
-  i18n: {
-    en: {
-      name: "Bruni",
-      version: "Fire Salamander",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "PARTING GIFT",
-          description: "When this character is banished, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Bruni",
-      version: "Feuersalamander",
-      text: "Wendig ABSCHIEDSGESCHENK Wenn dieser Charakter verbannt wird, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Bruni",
-      version: "Salamandre de feu",
-      text: "Insaisissable UN CADEAU AU PASSAGE Lorsque ce personnage est banni, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Bruni",
-      version: "Salamandra del Fuoco",
-      text: "Sfuggente DONO DI ADDIO Quando questo personaggio viene esiliato, puoi pescare una carta.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "005",
@@ -89,4 +60,5 @@ export const bruniFireSalamander: CharacterCard = {
       text: "PARTING GIFT When this character is banished, you may draw a card.",
     },
   ],
+  i18n: bruniFireSalamanderI18n,
 };

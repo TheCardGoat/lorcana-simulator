@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boltDependableFriendI18n } from "./018-bolt-dependable-friend.i18n";
 
 export const boltDependableFriend: CharacterCard = {
   id: "XZV",
@@ -7,28 +8,6 @@ export const boltDependableFriend: CharacterCard = {
   cardType: "character",
   name: "Bolt",
   version: "Dependable Friend",
-  i18n: {
-    en: {
-      name: "Bolt",
-      version: "Dependable Friend",
-      text: "Support",
-    },
-    de: {
-      name: "Bolt",
-      version: "Verlässlicher Freund",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Volt",
-      version: "Ami digne de confiance",
-      text: "Soutien",
-    },
-    it: {
-      name: "Bolt",
-      version: "Amico Fidato",
-      text: "Aiutante",
-    },
-  },
   inkType: ["amber"],
   franchise: "Bolt",
   set: "007",
@@ -52,5 +31,24 @@ export const boltDependableFriend: CharacterCard = {
       type: "keyword",
       text: "Support",
     },
+    {
+      id: "j9c-2",
+      type: "triggered",
+      text: "Support (Whenever this character quests, you may add their {S} to another chosen character's {S} this turn.)",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "support",
+          target: "ANOTHER_CHOSEN_CHARACTER_OF_YOURS",
+        },
+      },
+    },
   ],
+  i18n: boltDependableFriendI18n,
 };

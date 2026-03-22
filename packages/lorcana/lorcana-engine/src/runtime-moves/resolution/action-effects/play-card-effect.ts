@@ -26,6 +26,13 @@ import {
   moveSuspendedActionCardToLimbo,
 } from "./pending-action-effects";
 import { payBasicCost, validateBasicCost } from "../../rules/play-card-rules";
+import {
+  clearCurrentSelectionTargets,
+  getCombinedSelectionInput,
+  getContextSelectionTargets,
+  getCurrentSelectionInput,
+  getEffectTargetSelectionInput,
+} from "./selection-state";
 
 type CardDefinitionLike = {
   actionSubtype?: string;
@@ -93,6 +100,40 @@ function isPlayerTargetLike(target: unknown): target is PlayerTargetLike {
   );
 }
 
+/**
+ * Returns true when the play-card filter relies on runtime context from a prior
+ * sequence step (e.g. the cost or identity of a previously chosen card) and
+ * therefore requires an explicit player selection from hand rather than
+ * auto-selection.  A filter with a static `name` field, by contrast, can
+ * unambiguously identify the card to play and does not need explicit selection.
+ */
+function isContextDependentPlayCardFilter(effect: PlayCardEffect): boolean {
+  const filter =
+    effect.filter &&
+    !Array.isArray(effect.filter) &&
+    !("type" in effect.filter && typeof effect.filter.type === "string")
+      ? (effect.filter as PlayCardFilterLike)
+      : undefined;
+
+  if (!filter) {
+    return false;
+  }
+
+  // Filters that reference a previously chosen card's cost or identity are context-dependent.
+  if (
+    filter.maxCost === "chosen-card-cost" ||
+    (typeof filter.maxCost === "object" &&
+      filter.maxCost !== null &&
+      (filter.maxCost as { type?: unknown }).type === "chosen-card-cost") ||
+    filter.excludeChosenCard === true ||
+    filter.sameNameAsChosenCard === true
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 function resolveSourceCards(
   ctx: PlayCardExecutionContext,
   cardPlayed: CardPlayedPayload,
@@ -130,7 +171,32 @@ function resolveSourceCards(
     return underCards;
   }
 
-  if (from === "deck" || from === "discard" || from === "hand") {
+  if (from === "discard") {
+    const cardsInZone = ctx.framework.zones.getCards({
+      zone: from,
+      playerId: sourcePlayerId,
+    }) as CardInstanceId[];
+    if (hasExplicitTargetSelection) {
+      const zoneSet = new Set(cardsInZone);
+      const selectedInZone = selectedTargets.filter((cardId) => zoneSet.has(cardId));
+      return selectedInZone;
+    }
+
+    return cardsInZone;
+  }
+
+  if (from === "deck" || from === "hand") {
+    if (from === "hand" && !hasExplicitTargetSelection) {
+      // When there are context targets (from prior sequence steps), block auto-play
+      // unless the filter unambiguously identifies the card by name. Context-dependent
+      // filters (e.g. maxCost: "chosen-card-cost", excludeChosenCard) require the
+      // player to make an explicit selection.
+      const contextTargets = getContextSelectionTargets(resolutionInput);
+      if (contextTargets.length > 0 && isContextDependentPlayCardFilter(effect)) {
+        return [];
+      }
+    }
+
     const cardsInZone = ctx.framework.zones.getCards({
       zone: from,
       playerId: sourcePlayerId,
@@ -265,6 +331,19 @@ function matchesPlayCardFilter(
     }
   }
 
+  if (filter.sameNameAsChosenCard === true) {
+    const chosenCardId = resolutionInput.eventSnapshot?.chosenCardId as CardInstanceId | undefined;
+    if (!chosenCardId) {
+      return false;
+    }
+    const chosenDefinition = ctx.cards.getDefinition(chosenCardId) as
+      | CardDefinitionLike
+      | undefined;
+    if (!chosenDefinition?.name || definition.name !== chosenDefinition.name) {
+      return false;
+    }
+  }
+
   if (filter.sameInstanceAsSource === true && cardId !== cardPlayed.cardId) {
     return false;
   }
@@ -293,6 +372,31 @@ function matchesPlayableCardCriteria(
 
   if (!matchesPlayCardTypeConstraint(definition, effect.cardType)) {
     return false;
+  }
+
+  if (effect.costRestriction) {
+    const restriction = effect.costRestriction;
+    if (
+      typeof restriction !== "object" ||
+      restriction === null ||
+      !("comparison" in restriction) ||
+      !("value" in restriction) ||
+      typeof (restriction as { comparison?: unknown }).comparison !== "string" ||
+      typeof (restriction as { value?: unknown }).value !== "number"
+    ) {
+      return false;
+    }
+    const { comparison, value } = restriction as {
+      comparison: string;
+      value: number;
+    };
+    const cardCost = Number(definition.cost ?? Number.NaN);
+    if (!Number.isFinite(cardCost)) return false;
+    if (comparison === "less-or-equal" && cardCost > value) return false;
+    if (comparison === "less-than" && cardCost >= value) return false;
+    if (comparison === "equal" && cardCost !== value) return false;
+    if (comparison === "greater-than" && cardCost <= value) return false;
+    if (comparison === "greater-or-equal" && cardCost < value) return false;
   }
 
   const filter =
@@ -386,17 +490,24 @@ export function resolvePlayCardEffect(
     return;
   }
 
-  if (effect.reducedBy !== undefined || effect.costRestriction !== undefined) {
+  if (effect.reducedBy !== undefined) {
     handleUnsupportedActionEffect(
       "play-card",
-      "Reduced-cost and cost-restricted play-card effects are not supported",
+      "Reduced-cost play-card effects (reducedBy) are not supported",
     );
     return;
   }
 
-  const selectedTargets = normalizeSelectedTargets(resolutionInput.targets);
+  const currentSelectedTargets = normalizeSelectedTargets(
+    getCurrentSelectionInput(resolutionInput),
+  );
   const targetPlayerIds = isPlayerTargetLike(effect.target)
-    ? resolveTargetPlayerIds(ctx, cardPlayed, effect.target, resolutionInput.targets)
+    ? resolveTargetPlayerIds(
+        ctx,
+        cardPlayed,
+        effect.target,
+        getEffectTargetSelectionInput(effect.target, resolutionInput),
+      )
     : [cardPlayed.playerId];
   const resolvedPlayerIds = targetPlayerIds.length > 0 ? targetPlayerIds : [cardPlayed.playerId];
 
@@ -407,7 +518,7 @@ export function resolvePlayCardEffect(
       effect,
       resolutionInput,
       playerId as PlayerId,
-      selectedTargets,
+      currentSelectedTargets,
     );
     const playableCards = sourceCards.filter((cardId) =>
       matchesPlayableCardCriteria(ctx, cardPlayed, cardId, effect, resolutionInput),
@@ -451,7 +562,7 @@ export function resolvePlayCardEffect(
       }
     }
 
-    const sourceZoneKey = ctx.framework.state.ctx.zones.private.cardIndex[chosenCardId]?.zoneKey;
+    const sourceZoneKey = ctx.framework.zones.getCardZone(chosenCardId);
 
     if (cardType === "action") {
       ctx.framework.zones.moveCard(chosenCardId, {
@@ -474,6 +585,7 @@ export function resolvePlayCardEffect(
         playerId,
         subjectCardId: chosenCardId,
       });
+      const nestedActionResolutionInput = clearCurrentSelectionTargets(resolutionInput);
       resolveActionCardEffects(
         ctx,
         replayedActionPayload,
@@ -481,7 +593,9 @@ export function resolvePlayCardEffect(
           ReturnType<typeof ctx.cards.getDefinition>,
           { cardType: "action" }
         >,
-        resolutionInput,
+        {
+          ...nestedActionResolutionInput,
+        },
       );
       if (hasPendingActionEffectResolution(ctx)) {
         moveSuspendedActionCardToLimbo(ctx, replayedActionPayload);
@@ -530,7 +644,7 @@ export function resolvePlayCardEffect(
     );
 
     if (cardType === "character" && (effect.grantsRush || effect.banishAtEndOfTurn)) {
-      const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+      const currentTurn = ctx.framework.state.status.turn ?? 1;
       const { startsAtTurn, expiresAtTurn } = resolveTemporaryEffectWindow(
         currentTurn,
         "this-turn",
@@ -593,4 +707,48 @@ export function resolvePlayCardEffect(
   }
 
   flushTriggeredEventsToBag(ctx);
+}
+
+/**
+ * Executes an action card that has already been physically moved to the play zone
+ * by a scry "play for free" destination. Runs the card's effects and finalizes
+ * it to discard (or limbo if suspended), matching the normal action-card play lifecycle.
+ */
+export function executeScryActionCardPlay(
+  ctx: PlayCardExecutionContext,
+  actionCardId: CardInstanceId,
+  controllerId: PlayerId,
+  resolutionInput: ActionResolutionInput,
+): void {
+  const definition = ctx.cards.getDefinition(actionCardId) as CardDefinitionLike | undefined;
+  if (!definition || definition.cardType !== "action") {
+    return;
+  }
+
+  const actionPayload: CardPlayedPayload = {
+    playerId: controllerId,
+    cardId: actionCardId,
+    cardType: "action",
+    costType: "free",
+  };
+
+  emitTriggeredLorcanaEvent(ctx, "cardPlayed", actionPayload, {
+    event: "play",
+    playerId: controllerId,
+    subjectCardId: actionCardId,
+  });
+
+  const nestedInput = clearCurrentSelectionTargets(resolutionInput);
+  resolveActionCardEffects(
+    ctx,
+    actionPayload,
+    definition as Extract<ReturnType<typeof ctx.cards.getDefinition>, { cardType: "action" }>,
+    nestedInput,
+  );
+
+  if (hasPendingActionEffectResolution(ctx)) {
+    moveSuspendedActionCardToLimbo(ctx, actionPayload);
+  } else {
+    finalizeResolvedActionCard(ctx, actionPayload);
+  }
 }

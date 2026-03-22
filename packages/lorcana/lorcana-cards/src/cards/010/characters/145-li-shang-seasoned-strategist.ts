@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liShangSeasonedStrategistI18n } from "./145-li-shang-seasoned-strategist.i18n";
 
 export const liShangSeasonedStrategist: CharacterCard = {
   id: "1HE",
@@ -7,24 +8,6 @@ export const liShangSeasonedStrategist: CharacterCard = {
   cardType: "character",
   name: "Li Shang",
   version: "Seasoned Strategist",
-  i18n: {
-    en: {
-      name: "Li Shang",
-      version: "Seasoned Strategist",
-    },
-    de: {
-      name: "Li Shang",
-      version: "Erfahrener Stratege",
-    },
-    fr: {
-      name: "Li Shang",
-      version: "Stratège chevronné",
-    },
-    it: {
-      name: "Li Shang",
-      version: "Stratega Esperto",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Mulan",
   set: "010",
@@ -41,4 +24,5 @@ export const liShangSeasonedStrategist: CharacterCard = {
     tcgPlayer: 660002,
   },
   classifications: ["Storyborn", "Hero", "Captain"],
+  i18n: liShangSeasonedStrategistI18n,
 };

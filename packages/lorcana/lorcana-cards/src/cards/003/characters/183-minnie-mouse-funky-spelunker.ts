@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseFunkySpelunkerI18n } from "./183-minnie-mouse-funky-spelunker.i18n";
 
 export const minnieMouseFunkySpelunker: CharacterCard = {
   id: "xPZ",
@@ -7,48 +8,6 @@ export const minnieMouseFunkySpelunker: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Funky Spelunker",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Funky Spelunker",
-      text: [
-        {
-          title: "JOURNEY",
-          description: "While this character is at a location, she gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Flippige Höhlenforscherin",
-      text: [
-        {
-          title: "REISE",
-          description: "Solange dieser Charakter an einem Ort ist, erhält er +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Minnie",
-      version: "Spéléologue funky",
-      text: [
-        {
-          title: "VOYAGE",
-          description: "Tant que ce personnage se trouve sur un lieu, il gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Minni",
-      version: "Speleologa Eccentrica",
-      text: [
-        {
-          title: "VIAGGIO",
-          description: "Mentre questo personaggio si trova in un luogo, riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   set: "003",
   cardNumber: 183,
@@ -69,7 +28,6 @@ export const minnieMouseFunkySpelunker: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -83,4 +41,5 @@ export const minnieMouseFunkySpelunker: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: minnieMouseFunkySpelunkerI18n,
 };

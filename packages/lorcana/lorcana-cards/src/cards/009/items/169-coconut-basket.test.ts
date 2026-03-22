@@ -84,9 +84,8 @@ describe("Coconut Basket", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: false }),
+      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getDamage(damagedFriend)).toBe(2);

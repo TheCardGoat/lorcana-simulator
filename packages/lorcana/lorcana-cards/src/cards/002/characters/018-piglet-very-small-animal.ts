@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pigletVerySmallAnimalI18n } from "./018-piglet-very-small-animal.i18n";
 
 export const pigletVerySmallAnimal: CharacterCard = {
   id: "sVL",
@@ -7,24 +8,6 @@ export const pigletVerySmallAnimal: CharacterCard = {
   cardType: "character",
   name: "Piglet",
   version: "Very Small Animal",
-  i18n: {
-    en: {
-      name: "Piglet",
-      version: "Very Small Animal",
-    },
-    de: {
-      name: "Ferkel",
-      version: "So ein kleines Tier",
-    },
-    fr: {
-      name: "Porcinet",
-      version: "Si petit animal",
-    },
-    it: {
-      name: "Pimpi",
-      version: "Animale Molto Piccolo",
-    },
-  },
   inkType: ["amber"],
   franchise: "Winnie the Pooh",
   set: "002",
@@ -41,4 +24,5 @@ export const pigletVerySmallAnimal: CharacterCard = {
     tcgPlayer: 527720,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: pigletVerySmallAnimalI18n,
 };

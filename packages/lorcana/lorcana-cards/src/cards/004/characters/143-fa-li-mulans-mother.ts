@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { faLiMulansMotherI18n } from "./143-fa-li-mulans-mother.i18n";
 
 export const faLiMulansMother: CharacterCard = {
   id: "DxW",
@@ -7,24 +8,6 @@ export const faLiMulansMother: CharacterCard = {
   cardType: "character",
   name: "Fa Li",
   version: "Mulan’s Mother",
-  i18n: {
-    en: {
-      name: "Fa Li",
-      version: "Mulan’s Mother",
-    },
-    de: {
-      name: "Fa Li",
-      version: "Mulans Mutter",
-    },
-    fr: {
-      name: "Fa Li",
-      version: "Mère de Mulan",
-    },
-    it: {
-      name: "Fa Li",
-      version: "Madre di Mulan",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Mulan",
   set: "004",
@@ -41,4 +24,5 @@ export const faLiMulansMother: CharacterCard = {
     tcgPlayer: 549527,
   },
   classifications: ["Storyborn", "Mentor"],
+  i18n: faLiMulansMotherI18n,
 };

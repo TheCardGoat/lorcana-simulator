@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { hideAwayI18n } from "./163-hide-away.i18n";
 
 export const hideAway: ActionCard = {
   id: "QYp",
@@ -6,24 +7,6 @@ export const hideAway: ActionCard = {
   reprints: ["set5-163"],
   cardType: "action",
   name: "Hide Away",
-  i18n: {
-    en: {
-      name: "Hide Away",
-      text: "Put chosen item or location into its player's inkwell facedown and exerted.",
-    },
-    de: {
-      name: "Verstecken",
-      text: "Lege einen Ort oder Gegenstand deiner Wahl verdeckt und erschöpft in den zugehörigen Tintenvorrat.",
-    },
-    fr: {
-      name: "Cachez-vous",
-      text: "Choisissez un objet ou un lieu et placez-le dans la réserve d'encre de son propriétaire, face cachée et épuisé.",
-    },
-    it: {
-      name: "Nascondere",
-      text: "Aggiungi un oggetto o un luogo a tua scelta al calamaio del suo giocatore, a faccia in giù e impegnato.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sleeping Beauty",
   set: "005",
@@ -55,4 +38,5 @@ export const hideAway: ActionCard = {
       },
     },
   ],
+  i18n: hideAwayI18n,
 };

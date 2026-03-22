@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 1 of 18** | [Next →](AUDIT_INVENTORY_CHUNK_02.md)
-
 
 - [x] **001/actions/029-just-in-time.test.ts**
   - Card: `001/actions/029-just-in-time.ts`

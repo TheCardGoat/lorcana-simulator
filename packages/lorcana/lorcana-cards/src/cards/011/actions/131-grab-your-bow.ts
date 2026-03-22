@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { grabYourBowI18n } from "./131-grab-your-bow.i18n";
 
 export const grabYourBow: ActionCard = {
   id: "EtL",
@@ -6,24 +7,6 @@ export const grabYourBow: ActionCard = {
   reprints: ["set11-131"],
   cardType: "action",
   name: "Grab Your Bow",
-  i18n: {
-    en: {
-      name: "Grab Your Bow",
-      text: "Banish up to 2 chosen characters with 2 {S} or less.",
-    },
-    de: {
-      name: "Nehmt den Pfeil",
-      text: "Verbanne bis zu 2 Charaktere deiner Wahl mit 2 oder weniger.",
-    },
-    fr: {
-      name: "À vos flèches",
-      text: "Choisissez jusqu'à 2 personnages ayant 2 ou moins et bannissez-les.",
-    },
-    it: {
-      name: "Siamo Eroi",
-      text: "(Un personaggio con costo 5 o superiore può per cantare questa canzone gratis.) Esilia fino a 2 personaggi a tua scelta con 2 o inferiore.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Beauty and the Beast",
   set: "011",
@@ -62,4 +45,5 @@ export const grabYourBow: ActionCard = {
       },
     },
   ],
+  i18n: grabYourBowI18n,
 };

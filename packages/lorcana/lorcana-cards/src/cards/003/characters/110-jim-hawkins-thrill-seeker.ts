@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jimHawkinsThrillSeekerI18n } from "./110-jim-hawkins-thrill-seeker.i18n";
 
 export const jimHawkinsThrillSeeker: CharacterCard = {
   id: "n5A",
@@ -7,24 +8,6 @@ export const jimHawkinsThrillSeeker: CharacterCard = {
   cardType: "character",
   name: "Jim Hawkins",
   version: "Thrill Seeker",
-  i18n: {
-    en: {
-      name: "Jim Hawkins",
-      version: "Thrill Seeker",
-    },
-    de: {
-      name: "Jim Hawkins",
-      version: "Adrenalinjunkie",
-    },
-    fr: {
-      name: "Jim Hawkins",
-      version: "Cherche des sensations fortes",
-    },
-    it: {
-      name: "Jim Hawkins",
-      version: "Alla Ricerca del Brivido",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Treasure Planet",
   set: "003",
@@ -41,4 +24,5 @@ export const jimHawkinsThrillSeeker: CharacterCard = {
     tcgPlayer: 536113,
   },
   classifications: ["Dreamborn", "Hero"],
+  i18n: jimHawkinsThrillSeekerI18n,
 };

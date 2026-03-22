@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { copperChampionOfTheForestI18n } from "./084-copper-champion-of-the-forest.i18n";
 
 export const copperChampionOfTheForest: CharacterCard = {
   id: "dzM",
@@ -7,37 +8,6 @@ export const copperChampionOfTheForest: CharacterCard = {
   cardType: "character",
   name: "Copper",
   version: "Champion of the Forest",
-  i18n: {
-    en: {
-      name: "Copper",
-      version: "Champion of the Forest",
-      text: [
-        {
-          title: "Shift 3 {I}",
-        },
-        {
-          title: "MORE TO EXPLORE",
-          description:
-            "Whenever this character quests, your characters with Evasive get +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Capper",
-      version: "Held des Waldes",
-      text: "Gestaltwandel 3 MEHR ZU ERFORSCHEN Jedes Mal, wenn dieser Charakter erkundet, erhalten deine Charaktere mit Wendig in diesem Zug +1.",
-    },
-    fr: {
-      name: "Rouky",
-      version: "Champion de la forêt",
-      text: "Alter 3 DAVANTAGE À EXPLORER Chaque fois que ce personnage est envoyé à l'aventure, vos personnages avec Insaisissable gagnent +1 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Toby",
-      version: "Campione del Bosco",
-      text: "Trasformazione 3 PIÙ COSE DA ESPLORARE Ogni volta che questo personaggio va all'avventura, i tuoi personaggi con Sfuggente ricevono +1 per questo turno.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Fox and the Hound",
   set: "011",
@@ -78,7 +48,7 @@ export const copperChampionOfTheForest: CharacterCard = {
       effect: {
         modifier: 1,
         stat: "lore",
-        target: "YOUR_CHARACTERS",
+        target: "YOUR_EVASIVE_CHARACTERS",
         type: "modify-stat",
         duration: "this-turn",
       },
@@ -92,4 +62,5 @@ export const copperChampionOfTheForest: CharacterCard = {
       text: "MORE TO EXPLORE Whenever this character quests, your characters with Evasive get +1 {L} this turn.",
     },
   ],
+  i18n: copperChampionOfTheForestI18n,
 };

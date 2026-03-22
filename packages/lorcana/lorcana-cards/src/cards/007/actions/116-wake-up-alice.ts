@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { wakeUpAliceI18n } from "./116-wake-up-alice.i18n";
 
 export const wakeUpAlice: ActionCard = {
   id: "LkF",
@@ -6,24 +7,6 @@ export const wakeUpAlice: ActionCard = {
   reprints: ["set7-116"],
   cardType: "action",
   name: "Wake Up, Alice!",
-  i18n: {
-    en: {
-      name: "Wake Up, Alice!",
-      text: "Return chosen damaged character to their player's hand.",
-    },
-    de: {
-      name: "Alice, wach auf!",
-      text: "Schicke einen beschädigten Charakter deiner Wahl auf die zugehörige Hand zurück.",
-    },
-    fr: {
-      name: "Réveille-toi, Alice !",
-      text: "Choisissez un personnage avec au moins un dommage et renvoyez-le dans la main de son propriétaire.",
-    },
-    it: {
-      name: "Alice, Svegliati!",
-      text: "Fai tornare in mano al suo giocatore un personaggio danneggiato a tua scelta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Alice in Wonderland",
   set: "007",
@@ -58,4 +41,5 @@ export const wakeUpAlice: ActionCard = {
       type: "action",
     },
   ],
+  i18n: wakeUpAliceI18n,
 };

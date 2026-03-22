@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicaDeSpellThievingSorceressI18n } from "./050-magica-de-spell-thieving-sorceress.i18n";
 
 export const magicaDeSpellThievingSorceress: CharacterCard = {
   id: "iq5",
@@ -7,52 +8,6 @@ export const magicaDeSpellThievingSorceress: CharacterCard = {
   cardType: "character",
   name: "Magica De Spell",
   version: "Thieving Sorceress",
-  i18n: {
-    en: {
-      name: "Magica De Spell",
-      version: "Thieving Sorceress",
-      text: [
-        {
-          title: "TELEKINESIS",
-          description:
-            "{E} — Return chosen item with cost equal to or less than this character's {S} to its player's hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Gundel Gaukeley",
-      version: "Diebische Hexe",
-      text: [
-        {
-          title: "TELEKINESE",
-          description:
-            "— Schicke einen Gegenstand deiner Wahl auf die zugehörige Hand zurück, der genauso viel oder weniger kostet wie der -Wert dieses Charakters beträgt.",
-        },
-      ],
-    },
-    fr: {
-      name: "Miss Tick",
-      version: "Sorcière en plein larcin",
-      text: [
-        {
-          title: "TÉLÉKINÉSIE",
-          description:
-            "— Choisissez un objet ayant un coût inférieur ou égal à la de ce personnage et renvoyez-le dans la main de son propriétaire.",
-        },
-      ],
-    },
-    it: {
-      name: "Amelia",
-      version: "Strega Ladruncola",
-      text: [
-        {
-          title: "TELECINESI",
-          description:
-            "— Fai tornare un oggetto a tua scelta con costo pari o inferiore alla di questo personaggio in mano al suo giocatore.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Ducktales",
   set: "003",
@@ -75,7 +30,33 @@ export const magicaDeSpellThievingSorceress: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer"],
-  missingImplementation: true,
-  missingTests: true,
-  abilities: [],
+  abilities: [
+    {
+      type: "activated",
+      id: "iq5-1",
+      name: "TELEKINESIS",
+      text: "TELEKINESIS {E} — Return chosen item with cost equal to or less than this character's {S} to its player's hand.",
+      cost: {
+        exert: true,
+      },
+      effect: {
+        type: "return-to-hand",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["item"],
+          filter: [
+            {
+              type: "cost-comparison",
+              comparison: "less-or-equal",
+              value: 3,
+            },
+          ],
+        },
+      },
+    },
+  ],
+  i18n: magicaDeSpellThievingSorceressI18n,
 };

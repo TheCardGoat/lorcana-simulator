@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { heiheiExpandedConsciousnessI18n } from "./163-heihei-expanded-consciousness.i18n";
 
 export const heiheiExpandedConsciousness: CharacterCard = {
   id: "MiH",
@@ -7,40 +8,6 @@ export const heiheiExpandedConsciousness: CharacterCard = {
   cardType: "character",
   name: "Heihei",
   version: "Expanded Consciousness",
-  i18n: {
-    en: {
-      name: "Heihei",
-      version: "Expanded Consciousness",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "Resist +1",
-        },
-        {
-          title: "CLEAR YOUR MIND",
-          description:
-            "When you play this character, put all cards from your hand into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "HeiHei",
-      version: "Erweitertes Bewusstsein",
-      text: "Gestaltwandel 3 Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.) DEN GEIST BEFREIEN Wenn du diesen Charakter ausspielst, lege alle Karten aus deiner Hand verdeckt und erschöpft in deinen Tintenvorrat.",
-    },
-    fr: {
-      name: "Heihei",
-      version: "Conscience élargie",
-      text: "Alter 3 Résistance +1 FAITES LE VIDE DANS VOTRE ESPRIT Lorsque vous jouez ce personnage, placez toutes les cartes de votre main dans votre réserve d'encre, face cachée et épuisées.",
-    },
-    it: {
-      name: "Heihei",
-      version: "Dalla Coscienza Ampliata",
-      text: "Trasformazione 3 Resistere +1 LIBERA LA TUA MENTE Quando giochi questo personaggio, aggiungi tutte le carte dalla tua mano al tuo calamaio, a faccia in giù e impegnate.",
-    },
-  },
   inkType: ["sapphire", "steel"],
   franchise: "Moana",
   set: "007",
@@ -105,4 +72,5 @@ export const heiheiExpandedConsciousness: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: heiheiExpandedConsciousnessI18n,
 };

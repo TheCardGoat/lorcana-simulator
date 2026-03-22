@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yaoImperialSoldierI18n } from "./194-yao-imperial-soldier.i18n";
 
 export const yaoImperialSoldier: CharacterCard = {
   id: "0wR",
@@ -7,28 +8,6 @@ export const yaoImperialSoldier: CharacterCard = {
   cardType: "character",
   name: "Yao",
   version: "Imperial Soldier",
-  i18n: {
-    en: {
-      name: "Yao",
-      version: "Imperial Soldier",
-      text: "Challenger +2",
-    },
-    de: {
-      name: "Yao",
-      version: "Soldat des Kaisers",
-      text: "Herausfordern +2",
-    },
-    fr: {
-      name: "Yao",
-      version: "Soldat Impérial",
-      text: "Offensif +2",
-    },
-    it: {
-      name: "Yao",
-      version: "Soldato Imperiale",
-      text: "Sfidante +2",
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "004",
@@ -54,4 +33,5 @@ export const yaoImperialSoldier: CharacterCard = {
       text: "Challenger +2",
     },
   ],
+  i18n: yaoImperialSoldierI18n,
 };

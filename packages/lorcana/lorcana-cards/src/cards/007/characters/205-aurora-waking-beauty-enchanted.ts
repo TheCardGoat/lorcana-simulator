@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { auroraWakingBeautyEnchantedI18n } from "./205-aurora-waking-beauty-enchanted.i18n";
 
 export const auroraWakingBeautyEnchanted: CharacterCard = {
   id: "ALL",
@@ -7,43 +8,6 @@ export const auroraWakingBeautyEnchanted: CharacterCard = {
   cardType: "character",
   name: "Aurora",
   version: "Waking Beauty",
-  i18n: {
-    en: {
-      name: "Aurora",
-      version: "Waking Beauty",
-      text: [
-        {
-          title: "Singer 5",
-        },
-        {
-          title: "SWEET DREAMS",
-          description:
-            "Whenever you remove 1 or more damage from a character, ready this character. She can't quest or challenge for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Aurora",
-      version: "Erwachte Schönheit",
-      text: [
-        {
-          title: "Singen 5",
-          description:
-            "(Die Kosten dieses Charakters gelten als 5 für das Singen von Liedern.) SÜSSE TRÄUME Jedes Mal, wenn du 1 oder mehr Schaden von einem Charakter entfernst, mache diesen Charakter bereit. Er kann in diesem Zug nicht mehr erkunden oder herausfordern.",
-        },
-      ],
-    },
-    fr: {
-      name: "Aurore",
-      version: "La belle s'éveillant",
-      text: "Mélomane 5 (Ce personnage est considéré comme ayant un coût de 5 pour chanter des chansons.) BEAUX RÊVES Chaque fois que vous retirez au moins 1 dommage d'un personnage, redressez ce personnage-ci. Il ne peut ni partir à l'aventure ni défier pour le reste de ce tour.",
-    },
-    it: {
-      name: "Aurora",
-      version: "Bellezza Risvegliata",
-      text: "Melodioso 5 SOGNI D'ORO Ogni volta che rimuovi 1 o più danni da un personaggio, prepara questo personaggio. Non può andare all'avventura o sfidare per il resto di questo turno.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Sleeping Beauty",
   set: "007",
@@ -82,18 +46,12 @@ export const auroraWakingBeautyEnchanted: CharacterCard = {
       effect: {
         steps: [
           {
-            target: {
-              selector: "self",
-              count: 1,
-              owner: "any",
-              zones: ["play"],
-              cardTypes: ["character"],
-            },
+            target: "SELF",
             type: "ready",
           },
           {
             duration: "this-turn",
-            restriction: "cant-quest",
+            restriction: "cant-quest-or-challenge",
             target: "SELF",
             type: "restriction",
           },
@@ -104,11 +62,12 @@ export const auroraWakingBeautyEnchanted: CharacterCard = {
       name: "SWEET DREAMS",
       text: "SWEET DREAMS Whenever you remove 1 or more damage from a character, ready this character. She can't quest or challenge for the rest of this turn.",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "remove-damage",
+        on: "YOU",
+        timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: auroraWakingBeautyEnchantedI18n,
 };

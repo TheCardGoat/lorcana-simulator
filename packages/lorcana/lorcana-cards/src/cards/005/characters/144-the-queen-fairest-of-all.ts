@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theQueenFairestOfAllI18n } from "./144-the-queen-fairest-of-all.i18n";
 
 export const theQueenFairestOfAll: CharacterCard = {
   id: "Wpl",
@@ -7,40 +8,6 @@ export const theQueenFairestOfAll: CharacterCard = {
   cardType: "character",
   name: "The Queen",
   version: "Fairest of All",
-  i18n: {
-    en: {
-      name: "The Queen",
-      version: "Fairest of All",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "Ward",
-        },
-        {
-          title: "REFLECTIONS OF VANITY",
-          description:
-            "For each other character named The Queen you have in play, this character gets +1 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Königin",
-      version: "Die Schönste von allen",
-      text: "Gestaltwandel 3 Behütet SPIEGELBILDER DER EITELKEIT Für jeden deiner anderen Die-Königin-Charaktere im Spiel, erhält dieser Charakter +1.",
-    },
-    fr: {
-      name: "La Reine",
-      version: "La plus belle",
-      text: "Alter 3 Hors d'atteinte REFLETS DE LA VANITÉ Pour chaque autre personnage La Reine que vous avez en jeu, ce personnage-ci gagne +1.",
-    },
-    it: {
-      name: "Regina",
-      version: "La Più Bella del Reame",
-      text: "Trasformazione 3 Protetto RIFLESSI DI VANITÀ Per ogni altro personaggio chiamato Regina che hai in gioco, questo personaggio riceve +1.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Snow White",
   set: "005",
@@ -87,14 +54,21 @@ export const theQueenFairestOfAll: CharacterCard = {
     },
     {
       effect: {
-        modifier: 1,
+        modifier: {
+          name: "The Queen",
+          controller: "you",
+          excludeSelf: true,
+          type: "name-character-count",
+        },
         stat: "lore",
         target: "SELF",
         type: "modify-stat",
       },
       id: "1ho-3",
+      name: "REFLECTIONS OF VANITY",
       text: "REFLECTIONS OF VANITY For each other character named The Queen you have in play, this character gets +1 {L}.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: theQueenFairestOfAllI18n,
 };

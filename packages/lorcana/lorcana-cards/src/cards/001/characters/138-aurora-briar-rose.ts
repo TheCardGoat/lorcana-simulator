@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { auroraBriarRoseI18n } from "./138-aurora-briar-rose.i18n";
 
 export const auroraBriarRose: CharacterCard = {
   id: "HSP",
@@ -7,50 +8,6 @@ export const auroraBriarRose: CharacterCard = {
   cardType: "character",
   name: "Aurora",
   version: "Briar Rose",
-  i18n: {
-    en: {
-      name: "Aurora",
-      version: "Briar Rose",
-      text: [
-        {
-          title: "DISARMING BEAUTY",
-          description: "When you play this character, chosen character gets -2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Aurora",
-      version: "Röschen",
-      text: [
-        {
-          title: "ENTWAFFNENDE SCHÖNHEIT",
-          description:
-            "Wenn du diesen Charakter ausspielst, gib einem Charakter deiner Wahl in diesem Zug -2.",
-        },
-      ],
-    },
-    fr: {
-      name: "AURORE",
-      version: "Rose",
-      text: [
-        {
-          title: "BEAUTÉ DÉCONCERTANTE",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage qui subit -2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Aurora",
-      version: "Briar Rose",
-      text: [
-        {
-          title: "DISARMING BEAUTY",
-          description: "When you play this character, chosen character gets –2 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sleeping Beauty",
   set: "001",
@@ -61,7 +18,6 @@ export const auroraBriarRose: CharacterCard = {
   willpower: 5,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_ce469941c08b425484af9a8c69eb8ce1",
     tcgPlayer: 508809,
@@ -93,4 +49,5 @@ export const auroraBriarRose: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: auroraBriarRoseI18n,
 };

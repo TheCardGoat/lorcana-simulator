@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { allIsFoundEnchantedI18n } from "./220-all-is-found-enchanted.i18n";
 
 export const allIsFoundEnchanted: ActionCard = {
   id: "Zf7",
@@ -6,24 +7,6 @@ export const allIsFoundEnchanted: ActionCard = {
   reprints: ["set7-178"],
   cardType: "action",
   name: "All Is Found",
-  i18n: {
-    en: {
-      name: "All Is Found",
-      text: "Put up to 2 cards from your discard into your inkwell facedown and exerted.",
-    },
-    de: {
-      name: "Es kommt zu dir",
-      text: "Lege bis zu 2 Karten aus deinem Ablagestapel verdeckt und erschöpft in deinen Tintenvorrat.",
-    },
-    fr: {
-      name: "La berceuse d'Ahtohallan",
-      text: "Placez jusqu'à 2 cartes de votre défausse dans votre réserve d'encre, face cachée et épuisées.",
-    },
-    it: {
-      name: "Un Rifugio Ha Trovato",
-      text: "(Un personaggio con costo 5 o superiore può per cantare questa canzone gratis.) Aggiungi fino a 2 carte dai tuoi scarti al tuo calamaio, a faccia in giù e impegnate.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Frozen",
   set: "007",
@@ -59,4 +42,5 @@ export const allIsFoundEnchanted: ActionCard = {
       type: "action",
     },
   ],
+  i18n: allIsFoundEnchantedI18n,
 };

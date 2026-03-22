@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sleepyNoddingOffI18n } from "./021-sleepy-nodding-off.i18n";
 
 export const sleepyNoddingOff: CharacterCard = {
   id: "42K",
@@ -7,48 +8,6 @@ export const sleepyNoddingOff: CharacterCard = {
   cardType: "character",
   name: "Sleepy",
   version: "Nodding Off",
-  i18n: {
-    en: {
-      name: "Sleepy",
-      version: "Nodding Off",
-      text: [
-        {
-          title: "YAWN!",
-          description: "This character enters play exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Schlafmütz",
-      version: "Am Dösen",
-      text: [
-        {
-          title: "GÄHN!",
-          description: "Dieser Charakter kommt erschöpft ins Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Dormeur",
-      version: "Tombe de fatigue",
-      text: [
-        {
-          title: "BAAAILLE...",
-          description: "Ce personnage entre en jeu épuisé.",
-        },
-      ],
-    },
-    it: {
-      name: "Sleepy",
-      version: "Nodding Off",
-      text: [
-        {
-          title: "YAWN!",
-          description: "This character enters play exerted.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "002",
@@ -83,4 +42,5 @@ export const sleepyNoddingOff: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: sleepyNoddingOffI18n,
 };

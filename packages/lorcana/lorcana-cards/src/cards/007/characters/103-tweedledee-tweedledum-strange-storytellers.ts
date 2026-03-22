@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tweedledeeTweedledumStrangeStorytellersI18n } from "./103-tweedledee-tweedledum-strange-storytellers.i18n";
 
 export const tweedledeeTweedledumStrangeStorytellers: CharacterCard = {
   id: "Myt",
@@ -7,52 +8,6 @@ export const tweedledeeTweedledumStrangeStorytellers: CharacterCard = {
   cardType: "character",
   name: "Tweedledee & Tweedledum",
   version: "Strange Storytellers",
-  i18n: {
-    en: {
-      name: "Tweedledee & Tweedledum",
-      version: "Strange Storytellers",
-      text: [
-        {
-          title: "ANOTHER RECITATION",
-          description:
-            "Whenever this character quests, you may return chosen damaged character to their player's hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Dideldei und Dideldum",
-      version: "Seltsame Geschichtenerzähler",
-      text: [
-        {
-          title: "NOCH EINE GESCHICHTE",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du einen beschädigten Charakter deiner Wahl zurück auf die zugehörige Hand schicken.",
-        },
-      ],
-    },
-    fr: {
-      name: "Tweedledee et Tweedeldum",
-      version: "Étranges conteurs",
-      text: [
-        {
-          title: "ENCORE UNE AUTRE HISTOIRE",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez choisir un personnage avec au moins un dommage et le renvoyer dans la main de son propriétaire.",
-        },
-      ],
-    },
-    it: {
-      name: "Pinco Panco e Panco Pinco",
-      version: "Strani Cantastorie",
-      text: [
-        {
-          title: "SECONDO NUMERO",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi far riprendere in mano al suo giocatore un personaggio danneggiato a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald", "ruby"],
   franchise: "Alice in Wonderland",
   set: "007",
@@ -86,6 +41,11 @@ export const tweedledeeTweedledumStrangeStorytellers: CharacterCard = {
             owner: "any",
             zones: ["play"],
             cardTypes: ["character"],
+            filter: [
+              {
+                type: "damaged",
+              },
+            ],
           },
           type: "return-to-hand",
         },
@@ -102,4 +62,5 @@ export const tweedledeeTweedledumStrangeStorytellers: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: tweedledeeTweedledumStrangeStorytellersI18n,
 };

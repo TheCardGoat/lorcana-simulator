@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { dragonFireI18n } from "./130-dragon-fire.i18n";
 
 export const dragonFire: ActionCard = {
   id: "NCd",
@@ -6,24 +7,6 @@ export const dragonFire: ActionCard = {
   reprints: ["set1-130", "set10-133"],
   cardType: "action",
   name: "Dragon Fire",
-  i18n: {
-    en: {
-      name: "Dragon Fire",
-      text: "Banish chosen character.",
-    },
-    de: {
-      name: "Dragon Fire",
-      text: "Banish chosen character.",
-    },
-    fr: {
-      name: "Dragon Fire",
-      text: "Banish chosen character.",
-    },
-    it: {
-      name: "Dragon Fire",
-      text: "Banish chosen character.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Sleeping Beauty",
   set: "001",
@@ -51,4 +34,5 @@ export const dragonFire: ActionCard = {
       type: "action",
     },
   ],
+  i18n: dragonFireI18n,
 };

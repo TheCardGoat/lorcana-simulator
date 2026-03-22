@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { auntCassBiggestFanI18n } from "./138-aunt-cass-biggest-fan.i18n";
 
 export const auntCassBiggestFan: CharacterCard = {
   id: "zKK",
@@ -7,52 +8,6 @@ export const auntCassBiggestFan: CharacterCard = {
   cardType: "character",
   name: "Aunt Cass",
   version: "Biggest Fan",
-  i18n: {
-    en: {
-      name: "Aunt Cass",
-      version: "Biggest Fan",
-      text: [
-        {
-          title: "HAPPY TO HELP",
-          description:
-            "Whenever this character quests, chosen Inventor character gets +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Tante Cass",
-      version: "Größter Fan",
-      text: [
-        {
-          title: "ICH HELFE GERN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, erhält ein Erfinder deiner Wahl in diesem Zug +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Tante Cassie",
-      version: "Plus grande fan",
-      text: [
-        {
-          title: "HEUREUSE D'AIDER",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, choisissez un personnage Inventeur qui gagne +1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Zia Cass",
-      version: "La Più Grande Fan",
-      text: [
-        {
-          title: "FELICE DI AIUTARE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, un personaggio Inventore a tua scelta riceve +1 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "006",
@@ -81,7 +36,19 @@ export const auntCassBiggestFan: CharacterCard = {
         duration: "this-turn",
         modifier: 1,
         stat: "lore",
-        target: "CHOSEN_CHARACTER",
+        target: {
+          selector: "chosen",
+          cardTypes: ["character"],
+          owner: "you",
+          zones: ["play"],
+          count: 1,
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Inventor",
+            },
+          ],
+        },
         type: "modify-stat",
       },
       id: "1qq-1",
@@ -95,4 +62,5 @@ export const auntCassBiggestFan: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: auntCassBiggestFanI18n,
 };

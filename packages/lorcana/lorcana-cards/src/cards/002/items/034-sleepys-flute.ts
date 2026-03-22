@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { sleepysFluteI18n } from "./034-sleepys-flute.i18n";
 
 export const sleepysFlute: ItemCard = {
   id: "duq",
@@ -6,45 +7,6 @@ export const sleepysFlute: ItemCard = {
   reprints: ["set2-034"],
   cardType: "item",
   name: "Sleepy's Flute",
-  i18n: {
-    en: {
-      name: "Sleepy's Flute",
-      text: [
-        {
-          title: "A SILLY SONG",
-          description: "{E} — If you played a song this turn, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Schlafmütz‘ Flöte",
-      text: [
-        {
-          title: "GAUDIUM IM UNSINN",
-          description:
-            "— Falls du in diesem Zug mindestens ein Lied ausgespielt hast, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Flûte de Dormeur",
-      text: [
-        {
-          title: "CHANSON TYROLIENNE",
-          description: "— Gagnez 1 éclat de Lore si vous avez joué une chanson durant votre tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Sleepy's Flute",
-      text: [
-        {
-          title: "A SILLY SONG",
-          description: "— If you played a song this turn, gain 1 lore.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "002",
@@ -89,4 +51,5 @@ export const sleepysFlute: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: sleepysFluteI18n,
 };

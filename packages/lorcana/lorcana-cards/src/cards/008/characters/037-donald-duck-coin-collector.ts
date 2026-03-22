@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckCoinCollectorI18n } from "./037-donald-duck-coin-collector.i18n";
 
 export const donaldDuckCoinCollector: CharacterCard = {
   id: "i7B",
@@ -7,72 +8,6 @@ export const donaldDuckCoinCollector: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Coin Collector",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Coin Collector",
-      text: [
-        {
-          title: "HERE, PIGGY, PIGGY",
-          description:
-            "For each item named The Nephews' Piggy Bank you have in play, you pay 2 {I} less to play this character.",
-        },
-        {
-          title: "MONEY EVERYWHERE",
-          description:
-            'When you play this character, your other characters gain "{E} — Draw a card" this turn.',
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Münzsammler",
-      text: [
-        {
-          title: "WO IST DAS SCHWEINCHEN?",
-          description:
-            "Für jeden Das-Sparschwein-der-Neffen-Gegenstand, den du im Spiel hast, zahlst du 2 weniger, um diesen Charakter auszuspielen.",
-        },
-        {
-          title: "ÜBERALL GELD",
-          description:
-            'Wenn du diesen Charakter ausspielst, erhalten deine anderen Charaktere in diesem Zug: " — Ziehe 1 Karte."',
-        },
-      ],
-    },
-    fr: {
-      name: "Donald",
-      version: "Collectionneur de pièces",
-      text: [
-        {
-          title: "PAR ICI, PETIT COCHON",
-          description:
-            "Jouer ce personnage vous coûte 2 de moins pour chaque objet nommé La tirelire des neveux que vous avez en jeu.",
-        },
-        {
-          title: "DE L'ARGENT PARTOUT",
-          description:
-            'Lorsque vous jouez ce personnage, vos autres personnages gagnent " — Piochez une carte." pour le reste de ce tour.',
-        },
-      ],
-    },
-    it: {
-      name: "Paperino",
-      version: "Collezionista di Monete",
-      text: [
-        {
-          title: "QUI, MAIALINO",
-          description:
-            "Per ogni oggetto chiamato Salvadanaio dei Nipoti che hai in gioco, paga 2 in meno per giocare questo personaggio.",
-        },
-        {
-          title: "SOLDI OVUNQUE",
-          description:
-            'Quando giochi questo personaggio, i tuoi altri personaggi ottengono " — Pesca una carta" per questo turno.',
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   set: "008",
   cardNumber: 37,
@@ -99,5 +34,60 @@ export const donaldDuckCoinCollector: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      id: "i7B-1",
+      name: "HERE, PIGGY, PIGGY",
+      text: "HERE, PIGGY, PIGGY For each item named The Nephews' Piggy Bank you have in play, you pay 2 {I} less to play this character.",
+      type: "static",
+      sourceZones: ["hand"],
+      effect: {
+        type: "cost-reduction",
+        amount: {
+          type: "filtered-count",
+          owner: "you",
+          zones: ["play"],
+          cardType: "item",
+          filters: [
+            {
+              type: "has-name",
+              name: "The Nephews' Piggy Bank",
+            },
+          ],
+          multiplier: 2,
+        },
+        cardType: "character",
+      },
+    },
+    {
+      id: "i7B-2",
+      name: "MONEY EVERYWHERE",
+      text: 'MONEY EVERYWHERE When you play this character, your other characters gain "{E} — Draw a card" this turn.',
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+      effect: {
+        type: "grant-ability",
+        ability: {
+          type: "activated",
+          id: "draw-a-card-when-exerted",
+          cost: {
+            exert: true,
+          },
+          effect: {
+            type: "draw",
+            amount: 1,
+            target: "CONTROLLER",
+          },
+          text: "{E} — Draw a card.",
+        },
+        duration: "this-turn",
+        target: "YOUR_OTHER_CHARACTERS",
+      },
+    },
+  ],
+  i18n: donaldDuckCoinCollectorI18n,
 };

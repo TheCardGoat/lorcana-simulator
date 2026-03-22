@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseNightWatchI18n } from "./187-mickey-mouse-night-watch.i18n";
 
 export const mickeyMouseNightWatch: CharacterCard = {
   id: "3YP",
@@ -7,49 +8,6 @@ export const mickeyMouseNightWatch: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Night Watch",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Night Watch",
-      text: [
-        {
-          title: "SUPPORT",
-          description: "Your Pluto characters get Resist +1.",
-        },
-      ],
-    },
-    de: {
-      name: "Micky Maus",
-      version: "Nachtwächter",
-      text: [
-        {
-          title: "UNTERSTÜTZUNG",
-          description:
-            "Deine Pluto-Charaktere erhalten Robust +1. (Reduziere jeglichen Schaden, der ihnen zugefügt wird, um 1.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Veilleur de nuit",
-      text: [
-        {
-          title: "RENFORT",
-          description: "Vos personnages Pluto gagnent Résistance +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Topolino",
-      version: "Sentinella Notturna",
-      text: [
-        {
-          title: "SCORTA I",
-          description: "tuoi personaggi chiamati Pluto ottengono Resistere +1.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   set: "006",
   cardNumber: 187,
@@ -84,4 +42,5 @@ export const mickeyMouseNightWatch: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: mickeyMouseNightWatchI18n,
 };

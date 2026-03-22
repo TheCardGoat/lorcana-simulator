@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { peterPanShadowFinderI18n } from "./054-peter-pan-shadow-finder.i18n";
 
 export const peterPanShadowFinder: CharacterCard = {
   id: "mNf",
@@ -7,45 +8,6 @@ export const peterPanShadowFinder: CharacterCard = {
   cardType: "character",
   name: "Peter Pan",
   version: "Shadow Finder",
-  i18n: {
-    en: {
-      name: "Peter Pan",
-      version: "Shadow Finder",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "FLY, OF COURSE!",
-          description: "Your other characters with Evasive gain Rush.",
-        },
-      ],
-    },
-    de: {
-      name: "Peter Pan",
-      version: "Schattenfinder",
-      text: "Rasant Wendig FLIEGEN NATÜRLICH Deine anderen Charaktere mit Wendig erhalten Rasant.",
-    },
-    fr: {
-      name: "Peter Pan",
-      version: "Trouveur d'ombre",
-      text: "Charge Insaisissable EN VOLANT, BIEN SÛR! Vos autres personnages avec Insaisissable gagnent Charge.",
-    },
-    it: {
-      name: "Peter Pan",
-      version: "Cercatore di Ombre",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) Sfuggente VOLANDO! I tuoi altri personaggi con Sfuggente ottengono Lesto.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Peter Pan",
   set: "004",
@@ -97,4 +59,5 @@ export const peterPanShadowFinder: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: peterPanShadowFinderI18n,
 };

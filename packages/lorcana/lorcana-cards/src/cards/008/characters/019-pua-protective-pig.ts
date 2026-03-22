@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { puaProtectivePigI18n } from "./019-pua-protective-pig.i18n";
 
 export const puaProtectivePig: CharacterCard = {
   id: "Ai2",
@@ -7,42 +8,6 @@ export const puaProtectivePig: CharacterCard = {
   cardType: "character",
   name: "Pua",
   version: "Protective Pig",
-  i18n: {
-    en: {
-      name: "Pua",
-      version: "Protective Pig",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "FREE FRUIT",
-          description: "When this character is banished, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Pua",
-      version: "Beschützendes Schwein",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) GRATIS OBST Wenn dieser Charakter verbannt wird, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Pua",
-      version: "Cochon protecteur",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.) FRUITS GRATUITS Lorsque ce personnage est banni, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Pua",
-      version: "Maiale Protettivo",
-      text: "Guardiano FRUTTA GRATIS Quando questo personaggio viene esiliato, puoi pescare una carta.",
-    },
-  },
   inkType: ["amber", "amethyst"],
   franchise: "Moana",
   set: "008",
@@ -95,4 +60,5 @@ export const puaProtectivePig: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: puaProtectivePigI18n,
 };

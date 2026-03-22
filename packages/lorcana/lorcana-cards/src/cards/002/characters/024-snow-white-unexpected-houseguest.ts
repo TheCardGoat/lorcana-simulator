@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { snowWhiteUnexpectedHouseguestI18n } from "./024-snow-white-unexpected-houseguest.i18n";
 
 export const snowWhiteUnexpectedHouseguest: CharacterCard = {
   id: "BdH",
@@ -7,43 +8,6 @@ export const snowWhiteUnexpectedHouseguest: CharacterCard = {
   cardType: "character",
   name: "Snow White",
   version: "Unexpected Houseguest",
-  i18n: {
-    en: {
-      name: "Snow White",
-      version: "Unexpected Houseguest",
-      text: [
-        {
-          title: "HOW DO YOU DO?",
-          description: "You pay 1 {I} less to play Seven Dwarfs characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Schneewittchen",
-      version: "Unerwarteter Gast",
-      text: [
-        {
-          title: "EINEN SCHÖNEN GUTEN MORGEN",
-          description: "Du zahlst 1 weniger, um die Sieben Zwerge auszuspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Blanche-Neige",
-      version: "Invitée inattendue",
-      text: [
-        {
-          title: "ENCHANTÉE, MESSIEURS",
-          description: "Les personnages Sept Nains vous coûtent 1 de moins à jouer.",
-        },
-      ],
-    },
-    it: {
-      name: "Snow White",
-      version: "Unexpected Houseguest",
-      text: "How Do You Do?\\ You pay 1 less to play Seven Dwarfs characters.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "002",
@@ -80,4 +44,5 @@ export const snowWhiteUnexpectedHouseguest: CharacterCard = {
       },
     },
   ],
+  i18n: snowWhiteUnexpectedHouseguestI18n,
 };

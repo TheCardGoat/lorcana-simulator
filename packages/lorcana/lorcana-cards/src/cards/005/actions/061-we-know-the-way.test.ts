@@ -3,7 +3,7 @@ import { PLAYER_ONE, LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/te
 import { simbaProtectiveCub } from "../../001";
 import { weKnowTheWay } from "./061-we-know-the-way";
 
-describe.skip("We Know the Way", () => {
+describe("We Know the Way", () => {
   it("shuffles the chosen discard card back and may play a revealed card with the same name for free", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [weKnowTheWay],

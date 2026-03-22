@@ -11,6 +11,7 @@
 import type { AmountExpr, CardSelectionFilter } from "../../expressions";
 import type {
   CardFilter,
+  CardTarget,
   CharacterTarget,
   ItemTarget,
   LocationTarget,
@@ -131,6 +132,8 @@ export interface RemoveDamageEffect {
   /** "up to" allows removing less than max */
   upTo?: boolean;
   selfReplacement?: NumericSelfReplacement;
+  /** Ready each character that had damage removed */
+  thenReady?: boolean;
 }
 
 /**
@@ -212,6 +215,16 @@ export interface BanishEffect {
   target?: CharacterTarget | ItemTarget | LocationTarget;
   /** Which player chooses the target when the effect uses chosen targeting */
   chosenBy?: "you" | "opponent";
+}
+
+/**
+ * Select a target and carry it forward for later effects in the same sequence.
+ *
+ * @example "Choose an opposing character. That character's player may..."
+ */
+export interface SelectTargetEffect {
+  type: "select-target";
+  target?: CharacterTarget | ItemTarget | LocationTarget | CardTarget | PlayerTarget;
 }
 
 // ============================================================================

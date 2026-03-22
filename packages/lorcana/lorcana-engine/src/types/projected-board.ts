@@ -4,6 +4,7 @@ import type {
   EnginePendingEffectProjection,
   PlayerId,
 } from "#core";
+import type { ResolutionSelectionContext } from "./resolution-selection";
 
 // Not present here means not having that keyword modified, and should use the value present in the CardDefinition
 export type ProjectedKeywordValues = Partial<{
@@ -11,9 +12,9 @@ export type ProjectedKeywordValues = Partial<{
   resist: number;
 }>;
 
-// Not present means everything is default/empty
-// prefer naming convention that favors defaulting to undefined, to save network bandwidth
-export type ProjectedLorcanaCardDerived = Partial<{
+// Required version of all derived card properties — single source of truth
+export type LorcanaCardDerived = {
+  cardType: "character" | "action" | "item" | "location";
   exerted: boolean;
   drying: boolean;
   damage: number;
@@ -31,18 +32,32 @@ export type ProjectedLorcanaCardDerived = Partial<{
   temporaryAbilityStarts: Record<string, number>;
   temporaryRestrictions: Record<string, number>;
   temporaryRestrictionStarts: Record<string, number>;
-
-  // Not present here means using the value present in the CardDefinition
   strength: number;
   willpower: number;
   lore: number;
   moveCost: number;
   playCost: number;
+  grantedAbilityTextEntries: Array<{
+    title: string;
+    description?: string;
+    sourceId?: string;
+    sourceDefinitionId?: string;
+  }>;
+  keywordGrantSources: Array<{
+    keyword: string;
+    sourceId: string;
+    sourceDefinitionId?: string;
+  }>;
+  statModifierSources: Array<{
+    stat: string;
+    amount: number;
+    sourceId: string;
+    sourceDefinitionId?: string;
+  }>;
+};
 
-  // Methods for accessing derived values (for test compatibility)
-  getStrength: () => number;
-  getWillpower: () => number;
-}>;
+// Network-optimized projection: undefined = use definition default, saves bandwidth
+export type ProjectedLorcanaCardDerived = Partial<LorcanaCardDerived>;
 
 export type LorcanaBoardZoneId = "deck" | "hand" | "play" | "inkwell" | "discard" | "limbo";
 
@@ -63,8 +78,7 @@ export type LorcanaProjectedCardId = CardInstanceId | string;
 
 export type LorcanaProjectedPlayerBoard = {
   lore: number;
-  // TODO: We need a player wide flag that tell whether the player can put a card in inkwell or not
-  // canAddCardToInkwell: boolean;
+  canAddCardToInkwell: boolean;
   handCount: number;
   deckCount: number;
   deckTop?: LorcanaProjectedCardId;
@@ -88,6 +102,10 @@ export type LorcanaProjectedTimerView = {
   players?: Record<string, LorcanaProjectedTimerPlayer>;
 };
 
+export type LorcanaProjectedPendingEffect = EnginePendingEffectProjection & {
+  selectionContext?: ResolutionSelectionContext;
+};
+
 export type LorcanaProjectedBagEffect = {
   id: string;
   type: string;
@@ -95,6 +113,7 @@ export type LorcanaProjectedBagEffect = {
   chooserId: PlayerId;
   sourceId?: string;
   payload: unknown;
+  selectionContext?: ResolutionSelectionContext;
 };
 
 export type LorcanaProjectedPendingChoice = {
@@ -124,7 +143,7 @@ export type LorcanaProjectedBoardView = {
   players: Record<string, LorcanaProjectedPlayerBoard>;
   cards: Record<string, LorcanaProjectedCard>;
   activeEffects: EngineActiveEffectProjection[];
-  pendingEffects: EnginePendingEffectProjection[];
+  pendingEffects: LorcanaProjectedPendingEffect[];
   pendingChoice?: LorcanaProjectedPendingChoice;
   bagEffects: LorcanaProjectedBagEffect[];
   temporaryPlayerRestrictions?: Record<string, Record<string, number>>;

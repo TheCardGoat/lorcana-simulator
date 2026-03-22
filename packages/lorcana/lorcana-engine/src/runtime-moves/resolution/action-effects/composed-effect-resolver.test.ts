@@ -11,6 +11,7 @@ type TestCardDefinition = {
   willpower?: number;
   lore?: number;
   cost?: number;
+  abilities?: Array<Record<string, unknown>>;
 };
 
 type DrawCall = {
@@ -90,7 +91,9 @@ function createResolverTestContext(args?: {
         zone: to.zone,
       });
     },
+    shuffle: () => {},
     getCardOwner: (cardId: CardInstanceId) => cardIndex[cardId]?.ownerID,
+    getCardController: (cardId: CardInstanceId) => cardIndex[cardId]?.ownerID,
     getCardZone: (cardId: CardInstanceId) => cardIndex[cardId]?.zoneKey,
   };
   const cardsApi = {
@@ -152,7 +155,9 @@ function createResolverTestContext(args?: {
         emit: () => {},
       },
       state: {
-        ctx: runtimeCtx as never,
+        priority: runtimeCtx.priority as never,
+        status: runtimeCtx.status as never,
+        _zonesPrivate: runtimeCtx.zones?.private as never,
         playerIds: [PLAYER_ONE, PLAYER_TWO],
         turn: 1,
         currentPlayer: PLAYER_ONE,
@@ -607,10 +612,20 @@ describe("resolveActionEffect", () => {
     );
 
     expect(suspended.status).toBe("suspended");
-    expect(ctx.framework.state.ctx.priority.pendingChoice?.type).toBe("action-effect");
+    expect(ctx.framework.state.priority.pendingChoice?.type).toBe("action-effect");
     expect(ctx.G.pendingEffects).toHaveLength(1);
     expect(ctx.G.pendingEffects?.[0]).toMatchObject({
       kind: "name-card-selection",
+    });
+    expect(ctx.G.pendingEffects?.[0]?.selectionContext).toMatchObject({
+      origin: "pending-effect",
+      requestId: ctx.G.pendingEffects?.[0]?.id,
+      kind: "name-card-selection",
+      sourceCardId: source,
+      chooserId: PLAYER_ONE,
+      submitField: "namedCard",
+      searchMode: "lorcana-catalog",
+      currentSelection: {},
     });
 
     const resolutionInput = {
@@ -631,6 +646,219 @@ describe("resolveActionEffect", () => {
       lastEffectPerformed: true,
       namedCardName: "Pete",
     });
+  });
+
+  it("suspends opponent-chosen target effects with an opponent-scoped selection context", () => {
+    const source = "source" as CardInstanceId;
+    const opposingTarget = "opposing-target" as CardInstanceId;
+    const { ctx } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [opposingTarget]: {
+          id: "opposing-target",
+          cardType: "character",
+          strength: 2,
+          willpower: 3,
+        },
+      },
+      zoneCards: {
+        [`play:${PLAYER_TWO}`]: [opposingTarget],
+      },
+    });
+
+    const suspended = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "exert",
+        chosenBy: "opponent",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+      {},
+    );
+
+    expect(suspended.status).toBe("suspended");
+    expect(ctx.framework.state.priority.pendingChoice).toMatchObject({
+      type: "action-effect",
+      playerID: PLAYER_TWO,
+    });
+    expect(ctx.G.pendingEffects).toHaveLength(1);
+    expect(ctx.G.pendingEffects?.[0]).toMatchObject({
+      chooserId: PLAYER_TWO,
+      kind: "target-selection",
+    });
+
+    const selectionContext = ctx.G.pendingEffects?.[0]?.selectionContext;
+    expect(selectionContext).toMatchObject({
+      origin: "pending-effect",
+      requestId: ctx.G.pendingEffects?.[0]?.id,
+      kind: "target-selection",
+      sourceCardId: source,
+      chooserId: PLAYER_TWO,
+      submitField: "targets",
+      currentSelection: {},
+      cardCandidateIds: [opposingTarget],
+      playerCandidateIds: [],
+      allowedZones: ["play"],
+      minSelections: 1,
+      maxSelections: 1,
+      ordered: false,
+    });
+    if (!selectionContext || selectionContext.kind !== "target-selection") {
+      throw new Error("Expected a target-selection context");
+    }
+    expect(selectionContext.targetDsl).toEqual([
+      {
+        selector: "chosen",
+        count: 1,
+        owner: "opponent",
+        zones: ["play"],
+        cardTypes: ["character"],
+        excludeSelf: false,
+      },
+    ]);
+  });
+
+  it("does not suspend when repeated chosen descriptors reuse the same selected target", () => {
+    const source = "source" as CardInstanceId;
+    const target = "target" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [target]: { id: "target", cardType: "character", strength: 3, willpower: 5 },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [target],
+      },
+      cardMeta: {
+        [target]: { damage: 1, exerted: true },
+      },
+    });
+
+    const resolved = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "sequence",
+        steps: [
+          {
+            type: "remove-damage",
+            amount: 3,
+            upTo: true,
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+              excludeSelf: false,
+            },
+          },
+          {
+            type: "ready",
+            target: "CHOSEN_CHARACTER",
+          },
+        ],
+      },
+      {
+        targets: [target],
+      },
+    );
+
+    expect(resolved.status).toBe("resolved");
+    expect(ctx.framework.state.priority.pendingChoice).toBeUndefined();
+    expect(ctx.G.pendingEffects).toHaveLength(0);
+    expect(state.cardMeta[target]?.damage).toBe(0);
+  });
+
+  it("does not suspend later chosen-target consumers when the chosen target lives in prior sequence context", () => {
+    const source = "source" as CardInstanceId;
+    const target = "target" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [target]: { id: "target", cardType: "character", strength: 3, willpower: 5 },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [target],
+      },
+      cardMeta: {
+        [target]: { damage: 1, exerted: true },
+      },
+    });
+
+    const resolved = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "sequence",
+        steps: [
+          {
+            type: "sequence",
+            steps: [
+              {
+                type: "remove-damage",
+                amount: 3,
+                upTo: true,
+                target: {
+                  selector: "chosen",
+                  count: 1,
+                  owner: "any",
+                  zones: ["play"],
+                  cardTypes: ["character"],
+                },
+              },
+              {
+                type: "ready",
+                target: "CHOSEN_CHARACTER",
+              },
+            ],
+          },
+          {
+            type: "restriction",
+            restriction: "cant-quest",
+            duration: "this-turn",
+            target: { ref: "previous-target" },
+          },
+        ],
+      },
+      {
+        targets: [target],
+      },
+      {
+        allowPromptForExistingChosenTargets: true,
+      },
+    );
+
+    if (resolved.status === "suspended") {
+      throw new Error(
+        JSON.stringify(
+          {
+            pendingKind: resolved.pendingEffect.kind,
+            pendingEffect: resolved.pendingEffect.effect,
+            selectionContext: resolved.pendingEffect.selectionContext,
+          },
+          null,
+          2,
+        ),
+      );
+    }
+
+    expect(resolved.status).toBe("resolved");
+    expect(ctx.framework.state.priority.pendingChoice).toBeUndefined();
+    expect(ctx.G.pendingEffects).toHaveLength(0);
+    expect(state.cardMeta[target]?.damage).toBe(0);
+    expect(state.cardMeta[target]?.temporaryRestrictions).toEqual(
+      expect.objectContaining({
+        "cant-quest": 1,
+      }),
+    );
   });
 
   it("puts chosen hand cards on top of the deck in the provided order", () => {
@@ -715,6 +943,62 @@ describe("resolveActionEffect", () => {
     ]);
   });
 
+  it("keeps the chosen card context for a later CARD_OWNER step in a sequence", () => {
+    const source = "source" as CardInstanceId;
+    const selectedCard = "selected-card" as CardInstanceId;
+    const deckOne = "deck-one" as CardInstanceId;
+    const deckTwo = "deck-two" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [selectedCard]: { id: "selected-card", cardType: "character" },
+        [deckOne]: { id: "deck-one", cardType: "action" },
+        [deckTwo]: { id: "deck-two", cardType: "action" },
+      },
+      zoneCards: {
+        [`play:${PLAYER_TWO}`]: [selectedCard],
+        [`deck:${PLAYER_TWO}`]: [deckOne, deckTwo],
+      },
+    });
+
+    const result = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "sequence",
+        steps: [
+          {
+            type: "shuffle-into-deck",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "opponent",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          },
+          {
+            type: "draw",
+            amount: 2,
+            target: "CARD_OWNER",
+          },
+        ],
+      },
+      {
+        targets: [selectedCard],
+      },
+    );
+
+    expect(result.status).toBe("resolved");
+    expect(state.drawCalls).toEqual([
+      {
+        from: { zone: "deck", playerId: PLAYER_TWO },
+        to: { zone: "hand", playerId: PLAYER_TWO },
+        count: 2,
+      },
+    ]);
+  });
+
   it("propagates healedAmount through a sequence even when resolution starts without an event snapshot", () => {
     const source = "source" as CardInstanceId;
     const target = "target" as CardInstanceId;
@@ -777,6 +1061,75 @@ describe("resolveActionEffect", () => {
     ]);
   });
 
+  it("defaults up-to remove-damage to the maximum legal amount when no amount is provided", () => {
+    const source = "source" as CardInstanceId;
+    const target = "target" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [target]: { id: "target", cardType: "character", willpower: 5 },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [target],
+      },
+      cardMeta: {
+        [target]: { damage: 2 },
+      },
+    });
+
+    const result = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "remove-damage",
+        amount: 3,
+        target: "CHOSEN_CHARACTER",
+        upTo: true,
+      },
+      {
+        targets: [target],
+      },
+    );
+
+    expect(result.status).toBe("resolved");
+    expect(state.cardMeta[target]?.damage).toBe(0);
+  });
+
+  it("preserves an explicit zero amount for up-to remove-damage", () => {
+    const source = "source" as CardInstanceId;
+    const target = "target" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [target]: { id: "target", cardType: "character", willpower: 5 },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [target],
+      },
+      cardMeta: {
+        [target]: { damage: 2 },
+      },
+    });
+
+    const result = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "remove-damage",
+        amount: 3,
+        target: "CHOSEN_CHARACTER",
+        upTo: true,
+      },
+      {
+        targets: [target],
+        amount: 0,
+      },
+    );
+
+    expect(result.status).toBe("resolved");
+    expect(state.cardMeta[target]?.damage).toBe(2);
+  });
+
   it("keeps if-you-do false when the previous effect has no valid targets", () => {
     const source = "source" as CardInstanceId;
     const { ctx } = createResolverTestContext({
@@ -816,6 +1169,59 @@ describe("resolveActionEffect", () => {
     );
 
     expect(ctx.G.lore[PLAYER_ONE]).toBe(0);
+  });
+
+  it("continues to later independent sequence steps when a targeted step has no valid targets", () => {
+    const source = "source" as CardInstanceId;
+    const drawnCard = "drawn-card" as CardInstanceId;
+    const wardedOpponent = "warded-opponent" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [drawnCard]: { id: "drawn-card", cardType: "action" },
+        [wardedOpponent]: {
+          id: "warded-opponent",
+          cardType: "character",
+          strength: 2,
+          willpower: 4,
+          abilities: [{ type: "keyword", keyword: "Ward", text: "Ward" }],
+        },
+      },
+      zoneCards: {
+        [`deck:${PLAYER_ONE}`]: [drawnCard],
+        [`play:${PLAYER_TWO}`]: [wardedOpponent],
+      },
+      cardMeta: {
+        [wardedOpponent]: { damage: 0 },
+      },
+    });
+
+    const result = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "sequence",
+        steps: [
+          {
+            type: "deal-damage",
+            amount: 2,
+            target: "CHOSEN_CHARACTER",
+          },
+          {
+            type: "draw",
+            amount: 1,
+            target: "CONTROLLER",
+          },
+        ],
+      },
+      { eventSnapshot: {} },
+    );
+
+    expect(result.status).toBe("resolved");
+    expect(ctx.G.pendingEffects).toHaveLength(0);
+    expect(state.cardMeta[wardedOpponent]?.damage).toBe(0);
+    expect(state.drawCalls).toHaveLength(1);
+    expect(state.drawCalls[0]?.count).toBe(1);
   });
 
   it("keeps if-you-do false when return-to-hand fails before a play-card continuation", () => {
@@ -870,6 +1276,67 @@ describe("resolveActionEffect", () => {
     );
 
     expect(state.moveCalls).toEqual([]);
+  });
+
+  it("does not auto-play from hand when a follow-up play-card selection is omitted", () => {
+    const source = "source" as CardInstanceId;
+    const returnedTarget = "returned-target" as CardInstanceId;
+    const handCharacter = "hand-character" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [returnedTarget]: { id: "returned-target", cardType: "character", cost: 2, willpower: 3 },
+        [handCharacter]: { id: "hand-character", cardType: "character", cost: 2, willpower: 3 },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [returnedTarget],
+        [`hand:${PLAYER_ONE}`]: [handCharacter],
+      },
+    });
+
+    const result = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "sequence",
+        steps: [
+          {
+            type: "return-to-hand",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          },
+          {
+            type: "conditional",
+            condition: {
+              type: "if-you-do",
+            },
+            then: {
+              type: "play-card",
+              from: "hand",
+              cardType: "character",
+              cost: "free",
+              filter: {
+                maxCost: "chosen-card-cost",
+                excludeChosenCard: true,
+              },
+            },
+          },
+        ],
+      },
+      {
+        targets: [returnedTarget],
+      },
+    );
+
+    expect(result.status).toBe("resolved");
+    expect(state.moveCalls).toEqual([
+      { cardId: returnedTarget, playerId: PLAYER_ONE, zone: "hand" },
+    ]);
   });
 
   it("keeps if-you-do false when the first damage effect deals zero damage", () => {

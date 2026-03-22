@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jafarDreadnoughtI18n } from "./183-jafar-dreadnought.i18n";
 
 export const jafarDreadnought: CharacterCard = {
   id: "OLg",
@@ -7,43 +8,6 @@ export const jafarDreadnought: CharacterCard = {
   cardType: "character",
   name: "Jafar",
   version: "Dreadnought",
-  i18n: {
-    en: {
-      name: "Jafar",
-      version: "Dreadnought",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "NOW WHERE WERE WE?",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschafar",
-      version: "Wüstenkreuzer",
-      text: "Gestaltwandel 2 ALSO, WO WAREN WIR? Jedes Mal, wenn dieser Charakter in deinem Zug durch eine Herausforderung einen anderen Charakter verbannt, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Jafar",
-      version: "Serpent cuirassé",
-      text: "Alter 2 ALORS, OÙ EN ÉTIONS-NOUS? Lorsque ce personnage en bannit un autre via un défi durant votre tour, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Jafar",
-      version: "Dreadnought",
-      text: [
-        {
-          title: "Shift 2",
-          description:
-            "(You may pay 2 to play this on top of one of your characters named Jafar.) NOW WHERE WERE WE? During your turn, whenever this character banishes another character in a challenge, you may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Aladdin",
   set: "002",
@@ -69,7 +33,6 @@ export const jafarDreadnought: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain", "Sorcerer"],
-  missingTests: true,
   abilities: [
     {
       id: "22g-1",
@@ -101,4 +64,6 @@ export const jafarDreadnought: CharacterCard = {
       text: "NOW WHERE WERE WE? During your turn, whenever this character banishes another character in a challenge, you may draw a card.",
     },
   ],
+  missingTests: true,
+  i18n: jafarDreadnoughtI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { bernardBrandnewAgentI18n } from "./002-bernard-brand-new-agent.i18n";
 
 export const bernardBrandnewAgent: CharacterCard = {
   id: "oTM",
@@ -7,52 +8,6 @@ export const bernardBrandnewAgent: CharacterCard = {
   cardType: "character",
   name: "Bernard",
   version: "Brand-New Agent",
-  i18n: {
-    en: {
-      name: "Bernard",
-      version: "Brand-New Agent",
-      text: [
-        {
-          title: "I'LL CHECK IT OUT",
-          description:
-            "At the end of your turn, if this character is exerted, you may ready another chosen character of yours.",
-        },
-      ],
-    },
-    de: {
-      name: "Bernard",
-      version: "Frischgebackener Agent",
-      text: [
-        {
-          title: "ICH SCHAU MICH MAL EIN BISSCHEN UM",
-          description:
-            "Am Ende deines Zuges, wenn dieser Charakter erschöpft ist, darfst du einen deiner anderen Charaktere wählen und bereit machen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Bernard",
-      version: "Tout nouvel agent",
-      text: [
-        {
-          title: "JE VAIS VOIR CE QU'IL EN EST À",
-          description:
-            "la fin de votre tour, si ce personnage est épuisé, vous pouvez choisir et redresser l'un de vos autres personnages.",
-        },
-      ],
-    },
-    it: {
-      name: "Bernie",
-      version: "Agente Novello",
-      text: [
-        {
-          title: "VADO A ISPEZIONARE",
-          description:
-            "Alla fine del tuo turno, se questo personaggio è impegnato, puoi preparare uno dei tuoi altri personaggi a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Rescuers",
   set: "003",
@@ -75,27 +30,36 @@ export const bernardBrandnewAgent: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  missingImplementation: true,
-  missingTests: true,
   abilities: [
     {
+      id: "oTM-1",
+      name: "I'LL CHECK IT OUT",
+      text: "I'LL CHECK IT OUT At the end of your turn, if this character is exerted, you may ready another chosen character of yours.",
+      type: "triggered",
+      trigger: {
+        event: "end-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      condition: {
+        type: "is-exerted",
+      },
       effect: {
+        type: "optional",
         chooser: "CONTROLLER",
         effect: {
+          type: "ready",
           target: {
             selector: "chosen",
             count: 1,
-            owner: "any",
+            owner: "you",
             zones: ["play"],
             cardTypes: ["character"],
+            excludeSelf: true,
           },
-          type: "ready",
         },
-        type: "optional",
       },
-      id: "15t-1",
-      text: "I'LL CHECK IT OUT At the end of your turn, if this character is exerted, you may ready another chosen character of yours.",
-      type: "action",
     },
   ],
+  i18n: bernardBrandnewAgentI18n,
 };

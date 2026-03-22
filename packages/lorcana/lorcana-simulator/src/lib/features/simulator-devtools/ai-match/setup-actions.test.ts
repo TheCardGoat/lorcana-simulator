@@ -28,9 +28,10 @@ function createConfig(): AutomatedMatchConfig {
   return {
     playerOneDeckText: DECK_FIXTURES[0]!.cards,
     playerTwoDeckText: DECK_FIXTURES[1]!.cards,
-    playerOneFixtureName: DECK_FIXTURES[0]!.name,
-    playerTwoFixtureName: DECK_FIXTURES[1]!.name,
-    strategyId: "default-lore-race",
+    playerOneFixtureId: DECK_FIXTURES[0]!.id,
+    playerTwoFixtureId: DECK_FIXTURES[1]!.id,
+    playerOneStrategyId: "default-lore-race",
+    playerTwoStrategyId: "board-control-lore-race",
     seed: "ai-match:seed",
   };
 }
@@ -40,11 +41,11 @@ describe("automated match setup actions", () => {
     const nextConfig = replaceDeckTextWithFixture(
       createConfig(),
       "playerOne",
-      DECK_FIXTURES[2]!.name,
+      DECK_FIXTURES[2]!.id,
     );
 
     expect(nextConfig.playerOneDeckText).toBe(DECK_FIXTURES[2]!.cards);
-    expect(nextConfig.playerOneFixtureName).toBe(DECK_FIXTURES[2]!.name);
+    expect(nextConfig.playerOneFixtureId).toBe(DECK_FIXTURES[2]!.id);
   });
 
   it("clicking simulate with valid decks prepares a new seeded config and navigates", async () => {

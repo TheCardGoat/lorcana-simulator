@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { simbaScrappyCubI18n } from "./105-simba-scrappy-cub.i18n";
 
 export const simbaScrappyCub: CharacterCard = {
   id: "bO8",
@@ -7,24 +8,6 @@ export const simbaScrappyCub: CharacterCard = {
   cardType: "character",
   name: "Simba",
   version: "Scrappy Cub",
-  i18n: {
-    en: {
-      name: "Simba",
-      version: "Scrappy Cub",
-    },
-    de: {
-      name: "Simba",
-      version: "Rauflustiges Löwenjunges",
-    },
-    fr: {
-      name: "Simba",
-      version: "Lionceau bagarreur",
-    },
-    it: {
-      name: "Simba",
-      version: "Cucciolo Spelacchiato",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lion King",
   set: "009",
@@ -41,4 +24,5 @@ export const simbaScrappyCub: CharacterCard = {
     tcgPlayer: 650043,
   },
   classifications: ["Storyborn", "Hero", "Prince"],
+  i18n: simbaScrappyCubI18n,
 };

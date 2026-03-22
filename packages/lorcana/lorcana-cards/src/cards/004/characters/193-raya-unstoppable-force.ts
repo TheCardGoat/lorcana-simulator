@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rayaUnstoppableForceI18n } from "./193-raya-unstoppable-force.i18n";
 
 export const rayaUnstoppableForce: CharacterCard = {
   id: "u57",
@@ -7,40 +8,6 @@ export const rayaUnstoppableForce: CharacterCard = {
   cardType: "character",
   name: "Raya",
   version: "Unstoppable Force",
-  i18n: {
-    en: {
-      name: "Raya",
-      version: "Unstoppable Force",
-      text: [
-        {
-          title: "Challenger +2",
-        },
-        {
-          title: "Resist +2",
-        },
-        {
-          title: "YOU GAVE IT YOUR BEST",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Raya",
-      version: "Unaufhaltsame Kraft",
-      text: "Herausfordern +2 Robust +2 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 2.) DU HAST DEIN BESTES GETAN Jedes Mal, wenn dieser Charakter in deinem Zug durch eine Herausforderung einen anderen Charakter verbannt, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Raya",
-      version: "Force inarrêtable",
-      text: "Offensif +2 Résistance +2 L'IMPORTANT, C'EST D'ESSAYER Chaque fois que ce personnage en bannit un autre via un défi durant votre tour, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Raya",
-      version: "Forza Inarrestabile",
-      text: "Sfidante +2 Resistere +2 HAI FATTO DEL TUO MEGLIO Durante il tuo turno, ogni volta che questo personaggio esilia un altro personaggio in una sfida, puoi pescare una carta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Raya and the Last Dragon",
   set: "004",
@@ -105,4 +72,5 @@ export const rayaUnstoppableForce: CharacterCard = {
       text: "YOU GAVE IT YOUR BEST During your turn, whenever this character banishes another character in a challenge, you may draw a card.",
     },
   ],
+  i18n: rayaUnstoppableForceI18n,
 };

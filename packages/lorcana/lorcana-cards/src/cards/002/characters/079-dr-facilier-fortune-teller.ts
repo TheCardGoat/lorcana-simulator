@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { drFacilierFortuneTellerI18n } from "./079-dr-facilier-fortune-teller.i18n";
 
 export const drFacilierFortuneTeller: CharacterCard = {
   id: "WRE",
@@ -7,43 +8,6 @@ export const drFacilierFortuneTeller: CharacterCard = {
   cardType: "character",
   name: "Dr. Facilier",
   version: "Fortune Teller",
-  i18n: {
-    en: {
-      name: "Dr. Facilier",
-      version: "Fortune Teller",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "YOU'RE IN MY WORLD",
-          description:
-            "Whenever this character quests, chosen opposing character can't quest during their next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Dr. Facilier",
-      version: "Wahrsager",
-      text: "Wendig IHR SEID IN MEINER WELT Jedes Mal, wenn dieser Charakter erkundet, wähle einen gegnerischen Charakter. Er kann in seinem nächsten Zug nicht erkunden.",
-    },
-    fr: {
-      name: "Dr. Facilier",
-      version: "Lit dans les cartes",
-      text: "Insaisissable MON ROYAUME VOUS TEND LES BRAS Lorsque ce personnage est envoyé à l'aventure, choisissez un personnage adverse. Il ne peut pas être envoyé à l'aventure durant son prochain tour.",
-    },
-    it: {
-      name: "Dr. Facilier",
-      version: "Fortune Teller",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) YOU'RE IN MY WORLD Whenever this character quests, chosen opposing character can't quest during their next turn.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Princess and the Frog",
   set: "002",
@@ -69,7 +33,6 @@ export const drFacilierFortuneTeller: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer"],
-  missingTests: true,
   abilities: [
     {
       id: "h8r-1",
@@ -79,9 +42,15 @@ export const drFacilierFortuneTeller: CharacterCard = {
     },
     {
       effect: {
-        duration: "until-start-of-next-turn",
+        duration: "their-next-turn",
         restriction: "cant-quest",
-        target: "SELF",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
         type: "restriction",
       },
       id: "h8r-2",
@@ -95,4 +64,5 @@ export const drFacilierFortuneTeller: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: drFacilierFortuneTellerI18n,
 };

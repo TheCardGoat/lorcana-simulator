@@ -54,9 +54,6 @@ describe("Medallion Weights", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
-    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
     expect(testEngine.asPlayerTwo().getCardZone(challengeDummy)).toBe("discard");

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { motherKnowsBestI18n } from "./095-mother-knows-best.i18n";
 
 export const motherKnowsBest: ActionCard = {
   id: "VGx",
@@ -6,24 +7,6 @@ export const motherKnowsBest: ActionCard = {
   reprints: ["set1-095", "set9-099"],
   cardType: "action",
   name: "Mother Knows Best",
-  i18n: {
-    en: {
-      name: "Mother Knows Best",
-      text: "Return chosen character to their player's hand.",
-    },
-    de: {
-      name: "Mutter weiß mehr",
-      text: "Schicke einen Charakter deiner Wahl auf die zugehörige Hand zurück.",
-    },
-    fr: {
-      name: "N'ÉCOUTE QUE MOI",
-      text: "(Vous pouvez une carte personnage coûtant 3 ou plus pour chanter cette chanson gratuitement.) Choisissez et renvoyez un personnage en jeu dans la main de son propriétaire.",
-    },
-    it: {
-      name: "Mother Knows Best",
-      text: "Return chosen character to their player's hand.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Tangled",
   set: "001",
@@ -46,4 +29,5 @@ export const motherKnowsBest: ActionCard = {
       },
     },
   ],
+  i18n: motherKnowsBestI18n,
 };

@@ -50,9 +50,7 @@ describe("Mystical Tree - Mama Odie's Home", () => {
       testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
     ).toBe(true);
     expect(
-      testEngine
-        .asPlayerOne()
-        .resolveNextPending({ resolveOptional: true, targets: [damagedResident, opposingTarget] })
+      testEngine.asPlayerOne().resolveNextPending({ targets: [damagedResident, opposingTarget] })
         .success,
     ).toBe(true);
 
@@ -78,11 +76,11 @@ describe("Mystical Tree - Mama Odie's Home", () => {
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
+      testEngine
+        .asPlayerOne()
+        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: false })
+        .success,
     ).toBe(true);
-    expect(testEngine.asPlayerOne().resolveNextPending({ resolveOptional: false }).success).toBe(
-      true,
-    );
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
   });
 });

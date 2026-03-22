@@ -1,23 +1,22 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { baymaxLowBattery } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("SHHHHH This character enters play exerted.", () => {
-//   It("should enter exerted", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: 10,
-//       Play: [],
-//       Hand: [baymaxLowBattery],
-//     });
-//
-//     Await testEngine.playCard(baymaxLowBattery);
-//
-//     Expect(testEngine.getCardModel(baymaxLowBattery).meta.exerted).toBeTruthy();
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { baymaxLowBattery } from "./087-baymax-low-battery";
+
+describe("Baymax - Low Battery", () => {
+  it("SHHHHH - Enters play exerted", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [{ card: baymaxLowBattery }],
+      inkwell: Array.from({ length: 2 }).map(() => ({ card: baymaxLowBattery })),
+    });
+
+    const baymaxId = testEngine.findCardInstanceId(baymaxLowBattery, "hand");
+
+    // Play Baymax
+    testEngine.asPlayerOne().playCard(baymaxId);
+
+    // Baymax should be in play and exerted
+    const baymax = testEngine.asServer().getCard(baymaxId);
+    expect(baymax.zone).toBe("play");
+    expect(baymax.exerted).toBe(true);
+  });
+});

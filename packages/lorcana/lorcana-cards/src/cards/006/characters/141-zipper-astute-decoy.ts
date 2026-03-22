@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { zipperAstuteDecoyI18n } from "./141-zipper-astute-decoy.i18n";
 
 export const zipperAstuteDecoy: CharacterCard = {
   id: "aVD",
@@ -7,37 +8,6 @@ export const zipperAstuteDecoy: CharacterCard = {
   cardType: "character",
   name: "Zipper",
   version: "Astute Decoy",
-  i18n: {
-    en: {
-      name: "Zipper",
-      version: "Astute Decoy",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "RUN INTERFERENCE",
-          description:
-            "During your turn, whenever a card is put into your inkwell, another chosen character gains Resist +1 until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Summi",
-      version: "Scharfsinniger Lockvogel",
-      text: "Behütet EINGREIFEN Jedes Mal während deines Zuges, wenn eine Karte in deinen Tintenvorrat gelegt wird, erhält ein anderer Charakter deiner Wahl bis zu Beginn deines nächsten Zuges Robust +1. (Reduziere jeglichen Schaden, der dem Charakter zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "Ruzor",
-      version: "Leurre astucieux",
-      text: "Hors d'atteinte EN INTERPOSITION Durant votre tour, chaque fois qu'une carte est placée dans votre réserve d'encre, choisissez un autre personnage qui gagne Résistance +1 jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Zipper",
-      version: "Astuto Diversivo",
-      text: "Protetto INTERFERIRE Durante il tuo turno, ogni volta che una carta viene aggiunta al tuo calamaio, un altro personaggio a tua scelta ottiene Resistere +1 fino all'inizio del tuo prossimo turno.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Rescue Rangers",
   set: "006",
@@ -72,26 +42,39 @@ export const zipperAstuteDecoy: CharacterCard = {
     },
     {
       effect: {
-        keyword: "Resist",
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
+        chooser: "CONTROLLER",
+        effect: {
+          keyword: "Resist",
+          target: {
+            cardTypes: ["character"],
+            count: 1,
+            owner: "any",
+            selector: "chosen",
+            zones: ["play"],
+            excludeSelf: true,
+          },
+          type: "gain-keyword",
+          value: 1,
+          duration: "until-start-of-next-turn",
         },
-        type: "gain-keyword",
-        value: 1,
+        type: "optional",
       },
       id: "n08-2",
       name: "RUN INTERFERENCE",
       text: "RUN INTERFERENCE During your turn, whenever a card is put into your inkwell, another chosen character gains Resist +1 until the start of your next turn.",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "ink",
+        on: "CONTROLLER",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
+        timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: zipperAstuteDecoyI18n,
 };

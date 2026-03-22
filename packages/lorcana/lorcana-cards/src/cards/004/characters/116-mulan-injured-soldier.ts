@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mulanInjuredSoldierI18n } from "./116-mulan-injured-soldier.i18n";
 
 export const mulanInjuredSoldier: CharacterCard = {
   id: "sfy",
@@ -7,48 +8,6 @@ export const mulanInjuredSoldier: CharacterCard = {
   cardType: "character",
   name: "Mulan",
   version: "Injured Soldier",
-  i18n: {
-    en: {
-      name: "Mulan",
-      version: "Injured Soldier",
-      text: [
-        {
-          title: "BATTLE WOUND",
-          description: "This character enters play with 2 damage.",
-        },
-      ],
-    },
-    de: {
-      name: "Mulan",
-      version: "Verwundete Soldatin",
-      text: [
-        {
-          title: "KRIEGSWUNDE",
-          description: "Dieser Charakter kommt mit 2 Schaden auf ihm ins Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mulan",
-      version: "Soldate blessée",
-      text: [
-        {
-          title: "BLESSURE AU COMBAT",
-          description: "Ce personnage entre en jeu avec 2 jetons Dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Mulan",
-      version: "Guerriera Ferita",
-      text: [
-        {
-          title: "FERITA DA COMBATTIMENTO",
-          description: "Questo personaggio entra in gioco con 2 danni.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mulan",
   set: "004",
@@ -82,4 +41,5 @@ export const mulanInjuredSoldier: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: mulanInjuredSoldierI18n,
 };

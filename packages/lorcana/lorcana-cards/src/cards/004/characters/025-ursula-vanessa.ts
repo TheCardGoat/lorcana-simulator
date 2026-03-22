@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ursulaVanessaI18n } from "./025-ursula-vanessa.i18n";
 
 export const ursulaVanessa: CharacterCard = {
   id: "PLH",
@@ -7,33 +8,6 @@ export const ursulaVanessa: CharacterCard = {
   cardType: "character",
   name: "Ursula",
   version: "Vanessa",
-  i18n: {
-    en: {
-      name: "Ursula",
-      version: "Vanessa",
-      text: "Singer 4",
-    },
-    de: {
-      name: "Ursula",
-      version: "Vanessa",
-      text: [
-        {
-          title: "Singen 4",
-          description: "(Die Kosten dieses Charakters gelten als 4 für das Singen von Liedern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Ursula",
-      version: "Vanessa",
-      text: "Mélomane 4 (Ce personnage est considéré comme ayant un coût de 4 pour chanter des chansons.)",
-    },
-    it: {
-      name: "Ursula",
-      version: "Vanessa",
-      text: "Melodioso 4",
-    },
-  },
   inkType: ["amber"],
   franchise: "Little Mermaid",
   set: "004",
@@ -59,4 +33,5 @@ export const ursulaVanessa: CharacterCard = {
       text: "Singer 4",
     },
   ],
+  i18n: ursulaVanessaI18n,
 };

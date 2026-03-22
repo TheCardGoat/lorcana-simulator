@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { vitalisphereI18n } from "./134-vitalisphere.i18n";
 
 export const vitalisphere: ItemCard = {
   id: "WDs",
@@ -6,48 +7,6 @@ export const vitalisphere: ItemCard = {
   reprints: ["set4-134"],
   cardType: "item",
   name: "Vitalisphere",
-  i18n: {
-    en: {
-      name: "Vitalisphere",
-      text: [
-        {
-          title: "EXTRACT OF RUBY 1",
-          description:
-            "{I}, Banish this item — Chosen character gains Rush and gets +2 {S} this turn. (They can challenge the turn they're played.)",
-        },
-      ],
-    },
-    de: {
-      name: "Vitalisphäre",
-      text: [
-        {
-          title: "EXTRAKT AUS RUBIN 1,",
-          description:
-            "Verbanne diesen Gegenstand — Ein Charakter deiner Wahl erhält in diesem Zug +2 und Rasant. (Der Charakter kann im selben Zug herausfordern, in dem er ausgespielt wird.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Sphère de Vitalité",
-      text: [
-        {
-          title: "EXTRAIT DE RUBIS 1,",
-          description:
-            "Bannissez cet objet — Choisissez un personnage qui gagne Charge et +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Vitalisfera",
-      text: [
-        {
-          title: "ESTRATTO DI RUBINO 1,",
-          description:
-            "esilia questo oggetto — Un personaggio a tua scelta ottiene Lesto e riceve +2 per questo turno. (Può sfidare nel turno in cui viene giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lorcana",
   set: "004",
@@ -104,4 +63,5 @@ export const vitalisphere: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: vitalisphereI18n,
 };

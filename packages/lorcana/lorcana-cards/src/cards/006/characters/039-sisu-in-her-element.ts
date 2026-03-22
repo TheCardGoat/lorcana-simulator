@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sisuInHerElementI18n } from "./039-sisu-in-her-element.i18n";
 
 export const sisuInHerElement: CharacterCard = {
   id: "qi6",
@@ -7,28 +8,6 @@ export const sisuInHerElement: CharacterCard = {
   cardType: "character",
   name: "Sisu",
   version: "In Her Element",
-  i18n: {
-    en: {
-      name: "Sisu",
-      version: "In Her Element",
-      text: "Challenger +2 (While challenging, this character gets +2 {S}).",
-    },
-    de: {
-      name: "Sisu",
-      version: "In ihrem Element",
-      text: "Herausfordern +2",
-    },
-    fr: {
-      name: "Sisu",
-      version: "Dans son élément",
-      text: "Offensif +2",
-    },
-    it: {
-      name: "Sisu",
-      version: "Nel Suo Elemento",
-      text: "Sfidante +2",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Raya and the Last Dragon",
   set: "006",
@@ -54,4 +33,5 @@ export const sisuInHerElement: CharacterCard = {
       text: "Challenger +2.",
     },
   ],
+  i18n: sisuInHerElementI18n,
 };

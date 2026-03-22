@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { beastHardheadedI18n } from "./172-beast-hardheaded.i18n";
 
 export const beastHardheaded: CharacterCard = {
   id: "VIG",
@@ -7,50 +8,6 @@ export const beastHardheaded: CharacterCard = {
   cardType: "character",
   name: "Beast",
   version: "Hardheaded",
-  i18n: {
-    en: {
-      name: "Beast",
-      version: "Hardheaded",
-      text: [
-        {
-          title: "BREAK",
-          description: "When you play this character, you may banish chosen item.",
-        },
-      ],
-    },
-    de: {
-      name: "Biest",
-      version: "Dickköpfig",
-      text: [
-        {
-          title: "ZERFETZEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Gegenstand deiner Wahl verbannen.",
-        },
-      ],
-    },
-    fr: {
-      name: "LA BÊTE",
-      version: "Colérique et aigrie",
-      text: [
-        {
-          title: "DESTRUCTION",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un objet et le bannir.",
-        },
-      ],
-    },
-    it: {
-      name: "La Bestia",
-      version: "Testarda",
-      text: [
-        {
-          title: "ROMPERE",
-          description: "Quando giochi questo personaggio, puoi esiliare un oggetto a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Beauty and the Beast",
   set: "001",
@@ -61,7 +18,6 @@ export const beastHardheaded: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_9600ba030e244c31becf34a3bf0822af",
     tcgPlayer: 508900,
@@ -78,7 +34,13 @@ export const beastHardheaded: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: "CHOSEN_CHARACTER",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["item"],
+          },
           type: "banish",
         },
         type: "optional",
@@ -94,4 +56,5 @@ export const beastHardheaded: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: beastHardheadedI18n,
 };

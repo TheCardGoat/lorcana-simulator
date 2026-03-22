@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chefLouisInOverHisHeadI18n } from "./140-chef-louis-in-over-his-head.i18n";
 
 export const chefLouisInOverHisHead: CharacterCard = {
   id: "3Pj",
@@ -7,24 +8,6 @@ export const chefLouisInOverHisHead: CharacterCard = {
   cardType: "character",
   name: "Chef Louis",
   version: "In Over His Head",
-  i18n: {
-    en: {
-      name: "Chef Louis",
-      version: "In Over His Head",
-    },
-    de: {
-      name: "Chef Louis",
-      version: "Überfordert",
-    },
-    fr: {
-      name: "Chef Louis",
-      version: "Dépassé par la situation",
-    },
-    it: {
-      name: "Chef Louis",
-      version: "Con l'Acqua alla Gola",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Little Mermaid",
   set: "010",
@@ -41,4 +24,5 @@ export const chefLouisInOverHisHead: CharacterCard = {
     tcgPlayer: 659460,
   },
   classifications: ["Storyborn"],
+  i18n: chefLouisInOverHisHeadI18n,
 };

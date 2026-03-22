@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mushuBragginDragonI18n } from "./046-mushu-braggin-dragon.i18n";
 
 export const mushuBragginDragon: CharacterCard = {
   id: "7CA",
@@ -7,24 +8,6 @@ export const mushuBragginDragon: CharacterCard = {
   cardType: "character",
   name: "Mushu",
   version: "Braggin' Dragon",
-  i18n: {
-    en: {
-      name: "Mushu",
-      version: "Braggin' Dragon",
-    },
-    de: {
-      name: "Mushu",
-      version: "Angeberischer Drache",
-    },
-    fr: {
-      name: "Mushu",
-      version: "Dragon frimeur",
-    },
-    it: {
-      name: "Mushu",
-      version: "Drago Spaccone",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Mulan",
   set: "010",
@@ -41,4 +24,5 @@ export const mushuBragginDragon: CharacterCard = {
     tcgPlayer: 660001,
   },
   classifications: ["Storyborn", "Ally", "Dragon"],
+  i18n: mushuBragginDragonI18n,
 };

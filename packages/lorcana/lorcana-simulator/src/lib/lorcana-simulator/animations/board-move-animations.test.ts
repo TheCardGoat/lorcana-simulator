@@ -8,6 +8,7 @@ import type {
 import type {
   LorcanaCardSnapshot,
   LorcanaPlayerSide,
+  LorcanaSimulatorMoveId,
   LorcanaZoneId,
   MoveLogEntrySnapshot,
 } from "@/features/simulator/model/contracts.js";
@@ -105,6 +106,7 @@ function createSnapshot(
     }
 
     return {
+      canAddCardToInkwell: false,
       lore: 0,
       handCount: zones.hand?.totalCards ?? hand.length,
       deckCount: zones.deck?.totalCards ?? 0,
@@ -203,7 +205,7 @@ function createResolver(...snapshots: LorcanaProjectedBoardView[]) {
 function createMoveLogEntry(options: {
   id: string;
   actorSide?: LorcanaPlayerSide;
-  moveId: string;
+  moveId: LorcanaSimulatorMoveId;
   cardId: string;
   timestamp?: number;
 }): MoveLogEntrySnapshot {

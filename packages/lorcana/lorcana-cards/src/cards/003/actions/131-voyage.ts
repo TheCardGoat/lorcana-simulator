@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { voyageI18n } from "./131-voyage.i18n";
 
 export const voyage: ActionCard = {
   id: "Xj3",
@@ -6,24 +7,6 @@ export const voyage: ActionCard = {
   reprints: ["set3-131"],
   cardType: "action",
   name: "Voyage",
-  i18n: {
-    en: {
-      name: "Voyage",
-      text: "Move up to 2 characters of yours to the same location for free.",
-    },
-    de: {
-      name: "Seefahrt",
-      text: "Wähle bis zu 2 deiner Charaktere und bewege sie kostenlos zu dem selben Ort.",
-    },
-    fr: {
-      name: "Voyage",
-      text: "Déplacez gratuitement jusqu'à 2 de vos personnages sur un même lieu.",
-    },
-    it: {
-      name: "Navigare",
-      text: "Muovi fino a 2 tuoi personaggi nello stesso luogo, gratis.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "003",
@@ -61,4 +44,5 @@ export const voyage: ActionCard = {
       },
     },
   ],
+  i18n: voyageI18n,
 };

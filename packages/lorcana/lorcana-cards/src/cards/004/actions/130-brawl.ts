@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { brawlI18n } from "./130-brawl.i18n";
 
 export const brawl: ActionCard = {
   id: "eF8",
@@ -6,24 +7,6 @@ export const brawl: ActionCard = {
   reprints: ["set4-130"],
   cardType: "action",
   name: "Brawl",
-  i18n: {
-    en: {
-      name: "Brawl",
-      text: "Banish chosen character with 2 {S} or less.",
-    },
-    de: {
-      name: "Schlägerei",
-      text: "Verbanne einen Charakter deiner Wahl mit 2 oder weniger.",
-    },
-    fr: {
-      name: "Bagarre",
-      text: "Choisissez un personnage avec 2 ou moins et bannissez-le.",
-    },
-    it: {
-      name: "Zuffa",
-      text: "Esilia un personaggio a tua scelta con 2 o inferiore.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Tangled",
   set: "004",
@@ -60,4 +43,5 @@ export const brawl: ActionCard = {
       type: "action",
     },
   ],
+  i18n: brawlI18n,
 };

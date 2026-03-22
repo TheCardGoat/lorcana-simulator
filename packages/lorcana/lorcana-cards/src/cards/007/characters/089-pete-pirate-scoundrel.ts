@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { petePirateScoundrelI18n } from "./089-pete-pirate-scoundrel.i18n";
 
 export const petePirateScoundrel: CharacterCard = {
   id: "4mp",
@@ -7,51 +8,6 @@ export const petePirateScoundrel: CharacterCard = {
   cardType: "character",
   name: "Pete",
   version: "Pirate Scoundrel",
-  i18n: {
-    en: {
-      name: "Pete",
-      version: "Pirate Scoundrel",
-      text: [
-        {
-          title: "PILFER AND PLUNDER",
-          description: "Whenever you play an action that isn't a song, you may banish chosen item.",
-        },
-      ],
-    },
-    de: {
-      name: "Kater Karlo",
-      version: "Piraten-Schurke",
-      text: [
-        {
-          title: "STEHLEN UND PLÜNDERN",
-          description:
-            "Jedes Mal, wenn du eine Aktion ausspielst, die kein Lied ist, darfst du einen Gegenstand deiner Wahl verbannen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Pat",
-      version: "Crapule de pirate",
-      text: [
-        {
-          title: "VOLER ET PILLER",
-          description:
-            "Chaque fois que vous jouez une action qui n'est pas une chanson, vous pouvez choisir un objet et le bannir.",
-        },
-      ],
-    },
-    it: {
-      name: "Gambadilegno",
-      version: "Canaglia Pirata",
-      text: [
-        {
-          title: "SGRAFFIGNARE E SACCHEGGIARE",
-          description:
-            "Ogni volta che giochi un'azione che non è una canzone, puoi esiliare un oggetto a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "007",
   cardNumber: 89,
@@ -102,4 +58,5 @@ export const petePirateScoundrel: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: petePirateScoundrelI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckStruttingHisStuffI18n } from "./144-donald-duck-strutting-his-stuff.i18n";
 
 export const donaldDuckStruttingHisStuff: CharacterCard = {
   id: "fpc",
@@ -7,33 +8,6 @@ export const donaldDuckStruttingHisStuff: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Strutting His Stuff",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Strutting His Stuff",
-      text: "Ward",
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Stolziert umher",
-      text: "Behütet",
-    },
-    fr: {
-      name: "DONALD",
-      version: "Inventeur fanfaron",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Donald Duck",
-      version: "Strutting His Stuff",
-      text: [
-        {
-          title: "Ward",
-          description: "(Opponents can't choose this character except to challenge.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   set: "001",
   cardNumber: 144,
@@ -43,7 +17,6 @@ export const donaldDuckStruttingHisStuff: CharacterCard = {
   willpower: 3,
   lore: 2,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_8d5ff9b706fd4f59b44e0ca52638a257",
     tcgPlayer: 503358,
@@ -58,4 +31,5 @@ export const donaldDuckStruttingHisStuff: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: donaldDuckStruttingHisStuffI18n,
 };

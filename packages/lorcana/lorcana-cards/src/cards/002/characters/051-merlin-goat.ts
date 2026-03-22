@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { merlinGoatI18n } from "./051-merlin-goat.i18n";
 
 export const merlinGoat: CharacterCard = {
   id: "nZn",
@@ -7,50 +8,6 @@ export const merlinGoat: CharacterCard = {
   cardType: "character",
   name: "Merlin",
   version: "Goat",
-  i18n: {
-    en: {
-      name: "Merlin",
-      version: "Goat",
-      text: [
-        {
-          title: "HERE I COME!",
-          description: "When you play this character and when he leaves play, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Merlin",
-      version: "Ziege",
-      text: [
-        {
-          title: "JETZT KOMME ICH!",
-          description:
-            "Wenn du diesen Charakter ausspielst und wenn er das Spiel verlässt, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Merlin",
-      version: "En chèvre",
-      text: [
-        {
-          title: "ATTENTION, J'ARRIVE!",
-          description:
-            "Lorsque vous jouez ce personnage et lorsqu'il quitte la zone de jeu, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Merlin",
-      version: "Goat",
-      text: [
-        {
-          title: "HERE I COME!",
-          description: "When you play this character and when he leaves play, gain 1 lore.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -67,12 +24,11 @@ export const merlinGoat: CharacterCard = {
   },
   text: [
     {
-      title: "HERE I COME!",
-      description: "When you play this character and when he leaves play, gain 1 lore.",
+      title: "HERE",
+      description: "I COME! When you play this character and when he leaves play, gain 1 lore.",
     },
   ],
   classifications: ["Storyborn", "Mentor", "Sorcerer"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -99,4 +55,6 @@ export const merlinGoat: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: merlinGoatI18n,
 };

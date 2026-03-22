@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cruellaDeVilFashionableCruiserI18n } from "./145-cruella-de-vil-fashionable-cruiser.i18n";
 
 export const cruellaDeVilFashionableCruiser: CharacterCard = {
   id: "6E0",
@@ -7,52 +8,6 @@ export const cruellaDeVilFashionableCruiser: CharacterCard = {
   cardType: "character",
   name: "Cruella De Vil",
   version: "Fashionable Cruiser",
-  i18n: {
-    en: {
-      name: "Cruella De Vil",
-      version: "Fashionable Cruiser",
-      text: [
-        {
-          title: "NOW GET GOING",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Cruella De Vil",
-      version: "Modische Cruiserin",
-      text: [
-        {
-          title: "MACHT GEFÄLLIGST WEITER!",
-          description:
-            "In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Cruella d'Enfer",
-      version: "Collection croisière",
-      text: [
-        {
-          title: "ALLEZ, EN ROUTE",
-          description:
-            "Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier les personnages avec Insaisissable.)",
-        },
-      ],
-    },
-    it: {
-      name: "Cruella De Vil",
-      version: "Fashionable Cruiser",
-      text: [
-        {
-          title: "NOW GET GOING",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "101 Dalmatians",
   set: "009",
@@ -89,4 +44,5 @@ export const cruellaDeVilFashionableCruiser: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: cruellaDeVilFashionableCruiserI18n,
 };

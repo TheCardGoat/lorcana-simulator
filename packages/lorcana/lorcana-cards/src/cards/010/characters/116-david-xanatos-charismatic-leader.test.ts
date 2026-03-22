@@ -1,115 +1,83 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { smash } from "@lorcanito/lorcana-engine/cards/001/actions/actions";
-// Import { deweyLovableShowoff } from "@lorcanito/lorcana-engine/cards/008";
-// Import {
-//   DavidXanatosCharismaticLeader,
-//   MickeyMouseDetective,
-// } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("David Xanatos - Charismatic Leader", () => {
-//   Describe("LEARN FROM EVERYTHING", () => {
-//     It("1. should draw a card when one of your characters is banished during your turn", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: smash.cost,
-//         Play: [davidXanatosCharismaticLeader, mickeyMouseDetective],
-//         Hand: [smash],
-//         Deck: 5,
-//       });
-//
-//       Const mickey = testEngine.getCardModel(mickeyMouseDetective);
-//
-//       Expect(testEngine.getZonesCardCount("player_one").hand).toBe(1);
-//       Expect(mickey.zone).toBe("play");
-//
-//       // Banish Mickey during your turn (willpower 3, Smash deals 3 damage)
-//       Await testEngine.playCard(smash, { targets: [mickey] });
-//
-//       Expect(mickey.zone).toBe("discard");
-//       // Should have drawn 1 card (1 from hand - smash + 1 drawn = 1)
-//       Expect(testEngine.getZonesCardCount("player_one").hand).toBe(1);
-//     });
-//
-//     It("2. should NOT draw during opponent's turn", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [davidXanatosCharismaticLeader, deweyLovableShowoff],
-//           Deck: 5,
-//         },
-//         {
-//           Inkwell: smash.cost,
-//           Hand: [smash],
-//         },
-//       );
-//
-//       Const dewey = testEngine.getCardModel(deweyLovableShowoff);
-//
-//       Expect(testEngine.getZonesCardCount("player_one").hand).toBe(0);
-//
-//       // Pass turn to opponent
-//       TestEngine.passTurn();
-//
-//       // Opponent banishes your Dewey
-//       TestEngine.changeActivePlayer("player_two");
-//       Await testEngine.playCard(smash, { targets: [dewey] });
-//
-//       // Should NOT have drawn (not your turn)
-//       Expect(testEngine.getZonesCardCount("player_one").hand).toBe(0);
-//     });
-//   });
-//
-//   Describe("WHAT ARE YOU WAITING FOR?", () => {
-//     It("3. should give chosen character Rush when David quests", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [davidXanatosCharismaticLeader, mickeyMouseDetective],
-//       });
-//
-//       Const david = testEngine.getCardModel(davidXanatosCharismaticLeader);
-//       Const mickey = testEngine.getCardModel(mickeyMouseDetective);
-//
-//       // Make David ready
-//       David.updateCardMeta({ exerted: false });
-//
-//       Expect(mickey.hasRush).toBe(false);
-//
-//       // Quest with David
-//       Await testEngine.questCard(davidXanatosCharismaticLeader);
-//
-//       // Resolve and choose Mickey
-//       Await testEngine.resolveTopOfStack({ targets: [mickey] });
-//
-//       // Mickey should have Rush this turn
-//       Expect(mickey.hasRush).toBe(true);
-//     });
-//
-//     It("4. should only last for this turn", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [davidXanatosCharismaticLeader, mickeyMouseDetective],
-//       });
-//
-//       Const david = testEngine.getCardModel(davidXanatosCharismaticLeader);
-//       Const mickey = testEngine.getCardModel(mickeyMouseDetective);
-//
-//       // Make David ready
-//       David.updateCardMeta({ exerted: false });
-//
-//       // Quest with David and give Mickey Rush
-//       Await testEngine.questCard(davidXanatosCharismaticLeader);
-//       Await testEngine.resolveTopOfStack({ targets: [mickey] });
-//
-//       Expect(mickey.hasRush).toBe(true);
-//
-//       // Pass turn
-//       TestEngine.passTurn();
-//
-//       // Rush should be gone
-//       Expect(mickey.hasRush).toBe(false);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { smash } from "../../001";
+import { davidXanatosCharismaticLeader } from "./116-david-xanatos-charismatic-leader";
+
+const allyToBanish = createMockCharacter({
+  id: "david-xanatos-charismatic-ally",
+  name: "Ally To Banish",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+});
+
+const rushTarget = createMockCharacter({
+  id: "david-xanatos-rush-target",
+  name: "Rush Target",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+});
+
+describe("David Xanatos - Charismatic Leader", () => {
+  it("LEARN FROM EVERYTHING - draws a card when one of your characters is banished during your turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [davidXanatosCharismaticLeader, allyToBanish],
+        hand: [smash],
+        inkwell: smash.cost,
+        deck: [rushTarget, rushTarget],
+      },
+      {
+        deck: 2,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
+    expect(
+      testEngine.asPlayerOne().playCard(smash, { targets: [allyToBanish] }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
+  });
+
+  it("does not draw when your character is banished during the opponent's turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [davidXanatosCharismaticLeader, allyToBanish],
+        deck: 2,
+      },
+      {
+        hand: [smash],
+        inkwell: smash.cost,
+        deck: 2,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerTwo().playCard(smash, { targets: [allyToBanish] }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+  });
+
+  it("WHAT ARE YOU WAITING FOR? - gives a chosen character Rush this turn when David quests", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: davidXanatosCharismaticLeader, isDrying: false }, rushTarget],
+      deck: 2,
+    });
+
+    expect(testEngine.asPlayerOne().quest(davidXanatosCharismaticLeader)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveNextBag({
+        targets: [rushTarget],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().hasKeyword(rushTarget, "Rush")).toBe(true);
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().hasKeyword(rushTarget, "Rush")).toBe(false);
+  });
+});

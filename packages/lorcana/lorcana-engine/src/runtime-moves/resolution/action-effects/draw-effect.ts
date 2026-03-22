@@ -4,6 +4,7 @@ import type { CardPlayedPayload } from "../../../types/index";
 import type { PlayCardExecutionContext } from "./types";
 import { resolveCurrentTurnPlayerId } from "../../../targeting/runtime";
 import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
+import { recordCardDrawnThisTurn } from "../../state/turn-metrics";
 
 type ResolvedDrawEffectInput = {
   drawAmount?: number;
@@ -52,7 +53,7 @@ function resolveDrawTargetPlayerIds(
       return [
         ...new Set(
           (selectedTargets ?? [])
-            .map((cardId) => ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID)
+            .map((cardId) => ctx.framework.zones.getCardOwner(cardId))
             .filter((playerId): playerId is PlayerId => typeof playerId === "string"),
         ),
       ];
@@ -103,6 +104,7 @@ export function resolveDrawEffect(
     });
 
     drawnCardIds.forEach((cardId) => {
+      recordCardDrawnThisTurn(ctx, playerId);
       emitTriggeredLorcanaEvent(
         ctx,
         "cardsDrawn",

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { peterPanHighFlyerI18n } from "./105-peter-pan-high-flyer.i18n";
 
 export const peterPanHighFlyer: CharacterCard = {
   id: "MnK",
@@ -7,28 +8,6 @@ export const peterPanHighFlyer: CharacterCard = {
   cardType: "character",
   name: "Peter Pan",
   version: "High Flyer",
-  i18n: {
-    en: {
-      name: "Peter Pan",
-      version: "High Flyer",
-      text: "Evasive",
-    },
-    de: {
-      name: "Peter Pan",
-      version: "Überflieger",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Peter Pan",
-      version: "De haute volée",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Peter Pan",
-      version: "Che Vola Alto",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Peter Pan",
   set: "010",
@@ -53,4 +32,5 @@ export const peterPanHighFlyer: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: peterPanHighFlyerI18n,
 };

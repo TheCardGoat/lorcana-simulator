@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mauiDemigodI18n } from "./185-maui-demigod.i18n";
 
 export const mauiDemigod: CharacterCard = {
   id: "nM3",
@@ -7,24 +8,6 @@ export const mauiDemigod: CharacterCard = {
   cardType: "character",
   name: "Maui",
   version: "Demigod",
-  i18n: {
-    en: {
-      name: "Maui",
-      version: "Demigod",
-    },
-    de: {
-      name: "Maui",
-      version: "Halbgott",
-    },
-    fr: {
-      name: "Maui",
-      version: "Demi-dieu",
-    },
-    it: {
-      name: "Maui",
-      version: "Demigod",
-    },
-  },
   inkType: ["steel"],
   franchise: "Moana",
   set: "001",
@@ -35,11 +18,11 @@ export const mauiDemigod: CharacterCard = {
   willpower: 8,
   lore: 3,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_d32d5f07d1274a6ebcf0e8e437155768",
     tcgPlayer: 502018,
   },
   classifications: ["Storyborn", "Hero", "Deity"],
+  i18n: mauiDemigodI18n,
 };

@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { merlinsCottageTheWizardsHomeI18n } from "./170-merlins-cottage-the-wizards-home.i18n";
 
 export const merlinsCottageTheWizardsHome: LocationCard = {
   id: "yVb",
@@ -7,48 +8,6 @@ export const merlinsCottageTheWizardsHome: LocationCard = {
   cardType: "location",
   name: "Merlin's Cottage",
   version: "The Wizard's Home",
-  i18n: {
-    en: {
-      name: "Merlin's Cottage",
-      version: "The Wizard's Home",
-      text: [
-        {
-          title: "KNOWLEDGE IS POWER",
-          description: "Each player plays with the top card of their deck face up.",
-        },
-      ],
-    },
-    de: {
-      name: "Merlins Hütte",
-      version: "Das Haus des Zauberers",
-      text: [
-        {
-          title: "WISSEN IST MACHT Alle Mitspielenden",
-          description: "(auch du) spielen mit der obersten Karte ihres Decks offen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Chaumière de Merlin",
-      version: "Foyer du sorcier",
-      text: [
-        {
-          title: "LE SAVOIR, C'EST LE POUVOIR",
-          description: "Chaque joueur joue avec la carte du dessus de sa pioche révélée.",
-        },
-      ],
-    },
-    it: {
-      name: "Casetta di Merlino",
-      version: "La Casa del Mago",
-      text: [
-        {
-          title: "LA CONOSCENZA È POTERE",
-          description: "Ogni giocatore gioca con la prima carta del suo mazzo a faccia in su.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -81,4 +40,5 @@ export const merlinsCottageTheWizardsHome: LocationCard = {
       },
     },
   ],
+  i18n: merlinsCottageTheWizardsHomeI18n,
 };

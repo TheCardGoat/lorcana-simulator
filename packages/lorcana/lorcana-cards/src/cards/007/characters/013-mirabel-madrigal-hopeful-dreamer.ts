@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mirabelMadrigalHopefulDreamerI18n } from "./013-mirabel-madrigal-hopeful-dreamer.i18n";
 
 export const mirabelMadrigalHopefulDreamer: CharacterCard = {
   id: "sOB",
@@ -7,33 +8,6 @@ export const mirabelMadrigalHopefulDreamer: CharacterCard = {
   cardType: "character",
   name: "Mirabel Madrigal",
   version: "Hopeful Dreamer",
-  i18n: {
-    en: {
-      name: "Mirabel Madrigal",
-      version: "Hopeful Dreamer",
-      text: "Evasive Singer 5",
-    },
-    de: {
-      name: "Mirabel Madrigal",
-      version: "Hoffnungsvolle Träumerin",
-      text: [
-        {
-          title: "Wendig Singen 5",
-          description: "(Die Kosten dieses Charakters gelten als 5 für das Singen von Liedern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Mirabel Madrigal",
-      version: "Rêveuse pleine d'espoir",
-      text: "Insaisissable Mélomane 5 (Ce personnage est considéré comme ayant un coût de 5 pour chanter des chansons.)",
-    },
-    it: {
-      name: "Mirabel Madrigal",
-      version: "Sognatrice Speranzosa",
-      text: "Sfuggente Melodioso 5",
-    },
-  },
   inkType: ["amber", "amethyst"],
   franchise: "Encanto",
   set: "007",
@@ -51,4 +25,5 @@ export const mirabelMadrigalHopefulDreamer: CharacterCard = {
   text: "Evasive Singer 5",
   classifications: ["Storyborn", "Hero", "Madrigal"],
   abilities: [],
+  i18n: mirabelMadrigalHopefulDreamerI18n,
 };

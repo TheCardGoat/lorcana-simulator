@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goofyFlyingGoofI18n } from "./123-goofy-flying-goof.i18n";
 
 export const goofyFlyingGoof: CharacterCard = {
   id: "GQo",
@@ -7,41 +8,6 @@ export const goofyFlyingGoof: CharacterCard = {
   cardType: "character",
   name: "Goofy",
   version: "Flying Goof",
-  i18n: {
-    en: {
-      name: "Goofy",
-      version: "Flying Goof",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "Evasive",
-        },
-      ],
-    },
-    de: {
-      name: "Goofy",
-      version: "Fliegender Goof",
-      text: "Rasant Wendig",
-    },
-    fr: {
-      name: "Dingo",
-      version: "Gaffeur volant",
-      text: "Charge Insaisissable",
-    },
-    it: {
-      name: "Pippo",
-      version: "Pasticcione Volante",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) Sfuggente",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "006",
   cardNumber: 123,
@@ -78,4 +44,5 @@ export const goofyFlyingGoof: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: goofyFlyingGoofI18n,
 };

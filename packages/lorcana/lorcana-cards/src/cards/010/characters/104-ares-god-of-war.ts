@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { aresGodOfWarI18n } from "./104-ares-god-of-war.i18n";
 
 export const aresGodOfWar: CharacterCard = {
   id: "S33",
@@ -7,28 +8,6 @@ export const aresGodOfWar: CharacterCard = {
   cardType: "character",
   name: "Ares",
   version: "God of War",
-  i18n: {
-    en: {
-      name: "Ares",
-      version: "God of War",
-      text: "Reckless CALL TO BATTLE Once during your turn, whenever you put a card under one of your characters or locations, you may ready chosen character. If you do, that character can't quest for the rest of this turn.",
-    },
-    de: {
-      name: "Ares",
-      version: "Gott des Krieges",
-      text: "Impulsiv AUFRUF ZUM KAMPF Einmal während deines Zuges, wenn du eine Karte unter einen deiner Charaktere oder Orte legst, darfst du einen Charakter deiner Wahl bereit machen. Wenn du dies tust, kann jener in diesem Zug nicht mehr erkunden.",
-    },
-    fr: {
-      name: "Arès",
-      version: "Dieu de la guerre",
-      text: "Combattant APPEL AUX ARMES Une fois durant votre tour, lorsque vous placez une carte sous l'un de vos personnages ou de vos lieux, vous pouvez choisir un personnage et le redresser. Si vous le faites, le personnage ainsi choisi ne peut pas être envoyé à l'aventure pour le reste de ce tour.",
-    },
-    it: {
-      name: "Ares",
-      version: "Dio della Guerra",
-      text: "Attaccabrighe ALLA BATTAGLIA Una volta durante il tuo turno, ogni volta che metti una carta sotto a uno dei tuoi personaggi o luoghi, puoi preparare un personaggio a tua scelta. Se lo fai, quel personaggio non può andare all'avventura per il resto di questo turno.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Hercules",
   set: "010",
@@ -46,6 +25,12 @@ export const aresGodOfWar: CharacterCard = {
   text: "Reckless CALL TO BATTLE Once during your turn, whenever you put a card under one of your characters or locations, you may ready chosen character. If you do, that character can't quest for the rest of this turn.",
   classifications: ["Storyborn", "Deity"],
   abilities: [
+    {
+      id: "3s2-1",
+      keyword: "Reckless",
+      text: "Reckless",
+      type: "keyword",
+    },
     {
       effect: {
         steps: [
@@ -66,21 +51,29 @@ export const aresGodOfWar: CharacterCard = {
           {
             duration: "this-turn",
             restriction: "cant-quest",
-            target: "SELF",
+            target: {
+              ref: "previous-target",
+            },
             type: "restriction",
           },
         ],
         type: "sequence",
       },
-      id: "3s2-1",
-      name: "Reckless CALL TO BATTLE Once",
-      text: "Reckless CALL TO BATTLE Once during your turn, whenever you put a card under one of your characters or locations, you may ready chosen character. If you do, that character can't quest for the rest of this turn.",
+      id: "3s2-2",
+      name: "CALL TO BATTLE",
+      text: "CALL TO BATTLE Once during your turn, whenever you put a card under one of your characters or locations, you may ready chosen character. If you do, that character can't quest for the rest of this turn.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "put-card-under",
+        on: "YOUR_CHARACTERS_OR_LOCATIONS",
         timing: "whenever",
+        restrictions: [
+          {
+            type: "once-per-turn",
+          },
+        ],
       },
       type: "triggered",
     },
   ],
+  i18n: aresGodOfWarI18n,
 };

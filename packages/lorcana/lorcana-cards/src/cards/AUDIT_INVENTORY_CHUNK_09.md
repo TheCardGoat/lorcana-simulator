@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 9 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_08.md) | [Next →](AUDIT_INVENTORY_CHUNK_10.md)
-
 
 - [ ] **006/characters/057-mamma-odie-lone-sage.test.ts**
   - Card: `006/characters/057-mamma-odie-lone-sage.ts`

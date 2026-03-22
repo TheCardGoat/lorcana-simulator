@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jafarTyrannicalHypnotistI18n } from "./172-jafar-tyrannical-hypnotist.i18n";
 
 export const jafarTyrannicalHypnotist: CharacterCard = {
   id: "4QY",
@@ -7,36 +8,6 @@ export const jafarTyrannicalHypnotist: CharacterCard = {
   cardType: "character",
   name: "Jafar",
   version: "Tyrannical Hypnotist",
-  i18n: {
-    en: {
-      name: "Jafar",
-      version: "Tyrannical Hypnotist",
-      text: [
-        {
-          title: "Challenger +7",
-        },
-        {
-          title: "INTIMIDATING GAZE",
-          description: "Opposing characters with cost 4 or less can't challenge.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschafar",
-      version: "Tyrannischer Hypnosekünstler",
-      text: "Herausfordern +7 EINSCHÜCHTERNDER BLICK Gegnerische Charaktere, die 4 oder weniger kosten, können nicht herausfordern.",
-    },
-    fr: {
-      name: "Jafar",
-      version: "Hypnotiseur tyrannique",
-      text: "Offensif +7 REGARD INTIMIDANT Les personnages adverses coûtant 4 ou moins ne peuvent pas défier.",
-    },
-    it: {
-      name: "Jafar",
-      version: "Ipnotizzatore Tirannico",
-      text: "Sfidante +7 SGUARDO INTIMIDATORIO I personaggi avversari con costo 4 o inferiore non possono sfidare.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Aladdin",
   set: "005",
@@ -72,12 +43,27 @@ export const jafarTyrannicalHypnotist: CharacterCard = {
     {
       effect: {
         restriction: "cant-challenge",
-        target: "SELF",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "opponent",
+          cardTypes: ["character"],
+          zones: ["play"],
+          filter: [
+            {
+              type: "cost-comparison",
+              comparison: "less-or-equal",
+              value: 4,
+            },
+          ],
+        },
         type: "restriction",
       },
       id: "xg5-2",
+      name: "INTIMIDATING GAZE",
       text: "INTIMIDATING GAZE Opposing characters with cost 4 or less can't challenge.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: jafarTyrannicalHypnotistI18n,
 };

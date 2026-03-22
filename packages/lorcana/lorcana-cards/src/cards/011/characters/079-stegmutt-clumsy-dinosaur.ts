@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stegmuttClumsyDinosaurI18n } from "./079-stegmutt-clumsy-dinosaur.i18n";
 
 export const stegmuttClumsyDinosaur: CharacterCard = {
   id: "28g",
@@ -7,72 +8,6 @@ export const stegmuttClumsyDinosaur: CharacterCard = {
   cardType: "character",
   name: "Stegmutt",
   version: "Clumsy Dinosaur",
-  i18n: {
-    en: {
-      name: "Stegmutt",
-      version: "Clumsy Dinosaur",
-      text: [
-        {
-          title: "WAKE OF DESTRUCTION",
-          description:
-            "For each item card in your discard, you pay 1 {I} less to play this character.",
-        },
-        {
-          title: "COLLATERAL DAMAGE",
-          description:
-            "When you play this character, you may put 3 item cards from your discard on the bottom of your deck in any order. If you do, deal 3 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Stegmann",
-      version: "Tollpatschiger Dinosaurier",
-      text: [
-        {
-          title: "SPUR DER ZERSTÖRUNG",
-          description:
-            "Für jede Gegenstandskarte in deinem Ablagestapel zahlst du 1 weniger, um diesen Charakter auszuspielen.",
-        },
-        {
-          title: "KOLLATERALSCHADEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du 3 Gegenstandskarten aus deinem Ablagestapel in beliebiger Reihenfolge unter dein Deck legen. Wenn du dies tust, füge einem Charakter deiner Wahl 3 Schaden zu.",
-        },
-      ],
-    },
-    fr: {
-      name: "Sigmund",
-      version: "Dinosaure maladroit",
-      text: [
-        {
-          title: "SILLAGE DE DESTRUCTION",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins pour chaque carte Objet dans votre défausse.",
-        },
-        {
-          title: "DOMMAGE COLLATÉRAL",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez placer 3 cartes Objet de votre défausse sous votre pioche dans l'ordre de votre choix. Si vous le faites, choisissez un personnage et infligez-lui 3 dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "Stego",
-      version: "Goffo Dinosauro",
-      text: [
-        {
-          title: "SCIA DI DISTRUZIONE",
-          description:
-            "Per ogni carta oggetto nei tuoi scarti, paga 1 in meno per giocare questo personaggio.",
-        },
-        {
-          title: "DANNO COLLATERALE",
-          description:
-            "Quando giochi questo personaggio, puoi mettere 3 carte oggetto dai tuoi scarti in fondo al tuo mazzo in qualsiasi ordine. Se lo fai, infliggi 3 danni a un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -102,53 +37,68 @@ export const stegmuttClumsyDinosaur: CharacterCard = {
   abilities: [
     {
       id: "10u-1",
+      name: "WAKE OF DESTRUCTION",
+      type: "static",
+      sourceZones: ["hand"],
       effect: {
-        from: "hand",
-        type: "play-card",
+        type: "cost-reduction",
+        amount: {
+          type: "filtered-count",
+          cardType: "item",
+          owner: "you",
+          zones: ["discard"],
+          filters: [],
+        },
       },
-      type: "action",
       text: "WAKE OF DESTRUCTION For each item card in your discard, you pay 1 {I} less to play this character.",
     },
     {
       id: "10u-2",
-      effect: {
-        steps: [
-          {
-            chooser: "CONTROLLER",
-            effect: {
-              target: {
-                cardTypes: ["item"],
-                count: 1,
-                owner: "any",
-                selector: "chosen",
-                zones: ["play"],
-              },
-              type: "put-on-bottom",
-            },
-            type: "optional",
-          },
-          {
-            amount: 3,
-            target: {
-              cardTypes: ["character"],
-              count: 1,
-              owner: "any",
-              selector: "chosen",
-              zones: ["play"],
-            },
-            type: "deal-damage",
-          },
-        ],
-        type: "sequence",
-      },
       name: "COLLATERAL DAMAGE",
+      type: "triggered",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
       },
-      type: "triggered",
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "optional",
+            chooser: "CONTROLLER",
+            effect: {
+              type: "put-on-bottom",
+              target: {
+                cardTypes: ["item"],
+                count: 3,
+                owner: "you",
+                selector: "chosen",
+                zones: ["discard"],
+              },
+            },
+          },
+          {
+            type: "conditional",
+            condition: {
+              type: "if-you-do",
+            },
+            then: {
+              type: "deal-damage",
+              amount: 3,
+              target: {
+                cardTypes: ["character"],
+                count: 1,
+                owner: "any",
+                selector: "chosen",
+                zones: ["play"],
+              },
+            },
+          },
+        ],
+      },
       text: "COLLATERAL DAMAGE When you play this character, you may put 3 item cards from your discard on the bottom of your deck in any order. If you do, deal 3 damage to chosen character.",
     },
   ],
+  i18n: stegmuttClumsyDinosaurI18n,
 };

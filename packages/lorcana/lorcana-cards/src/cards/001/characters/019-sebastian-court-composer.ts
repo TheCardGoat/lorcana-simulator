@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sebastianCourtComposerI18n } from "./019-sebastian-court-composer.i18n";
 
 export const sebastianCourtComposer: CharacterCard = {
   id: "Xb7",
@@ -7,33 +8,6 @@ export const sebastianCourtComposer: CharacterCard = {
   cardType: "character",
   name: "Sebastian",
   version: "Court Composer",
-  i18n: {
-    en: {
-      name: "Sebastian",
-      version: "Court Composer",
-      text: "Singer 4",
-    },
-    de: {
-      name: "Sebastian",
-      version: "Hofkomponist",
-      text: [
-        {
-          title: "Singen 4",
-          description: "(Die Kosten dieses Charakters gelten als 4 für das Singen von Liedern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "SÉBASTIEN",
-      version: "Compositeur à la Cour",
-      text: "Mélomane 4 (Ce personnage est considéré comme ayant un coût de 4 pour chanter des chansons.)",
-    },
-    it: {
-      name: "Sebastian",
-      version: "Compositore di Corte",
-      text: "Melodioso 4",
-    },
-  },
   inkType: ["amber"],
   franchise: "Little Mermaid",
   set: "001",
@@ -44,7 +18,6 @@ export const sebastianCourtComposer: CharacterCard = {
   willpower: 2,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_acaae5dbf3c341b8ad35851ac755cfd6",
     tcgPlayer: 504540,
@@ -60,4 +33,5 @@ export const sebastianCourtComposer: CharacterCard = {
       text: "Singer 4",
     },
   ],
+  i18n: sebastianCourtComposerI18n,
 };

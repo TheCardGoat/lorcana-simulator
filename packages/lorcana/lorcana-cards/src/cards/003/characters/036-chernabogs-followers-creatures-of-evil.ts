@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chernabogsFollowersCreaturesOfEvilI18n } from "./036-chernabogs-followers-creatures-of-evil.i18n";
 
 export const chernabogsFollowersCreaturesOfEvil: CharacterCard = {
   id: "gNW",
@@ -7,51 +8,6 @@ export const chernabogsFollowersCreaturesOfEvil: CharacterCard = {
   cardType: "character",
   name: "Chernabog's Followers",
   version: "Creatures of Evil",
-  i18n: {
-    en: {
-      name: "Chernabog's Followers",
-      version: "Creatures of Evil",
-      text: [
-        {
-          title: "RESTLESS SOULS",
-          description: "Whenever this character quests, you may banish them to draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Chernabogs Anhänger",
-      version: "Geschöpfe des Bösen",
-      text: [
-        {
-          title: "RASTLOSE SEELEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du ihn verbannen, um 1 Karte zu ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Adeptes de Chernabog",
-      version: "Créatures du mal",
-      text: [
-        {
-          title: "ÂMES SANS REPOS",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez le bannir pour piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Seguaci di Chernabog",
-      version: "Creature del Male",
-      text: [
-        {
-          title: "ANIME INQUIETE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi esiliarlo per pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Fantasia",
   set: "003",
@@ -73,20 +29,23 @@ export const chernabogsFollowersCreaturesOfEvil: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["card"],
-          },
-          type: "banish",
+          type: "sequence",
+          steps: [
+            {
+              target: "SELF",
+              type: "banish",
+            },
+            {
+              amount: 1,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+          ],
         },
         type: "optional",
       },
@@ -101,4 +60,5 @@ export const chernabogsFollowersCreaturesOfEvil: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: chernabogsFollowersCreaturesOfEvilI18n,
 };

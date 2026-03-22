@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { basilPracticedDetectiveI18n } from "./153-basil-practiced-detective.i18n";
 
 export const basilPracticedDetective: CharacterCard = {
   id: "F8I",
@@ -7,28 +8,6 @@ export const basilPracticedDetective: CharacterCard = {
   cardType: "character",
   name: "Basil",
   version: "Practiced Detective",
-  i18n: {
-    en: {
-      name: "Basil",
-      version: "Practiced Detective",
-      text: "Support",
-    },
-    de: {
-      name: "Basil",
-      version: "Geübter Detektiv",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Basil",
-      version: "Détective chevronné",
-      text: "Soutien",
-    },
-    it: {
-      name: "Basil",
-      version: "Detective Esperto",
-      text: "Aiutante",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Great Mouse Detective",
   set: "005",
@@ -53,4 +32,5 @@ export const basilPracticedDetective: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: basilPracticedDetectiveI18n,
 };

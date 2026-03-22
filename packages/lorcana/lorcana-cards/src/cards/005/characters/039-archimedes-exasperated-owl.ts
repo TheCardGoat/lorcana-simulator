@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { archimedesExasperatedOwlI18n } from "./039-archimedes-exasperated-owl.i18n";
 
 export const archimedesExasperatedOwl: CharacterCard = {
   id: "KbE",
@@ -7,28 +8,6 @@ export const archimedesExasperatedOwl: CharacterCard = {
   cardType: "character",
   name: "Archimedes",
   version: "Exasperated Owl",
-  i18n: {
-    en: {
-      name: "Archimedes",
-      version: "Exasperated Owl",
-      text: "Evasive",
-    },
-    de: {
-      name: "Archimedes",
-      version: "Verärgerter Kauz",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Archimède",
-      version: "Hibou exaspéré",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Anacleto",
-      version: "Gufo Esasperato",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -53,4 +32,5 @@ export const archimedesExasperatedOwl: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: archimedesExasperatedOwlI18n,
 };

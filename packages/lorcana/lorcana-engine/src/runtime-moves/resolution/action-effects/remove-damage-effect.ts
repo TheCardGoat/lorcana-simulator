@@ -1,10 +1,12 @@
-import type { CardInstanceId } from "#core";
+import type { CardInstanceId, PlayerId } from "#core";
 import type { CardPlayedPayload } from "../../../types/index";
 import type { RemoveDamageEffect } from "@tcg/lorcana-types";
 import type { PlayCardExecutionContext } from "./types";
 import type { DynamicAmountEventSnapshot } from "../../../types/domain-events";
 
 import { queueTriggeredEvent } from "../../../triggered-abilities";
+import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
+import { markLastEffectPerformed } from "./event-snapshot-utils";
 
 type ResolvedRemoveDamageEffectInput = {
   targets: CardInstanceId[];
@@ -49,9 +51,12 @@ export function resolveRemoveDamageEffect(
     const nextDamage = Math.max(0, currentDamage - resolvedHealAmount);
     healedAmount += resolvedHealAmount;
 
+    const shouldReady = effect.thenReady && resolvedHealAmount > 0;
+
     ctx.cards.patchMeta(targetId, {
       ...meta,
       damage: nextDamage,
+      ...(shouldReady ? { state: "ready" as const } : {}),
     });
 
     if (resolvedHealAmount > 0) {
@@ -64,10 +69,23 @@ export function resolveRemoveDamageEffect(
           healedAmount: resolvedHealAmount,
         },
       });
+
+      if (shouldReady) {
+        const playerId = ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined;
+        if (playerId) {
+          emitTriggeredLorcanaEvent(
+            ctx,
+            "cardReadied",
+            { cardId: targetId },
+            { event: "ready", playerId, subjectCardId: targetId },
+          );
+        }
+      }
     }
   }
 
   if (resolvedInput.eventSnapshot) {
     resolvedInput.eventSnapshot.healedAmount = healedAmount;
+    markLastEffectPerformed(resolvedInput.eventSnapshot, healedAmount > 0);
   }
 }

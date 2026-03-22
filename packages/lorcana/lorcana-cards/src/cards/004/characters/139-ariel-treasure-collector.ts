@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arielTreasureCollectorI18n } from "./139-ariel-treasure-collector.i18n";
 
 export const arielTreasureCollector: CharacterCard = {
   id: "Sxx",
@@ -7,37 +8,6 @@ export const arielTreasureCollector: CharacterCard = {
   cardType: "character",
   name: "Ariel",
   version: "Treasure Collector",
-  i18n: {
-    en: {
-      name: "Ariel",
-      version: "Treasure Collector",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "THE GIRL WHO HAS EVERYTHING",
-          description:
-            "While you have more items in play than each opponent, this character gets +2 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Arielle",
-      version: "Schatzsammlerin",
-      text: "Behütet DIE, DIE SCHON ALLES HAT Wenn du mehr Gegenstände als jede gegnerische Person im Spiel hast, erhält dieser Charakter +2.",
-    },
-    fr: {
-      name: "Ariel",
-      version: "Collectionneuse de trésors",
-      text: "Hors d'atteinte TROP GÂTÉE PAR LA VIE Tant que vous avez plus d'objets en jeu que chaque adversaire, ce personnage gagne +2.",
-    },
-    it: {
-      name: "Ariel",
-      version: "Collezionista di Tesori",
-      text: "Protetto UNA CHE HA TUTTO ORMAI Mentre hai in gioco più oggetti di ogni avversario, questo personaggio riceve +2.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Little Mermaid",
   set: "004",
@@ -71,6 +41,18 @@ export const arielTreasureCollector: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        type: "comparison",
+        left: {
+          type: "item-count",
+          controller: "you",
+        },
+        comparison: "greater-than",
+        right: {
+          type: "item-count",
+          controller: "opponent",
+        },
+      },
       effect: {
         modifier: 2,
         stat: "lore",
@@ -78,8 +60,10 @@ export const arielTreasureCollector: CharacterCard = {
         type: "modify-stat",
       },
       id: "hyy-2",
+      name: "THE GIRL WHO HAS EVERYTHING",
       text: "THE GIRL WHO HAS EVERYTHING While you have more items in play than each opponent, this character gets +2 {L}.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: arielTreasureCollectorI18n,
 };

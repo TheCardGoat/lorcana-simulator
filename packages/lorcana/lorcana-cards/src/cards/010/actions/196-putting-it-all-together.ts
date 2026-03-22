@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { puttingItAllTogetherI18n } from "./196-putting-it-all-together.i18n";
 
 export const puttingItAllTogether: ActionCard = {
   id: "GAi",
@@ -6,24 +7,6 @@ export const puttingItAllTogether: ActionCard = {
   reprints: ["set10-196"],
   cardType: "action",
   name: "Putting It All Together",
-  i18n: {
-    en: {
-      name: "Putting It All Together",
-      text: "Chosen opposing character can't challenge during their next turn. Draw a card.",
-    },
-    de: {
-      name: "Alles zusammenfügen",
-      text: "Wähle einen gegnerischen Charakter. Er kann in seinem nächsten Zug nicht herausfordern. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Rassembler les indices",
-      text: "Choisissez un personnage adverse qui ne peut pas défier lors de son prochain tour. Piochez une carte.",
-    },
-    it: {
-      name: "Unire gli Indizi",
-      text: "Un personaggio avversario a tua scelta non può sfidare durante il suo prossimo turno. Pesca una carta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Zootropolis",
   set: "010",
@@ -57,4 +40,5 @@ export const puttingItAllTogether: ActionCard = {
       type: "action",
     },
   ],
+  i18n: puttingItAllTogetherI18n,
 };

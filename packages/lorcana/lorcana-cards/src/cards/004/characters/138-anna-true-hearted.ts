@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { annaTrueheartedI18n } from "./138-anna-true-hearted.i18n";
 
 export const annaTruehearted: CharacterCard = {
   id: "0EO",
@@ -7,52 +8,6 @@ export const annaTruehearted: CharacterCard = {
   cardType: "character",
   name: "Anna",
   version: "True-Hearted",
-  i18n: {
-    en: {
-      name: "Anna",
-      version: "True-Hearted",
-      text: [
-        {
-          title: "LET ME HELP YOU",
-          description:
-            "Whenever this character quests, your other Hero characters get +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Anna",
-      version: "Wahres Herz",
-      text: [
-        {
-          title: "LASS MICH DIR HELFEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, erhalten deine anderen Heldinnen und Helden in diesem Zug +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Anna",
-      version: "Cœur sincère",
-      text: [
-        {
-          title: "LAISSE-MOI T'AIDER",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vos autres personnages Héros gagnent +1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Anna",
-      version: "Cuore Puro",
-      text: [
-        {
-          title: "LASCIA CHE TI AIUTI",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, i tuoi altri personaggi Eroe ricevono +1 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Frozen",
   set: "004",
@@ -81,7 +36,20 @@ export const annaTruehearted: CharacterCard = {
         duration: "this-turn",
         modifier: 1,
         stat: "lore",
-        target: "CHOSEN_CHARACTER",
+        target: {
+          count: "all",
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Hero",
+            },
+          ],
+          excludeSelf: true,
+        },
         type: "modify-stat",
       },
       id: "1qm-1",
@@ -95,4 +63,5 @@ export const annaTruehearted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: annaTrueheartedI18n,
 };

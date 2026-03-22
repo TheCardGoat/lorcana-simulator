@@ -4,6 +4,7 @@ import type { PlayerId } from "#core";
 import type { CardPlayedPayload } from "../../../types/index";
 import type { PlayCardExecutionContext } from "./types";
 import { resolveCurrentTurnPlayerId } from "../../../targeting/runtime";
+import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
 
 type ResolvedGainLoreEffectInput = {
   gainAmount?: number;
@@ -52,7 +53,7 @@ function resolveGainLoreTargetPlayerIds(
       return [
         ...new Set(
           (selectedTargets ?? [])
-            .map((cardId) => ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID)
+            .map((cardId) => ctx.framework.zones.getCardOwner(cardId))
             .filter((playerId): playerId is PlayerId => typeof playerId === "string"),
         ),
       ];
@@ -89,5 +90,25 @@ export function resolveGainLoreEffect(
   for (const playerId of targetPlayerIds) {
     const currentLore = Number(ctx.G.lore[playerId] ?? 0);
     ctx.G.lore[playerId] = currentLore + gainAmount;
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "loreChanged",
+      {
+        playerId,
+        operation: "add",
+        previousLore: currentLore,
+        source: "effect",
+        amount: gainAmount,
+        newLore: currentLore + gainAmount,
+      },
+      {
+        event: "gain-lore",
+        playerId,
+        triggerSourceCardId: cardPlayed.cardId,
+        eventSnapshot: {
+          triggerAmount: gainAmount,
+        },
+      },
+    );
   }
 }

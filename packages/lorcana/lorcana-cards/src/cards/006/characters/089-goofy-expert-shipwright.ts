@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goofyExpertShipwrightI18n } from "./089-goofy-expert-shipwright.i18n";
 
 export const goofyExpertShipwright: CharacterCard = {
   id: "T9c",
@@ -7,55 +8,6 @@ export const goofyExpertShipwright: CharacterCard = {
   cardType: "character",
   name: "Goofy",
   version: "Expert Shipwright",
-  i18n: {
-    en: {
-      name: "Goofy",
-      version: "Expert Shipwright",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "CLEVER DESIGN",
-          description:
-            "Whenever this character quests, chosen character gains Ward until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Goofy",
-      version: "Expert Shipwright",
-      text: [
-        {
-          title: "Ward",
-          description:
-            "(Opponents can't choose this character except to challenge.) CLEVER DESIGN Whenever this character quests, chosen character gains Ward until the start of your next turn.",
-        },
-      ],
-    },
-    fr: {
-      name: "Goofy",
-      version: "Expert Shipwright",
-      text: [
-        {
-          title: "Ward",
-          description:
-            "(Opponents can't choose this character except to challenge.) CLEVER DESIGN Whenever this character quests, chosen character gains Ward until the start of your next turn.",
-        },
-      ],
-    },
-    it: {
-      name: "Goofy",
-      version: "Expert Shipwright",
-      text: [
-        {
-          title: "Ward",
-          description:
-            "(Opponents can't choose this character except to challenge.) CLEVER DESIGN Whenever this character quests, chosen character gains Ward until the start of your next turn.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "006",
   cardNumber: 89,
@@ -89,6 +41,7 @@ export const goofyExpertShipwright: CharacterCard = {
     },
     {
       effect: {
+        duration: "until-start-of-next-turn",
         keyword: "Ward",
         target: {
           cardTypes: ["character"],
@@ -110,4 +63,5 @@ export const goofyExpertShipwright: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: goofyExpertShipwrightI18n,
 };

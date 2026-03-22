@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { eliLaBouffBigDaddyI18n } from "./179-eli-la-bouff-big-daddy.i18n";
 
 export const eliLaBouffBigDaddy: CharacterCard = {
   id: "Mx7",
@@ -7,24 +8,6 @@ export const eliLaBouffBigDaddy: CharacterCard = {
   cardType: "character",
   name: "Eli La Bouff",
   version: "Big Daddy",
-  i18n: {
-    en: {
-      name: "Eli La Bouff",
-      version: "Big Daddy",
-    },
-    de: {
-      name: "Eli La Bouff",
-      version: "Big Daddy",
-    },
-    fr: {
-      name: "Eli Lebœuf",
-      version: "Big Daddy",
-    },
-    it: {
-      name: "Eli La Bouff",
-      version: "Big Daddy",
-    },
-  },
   inkType: ["steel"],
   franchise: "Princess and the Frog",
   set: "002",
@@ -41,4 +24,5 @@ export const eliLaBouffBigDaddy: CharacterCard = {
     tcgPlayer: 525267,
   },
   classifications: ["Storyborn", "Mentor"],
+  i18n: eliLaBouffBigDaddyI18n,
 };

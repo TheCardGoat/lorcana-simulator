@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { annaLittleSisterI18n } from "./052-anna-little-sister.i18n";
 
 export const annaLittleSister: CharacterCard = {
   id: "Xmi",
@@ -7,52 +8,6 @@ export const annaLittleSister: CharacterCard = {
   cardType: "character",
   name: "Anna",
   version: "Little Sister",
-  i18n: {
-    en: {
-      name: "Anna",
-      version: "Little Sister",
-      text: [
-        {
-          title: "UNEXPECTED DISCOVERY",
-          description:
-            "When you play this character, you may put a card from chosen player's discard on the bottom of their deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Anna",
-      version: "Kleine Schwester",
-      text: [
-        {
-          title: "UNERWARTETE ENTDECKUNG",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du 1 Karte aus einem Ablagestapel deiner Wahl unter das zugehörige Deck legen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Anna",
-      version: "Petite sœur",
-      text: [
-        {
-          title: "DÉCOUVERTE INATTENDUE",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un joueur et placer une carte de sa défausse sous sa pioche.",
-        },
-      ],
-    },
-    it: {
-      name: "Anna",
-      version: "Sorellina",
-      text: [
-        {
-          title: "SCOPERTA INATTESA",
-          description:
-            "Quando giochi questo personaggio, puoi mettere una carta dagli scarti di un giocatore a tua scelta in fondo al suo mazzo.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "011",
@@ -81,14 +36,19 @@ export const annaLittleSister: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            cardTypes: ["card"],
-            count: 1,
-            owner: "any",
-            selector: "chosen",
-            zones: ["play"],
-          },
-          type: "put-on-bottom",
+          type: "sequence",
+          steps: [
+            {
+              target: {
+                cardTypes: ["character"],
+                count: 1,
+                owner: "any",
+                selector: "chosen",
+                zones: ["discard"],
+              },
+              type: "put-on-bottom",
+            },
+          ],
         },
         type: "optional",
       },
@@ -102,4 +62,5 @@ export const annaLittleSister: CharacterCard = {
       text: "UNEXPECTED DISCOVERY When you play this character, you may put a card from chosen player's discard on the bottom of their deck.",
     },
   ],
+  i18n: annaLittleSisterI18n,
 };

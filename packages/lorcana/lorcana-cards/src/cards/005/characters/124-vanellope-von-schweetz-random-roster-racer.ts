@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { vanellopeVonSchweetzRandomRosterRacerI18n } from "./124-vanellope-von-schweetz-random-roster-racer.i18n";
 
 export const vanellopeVonSchweetzRandomRosterRacer: CharacterCard = {
   id: "yeD",
@@ -7,43 +8,6 @@ export const vanellopeVonSchweetzRandomRosterRacer: CharacterCard = {
   cardType: "character",
   name: "Vanellope von Schweetz",
   version: "Random Roster Racer",
-  i18n: {
-    en: {
-      name: "Vanellope von Schweetz",
-      version: "Random Roster Racer",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "PIXLEXIA",
-          description:
-            "When you play this character, she gains Evasive until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Vanellope von Schweetz",
-      version: "Im Rennen um die Qualifikation",
-      text: "Rasant PIXELITIS Wenn du diesen Charakter ausspielst, erhält er bis zu Beginn deines nächsten Zuges Wendig.",
-    },
-    fr: {
-      name: "Vanellope von Schweetz",
-      version: "Coureuse aléatoire",
-      text: "Charge PIXLEXIE Lorsque vous jouez ce personnage, il gagne Insaisissable jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Vanellope von Schweetz",
-      version: "Pilota del Gran Premio",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) PIXELLESSICA Quando giochi questo personaggio, ottiene Sfuggente fino all'inizio del tuo prossimo turno. (Solo altri personaggi con Sfuggente possono sfidarlo.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -78,8 +42,9 @@ export const vanellopeVonSchweetzRandomRosterRacer: CharacterCard = {
     },
     {
       effect: {
+        duration: "until-start-of-next-turn",
         keyword: "Evasive",
-        target: "CHOSEN_CHARACTER",
+        target: "SELF",
         type: "gain-keyword",
       },
       id: "a4q-2",
@@ -93,4 +58,5 @@ export const vanellopeVonSchweetzRandomRosterRacer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: vanellopeVonSchweetzRandomRosterRacerI18n,
 };

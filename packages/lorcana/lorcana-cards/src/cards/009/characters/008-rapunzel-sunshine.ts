@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rapunzelSunshineI18n } from "./008-rapunzel-sunshine.i18n";
 
 export const rapunzelSunshine: CharacterCard = {
   id: "Cwj",
@@ -7,48 +8,6 @@ export const rapunzelSunshine: CharacterCard = {
   cardType: "character",
   name: "Rapunzel",
   version: "Sunshine",
-  i18n: {
-    en: {
-      name: "Rapunzel",
-      version: "Sunshine",
-      text: [
-        {
-          title: "MAGIC HAIR",
-          description: "{E} — Remove up to 2 damage from chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Rapunzel",
-      version: "Sonnenschein",
-      text: [
-        {
-          title: "ZAUBERHAARE",
-          description: "— Entferne bis zu 2 Schaden von einem Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Raiponce",
-      version: "Solaire",
-      text: [
-        {
-          title: "CHEVEUX MAGIQUES",
-          description: "— Choisissez un personnage et retirez-lui jusqu'à 2 jetons Dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Rapunzel",
-      version: "Raggio di Sole",
-      text: [
-        {
-          title: "CAPELLI MAGICI",
-          description: "— Rimuovi fino a 2 danni da un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Tangled",
   set: "009",
@@ -92,4 +51,5 @@ export const rapunzelSunshine: CharacterCard = {
       type: "activated",
     },
   ],
+  i18n: rapunzelSunshineI18n,
 };

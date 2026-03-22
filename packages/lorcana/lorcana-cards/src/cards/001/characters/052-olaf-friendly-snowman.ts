@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { olafFriendlySnowmanI18n } from "./052-olaf-friendly-snowman.i18n";
 
 export const olafFriendlySnowman: CharacterCard = {
   id: "ch3",
@@ -7,24 +8,6 @@ export const olafFriendlySnowman: CharacterCard = {
   cardType: "character",
   name: "Olaf",
   version: "Friendly Snowman",
-  i18n: {
-    en: {
-      name: "Olaf",
-      version: "Friendly Snowman",
-    },
-    de: {
-      name: "Olaf",
-      version: "Freundlicher Schneemann",
-    },
-    fr: {
-      name: "OLAF",
-      version: "Gentil bonhomme de neige",
-    },
-    it: {
-      name: "Olaf",
-      version: "Amichevole Pupazzo di Neve",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "001",
@@ -41,4 +24,5 @@ export const olafFriendlySnowman: CharacterCard = {
     tcgPlayer: 649999,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: olafFriendlySnowmanI18n,
 };

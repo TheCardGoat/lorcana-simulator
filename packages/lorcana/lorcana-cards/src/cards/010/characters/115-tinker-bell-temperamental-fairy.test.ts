@@ -1,130 +1,149 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   BronxFerociousBeast,
-//   DiabloWatchfulRaven,
-//   HermesHarriedMessenger,
-//   TinkerBellTemperamentalFairy,
-// } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Tinker Bell - Temperamental Fairy", () => {
-//   Describe("Shift 3", () => {
-//     It("should have Shift ability", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [tinkerBellTemperamentalFairy],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         TinkerBellTemperamentalFairy,
-//       );
-//       Expect(cardUnderTest.hasShift).toBe(true);
-//     });
-//
-//     It("should have shift cost of 3", () => {
-//       Const shiftAbility = tinkerBellTemperamentalFairy.abilities?.find(
-//         (a) => "ability" in a && a.ability === "shift",
-//       );
-//
-//       Expect(shiftAbility).toBeDefined();
-//
-//       If (shiftAbility && "costs" in shiftAbility) {
-//         Expect(shiftAbility.costs).toEqual([{ type: "ink", amount: 3 }]);
-//       }
-//     });
-//   });
-//
-//   Describe("HARMLESS DIVERSION - When you play this character, exert chosen opposing character with 2 {S} or less", () => {
-//     It("should have the HARMLESS DIVERSION ability defined", () => {
-//       Const harmlessDiversion = tinkerBellTemperamentalFairy.abilities?.find(
-//         (a) => "name" in a && a.name === "HARMLESS DIVERSION",
-//       );
-//
-//       Expect(harmlessDiversion).toBeDefined();
-//
-//       If (
-//         HarmlessDiversion &&
-//         "effects" in harmlessDiversion &&
-//         Array.isArray(harmlessDiversion.effects)
-//       ) {
-//         Expect(harmlessDiversion.effects).toHaveLength(1);
-//         Const effect = harmlessDiversion.effects[0] as any;
-//         Expect(effect.type).toBe("exert");
-//
-//         // Should target opposing characters with strength <= 2
-//         If ("target" in harmlessDiversion) {
-//           Const target = harmlessDiversion.target as any;
-//           Expect(target.filters).toBeDefined();
-//
-//           Const strengthFilter = target.filters.find(
-//             (f: any) => f.filter === "attribute" && f.value === "strength",
-//           );
-//           Expect(strengthFilter).toBeDefined();
-//           Expect(strengthFilter.comparison.operator).toBe("lte");
-//           Expect(strengthFilter.comparison.value).toBe(2);
-//         }
-//       }
-//     });
-//
-//     It.skip("should trigger when played and require a target (integration test)", async () => {
-//       // Note: This test requires a character with 2 or less strength to be available
-//       // Diablo (3), Hermes (3), and Bronx (6) all have too much strength
-//       // This test is skipped until we have a suitable test character
-//       Expect(true).toBe(true);
-//     });
-//   });
-//
-//   Describe("Stats and basic properties", () => {
-//     It("should have correct stats", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [tinkerBellTemperamentalFairy],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         TinkerBellTemperamentalFairy,
-//       );
-//
-//       Expect(cardUnderTest.strength).toBe(5);
-//       Expect(cardUnderTest.willpower).toBe(3);
-//       Expect(cardUnderTest.lore).toBe(1);
-//       Expect(cardUnderTest.cost).toBe(5);
-//     });
-//
-//     It("should be inkwell card", () => {
-//       Expect(tinkerBellTemperamentalFairy.inkwell).toBe(true);
-//     });
-//
-//     It("should have correct characteristics", () => {
-//       Expect(tinkerBellTemperamentalFairy.characteristics).toEqual([
-//         "floodborn",
-//         "ally",
-//         "fairy",
-//       ]);
-//     });
-//
-//     It("should be ruby color", () => {
-//       Expect(tinkerBellTemperamentalFairy.colors).toEqual(["ruby"]);
-//     });
-//   });
-//
-//   Describe("Gameplay", () => {
-//     It("should be playable from hand", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: tinkerBellTemperamentalFairy.cost,
-//         Hand: [tinkerBellTemperamentalFairy],
-//       });
-//
-//       Await testEngine.playCard(tinkerBellTemperamentalFairy);
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         TinkerBellTemperamentalFairy,
-//       );
-//       Expect(cardUnderTest.zone).toBe("play");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  LorcanaTestEngine,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { tinkerBellTemperamentalFairy } from "./115-tinker-bell-temperamental-fairy";
+
+const weakOpponent = createMockCharacter({
+  id: "tbtf-weak-opponent",
+  name: "Weak Opponent",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+});
+
+const strongOpponent = createMockCharacter({
+  id: "tbtf-strong-opponent",
+  name: "Strong Opponent",
+  cost: 4,
+  strength: 4,
+  willpower: 4,
+});
+
+describe("Tinker Bell - Temperamental Fairy", () => {
+  it("has the Shift 3 keyword", () => {
+    const testEngine = new LorcanaTestEngine({
+      play: [tinkerBellTemperamentalFairy],
+    });
+
+    const cardModel = testEngine.getCardModel(tinkerBellTemperamentalFairy);
+    expect(cardModel.hasShift()).toBe(true);
+    expect(cardModel.shiftInkCost).toBe(3);
+  });
+
+  describe("HARMLESS DIVERSION — When you play this character, exert chosen opposing character with 2 {S} or less.", () => {
+    it("triggers when played and exerts the chosen opposing character with 2 strength or less", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [tinkerBellTemperamentalFairy],
+          inkwell: tinkerBellTemperamentalFairy.cost,
+          deck: 2,
+        },
+        {
+          play: [weakOpponent],
+          deck: 2,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(tinkerBellTemperamentalFairy),
+      ).toBeSuccessfulCommand();
+
+      // HARMLESS DIVERSION should have triggered
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Resolve the bag effect, targeting the weak opponent
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [weakOpponent] }),
+      ).toBeSuccessfulCommand();
+
+      // The weak opponent should now be exerted
+      expect(testEngine.asPlayerTwo().isExerted(weakOpponent)).toBe(true);
+    });
+
+    it("auto-resolves and does not exert when the only opposing character has more than 2 strength", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [tinkerBellTemperamentalFairy],
+          inkwell: tinkerBellTemperamentalFairy.cost,
+          deck: 2,
+        },
+        {
+          play: [strongOpponent],
+          deck: 2,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(tinkerBellTemperamentalFairy),
+      ).toBeSuccessfulCommand();
+
+      // Tinker Bell is now in play
+      expect(testEngine.asPlayerOne().getCardZone(tinkerBellTemperamentalFairy)).toBe("play");
+
+      // Strong opponent should remain unexerted (no valid targets, trigger auto-resolves)
+      expect(testEngine.asPlayerTwo().isExerted(strongOpponent)).toBe(false);
+    });
+
+    it("selects the weak opponent when both weak and strong opponents are in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [tinkerBellTemperamentalFairy],
+          inkwell: tinkerBellTemperamentalFairy.cost,
+          deck: 2,
+        },
+        {
+          play: [weakOpponent, strongOpponent],
+          deck: 2,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(tinkerBellTemperamentalFairy),
+      ).toBeSuccessfulCommand();
+
+      // HARMLESS DIVERSION should have triggered
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Target only the weak opponent (2 strength)
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [weakOpponent] }),
+      ).toBeSuccessfulCommand();
+
+      // Weak opponent is exerted, strong opponent is not
+      expect(testEngine.asPlayerTwo().isExerted(weakOpponent)).toBe(true);
+      expect(testEngine.asPlayerTwo().isExerted(strongOpponent)).toBe(false);
+    });
+
+    it("cannot target the strong opponent when both are in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [tinkerBellTemperamentalFairy],
+          inkwell: tinkerBellTemperamentalFairy.cost,
+          deck: 2,
+        },
+        {
+          play: [weakOpponent, strongOpponent],
+          deck: 2,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(tinkerBellTemperamentalFairy),
+      ).toBeSuccessfulCommand();
+
+      // HARMLESS DIVERSION triggers
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Attempting to target the strong opponent (4 strength) should fail
+      const resolveResult = testEngine.asPlayerOne().resolveNextBag({ targets: [strongOpponent] });
+      expect(resolveResult.success).toBe(false);
+
+      // Neither opponent should be exerted
+      expect(testEngine.asPlayerTwo().isExerted(weakOpponent)).toBe(false);
+      expect(testEngine.asPlayerTwo().isExerted(strongOpponent)).toBe(false);
+    });
+  });
+});

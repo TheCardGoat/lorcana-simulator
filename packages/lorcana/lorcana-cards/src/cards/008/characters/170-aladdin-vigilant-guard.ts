@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { aladdinVigilantGuardI18n } from "./170-aladdin-vigilant-guard.i18n";
 
 export const aladdinVigilantGuard: CharacterCard = {
   id: "728",
@@ -7,43 +8,6 @@ export const aladdinVigilantGuard: CharacterCard = {
   cardType: "character",
   name: "Aladdin",
   version: "Vigilant Guard",
-  i18n: {
-    en: {
-      name: "Aladdin",
-      version: "Vigilant Guard",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "SAFE PASSAGE",
-          description:
-            "Whenever one of your Ally characters quests, you may remove up to 2 damage from this character.",
-        },
-      ],
-    },
-    de: {
-      name: "Aladdin",
-      version: "Wachsamer Gardist",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) SICHERER DURCHGANG Jedes Mal, wenn einer deiner Verbündeten erkundet, darfst du bis zu 2 Schaden von diesem Charakter entfernen.",
-    },
-    fr: {
-      name: "Aladdin",
-      version: "Protecteur vigilant",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.) PASSAGE SÛR Chaque fois que l'un de vos personnages Allié est envoyé à l'aventure, vous pouvez retirer jusqu'à 2 dommages de ce personnage-ci.",
-        },
-      ],
-    },
-    it: {
-      name: "Aladdin",
-      version: "Guardia Vigile",
-      text: "Guardiano PASSAGGIO SICURO Ogni volta che uno dei tui personaggi Alleato va all'avventura, puoi rimuovere fino a 2 danni da questo personaggio.",
-    },
-  },
   inkType: ["sapphire", "steel"],
   franchise: "Aladdin",
   set: "008",
@@ -97,11 +61,17 @@ export const aladdinVigilantGuard: CharacterCard = {
       name: "SAFE PASSAGE",
       text: "SAFE PASSAGE Whenever one of your Ally characters quests, you may remove up to 2 damage from this character.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "quest",
+        on: {
+          controller: "you",
+          cardType: "character",
+          classification: "Ally",
+          excludeSelf: true,
+        },
         timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: aladdinVigilantGuardI18n,
 };

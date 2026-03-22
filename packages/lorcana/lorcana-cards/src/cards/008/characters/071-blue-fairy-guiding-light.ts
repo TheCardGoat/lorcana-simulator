@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { blueFairyGuidingLightI18n } from "./071-blue-fairy-guiding-light.i18n";
 
 export const blueFairyGuidingLight: CharacterCard = {
   id: "IbB",
@@ -7,35 +8,6 @@ export const blueFairyGuidingLight: CharacterCard = {
   cardType: "character",
   name: "Blue Fairy",
   version: "Guiding Light",
-  i18n: {
-    en: {
-      name: "Blue Fairy",
-      version: "Guiding Light",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "Support",
-        },
-      ],
-    },
-    de: {
-      name: "Die Blaue Fee",
-      version: "Leitendes Licht",
-      text: "Wendig Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "La Fée Bleue",
-      version: "Guide spirituelle",
-      text: "Insaisissable Soutien",
-    },
-    it: {
-      name: "Fata Turchina",
-      version: "Luce Guida",
-      text: "Sfuggente Aiutante",
-    },
-  },
   inkType: ["amethyst", "sapphire"],
   franchise: "Pinocchio",
   set: "008",
@@ -72,5 +44,24 @@ export const blueFairyGuidingLight: CharacterCard = {
       type: "keyword",
       text: "Support",
     },
+    {
+      id: "1iq-3",
+      type: "triggered",
+      text: "Support (Whenever this character quests, you may add their {S} to another chosen character's {S} this turn.)",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "support",
+          target: "ANOTHER_CHOSEN_CHARACTER_OF_YOURS",
+        },
+      },
+    },
   ],
+  i18n: blueFairyGuidingLightI18n,
 };

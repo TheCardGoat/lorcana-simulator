@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mrArrowLegacysFirstMateI18n } from "./182-mr-arrow-legacys-first-mate.i18n";
 
 export const mrArrowLegacysFirstMate: CharacterCard = {
   id: "Sh0",
@@ -7,28 +8,6 @@ export const mrArrowLegacysFirstMate: CharacterCard = {
   cardType: "character",
   name: "Mr. Arrow",
   version: "Legacy's First Mate",
-  i18n: {
-    en: {
-      name: "Mr. Arrow",
-      version: "Legacy's First Mate",
-      text: "Resist +1",
-    },
-    de: {
-      name: "Arrow",
-      version: "Erster Maat der Legacy",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "Monsieur Arrow",
-      version: "Second du RLS Héritage",
-      text: "Résistance +1 (Les dommages qui sont infligés à ce personnage sont réduits de 1.)",
-    },
-    it: {
-      name: "Signor Arrow",
-      version: "Primo Ufficiale della Legacy",
-      text: "Resistere +1",
-    },
-  },
   inkType: ["steel"],
   franchise: "Treasure Planet",
   set: "006",
@@ -54,4 +33,5 @@ export const mrArrowLegacysFirstMate: CharacterCard = {
       text: "Resist +1",
     },
   ],
+  i18n: mrArrowLegacysFirstMateI18n,
 };

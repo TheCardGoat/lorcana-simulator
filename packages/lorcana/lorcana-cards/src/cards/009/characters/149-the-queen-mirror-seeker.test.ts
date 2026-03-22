@@ -1,24 +1,49 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { theQueenMirrorSeeker } from "@lorcanito/lorcana-engine/cards/009/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("The Queen - Mirror Seeker", () => {
-//   It.skip("**CALCULATING AND VAIN** Whenever this character quests, you may look at the top 3 cards of your deck and put them back in any order.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: theQueenMirrorSeeker.cost,
-//       Play: [theQueenMirrorSeeker],
-//       Hand: [theQueenMirrorSeeker],
-//     });
-//
-//     Await testEngine.playCard(theQueenMirrorSeeker);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { theQueenMirrorSeeker } from "./149-the-queen-mirror-seeker";
+
+const cardA = createMockCharacter({ id: "queen-scry-a", name: "Scry Card A", cost: 1 });
+const cardB = createMockCharacter({ id: "queen-scry-b", name: "Scry Card B", cost: 2 });
+const cardC = createMockCharacter({ id: "queen-scry-c", name: "Scry Card C", cost: 3 });
+
+describe("The Queen - Mirror Seeker", () => {
+  describe("CALCULATING AND VAIN - Whenever this character quests, you may look at the top 3 cards of your deck and put them back in any order.", () => {
+    it("scries 3 and reorders them on top of the deck when questing", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        deck: [cardA, cardB, cardC],
+        play: [{ card: theQueenMirrorSeeker, isDrying: false }],
+      });
+
+      expect(testEngine.asPlayerOne().quest(theQueenMirrorSeeker)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          destinations: [{ zone: "deck-top", cards: [cardC, cardA, cardB] }],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(cardA)).toBe("deck");
+      expect(testEngine.asPlayerOne().getCardZone(cardB)).toBe("deck");
+      expect(testEngine.asPlayerOne().getCardZone(cardC)).toBe("deck");
+    });
+
+    it("does not scry when the optional is declined", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        deck: [cardA, cardB, cardC],
+        play: [{ card: theQueenMirrorSeeker, isDrying: false }],
+      });
+
+      expect(testEngine.asPlayerOne().quest(theQueenMirrorSeeker)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({ deck: 3 });
+    });
+  });
+});

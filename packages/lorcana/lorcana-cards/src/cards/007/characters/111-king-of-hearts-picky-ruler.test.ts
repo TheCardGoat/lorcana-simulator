@@ -1,129 +1,118 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { captainHookForcefulDuelist } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import {
-//   MadamMimFox,
-//   MadamMimSnake,
-// } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import { mrSmeeBumblingMate } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { bellesHouseMauricesWorkshop } from "@lorcanito/lorcana-engine/cards/003/locations/locations";
-// Import { hiddenCoveTranquilHaven } from "@lorcanito/lorcana-engine/cards/004/locations/locations";
-// Import {
-//   DenahiImpatientHunter,
-//   KingOfHeartsPickyRuler,
-// } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("King Of Hearts - Picky Ruler", () => {
-//   It("OBJECTIONABLE STATE Damaged characters can't challenge your characters.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [
-//           KingOfHeartsPickyRuler,
-//           MrSmeeBumblingMate,
-//           CaptainHookForcefulDuelist,
-//           HiddenCoveTranquilHaven,
-//         ],
-//       },
-//       {
-//         Play: [madamMimFox, madamMimSnake],
-//       },
-//     );
-//
-//     Await testEngine.setCardDamage(madamMimFox, 1);
-//
-//     Await testEngine.tapCard(mrSmeeBumblingMate);
-//     Await testEngine.tapCard(captainHookForcefulDuelist);
-//
-//     Await testEngine.challenge({
-//       Attacker: madamMimFox,
-//       Defender: mrSmeeBumblingMate,
-//     });
-//     Expect(testEngine.getCardModel(mrSmeeBumblingMate).damage).toBe(0);
-//
-//     Await testEngine.challenge({
-//       Attacker: madamMimFox,
-//       Defender: hiddenCoveTranquilHaven,
-//     });
-//     Expect(testEngine.getCardModel(hiddenCoveTranquilHaven).damage).toBe(4);
-//
-//     Await testEngine.challenge({
-//       Attacker: madamMimSnake,
-//       Defender: mrSmeeBumblingMate,
-//     });
-//     Expect(testEngine.getCardZone(mrSmeeBumblingMate)).toBe("discard");
-//     Expect(testEngine.getCardZone(madamMimSnake)).toBe("discard");
-//   });
-// });
-//
-// Describe("Regression", () => {
-//   It("Characters with Reckless affect by the effect should NOT prevent players passing the turn.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [denahiImpatientHunter],
-//       },
-//       {
-//         Play: [kingOfHeartsPickyRuler],
-//       },
-//     );
-//
-//     Const denahi = testEngine.getCardModel(denahiImpatientHunter);
-//     Const king = testEngine.getCardModel(kingOfHeartsPickyRuler);
-//
-//     Await testEngine.tapCard(kingOfHeartsPickyRuler);
-//
-//     Expect(denahi.canChallenge(king)).toBeTruthy();
-//     Expect(denahi.hasChallengeCharactersRestriction).toBeFalsy();
-//     Expect(denahi.hasChallengeRestriction).toBeFalsy();
-//
-//     Await testEngine.setCardDamage(denahiImpatientHunter, 1);
-//
-//     // Challenge restriction is only true when they're unable to challenge at all
-//     Expect(denahi.hasChallengeRestriction).toBeFalsy();
-//     Expect(denahi.hasChallengeCharactersRestriction).toBeTruthy();
-//     Expect(denahi.canChallenge(king)).toBeFalsy();
-//
-//     Expect(testEngine.store.turnCount).toEqual(0);
-//     Await testEngine.passTurn();
-//     Expect(testEngine.store.turnCount).toEqual(1);
-//   });
-//
-//   It("Characters with Reckless affect by the effect should prevent players passing the turn if there's location in play.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [denahiImpatientHunter],
-//       },
-//       {
-//         Play: [kingOfHeartsPickyRuler, bellesHouseMauricesWorkshop],
-//       },
-//     );
-//
-//     Const denahi = testEngine.getCardModel(denahiImpatientHunter);
-//     Const king = testEngine.getCardModel(kingOfHeartsPickyRuler);
-//     Const location = testEngine.getCardModel(bellesHouseMauricesWorkshop);
-//
-//     Await testEngine.tapCard(kingOfHeartsPickyRuler);
-//
-//     Expect(denahi.canChallenge(king)).toBeTruthy();
-//     Expect(denahi.hasChallengeCharactersRestriction).toBeFalsy();
-//     Expect(denahi.hasChallengeRestriction).toBeFalsy();
-//     Expect(denahi.canChallenge(location)).toBeTruthy();
-//
-//     Await testEngine.setCardDamage(denahiImpatientHunter, 1);
-//
-//     // Challenge restriction is only true when they're unable to challenge at all
-//     Expect(denahi.hasChallengeRestriction).toBeFalsy();
-//     Expect(denahi.hasChallengeCharactersRestriction).toBeTruthy();
-//     Expect(denahi.canChallenge(king)).toBeFalsy();
-//     Expect(denahi.canChallenge(location)).toBeTruthy();
-//
-//     Expect(testEngine.store.turnCount).toEqual(0);
-//     Await testEngine.passTurn();
-//     Expect(testEngine.store.turnCount).toEqual(0);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { kingOfHeartsPickyRuler } from "./111-king-of-hearts-picky-ruler";
+
+const damagedAttacker = createMockCharacter({
+  id: "king-picky-damaged-attacker",
+  name: "Damaged Attacker",
+  cost: 2,
+  strength: 2,
+  willpower: 4,
+  lore: 1,
+});
+
+const undamagedAttacker = createMockCharacter({
+  id: "king-picky-undamaged-attacker",
+  name: "Undamaged Attacker",
+  cost: 2,
+  strength: 2,
+  willpower: 4,
+  lore: 1,
+});
+
+const friendlyCharacter = createMockCharacter({
+  id: "king-picky-friendly",
+  name: "Friendly Character",
+  cost: 2,
+  strength: 1,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("King of Hearts - Picky Ruler", () => {
+  describe("OBJECTIONABLE STATE - Damaged characters can't challenge your characters.", () => {
+    it("a damaged opposing character cannot challenge the King of Hearts' controller's characters", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [kingOfHeartsPickyRuler, { card: friendlyCharacter, exerted: true }],
+          deck: 5,
+        },
+        {
+          play: [{ card: damagedAttacker, isDrying: false, damage: 1 }],
+          deck: 5,
+        },
+      );
+
+      // Pass to player two's turn so they can act
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Damaged attacker should NOT be able to challenge the friendly character
+      expect(
+        testEngine.asPlayerTwo().challenge(damagedAttacker, friendlyCharacter),
+      ).not.toBeSuccessfulCommand();
+    });
+
+    it("an undamaged opposing character can still challenge the King of Hearts' controller's characters", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [kingOfHeartsPickyRuler, { card: friendlyCharacter, exerted: true }],
+          deck: 5,
+        },
+        {
+          play: [{ card: undamagedAttacker, isDrying: false }],
+          deck: 5,
+        },
+      );
+
+      // Pass to player two's turn so they can act
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Undamaged attacker SHOULD be able to challenge
+      expect(
+        testEngine.asPlayerTwo().challenge(undamagedAttacker, friendlyCharacter),
+      ).toBeSuccessfulCommand();
+    });
+
+    it("a damaged opposing character cannot challenge the King of Hearts himself", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: kingOfHeartsPickyRuler, exerted: true }],
+          deck: 5,
+        },
+        {
+          play: [{ card: damagedAttacker, isDrying: false, damage: 1 }],
+          deck: 5,
+        },
+      );
+
+      // Pass to player two's turn so they can act
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Damaged attacker should NOT be able to challenge the King of Hearts himself
+      expect(
+        testEngine.asPlayerTwo().challenge(damagedAttacker, kingOfHeartsPickyRuler),
+      ).not.toBeSuccessfulCommand();
+    });
+
+    it("restriction does not apply when King of Hearts is not in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: friendlyCharacter, exerted: true }],
+          deck: 5,
+        },
+        {
+          play: [{ card: damagedAttacker, isDrying: false, damage: 1 }],
+          deck: 5,
+        },
+      );
+
+      // Pass to player two's turn so they can act
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Without King of Hearts in play, damaged attacker CAN challenge
+      expect(
+        testEngine.asPlayerTwo().challenge(damagedAttacker, friendlyCharacter),
+      ).toBeSuccessfulCommand();
+    });
+  });
+});

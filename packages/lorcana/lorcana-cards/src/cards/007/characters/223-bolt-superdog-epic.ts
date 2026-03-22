@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boltSuperdogEpicI18n } from "./223-bolt-superdog-epic.i18n";
 
 export const boltSuperdogEpic: CharacterCard = {
   id: "VBj",
@@ -7,40 +8,6 @@ export const boltSuperdogEpic: CharacterCard = {
   cardType: "character",
   name: "Bolt",
   version: "Superdog",
-  i18n: {
-    en: {
-      name: "Bolt",
-      version: "Superdog",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Bolt.) MARK OF POWER Whenever you ready this character, gain 1 lore for each other undamaged character you have in play. BOLT STARE — Banish chosen Illusion character.",
-        },
-      ],
-    },
-    de: {
-      name: "Bolt",
-      version: "Superhund",
-      text: "Gestaltwandel 3 DAS ZEICHEN MEINER KRAFT Jedes Mal, wenn du diesen Charakter bereit machst, sammelst du 1 Legende für jeden deiner anderen unbeschädigten Charaktere im Spiel. BOLT-LASERBLICK — Verbanne eine Illusion deiner Wahl.",
-    },
-    fr: {
-      name: "Volt",
-      version: "Superchien",
-      text: "Alter 3 LA MARQUE DE MON POUVOIR Chaque fois que vous redressez ce personnage, pour chacun de vos autres personnages sans dommage en jeu, gagnez 1 éclat de Lore. YEUX LASER — Choisissez un personnage Illusion et bannissez-le.",
-    },
-    it: {
-      name: "Bolt",
-      version: "Superdog",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Bolt.) MARK OF POWER Whenever you ready this character, gain 1 lore for each other undamaged character you have in play. BOLT STARE — Banish chosen Illusion character.",
-        },
-      ],
-    },
-  },
   inkType: ["amber", "steel"],
   franchise: "Bolt",
   set: "007",
@@ -59,10 +26,81 @@ export const boltSuperdogEpic: CharacterCard = {
   text: [
     {
       title: "Shift 3",
+      description: "(You may pay 3 to play this on top of one of your characters named Bolt.)",
+    },
+    {
+      title: "MARK OF POWER",
       description:
-        "(You may pay 3 to play this on top of one of your characters named Bolt.) MARK OF POWER Whenever you ready this character, gain 1 lore for each other undamaged character you have in play. BOLT STARE — Banish chosen Illusion character.",
+        "Whenever you ready this character, gain 1 lore for each other undamaged character you have in play.",
+    },
+    {
+      title: "BOLT STARE",
+      description: "— Banish chosen Illusion character.",
     },
   ],
   classifications: ["Floodborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      id: "VBj-1",
+      keyword: "Shift",
+      type: "keyword",
+      cost: {
+        ink: 3,
+      },
+      text: "Shift 3",
+    },
+    {
+      id: "VBj-2",
+      name: "MARK OF POWER",
+      type: "triggered",
+      trigger: {
+        event: "ready",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "gain-lore",
+        amount: {
+          type: "filtered-count",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          excludeSelf: true,
+          filters: [
+            {
+              type: "status",
+              status: "undamaged",
+            },
+          ],
+        },
+      },
+      text: "MARK OF POWER Whenever you ready this character, gain 1 lore for each other undamaged character you have in play.",
+    },
+    {
+      id: "VBj-3",
+      name: "BOLT STARE",
+      type: "activated",
+      cost: {
+        exert: true,
+      },
+      effect: {
+        type: "banish",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Illusion",
+            },
+          ],
+        },
+      },
+      text: "BOLT STARE {E} — Banish chosen Illusion character.",
+    },
+  ],
+  i18n: boltSuperdogEpicI18n,
 };

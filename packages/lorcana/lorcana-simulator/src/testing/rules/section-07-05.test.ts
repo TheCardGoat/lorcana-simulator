@@ -26,10 +26,12 @@ describe("#### 7. ZONES", () => {
       });
 
       const itemId = testEngine.findCardInstanceId(fishboneQuill, "play", PLAYER_ONE);
+      const plutoId = testEngine.findCardInstanceId(plutoFriendlyPooch, "hand", PLAYER_ONE);
       const result = testEngine.executeMoveForView("playerOne", "activateAbility", {
         args: {
           cardId: itemId,
           abilityIndex: 0,
+          targets: [plutoId],
         },
       });
 

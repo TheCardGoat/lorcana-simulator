@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mirabelMadrigalGiftOfTheFamilyI18n } from "./018-mirabel-madrigal-gift-of-the-family.i18n";
 
 export const mirabelMadrigalGiftOfTheFamily: CharacterCard = {
   id: "iqv",
@@ -7,37 +8,6 @@ export const mirabelMadrigalGiftOfTheFamily: CharacterCard = {
   cardType: "character",
   name: "Mirabel Madrigal",
   version: "Gift of the Family",
-  i18n: {
-    en: {
-      name: "Mirabel Madrigal",
-      version: "Gift of the Family",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "SAVING THE MIRACLE",
-          description:
-            "Whenever this character quests, your other Madrigal characters get +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Mirabel Madrigal",
-      version: "Gabe der Familie",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) RETTUNG DES WUNDERS Jedes Mal, wenn dieser Charakter erkundet, erhalten deine anderen Madrigal in diesem Zug +1.",
-    },
-    fr: {
-      name: "Mirabel Madrigal",
-      version: "Don de la famille",
-      text: "Soutien SAUVER LE MIRACLE Chaque fois que ce personnage est envoyé à l'aventure, vos autres personnages Madrigal gagnent +1 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Mirabel Madrigal",
-      version: "Dono della Famiglia",
-      text: "Aiutante SALVARE IL MIRACOLO Ogni volta che questo personaggio va all'avventura, i tuoi altri personaggi Madrigal ricevono +1 per questo turno.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Encanto",
   set: "004",
@@ -89,4 +59,5 @@ export const mirabelMadrigalGiftOfTheFamily: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mirabelMadrigalGiftOfTheFamilyI18n,
 };

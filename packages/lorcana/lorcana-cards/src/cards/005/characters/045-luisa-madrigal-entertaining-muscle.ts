@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { luisaMadrigalEntertainingMuscleI18n } from "./045-luisa-madrigal-entertaining-muscle.i18n";
 
 export const luisaMadrigalEntertainingMuscle: CharacterCard = {
   id: "GTb",
@@ -7,24 +8,6 @@ export const luisaMadrigalEntertainingMuscle: CharacterCard = {
   cardType: "character",
   name: "Luisa Madrigal",
   version: "Entertaining Muscle",
-  i18n: {
-    en: {
-      name: "Luisa Madrigal",
-      version: "Entertaining Muscle",
-    },
-    de: {
-      name: "Luisa Madrigal",
-      version: "Entertainerin mit Muskeln",
-    },
-    fr: {
-      name: "Luisa Madrigal",
-      version: "Madame Muscle",
-    },
-    it: {
-      name: "Luisa Madrigal",
-      version: "Muscoli Spettacolari",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "005",
@@ -41,4 +24,5 @@ export const luisaMadrigalEntertainingMuscle: CharacterCard = {
     tcgPlayer: 557729,
   },
   classifications: ["Storyborn", "Ally", "Madrigal"],
+  i18n: luisaMadrigalEntertainingMuscleI18n,
 };

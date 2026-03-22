@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { genieMagicalResearcherI18n } from "./049-genie-magical-researcher.i18n";
 
 export const genieMagicalResearcher: CharacterCard = {
   id: "fkH",
@@ -7,34 +8,6 @@ export const genieMagicalResearcher: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "Magical Researcher",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "Magical Researcher",
-      text: "Boost 1 {I} INCREASING WISDOM This character gets +1 {L} for each card under him.",
-    },
-    de: {
-      name: "Dschinni",
-      version: "Magischer Forscher",
-      text: "Stärken 1 WACHSENDE WEISHEIT Dieser Charakter erhält für jede Karte unter ihm +1.",
-    },
-    fr: {
-      name: "Génie",
-      version: "Chercheur en magie",
-      text: "Boost 1 SAGESSE CROISSANTE Ce personnage gagne +1 pour chaque carte sous lui.",
-    },
-    it: {
-      name: "Genio",
-      version: "Ricercatore Magico",
-      text: [
-        {
-          title: "Potenziamento 1",
-          description:
-            "(Una volta durante il tuo turno, puoi pagare 1 per mettere la prima carta del tuo mazzo a faccia in giù sotto a questo personaggio.) SAGGEZZA IN AUMENTO Questo personaggio riceve +1 per ogni carta sotto di sé.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "011",
@@ -54,14 +27,25 @@ export const genieMagicalResearcher: CharacterCard = {
   abilities: [
     {
       id: "h4v-1",
+      keyword: "Boost",
+      type: "keyword",
+      value: 1,
+      text: "Boost 1 {I}",
+    },
+    {
+      id: "h4v-2",
+      name: "INCREASING WISDOM",
+      type: "static",
       effect: {
-        modifier: 1,
+        modifier: {
+          type: "cards-under-self",
+        },
         stat: "lore",
         target: "SELF",
         type: "modify-stat",
       },
-      type: "action",
-      text: "Boost 1 {I} INCREASING WISDOM This character gets +1 {L} for each card under him.",
+      text: "INCREASING WISDOM This character gets +1 {L} for each card under him.",
     },
   ],
+  i18n: genieMagicalResearcherI18n,
 };

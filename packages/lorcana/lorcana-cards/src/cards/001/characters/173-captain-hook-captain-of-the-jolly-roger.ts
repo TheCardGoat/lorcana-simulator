@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { captainHookCaptainOfTheJollyRogerI18n } from "./173-captain-hook-captain-of-the-jolly-roger.i18n";
 
 export const captainHookCaptainOfTheJollyRoger: CharacterCard = {
   id: "svs",
@@ -7,52 +8,6 @@ export const captainHookCaptainOfTheJollyRoger: CharacterCard = {
   cardType: "character",
   name: "Captain Hook",
   version: "Captain of the Jolly Roger",
-  i18n: {
-    en: {
-      name: "Captain Hook",
-      version: "Captain of the Jolly Roger",
-      text: [
-        {
-          title: "DOUBLE THE POWDER!",
-          description:
-            "When you play this character, you may return an action card named Fire the Cannons! from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Käpt'n Hook",
-      version: "Kapitän der Jolly Roger",
-      text: [
-        {
-          title: "DOPPELTE LADUNG!",
-          description:
-            'Wenn du diesen Charakter ausspielst, darfst du 1 "Feuert die Kanonen!"-Aktionskarte aus deinem Ablagestapel zurück auf deine Hand nehmen.',
-        },
-      ],
-    },
-    fr: {
-      name: "CAPITAINE CROCHET",
-      version: "Capitaine du Jolly Roger",
-      text: [
-        {
-          title: "DOUBLEZ LES CHARGES!",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez reprendre en main une carte action ALLUMEZ LES MÊCHES! de votre défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Captain Hook",
-      version: "Captain of the Jolly Roger",
-      text: [
-        {
-          title: "DOUBLE THE POWDER!",
-          description:
-            "When you play this character, you may return an action card named Fire the Cannons! from your discard to your hand.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Peter Pan",
   set: "001",
@@ -63,7 +18,6 @@ export const captainHookCaptainOfTheJollyRoger: CharacterCard = {
   willpower: 4,
   lore: 1,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_79c990fe5bf14f4bbd075b6f80ad4290",
     tcgPlayer: 650123,
@@ -98,4 +52,5 @@ export const captainHookCaptainOfTheJollyRoger: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: captainHookCaptainOfTheJollyRogerI18n,
 };

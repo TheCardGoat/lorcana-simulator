@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rayaHeadstrongI18n } from "./122-raya-headstrong.i18n";
 
 export const rayaHeadstrong: CharacterCard = {
   id: "8Xm",
@@ -7,52 +8,6 @@ export const rayaHeadstrong: CharacterCard = {
   cardType: "character",
   name: "Raya",
   version: "Headstrong",
-  i18n: {
-    en: {
-      name: "Raya",
-      version: "Headstrong",
-      text: [
-        {
-          title: "NOTE TO SELF, DON'T DIE",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, you may ready this character. She can't quest for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Raya",
-      version: "Eigensinnig",
-      text: [
-        {
-          title: "DAS ALLERWICHTIGSTE: NICHT STERBEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter in deinem Zug durch eine Herausforderung einen anderen Charakter verbannt, darfst du ihn bereit machen. Er kann in diesem Zug nicht mehr erkunden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Raya",
-      version: "Obstinée",
-      text: [
-        {
-          title: "OBJECTIF: NE PAS MOURIR",
-          description:
-            "Lorsque ce personnage en bannit un autre via un défi durant votre tour, vous pouvez le redresser. Il ne peut pas être envoyé à l'aventure pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Raya",
-      version: "Headstrong",
-      text: [
-        {
-          title: "NOTE TO SELF, DON'T DIE",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, you may ready this character. She can't quest for the rest of this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "002",
@@ -74,8 +29,6 @@ export const rayaHeadstrong: CharacterCard = {
         "During your turn, whenever this character banishes another character in a challenge, you may ready this character. She can't quest for the rest of this turn.",
     },
   ],
-  missingImplementation: true,
-  missingTests: true,
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [
     {
@@ -127,4 +80,6 @@ export const rayaHeadstrong: CharacterCard = {
       },
     },
   ],
+  missingTests: true,
+  i18n: rayaHeadstrongI18n,
 };

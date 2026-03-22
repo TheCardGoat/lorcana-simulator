@@ -6,6 +6,7 @@ import type {
   SimulatorSerializedObject,
 } from "@/features/simulator/model/contracts.js";
 import {
+  createCardSnapshot,
   createCharacterCard,
   createLogEntry,
 } from "@/features/simulator-devtools/test-data/factories.js";
@@ -16,68 +17,253 @@ import {
   toTypedLorcanaLogMessage,
 } from "./event-log-presentation.js";
 
-const FORMAT_CASES: Array<{
-  key: LorcanaLogMessageKey;
+type FormatCase = {
+  moveId: MoveLogEntrySnapshot["moveId"];
   values: SimulatorSerializedObject;
   expected: string;
-}> = [
-  {
-    key: "lorcana.setup.firstPlayerChosen",
+};
+
+const FORMAT_CASES = {
+  "lorcana.setup.firstPlayerChosen": {
+    moveId: "chooseWhoGoesFirst",
     values: { chooser: "player_one", chosen: "player_two" },
-    expected: "Chose Opponent to start",
+    expected: "Chose Opponent to start.",
   },
-  {
-    key: "lorcana.setup.mulligan.count",
+  "lorcana.setup.mulligan.count": {
+    moveId: "alterHand",
     values: { playerId: "player_one", count: 2 },
-    expected: "Mulliganed 2 cards",
+    expected: "Altered 2 cards.",
   },
-  {
-    key: "lorcana.setup.mulligan.detail",
+  "lorcana.setup.mulligan.detail": {
+    moveId: "alterHand",
     values: {
       playerId: "player_one",
       count: 2,
       mulliganed: ["card-primary", "card-secondary"],
       drawn: ["card-secondary", "card-primary"],
     },
-    expected: "Mulliganed 2 cards: Ariel - On Human Legs, Mickey Mouse - Detective",
+    expected:
+      "Altered 2 cards: Ariel - On Human Legs, Mickey Mouse - Detective. Drew Mickey Mouse - Detective, Ariel - On Human Legs.",
   },
-  {
-    key: "lorcana.setup.done",
+  "lorcana.setup.done": {
+    moveId: "alterHand",
     values: {},
-    expected: "Setup ready",
+    expected: "Setup complete.",
   },
-  {
-    key: "lorcana.ability.activated",
-    values: { playerId: "player_one", cardId: "card-primary", abilityName: "Singer 5" },
-    expected: "Ariel - On Human Legs used Singer 5",
-  },
-  {
-    key: "lorcana.card.inked",
+  "lorcana.ability.activated": {
+    moveId: "activateAbility",
     values: { playerId: "player_one", cardId: "card-primary" },
-    expected: "Inked [Inkable] Ariel - On Human Legs into inkwell",
+    expected: "Activated an ability from Ariel - On Human Legs.",
   },
-  {
-    key: "lorcana.scry.count",
+  "lorcana.ability.activated.named": {
+    moveId: "activateAbility",
+    values: { playerId: "player_one", cardId: "card-primary", abilityName: "Singer 5" },
+    expected: "Activated Singer 5 from Ariel - On Human Legs.",
+  },
+  "lorcana.card.inked": {
+    moveId: "putCardIntoInkwell",
+    values: { playerId: "player_one", cardId: "card-primary" },
+    expected: "Put [Inkable] Ariel - On Human Legs into the inkwell.",
+  },
+  "lorcana.scry.count": {
+    moveId: "playCard",
     values: { playerId: "player_one", count: 3 },
-    expected: "Scry 3",
+    expected: "Looked at the top 3 cards.",
   },
-  {
-    key: "lorcana.scry.detail",
+  "lorcana.scry.detail": {
+    moveId: "playCard",
     values: { playerId: "player_one", count: 2, lookedAt: ["card-primary", "card-secondary"] },
-    expected: "Looked at 2 cards",
+    expected: "Looked at the top 2 cards: Ariel - On Human Legs, Mickey Mouse - Detective.",
   },
-];
+  "lorcana.move.playCard": {
+    moveId: "playCard",
+    values: { playerId: "player_one", cardId: "card-primary" },
+    expected: "Played Ariel - On Human Legs.",
+  },
+  "lorcana.move.quest": {
+    moveId: "quest",
+    values: { playerId: "player_one", cardId: "card-primary", loreGained: 2 },
+    expected: "Quested with Ariel - On Human Legs for 2 lore.",
+  },
+  "lorcana.move.questWithAll": {
+    moveId: "questWithAll",
+    values: {
+      playerId: "player_one",
+      cardIds: ["card-primary", "card-secondary"],
+      loreGained: 3,
+      count: 2,
+    },
+    expected:
+      "Quested with 2 characters: Ariel - On Human Legs, Mickey Mouse - Detective for 3 lore.",
+  },
+  "lorcana.move.challenge": {
+    moveId: "challenge",
+    values: {
+      playerId: "player_one",
+      attackerId: "card-primary",
+      defenderId: "card-secondary",
+    },
+    expected: "Challenged Mickey Mouse - Detective with Ariel - On Human Legs.",
+  },
+  "lorcana.move.moveCharacterToLocation": {
+    moveId: "moveCharacterToLocation",
+    values: {
+      playerId: "player_one",
+      characterId: "card-primary",
+      locationId: "card-location",
+    },
+    expected: "Moved Ariel - On Human Legs to Motunui - Island Paradise.",
+  },
+  "lorcana.move.passTurn": {
+    moveId: "passTurn",
+    values: { playerId: "player_one" },
+    expected: "Passed the turn.",
+  },
+  "lorcana.move.concede": {
+    moveId: "concede",
+    values: { playerId: "player_one" },
+    expected: "Conceded the game.",
+  },
+  "lorcana.bag.resolve.completed": {
+    moveId: "resolveBag",
+    values: { playerId: "player_one", sourceId: "card-primary" },
+    expected: "Resolved an effect from Ariel - On Human Legs.",
+  },
+  "lorcana.bag.resolve.completed.named": {
+    moveId: "resolveBag",
+    values: { playerId: "player_one", sourceId: "card-primary", abilityName: "Singer 5" },
+    expected: "Resolved Singer 5 from Ariel - On Human Legs.",
+  },
+  "lorcana.bag.resolve.completed.targets": {
+    moveId: "resolveBag",
+    values: {
+      playerId: "player_one",
+      sourceId: "card-primary",
+      targets: ["card-secondary", "card-location"],
+    },
+    expected:
+      "Resolved an effect from Ariel - On Human Legs, targeting Mickey Mouse - Detective, Motunui - Island Paradise.",
+  },
+  "lorcana.bag.resolve.completed.targets.named": {
+    moveId: "resolveBag",
+    values: {
+      playerId: "player_one",
+      sourceId: "card-primary",
+      abilityName: "Singer 5",
+      targets: ["card-secondary", "card-location"],
+    },
+    expected:
+      "Resolved Singer 5 from Ariel - On Human Legs, targeting Mickey Mouse - Detective, Motunui - Island Paradise.",
+  },
+  "lorcana.bag.resolve.skipped": {
+    moveId: "resolveBag",
+    values: { playerId: "player_one", sourceId: "card-primary" },
+    expected: "Skipped an effect from Ariel - On Human Legs.",
+  },
+  "lorcana.bag.resolve.skipped.named": {
+    moveId: "resolveBag",
+    values: { playerId: "player_one", sourceId: "card-primary", abilityName: "Singer 5" },
+    expected: "Skipped Singer 5 from Ariel - On Human Legs.",
+  },
+  "lorcana.bag.resolve.pending": {
+    moveId: "resolveBag",
+    values: { playerId: "player_one", sourceId: "card-primary" },
+    expected: "Started resolving an effect from Ariel - On Human Legs. More input is required.",
+  },
+  "lorcana.bag.resolve.pending.named": {
+    moveId: "resolveBag",
+    values: { playerId: "player_one", sourceId: "card-primary", abilityName: "Singer 5" },
+    expected: "Started resolving Singer 5 from Ariel - On Human Legs. More input is required.",
+  },
+  "lorcana.effect.resolve.discardChoice": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      sourceCardId: "card-primary",
+      targets: ["card-secondary"],
+    },
+    expected: "Resolved Ariel - On Human Legs by discarding Mickey Mouse - Detective.",
+  },
+  "lorcana.effect.resolve.targetSelection": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      sourceCardId: "card-primary",
+      targets: ["card-secondary", "card-location"],
+    },
+    expected:
+      "Resolved Ariel - On Human Legs, targeting Mickey Mouse - Detective, Motunui - Island Paradise.",
+  },
+  "lorcana.effect.resolve.choiceSelection": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      sourceCardId: "card-primary",
+      choiceIndex: 2,
+    },
+    expected: "Resolved Ariel - On Human Legs with option 2.",
+  },
+  "lorcana.effect.resolve.optionalSelection.accepted": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", sourceCardId: "card-primary" },
+    expected: "Resolved Ariel - On Human Legs by choosing yes.",
+  },
+  "lorcana.effect.resolve.optionalSelection.rejected": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", sourceCardId: "card-primary" },
+    expected: "Resolved Ariel - On Human Legs by choosing no.",
+  },
+  "lorcana.effect.resolve.nameCardSelection": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      sourceCardId: "card-primary",
+      namedCard: "Be Prepared",
+    },
+    expected: "Resolved Ariel - On Human Legs by naming Be Prepared.",
+  },
+  "lorcana.effect.resolve.scrySelection": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", sourceCardId: "card-primary" },
+    expected: "Finished ordering cards for Ariel - On Human Legs.",
+  },
+} satisfies Record<LorcanaLogMessageKey, FormatCase>;
 
-function createTypedEntry(
-  key: LorcanaLogMessageKey,
-  values: SimulatorSerializedObject,
-): MoveLogEntrySnapshot {
+const FALLBACK_CASES = {
+  activateAbility: "Performed a fallback ability action.",
+  alterHand: "Performed a fallback alter hand action.",
+  chooseWhoGoesFirst: "Performed a fallback first-player action.",
+  challenge: "Performed a fallback challenge action.",
+  concede: "Performed a fallback concede action.",
+  moveCharacterToLocation: "Performed a fallback move action.",
+  passTurn: "Performed a fallback pass action.",
+  playCard: "Performed a fallback play action.",
+  putCardIntoInkwell: "Performed a fallback ink action.",
+  quest: "Performed a fallback quest action.",
+  questWithAll: "Performed a fallback group quest action.",
+  undo: "Performed a fallback undo action.",
+  sing: "Performed a fallback sing action.",
+  singTogether: "Performed a fallback sing together action.",
+  resolveBag: "Performed a fallback bag resolution.",
+  resolveEffect: "Performed a fallback effect resolution.",
+  manualMoveCard: "Performed a fallback manual move action.",
+  manualExertCard: "Performed a fallback manual exert action.",
+  manualReadyCard: "Performed a fallback manual ready action.",
+  manualDryCard: "Performed a fallback manual dry action.",
+  manualSetDamage: "Performed a fallback damage action.",
+  manualSetLore: "Performed a fallback lore action.",
+  manualShuffleDeck: "Performed a fallback shuffle action.",
+  manualPassTurn: "Performed a fallback manual pass action.",
+} satisfies Record<MoveLogEntrySnapshot["moveId"], string>;
+
+function createTypedEntry(key: LorcanaLogMessageKey, formatCase: FormatCase): MoveLogEntrySnapshot {
   const primaryCard = createCharacterCard("playerOne", "play", {
     id: "card-primary",
     name: "Ariel - On Human Legs",
     strength: 2,
     willpower: 3,
     inkType: ["sapphire"],
+    loreValue: 2,
     text: "Singer 5",
   });
   const secondaryCard = createCharacterCard("playerTwo", "play", {
@@ -86,20 +272,23 @@ function createTypedEntry(
     strength: 1,
     willpower: 2,
     inkType: ["amber"],
+    loreValue: 1,
+  });
+  const locationCard = createCardSnapshot("playerOne", "play", {
+    id: "card-location",
+    name: "Motunui - Island Paradise",
+    type: "location",
+    cost: 3,
+    loreValue: 1,
   });
 
   return createLogEntry(`legacy ${key}`, {
     actorSide: "playerOne",
     id: key,
-    moveId:
-      key === "lorcana.card.inked"
-        ? "putCardIntoInkwell"
-        : key === "lorcana.ability.activated"
-          ? "activateAbility"
-          : "playCard",
+    moveId: formatCase.moveId,
     rawLogRegistry: {
       move: {
-        moveId: "testMove",
+        moveId: formatCase.moveId,
         params: { cardId: primaryCard.cardId },
         playerId: "player_one",
         timestamp: 123,
@@ -109,7 +298,7 @@ function createTypedEntry(
         defaultMessage: {
           key: "move.executed",
           values: {
-            move: "testMove",
+            move: formatCase.moveId,
             playerId: "player_one",
           },
         },
@@ -117,10 +306,10 @@ function createTypedEntry(
       relatedLogEntries: [
         {
           sourceEventSeqs: [1],
-          defaultMessage: { key, values },
+          defaultMessage: { key, values: formatCase.values },
         },
       ],
-      cardReferences: [primaryCard, secondaryCard],
+      cardReferences: [primaryCard, secondaryCard, locationCard],
     },
     turnNumber: 7,
   });
@@ -152,17 +341,19 @@ function flattenRowText(entry: MoveLogEntrySnapshot): string {
 }
 
 describe("event log presentation", () => {
-  for (const { key, values, expected } of FORMAT_CASES) {
+  const typedCases = Object.entries(FORMAT_CASES) as Array<[LorcanaLogMessageKey, FormatCase]>;
+
+  for (const [key, formatCase] of typedCases) {
     it(`formats ${key} through the typed formatter`, () => {
-      const entry = createTypedEntry(key, values);
+      const entry = createTypedEntry(key, formatCase);
       const typedMessage = toTypedLorcanaLogMessage(
         entry.rawLogRegistry?.relatedLogEntries[0]?.defaultMessage,
       );
 
       expect(typedMessage?.key).toBe(key);
-      expect(typedMessage?.values).toEqual(values);
+      expect(typedMessage?.values).toEqual(formatCase.values);
       expect(collectTypedLorcanaMessages(entry)).toHaveLength(1);
-      expect(flattenRowText(entry)).toBe(expected);
+      expect(flattenRowText(entry)).toBe(formatCase.expected);
     });
   }
 
@@ -176,20 +367,30 @@ describe("event log presentation", () => {
     expect(filterEntriesToLastTurns(entries).map((entry) => entry.id)).toEqual(["t2", "t3"]);
   });
 
-  it("falls back to legacy copy when no typed Lorcana message is available", () => {
-    const entry = createLogEntry("Moved Stitch", {
-      actorSide: "playerTwo",
-      id: "fallback-entry",
-      moveId: "playCard",
-      detail: "Moved to play",
-      turnNumber: 2,
+  const fallbackCases = Object.entries(FALLBACK_CASES) as Array<
+    [MoveLogEntrySnapshot["moveId"], string]
+  >;
+
+  for (const [moveId, title] of fallbackCases) {
+    it(`falls back for ${moveId}`, () => {
+      const entry = createLogEntry(title, {
+        actorSide: "playerTwo",
+        id: `fallback-${moveId}`,
+        moveId,
+        detail: undefined,
+        rawLogRegistry: undefined,
+        turnNumber: 2,
+      });
+
+      const fallbackRow = buildEventLogRows([entry]).find(
+        (
+          row,
+        ): row is Extract<ReturnType<typeof buildEventLogRows>[number], { kind: "event-row" }> =>
+          row.kind === "event-row",
+      );
+
+      expect(fallbackRow?.source).toBe("fallback");
+      expect(flattenRowText(entry).length).toBeGreaterThan(0);
     });
-
-    const fallbackRow = buildEventLogRows([entry]).find(
-      (row): row is Extract<ReturnType<typeof buildEventLogRows>[number], { kind: "event-row" }> =>
-        row.kind === "event-row",
-    );
-
-    expect(fallbackRow?.source).toBe("fallback");
-  });
+  }
 });

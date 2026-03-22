@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { restoringTheHeartI18n } from "./039-restoring-the-heart.i18n";
 
 export const restoringTheHeart: ActionCard = {
   id: "PpP",
@@ -6,24 +7,6 @@ export const restoringTheHeart: ActionCard = {
   reprints: ["set7-039"],
   cardType: "action",
   name: "Restoring the Heart",
-  i18n: {
-    en: {
-      name: "Restoring the Heart",
-      text: "Remove up to 3 damage from chosen character or location. Draw a card.",
-    },
-    de: {
-      name: "Das Herz zurückbringen",
-      text: "Entferne bis zu 3 Schaden von einem Charakter oder Ort deiner Wahl. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Restituer le Cœur",
-      text: "Choisissez un personnage ou un lieu et retirez-lui jusqu'à 3 dommages. Piochez une carte.",
-    },
-    it: {
-      name: "Risanare il Cuore",
-      text: "Rimuovi fino a 3 danni da un personaggio o da un luogo a tua scelta. Pesca una carta.",
-    },
-  },
   inkType: ["amber", "sapphire"],
   franchise: "Moana",
   set: "007",
@@ -59,4 +42,5 @@ export const restoringTheHeart: ActionCard = {
       type: "action",
     },
   ],
+  i18n: restoringTheHeartI18n,
 };

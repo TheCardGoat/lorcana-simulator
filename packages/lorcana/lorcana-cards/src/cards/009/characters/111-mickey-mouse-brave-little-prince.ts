@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseBraveLittlePrinceI18n } from "./111-mickey-mouse-brave-little-prince.i18n";
 
 export const mickeyMouseBraveLittlePrince: CharacterCard = {
   id: "7B1",
@@ -7,40 +8,6 @@ export const mickeyMouseBraveLittlePrince: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Brave Little Prince",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Brave Little Prince",
-      text: [
-        {
-          title: "Shift 5 {I}",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "CROWNING ACHIEVEMENT",
-          description:
-            "While this character has a card under him, he gets +3 {S}, +3 {W}, and +3 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Micky Maus",
-      version: "Tapferer Kleiner Prinz",
-      text: "Gestaltwandel 5 Wendig KRÖNENDER ABSCHLUSS Solange dieser Charakter mindestens eine Karte unter sich hat, erhält er +3, +3 und +3.",
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Brave petit prince",
-      text: "Alter 5 Insaisissable COURONNÉ DE GLOIRE Tant que ce personnage a une carte sous lui, il gagne +3, +3 et +3.",
-    },
-    it: {
-      name: "Topolino",
-      version: "Eroico Principe",
-      text: "Trasformazione 5 Sfuggente IMPRESA CORONATA Mentre questo personaggio ha una carta sotto di sé, riceve +3, +3 e +3.",
-    },
-  },
   inkType: ["ruby"],
   set: "009",
   cardNumber: 111,
@@ -95,4 +62,5 @@ export const mickeyMouseBraveLittlePrince: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: mickeyMouseBraveLittlePrinceI18n,
 };

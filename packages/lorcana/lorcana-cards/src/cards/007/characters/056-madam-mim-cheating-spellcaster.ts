@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madamMimCheatingSpellcasterI18n } from "./056-madam-mim-cheating-spellcaster.i18n";
 
 export const madamMimCheatingSpellcaster: CharacterCard = {
   id: "UyZ",
@@ -7,51 +8,6 @@ export const madamMimCheatingSpellcaster: CharacterCard = {
   cardType: "character",
   name: "Madam Mim",
   version: "Cheating Spellcaster",
-  i18n: {
-    en: {
-      name: "Madam Mim",
-      version: "Cheating Spellcaster",
-      text: [
-        {
-          title: "PLAY ROUGH",
-          description: "Whenever this character quests, exert chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Madame Mim",
-      version: "Betrügerische Zauberkünstlerin",
-      text: [
-        {
-          title: "UNFAIRE MITTEL",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, erschöpfe einen gegnerischen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Madame Mime",
-      version: "Sorcière tricheuse",
-      text: [
-        {
-          title: "JOUER AU PLUS FIN",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, choisissez un personnage adverse et épuisez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Maga Magò",
-      version: "Fattucchiera Imbrogliona",
-      text: [
-        {
-          title: "GIOCO DURO",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, impegna un personaggio avversario a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "007",
@@ -96,4 +52,5 @@ export const madamMimCheatingSpellcaster: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: madamMimCheatingSpellcasterI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cardSoldiersFullDeckI18n } from "./105-card-soldiers-full-deck.i18n";
 
 export const cardSoldiersFullDeck: CharacterCard = {
   id: "V2r",
@@ -7,24 +8,6 @@ export const cardSoldiersFullDeck: CharacterCard = {
   cardType: "character",
   name: "Card Soldiers",
   version: "Full Deck",
-  i18n: {
-    en: {
-      name: "Card Soldiers",
-      version: "Full Deck",
-    },
-    de: {
-      name: "Kartensoldaten",
-      version: "Ganzer Stapel",
-    },
-    fr: {
-      name: "Gardes cartes",
-      version: "Jeu complet",
-    },
-    it: {
-      name: "Carte Soldato",
-      version: "Mazzo Completo",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Alice in Wonderland",
   set: "002",
@@ -41,4 +24,5 @@ export const cardSoldiersFullDeck: CharacterCard = {
     tcgPlayer: 650057,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: cardSoldiersFullDeckI18n,
 };

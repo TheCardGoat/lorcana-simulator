@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { balooLaidbackBearI18n } from "./069-baloo-laid-back-bear.i18n";
 
 export const balooLaidbackBear: CharacterCard = {
   id: "Ji1",
@@ -7,24 +8,6 @@ export const balooLaidbackBear: CharacterCard = {
   cardType: "character",
   name: "Baloo",
   version: "Laid-Back Bear",
-  i18n: {
-    en: {
-      name: "Baloo",
-      version: "Laid-Back Bear",
-    },
-    de: {
-      name: "Balu",
-      version: "Lässiger Bär",
-    },
-    fr: {
-      name: "Baloo",
-      version: "Ours nonchalant",
-    },
-    it: {
-      name: "Baloo",
-      version: "Orso Rilassato",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Jungle Book",
   set: "010",
@@ -41,4 +24,5 @@ export const balooLaidbackBear: CharacterCard = {
     tcgPlayer: 659450,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: balooLaidbackBearI18n,
 };

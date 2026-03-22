@@ -42,9 +42,6 @@ describe("Motunui - Island Paradise", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }).success).toBe(
-      true,
-    );
 
     expect(testEngine.asPlayerOne().getCardZone(motunuiResident)).toBe("inkwell");
     expect(

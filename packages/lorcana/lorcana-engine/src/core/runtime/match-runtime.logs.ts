@@ -11,12 +11,12 @@ import type {
 } from "./types";
 import type { LogProjector, ProjectedLogEntry } from "./match-runtime.types";
 
-export interface ProjectGameLogInput<G> {
+export interface ProjectGameLogInput {
   publishedGameEvents: PublishedGameEvent[];
-  state: MatchState<G>;
+  state: MatchState;
   moveLogEntries?: readonly ProjectedLogEntry[];
   nextGameLogSeq: number;
-  logProjector?: LogProjector<G>;
+  logProjector?: LogProjector;
 }
 
 export interface ProjectGameLogOutput {
@@ -24,7 +24,7 @@ export interface ProjectGameLogOutput {
   nextGameLogSeq: number;
 }
 
-export function projectGameLog<G>(input: ProjectGameLogInput<G>): ProjectGameLogOutput {
+export function projectGameLog(input: ProjectGameLogInput): ProjectGameLogOutput {
   const { publishedGameEvents, state, moveLogEntries = [], nextGameLogSeq, logProjector } = input;
 
   let nextSeq = nextGameLogSeq;

@@ -14,7 +14,6 @@ import {
   createLorcanaLogMessage,
   type LorcanaCard,
   type LorcanaCardMeta,
-  type LorcanaG,
   type LorcanaMoveDefinition,
   type LorcanaRuntimeMoveInputs,
   type PendingTurnTransitionState,
@@ -24,7 +23,7 @@ import {
   cleanupDanglingTargetEffects,
   cleanupExpiredEffects,
 } from "../../effects/continuous-effects";
-import type { LorcanaRuntimeCardDerivedMethods } from "../../state/runtime-card-derived";
+import type { LorcanaCardDerived } from "../../../types/projected-board";
 import {
   emitTriggeredLorcanaEvent,
   finalizeResolutionBoundary,
@@ -40,32 +39,27 @@ import {
   pruneExpiredTemporaryEffects,
 } from "../../effects/temporary-effects";
 import { pruneExpiredReplacementEffects } from "../../effects/replacement-effects";
-import { hasStaticPlayerRestriction } from "../../rules/static-ability-utils";
+import {
+  hasStaticCardRestriction,
+  hasStaticPlayerRestriction,
+} from "../../rules/static-ability-utils";
+import { recordCardDrawnThisTurn } from "../../state/turn-metrics";
 
 type PassTurnExecutionContext = Pick<
-  MoveExecutionContext<LorcanaG, LorcanaCard, LorcanaRuntimeMoveInputs["passTurn"]>,
+  MoveExecutionContext<LorcanaRuntimeMoveInputs["passTurn"]>,
   "G" | "playerId" | "query" | "framework" | "cards"
 >;
 
-type PassTurnValidationContext = MoveValidationContext<
-  LorcanaG,
-  LorcanaCard,
-  LorcanaRuntimeMoveInputs["passTurn"],
-  LorcanaRuntimeCardDerivedMethods
->;
+type PassTurnValidationContext = MoveValidationContext<LorcanaRuntimeMoveInputs["passTurn"]>;
 
-type PassTurnEnumerationContext = MoveEnumerationContext<
-  LorcanaG,
-  LorcanaCard,
-  LorcanaRuntimeCardDerivedMethods
->;
+type PassTurnEnumerationContext = MoveEnumerationContext;
 
 type PassTurnIntentContext = PassTurnValidationContext | PassTurnEnumerationContext;
 
 type PassTurnFailure = Extract<RuntimeValidationResult, { valid: false }>;
 
 function isCardStillInPlay(ctx: PassTurnExecutionContext, sourceId: string): boolean {
-  const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[sourceId]?.zoneKey;
+  const zoneKey = ctx.framework.zones.getCardZone(sourceId);
   return typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"));
 }
 
@@ -112,6 +106,14 @@ function readyCardsForPlayer(
   playerId: PlayerId,
   currentTurn: number,
 ): void {
+  const readyOnlyOneCharacter = hasTemporaryPlayerRestriction(
+    ctx.G.temporaryPlayerRestrictions,
+    playerId,
+    currentTurn,
+    "ready-only-one-character",
+  );
+  let charactersReadied = 0;
+
   const playerZoneRefs = [
     { zone: "play", playerId },
     { zone: "inkwell", playerId },
@@ -130,10 +132,21 @@ function readyCardsForPlayer(
         }) ||
         hasTemporaryRestriction(currentMeta, currentTurn, "doesnt-ready", {
           isSourceInPlay: (sourceId) => isCardStillInPlay(ctx, sourceId),
+        }) ||
+        hasStaticCardRestriction({
+          state: ctx.framework.state,
+          cardId,
+          restriction: "cant-ready",
+          getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
         });
+      const exceedsReadyLimit =
+        zone.zone === "play" && readyOnlyOneCharacter && charactersReadied >= 1;
 
-      if (currentMeta.state === "exerted" && !cantReady) {
+      if (currentMeta.state === "exerted" && !cantReady && !exceedsReadyLimit) {
         nextMeta.state = "ready";
+        if (zone.zone === "play") {
+          charactersReadied += 1;
+        }
         emitTriggeredLorcanaEvent(
           ctx,
           "cardReadied",
@@ -152,17 +165,22 @@ function readyCardsForPlayer(
 }
 
 function drawForTurn(ctx: PassTurnExecutionContext, playerId: PlayerId, turnNumber: number): void {
-  const openingTurnPlayer = ctx.framework.state.ctx.status.otp as PlayerId | undefined;
+  const openingTurnPlayer = ctx.framework.state.status.otp as PlayerId | undefined;
   const shouldSkipOpeningDraw = turnNumber === 1 && playerId === openingTurnPlayer;
   if (shouldSkipOpeningDraw) {
     return;
   }
 
+  const deckCards = ctx.framework.zones.getCards({ zone: "deck", playerId });
+  const deckHasCards = Array.isArray(deckCards) && deckCards.length > 0;
   ctx.framework.zones.drawCards({
     from: { zone: "deck", playerId },
     to: { zone: "hand", playerId },
     count: 1,
   });
+  if (deckHasCards) {
+    recordCardDrawnThisTurn(ctx, playerId);
+  }
 }
 
 function shouldSkipDrawStepForPlayer(
@@ -170,12 +188,12 @@ function shouldSkipDrawStepForPlayer(
   playerId: PlayerId,
   turnNumber: number,
 ): boolean {
-  const openingTurnPlayer = ctx.framework.state.ctx.status.otp as PlayerId | undefined;
+  const openingTurnPlayer = ctx.framework.state.status.otp as PlayerId | undefined;
   if (turnNumber === 1 && playerId === openingTurnPlayer) {
     return true;
   }
 
-  const currentTurn = ctx.framework.state.ctx.status.turn ?? turnNumber;
+  const currentTurn = ctx.framework.state.status.turn ?? turnNumber;
   if (
     hasTemporaryPlayerRestriction(
       ctx.G.temporaryPlayerRestrictions,
@@ -274,6 +292,8 @@ export function advanceTurnToNextPlayer(ctx: PassTurnExecutionContext): AdvanceT
     banishedCharactersInChallengeByOwnerThisTurn: {},
     discardCardsLeftThisTurn: 0,
     pendingCostReductionsByPlayer: {},
+    cardsDrawnThisTurnByPlayer: {},
+    pendingPlayFromUnder: [],
   };
 
   gainLoreFromLocations(ctx, nextPlayer);
@@ -327,7 +347,7 @@ export function continuePendingTurnTransition(ctx: PassTurnExecutionContext): vo
           ctx.G.pendingTurnTransition = transitionState;
           if (
             hasPendingBagItems(ctx) ||
-            ctx.framework.state.ctx.priority.pendingChoice ||
+            ctx.framework.state.priority.pendingChoice ||
             (ctx.G.pendingEffects?.length ?? 0) > 0
           ) {
             return;
@@ -378,12 +398,12 @@ export function continuePendingTurnTransition(ctx: PassTurnExecutionContext): vo
             triggerWindowQueued: true,
           };
           ctx.G.pendingTurnTransition = transitionState;
-          if (hasPendingBagItems(ctx) || ctx.framework.state.ctx.priority.pendingChoice) {
+          if (hasPendingBagItems(ctx) || ctx.framework.state.priority.pendingChoice) {
             return;
           }
         }
 
-        const turnNumber = transitionState.turnNumber ?? ctx.framework.state.ctx.status.turn ?? 1;
+        const turnNumber = transitionState.turnNumber ?? ctx.framework.state.status.turn ?? 1;
         const drawStepStarted = transitionState.drawStepStarted === true;
         if (!drawStepStarted) {
           transitionState = {
@@ -411,7 +431,7 @@ function getPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null 
   if (
     ctx.G.pendingTurnTransition ||
     hasPendingBagItems(ctx) ||
-    ctx.framework.state.ctx.priority.pendingChoice ||
+    ctx.framework.state.priority.pendingChoice ||
     (ctx.G.pendingEffects?.length ?? 0) > 0
   ) {
     return {
@@ -421,7 +441,7 @@ function getPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null 
     };
   }
 
-  if (ctx.framework.state.ctx.priority.stackDepth > 0) {
+  if (ctx.framework.state.priority.stackDepth > 0) {
     return {
       valid: false,
       error: "Cannot pass turn while stack has unresolved effects",
@@ -433,7 +453,7 @@ function getPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null 
     const attackerDef = ctx.cards.getDefinition(attackerId);
     const hasStaticReckless = attackerDef ? hasKeyword(attackerDef, "Reckless") : false;
     const attackerMeta = ctx.cards.require(attackerId).meta;
-    const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+    const currentTurn = ctx.framework.state.status.turn ?? 1;
     const controllerId = ctx.cards.require(attackerId).controllerID as PlayerId | undefined;
     const controllerCantChallenge =
       controllerId !== undefined &&

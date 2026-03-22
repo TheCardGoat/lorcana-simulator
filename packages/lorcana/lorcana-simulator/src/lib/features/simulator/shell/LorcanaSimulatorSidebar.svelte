@@ -1,12 +1,23 @@
 <script lang="ts">
-  import { m } from "$lib/paraglide/messages.js";
+  import { m } from "$lib/i18n/messages.js";
   import * as Sidebar from "$lib/design-system/primitives/sidebar";
+  import EmptyState from "@/design-system/simulator/display/EmptyState.svelte";
   import {AvailableMovesPanel, EventLogPanel, PlayerInfo} from "@/features/simulator/index.js";
   import PlayerSettingsDialog from "@/features/simulator/dialogs/PlayerSettingsDialog.svelte";
+  import SimulatorSupportDialog from "@/features/simulator/dialogs/SimulatorSupportDialog.svelte";
   import {useSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
   import {useLorcanaSidebarPresenter} from "@/features/simulator/context/game-context.svelte.js";
+  import { useHumanVsAiOrchestrator } from "@/features/simulator-devtools/vs-ai/context.js";
+  import AiPlayerControls from "@/features/simulator-devtools/vs-ai/AiPlayerControls.svelte";
+
+  interface LorcanaSimulatorSidebarProps {
+    readOnly?: boolean;
+  }
+
+  let { readOnly = false }: LorcanaSimulatorSidebarProps = $props();
 
   const sidebar = useLorcanaSidebarPresenter();
+  const aiOrchestratorStore = useHumanVsAiOrchestrator();
   const simulatorCardContext = useSimulatorCardContext();
 
   const boardSnapshot = $derived(sidebar.boardSnapshot);
@@ -15,12 +26,14 @@
   const hasOwnedView = $derived(sidebar.hasOwnedView);
   const headerPlayerData = $derived(sidebar.headerPlayerData);
   const footerPlayerData = $derived(sidebar.footerPlayerData);
-  const executableMoves = $derived(sidebar.executableMoves);
+  const moveCategorySummaries = $derived(sidebar.moveCategorySummaries);
   const moveLogEntries = $derived(sidebar.moveLogEntries);
   const ownerSide = $derived(sidebar.ownerSide);
   const activeSide = $derived(sidebar.activeSide);
   const showRawLogRegistryJson = $derived(sidebar.showRawLogRegistryJson);
   const hoveredLogCard = $derived(sidebar.hoveredLogCard);
+  const availableMovesSelectionState = $derived(sidebar.availableMovesSelectionState);
+  let supportDialogOpen = $state(false);
 
   $effect(() => {
     simulatorCardContext.setExternalPreviewCard(hoveredLogCard);
@@ -42,7 +55,11 @@
         availableInk={headerPlayerData.availableInk}
         isActive={activeSide === topSide}
         isOpponent={hasOwnedView}
-      />
+      >
+        {#if $aiOrchestratorStore}
+          <AiPlayerControls orchestrator={$aiOrchestratorStore} />
+        {/if}
+      </PlayerInfo>
     {/if}
   </Sidebar.Header>
 
@@ -56,18 +73,43 @@
         onCardLeave={sidebar.handleLogCardLeave}
       />
 
-      <AvailableMovesPanel
-        moves={executableMoves}
-        supplementalActions={sidebar.resolutionActions}
-        interactiveSide={ownerSide}
-        activeSide={activeSide ?? undefined}
-        {showRawLogRegistryJson}
-        activePlayerGuidance={sidebar.activePlayerGuidanceController}
-        onStartManualMoveSelection={({ id, moves }) =>
-          sidebar.startManualCardActionSelection(id, moves)}
-        onResetManualMoveSelection={sidebar.cancelManualCardActionSelection}
-        onExecuteMove={sidebar.handleAvailableMoveClick}
-      />
+      {#if readOnly}
+        <div class="sidebar-readonly-state">
+          <p class="sidebar-readonly-title">{m["sim.postGame.actionsLocked"]({})}</p>
+          <EmptyState
+            icon="🏁"
+            label={m["sim.postGame.actionsLockedDetail"]({})}
+          />
+        </div>
+      {:else}
+        <AvailableMovesPanel
+          summaries={moveCategorySummaries}
+          onExpandCategory={sidebar.expandCategoryMoves}
+          supplementalActions={sidebar.resolutionActions}
+          selectionState={availableMovesSelectionState}
+          interactiveSide={ownerSide}
+          activeSide={activeSide ?? undefined}
+          {showRawLogRegistryJson}
+          activePlayerGuidance={sidebar.activePlayerGuidanceController}
+          cardSnapshots={sidebar.cardSnapshotsById}
+          onCardHover={sidebar.handleLogCardHover}
+          onCardLeave={sidebar.handleLogCardLeave}
+          onStartManualMoveSelection={({ id, moves }) =>
+            sidebar.startManualCardActionSelection(id, moves)}
+          onSelectCard={sidebar.handleAvailableMovesSelectionCard}
+          onSelectPlayer={sidebar.handleAvailableMovesSelectionPlayer}
+          onSelectOption={sidebar.handleAvailableMovesSelectionOption}
+          onResolutionNamedCardQueryInput={sidebar.handleAvailableMovesNamedCardQueryInput}
+          onSelectNamedCard={sidebar.handleAvailableMovesNamedCardSelection}
+          onAssignScryCard={sidebar.handleAvailableMovesScryAssignment}
+          onReorderScryCard={sidebar.handleAvailableMovesScryReorder}
+          onBackSelection={sidebar.backActionSelectionSession}
+          onCancelSelection={sidebar.cancelActionSelectionSession}
+          onConfirmSelection={sidebar.confirmActionSelection}
+          onResetManualMoveSelection={sidebar.cancelManualCardActionSelection}
+          onExecuteMove={sidebar.handleAvailableMoveClick}
+        />
+      {/if}
     </div>
   </Sidebar.Content>
 
@@ -86,7 +128,11 @@
         isActive={activeSide === bottomSide}
         isOpponent={false}
         showSettings
+        showSupport
         onSettingsClick={sidebar.handleOpenPlayerSettings}
+        onSupportClick={() => {
+          supportDialogOpen = true;
+        }}
       />
     {/if}
   </Sidebar.Footer>
@@ -99,10 +145,20 @@
   selectedLocale={sidebar.selectedLocale}
   {showRawLogRegistryJson}
   skipActionConfirmation={sidebar.skipActionConfirmation}
+  cardPreviewMode={sidebar.cardPreviewMode}
   onLocaleSelection={sidebar.handleLocaleSelection}
   onToggleRawLogRegistryJson={sidebar.handleRawLogRegistryToggle}
   onToggleSkipActionConfirmation={sidebar.handleSkipActionConfirmationToggle}
+  onCardPreviewModeChange={sidebar.handleCardPreviewModeChange}
+  primaryClickAction={sidebar.primaryClickAction}
+  onPrimaryClickActionChange={sidebar.handlePrimaryClickActionChange}
+  animationSpeed={sidebar.animationSpeed}
+  onAnimationSpeedChange={sidebar.handleAnimationSpeedChange}
+  soundVolume={sidebar.soundVolume}
+  onSoundVolumeChange={sidebar.handleSoundVolumeChange}
 />
+
+<SimulatorSupportDialog bind:open={supportDialogOpen} />
 
 <style>
   :global([data-sidebar="sidebar"]) {
@@ -116,7 +172,7 @@
     z-index: 10;
     background: rgba(9, 16, 28, 0.92);
     border-bottom: 1px solid rgba(113, 154, 204, 0.3);
-    padding: 0.5rem 0.5rem 0.45rem;
+    padding: 0.35rem 0.4rem;
     flex-shrink: 0;
   }
 
@@ -126,7 +182,7 @@
     z-index: 10;
     background: rgba(9, 16, 28, 0.92);
     border-top: 1px solid rgba(113, 154, 204, 0.3);
-    padding: 0.45rem 0.5rem 0.5rem;
+    padding: 0.35rem 0.4rem;
     margin-top: auto;
     flex-shrink: 0;
   }
@@ -134,7 +190,7 @@
   :global(.sidebar-content-body) {
     flex: 1;
     min-height: 0;
-    padding: 0.45rem 0.5rem 0.55rem;
+    padding: 0.25rem 0.4rem;
     overflow: hidden;
   }
 
@@ -144,5 +200,26 @@
     gap: 0.45rem;
     height: 100%;
     min-height: 0;
+  }
+
+  .sidebar-content-stack > :nth-child(2) {
+    border-top: 1px solid rgba(109, 149, 195, 0.16);
+    padding-top: 0.25rem;
+  }
+
+  .sidebar-readonly-state {
+    display: grid;
+    place-items: center;
+    gap: 0.4rem;
+    min-height: 0;
+    padding: 1rem 0.25rem;
+    border-top: 1px solid rgba(109, 149, 195, 0.16);
+  }
+
+  .sidebar-readonly-title {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: rgba(226, 232, 240, 0.9);
   }
 </style>

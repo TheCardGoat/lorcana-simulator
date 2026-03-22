@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { noiAcrobaticBabyI18n } from "./119-noi-acrobatic-baby.i18n";
 
 export const noiAcrobaticBaby: CharacterCard = {
   id: "9pN",
@@ -7,52 +8,6 @@ export const noiAcrobaticBaby: CharacterCard = {
   cardType: "character",
   name: "Noi",
   version: "Acrobatic Baby",
-  i18n: {
-    en: {
-      name: "Noi",
-      version: "Acrobatic Baby",
-      text: [
-        {
-          title: "FANCY FOOTWORK",
-          description:
-            "Whenever you play an action, this character takes no damage from challenges this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Kleine Noi",
-      version: "Akrobatisches Baby",
-      text: [
-        {
-          title: "RAFFINIERTE BEINARBEIT",
-          description:
-            "Jedes Mal, wenn du eine Aktion ausspielst, erhält dieser Charakter in diesem Zug keinen Schaden durch Herausforderungen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Bébé Noï",
-      version: "Bébé acrobate",
-      text: [
-        {
-          title: "JEU DE JAMBES REMARQUABLE",
-          description:
-            "Chaque fois que vous jouez une action, ce personnage ne subit aucun dommage lors des défis pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Noi",
-      version: "Bambina Acrobatica",
-      text: [
-        {
-          title: "ACROBAZIE",
-          description:
-            "Ogni volta che giochi un'azione, questo personaggio non subisce danni dalle sfide per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "004",
@@ -76,4 +31,5 @@ export const noiAcrobaticBaby: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [],
+  i18n: noiAcrobaticBabyI18n,
 };

@@ -14,7 +14,7 @@ import {
   evaluateCondition,
   type ConditionEvaluationContext,
 } from "../../rules/condition-evaluator";
-import { getEffectiveStrength, type DerivedStateContext } from "../../rules/derived-state";
+import { createProjectionState, getEffectiveStrength } from "../../rules/derived-state";
 import { isEffectExpired, resolveEffectWindow } from "../../rules/effect-registry";
 
 type ReplacementContext = Pick<PlayCardExecutionContext, "G" | "framework" | "cards">;
@@ -43,7 +43,7 @@ export type ReplacementEvent =
       controllerId: PlayerId;
       targetId: CardInstanceId;
       amount: number;
-      stat: "strength" | "willpower" | "lore";
+      stat: "strength" | "willpower" | "lore" | "singer-threshold";
     }
   | {
       kind: "deal-damage";
@@ -80,6 +80,14 @@ export type ReplacementEvent =
       amount: number;
     }
   | {
+      kind: "lose-lore";
+      eventId: string;
+      sourceId?: CardInstanceId;
+      controllerId: PlayerId;
+      playerId: PlayerId;
+      amount: number;
+    }
+  | {
       kind: "zone-change";
       eventId: string;
       sourceId?: CardInstanceId;
@@ -89,6 +97,18 @@ export type ReplacementEvent =
       fromZone: string;
       toZone: string;
       position?: "top" | "bottom";
+    }
+  | {
+      kind: "discard";
+      eventId: string;
+      sourceId?: CardInstanceId;
+      controllerId: PlayerId;
+      /** The player who would discard */
+      targetPlayerId: PlayerId;
+      /** Number of cards that would be discarded */
+      amount: number;
+      /** Whether the discard is prevented */
+      prevented: boolean;
     };
 
 type ReplacementCandidate = {
@@ -100,16 +120,14 @@ type ReplacementCandidate = {
 };
 
 function getCurrentTurn(ctx: ReplacementContext): number {
-  return ctx.framework.state.ctx.status.turn ?? 1;
+  return ctx.framework.state.status.turn ?? 1;
 }
 
 function getCardOwnerId(
   ctx: ReplacementContext,
   cardId: CardInstanceId | undefined,
 ): PlayerId | undefined {
-  return cardId
-    ? (ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID as PlayerId | undefined)
-    : undefined;
+  return cardId ? (ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined) : undefined;
 }
 
 function getCardName(
@@ -141,7 +159,7 @@ function getCardStrength(ctx: ReplacementContext, cardId: CardInstanceId | undef
 
   return getEffectiveStrength(
     definition as any,
-    ctx.framework.state as unknown as DerivedStateContext,
+    createProjectionState(ctx.framework.state, ctx.G),
     cardId,
     (id) => ctx.cards.getDefinition(id) as any,
   );
@@ -255,6 +273,20 @@ function createNumericSelfReplacementCandidate(
   };
 }
 
+function buildConditionContext(
+  ctx: ReplacementContext,
+  playerId: PlayerId,
+  sourceCardId?: CardInstanceId,
+): ConditionEvaluationContext {
+  return {
+    framework: ctx.framework,
+    cards: ctx.cards,
+    G: ctx.G,
+    playerId,
+    sourceCardId,
+  };
+}
+
 function createPrintedReplacementCandidate(
   ctx: ReplacementContext,
   sourceId: CardInstanceId,
@@ -262,9 +294,71 @@ function createPrintedReplacementCandidate(
   ability: ReplacementAbilityDefinition,
   event: ReplacementEvent,
 ): ReplacementCandidate | undefined {
+  // Handle "lose-lore" replacement with "prevent" string replacement
+  if (ability.replaces === "lose-lore" && ability.replacement === "prevent") {
+    if (event.kind !== "lose-lore" || event.amount <= 0) {
+      return undefined;
+    }
+    // Only applies to the controller (the card owner's lore)
+    if (event.playerId !== controllerId) {
+      return undefined;
+    }
+    // Evaluate the condition (e.g. "during opponents' turns")
+    if (
+      ability.condition &&
+      !evaluateCondition(ability.condition, buildConditionContext(ctx, controllerId, sourceId))
+    ) {
+      return undefined;
+    }
+    const abilityKey = ability.id ?? "replacement";
+    return {
+      id: `${sourceId}:${abilityKey}:prevent-lose-lore`,
+      applicationKey: `${sourceId}:${abilityKey}:prevent-lose-lore`,
+      apply: (currentEvent) => ({ ...currentEvent, amount: 0 }),
+      consume: () => undefined,
+    };
+  }
+
+  // Handle "discard" replacement with "prevent" string replacement
+  if (ability.replaces === "discard" && ability.replacement === "prevent") {
+    if (event.kind !== "discard" || event.prevented) {
+      return undefined;
+    }
+    // Only applies to the controller (the card owner's discard)
+    if (event.targetPlayerId !== controllerId) {
+      return undefined;
+    }
+    // Evaluate the condition (e.g. "during opponents' turns")
+    if (
+      ability.condition &&
+      !evaluateCondition(ability.condition, buildConditionContext(ctx, controllerId, sourceId))
+    ) {
+      return undefined;
+    }
+    const abilityKey = ability.id ?? "replacement";
+    return {
+      id: `${sourceId}:${abilityKey}:prevent-discard`,
+      applicationKey: `${sourceId}:${abilityKey}:prevent-discard`,
+      apply: (currentEvent) => ({ ...currentEvent, prevented: true }),
+      consume: () => undefined,
+    };
+  }
+
   const abilityKind = ability.replacement as ReplacementAbilityKind | undefined;
   if (!abilityKind) {
     return undefined;
+  }
+
+  if (abilityKind.type === "prevent-remove-damage") {
+    if (event.kind !== "remove-damage" || event.amount <= 0) {
+      return undefined;
+    }
+    return {
+      id: `${sourceId}:${ability.id ?? "replacement"}:prevent-remove`,
+      applicationKey: `${sourceId}:${ability.id ?? "replacement"}:prevent-remove`,
+      apply: (currentEvent) => ({ ...currentEvent, amount: 0 }),
+      consume: () => undefined,
+    };
   }
 
   if ((event.kind !== "deal-damage" && event.kind !== "challenge-damage") || event.amount <= 0) {
@@ -377,12 +471,16 @@ function createRegisteredReplacementCandidate(
   }
 
   if (replacement.type === "zone-destination") {
-    if (
-      event.kind !== "zone-change" ||
-      !registration.targetId ||
-      event.cardId !== registration.targetId ||
-      event.toZone !== replacement.toZone
-    ) {
+    if (event.kind !== "zone-change" || event.toZone !== replacement.toZone) {
+      return undefined;
+    }
+    // When targetId is set, the replacement applies only to that specific card.
+    // When targetId is undefined (e.g. registered before the card-to-be-played is known),
+    // scope to any card belonging to the registering controller.
+    if (registration.targetId && event.cardId !== registration.targetId) {
+      return undefined;
+    }
+    if (!registration.targetId && event.controllerId !== registration.controllerId) {
       return undefined;
     }
 

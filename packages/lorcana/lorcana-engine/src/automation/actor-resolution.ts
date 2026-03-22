@@ -1,4 +1,4 @@
-import type { DeepReadonly, MatchStaticResources, PlayerId } from "#core";
+import type { DeepReadonly, MatchRuntimeConfig, MatchStaticResources, PlayerId } from "#core";
 import { buildValidationContext } from "../core/runtime/match-runtime.utils";
 import { lorcanaRuntimeConfig } from "../runtime-game";
 import { getNextBagResolver } from "../triggered-abilities";
@@ -8,7 +8,7 @@ import type { AutomatedActionDiagnostic } from "./types";
 
 export function resolveServerCurrentActor(args: {
   state: DeepReadonly<LorcanaMatchState>;
-  staticResources: MatchStaticResources<LorcanaCard>;
+  staticResources: MatchStaticResources;
 }): Extract<AutomatedActionDiagnostic, { kind: "actor-resolution" }> {
   const { state, staticResources } = args;
 
@@ -50,12 +50,14 @@ export function resolveServerCurrentActor(args: {
     state as LorcanaMatchState,
     state.ctx.priority.holder ?? state.ctx.playerIds[0] ?? "",
     { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-    lorcanaRuntimeConfig,
+    lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
     staticResources,
     state.ctx.status.gameEnded,
     "preflight",
   );
-  const bagResolver = getNextBagResolver(validationContext);
+  const bagResolver = getNextBagResolver(
+    validationContext as unknown as Parameters<typeof getNextBagResolver>[0],
+  );
   if (bagResolver) {
     return {
       kind: "actor-resolution",

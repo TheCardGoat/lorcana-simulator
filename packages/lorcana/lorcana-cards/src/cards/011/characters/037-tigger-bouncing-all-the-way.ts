@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tiggerBouncingAllTheWayI18n } from "./037-tigger-bouncing-all-the-way.i18n";
 
 export const tiggerBouncingAllTheWay: CharacterCard = {
   id: "IyC",
@@ -7,52 +8,6 @@ export const tiggerBouncingAllTheWay: CharacterCard = {
   cardType: "character",
   name: "Tigger",
   version: "Bouncing All the Way",
-  i18n: {
-    en: {
-      name: "Tigger",
-      version: "Bouncing All the Way",
-      text: [
-        {
-          title: "SPLENDERIFFIC BOUNCE",
-          description:
-            "When you play this character, you may return chosen character, item, or location with cost 2 or less to their player's hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Tigger",
-      version: "Immerzu am Hüpfen",
-      text: [
-        {
-          title: "WUNDERTASTISCHER SPRUNG",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Charakter, Gegenstand oder Ort deiner Wahl, der 2 oder weniger kostet, zurück auf die zugehörige Hand schicken.",
-        },
-      ],
-    },
-    fr: {
-      name: "Tigrou",
-      version: "Bondit à tout va",
-      text: [
-        {
-          title: "BOND SPLENDIFIQUE",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage, un objet ou un lieu coûtant 2 ou moins et le renvoyer dans la main de son propriétaire.",
-        },
-      ],
-    },
-    it: {
-      name: "Tigro",
-      version: "Sempre Saltellante",
-      text: [
-        {
-          title: "SALTELLO SPLENDERRIMO",
-          description:
-            "Quando giochi questo personaggio, puoi far riprendere in mano al suo giocatore un personaggio, un oggetto o un luogo a tua scelta con costo 2 o inferiore.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Winnie the Pooh",
   set: "011",
@@ -82,11 +37,18 @@ export const tiggerBouncingAllTheWay: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           target: {
-            cardTypes: ["character"],
+            cardTypes: ["character", "item", "location"],
             count: 1,
             owner: "any",
             selector: "chosen",
             zones: ["play"],
+            filter: [
+              {
+                type: "cost-comparison",
+                comparison: "less-or-equal",
+                value: 2,
+              },
+            ],
           },
           type: "return-to-hand",
         },
@@ -102,4 +64,5 @@ export const tiggerBouncingAllTheWay: CharacterCard = {
       text: "SPLENDERIFFIC BOUNCE When you play this character, you may return chosen character, item, or location with cost 2 or less to their player's hand.",
     },
   ],
+  i18n: tiggerBouncingAllTheWayI18n,
 };

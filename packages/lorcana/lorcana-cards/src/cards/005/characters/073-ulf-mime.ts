@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ulfMimeI18n } from "./073-ulf-mime.i18n";
 
 export const ulfMime: CharacterCard = {
   id: "5p6",
@@ -7,48 +8,6 @@ export const ulfMime: CharacterCard = {
   cardType: "character",
   name: "Ulf",
   version: "Mime",
-  i18n: {
-    en: {
-      name: "Ulf",
-      version: "Mime",
-      text: [
-        {
-          title: "SILENT PERFORMANCE",
-          description: "This character can't {E} to sing songs.",
-        },
-      ],
-    },
-    de: {
-      name: "Ulf",
-      version: "Pantomime",
-      text: [
-        {
-          title: "STUMME DARSTELLUNG",
-          description: "Dieser Charakter kann nicht, um Lieder zu singen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Ulf",
-      version: "Mime",
-      text: [
-        {
-          title: "NUMÉRO SILENCIEUX",
-          description: "Ce personnage ne peut pas être pour chanter des chansons.",
-        },
-      ],
-    },
-    it: {
-      name: "Ulf",
-      version: "Mimo",
-      text: [
-        {
-          title: "PERFORMANCE SILENZIOSA",
-          description: "Questo personaggio non può per cantare le canzoni.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Tangled",
   set: "005",
@@ -83,4 +42,5 @@ export const ulfMime: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: ulfMimeI18n,
 };

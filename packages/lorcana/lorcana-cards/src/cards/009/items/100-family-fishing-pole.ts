@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { familyFishingPoleI18n } from "./100-family-fishing-pole.i18n";
 
 export const familyFishingPole: ItemCard = {
   id: "jDl",
@@ -6,52 +7,6 @@ export const familyFishingPole: ItemCard = {
   reprints: ["set9-100"],
   cardType: "item",
   name: "Family Fishing Pole",
-  i18n: {
-    en: {
-      name: "Family Fishing Pole",
-      text: [
-        {
-          title: "WATCH CLOSELY",
-          description: "This item enters play exerted.",
-        },
-        {
-          title: "THE PERFECT CAST",
-          description:
-            "{E}, 1 {I}, Banish this item — Return chosen exerted character of yours to your hand to gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Angelrute der Familie",
-      text: [
-        {
-          title: "PASS GUT AUF",
-          description:
-            "Dieser Gegenstand kommt erschöpft ins Spiel. DER PERFEKTE WURF, 1, Verbanne diesen Gegenstand — Wähle einen deiner erschöpften Charaktere und nimm ihn zurück auf deine Hand, um 2 Legenden zu sammeln.",
-        },
-      ],
-    },
-    fr: {
-      name: "Canne à pêche familiale",
-      text: [
-        {
-          title: "OBSERVE ATTENTIVEMENT",
-          description:
-            "Cet objet arrive en jeu épuisé. LE PARFAIT LANCER, 1, bannissez cet objet — Choisissez l'un de vos personnages épuisés et renvoyez-le dans votre main pour gagner 2 éclats de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Canna da Pesca di Famiglia",
-      text: [
-        {
-          title: "OSSERVA ATTENTAMENTE",
-          description:
-            "Questo oggetto entra in gioco impegnato. LA TECNICA DEL GRANDE LANCIO, 1, esilia questo oggetto — Riprendi in mano un tuo personaggio impegnato a tua scelta per ottenere 2 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Goofy Movie",
   set: "009",
@@ -122,4 +77,5 @@ export const familyFishingPole: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: familyFishingPoleI18n,
 };

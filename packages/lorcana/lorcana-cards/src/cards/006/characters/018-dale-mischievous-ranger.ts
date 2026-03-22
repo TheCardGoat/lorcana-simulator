@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daleMischievousRangerI18n } from "./018-dale-mischievous-ranger.i18n";
 
 export const daleMischievousRanger: CharacterCard = {
   id: "gNk",
@@ -7,52 +8,6 @@ export const daleMischievousRanger: CharacterCard = {
   cardType: "character",
   name: "Dale",
   version: "Mischievous Ranger",
-  i18n: {
-    en: {
-      name: "Dale",
-      version: "Mischievous Ranger",
-      text: [
-        {
-          title: "NUTS ABOUT PRANKS",
-          description:
-            "When you play this character, you may put the top 3 cards of your deck into your discard to give chosen character -3 {S} until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Chap",
-      version: "Schelmischer Ritter des Rechts",
-      text: [
-        {
-          title: "ICH STEH AUF STREICHE",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du die obersten 3 Karten deines Decks auf deinen Ablagestapel legen, um einem Charakter deiner Wahl bis zu Beginn deines nächsten Zuges -3 zu geben.",
-        },
-      ],
-    },
-    fr: {
-      name: "Tac",
-      version: "Ranger malicieux",
-      text: [
-        {
-          title: "BLAGUEUR À LA NOIX",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez placer les trois premières cartes de votre pioche dans votre défausse pour choisir un personnage qui subit -3 jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Ciop",
-      version: "Agente Speciale Dispettoso",
-      text: [
-        {
-          title: "MATTO PER GLI SCHERZI",
-          description:
-            "Quando giochi questo personaggio, puoi mettere le prime 3 carte del tuo mazzo nei tuoi scarti per dare a un personaggio a tua scelta -3 fino all'inizio del tuo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Rescue Rangers",
   set: "006",
@@ -75,5 +30,45 @@ export const daleMischievousRanger: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      id: "gNk-1",
+      name: "NUTS ABOUT PRANKS",
+      text: "NUTS ABOUT PRANKS When you play this character, you may put the top 3 cards of your deck into your discard to give chosen character -3 {S} until the start of your next turn.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+      effect: {
+        chooser: "CONTROLLER",
+        type: "optional",
+        effect: {
+          type: "sequence",
+          steps: [
+            {
+              type: "mill",
+              amount: 3,
+              target: "CONTROLLER",
+            },
+            {
+              type: "modify-stat",
+              stat: "strength",
+              modifier: -3,
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "any",
+                zones: ["play"],
+                cardTypes: ["character"],
+              },
+              duration: "until-start-of-next-turn",
+            },
+          ],
+        },
+      },
+    },
+  ],
+  i18n: daleMischievousRangerI18n,
 };

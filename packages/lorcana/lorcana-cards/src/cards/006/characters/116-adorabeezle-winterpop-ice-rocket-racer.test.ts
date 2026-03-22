@@ -1,29 +1,49 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { adorabeezleWinterpopIceRocketRacer } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Adorabeezle Winterpop - Ice Rocket Racer", () => {
-//   It("KEEP DRIVING While this character has damage, she gets +1 {L}.", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [adorabeezleWinterpopIceRocketRacer],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(
-//       AdorabeezleWinterpopIceRocketRacer,
-//     );
-//
-//     Expect(cardUnderTest.lore).toEqual(adorabeezleWinterpopIceRocketRacer.lore);
-//
-//     Await testEngine.setCardDamage(cardUnderTest, 1);
-//
-//     Expect(cardUnderTest.lore).toEqual(
-//       AdorabeezleWinterpopIceRocketRacer.lore + 1,
-//     );
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { adorabeezleWinterpopIceRocketRacer } from "./116-adorabeezle-winterpop-ice-rocket-racer";
+
+describe("Adorabeezle Winterpop - Ice Rocket Racer", () => {
+  describe("KEEP DRIVING — While this character has damage, she gets +1 {L}.", () => {
+    it("has base lore of 1 when undamaged", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: adorabeezleWinterpopIceRocketRacer }],
+      });
+
+      const cardId = testEngine.findCardInstanceId(adorabeezleWinterpopIceRocketRacer, "play");
+      const card = testEngine.asServer().getCard(cardId);
+      expect(card.lore).toBe(1);
+    });
+
+    it("gets +1 lore when she has damage", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: adorabeezleWinterpopIceRocketRacer }],
+      });
+
+      const cardId = testEngine.findCardInstanceId(adorabeezleWinterpopIceRocketRacer, "play");
+
+      // Set damage on the character
+      testEngine.asServer().manualSetDamage(cardId, 1);
+
+      const card = testEngine.asServer().getCard(cardId);
+      expect(card.lore).toBe(2); // 1 base + 1 from KEEP DRIVING
+    });
+
+    it("loses the +1 lore bonus when damage is removed", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: adorabeezleWinterpopIceRocketRacer }],
+      });
+
+      const cardId = testEngine.findCardInstanceId(adorabeezleWinterpopIceRocketRacer, "play");
+
+      // Add damage
+      testEngine.asServer().manualSetDamage(cardId, 1);
+      let card = testEngine.asServer().getCard(cardId);
+      expect(card.lore).toBe(2);
+
+      // Remove damage
+      testEngine.asServer().manualSetDamage(cardId, 0);
+      card = testEngine.asServer().getCard(cardId);
+      expect(card.lore).toBe(1); // Back to base
+    });
+  });
+});

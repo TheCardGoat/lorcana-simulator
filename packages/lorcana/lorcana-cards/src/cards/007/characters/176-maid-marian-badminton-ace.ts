@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { maidMarianBadmintonAceI18n } from "./176-maid-marian-badminton-ace.i18n";
 
 export const maidMarianBadmintonAce: CharacterCard = {
   id: "II0",
@@ -7,74 +8,11 @@ export const maidMarianBadmintonAce: CharacterCard = {
   cardType: "character",
   name: "Maid Marian",
   version: "Badminton Ace",
-  i18n: {
-    en: {
-      name: "Maid Marian",
-      version: "Badminton Ace",
-      text: [
-        {
-          title: "GOOD SHOT",
-          description:
-            "During an opponent's turn, whenever one of your Ally characters is damaged, deal 1 damage to chosen opposing character.",
-        },
-        {
-          title: "FAIR PLAY",
-          description: "Your characters named Lady Kluck gain Resist +1.",
-        },
-      ],
-    },
-    de: {
-      name: "Maid Marian",
-      version: "Badminton-Ass",
-      text: [
-        {
-          title: "EIN GUTER SCHLAG",
-          description:
-            "Jedes Mal, wenn einer deiner Verbündeten im Zug einer gegnerischen Person Schaden erhält, füge einem gegnerischen Charakter deiner Wahl 1 Schaden zu.",
-        },
-        {
-          title: "FAIRES SPIEL",
-          description:
-            "Deine Lady-Gluck-Charaktere erhalten Robust +1 (Reduziere jeglichen Schaden, der ihnen zugefügt wird, um 1.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Belle Marianne",
-      version: "As du badminton",
-      text: [
-        {
-          title: "FORT BIEN JOUÉ",
-          description:
-            "Durant le tour d'un adversaire, chaque fois que l'un de vos personnages Allié subit des dommages, choisissez un personnage adverse et infligez-lui 1 dommage.",
-        },
-        {
-          title: "ESPRIT SPORTIF",
-          description: "Vos personnages Dame Gertrude gagnent Résistance +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Lady Marian",
-      version: "Asso del Volano",
-      text: [
-        {
-          title: "BEL COLPO",
-          description:
-            "Durante il turno di un avversario, ogni volta che uno dei tuoi personaggi Alleato viene danneggiato, infliggi 1 danno a un personaggio avversario a tua scelta.",
-        },
-        {
-          title: "FAIR PLAY I",
-          description: "tuoi personaggi chiamati Lady Cocca ottengono Resistere +1.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire", "steel"],
   franchise: "Robin Hood",
   set: "007",
   cardNumber: 176,
-  rarity: "common",
+  rarity: "super_rare",
   cost: 4,
   strength: 3,
   willpower: 3,
@@ -98,7 +36,22 @@ export const maidMarianBadmintonAce: CharacterCard = {
   classifications: ["Dreamborn", "Hero", "Princess"],
   abilities: [
     {
+      id: "6at-1",
+      name: "GOOD SHOT",
+      text: "GOOD SHOT During an opponent's turn, whenever one of your Ally characters is damaged, deal 1 damage to chosen opposing character.",
+      type: "triggered",
+      trigger: {
+        event: "damage",
+        timing: "whenever",
+        on: {
+          controller: "you",
+          cardType: "character",
+          classification: "Ally",
+        },
+        restrictions: [{ type: "during-turn", whose: "opponent" }],
+      },
       effect: {
+        type: "deal-damage",
         amount: 1,
         target: {
           cardTypes: ["character"],
@@ -107,22 +60,29 @@ export const maidMarianBadmintonAce: CharacterCard = {
           selector: "chosen",
           zones: ["play"],
         },
-        type: "deal-damage",
       },
-      id: "6at-1",
-      text: "GOOD SHOT During an opponent's turn, whenever one of your Ally characters is damaged, deal 1 damage to chosen opposing character.",
-      type: "action",
     },
     {
-      effect: {
-        keyword: "Resist",
-        target: "YOUR_CHARACTERS",
-        type: "gain-keyword",
-        value: 1,
-      },
       id: "6at-2",
+      name: "FAIR PLAY",
       text: "FAIR PLAY Your characters named Lady Kluck gain Resist +1.",
-      type: "action",
+      type: "static",
+      effect: {
+        type: "gain-keyword",
+        keyword: "Resist",
+        value: 1,
+        target: {
+          cardTypes: ["character"],
+          count: "all",
+          owner: "you",
+          selector: "all",
+          zones: ["play"],
+          filter: [
+            { type: "attribute", attribute: "name", comparison: "equals", value: "Lady Kluck" },
+          ],
+        },
+      },
     },
   ],
+  i18n: maidMarianBadmintonAceI18n,
 };

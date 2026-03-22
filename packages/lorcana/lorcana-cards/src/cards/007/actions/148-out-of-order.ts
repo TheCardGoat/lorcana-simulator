@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { outOfOrderI18n } from "./148-out-of-order.i18n";
 
 export const outOfOrder: ActionCard = {
   id: "ljS",
@@ -6,24 +7,6 @@ export const outOfOrder: ActionCard = {
   reprints: ["set7-148"],
   cardType: "action",
   name: "Out of Order",
-  i18n: {
-    en: {
-      name: "Out of Order",
-      text: "Banish chosen character.",
-    },
-    de: {
-      name: "Ausser Betrieb",
-      text: "Verbanne einen Charakter deiner Wahl.",
-    },
-    fr: {
-      name: "Hors service",
-      text: "Choisissez un personnage et bannissez-le.",
-    },
-    it: {
-      name: "Fuori Servizio",
-      text: "Esilia un personaggio a tua scelta.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Wreck It Ralph",
   set: "007",
@@ -53,4 +36,5 @@ export const outOfOrder: ActionCard = {
       type: "action",
     },
   ],
+  i18n: outOfOrderI18n,
 };

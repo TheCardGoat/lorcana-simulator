@@ -36,6 +36,19 @@ export interface ScryEffect {
   destinations?: ScryDestination[];
   /** Whether all looked-at cards should be revealed to opponent */
   revealAll?: boolean;
+  /**
+   * Who makes the scry selection (distributes cards to destinations).
+   * Defaults to CONTROLLER. Use "OPPONENT" when the opponent's player
+   * must choose how to distribute the scry'd cards (e.g. "their player may
+   * reveal the top card and play it for free").
+   */
+  chooser?: PlayerTarget;
+  /**
+   * If true, the scry effect repeats (re-queues itself) when any card is
+   * placed into the `hand` destination. Used for "repeat this effect" cards
+   * like Sisu - Uniting Dragon.
+   */
+  repeatOnHandMatch?: boolean;
 }
 
 /**

@@ -1,150 +1,106 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   MrSmee,
-//   RapunzelGiftedWithHealing,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { pawpsicle } from "@lorcanito/lorcana-engine/cards/002/items/items";
-// Import { chienPoImperialSoldier } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import {
-//   AuroraWakingBeauty,
-//   TheFamilyMadrigal,
-// } from "@lorcanito/lorcana-engine/cards/007";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Aurora - Waking Beauty", () => {
-//   Describe("SWEET DREAMS", () => {
-//     It("should ready the character when you heal your character", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: 5,
-//         Play: [auroraWakingBeauty, chienPoImperialSoldier],
-//         Hand: [rapunzelGiftedWithHealing],
-//         Deck: [mrSmee, mrSmee, mrSmee],
-//       });
-//
-//       Const auroraModel = testEngine.getCardModel(auroraWakingBeauty);
-//       Const chienModel = testEngine.getCardModel(chienPoImperialSoldier);
-//
-//       Await testEngine.questCard(auroraWakingBeauty);
-//
-//       Await chienModel.updateCardDamage(1);
-//
-//       Await testEngine.playCard(rapunzelGiftedWithHealing);
-//
-//       Await testEngine.resolveTopOfStack({ targets: [chienModel] });
-//
-//       Expect(auroraModel.ready).toBe(true);
-//       Expect(auroraModel.hasQuestRestriction).toBe(true);
-//       Expect(auroraModel.hasChallengeRestriction).toBe(true);
-//     });
-//
-//     It("should ready the character when you heal opponent's character", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: 5,
-//           Play: [auroraWakingBeauty, pawpsicle],
-//         },
-//         {
-//           Play: [chienPoImperialSoldier],
-//         },
-//       );
-//
-//       Const auroraModel = testEngine.getCardModel(auroraWakingBeauty);
-//       Const chienModel = testEngine.getCardModel(chienPoImperialSoldier);
-//
-//       Await testEngine.questCard(auroraWakingBeauty);
-//
-//       Await chienModel.updateCardDamage(1);
-//
-//       Await testEngine.activateCard(pawpsicle);
-//
-//       Await testEngine.acceptOptionalLayer();
-//       Await testEngine.resolveTopOfStack({ targets: [chienModel] }, true);
-//
-//       Expect(auroraModel.ready).toBe(true);
-//       Expect(auroraModel.hasQuestRestriction).toBe(true);
-//       Expect(auroraModel.hasChallengeRestriction).toBe(true);
-//     });
-//
-//     It("should not ready the character when you don't heal any damage", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: 5,
-//           Play: [auroraWakingBeauty, pawpsicle],
-//         },
-//         {
-//           Play: [chienPoImperialSoldier],
-//         },
-//       );
-//
-//       Const auroraModel = testEngine.getCardModel(auroraWakingBeauty);
-//       Const chienModel = testEngine.getCardModel(chienPoImperialSoldier);
-//
-//       Await testEngine.questCard(auroraWakingBeauty);
-//
-//       Await testEngine.activateCard(pawpsicle);
-//
-//       Await testEngine.acceptOptionalLayer();
-//       Await testEngine.resolveTopOfStack({ targets: [chienModel] }, true);
-//
-//       Expect(auroraModel.ready).toBe(false);
-//       Expect(auroraModel.hasQuestRestriction).toBe(false);
-//       Expect(auroraModel.hasChallengeRestriction).toBe(false);
-//     });
-//
-//     It("should not ready when opponents heal a character", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: 5,
-//           Play: [chienPoImperialSoldier, pawpsicle],
-//         },
-//         {
-//           Play: [auroraWakingBeauty],
-//         },
-//       );
-//
-//       Const auroraModel = testEngine.getCardModel(auroraWakingBeauty);
-//       Const chienModel = testEngine.getCardModel(chienPoImperialSoldier);
-//
-//       Await testEngine.tapCard(auroraWakingBeauty);
-//       Await testEngine.setCardDamage(chienModel, 1);
-//
-//       Await testEngine.activateCard(
-//         Pawpsicle,
-//         {
-//           AcceptOptionalLayer: true,
-//           Targets: [chienModel],
-//         },
-//         True,
-//       );
-//
-//       Expect(auroraModel.ready).toBe(false);
-//       Expect(auroraModel.hasQuestRestriction).toBe(false);
-//       Expect(auroraModel.hasChallengeRestriction).toBe(false);
-//     });
-//
-//     It("Singer 5 (This character counts as cost 5 to sing songs.)", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [auroraWakingBeauty],
-//         Hand: [theFamilyMadrigal],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(auroraWakingBeauty);
-//       Const song = testEngine.getCardModel(theFamilyMadrigal);
-//       Expect(cardUnderTest.hasSinger).toBe(true);
-//
-//       Await testEngine.singSong({
-//         Singer: auroraWakingBeauty,
-//         Song: theFamilyMadrigal,
-//       });
-//
-//       Expect(cardUnderTest.exerted).toBe(true);
-//       Expect(song.zone).toEqual("discard");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { auroraWakingBeauty } from "./014-aurora-waking-beauty";
+import { magicGoldenFlower } from "../../001/items/169-magic-golden-flower";
+
+const damagedAlly = createMockCharacter({
+  id: "aurora-test-damaged-ally",
+  name: "Damaged Ally",
+  cost: 2,
+  willpower: 5,
+});
+
+describe("Aurora - Waking Beauty", () => {
+  it("has Singer 5 keyword", () => {
+    const keyword = auroraWakingBeauty.abilities?.find(
+      (a) => a.type === "keyword" && a.keyword === "Singer",
+    );
+    expect(keyword).toBeDefined();
+    expect((keyword as { value?: number }).value).toBe(5);
+  });
+
+  describe("SWEET DREAMS - Whenever you remove 1 or more damage from a character, ready this character. She can't quest or challenge for the rest of this turn.", () => {
+    it("should ready Aurora when you heal a character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [auroraWakingBeauty, { card: damagedAlly, damage: 3 }, magicGoldenFlower],
+        deck: 2,
+      });
+
+      const auroraId = testEngine.findCardInstanceId(auroraWakingBeauty, "play");
+      const allyId = testEngine.findCardInstanceId(damagedAlly, "play");
+      const flowerId = testEngine.findCardInstanceId(magicGoldenFlower, "play");
+
+      // Exert Aurora (e.g., via quest) so we can verify she gets readied
+      expect(testEngine.asPlayerOne().quest(auroraId)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().isExerted(auroraId)).toBe(true);
+
+      // Use Magic Golden Flower to heal the damaged ally
+      testEngine.asPlayerOne().activateAbility(flowerId, { abilityIndex: 0, targets: [allyId] });
+
+      // Resolve the SWEET DREAMS triggered ability
+      testEngine.asPlayerOne().resolveNextBag();
+
+      // Aurora should be readied
+      expect(testEngine.asPlayerOne().isExerted(auroraId)).toBe(false);
+
+      // Aurora should have quest and challenge restrictions for this turn
+      expect(testEngine.hasRestriction(auroraWakingBeauty, "cant-quest-or-challenge")).toBe(true);
+    });
+
+    it("should not ready Aurora when no damage is actually removed", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [
+          auroraWakingBeauty,
+          damagedAlly, // no damage on this ally
+          magicGoldenFlower,
+        ],
+        deck: 2,
+      });
+
+      const auroraId = testEngine.findCardInstanceId(auroraWakingBeauty, "play");
+      const allyId = testEngine.findCardInstanceId(damagedAlly, "play");
+      const flowerId = testEngine.findCardInstanceId(magicGoldenFlower, "play");
+
+      // Exert Aurora
+      expect(testEngine.asPlayerOne().quest(auroraId)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().isExerted(auroraId)).toBe(true);
+
+      // Use Magic Golden Flower on a character with no damage
+      testEngine.asPlayerOne().activateAbility(flowerId, { abilityIndex: 0, targets: [allyId] });
+
+      // Aurora should still be exerted since no damage was actually removed
+      expect(testEngine.asPlayerOne().isExerted(auroraId)).toBe(true);
+
+      // No restrictions should be applied
+      expect(testEngine.hasRestriction(auroraWakingBeauty, "cant-quest-or-challenge")).toBe(false);
+    });
+
+    it("restrictions should expire after the turn ends", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [auroraWakingBeauty, { card: damagedAlly, damage: 3 }, magicGoldenFlower],
+        deck: 2,
+      });
+
+      const auroraId = testEngine.findCardInstanceId(auroraWakingBeauty, "play");
+      const allyId = testEngine.findCardInstanceId(damagedAlly, "play");
+      const flowerId = testEngine.findCardInstanceId(magicGoldenFlower, "play");
+
+      // Exert Aurora
+      expect(testEngine.asPlayerOne().quest(auroraId)).toBeSuccessfulCommand();
+
+      // Heal the ally to trigger SWEET DREAMS
+      testEngine.asPlayerOne().activateAbility(flowerId, { abilityIndex: 0, targets: [allyId] });
+      testEngine.asPlayerOne().resolveNextBag();
+
+      // Verify restrictions exist
+      expect(testEngine.hasRestriction(auroraWakingBeauty, "cant-quest-or-challenge")).toBe(true);
+
+      // Pass turn and opponent passes turn back
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      // Restrictions should have expired
+      expect(testEngine.hasRestriction(auroraWakingBeauty, "cant-quest-or-challenge")).toBe(false);
+    });
+  });
+});

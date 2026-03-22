@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { fergusMcduckScroogesFatherI18n } from "./144-fergus-mcduck-scrooges-father.i18n";
 
 export const fergusMcduckScroogesFather: CharacterCard = {
   id: "sKm",
@@ -7,52 +8,6 @@ export const fergusMcduckScroogesFather: CharacterCard = {
   cardType: "character",
   name: "Fergus McDuck",
   version: "Scrooge's Father",
-  i18n: {
-    en: {
-      name: "Fergus McDuck",
-      version: "Scrooge's Father",
-      text: [
-        {
-          title: "TOUGHEN UP",
-          description:
-            "When you play this character, chosen character of yours gains Ward until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Dietbert Duck",
-      version: "Dagoberts Vater",
-      text: [
-        {
-          title: "ABHÄRTEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, wähle einen deiner Charaktere. Jener erhält bis zu Beginn deines nächsten Zuges Behütet. (Gegnerische Mitspielende können den Charakter nicht auswählen, außer um ihn herauszufordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Fergus Mac Picsou",
-      version: "Père de Balthazar",
-      text: [
-        {
-          title: "ENDURCIR",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez l'un de vos personnages qui gagne Hors d'atteinte jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Fergus de' Paperoni",
-      version: "Padre di Paperone",
-      text: [
-        {
-          title: "INDURIRSI",
-          description:
-            "Quando giochi questo personaggio, un tuo personaggio a tua scelta ottiene Protetto fino all'inizio del tuo prossimo turno. (Gli avversari non possono sceglierlo se non per sfidarlo.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Ducktales",
   set: "010",
@@ -78,11 +33,12 @@ export const fergusMcduckScroogesFather: CharacterCard = {
   abilities: [
     {
       effect: {
+        duration: "until-start-of-next-turn",
         keyword: "Ward",
         target: {
           cardTypes: ["character"],
           count: 1,
-          owner: "any",
+          owner: "you",
           selector: "chosen",
           zones: ["play"],
         },
@@ -99,4 +55,5 @@ export const fergusMcduckScroogesFather: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: fergusMcduckScroogesFatherI18n,
 };

@@ -1,7 +1,7 @@
-import type { CardInstanceId } from "#core";
-import { isClassification, type BanishEffect } from "@tcg/lorcana-types";
+import type { CardInstanceId, BaseCardDefinition } from "#core";
+import { isClassification, type BanishEffect, type LorcanaCard } from "@tcg/lorcana-types";
 import type { PlayerId } from "#core";
-import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
+import { moveCardOutOfPlayWithStack, getCharacterIdsAtLocation } from "../../state/shift-stack";
 import { type CardPlayedPayload } from "../../../types";
 import type { DynamicAmountEventSnapshot } from "../../../types/domain-events";
 import type { PlayCardExecutionContext } from "./types";
@@ -12,8 +12,9 @@ import {
   emitTriggeredLorcanaEvent,
   snapshotTriggeredCandidatesForCard,
 } from "../../effects/triggered-abilities";
-import { getEffectiveStrength, type DerivedStateContext } from "../../../rules/derived-state";
+import { createProjectionState, getEffectiveStrength } from "../../../rules/derived-state";
 import { projectLorcanaCardDerived } from "../../../projection/card-derived";
+import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
 
 type ResolvedBanishEffectInput = {
   eventSnapshot?: DynamicAmountEventSnapshot;
@@ -35,15 +36,12 @@ export function resolveBanishEffect(
   _effect: BanishEffect,
   resolvedInput: ResolvedBanishEffectInput,
 ): void {
-  const derivedState = {
-    ...ctx.framework.state,
-    G: ctx.G,
-  } as DerivedStateContext;
+  const derivedState = createProjectionState(ctx.framework.state, ctx.G);
   let banishedAny = false;
   let banishedCount = 0;
 
   for (const targetId of resolvedInput.targets) {
-    const ownerId = ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.ownerID;
+    const ownerId = ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined;
     if (!ownerId) {
       effectLogger.fatal(`Target card ${targetId} not found in card index`);
       continue;
@@ -55,9 +53,12 @@ export function resolveBanishEffect(
       : 0;
     const subjectAtLocationId = targetMeta.atLocationId as CardInstanceId | undefined;
     const targetDefinition = ctx.cards.getDefinition(targetId);
+    const targetDefAsLorcana = targetDefinition as
+      | (BaseCardDefinition & Partial<LorcanaCard>)
+      | undefined;
     const targetCost =
-      typeof targetDefinition?.cost === "number" && Number.isFinite(targetDefinition.cost)
-        ? targetDefinition.cost
+      typeof targetDefAsLorcana?.cost === "number" && Number.isFinite(targetDefAsLorcana.cost)
+        ? targetDefAsLorcana.cost
         : undefined;
     const projected = targetDefinition
       ? projectLorcanaCardDerived({
@@ -66,17 +67,18 @@ export function resolveBanishEffect(
           state: derivedState,
           cardInstanceId: targetId,
           ownerID: ownerId,
-          controllerID: ((ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.controllerID as
+          controllerID: ((ctx.framework.zones.getCardController(targetId) as
             | PlayerId
             | undefined) ?? ownerId) as PlayerId,
-          zoneID: ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.zoneKey,
+          zoneID: ctx.framework.zones.getCardZone(targetId),
           actorPlayerId: cardPlayed.playerId,
           getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
         })
       : undefined;
     const classificationsBeforeBanish = projected?.classifications?.filter(isClassification);
+    const keywordsBeforeBanish = getKeywordsBeforeBanish(ctx, targetId, cardPlayed.playerId);
     const strengthBeforeBanish =
-      targetDefinition?.cardType === "character"
+      targetDefAsLorcana?.cardType === "character"
         ? getEffectiveStrength(
             targetDefinition as any,
             derivedState,
@@ -105,9 +107,16 @@ export function resolveBanishEffect(
       if (Array.isArray(classificationsBeforeBanish) && classificationsBeforeBanish.length > 0) {
         resolvedInput.eventSnapshot.classificationsBeforeBanish = [...classificationsBeforeBanish];
       }
+      if (Array.isArray(keywordsBeforeBanish) && keywordsBeforeBanish.length > 0) {
+        resolvedInput.eventSnapshot.keywordsBeforeBanish = [...keywordsBeforeBanish];
+      }
     }
 
     const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, targetId);
+    const charsAtLocation =
+      targetDefAsLorcana?.cardType === "location"
+        ? getCharacterIdsAtLocation(ctx, targetId)
+        : undefined;
     moveCardOutOfPlayWithStack(ctx, targetId, {
       zone: "discard",
       playerId: ownerId,
@@ -122,6 +131,7 @@ export function resolveBanishEffect(
         snapshot: {
           cardsUnderCountBeforeBanish,
           classificationsBeforeBanish,
+          keywordsBeforeBanish,
           strengthBeforeBanish,
           subjectAtLocationId,
         },
@@ -135,8 +145,12 @@ export function resolveBanishEffect(
         triggerSourceCardId: targetId,
         triggerCandidates,
         eventSnapshot: {
+          cardsUnderCountBeforeBanish,
+          strengthBeforeBanish,
           classificationsBeforeBanish,
+          keywordsBeforeBanish,
           subjectAtLocationId,
+          charactersAtSourceLocationBeforeBanish: charsAtLocation,
         },
       },
     );

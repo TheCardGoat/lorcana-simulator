@@ -22,14 +22,8 @@ describe("Mulan - Reflecting", () => {
     // Resolve triggers
     testEngine.asPlayerOne().resolveNextBag();
 
-    // Since it's a song, we should be prompted if we want to play it (optional effect)
-    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
-    if (pendingChoice) {
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true });
-    }
-
     // Bibbidi Bobbidi Boo needs a target to bounce to hand
-    pendingChoice = testEngine.asPlayerOne().getPendingChoice();
+    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
     if (pendingChoice) {
       testEngine.asPlayerOne().resolveNextPending({ targets: [mulanId] });
     }

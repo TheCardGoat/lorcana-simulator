@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pachaVillageLeaderI18n } from "./190-pacha-village-leader.i18n";
 
 export const pachaVillageLeader: CharacterCard = {
   id: "SED",
@@ -7,24 +8,6 @@ export const pachaVillageLeader: CharacterCard = {
   cardType: "character",
   name: "Pacha",
   version: "Village Leader",
-  i18n: {
-    en: {
-      name: "Pacha",
-      version: "Village Leader",
-    },
-    de: {
-      name: "Patcha",
-      version: "Dorfvorsteher",
-    },
-    fr: {
-      name: "Pacha",
-      version: "Chef de village",
-    },
-    it: {
-      name: "Pacha",
-      version: "Village Leader",
-    },
-  },
   inkType: ["steel"],
   franchise: "Emperors New Groove",
   set: "002",
@@ -41,4 +24,5 @@ export const pachaVillageLeader: CharacterCard = {
     tcgPlayer: 527778,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: pachaVillageLeaderI18n,
 };

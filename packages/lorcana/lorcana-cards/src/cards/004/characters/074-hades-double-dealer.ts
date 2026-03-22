@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hadesDoubleDealerI18n } from "./074-hades-double-dealer.i18n";
 
 export const hadesDoubleDealer: CharacterCard = {
   id: "V9W",
@@ -7,52 +8,6 @@ export const hadesDoubleDealer: CharacterCard = {
   cardType: "character",
   name: "Hades",
   version: "Double Dealer",
-  i18n: {
-    en: {
-      name: "Hades",
-      version: "Double Dealer",
-      text: [
-        {
-          title: "HERE'S THE TRADE-OFF",
-          description:
-            "{E}, Banish one of your other characters — Play a character with the same name as the banished character for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Hades",
-      version: "Falsches Spiel",
-      text: [
-        {
-          title: "NUN ZUM",
-          description:
-            "GESCHÄFT, Verbanne einen deiner anderen Charaktere — Spiele einen Charakter mit demselben Namen wie der verbannte Charakter, kostenlos aus.",
-        },
-      ],
-    },
-    fr: {
-      name: "Hadès",
-      version: "Double jeu",
-      text: [
-        {
-          title: "VOILÀ LE MARCHÉ,",
-          description:
-            "Bannissez l'un de vos autres personnages — Jouez gratuitement un personnage de votre main portant le même nom que le personnage banni.",
-        },
-      ],
-    },
-    it: {
-      name: "Ade",
-      version: "Doppiogiochista",
-      text: [
-        {
-          title: "FACCIAMO UNO SCAMBIO,",
-          description:
-            "esilia uno dei tuoi altri personaggi — Gioca un personaggio con lo stesso nome di quello che hai esiliato, gratis.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "004",
@@ -79,16 +34,24 @@ export const hadesDoubleDealer: CharacterCard = {
     {
       cost: {
         exert: true,
+        banishCharacter: true,
+        banishCharacterTarget: "another",
       },
       effect: {
         cardType: "character",
         cost: "free",
         from: "hand",
+        filter: {
+          cardType: "character",
+          sameNameAsChosenCard: true,
+        },
         type: "play-card",
       },
       id: "i41-1",
+      name: "HERE'S THE TRADE-OFF",
       text: "HERE'S THE TRADE-OFF {E}, Banish one of your other characters — Play a character with the same name as the banished character for free.",
       type: "activated",
     },
   ],
+  i18n: hadesDoubleDealerI18n,
 };

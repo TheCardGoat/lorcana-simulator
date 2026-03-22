@@ -25,12 +25,15 @@ export type {
   ExertEffect,
   GainLoreEffect,
   LoseLoreEffect,
+  LookAtCardsEffect,
   MillEffect,
   MoveDamageEffect,
   NumericSelfReplacement,
   PutDamageEffect,
+  PutInHandEffect,
   ReadyEffect,
   RemoveDamageEffect,
+  SelectTargetEffect,
   SelfReplacementCondition,
 } from "./basic-effects";
 // Combined types and guards
@@ -81,16 +84,20 @@ export type {
 
 // Modifier effects
 export type {
+  CostIncreaseEffect,
   CostReductionEffect,
   DrawUntilHandSizeEffect,
   EntersPlayEffect,
   GainKeywordEffect,
   GrantAbilityEffect,
   LoseKeywordEffect,
+  GrantHandInkabilityEffect,
+  GrantDiscardInkabilityEffect,
   ModifyStatEffect,
   NameACardEffect,
   PropertyModificationEffect,
   PutOnTopEffect,
+  RevealUntilMatchEffect,
   RestrictionEffect,
   RevealHandEffect,
   RevealTopCardEffect,

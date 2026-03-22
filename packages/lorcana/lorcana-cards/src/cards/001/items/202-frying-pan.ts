@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { fryingPanI18n } from "./202-frying-pan.i18n";
 
 export const fryingPan: ItemCard = {
   id: "HLs",
@@ -6,48 +7,6 @@ export const fryingPan: ItemCard = {
   reprints: ["set1-202"],
   cardType: "item",
   name: "Frying Pan",
-  i18n: {
-    en: {
-      name: "Frying Pan",
-      text: [
-        {
-          title: "CLANG!",
-          description:
-            "Banish this item — Chosen character can't challenge during their next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Bratpfanne",
-      text: [
-        {
-          title: "KLONG!",
-          description:
-            "Verbanne diesen Gegenstand — wähle einen gegnerischen Charakter. Er kann in seinem nächsten Zug nicht herausfordern.",
-        },
-      ],
-    },
-    fr: {
-      name: "POÊLE À FRIRE",
-      text: [
-        {
-          title: "BANG!",
-          description:
-            "Bannissez cet objet — Choisissez un personnage qui ne pourra pas défier durant son prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Frying Pan",
-      text: [
-        {
-          title: "CLANG!",
-          description:
-            "Banish this item — Chosen character can't challenge during their next turn.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Tangled",
   set: "001",
@@ -82,4 +41,5 @@ export const fryingPan: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: fryingPanI18n,
 };

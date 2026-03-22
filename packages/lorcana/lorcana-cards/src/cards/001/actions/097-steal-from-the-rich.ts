@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { stealFromTheRichI18n } from "./097-steal-from-the-rich.i18n";
 
 export const stealFromTheRich: ActionCard = {
   id: "mkJ",
@@ -6,24 +7,6 @@ export const stealFromTheRich: ActionCard = {
   reprints: ["set1-097"],
   cardType: "action",
   name: "Steal from the Rich",
-  i18n: {
-    en: {
-      name: "Steal from the Rich",
-      text: "Whenever one of your characters quests this turn, each opponent loses 1 lore.",
-    },
-    de: {
-      name: "Nimm von den Reichen",
-      text: "Jedes Mal, wenn einer deiner Charaktere in diesem Zug erkundet, verlieren alle gegnerischen Mitspielenden je 1 Legende.",
-    },
-    fr: {
-      name: "VOLER AUX RICHES",
-      text: "Chaque fois que l'un de vos personnages est envoyé à l'aventure durant ce tour, chaque adversaire perd 1 éclat de Lore.",
-    },
-    it: {
-      name: "Steal from the Rich",
-      text: "Whenever one of your characters quests this turn, each opponent loses 1 lore.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "001",
@@ -60,4 +43,5 @@ export const stealFromTheRich: ActionCard = {
       },
     },
   ],
+  i18n: stealFromTheRichI18n,
 };

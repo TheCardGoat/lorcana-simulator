@@ -8,13 +8,13 @@ describe("Go the Distance", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [goTheDistance],
       inkwell: goTheDistance.cost,
-      deck: [simbaProtectiveCub],
+      deck: 5,
       play: [{ card: simbaProtectiveCub, exerted: true, damage: 1 }],
     });
 
-    expect(testEngine.asPlayerOne().playCardTo(goTheDistance, simbaProtectiveCub).success).toBe(
-      true,
-    );
+    expect(
+      testEngine.asPlayerOne().playCard(goTheDistance, { targets: [simbaProtectiveCub] }).success,
+    ).toBe(true);
 
     expect(testEngine.asPlayerOne()).toBeReady(simbaProtectiveCub);
     expect(testEngine.asPlayerOne()).toHaveRestriction({

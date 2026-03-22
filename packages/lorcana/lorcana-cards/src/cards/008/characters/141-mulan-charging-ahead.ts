@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mulanChargingAheadI18n } from "./141-mulan-charging-ahead.i18n";
 
 export const mulanChargingAhead: CharacterCard = {
   id: "KZj",
@@ -7,59 +8,6 @@ export const mulanChargingAhead: CharacterCard = {
   cardType: "character",
   name: "Mulan",
   version: "Charging Ahead",
-  i18n: {
-    en: {
-      name: "Mulan",
-      version: "Charging Ahead",
-      text: [
-        {
-          title: "Reckless",
-        },
-        {
-          title: "BURST OF SPEED",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-        {
-          title: "LONG RANGE",
-          description: "This character can challenge ready characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Mulan",
-      version: "Charging Ahead",
-      text: [
-        {
-          title: "Reckless",
-          description:
-            "(This character can't quest and must challenge each turn if able.) BURST OF SPEED During your turn, this character gains Evasive. (They can challenge characters with Evasive.) LONG RANGE This character can challenge ready characters.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mulan",
-      version: "Charging Ahead",
-      text: [
-        {
-          title: "Reckless",
-          description:
-            "(This character can't quest and must challenge each turn if able.) BURST OF SPEED During your turn, this character gains Evasive. (They can challenge characters with Evasive.) LONG RANGE This character can challenge ready characters.",
-        },
-      ],
-    },
-    it: {
-      name: "Mulan",
-      version: "Charging Ahead",
-      text: [
-        {
-          title: "Reckless",
-          description:
-            "(This character can't quest and must challenge each turn if able.) BURST OF SPEED During your turn, this character gains Evasive. (They can challenge characters with Evasive.) LONG RANGE This character can challenge ready characters.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby", "steel"],
   franchise: "Mulan",
   set: "008",
@@ -122,4 +70,5 @@ export const mulanChargingAhead: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: mulanChargingAheadI18n,
 };

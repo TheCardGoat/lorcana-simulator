@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { nickWildeSlyFoxI18n } from "./150-nick-wilde-sly-fox.i18n";
 
 export const nickWildeSlyFox: CharacterCard = {
   id: "2oi",
@@ -7,36 +8,6 @@ export const nickWildeSlyFox: CharacterCard = {
   cardType: "character",
   name: "Nick Wilde",
   version: "Sly Fox",
-  i18n: {
-    en: {
-      name: "Nick Wilde",
-      version: "Sly Fox",
-      text: [
-        {
-          title: "Shift 1",
-        },
-        {
-          title: "CAN'T TOUCH ME",
-          description: "While you have an item in play, this character can't be challenged.",
-        },
-      ],
-    },
-    de: {
-      name: "Nick Wilde",
-      version: "Schlitzohr",
-      text: "Gestaltwandel 1 DU KANNST MIR NICHTS ANHABEN Solange du mindestens einen Gegenstand im Spiel hast, kann dieser Charakter nicht herausgefordert werden.",
-    },
-    fr: {
-      name: "Nick Wilde",
-      version: "Renard narquois",
-      text: "Alter 1 TU M'AURAS PAS Tant que vous avez un objet en jeu, ce personnage ne peut pas être défié.",
-    },
-    it: {
-      name: "Nick Wilde",
-      version: "Volpe Acuta",
-      text: "Trasformazione 1 NON PUOI TOCCARMI Mentre hai in gioco un oggetto, questo personaggio non può essere sfidato.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Zootropolis",
   set: "006",
@@ -82,4 +53,5 @@ export const nickWildeSlyFox: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: nickWildeSlyFoxI18n,
 };

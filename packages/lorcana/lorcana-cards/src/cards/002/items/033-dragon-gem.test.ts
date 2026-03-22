@@ -34,4 +34,10 @@ describe("Dragon Gem", () => {
     expect(result.success).toBe(false);
     expect(testEngine.asPlayerOne().getCardZone(jetsamUrsulasSpy)).toBe("discard");
   });
+
+  describe("Fabled Release Notes - Alice / Dragon Gem", () => {
+    it.todo("Dragon Gem cannot return Alice - Growing Girl (she doesn't have Support herself)", () => {});
+
+    it.todo("Dragon Gem CAN return Alice if another Alice gives her Support", () => {});
+  });
 });

@@ -1,3 +1,4 @@
+import type { PlayerId } from "#core";
 import type { ExertEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
@@ -7,6 +8,8 @@ import {
   resolveCandidateTargets,
   selectTargets,
 } from "../../../targeting/runtime";
+import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
+import { markLastEffectPerformed } from "./event-snapshot-utils";
 
 export function isExertEffect(effect: unknown): effect is ExertEffect {
   return (
@@ -25,10 +28,48 @@ export function resolveExertEffect(
 ): void {
   const descriptor = normalizeTargetDescriptor(effect.target);
   const selectedTargets = normalizeSelectedTargets(resolutionInput.targets);
-  const candidates = resolveCandidateTargets(ctx, cardPlayed, descriptor);
+  const candidates = resolveCandidateTargets(ctx, cardPlayed, descriptor, {
+    eventSnapshot: resolutionInput.eventSnapshot,
+    selectedTargets,
+    sourceCardId: cardPlayed.cardId,
+  });
   const targets = selectTargets(candidates, descriptor, selectedTargets);
 
   for (const targetId of targets) {
     ctx.cards.patchMeta(targetId, { state: "exerted" });
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "cardExerted",
+      {
+        cardId: targetId,
+        source: "effect",
+      },
+      {
+        event: "exert",
+        subjectCardId: targetId,
+        triggerSourceCardId: cardPlayed.cardId,
+        playerId: ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined,
+      },
+    );
+
+    // Record the first exerted target's cost in the event snapshot so subsequent
+    // effects (e.g. "play a song with cost ≤ exerted character's cost") can reference it.
+    if (resolutionInput.eventSnapshot) {
+      if (!resolutionInput.eventSnapshot.chosenCardId) {
+        resolutionInput.eventSnapshot.chosenCardId = targetId;
+      }
+      if (resolutionInput.eventSnapshot.chosenCardCost === undefined) {
+        const targetDefinition = ctx.cards.getDefinition(targetId) as
+          | { cost?: unknown }
+          | undefined;
+        const targetCost =
+          typeof targetDefinition?.cost === "number" ? targetDefinition.cost : undefined;
+        if (typeof targetCost === "number") {
+          resolutionInput.eventSnapshot.chosenCardCost = targetCost;
+        }
+      }
+    }
   }
+
+  markLastEffectPerformed(resolutionInput.eventSnapshot, targets.length > 0);
 }

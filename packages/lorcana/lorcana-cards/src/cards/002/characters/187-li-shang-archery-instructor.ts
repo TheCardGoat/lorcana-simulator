@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liShangArcheryInstructorI18n } from "./187-li-shang-archery-instructor.i18n";
 
 export const liShangArcheryInstructor: CharacterCard = {
   id: "vB7",
@@ -7,52 +8,6 @@ export const liShangArcheryInstructor: CharacterCard = {
   cardType: "character",
   name: "Li Shang",
   version: "Archery Instructor",
-  i18n: {
-    en: {
-      name: "Li Shang",
-      version: "Archery Instructor",
-      text: [
-        {
-          title: "ARCHERY LESSON",
-          description:
-            "Whenever this character quests, your characters gain Evasive this turn. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Li Shang",
-      version: "Bogenschützen-Ausbilder",
-      text: [
-        {
-          title: "LEKTION IM BOGENSCHIESSEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, erhalten deine Charaktere in diesem Zug Wendig. (Sie können Charaktere mit Wendig herausfordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Li Shang",
-      version: "Instructeur d'archerie",
-      text: [
-        {
-          title: "LEÇON DE TIR À L'ARC",
-          description:
-            "Lorsque ce personnage est envoyé à l'aventure, vos personnages gagnent Insaisissable pour le reste de ce tour. (Ils peuvent défier les personnages avec Insaisissable.)",
-        },
-      ],
-    },
-    it: {
-      name: "Li Shang",
-      version: "Archery Instructor",
-      text: [
-        {
-          title: "ARCHERY LESSON",
-          description:
-            "Whenever this character quests, your characters gain Evasive this turn. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "002",
@@ -75,7 +30,6 @@ export const liShangArcheryInstructor: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -95,4 +49,6 @@ export const liShangArcheryInstructor: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: liShangArcheryInstructorI18n,
 };

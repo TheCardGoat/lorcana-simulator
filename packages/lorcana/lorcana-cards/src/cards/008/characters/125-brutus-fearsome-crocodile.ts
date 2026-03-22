@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { brutusFearsomeCrocodileI18n } from "./125-brutus-fearsome-crocodile.i18n";
 
 export const brutusFearsomeCrocodile: CharacterCard = {
   id: "ZmK",
@@ -7,52 +8,6 @@ export const brutusFearsomeCrocodile: CharacterCard = {
   cardType: "character",
   name: "Brutus",
   version: "Fearsome Crocodile",
-  i18n: {
-    en: {
-      name: "Brutus",
-      version: "Fearsome Crocodile",
-      text: [
-        {
-          title: "SPITEFUL",
-          description:
-            "During your turn, when this character is banished, if one of your characters was damaged this turn, gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Brutus, das Krokodil",
-      version: "Furchterregendes Krokodil",
-      text: [
-        {
-          title: "BISSIG",
-          description:
-            "Wenn dieser Charakter in deinem Zug verbannt wird, falls in diesem Zug einer deiner Charaktere beschädigt wurde, sammelst du 2 Legenden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Brutus",
-      version: "Redoutable crocodile",
-      text: [
-        {
-          title: "MALVEILLANT",
-          description:
-            "Durant votre tour, lorsque ce personnage est banni, si l'un de vos personnages a subi un dommage ou plus ce tour-ci, gagnez 2 éclats de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Bruto",
-      version: "Coccodrillo Spaventoso",
-      text: [
-        {
-          title: "MALEVOLO",
-          description:
-            "Durante il tuo turno, quando questo personaggio viene esiliato, se uno dei tuoi personaggi è stato danneggiato in questo turno, ottieni 2 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Rescuers",
   set: "008",
@@ -79,8 +34,13 @@ export const brutusFearsomeCrocodile: CharacterCard = {
     {
       effect: {
         condition: {
-          expression: "one of your characters was damaged this turn",
-          type: "if",
+          type: "turn-metric",
+          metric: "damaged-characters-by-owner",
+          ownerScope: "you",
+          comparison: {
+            operator: "gt",
+            value: 0,
+          },
         },
         then: {
           amount: 2,
@@ -95,8 +55,15 @@ export const brutusFearsomeCrocodile: CharacterCard = {
         event: "banish",
         on: "SELF",
         timing: "when",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
       },
       type: "triggered",
     },
   ],
+  i18n: brutusFearsomeCrocodileI18n,
 };

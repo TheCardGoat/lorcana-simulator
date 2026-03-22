@@ -2,6 +2,7 @@ import type { CardInstanceId, PlayerId } from "#core";
 import type { CardSelectionFilter, DiscardEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
 import { queueTriggeredEvent } from "../../effects/triggered-abilities";
+import { applyReplacementEffects } from "../../effects/replacement-effects";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import { createPendingActionEffect, enqueuePendingActionEffect } from "./pending-action-effects";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
@@ -11,6 +12,7 @@ import type {
   ActionResolutionResult,
   PlayCardExecutionContext,
 } from "./types";
+import { getCombinedSelectionInput, getCurrentSelectionTargets } from "./selection-state";
 
 type ResolvedDiscardEffectInput = {
   discardAmount?: number;
@@ -20,6 +22,7 @@ type ResolvedDiscardEffectInput = {
 
 type CardDefinitionLike = {
   cardType?: string;
+  actionSubtype?: string;
   classifications?: string[];
   cost?: number;
 };
@@ -54,12 +57,24 @@ function matchesDiscardFilter(
     return false;
   }
 
-  if (typeof filter.cardType === "string" && definition.cardType !== filter.cardType) {
-    return false;
+  if (typeof filter.cardType === "string") {
+    if (filter.cardType === "song") {
+      if (definition.cardType !== "action" || definition.actionSubtype !== "song") {
+        return false;
+      }
+    } else if (definition.cardType !== filter.cardType) {
+      return false;
+    }
   }
 
-  if (typeof filter.notCardType === "string" && definition.cardType === filter.notCardType) {
-    return false;
+  if (typeof filter.notCardType === "string") {
+    if (filter.notCardType === "song") {
+      if (definition.actionSubtype === "song") {
+        return false;
+      }
+    } else if (definition.cardType === filter.notCardType) {
+      return false;
+    }
   }
 
   if (typeof filter.maxCost === "number") {
@@ -97,24 +112,26 @@ export function resolveDiscardEffect(
 ): ActionResolutionResult {
   const selectedTargets =
     resolvedInput.selectedTargets ??
-    (Array.isArray(resolutionInput.targets)
-      ? resolutionInput.targets.filter(
-          (targetId): targetId is CardInstanceId => typeof targetId === "string",
-        )
-      : typeof resolutionInput.targets === "string"
-        ? [resolutionInput.targets as CardInstanceId]
-        : []);
+    getCurrentSelectionTargets(resolutionInput).filter(
+      (targetId): targetId is CardInstanceId => typeof targetId === "string",
+    );
+  // When target is CARD_OWNER, derive the owner from selectedTargets.
+  // If selectedTargets is empty (e.g. in a sequence where the prior step resolved
+  // the card via an event-snapshot ref like "trigger-source" rather than passing it
+  // through currentTargets), fall back to eventSnapshot.chosenCardId which
+  // return-to-hand (and similar effects) write after resolving their ref target.
+  const cardOwnerSourceIds: CardInstanceId[] =
+    selectedTargets.length > 0
+      ? selectedTargets
+      : effect.target === "CARD_OWNER" && resolutionInput.eventSnapshot?.chosenCardId != null
+        ? [resolutionInput.eventSnapshot.chosenCardId as CardInstanceId]
+        : [];
   const targetPlayerIds =
     effect.target === "CARD_OWNER"
       ? [
           ...new Set(
-            selectedTargets
-              .map(
-                (cardId) =>
-                  ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID as
-                    | string
-                    | undefined,
-              )
+            cardOwnerSourceIds
+              .map((cardId) => ctx.framework.zones.getCardOwner(cardId) as string | undefined)
               .filter(
                 (playerId): playerId is string =>
                   typeof playerId === "string" &&
@@ -124,7 +141,13 @@ export function resolveDiscardEffect(
               ),
           ),
         ]
-      : resolveTargetPlayerIds(ctx, cardPlayed, effect.target, resolutionInput.targets);
+      : resolveTargetPlayerIds(
+          ctx,
+          cardPlayed,
+          effect.target,
+          getCombinedSelectionInput(resolutionInput),
+          resolutionInput.eventSnapshot,
+        );
 
   const discardAll = resolvedInput.discardAll === true;
   const amount = discardAll
@@ -136,15 +159,31 @@ export function resolveDiscardEffect(
       : 1;
 
   if (targetPlayerIds.length === 0 || amount <= 0) {
+    markLastEffectPerformed(resolutionInput.eventSnapshot, false);
     return { status: "resolved" };
   }
 
   const sourceZone = effect.from ?? "hand";
   const actorId = (ctx.playerId ??
     ctx.framework.state.currentPlayer ??
-    ctx.framework.state.ctx.priority.holder) as PlayerId | undefined;
+    ctx.framework.state.priority.holder) as PlayerId | undefined;
+  let discardedAny = false;
 
   for (const targetPlayerId of targetPlayerIds) {
+    // Check if a replacement effect prevents this player from discarding
+    const discardEvent = applyReplacementEffects(ctx, {
+      kind: "discard",
+      eventId: `discard:${targetPlayerId}:${cardPlayed.cardId}`,
+      sourceId: cardPlayed.cardId,
+      controllerId: cardPlayed.playerId,
+      targetPlayerId: targetPlayerId as PlayerId,
+      amount,
+      prevented: false,
+    });
+    if (discardEvent.prevented) {
+      continue;
+    }
+
     const candidates = (
       ctx.framework.zones.getCards({
         zone: sourceZone,
@@ -172,8 +211,10 @@ export function resolveDiscardEffect(
           ? ((ctx.framework.state.playerIds.find((playerId) => playerId !== cardPlayed.playerId) ??
               targetPlayerId) as PlayerId)
           : targetPlayerId;
+    const requiresExplicitSelectionByRules =
+      sourceZone === "hand" && !discardAll && (effect.random !== true || effect.chosen === true);
     const requiresExplicitSelection =
-      effect.chosen === true &&
+      requiresExplicitSelectionByRules &&
       (actorId !== chooserId || selectedFromCandidates.length < effectiveAmount);
     if (requiresExplicitSelection) {
       const pendingEffect = createPendingActionEffect(ctx, {
@@ -208,7 +249,16 @@ export function resolveDiscardEffect(
     }
 
     if (cardsToDiscard.length > 0) {
-      markLastEffectPerformed(resolutionInput.eventSnapshot, true);
+      discardedAny = true;
+      // Accumulate discarded card IDs for downstream count effects (e.g. "count action cards discarded")
+      if (!resolutionInput.eventSnapshot) {
+        resolutionInput.eventSnapshot = {};
+      }
+      const existing = resolutionInput.eventSnapshot.discardedCardIds ?? [];
+      resolutionInput.eventSnapshot.discardedCardIds = [
+        ...existing,
+        ...cardsToDiscard,
+      ] as import("#core").CardInstanceId[];
       const triggerBatchKey = cardsToDiscard.join("|");
       for (const cardId of cardsToDiscard) {
         queueTriggeredEvent(ctx, {
@@ -225,5 +275,6 @@ export function resolveDiscardEffect(
     }
   }
 
+  markLastEffectPerformed(resolutionInput.eventSnapshot, discardedAny);
   return { status: "resolved" };
 }

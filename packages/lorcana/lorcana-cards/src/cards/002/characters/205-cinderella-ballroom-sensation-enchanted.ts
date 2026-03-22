@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cinderellaBallroomSensationEnchantedI18n } from "./205-cinderella-ballroom-sensation-enchanted.i18n";
 
 export const cinderellaBallroomSensationEnchanted: CharacterCard = {
   id: "hzv",
@@ -7,38 +8,6 @@ export const cinderellaBallroomSensationEnchanted: CharacterCard = {
   cardType: "character",
   name: "Cinderella",
   version: "Ballroom Sensation",
-  i18n: {
-    en: {
-      name: "Cinderella",
-      version: "Ballroom Sensation",
-      text: "Singer 3",
-    },
-    de: {
-      name: "Cinderella",
-      version: "Sensation im Ballsaal",
-      text: [
-        {
-          title: "Singen 3",
-          description: "(Die Kosten dieses Charakters gelten als 3 für das Singen von Liedern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Cendrillon",
-      version: "Fait sensation au bal",
-      text: "Mélomane 3 (Ce personnage est considéré comme ayant un coût de 3 pour chanter des chansons.)",
-    },
-    it: {
-      name: "Cinderella",
-      version: "Ballroom Sensation",
-      text: [
-        {
-          title: "Singer 3",
-          description: "(This character counts as cost 3 to sing songs.)",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Cinderella",
   set: "002",
@@ -65,4 +34,5 @@ export const cinderellaBallroomSensationEnchanted: CharacterCard = {
       text: "Singer 3",
     },
   ],
+  i18n: cinderellaBallroomSensationEnchantedI18n,
 };

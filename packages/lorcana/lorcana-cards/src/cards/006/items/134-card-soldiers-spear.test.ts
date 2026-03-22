@@ -27,4 +27,14 @@ describe("Card Soldier's Spear", () => {
     expect(testEngine.asPlayerOne().getCardStrength(damagedSoldier)).toBe(3);
     expect(testEngine.asPlayerOne().getCardStrength(healthySoldier)).toBe(2);
   });
+
+  it("does not affect undamaged characters even with spear in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [cardSoldiersSpear, damagedSoldier, healthySoldier],
+    });
+
+    // Neither character is damaged, so neither should get the bonus
+    expect(testEngine.asPlayerOne().getCardStrength(damagedSoldier)).toBe(2);
+    expect(testEngine.asPlayerOne().getCardStrength(healthySoldier)).toBe(2);
+  });
 });

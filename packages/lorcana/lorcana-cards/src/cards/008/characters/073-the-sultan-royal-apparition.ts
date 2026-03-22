@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theSultanRoyalApparitionI18n } from "./073-the-sultan-royal-apparition.i18n";
 
 export const theSultanRoyalApparition: CharacterCard = {
   id: "m6L",
@@ -7,56 +8,6 @@ export const theSultanRoyalApparition: CharacterCard = {
   cardType: "character",
   name: "The Sultan",
   version: "Royal Apparition",
-  i18n: {
-    en: {
-      name: "The Sultan",
-      version: "Royal Apparition",
-      text: [
-        {
-          title: "Vanish",
-          description: "(When an opponent chooses this character for an action, banish them.)",
-        },
-        {
-          title: "COMMANDING PRESENCE",
-          description:
-            "Whenever one of your Illusion characters quests, exert chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Der Sultan",
-      version: "Königliche Erscheinung",
-      text: [
-        {
-          title: "Verschwinden",
-          description:
-            "(Jedes Mal, wenn dieser Charakter von einer Aktion einer gegnerischen Person ausgewählt wird, verbanne ihn.) SOUVERÄNE PRÄSENZ Jedes Mal, wenn eine deiner Illusionen erkundet, erschöpfe einen gegnerischen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le Sultan",
-      version: "Apparition royale",
-      text: [
-        {
-          title: "Dissipation",
-          description:
-            "(Lorsqu'un adversaire choisit ce personnage avec une action, bannissez-le.) PRÉSENCE IMPÉRIEUSE Chaque fois que l'un de vos personnages Illusion est envoyé à l'aventure, choisissez un personnage adverse et épuisez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Il Sultano",
-      version: "Apparizione Reale",
-      text: [
-        {
-          title: "Svanire",
-          description:
-            "(Quando un avversario sceglie questo personaggio per un'azione, esilialo.) PRESENZA AUTOREVOLE Ogni volta che uno dei tuoi personaggi Illusione va all'avventura, impegna un personaggio avversario a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst", "steel"],
   franchise: "Aladdin",
   set: "008",
@@ -105,11 +56,16 @@ export const theSultanRoyalApparition: CharacterCard = {
       name: "COMMANDING PRESENCE",
       text: "COMMANDING PRESENCE Whenever one of your Illusion characters quests, exert chosen opposing character.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "quest",
+        on: {
+          controller: "you",
+          cardType: "character",
+          classification: "Illusion",
+        },
         timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: theSultanRoyalApparitionI18n,
 };

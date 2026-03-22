@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { marchHareAbsurdHostI18n } from "./050-march-hare-absurd-host.i18n";
 
 export const marchHareAbsurdHost: CharacterCard = {
   id: "don",
@@ -7,33 +8,6 @@ export const marchHareAbsurdHost: CharacterCard = {
   cardType: "character",
   name: "March Hare",
   version: "Absurd Host",
-  i18n: {
-    en: {
-      name: "March Hare",
-      version: "Absurd Host",
-      text: "Rush",
-    },
-    de: {
-      name: "Der Märzhase",
-      version: "Alberner Gastgeber",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Le Lièvre de Mars",
-      version: "Hôte absurde",
-      text: "Charge",
-    },
-    it: {
-      name: "Leprotto Bisestile",
-      version: "Ospite Assurdo",
-      text: [
-        {
-          title: "Lesto",
-          description: "(Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Alice in Wonderland",
   set: "006",
@@ -58,4 +32,5 @@ export const marchHareAbsurdHost: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: marchHareAbsurdHostI18n,
 };

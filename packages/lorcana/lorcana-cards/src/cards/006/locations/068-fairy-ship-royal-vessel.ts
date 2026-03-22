@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { fairyShipRoyalVesselI18n } from "./068-fairy-ship-royal-vessel.i18n";
 
 export const fairyShipRoyalVessel: LocationCard = {
   id: "3Go",
@@ -7,24 +8,6 @@ export const fairyShipRoyalVessel: LocationCard = {
   cardType: "location",
   name: "Fairy Ship",
   version: "Royal Vessel",
-  i18n: {
-    en: {
-      name: "Fairy Ship",
-      version: "Royal Vessel",
-    },
-    de: {
-      name: "Feenschiff",
-      version: "Königliches Schiff",
-    },
-    fr: {
-      name: "Navire des Fées",
-      version: "Vaisseau royal",
-    },
-    it: {
-      name: "Nave Fatata",
-      version: "Vascello Reale",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Peter Pan",
   set: "006",
@@ -40,4 +23,5 @@ export const fairyShipRoyalVessel: LocationCard = {
     lorcast: "crd_107f43772b78405f8a4fb587e8279d14",
     tcgPlayer: 584615,
   },
+  i18n: fairyShipRoyalVesselI18n,
 };

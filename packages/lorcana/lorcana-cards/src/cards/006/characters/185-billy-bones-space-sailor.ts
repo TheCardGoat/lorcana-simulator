@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { billyBonesSpaceSailorI18n } from "./185-billy-bones-space-sailor.i18n";
 
 export const billyBonesSpaceSailor: CharacterCard = {
   id: "MbE",
@@ -7,51 +8,6 @@ export const billyBonesSpaceSailor: CharacterCard = {
   cardType: "character",
   name: "Billy Bones",
   version: "Space Sailor",
-  i18n: {
-    en: {
-      name: "Billy Bones",
-      version: "Space Sailor",
-      text: [
-        {
-          title: "KEEP IT HIDDEN",
-          description: "When this character is banished, you may banish chosen item or location.",
-        },
-      ],
-    },
-    de: {
-      name: "Billy Bones",
-      version: "Weltraum-Segler",
-      text: [
-        {
-          title: "HALT ES VERSTECKT",
-          description:
-            "Wenn dieser Charakter verbannt wird, darfst du einen Gegenstand oder Ort deiner Wahl verbannen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Billy Bones",
-      version: "Marin de l'espace",
-      text: [
-        {
-          title: "CACHE-LE BIEN",
-          description:
-            "Lorsque ce personnage est banni, vous pouvez choisir un objet ou un lieu et le bannir.",
-        },
-      ],
-    },
-    it: {
-      name: "Billy Bones",
-      version: "Marinaio Spaziale",
-      text: [
-        {
-          title: "TIENILO NASCOSTO",
-          description:
-            "Quando questo personaggio viene esiliato, puoi esiliare un oggetto o un luogo a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Treasure Planet",
   set: "006",
@@ -83,7 +39,7 @@ export const billyBonesSpaceSailor: CharacterCard = {
             count: 1,
             owner: "any",
             zones: ["play"],
-            cardTypes: ["item"],
+            cardTypes: ["item", "location"],
           },
           type: "banish",
         },
@@ -100,4 +56,5 @@ export const billyBonesSpaceSailor: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: billyBonesSpaceSailorI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kronkUnlicensedInvestigatorI18n } from "./178-kronk-unlicensed-investigator.i18n";
 
 export const kronkUnlicensedInvestigator: CharacterCard = {
   id: "D2Y",
@@ -7,28 +8,6 @@ export const kronkUnlicensedInvestigator: CharacterCard = {
   cardType: "character",
   name: "Kronk",
   version: "Unlicensed Investigator",
-  i18n: {
-    en: {
-      name: "Kronk",
-      version: "Unlicensed Investigator",
-      text: "Challenger +1",
-    },
-    de: {
-      name: "Kronk",
-      version: "Nicht lizenzierter Ermittler",
-      text: "Herausfordern +1",
-    },
-    fr: {
-      name: "Kronk",
-      version: "Enquêteur sans permis",
-      text: "Offensif +1",
-    },
-    it: {
-      name: "Kronk",
-      version: "Investigatore Senza Licenza",
-      text: "Sfidante +1",
-    },
-  },
   inkType: ["steel"],
   franchise: "Emperors New Groove",
   set: "005",
@@ -54,4 +33,5 @@ export const kronkUnlicensedInvestigator: CharacterCard = {
       text: "Challenger +1",
     },
   ],
+  i18n: kronkUnlicensedInvestigatorI18n,
 };

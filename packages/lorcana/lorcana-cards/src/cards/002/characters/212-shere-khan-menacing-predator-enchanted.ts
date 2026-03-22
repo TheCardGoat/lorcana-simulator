@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { shereKhanMenacingPredatorEnchantedI18n } from "./212-shere-khan-menacing-predator-enchanted.i18n";
 
 export const shereKhanMenacingPredatorEnchanted: CharacterCard = {
   id: "XRe",
@@ -7,50 +8,6 @@ export const shereKhanMenacingPredatorEnchanted: CharacterCard = {
   cardType: "character",
   name: "Shere Khan",
   version: "Menacing Predator",
-  i18n: {
-    en: {
-      name: "Shere Khan",
-      version: "Menacing Predator",
-      text: [
-        {
-          title: "DON'T INSULT MY INTELLIGENCE",
-          description: "Whenever one of your characters challenges another character, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Shir Khan",
-      version: "Bedrohliches Raubtier",
-      text: [
-        {
-          title: "BELEIDIGE NICHT MEINE INTELLIGENZ",
-          description:
-            "Jedes Mal, wenn einer deiner Charaktere einen anderen Charakter herausfordert, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Shere Khan",
-      version: "Prédateur menaçant",
-      text: [
-        {
-          title: "N'INSULTE PAS MON INTELLIGENCE",
-          description:
-            "Chaque fois que l'un de vos personnages en défie un autre, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Shere Khan",
-      version: "Menacing Predator",
-      text: [
-        {
-          title: "DON'T INSULT MY INTELLIGENCE",
-          description: "Whenever one of your characters challenges another character, gain 1 lore.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Jungle Book",
   set: "002",
@@ -66,6 +23,7 @@ export const shereKhanMenacingPredatorEnchanted: CharacterCard = {
     lorcast: "crd_4245d44a1e8344e1878acd9002b813e0",
     tcgPlayer: 650042,
   },
+  missingTests: true,
   text: [
     {
       title: "DON'T INSULT MY INTELLIGENCE",
@@ -73,7 +31,6 @@ export const shereKhanMenacingPredatorEnchanted: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -91,4 +48,5 @@ export const shereKhanMenacingPredatorEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: shereKhanMenacingPredatorEnchantedI18n,
 };

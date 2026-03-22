@@ -1,12 +1,10 @@
 import { MediaQuery } from "svelte/reactivity";
 
-export type SimulatorLayoutMode = "desktop" | "tablet" | "mobile";
+export type SimulatorLayoutMode = "desktop" | "mobile";
 
-const MOBILE_MAX_WIDTH = 767;
 const DESKTOP_MIN_WIDTH = 1240;
 
 export class SimulatorLayoutModeObserver {
-  #mobileQuery = new MediaQuery(`max-width: ${MOBILE_MAX_WIDTH}px`);
   #desktopQuery = new MediaQuery(`min-width: ${DESKTOP_MIN_WIDTH}px`);
 
   get current(): SimulatorLayoutMode {
@@ -14,11 +12,7 @@ export class SimulatorLayoutModeObserver {
       return "desktop";
     }
 
-    if (this.#mobileQuery.current) {
-      return "mobile";
-    }
-
-    return "tablet";
+    return "mobile";
   }
 
   get isCompact(): boolean {

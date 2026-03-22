@@ -251,7 +251,7 @@ describe("delayed triggers", () => {
     expect(testEngine.asServer().getState().G.triggeredAbilities.registrations).toHaveLength(0);
   });
 
-  it("suspends resolveBag when a delayed trigger needs a choice and resumes after resolveEffect", () => {
+  it("requires explicit targets when a delayed trigger needs a choice and resolves once provided", () => {
     const chosenTarget = createMockCharacter({
       id: "delayed-choice-target",
       name: "Delayed Choice Target",
@@ -281,31 +281,41 @@ describe("delayed triggers", () => {
     expect(testEngine.asPlayerOne().passTurn().success).toBe(true);
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id).success).toBe(true);
-
-    const suspendedState = testEngine.asServer().getState();
-    expect(suspendedState.G.pendingTurnTransition).toMatchObject({
-      previousPlayer: PLAYER_ONE,
-      stage: "end-of-turn",
-    });
-    expect(testEngine.getCurrentPhase()).toBe("end");
-    expect(suspendedState.ctx.priority.pendingChoice?.type).toBe("action-effect");
-    expect(testEngine.getActivePlayer()).toBe(PLAYER_ONE);
-
-    const effectId = suspendedState.ctx.priority.pendingChoice?.requestID;
     const chosenTargetId = testEngine.findCardInstanceId(chosenTarget, "play", PLAYER_ONE);
+    const otherTargetId = testEngine.findCardInstanceId(otherTarget, "play", PLAYER_ONE);
+
+    expect(bagEffect?.selectionContext).toBeDefined();
+    expect(bagEffect?.selectionContext?.origin).toBe("bag");
+    expect(bagEffect?.selectionContext?.requestId).toBe(bagEffect?.id);
+    expect(bagEffect?.selectionContext?.kind).toBe("target-selection");
+    if (!bagEffect?.selectionContext || bagEffect.selectionContext.kind !== "target-selection") {
+      throw new Error("Expected a target-selection bag context");
+    }
+    expect(bagEffect.selectionContext.submitField).toBe("targets");
+    expect(bagEffect.selectionContext.sourceCardId).toBe(bagEffect.sourceId);
+    expect(bagEffect.selectionContext.cardCandidateIds).toEqual(
+      expect.arrayContaining([chosenTargetId, otherTargetId]),
+    );
+    expect(bagEffect.selectionContext.playerCandidateIds).toEqual([]);
+    expect(bagEffect.selectionContext.allowedZones).toEqual(["play"]);
+    expect(bagEffect.selectionContext.minSelections).toBe(1);
+    expect(bagEffect.selectionContext.maxSelections).toBe(1);
+    expect(bagEffect.selectionContext.ordered).toBe(false);
+    expect(bagEffect.selectionContext.targetDsl).toEqual(
+      expect.arrayContaining([expect.objectContaining({ selector: "chosen" })]),
+    );
+
     expect(
-      effectId
-        ? testEngine.asPlayerOne().resolveEffect(effectId, {
-            targets: [chosenTargetId],
-          }).success
-        : false,
+      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        targets: [chosenTargetId],
+      }).success,
     ).toBe(true);
 
     expect(testEngine.getActivePlayer()).toBe(PLAYER_TWO);
     expect(testEngine.getCurrentPhase()).toBe("main");
     expect(testEngine.isExerted(chosenTarget)).toBe(false);
     expect(testEngine.asServer().getState().G.pendingTurnTransition).toBeUndefined();
+    expect(testEngine.asPlayerOne().getPendingEffects()).toEqual([]);
   });
 
   it("clears delayed triggers whose target is gone before they resolve", () => {

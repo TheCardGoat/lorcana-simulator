@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { petePastryChomperI18n } from "./120-pete-pastry-chomper.i18n";
 
 export const petePastryChomper: CharacterCard = {
   id: "sSk",
@@ -7,24 +8,6 @@ export const petePastryChomper: CharacterCard = {
   cardType: "character",
   name: "Pete",
   version: "Pastry Chomper",
-  i18n: {
-    en: {
-      name: "Pete",
-      version: "Pastry Chomper",
-    },
-    de: {
-      name: "Kater Karlo",
-      version: "Tortenheber",
-    },
-    fr: {
-      name: "Pat",
-      version: "Engloutisseur de pâtisseries",
-    },
-    it: {
-      name: "Gambadilegno",
-      version: "Mascellone da Pasticceria",
-    },
-  },
   inkType: ["ruby"],
   set: "005",
   cardNumber: 120,
@@ -40,4 +23,5 @@ export const petePastryChomper: CharacterCard = {
     tcgPlayer: 561638,
   },
   classifications: ["Storyborn", "Villain"],
+  i18n: petePastryChomperI18n,
 };

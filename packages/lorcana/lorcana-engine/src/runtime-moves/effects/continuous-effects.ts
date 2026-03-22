@@ -47,28 +47,24 @@ type ContinuousEffectReadContext = {
   };
   framework?: {
     state: {
-      ctx: {
-        priority?: {
-          holder?: string;
-        };
-        status?: {
-          turn?: number;
-        };
-        zones?: {
-          private?: {
-            cardIndex?: Record<
-              string,
-              | {
-                  zoneKey?: string;
-                  ownerID?: string;
-                  controllerID?: string;
-                }
-              | undefined
-            >;
-            cardMeta?: Record<string, { atLocationId?: CardInstanceId } | undefined>;
-            zoneCards?: Record<string, readonly string[] | undefined>;
-          };
-        };
+      priority?: {
+        holder?: string;
+      };
+      status?: {
+        turn?: number;
+      };
+      _zonesPrivate?: {
+        cardIndex?: Record<
+          string,
+          | {
+              zoneKey?: string;
+              ownerID?: string;
+              controllerID?: string;
+            }
+          | undefined
+        >;
+        cardMeta?: Record<string, { atLocationId?: CardInstanceId } | undefined>;
+        zoneCards?: Record<string, readonly string[] | undefined>;
       };
     };
   };
@@ -91,8 +87,12 @@ function getRuntimeCtx(state: ContinuousEffectReadContext): {
     };
   };
 } {
-  if (state.framework?.state.ctx) {
-    return state.framework.state.ctx;
+  if (state.framework?.state.priority) {
+    return {
+      priority: state.framework.state.priority,
+      status: state.framework.state.status,
+      zones: { private: state.framework.state._zonesPrivate },
+    };
   }
   return state.ctx ?? {};
 }
@@ -219,7 +219,10 @@ function isStatModifierEffectActive(
   const evaluationContext: ConditionEvaluationContext = {
     framework: {
       state: {
-        ctx: ctx as any,
+        priority: ctx.priority as ConditionEvaluationContext["framework"]["state"]["priority"],
+        status: ctx.status as ConditionEvaluationContext["framework"]["state"]["status"],
+        _zonesPrivate: ctx.zones
+          ?.private as ConditionEvaluationContext["framework"]["state"]["_zonesPrivate"],
         currentPlayer: ctx.priority?.holder as PlayerId | undefined,
         // We don't have easy access to all player IDs here without scanning cardIndex
         // but let's try to derive it if possible, or leave it empty if not critical for simple conditions
@@ -340,6 +343,24 @@ export function cleanupExpiredEffects(
 
     return !isEffectExpired(instance, currentTurn);
   });
+}
+
+/**
+ * Retarget all continuous effects from one card instance to another.
+ * Used during Shift to transfer stat modifiers from the old top card
+ * to the new top card in a shift stack.
+ */
+export function retargetContinuousEffects(
+  state: ContinuousEffectWriteContext,
+  oldTargetId: CardInstanceId,
+  newTargetId: CardInstanceId,
+): void {
+  const effects = getOrCreateContinuousEffectState(state);
+  for (const instance of effects.instances) {
+    if (instance.kind === "stat-modifier" && instance.targetId === oldTargetId) {
+      instance.targetId = newTargetId;
+    }
+  }
 }
 
 export function cleanupDanglingTargetEffects(

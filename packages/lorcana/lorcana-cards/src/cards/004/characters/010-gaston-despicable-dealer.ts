@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gastonDespicableDealerI18n } from "./010-gaston-despicable-dealer.i18n";
 
 export const gastonDespicableDealer: CharacterCard = {
   id: "a3C",
@@ -7,49 +8,6 @@ export const gastonDespicableDealer: CharacterCard = {
   cardType: "character",
   name: "Gaston",
   version: "Despicable Dealer",
-  i18n: {
-    en: {
-      name: "Gaston",
-      version: "Despicable Dealer",
-      text: [
-        {
-          title: "DUBIOUS RECRUITMENT",
-          description: "{E} — You pay 2 {I} less for the next character you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Gaston",
-      version: "Verruchter Händler",
-      text: [
-        {
-          title: "ZWEIFELHAFTE REKRUTIERUNG",
-          description:
-            "— Du zahlst 2 weniger für den nächsten Charakter, den du in diesem Zug ausspielst.",
-        },
-      ],
-    },
-    fr: {
-      name: "Gaston",
-      version: "Odieux comploteur",
-      text: [
-        {
-          title: "RECRUTEMENT DOUTEUX",
-          description: "— Le prochain personnage que vous jouez durant ce tour coûte 2 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Gaston",
-      version: "Spregevole Trafficante",
-      text: [
-        {
-          title: "RECLUTAMENTO SOSPETTO",
-          description: "— Paga 2 in meno per giocare il tuo prossimo personaggio per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Beauty and the Beast",
   set: "004",
@@ -77,12 +35,17 @@ export const gastonDespicableDealer: CharacterCard = {
         exert: true,
       },
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 2,
+        cardType: "character",
+        duration: "next-play-this-turn",
+        target: "CONTROLLER",
+        type: "cost-reduction",
       },
       id: "9k7-1",
+      name: "DUBIOUS RECRUITMENT",
       text: "DUBIOUS RECRUITMENT {E} — You pay 2 {I} less for the next character you play this turn.",
       type: "activated",
     },
   ],
+  i18n: gastonDespicableDealerI18n,
 };

@@ -1,39 +1,54 @@
 /**
  * Asset URL helpers for Lorcana card skeleton UI.
- * All assets are served from the TCG Online CDN.
+ * All assets are served from the configured simulator asset base.
  */
 
-const ASSET_BASE = "https://r2.tcg.online/public/lorcana/simulator";
+import { buildSimulatorAssetUrl } from "$lib/config/public-url-config.js";
 
 /**
  * Get the URL for an ink symbol SVG.
  * @param ink - The ink type (e.g., "amber", "ruby", "sapphire")
  */
 export function getInkSymbolUrl(ink: string): string {
-  return `${ASSET_BASE}/inks/${ink.toLowerCase()}.svg`;
+  return buildSimulatorAssetUrl(`inks/${ink.toLowerCase()}.svg`);
 }
 
-/**
- * Get the URL for a rarity icon.
- * @param rarity - The rarity type (e.g., "common", "legendary")
- */
 export function getRarityIconUrl(rarity: string): string {
   // Convert super_rare to super-rare for URL
   const normalizedRarity = rarity.toLowerCase().replace(/_/g, "-");
-  return `${ASSET_BASE}/rarity/${normalizedRarity}.webp`;
+  return buildSimulatorAssetUrl(`rarity/${normalizedRarity}.webp`);
 }
 
-/**
- * Get the URL for a stat icon.
- * @param stat - The stat type ("strength" or "defense")
- */
 export function getStatIconUrl(stat: "strength" | "defense"): string {
-  return `${ASSET_BASE}/symbols/${stat}.svg`;
+  return buildSimulatorAssetUrl(`symbols/${stat}.svg`);
 }
 
-/**
- * Get the URL for the cost/ink icon.
- */
+export function getStatSmallIconUrl(stat: "strength" | "defense"): string {
+  return buildSimulatorAssetUrl(
+    `symbols/${stat === "defense" ? "willpower-2" : "strength-simple-2"}.svg`,
+  );
+}
+
+export function getCostWithBgIconUrl(): string {
+  return buildSimulatorAssetUrl("symbols/ink-cost.svg");
+}
+
 export function getCostIconUrl(): string {
-  return `${ASSET_BASE}/symbols/ink-cost.svg`;
+  return buildSimulatorAssetUrl("symbols/cost.svg");
+}
+
+export function getCostIconSmallUrl(): string {
+  return buildSimulatorAssetUrl("symbols/ink-simple-2.svg");
+}
+
+export function getLoreIconUrl(): string {
+  return buildSimulatorAssetUrl("symbols/lore-2.svg");
+}
+
+export function getExertIconUrl(): string {
+  return buildSimulatorAssetUrl("symbols/exert.svg");
+}
+
+export function getInkableIconUrl(inkable?: boolean): string {
+  return buildSimulatorAssetUrl(`symbols/${inkable ? "inkpot" : "non-inkwell-2"}.svg`);
 }

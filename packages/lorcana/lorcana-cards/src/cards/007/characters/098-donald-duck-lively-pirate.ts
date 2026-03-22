@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckLivelyPirateI18n } from "./098-donald-duck-lively-pirate.i18n";
 
 export const donaldDuckLivelyPirate: CharacterCard = {
   id: "z2w",
@@ -7,52 +8,6 @@ export const donaldDuckLivelyPirate: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Lively Pirate",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Lively Pirate",
-      text: [
-        {
-          title: "DUCK OF ACTION",
-          description:
-            "Whenever this character is challenged, you may return an action card that isn't a song card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Lebhafter Pirat",
-      text: [
-        {
-          title: "ENTE DER AKTION",
-          description:
-            "Jedes Mal, wenn dieser Charakter herausgefordert wird, darfst du 1 Aktionskarte, die keine Liedkarte ist, aus deinem Ablagestapel zurück auf deine Hand nehmen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Donald",
-      version: "Pirate plein d'entrain",
-      text: [
-        {
-          title: "CANARD D'ACTION",
-          description:
-            "Chaque fois que ce personnage est défié, vous pouvez renvoyer une carte Action qui n'est pas une chanson de votre défausse dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Paperino",
-      version: "Pirata Vivace",
-      text: [
-        {
-          title: "PAPERO D'AZIONE",
-          description:
-            "Ogni volta che questo personaggio viene sfidato, puoi riprendere in mano una carta azione che non è una carta canzone dai tuoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "007",
   cardNumber: 98,
@@ -79,14 +34,12 @@ export const donaldDuckLivelyPirate: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["card"],
+          filter: {
+            cardType: "action",
+            notCardType: "song",
           },
-          type: "return-to-hand",
+          target: "CONTROLLER",
+          type: "return-from-discard",
         },
         type: "optional",
       },
@@ -101,4 +54,5 @@ export const donaldDuckLivelyPirate: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: donaldDuckLivelyPirateI18n,
 };

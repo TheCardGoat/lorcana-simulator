@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hansNobleScoundrelI18n } from "./148-hans-noble-scoundrel.i18n";
 
 export const hansNobleScoundrel: CharacterCard = {
   id: "ylY",
@@ -7,52 +8,6 @@ export const hansNobleScoundrel: CharacterCard = {
   cardType: "character",
   name: "Hans",
   version: "Noble Scoundrel",
-  i18n: {
-    en: {
-      name: "Hans",
-      version: "Noble Scoundrel",
-      text: [
-        {
-          title: "ROYAL SCHEMES",
-          description:
-            "When you play this character, if a Princess or Queen character is in play, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Hans",
-      version: "Adeliger Halunke",
-      text: [
-        {
-          title: "KÖNIGLICHE PLÄNE",
-          description:
-            "Wenn du diesen Charakter ausspielst und mindestens eine Prinzessin oder eine Königin im Spiel ist, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Hans",
-      version: "Noble crapule",
-      text: [
-        {
-          title: "INTRIGUES ROYALES",
-          description:
-            "S'il y a un personnage Princesse ou Reine en jeu lorsque vous jouez ce personnage, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Hans",
-      version: "Nobile Furfante",
-      text: [
-        {
-          title: "COMPLOTTI REGALI",
-          description:
-            "Quando giochi questo personaggio, se un personaggio Principessa o Regina è in gioco, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Frozen",
   set: "009",
@@ -79,8 +34,47 @@ export const hansNobleScoundrel: CharacterCard = {
     {
       effect: {
         condition: {
-          expression: "a Princess or Queen character is in play",
-          type: "if",
+          type: "or",
+          conditions: [
+            {
+              type: "target-query",
+              query: {
+                selector: "all",
+                owner: "any",
+                zones: ["play"],
+                cardType: "character",
+                filter: [
+                  {
+                    type: "has-classification",
+                    classification: "Princess",
+                  },
+                ],
+              },
+              comparison: {
+                operator: "gte",
+                value: 1,
+              },
+            },
+            {
+              type: "target-query",
+              query: {
+                selector: "all",
+                owner: "any",
+                zones: ["play"],
+                cardType: "character",
+                filter: [
+                  {
+                    type: "has-classification",
+                    classification: "Queen",
+                  },
+                ],
+              },
+              comparison: {
+                operator: "gte",
+                value: 1,
+              },
+            },
+          ],
         },
         then: {
           amount: 1,
@@ -99,4 +93,5 @@ export const hansNobleScoundrel: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: hansNobleScoundrelI18n,
 };

@@ -59,9 +59,7 @@ describe("The Frozen Vine - Monstrous Plant", () => {
     expect(
       testEngine.asPlayerTwo().challenge(locationAttacker, theFrozenVineMonstrousPlant),
     ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
     expect(testEngine.asPlayerOne().getCardZone(theFrozenVineMonstrousPlant)).toBe("discard");
   });
 
@@ -79,9 +77,7 @@ describe("The Frozen Vine - Monstrous Plant", () => {
     expect(
       testEngine.asPlayerTwo().challenge(locationAttacker, theFrozenVineMonstrousPlant),
     ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
     expect(testEngine.asPlayerOne().getCardZone(theFrozenVineMonstrousPlant)).toBe("discard");
   });
 });

@@ -1,68 +1,97 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { partOfYourWorld } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import { cinderellaBallroomSensation } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import {
-//   DiabloMaleficentsSpy,
-//   UrsulaSeaWitchQueen,
-// } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Ursula - Sea Witch Queen", () => {
-//   It("**NOW I'M THE RULER** Whenever this character quests, exert chosen character.", () => {
-//     Const testStore = new TestStore({
-//       Play: [ursulaSeaWitchQueen, diabloMaleficentsSpy],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(ursulaSeaWitchQueen);
-//     Const target = testStore.getCard(diabloMaleficentsSpy);
-//
-//     Expect(target.meta.exerted).toBeFalsy();
-//     CardUnderTest.quest();
-//     TestStore.resolveTopOfStack({ targets: [target] });
-//     Expect(target.meta.exerted).toBe(true);
-//   });
-//
-//   Describe("**YOU'LL LISTEN TO ME!**", () => {
-//     It("Other characters can't exert to sing songs.", () => {
-//       Const testStore = new TestStore({
-//         Play: [ursulaSeaWitchQueen, cinderellaBallroomSensation],
-//         Hand: [partOfYourWorld],
-//       });
-//
-//       Const songToSing = testStore.getCard(partOfYourWorld);
-//       Const cardToSing = testStore.getCard(cinderellaBallroomSensation);
-//
-//       Expect(cardToSing.ready).toEqual(true);
-//       Expect(cardToSing.meta.playedThisTurn).toBeFalsy();
-//
-//       CardToSing.sing(songToSing);
-//
-//       Expect(cardToSing.ready).toEqual(true);
-//       Expect(testStore.getZonesCardCount().hand).toEqual(1);
-//       Expect(testStore.getZonesCardCount().play).toEqual(2);
-//     });
-//
-//     It("She's able to sing", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [ursulaSeaWitchQueen],
-//         Discard: [cinderellaBallroomSensation],
-//         Hand: [partOfYourWorld],
-//       });
-//
-//       Const { singer, song } = await testEngine.singSong({
-//         Song: partOfYourWorld,
-//         Singer: cinderellaBallroomSensation,
-//       });
-//
-//       Expect(singer.ready).toEqual(false);
-//       Expect(song.zone).toEqual("discard");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  createMockSong,
+} from "@tcg/lorcana-engine/testing";
+import { ursulaSeaWitchQueen } from "./058-ursula-sea-witch-queen";
+import { beOurGuest } from "../../001/actions/025-be-our-guest";
+
+const otherCharacter = createMockCharacter({
+  id: "ursula-swq-other-char",
+  name: "Other Character",
+  cost: 3,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+const songCard = createMockSong({
+  id: "ursula-swq-song",
+  name: "Test Song",
+  cost: 3,
+  text: "Draw a card.",
+});
+
+describe("Ursula - Sea Witch Queen", () => {
+  describe("NOW I AM THE RULER! — Whenever this character quests, exert chosen character.", () => {
+    it("triggers a bag effect when Ursula quests, allowing the controller to exert a chosen character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: ursulaSeaWitchQueen, isDrying: false }, otherCharacter],
+      });
+
+      expect(testEngine.asPlayerOne().isExerted(otherCharacter)).toBe(false);
+
+      expect(testEngine.asPlayerOne().quest(ursulaSeaWitchQueen)).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffects).toHaveLength(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          targets: [otherCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().isExerted(otherCharacter)).toBe(true);
+    });
+
+    it("can exert an opposing character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: ursulaSeaWitchQueen, isDrying: false }],
+        },
+        {
+          play: [otherCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().quest(ursulaSeaWitchQueen)).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffects).toHaveLength(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          targets: [otherCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().isExerted(otherCharacter)).toBe(true);
+    });
+  });
+
+  describe("YOU'LL LISTEN TO ME! — Other characters can't exert to sing songs.", () => {
+    it("prevents other characters from singing songs while Ursula is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [ursulaSeaWitchQueen, otherCharacter],
+        hand: [beOurGuest],
+      });
+
+      // otherCharacter has cost 3, beOurGuest costs 2 — normally valid singer
+      const result = testEngine.asPlayerOne().singSong(beOurGuest, otherCharacter);
+      expect(result.success).toBe(false);
+    });
+
+    it("Ursula herself is still able to sing (only OTHER characters are prevented)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: ursulaSeaWitchQueen, isDrying: false }],
+        hand: [songCard],
+      });
+
+      // Ursula costs 7, song costs 3 — she can sing it; restriction only applies to others
+      const result = testEngine.asPlayerOne().singSong(songCard, ursulaSeaWitchQueen);
+      expect(result.success).toBe(true);
+    });
+  });
+});

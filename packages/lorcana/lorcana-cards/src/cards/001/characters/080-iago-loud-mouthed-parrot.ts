@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { iagoLoudmouthedParrotI18n } from "./080-iago-loud-mouthed-parrot.i18n";
 
 export const iagoLoudmouthedParrot: CharacterCard = {
   id: "4Om",
@@ -7,52 +8,6 @@ export const iagoLoudmouthedParrot: CharacterCard = {
   cardType: "character",
   name: "Iago",
   version: "Loud-Mouthed Parrot",
-  i18n: {
-    en: {
-      name: "Iago",
-      version: "Loud-Mouthed Parrot",
-      text: [
-        {
-          title: "YOU GOT A PROBLEM?",
-          description:
-            "{E} — Chosen character gains Reckless during their next turn. (They can't quest and must challenge if able.)",
-        },
-      ],
-    },
-    de: {
-      name: "Jago",
-      version: "Großmäuliger Papagei",
-      text: [
-        {
-          title: "HAST DU'N PROBLEM?",
-          description:
-            "— Ein Charakter deiner Wahl erhält in seinem nächsten Zug Impulsiv. (Der Charakter kann nicht erkunden und muss herausfordern, wenn möglich.)",
-        },
-      ],
-    },
-    fr: {
-      name: "IAGO",
-      version: "Perroquet braillard",
-      text: [
-        {
-          title: "T'AS UN",
-          description:
-            "PROBLÈME? — Choisissez un personnage, il gagne Combattant durant son prochain tour. (Il ne peut pas être envoyé à l'aventure et doit défier à chaque tour s'il le peut.)",
-        },
-      ],
-    },
-    it: {
-      name: "Iago",
-      version: "Loud-Mouthed Parrot",
-      text: [
-        {
-          title: "YOU GOT A PROBLEM?",
-          description:
-            "— Chosen character gains Reckless during their next turn. (They can't quest and must challenge if able.)",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aladdin",
   set: "001",
@@ -63,7 +18,6 @@ export const iagoLoudmouthedParrot: CharacterCard = {
   willpower: 4,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_fb67b53a2df44bff96ca7fff2d607437",
     tcgPlayer: 497207,
@@ -93,4 +47,5 @@ export const iagoLoudmouthedParrot: CharacterCard = {
       type: "activated",
     },
   ],
+  i18n: iagoLoudmouthedParrotI18n,
 };

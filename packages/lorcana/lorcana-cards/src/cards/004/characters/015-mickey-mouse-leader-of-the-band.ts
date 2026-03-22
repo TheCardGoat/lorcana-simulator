@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseLeaderOfTheBandI18n } from "./015-mickey-mouse-leader-of-the-band.i18n";
 
 export const mickeyMouseLeaderOfTheBand: CharacterCard = {
   id: "HGH",
@@ -7,36 +8,6 @@ export const mickeyMouseLeaderOfTheBand: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Leader of the Band",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Leader of the Band",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "STRIKE UP THE MUSIC",
-          description: "When you play this character, chosen character gains Support this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Micky Maus",
-      version: "Dirigent",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) DIE MUSIK AUFDREHEN Wenn du diesen Charakter ausspielst, erhält ein Charakter deiner Wahl in diesem Zug Unterstützen.",
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Chef de la fanfare",
-      text: "Soutien EN AVANT LA MUSIQUE! Lorsque vous jouez ce personnage, choisissez un personnage qui gagne Soutien pour le reste de ce tour.",
-    },
-    it: {
-      name: "Topolino",
-      version: "Direttore della Banda",
-      text: "Aiutante ATTACCARE IL PEZZO Quando giochi questo personaggio, un personaggio a tua scelta ottiene Aiutante per questo turno.",
-    },
-  },
   inkType: ["amber"],
   set: "004",
   cardNumber: 15,
@@ -91,4 +62,5 @@ export const mickeyMouseLeaderOfTheBand: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mickeyMouseLeaderOfTheBandI18n,
 };

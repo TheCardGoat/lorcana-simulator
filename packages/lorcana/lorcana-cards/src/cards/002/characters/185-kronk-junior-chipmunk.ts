@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kronkJuniorChipmunkI18n } from "./185-kronk-junior-chipmunk.i18n";
 
 export const kronkJuniorChipmunk: CharacterCard = {
   id: "XpE",
@@ -7,37 +8,6 @@ export const kronkJuniorChipmunk: CharacterCard = {
   cardType: "character",
   name: "Kronk",
   version: "Junior Chipmunk",
-  i18n: {
-    en: {
-      name: "Kronk",
-      version: "Junior Chipmunk",
-      text: [
-        {
-          title: "Resist +1",
-        },
-        {
-          title: "SCOUT LEADER",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, you may deal 2 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Kronk",
-      version: "Junior Chipmunk",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.) PFADFINDER Jedes Mal, wenn dieser Charakter in deinem Zug durch eine Herausforderung einen anderen Charakter verbannt, darfst du einem Charakter deiner Wahl 2 Schaden zufügen.",
-    },
-    fr: {
-      name: "Kronk",
-      version: "Ragondin junior",
-      text: "Résistance +1 CHEF SCOUT Lorsque ce personnage en bannit un autre via un défi durant votre tour, vous pouvez choisir un personnage et lui infliger 2 dommages.",
-    },
-    it: {
-      name: "Kronk",
-      version: "Junior Chipmunk",
-      text: "Resist +1 (Damage dealt to this character is reduced by 1.) SCOUT LEADER During your turn, whenever this character banishes another character in a challenge, you may deal 2 damage to chosen character.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Emperors New Groove",
   set: "002",
@@ -63,7 +33,6 @@ export const kronkJuniorChipmunk: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       id: "6z5-1",
@@ -92,11 +61,18 @@ export const kronkJuniorChipmunk: CharacterCard = {
       name: "SCOUT LEADER",
       text: "SCOUT LEADER During your turn, whenever this character banishes another character in a challenge, you may deal 2 damage to chosen character.",
       trigger: {
-        event: "banish",
-        on: "OPPONENT_CHARACTERS",
+        event: "banish-in-challenge",
+        on: "SELF",
         timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
       },
       type: "triggered",
     },
   ],
+  i18n: kronkJuniorChipmunkI18n,
 };

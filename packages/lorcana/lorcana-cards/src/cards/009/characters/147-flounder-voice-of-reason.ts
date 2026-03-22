@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flounderVoiceOfReasonI18n } from "./147-flounder-voice-of-reason.i18n";
 
 export const flounderVoiceOfReason: CharacterCard = {
   id: "e6d",
@@ -7,24 +8,6 @@ export const flounderVoiceOfReason: CharacterCard = {
   cardType: "character",
   name: "Flounder",
   version: "Voice of Reason",
-  i18n: {
-    en: {
-      name: "Flounder",
-      version: "Voice of Reason",
-    },
-    de: {
-      name: "Fabius",
-      version: "Stimme der Vernunft",
-    },
-    fr: {
-      name: "POLOCHON",
-      version: "La voix de la raison",
-    },
-    it: {
-      name: "Flounder",
-      version: "Voce della Ragione",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Little Mermaid",
   set: "009",
@@ -41,4 +24,5 @@ export const flounderVoiceOfReason: CharacterCard = {
     tcgPlayer: 650082,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: flounderVoiceOfReasonI18n,
 };

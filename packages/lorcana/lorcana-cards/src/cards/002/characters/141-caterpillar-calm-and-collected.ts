@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { caterpillarCalmAndCollectedI18n } from "./141-caterpillar-calm-and-collected.i18n";
 
 export const caterpillarCalmAndCollected: CharacterCard = {
   id: "NTh",
@@ -7,24 +8,6 @@ export const caterpillarCalmAndCollected: CharacterCard = {
   cardType: "character",
   name: "Caterpillar",
   version: "Calm and Collected",
-  i18n: {
-    en: {
-      name: "Caterpillar",
-      version: "Calm and Collected",
-    },
-    de: {
-      name: "Onkel Raupe",
-      version: "Ruhig und gefasst",
-    },
-    fr: {
-      name: "La Chenille",
-      version: "Chill et vaporeux",
-    },
-    it: {
-      name: "Caterpillar",
-      version: "Calm and Collected",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Alice in Wonderland",
   set: "002",
@@ -41,4 +24,5 @@ export const caterpillarCalmAndCollected: CharacterCard = {
     tcgPlayer: 527762,
   },
   classifications: ["Dreamborn"],
+  i18n: caterpillarCalmAndCollectedI18n,
 };

@@ -23,13 +23,6 @@ describe("Mufasa - Betrayed Leader", () => {
     // Resolve triggers
     testEngine.asPlayerOne().resolveNextBag();
 
-    // Since it's a character, we should be prompted if we want to play it (optional effect)
-    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
-    console.log("Pending choice:", pendingChoice);
-    if (pendingChoice) {
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true });
-    }
-
     // Gaston should be in play and exerted
     const gastonZone = testEngine.asServer().getState().ctx.zones.private.cardIndex[
       gastonId

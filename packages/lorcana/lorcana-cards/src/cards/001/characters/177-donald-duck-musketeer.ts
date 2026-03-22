@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckMusketeerI18n } from "./177-donald-duck-musketeer.i18n";
 
 export const donaldDuckMusketeer: CharacterCard = {
   id: "8Ze",
@@ -7,55 +8,6 @@ export const donaldDuckMusketeer: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Musketeer",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Musketeer",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "STAY ALERT!",
-          description:
-            "During your turn, your Musketeer characters gain Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Musketeer",
-      text: [
-        {
-          title: "Bodyguard",
-          description:
-            "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.) STAY ALERT! During your turn, your Musketeer characters gain Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Donald Duck",
-      version: "Musketeer",
-      text: [
-        {
-          title: "Bodyguard",
-          description:
-            "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.) STAY ALERT! During your turn, your Musketeer characters gain Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    it: {
-      name: "Donald Duck",
-      version: "Musketeer",
-      text: [
-        {
-          title: "Bodyguard",
-          description:
-            "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.) STAY ALERT! During your turn, your Musketeer characters gain Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   set: "001",
   cardNumber: 177,
@@ -65,7 +17,6 @@ export const donaldDuckMusketeer: CharacterCard = {
   willpower: 5,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_e854c2e94f504118b3618ae2eb10a195",
     tcgPlayer: 508907,
@@ -89,9 +40,25 @@ export const donaldDuckMusketeer: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        type: "during-turn",
+        whose: "your",
+      },
       effect: {
         keyword: "Evasive",
-        target: "YOUR_CHARACTERS",
+        target: {
+          count: "all",
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Musketeer",
+            },
+          ],
+        },
         type: "gain-keyword",
       },
       id: "1te-2",
@@ -100,4 +67,5 @@ export const donaldDuckMusketeer: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: donaldDuckMusketeerI18n,
 };

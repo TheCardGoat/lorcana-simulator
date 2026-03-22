@@ -19,7 +19,23 @@ describe("Divebomb", () => {
 
     expect(
       testEngine.asPlayerOne().playCard(divebomb, {
-        targets: [mauiSoaringDemigod, arielOnHumanLegs],
+        targets: [mauiSoaringDemigod],
+      }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+    const [pendingEffect] = testEngine.asPlayerOne().getPendingEffects();
+    const arielId = testEngine.findCardInstanceId(arielOnHumanLegs, "play", "player_two");
+    expect(pendingEffect?.selectionContext).toMatchObject({ kind: "target-selection" });
+    expect(pendingEffect?.selectionContext?.kind).toBe("target-selection");
+    if (pendingEffect?.selectionContext?.kind !== "target-selection") {
+      throw new Error("Expected a target-selection prompt");
+    }
+    expect(pendingEffect.selectionContext.cardCandidateIds).toEqual([arielId]);
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        targets: [arielOnHumanLegs],
       }),
     ).toBeSuccessfulCommand();
 

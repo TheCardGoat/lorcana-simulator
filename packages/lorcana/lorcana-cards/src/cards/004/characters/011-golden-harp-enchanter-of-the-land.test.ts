@@ -1,40 +1,28 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { friendsOnTheOtherSide } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import { goldenHarpEnchanterOfTheLand } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Golden Harp - Enchanter of the Land", () => {
-//   Describe("**STOLEN AWAY** At the end of your turn, if you didn't play a song this turn, banish this character.", () => {
-//     It("should banish the character if no song was played this turn", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [goldenHarpEnchanterOfTheLand],
-//       });
-//
-//       Await testEngine.passTurn();
-//
-//       Expect(testEngine.getCardModel(goldenHarpEnchanterOfTheLand).zone).toBe(
-//         "discard",
-//       );
-//     });
-//     It("should not banish the character if a song was played this turn", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: 3,
-//         Play: [goldenHarpEnchanterOfTheLand],
-//         Hand: [friendsOnTheOtherSide],
-//       });
-//
-//       Await testEngine.playCard(friendsOnTheOtherSide);
-//       Await testEngine.passTurn();
-//
-//       Expect(testEngine.getCardModel(goldenHarpEnchanterOfTheLand).zone).toBe(
-//         "play",
-//       );
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { friendsOnTheOtherSide } from "../../001/actions/064-friends-on-the-other-side";
+import { goldenHarpEnchanterOfTheLand } from "./011-golden-harp-enchanter-of-the-land";
+
+describe("Golden Harp - Enchanter of the Land", () => {
+  it("banishes itself at the end of your turn if you did not play a song", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [goldenHarpEnchanterOfTheLand],
+    });
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardZone(goldenHarpEnchanterOfTheLand)).toBe("discard");
+  });
+
+  it("stays in play if you played a song that turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [goldenHarpEnchanterOfTheLand],
+      hand: [friendsOnTheOtherSide],
+      inkwell: friendsOnTheOtherSide.cost,
+      deck: 3,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardZone(goldenHarpEnchanterOfTheLand)).toBe("play");
+  });
+});

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mayorWinddancerActorturnedpoliticianI18n } from "./188-mayor-winddancer-actor-turned-politician.i18n";
 
 export const mayorWinddancerActorturnedpolitician: CharacterCard = {
   id: "9T3",
@@ -7,24 +8,6 @@ export const mayorWinddancerActorturnedpolitician: CharacterCard = {
   cardType: "character",
   name: "Mayor Winddancer",
   version: "Actor-Turned-Politician",
-  i18n: {
-    en: {
-      name: "Mayor Winddancer",
-      version: "Actor-Turned-Politician",
-    },
-    de: {
-      name: "Bürgermeister Winddancer",
-      version: "Schauspieler und Politiker",
-    },
-    fr: {
-      name: "Maire Winddancer",
-      version: "Acteur devenu politicien",
-    },
-    it: {
-      name: "Sindaco Winddancer",
-      version: "Ex Attore Ora in Politica",
-    },
-  },
   inkType: ["steel"],
   franchise: "Zootropolis",
   set: "010",
@@ -41,4 +24,5 @@ export const mayorWinddancerActorturnedpolitician: CharacterCard = {
     tcgPlayer: 659457,
   },
   classifications: ["Storyborn"],
+  i18n: mayorWinddancerActorturnedpoliticianI18n,
 };

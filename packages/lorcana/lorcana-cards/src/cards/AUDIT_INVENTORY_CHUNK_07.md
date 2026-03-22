@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 7 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_06.md) | [Next →](AUDIT_INVENTORY_CHUNK_08.md)
-
 
 - [ ] **005/characters/039-archimedes-exasperated-owl.test.ts**
   - Card: `005/characters/039-archimedes-exasperated-owl.ts`

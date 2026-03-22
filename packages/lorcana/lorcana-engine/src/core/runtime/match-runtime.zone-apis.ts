@@ -13,17 +13,14 @@ import type { BaseCardDefinition } from "./card-contracts";
 // Zone Operations (Read-only for validation)
 // =============================================================================
 
-export function createZoneQueryAPI<G, TCardDefinition extends BaseCardDefinition>(
-  state: MatchState<G>,
-  cardsApi: CardQueryAPI<TCardDefinition>,
-): ZoneQueryAPI {
+export function createZoneQueryAPI(state: MatchState, cardsApi: CardQueryAPI): ZoneQueryAPI {
   const getFallbackCardView = (cardId: string) => {
     const indexEntry = state.ctx.zones.private.cardIndex[cardId];
     return (
       cardsApi.get(cardId) ?? {
         instanceId: cardId,
         definitionId: cardId,
-        definition: undefined as unknown as TCardDefinition,
+        definition: undefined as unknown as BaseCardDefinition,
         ownerID: (indexEntry?.ownerID ?? "unknown") as string,
         controllerID: (indexEntry?.controllerID ?? indexEntry?.ownerID ?? "unknown") as string,
         zoneID: indexEntry?.zoneKey,
@@ -110,9 +107,9 @@ export function createZoneQueryAPI<G, TCardDefinition extends BaseCardDefinition
       const cards = state.ctx.zones.private.zoneCards[zoneId] || [];
       return cards.length > 0 ? cards[0] : undefined;
     },
-    getCardZone: () => undefined,
-    getCardOwner: () => undefined,
-    getCardController: () => undefined,
+    getCardZone: (cardId) => state.ctx.zones.private.cardIndex[cardId]?.zoneKey,
+    getCardOwner: (cardId) => state.ctx.zones.private.cardIndex[cardId]?.ownerID,
+    getCardController: (cardId) => state.ctx.zones.private.cardIndex[cardId]?.controllerID,
     isOrdered: (zone) => {
       const zoneId = resolveZoneId(zone);
       return state.ctx.zones.zoneDefs[zoneId]?.ordered ?? true;

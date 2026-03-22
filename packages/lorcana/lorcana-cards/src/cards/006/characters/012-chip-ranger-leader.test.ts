@@ -1,36 +1,57 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   ChipRangerLeader,
-//   DaleFriendInNeed,
-// } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Chip - Ranger Leader", () => {
-//   Describe("**THE VALUE OF FRIENDSHIP** While you have a character named Dale in play, this character gains **Support**. _(Whenever they quest, you may add their {S} to another chosen character's {S} this turn.)_", () => {
-//     It("should have support when Dale is in play", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [chipRangerLeader, daleFriendInNeed],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(chipRangerLeader);
-//
-//       Expect(cardUnderTest.hasSupport).toBe(true);
-//     });
-//
-//     It("should not have support when Dale is not in play", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [chipRangerLeader],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(chipRangerLeader);
-//
-//       Expect(cardUnderTest.hasSupport).toBe(false);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { chipRangerLeader } from "./012-chip-ranger-leader";
+
+const dale = createMockCharacter({
+  id: "chip-ranger-leader-dale",
+  name: "Dale",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+const supportTarget = createMockCharacter({
+  id: "chip-ranger-leader-support-target",
+  name: "Support Target",
+  cost: 2,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Chip - Ranger Leader", () => {
+  describe("THE VALUE OF FRIENDSHIP - While you have a character named Dale in play, this character gains Support.", () => {
+    it("does not grant Support when Dale is not in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [chipRangerLeader, supportTarget],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().quest(chipRangerLeader)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
+    it("grants Support while Dale is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [chipRangerLeader, dale, supportTarget],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().quest(chipRangerLeader)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+          targets: [supportTarget],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardStrength(supportTarget)).toBe(
+        supportTarget.strength + chipRangerLeader.strength,
+      );
+    });
+  });
+});

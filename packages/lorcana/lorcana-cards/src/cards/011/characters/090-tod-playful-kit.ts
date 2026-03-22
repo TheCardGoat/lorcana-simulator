@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { todPlayfulKitI18n } from "./090-tod-playful-kit.i18n";
 
 export const todPlayfulKit: CharacterCard = {
   id: "43t",
@@ -7,57 +8,6 @@ export const todPlayfulKit: CharacterCard = {
   cardType: "character",
   name: "Tod",
   version: "Playful Kit",
-  i18n: {
-    en: {
-      name: "Tod",
-      version: "Playful Kit",
-      text: [
-        {
-          title: "LOOK AT THIS!",
-          description: "Whenever this character quests, choose one:",
-        },
-        {
-          title: "* Gain 1 lore.",
-        },
-        {
-          title: "* Chosen character of yours gains Evasive until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Cap",
-      version: "Verspielter Welpe",
-      text: [
-        {
-          title: "SIEH DIR DAS AN!",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, wähle eine Möglichkeit aus: • Sammle 1 Legende. • Wähle einen deiner Charaktere. Jener erhält bis zu Beginn deines nächsten Zuges Wendig.",
-        },
-      ],
-    },
-    fr: {
-      name: "Rox",
-      version: "Renardeau joueur",
-      text: [
-        {
-          title: "REGARDE ÇA!",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, choisissez entre: • Gagnez 1 éclat de Lore. • Choisissez l'un de vos personnages qui gagne Insaisissable jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Red",
-      version: "Cucciolo Giocoso",
-      text: [
-        {
-          title: "GUARDA QUESTO!",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, scegli uno: • Ottieni 1 leggenda. • Un tuo personaggio a tua scelta ottiene Sfuggente fino all'inizio del tuo prossimo turno. (Solo altri personaggi con Sfuggente possono sfidarlo.)",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Fox and the Hound",
   set: "011",
@@ -85,5 +35,37 @@ export const todPlayfulKit: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      id: "43t-1",
+      name: "LOOK AT THIS!",
+      effect: {
+        optionLabels: [
+          "Gain 1 lore.",
+          "Chosen character of yours gains Evasive until the start of your next turn.",
+        ],
+        options: [
+          {
+            amount: 1,
+            type: "gain-lore",
+          },
+          {
+            keyword: "Evasive",
+            duration: "until-start-of-next-turn",
+            target: "CHOSEN_CHARACTER_OF_YOURS",
+            type: "gain-keyword",
+          },
+        ],
+        type: "choice",
+      },
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
+      text: "LOOK AT THIS! Whenever this character quests, choose one: Gain 1 lore, or chosen character of yours gains Evasive until the start of your next turn.",
+    },
+  ],
+  i18n: todPlayfulKitI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { webbyVanderquackJuniorProspectorEnchantedI18n } from "./229-webby-vanderquack-junior-prospector-enchanted.i18n";
 
 export const webbyVanderquackJuniorProspectorEnchanted: CharacterCard = {
   id: "jSV",
@@ -7,40 +8,6 @@ export const webbyVanderquackJuniorProspectorEnchanted: CharacterCard = {
   cardType: "character",
   name: "Webby Vanderquack",
   version: "Junior Prospector",
-  i18n: {
-    en: {
-      name: "Webby Vanderquack",
-      version: "Junior Prospector",
-      text: [
-        {
-          title: "Shift 2 {I}",
-        },
-        {
-          title: "Ward",
-        },
-        {
-          title: "WORK SMARTER",
-          description:
-            "Whenever this character quests, if an opponent has more cards in their inkwell than you, you may put the top card of your deck into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Nicky Vanderquack",
-      version: "Junior-Schürferin",
-      text: "Gestaltwandel 2 Behütet SCHLAUER ARBEITEN Jedes Mal, wenn dieser Charakter erkundet, falls mindestens eine gegnerische Person mehr Karten in ihrem Tintenvorrat hat als du, darfst du die oberste Karte deines Decks verdeckt und erschöpft in deinen Tintenvorrat legen.",
-    },
-    fr: {
-      name: "Zaza",
-      version: "Prospectrice junior",
-      text: "Alter 2 Hors d'atteinte TRAVAIL MALIN Chaque fois que ce personnage est envoyé à l'aventure, si un adversaire a plus de cartes dans sa réserve d'encre que vous, vous pouvez placer la carte du dessus de votre pioche dans votre réserve d'encre, face cachée et épuisée.",
-    },
-    it: {
-      name: "Gaia Vanderquack",
-      version: "Apprendista Cercatrice",
-      text: "Trasformazione 2, Protetto LAVORARE MEGLIO Ogni volta che questo personaggio va all'avventura, se un avversario ha più carte nel suo calamaio di te, puoi aggiungere la prima carta del tuo mazzo al tuo calamaio, a faccia in giù e impegnata.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Ducktales",
   set: "010",
@@ -112,4 +79,5 @@ export const webbyVanderquackJuniorProspectorEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: webbyVanderquackJuniorProspectorEnchantedI18n,
 };

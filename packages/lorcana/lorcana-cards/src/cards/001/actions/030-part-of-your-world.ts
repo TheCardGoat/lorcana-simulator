@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { partOfYourWorldI18n } from "./030-part-of-your-world.i18n";
 
 export const partOfYourWorld: ActionCard = {
   id: "Vba",
@@ -6,24 +7,6 @@ export const partOfYourWorld: ActionCard = {
   reprints: ["set1-030"],
   cardType: "action",
   name: "Part of Your World",
-  i18n: {
-    en: {
-      name: "Part of Your World",
-      text: "Return a character card from your discard to your hand.",
-    },
-    de: {
-      name: "In Deiner Welt",
-      text: "Nimm 1 Charakterkarte aus deinem Ablagestapel zurück auf deine Hand.",
-    },
-    fr: {
-      name: "PARTIR LÀ-BAS",
-      text: "Reprenez en main une carte personnage de votre défausse.",
-    },
-    it: {
-      name: "Vivere Là",
-      text: "(Un personaggio con costo 3 o superiore può per cantare questa canzone gratis.) Riprendi in mano una carta personaggio dai tuoi scarti.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Little Mermaid",
   set: "001",
@@ -48,4 +31,5 @@ export const partOfYourWorld: ActionCard = {
       },
     },
   ],
+  i18n: partOfYourWorldI18n,
 };

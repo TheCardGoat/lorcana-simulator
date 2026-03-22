@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liquidatorIcedOverI18n } from "./111-liquidator-iced-over.i18n";
 
 export const liquidatorIcedOver: CharacterCard = {
   id: "UCV",
@@ -7,55 +8,6 @@ export const liquidatorIcedOver: CharacterCard = {
   cardType: "character",
   name: "Liquidator",
   version: "Iced Over",
-  i18n: {
-    en: {
-      name: "Liquidator",
-      version: "Iced Over",
-      text: [
-        {
-          title: "UNDERDOG",
-          description:
-            "If this is your first turn and you're not the first player, you pay 1 {I} less to play this character.",
-        },
-        {
-          title: "Reckless",
-        },
-      ],
-    },
-    de: {
-      name: "Liquidator",
-      version: "Vereist",
-      text: [
-        {
-          title: "UNDERDOG",
-          description:
-            "Falls dies dein erster Zug ist und du das Spiel nicht begonnen hast, zahlst du 1 weniger, um diesen Charakter auszuspielen. Impulsiv",
-        },
-      ],
-    },
-    fr: {
-      name: "Liquidator",
-      version: "Couvert de glace",
-      text: [
-        {
-          title: "OUTSIDER",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins si c'est votre premier tour et que vous n'êtes pas le premier joueur. Combattant",
-        },
-      ],
-    },
-    it: {
-      name: "Liquidator",
-      version: "Congelato",
-      text: [
-        {
-          title: "SFAVORITO",
-          description:
-            "Se questo è il tuo primo turno e non sei il primo giocatore, paga 1 in meno per giocare questo personaggio. Attaccabrighe",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -84,17 +36,17 @@ export const liquidatorIcedOver: CharacterCard = {
   abilities: [
     {
       id: "12q-1",
-      effect: {
-        condition: {
-          type: "first-turn-non-otp",
-        },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+      name: "UNDERDOG",
+      type: "static",
+      condition: {
+        type: "first-turn-non-otp",
       },
-      type: "action",
+      effect: {
+        type: "cost-reduction",
+        amount: 1,
+        cardType: "character",
+      },
+      sourceZones: ["hand"],
       text: "UNDERDOG If this is your first turn and you’re not the first player, you pay 1 {I} less to play this character.",
     },
     {
@@ -104,4 +56,5 @@ export const liquidatorIcedOver: CharacterCard = {
       text: "Reckless",
     },
   ],
+  i18n: liquidatorIcedOverI18n,
 };

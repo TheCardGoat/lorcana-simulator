@@ -10,6 +10,7 @@ import {
   type CommandEnvelope,
   type CommandResult,
   type EngineMoveValidationResult,
+  type MatchRuntimeConfig,
   type Player,
   type PlayerId,
   ServerEngine,
@@ -26,6 +27,10 @@ import type {
 } from "./types";
 
 import { LorcanaEngineBase } from "./lorcana-engine-base";
+import type {
+  LorcanaServerAuthoritativeSnapshot,
+  LorcanaUndoCheckpointSnapshot,
+} from "./serialization";
 import { resolveServerCurrentActor } from "./automation/actor-resolution";
 import {
   enumerateAutomatedActionsWithAdapter,
@@ -38,7 +43,6 @@ import type {
   AutomatedActionExecutionResult,
 } from "./automation";
 import { lorcanaRuntimeConfig } from "./runtime-game";
-import type { LorcanaRuntimeCardDerivedMethods } from "./runtime-moves";
 import { type LorcanaCardsMaps } from "./engine-initialization";
 
 export type LorcanaEngineDeckEntry = {
@@ -58,32 +62,20 @@ export type LorcanaEngineInit = {
   matchID?: string;
   gameID?: string;
   goingFirst: PlayerId;
-  cardCatalog: CardCatalog<LorcanaCard>;
+  cardCatalog: CardCatalog;
   players: Player[];
   cardsMaps: LorcanaCardsMaps;
 };
 
 export class LorcanaServer extends LorcanaEngineBase {
-  engine: ServerEngine<
-    LorcanaG,
-    LorcanaCard,
-    LorcanaRuntimeCardDerivedMethods,
-    LorcanaProjectedBoardView,
-    typeof lorcanaRuntimeConfig.moves
-  >;
+  engine: ServerEngine;
 
   constructor(init: LorcanaEngineInit) {
     super(init);
     const staticResources = this.getResolvedStaticResources();
 
-    const serverEngineConfig: ServerEngineConfig<
-      LorcanaG,
-      LorcanaCard,
-      LorcanaRuntimeCardDerivedMethods,
-      LorcanaProjectedBoardView,
-      typeof lorcanaRuntimeConfig.moves
-    > = {
-      runtimeConfig: lorcanaRuntimeConfig,
+    const serverEngineConfig: ServerEngineConfig = {
+      runtimeConfig: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
       players: init.players,
       seed: init.seed,
       staticResources: staticResources,
@@ -109,11 +101,79 @@ export class LorcanaServer extends LorcanaEngineBase {
     return this.engine.getRuntime();
   }
 
+  getGameLog() {
+    return this.engine.getRuntime().getGameLog();
+  }
+
+  canUndo(playerId: string): boolean {
+    return this.engine.canUndo(playerId);
+  }
+
+  getUndoCheckpointSnapshot(): LorcanaUndoCheckpointSnapshot | undefined {
+    const checkpoint = this.engine.getUndoCheckpointSnapshot();
+    return checkpoint
+      ? ({
+          ...checkpoint,
+          state: structuredClone(checkpoint.state) as LorcanaMatchState,
+          runtimeSnapshot: structuredClone(checkpoint.runtimeSnapshot),
+        } satisfies LorcanaUndoCheckpointSnapshot)
+      : undefined;
+  }
+
+  restoreAuthoritativeSnapshot(snapshot: LorcanaServerAuthoritativeSnapshot): void {
+    this.engine.restoreAuthoritativeSnapshot({
+      state: snapshot.state as LorcanaMatchState,
+      ...(snapshot.undoCheckpoint
+        ? {
+            undoCheckpoint: {
+              ...snapshot.undoCheckpoint,
+              state: structuredClone(snapshot.undoCheckpoint.state) as LorcanaMatchState,
+              runtimeSnapshot: structuredClone(snapshot.undoCheckpoint.runtimeSnapshot),
+            },
+          }
+        : {}),
+    });
+  }
+
+  override undo(playerId: string, prevStateID?: number): CommandResult {
+    const runtime = this.engine.getRuntime();
+    const previousGameEventCount = runtime.getPublishedGameEvents().length;
+    const previousLogCount = runtime.getGameLog().length;
+    const wasAccepted = this.engine.undo(playerId, prevStateID);
+
+    if (!wasAccepted) {
+      return {
+        success: false,
+        error: "Cannot undo right now.",
+        errorCode: "UNDO_NOT_AVAILABLE",
+        currentStateID: this.getStateID(),
+      };
+    }
+
+    return {
+      success: true,
+      stateID: this.getStateID(),
+      state: structuredClone(this.engine.getState()) as LorcanaMatchState,
+      patches: [],
+      gameEvents: runtime.getPublishedGameEvents().slice(previousGameEventCount),
+      logEntries: runtime.getGameLog().slice(previousLogCount),
+      processedCommand: {
+        commandID: `undo-${playerId}-${Date.now()}`,
+        move: "undo",
+      },
+      animations: [],
+      undoable: false,
+    };
+  }
+
   protected executeMoveViaEngine<K extends keyof LorcanaRuntimeMoveInputs & string>(
     moveId: K,
     input: LorcanaRuntimeMoveInputs[K],
     ctx: { playerId: string; prevStateID?: number },
   ): CommandResult {
+    const runtime = this.engine.getRuntime();
+    const previousGameEventCount = runtime.getPublishedGameEvents().length;
+    const previousLogCount = runtime.getGameLog().length;
     const result = this.engine.executeMoveForPlayer(ctx.playerId, moveId as string, input as never);
     if (!result.success) {
       return {
@@ -132,10 +192,16 @@ export class LorcanaServer extends LorcanaEngineBase {
       stateID: this.getStateID(),
       state: structuredClone(this.engine.getState()) as LorcanaMatchState,
       patches: [],
-      gameEvents: [],
-      logEntries: [],
-      processedCommand: commandEnvelope,
+      gameEvents: runtime.getPublishedGameEvents().slice(previousGameEventCount),
+      logEntries: runtime.getGameLog().slice(previousLogCount),
+      processedCommand: {
+        ...commandEnvelope,
+        commandID: `server-${ctx.playerId}-${moveId}-${Date.now()}`,
+        input,
+        move: moveId,
+      },
       animations: [],
+      undoable: false,
     };
 
     return commandResult;
@@ -152,7 +218,9 @@ export class LorcanaServer extends LorcanaEngineBase {
   protected enumerateMovesForPlayerViaEngine(
     playerId: string,
   ): Array<keyof LorcanaRuntimeMoveInputs & string> {
-    return this.engine.enumerateMovesForPlayer(playerId);
+    return this.engine.enumerateMovesForPlayer(playerId) as Array<
+      keyof LorcanaRuntimeMoveInputs & string
+    >;
   }
 
   protected override getAutomatedPlanningBoardForPlayer(

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { puaDisgruntledPigI18n } from "./059-pua-disgruntled-pig.i18n";
 
 export const puaDisgruntledPig: CharacterCard = {
   id: "lA0",
@@ -7,24 +8,6 @@ export const puaDisgruntledPig: CharacterCard = {
   cardType: "character",
   name: "Pua",
   version: "Disgruntled Pig",
-  i18n: {
-    en: {
-      name: "Pua",
-      version: "Disgruntled Pig",
-    },
-    de: {
-      name: "Pua",
-      version: "Verärgertes Schwein",
-    },
-    fr: {
-      name: "Pua",
-      version: "Cochon mécontent",
-    },
-    it: {
-      name: "Pua",
-      version: "Maiale Contrariato",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Moana",
   set: "011",
@@ -41,4 +24,5 @@ export const puaDisgruntledPig: CharacterCard = {
     tcgPlayer: 675297,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: puaDisgruntledPigI18n,
 };

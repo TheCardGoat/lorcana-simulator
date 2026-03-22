@@ -3,52 +3,50 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 10 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_09.md) | [Next →](AUDIT_INVENTORY_CHUNK_11.md)
 
-
-- [ ] **006/items/168-jumbo-pop.test.ts**
+- [x] **006/items/168-jumbo-pop.test.ts**
   - Card: `006/items/168-jumbo-pop.ts`
     - `HERE YOU GO Banish this item – Remove up to 2 damage from each of your characters. Draw a card.`
 
-- [ ] **006/items/200-king-s-sensor-core.test.ts**
-  - Card: `MISSING`
+- [x] **006/items/200-kings-sensor-core.test.ts**
+  - Card: `006/items/200-kings-sensor-core.ts`
     - `Should give resist to your Prince and King characters in play`
     - `**ROYAL SEARCH** {E}, 2 {I} – Reveal the top card of your deck. If it’s a Prince or King character card, you may put it into your hand. Otherwise, put it on the top of your deck.`
 
-- [ ] **006/items/201-training-dummy.test.ts**
+- [x] **006/items/201-training-dummy.test.ts**
   - Card: `006/items/201-training-dummy.ts`
     - `HANDLE WITH CARE {E}, 2 {I} – Chosen character gains Bodyguard until the start of your next turn. (An opposing character who challenges one of your characters must choose one with Bodyguard if able.)`
 
-- [ ] **006/items/202-sunglasses.test.ts**
+- [x] **006/items/202-sunglasses.test.ts**
   - Card: `006/items/202-sunglasses.ts`
     - `SPYCRAFT {E} - Draw a card, then choose and discard a card.`
 
 ### locations (12 tests)
 
-- [ ] **006/locations/034-hundred-acre-island-pooh-s-home.test.ts**
-  - Card: `MISSING`
+- [x] **006/locations/034-hundred-acre-island-poohs-home.test.ts**
+  - Card: `006/locations/034-hundred-acre-island-poohs-home.ts`
     - `FRIENDS FOREVER During an opponent's turn, whenever a character is banished here, gain 1 lore.`
 
-- [ ] **006/locations/035-sugar-rush-speedway-finish-line.test.ts**
+- [x] **006/locations/035-sugar-rush-speedway-finish-line.test.ts**
   - Card: `006/locations/035-sugar-rush-speedway-finish-line.ts`
     - `Moving from another location`
     - `NOT Moving from another location`
 
-- [ ] **006/locations/068-fairy-ship-royal-vessel.test.ts**
+- [x] **006/locations/068-fairy-ship-royal-vessel.test.ts**
   - Card: `006/locations/068-fairy-ship-royal-vessel.ts`
     - `LOOK INNOCENT This location enters play exerted.`
 
-- [ ] **006/locations/069-mystical-tree-mama-odie-s-home.test.ts**
-  - Card: `MISSING`
+- [x] **006/locations/069-mystical-tree-mama-odies-home.test.ts**
+  - Card: `006/locations/069-mystical-tree-mama-odies-home.ts`
     - `NOT BAD At the start of your turn, you may move 1 damage counter from chosen character here to chosen opposing character.`
     - `HARD-EARNED WISDOM At the start of your turn, if you have a character named Mama Odie here, gain 1 lore.`
 
-- [ ] **006/locations/101-perilous-maze-watery-labyrinth.test.ts**
+- [x] **006/locations/101-perilous-maze-watery-labyrinth.test.ts**
   - Card: `006/locations/101-perilous-maze-watery-labyrinth.ts`
     - `LOST IN THE WAVES Whenever a character is challenged while here, each opponent chooses and discards a card.`
 
-- [ ] **006/locations/102-owl-island-secluded-entrance.test.ts**
+- [x] **006/locations/102-owl-island-secluded-entrance.test.ts**
   - Card: `006/locations/102-owl-island-secluded-entrance.ts`
     - `TEAMWORK For each character you have here, you pay 1 {I} less for the first action you play each turn.`
     - `LOTS TO LEARN Whenever you play a second action in a turn, gain 3 lore.`
@@ -224,7 +222,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
 
 - [ ] **007/characters/013-mirabel-madrigal-hopeful-dreamer.test.ts**
   - Card: `007/characters/013-mirabel-madrigal-hopeful-dreamer.ts`
-    - `Evasive (Only characters with Evasive can challenge this character.) Singer 5 (This character counts as cost 5 to sing songs.)`
+    - `Evasive Singer 5 (This character counts as cost 5 to sing songs.)`
 
 - [ ] **007/characters/014-aurora-waking-beauty.test.ts**
   - Card: `007/characters/014-aurora-waking-beauty.ts`

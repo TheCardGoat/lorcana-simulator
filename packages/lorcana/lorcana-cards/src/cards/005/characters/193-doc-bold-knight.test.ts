@@ -42,10 +42,9 @@ describe("Doc - Bold Knight", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
+      testEngine
+        .asPlayerOne()
+        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
@@ -53,6 +52,38 @@ describe("Doc - Bold Knight", () => {
         hand: 2,
         deck: 1,
         discard: 4,
+      }),
+    );
+  });
+
+  it("projects an optional bag selection and lets you decline it", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [docBoldKnight, kingVictorious, mischievousCub, ukulelePlayer, northernMoose],
+      inkwell: docBoldKnight.cost,
+      deck: [drawOne, drawTwo, drawThree],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(docBoldKnight)).toBeSuccessfulCommand();
+
+    const bagEffect = testEngine.asPlayerOne().getBoard().bagEffects[0];
+
+    expect(bagEffect?.selectionContext).toMatchObject({
+      kind: "optional-selection",
+      chooserId: "player_one",
+      submitField: "resolveOptional",
+    });
+
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: false }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
+      expect.objectContaining({
+        hand: 4,
+        deck: 3,
+        discard: 0,
       }),
     );
   });

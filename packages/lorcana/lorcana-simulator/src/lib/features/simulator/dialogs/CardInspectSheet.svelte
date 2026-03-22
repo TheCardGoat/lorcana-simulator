@@ -3,7 +3,7 @@
   import XIcon from "@lucide/svelte/icons/x";
   import * as Button from "$lib/design-system/primitives/button/index.js";
   import * as Sheet from "$lib/design-system/primitives/sheet/index.js";
-  import { m } from "$lib/paraglide/messages.js";
+  import { m } from "$lib/i18n/messages.js";
   import {SimulatorLayoutModeObserver} from "@/features/simulator/model/layout-mode.svelte.js";
   import {useLorcanaSidebarPresenter} from "@/features/simulator/context/game-context.svelte.js";
   import CardHoverCardContent from "@/design-system/simulator/cards/CardHoverCardContent.svelte";
@@ -83,7 +83,7 @@
             card={inspectedCard}
             actions={inspectedActions}
             onAction={(action) => {
-              if (sidebar.handleCardActionClick(action)) {
+              if (sidebar.handleCardActionClick(action, { skipConfirmation: true })) {
                 simulatorCardContext.closeCardInspect();
               }
             }}

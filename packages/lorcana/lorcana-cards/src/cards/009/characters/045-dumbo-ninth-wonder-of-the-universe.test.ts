@@ -1,93 +1,86 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { iagoPrettyPolly } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { aPiratesLife } from "@lorcanito/lorcana-engine/cards/004/actions/128-a-pirates-life";
-// Import {
-//   DumboNinthWonderOfTheUniverse,
-//   DumboTheFlyingElephant,
-// } from "@lorcanito/lorcana-engine/cards/009";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Dumbo - Ninth Wonder of the Universe", () => {
-//   It("Evasive (Only characters with Evasive can challenge this character.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [dumboNinthWonderOfTheUniverse],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(
-//       DumboNinthWonderOfTheUniverse,
-//     );
-//     Expect(cardUnderTest.hasEvasive).toBe(true);
-//   });
-//
-//   It("BREAKING RECORDS {E}, 1 {I} – Draw a card and gain 1 lore.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: 1,
-//       Play: [dumboNinthWonderOfTheUniverse],
-//       Deck: 3,
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(
-//       DumboNinthWonderOfTheUniverse,
-//     );
-//
-//     Await testEngine.activateCard(cardUnderTest);
-//     Expect(testEngine.getPlayerLore()).toEqual(1);
-//     Expect(testEngine.getCardsByZone("hand").length).toEqual(1);
-//   });
-//
-//   It("MAKING HISTORY Your other characters with Evasive gain '{E}, 1 {I} – Draw a card and gain 1 lore.'", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: 1,
-//       Play: [dumboNinthWonderOfTheUniverse, iagoPrettyPolly],
-//       Deck: 3,
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(iagoPrettyPolly);
-//
-//     Await testEngine.activateCard(cardUnderTest);
-//
-//     Expect(cardUnderTest.ready).toEqual(false);
-//     Expect(testEngine.getPlayerLore()).toEqual(1);
-//     Expect(testEngine.getCardsByZone("hand").length).toEqual(1);
-//   });
-//
-//   Describe("Regressions", () => {
-//     It("Only give the ability to other characters", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [dumboNinthWonderOfTheUniverse],
-//       });
-//
-//       Const dumbo = testEngine.getCardModel(dumboNinthWonderOfTheUniverse);
-//
-//       Expect(dumbo.activatedAbilities).toHaveLength(2);
-//     });
-//
-//     It("A Pirate's Life interaction", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: 1,
-//           Play: [dumboNinthWonderOfTheUniverse, dumboTheFlyingElephant],
-//           Hand: [aPiratesLife],
-//           Deck: 3,
-//         },
-//         {
-//           Lore: 5,
-//         },
-//       );
-//
-//       Await testEngine.singSongTogether({
-//         Singers: [dumboNinthWonderOfTheUniverse, dumboTheFlyingElephant],
-//         Song: aPiratesLife,
-//       });
-//
-//       Expect(testEngine.getLoreForPlayer("player_one")).toBe(2);
-//       Expect(testEngine.getLoreForPlayer("player_two")).toBe(3);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { iagoPrettyPolly } from "../../003/characters";
+import { simbaScrappyCub } from "../../003/characters";
+import { dumboNinthWonderOfTheUniverse } from "./045-dumbo-ninth-wonder-of-the-universe";
+
+describe("Dumbo - Ninth Wonder of the Universe (set9-045)", () => {
+  it("has Evasive keyword", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [dumboNinthWonderOfTheUniverse],
+    });
+
+    expect(testEngine.asPlayerOne().getCard(dumboNinthWonderOfTheUniverse)?.keywords).toContain(
+      "Evasive",
+    );
+  });
+
+  it("BREAKING RECORDS: exert + 1 ink to draw a card and gain 1 lore", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: 1,
+      play: [dumboNinthWonderOfTheUniverse],
+      deck: 3,
+    });
+
+    const result = testEngine.asPlayerOne().activateAbility(dumboNinthWonderOfTheUniverse, {
+      ability: "BREAKING RECORDS",
+    });
+
+    expect(result).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().isExerted(dumboNinthWonderOfTheUniverse)).toBe(true);
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
+    expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1 });
+  });
+
+  it("MAKING HISTORY: grants BREAKING RECORDS to other characters with Evasive", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: 1,
+      play: [dumboNinthWonderOfTheUniverse, iagoPrettyPolly],
+      deck: 3,
+    });
+
+    // Iago has Evasive, so it should gain the BREAKING RECORDS activated ability
+    const result = testEngine.asPlayerOne().activateAbility(iagoPrettyPolly, {
+      ability: "BREAKING RECORDS",
+    });
+
+    expect(result).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().isExerted(iagoPrettyPolly)).toBe(true);
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
+    expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1 });
+  });
+
+  it("MAKING HISTORY: does NOT grant ability to characters without Evasive", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: 1,
+      play: [dumboNinthWonderOfTheUniverse, simbaScrappyCub],
+      deck: 3,
+    });
+
+    // Simba does not have Evasive, so should not have BREAKING RECORDS
+    const result = testEngine.asPlayerOne().activateAbility(simbaScrappyCub, {
+      ability: "BREAKING RECORDS",
+    });
+
+    expect(result).not.toBeSuccessfulCommand();
+  });
+
+  it("MAKING HISTORY: Dumbo does not grant himself a duplicate BREAKING RECORDS", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: 1,
+      play: [dumboNinthWonderOfTheUniverse],
+      deck: 3,
+    });
+
+    // Activate BREAKING RECORDS (Dumbo's own)
+    const result = testEngine.asPlayerOne().activateAbility(dumboNinthWonderOfTheUniverse, {
+      ability: "BREAKING RECORDS",
+    });
+
+    expect(result).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().isExerted(dumboNinthWonderOfTheUniverse)).toBe(true);
+    // Since Dumbo is exerted and only has 1 BREAKING RECORDS, he can't activate again
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
+    expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1 });
+  });
+});

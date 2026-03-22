@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseFoodFightDefenderI18n } from "./176-mickey-mouse-food-fight-defender.i18n";
 
 export const mickeyMouseFoodFightDefender: CharacterCard = {
   id: "z89",
@@ -7,28 +8,6 @@ export const mickeyMouseFoodFightDefender: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Food Fight Defender",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Food Fight Defender",
-      text: "Resist +1",
-    },
-    de: {
-      name: "Micky Maus",
-      version: "Essensschlacht-Verteidiger",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Défenseur de la bataille de nourriture",
-      text: "Résistance +1",
-    },
-    it: {
-      name: "Topolino",
-      version: "Difensore nella Battaglia di Cibo",
-      text: "Resistere +1",
-    },
-  },
   inkType: ["steel"],
   set: "005",
   cardNumber: 176,
@@ -53,4 +32,5 @@ export const mickeyMouseFoodFightDefender: CharacterCard = {
       text: "Resist +1",
     },
   ],
+  i18n: mickeyMouseFoodFightDefenderI18n,
 };

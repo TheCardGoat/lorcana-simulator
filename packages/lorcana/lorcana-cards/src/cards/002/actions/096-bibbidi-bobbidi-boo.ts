@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { bibbidiBobbidiBooI18n } from "./096-bibbidi-bobbidi-boo.i18n";
 
 export const bibbidiBobbidiBoo: ActionCard = {
   id: "GrH",
@@ -6,24 +7,6 @@ export const bibbidiBobbidiBoo: ActionCard = {
   reprints: ["set2-096"],
   cardType: "action",
   name: "Bibbidi Bobbidi Boo",
-  i18n: {
-    en: {
-      name: "Bibbidi Bobbidi Boo",
-      text: "Return chosen character of yours to your hand to play another character with the same cost or less for free.",
-    },
-    de: {
-      name: "Bibbidi Babbidi Bu",
-      text: "Wähle einen deiner Charaktere und nimm ihn zurück auf deine Hand, um einen Charakter kostenlos auszuspielen, der gleich viel oder weniger kostet als der zurückgenommene Charakter.",
-    },
-    fr: {
-      name: "Bibbidi Bobbidi Boo",
-      text: "Choisissez l'un de vos personnages et renvoyez-le dans votre main pour pouvoir jouer gratuitement un autre personnage coûtant autant ou moins.",
-    },
-    it: {
-      name: "Bibbidi Bobbidi Boo",
-      text: "Return chosen character of yours to your hand to play a character with the same cost or less for free.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Cinderella",
   set: "002",
@@ -64,7 +47,9 @@ export const bibbidiBobbidiBoo: ActionCard = {
               cardType: "character",
               cost: "free",
               filter: {
-                maxCost: "chosen-card-cost",
+                maxCost: {
+                  type: "chosen-card-cost",
+                },
                 excludeChosenCard: true,
               },
             },
@@ -73,4 +58,5 @@ export const bibbidiBobbidiBoo: ActionCard = {
       },
     },
   ],
+  i18n: bibbidiBobbidiBooI18n,
 };

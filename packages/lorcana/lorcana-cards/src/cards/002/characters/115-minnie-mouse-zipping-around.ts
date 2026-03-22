@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseZippingAroundI18n } from "./115-minnie-mouse-zipping-around.i18n";
 
 export const minnieMouseZippingAround: CharacterCard = {
   id: "tsF",
@@ -7,24 +8,6 @@ export const minnieMouseZippingAround: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Zipping Around",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Zipping Around",
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Flitzt umher",
-    },
-    fr: {
-      name: "Minnie",
-      version: "N'arrête jamais",
-    },
-    it: {
-      name: "Minnie Mouse",
-      version: "Zipping Around",
-    },
-  },
   inkType: ["ruby"],
   set: "002",
   cardNumber: 115,
@@ -40,4 +23,5 @@ export const minnieMouseZippingAround: CharacterCard = {
     tcgPlayer: 524290,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: minnieMouseZippingAroundI18n,
 };

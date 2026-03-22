@@ -42,6 +42,7 @@ export interface CardInteractionController {
   handleHover: (payload: CardHoverPayload) => void;
   handleLeave: (payload: CardLeavePayload) => void;
   handleSelect: (payload: CardSelectPayload) => void;
+  handleContextMenu?: (payload: CardSelectPayload) => void;
   openCardInspect: (payload: CardHoverPayload) => void;
   closeCardInspect: () => void;
   openGlobalPreview: (card?: LorcanaCardSnapshot | null) => void;

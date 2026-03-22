@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { oneJumpAheadI18n } from "./165-one-jump-ahead.i18n";
 
 export const oneJumpAhead: ActionCard = {
   id: "GXc",
@@ -6,24 +7,6 @@ export const oneJumpAhead: ActionCard = {
   reprints: ["set1-164", "set9-165"],
   cardType: "action",
   name: "One Jump Ahead",
-  i18n: {
-    en: {
-      name: "One Jump Ahead",
-      text: "Put the top card of your deck into your inkwell facedown and exerted.",
-    },
-    de: {
-      name: "Schnell weg!",
-      text: "Lege die oberste Karte deines Decks verdeckt und erschöpft in deinen Tintenvorrat.",
-    },
-    fr: {
-      name: "JE VOLE",
-      text: "Placez la première carte de votre pioche dans votre réserve d'encre, face cachée et épuisée.",
-    },
-    it: {
-      name: "One Jump Ahead",
-      text: "Put the top card of your deck into your inkwell facedown and exerted.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Aladdin",
   set: "009",
@@ -48,4 +31,5 @@ export const oneJumpAhead: ActionCard = {
       },
     },
   ],
+  i18n: oneJumpAheadI18n,
 };

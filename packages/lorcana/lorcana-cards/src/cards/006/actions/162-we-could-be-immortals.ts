@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { weCouldBeImmortalsI18n } from "./162-we-could-be-immortals.i18n";
 
 export const weCouldBeImmortals: ActionCard = {
   id: "Q0V",
@@ -6,24 +7,6 @@ export const weCouldBeImmortals: ActionCard = {
   reprints: ["set6-162"],
   cardType: "action",
   name: "We Could Be Immortals",
-  i18n: {
-    en: {
-      name: "We Could Be Immortals",
-      text: "Your Inventor characters gain Resist +6 this turn. Then, put this card into your inkwell facedown and exerted.",
-    },
-    de: {
-      name: "We Could Be Immortals",
-      text: "Deine Erfinder erhalten in diesem Zug Robust +6. Danach lege diese Karte verdeckt und erschöpft in deinen Tintenvorrat. (Reduziere jeglichen Schaden, der den Charakteren zugefügt wird, um 6.)",
-    },
-    fr: {
-      name: "We Could Be Immortals",
-      text: "Vos personnages Inventeur gagnent Résistance +6 pour le reste de ce tour. Ensuite, placez cette carte dans votre réserve d'encre, face cachée et épuisée.",
-    },
-    it: {
-      name: "Saremo Immortali",
-      text: "(Un personaggio con costo 4 o superiore può per cantare questa canzone gratis.) I tuoi personaggi Inventore ottengono Resistere +6 per questo turno. Poi aggiungi questa carta al tuo calamaio, a faccia in giù e impegnata.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "006",
@@ -76,4 +59,5 @@ export const weCouldBeImmortals: ActionCard = {
       type: "action",
     },
   ],
+  i18n: weCouldBeImmortalsI18n,
 };

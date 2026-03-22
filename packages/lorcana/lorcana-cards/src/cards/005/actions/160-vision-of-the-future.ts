@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { visionOfTheFutureI18n } from "./160-vision-of-the-future.i18n";
 
 export const visionOfTheFuture: ActionCard = {
   id: "Dub",
@@ -6,24 +7,6 @@ export const visionOfTheFuture: ActionCard = {
   reprints: ["set5-160"],
   cardType: "action",
   name: "Vision of the Future",
-  i18n: {
-    en: {
-      name: "Vision of the Future",
-      text: "Look at the top 5 cards of your deck. Put one into your hand and the rest on the bottom of your deck in any order.",
-    },
-    de: {
-      name: "Prophezeiung der Zukunft",
-      text: "Schaue dir die obersten 5 Karten deines Decks an. Nimm 1 davon auf deine Hand und lege die restlichen Karten in beliebiger Reihenfolge unter dein Deck.",
-    },
-    fr: {
-      name: "Vision de l'Avenir",
-      text: "Regardez les 5 premières cartes de votre pioche. Placez-en une dans votre main et le reste sous votre pioche, dans l'ordre de votre choix.",
-    },
-    it: {
-      name: "Visione del Futuro",
-      text: "Guarda le prime 5 carte del tuo mazzo. Aggiungine una alla tua mano e metti il resto in fondo al tuo mazzo in qualsiasi ordine.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -60,4 +43,5 @@ export const visionOfTheFuture: ActionCard = {
       type: "action",
     },
   ],
+  i18n: visionOfTheFutureI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { aWholeNewWorldI18n } from "./195-a-whole-new-world.i18n";
 
 export const aWholeNewWorld: ActionCard = {
   id: "YDE",
@@ -6,36 +7,6 @@ export const aWholeNewWorld: ActionCard = {
   reprints: ["set1-195"],
   cardType: "action",
   name: "A Whole New World",
-  i18n: {
-    en: {
-      name: "A Whole New World",
-      text: "Each player discards their hand and draws 7 cards.",
-    },
-    de: {
-      name: "A Whole New World",
-      text: [
-        {
-          title: "(A",
-          description:
-            "character with cost 5 or more can to sing this song for free.) Each player discards their hand and draws 7 cards.",
-        },
-      ],
-    },
-    fr: {
-      name: "A Whole New World",
-      text: [
-        {
-          title: "(A",
-          description:
-            "character with cost 5 or more can to sing this song for free.) Each player discards their hand and draws 7 cards.",
-        },
-      ],
-    },
-    it: {
-      name: "A Whole New World",
-      text: "Each player discards their hand and draws 7 cards.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Aladdin",
   set: "001",
@@ -69,4 +40,5 @@ export const aWholeNewWorld: ActionCard = {
       },
     },
   ],
+  i18n: aWholeNewWorldI18n,
 };

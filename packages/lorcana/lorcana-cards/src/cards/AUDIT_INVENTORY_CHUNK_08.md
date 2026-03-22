@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 8 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_07.md) | [Next →](AUDIT_INVENTORY_CHUNK_09.md)
-
 
 - [ ] **005/items/030-healing-decanter-item.test.ts**
   - Card: `005/items/030-healing-decanter-item.ts`

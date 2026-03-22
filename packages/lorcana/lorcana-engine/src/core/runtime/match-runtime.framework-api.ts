@@ -1,19 +1,13 @@
 import type { Draft } from "immer";
 import type { MatchState } from "./types";
+import type { CardQueryAPI } from "./card-runtime";
 import type {
-  AnyRuntimeCardWithDefinition,
-  CardQueryAPI,
-  RuntimeCardDefinitionOf,
-  RuntimeCardDerivedOf,
-  RuntimeCardMetaOf,
-} from "./card-runtime";
-import type {
-  CardRuntimeAPIWithRuntimeCard,
-  CardRuntimeReadAPIWithRuntimeCard,
+  CardRuntimeAPI,
+  CardRuntimeReadAPI,
   EventAPI,
-  FrameworkReadAPIWithRuntimeCard,
+  FrameworkReadAPI,
   FrameworkStateSnapshot,
-  FrameworkWriteAPIWithRuntimeCard,
+  FrameworkWriteAPI,
   ProjectedLogEntry,
   RandomAPI,
   TimeOperationsAPI,
@@ -22,30 +16,23 @@ import type {
   ZoneQueryAPI,
 } from "./match-runtime.types";
 import type { PlayerId } from "../types";
+import type { BaseCardMeta } from "./card-contracts";
 
-export function createCardRuntimeAPI<
-  G,
-  TRuntimeCardWithDefinition extends AnyRuntimeCardWithDefinition = AnyRuntimeCardWithDefinition,
->(
-  draft: Draft<MatchState<G>>,
-  cardsApi: CardQueryAPI<
-    RuntimeCardDefinitionOf<TRuntimeCardWithDefinition>,
-    RuntimeCardMetaOf<TRuntimeCardWithDefinition>,
-    RuntimeCardDerivedOf<TRuntimeCardWithDefinition>
-  >,
-): CardRuntimeAPIWithRuntimeCard<TRuntimeCardWithDefinition> {
+export function createCardRuntimeAPI(
+  draft: Draft<MatchState>,
+  cardsApi: CardQueryAPI,
+): CardRuntimeAPI {
   return {
     ...cardsApi,
     setMeta: (cardId, meta) => {
       draft.ctx.zones.private.cardMeta[cardId] = meta;
     },
     patchMeta: (cardId, patch) => {
-      const current = (draft.ctx.zones.private.cardMeta[cardId] ??
-        {}) as RuntimeCardMetaOf<TRuntimeCardWithDefinition>;
+      const current = (draft.ctx.zones.private.cardMeta[cardId] ?? {}) as BaseCardMeta;
       const next = {
         ...(current as Record<string, unknown>),
         ...(patch as Record<string, unknown>),
-      } as RuntimeCardMetaOf<TRuntimeCardWithDefinition>;
+      } as BaseCardMeta;
       draft.ctx.zones.private.cardMeta[cardId] = next;
 
       return next;
@@ -55,45 +42,35 @@ export function createCardRuntimeAPI<
     },
     entriesMeta: () =>
       Object.entries(draft.ctx.zones.private.cardMeta).map(
-        ([cardId, meta]) =>
-          [cardId, (meta ?? {}) as RuntimeCardMetaOf<TRuntimeCardWithDefinition>] as const,
+        ([cardId, meta]) => [cardId, (meta ?? {}) as BaseCardMeta] as const,
       ),
   };
 }
 
-export function createFrameworkReadAPI<
-  TRuntimeCardWithDefinition extends AnyRuntimeCardWithDefinition = AnyRuntimeCardWithDefinition,
->(
+export function createFrameworkReadAPI(
   state: FrameworkStateSnapshot,
   zones: ZoneQueryAPI,
   time: TimeQueryAPI,
-  cardsApi: CardQueryAPI<
-    RuntimeCardDefinitionOf<TRuntimeCardWithDefinition>,
-    RuntimeCardMetaOf<TRuntimeCardWithDefinition>,
-    RuntimeCardDerivedOf<TRuntimeCardWithDefinition>
-  >,
-): FrameworkReadAPIWithRuntimeCard<TRuntimeCardWithDefinition> {
+  cardsApi: CardQueryAPI,
+): FrameworkReadAPI {
   return {
     state,
     zones,
     time,
-    cards: cardsApi as CardRuntimeReadAPIWithRuntimeCard<TRuntimeCardWithDefinition>,
+    cards: cardsApi as CardRuntimeReadAPI,
   };
 }
 
-export function createFrameworkWriteAPI<
-  G,
-  TRuntimeCardWithDefinition extends AnyRuntimeCardWithDefinition = AnyRuntimeCardWithDefinition,
->(
-  draft: Draft<MatchState<G>>,
+export function createFrameworkWriteAPI(
+  draft: Draft<MatchState>,
   state: FrameworkStateSnapshot,
   zones: ZoneOperationsAPI,
   time: TimeOperationsAPI,
   random: RandomAPI,
   events: EventAPI,
-  cardsApi: CardRuntimeAPIWithRuntimeCard<TRuntimeCardWithDefinition>,
+  cardsApi: CardRuntimeAPI,
   onMoveLog?: (entries: readonly ProjectedLogEntry[]) => void,
-): FrameworkWriteAPIWithRuntimeCard<TRuntimeCardWithDefinition> {
+): FrameworkWriteAPI {
   return {
     state,
     zones,

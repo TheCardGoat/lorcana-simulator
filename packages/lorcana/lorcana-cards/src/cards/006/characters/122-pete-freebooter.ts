@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { peteFreebooterI18n } from "./122-pete-freebooter.i18n";
 
 export const peteFreebooter: CharacterCard = {
   id: "SRs",
@@ -7,24 +8,6 @@ export const peteFreebooter: CharacterCard = {
   cardType: "character",
   name: "Pete",
   version: "Freebooter",
-  i18n: {
-    en: {
-      name: "Pete",
-      version: "Freebooter",
-    },
-    de: {
-      name: "Kater Karlo",
-      version: "Freibeuter",
-    },
-    fr: {
-      name: "Pat",
-      version: "Flibustier",
-    },
-    it: {
-      name: "Gambadilegno",
-      version: "Filibustiere",
-    },
-  },
   inkType: ["ruby"],
   set: "006",
   cardNumber: 122,
@@ -40,4 +23,5 @@ export const peteFreebooter: CharacterCard = {
     tcgPlayer: 593035,
   },
   classifications: ["Dreamborn", "Villain", "Pirate"],
+  i18n: peteFreebooterI18n,
 };

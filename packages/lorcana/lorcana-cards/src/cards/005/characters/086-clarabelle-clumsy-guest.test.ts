@@ -1,23 +1,63 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { clarabelleClumsyGuest } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Clarabelle - Clumsy Guest", () => {
-//   It.skip("**BUTTERFINGER** When you play this character, you may pay to {I} to banish chosen item.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: clarabelleClumsyGuest.cost,
-//       Hand: [clarabelleClumsyGuest],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(clarabelleClumsyGuest);
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockItem } from "@tcg/lorcana-engine/testing";
+import { clarabelleClumsyGuest } from "./086-clarabelle-clumsy-guest";
+
+const chosenItem = createMockItem({
+  id: "clarabelle-chosen-item",
+  name: "Chosen Item",
+  cost: 2,
+});
+
+describe("Clarabelle - Clumsy Guest", () => {
+  describe("BUTTERFINGERS - When you play this character, you may pay 2 {I} to banish chosen item.", () => {
+    it("banishes a chosen item when the optional ability is accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [clarabelleClumsyGuest],
+          inkwell: clarabelleClumsyGuest.cost + 2,
+          deck: 2,
+        },
+        {
+          play: [chosenItem],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(clarabelleClumsyGuest)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          targets: [chosenItem],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(chosenItem)).toBe("discard");
+    });
+
+    it("can decline the optional ability", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [clarabelleClumsyGuest],
+          inkwell: clarabelleClumsyGuest.cost + 2,
+          deck: 2,
+        },
+        {
+          play: [chosenItem],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(clarabelleClumsyGuest)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(chosenItem)).toBe("play");
+    });
+  });
+});

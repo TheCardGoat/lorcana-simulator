@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { darkwingDuckDarkwarriorI18n } from "./188-darkwing-duck-darkwarrior.i18n";
 
 export const darkwingDuckDarkwarrior: CharacterCard = {
   id: "8XU",
@@ -7,37 +8,6 @@ export const darkwingDuckDarkwarrior: CharacterCard = {
   cardType: "character",
   name: "Darkwing Duck",
   version: "Darkwarrior",
-  i18n: {
-    en: {
-      name: "Darkwing Duck",
-      version: "Darkwarrior",
-      text: [
-        {
-          title: "Challenger +2",
-        },
-        {
-          title: "INSTA-ARMOR",
-          description:
-            "During your turn, whenever an item is banished, this character gains Resist +1 until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Darkwing Duck",
-      version: "Darkwarrior",
-      text: "Herausfordern +2 SOFORT-RÜSTUNG Jedes Mal während deines Zuges, wenn ein Gegenstand verbannt wird, erhält dieser Charakter bis zu Beginn deines nächsten Zuges Robust +1. (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "Myster Mask",
-      version: "Canard Vador",
-      text: "Offensif +2 INSTA-ARMURE Durant votre tour, chaque fois qu'un objet est banni, ce personnage gagne Résistance +1 jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Darkwing Duck",
-      version: "Darkwarrior",
-      text: "Sfidante +2 ARMATURA ISTANTANEA Durante il tuo turno, ogni volta che un oggetto viene esiliato, questo personaggio ottiene Resistere +1 fino all'inizio del tuo prossimo turno.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -78,15 +48,23 @@ export const darkwingDuckDarkwarrior: CharacterCard = {
         target: "SELF",
         type: "gain-keyword",
         value: 1,
+        duration: "until-start-of-next-turn",
       },
       name: "INSTA-ARMOR",
       trigger: {
         event: "banish",
-        on: "YOUR_ITEMS",
+        on: "ANY_ITEM",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
         timing: "whenever",
       },
       type: "triggered",
       text: "INSTA-ARMOR During your turn, whenever an item is banished, this character gains Resist +1 until the start of your next turn.",
     },
   ],
+  i18n: darkwingDuckDarkwarriorI18n,
 };

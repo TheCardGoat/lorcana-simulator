@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { beastsMirrorI18n } from "./201-beasts-mirror.i18n";
 
 export const beastsMirror: ItemCard = {
   id: "g9u",
@@ -6,44 +7,6 @@ export const beastsMirror: ItemCard = {
   reprints: ["set1-201", "set9-203"],
   cardType: "item",
   name: "Beast’s Mirror",
-  i18n: {
-    en: {
-      name: "Beast’s Mirror",
-      text: [
-        {
-          title: "SHOW ME, 3",
-          description: "— If you have no cards in your hand, draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Spiegel des Biests",
-      text: [
-        {
-          title: "ZEIG'S MIR, 3",
-          description: "— Wenn du keine Karten auf der Hand hast, ziehe 1 Karte.",
-        },
-      ],
-    },
-    fr: {
-      name: "MIROIR DE LA BÊTE",
-      text: [
-        {
-          title: "MONTRE-MOI, 3",
-          description: "— Si vous n'avez plus de carte en main, piochez une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Beast’s Mirror",
-      text: [
-        {
-          title: "SHOW ME, 3",
-          description: "— If you have no cards in your hand, draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Beauty and the Beast",
   set: "001",
@@ -88,4 +51,5 @@ export const beastsMirror: ItemCard = {
       text: "SHOW ME {E}, 3 {I} — If you have no cards in your hand, draw a card.",
     },
   ],
+  i18n: beastsMirrorI18n,
 };

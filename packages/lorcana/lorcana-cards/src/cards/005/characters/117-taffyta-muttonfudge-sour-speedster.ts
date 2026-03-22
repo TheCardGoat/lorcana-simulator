@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { taffytaMuttonfudgeSourSpeedsterI18n } from "./117-taffyta-muttonfudge-sour-speedster.i18n";
 
 export const taffytaMuttonfudgeSourSpeedster: CharacterCard = {
   id: "5D9",
@@ -7,36 +8,6 @@ export const taffytaMuttonfudgeSourSpeedster: CharacterCard = {
   cardType: "character",
   name: "Taffyta Muttonfudge",
   version: "Sour Speedster",
-  i18n: {
-    en: {
-      name: "Taffyta Muttonfudge",
-      version: "Sour Speedster",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "NEW ROSTER",
-          description: "Once per turn, when this character moves to a location, gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Taffyta Muttonfudge",
-      version: "Saure Raserin",
-      text: "Gestaltwandel 2 NEUE STARTFORMATION Einmal pro Zug, wenn dieser Charakter zu einem Ort bewegt wird, sammelst du 2 Legenden.",
-    },
-    fr: {
-      name: "Taffyta Crème Brûlée",
-      version: "Coureuse acide",
-      text: "Alter 2 REMETTRE LES COMPTEURS À ZÉRO Une fois par tour, lorsque ce personnage est déplacé sur un lieu, gagnez 2 éclats de Lore.",
-    },
-    it: {
-      name: "Taffyta Muttonfudge",
-      version: "Aspra Velocista",
-      text: "Trasformazione 2 NUOVI CONCORRENTI Una volta per turno, quando questo personaggio si sposta in un luogo, ottieni 2 leggenda.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -92,4 +63,5 @@ export const taffytaMuttonfudgeSourSpeedster: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: taffytaMuttonfudgeSourSpeedsterI18n,
 };

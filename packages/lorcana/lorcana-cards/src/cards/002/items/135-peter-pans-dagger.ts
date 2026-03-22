@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { peterPansDaggerI18n } from "./135-peter-pans-dagger.i18n";
 
 export const peterPansDagger: ItemCard = {
   id: "USv",
@@ -6,24 +7,6 @@ export const peterPansDagger: ItemCard = {
   reprints: ["set2-135"],
   cardType: "item",
   name: "Peter Pan's Dagger",
-  i18n: {
-    en: {
-      name: "Peter Pan's Dagger",
-      text: "Your characters with Evasive get +1 {S}.",
-    },
-    de: {
-      name: "Peter Pans Dolch",
-      text: "Deine Charaktere mit Wendig erhalten +1.",
-    },
-    fr: {
-      name: "Dague de Peter Pan",
-      text: "Vos personnages avec Insaisissable gagnent +1.",
-    },
-    it: {
-      name: "Peter Pan's Dagger",
-      text: "Your characters with Evasive get +1.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Peter Pan",
   set: "002",
@@ -41,7 +24,19 @@ export const peterPansDagger: ItemCard = {
       effect: {
         modifier: 1,
         stat: "strength",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-keyword",
+              keyword: "Evasive",
+            },
+          ],
+        },
         type: "modify-stat",
       },
       id: "hwz-1",
@@ -49,4 +44,5 @@ export const peterPansDagger: ItemCard = {
       type: "static",
     },
   ],
+  i18n: peterPansDaggerI18n,
 };

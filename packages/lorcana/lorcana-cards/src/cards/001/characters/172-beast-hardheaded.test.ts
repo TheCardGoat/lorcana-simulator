@@ -1,46 +1,58 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockItem } from "@tcg/lorcana-engine/testing";
 import { beastHardheaded } from "./172-beast-hardheaded";
 
-describe("Beast - Hardheaded", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [beastHardheaded] });
-  //   Expect(testEngine.getCardModel(beastHardheaded).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const targetItem = createMockItem({
+  id: "beast-hardheaded-target-item",
+  name: "Target Item",
+  cost: 1,
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { beastHardheaded } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { dingleHopper } from "@lorcanito/lorcana-engine/cards/001/items/items";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Beast - Hardheaded", () => {
-//   It("**DESTRUCTION** When you play this character, you may banish chosen item card.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: beastHardheaded.cost,
-//       Hand: [beastHardheaded],
-//       Play: [dingleHopper],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId("hand", beastHardheaded.id);
-//     Const target = testStore.getByZoneAndId("play", dingleHopper.id);
-//
-//     CardUnderTest.playFromHand();
-//
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({
-//       TargetId: target.instanceId,
-//     });
-//
-//     Expect(target.zone).toEqual("discard");
-//   });
-// });
-//
+describe("Beast - Hardheaded", () => {
+  describe("BREAK - When you play this character, you may banish chosen item.", () => {
+    it("banishes chosen item when played and accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [beastHardheaded],
+        inkwell: beastHardheaded.cost,
+        play: [targetItem],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(beastHardheaded)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [targetItem] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(targetItem)).toBe("discard");
+    });
+
+    it("does not banish when the optional ability is declined", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [beastHardheaded],
+        inkwell: beastHardheaded.cost,
+        play: [targetItem],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(beastHardheaded)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(targetItem)).toBe("play");
+    });
+
+    it("plays successfully even with no items in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [beastHardheaded],
+        inkwell: beastHardheaded.cost,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(beastHardheaded)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(beastHardheaded)).toBe("play");
+    });
+  });
+});

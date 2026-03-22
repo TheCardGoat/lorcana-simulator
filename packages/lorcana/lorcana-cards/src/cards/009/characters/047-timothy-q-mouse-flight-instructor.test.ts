@@ -1,25 +1,32 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { ryderFleetfootedInfiltrator } from "@lorcanito/lorcana-engine/cards/008";
-// Import { timothyQMouseFlightInstructor } from "@lorcanito/lorcana-engine/cards/009/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Timothy Q. Mouse - Flight Instructor", () => {
-//   It("LET'S SHOW 'EM, DUMBO! While you have a character with Evasive in play, this character gets +1 {L}.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: timothyQMouseFlightInstructor.cost,
-//       Play: [timothyQMouseFlightInstructor, ryderFleetfootedInfiltrator],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(
-//       TimothyQMouseFlightInstructor,
-//     );
-//
-//     Expect(cardUnderTest.lore).toBe(timothyQMouseFlightInstructor.lore + 1);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { timothyQMouseFlightInstructor } from "./047-timothy-q-mouse-flight-instructor";
+import { ryderFleetfootedInfiltrator } from "../../008/characters/056-ryder-fleet-footed-infiltrator";
+
+const nonEvasiveCharacter = createMockCharacter({
+  id: "timothy-009-test-non-evasive",
+  name: "Non-Evasive Character",
+  cost: 1,
+});
+
+describe("Timothy Q. Mouse - Flight Instructor", () => {
+  it("LET'S SHOW 'EM, DUMBO! - base lore when no evasive character in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [timothyQMouseFlightInstructor, nonEvasiveCharacter],
+    });
+
+    expect(testEngine.asPlayerOne().getCardLore(timothyQMouseFlightInstructor)).toBe(
+      timothyQMouseFlightInstructor.lore,
+    );
+  });
+
+  it("LET'S SHOW 'EM, DUMBO! - gets +1 lore while you have a character with Evasive in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [timothyQMouseFlightInstructor, ryderFleetfootedInfiltrator],
+    });
+
+    expect(testEngine.asPlayerOne().getCardLore(timothyQMouseFlightInstructor)).toBe(
+      timothyQMouseFlightInstructor.lore + 1,
+    );
+  });
+});

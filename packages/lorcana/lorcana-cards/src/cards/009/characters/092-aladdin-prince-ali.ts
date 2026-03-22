@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { aladdinPrinceAliI18n } from "./092-aladdin-prince-ali.i18n";
 
 export const aladdinPrinceAli: CharacterCard = {
   id: "iTM",
@@ -7,33 +8,6 @@ export const aladdinPrinceAli: CharacterCard = {
   cardType: "character",
   name: "Aladdin",
   version: "Prince Ali",
-  i18n: {
-    en: {
-      name: "Aladdin",
-      version: "Prince Ali",
-      text: "Ward",
-    },
-    de: {
-      name: "Aladdin",
-      version: "Prinz Ali",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Aladdin",
-      version: "Prince Ali",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Aladdin",
-      version: "Prince Ali",
-      text: [
-        {
-          title: "Ward",
-          description: "(Opponents can't choose this character except to challenge.)",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aladdin",
   set: "009",
@@ -58,4 +32,5 @@ export const aladdinPrinceAli: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: aladdinPrinceAliI18n,
 };

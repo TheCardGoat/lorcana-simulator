@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { dopeyKnightApprenticeI18n } from "./181-dopey-knight-apprentice.i18n";
 
 export const dopeyKnightApprentice: CharacterCard = {
   id: "kCO",
@@ -7,52 +8,6 @@ export const dopeyKnightApprentice: CharacterCard = {
   cardType: "character",
   name: "Dopey",
   version: "Knight Apprentice",
-  i18n: {
-    en: {
-      name: "Dopey",
-      version: "Knight Apprentice",
-      text: [
-        {
-          title: "STRONGER TOGETHER",
-          description:
-            "When you play this character, if you have another Knight character in play, you may deal 1 damage to chosen character or location.",
-        },
-      ],
-    },
-    de: {
-      name: "Seppl",
-      version: "Ritterlehrling",
-      text: [
-        {
-          title: "ZUSAMMEN STÄRKER",
-          description:
-            "Wenn du diesen Charakter ausspielst und mindestens einen weiteren Ritter im Spiel hast, darfst du einem Charakter oder einem Ort deiner Wahl 1 Schaden zufügen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Simplet",
-      version: "Chevalier en herbe",
-      text: [
-        {
-          title: "L'UNION FAIT LA FORCE",
-          description:
-            "Lorsque vous jouez ce personnage, si vous avez un autre personnage Chevalier en jeu, vous pouvez choisir un personnage ou un lieu et lui infliger 1 dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Cucciolo",
-      version: "Apprendista Cavaliere",
-      text: [
-        {
-          title: "PIÙ FORTI INSIEME",
-          description:
-            "Quando giochi questo personaggio, se hai in gioco un altro personaggio Cavaliere, puoi infliggere 1 danno a un personaggio o a un luogo a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Snow White",
   set: "005",
@@ -77,23 +32,27 @@ export const dopeyKnightApprentice: CharacterCard = {
   classifications: ["Dreamborn", "Ally", "Knight", "Seven Dwarfs"],
   abilities: [
     {
+      condition: {
+        type: "has-character-count",
+        classification: "Knight",
+        controller: "you",
+        count: 2,
+        comparison: "greater-or-equal",
+      },
       effect: {
-        condition: {
-          expression: "you have another Knight character in play",
-          type: "if",
-        },
-        then: {
+        chooser: "CONTROLLER",
+        effect: {
           amount: 1,
           target: {
             selector: "chosen",
             count: 1,
             owner: "any",
             zones: ["play"],
-            cardTypes: ["character"],
+            cardTypes: ["character", "location"],
           },
           type: "deal-damage",
         },
-        type: "conditional",
+        type: "optional",
       },
       id: "1w8-1",
       name: "STRONGER TOGETHER",
@@ -106,4 +65,5 @@ export const dopeyKnightApprentice: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: dopeyKnightApprenticeI18n,
 };

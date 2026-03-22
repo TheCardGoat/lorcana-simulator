@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { freezeTheVineEnchantedI18n } from "./231-freeze-the-vine-enchanted.i18n";
 
 export const freezeTheVineEnchanted: ActionCard = {
   id: "2nf",
@@ -6,24 +7,6 @@ export const freezeTheVineEnchanted: ActionCard = {
   reprints: ["set11-096"],
   cardType: "action",
   name: "Freeze the Vine",
-  i18n: {
-    en: {
-      name: "Freeze the Vine",
-      text: "Banish all locations. Draw 2 cards, then choose and discard a card.",
-    },
-    de: {
-      name: "Gefrier die Ranke",
-      text: "Verbanne alle Orte. Ziehe 2 Karten. Wähle danach 1 Karte aus deiner Hand und wirf sie ab.",
-    },
-    fr: {
-      name: "Geler la Plante",
-      text: "Bannissez tous les lieux. Piochez 2 cartes, puis défaussez une carte.",
-    },
-    it: {
-      name: "Congelare il Viticcio",
-      text: "Esilia tutti i luoghi. Pesca 2 carte, poi scegli e scarta una carta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Frozen",
   set: "011",
@@ -70,4 +53,5 @@ export const freezeTheVineEnchanted: ActionCard = {
       },
     },
   ],
+  i18n: freezeTheVineEnchantedI18n,
 };

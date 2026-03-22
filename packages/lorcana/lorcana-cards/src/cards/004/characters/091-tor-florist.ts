@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { torFloristI18n } from "./091-tor-florist.i18n";
 
 export const torFlorist: CharacterCard = {
   id: "iSO",
@@ -7,24 +8,6 @@ export const torFlorist: CharacterCard = {
   cardType: "character",
   name: "Tor",
   version: "Florist",
-  i18n: {
-    en: {
-      name: "Tor",
-      version: "Florist",
-    },
-    de: {
-      name: "Thor",
-      version: "Florist",
-    },
-    fr: {
-      name: "Tor",
-      version: "Fleuriste",
-    },
-    it: {
-      name: "Tohr",
-      version: "Fioraio",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Tangled",
   set: "004",
@@ -41,4 +24,5 @@ export const torFlorist: CharacterCard = {
     tcgPlayer: 547775,
   },
   classifications: ["Dreamborn", "Ally"],
+  i18n: torFloristI18n,
 };

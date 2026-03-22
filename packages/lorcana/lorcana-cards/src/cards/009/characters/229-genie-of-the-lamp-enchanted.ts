@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { genieOfTheLampEnchantedI18n } from "./229-genie-of-the-lamp-enchanted.i18n";
 
 export const genieOfTheLampEnchanted: CharacterCard = {
   id: "NlV",
@@ -7,36 +8,6 @@ export const genieOfTheLampEnchanted: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "Of the Lamp",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "Of the Lamp",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "LET'S MAKE SOME MAGIC",
-          description: "While this character is exerted, your other characters get +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschinni",
-      version: "Aus der Wunderlampe",
-      text: "Wendig JETZT WIRD GEZAUBERT Solange dieser Charakter erschöpft ist, erhalten deine anderen Charaktere +2.",
-    },
-    fr: {
-      name: "Génie",
-      version: "de la Lampe",
-      text: "Insaisissable ALORS FAISONS UN PEU DE MAGIE Tant que ce personnage est épuisé, vos autres personnages gagnent +2.",
-    },
-    it: {
-      name: "Genio",
-      version: "Della Lampada",
-      text: "Sfuggente SOTTO CON LA MAGIA Mentre questo personaggio è impegnato, i tuoi altri personaggi ricevono +2.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aladdin",
   set: "009",
@@ -70,10 +41,21 @@ export const genieOfTheLampEnchanted: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        type: "exerted",
+      },
+      name: "LET'S MAKE SOME MAGIC",
       effect: {
         modifier: 2,
         stat: "strength",
-        target: "SELF",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+        },
         type: "modify-stat",
       },
       id: "msr-2",
@@ -81,4 +63,5 @@ export const genieOfTheLampEnchanted: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: genieOfTheLampEnchantedI18n,
 };

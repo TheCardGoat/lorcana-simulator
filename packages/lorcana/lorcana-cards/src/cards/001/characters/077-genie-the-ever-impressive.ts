@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { genieTheEverImpressiveI18n } from "./077-genie-the-ever-impressive.i18n";
 
 export const genieTheEverImpressive: CharacterCard = {
   id: "5U3",
@@ -7,24 +8,6 @@ export const genieTheEverImpressive: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "The Ever Impressive",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "The Ever Impressive",
-    },
-    de: {
-      name: "Dschinni",
-      version: "Stets eindrucksvoll",
-    },
-    fr: {
-      name: "GÉNIE",
-      version: "À votre service",
-    },
-    it: {
-      name: "Genie",
-      version: "The Ever Impressive",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aladdin",
   set: "001",
@@ -35,11 +18,11 @@ export const genieTheEverImpressive: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_64d94b7ad8e84bac909438767e1e63af",
     tcgPlayer: 507515,
   },
   classifications: ["Dreamborn", "Ally"],
+  i18n: genieTheEverImpressiveI18n,
 };

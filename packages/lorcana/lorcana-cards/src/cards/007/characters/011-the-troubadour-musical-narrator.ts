@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theTroubadourMusicalNarratorI18n } from "./011-the-troubadour-musical-narrator.i18n";
 
 export const theTroubadourMusicalNarrator: CharacterCard = {
   id: "k1P",
@@ -7,35 +8,6 @@ export const theTroubadourMusicalNarrator: CharacterCard = {
   cardType: "character",
   name: "The Troubadour",
   version: "Musical Narrator",
-  i18n: {
-    en: {
-      name: "The Troubadour",
-      version: "Musical Narrator",
-      text: [
-        {
-          title: "Resist +1",
-        },
-        {
-          title: "Singer 4",
-        },
-      ],
-    },
-    de: {
-      name: "Der Troubadour",
-      version: "Musikalischer Erzähler",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.) Singen 4 (Die Kosten dieses Charakters gelten als 4 für das Singen von Liedern.)",
-    },
-    fr: {
-      name: "Le Troubadour",
-      version: "Narrateur-musicien",
-      text: "Résistance +1 Mélomane 4 (Ce personnage est considéré comme ayant un coût de 4 pour chanter des chansons.)",
-    },
-    it: {
-      name: "Il Trovatore",
-      version: "Narratore Musicante",
-      text: "Resistere +1 Melodioso 4",
-    },
-  },
   inkType: ["amber", "steel"],
   set: "007",
   cardNumber: 11,
@@ -74,4 +46,5 @@ export const theTroubadourMusicalNarrator: CharacterCard = {
       text: "Singer 4",
     },
   ],
+  i18n: theTroubadourMusicalNarratorI18n,
 };

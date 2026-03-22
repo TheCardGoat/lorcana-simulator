@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ryderFleetfootedInfiltratorI18n } from "./056-ryder-fleet-footed-infiltrator.i18n";
 
 export const ryderFleetfootedInfiltrator: CharacterCard = {
   id: "yNt",
@@ -7,28 +8,6 @@ export const ryderFleetfootedInfiltrator: CharacterCard = {
   cardType: "character",
   name: "Ryder",
   version: "Fleet-Footed Infiltrator",
-  i18n: {
-    en: {
-      name: "Ryder",
-      version: "Fleet-Footed Infiltrator",
-      text: "Evasive",
-    },
-    de: {
-      name: "Ryder",
-      version: "Flottfüßiger Eindringling",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Ryder",
-      version: "Infiltré agile",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Ryder",
-      version: "Infiltratore dal Piede Lesto",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "008",
@@ -53,4 +32,5 @@ export const ryderFleetfootedInfiltrator: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: ryderFleetfootedInfiltratorI18n,
 };

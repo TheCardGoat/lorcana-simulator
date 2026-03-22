@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { vaultDoorI18n } from "./167-vault-door.i18n";
 
 export const vaultDoor: ItemCard = {
   id: "tAF",
@@ -6,45 +7,6 @@ export const vaultDoor: ItemCard = {
   reprints: ["set3-167"],
   cardType: "item",
   name: "Vault Door",
-  i18n: {
-    en: {
-      name: "Vault Door",
-      text: [
-        {
-          title: "SEALED AWAY",
-          description: "Your locations and characters at locations gain Resist +1.",
-        },
-      ],
-    },
-    de: {
-      name: "Tresortür",
-      text: [
-        {
-          title: "WEGGESPERRT",
-          description:
-            "Deine Orte und Charaktere an Orten erhalten Robust +1 (Reduziere jeglichen Schaden, der ihnen zugefügt wird, um 1.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Porte du coffre",
-      text: [
-        {
-          title: "SCELLÉ",
-          description: "Vos lieux et personnages sur des lieux gagnent Résistance +1",
-        },
-      ],
-    },
-    it: {
-      name: "Porta Blindata",
-      text: [
-        {
-          title: "SIGILLATO I",
-          description: "tuoi luoghi e i tuoi personaggi in un luogo ottengono Resistere +1.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Ducktales",
   set: "003",
@@ -66,13 +28,37 @@ export const vaultDoor: ItemCard = {
     {
       effect: {
         keyword: "Resist",
-        target: "CHOSEN_CHARACTER",
+        target: "YOUR_LOCATIONS",
         type: "gain-keyword",
         value: 1,
       },
       id: "1nn-1",
+      name: "SEALED AWAY",
       text: "SEALED AWAY Your locations and characters at locations gain Resist +1.",
-      type: "action",
+      type: "static",
+    },
+    {
+      effect: {
+        keyword: "Resist",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "at-location",
+            },
+          ],
+        },
+        type: "gain-keyword",
+        value: 1,
+      },
+      id: "1nn-2",
+      text: "SEALED AWAY Your characters at locations gain Resist +1.",
+      type: "static",
     },
   ],
+  i18n: vaultDoorI18n,
 };

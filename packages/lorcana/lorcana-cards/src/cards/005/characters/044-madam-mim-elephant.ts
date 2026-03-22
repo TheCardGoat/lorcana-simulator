@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madamMimElephantI18n } from "./044-madam-mim-elephant.i18n";
 
 export const madamMimElephant: CharacterCard = {
   id: "jUU",
@@ -7,72 +8,6 @@ export const madamMimElephant: CharacterCard = {
   cardType: "character",
   name: "Madam Mim",
   version: "Elephant",
-  i18n: {
-    en: {
-      name: "Madam Mim",
-      version: "Elephant",
-      text: [
-        {
-          title: "A LITTLE GAME",
-          description:
-            "When you play this character, banish her or return another chosen character of yours to your hand.",
-        },
-        {
-          title: "SNEAKY MOVE",
-          description:
-            "At the start of your turn, you may move up to 2 damage counters from this character to chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Madame Mim",
-      version: "Elefant",
-      text: [
-        {
-          title: "EIN KLEINES SPIELCHEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, musst du ihn verbannen oder einen deiner anderen Charaktere wählen und zurück auf deine Hand nehmen.",
-        },
-        {
-          title: "RAFFINIERTER SCHACHZUG",
-          description:
-            "Zu Beginn deines Zuges, darfst du bis zu 2 Schadensmarker von diesem Charakter zu einem gegnerischen Charakter deiner Wahl verschieben.",
-        },
-      ],
-    },
-    fr: {
-      name: "Madame Mime",
-      version: "En éléphante",
-      text: [
-        {
-          title: "UN PETIT JEU",
-          description:
-            "Lorsque vous jouez ce personnage, bannissez-le ou renvoyez l'un de vos autres personnages en jeu dans votre main.",
-        },
-        {
-          title: "COUP EN DOUCE",
-          description:
-            "Au début de votre tour, vous pouvez déplacer jusqu'à 2 dommages de ce personnage vers un personnage adverse.",
-        },
-      ],
-    },
-    it: {
-      name: "Maga Magò",
-      version: "Elefante",
-      text: [
-        {
-          title: "UN GIOCHETTO",
-          description:
-            "Quando giochi questo personaggio, esilialo o riprendi in mano un tuo altro personaggio a tua scelta.",
-        },
-        {
-          title: "MOSSA SUBDOLA",
-          description:
-            "All'inizio del tuo turno, puoi spostare fino a 2 segnalini danno da questo personaggio a un personaggio avversario a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -133,5 +68,55 @@ export const madamMimElephant: CharacterCard = {
         ],
       },
     },
+    {
+      id: "1dn-2",
+      name: "SNEAKY MOVE",
+      text: "SNEAKY MOVE At the start of your turn, you may move up to 2 damage counters from this character to chosen opposing character.",
+      type: "triggered",
+      trigger: {
+        event: "start-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      condition: {
+        type: "and",
+        conditions: [
+          {
+            type: "self-has-damage",
+          },
+          {
+            type: "target-query",
+            query: {
+              selector: "all",
+              owner: "opponent",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+            comparison: {
+              operator: "gte",
+              value: 1,
+            },
+          },
+        ],
+      },
+      effect: {
+        type: "optional",
+        effect: {
+          type: "move-damage",
+          amount: 2,
+          from: {
+            ref: "self",
+          },
+          to: {
+            selector: "chosen",
+            count: 1,
+            owner: "opponent",
+            zones: ["play"],
+            cardTypes: ["character"],
+          },
+        },
+      },
+    },
   ],
+  i18n: madamMimElephantI18n,
 };

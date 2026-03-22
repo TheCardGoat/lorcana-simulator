@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { heffalumpsAndWoozlesI18n } from "./095-heffalumps-and-woozles.i18n";
 
 export const heffalumpsAndWoozles: ActionCard = {
   id: "Iby",
@@ -6,24 +7,6 @@ export const heffalumpsAndWoozles: ActionCard = {
   reprints: ["set6-095"],
   cardType: "action",
   name: "Heffalumps and Woozles",
-  i18n: {
-    en: {
-      name: "Heffalumps and Woozles",
-      text: "Chosen opposing character can't quest during their next turn. Draw a card.",
-    },
-    de: {
-      name: "Heffalumps und Wusel",
-      text: "Ein gegnerischer Charakter deiner Wahl kann in seinem nächsten Zug nicht erkunden. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Éfélants et Nouifs",
-      text: "Choisissez un personnage adverse qui ne peut pas être envoyé à l'aventure durant son prochain tour. Piochez une carte.",
-    },
-    it: {
-      name: "Efelanti e Noddole",
-      text: "(Un personaggio con costo 2 o superiore può per cantare questa canzone gratis.) Un personaggio avversario a tua scelta non può andare all'avventura durante il suo prossimo turno. Pesca una carta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Winnie the Pooh",
   set: "006",
@@ -68,4 +51,5 @@ export const heffalumpsAndWoozles: ActionCard = {
       type: "action",
     },
   ],
+  i18n: heffalumpsAndWoozlesI18n,
 };

@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { shieldOfVirtueI18n } from "./135-shield-of-virtue.i18n";
 
 export const shieldOfVirtue: ItemCard = {
   id: "lec",
@@ -6,48 +7,6 @@ export const shieldOfVirtue: ItemCard = {
   reprints: ["set1-135"],
   cardType: "item",
   name: "Shield of Virtue",
-  i18n: {
-    en: {
-      name: "Shield of Virtue",
-      text: [
-        {
-          title: "FIREPROOF",
-          description:
-            "{E}, 3 {I} — Ready chosen character. They can't quest for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Schild der Tugend",
-      text: [
-        {
-          title: "FEUERFEST, 3",
-          description:
-            "— Mache einen Charakter deiner Wahl bereit. Er kann in diesem Zug nicht mehr erkunden.",
-        },
-      ],
-    },
-    fr: {
-      name: "BOUCLIER DE VERTU",
-      text: [
-        {
-          title: "À L'ÉPREUVE DU FEU,",
-          description:
-            "3 — Choisissez un personnage et redressez-le. Il ne peut pas être envoyé à l'aventure pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Scudo di Virtù",
-      text: [
-        {
-          title: "IGNIFUGO, 3",
-          description:
-            "— Prepara un personaggio a tua scelta. Non può andare all'avventura per il resto di questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Sleeping Beauty",
   set: "001",
@@ -95,4 +54,5 @@ export const shieldOfVirtue: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: shieldOfVirtueI18n,
 };

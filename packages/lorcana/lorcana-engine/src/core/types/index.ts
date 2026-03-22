@@ -19,4 +19,4 @@ export {
   asZoneIdOptional,
   asCardInstanceIds,
 } from "./branded-utils";
-export type { IState, CardZoneConfig } from "./state";
+export type { CardZoneConfig } from "./state";

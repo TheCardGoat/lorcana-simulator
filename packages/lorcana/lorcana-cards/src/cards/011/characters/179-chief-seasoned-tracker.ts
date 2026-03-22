@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chiefSeasonedTrackerI18n } from "./179-chief-seasoned-tracker.i18n";
 
 export const chiefSeasonedTracker: CharacterCard = {
   id: "pkL",
@@ -7,52 +8,6 @@ export const chiefSeasonedTracker: CharacterCard = {
   cardType: "character",
   name: "Chief",
   version: "Seasoned Tracker",
-  i18n: {
-    en: {
-      name: "Chief",
-      version: "Seasoned Tracker",
-      text: [
-        {
-          title: "GOOD RIDDANCE",
-          description:
-            "{E} — If an opposing character was banished in a challenge this turn, draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Chef, der Jagdhund",
-      version: "Altgedienter Spurensucher",
-      text: [
-        {
-          title: "AUF WIEDERSEHEN",
-          description:
-            "— Falls in diesem Zug ein gegnerischer Charakter durch eine Herausforderung verbannt wurde, ziehe 1 Karte.",
-        },
-      ],
-    },
-    fr: {
-      name: "Chef",
-      version: "Pisteur chevronné",
-      text: [
-        {
-          title: "BON",
-          description:
-            "DÉBARRAS — Si un personnage adverse a été banni via un défi ce tour-ci, piochez une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Fiuto",
-      version: "Segugio Esperto",
-      text: [
-        {
-          title: "UNA BELLA LIBERAZIONE",
-          description:
-            "— Se un personaggio avversario è stato esiliato in una sfida in questo turno, pesca una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Fox and the Hound",
   set: "011",
@@ -83,8 +38,8 @@ export const chiefSeasonedTracker: CharacterCard = {
       },
       effect: {
         condition: {
-          expression: "an opposing character was banished in a challenge this turn",
-          type: "if",
+          type: "banished-in-challenge-this-turn",
+          owner: "opponent",
         },
         then: {
           amount: 1,
@@ -97,4 +52,5 @@ export const chiefSeasonedTracker: CharacterCard = {
       text: "GOOD RIDDANCE {E} — If an opposing character was banished in a challenge this turn, draw a card.",
     },
   ],
+  i18n: chiefSeasonedTrackerI18n,
 };

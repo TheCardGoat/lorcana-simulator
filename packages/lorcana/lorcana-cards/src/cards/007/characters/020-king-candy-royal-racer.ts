@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kingCandyRoyalRacerI18n } from "./020-king-candy-royal-racer.i18n";
 
 export const kingCandyRoyalRacer: CharacterCard = {
   id: "oc8",
@@ -7,52 +8,6 @@ export const kingCandyRoyalRacer: CharacterCard = {
   cardType: "character",
   name: "King Candy",
   version: "Royal Racer",
-  i18n: {
-    en: {
-      name: "King Candy",
-      version: "Royal Racer",
-      text: [
-        {
-          title: "SWEET REVENGE",
-          description:
-            "Whenever one of your other Racer characters is banished, each opponent chooses and banishes one of their characters.",
-        },
-      ],
-    },
-    de: {
-      name: "King Candy",
-      version: "Königlicher Rennfahrer",
-      text: [
-        {
-          title: "SÜSSE RACHE",
-          description:
-            "Jedes Mal, wenn einer deiner anderen Rennfahrer verbannt wird, wählen alle gegnerischen Mitspielenden je einen ihrer Charaktere und verbannen ihn.",
-        },
-      ],
-    },
-    fr: {
-      name: "Sa Sucrerie",
-      version: "Pilote royal",
-      text: [
-        {
-          title: "DOUCE REVANCHE",
-          description:
-            "Chaque fois que l'un de vos autres personnages Pilote est banni, chaque adversaire choisit l'un de ses personnages et le bannit.",
-        },
-      ],
-    },
-    it: {
-      name: "Re Candito",
-      version: "Pilota Reale",
-      text: [
-        {
-          title: "DOLCE VENDETTA",
-          description:
-            "Ogni volta che uno dei tuoi altri personaggi Pilota viene esiliato, ogni avversario sceglie ed esilia uno dei suoi personaggi.",
-        },
-      ],
-    },
-  },
   inkType: ["amber", "ruby"],
   franchise: "Wreck It Ralph",
   set: "007",
@@ -75,5 +30,40 @@ export const kingCandyRoyalRacer: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "King", "Racer"],
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        type: "for-each-opponent",
+        effect: {
+          type: "optional",
+          chooser: "OPPONENT",
+          effect: {
+            type: "banish",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "opponent",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          },
+        },
+      },
+      id: "oc8-1",
+      name: "SWEET REVENGE",
+      text: "SWEET REVENGE Whenever one of your other Racer characters is banished, each opponent chooses and banishes one of their characters.",
+      trigger: {
+        event: "banish",
+        on: {
+          controller: "you",
+          cardType: "character",
+          classification: "Racer",
+          excludeSelf: true,
+        },
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
+  i18n: kingCandyRoyalRacerI18n,
 };

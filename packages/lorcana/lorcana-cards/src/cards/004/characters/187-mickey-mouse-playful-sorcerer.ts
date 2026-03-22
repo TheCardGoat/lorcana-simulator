@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMousePlayfulSorcererI18n } from "./187-mickey-mouse-playful-sorcerer.i18n";
 
 export const mickeyMousePlayfulSorcerer: CharacterCard = {
   id: "QEb",
@@ -7,58 +8,6 @@ export const mickeyMousePlayfulSorcerer: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Playful Sorcerer",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Playful Sorcerer",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "Resist +1",
-        },
-        {
-          title: "SWEEP AWAY",
-          description:
-            "When you play this character, deal damage to chosen character equal to the number of Broom characters you have in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Mickey Mouse",
-      version: "Playful Sorcerer",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Mickey Mouse.)Resist +1 (Damage dealt to this character is reduced by 1.)SWEEP AWAY When you play this character, deal damage to chosen character equal to the number of Broom characters you have in play.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Playful Sorcerer",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Mickey Mouse.)Resist +1 (Damage dealt to this character is reduced by 1.)SWEEP AWAY When you play this character, deal damage to chosen character equal to the number of Broom characters you have in play.",
-        },
-      ],
-    },
-    it: {
-      name: "Mickey Mouse",
-      version: "Playful Sorcerer",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Mickey Mouse.)Resist +1 (Damage dealt to this character is reduced by 1.)SWEEP AWAY When you play this character, deal damage to chosen character equal to the number of Broom characters you have in play.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Fantasia",
   set: "004",
@@ -88,4 +37,5 @@ export const mickeyMousePlayfulSorcerer: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Sorcerer"],
   abilities: [],
+  i18n: mickeyMousePlayfulSorcererI18n,
 };

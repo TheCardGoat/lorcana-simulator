@@ -1,77 +1,58 @@
 import {
+  type AcceptedMoveRecord,
+  getAutomatedActionStrategyOption,
   computeAutomatedActionStateFingerprint,
   type AutomatedActionExecutionResult,
+  type AutomatedActionStrategyOption,
   type AutomatedActionTraceSink,
   type DeepReadonly,
+  type EngineMoveHistoryEntry,
+  type EngineLogRecord,
+  type GameLogEntry,
   type LorcanaMatchState,
   type LorcanaServer,
   type PlayerId,
 } from "@tcg/lorcana-engine";
 import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { LorcanaMultiplayerSimulatorAdapter } from "../harness/index.js";
+import {
+  createRepeatedStateDeadlockTracker,
+  resolveRepeatedStateDeadlockByConceding,
+} from "../automation-deadlock.js";
 import { createAutomatedMatchFixture } from "./fixture.js";
-import { getAutomatedMatchStrategyOption } from "./strategy-registry.js";
 import type {
   LorcanaPlayerSide,
   LorcanaSimulatorView,
+  MoveLogDefaultMessageSnapshot,
   MoveLogEntrySnapshot,
+  SimulatorSerializedObject,
 } from "@/features/simulator/model/contracts.js";
-import { assertLorcanaSimulatorMoveId } from "@/features/simulator/model/contracts.js";
+import {
+  assertLorcanaSimulatorMoveId,
+  isLorcanaSimulatorMoveId,
+} from "@/features/simulator/model/contracts.js";
 import { formatEventLogBody } from "@/features/simulator/model/event-log-formatting.js";
 import type {
   AutomatedMatchConfig,
   AutomatedMatchPlaybackState,
   AutomatedMatchStatusSnapshot,
-  AutomatedMatchStrategyOption,
 } from "./types.js";
 
 const DEFAULT_AUTOMATED_MATCH_SPEED_MS = 800;
-const REPEATED_STATE_DEADLOCK_THRESHOLD = 3;
-interface RepeatedStateObservation {
-  actorId?: PlayerId;
-  stateFingerprint: string;
-}
-
-interface RepeatedStateObservationResult {
-  count: number;
-  repeatedStateDeadlock: boolean;
-}
-
-function createRepeatedStateDeadlockTracker(repeatThreshold = REPEATED_STATE_DEADLOCK_THRESHOLD) {
-  const seenStates = new Map<string, number>();
-
-  return {
-    observe(observation: RepeatedStateObservation): RepeatedStateObservationResult {
-      if (!observation.actorId) {
-        return {
-          count: 0,
-          repeatedStateDeadlock: false,
-        };
-      }
-
-      const key = `${observation.actorId}:${observation.stateFingerprint}`;
-      const count = (seenStates.get(key) ?? 0) + 1;
-      seenStates.set(key, count);
-
-      return {
-        count,
-        repeatedStateDeadlock: count >= repeatThreshold,
-      };
-    },
-  };
-}
-
 export interface AutomatedMatchPlaybackServer {
+  concede(playerId: PlayerId): { error?: string; success: boolean };
   getActivePlayer(): PlayerId | undefined;
   getCurrentPhase(): string | undefined;
   getCurrentStep(): string | null | undefined;
+  getGameLog(): GameLogEntry[];
   getGameSegment(): string | undefined;
+  getMoveHistory(limit?: number): EngineMoveHistoryEntry[];
   getState(): DeepReadonly<LorcanaMatchState>;
   getStateID(): number;
   getTurnNumber(): number;
   getWinner(): PlayerId | undefined;
   takeAutomatedActionForCurrentActor(args: {
-    strategy: AutomatedMatchStrategyOption["strategy"];
+    strategy: AutomatedActionStrategyOption["strategy"];
     traceSink?: AutomatedActionTraceSink;
   }): AutomatedActionExecutionResult;
 }
@@ -131,7 +112,7 @@ function toPlayerSide(playerId?: PlayerId): LorcanaPlayerSide | undefined {
   return undefined;
 }
 
-function createAutomatedMoveLogEntry(
+export function createAutomatedMoveLogEntry(
   result: AutomatedActionExecutionResult,
   playbackState: AutomatedMatchPlaybackState,
   turnNumber: number,
@@ -144,7 +125,12 @@ function createAutomatedMoveLogEntry(
   const processedCommand = result.finalResult.processedCommand as
     | ProcessedCommandSnapshot
     | undefined;
-  const moveId = processedCommand?.move ?? playbackState.lastTrace?.selectedCandidate?.family;
+  const tracedMoveId = playbackState.lastTrace?.selectedCandidate?.family;
+  const fallbackMoveId =
+    processedCommand?.move && isLorcanaSimulatorMoveId(processedCommand.move)
+      ? processedCommand.move
+      : undefined;
+  const moveId = tracedMoveId ?? fallbackMoveId;
   if (!moveId) {
     return null;
   }
@@ -176,6 +162,148 @@ function createAutomatedMoveLogEntry(
   };
 }
 
+function normalizePersistedMoveParams(
+  input?: AcceptedMoveRecord["input"],
+): SimulatorSerializedObject | undefined {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return undefined;
+  }
+
+  const args = "args" in input ? input.args : undefined;
+  if (!args || typeof args !== "object" || Array.isArray(args)) {
+    return undefined;
+  }
+
+  return args as SimulatorSerializedObject;
+}
+
+function snapshotPersistedDefaultMessage(
+  defaultMessage?: EngineLogRecord["defaultMessage"],
+): MoveLogDefaultMessageSnapshot | undefined {
+  if (
+    !defaultMessage ||
+    typeof defaultMessage !== "object" ||
+    !("key" in defaultMessage) ||
+    typeof defaultMessage.key !== "string" ||
+    !("values" in defaultMessage) ||
+    !defaultMessage.values ||
+    typeof defaultMessage.values !== "object" ||
+    Array.isArray(defaultMessage.values)
+  ) {
+    return undefined;
+  }
+
+  return {
+    key: defaultMessage.key,
+    values: defaultMessage.values as SimulatorSerializedObject,
+  };
+}
+
+function getDefaultMessageKey(
+  defaultMessage?: EngineLogRecord["defaultMessage"],
+): string | undefined {
+  if (!defaultMessage || typeof defaultMessage !== "object" || !("key" in defaultMessage)) {
+    return undefined;
+  }
+
+  return typeof defaultMessage.key === "string" ? defaultMessage.key : undefined;
+}
+
+function getDefaultMessageMoveId(
+  defaultMessage?: EngineLogRecord["defaultMessage"],
+): string | undefined {
+  if (
+    !defaultMessage ||
+    typeof defaultMessage !== "object" ||
+    !("values" in defaultMessage) ||
+    !defaultMessage.values ||
+    typeof defaultMessage.values !== "object" ||
+    Array.isArray(defaultMessage.values)
+  ) {
+    return undefined;
+  }
+
+  const move = (defaultMessage.values as Record<string, unknown>).move;
+  return typeof move === "string" ? move : undefined;
+}
+
+export function createPersistedMoveLogEntries(args: {
+  acceptedMoves: AcceptedMoveRecord[];
+  engineLogs: EngineLogRecord[];
+  resolveActorSide?: (actorId: string) => LorcanaPlayerSide | undefined;
+}): MoveLogEntrySnapshot[] {
+  const { acceptedMoves, engineLogs, resolveActorSide } = args;
+  const moveExecutedLogs = engineLogs.filter(
+    (record) => getDefaultMessageKey(record.defaultMessage) === "move.executed",
+  );
+  let moveExecutedCursor = 0;
+
+  return acceptedMoves.flatMap((acceptedMove, index) => {
+    if (!isLorcanaSimulatorMoveId(acceptedMove.moveId)) {
+      return [];
+    }
+
+    let matchingMoveLog = moveExecutedLogs
+      .slice(moveExecutedCursor)
+      .find((record) => getDefaultMessageMoveId(record.defaultMessage) === acceptedMove.moveId);
+
+    if (!matchingMoveLog && moveExecutedCursor < moveExecutedLogs.length) {
+      matchingMoveLog = moveExecutedLogs[moveExecutedCursor];
+    }
+
+    if (matchingMoveLog) {
+      const matchingIndex = moveExecutedLogs.findIndex(
+        (record) => record.seq === matchingMoveLog?.seq,
+      );
+      moveExecutedCursor = matchingIndex >= 0 ? matchingIndex + 1 : moveExecutedCursor + 1;
+    }
+
+    const matchingSourceSeqs = new Set<number>(matchingMoveLog?.sourceEventSeqs ?? []);
+    const relatedLogEntries =
+      matchingSourceSeqs.size === 0
+        ? []
+        : engineLogs
+            .filter((record) => record.sourceEventSeqs.some((seq) => matchingSourceSeqs.has(seq)))
+            .map((record) => ({
+              sourceEventSeqs: [...record.sourceEventSeqs],
+              defaultMessage: snapshotPersistedDefaultMessage(record.defaultMessage),
+            }));
+
+    const entry: MoveLogEntrySnapshot = {
+      actorSide: resolveActorSide?.(acceptedMove.actorId),
+      detail: undefined,
+      id: `persisted-${acceptedMove.stateVersion}-${index}-${acceptedMove.moveId}`,
+      moveId: acceptedMove.moveId,
+      rawLogRegistry: {
+        move: {
+          moveId: acceptedMove.moveId,
+          params: normalizePersistedMoveParams(acceptedMove.input),
+          playerId: acceptedMove.actorId,
+          timestamp: acceptedMove.timestamp,
+        },
+        matchingMoveLogEntry: matchingMoveLog
+          ? {
+              sourceEventSeqs: [...matchingMoveLog.sourceEventSeqs],
+              defaultMessage: snapshotPersistedDefaultMessage(matchingMoveLog.defaultMessage),
+            }
+          : undefined,
+        relatedLogEntries,
+      },
+      timestamp: acceptedMove.timestamp,
+      title: "",
+      turnNumber: acceptedMove.turnNumber,
+    };
+
+    const presentation = formatEventLogBody(entry);
+    return [
+      {
+        ...entry,
+        title: presentation.text,
+      },
+    ];
+  });
+}
+
 export class AutomatedMatchPlaybackReadModel extends LorcanaMultiplayerSimulatorAdapter {
   #listeners = new Set<(stateID: number) => void>();
   #manualRevision = 0;
@@ -185,7 +313,19 @@ export class AutomatedMatchPlaybackReadModel extends LorcanaMultiplayerSimulator
     limit = 50,
     view: LorcanaSimulatorView = "authoritative",
   ): MoveLogEntrySnapshot[] {
-    const entries = [...super.getMoveLog(limit, view), ...this.#syntheticEntries];
+    const entries = [...super.getMoveLog(limit, view), ...this.#syntheticEntries].sort(
+      (left, right) => {
+        if (left.turnNumber !== right.turnNumber) {
+          return left.turnNumber - right.turnNumber;
+        }
+
+        if (left.timestamp !== right.timestamp) {
+          return left.timestamp - right.timestamp;
+        }
+
+        return left.id.localeCompare(right.id);
+      },
+    );
     return limit > 0 ? entries.slice(-limit) : entries;
   }
 
@@ -195,6 +335,15 @@ export class AutomatedMatchPlaybackReadModel extends LorcanaMultiplayerSimulator
 
   pushSyntheticMoveEntry(entry: MoveLogEntrySnapshot): void {
     this.#syntheticEntries = [...this.#syntheticEntries, entry];
+    this.#notifySyntheticListeners();
+  }
+
+  pushSyntheticMoveEntries(entries: MoveLogEntrySnapshot[]): void {
+    if (entries.length === 0) {
+      return;
+    }
+
+    this.#syntheticEntries = [...this.#syntheticEntries, ...entries];
     this.#notifySyntheticListeners();
   }
 
@@ -237,10 +386,11 @@ export class AutomatedMatchPlaybackController<
   ) => AutomatedMatchPlaybackSession<TEngine, TReadModel>;
   #listeners = new Set<() => void>();
   #playbackState: AutomatedMatchPlaybackState;
+  #playerOneStrategyOption: AutomatedActionStrategyOption;
+  #playerTwoStrategyOption: AutomatedActionStrategyOption;
   #repeatTracker = createRepeatedStateDeadlockTracker();
   #session: AutomatedMatchPlaybackSession<TEngine, TReadModel>;
   #sessionRevision = 0;
-  #strategyOption: AutomatedMatchStrategyOption;
   #timer: ReturnType<typeof setTimeout> | null = null;
   #timerRevision = 0;
 
@@ -248,13 +398,23 @@ export class AutomatedMatchPlaybackController<
     config: AutomatedMatchConfig,
     dependencies: AutomatedMatchPlaybackControllerDependencies<TEngine, TReadModel> = {},
   ) {
-    const strategyOption = getAutomatedMatchStrategyOption(config.strategyId);
-    if (!strategyOption) {
-      throw new Error(`Unknown automated match strategy "${config.strategyId}".`);
+    const playerOneStrategyOption = getAutomatedActionStrategyOption(config.playerOneStrategyId);
+    if (!playerOneStrategyOption) {
+      throw new Error(
+        `Unknown automated match player one strategy "${config.playerOneStrategyId}".`,
+      );
+    }
+
+    const playerTwoStrategyOption = getAutomatedActionStrategyOption(config.playerTwoStrategyId);
+    if (!playerTwoStrategyOption) {
+      throw new Error(
+        `Unknown automated match player two strategy "${config.playerTwoStrategyId}".`,
+      );
     }
 
     this.#config = config;
-    this.#strategyOption = strategyOption;
+    this.#playerOneStrategyOption = playerOneStrategyOption;
+    this.#playerTwoStrategyOption = playerTwoStrategyOption;
     this.#createSession =
       dependencies.createSession ??
       ((nextConfig) =>
@@ -377,6 +537,20 @@ export class AutomatedMatchPlaybackController<
     };
   }
 
+  #resolveStrategyOptionForActor(
+    actorId: PlayerId | undefined,
+  ): AutomatedActionStrategyOption | undefined {
+    if (actorId === "player_one") {
+      return this.#playerOneStrategyOption;
+    }
+
+    if (actorId === "player_two") {
+      return this.#playerTwoStrategyOption;
+    }
+
+    return undefined;
+  }
+
   #clearTimer(): void {
     this.#timerRevision += 1;
 
@@ -404,12 +578,24 @@ export class AutomatedMatchPlaybackController<
         latestTrace = trace;
       },
     };
+    const activePlayer = this.#session.server.getActivePlayer();
+    const strategyOption = this.#resolveStrategyOptionForActor(activePlayer);
+    if (!strategyOption) {
+      this.#setPlaybackState({
+        error: "Unable to resolve the acting player's automated strategy.",
+        lastResult: undefined,
+        lastTrace: latestTrace,
+        mode: "error",
+        speedMs: this.#playbackState.speedMs,
+      });
+      return undefined;
+    }
 
     const stateFingerprint = computeAutomatedActionStateFingerprint(
       this.#session.server.getState(),
     );
     const result = this.#session.server.takeAutomatedActionForCurrentActor({
-      strategy: this.#strategyOption.strategy,
+      strategy: strategyOption.strategy,
       traceSink,
     });
 
@@ -431,9 +617,16 @@ export class AutomatedMatchPlaybackController<
       return result;
     }
 
-    if (observation.repeatedStateDeadlock) {
+    const deadlockResolution = resolveRepeatedStateDeadlockByConceding({
+      actorId: result.actorId,
+      concede: (actorId) => this.#session.server.concede(actorId),
+      observation,
+    });
+
+    if (deadlockResolution.attempted && !deadlockResolution.conceded) {
       this.#setPlaybackState({
-        error: "Repeated state detected while both AIs were taking actions.",
+        error:
+          deadlockResolution.error ?? "Repeated state detected while both AIs were taking actions.",
         lastResult: result,
         lastTrace: latestTrace,
         mode: "error",

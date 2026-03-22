@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cheshireCatNotAllThereI18n } from "./071-cheshire-cat-not-all-there.i18n";
 
 export const cheshireCatNotAllThere: CharacterCard = {
   id: "qpX",
@@ -7,52 +8,6 @@ export const cheshireCatNotAllThere: CharacterCard = {
   cardType: "character",
   name: "Cheshire Cat",
   version: "Not All There",
-  i18n: {
-    en: {
-      name: "Cheshire Cat",
-      version: "Not All There",
-      text: [
-        {
-          title: "LOSE SOMETHING?",
-          description:
-            "When this character is challenged and banished, banish the challenging character.",
-        },
-      ],
-    },
-    de: {
-      name: "Grinsekatze",
-      version: "Nicht ganz da",
-      text: [
-        {
-          title: "DA BIN ICH!",
-          description:
-            "Wenn dieser Charakter herausgefordert und verbannt wird, verbanne den herausfordernden Charakter.",
-        },
-      ],
-    },
-    fr: {
-      name: "CHAT DU CHESHIRE",
-      version: "N'a pas toujours toute sa tête",
-      text: [
-        {
-          title: "VOUS AVEZ PERDU QUELQUE CHOSE?",
-          description:
-            "Si ce personnage est défié et banni, bannissez le personnage qui l'a défié.",
-        },
-      ],
-    },
-    it: {
-      name: "Cheshire Cat",
-      version: "Not All There",
-      text: [
-        {
-          title: "LOSE SOMETHING?",
-          description:
-            "When this character is challenged and banished, banish the challenging character.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Alice in Wonderland",
   set: "001",
@@ -95,4 +50,5 @@ export const cheshireCatNotAllThere: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: cheshireCatNotAllThereI18n,
 };

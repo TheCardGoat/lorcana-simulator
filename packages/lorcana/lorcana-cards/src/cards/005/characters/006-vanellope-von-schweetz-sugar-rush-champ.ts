@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { vanellopeVonSchweetzSugarRushChampI18n } from "./006-vanellope-von-schweetz-sugar-rush-champ.i18n";
 
 export const vanellopeVonSchweetzSugarRushChamp: CharacterCard = {
   id: "Xwz",
@@ -7,24 +8,6 @@ export const vanellopeVonSchweetzSugarRushChamp: CharacterCard = {
   cardType: "character",
   name: "Vanellope von Schweetz",
   version: "Sugar Rush Champ",
-  i18n: {
-    en: {
-      name: "Vanellope von Schweetz",
-      version: "Sugar Rush Champ",
-    },
-    de: {
-      name: "Vanellope von Schweetz",
-      version: "Sugar Rush Champion",
-    },
-    fr: {
-      name: "Vanellope von Schweetz",
-      version: "Championne de Sugar Rush",
-    },
-    it: {
-      name: "Vanellope von Schweetz",
-      version: "Campionessa di Sugar Rush",
-    },
-  },
   inkType: ["amber"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -41,4 +24,5 @@ export const vanellopeVonSchweetzSugarRushChamp: CharacterCard = {
     tcgPlayer: 555241,
   },
   classifications: ["Storyborn", "Hero", "Princess", "Racer"],
+  i18n: vanellopeVonSchweetzSugarRushChampI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { shesYourPersonI18n } from "./040-shes-your-person.i18n";
 
 export const shesYourPerson: ActionCard = {
   id: "znP",
@@ -6,24 +7,6 @@ export const shesYourPerson: ActionCard = {
   reprints: ["set8-040"],
   cardType: "action",
   name: "She's Your Person",
-  i18n: {
-    en: {
-      name: "She's Your Person",
-      text: "Choose one:\n- Remove up to 3 damage from chosen character.\n- Remove up to 3 damage from each of your characters with Bodyguard.",
-    },
-    de: {
-      name: "Sie ist dein Mensch",
-      text: "Wähle eine Möglichkeit aus: • Entferne bis zu 3 Schaden von einem Charakter deiner Wahl. • Entferne bis zu 3 Schaden von jedem deiner Charaktere mit Beschützen.",
-    },
-    fr: {
-      name: "C’est ta maîtresse",
-      text: "Choisissez entre: • Choisissez un personnage et retirez-lui jusqu'à 3 dommages. • Retirez jusqu'à 3 dommages de chacun de vos personnages avec Rempart.",
-    },
-    it: {
-      name: "È la tua Penny",
-      text: "Scegli uno: • Rimuovi fino a 3 danni da un personaggio a tua scelta. • Rimuovi fino a 3 danni da ogni tuo personaggio con Guardiano.",
-    },
-  },
   inkType: ["amber", "steel"],
   franchise: "Bolt",
   set: "008",
@@ -71,4 +54,5 @@ export const shesYourPerson: ActionCard = {
       },
     },
   ],
+  i18n: shesYourPersonI18n,
 };

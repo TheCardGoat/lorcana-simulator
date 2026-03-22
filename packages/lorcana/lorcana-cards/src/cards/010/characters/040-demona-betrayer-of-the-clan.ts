@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { demonaBetrayerOfTheClanI18n } from "./040-demona-betrayer-of-the-clan.i18n";
 
 export const demonaBetrayerOfTheClan: CharacterCard = {
   id: "dX5",
@@ -7,36 +8,6 @@ export const demonaBetrayerOfTheClan: CharacterCard = {
   cardType: "character",
   name: "Demona",
   version: "Betrayer of the Clan",
-  i18n: {
-    en: {
-      name: "Demona",
-      version: "Betrayer of the Clan",
-      text: [
-        {
-          title: "Challenger +2",
-        },
-        {
-          title: "STONE BY DAY",
-          description: "If you have 3 or more cards in your hand, this character can't ready.",
-        },
-      ],
-    },
-    de: {
-      name: "Demona",
-      version: "Verräterin des Clans",
-      text: "Herausfordern +2 AM TAGE AUS STEIN Solange du 3 oder mehr Karten auf der Hand hast, kann dieser Charakter nicht bereit gemacht werden.",
-    },
-    fr: {
-      name: "Démona",
-      version: "Traîtresse du clan",
-      text: "Offensif +2 STATUE LE JOUR Ce personnage ne peut pas se redresser si vous avez 3 cartes ou plus en main.",
-    },
-    it: {
-      name: "Demona",
-      version: "Traditrice del Clan",
-      text: "Sfidante +2 STATUE DI GIORNO Se hai 3 o più carte in mano, questo personaggio non si può preparare.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Gargoyles",
   set: "010",
@@ -70,29 +41,23 @@ export const demonaBetrayerOfTheClan: CharacterCard = {
       value: 2,
     },
     {
-      effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["hand"],
-          },
-          comparison: {
-            operator: "gte",
-            value: 3,
-          },
-        },
-        then: {
-          restriction: "cant-ready",
-          target: "SELF",
-          type: "restriction",
-        },
-        type: "conditional",
-      },
       id: "t99-2",
+      name: "STONE BY DAY",
       text: "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
-      type: "action",
+      type: "static",
+      condition: {
+        type: "resource-count",
+        what: "cards-in-hand",
+        controller: "you",
+        comparison: "greater-or-equal",
+        value: 3,
+      },
+      effect: {
+        type: "restriction",
+        restriction: "cant-ready",
+        target: "SELF",
+      },
     },
   ],
+  i18n: demonaBetrayerOfTheClanI18n,
 };

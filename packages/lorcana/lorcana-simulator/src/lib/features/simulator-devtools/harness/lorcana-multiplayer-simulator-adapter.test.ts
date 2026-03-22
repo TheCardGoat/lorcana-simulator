@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
+import { arielOnHumanLegs } from "@tcg/lorcana-cards/cards/001";
 import { LorcanaMultiplayerTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
 
 import { filterEntriesToLastTurns } from "@/features/simulator/panels/event-log-presentation.js";
@@ -22,7 +23,27 @@ describe("LorcanaMultiplayerSimulatorAdapter", () => {
 
     const moveLog = adapter.getMoveLog(10, "authoritative");
 
-    expect(moveLog.map((entry) => entry.turnNumber)).toEqual([2, 3, 4]);
+    expect(moveLog.map((entry) => entry.turnNumber)).toEqual([1, 2, 3]);
+  });
+
+  it("keeps pass-turn entries on the originating opening turn (turn 1)", () => {
+    engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      { deck: 3 },
+      { deck: 3 },
+      { skipPreGame: false },
+    );
+    const adapter = new LorcanaMultiplayerSimulatorAdapter(engine);
+
+    expect(engine.asLorcanaPlayerOne().chooseFirstPlayer(PLAYER_ONE).success).toBe(true);
+    expect(engine.asLorcanaPlayerOne().mulligan([]).success).toBe(true);
+    expect(engine.asLorcanaPlayerTwo().mulligan([]).success).toBe(true);
+    expect(engine.asLorcanaPlayerOne().passTurn().success).toBe(true);
+
+    const moveLog = adapter.getMoveLog(10, "authoritative");
+    const passTurnEntry = moveLog.find((entry) => entry.moveId === "passTurn");
+
+    expect(passTurnEntry).toBeDefined();
+    expect(passTurnEntry?.turnNumber).toBe(1);
   });
 
   it("keeps enough raw log data for the typed Lorcana bridge to recover setup messages", () => {
@@ -57,7 +78,7 @@ describe("LorcanaMultiplayerSimulatorAdapter", () => {
 
     const filteredLog = filterEntriesToLastTurns(adapter.getMoveLog(10, "authoritative"));
 
-    expect([...new Set(filteredLog.map((entry) => entry.turnNumber))]).toEqual([3, 4]);
+    expect([...new Set(filteredLog.map((entry) => entry.turnNumber))]).toEqual([2, 3]);
     expect(filteredLog).toHaveLength(2);
   });
 
@@ -108,5 +129,28 @@ describe("LorcanaMultiplayerSimulatorAdapter", () => {
       playerTwo: 1,
       spectator: 1,
     });
+  });
+
+  it("includes undo actions in the authoritative move log", () => {
+    engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [arielOnHumanLegs],
+        deck: 3,
+      },
+      { deck: 3 },
+    );
+    const adapter = new LorcanaMultiplayerSimulatorAdapter(engine);
+
+    expect(engine.asPlayerOne().ink(arielOnHumanLegs)).toBeSuccessfulCommand();
+    expect(engine.asServer().undo(PLAYER_ONE).success).toBe(true);
+
+    const moveLog = adapter.getMoveLog(10, "authoritative");
+    const undoEntry = moveLog.find((entry) => entry.moveId === "undo");
+    const inkEntry = moveLog.find((entry) => entry.moveId === "putCardIntoInkwell");
+
+    expect(inkEntry).toBeDefined();
+    expect(undoEntry).toBeDefined();
+    expect(undoEntry?.title).toBe("Undid the last move.");
+    expect(undoEntry?.actorSide).toBe("playerOne");
   });
 });

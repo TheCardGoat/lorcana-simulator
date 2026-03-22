@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chipTheTeacupGentleSoulI18n } from "./037-chip-the-teacup-gentle-soul.i18n";
 
 export const chipTheTeacupGentleSoul: CharacterCard = {
   id: "8TZ",
@@ -7,24 +8,6 @@ export const chipTheTeacupGentleSoul: CharacterCard = {
   cardType: "character",
   name: "Chip the Teacup",
   version: "Gentle Soul",
-  i18n: {
-    en: {
-      name: "Chip the Teacup",
-      version: "Gentle Soul",
-    },
-    de: {
-      name: "Tassilo",
-      version: "Sanftmütige Seele",
-    },
-    fr: {
-      name: "Zip",
-      version: "Âme innocente",
-    },
-    it: {
-      name: "Chip the Teacup",
-      version: "Gentle Soul",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -41,4 +24,5 @@ export const chipTheTeacupGentleSoul: CharacterCard = {
     tcgPlayer: 525108,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: chipTheTeacupGentleSoulI18n,
 };

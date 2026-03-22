@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cerberusThreeheadedDogI18n } from "./176-cerberus-three-headed-dog.i18n";
 
 export const cerberusThreeheadedDog: CharacterCard = {
   id: "sNx",
@@ -7,24 +8,6 @@ export const cerberusThreeheadedDog: CharacterCard = {
   cardType: "character",
   name: "Cerberus",
   version: "Three-Headed Dog",
-  i18n: {
-    en: {
-      name: "Cerberus",
-      version: "Three-Headed Dog",
-    },
-    de: {
-      name: "Zerberus",
-      version: "Dreiköpfiger Hund",
-    },
-    fr: {
-      name: "CERBÈRE",
-      version: "Chien à trois têtes",
-    },
-    it: {
-      name: "Cerberus",
-      version: "Three-Headed Dog",
-    },
-  },
   inkType: ["steel"],
   franchise: "Hercules",
   set: "001",
@@ -41,4 +24,5 @@ export const cerberusThreeheadedDog: CharacterCard = {
     tcgPlayer: 497206,
   },
   classifications: ["Storyborn"],
+  i18n: cerberusThreeheadedDogI18n,
 };

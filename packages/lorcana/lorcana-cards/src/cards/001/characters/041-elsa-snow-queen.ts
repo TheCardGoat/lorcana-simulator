@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { elsaSnowQueenI18n } from "./041-elsa-snow-queen.i18n";
 
 export const elsaSnowQueen: CharacterCard = {
   id: "b3D",
@@ -7,48 +8,6 @@ export const elsaSnowQueen: CharacterCard = {
   cardType: "character",
   name: "Elsa",
   version: "Snow Queen",
-  i18n: {
-    en: {
-      name: "Elsa",
-      version: "Snow Queen",
-      text: [
-        {
-          title: "FREEZE",
-          description: "{E} — Exert chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Elsa",
-      version: "Snow Queen",
-      text: [
-        {
-          title: "FREEZE",
-          description: "— Exert chosen opposing character.",
-        },
-      ],
-    },
-    fr: {
-      name: "Elsa",
-      version: "Snow Queen",
-      text: [
-        {
-          title: "FREEZE",
-          description: "— Exert chosen opposing character.",
-        },
-      ],
-    },
-    it: {
-      name: "Elsa",
-      version: "Snow Queen",
-      text: [
-        {
-          title: "FREEZE",
-          description: "— Exert chosen opposing character.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "001",
@@ -85,4 +44,5 @@ export const elsaSnowQueen: CharacterCard = {
       },
     },
   ],
+  i18n: elsaSnowQueenI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { aladdinIntrepidCommanderI18n } from "./119-aladdin-intrepid-commander.i18n";
 
 export const aladdinIntrepidCommander: CharacterCard = {
   id: "brg",
@@ -7,36 +8,6 @@ export const aladdinIntrepidCommander: CharacterCard = {
   cardType: "character",
   name: "Aladdin",
   version: "Intrepid Commander",
-  i18n: {
-    en: {
-      name: "Aladdin",
-      version: "Intrepid Commander",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "REMEMBER YOUR TRAINING",
-          description: "When you play this character, your characters get +2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Aladdin",
-      version: "Unerschrockener Kommandant",
-      text: "Gestaltwandel 2 ERINNERE DICH AN DEIN TRAINING Wenn du diesen Charakter ausspielst, erhalten deine Charaktere in diesem Zug +2.",
-    },
-    fr: {
-      name: "Aladdin",
-      version: "Commandant intrépide",
-      text: "Alter 2 RAPPELLE-TOI TON ENTRAÎNEMENT Lorsque vous jouez ce personnage, vos personnages gagnent +2 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Aladdin",
-      version: "Comandante Intrepido",
-      text: "Trasformazione 2 RICORDA IL TUO ADDESTRAMENTO Quando giochi questo personaggio, i tuoi personaggi ricevono +2 per questo turno.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aladdin",
   set: "006",
@@ -90,4 +61,5 @@ export const aladdinIntrepidCommander: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: aladdinIntrepidCommanderI18n,
 };

@@ -37,10 +37,9 @@ describe("Seven Dwarfs' Mine - Secure Fortress", () => {
     expect(
       testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
     ).toBe(true);
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true, targets: [targetDummy] })
-        .success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolveNextPending({ targets: [targetDummy] }).success).toBe(
+      true,
+    );
 
     expect(testEngine.asPlayerTwo().getCard(targetDummy)?.damage).toBe(2);
   });

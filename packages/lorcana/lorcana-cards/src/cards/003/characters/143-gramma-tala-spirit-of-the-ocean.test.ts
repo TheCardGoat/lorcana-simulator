@@ -1,120 +1,90 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { liloMakingAWish } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { letItGo } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import { grammaTalaSpiritOfTheOcean } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { aladdinBraveRescuer } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { allFunnedOut } from "@lorcanito/lorcana-engine/cards/005/actions/actions";
-// Import {
-//   DonaldDuckFocusedFlatfoot,
-//   TipoGrowingSon,
-// } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Gramma Tala - Spirit of the Ocean", () => {
-//   Describe("**DO YOU KNOW WHO YOU ARE?** Whenever a card is put into your inkwell, gain 1 lore.", () => {
-//     It("Adding card from hand to inkwell should give +1 lore", () => {
-//       Const testStore = new TestStore({
-//         Play: [grammaTalaSpiritOfTheOcean],
-//         Hand: [aladdinBraveRescuer, liloMakingAWish],
-//       });
-//
-//       TestStore.store.tableStore.getTable("player_one").lore = 0;
-//
-//       Const cardToPutInInkwell = testStore.getCard(aladdinBraveRescuer);
-//       CardToPutInInkwell.addToInkwell();
-//
-//       Expect(testStore.getPlayerLore()).toBe(1);
-//     });
-//
-//     It("cards with effect that add to inkwell should also trigger ability", async () => {
-//       Const testStore = new TestEngine({
-//         Inkwell: 20,
-//         Play: [grammaTalaSpiritOfTheOcean],
-//         Hand: [
-//           TipoGrowingSon,
-//           LiloMakingAWish,
-//           AllFunnedOut,
-//           DonaldDuckFocusedFlatfoot,
-//         ],
-//         Deck: 1,
-//       });
-//
-//       TestStore.store.tableStore.getTable("player_one").lore = 0;
-//
-//       Const tipoCard = testStore.getCardModel(tipoGrowingSon);
-//       Const allFunnedOutCard = testStore.getCardModel(allFunnedOut);
-//       Const donaldDuckCard = testStore.getCardModel(donaldDuckFocusedFlatfoot);
-//       Const cardToPutInInkwell = testStore.getCardModel(liloMakingAWish);
-//
-//       Await testStore.playCard(tipoCard);
-//       Await testStore.resolveOptionalAbility();
-//       Await testStore.resolveTopOfStack({ targets: [cardToPutInInkwell] });
-//
-//       Expect(testStore.getPlayerLore()).toBe(1);
-//
-//       AllFunnedOutCard.playFromHand();
-//       Await testStore.resolveTopOfStack({ targets: [tipoCard] });
-//
-//       Expect(testStore.getPlayerLore()).toBe(2);
-//
-//       Await testStore.playCard(donaldDuckCard);
-//       Await testStore.resolveOptionalAbility();
-//
-//       Expect(testStore.getPlayerLore()).toBe(3);
-//     });
-//
-//     It("should gain lore when opponent puts cards into your inkwell", async () => {
-//       Const testStore = new TestEngine(
-//         {
-//           Inkwell: letItGo.cost,
-//           Hand: [letItGo],
-//           Lore: 0,
-//         },
-//         {
-//           Play: [grammaTalaSpiritOfTheOcean, liloMakingAWish],
-//           Lore: 0,
-//         },
-//       );
-//
-//       Const letItGoCard = testStore.getCardModel(letItGo);
-//       Const cardToPutInInkwell = testStore.getCardModel(liloMakingAWish);
-//       LetItGoCard.playFromHand();
-//
-//       Await testStore.resolveTopOfStack(
-//         { targets: [cardToPutInInkwell] },
-//         True,
-//       );
-//
-//       Expect(testStore.getPlayerLore("player_two")).toBe(1);
-//     });
-//
-//     It("should not gain lore when opponent puts gramma into your inkweel", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Inkwell: letItGo.cost,
-//           Hand: [letItGo],
-//         },
-//         {
-//           Play: [grammaTalaSpiritOfTheOcean],
-//         },
-//       );
-//
-//       TestStore.store.tableStore.getTable("player_two").lore = 0;
-//
-//       Const letItGoCard = testStore.getCard(letItGo);
-//       Const cardToPutInInkwell = testStore.getCard(grammaTalaSpiritOfTheOcean);
-//       LetItGoCard.playFromHand();
-//
-//       TestStore.resolveTopOfStack({ targets: [cardToPutInInkwell] });
-//
-//       Expect(testStore.getPlayerLore("player_two")).toBe(0);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { letItGo } from "../../001/actions/163-let-it-go";
+import { grammaTalaSpiritOfTheOcean } from "./143-gramma-tala-spirit-of-the-ocean";
+
+const inkableCard = createMockCharacter({
+  id: "gramma-tala-inkable-card",
+  name: "Inkable Card",
+  cost: 1,
+  inkable: true,
+});
+
+describe("Gramma Tala - Spirit of the Ocean", () => {
+  describe("DO YOU KNOW WHO YOU ARE? - Whenever a card is put into your inkwell, gain 1 lore.", () => {
+    it("gains 1 lore when you ink a card from hand", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [grammaTalaSpiritOfTheOcean],
+        hand: [inkableCard],
+      });
+
+      const loreBefore = testEngine.getLore(PLAYER_ONE);
+
+      expect(testEngine.asPlayerOne().ink(inkableCard)).toBeSuccessfulCommand();
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore + 1);
+      expect(testEngine.asPlayerOne().getCardZone(inkableCard)).toBe("inkwell");
+    });
+
+    it("gains 1 lore when an opponent puts one of your cards into your inkwell", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [grammaTalaSpiritOfTheOcean, inkableCard],
+          lore: 0,
+          deck: 1,
+        },
+        {
+          hand: [letItGo],
+          inkwell: letItGo.cost,
+          deck: 1,
+        },
+      );
+
+      const inkTargetId = testEngine.findCardInstanceId(inkableCard, "play", "p1");
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().playCard(letItGo, {
+          targets: [inkTargetId],
+        }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
+      expect(testEngine.asPlayerOne().getCardZone(inkTargetId)).toBe("inkwell");
+    });
+
+    it("does not gain lore when Gramma Tala herself is put into your inkwell", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [grammaTalaSpiritOfTheOcean],
+          lore: 0,
+          deck: 1,
+        },
+        {
+          hand: [letItGo],
+          inkwell: letItGo.cost,
+          deck: 1,
+        },
+      );
+
+      const grammaId = testEngine.findCardInstanceId(grammaTalaSpiritOfTheOcean, "play", "p1");
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().playCard(letItGo, {
+          targets: [grammaId],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+      expect(testEngine.asPlayerOne().getCardZone(grammaId)).toBe("inkwell");
+    });
+  });
+});

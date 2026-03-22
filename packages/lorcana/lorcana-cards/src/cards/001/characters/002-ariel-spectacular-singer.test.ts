@@ -1,95 +1,52 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   ArielSpectacularSinger,
-//   ChiefTui,
-//   HeiheiBoatSnack,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { shieldOfVirtue } from "@lorcanito/lorcana-engine/cards/001/items/items";
-// Import { friendsOnTheOtherSide } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import { hiramFlavershamToymaker } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import { tipoGrowingSon } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Ariel - Spectacular Singer", () => {
-//   It("MUSICAL DEBUT effect - Song Tutored", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: arielSpectacularSinger.cost,
-//       Hand: [arielSpectacularSinger],
-//       Deck: [
-//         ShieldOfVirtue,
-//         ChiefTui,
-//         HeiheiBoatSnack,
-//         FriendsOnTheOtherSide,
-//         TipoGrowingSon,
-//         HiramFlavershamToymaker,
-//       ],
-//     });
-//
-//     Await testEngine.playCard(arielSpectacularSinger);
-//
-//     Await testEngine.resolveTopOfStack({
-//       Scry: {
-//         Bottom: [hiramFlavershamToymaker, tipoGrowingSon, heiheiBoatSnack],
-//         Hand: [friendsOnTheOtherSide],
-//       },
-//     });
-//
-//     Expect(testEngine.getCardZone(friendsOnTheOtherSide)).toEqual("hand");
-//
-//     Const bottomCard = testEngine.testStore.getZonesCards().deck[0];
-//     Const secondBottomCard = testEngine.testStore.getZonesCards().deck[1];
-//     Const thirdBottomCard = testEngine.testStore.getZonesCards().deck[2];
-//
-//     Expect(bottomCard?.lorcanitoCard?.name).toEqual(
-//       HiramFlavershamToymaker.name,
-//     );
-//     Expect(secondBottomCard?.lorcanitoCard?.name).toEqual(tipoGrowingSon.name);
-//     Expect(thirdBottomCard?.lorcanitoCard?.name).toEqual(heiheiBoatSnack.name);
-//   });
-//   It("MUSICAL DEBUT effect - Missed song", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: arielSpectacularSinger.cost,
-//       Hand: [arielSpectacularSinger],
-//       Deck: [
-//         ShieldOfVirtue,
-//         FriendsOnTheOtherSide,
-//         ChiefTui,
-//         HeiheiBoatSnack,
-//         TipoGrowingSon,
-//         HiramFlavershamToymaker,
-//       ],
-//     });
-//
-//     Await testEngine.playCard(arielSpectacularSinger);
-//
-//     Await testEngine.resolveTopOfStack({
-//       Scry: {
-//         Bottom: [
-//           HiramFlavershamToymaker,
-//           TipoGrowingSon,
-//           HeiheiBoatSnack,
-//           ChiefTui,
-//         ],
-//         Hand: [],
-//       },
-//     });
-//
-//     Const bottomCard = testEngine.testStore.getZonesCards().deck[0];
-//     Const secondBottomCard = testEngine.testStore.getZonesCards().deck[1];
-//     Const thirdBottomCard = testEngine.testStore.getZonesCards().deck[2];
-//     Const fourthBottomCard = testEngine.testStore.getZonesCards().deck[3];
-//
-//     Expect(bottomCard?.lorcanitoCard?.name).toEqual(
-//       HiramFlavershamToymaker.name,
-//     );
-//     Expect(secondBottomCard?.lorcanitoCard?.name).toEqual(tipoGrowingSon.name);
-//     Expect(thirdBottomCard?.lorcanitoCard?.name).toEqual(heiheiBoatSnack.name);
-//     Expect(fourthBottomCard?.lorcanitoCard?.name).toEqual(chiefTui.name);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+  createMockSong,
+} from "@tcg/lorcana-engine/testing";
+import { arielSpectacularSinger } from "./002-ariel-spectacular-singer";
+
+const fillerA = createMockCharacter({ id: "ariel-filler-a", name: "Filler A", cost: 1 });
+const fillerB = createMockCharacter({ id: "ariel-filler-b", name: "Filler B", cost: 2 });
+const fillerC = createMockCharacter({ id: "ariel-filler-c", name: "Filler C", cost: 3 });
+const testSong = createMockSong({
+  id: "ariel-test-song",
+  name: "Test Song",
+  cost: 2,
+  text: "A test song for Ariel.",
+});
+
+describe("Ariel - Spectacular Singer", () => {
+  describe("MUSICAL DEBUT - When you play this character, look at the top 4 cards of your deck. You may reveal a song card and put it into your hand. Put the rest on the bottom of your deck in any order.", () => {
+    it("picks a song card to hand and puts the rest on bottom when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [arielSpectacularSinger],
+        inkwell: arielSpectacularSinger.cost,
+        deck: [fillerA, testSong, fillerB, fillerC],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(arielSpectacularSinger)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          destinations: [
+            { zone: "hand", cards: [testSong] },
+            { zone: "deck-bottom", cards: [fillerB, fillerA, fillerC] },
+          ],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(testSong)).toBe("hand");
+      expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
+        fillerB.id,
+        fillerA.id,
+        fillerC.id,
+      ]);
+    });
+  });
+});

@@ -1,9 +1,11 @@
+import type { PlayerId } from "#core";
 import type { GrantAbilityEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
 import type { LorcanaCardMeta } from "../../../types";
 import { addTemporaryAbility, resolveTemporaryEffectWindow } from "../../effects/temporary-effects";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { resolveEffectTargets } from "../../../targeting/runtime";
+import { getEffectTargetSelectionInput } from "./selection-state";
 
 export function isGrantAbilityEffect(effect: unknown): effect is GrantAbilityEffect {
   return (
@@ -41,16 +43,21 @@ export function resolveGrantAbilityEffect(
   }
 
   const resolvedTargets =
-    resolveEffectTargets(ctx, cardPlayed, effect.target, resolutionInput.targets) ?? [];
+    resolveEffectTargets(
+      ctx,
+      cardPlayed,
+      effect.target,
+      getEffectTargetSelectionInput(effect.target, resolutionInput),
+    ) ?? [];
   if (resolvedTargets.length === 0) {
     return;
   }
 
-  const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+  const currentTurn = ctx.framework.state.status.turn ?? 1;
   const currentPlayerId = ctx.framework.state.currentPlayer;
 
   for (const targetId of resolvedTargets) {
-    const targetOwnerId = ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.ownerID;
+    const targetOwnerId = ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined;
     const { startsAtTurn, expiresAtTurn } = resolveTemporaryEffectWindow(
       currentTurn,
       effect.duration,

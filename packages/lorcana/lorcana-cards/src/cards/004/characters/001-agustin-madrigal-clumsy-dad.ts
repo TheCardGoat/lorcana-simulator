@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { agustinMadrigalClumsyDadI18n } from "./001-agustin-madrigal-clumsy-dad.i18n";
 
 export const agustinMadrigalClumsyDad: CharacterCard = {
   id: "pkE",
@@ -7,24 +8,6 @@ export const agustinMadrigalClumsyDad: CharacterCard = {
   cardType: "character",
   name: "Agustin Madrigal",
   version: "Clumsy Dad",
-  i18n: {
-    en: {
-      name: "Agustin Madrigal",
-      version: "Clumsy Dad",
-    },
-    de: {
-      name: "Agustín Madrigal",
-      version: "Tollpatschiger Vater",
-    },
-    fr: {
-      name: "Agustín Madrigal",
-      version: "Père maladroit",
-    },
-    it: {
-      name: "Agustín Madrigal",
-      version: "Papà Impacciato",
-    },
-  },
   inkType: ["amber"],
   franchise: "Encanto",
   set: "004",
@@ -41,4 +24,5 @@ export const agustinMadrigalClumsyDad: CharacterCard = {
     tcgPlayer: 549618,
   },
   classifications: ["Storyborn", "Mentor", "Madrigal"],
+  i18n: agustinMadrigalClumsyDadI18n,
 };

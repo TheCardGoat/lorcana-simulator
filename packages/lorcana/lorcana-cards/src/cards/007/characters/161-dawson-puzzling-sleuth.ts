@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { dawsonPuzzlingSleuthI18n } from "./161-dawson-puzzling-sleuth.i18n";
 
 export const dawsonPuzzlingSleuth: CharacterCard = {
   id: "RK6",
@@ -7,52 +8,6 @@ export const dawsonPuzzlingSleuth: CharacterCard = {
   cardType: "character",
   name: "Dawson",
   version: "Puzzling Sleuth",
-  i18n: {
-    en: {
-      name: "Dawson",
-      version: "Puzzling Sleuth",
-      text: [
-        {
-          title: "BE SENSIBLE",
-          description:
-            "Once during your turn, whenever a card is put into your inkwell, look at the top card of your deck. You may put it on either the top or the bottom of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Dr. David Wasdenn",
-      version: "Grübelnder Detektiv",
-      text: [
-        {
-          title: "SEI VERNÜNFTIG",
-          description:
-            "Einmal während deines Zuges, wenn eine Karte in deinen Tintenvorrat gelegt wird, schaue dir die oberste Karte deines Decks an. Lege sie anschließend entweder auf dein Deck oder darunter.",
-        },
-      ],
-    },
-    fr: {
-      name: "Dawson",
-      version: "Détective énigmatique",
-      text: [
-        {
-          title: "FAIRE PREUVE DE DISCERNEMENT",
-          description:
-            "Une seule fois durant votre tour, lorsqu'une carte est placée dans votre réserve d'encre, regardez la carte du dessus de votre pioche. Remettez-la soit sur le dessus de votre pioche, soit en dessous.",
-        },
-      ],
-    },
-    it: {
-      name: "Topson",
-      version: "Investigatore Perplesso",
-      text: [
-        {
-          title: "SIA RAGIONEVOLE",
-          description:
-            "Una volta durante il tuo turno, ogni volta che una carta viene aggiunta al tuo calamaio, guarda la prima carta del tuo mazzo. Puoi metterla in cima o in fondo al tuo mazzo.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Great Mouse Detective",
   set: "007",
@@ -80,20 +35,37 @@ export const dawsonPuzzlingSleuth: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: "CHOSEN_CHARACTER",
-          type: "put-on-bottom",
+          type: "scry",
+          amount: 1,
+          destinations: [
+            {
+              zone: "deck-top",
+              min: 0,
+              max: 1,
+            },
+            {
+              zone: "deck-bottom",
+              remainder: true,
+            },
+          ],
         },
         type: "optional",
       },
       id: "1t5-1",
-      name: "BE SENSIBLE Once",
+      name: "BE SENSIBLE",
       text: "BE SENSIBLE Once during your turn, whenever a card is put into your inkwell, look at the top card of your deck. You may put it on either the top or the bottom of your deck.",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "ink",
+        on: "CONTROLLER",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "once-per-turn",
+          },
+        ],
       },
       type: "triggered",
     },
   ],
+  i18n: dawsonPuzzlingSleuthI18n,
 };

@@ -1,88 +1,81 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   GenieOnTheJob,
-//   GeniePowerUnleashed,
-//   GenieTheEverImpressive,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { genieMainAttraction } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { healingDecanterItem } from "@lorcanito/lorcana-engine/cards/005/items/items";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Genie - Main Attraction", () => {
-//   It("**SPECTACULAR ENTERTAINER** When this character is exerted, opposing characters cannot ready at the start of your opponents turn.", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Play: [genieMainAttraction],
-//         Deck: 4,
-//       },
-//       {
-//         Play: [genieOnTheJob, genieTheEverImpressive, geniePowerUnleashed],
-//         Deck: 4,
-//       },
-//     );
-//
-//     Const cardUnderTest = testStore.getCard(genieMainAttraction);
-//     Const target = testStore.getCard(genieOnTheJob);
-//     Const anotherTarget = testStore.getCard(genieTheEverImpressive);
-//     Const thirdTarget = testStore.getCard(geniePowerUnleashed);
-//
-//     [cardUnderTest, target, anotherTarget, thirdTarget].forEach((card) => {
-//       Card.updateCardMeta({ exerted: true });
-//     });
-//
-//     TestStore.passTurn();
-//
-//     [cardUnderTest, target, anotherTarget, thirdTarget].forEach((card) => {
-//       Expect(card.ready).toBe(false);
-//     });
-//
-//     TestStore.passTurn();
-//     CardUnderTest.updateCardMeta({ exerted: true });
-//
-//     TestStore.passTurn();
-//     [target, anotherTarget, thirdTarget].forEach((card) => {
-//       Expect(card.ready).toBe(false);
-//     });
-//
-//     TestStore.passTurn();
-//     TestStore.passTurn();
-//
-//     [cardUnderTest, target, anotherTarget, thirdTarget].forEach((card) => {
-//       Expect(card.ready).toBe(true);
-//     });
-//   });
-//
-//   It("**SPECTACULAR ENTERTAINER** Items should be able to ready even when Genie is exerted, as the ability only affects characters", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Play: [genieMainAttraction],
-//         Deck: 4,
-//       },
-//       {
-//         Play: [healingDecanterItem],
-//         Deck: 4,
-//       },
-//     );
-//
-//     Const genie = testStore.getCard(genieMainAttraction);
-//     Const item = testStore.getCard(healingDecanterItem);
-//
-//     // Exert both Genie and the item
-//     Genie.updateCardMeta({ exerted: true });
-//     Item.updateCardMeta({ exerted: true });
-//
-//     // Pass turn - item should ready even though Genie is exerted
-//     TestStore.passTurn();
-//
-//     // Genie should still be exerted (it's on the opponent's side)
-//     Expect(genie.ready).toBe(false);
-//     // Item should ready because Genie's ability only affects characters
-//     Expect(item.ready).toBe(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { genieMainAttraction } from "./049-genie-main-attraction";
+
+const opponentCharacter = createMockCharacter({
+  id: "genie-ma-opp-char",
+  name: "Opponent Character",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Genie - Main Attraction", () => {
+  describe("PHENOMENAL SHOWMAN - While this character is exerted, opposing characters can't ready at the start of their turn.", () => {
+    it("while exerted, opposing characters can't ready at start of their turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: genieMainAttraction, exerted: true }],
+          deck: 3,
+        },
+        {
+          play: [{ card: opponentCharacter, exerted: true }],
+          deck: 3,
+        },
+      );
+
+      // Opponent's character is exerted; Genie is also exerted (restriction is active)
+      expect(testEngine.isExerted(opponentCharacter)).toBe(true);
+
+      // P1 passes turn — P2's turn starts; opposing chars should NOT ready because Genie is exerted
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.isExerted(opponentCharacter)).toBe(true);
+    });
+
+    it("opposing characters can ready normally when Genie is not exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [genieMainAttraction],
+          deck: 3,
+        },
+        {
+          play: [{ card: opponentCharacter, exerted: true }],
+          deck: 3,
+        },
+      );
+
+      // Genie is NOT exerted — restriction is inactive
+      expect(testEngine.isExerted(opponentCharacter)).toBe(true);
+
+      // P1 passes turn — P2's turn starts; opposing char should ready normally
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.isExerted(opponentCharacter)).toBe(false);
+    });
+
+    it("restriction is removed when Genie readies", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: genieMainAttraction, exerted: true }],
+          deck: 3,
+        },
+        {
+          play: [{ card: opponentCharacter, exerted: true }],
+          deck: 3,
+        },
+      );
+
+      // P1 passes — P2's turn: opponent can't ready (Genie is exerted)
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.isExerted(opponentCharacter)).toBe(true);
+
+      // P2 passes — P1's turn: Genie readies, so restriction lifts
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.isExerted(genieMainAttraction)).toBe(false);
+
+      // P1 passes again — P2's turn: now Genie is not exerted, opponent can ready
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.isExerted(opponentCharacter)).toBe(false);
+    });
+  });
+});

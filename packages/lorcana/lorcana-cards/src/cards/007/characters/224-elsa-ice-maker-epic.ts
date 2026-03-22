@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { elsaIceMakerEpicI18n } from "./224-elsa-ice-maker-epic.i18n";
 
 export const elsaIceMakerEpic: CharacterCard = {
   id: "2hI",
@@ -7,52 +8,6 @@ export const elsaIceMakerEpic: CharacterCard = {
   cardType: "character",
   name: "Elsa",
   version: "Ice Maker",
-  i18n: {
-    en: {
-      name: "Elsa",
-      version: "Ice Maker",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Elsa.) WINTER WALL Whenever this character quests, you may exert chosen character. If you do and you have a character named Anna in play, the chosen character can't ready at the start of their next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Elsa",
-      version: "Ice Maker",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Elsa.) WINTER WALL Whenever this character quests, you may exert chosen character. If you do and you have a character named Anna in play, the chosen character can't ready at the start of their next turn.",
-        },
-      ],
-    },
-    fr: {
-      name: "Elsa",
-      version: "Ice Maker",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Elsa.) WINTER WALL Whenever this character quests, you may exert chosen character. If you do and you have a character named Anna in play, the chosen character can't ready at the start of their next turn.",
-        },
-      ],
-    },
-    it: {
-      name: "Elsa",
-      version: "Ice Maker",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Elsa.) WINTER WALL Whenever this character quests, you may exert chosen character. If you do and you have a character named Anna in play, the chosen character can't ready at the start of their next turn.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst", "sapphire"],
   franchise: "Frozen",
   set: "007",
@@ -71,8 +26,12 @@ export const elsaIceMakerEpic: CharacterCard = {
   text: [
     {
       title: "Shift 4",
+      description: "(You may pay 4 to play this on top of one of your characters named Elsa.)",
+    },
+    {
+      title: "WINTER WALL",
       description:
-        "(You may pay 4 to play this on top of one of your characters named Elsa.) WINTER WALL Whenever this character quests, you may exert chosen character. If you do and you have a character named Anna in play, the chosen character can't ready at the start of their next turn.",
+        "Whenever this character quests, you may exert chosen character. If you do and you have a character named Anna in play, the chosen character can't ready at the start of their next turn.",
     },
   ],
   classifications: ["Floodborn", "Hero", "Queen", "Sorcerer"],
@@ -88,18 +47,47 @@ export const elsaIceMakerEpic: CharacterCard = {
     },
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
+        type: "sequence",
+        steps: [
+          {
+            chooser: "CONTROLLER",
+            effect: {
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "any",
+                zones: ["play"],
+                cardTypes: ["character"],
+              },
+              type: "exert",
+            },
+            type: "optional",
           },
-          type: "exert",
-        },
-        type: "optional",
+          {
+            condition: {
+              type: "and",
+              conditions: [
+                {
+                  type: "if-you-do",
+                },
+                {
+                  type: "has-named-character",
+                  name: "Anna",
+                  controller: "you",
+                },
+              ],
+            },
+            then: {
+              type: "restriction",
+              restriction: "cant-ready",
+              duration: "until-start-of-next-turn",
+              target: {
+                ref: "previous-target",
+              },
+            },
+            type: "conditional",
+          },
+        ],
       },
       id: "1v2-2",
       name: "WINTER WALL",
@@ -112,4 +100,5 @@ export const elsaIceMakerEpic: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: elsaIceMakerEpicI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { cantHoldItBackAnymoreI18n } from "./062-cant-hold-it-back-anymore.i18n";
 
 export const cantHoldItBackAnymore: ActionCard = {
   id: "U6W",
@@ -6,24 +7,6 @@ export const cantHoldItBackAnymore: ActionCard = {
   reprints: ["set10-062"],
   cardType: "action",
   name: "Can't Hold It Back Anymore",
-  i18n: {
-    en: {
-      name: "Can't Hold It Back Anymore",
-      text: "Exert chosen opposing character. Move all damage counters from all other characters to that character.",
-    },
-    de: {
-      name: "Die Kraft, sie ist grenzenlos",
-      text: "Erschöpfe einen gegnerischen Charakter deiner Wahl. Verschiebe alle Schadensmarker von allen anderen Charakteren zu dem gewählten Charakter.",
-    },
-    fr: {
-      name: "Je ne mentirai plus jamais",
-      text: "Choisissez un personnage adverse et épuisez-le. Déplacez tous les dommages de tous les autres personnages sur le personnage ainsi choisi.",
-    },
-    it: {
-      name: "Che Il Cuore Mi Guidi un Po'",
-      text: "Impegna un personaggio avversario a tua scelta. Sposta tutti i segnalini danno da tutti gli altri personaggi a quel personaggio.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "010",
@@ -68,4 +51,5 @@ export const cantHoldItBackAnymore: ActionCard = {
       type: "action",
     },
   ],
+  i18n: cantHoldItBackAnymoreI18n,
 };

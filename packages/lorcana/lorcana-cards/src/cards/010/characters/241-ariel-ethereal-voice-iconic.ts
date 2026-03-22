@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arielEtherealVoiceIconicI18n } from "./241-ariel-ethereal-voice-iconic.i18n";
 
 export const arielEtherealVoiceIconic: CharacterCard = {
   id: "P7j",
@@ -7,37 +8,6 @@ export const arielEtherealVoiceIconic: CharacterCard = {
   cardType: "character",
   name: "Ariel",
   version: "Ethereal Voice",
-  i18n: {
-    en: {
-      name: "Ariel",
-      version: "Ethereal Voice",
-      text: [
-        {
-          title: "Boost 1 {I}",
-        },
-        {
-          title: "COMMAND PERFORMANCE",
-          description:
-            "Once during your turn, whenever you play a song, if there's a card under this character, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Arielle",
-      version: "Ätherische Stimme",
-      text: "Stärken 1 ANORDNUNG ZUM AUFTRITT Einmal während deines Zuges, wenn du ein Lied ausspielst und falls dieser Charakter mindestens eine Karte unter sich hat, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Ariel",
-      version: "Voix éthérée",
-      text: "Boost 1 COMMANDE SPÉCIALE Une fois durant votre tour, lorsque vous jouez une chanson, s'il y a une carte sous ce personnage, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Ariel",
-      version: "Voce Eterea",
-      text: "Potenziamento 1 RICHIESTA DI ESIBIZIONE Una volta durante il tuo turno, ogni volta che giochi una canzone, se c'è una carta sotto a questo personaggio, puoi pescare una carta.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Little Mermaid",
   set: "010",
@@ -74,17 +44,17 @@ export const arielEtherealVoiceIconic: CharacterCard = {
     },
     {
       id: "1l1-2",
+      condition: {
+        type: "has-card-under",
+      },
       effect: {
-        condition: {
-          expression: "there's a card under this character",
-          type: "if",
-        },
-        then: {
+        chooser: "CONTROLLER",
+        effect: {
           amount: 1,
           target: "CONTROLLER",
           type: "draw",
         },
-        type: "conditional",
+        type: "optional",
       },
       name: "COMMAND PERFORMANCE Once",
       trigger: {
@@ -93,10 +63,20 @@ export const arielEtherealVoiceIconic: CharacterCard = {
           cardType: "action",
           controller: "you",
         },
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+          {
+            type: "once-per-turn",
+          },
+        ],
         timing: "whenever",
       },
       type: "triggered",
       text: "COMMAND PERFORMANCE Once during your turn, whenever you play a song, if there's a card under this character, you may draw a card.",
     },
   ],
+  i18n: arielEtherealVoiceIconicI18n,
 };

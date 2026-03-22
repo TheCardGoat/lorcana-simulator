@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lumiereHotheadedCandelabraI18n } from "./112-lumiere-hotheaded-candelabra.i18n";
 
 export const lumiereHotheadedCandelabra: CharacterCard = {
   id: "3B5",
@@ -7,24 +8,6 @@ export const lumiereHotheadedCandelabra: CharacterCard = {
   cardType: "character",
   name: "Lumiere",
   version: "Hotheaded Candelabra",
-  i18n: {
-    en: {
-      name: "Lumiere",
-      version: "Hotheaded Candelabra",
-    },
-    de: {
-      name: "Lumière",
-      version: "Hitzköpfiger Armleuchter",
-    },
-    fr: {
-      name: "Lumière",
-      version: "Véritable tête brûlée",
-    },
-    it: {
-      name: "Lumiere",
-      version: "Hotheaded Candelabra",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -41,4 +24,5 @@ export const lumiereHotheadedCandelabra: CharacterCard = {
     tcgPlayer: 525111,
   },
   classifications: ["Dreamborn", "Ally"],
+  i18n: lumiereHotheadedCandelabraI18n,
 };

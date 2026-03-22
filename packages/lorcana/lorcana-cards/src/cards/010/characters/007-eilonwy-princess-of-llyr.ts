@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { eilonwyPrincessOfLlyrI18n } from "./007-eilonwy-princess-of-llyr.i18n";
 
 export const eilonwyPrincessOfLlyr: CharacterCard = {
   id: "B00",
@@ -7,28 +8,6 @@ export const eilonwyPrincessOfLlyr: CharacterCard = {
   cardType: "character",
   name: "Eilonwy",
   version: "Princess of Llyr",
-  i18n: {
-    en: {
-      name: "Eilonwy",
-      version: "Princess of Llyr",
-      text: "Support",
-    },
-    de: {
-      name: "Eilonwy",
-      version: "Prinzessin von Llyr",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Eilonwy",
-      version: "Princesse de Llyr",
-      text: "Soutien",
-    },
-    it: {
-      name: "Ailin",
-      version: "Principessa di Llyr",
-      text: "Aiutante",
-    },
-  },
   inkType: ["amber"],
   franchise: "Black Cauldron",
   set: "010",
@@ -53,4 +32,5 @@ export const eilonwyPrincessOfLlyr: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: eilonwyPrincessOfLlyrI18n,
 };

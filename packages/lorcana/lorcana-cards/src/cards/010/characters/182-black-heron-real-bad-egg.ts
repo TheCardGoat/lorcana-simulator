@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { blackHeronRealBadEggI18n } from "./182-black-heron-real-bad-egg.i18n";
 
 export const blackHeronRealBadEgg: CharacterCard = {
   id: "2S3",
@@ -7,24 +8,6 @@ export const blackHeronRealBadEgg: CharacterCard = {
   cardType: "character",
   name: "Black Heron",
   version: "Real Bad Egg",
-  i18n: {
-    en: {
-      name: "Black Heron",
-      version: "Real Bad Egg",
-    },
-    de: {
-      name: "Spitzschnabel",
-      version: "Faules Ei",
-    },
-    fr: {
-      name: "Le Héron noir",
-      version: "Mauvaise graine",
-    },
-    it: {
-      name: "Airone Nero",
-      version: "Vera Mela Marcia",
-    },
-  },
   inkType: ["steel"],
   franchise: "Ducktales",
   set: "010",
@@ -41,4 +24,5 @@ export const blackHeronRealBadEgg: CharacterCard = {
     tcgPlayer: 659456,
   },
   classifications: ["Storyborn", "Villain"],
+  i18n: blackHeronRealBadEggI18n,
 };

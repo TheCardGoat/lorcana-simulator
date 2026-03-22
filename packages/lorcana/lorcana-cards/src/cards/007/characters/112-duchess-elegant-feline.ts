@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { duchessElegantFelineI18n } from "./112-duchess-elegant-feline.i18n";
 
 export const duchessElegantFeline: CharacterCard = {
   id: "gHW",
@@ -7,24 +8,6 @@ export const duchessElegantFeline: CharacterCard = {
   cardType: "character",
   name: "Duchess",
   version: "Elegant Feline",
-  i18n: {
-    en: {
-      name: "Duchess",
-      version: "Elegant Feline",
-    },
-    de: {
-      name: "Duchesse",
-      version: "Elegante Katze",
-    },
-    fr: {
-      name: "Duchesse",
-      version: "Féline élégante",
-    },
-    it: {
-      name: "Duchessa",
-      version: "Gatta Elegante",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aristocats",
   set: "007",
@@ -41,4 +24,5 @@ export const duchessElegantFeline: CharacterCard = {
     tcgPlayer: 618153,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: duchessElegantFelineI18n,
 };

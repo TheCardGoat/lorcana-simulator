@@ -1,8 +1,8 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "lorcana.setup.firstPlayerChosen": "Waehlte {chosen} fuer den Start.",
-  "lorcana.setup.mulligan.count": "Nahm {count} Karten in den Mulligan.",
-  "lorcana.setup.mulligan.detail": "Nahm {count} Karten in den Mulligan: {mulliganed}. Zog {drawn}.",
+  "lorcana.setup.mulligan.count": "Aenderte {count} Karten.",
+  "lorcana.setup.mulligan.detail": "Aenderte {count} Karten: {mulliganed}. Zog {drawn}.",
   "lorcana.setup.done": "Aufbau abgeschlossen.",
   "lorcana.ability.activated": "Aktivierte eine Faehigkeit von {cardId}.",
   "lorcana.ability.activated.named": "Aktivierte {abilityName} von {cardId}.",

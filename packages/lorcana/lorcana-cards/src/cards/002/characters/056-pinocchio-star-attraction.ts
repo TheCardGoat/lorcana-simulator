@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pinocchioStarAttractionI18n } from "./056-pinocchio-star-attraction.i18n";
 
 export const pinocchioStarAttraction: CharacterCard = {
   id: "2SS",
@@ -7,24 +8,6 @@ export const pinocchioStarAttraction: CharacterCard = {
   cardType: "character",
   name: "Pinocchio",
   version: "Star Attraction",
-  i18n: {
-    en: {
-      name: "Pinocchio",
-      version: "Star Attraction",
-    },
-    de: {
-      name: "Pinocchio",
-      version: "Hauptattraktion",
-    },
-    fr: {
-      name: "Pinocchio",
-      version: "Clou du spectacle",
-    },
-    it: {
-      name: "Pinocchio",
-      version: "Star Attraction",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Pinocchio",
   set: "002",
@@ -41,4 +24,5 @@ export const pinocchioStarAttraction: CharacterCard = {
     tcgPlayer: 525080,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: pinocchioStarAttractionI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tinkerBellTinyTacticianI18n } from "./194-tinker-bell-tiny-tactician.i18n";
 
 export const tinkerBellTinyTactician: CharacterCard = {
   id: "cY7",
@@ -7,48 +8,6 @@ export const tinkerBellTinyTactician: CharacterCard = {
   cardType: "character",
   name: "Tinker Bell",
   version: "Tiny Tactician",
-  i18n: {
-    en: {
-      name: "Tinker Bell",
-      version: "Tiny Tactician",
-      text: [
-        {
-          title: "BATTLE PLANS",
-          description: "{E} — Draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Naseweis",
-      version: "Winzige Taktikerin",
-      text: [
-        {
-          title: "SCHLACHTPLÄNE",
-          description: "— Ziehe 1 Karte. Wähle danach 1 Karte aus deiner Hand und wirf sie ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "LA FÉE CLOCHETTE",
-      version: "Mini tacticienne",
-      text: [
-        {
-          title: "PLANS DE BATAILLE",
-          description: "— Piochez une carte puis défaussez-en une.",
-        },
-      ],
-    },
-    it: {
-      name: "Tinker Bell",
-      version: "Tiny Tactician",
-      text: [
-        {
-          title: "BATTLE PLANS",
-          description: "— Draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Peter Pan",
   set: "001",
@@ -59,7 +18,6 @@ export const tinkerBellTinyTactician: CharacterCard = {
   willpower: 4,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_24d837a8adab46e8ac2ffa7859489926",
     tcgPlayer: 650122,
@@ -97,4 +55,5 @@ export const tinkerBellTinyTactician: CharacterCard = {
       type: "activated",
     },
   ],
+  i18n: tinkerBellTinyTacticianI18n,
 };

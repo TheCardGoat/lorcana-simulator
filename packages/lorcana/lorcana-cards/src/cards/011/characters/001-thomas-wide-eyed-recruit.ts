@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { thomasWideeyedRecruitI18n } from "./001-thomas-wide-eyed-recruit.i18n";
 
 export const thomasWideeyedRecruit: CharacterCard = {
   id: "685",
@@ -7,24 +8,6 @@ export const thomasWideeyedRecruit: CharacterCard = {
   cardType: "character",
   name: "Thomas",
   version: "Wide-Eyed Recruit",
-  i18n: {
-    en: {
-      name: "Thomas",
-      version: "Wide-Eyed Recruit",
-    },
-    de: {
-      name: "Thomas",
-      version: "Staunender Rekrut",
-    },
-    fr: {
-      name: "Thomas",
-      version: "Recrue émerveillée",
-    },
-    it: {
-      name: "Thomas",
-      version: "Recluta Ingenua",
-    },
-  },
   inkType: ["amber"],
   franchise: "Pocahontas",
   set: "011",
@@ -41,4 +24,5 @@ export const thomasWideeyedRecruit: CharacterCard = {
     tcgPlayer: 674816,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: thomasWideeyedRecruitI18n,
 };

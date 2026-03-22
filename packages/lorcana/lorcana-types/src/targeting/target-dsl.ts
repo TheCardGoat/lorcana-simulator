@@ -156,7 +156,8 @@ export type PlayerTargetScope =
   | "opponent" // Single opponent
   | "each-opponent" // All opponents (multiplayer)
   | "each-player" // All players including self
-  | "chosen"; // Player chooses a player
+  | "chosen" // Player chooses a player
+  | "challenging-player"; // The player who initiated the challenge (attacker's controller)
 
 /**
  * Player targeting DSL for effects that target players

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liloSnowArtistI18n } from "./002-lilo-snow-artist.i18n";
 
 export const liloSnowArtist: CharacterCard = {
   id: "pzM",
@@ -7,51 +8,6 @@ export const liloSnowArtist: CharacterCard = {
   cardType: "character",
   name: "Lilo",
   version: "Snow Artist",
-  i18n: {
-    en: {
-      name: "Lilo",
-      version: "Snow Artist",
-      text: [
-        {
-          title: "CREATIVE INSPIRATION",
-          description:
-            "While you have a character named Stitch in play, this character gets +1 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Lilo",
-      version: "Schneekünstlerin",
-      text: [
-        {
-          title: "KREATIVE INSPIRATION",
-          description:
-            "Solange du mindestens einen Stitch-Charakter im Spiel hast, erhält dieser Charakter +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Lilo",
-      version: "Artiste de la neige",
-      text: [
-        {
-          title: "INSPIRATION CRÉATIVE",
-          description: "Tant que vous avez un personnage Stitch en jeu, ce personnage-ci gagne +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Lilo",
-      version: "Artista della Neve",
-      text: [
-        {
-          title: "ISPIRAZIONE CREATIVA",
-          description:
-            "Mentre hai in gioco un personaggio chiamato Stitch, questo personaggio riceve +1.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "011",
@@ -82,8 +38,15 @@ export const liloSnowArtist: CharacterCard = {
         target: "SELF",
         type: "modify-stat",
       },
-      type: "action",
+      condition: {
+        type: "has-named-character",
+        controller: "you",
+        name: "Stitch",
+      },
+      name: "CREATIVE INSPIRATION",
+      type: "static",
       text: "CREATIVE INSPIRATION While you have a character named Stitch in play, this character gets +1 {L}.",
     },
   ],
+  i18n: liloSnowArtistI18n,
 };

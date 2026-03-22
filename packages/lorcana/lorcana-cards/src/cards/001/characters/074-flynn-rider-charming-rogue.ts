@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flynnRiderCharmingRogueI18n } from "./074-flynn-rider-charming-rogue.i18n";
 
 export const flynnRiderCharmingRogue: CharacterCard = {
   id: "a9K",
@@ -7,52 +8,6 @@ export const flynnRiderCharmingRogue: CharacterCard = {
   cardType: "character",
   name: "Flynn Rider",
   version: "Charming Rogue",
-  i18n: {
-    en: {
-      name: "Flynn Rider",
-      version: "Charming Rogue",
-      text: [
-        {
-          title: "HERE COMES THE SMOLDER",
-          description:
-            "Whenever this character is challenged, the challenging player chooses and discards a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Flynn Rider",
-      version: "Charmanter Gauner",
-      text: [
-        {
-          title: "WER KANN HIERZU SCHON NEIN SAGEN?",
-          description:
-            "Jedes Mal, wenn dieser Charakter herausgefordert wird, wählt die herausfordernde Person 1 Karte aus ihrer Hand und wirft sie ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "FLYNN RIDER",
-      version: "Charmant voleur",
-      text: [
-        {
-          title: "LE GRAND JEU",
-          description:
-            "Chaque fois que ce personnage est défié, le joueur qui a lancé le défi choisit et défausse une de ses cartes.",
-        },
-      ],
-    },
-    it: {
-      name: "Flynn Rider",
-      version: "Charming Rogue",
-      text: [
-        {
-          title: "HERE COMES THE SMOLDER",
-          description:
-            "Whenever this character is challenged, the challenging player chooses and discards a card.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Tangled",
   set: "001",
@@ -80,7 +35,8 @@ export const flynnRiderCharmingRogue: CharacterCard = {
       effect: {
         amount: 1,
         chosen: true,
-        target: "CONTROLLER",
+        from: "hand",
+        target: "CHALLENGING_PLAYER",
         type: "discard",
       },
       id: "qk8-1",
@@ -94,4 +50,5 @@ export const flynnRiderCharmingRogue: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: flynnRiderCharmingRogueI18n,
 };

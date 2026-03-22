@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gantuCaptainCrankyheadI18n } from "./189-gantu-captain-crankyhead.i18n";
 
 export const gantuCaptainCrankyhead: CharacterCard = {
   id: "J9q",
@@ -7,24 +8,6 @@ export const gantuCaptainCrankyhead: CharacterCard = {
   cardType: "character",
   name: "Gantu",
   version: "Captain Crankyhead",
-  i18n: {
-    en: {
-      name: "Gantu",
-      version: "Captain Crankyhead",
-    },
-    de: {
-      name: "Gantu",
-      version: "Kapitän Dummkopf",
-    },
-    fr: {
-      name: "Gantu",
-      version: "Capitaine tête de mule",
-    },
-    it: {
-      name: "Gantu",
-      version: "Capitano Irritabile",
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "006",
@@ -41,4 +24,5 @@ export const gantuCaptainCrankyhead: CharacterCard = {
     tcgPlayer: 593004,
   },
   classifications: ["Dreamborn", "Alien", "Captain"],
+  i18n: gantuCaptainCrankyheadI18n,
 };

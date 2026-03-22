@@ -13,39 +13,26 @@ import type {
   RuntimePhaseDefinition,
   GameEndResult,
 } from "./match-runtime.types";
-import type { BaseCardDefinition } from "./card-contracts";
-
-export type FlowLifecycleContextFactory<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-> = (
-  draft: Draft<MatchState<G>>,
+export type FlowLifecycleContextFactory = (
+  draft: Draft<MatchState>,
   gameEnded: boolean,
   playerId?: string,
-) => RuntimeLifecycleContext<G, TCardDefinition>;
-export type FlowLifecycleContextFactoryWithDerived<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-> = (
-  draft: Draft<MatchState<G>>,
+) => RuntimeLifecycleContext;
+export type FlowLifecycleContextFactoryWithDerived = (
+  draft: Draft<MatchState>,
   gameEnded: boolean,
   playerId?: string,
-) => RuntimeLifecycleContext<G, TCardDefinition, TCardDerived>;
+) => RuntimeLifecycleContext;
 
 // =============================================================================
 // Phase Resolution
 // =============================================================================
 
-export function getCurrentPhaseDefinition<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
->(
-  flow: RuntimeFlowDefinition<G, TCardDefinition, TCardDerived> | undefined,
+export function getCurrentPhaseDefinition(
+  flow: RuntimeFlowDefinition | undefined,
   currentPhaseId: string | undefined,
   currentGameSegmentId?: string,
-): RuntimePhaseDefinition<G, TCardDefinition, TCardDerived> | undefined {
+): RuntimePhaseDefinition | undefined {
   if (!flow || !currentPhaseId) {
     return undefined;
   }
@@ -62,12 +49,8 @@ export function getCurrentPhaseDefinition<
   return undefined;
 }
 
-export function isMoveAllowedByFlow<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
->(
-  flow: RuntimeFlowDefinition<G, TCardDefinition, TCardDerived> | undefined,
+export function isMoveAllowedByFlow(
+  flow: RuntimeFlowDefinition | undefined,
   currentPhaseId: string | undefined,
   moveId: string,
   currentGameSegmentId?: string,
@@ -80,12 +63,8 @@ export function isMoveAllowedByFlow<
   return currentPhase.validMoves.includes(moveId);
 }
 
-export function getFlowDisallowReason<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
->(
-  flow: RuntimeFlowDefinition<G, TCardDefinition, TCardDerived> | undefined,
+export function getFlowDisallowReason(
+  flow: RuntimeFlowDefinition | undefined,
   currentPhaseId: string | undefined,
   moveId: string,
   currentGameSegmentId?: string,
@@ -98,14 +77,10 @@ export function getFlowDisallowReason<
   return `Move '${moveId}' is not legal in phase '${currentPhase.id}'`;
 }
 
-export function resolveFlowTransitionsOnDraft<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
->(
-  draft: Draft<MatchState<G>>,
-  flow: RuntimeFlowDefinition<G, TCardDefinition, TCardDerived> | undefined,
-  buildLifecycleContext: FlowLifecycleContextFactoryWithDerived<G, TCardDefinition, TCardDerived>,
+export function resolveFlowTransitionsOnDraft(
+  draft: Draft<MatchState>,
+  flow: RuntimeFlowDefinition | undefined,
+  buildLifecycleContext: FlowLifecycleContextFactoryWithDerived,
   options?: {
     bootstrap?: boolean;
     gameEnded?: boolean;
@@ -127,10 +102,7 @@ export function resolveFlowTransitionsOnDraft<
   const getCurrentPhase = (segmentId: string | undefined, phaseId: string | undefined) =>
     getCurrentSegment(segmentId)?.turn?.phases?.[phaseId ?? ""];
 
-  const invoke = (
-    hook: RuntimeLifecycleHook<G, TCardDefinition, TCardDerived> | undefined,
-    playerId?: string,
-  ) => {
+  const invoke = (hook: RuntimeLifecycleHook | undefined, playerId?: string) => {
     resolvedGameEnded = resolvedGameEnded || draft.ctx.status.gameEnded;
     invokeLifecycleHook(draft, hook, buildLifecycleContext, resolvedGameEnded, playerId);
   };
@@ -159,14 +131,14 @@ export function resolveFlowTransitionsOnDraft<
 
     resolvedGameEnded = resolvedGameEnded || draft.ctx.status.gameEnded;
 
-    const shouldEnd = currentPhase.endIf(draft as MatchState<G>);
+    const shouldEnd = currentPhase.endIf(draft as MatchState);
     if (!shouldEnd) {
       return;
     }
 
     const nextPhaseId =
       typeof currentPhase.nextPhase === "function"
-        ? currentPhase.nextPhase(draft as MatchState<G>)
+        ? currentPhase.nextPhase(draft as MatchState)
         : currentPhase.nextPhase;
 
     if (nextPhaseId) {
@@ -207,14 +179,10 @@ export function resolveFlowTransitionsOnDraft<
   throw new Error("Flow transition resolution exceeded the maximum number of transitions");
 }
 
-function invokeLifecycleHook<
-  G,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object = {},
->(
-  draft: Draft<MatchState<G>>,
-  hook: RuntimeLifecycleHook<G, TCardDefinition, TCardDerived> | undefined,
-  buildLifecycleContext: FlowLifecycleContextFactoryWithDerived<G, TCardDefinition, TCardDerived>,
+function invokeLifecycleHook(
+  draft: Draft<MatchState>,
+  hook: RuntimeLifecycleHook | undefined,
+  buildLifecycleContext: FlowLifecycleContextFactoryWithDerived,
   gameEnded: boolean,
   playerId?: string,
 ): void {
@@ -226,12 +194,9 @@ function invokeLifecycleHook<
     draft,
     gameEnded,
     playerId,
-  ) as RuntimeLifecycleContext<G, TCardDefinition, TCardDerived>;
-  const hookContext = callbackContext as unknown as MatchState<G> &
-    RuntimeLifecycleContext<G, TCardDefinition, TCardDerived>;
-  const invoke = hook as (
-    ctx: MatchState<G> | RuntimeLifecycleContext<G, TCardDefinition, TCardDerived>,
-  ) => unknown;
+  ) as RuntimeLifecycleContext;
+  const hookContext = callbackContext as unknown as MatchState & RuntimeLifecycleContext;
+  const invoke = hook as (ctx: MatchState | RuntimeLifecycleContext) => unknown;
   // Return value is intentionally ignored; mutate-by-side-effect is canonical.
   invoke(hookContext);
 }
@@ -240,13 +205,9 @@ function invokeLifecycleHook<
 // Game End Resolution
 // =============================================================================
 
-export function checkGameEndCondition<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
->(
-  draft: Draft<MatchState<G>>,
-  flow: RuntimeFlowDefinition<G, TCardDefinition, TCardDerived> | undefined,
+export function checkGameEndCondition(
+  draft: Draft<MatchState>,
+  flow: RuntimeFlowDefinition | undefined,
 ): GameEndResult | undefined {
   if (!flow) {
     return undefined;
@@ -259,14 +220,14 @@ export function checkGameEndCondition<
     const gameSegmentId = currentGameSegmentId || flow.initialGameSegment;
     const gameSegment = gameSegmentId ? flow.gameSegments[gameSegmentId] : undefined;
     if (gameSegment?.endIf) {
-      return gameSegment.endIf(draft as MatchState<G>);
+      return gameSegment.endIf(draft as MatchState);
     }
   }
 
   return undefined;
 }
 
-export function applyGameEndToDraft<G>(draft: Draft<MatchState<G>>, result: GameEndResult): void {
+export function applyGameEndToDraft(draft: Draft<MatchState>, result: GameEndResult): void {
   draft.ctx.status.gameEnded = true;
   draft.ctx.status.winner = result.winner;
   draft.ctx.status.reason = result.reason;

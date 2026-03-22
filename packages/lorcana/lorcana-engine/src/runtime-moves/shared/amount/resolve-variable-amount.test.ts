@@ -98,7 +98,9 @@ function createTestContext(args?: {
     framework: {
       cards: cardsApi,
       state: {
-        ctx: runtimeCtx as never,
+        priority: runtimeCtx.priority as never,
+        status: runtimeCtx.status as never,
+        _zonesPrivate: runtimeCtx.zones?.private as never,
         playerIds: [PLAYER_ONE, PLAYER_TWO],
         turn: 1,
         currentPlayer,
@@ -184,6 +186,50 @@ describe("resolveVariableAmount", () => {
     });
 
     expect(resolved).toEqual({ mode: "aggregate", value: 2 });
+  });
+
+  it("supports classification-character-count with excludeSelf", () => {
+    const source = "source" as CardInstanceId;
+    const allyVillain = "ally-villain" as CardInstanceId;
+    const allyHero = "ally-hero" as CardInstanceId;
+
+    const ctx = createTestContext({
+      definitions: {
+        [source]: {
+          id: "source",
+          cardType: "character",
+          classifications: ["Storyborn", "Villain"],
+        },
+        [allyVillain]: {
+          id: "ally-villain",
+          cardType: "character",
+          classifications: ["Dreamborn", "Villain"],
+        },
+        [allyHero]: {
+          id: "ally-hero",
+          cardType: "character",
+          classifications: ["Storyborn", "Hero"],
+        },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [source, allyVillain, allyHero],
+      },
+    });
+
+    const amount: VariableAmount = {
+      type: "classification-character-count",
+      classification: "Villain",
+      controller: "you",
+      excludeSelf: true,
+    };
+
+    const resolved = resolveVariableAmount(amount, {
+      controllerId: PLAYER_ONE,
+      ctx,
+      sourceId: source,
+    });
+
+    expect(resolved).toEqual({ mode: "aggregate", value: 1 });
   });
 
   it("resolves difference and invert semantics", () => {

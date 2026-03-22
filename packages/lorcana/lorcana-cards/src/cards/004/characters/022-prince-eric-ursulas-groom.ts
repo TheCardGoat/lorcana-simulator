@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princeEricUrsulasGroomI18n } from "./022-prince-eric-ursulas-groom.i18n";
 
 export const princeEricUrsulasGroom: CharacterCard = {
   id: "sTh",
@@ -7,37 +8,6 @@ export const princeEricUrsulasGroom: CharacterCard = {
   cardType: "character",
   name: "Prince Eric",
   version: "Ursula's Groom",
-  i18n: {
-    en: {
-      name: "Prince Eric",
-      version: "Ursula's Groom",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "UNDER VANESSA'S SPELL",
-          description:
-            "While you have a character named Ursula in play, this character gains Bodyguard and gets +2 {W}. (An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
-        },
-      ],
-    },
-    de: {
-      name: "Prinz Eric",
-      version: "Ursulas Bräutigam",
-      text: "Gestaltwandel 4 IN VANESSAS BANN Solange du mindestens einen Ursula-Charakter im Spiel hast, erhält dieser Charakter +2 und Beschützen. (Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "Prince Eric",
-      version: "Fiancé d'Ursula",
-      text: "Alter 4 SOUS LE CHARME DE VANESSA Tant que vous avez un personnage Ursula en jeu, ce personnage-ci gagne Rempart et +2. (Lorsqu'un adversaire défie l'un de vos personnages, il doit, si possible, choisir l'un de vos personnages avec Rempart.)",
-    },
-    it: {
-      name: "Principe Eric",
-      version: "Sposo di Ursula",
-      text: "Trasformazione 4 SOTTO L'INCANTO DI VANESSA Mentre hai in gioco un personaggio chiamato Ursula, questo personaggio ottiene Guardiano e riceve +2. (Un personaggio avversario che sfida uno dei tuoi personaggi deve sceglierne uno con Guardiano, se possibile.)",
-    },
-  },
   inkType: ["amber"],
   franchise: "Little Mermaid",
   set: "004",
@@ -95,4 +65,5 @@ export const princeEricUrsulasGroom: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: princeEricUrsulasGroomI18n,
 };

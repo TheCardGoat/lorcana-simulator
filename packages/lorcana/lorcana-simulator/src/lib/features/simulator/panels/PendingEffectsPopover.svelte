@@ -1,8 +1,20 @@
 <script lang="ts">
-  import { Grip, Minimize2, Rows3 } from "@lucide/svelte";
+  import { ChevronDown, ChevronUp, Grip, Crosshair, Expand, Shrink } from "@lucide/svelte";
+  
   import CardImage from "@/design-system/simulator/cards/CardImage.svelte";
+  import NamedCardSearchInput from "@/features/simulator/panels/NamedCardSearchInput.svelte";
   import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
   import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
+  import {
+    DEFAULT_PENDING_EFFECTS_VIEW_MODE,
+    persistPendingEffectsViewModePreference,
+    readPendingEffectsViewModePreference,
+    type PendingEffectsViewMode,
+  } from "@/features/simulator/panels/pending-effects-view-preference.js";
+  import type {
+    GuidanceAction,
+    NamedCardSearchState,
+  } from "@/features/simulator/model/active-player-guidance.js";
 
   export interface PendingEffectsPopoverItem {
     id: string;
@@ -22,15 +34,22 @@
     onPrimaryAction?: () => void;
     onAccept?: () => void;
     onReject?: () => void;
+    statusMessage?: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+    inlineActions?: GuidanceAction[];
+    namedCardSearch?: NamedCardSearchState;
   }
 
   interface PendingEffectsPopoverProps {
     items: PendingEffectsPopoverItem[];
+    open?: boolean;
+    canOpenTargetModal?: boolean;
+    onOpenTargetModal?: () => void;
   }
 
   type DragTarget = "panel" | "reminder";
-  type ViewMode = "compact" | "normal";
-
+  type ViewMode = PendingEffectsViewMode;
   const SCREEN_MARGIN = 16;
   const DRAG_THRESHOLD = 4;
   const REMINDER_FALLBACK_WIDTH = 208;
@@ -38,15 +57,20 @@
   const PANEL_FALLBACK_WIDTH = 420;
   const PANEL_FALLBACK_HEIGHT = 360;
 
-  let { items }: PendingEffectsPopoverProps = $props();
+  let {
+    items,
+    open = $bindable(false),
+    canOpenTargetModal = false,
+    onOpenTargetModal,
+  }: PendingEffectsPopoverProps = $props();
   const simulatorCardContext = useSimulatorCardContext();
 
-  let isPanelOpen = $state(false);
-  let viewMode = $state<ViewMode>("normal");
+  let viewMode = $state<ViewMode>(DEFAULT_PENDING_EFFECTS_VIEW_MODE);
   let reminderOffset = $state({ x: 0, y: 0 });
   let panelOffset = $state({ x: 0, y: 0 });
   let reminderRef = $state<HTMLButtonElement | null>(null);
   let panelRef = $state<HTMLElement | null>(null);
+  let hasHydratedViewModePreference = $state(false);
   let dragState = $state<{
     origin: { x: number; y: number };
     pointerId: number;
@@ -70,7 +94,7 @@
 
   $effect(() => {
     if (itemCount === 0) {
-      isPanelOpen = false;
+      open = false;
       previousItemCount = 0;
       previousActionableSignature = "";
       return;
@@ -80,7 +104,7 @@
       previousItemCount === 0 ||
       (actionableSignature.length > 0 && actionableSignature !== previousActionableSignature)
     ) {
-      isPanelOpen = true;
+      open = true;
     }
 
     previousItemCount = itemCount;
@@ -141,7 +165,7 @@
 
     const handleResize = (): void => {
       reminderOffset = clampOffset("reminder", reminderOffset);
-      if (isPanelOpen) {
+      if (open) {
         panelOffset = clampOffset("panel", panelOffset);
       }
     };
@@ -153,9 +177,27 @@
     };
   });
 
+  $effect(() => {
+    if (hasHydratedViewModePreference || typeof localStorage === "undefined") {
+      return;
+    }
+
+    viewMode = readPendingEffectsViewModePreference(localStorage);
+    hasHydratedViewModePreference = true;
+  });
+
+  $effect(() => {
+    if (!hasHydratedViewModePreference || typeof localStorage === "undefined") {
+      return;
+    }
+
+    persistPendingEffectsViewModePreference(localStorage, viewMode);
+  });
+
   function isActionable(item: PendingEffectsPopoverItem): boolean {
     return Boolean(
-      item.onPrimaryAction ||
+      item.statusMessage ||
+        item.onPrimaryAction ||
         (item.canResolve && item.onResolve) ||
         (item.canAccept && item.onAccept) ||
         (item.canReject && item.onReject),
@@ -164,6 +206,7 @@
 
   function getActionSignature(item: PendingEffectsPopoverItem): string {
     return [
+      item.statusMessage ? `status:${item.statusMessage}` : null,
       item.onPrimaryAction ? "primary" : null,
       item.canResolve && item.onResolve ? "resolve" : null,
       item.canAccept && item.onAccept ? "accept" : null,
@@ -244,11 +287,11 @@
       return;
     }
 
-    isPanelOpen = !isPanelOpen;
+    open = !open;
   }
 
   function minimizePanel(): void {
-    isPanelOpen = false;
+    open = false;
   }
 
   function toggleViewMode(): void {
@@ -299,25 +342,32 @@
     class="pending-effects-reminder"
     class:pending-effects-reminder--dragging={dragState?.target === "reminder"}
     data-queue-anchor="reminder"
-    data-state={isPanelOpen ? "open" : "closed"}
+    data-state={open ? "open" : "closed"}
     onclick={handleReminderClick}
     onpointerdown={(event) => startDrag("reminder", event)}
     style={getReminderOffsetStyle()}
-    aria-expanded={isPanelOpen}
+    aria-expanded={open}
     aria-controls="pending-effects-panel"
   >
     <span class="drag-indicator drag-indicator--reminder" aria-hidden="true">
-      <Grip class="drag-indicator__icon" />
+      <Grip size={15} strokeWidth={2.2} />
     </span>
     <span class="trigger-label">Stack</span>
     <span class="trigger-count">{itemCount}</span>
+    <span class="trigger-toggle-indicator" aria-hidden="true">
+      {#if open}
+        <ChevronUp size={15} strokeWidth={2.4} />
+      {:else}
+        <ChevronDown size={15} strokeWidth={2.4} />
+      {/if}
+    </span>
     <span class="trigger-breakdown">{bagCount} bag · {pendingCount} pending</span>
     {#if activeItem}
-      <span class="trigger-current">{activeItem.title}</span>
+      <span class="trigger-current">{activeItem.statusMessage ?? activeItem.title}</span>
     {/if}
   </button>
 
-  {#if isPanelOpen}
+  {#if open}
     <div
       class="pending-effects-panel-anchor"
       data-queue-anchor="panel"
@@ -340,12 +390,23 @@
         >
           <div class="panel-title-block">
             <span class="drag-indicator drag-indicator--panel" aria-hidden="true">
-              <Grip class="drag-indicator__icon" />
+              <Grip size={15} strokeWidth={2.2} />
             </span>
             <h2>Pending effects</h2>
             <span class="panel-count">{itemCount}</span>
           </div>
           <div class="panel-controls">
+            {#if canOpenTargetModal && onOpenTargetModal}
+              <button
+                type="button"
+                class="header-icon-button"
+                onclick={() => onOpenTargetModal?.()}
+                aria-label="Open target selector"
+                title="Open target selector"
+              >
+                <Crosshair size={14} strokeWidth={2.1} />
+              </button>
+            {/if}
             <button
               type="button"
               class="header-icon-button"
@@ -353,7 +414,11 @@
               aria-label={viewMode === "normal" ? "Switch to compact view" : "Switch to full view"}
               title={viewMode === "normal" ? "Compact view" : "Full view"}
             >
-              <Rows3 class="header-icon-button__icon" />
+            {#if viewMode === "normal"}
+              <Shrink size={14} strokeWidth={2.1} />
+              {:else}
+                <Expand size={14} strokeWidth={2.1} />
+              {/if}
             </button>
             <button
               type="button"
@@ -362,7 +427,7 @@
               aria-label="Minimize pending effects"
               title="Minimize"
             >
-              <Minimize2 class="header-icon-button__icon" />
+              <ChevronDown size={14} strokeWidth={2.1} />
             </button>
           </div>
         </div>
@@ -413,44 +478,91 @@
                 {#if item.disabledReason}
                   <p class="effect-disabled-reason">{item.disabledReason}</p>
                 {/if}
+
+                {#if item.namedCardSearch}
+                  <div class="effect-named-card-search">
+                    <NamedCardSearchInput
+                      query={item.namedCardSearch.query}
+                      results={item.namedCardSearch.results}
+                      oninput={item.namedCardSearch.oninput}
+                      onselect={item.namedCardSearch.onselect}
+                      compact />
+                  </div>
+                {/if}
               </div>
 
               <div class="effect-actions">
-                {#if item.onPrimaryAction}
-                  <button
-                    type="button"
-                    class="action-button action-button--primary"
-                    onclick={() => handlePrimaryAction(item)}
-                  >
-                    {item.primaryActionLabel ?? "Open"}
-                  </button>
-                {/if}
-                {#if item.canResolve && item.onResolve}
-                  <button
-                    type="button"
-                    class="action-button action-button--primary"
-                    onclick={() => handleResolve(item)}
-                  >
-                    Resolve
-                  </button>
-                {/if}
-                {#if item.canAccept && item.onAccept}
-                  <button
-                    type="button"
-                    class="action-button action-button--primary"
-                    onclick={() => handleAccept(item)}
-                  >
-                    Accept
-                  </button>
-                {/if}
-                {#if item.canReject && item.onReject}
-                  <button
-                    type="button"
-                    class="action-button action-button--secondary"
-                    onclick={() => handleReject(item)}
-                  >
-                    Reject
-                  </button>
+                {#if item.statusMessage}
+                  {#if item.inlineActions && item.inlineActions.length > 0}
+                    {#each item.inlineActions as action (action.id)}
+                      <button
+                        type="button"
+                        class={`action-button ${action.emphasis ? "action-button--primary" : "action-button--secondary"}`}
+                        onclick={action.onClick}
+                        disabled={action.disabled}
+                      >
+                        {action.label}
+                      </button>
+                    {/each}
+                  {/if}
+                  {#if !item.onConfirm}
+                    <span class="effect-status-message">{item.statusMessage}</span>
+                  {/if}
+                  {#if item.onConfirm}
+                    <button
+                      type="button"
+                      class="action-button action-button--primary"
+                      onclick={() => item.onConfirm?.()}
+                    >
+                      Confirm
+                    </button>
+                  {/if}
+                  {#if item.onCancel}
+                    <button
+                      type="button"
+                      class="action-button action-button--secondary"
+                      onclick={() => item.onCancel?.()}
+                    >
+                      Cancel
+                    </button>
+                  {/if}
+                {:else}
+                  {#if item.onPrimaryAction}
+                    <button
+                      type="button"
+                      class="action-button action-button--primary"
+                      onclick={() => handlePrimaryAction(item)}
+                    >
+                      {item.primaryActionLabel ?? "Open"}
+                    </button>
+                  {/if}
+                  {#if item.canResolve && item.onResolve}
+                    <button
+                      type="button"
+                      class="action-button action-button--primary"
+                      onclick={() => handleResolve(item)}
+                    >
+                      Resolve
+                    </button>
+                  {/if}
+                  {#if item.canAccept && item.onAccept}
+                    <button
+                      type="button"
+                      class="action-button action-button--primary"
+                      onclick={() => handleAccept(item)}
+                    >
+                      Accept
+                    </button>
+                  {/if}
+                  {#if item.canReject && item.onReject}
+                    <button
+                      type="button"
+                      class="action-button action-button--secondary"
+                      onclick={() => handleReject(item)}
+                    >
+                      Reject
+                    </button>
+                  {/if}
                 {/if}
               </div>
             </article>
@@ -495,12 +607,6 @@
     opacity: 0.9;
   }
 
-  .drag-indicator__icon {
-    width: 0.92rem;
-    height: 0.92rem;
-    stroke-width: 2.2;
-  }
-
   .drag-indicator--reminder {
     grid-row: 1 / span 2;
     align-self: stretch;
@@ -526,6 +632,14 @@
     line-height: 1;
   }
 
+  .trigger-toggle-indicator {
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 239, 208, 0.92);
+  }
+
   .trigger-breakdown {
     grid-column: 1 / -1;
     font-size: 0.78rem;
@@ -548,9 +662,11 @@
     top: 50%;
     right: 1rem;
     z-index: 209;
+    pointer-events: none;
   }
 
   .pending-effects-panel {
+    pointer-events: auto;
     width: min(28rem, calc(100vw - 2.25rem));
     max-height: min(72vh, 42rem);
     overflow: auto;
@@ -649,12 +765,6 @@
     background: rgba(22, 39, 62, 0.92);
     transform: translateY(-1px);
     outline: none;
-  }
-
-  .header-icon-button__icon {
-    width: 0.9rem;
-    height: 0.9rem;
-    stroke-width: 2.1;
   }
 
   .item-list {
@@ -787,10 +897,22 @@
     line-height: 1.35;
   }
 
+  .effect-named-card-search {
+    margin-top: 0.45rem;
+  }
+
   .effect-actions {
     display: grid;
     gap: 0.55rem;
     min-width: 6.7rem;
+  }
+
+  .effect-status-message {
+    font-size: 0.76rem;
+    color: rgba(248, 196, 113, 0.92);
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
   }
 
   .action-button {
@@ -886,11 +1008,6 @@
     .pending-effects-reminder {
       min-width: 10.5rem;
       padding: 0.72rem 0.82rem;
-    }
-
-    .drag-indicator__icon {
-      width: 0.86rem;
-      height: 0.86rem;
     }
 
     .pending-effects-panel {

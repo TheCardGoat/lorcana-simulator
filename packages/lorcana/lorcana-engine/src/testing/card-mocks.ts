@@ -1,4 +1,5 @@
 import { type ActionCard, type CharacterCard, type InkType } from "../types";
+import type { ItemCard, LocationCard } from "@tcg/lorcana-types";
 import { type CardCatalog, createRecordCardCatalog } from "#core";
 import type { LorcanaCard } from "@tcg/lorcana-types";
 import { createCardI18n } from "../card-i18n";
@@ -6,13 +7,40 @@ import { createCardI18n } from "../card-i18n";
 export type CreateMockCharacterParams = {
   id: string;
   name: string;
+  version?: string;
   cost: number;
   strength?: number;
   willpower?: number;
   lore?: number;
+  inkable?: boolean;
   classifications?: CharacterCard["classifications"];
   abilities?: CharacterCard["abilities"];
+  inkType?: InkType[];
 };
+
+export type CreateMockItemParams = {
+  id: string;
+  name: string;
+  cost: number;
+  abilities?: ItemCard["abilities"];
+};
+
+export function createMockItem(params: CreateMockItemParams): ItemCard {
+  return {
+    id: params.id,
+    canonicalId: `ci_${params.id}`,
+    cardType: "item",
+    name: params.name,
+    cost: params.cost,
+    inkType: ["amber"] as InkType[],
+    inkable: true,
+    set: "TST",
+    rarity: "common",
+    abilities: params.abilities ?? [],
+    i18n: createCardI18n(params.name),
+    cardNumber: 666,
+  };
+}
 
 export type CreateMockSongParams = {
   id: string;
@@ -28,13 +56,14 @@ export function createMockCharacter(params: CreateMockCharacterParams): Characte
     canonicalId: `ci_${params.id}`,
     cardType: "character",
     name: params.name,
+    ...(params.version !== undefined ? { version: params.version } : {}),
     cost: params.cost,
     strength: params.strength ?? 2,
     willpower: params.willpower ?? 5,
     lore: params.lore ?? 1,
     classifications: params.classifications ?? ["Storyborn", "Hero"],
-    inkType: ["amber"] as InkType[],
-    inkable: true,
+    inkType: (params.inkType ?? ["amber"]) as InkType[],
+    inkable: params.inkable ?? true,
     set: "TST",
     rarity: "common",
     abilities: params.abilities ?? [],
@@ -67,6 +96,67 @@ export function createMockSong(params: CreateMockSongParams): ActionCard {
   };
 }
 
+export type CreateMockLocationParams = {
+  id: string;
+  name: string;
+  cost: number;
+  moveCost?: number;
+  willpower?: number;
+  lore?: number;
+  abilities?: LocationCard["abilities"];
+};
+
+export function createMockLocation(params: CreateMockLocationParams): LocationCard {
+  return {
+    id: params.id,
+    canonicalId: `ci_${params.id}`,
+    cardType: "location",
+    name: params.name,
+    cost: params.cost,
+    moveCost: params.moveCost ?? 1,
+    willpower: params.willpower ?? 4,
+    lore: params.lore ?? 1,
+    inkType: ["amber"] as InkType[],
+    inkable: true,
+    set: "TST",
+    rarity: "common",
+    abilities: params.abilities ?? [],
+    i18n: createCardI18n(params.name),
+    cardNumber: 667,
+  };
+}
+
+export type CreateMockActionParams = {
+  id: string;
+  name: string;
+  cost: number;
+  text?: string;
+  abilities?: ActionCard["abilities"];
+};
+
+export function createMockAction(params: CreateMockActionParams): ActionCard {
+  return {
+    id: params.id,
+    canonicalId: `ci_${params.id}`,
+    cardType: "action",
+    name: params.name,
+    cost: params.cost,
+    inkType: ["amber"] as InkType[],
+    inkable: true,
+    set: "TST",
+    rarity: "common",
+    text: params.text ?? "",
+    abilities: params.abilities ?? [],
+    i18n: createCardI18n(params.name, {
+      en: {
+        name: params.name,
+        text: params.text ?? "",
+      },
+    }),
+    cardNumber: 668,
+  };
+}
+
 // Create a minimal test card for testing
 export function createTestCard(id: string, name: string): CharacterCard {
   return {
@@ -93,9 +183,7 @@ export function createTestCard(id: string, name: string): CharacterCard {
   } as CharacterCard;
 }
 
-export function createTestCardCatalog(
-  cards: Record<string, LorcanaCard>,
-): CardCatalog<LorcanaCard> {
+export function createTestCardCatalog(cards: Record<string, LorcanaCard>): CardCatalog {
   return createRecordCardCatalog("test:cards", cards);
 }
 

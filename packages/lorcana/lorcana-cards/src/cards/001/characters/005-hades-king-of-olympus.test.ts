@@ -1,55 +1,41 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   HadesKingOfOlympus,
-//   MaleficentUninvited,
-//   ScarFieryUsurper,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Hades - King of Olympus", () => {
-//   // TODO: Fix this test
-//   It.skip("**Sinister plot** This character gets +1 {L} for every other Villain character you have in play.", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Inkwell: maleficentUninvited.cost + scarFieryUsurper.cost,
-//         Hand: [maleficentUninvited, scarFieryUsurper],
-//         Play: [hadesKingOfOlympus],
-//         Deck: 1,
-//       },
-//       { deck: 1 },
-//     );
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       HadesKingOfOlympus.id,
-//     );
-//     Const targetCard = testStore.getByZoneAndId("hand", maleficentUninvited.id);
-//     Const anotherCard = testStore.getByZoneAndId("hand", scarFieryUsurper.id);
-//
-//     Expect(cardUnderTest.strength).toEqual(6);
-//
-//     TargetCard.playFromHand();
-//     Expect(cardUnderTest.strength).toEqual(7);
-//
-//     AnotherCard.playFromHand();
-//     Expect(cardUnderTest.strength).toEqual(8);
-//   });
-//
-//   It("**Shift** 6 (_You may pay 6 {I} to play this on top of one of your characters named Hades._)", () => {
-//     Const testStore = new TestStore({
-//       Play: [hadesKingOfOlympus],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       HadesKingOfOlympus.id,
-//     );
-//     Expect(cardUnderTest.hasShift).toEqual(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { hadesKingOfOlympus } from "./005-hades-king-of-olympus";
+
+const villainAlly = createMockCharacter({
+  id: "hades-king-of-olympus-villain-ally",
+  name: "Villain Ally",
+  cost: 2,
+  lore: 1,
+  classifications: ["Storyborn", "Villain"],
+});
+
+const heroAlly = createMockCharacter({
+  id: "hades-king-of-olympus-hero-ally",
+  name: "Hero Ally",
+  cost: 2,
+  lore: 1,
+  classifications: ["Storyborn", "Hero"],
+});
+
+describe("Hades - King of Olympus", () => {
+  it("SINISTER PLOT - gets +1 lore for each other Villain character you have in play", () => {
+    const soloEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [hadesKingOfOlympus],
+    });
+
+    expect(soloEngine.getCard(hadesKingOfOlympus).lore).toBe(hadesKingOfOlympus.lore);
+
+    const villainEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [hadesKingOfOlympus, villainAlly],
+    });
+
+    expect(villainEngine.getCard(hadesKingOfOlympus).lore).toBe(hadesKingOfOlympus.lore + 1);
+
+    const mixedEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [hadesKingOfOlympus, villainAlly, heroAlly],
+    });
+
+    expect(mixedEngine.getCard(hadesKingOfOlympus).lore).toBe(hadesKingOfOlympus.lore + 1);
+  });
+});

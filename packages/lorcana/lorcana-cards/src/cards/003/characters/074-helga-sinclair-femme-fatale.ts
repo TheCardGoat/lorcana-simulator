@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { helgaSinclairFemmeFataleI18n } from "./074-helga-sinclair-femme-fatale.i18n";
 
 export const helgaSinclairFemmeFatale: CharacterCard = {
   id: "akr",
@@ -7,37 +8,6 @@ export const helgaSinclairFemmeFatale: CharacterCard = {
   cardType: "character",
   name: "Helga Sinclair",
   version: "Femme Fatale",
-  i18n: {
-    en: {
-      name: "Helga Sinclair",
-      version: "Femme Fatale",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "THIS CHANGES EVERYTHING",
-          description:
-            "Whenever this character quests, you may deal 3 damage to chosen damaged character.",
-        },
-      ],
-    },
-    de: {
-      name: "Helga Sinclair",
-      version: "Femme Fatale",
-      text: "Gestaltwandel 3 DADURCH ÄNDERT SICH ALLES Jedes Mal, wenn dieser Charakter erkundet, darfst du einem beschädigten Charakter deiner Wahl 3 Schaden zufügen.",
-    },
-    fr: {
-      name: "Helga Sinclair",
-      version: "Femme fatale",
-      text: "Alter 3 ÇA CHANGE BEAUCOUP DE CHOSES Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez choisir un personnage blessé et lui infliger 3 dommages.",
-    },
-    it: {
-      name: "Helga Sinclair",
-      version: "Femme Fatale",
-      text: "Trasformazione 3 QUESTO CAMBIA TUTTO Ogni volta che questo personaggio va all'avventura, puoi infliggere 3 danni a un personaggio danneggiato a tua scelta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Atlantis",
   set: "003",
@@ -63,7 +33,6 @@ export const helgaSinclairFemmeFatale: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -101,4 +70,5 @@ export const helgaSinclairFemmeFatale: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: helgaSinclairFemmeFataleI18n,
 };

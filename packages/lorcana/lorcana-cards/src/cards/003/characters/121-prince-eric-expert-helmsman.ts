@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princeEricExpertHelmsmanI18n } from "./121-prince-eric-expert-helmsman.i18n";
 
 export const princeEricExpertHelmsman: CharacterCard = {
   id: "03G",
@@ -7,50 +8,6 @@ export const princeEricExpertHelmsman: CharacterCard = {
   cardType: "character",
   name: "Prince Eric",
   version: "Expert Helmsman",
-  i18n: {
-    en: {
-      name: "Prince Eric",
-      version: "Expert Helmsman",
-      text: [
-        {
-          title: "SURPRISE MANEUVER",
-          description: "When this character is banished, you may banish chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Prinz Eric",
-      version: "Erfahrener Steuermann",
-      text: [
-        {
-          title: "ÜBERRASCHUNGSMANÖVER",
-          description:
-            "Wenn dieser Charakter verbannt wird, darfst du einen Charakter deiner Wahl verbannen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Prince Eric",
-      version: "Maître timonier",
-      text: [
-        {
-          title: "MANŒUVRE SURPRISE",
-          description: "Lorsque ce personnage est banni, choisissez un personnage et bannissez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Principe Eric",
-      version: "Timoniere Esperto",
-      text: [
-        {
-          title: "MANOVRA A SORPRESA",
-          description:
-            "Quando questo personaggio viene esiliato, puoi esiliare un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Little Mermaid",
   set: "003",
@@ -72,7 +29,6 @@ export const princeEricExpertHelmsman: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Prince"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -100,4 +56,5 @@ export const princeEricExpertHelmsman: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: princeEricExpertHelmsmanI18n,
 };

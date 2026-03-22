@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tinkerBellMostHelpfulI18n } from "./088-tinker-bell-most-helpful.i18n";
 
 export const tinkerBellMostHelpful: CharacterCard = {
   id: "hsu",
@@ -7,42 +8,6 @@ export const tinkerBellMostHelpful: CharacterCard = {
   cardType: "character",
   name: "Tinker Bell",
   version: "Most Helpful",
-  i18n: {
-    en: {
-      name: "Tinker Bell",
-      version: "Most Helpful",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "PIXIE DUST",
-          description: "When you play this character, chosen character gains Evasive this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Naseweis",
-      version: "Stets hilfsbereit",
-      text: "Wendig FEENGLANZ Wenn du diesen Charakter ausspielst, erhält ein Charakter deiner Wahl in diesem Zug Wendig.",
-    },
-    fr: {
-      name: "LA FÉE CLOCHETTE",
-      version: "La plus serviable",
-      text: "Insaisissable POUSSIÈRE DE FÉE Lorsque vous jouez ce personnage, choisissez un personnage qui gagne Insaisissable pour le reste de ce tour.",
-    },
-    it: {
-      name: "Tinker Bell",
-      version: "Most Helpful",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) PIXIE DUST When you play this character, chosen character gains Evasive this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Peter Pan",
   set: "009",
@@ -98,4 +63,5 @@ export const tinkerBellMostHelpful: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: tinkerBellMostHelpfulI18n,
 };

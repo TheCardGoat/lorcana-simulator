@@ -44,17 +44,30 @@ type DetailedCandidateSummary = AutomatedActionCandidateSummary & {
 };
 
 type LoreRaceHeuristicPreferences = {
+  challengePriorityMode: "default" | "board-control";
   inkPrintedCostDirection: "asc" | "desc";
+  preferSimplePermanentDevelopment: boolean;
   playCardNetCostDirection: "asc" | "desc";
 };
 
 const LEGACY_LORE_RACE_HEURISTIC_PREFERENCES: LoreRaceHeuristicPreferences = {
+  challengePriorityMode: "default",
   inkPrintedCostDirection: "desc",
+  preferSimplePermanentDevelopment: false,
   playCardNetCostDirection: "asc",
 };
 
 const DEFAULT_LORE_RACE_HEURISTIC_PREFERENCES: LoreRaceHeuristicPreferences = {
-  inkPrintedCostDirection: "desc",
+  challengePriorityMode: "default",
+  inkPrintedCostDirection: "asc",
+  preferSimplePermanentDevelopment: false,
+  playCardNetCostDirection: "desc",
+};
+
+const BOARD_CONTROL_LORE_RACE_HEURISTIC_PREFERENCES: LoreRaceHeuristicPreferences = {
+  challengePriorityMode: "board-control",
+  inkPrintedCostDirection: "asc",
+  preferSimplePermanentDevelopment: true,
   playCardNetCostDirection: "desc",
 };
 
@@ -166,9 +179,30 @@ function countCopiesInHand(
   }, 0);
 }
 
+function getAvailableInkForPlayer(
+  context: AutomatedActionPlanningContext,
+  playerId: string,
+): number {
+  const inkwell = context.board.players[playerId]?.inkwell ?? [];
+
+  return inkwell.reduce((total, cardId) => {
+    const card = getProjectedCard(context, String(cardId));
+    return card?.exerted === true ? total : total + 1;
+  }, 0);
+}
+
+function isPermanentCardType(cardType: string | undefined): boolean {
+  return cardType === "character" || cardType === "item" || cardType === "location";
+}
+
+function getProjectedCardType(card: LorcanaProjectedCard | undefined): string | undefined {
+  return (card as (LorcanaProjectedCard & { cardType?: string }) | undefined)?.cardType;
+}
+
 function shouldPrioritizeChallenge(
   context: AutomatedActionPlanningContext,
   candidate: Extract<AutomatedActionCandidate, { family: "challenge" }>,
+  preferences: LoreRaceHeuristicPreferences,
 ): boolean {
   const opponentId = resolveOpponentId(context);
   const defenderWouldBeBanished = candidate.preview?.defenderWouldBeBanished === true;
@@ -188,6 +222,16 @@ function shouldPrioritizeChallenge(
     return false;
   }
 
+  if (preferences.challengePriorityMode === "board-control") {
+    const actorQuestPotential = getQuestPotentialForPlayer(context, context.actorId);
+    const opponentQuestPotential = getQuestPotentialForPlayer(context, opponentId);
+
+    return (
+      opponentLore >= actorLore &&
+      (defenderLore >= 1 || opponentQuestPotential - actorQuestPotential >= 2)
+    );
+  }
+
   return (
     opponentLore >= 15 ||
     (opponentLore > actorLore && defenderLore >= 2) ||
@@ -199,8 +243,12 @@ function shouldPrioritizeChallenge(
 function getFamilyOrder(
   context: AutomatedActionPlanningContext,
   candidate: AutomatedActionCandidate,
+  preferences: LoreRaceHeuristicPreferences,
 ): number {
-  if (candidate.family === "challenge" && shouldPrioritizeChallenge(context, candidate)) {
+  if (
+    candidate.family === "challenge" &&
+    shouldPrioritizeChallenge(context, candidate, preferences)
+  ) {
     return FAMILY_ORDER.quest - 0.5;
   }
 
@@ -259,6 +307,23 @@ function getPlayCardNetCost(
   return getPrintedCost(context, candidate.cardId);
 }
 
+function isSimpleDevelopmentPlay(
+  context: AutomatedActionPlanningContext,
+  candidate: Extract<AutomatedActionCandidate, { family: "playCard" }>,
+): boolean {
+  const card = getProjectedCard(context, candidate.cardId);
+  if (!isPermanentCardType(getProjectedCardType(card))) {
+    return false;
+  }
+
+  const netCost = getPlayCardNetCost(context, candidate);
+  if (netCost <= 0 || netCost > getAvailableInkForPlayer(context, context.actorId)) {
+    return false;
+  }
+
+  return getPlayCardComplexity(candidate) === 0;
+}
+
 function getAbilityComplexity(
   candidate: Extract<AutomatedActionCandidate, { family: "activateAbility" }>,
 ): number {
@@ -306,7 +371,7 @@ function buildDetailedCandidateSummary(
   preferences: LoreRaceHeuristicPreferences,
 ): DetailedCandidateSummary {
   const stableKey = getStableKey(context, candidate);
-  const familyOrder = getFamilyOrder(context, candidate);
+  const familyOrder = getFamilyOrder(context, candidate, preferences);
   const heuristics: AutomatedActionCandidateHeuristic[] = [
     createHeuristic("asc", "familyOrder", familyOrder),
   ];
@@ -346,9 +411,12 @@ function buildDetailedCandidateSummary(
   }
 
   if (candidate.family === "playCard") {
+    const simpleDevelopmentPlay =
+      preferences.preferSimplePermanentDevelopment && isSimpleDevelopmentPlay(context, candidate);
     ranking.playCardComplexity = getPlayCardComplexity(candidate);
     ranking.playCardNetCost = getPlayCardNetCost(context, candidate);
     ranking.printedLore = getPrintedLore(context, candidate.cardId);
+    heuristics.push(createHeuristic("preferTrue", "simpleDevelopmentPlay", simpleDevelopmentPlay));
     heuristics.push(createHeuristic("asc", "playCardComplexity", ranking.playCardComplexity));
     heuristics.push(
       createHeuristic(
@@ -381,7 +449,7 @@ function buildDetailedCandidateSummary(
   }
 
   if (candidate.family === "challenge") {
-    ranking.challengePriorityBoost = shouldPrioritizeChallenge(context, candidate);
+    ranking.challengePriorityBoost = shouldPrioritizeChallenge(context, candidate, preferences);
     ranking.challengeDefenderWouldBeBanished = candidate.preview?.defenderWouldBeBanished === true;
     ranking.challengeAttackerSurvives = candidate.preview?.attackerWouldBeBanished !== true;
     ranking.challengeAttackerLore = getPrintedLore(context, candidate.attackerId);
@@ -391,11 +459,7 @@ function buildDetailedCandidateSummary(
       (ranking.challengeAttackerLore ?? 0) +
       (ranking.challengeAttackerSurvives ? 1 : 0);
     heuristics.push(
-      createHeuristic(
-        "preferTrue",
-        "challengePriorityBoost",
-        ranking.challengePriorityBoost,
-      ),
+      createHeuristic("preferTrue", "challengePriorityBoost", ranking.challengePriorityBoost),
     );
     heuristics.push(
       createHeuristic(
@@ -407,15 +471,11 @@ function buildDetailedCandidateSummary(
     heuristics.push(
       createHeuristic("preferTrue", "challengeAttackerSurvives", ranking.challengeAttackerSurvives),
     );
-    heuristics.push(
-      createHeuristic("desc", "challengeLoreSwing", ranking.challengeLoreSwing),
-    );
+    heuristics.push(createHeuristic("desc", "challengeLoreSwing", ranking.challengeLoreSwing));
     heuristics.push(
       createHeuristic("desc", "challengeDefenderLore", ranking.challengeDefenderLore),
     );
-    heuristics.push(
-      createHeuristic("asc", "challengeAttackerLore", ranking.challengeAttackerLore),
-    );
+    heuristics.push(createHeuristic("asc", "challengeAttackerLore", ranking.challengeAttackerLore));
   }
 
   heuristics.push(createHeuristic("asc", "stableKey", stableKey));
@@ -470,6 +530,20 @@ function compareDetailedCandidateSummaries(
   }
 
   if (left.family === "playCard" && right.family === "playCard") {
+    if (preferences.preferSimplePermanentDevelopment) {
+      const simpleDevelopmentOrder = compareBooleansDescending(
+        left.heuristics.some(
+          (heuristic) => heuristic.key === "simpleDevelopmentPlay" && heuristic.value === true,
+        ),
+        right.heuristics.some(
+          (heuristic) => heuristic.key === "simpleDevelopmentPlay" && heuristic.value === true,
+        ),
+      );
+      if (simpleDevelopmentOrder !== 0) {
+        return simpleDevelopmentOrder;
+      }
+    }
+
     const complexityOrder = compareNumbersAscending(
       left.ranking.playCardComplexity ?? 0,
       right.ranking.playCardComplexity ?? 0,
@@ -620,20 +694,43 @@ export function summarizeDefaultLoreRaceCandidates(
   return summarizeLoreRaceCandidates(context, candidates, DEFAULT_LORE_RACE_HEURISTIC_PREFERENCES);
 }
 
-export const legacyLoreRaceAutomatedActionStrategy: AutomatedActionStrategy = {
-  name: "legacy-lore-race",
-  rankCandidates(context, candidates) {
-    return summarizeLegacyLoreRaceCandidates(context, candidates).map(
-      ({ candidate }) => candidate,
-    );
-  },
-};
+export function summarizeBoardControlLoreRaceCandidates(
+  context: AutomatedActionPlanningContext,
+  candidates: readonly AutomatedActionCandidate[],
+): AutomatedActionCandidateSummary[] {
+  return summarizeLoreRaceCandidates(
+    context,
+    candidates,
+    BOARD_CONTROL_LORE_RACE_HEURISTIC_PREFERENCES,
+  );
+}
 
-export const defaultLoreRaceAutomatedActionStrategy: AutomatedActionStrategy = {
-  name: "default-lore-race",
-  rankCandidates(context, candidates) {
-    return summarizeDefaultLoreRaceCandidates(context, candidates).map(
-      ({ candidate }) => candidate,
-    );
-  },
-};
+function createLoreRaceAutomatedActionStrategy(
+  name: string,
+  summarize: (
+    context: AutomatedActionPlanningContext,
+    candidates: readonly AutomatedActionCandidate[],
+  ) => AutomatedActionCandidateSummary[],
+): AutomatedActionStrategy {
+  return {
+    name,
+    rankCandidates(context, candidates) {
+      return summarize(context, candidates).map(({ candidate }) => candidate);
+    },
+  };
+}
+
+export const legacyLoreRaceAutomatedActionStrategy = createLoreRaceAutomatedActionStrategy(
+  "legacy-lore-race",
+  summarizeLegacyLoreRaceCandidates,
+);
+
+export const defaultLoreRaceAutomatedActionStrategy = createLoreRaceAutomatedActionStrategy(
+  "default-lore-race",
+  summarizeDefaultLoreRaceCandidates,
+);
+
+export const boardControlLoreRaceAutomatedActionStrategy = createLoreRaceAutomatedActionStrategy(
+  "board-control-lore-race",
+  summarizeBoardControlLoreRaceCandidates,
+);

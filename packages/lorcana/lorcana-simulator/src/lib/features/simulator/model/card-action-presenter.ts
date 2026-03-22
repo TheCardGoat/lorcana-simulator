@@ -1,4 +1,4 @@
-import { m } from "$lib/paraglide/messages.js";
+import { m } from "$lib/i18n/messages.js";
 import type {
   CardActionCategoryId,
   CardActionView,
@@ -9,6 +9,8 @@ import type {
 
 const CARD_ACTION_ORDER: readonly CardActionCategoryId[] = [
   "play-card",
+  "shift-card",
+  "sing-card",
   "ink-card",
   "quest",
   "challenge",
@@ -20,6 +22,8 @@ function getSourceCardId(move: ExecutableMoveEntry): string | null {
   switch (move.presentation.categoryId) {
     case "ink-card":
     case "play-card":
+    case "shift-card":
+    case "sing-card":
     case "quest":
     case "activate-ability": {
       const cardId = (move.params as { cardId?: unknown }).cardId;
@@ -40,6 +44,10 @@ function getSourceCardId(move: ExecutableMoveEntry): string | null {
 
 function getTargetCardId(move: ExecutableMoveEntry): string | null {
   switch (move.presentation.categoryId) {
+    case "play-card": {
+      const targets = (move.params as { targets?: unknown }).targets;
+      return Array.isArray(targets) && typeof targets[0] === "string" ? targets[0] : null;
+    }
     case "challenge": {
       const defenderId = (move.params as { defenderId?: unknown }).defenderId;
       return typeof defenderId === "string" ? defenderId : null;
@@ -101,13 +109,15 @@ function buildEnabledCategoryAction(
   const detail =
     categoryId === "play-card"
       ? getPlayActionDetail(card, moves[0]!)
-      : categoryId === "challenge"
-        ? `${moves.length} target${moves.length === 1 ? "" : "s"}`
-        : categoryId === "move-to-location"
-          ? `${moves.length} location${moves.length === 1 ? "" : "s"}`
-          : categoryId === "activate-ability"
-            ? `${moves.length} abilit${moves.length === 1 ? "y" : "ies"}`
-            : undefined;
+      : categoryId === "shift-card" || categoryId === "sing-card"
+        ? undefined
+        : categoryId === "challenge"
+          ? `${moves.length} target${moves.length === 1 ? "" : "s"}`
+          : categoryId === "move-to-location"
+            ? `${moves.length} location${moves.length === 1 ? "" : "s"}`
+            : categoryId === "activate-ability"
+              ? `${moves.length} abilit${moves.length === 1 ? "y" : "ies"}`
+              : undefined;
 
   return {
     id: `${categoryId}:${card.cardId}`,
@@ -209,6 +219,8 @@ export function buildCardActionViews(options: {
       categoryId !== "ink-card" &&
       categoryId !== "move-to-location" &&
       categoryId !== "play-card" &&
+      categoryId !== "shift-card" &&
+      categoryId !== "sing-card" &&
       categoryId !== "quest"
     ) {
       continue;

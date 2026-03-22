@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseDetectiveI18n } from "./160-mickey-mouse-detective.i18n";
 
 export const mickeyMouseDetective: CharacterCard = {
   id: "jRJ",
@@ -7,52 +8,6 @@ export const mickeyMouseDetective: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Detective",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Detective",
-      text: [
-        {
-          title: "GET A CLUE",
-          description:
-            "When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Mickey Mouse",
-      version: "Detective",
-      text: [
-        {
-          title: "GET A CLUE",
-          description:
-            "When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Detective",
-      text: [
-        {
-          title: "GET A CLUE",
-          description:
-            "When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    it: {
-      name: "Mickey Mouse",
-      version: "Detective",
-      text: [
-        {
-          title: "GET A CLUE",
-          description:
-            "When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   set: "010",
   cardNumber: 160,
@@ -68,9 +23,9 @@ export const mickeyMouseDetective: CharacterCard = {
   },
   text: [
     {
-      title: "GET A CLUE",
+      title: "GET",
       description:
-        "When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
+        "A CLUE When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
     },
   ],
   classifications: ["Dreamborn", "Hero", "Detective"],
@@ -98,4 +53,5 @@ export const mickeyMouseDetective: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mickeyMouseDetectiveI18n,
 };

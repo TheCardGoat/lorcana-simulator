@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { darkwingDuckCrimeFighterI18n } from "./174-darkwing-duck-crime-fighter.i18n";
 
 export const darkwingDuckCrimeFighter: CharacterCard = {
   id: "HIg",
@@ -7,24 +8,6 @@ export const darkwingDuckCrimeFighter: CharacterCard = {
   cardType: "character",
   name: "Darkwing Duck",
   version: "Crime Fighter",
-  i18n: {
-    en: {
-      name: "Darkwing Duck",
-      version: "Crime Fighter",
-    },
-    de: {
-      name: "Darkwing Duck",
-      version: "Verbrechensbekämpfer",
-    },
-    fr: {
-      name: "Myster Mask",
-      version: "Combat le crime",
-    },
-    it: {
-      name: "Darkwing Duck",
-      version: "Nemico del Crimine",
-    },
-  },
   inkType: ["steel"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -41,4 +24,6 @@ export const darkwingDuckCrimeFighter: CharacterCard = {
     tcgPlayer: 677140,
   },
   classifications: ["Storyborn", "Super", "Hero", "Detective"],
+  abilities: [],
+  i18n: darkwingDuckCrimeFighterI18n,
 };

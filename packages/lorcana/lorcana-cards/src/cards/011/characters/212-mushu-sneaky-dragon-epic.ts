@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mushuSneakyDragonEpicI18n } from "./212-mushu-sneaky-dragon-epic.i18n";
 
 export const mushuSneakyDragonEpic: CharacterCard = {
   id: "EZT",
@@ -7,51 +8,6 @@ export const mushuSneakyDragonEpic: CharacterCard = {
   cardType: "character",
   name: "Mushu",
   version: "Sneaky Dragon",
-  i18n: {
-    en: {
-      name: "Mushu",
-      version: "Sneaky Dragon",
-      text: [
-        {
-          title: "SNOWY SURPRISE",
-          description: "When you play this character, deal 2 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Mushu",
-      version: "Listiger Drache",
-      text: [
-        {
-          title: "ÜBERRASCHUNG AUS SCHNEE",
-          description:
-            "Wenn du diesen Charakter ausspielst, füge einem Charakter deiner Wahl 2 Schaden zu.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mushu",
-      version: "Dragon malicieux",
-      text: [
-        {
-          title: "SURPRISE ENNEIGÉE",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage et infligez-lui 2 dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "Mushu",
-      version: "Drago Furbetto",
-      text: [
-        {
-          title: "SORPRESA NEVOSA",
-          description:
-            "Quando giochi questo personaggio, infliggi 2 danni a un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Mulan",
   set: "011",
@@ -98,4 +54,5 @@ export const mushuSneakyDragonEpic: CharacterCard = {
       text: "SNOWY SURPRISE When you play this character, deal 2 damage to chosen character.",
     },
   ],
+  i18n: mushuSneakyDragonEpicI18n,
 };

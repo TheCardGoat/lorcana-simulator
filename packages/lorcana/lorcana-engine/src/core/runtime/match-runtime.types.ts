@@ -21,20 +21,28 @@ import type {
   TCGCtx,
   CtxStatus,
   CtxPriority,
+  ZoneRuntimeState,
 } from "./types";
 import type { PlayerId } from "../types";
 import type { ZoneOperationsAPI, ZoneQueryAPI } from "./zone-operations";
-import type {
-  AnyRuntimeCardWithDefinition,
-  CardQueryAPI,
-  RuntimeCardDefinitionOf,
-  RuntimeCardDerivedOf,
-  RuntimeCardDeriver,
-  RuntimeCardMetaOf,
-} from "./card-runtime";
+import type { CardQueryAPI, RuntimeCardDeriver } from "./card-runtime";
 import type { CardCatalog, CardsMaps, MatchStaticResources } from "./static-resources";
-import type { BaseCardDefinition, BaseCardMeta } from "./card-contracts";
+import type { BaseCardMeta } from "./card-contracts";
 import type { EngineMoveId } from "../engine/contracts";
+import type { LorcanaG } from "../../types/runtime-state";
+
+/**
+ * A record of named move definitions.
+ *
+ * The `any` type parameters are intentional and unavoidable: `MoveRecord` is a heterogeneous
+ * container of move functions each with distinct `args` types. TypeScript's function-parameter
+ * contravariance makes it impossible to express this without `any` — `unknown` breaks
+ * definition-side assignability and `never` breaks call-site invocations.
+ * Type safety is enforced at the definition boundary (LorcanaMoveDefinition) and at specific
+ * call sites, not at the collection level.
+ */
+// oxlint-disable-next-line no-explicit-any
+export type MoveRecord = Record<string, MoveDefinition<any, any>>;
 
 // =============================================================================
 // Runtime Configuration
@@ -44,115 +52,62 @@ export interface RuntimeBoardProjectionContext {
   serverTimestamp: number;
 }
 
-interface MatchRuntimeConfigCore<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-  TBoardView = FilteredMatchView<G>,
-> {
+interface MatchRuntimeConfigCore {
   name: string;
-  moves: Moves;
-  flow: RuntimeFlowDefinition<G, TCardDefinition, TCardDerived>;
+  moves: MoveRecord;
+  flow: RuntimeFlowDefinition;
   timeControl?: TimeControlConfig;
   zones: ZoneDefinitions;
-  playerView: (state: MatchState<G>, roleCtx: ViewRoleContext) => FilteredMatchView<G>;
+  playerView: (state: MatchState, roleCtx: ViewRoleContext) => FilteredMatchView;
   projectBoard: (
-    state: MatchState<G>,
+    state: MatchState,
     roleCtx: ViewRoleContext,
-    staticResources: MatchStaticResources<TCardDefinition>,
+    staticResources: MatchStaticResources,
     projectionCtx?: RuntimeBoardProjectionContext,
-  ) => TBoardView;
-  logProjector?: LogProjector<G>;
-  deriveRuntimeCard: RuntimeCardDeriver<G, TCardDefinition, TCardMeta, TCardDerived>;
+  ) => FilteredMatchView;
+  logProjector?: LogProjector;
+  deriveRuntimeCard: RuntimeCardDeriver;
   // TODO: Setup should also include ctx
-  setup: (args: SetupArgs<TCardDefinition>) => G;
+  setup: (args: SetupArgs) => LorcanaG;
   /** Optional one-time hook to populate zones (e.g. put all instances into deck). Runs after setup, inside Immer produce. */
-  boardSetup?: (draft: Draft<MatchState<G>>, ctx: BoardSetupContext<TCardDefinition>) => void;
-  derivePacketAnimations?: (
-    context: PacketAnimationContext<G, TCardDefinition>,
-  ) => readonly PacketAnimation[];
+  boardSetup?: (draft: Draft<MatchState>, ctx: BoardSetupContext) => void;
+  derivePacketAnimations?: (context: PacketAnimationContext) => readonly PacketAnimation[];
 }
 
-export type RuntimeCardSpecDefinition<
-  TCardRuntimeOrDefinition extends AnyRuntimeCardWithDefinition | BaseCardDefinition,
-> = TCardRuntimeOrDefinition extends AnyRuntimeCardWithDefinition
-  ? RuntimeCardDefinitionOf<TCardRuntimeOrDefinition>
-  : TCardRuntimeOrDefinition;
+export type MatchRuntimeConfig = MatchRuntimeConfigCore;
 
-export type RuntimeCardSpecMeta<
-  TCardRuntimeOrDefinition extends AnyRuntimeCardWithDefinition | BaseCardDefinition,
-> = TCardRuntimeOrDefinition extends AnyRuntimeCardWithDefinition
-  ? RuntimeCardMetaOf<TCardRuntimeOrDefinition>
-  : BaseCardMeta;
-
-export type RuntimeCardSpecDerived<
-  TCardRuntimeOrDefinition extends AnyRuntimeCardWithDefinition | BaseCardDefinition,
-  TFallbackDerived extends object,
-> = TCardRuntimeOrDefinition extends AnyRuntimeCardWithDefinition
-  ? RuntimeCardDerivedOf<TCardRuntimeOrDefinition>
-  : TFallbackDerived;
-
-export type MatchRuntimeConfig<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-  TBoardView = FilteredMatchView<G>,
-> = MatchRuntimeConfigCore<G, Moves, TCardDefinition, BaseCardMeta, TCardDerived, TBoardView>;
-
-export type MatchRuntimeConfigWithRuntimeCard<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TRuntimeCardWithDefinition extends AnyRuntimeCardWithDefinition,
-  TBoardView = FilteredMatchView<G>,
-> = MatchRuntimeConfigCore<
-  G,
-  Moves,
-  RuntimeCardDefinitionOf<TRuntimeCardWithDefinition>,
-  RuntimeCardMetaOf<TRuntimeCardWithDefinition>,
-  RuntimeCardDerivedOf<TRuntimeCardWithDefinition>,
-  TBoardView
->;
-
-export interface SetupArgs<TCardDefinition extends BaseCardDefinition = BaseCardDefinition> {
+export interface SetupArgs {
   players: Player[];
   seed?: string;
-  staticResources: MatchStaticResources<TCardDefinition>;
+  staticResources: MatchStaticResources;
 }
 
-export interface BoardSetupContext<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-> {
+export interface BoardSetupContext {
   players: Player[];
-  staticResources: MatchStaticResources<TCardDefinition>;
+  staticResources: MatchStaticResources;
   random: RandomAPI;
 }
 
-export interface LogProjectionContext<G = unknown> {
-  state: MatchState<G>;
+export interface LogProjectionContext {
+  state: MatchState;
 }
 
-export interface PacketAnimationContext<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-> {
+export interface PacketAnimationContext {
   command: CommandEnvelope;
   playerId: string;
   role: RuntimeActorRole;
-  previousState: MatchState<G>;
-  nextState: MatchState<G>;
-  staticResources: MatchStaticResources<TCardDefinition>;
+  previousState: MatchState;
+  nextState: MatchState;
+  staticResources: MatchStaticResources;
 }
 
 export type ProjectedLogEntry = Pick<GameLogEntry, "category" | "visibility"> & {
   defaultMessage?: LogMessage;
 };
 
-export type LogProjector<G = unknown> = (
+export type LogProjector = (
   event: PublishedGameEvent,
-  context: LogProjectionContext<G>,
+  context: LogProjectionContext,
 ) => ProjectedLogEntry[];
 
 export interface Player {
@@ -170,8 +125,8 @@ export type DeepReadonly<T> = T extends (...args: any[]) => any
         ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
         : T;
 
-export interface RuntimeStateView<G> {
-  readonly G: DeepReadonly<G>;
+export interface RuntimeStateView {
+  readonly G: DeepReadonly<LorcanaG>;
   readonly ctx: DeepReadonly<TCGCtx>;
   readonly playerId: PlayerId;
   readonly playerIds: PlayerId[];
@@ -186,27 +141,19 @@ export interface RuntimeStateView<G> {
   readonly gameEnded: boolean;
 }
 
-export interface RuntimeLifecycleContext<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-> {
-  readonly G: Draft<G>;
+export interface RuntimeLifecycleContext {
+  readonly G: Draft<LorcanaG>;
   readonly playerId?: PlayerId;
   readonly query: QueryAPI;
-  readonly cards: CardRuntimeAPI<TCardDefinition, BaseCardMeta, TCardDerived>;
-  readonly framework: FrameworkWriteAPI<TCardDefinition, BaseCardMeta, TCardDerived>;
+  readonly cards: CardRuntimeAPI;
+  readonly framework: FrameworkWriteAPI;
 }
 
-export type RuntimeLifecycleHook<
-  G = unknown,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-> =
-  | ((context: RuntimeLifecycleContext<G, TCardDefinition, TCardDerived>) => unknown)
-  | ((state: MatchState<G>) => MatchState<G> | void);
+export type RuntimeLifecycleHook =
+  | ((context: RuntimeLifecycleContext) => unknown)
+  | ((state: MatchState) => MatchState | void);
 
-export type MoveStateView<G> = RuntimeStateView<G>;
+export type MoveStateView = RuntimeStateView;
 
 export interface MoveInputView<TInput extends MoveInput = MoveInput> {
   readonly input: DeepReadonly<TInput>;
@@ -215,7 +162,12 @@ export interface MoveInputView<TInput extends MoveInput = MoveInput> {
 }
 
 export interface FrameworkStateSnapshot {
-  readonly ctx: DeepReadonly<TCGCtx>;
+  readonly priority: DeepReadonly<CtxPriority>;
+  readonly status: DeepReadonly<CtxStatus>;
+  /** @internal Projection layer only — do not use in move handlers. */
+  readonly _zonesPrivate: DeepReadonly<ZoneRuntimeState["private"]>;
+  /** @internal Public zone summaries (card counts). Available on both server and client. */
+  readonly _zonesPublic: DeepReadonly<ZoneRuntimeState["public"]>;
   readonly playerIds: PlayerId[];
   readonly turn: number;
   readonly phase?: string;
@@ -228,65 +180,23 @@ export interface FrameworkStateSnapshot {
   readonly gameEnded: boolean;
 }
 
-export interface CardRuntimeReadAPI<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-> extends CardQueryAPI<TCardDefinition, TCardMeta, TCardDerived> {}
+export interface CardRuntimeReadAPI extends CardQueryAPI {}
 
-export interface CardRuntimeAPI<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-> extends CardRuntimeReadAPI<TCardDefinition, TCardMeta, TCardDerived> {
-  setMeta: (cardId: string, meta: TCardMeta) => void;
-  patchMeta: (cardId: string, patch: Partial<TCardMeta>) => TCardMeta;
+export interface CardRuntimeAPI extends CardRuntimeReadAPI {
+  setMeta: (cardId: string, meta: BaseCardMeta) => void;
+  patchMeta: (cardId: string, patch: Partial<BaseCardMeta>) => BaseCardMeta;
   clearMeta: (cardId: string) => void;
-  entriesMeta: () => readonly (readonly [cardId: string, meta: TCardMeta])[];
+  entriesMeta: () => readonly (readonly [cardId: string, meta: BaseCardMeta])[];
 }
 
-export type CardRuntimeReadAPIWithRuntimeCard<TRuntimeCard extends AnyRuntimeCardWithDefinition> =
-  CardRuntimeReadAPI<
-    RuntimeCardDefinitionOf<TRuntimeCard>,
-    RuntimeCardMetaOf<TRuntimeCard>,
-    RuntimeCardDerivedOf<TRuntimeCard>
-  >;
-
-export type CardRuntimeAPIWithRuntimeCard<TRuntimeCard extends AnyRuntimeCardWithDefinition> =
-  CardRuntimeAPI<
-    RuntimeCardDefinitionOf<TRuntimeCard>,
-    RuntimeCardMetaOf<TRuntimeCard>,
-    RuntimeCardDerivedOf<TRuntimeCard>
-  >;
-
-export type FrameworkCardsReadAPI<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-> = CardRuntimeReadAPI<TCardDefinition, TCardMeta, TCardDerived>;
-
-export type FrameworkCardsWriteAPI<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-> = CardRuntimeAPI<TCardDefinition, TCardMeta, TCardDerived>;
-
-export interface FrameworkReadAPI<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-> {
+export interface FrameworkReadAPI {
   readonly state: FrameworkStateSnapshot;
   readonly zones: ZoneQueryAPI;
   readonly time: TimeQueryAPI;
-  readonly cards: CardRuntimeReadAPI<TCardDefinition, TCardMeta, TCardDerived>;
+  readonly cards: CardRuntimeReadAPI;
 }
 
-export interface FrameworkWriteAPI<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-> extends FrameworkReadAPI<TCardDefinition, TCardMeta, TCardDerived> {
+export interface FrameworkWriteAPI extends FrameworkReadAPI {
   readonly zones: ZoneOperationsAPI;
   readonly time: TimeOperationsAPI;
   readonly random: RandomAPI;
@@ -307,7 +217,7 @@ export interface FrameworkWriteAPI<
     closeWindow: () => void;
     resetPasses: () => void;
   };
-  readonly cards: CardRuntimeAPI<TCardDefinition, TCardMeta, TCardDerived>;
+  readonly cards: CardRuntimeAPI;
   readonly log: (entry: ProjectedLogEntry | readonly ProjectedLogEntry[]) => void;
   logPublicWithOverrides(entry: {
     category: GameLogEntry["category"];
@@ -316,57 +226,33 @@ export interface FrameworkWriteAPI<
   }): void;
 }
 
-export type FrameworkReadAPIWithRuntimeCard<TRuntimeCard extends AnyRuntimeCardWithDefinition> =
-  FrameworkReadAPI<
-    RuntimeCardDefinitionOf<TRuntimeCard>,
-    RuntimeCardMetaOf<TRuntimeCard>,
-    RuntimeCardDerivedOf<TRuntimeCard>
-  >;
-
-export type FrameworkWriteAPIWithRuntimeCard<TRuntimeCard extends AnyRuntimeCardWithDefinition> =
-  FrameworkWriteAPI<
-    RuntimeCardDefinitionOf<TRuntimeCard>,
-    RuntimeCardMetaOf<TRuntimeCard>,
-    RuntimeCardDerivedOf<TRuntimeCard>
-  >;
-
 export interface MoveValidationContext<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
   TInput extends MoveInput = MoveInput,
-  TCardDerived extends object = {},
 > extends MoveInputView<TInput> {
-  readonly G: DeepReadonly<G>;
+  readonly G: DeepReadonly<LorcanaG>;
   readonly playerId: PlayerId;
   readonly validationMode: "preflight" | "final";
   readonly query: QueryAPI;
-  readonly cards: CardRuntimeReadAPI<TCardDefinition, BaseCardMeta, TCardDerived>;
-  readonly framework: FrameworkReadAPI<TCardDefinition, BaseCardMeta, TCardDerived>;
+  readonly cards: CardRuntimeReadAPI;
+  readonly framework: FrameworkReadAPI;
 }
 
 export interface MoveExecutionContext<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
   TInput extends MoveInput = MoveInput,
-  TCardDerived extends object = {},
 > extends MoveInputView<TInput> {
-  readonly G: Draft<G>;
+  readonly G: Draft<LorcanaG>;
   readonly playerId: PlayerId;
   readonly query: QueryAPI;
-  readonly cards: CardRuntimeAPI<TCardDefinition, BaseCardMeta, TCardDerived>;
-  readonly framework: FrameworkWriteAPI<TCardDefinition, BaseCardMeta, TCardDerived>;
+  readonly cards: CardRuntimeAPI;
+  readonly framework: FrameworkWriteAPI;
 }
 
-export interface MoveEnumerationContext<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-> {
-  readonly G: DeepReadonly<G>;
+export interface MoveEnumerationContext {
+  readonly G: DeepReadonly<LorcanaG>;
   readonly playerId: PlayerId;
   readonly query: QueryAPI;
-  readonly cards: CardRuntimeReadAPI<TCardDefinition, BaseCardMeta, TCardDerived>;
-  readonly framework: FrameworkReadAPI<TCardDefinition, BaseCardMeta, TCardDerived>;
+  readonly cards: CardRuntimeReadAPI;
+  readonly framework: FrameworkReadAPI;
 }
 
 export interface QueryAPI {
@@ -375,18 +261,10 @@ export interface QueryAPI {
   explainIllegal: () => string | undefined;
 }
 
-export interface MoveDefinition<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TInput extends MoveInput = MoveInput,
-  TTargetDSL = unknown,
-  TCardDerived extends object = {},
-> {
-  available?: (context: MoveEnumerationContext<G, TCardDefinition, TCardDerived>) => boolean;
-  validate?: (
-    context: MoveValidationContext<G, TCardDefinition, TInput, TCardDerived>,
-  ) => RuntimeValidationResult;
-  execute: (context: MoveExecutionContext<G, TCardDefinition, TInput, TCardDerived>) => void;
+export interface MoveDefinition<TInput extends MoveInput = MoveInput, TTargetDSL = unknown> {
+  available?: (context: MoveEnumerationContext) => boolean;
+  validate?: (context: MoveValidationContext<TInput>) => RuntimeValidationResult;
+  execute: (context: MoveExecutionContext<TInput>) => void;
   undoable?: boolean;
   redactInput?: boolean;
   optimistic?: boolean | "auto";
@@ -395,31 +273,20 @@ export interface MoveDefinition<
   ignorePriority?: boolean;
 }
 
-export type RuntimeMoveInputMap<
-  Moves extends Record<string, MoveDefinition<any, any, any, any, any>>,
-> = {
-  [K in keyof Moves]: Moves[K] extends MoveDefinition<any, any, infer TInput, any, any>
-    ? TInput
-    : MoveInput;
+export type RuntimeMoveInputMap<Moves extends MoveRecord> = {
+  [K in keyof Moves]: Moves[K] extends MoveDefinition<infer TInput, any> ? TInput : MoveInput;
 };
 
-export type RuntimeLegalMove<
-  Moves extends Record<string, MoveDefinition<any, any, any, any, any>>,
-> = EngineMoveId<RuntimeMoveInputMap<Moves>>;
+export type RuntimeLegalMove<Moves extends MoveRecord> = EngineMoveId<RuntimeMoveInputMap<Moves>>;
 
 export type RuntimeActorRole = "player" | "judge";
 
-export type MoveContext<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TInput extends MoveInput = MoveInput,
-  G = unknown,
-  TCardDerived extends object = {},
-> = MoveExecutionContext<G, TCardDefinition, TInput, TCardDerived>;
+export type MoveContext<TInput extends MoveInput = MoveInput> = MoveExecutionContext<TInput>;
 
-export interface MatchRuntimeInit<TCardDefinition extends BaseCardDefinition = BaseCardDefinition> {
+export interface MatchRuntimeInit {
   players: Player[];
   cardsMaps: CardsMaps;
-  cardCatalog: CardCatalog<TCardDefinition>;
+  cardCatalog: CardCatalog;
   seed?: string;
   matchID?: string;
   gameID?: string;
@@ -427,75 +294,55 @@ export interface MatchRuntimeInit<TCardDefinition extends BaseCardDefinition = B
 }
 
 /** Runtime step definition for steps within phases. */
-export interface RuntimeStepDefinition<
-  G = unknown,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-> {
+export interface RuntimeStepDefinition {
   id: string;
   name: string;
   order: number;
-  onEnter?: RuntimeLifecycleHook<G, TCardDefinition, TCardDerived>;
-  onExit?: RuntimeLifecycleHook<G, TCardDefinition, TCardDerived>;
-  endIf?: (state: MatchState<G>) => boolean;
+  onEnter?: RuntimeLifecycleHook;
+  onExit?: RuntimeLifecycleHook;
+  endIf?: (state: MatchState) => boolean;
   next?: string;
   validMoves?: string[];
 }
 
 /** Runtime turn definition for turn structure within game segments. */
-export interface RuntimeTurnDefinition<
-  G = unknown,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-> {
+export interface RuntimeTurnDefinition {
   initialPhase?: string;
-  onBegin?: RuntimeLifecycleHook<G, TCardDefinition, TCardDerived>;
-  onEnd?: RuntimeLifecycleHook<G, TCardDefinition, TCardDerived>;
-  endIf?: (state: MatchState<G>) => boolean;
-  phases: Record<string, RuntimePhaseDefinition<G, TCardDefinition, TCardDerived>>;
+  onBegin?: RuntimeLifecycleHook;
+  onEnd?: RuntimeLifecycleHook;
+  endIf?: (state: MatchState) => boolean;
+  phases: Record<string, RuntimePhaseDefinition>;
   validMoves?: string[];
 }
 
 /** Runtime game segment definition for high-level game divisions. */
-export interface RuntimeGameSegmentDefinition<
-  G = unknown,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-> {
+export interface RuntimeGameSegmentDefinition {
   id: string;
   name: string;
   order: number;
-  onEnter?: RuntimeLifecycleHook<G, TCardDefinition, TCardDerived>;
-  onExit?: RuntimeLifecycleHook<G, TCardDefinition, TCardDerived>;
-  endIf?: (state: MatchState<G>) => GameEndResult | undefined;
+  onEnter?: RuntimeLifecycleHook;
+  onExit?: RuntimeLifecycleHook;
+  endIf?: (state: MatchState) => GameEndResult | undefined;
   validMoves?: string[];
   next?: string;
-  turn: RuntimeTurnDefinition<G, TCardDefinition, TCardDerived>;
+  turn: RuntimeTurnDefinition;
 }
 
-export type RuntimeFlowDefinition<
-  G = unknown,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-> = {
-  gameSegments: Record<string, RuntimeGameSegmentDefinition<G, TCardDefinition, TCardDerived>>;
+export type RuntimeFlowDefinition = {
+  gameSegments: Record<string, RuntimeGameSegmentDefinition>;
   initialGameSegment?: string;
 };
 
-export interface RuntimePhaseDefinition<
-  G = unknown,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-> {
+export interface RuntimePhaseDefinition {
   id: string;
   name: string;
   order: number;
-  onEnter?: RuntimeLifecycleHook<G, TCardDefinition, TCardDerived>;
-  onExit?: RuntimeLifecycleHook<G, TCardDefinition, TCardDerived>;
+  onEnter?: RuntimeLifecycleHook;
+  onExit?: RuntimeLifecycleHook;
   validMoves?: string[];
-  endIf?: (state: MatchState<G>) => boolean | string;
-  nextPhase?: string | ((state: MatchState<G>) => string);
-  steps?: Record<string, RuntimeStepDefinition<G, TCardDefinition, TCardDerived>>;
+  endIf?: (state: MatchState) => boolean | string;
+  nextPhase?: string | ((state: MatchState) => string);
+  steps?: Record<string, RuntimeStepDefinition>;
   next?: string;
 }
 
@@ -553,12 +400,22 @@ export type CommandResult<T = unknown> = CommandSuccess<T> | CommandFailure;
 export interface CommandSuccess<T> {
   success: true;
   stateID: number;
-  state: MatchState<T>;
+  state: MatchState;
   patches: import("immer").Patch[];
   gameEvents: PublishedGameEvent[];
   logEntries: GameLogEntry[];
   processedCommand: CommandEnvelope;
   animations: PacketAnimation[];
+  undoable: boolean;
+}
+
+export interface RuntimeSnapshot {
+  publishedGameEventsLength: number;
+  gameLogLength: number;
+  nextGameEventSeq: number;
+  nextGameLogSeq: number;
+  gameEnded: boolean;
+  gameEndResult?: GameEndResult;
 }
 
 export interface CommandFailure {

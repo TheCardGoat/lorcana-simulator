@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jetsamUrsulasBabyI18n } from "./046-jetsam-ursulas-baby.i18n";
 
 export const jetsamUrsulasBaby: CharacterCard = {
   id: "jZW",
@@ -7,36 +8,6 @@ export const jetsamUrsulasBaby: CharacterCard = {
   cardType: "character",
   name: "Jetsam",
   version: 'Ursula\'s "Baby"',
-  i18n: {
-    en: {
-      name: "Jetsam",
-      version: 'Ursula\'s "Baby"',
-      text: [
-        {
-          title: "Challenger +2",
-        },
-        {
-          title: "OMINOUS PAIR",
-          description: "Your characters named Flotsam gain Challenger +2.",
-        },
-      ],
-    },
-    de: {
-      name: "Meerschaum",
-      version: 'Ursulas "Baby"',
-      text: "Herausfordern +2 UNHEIMLICHES DUO Deine Abschaum-Charaktere erhalten Herausfordern +2.",
-    },
-    fr: {
-      name: "Jetsam",
-      version: '"Bébé" d\'Ursula',
-      text: "Offensif +2 DUO INQUIÉTANT Vos personnages Flotsam gagnent Offensif +2.",
-    },
-    it: {
-      name: "Jetsam",
-      version: "“Piccino” di Ursula",
-      text: "Sfidante +2 COPPIA SINISTRA I tuoi personaggi chiamati Flotsam ottengono Sfidante +2.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Little Mermaid",
   set: "004",
@@ -72,13 +43,22 @@ export const jetsamUrsulasBaby: CharacterCard = {
     {
       effect: {
         keyword: "Challenger",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [{ type: "has-name", name: "Flotsam" }],
+        },
         type: "gain-keyword",
         value: 2,
       },
       id: "du5-2",
+      name: "OMINOUS PAIR",
       text: "OMINOUS PAIR Your characters named Flotsam gain Challenger +2.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: jetsamUrsulasBabyI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sebastianLoyalCrabI18n } from "./016-sebastian-loyal-crab.i18n";
 
 export const sebastianLoyalCrab: CharacterCard = {
   id: "g45",
@@ -7,24 +8,6 @@ export const sebastianLoyalCrab: CharacterCard = {
   cardType: "character",
   name: "Sebastian",
   version: "Loyal Crab",
-  i18n: {
-    en: {
-      name: "Sebastian",
-      version: "Loyal Crab",
-    },
-    de: {
-      name: "Sebastian",
-      version: "Loyale Krabbe",
-    },
-    fr: {
-      name: "Sébastien",
-      version: "Crabe loyal",
-    },
-    it: {
-      name: "Sebastian",
-      version: "Granchio Leale",
-    },
-  },
   inkType: ["amber"],
   franchise: "Little Mermaid",
   set: "010",
@@ -41,4 +24,5 @@ export const sebastianLoyalCrab: CharacterCard = {
     tcgPlayer: 659605,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: sebastianLoyalCrabI18n,
 };

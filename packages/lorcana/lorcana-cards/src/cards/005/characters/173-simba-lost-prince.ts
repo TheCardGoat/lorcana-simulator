@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { simbaLostPrinceI18n } from "./173-simba-lost-prince.i18n";
 
 export const simbaLostPrince: CharacterCard = {
   id: "RA4",
@@ -7,52 +8,6 @@ export const simbaLostPrince: CharacterCard = {
   cardType: "character",
   name: "Simba",
   version: "Lost Prince",
-  i18n: {
-    en: {
-      name: "Simba",
-      version: "Lost Prince",
-      text: [
-        {
-          title: "FACE THE PAST",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Simba",
-      version: "Verschollener Prinz",
-      text: [
-        {
-          title: "DER VERGANGENHEIT STELLEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter in deinem Zug durch eine Herausforderung einen anderen Charakter verbannt, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Simba",
-      version: "Prince perdu",
-      text: [
-        {
-          title: "FAIRE FACE À MON PASSÉ",
-          description:
-            "Durant votre tour, chaque fois que ce personnage en bannit un autre via un défi, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Simba",
-      version: "Principe Smarrito",
-      text: [
-        {
-          title: "AFFRONTARE IL PASSATO",
-          description:
-            "Durante il tuo turno, ogni volta che questo personaggio esilia un altro personaggio in una sfida, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Lion King",
   set: "005",
@@ -89,12 +44,19 @@ export const simbaLostPrince: CharacterCard = {
       },
       name: "FACE THE PAST",
       trigger: {
-        event: "banish",
-        on: "OPPONENT_CHARACTERS",
+        event: "banish-in-challenge",
+        on: "SELF",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
         timing: "whenever",
       },
       type: "triggered",
       text: "FACE THE PAST During your turn, whenever this character banishes another character in a challenge, you may draw a card.",
     },
   ],
+  i18n: simbaLostPrinceI18n,
 };

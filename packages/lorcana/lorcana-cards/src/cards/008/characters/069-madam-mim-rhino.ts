@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madamMimRhinoI18n } from "./069-madam-mim-rhino.i18n";
 
 export const madamMimRhino: CharacterCard = {
   id: "buu",
@@ -7,37 +8,6 @@ export const madamMimRhino: CharacterCard = {
   cardType: "character",
   name: "Madam Mim",
   version: "Rhino",
-  i18n: {
-    en: {
-      name: "Madam Mim",
-      version: "Rhino",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "MAKE WAY, COMING THROUGH!",
-          description:
-            "When you play this character, banish her or return another chosen character of yours to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Madame Mim",
-      version: "Nashorn",
-      text: "Gestaltwandel 2 AUS DEM WEG, ICH KOMME! Wenn du diesen Charakter ausspielst, musst du ihn verbannen oder einen deiner anderen Charaktere wählen und zurück auf deine Hand nehmen.",
-    },
-    fr: {
-      name: "Madame Mime",
-      version: "En rhinocéros",
-      text: "Alter 2 FAITES PLACE, JE PASSE! Lorsque vous jouez ce personnage, bannissez-le ou renvoyez l'un de vos autres personnages en jeu dans votre main.",
-    },
-    it: {
-      name: "Maga Magò",
-      version: "Rinoceronte",
-      text: "Trasformazione 2 FATE LARGO, ARRIVO! Quando giochi questo personaggio, esilialo o riprendi in mano un tuo altro personaggio a tua scelta.",
-    },
-  },
   inkType: ["amethyst", "ruby"],
   franchise: "Sword in the Stone",
   set: "008",
@@ -106,4 +76,5 @@ export const madamMimRhino: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: madamMimRhinoI18n,
 };

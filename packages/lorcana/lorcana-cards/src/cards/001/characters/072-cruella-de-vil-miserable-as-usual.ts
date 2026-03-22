@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cruellaDeVilMiserableAsUsualI18n } from "./072-cruella-de-vil-miserable-as-usual.i18n";
 
 export const cruellaDeVilMiserableAsUsual: CharacterCard = {
   id: "UCh",
@@ -7,52 +8,6 @@ export const cruellaDeVilMiserableAsUsual: CharacterCard = {
   cardType: "character",
   name: "Cruella De Vil",
   version: "Miserable as Usual",
-  i18n: {
-    en: {
-      name: "Cruella De Vil",
-      version: "Miserable as Usual",
-      text: [
-        {
-          title: "YOU'LL BE SORRY!",
-          description:
-            "When this character is challenged and banished, you may return chosen character to their player's hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Cruella De Vil",
-      version: "Miserable As Usual",
-      text: [
-        {
-          title: "YOU'LL BE SORRY!",
-          description:
-            "When this character is challenged and banished, you may return chosen character to their player's hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Cruella De Vil",
-      version: "Miserable As Usual",
-      text: [
-        {
-          title: "YOU'LL BE SORRY!",
-          description:
-            "When this character is challenged and banished, you may return chosen character to their player's hand.",
-        },
-      ],
-    },
-    it: {
-      name: "Cruella De Vil",
-      version: "Miserable As Usual",
-      text: [
-        {
-          title: "YOU'LL BE SORRY!",
-          description:
-            "When this character is challenged and banished, you may return chosen character to their player's hand.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "101 Dalmatians",
   set: "001",
@@ -97,4 +52,5 @@ export const cruellaDeVilMiserableAsUsual: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: cruellaDeVilMiserableAsUsualI18n,
 };

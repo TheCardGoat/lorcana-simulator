@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yzmaWithoutBeautySleepI18n } from "./061-yzma-without-beauty-sleep.i18n";
 
 export const yzmaWithoutBeautySleep: CharacterCard = {
   id: "T45",
@@ -7,24 +8,6 @@ export const yzmaWithoutBeautySleep: CharacterCard = {
   cardType: "character",
   name: "Yzma",
   version: "Without Beauty Sleep",
-  i18n: {
-    en: {
-      name: "Yzma",
-      version: "Without Beauty Sleep",
-    },
-    de: {
-      name: "Isma",
-      version: "Ohne Schönheitsschlaf",
-    },
-    fr: {
-      name: "Yzma",
-      version: "Manque de sommeil",
-    },
-    it: {
-      name: "Yzma",
-      version: "Without Beauty Sleep",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Emperors New Groove",
   set: "002",
@@ -41,4 +24,5 @@ export const yzmaWithoutBeautySleep: CharacterCard = {
     tcgPlayer: 527269,
   },
   classifications: ["Storyborn", "Villain", "Sorcerer"],
+  i18n: yzmaWithoutBeautySleepI18n,
 };

@@ -1,94 +1,87 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   GenieInvestigativeMind,
-//   JudyHoppsLeadDetective,
-// } from "@lorcanito/lorcana-engine/cards/010";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Judy Hopps - Lead Detective", () => {
-//   Describe("Shift 4", () => {
-//     It("should have shift ability", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [judyHoppsLeadDetective],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(judyHoppsLeadDetective);
-//       Expect(cardUnderTest.hasShift).toBe(true);
-//     });
-//
-//     It("should have shift 4 in abilities array", () => {
-//       Const shiftAbility = judyHoppsLeadDetective.abilities?.find(
-//         (a) =>
-//           "type" in a &&
-//           A.type === "static" &&
-//           "ability" in a &&
-//           A.ability === "shift",
-//       );
-//       Expect(shiftAbility).toBeDefined();
-//       If (
-//         ShiftAbility &&
-//         "type" in shiftAbility &&
-//         ShiftAbility.type === "static" &&
-//         "ability" in shiftAbility &&
-//         ShiftAbility.ability === "shift" &&
-//         "costs" in shiftAbility
-//       ) {
-//         Expect(shiftAbility.costs).toEqual([{ type: "ink", amount: 4 }]);
-//       }
-//     });
-//   });
-//
-//   Describe("LATERAL THINKING", () => {
-//     It("should grant Alert to Detective characters during your turn", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [judyHoppsLeadDetective, genieInvestigativeMind],
-//       });
-//
-//       Const judy = testEngine.getCardModel(judyHoppsLeadDetective);
-//       Const genie = testEngine.getCardModel(genieInvestigativeMind);
-//
-//       // Both are Detective characters
-//       Expect(judy.characteristics).toContain("detective");
-//       Expect(genie.characteristics).toContain("detective");
-//
-//       // During your turn, they should have Alert
-//       Expect(judy.hasAlert).toBe(true);
-//       Expect(genie.hasAlert).toBe(true);
-//     });
-//
-//     It("should grant Resist +2 to Detective characters during your turn", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [judyHoppsLeadDetective, genieInvestigativeMind],
-//       });
-//
-//       Const judy = testEngine.getCardModel(judyHoppsLeadDetective);
-//       Const genie = testEngine.getCardModel(genieInvestigativeMind);
-//
-//       // During your turn, they should have Resist +2
-//       Expect(judy.hasResist).toBe(true);
-//       Expect(judy.damageReduction()).toBe(2);
-//       Expect(genie.hasResist).toBe(true);
-//       Expect(genie.damageReduction()).toBe(2);
-//     });
-//
-//     It("should only apply to Detective characters (Judy herself)", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [judyHoppsLeadDetective],
-//       });
-//
-//       Const judy = testEngine.getCardModel(judyHoppsLeadDetective);
-//
-//       // Judy is a Detective and should have both abilities
-//       Expect(judy.characteristics).toContain("detective");
-//       Expect(judy.hasAlert).toBe(true);
-//       Expect(judy.hasResist).toBe(true);
-//       Expect(judy.damageReduction()).toBe(2);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { judyHoppsLeadDetective } from "./150-judy-hopps-lead-detective";
+import { genieInvestigativeMind } from "./146-genie-investigative-mind";
+
+describe("Judy Hopps - Lead Detective", () => {
+  describe("Shift 4", () => {
+    it("has Shift keyword", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [judyHoppsLeadDetective],
+        deck: 1,
+      });
+
+      expect(testEngine.asPlayerOne().hasKeyword(judyHoppsLeadDetective, "Shift")).toBe(true);
+    });
+  });
+
+  describe("LATERAL THINKING — During your turn, your Detective characters gain Alert and Resist +2.", () => {
+    it("grants Alert to Judy Hopps (a Detective) during your turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        { play: [judyHoppsLeadDetective], deck: 1 },
+        { deck: 1 },
+      );
+
+      expect(testEngine.asPlayerOne()).toHaveKeyword({
+        card: judyHoppsLeadDetective,
+        keyword: "Alert",
+      });
+    });
+
+    it("grants Resist +2 to Judy Hopps (a Detective) during your turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        { play: [judyHoppsLeadDetective], deck: 1 },
+        { deck: 1 },
+      );
+
+      expect(testEngine.asPlayerOne()).toHaveKeyword({
+        card: judyHoppsLeadDetective,
+        keyword: "Resist",
+      });
+      expect(testEngine.asPlayerOne().getKeywordValue(judyHoppsLeadDetective, "Resist")).toBe(2);
+    });
+
+    it("grants Alert to Genie - Investigative Mind (another Detective) during your turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        { play: [judyHoppsLeadDetective, genieInvestigativeMind], deck: 1 },
+        { deck: 1 },
+      );
+
+      expect(testEngine.asPlayerOne()).toHaveKeyword({
+        card: genieInvestigativeMind,
+        keyword: "Alert",
+      });
+    });
+
+    it("grants Resist +2 to Genie - Investigative Mind (another Detective) during your turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        { play: [judyHoppsLeadDetective, genieInvestigativeMind], deck: 1 },
+        { deck: 1 },
+      );
+
+      expect(testEngine.asPlayerOne()).toHaveKeyword({
+        card: genieInvestigativeMind,
+        keyword: "Resist",
+      });
+      expect(testEngine.asPlayerOne().getKeywordValue(genieInvestigativeMind, "Resist")).toBe(2);
+    });
+
+    it("does not grant Alert or Resist during opponent's turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        { play: [judyHoppsLeadDetective], deck: 1 },
+        { deck: 1 },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne()).not.toHaveKeyword({
+        card: judyHoppsLeadDetective,
+        keyword: "Alert",
+      });
+      expect(testEngine.asPlayerOne()).not.toHaveKeyword({
+        card: judyHoppsLeadDetective,
+        keyword: "Resist",
+      });
+    });
+  });
+});

@@ -23,7 +23,7 @@ export interface CommandLogEntry {
 export interface MatchSnapshot {
   matchID: string;
   stateID: number;
-  state: MatchState<unknown>;
+  state: MatchState;
   timestamp: number;
 }
 
@@ -43,11 +43,11 @@ export interface MatchMetadata {
 export interface MatchReplayData {
   matchID: string;
   metadata: MatchMetadata;
-  initialState: MatchState<unknown>;
+  initialState: MatchState;
   commandLog: CommandLogEntry[];
   gameEvents: PublishedGameEvent[];
   gameLogEntries: GameLogEntry[];
-  finalState?: MatchState<unknown>;
+  finalState?: MatchState;
 }
 
 export interface ReplayExportOptions {
@@ -261,7 +261,7 @@ export class PersistenceManager {
   /**
    * Save a match snapshot.
    */
-  async saveSnapshot(matchID: string, state: MatchState<unknown>): Promise<void> {
+  async saveSnapshot(matchID: string, state: MatchState): Promise<void> {
     await this.adapter.saveSnapshot({
       matchID,
       stateID: state.ctx._stateID,
@@ -273,7 +273,7 @@ export class PersistenceManager {
   /**
    * Load the latest snapshot for a match.
    */
-  async loadLatestSnapshot(matchID: string): Promise<MatchState<unknown> | null> {
+  async loadLatestSnapshot(matchID: string): Promise<MatchState | null> {
     const snapshot = await this.adapter.getLatestSnapshot(matchID);
     return snapshot?.state || null;
   }

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { painImpudentImpI18n } from "./061-pain-impudent-imp.i18n";
 
 export const painImpudentImp: CharacterCard = {
   id: "V8w",
@@ -7,24 +8,6 @@ export const painImpudentImp: CharacterCard = {
   cardType: "character",
   name: "Pain",
   version: "Impudent Imp",
-  i18n: {
-    en: {
-      name: "Pain",
-      version: "Impudent Imp",
-    },
-    de: {
-      name: "Pech",
-      version: "Unverschämter Wicht",
-    },
-    fr: {
-      name: "Peine",
-      version: "Diablotin impudent",
-    },
-    it: {
-      name: "Pena",
-      version: "Diavoletto Impudente",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Hercules",
   set: "007",
@@ -41,4 +24,5 @@ export const painImpudentImp: CharacterCard = {
     tcgPlayer: 619439,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: painImpudentImpI18n,
 };

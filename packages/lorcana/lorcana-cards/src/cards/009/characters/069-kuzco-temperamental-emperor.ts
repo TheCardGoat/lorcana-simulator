@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kuzcoTemperamentalEmperorI18n } from "./069-kuzco-temperamental-emperor.i18n";
 
 export const kuzcoTemperamentalEmperor: CharacterCard = {
   id: "0lp",
@@ -7,55 +8,6 @@ export const kuzcoTemperamentalEmperor: CharacterCard = {
   cardType: "character",
   name: "Kuzco",
   version: "Temperamental Emperor",
-  i18n: {
-    en: {
-      name: "Kuzco",
-      version: "Temperamental Emperor",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "NO TOUCHY!",
-          description:
-            "When this character is challenged and banished, you may banish the challenging character.",
-        },
-      ],
-    },
-    de: {
-      name: "Kuzco",
-      version: "Temperamental Emperor",
-      text: [
-        {
-          title: "Ward",
-          description:
-            "(Opponents can't choose this character except to challenge.) NO TOUCHY! When this character is challenged and banished, you may banish the challenging character.",
-        },
-      ],
-    },
-    fr: {
-      name: "Kuzco",
-      version: "Temperamental Emperor",
-      text: [
-        {
-          title: "Ward",
-          description:
-            "(Opponents can't choose this character except to challenge.) NO TOUCHY! When this character is challenged and banished, you may banish the challenging character.",
-        },
-      ],
-    },
-    it: {
-      name: "Kuzco",
-      version: "Temperamental Emperor",
-      text: [
-        {
-          title: "Ward",
-          description:
-            "(Opponents can't choose this character except to challenge.) NO TOUCHY! When this character is challenged and banished, you may banish the challenging character.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Emperors New Groove",
   set: "009",
@@ -111,4 +63,5 @@ export const kuzcoTemperamentalEmperor: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: kuzcoTemperamentalEmperorI18n,
 };

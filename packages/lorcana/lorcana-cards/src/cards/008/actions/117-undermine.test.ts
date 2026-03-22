@@ -1,5 +1,4 @@
 import { describe, expect, it } from "bun:test";
-import type { CardInstanceId } from "@tcg/lorcana-engine";
 import { LorcanaMultiplayerTestEngine, PLAYER_TWO } from "@tcg/lorcana-engine/testing";
 import { mickeyMouseTrueFriend, simbaProtectiveCub } from "../../001";
 import { undermine } from "./117-undermine";
@@ -19,11 +18,7 @@ describe("Undermine", () => {
     const discardId = testEngine.findCardInstanceId(mickeyMouseTrueFriend, "hand", PLAYER_TWO);
     const simbaId = testEngine.findCardInstanceId(simbaProtectiveCub, "play", "p1");
 
-    expect(
-      testEngine.asPlayerOne().playCard(undermine, {
-        targets: [PLAYER_TWO as unknown as CardInstanceId, simbaId],
-      }).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().playCardForPlayer(undermine, PLAYER_TWO).success).toBe(true);
     expect(testEngine.asPlayerTwo().respondWith(discardId)).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [simbaId] }),

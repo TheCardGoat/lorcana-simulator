@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { everAsBeforeI18n } from "./162-ever-as-before.i18n";
 
 export const everAsBefore: ActionCard = {
   id: "DPw",
@@ -6,24 +7,6 @@ export const everAsBefore: ActionCard = {
   reprints: ["set5-162"],
   cardType: "action",
   name: "Ever as Before",
-  i18n: {
-    en: {
-      name: "Ever as Before",
-      text: "Remove up to 2 damage from any number of chosen characters.",
-    },
-    de: {
-      name: "Ewig altbekannt",
-      text: "Entferne bis zu 2 Schaden von beliebig vielen Charakteren deiner Wahl.",
-    },
-    fr: {
-      name: "Rien n'est plus pareil",
-      text: "Choisissez autant de personnages que vous le souhaitez et retirez-leur jusqu'à 2 dommages chacun.",
-    },
-    it: {
-      name: "Stessa Melodia",
-      text: "(Un personaggio con costo 2 o superiore può per cantare questa canzone gratis.) Rimuovi fino a 2 danni da un qualsiasi numero di personaggi a tua scelta.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "005",
@@ -56,4 +39,5 @@ export const everAsBefore: ActionCard = {
       type: "action",
     },
   ],
+  i18n: everAsBeforeI18n,
 };

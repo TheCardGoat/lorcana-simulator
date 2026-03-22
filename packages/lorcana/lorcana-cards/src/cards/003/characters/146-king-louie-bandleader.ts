@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kingLouieBandleaderI18n } from "./146-king-louie-bandleader.i18n";
 
 export const kingLouieBandleader: CharacterCard = {
   id: "yXk",
@@ -7,24 +8,6 @@ export const kingLouieBandleader: CharacterCard = {
   cardType: "character",
   name: "King Louie",
   version: "Bandleader",
-  i18n: {
-    en: {
-      name: "King Louie",
-      version: "Bandleader",
-    },
-    de: {
-      name: "King Louie",
-      version: "Bandleader",
-    },
-    fr: {
-      name: "Roi Louie",
-      version: "Chef de bande",
-    },
-    it: {
-      name: "Re Luigi",
-      version: "Leader della Band",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Talespin",
   set: "003",
@@ -41,4 +24,5 @@ export const kingLouieBandleader: CharacterCard = {
     tcgPlayer: 538243,
   },
   classifications: ["Storyborn", "Ally", "King"],
+  i18n: kingLouieBandleaderI18n,
 };

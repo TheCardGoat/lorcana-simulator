@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { dragonGemI18n } from "./033-dragon-gem.i18n";
 
 export const dragonGem: ItemCard = {
   id: "1DR",
@@ -6,47 +7,6 @@ export const dragonGem: ItemCard = {
   reprints: ["set2-033"],
   cardType: "item",
   name: "Dragon Gem",
-  i18n: {
-    en: {
-      name: "Dragon Gem",
-      text: [
-        {
-          title: "BRING BACK TO LIFE",
-          description:
-            "{E}, 3 {I} — Return a character card with Support from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Drachenjuwel",
-      text: [
-        {
-          title: "WIEDERBELEBEN, 3",
-          description:
-            "— Nimm eine Charakterkarte mit der Fähigkeit Unterstützen aus deinem Ablagestapel zurück auf deine Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Pierre de Dragon",
-      text: [
-        {
-          title: "RAMENER",
-          description:
-            "À LA VIE, 3 — Reprenez en main un personnage avec Soutien de votre défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Dragon Gem",
-      text: [
-        {
-          title: "BRING BACK TO LIFE, 3",
-          description: "— Return a character card with Support from your discard to your hand.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Raya and the Last Dragon",
   set: "002",
@@ -86,4 +46,5 @@ export const dragonGem: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: dragonGemI18n,
 };

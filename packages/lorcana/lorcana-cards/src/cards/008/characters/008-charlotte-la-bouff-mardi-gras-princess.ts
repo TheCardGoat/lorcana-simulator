@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { charlotteLaBouffMardiGrasPrincessI18n } from "./008-charlotte-la-bouff-mardi-gras-princess.i18n";
 
 export const charlotteLaBouffMardiGrasPrincess: CharacterCard = {
   id: "M8z",
@@ -7,24 +8,6 @@ export const charlotteLaBouffMardiGrasPrincess: CharacterCard = {
   cardType: "character",
   name: "Charlotte La Bouff",
   version: "Mardi Gras Princess",
-  i18n: {
-    en: {
-      name: "Charlotte La Bouff",
-      version: "Mardi Gras Princess",
-    },
-    de: {
-      name: "Charlotte La Bouff",
-      version: "Prinzessin des Karnevals",
-    },
-    fr: {
-      name: "Charlotte Lebœuf",
-      version: "Princesse de Mardi gras",
-    },
-    it: {
-      name: "Charlotte La Bouff",
-      version: "Principessa del Martedì Grasso",
-    },
-  },
   inkType: ["amber"],
   franchise: "Princess and the Frog",
   set: "008",
@@ -41,4 +24,5 @@ export const charlotteLaBouffMardiGrasPrincess: CharacterCard = {
     tcgPlayer: 631693,
   },
   classifications: ["Storyborn", "Ally", "Princess"],
+  i18n: charlotteLaBouffMardiGrasPrincessI18n,
 };

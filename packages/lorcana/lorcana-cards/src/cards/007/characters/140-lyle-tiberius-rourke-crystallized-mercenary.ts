@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lyleTiberiusRourkeCrystallizedMercenaryI18n } from "./140-lyle-tiberius-rourke-crystallized-mercenary.i18n";
 
 export const lyleTiberiusRourkeCrystallizedMercenary: CharacterCard = {
   id: "AnC",
@@ -7,52 +8,6 @@ export const lyleTiberiusRourkeCrystallizedMercenary: CharacterCard = {
   cardType: "character",
   name: "Lyle Tiberius Rourke",
   version: "Crystallized Mercenary",
-  i18n: {
-    en: {
-      name: "Lyle Tiberius Rourke",
-      version: "Crystallized Mercenary",
-      text: [
-        {
-          title: "EXPLOSIVE",
-          description:
-            "Once during your turn, whenever a card is put into your inkwell, deal 2 damage to each character in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Lyle Tiberius Rourke",
-      version: "Kristallisierter Söldner",
-      text: [
-        {
-          title: "EXPLOSIV",
-          description:
-            "Einmal während deines Zuges, wenn eine Karte in deinen Tintenvorrat gelegt wird, füge jedem Charakter 2 Schaden zu.",
-        },
-      ],
-    },
-    fr: {
-      name: "Lyle Tiberius Rourke",
-      version: "Mercenaire cristallisé",
-      text: [
-        {
-          title: "EXPLOSIF",
-          description:
-            "Une seule fois durant votre tour, lorsqu'une carte est placée dans votre réserve d'encre, infligez 2 dommages à chaque personnage en jeu.",
-        },
-      ],
-    },
-    it: {
-      name: "Lyle Tiberius Rourke",
-      version: "Mercenario Cristallizzato",
-      text: [
-        {
-          title: "ESPLOSIVO",
-          description:
-            "Una volta durante il tuo turno, ogni volta che una carta viene aggiunta al tuo calamaio, infliggi 2 danni a ogni personaggio in gioco.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Atlantis",
   set: "007",
@@ -89,14 +44,16 @@ export const lyleTiberiusRourkeCrystallizedMercenary: CharacterCard = {
         type: "deal-damage",
       },
       id: "1ug-1",
-      name: "EXPLOSIVE Once",
+      name: "EXPLOSIVE",
       text: "EXPLOSIVE Once during your turn, whenever a card is put into your inkwell, deal 2 damage to each character in play.",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "ink",
+        on: "CONTROLLER",
+        timing: "whenever",
+        restrictions: [{ type: "once-per-turn" }, { type: "during-turn", whose: "your" }],
       },
       type: "triggered",
     },
   ],
+  i18n: lyleTiberiusRourkeCrystallizedMercenaryI18n,
 };

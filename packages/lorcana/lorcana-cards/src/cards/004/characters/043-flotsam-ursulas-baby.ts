@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flotsamUrsulasBabyI18n } from "./043-flotsam-ursulas-baby.i18n";
 
 export const flotsamUrsulasBaby: CharacterCard = {
   id: "8TS",
@@ -7,71 +8,6 @@ export const flotsamUrsulasBaby: CharacterCard = {
   cardType: "character",
   name: "Flotsam",
   version: 'Ursula\'s "Baby"',
-  i18n: {
-    en: {
-      name: "Flotsam",
-      version: 'Ursula\'s "Baby"',
-      text: [
-        {
-          title: "QUICK ESCAPE",
-          description:
-            "When this character is banished in a challenge, return this card to your hand.",
-        },
-        {
-          title: "OMINOUS PAIR",
-          description:
-            'Your characters named Jetsam gain "When this character is banished in a challenge, return this card to your hand."',
-        },
-      ],
-    },
-    de: {
-      name: "Abschaum",
-      version: 'Ursulas "Baby"',
-      text: [
-        {
-          title: "SCHNELLE FLUCHT",
-          description:
-            "Wenn dieser Charakter durch eine Herausforderung verbannt wird, nimm ihn zurück auf deine Hand.",
-        },
-        {
-          title: "UNHEIMLICHES DUO",
-          description:
-            'Deine Meerschaum-Charaktere erhalten "Wenn dieser Charakter durch eine Herausforderung verbannt wird, nimm ihn zurück auf deine Hand".',
-        },
-      ],
-    },
-    fr: {
-      name: "Flotsam",
-      version: '"Bébé" d\'Ursula',
-      text: [
-        {
-          title: "FUITE RAPIDE",
-          description: "Lorsque ce personnage est banni via un défi, renvoyez-le dans votre main.",
-        },
-        {
-          title: "DUO INQUIÉTANT",
-          description:
-            'Vos personnages Jetsam gagnent "Lorsque ce personnage est banni via un défi, renvoyez cette carte dans votre main".',
-        },
-      ],
-    },
-    it: {
-      name: "Flotsam",
-      version: "“Piccino” di Ursula",
-      text: [
-        {
-          title: "FUGA RAPIDA",
-          description:
-            "Quando questo personaggio viene esiliato in una sfida, riprendi in mano questa carta.",
-        },
-        {
-          title: "COPPIA SINISTRA I",
-          description:
-            'tuoi personaggi chiamati Jetsam ottengono "Quando questo personaggio viene esiliato in una sfida, riprendi in mano questa carta."',
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Little Mermaid",
   set: "004",
@@ -100,28 +36,55 @@ export const flotsamUrsulasBaby: CharacterCard = {
   classifications: ["Dreamborn", "Ally"],
   abilities: [
     {
-      effect: {
-        target: "SELF",
-        type: "return-to-hand",
-      },
       id: "1e2-1",
       name: "QUICK ESCAPE",
       text: "QUICK ESCAPE When this character is banished in a challenge, return this card to your hand.",
+      type: "triggered",
+      sourceZones: ["play", "discard"],
       trigger: {
         event: "banish",
         on: "SELF",
+        restrictions: [
+          {
+            type: "in-challenge",
+          },
+        ],
         timing: "when",
       },
-      type: "triggered",
-    },
-    {
       effect: {
-        target: "SELF",
+        target: {
+          ref: "self",
+        },
         type: "return-to-hand",
       },
+    },
+    {
       id: "1e2-2",
-      text: "OMINOUS PAIR Your characters named Jetsam gain “When this character is banished in a challenge, return this card to your hand.”",
-      type: "action",
+      name: "OMINOUS PAIR",
+      text: 'OMINOUS PAIR Your characters named Jetsam gain "When this character is banished in a challenge, return this card to your hand."',
+      type: "triggered",
+      trigger: {
+        event: "banish",
+        on: {
+          controller: "you",
+          cardType: "character",
+          name: "Jetsam",
+          excludeSelf: true,
+        },
+        restrictions: [
+          {
+            type: "in-challenge",
+          },
+        ],
+        timing: "when",
+      },
+      effect: {
+        target: {
+          ref: "trigger-subject",
+        },
+        type: "return-to-hand",
+      },
     },
   ],
+  i18n: flotsamUrsulasBabyI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { violetSabrewingSeniorJuniorWoodchuckI18n } from "./044-violet-sabrewing-senior-junior-woodchuck.i18n";
 
 export const violetSabrewingSeniorJuniorWoodchuck: CharacterCard = {
   id: "erF",
@@ -7,28 +8,6 @@ export const violetSabrewingSeniorJuniorWoodchuck: CharacterCard = {
   cardType: "character",
   name: "Violet Sabrewing",
   version: "Senior Junior Woodchuck",
-  i18n: {
-    en: {
-      name: "Violet Sabrewing",
-      version: "Senior Junior Woodchuck",
-      text: "Evasive",
-    },
-    de: {
-      name: "Violetta Degenflügel",
-      version: "Senior-Junior-Fieselschweifling",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Violette Campyloptère",
-      version: "Castor junior senior",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Violet Sabrewing",
-      version: "Giovane Marmotta Senior",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Ducktales",
   set: "010",
@@ -53,4 +32,5 @@ export const violetSabrewingSeniorJuniorWoodchuck: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: violetSabrewingSeniorJuniorWoodchuckI18n,
 };

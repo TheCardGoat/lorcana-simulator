@@ -23,20 +23,8 @@
     const viaScaleY = animation.viaRect
       ? animation.viaRect.height / Math.max(animation.sourceRect.height, 1)
       : scaleY;
-
-    console.log("[BoardAnimationLayer] Rendering board animation style", {
-      id: animation.id,
-      variant: animation.variant,
-      sourceRect: animation.sourceRect,
-      destinationRect: animation.destinationRect,
-      viaRect: animation.viaRect ?? null,
-      dx,
-      dy,
-      scaleX,
-      scaleY,
-      viaDx,
-      viaDy,
-    });
+    // Use uniform scale at via-point to prevent card distortion
+    const viaScale = Math.min(viaScaleX, viaScaleY);
 
     return [
       `left:${animation.sourceRect.x}px`,
@@ -51,13 +39,16 @@
       `--board-animation-mid-dy:${viaDy}px`,
       `--board-animation-mid-scale-x:${viaScaleX}`,
       `--board-animation-mid-scale-y:${viaScaleY}`,
+      `--board-animation-mid-scale:${viaScale}`,
       `--board-animation-duration:${animation.durationMs}ms`,
     ].join(";");
   }
 
   function getImpactStyle(animation: ResolvedBoardMoveAnimation): string {
     const rect = animation.impactRect;
-    const size = Math.max(rect.width, rect.height) * 1.45;
+    const isPlay = animation.variant.startsWith("play-") && animation.variant !== "play-action-preview";
+    const sizeMultiplier = isPlay ? 1.8 : 1.45;
+    const size = Math.max(rect.width, rect.height) * sizeMultiplier;
     return [
       `left:${rect.centerX - size / 2}px`,
       `top:${rect.centerY - size / 2}px`,
@@ -68,9 +59,7 @@
   }
 
   function getAnimationImageFormat(animation: ResolvedBoardMoveAnimation): "art_and_name" | "full" {
-    return animation.variant === "play-action" || animation.destinationZoneId === "inkwell"
-      ? "art_and_name"
-      : "full";
+    return animation.destinationZoneId === "inkwell" ? "art_and_name" : "full";
   }
 </script>
 
@@ -79,7 +68,8 @@
     <div
       class="board-animation-impact"
       class:board-animation-impact--ink={animation.variant === "ink-faceDown" || animation.variant === "ink-faceUp"}
-      class:board-animation-impact--play={animation.variant !== "ink-faceDown" && animation.variant !== "ink-faceUp"}
+      class:board-animation-impact--move-to-location={animation.variant === "move-to-location"}
+      class:board-animation-impact--play={animation.variant !== "ink-faceDown" && animation.variant !== "ink-faceUp" && animation.variant !== "move-to-location"}
       style={getImpactStyle(animation)}
     ></div>
 
@@ -91,6 +81,7 @@
       class:board-animation-actor--play-item={animation.variant === "play-item"}
       class:board-animation-actor--play-location={animation.variant === "play-location"}
       class:board-animation-actor--play-action={animation.variant === "play-action"}
+      class:board-animation-actor--move-to-location={animation.variant === "move-to-location"}
       class:board-animation-actor--play-action-preview={animation.variant === "play-action-preview"}
       style={getAnimationStyle(animation)}
     >
@@ -160,6 +151,11 @@
     animation-timing-function: cubic-bezier(0.18, 0.84, 0.2, 1);
   }
 
+  .board-animation-actor--move-to-location {
+    animation-name: board-animation-move-to-location;
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
   .board-animation-actor--play-action-preview {
     animation-name: board-animation-play-action-preview;
     animation-timing-function: cubic-bezier(0.22, 0.82, 0.18, 1);
@@ -178,6 +174,14 @@
     box-shadow:
       0 0 22px rgba(145, 104, 255, 0.28),
       inset 0 0 18px rgba(196, 181, 253, 0.18);
+  }
+
+  .board-animation-impact--move-to-location {
+    background:
+      radial-gradient(circle, rgba(255, 200, 80, 0.26) 0%, rgba(255, 200, 80, 0.1) 40%, transparent 76%);
+    box-shadow:
+      0 0 24px rgba(255, 200, 80, 0.24),
+      inset 0 0 22px rgba(255, 230, 150, 0.12);
   }
 
   .board-animation-impact--play {
@@ -217,19 +221,26 @@
 
   @keyframes board-animation-play-character {
     0% {
-      opacity: 0.12;
+      opacity: 0;
       transform: translate(0px, 0px) scale(1) rotate(-6deg);
     }
-    20% {
+    15% {
       opacity: 1;
     }
-    54% {
-      transform: translate(
-          calc(var(--board-animation-dx) * 0.56),
-          calc(var(--board-animation-dy) * 0.56 - 72px)
-        )
-        scale(1.08)
-        rotate(2deg);
+    35% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        scale(var(--board-animation-mid-scale))
+        rotate(0deg);
+    }
+    55% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        scale(calc(var(--board-animation-mid-scale) * 1.02))
+        rotate(0deg);
+    }
+    70% {
+      opacity: 1;
     }
     100% {
       opacity: 0.98;
@@ -241,19 +252,26 @@
 
   @keyframes board-animation-play-item {
     0% {
-      opacity: 0.12;
+      opacity: 0;
       transform: translate(0px, 0px) scale(1) rotate(-4deg);
     }
-    24% {
+    15% {
       opacity: 1;
     }
-    64% {
-      transform: translate(
-          calc(var(--board-animation-dx) * 0.76),
-          calc(var(--board-animation-dy) * 0.76 - 28px)
-        )
-        scale(1.03)
-        rotate(4deg);
+    35% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        scale(var(--board-animation-mid-scale))
+        rotate(0deg);
+    }
+    55% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        scale(calc(var(--board-animation-mid-scale) * 1.02))
+        rotate(0deg);
+    }
+    70% {
+      opacity: 1;
     }
     100% {
       opacity: 0.98;
@@ -265,19 +283,26 @@
 
   @keyframes board-animation-play-location {
     0% {
-      opacity: 0.12;
+      opacity: 0;
       transform: translate(0px, 0px) scale(1) rotate(-3deg);
     }
-    28% {
+    15% {
       opacity: 1;
     }
+    35% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        scale(var(--board-animation-mid-scale))
+        rotate(0deg);
+    }
+    55% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        scale(calc(var(--board-animation-mid-scale) * 1.02))
+        rotate(0deg);
+    }
     70% {
-      transform: translate(
-          calc(var(--board-animation-dx) * 0.7),
-          calc(var(--board-animation-dy) * 0.7 - 18px)
-        )
-        scale(1.02)
-        rotate(1deg);
+      opacity: 1;
     }
     100% {
       opacity: 0.98;
@@ -289,24 +314,32 @@
 
   @keyframes board-animation-play-action {
     0% {
-      opacity: 0.12;
+      opacity: 0;
       transform: translate(0px, 0px) scale(1) rotate(-6deg);
     }
-    34% {
+    15% {
+      opacity: 1;
+    }
+    30% {
       opacity: 1;
       transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
-        scale(var(--board-animation-mid-scale-x), var(--board-animation-mid-scale-y))
+        scale(var(--board-animation-mid-scale))
         rotate(0deg);
     }
-    54% {
+    55% {
       opacity: 1;
       transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
-        scale(calc(var(--board-animation-mid-scale-x) * 1.08), calc(var(--board-animation-mid-scale-y) * 1.08));
+        scale(calc(var(--board-animation-mid-scale) * 1.02))
+        rotate(0deg);
+    }
+    75% {
+      opacity: 0.95;
     }
     100% {
-      opacity: 0.92;
+      opacity: 0;
       transform: translate(var(--board-animation-dx), var(--board-animation-dy))
-        scale(var(--board-animation-scale-x), var(--board-animation-scale-y)) rotate(3deg);
+        scale(var(--board-animation-scale-x), var(--board-animation-scale-y))
+        rotate(3deg);
     }
   }
 
@@ -320,16 +353,36 @@
     }
     32% {
       opacity: 1;
-      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy)) scale(calc(var(--board-animation-mid-scale-x) * 1.04), calc(var(--board-animation-mid-scale-y) * 1.04)) rotate(0deg);
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy)) scale(calc(var(--board-animation-mid-scale) * 1.04)) rotate(0deg);
     }
     74% {
       opacity: 1;
-      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy)) scale(calc(var(--board-animation-mid-scale-x) * 1.12), calc(var(--board-animation-mid-scale-y) * 1.12)) rotate(0deg);
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy)) scale(calc(var(--board-animation-mid-scale) * 1.12)) rotate(0deg);
     }
     100% {
       opacity: 0;
-      transform: translate(var(--board-animation-mid-dx), calc(var(--board-animation-mid-dy) - 28px)) scale(calc(var(--board-animation-mid-scale-x) * 0.82), calc(var(--board-animation-mid-scale-y) * 0.82))
+      transform: translate(var(--board-animation-mid-dx), calc(var(--board-animation-mid-dy) - 28px)) scale(calc(var(--board-animation-mid-scale) * 0.82))
         rotate(3deg);
+    }
+  }
+
+  @keyframes board-animation-move-to-location {
+    0% {
+      opacity: 1;
+      transform: translate(0px, 0px) scale(1);
+    }
+    40% {
+      opacity: 1;
+      transform: translate(
+          calc(var(--board-animation-dx) * 0.5),
+          calc(var(--board-animation-dy) * 0.5 - 18px)
+        )
+        scale(1.03);
+    }
+    100% {
+      opacity: 0.96;
+      transform: translate(var(--board-animation-dx), var(--board-animation-dy))
+        scale(var(--board-animation-scale-x), var(--board-animation-scale-y));
     }
   }
 

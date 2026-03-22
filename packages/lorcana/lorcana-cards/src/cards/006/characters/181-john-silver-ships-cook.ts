@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { johnSilverShipsCookI18n } from "./181-john-silver-ships-cook.i18n";
 
 export const johnSilverShipsCook: CharacterCard = {
   id: "d07",
@@ -7,52 +8,6 @@ export const johnSilverShipsCook: CharacterCard = {
   cardType: "character",
   name: "John Silver",
   version: "Ship's Cook",
-  i18n: {
-    en: {
-      name: "John Silver",
-      version: "Ship's Cook",
-      text: [
-        {
-          title: "HUNK OF HARDWARE",
-          description:
-            "When you play this character, chosen character can't challenge during their next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "John Silver",
-      version: "Schiffskoch",
-      text: [
-        {
-          title: "EIN EISENWARENLADEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, wähle einen Charakter. Er kann in seinem nächsten Zug nicht herausfordern.",
-        },
-      ],
-    },
-    fr: {
-      name: "John Silver",
-      version: "Maître-coq du vaisseau",
-      text: [
-        {
-          title: "BELLE QUINCAILLERIE",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage qui ne peut pas défier lors de son prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "John Silver",
-      version: "Cuoco di Bordo",
-      text: [
-        {
-          title: "STRANA FERRAGLIA",
-          description:
-            "Quando giochi questo personaggio, un personaggio a tua scelta non può sfidare durante il suo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Treasure Planet",
   set: "006",
@@ -78,8 +33,9 @@ export const johnSilverShipsCook: CharacterCard = {
   abilities: [
     {
       effect: {
+        duration: "their-next-turn",
         restriction: "cant-challenge",
-        target: "SELF",
+        target: "CHOSEN_CHARACTER",
         type: "restriction",
       },
       id: "1r7-1",
@@ -93,4 +49,5 @@ export const johnSilverShipsCook: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: johnSilverShipsCookI18n,
 };

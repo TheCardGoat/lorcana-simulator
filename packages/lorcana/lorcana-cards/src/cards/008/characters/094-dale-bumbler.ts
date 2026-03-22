@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daleBumblerI18n } from "./094-dale-bumbler.i18n";
 
 export const daleBumbler: CharacterCard = {
   id: "WWj",
@@ -7,24 +8,6 @@ export const daleBumbler: CharacterCard = {
   cardType: "character",
   name: "Dale",
   version: "Bumbler",
-  i18n: {
-    en: {
-      name: "Dale",
-      version: "Bumbler",
-    },
-    de: {
-      name: "Chap",
-      version: "Tollpatsch",
-    },
-    fr: {
-      name: "Tac",
-      version: "Empoté",
-    },
-    it: {
-      name: "Ciop",
-      version: "Pasticcione",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Rescue Rangers",
   set: "008",
@@ -41,4 +24,5 @@ export const daleBumbler: CharacterCard = {
     tcgPlayer: 631347,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: daleBumblerI18n,
 };

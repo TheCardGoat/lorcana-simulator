@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { elsasIcePalacePlaceOfSolitudeI18n } from "./067-elsas-ice-palace-place-of-solitude.i18n";
 
 export const elsasIcePalacePlaceOfSolitude: LocationCard = {
   id: "kvC",
@@ -7,52 +8,6 @@ export const elsasIcePalacePlaceOfSolitude: LocationCard = {
   cardType: "location",
   name: "Elsa's Ice Palace",
   version: "Place of Solitude",
-  i18n: {
-    en: {
-      name: "Elsa's Ice Palace",
-      version: "Place of Solitude",
-      text: [
-        {
-          title: "ETERNAL WINTER",
-          description:
-            "When you play this location, choose an exerted character. While this location is in play, that character can't ready at the start of their turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Elsa's Ice Palace",
-      version: "Place of Solitude",
-      text: [
-        {
-          title: "ETERNAL WINTER",
-          description:
-            "When you play this location, choose an exerted character. While this location is in play, that character can't ready at the start of their turn.",
-        },
-      ],
-    },
-    fr: {
-      name: "Elsa's Ice Palace",
-      version: "Place of Solitude",
-      text: [
-        {
-          title: "ETERNAL WINTER",
-          description:
-            "When you play this location, choose an exerted character. While this location is in play, that character can't ready at the start of their turn.",
-        },
-      ],
-    },
-    it: {
-      name: "Elsa's Ice Palace",
-      version: "Place of Solitude",
-      text: [
-        {
-          title: "ETERNAL WINTER",
-          description:
-            "When you play this location, choose an exerted character. While this location is in play, that character can't ready at the start of their turn.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "005",
@@ -105,4 +60,5 @@ export const elsasIcePalacePlaceOfSolitude: LocationCard = {
       type: "triggered",
     },
   ],
+  i18n: elsasIcePalacePlaceOfSolitudeI18n,
 };

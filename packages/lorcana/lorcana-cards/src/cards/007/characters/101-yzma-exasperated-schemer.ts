@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yzmaExasperatedSchemerI18n } from "./101-yzma-exasperated-schemer.i18n";
 
 export const yzmaExasperatedSchemer: CharacterCard = {
   id: "yjH",
@@ -7,52 +8,6 @@ export const yzmaExasperatedSchemer: CharacterCard = {
   cardType: "character",
   name: "Yzma",
   version: "Exasperated Schemer",
-  i18n: {
-    en: {
-      name: "Yzma",
-      version: "Exasperated Schemer",
-      text: [
-        {
-          title: "HOW SHALL I DO IT?",
-          description:
-            "When you play this character, you may draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Isma",
-      version: "Verärgerte Intrigantin",
-      text: [
-        {
-          title: "WIE SOLL ICH ES TUN?",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du 1 Karte ziehen. Wähle danach 1 Karte aus deiner Hand und wirf sie ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "Yzma",
-      version: "Conspiratrice à cran",
-      text: [
-        {
-          title: "OOOH, COMMENT PROCÉDER?",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez piocher une carte puis en défausser une.",
-        },
-      ],
-    },
-    it: {
-      name: "Yzma",
-      version: "Cospiratrice Esasperata",
-      text: [
-        {
-          title: "COME POSSO FARE?",
-          description:
-            "Quando giochi questo personaggio, puoi pescare una carta, poi scegliere e scartare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Emperors New Groove",
   set: "007",
@@ -69,9 +24,9 @@ export const yzmaExasperatedSchemer: CharacterCard = {
   },
   text: [
     {
-      title: "HOW SHALL I DO IT?",
+      title: "HOW SHALL",
       description:
-        "When you play this character, you may draw a card, then choose and discard a card.",
+        "I DO IT? When you play this character, you may draw a card, then choose and discard a card.",
     },
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer"],
@@ -79,13 +34,24 @@ export const yzmaExasperatedSchemer: CharacterCard = {
     {
       effect: {
         chooser: "CONTROLLER",
-        effect: {
-          amount: 1,
-          chosen: true,
-          target: "CONTROLLER",
-          type: "discard",
-        },
         type: "optional",
+        effect: {
+          type: "sequence",
+          steps: [
+            {
+              amount: 1,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+            {
+              amount: 1,
+              chosen: true,
+              from: "hand",
+              target: "CONTROLLER",
+              type: "discard",
+            },
+          ],
+        },
       },
       id: "5wn-1",
       name: "HOW SHALL I DO IT?",
@@ -98,4 +64,5 @@ export const yzmaExasperatedSchemer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: yzmaExasperatedSchemerI18n,
 };

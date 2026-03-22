@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madamMimUpToNoGoodI18n } from "./059-madam-mim-up-to-no-good.i18n";
 
 export const madamMimUpToNoGood: CharacterCard = {
   id: "EKX",
@@ -7,24 +8,6 @@ export const madamMimUpToNoGood: CharacterCard = {
   cardType: "character",
   name: "Madam Mim",
   version: "Up to No Good",
-  i18n: {
-    en: {
-      name: "Madam Mim",
-      version: "Up to No Good",
-    },
-    de: {
-      name: "Madame Mim",
-      version: "Böses im Sinn",
-    },
-    fr: {
-      name: "Madame Mime",
-      version: "Mijotant un mauvais coup",
-    },
-    it: {
-      name: "Maga Magò",
-      version: "Con Cattive Intenzioni",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "008",
@@ -41,4 +24,5 @@ export const madamMimUpToNoGood: CharacterCard = {
     tcgPlayer: 631390,
   },
   classifications: ["Storyborn", "Villain", "Sorcerer"],
+  i18n: madamMimUpToNoGoodI18n,
 };

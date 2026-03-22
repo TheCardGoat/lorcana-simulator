@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princeNaveenCarefreeExplorerI18n } from "./010-prince-naveen-carefree-explorer.i18n";
 
 export const princeNaveenCarefreeExplorer: CharacterCard = {
   id: "dBs",
@@ -7,24 +8,6 @@ export const princeNaveenCarefreeExplorer: CharacterCard = {
   cardType: "character",
   name: "Prince Naveen",
   version: "Carefree Explorer",
-  i18n: {
-    en: {
-      name: "Prince Naveen",
-      version: "Carefree Explorer",
-    },
-    de: {
-      name: "Prinz Naveen",
-      version: "Sorgloser Entdecker",
-    },
-    fr: {
-      name: "Prince Naveen",
-      version: "Explorateur désinvolte",
-    },
-    it: {
-      name: "Principe Naveen",
-      version: "Esploratore Scanzonato",
-    },
-  },
   inkType: ["amber"],
   franchise: "Princess and the Frog",
   set: "006",
@@ -41,4 +24,5 @@ export const princeNaveenCarefreeExplorer: CharacterCard = {
     tcgPlayer: 593038,
   },
   classifications: ["Storyborn", "Hero", "Prince"],
+  i18n: princeNaveenCarefreeExplorerI18n,
 };

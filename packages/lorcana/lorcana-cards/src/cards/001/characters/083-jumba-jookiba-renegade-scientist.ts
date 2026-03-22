@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jumbaJookibaRenegadeScientistI18n } from "./083-jumba-jookiba-renegade-scientist.i18n";
 
 export const jumbaJookibaRenegadeScientist: CharacterCard = {
   id: "JMC",
@@ -7,24 +8,6 @@ export const jumbaJookibaRenegadeScientist: CharacterCard = {
   cardType: "character",
   name: "Jumba Jookiba",
   version: "Renegade Scientist",
-  i18n: {
-    en: {
-      name: "Jumba Jookiba",
-      version: "Renegade Scientist",
-    },
-    de: {
-      name: "Jamba Jookiba",
-      version: "Abtrünniger Wissenschaftler",
-    },
-    fr: {
-      name: "JUMBA JOOKIBA",
-      version: "Scientifique dissident",
-    },
-    it: {
-      name: "Jumba Jookiba",
-      version: "Renegade Scientist",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lilo and Stitch",
   set: "001",
@@ -35,11 +18,11 @@ export const jumbaJookibaRenegadeScientist: CharacterCard = {
   willpower: 5,
   lore: 2,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_a1887fe9f3f74f7183a0a9bc44f57582",
     tcgPlayer: 485366,
   },
   classifications: ["Dreamborn", "Alien", "Inventor"],
+  i18n: jumbaJookibaRenegadeScientistI18n,
 };

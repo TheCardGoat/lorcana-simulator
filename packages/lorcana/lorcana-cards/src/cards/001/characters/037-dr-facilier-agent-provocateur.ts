@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { drFacilierAgentProvocateurI18n } from "./037-dr-facilier-agent-provocateur.i18n";
 
 export const drFacilierAgentProvocateur: CharacterCard = {
   id: "Af3",
@@ -7,57 +8,6 @@ export const drFacilierAgentProvocateur: CharacterCard = {
   cardType: "character",
   name: "Dr. Facilier",
   version: "Agent Provocateur",
-  i18n: {
-    en: {
-      name: "Dr. Facilier",
-      version: "Agent Provocateur",
-      text: [
-        {
-          title: "Shift 5",
-          description:
-            "(You may pay 5 {I} to play this on top of one of your characters named Dr. Facilier.)",
-        },
-        {
-          title: "INTO THE SHADOWS",
-          description:
-            "Whenever one of your other characters is banished in a challenge, you may return that card to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Dr. Facilier",
-      version: "Agent Provocateur",
-      text: [
-        {
-          title: "Gestaltwandel 5",
-          description:
-            "(Du kannst 5 zahlen, um diesen Charakter auf einen deiner Dr.-Facilier-Charaktere auszuspielen.)IM SCHATTENREICH Jedes Mal, wenn einer deiner anderen Charaktere durch eine Herausforderung verbannt wird, darfst du jene Karte zurück auf deine Hand nehmen.",
-        },
-      ],
-    },
-    fr: {
-      name: "DR. FACILIER",
-      version: "Agent provocateur",
-      text: [
-        {
-          title: "Alter 5",
-          description:
-            '(Vous pouvez payer 5 pour jouer ce personnage sur l\'un de vos personnages Dr. Facilier.) VERS LES OMBRES Vos autres personnages gagnent: "Lorsque ce personnage est banni via un défi, vous pouvez le reprendre en main."',
-        },
-      ],
-    },
-    it: {
-      name: "Dr. Facilier",
-      version: "Agent Provocateur",
-      text: [
-        {
-          title: "Shift 5",
-          description:
-            "(You may pay 5 to play this on top of one of your characters named Dr. Facilier.) INTO THE SHADOWS Whenever one of your other characters is banished in a challenge, you may return that card to your hand.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Princess and the Frog",
   set: "001",
@@ -68,8 +18,6 @@ export const drFacilierAgentProvocateur: CharacterCard = {
   willpower: 5,
   lore: 3,
   inkable: false,
-  missingImplementation: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_a23c8618b0aa41f9b41b9f0603495380",
     tcgPlayer: 508723,
@@ -89,23 +37,42 @@ export const drFacilierAgentProvocateur: CharacterCard = {
   classifications: ["Floodborn", "Villain", "Sorcerer"],
   abilities: [
     {
+      id: "Af3-1",
+      keyword: "Shift",
+      cost: {
+        ink: 5,
+      },
+      shiftTarget: "Dr. Facilier",
+      type: "keyword",
+      text: "**Shift 5** (You may pay 5 {I} to play this on top of one of your characters named Dr. Facilier.)",
+    },
+    {
+      id: "Af3-2",
+      name: "INTO THE SHADOWS",
+      type: "triggered",
+      sourceZones: ["play", "discard"],
+      text: "**INTO THE SHADOWS** Whenever one of your other characters is banished in a challenge, you may return that card to your hand.",
+      trigger: {
+        event: "banish",
+        on: "YOUR_OTHER_CHARACTERS",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "in-challenge",
+          },
+        ],
+      },
       effect: {
+        type: "optional",
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["card"],
-          },
           type: "return-to-hand",
+          target: {
+            ref: "trigger-source",
+          },
         },
-        type: "optional",
       },
-      id: "c3l-1",
-      text: "**SLEIGHT OF HAND** When you play this character, you may return target character to their player's hand.",
-      type: "action",
     },
   ],
+  i18n: drFacilierAgentProvocateurI18n,
 };

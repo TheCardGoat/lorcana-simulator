@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { walkThePlankI18n } from "./118-walk-the-plank.i18n";
 
 export const walkThePlank: ActionCard = {
   id: "m8D",
@@ -6,30 +7,6 @@ export const walkThePlank: ActionCard = {
   reprints: ["set8-118"],
   cardType: "action",
   name: "Walk the Plank!",
-  i18n: {
-    en: {
-      name: "Walk the Plank!",
-      text: 'Your Pirate characters gain "{E} — Banish chosen damaged character" this turn.',
-    },
-    de: {
-      name: "Über die Planke!",
-      text: 'Deine Piraten erhalten in diesem Zug: " — Verbanne einen beschädigten Charakter deiner Wahl."',
-    },
-    fr: {
-      name: "Sur la planche !",
-      text: 'Vos personnages Pirate gagnent " — Choisissez un personnage avec un dommage ou plus et bannissez-le." pour le reste de ce tour.',
-    },
-    it: {
-      name: "Sull'Asse!",
-      text: [
-        {
-          title: "I",
-          description:
-            'tuoi personaggi Pirata ottengono " — Esilia un personaggio danneggiato a tua scelta" per questo turno.',
-        },
-      ],
-    },
-  },
   inkType: ["emerald", "steel"],
   franchise: "Peter Pan",
   set: "008",
@@ -66,4 +43,5 @@ export const walkThePlank: ActionCard = {
       },
     },
   ],
+  i18n: walkThePlankI18n,
 };

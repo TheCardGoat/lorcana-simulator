@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { balooVonBruinwaldXiiiI18n } from "./001-baloo-von-bruinwald-xiii.i18n";
 
 export const balooVonBruinwaldXiii: CharacterCard = {
   id: "LOs",
@@ -7,42 +8,6 @@ export const balooVonBruinwaldXiii: CharacterCard = {
   cardType: "character",
   name: "Baloo",
   version: "von Bruinwald XIII",
-  i18n: {
-    en: {
-      name: "Baloo",
-      version: "von Bruinwald XIII",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "LET'S MAKE LIKE A TREE",
-          description: "When this character is banished, gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Balu",
-      version: "von Bruinwald XIII",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) AB DURCH DIE NASSE MITTE Wenn dieser Charakter verbannt wird, sammelst du 2 Legenden.",
-    },
-    fr: {
-      name: "Baloo",
-      version: "von Bruinwald XIII",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il vous défie, un personnage adverse doit, si possible, choisir l'un de vos personnages avec Rempart.) MOI, JE ME JETTE À L'EAU Lorsque ce personnage est banni, gagnez 2 éclats de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Baloo",
-      version: "Von Bruinwald XIII",
-      text: "Guardiano ALLONTANIAMOCI, SVELTI! Quando questo personaggio viene esiliato, ottieni 2 leggenda.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Talespin",
   set: "003",
@@ -62,12 +27,11 @@ export const balooVonBruinwaldXiii: CharacterCard = {
       title: "Bodyguard",
     },
     {
-      title: "LET'S MAKE LIKE A TREE",
-      description: "When this character is banished, gain 2 lore.",
+      title: "LET'S MAKE LIKE",
+      description: "A TREE When this character is banished, gain 2 lore.",
     },
   ],
   classifications: ["Dreamborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       id: "owv-1",
@@ -91,4 +55,5 @@ export const balooVonBruinwaldXiii: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: balooVonBruinwaldXiiiI18n,
 };

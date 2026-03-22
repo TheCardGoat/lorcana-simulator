@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { shenziScarsAccompliceI18n } from "./070-shenzi-scars-accomplice.i18n";
 
 export const shenziScarsAccomplice: CharacterCard = {
   id: "NoM",
@@ -7,36 +8,6 @@ export const shenziScarsAccomplice: CharacterCard = {
   cardType: "character",
   name: "Shenzi",
   version: "Scar's Accomplice",
-  i18n: {
-    en: {
-      name: "Shenzi",
-      version: "Scar's Accomplice",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "EASY PICKINGS",
-          description: "While challenging a damaged character, this character gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Shenzi",
-      version: "Scars Komplizin",
-      text: "Wendig LEICHTE BEUTE Solange dieser Charakter einen beschädigten Charakter herausfordert, erhält er +2.",
-    },
-    fr: {
-      name: "Shenzi",
-      version: "Complice de Scar",
-      text: "Insaisissable UN CASSE-CROÛTE FACILE Tant que ce personnage défie un personnage ayant au moins un dommage sur lui, il gagne +2.",
-    },
-    it: {
-      name: "Shenzi",
-      version: "Complice di Scar",
-      text: "Sfuggente PREDE FACILI Mentre sfida un personaggio danneggiato, questo personaggio riceve +2.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lion King",
   set: "005",
@@ -80,4 +51,5 @@ export const shenziScarsAccomplice: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: shenziScarsAccompliceI18n,
 };

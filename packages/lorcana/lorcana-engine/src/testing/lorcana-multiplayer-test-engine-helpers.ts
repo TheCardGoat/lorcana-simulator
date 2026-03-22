@@ -29,7 +29,7 @@ export type FixtureSeedBundle = {
     Omit<TestFixtureCardState, "card" | "cardsUnder"> & { cardsUnder?: string[] }
   >;
   staticResources: {
-    cards: ReturnType<typeof createRecordCardCatalog<LorcanaCard>>;
+    cards: ReturnType<typeof createRecordCardCatalog>;
     instances: ReturnType<typeof createRecordCardInstanceRegistry>;
     zoneDefinitions: Record<LorcanaZoneId, ZoneConfig>;
   };
@@ -63,9 +63,13 @@ export function normalizePlayerId(playerId: string): CanonicalPlayerId | undefin
   return undefined;
 }
 
-export function detectWinnerByLore(lore: LorcanaG["lore"]): string | undefined {
+export function detectWinnerByLore(
+  lore: LorcanaG["lore"],
+  loreToWin?: LorcanaG["loreToWin"],
+): string | undefined {
   for (const [playerId, amount] of Object.entries(lore)) {
-    if ((amount ?? 0) >= 20) {
+    const threshold = (loreToWin as Record<string, number> | undefined)?.[playerId] ?? 20;
+    if ((amount ?? 0) >= threshold) {
       return playerId;
     }
   }
@@ -192,7 +196,7 @@ export function buildFixtureSeedBundle(
     ownerByInstanceId,
     fixtureStateByInstanceId,
     staticResources: {
-      cards: createRecordCardCatalog<LorcanaCard>("lorcana:test-fixture", definitions),
+      cards: createRecordCardCatalog("lorcana:test-fixture", definitions),
       instances: createRecordCardInstanceRegistry("lorcana:test-fixture", records),
       zoneDefinitions: lorcanaRuntimeZones,
     },

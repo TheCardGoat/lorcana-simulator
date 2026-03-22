@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flotsamSlipperyAsAnEelI18n } from "./071-flotsam-slippery-as-an-eel.i18n";
 
 export const flotsamSlipperyAsAnEel: CharacterCard = {
   id: "gWd",
@@ -7,28 +8,6 @@ export const flotsamSlipperyAsAnEel: CharacterCard = {
   cardType: "character",
   name: "Flotsam",
   version: "Slippery as an Eel",
-  i18n: {
-    en: {
-      name: "Flotsam",
-      version: "Slippery as an Eel",
-      text: "Evasive",
-    },
-    de: {
-      name: "Abschaum",
-      version: "Glitschig wie ein Aal",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Flotsam",
-      version: "Se faufile comme une anguille",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Flotsam",
-      version: "Viscido Come un'Anguilla",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Little Mermaid",
   set: "010",
@@ -53,4 +32,5 @@ export const flotsamSlipperyAsAnEel: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: flotsamSlipperyAsAnEelI18n,
 };

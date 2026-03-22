@@ -5,6 +5,7 @@ import { createRecordCardCatalog, createRecordCardInstanceRegistry } from "./sta
 import { createInitialTCGCtx } from "./types";
 import type { MatchState } from "./types";
 import type { ZoneConfig } from "./match-runtime.types";
+import type { BaseCardDefinition } from "./card-contracts";
 
 // Minimal zone definitions for testing (avoids dependency on @tcg/lorcana-engine)
 const testZones: Record<string, ZoneConfig> = {
@@ -39,22 +40,22 @@ describe("card-runtime", () => {
     };
     ctx.zones.private.cardMeta.c000001 = { damage: 2, state: "ready" };
 
-    const state: MatchState<{ ok: true }> = {
+    const state = {
       G: { ok: true },
       ctx,
-    };
+    } as unknown as MatchState;
 
     const cards = createCardQueryAPI(
       state,
       {
         zoneDefinitions: testZones,
-        cards: createRecordCardCatalog<TestDef>("cards:test", {
+        cards: createRecordCardCatalog("cards:test", {
           alpha: {
             id: "alpha",
             canonicalId: "alpha",
             name: "Alpha Unit",
             cardType: "unit",
-          },
+          } as unknown as BaseCardDefinition,
         }),
         instances: createRecordCardInstanceRegistry("instances:test", {
           c000001: {
@@ -80,8 +81,8 @@ describe("card-runtime", () => {
     expect(card.controllerID).toBe("p1");
     expect(card.zoneID).toBe("deck");
     expect(card.meta.damage).toBe(2);
-    expect(card.isOwnedByP1()).toBe(true);
-    expect(card.getZoneOrUnknown()).toBe("deck");
+    expect((card as unknown as { isOwnedByP1: () => boolean }).isOwnedByP1()).toBe(true);
+    expect((card as unknown as { getZoneOrUnknown: () => string }).getZoneOrUnknown()).toBe("deck");
   });
 
   it("queryRuntime filters by owner and zones while preserving candidate order", () => {
@@ -142,18 +143,38 @@ describe("card-runtime", () => {
       controllerID: createPlayerId("p1"),
     };
 
-    const state: MatchState<{ ok: true }> = {
+    const state = {
       G: { ok: true },
       ctx,
-    };
+    } as unknown as MatchState;
 
     const staticResources = {
       zoneDefinitions: testZones,
-      cards: createRecordCardCatalog<TestDef>("cards:test", {
-        alpha: { id: "alpha", canonicalId: "alpha", name: "Alpha", cardType: "unit" },
-        beta: { id: "beta", canonicalId: "beta", name: "Beta", cardType: "unit" },
-        gamma: { id: "gamma", canonicalId: "gamma", name: "Gamma", cardType: "unit" },
-        delta: { id: "delta", canonicalId: "delta", name: "Delta", cardType: "unit" },
+      cards: createRecordCardCatalog("cards:test", {
+        alpha: {
+          id: "alpha",
+          canonicalId: "alpha",
+          name: "Alpha",
+          cardType: "unit",
+        } as unknown as BaseCardDefinition,
+        beta: {
+          id: "beta",
+          canonicalId: "beta",
+          name: "Beta",
+          cardType: "unit",
+        } as unknown as BaseCardDefinition,
+        gamma: {
+          id: "gamma",
+          canonicalId: "gamma",
+          name: "Gamma",
+          cardType: "unit",
+        } as unknown as BaseCardDefinition,
+        delta: {
+          id: "delta",
+          canonicalId: "delta",
+          name: "Delta",
+          cardType: "unit",
+        } as unknown as BaseCardDefinition,
       }),
       instances: createRecordCardInstanceRegistry("instances:test", {
         c1: { instanceId: "c1", definitionId: "alpha", ownerID: "p1" },
@@ -191,7 +212,8 @@ describe("card-runtime", () => {
 
     const projected = cards.queryRuntime(
       { owner: "you", zones: ["hand", "hand:p1"] },
-      (card) => `${card.instanceId}:${card.definitionId}:${card.isOwnedByActor()}`,
+      (card) =>
+        `${card.instanceId}:${card.definitionId}:${(card as unknown as { isOwnedByActor: () => boolean }).isOwnedByActor()}`,
     );
     expect(projected).toEqual(["c1:alpha:true", "c2:beta:true"]);
   });

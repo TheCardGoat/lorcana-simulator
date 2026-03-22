@@ -1,9 +1,19 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import type { AutomatedActionExecutionResult, CommandFailure } from "@tcg/lorcana-engine";
-import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import {
+  DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+  createAcceptedMoveRecord,
+  createEngineLogRecord,
+  type AutomatedActionTraceSink,
+  type AutomatedActionExecutionResult,
+  type CommandFailure,
+} from "@tcg/lorcana-engine";
+import type { PlayerId } from "@tcg/lorcana-types";
+import { LorcanaMultiplayerTestEngine, PLAYER_TWO } from "@tcg/lorcana-engine/testing";
 import { DECK_FIXTURES } from "../deck-fixtures/index.js";
 import {
   AutomatedMatchPlaybackController,
+  AutomatedMatchPlaybackReadModel,
+  createPersistedMoveLogEntries,
   type AutomatedMatchConfig,
   type AutomatedMatchPlaybackServer,
   type AutomatedMatchPlaybackSession,
@@ -13,9 +23,10 @@ function createConfig(): AutomatedMatchConfig {
   return {
     playerOneDeckText: DECK_FIXTURES[0]!.cards,
     playerTwoDeckText: DECK_FIXTURES[1]!.cards,
-    playerOneFixtureName: DECK_FIXTURES[0]!.name,
-    playerTwoFixtureName: DECK_FIXTURES[1]!.name,
-    strategyId: "default-lore-race",
+    playerOneFixtureId: DECK_FIXTURES[0]!.id,
+    playerTwoFixtureId: DECK_FIXTURES[1]!.id,
+    playerOneStrategyId: DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+    playerTwoStrategyId: "board-control-lore-race",
     seed: "ai-match:test",
   };
 }
@@ -83,6 +94,78 @@ describe("AutomatedMatchPlaybackController", () => {
     expect(controller.getReadModel().getMoveLog(20, "authoritative").length).toBeGreaterThan(0);
   });
 
+  it("rebuilds sidebar entries from persisted accepted moves and raw logs", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({ deck: 3 }, { deck: 3 });
+    disposables.push(engine);
+
+    expect(engine.asPlayerOne().passTurn().success).toBe(true);
+    expect(engine.asPlayerTwo().passTurn().success).toBe(true);
+    expect(engine.asPlayerOne().passTurn().success).toBe(true);
+
+    const server = engine.asServer();
+    const acceptedMoves = server.getMoveHistory().map((moveEntry, index) =>
+      createAcceptedMoveRecord({
+        actorId: String(moveEntry.playerId ?? ""),
+        gameId: "game-1",
+        moveEntry,
+        sourceAuthority: "server",
+        stateVersion: index + 1,
+      }),
+    );
+    const engineLogs = server.getGameLog().map((logEntry) =>
+      createEngineLogRecord({
+        gameId: "game-1",
+        logEntry,
+        sourceAuthority: "server",
+        stateVersion: acceptedMoves.at(-1)?.stateVersion ?? 0,
+      }),
+    );
+
+    const hydratedEntries = createPersistedMoveLogEntries({
+      acceptedMoves: acceptedMoves.slice(-2),
+      engineLogs,
+      resolveActorSide: (actorId) =>
+        actorId === "player_one" ? "playerOne" : actorId === "player_two" ? "playerTwo" : undefined,
+    });
+
+    expect(hydratedEntries).toHaveLength(2);
+    expect(hydratedEntries.map((entry) => entry.turnNumber)).toEqual([2, 3]);
+    expect(hydratedEntries.every((entry) => entry.title.length > 0)).toBe(true);
+    expect(
+      hydratedEntries[0]?.rawLogRegistry?.relatedLogEntries.some(
+        (entry) => entry.defaultMessage?.key === "move.executed",
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps hydrated synthetic entries ordered with live entries by turn", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({ deck: 3 }, { deck: 3 });
+    disposables.push(engine);
+
+    expect(engine.asPlayerOne().passTurn().success).toBe(true);
+    expect(engine.asPlayerTwo().passTurn().success).toBe(true);
+    expect(engine.asPlayerOne().passTurn().success).toBe(true);
+
+    const readModel = new AutomatedMatchPlaybackReadModel(engine);
+    const liveEntries = readModel.getMoveLog(10, "authoritative");
+    const turnSixEntry = liveEntries[liveEntries.length - 1];
+    const turnFiveEntry = liveEntries[liveEntries.length - 2];
+
+    if (!turnSixEntry || !turnFiveEntry) {
+      throw new Error("Expected live event log entries for ordering test.");
+    }
+
+    readModel.pushSyntheticMoveEntries([
+      { ...turnSixEntry, id: "synthetic-turn-6" },
+      { ...turnFiveEntry, id: "synthetic-turn-5" },
+    ]);
+
+    const mergedEntries = readModel.getMoveLog(20, "authoritative");
+    const mergedTurnNumbers = mergedEntries.map((entry) => entry.turnNumber);
+
+    expect(mergedTurnNumbers).toEqual([...mergedTurnNumbers].sort((left, right) => left - right));
+  });
+
   it("auto mode repeatedly advances until paused", async () => {
     const controller = new AutomatedMatchPlaybackController(createConfig());
     disposables.push(controller);
@@ -117,10 +200,15 @@ describe("AutomatedMatchPlaybackController", () => {
     let winner: typeof actorId | undefined;
 
     const fakeServer: AutomatedMatchPlaybackServer = {
+      concede: () => ({
+        success: true,
+      }),
       getActivePlayer: () => actorId,
       getCurrentPhase: () => "main",
       getCurrentStep: () => null,
+      getGameLog: () => [],
       getGameSegment: () => "mainGame",
+      getMoveHistory: () => [],
       getState: () => sampleServer.getState(),
       getStateID: () => sampleServer.getStateID() + stepCount,
       getTurnNumber: () => 1,
@@ -173,10 +261,15 @@ describe("AutomatedMatchPlaybackController", () => {
     const sampleStateId = sampleServer.getStateID();
 
     const fakeServer: AutomatedMatchPlaybackServer = {
-      getActivePlayer: () => undefined,
+      concede: () => ({
+        success: true,
+      }),
+      getActivePlayer: () => PLAYER_TWO,
       getCurrentPhase: () => "main",
       getCurrentStep: () => null,
+      getGameLog: () => [],
       getGameSegment: () => "mainGame",
+      getMoveHistory: () => [],
       getState: () => sampleState,
       getStateID: () => sampleStateId,
       getTurnNumber: () => 1,
@@ -226,5 +319,140 @@ describe("AutomatedMatchPlaybackController", () => {
     expect(controller.getActionCount()).toBe(0);
     expect(controller.getEngine().getStateID()).toBe(initialStateId);
     expect(controller.getSessionRevision()).toBe(1);
+  });
+
+  it("uses the acting player's configured strategy", () => {
+    const sampleEngine = LorcanaMultiplayerTestEngine.createWithFixture({ deck: 3 }, { deck: 3 });
+    disposables.push(sampleEngine);
+    const sampleServer = sampleEngine.asServer();
+    const successTemplate = sampleEngine.asPlayerOne().passTurn();
+    if (!successTemplate.success) {
+      throw new Error("Expected passTurn to succeed for the playback test.");
+    }
+
+    let usedStrategyName = "";
+    const fakeServer: AutomatedMatchPlaybackServer = {
+      concede: () => ({
+        success: true,
+      }),
+      getActivePlayer: () => PLAYER_TWO,
+      getCurrentPhase: () => "main",
+      getCurrentStep: () => null,
+      getGameLog: () => [],
+      getGameSegment: () => "mainGame",
+      getMoveHistory: () => [],
+      getState: () => sampleServer.getState(),
+      getStateID: () => sampleServer.getStateID(),
+      getTurnNumber: () => 1,
+      getWinner: () => undefined,
+      takeAutomatedActionForCurrentActor: (args: {
+        strategy: { name: string };
+        traceSink?: AutomatedActionTraceSink;
+      }) => {
+        usedStrategyName = args.strategy.name;
+        return {
+          actorId: PLAYER_TWO,
+          diagnostics: [],
+          executionAttempts: [],
+          finalResult: successTemplate,
+          orderedCandidates: [],
+          unsupportedSkips: [],
+          validationSkips: [],
+        } satisfies AutomatedActionExecutionResult;
+      },
+    };
+
+    const controller = new AutomatedMatchPlaybackController<{ id: string }, { id: string }>(
+      createConfig(),
+      {
+        createSession: (): AutomatedMatchPlaybackSession<{ id: string }, { id: string }> => ({
+          dispose() {},
+          engine: { id: "engine" },
+          readModel: { id: "read-model" },
+          server: fakeServer,
+        }),
+      },
+    );
+    disposables.push(controller);
+
+    controller.step();
+
+    expect(usedStrategyName).toBe("board-control-lore-race");
+  });
+
+  it("concedes the repeated-state actor instead of surfacing a playback deadlock error", () => {
+    const sampleEngine = LorcanaMultiplayerTestEngine.createWithFixture({ deck: 3 }, { deck: 3 });
+    disposables.push(sampleEngine);
+    const sampleServer = sampleEngine.asServer();
+    const actorId = sampleServer.getActivePlayer();
+    if (!actorId) {
+      throw new Error("Expected an active player for the playback test.");
+    }
+
+    const successTemplate = sampleEngine.asPlayerOne().passTurn();
+    if (!successTemplate.success) {
+      throw new Error("Expected passTurn to succeed for the playback test.");
+    }
+
+    let concededActor: typeof actorId | undefined;
+    const fakeServer: AutomatedMatchPlaybackServer = {
+      concede: (playerId) => {
+        concededActor = playerId;
+        return {
+          success: true,
+        };
+      },
+      getActivePlayer: () => actorId,
+      getCurrentPhase: () => "main",
+      getCurrentStep: () => null,
+      getGameLog: () => [],
+      getGameSegment: () => "mainGame",
+      getMoveHistory: () => [],
+      getState: () => sampleServer.getState(),
+      getStateID: () => sampleServer.getStateID(),
+      getTurnNumber: () => 1,
+      getWinner: () => (concededActor === actorId ? ("player_two" as PlayerId) : undefined),
+      takeAutomatedActionForCurrentActor: () =>
+        ({
+          actorId,
+          diagnostics: [],
+          executionAttempts: [],
+          finalResult: successTemplate,
+          orderedCandidates: [],
+          unsupportedSkips: [],
+          validationSkips: [],
+        }) as AutomatedActionExecutionResult,
+    };
+
+    const controller = new AutomatedMatchPlaybackController<{ id: string }, { id: string }>(
+      createConfig(),
+      {
+        createSession: (): AutomatedMatchPlaybackSession<{ id: string }, { id: string }> => ({
+          dispose() {},
+          engine: { id: "engine" },
+          readModel: { id: "read-model" },
+          server: fakeServer,
+        }),
+      },
+    );
+    disposables.push(controller);
+
+    controller.step();
+    controller.step();
+    controller.step();
+
+    expect(concededActor).toBe(actorId);
+    expect(controller.getPlaybackState().mode).toBe("complete");
+    expect(controller.getPlaybackState().error).toBeUndefined();
+  });
+
+  it("rejects unknown strategy ids", () => {
+    expect(
+      () =>
+        new AutomatedMatchPlaybackController({
+          ...createConfig(),
+          playerTwoStrategyId: "not-a-real-strategy",
+        }),
+    ).toThrow('Unknown automated match player two strategy "not-a-real-strategy".');
   });
 });

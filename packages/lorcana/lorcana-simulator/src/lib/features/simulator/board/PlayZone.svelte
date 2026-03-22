@@ -5,30 +5,35 @@
     LorcanaTableSeat,
     LorcanaZoneId,
   } from "@/features/simulator/model/contracts.js";
-  import { m } from "$lib/paraglide/messages.js";
-  import {EmptyState, DropIndicator, ZoneLabel} from "@/design-system/simulator/display/index.js";
+  import { m } from "$lib/i18n/messages.js";
+  import { EmptyState, DropIndicator } from "@/design-system/simulator/display/index.js";
   import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
   import PlayZoneLocationEntry from "./PlayZoneLocationEntry.svelte";
-  import {createCardAnchorId, createZoneAnchorId} from "@/features/simulator/animations/board-move-animations.js";
   import {
-      useLorcanaBoardPresenter,
-      useLorcanaSidebarPresenter
+    createCardAnchorId,
+    createZoneAnchorId,
+  } from "@/features/simulator/animations/board-move-animations.js";
+  import {
+    useLorcanaBoardPresenter,
+    useLorcanaSidebarPresenter,
   } from "@/features/simulator/context/game-context.svelte.js";
   import {
     createOptionalDroppable,
     useLorcanaSimulatorDndContext,
   } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
-  type ZoneDropState = "none" | "valid" | "invalid";
-  type PlayZoneEntry =
-          | {
-    kind: "card";
-    card: LorcanaCardSnapshot;
+
+  interface PlayZoneAssociation {
+    clusterId: string;
+    role: "location" | "occupant";
+    clusterSize: number;
+    isClusterStart: boolean;
+    isClusterEnd: boolean;
   }
-          | {
-    kind: "location-group";
-    location: LorcanaCardSnapshot;
-    occupants: LorcanaCardSnapshot[];
-  };
+
+  interface PlayZoneEntry {
+    card: LorcanaCardSnapshot;
+    association?: PlayZoneAssociation;
+  }
 
   interface BoardZoneProps {
     zoneId: LorcanaZoneId;
@@ -58,12 +63,19 @@
   );
   const playEntries = $derived.by<PlayZoneEntry[]>(() => {
     const locationIds = new Set(
-            cards.filter((card) => card.cardType === "location").map((card) => card.cardId),
+      cards.filter((card) => card.cardType === "location").map((card) => card.cardId),
     );
     const occupantsByLocation = new Map<string, LorcanaCardSnapshot[]>();
+    const orderedEntries: PlayZoneEntry[] = [];
+    const standaloneEntries: PlayZoneEntry[] = [];
+    const locationClusterEntries: PlayZoneEntry[] = [];
 
     for (const card of cards) {
-      if (card.cardType !== "character" || !card.atLocationId || !locationIds.has(card.atLocationId)) {
+      if (
+        card.cardType !== "character" ||
+        !card.atLocationId ||
+        !locationIds.has(card.atLocationId)
+      ) {
         continue;
       }
 
@@ -72,40 +84,62 @@
       occupantsByLocation.set(card.atLocationId, occupants);
     }
 
-    const entries = cards.flatMap<PlayZoneEntry>((card) => {
+    for (const card of cards) {
       if (card.cardType === "location") {
         const occupants = occupantsByLocation.get(card.cardId) ?? [];
-        return occupants.length > 0
-                ? [{kind: "location-group", location: card, occupants}]
-                : [{kind: "card", card}];
+        const clusterSize = 1 + occupants.length;
+        const clusterEntries: PlayZoneEntry[] = [
+          {
+            card,
+            association: {
+              clusterId: card.cardId,
+              role: "location",
+              clusterSize,
+              isClusterStart: true,
+              isClusterEnd: occupants.length === 0,
+            },
+          },
+          ...occupants.map((occupant, occupantIndex) => ({
+            card: occupant,
+            association: {
+              clusterId: card.cardId,
+              role: "occupant" as const,
+              clusterSize,
+              isClusterStart: false,
+              isClusterEnd: occupantIndex === occupants.length - 1,
+            },
+          })),
+        ];
+
+        if (seat === "bottom") {
+          locationClusterEntries.push(...clusterEntries);
+        } else {
+          orderedEntries.push(...clusterEntries);
+        }
+        continue;
       }
 
-      if (card.cardType === "character" && card.atLocationId && locationIds.has(card.atLocationId)) {
-        return [];
+      if (
+        card.cardType === "character" &&
+        card.atLocationId &&
+        locationIds.has(card.atLocationId)
+      ) {
+        continue;
       }
 
-      return [{kind: "card", card}];
-    });
+      const nextEntry = { card };
+      if (seat === "bottom") {
+        standaloneEntries.push(nextEntry);
+      } else {
+        orderedEntries.push(nextEntry);
+      }
+    }
 
     if (seat !== "bottom") {
-      return entries;
+      return orderedEntries;
     }
 
-    const characterEntries: PlayZoneEntry[] = [];
-    const locationEntries: PlayZoneEntry[] = [];
-
-    for (const entry of entries) {
-      const isLocationEntry =
-        entry.kind === "location-group" || entry.card.cardType === "location";
-
-      if (isLocationEntry) {
-        locationEntries.push(entry);
-      } else {
-        characterEntries.push(entry);
-      }
-    }
-
-    return [...characterEntries, ...locationEntries];
+    return [...standaloneEntries, ...locationClusterEntries];
   });
   const isMasked = $derived(board.isZoneMasked(playerSide, zoneId));
   const challengeMode = $derived(
@@ -122,11 +156,19 @@
   });
 
   function isValidTarget(cardId: string): boolean {
-    return sidebar.getActionSessionCardState(cardId).isSelectable;
+    const dropState = dnd.getCardDropState(cardId);
+    return (
+      sidebar.getActionSessionCardState(cardId).isSelectable ||
+      dropState === "preview" ||
+      dropState === "valid"
+    );
   }
 
   function isInvalidTarget(cardId: string): boolean {
-    return sidebar.getActionSessionCardState(cardId).isInvalidTarget;
+    return (
+      sidebar.getActionSessionCardState(cardId).isInvalidTarget ||
+      dnd.getCardDropState(cardId) === "invalid"
+    );
   }
 
   const zoneLabel = $derived(label || m["sim.zone.play"]({}));
@@ -152,49 +194,59 @@
   aria-label={m["sim.playZone.aria"]({ label: zoneLabel, player: playerLabel })}
   {@attach droppable.attach}
 >
-  <div class="cards-container">
+  <div class="play-counter" aria-label={`${cards.length} cards in ${zoneLabel}`}>
+    <span class="play-counter-value">{cards.length}</span>
+  </div>
+
+  <div class="cards-container" data-board-scroll-sync>
     {#if cards.length === 0}
       <EmptyState />
     {:else}
-      <div class="cards-grid">
-        {#each playEntries as entry (entry.kind === "location-group" ? entry.location.cardId : entry.card.cardId)}
-          {#if entry.kind === "location-group"}
-            <PlayZoneLocationEntry
-              location={entry.location}
-              occupants={entry.occupants}
-              {seat}
-              {playerSide}
-              {zoneId}
-              {isMasked}
-              {isValidTarget}
-              {isInvalidTarget}
-            />
-          {:else}
-            <div
-                    class="card-slot"
-                    data-card-id={entry.card.cardId}
-                    data-player-seat={seat}
-                    data-player-id={entry.card.ownerId}
-                    data-zone-id={entry.card.zoneId}
-                    data-board-anchor-id={createCardAnchorId(playerSide, zoneId, entry.card.cardId)}
-            >
-              <LorcanaCard
-                      card={entry.card}
-                      useContainerSize
-                      imageFormat="art_and_name"
-                      hoverShowActions
-                      isSelected={sidebar.getActionSessionCardState(entry.card.cardId).isSelected}
-                      isMasked={isMasked}
-                      isPlayable={sidebar.getActionSessionCardState(entry.card.cardId).isSelectable}
-                      isInvalidTarget={sidebar.getActionSessionCardState(entry.card.cardId).isInvalidTarget}
-                      isBanishedPreview={sidebar.getChallengePreviewCardState(entry.card.cardId).wouldBeBanished}
-                      isExerted={entry.card.readyState === "exerted"}
-                      isDrying={entry.card.isDrying ?? false}
-                      damage={entry.card.damage ?? 0}
+      <div class="cards-content">
+        <div class="cards-grid">
+          {#each playEntries as entry (entry.card.cardId)}
+            {#if entry.association}
+              <PlayZoneLocationEntry
+                card={entry.card}
+                association={entry.association}
+                {seat}
+                {playerSide}
+                {zoneId}
+                {isMasked}
+                {isValidTarget}
+                {isInvalidTarget}
               />
-            </div>
-          {/if}
-        {/each}
+            {:else}
+              {@const draggable = dnd.createOptionalDraggable({ card: entry.card })}
+              <div
+                class="card-slot"
+                data-card-id={entry.card.cardId}
+                data-card-drop-id={entry.card.cardId}
+                data-player-seat={seat}
+                data-player-side={playerSide}
+                data-player-id={entry.card.ownerId}
+                data-zone-id={entry.card.zoneId}
+                data-board-anchor-id={createCardAnchorId(playerSide, zoneId, entry.card.cardId)}
+                {@attach draggable.attach}
+              >
+                <LorcanaCard
+                  card={entry.card}
+                  useContainerSize
+                  imageFormat="art_and_name"
+                  hoverShowActions
+                  isSelected={sidebar.getActionSessionCardState(entry.card.cardId).isSelected}
+                  isMasked={isMasked}
+                  isPlayable={isValidTarget(entry.card.cardId)}
+                  isInvalidTarget={isInvalidTarget(entry.card.cardId)}
+                  isBanishedPreview={sidebar.getChallengePreviewCardState(entry.card.cardId).wouldBeBanished}
+                  isExerted={entry.card.readyState === "exerted"}
+                  isDrying={entry.card.isDrying ?? false}
+                  damage={entry.card.damage ?? 0}
+                />
+              </div>
+            {/if}
+          {/each}
+        </div>
       </div>
     {/if}
   </div>
@@ -209,19 +261,38 @@
     --zone-bg: rgba(15, 30, 50, 0.4);
     --zone-border: rgba(100, 150, 200, 0.15);
     --card-aspect: 0.9582;
-    --zone-card-width: 180px;
+    --play-zone-padding: 0.5rem;
+    --play-grid-gap: 0.5rem;
+    --play-counter-size: 28px;
+    --play-counter-offset: -6px;
+    --play-counter-translate-x: 50%;
+    --play-counter-translate-y: -50%;
+    --zone-card-width:
+      min(
+        var(--sim-play-card-width, 180px),
+        calc(
+          (
+            100cqh
+            - (var(--play-zone-padding) * 2)
+            - var(--play-grid-gap)
+          ) / 2 * var(--card-aspect)
+        )
+      );
     --zone-card-height: calc(var(--zone-card-width) / var(--card-aspect));
 
     /* Container context for zone cards */
-    container-type: inline-size;
+    container-type: size;
     container-name: play-zone;
 
     position: relative;
-    min-height: calc(var(--zone-card-height) + 2.25rem);
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
     background: var(--zone-bg);
     border: 2px dashed var(--zone-border);
     border-radius: 12px;
-    padding: 0.5rem;
+    padding: var(--play-zone-padding);
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -255,23 +326,84 @@
     box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.28);
   }
 
+  .play-counter {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--play-counter-size);
+    height: var(--play-counter-size);
+    border: 1px solid rgba(191, 219, 254, 0.32);
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(22, 49, 82, 0.98) 0%, rgba(16, 35, 61, 0.98) 100%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    transform: translate(var(--play-counter-translate-x), var(--play-counter-translate-y));
+    pointer-events: none;
+  }
+
+  .play-counter-value {
+    color: #e2e8f0;
+    font-size: 0.7rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
   .cards-container {
     flex: 1;
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
     justify-content: center;
     min-height: 0;
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(143, 211, 255, 0.55) rgba(7, 18, 31, 0.2);
+  }
+
+  .cards-container::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .cards-container::-webkit-scrollbar-track {
+    background: rgba(7, 18, 31, 0.24);
+    border-radius: 999px;
+  }
+
+  .cards-container::-webkit-scrollbar-thumb {
+    background: rgba(143, 211, 255, 0.4);
+    border-radius: 999px;
   }
 
   .cards-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns:
+      repeat(auto-fit, minmax(min(100%, var(--zone-card-width)), var(--zone-card-width)));
     justify-content: center;
-    align-items: flex-start;
-    gap: 0.5rem;
-    padding: 0.5rem;
+    align-content: start;
+    gap: var(--play-grid-gap);
+    padding: 0 0.5rem 0.5rem;
     width: 100%;
+    min-height: min-content;
+  }
+
+  .cards-content {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 100%;
+  }
+
+  .board-zone[data-player-seat="top"] .cards-content {
+    justify-content: flex-end;
+  }
+
+  .board-zone[data-player-seat="top"] .cards-grid {
+    padding: 0.5rem 0.5rem 0;
   }
 
   .card-slot {
@@ -282,25 +414,57 @@
 
   /* Responsive via container queries */
   @container play-zone (max-width: 400px) {
+    .board-zone {
+      --play-counter-size: 24px;
+      --play-counter-offset: -4px;
+      --play-grid-gap: 0.5rem;
+    }
+
     .card-slot {
-      --zone-card-width: clamp(50px, 30cqw, 100px);
+      --zone-card-width:
+        min(
+          clamp(50px, 30cqw, 100px),
+          calc(
+            (
+              100cqh
+              - (var(--play-zone-padding) * 2)
+              - var(--play-grid-gap)
+            ) / 2 * var(--card-aspect)
+          )
+        );
     }
   }
 
   @container play-zone (min-width: 600px) {
     .card-slot {
-      --zone-card-width: clamp(90px, 20cqw, 180px);
+      --zone-card-width:
+        min(
+          clamp(90px, 20cqw, 180px),
+          calc(
+            (
+              100cqh
+              - (var(--play-zone-padding) * 2)
+              - var(--play-grid-gap)
+            ) / 2 * var(--card-aspect)
+          )
+        );
     }
   }
 
   @media (min-width: 1240px) {
     .board-zone {
-      --zone-card-width: var(--sim-play-card-width, 180px);
+      --zone-card-width:
+        min(
+          var(--sim-play-card-width, 180px),
+          calc(
+            (
+              100cqh
+              - (var(--play-zone-padding) * 2)
+              - var(--play-grid-gap)
+            ) / 2 * var(--card-aspect)
+          )
+        );
       min-height: calc(var(--zone-card-height) + 2rem);
-    }
-
-    .card-slot {
-      --zone-card-width: var(--sim-play-card-width, 180px);
     }
 
     .cards-grid {
@@ -309,8 +473,11 @@
   }
 
   @media (max-width: 640px) {
+    .board-zone {
+      --play-grid-gap: 0.6rem;
+    }
+
     .cards-grid {
-      gap: 0.45rem;
       padding: 0.35rem;
     }
   }

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { wilhelminaPackardTheRadioOperatorI18n } from "./085-wilhelmina-packard-the-radio-operator.i18n";
 
 export const wilhelminaPackardTheRadioOperator: CharacterCard = {
   id: "qK6",
@@ -7,24 +8,6 @@ export const wilhelminaPackardTheRadioOperator: CharacterCard = {
   cardType: "character",
   name: "Wilhelmina Packard",
   version: "The Radio Operator",
-  i18n: {
-    en: {
-      name: "Wilhelmina Packard",
-      version: "The Radio Operator",
-    },
-    de: {
-      name: "Wilhelmina Packard",
-      version: "Die Funksprecherin",
-    },
-    fr: {
-      name: "Wilhelmina Placard",
-      version: "L'opératrice radio",
-    },
-    it: {
-      name: "Wilhelmina Packard",
-      version: "L'Operatrice Radio",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Atlantis",
   set: "008",
@@ -41,4 +24,5 @@ export const wilhelminaPackardTheRadioOperator: CharacterCard = {
     tcgPlayer: 631406,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: wilhelminaPackardTheRadioOperatorI18n,
 };

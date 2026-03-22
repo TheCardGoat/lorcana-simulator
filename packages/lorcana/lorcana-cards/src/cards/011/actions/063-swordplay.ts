@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { swordplayI18n } from "./063-swordplay.i18n";
 
 export const swordplay: ActionCard = {
   id: "7uF",
@@ -6,24 +7,6 @@ export const swordplay: ActionCard = {
   reprints: ["set11-063"],
   cardType: "action",
   name: "Swordplay",
-  i18n: {
-    en: {
-      name: "Swordplay",
-      text: "Chosen character gains Challenger +3 this turn. (They get +3 {S} while challenging.)",
-    },
-    de: {
-      name: "Schwertkunst",
-      text: "Ein Charakter deiner Wahl erhält in diesem Zug Herausfordern +3. (Während der Charakter herausfordert, erhält er +3.)",
-    },
-    fr: {
-      name: "Manier l'épée",
-      text: "Choisissez un personnage qui gagne Offensif +3 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Abilità con la Spada",
-      text: "Un personaggio a tua scelta ottiene Sfidante +3 per questo turno.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Black Cauldron",
   set: "011",
@@ -49,4 +32,5 @@ export const swordplay: ActionCard = {
       },
     },
   ],
+  i18n: swordplayI18n,
 };

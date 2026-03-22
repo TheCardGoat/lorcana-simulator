@@ -6,6 +6,7 @@ import {
 } from "./action-effects/types";
 import { resolveActionEffect } from "./action-effects/composed-effect-resolver";
 import { resolveRecordedVanishTargets } from "./action-effects/vanish";
+import { emitBeChosenEvents } from "../effects/be-chosen";
 
 export function resolveActionCardEffects(
   ctx: PlayCardExecutionContext,
@@ -17,6 +18,9 @@ export function resolveActionCardEffects(
     return;
   }
 
+  // Emit be-chosen events for all pre-determined targets of this action
+  emitBeChosenEvents(ctx, cardPlayed, resolutionInput);
+
   const effectiveResolutionInput = resolutionInput.eventSnapshot
     ? resolutionInput
     : { ...resolutionInput, eventSnapshot: {} };
@@ -25,7 +29,9 @@ export function resolveActionCardEffects(
     if (ability.type !== "action") {
       continue;
     }
-    const result = resolveActionEffect(ctx, cardPlayed, ability.effect, effectiveResolutionInput);
+    const result = resolveActionEffect(ctx, cardPlayed, ability.effect, effectiveResolutionInput, {
+      allowPromptForExistingChosenTargets: true,
+    });
     if (result.status === "suspended") {
       return;
     }

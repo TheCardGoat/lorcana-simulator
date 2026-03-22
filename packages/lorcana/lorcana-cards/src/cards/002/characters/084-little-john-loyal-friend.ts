@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { littleJohnLoyalFriendI18n } from "./084-little-john-loyal-friend.i18n";
 
 export const littleJohnLoyalFriend: CharacterCard = {
   id: "A4r",
@@ -7,24 +8,6 @@ export const littleJohnLoyalFriend: CharacterCard = {
   cardType: "character",
   name: "Little John",
   version: "Loyal Friend",
-  i18n: {
-    en: {
-      name: "Little John",
-      version: "Loyal Friend",
-    },
-    de: {
-      name: "Little John",
-      version: "Treuer Freund",
-    },
-    fr: {
-      name: "Petit Jean",
-      version: "Ami loyal",
-    },
-    it: {
-      name: "Little John",
-      version: "Loyal Friend",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "002",
@@ -41,4 +24,5 @@ export const littleJohnLoyalFriend: CharacterCard = {
     tcgPlayer: 527747,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: littleJohnLoyalFriendI18n,
 };

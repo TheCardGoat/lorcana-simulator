@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { skippyEnergeticRabbitI18n } from "./087-skippy-energetic-rabbit.i18n";
 
 export const skippyEnergeticRabbit: CharacterCard = {
   id: "Wyz",
@@ -7,28 +8,6 @@ export const skippyEnergeticRabbit: CharacterCard = {
   cardType: "character",
   name: "Skippy",
   version: "Energetic Rabbit",
-  i18n: {
-    en: {
-      name: "Skippy",
-      version: "Energetic Rabbit",
-      text: "Ward",
-    },
-    de: {
-      name: "Skippy",
-      version: "Kaninchen mit viel Energie",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Bobby",
-      version: "Lapin énergique",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Saetta",
-      version: "Coniglio Vivace",
-      text: "Protetto",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "003",
@@ -53,4 +32,5 @@ export const skippyEnergeticRabbit: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: skippyEnergeticRabbitI18n,
 };

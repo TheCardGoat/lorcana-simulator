@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tianaWarmAndHappyEpicI18n } from "./205-tiana-warm-and-happy-epic.i18n";
 
 export const tianaWarmAndHappyEpic: CharacterCard = {
   id: "BEO",
@@ -7,28 +8,6 @@ export const tianaWarmAndHappyEpic: CharacterCard = {
   cardType: "character",
   name: "Tiana",
   version: "Warm and Happy",
-  i18n: {
-    en: {
-      name: "Tiana",
-      version: "Warm and Happy",
-      text: "Support",
-    },
-    de: {
-      name: "Tiana",
-      version: "Warm und glücklich",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Tiana",
-      version: "Réchauffée et heureuse",
-      text: "Soutien",
-    },
-    it: {
-      name: "Tiana",
-      version: "Felice e al Calduccio",
-      text: "Aiutante",
-    },
-  },
   inkType: ["amber"],
   franchise: "Princess and the Frog",
   set: "011",
@@ -54,4 +33,5 @@ export const tianaWarmAndHappyEpic: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: tianaWarmAndHappyEpicI18n,
 };

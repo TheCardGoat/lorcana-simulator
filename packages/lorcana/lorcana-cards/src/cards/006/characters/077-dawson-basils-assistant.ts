@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { dawsonBasilsAssistantI18n } from "./077-dawson-basils-assistant.i18n";
 
 export const dawsonBasilsAssistant: CharacterCard = {
   id: "hiv",
@@ -7,24 +8,6 @@ export const dawsonBasilsAssistant: CharacterCard = {
   cardType: "character",
   name: "Dawson",
   version: "Basil's Assistant",
-  i18n: {
-    en: {
-      name: "Dawson",
-      version: "Basil's Assistant",
-    },
-    de: {
-      name: "Dr. David Wasdenn",
-      version: "Basils Assistent",
-    },
-    fr: {
-      name: "Dawson",
-      version: "Assistant de Basil",
-    },
-    it: {
-      name: "Topson",
-      version: "Assistente di Basil",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Great Mouse Detective",
   set: "006",
@@ -41,4 +24,5 @@ export const dawsonBasilsAssistant: CharacterCard = {
     tcgPlayer: 591115,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: dawsonBasilsAssistantI18n,
 };

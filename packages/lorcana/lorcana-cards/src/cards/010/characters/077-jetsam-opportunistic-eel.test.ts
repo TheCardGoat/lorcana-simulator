@@ -1,260 +1,271 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { tipoGrowingSon } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { jetsamOpportunisticEel } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Jetsam - Opportunistic Eel", () => {
-//   Describe("AMBUSH FROM THE DEEP - Basic Functionality", () => {
-//     It("deals 3 damage to chosen opposing damaged character when played", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: jetsamOpportunisticEel.cost,
-//           Hand: [jetsamOpportunisticEel],
-//         },
-//         {
-//           Play: [jetsamOpportunisticEel], // 6 willpower character
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(jetsamOpportunisticEel, 0);
-//       Const target = testEngine.getCardModel(jetsamOpportunisticEel, 1);
-//
-//       // Damage the target first to make it valid
-//       Target.updateCardDamage(1, "add");
-//
-//       Expect(target.damage).toBe(1);
-//       Expect(target.zone).toBe("play");
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//       // Should have dealt 3 additional damage (total 4 on 6 willpower)
-//       Expect(target.damage).toBe(4);
-//       Expect(target.zone).toBe("play");
-//     });
-//
-//     It("deals 3 damage to damaged character without banishing if it survives", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: jetsamOpportunisticEel.cost,
-//           Hand: [jetsamOpportunisticEel],
-//         },
-//         {
-//           Play: [jetsamOpportunisticEel], // 6 willpower character
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(jetsamOpportunisticEel, 0);
-//       Const target = testEngine.getCardModel(jetsamOpportunisticEel, 1);
-//
-//       // Damage the target first
-//       Target.updateCardDamage(2, "add");
-//
-//       Expect(target.damage).toBe(2);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//       // Should have dealt 3 additional damage (total 5 damage on 6 willpower)
-//       Expect(target.damage).toBe(5);
-//       Expect(target.zone).toBe("play");
-//     });
-//   });
-//
-//   Describe("AMBUSH FROM THE DEEP - Targeting Restrictions", () => {
-//     It("cannot target undamaged characters", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: jetsamOpportunisticEel.cost,
-//           Hand: [jetsamOpportunisticEel],
-//         },
-//         {
-//           Play: [tipoGrowingSon], // Undamaged character
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(jetsamOpportunisticEel);
-//       Const target = testEngine.getCardModel(tipoGrowingSon);
-//
-//       Expect(target.damage).toBe(0);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//
-//       // Should not have any ability on stack since no valid targets
-//       Expect(target.zone).toBe("play");
-//       Expect(target.damage).toBe(0);
-//     });
-//
-//     It("can only target opposing characters, not own damaged characters", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: jetsamOpportunisticEel.cost,
-//         Hand: [jetsamOpportunisticEel],
-//         Play: [tipoGrowingSon],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(jetsamOpportunisticEel);
-//       Const ownCharacter = testEngine.getCardModel(tipoGrowingSon);
-//
-//       // Damage own character
-//       OwnCharacter.updateCardDamage(1, "add");
-//
-//       Expect(ownCharacter.damage).toBe(1);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//
-//       // Should not target own characters
-//       Expect(ownCharacter.damage).toBe(1);
-//       Expect(ownCharacter.zone).toBe("play");
-//     });
-//
-//     It("must be a damaged character to be targeted", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: jetsamOpportunisticEel.cost,
-//           Hand: [jetsamOpportunisticEel],
-//         },
-//         {
-//           Play: [tipoGrowingSon],
-//         },
-//       );
-//
-//       Const target = testEngine.getCardModel(tipoGrowingSon);
-//
-//       Expect(target.damage).toBe(0);
-//
-//       Await testEngine.playCard(jetsamOpportunisticEel);
-//
-//       // No valid targets, ability should not trigger or resolve without effect
-//       Expect(target.damage).toBe(0);
-//     });
-//   });
-//
-//   Describe("AMBUSH FROM THE DEEP - Multiple Valid Targets", () => {
-//     It("allows player to choose which damaged opposing character to damage", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: jetsamOpportunisticEel.cost,
-//           Hand: [jetsamOpportunisticEel],
-//         },
-//         {
-//           Play: [tipoGrowingSon, jetsamOpportunisticEel],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(jetsamOpportunisticEel, 0);
-//       Const target1 = testEngine.getCardModel(tipoGrowingSon);
-//       Const target2 = testEngine.getCardModel(jetsamOpportunisticEel, 1);
-//
-//       // Damage both opposing characters
-//       Target1.updateCardDamage(1, "add");
-//       Target2.updateCardDamage(1, "add");
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveTopOfStack({ targets: [target2] });
-//
-//       // Only the chosen target should take additional damage
-//       Expect(target1.damage).toBe(1);
-//       Expect(target2.damage).toBe(4);
-//     });
-//   });
-//
-//   Describe("AMBUSH FROM THE DEEP - Edge Cases", () => {
-//     It("works when opponent has no valid targets", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: jetsamOpportunisticEel.cost,
-//           Hand: [jetsamOpportunisticEel],
-//         },
-//         {
-//           Play: [], // No opposing characters
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(jetsamOpportunisticEel);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//
-//       // Should play successfully even with no valid targets
-//       Expect(cardUnderTest.zone).toBe("play");
-//     });
-//
-//     It("can banish character if damage exceeds willpower", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: jetsamOpportunisticEel.cost,
-//           Hand: [jetsamOpportunisticEel],
-//         },
-//         {
-//           Play: [tipoGrowingSon], // 1 willpower character
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(jetsamOpportunisticEel);
-//       Const target = testEngine.getCardModel(tipoGrowingSon);
-//
-//       // Damage to 1 (will have 4 total after ability, exceeding 1 willpower)
-//       Target.updateCardDamage(1, "add");
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//       // Should be banished (1 + 3 = 4 damage on 1 willpower)
-//       Expect(target.zone).toBe("discard");
-//     });
-//
-//     It("triggers only when Jetsam is played, not when already in play", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [jetsamOpportunisticEel],
-//         },
-//         {
-//           Play: [tipoGrowingSon],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(jetsamOpportunisticEel);
-//       Const target = testEngine.getCardModel(tipoGrowingSon);
-//
-//       Target.updateCardDamage(1, "add");
-//
-//       // Damage target after Jetsam is already in play
-//       Target.updateCardDamage(1, "add");
-//
-//       // Should not trigger ability since Jetsam was already in play
-//       Expect(target.damage).toBe(2);
-//     });
-//   });
-//
-//   Describe("AMBUSH FROM THE DEEP - Damage Calculation", () => {
-//     It("deals exactly 3 damage", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: jetsamOpportunisticEel.cost,
-//           Hand: [jetsamOpportunisticEel],
-//         },
-//         {
-//           Play: [jetsamOpportunisticEel], // 6 willpower
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(jetsamOpportunisticEel, 0);
-//       Const target = testEngine.getCardModel(jetsamOpportunisticEel, 1);
-//
-//       Target.updateCardDamage(1, "add");
-//
-//       Expect(target.damage).toBe(1);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//       // Should have exactly 4 total damage (1 + 3)
-//       Expect(target.damage).toBe(4);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { jetsamOpportunisticEel } from "./077-jetsam-opportunistic-eel";
+
+const tankCharacter = createMockCharacter({
+  id: "jetsam-test-tank",
+  name: "Tank",
+  cost: 4,
+  strength: 3,
+  willpower: 6,
+  lore: 1,
+});
+
+const fragileCharacter = createMockCharacter({
+  id: "jetsam-test-fragile",
+  name: "Fragile",
+  cost: 1,
+  strength: 1,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Jetsam - Opportunistic Eel", () => {
+  describe("AMBUSH FROM THE DEEP - Basic Functionality", () => {
+    it("deals 3 damage to chosen opposing damaged character when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: jetsamOpportunisticEel.cost,
+          hand: [jetsamOpportunisticEel],
+          deck: 2,
+        },
+        {
+          play: [tankCharacter],
+          deck: 2,
+        },
+      );
+
+      // Pre-damage the target to make it a valid target
+      expect(testEngine.asServer().manualSetDamage(tankCharacter, 1)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getDamage(tankCharacter)).toBe(1);
+
+      expect(testEngine.asPlayerOne().playCard(jetsamOpportunisticEel)).toBeSuccessfulCommand();
+
+      const targetId = testEngine.findCardInstanceId(tankCharacter, "play", "player_two");
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+      ).toBeSuccessfulCommand();
+
+      // Should have dealt 3 additional damage (1 pre-damage + 3 from ability = 4)
+      expect(testEngine.asPlayerTwo().getDamage(tankCharacter)).toBe(4);
+      expect(testEngine.asPlayerTwo().getCardZone(tankCharacter)).toBe("play");
+    });
+
+    it("deals 3 damage to damaged character without banishing if it survives", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: jetsamOpportunisticEel.cost,
+          hand: [jetsamOpportunisticEel],
+          deck: 2,
+        },
+        {
+          play: [tankCharacter],
+          deck: 2,
+        },
+      );
+
+      // 2 pre-damage + 3 from ability = 5 on a 6-willpower character
+      expect(testEngine.asServer().manualSetDamage(tankCharacter, 2)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getDamage(tankCharacter)).toBe(2);
+
+      expect(testEngine.asPlayerOne().playCard(jetsamOpportunisticEel)).toBeSuccessfulCommand();
+
+      const targetId = testEngine.findCardInstanceId(tankCharacter, "play", "player_two");
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+      ).toBeSuccessfulCommand();
+
+      // Should have dealt 3 additional damage (2 + 3 = 5, survives with 6 willpower)
+      expect(testEngine.asPlayerTwo().getDamage(tankCharacter)).toBe(5);
+      expect(testEngine.asPlayerTwo().getCardZone(tankCharacter)).toBe("play");
+    });
+  });
+
+  describe("AMBUSH FROM THE DEEP - Targeting Restrictions", () => {
+    it("cannot target undamaged characters — no bag effect is created", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: jetsamOpportunisticEel.cost,
+          hand: [jetsamOpportunisticEel],
+          deck: 2,
+        },
+        {
+          play: [tankCharacter], // undamaged
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerTwo().getDamage(tankCharacter)).toBe(0);
+
+      expect(testEngine.asPlayerOne().playCard(jetsamOpportunisticEel)).toBeSuccessfulCommand();
+
+      // No valid targets => ability should not put anything in the bag
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getDamage(tankCharacter)).toBe(0);
+    });
+
+    it("can only target opposing characters, not own damaged characters", () => {
+      const ownCharacter = createMockCharacter({
+        id: "jetsam-test-own",
+        name: "Own Character",
+        cost: 2,
+        strength: 2,
+        willpower: 4,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: jetsamOpportunisticEel.cost,
+          hand: [jetsamOpportunisticEel],
+          play: [ownCharacter],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      // Damage own character
+      expect(testEngine.asServer().manualSetDamage(ownCharacter, 1)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getDamage(ownCharacter)).toBe(1);
+
+      expect(testEngine.asPlayerOne().playCard(jetsamOpportunisticEel)).toBeSuccessfulCommand();
+
+      // Own damaged characters are not valid targets — no bag effect
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getDamage(ownCharacter)).toBe(1);
+    });
+  });
+
+  describe("AMBUSH FROM THE DEEP - Multiple Valid Targets", () => {
+    it("allows player to choose which damaged opposing character to damage", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: jetsamOpportunisticEel.cost,
+          hand: [jetsamOpportunisticEel],
+          deck: 2,
+        },
+        {
+          play: [tankCharacter, fragileCharacter],
+          deck: 2,
+        },
+      );
+
+      // Damage both opposing characters
+      expect(testEngine.asServer().manualSetDamage(tankCharacter, 1)).toBeSuccessfulCommand();
+      expect(testEngine.asServer().manualSetDamage(fragileCharacter, 1)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().playCard(jetsamOpportunisticEel)).toBeSuccessfulCommand();
+
+      // Choose tank character (6 willpower, won't die)
+      const tankId = testEngine.findCardInstanceId(tankCharacter, "play", "player_two");
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [tankId] }),
+      ).toBeSuccessfulCommand();
+
+      // Only the chosen target should take additional damage
+      expect(testEngine.asPlayerTwo().getDamage(tankCharacter)).toBe(4);
+      // fragile only has 1 pre-existing damage
+      expect(testEngine.asPlayerTwo().getDamage(fragileCharacter)).toBe(1);
+    });
+  });
+
+  describe("AMBUSH FROM THE DEEP - Edge Cases", () => {
+    it("works when opponent has no valid targets — Jetsam still enters play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: jetsamOpportunisticEel.cost,
+          hand: [jetsamOpportunisticEel],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(jetsamOpportunisticEel)).toBeSuccessfulCommand();
+
+      // No valid targets, no bag effect
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getCardZone(jetsamOpportunisticEel)).toBe("play");
+    });
+
+    it("can banish character if damage exceeds willpower", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: jetsamOpportunisticEel.cost,
+          hand: [jetsamOpportunisticEel],
+          deck: 2,
+        },
+        {
+          play: [fragileCharacter], // 3 willpower
+          deck: 2,
+        },
+      );
+
+      // Pre-damage to 1 on a 3-willpower character; 1 + 3 = 4 damage => banished (exceeds 3 willpower)
+      expect(testEngine.asServer().manualSetDamage(fragileCharacter, 1)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getDamage(fragileCharacter)).toBe(1);
+
+      expect(testEngine.asPlayerOne().playCard(jetsamOpportunisticEel)).toBeSuccessfulCommand();
+
+      const targetId = testEngine.findCardInstanceId(fragileCharacter, "play", "player_two");
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+      ).toBeSuccessfulCommand();
+
+      // Should be banished (1 + 3 = 4 damage on 3 willpower)
+      expect(testEngine.asPlayerTwo().getCardZone(fragileCharacter)).toBe("discard");
+    });
+
+    it("triggers only when Jetsam is played, not when already in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [jetsamOpportunisticEel],
+          deck: 2,
+        },
+        {
+          play: [tankCharacter],
+          deck: 2,
+        },
+      );
+
+      // Damage target after Jetsam is already in play via manualSetDamage
+      expect(testEngine.asServer().manualSetDamage(tankCharacter, 2)).toBeSuccessfulCommand();
+
+      // No bag effect since Jetsam wasn't played this turn
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getDamage(tankCharacter)).toBe(2);
+    });
+  });
+
+  describe("AMBUSH FROM THE DEEP - Damage Calculation", () => {
+    it("deals exactly 3 damage", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: jetsamOpportunisticEel.cost,
+          hand: [jetsamOpportunisticEel],
+          deck: 2,
+        },
+        {
+          play: [tankCharacter], // 6 willpower
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asServer().manualSetDamage(tankCharacter, 1)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getDamage(tankCharacter)).toBe(1);
+
+      expect(testEngine.asPlayerOne().playCard(jetsamOpportunisticEel)).toBeSuccessfulCommand();
+
+      const targetId = testEngine.findCardInstanceId(tankCharacter, "play", "player_two");
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+      ).toBeSuccessfulCommand();
+
+      // Should have exactly 4 total damage (1 + 3)
+      expect(testEngine.asPlayerTwo().getDamage(tankCharacter)).toBe(4);
+    });
+  });
+});

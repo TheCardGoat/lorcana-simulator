@@ -4,6 +4,8 @@ import type { CardPlayedPayload } from "../../../types/index";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { recordDiscardExitThisTurn } from "../../state/turn-metrics";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
+import { emitTriggeredLorcanaEvent } from "../../../triggered-abilities";
+import { markLastEffectPerformed } from "./event-snapshot-utils";
 
 type DiscardCardDefinition = {
   actionSubtype?: string;
@@ -66,6 +68,32 @@ export function isReturnFromDiscardEffect(effect: unknown): effect is ReturnFrom
   );
 }
 
+type DiscardCandidatesContext = Pick<PlayCardExecutionContext, "cards" | "framework">;
+
+/**
+ * Returns true if there is at least one card in the controller's discard
+ * that satisfies the effect's filters. Used to decide whether to suppress
+ * an optional triggered ability before it is queued.
+ */
+export function hasReturnFromDiscardCandidates(
+  ctx: DiscardCandidatesContext,
+  controllerId: PlayerId,
+  effect: ReturnFromDiscardEffect,
+): boolean {
+  const discardCards = ctx.framework.zones.getCards({
+    zone: "discard",
+    playerId: controllerId,
+  }) as CardInstanceId[];
+
+  for (const cardId of discardCards) {
+    if (matchesReturnFilter(ctx as PlayCardExecutionContext, cardId, effect)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function resolveSelectedTargets(targets: ActionResolutionInput["targets"]): CardInstanceId[] {
   if (!targets) {
     return [];
@@ -114,6 +142,17 @@ function matchesReturnFilter(
         return false;
       }
     } else if (cardDefinition.cardType !== cardType) {
+      return false;
+    }
+  }
+
+  const notCardType = filter?.notCardType;
+  if (notCardType) {
+    if (notCardType === "song") {
+      if (cardDefinition.cardType === "action" && cardDefinition.actionSubtype === "song") {
+        return false;
+      }
+    } else if (cardDefinition.cardType === notCardType) {
       return false;
     }
   }
@@ -216,11 +255,47 @@ export function resolveReturnFromDiscardEffect(
       : candidateCards.slice(0, maxCardsToReturn);
 
   for (const cardId of cardsToReturn) {
-    const ownerId = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID as
-      | PlayerId
-      | undefined;
-    moveToDestination(ctx, cardId, ownerId ?? cardPlayed.playerId, effect.destination);
+    const ownerId = ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined;
+    const resolvedOwnerId = ownerId ?? cardPlayed.playerId;
+    const destination = effect.destination ?? "hand";
+    moveToDestination(ctx, cardId, resolvedOwnerId, effect.destination);
+
+    // Record the returned card in the event snapshot so that subsequent
+    // conditional effects (e.g. "if that character is named Tod") can inspect it.
+    if (resolutionInput.eventSnapshot !== undefined) {
+      resolutionInput.eventSnapshot.lastReturnedFromDiscardCardId = cardId;
+    } else {
+      resolutionInput.eventSnapshot = { lastReturnedFromDiscardCardId: cardId };
+    }
+
+    if (destination === "hand" || destination === undefined) {
+      emitTriggeredLorcanaEvent(
+        ctx,
+        "cardReturnedToHand",
+        { cardId, ownerId: resolvedOwnerId, fromZone: "discard" },
+        {
+          event: "return-to-hand",
+          playerId: resolvedOwnerId,
+          subjectCardId: cardId,
+          fromZone: "discard",
+        },
+      );
+    }
+
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "cardLeftDiscard",
+      { cardId, ownerId: resolvedOwnerId, toZone: destination ?? "hand" },
+      {
+        event: "leave-discard",
+        playerId: resolvedOwnerId,
+        subjectCardId: cardId,
+        fromZone: "discard",
+        toZone: destination ?? "hand",
+      },
+    );
   }
 
   recordDiscardExitThisTurn(ctx, cardsToReturn.length);
+  markLastEffectPerformed(resolutionInput.eventSnapshot, cardsToReturn.length > 0);
 }

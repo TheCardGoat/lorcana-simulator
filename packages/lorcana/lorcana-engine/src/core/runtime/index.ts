@@ -3,7 +3,7 @@
  *
  * New runtime architecture per PLAN.md
  *
- * This module implements the boardgame.io-style MatchState<G> = { G, ctx }
+ * This module implements the boardgame.io-style MatchState = { G, ctx }
  * architecture with:
  * - ctx.zones: First-class zone runtime state
  * - ctx.time: Passive time management (chess + priority clocks)
@@ -76,13 +76,13 @@ export {
 // Core runtime - explicit exports to avoid duplicate names with flow, game-definition, move-system
 export type {
   MatchRuntimeConfig,
-  MatchRuntimeConfigWithRuntimeCard,
   SetupArgs,
   BoardSetupContext,
   MatchRuntimeInit,
   Player,
   MoveDefinition,
   MoveContext,
+  MoveRecord,
   RuntimeBoardProjectionContext,
   DeepReadonly,
   RuntimeStateView,
@@ -99,14 +99,8 @@ export type {
   FrameworkStateSnapshot,
   CardRuntimeReadAPI,
   CardRuntimeAPI,
-  CardRuntimeReadAPIWithRuntimeCard,
-  CardRuntimeAPIWithRuntimeCard,
-  FrameworkCardsReadAPI,
-  FrameworkCardsWriteAPI,
   FrameworkReadAPI,
   FrameworkWriteAPI,
-  FrameworkReadAPIWithRuntimeCard,
-  FrameworkWriteAPIWithRuntimeCard,
   RuntimeLifecycleContext,
   RuntimeLifecycleHook,
   RuntimeFlowDefinition,
@@ -123,6 +117,7 @@ export type {
   CommandResult,
   CommandSuccess,
   CommandFailure,
+  RuntimeSnapshot,
 } from "./match-runtime";
 export { MatchRuntime } from "./match-runtime";
 
@@ -153,9 +148,6 @@ export type {
   RuntimeCardWithDefinitionBase,
   RuntimeCardWithDefinition,
   AnyRuntimeCardWithDefinition,
-  RuntimeCardDefinitionOf,
-  RuntimeCardMetaOf,
-  RuntimeCardDerivedOf,
   CardQueryAPI,
   RuntimeCardTargetQuery,
   RuntimeCardDeriveContext,
@@ -201,6 +193,7 @@ export {
   PROTOCOL_VERSION,
   isUpdateActionMessage,
   isSyncRequestMessage,
+  isUndoRequestMessage,
   isUpdatePatchMessage,
   isUpdateFullMessage,
   isSyncFullMessage,

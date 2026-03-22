@@ -20,7 +20,6 @@ import {
 } from "./static-resources";
 import { MatchRuntime } from "./match-runtime";
 import { StateSanitizer } from "./security";
-import type { BaseCardDefinition } from "./card-contracts";
 
 // =============================================================================
 // Replay Types
@@ -30,7 +29,7 @@ export interface ReplayState {
   isPlaying: boolean;
   currentStep: number;
   totalSteps: number;
-  currentState?: MatchState<unknown>;
+  currentState?: MatchState;
   speed: number;
 }
 
@@ -38,7 +37,7 @@ export interface ReplayStep {
   step: number;
   stateID: number;
   timestamp: number;
-  state: MatchState<unknown>;
+  state: MatchState;
   command?: CommandLogEntry;
   events: PublishedGameEvent[];
   logEntries: GameLogEntry[];
@@ -68,7 +67,7 @@ export interface ReplayEngineOptions {
    * External resources used to resolve runtime cards during replay inspection.
    * If replay metadata includes resourceRefs, refs are validated against this object.
    */
-  staticResources?: MatchStaticResources<BaseCardDefinition>;
+  staticResources?: MatchStaticResources;
   /**
    * Optional explicit refs if the caller doesn't want to pass the full resources object.
    */
@@ -86,7 +85,7 @@ export interface ReplayEngineOptions {
 export class ReplayEngine {
   private replayData: MatchReplayData;
   private steps: ReplayStep[] = [];
-  private currentState: MatchState<unknown>;
+  private currentState: MatchState;
   private currentStep = 0;
 
   constructor(replayData: MatchReplayData, options: ReplayEngineOptions = {}) {
@@ -285,11 +284,11 @@ export interface ReplayBuilderConfig {
 
 export class ReplayBuilder {
   private config: ReplayBuilderConfig;
-  private initialState?: MatchState<unknown>;
+  private initialState?: MatchState;
   private commandLog: CommandLogEntry[] = [];
   private gameEvents: PublishedGameEvent[] = [];
   private gameLogEntries: GameLogEntry[] = [];
-  private finalState?: MatchState<unknown>;
+  private finalState?: MatchState;
 
   constructor(config: ReplayBuilderConfig) {
     this.config = config;
@@ -298,7 +297,7 @@ export class ReplayBuilder {
   /**
    * Set the initial state.
    */
-  setInitialState(state: MatchState<unknown>): this {
+  setInitialState(state: MatchState): this {
     this.initialState = JSON.parse(JSON.stringify(state));
     return this;
   }
@@ -330,7 +329,7 @@ export class ReplayBuilder {
   /**
    * Set the final state.
    */
-  setFinalState(state: MatchState<unknown>): this {
+  setFinalState(state: MatchState): this {
     this.finalState = JSON.parse(JSON.stringify(state));
     return this;
   }
@@ -479,7 +478,7 @@ export class ReplayExporter {
   /**
    * Sanitize state by removing sensitive information.
    */
-  private static sanitizeState(state: MatchState<unknown>): MatchState<unknown> {
+  private static sanitizeState(state: MatchState): MatchState {
     const sanitized = JSON.parse(JSON.stringify(state));
 
     // Remove RNG state

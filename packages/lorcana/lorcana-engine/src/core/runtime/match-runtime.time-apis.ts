@@ -6,7 +6,7 @@ import type { Draft } from "immer";
 import type { MatchState, ClockPauseReason } from "./types";
 import type { TimeOperationsAPI, TimeQueryAPI } from "./match-runtime.types";
 
-export function createTimeQueryAPI<G>(state: MatchState<G>): TimeQueryAPI {
+export function createTimeQueryAPI(state: MatchState): TimeQueryAPI {
   return {
     getRemainingTime: (playerId) => {
       if (state.ctx.time.mode === "none") return Infinity;
@@ -15,7 +15,7 @@ export function createTimeQueryAPI<G>(state: MatchState<G>): TimeQueryAPI {
   };
 }
 
-export function createTimeOperationsForDraft<G>(draft: Draft<MatchState<G>>): TimeOperationsAPI {
+export function createTimeOperationsForDraft(draft: Draft<MatchState>): TimeOperationsAPI {
   return {
     getRemainingTime: (playerId) => {
       if (draft.ctx.time.mode === "none") return Infinity;

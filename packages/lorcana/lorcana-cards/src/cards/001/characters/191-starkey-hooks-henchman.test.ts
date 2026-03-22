@@ -1,67 +1,62 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { starkeyHooksHenchman } from "./191-starkey-hooks-henchman";
+import { captainColonelsLieutenant } from "./106-captain-colonels-lieutenant";
+import { johnSilverAlienPirate } from "./082-john-silver-alien-pirate";
 
-describe("Starkey - Hook’s Henchman", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [starkeyHooksHenchman] });
-  //   Expect(testEngine.getCardModel(starkeyHooksHenchman).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const nonCaptainCharacter = createMockCharacter({
+  id: "starkey-test-non-captain",
+  name: "Random Pirate",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  classifications: ["Storyborn", "Pirate"],
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, test } from "@jest/globals";
-// Import {
-//   CaptainColonelsLieutenant,
-//   JohnSilverAlienPirate,
-//   StarkeyHooksHenchman,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Starkey - Hook's Henchman", () => {
-//   Describe("**AYE AYE, CAPTAIN** While you have a Captain character in play, this character gets +1 {L}.", () => {
-//     Test("No Captain in play", () => {
-//       Const testStore = new TestStore({
-//         Play: [starkeyHooksHenchman],
-//       });
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         StarkeyHooksHenchman.id,
-//       );
-//
-//       Expect(cardUnderTest.lore).toEqual(starkeyHooksHenchman.lore);
-//     });
-//
-//     Test("With Captain in play", () => {
-//       Const testStore = new TestStore({
-//         Play: [starkeyHooksHenchman, johnSilverAlienPirate],
-//       });
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         StarkeyHooksHenchman.id,
-//       );
-//
-//       Expect(cardUnderTest.lore).toEqual(starkeyHooksHenchman.lore + 1);
-//     });
-//
-//     Test("With Captain in play", () => {
-//       Const testStore = new TestStore({
-//         Play: [starkeyHooksHenchman, captainColonelsLieutenant],
-//       });
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         StarkeyHooksHenchman.id,
-//       );
-//
-//       Expect(cardUnderTest.lore).toEqual(starkeyHooksHenchman.lore + 1);
-//     });
-//   });
-// });
-//
+describe("Starkey - Hook's Henchman", () => {
+  describe("AYE AYE, CAPTAIN - While you have a Captain character in play, this character gets +1 lore.", () => {
+    it("has base lore with no Captain in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [starkeyHooksHenchman],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().getCardLore(starkeyHooksHenchman)).toBe(
+        starkeyHooksHenchman.lore,
+      );
+    });
+
+    it("does not get +1 lore with a non-Captain character in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [starkeyHooksHenchman, nonCaptainCharacter],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().getCardLore(starkeyHooksHenchman)).toBe(
+        starkeyHooksHenchman.lore,
+      );
+    });
+
+    it("gets +1 lore with Captain Colonel's Lieutenant in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [starkeyHooksHenchman, captainColonelsLieutenant],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().getCardLore(starkeyHooksHenchman)).toBe(
+        starkeyHooksHenchman.lore + 1,
+      );
+    });
+
+    it("gets +1 lore with John Silver (Alien Pirate / Captain) in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [starkeyHooksHenchman, johnSilverAlienPirate],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().getCardLore(starkeyHooksHenchman)).toBe(
+        starkeyHooksHenchman.lore + 1,
+      );
+    });
+  });
+});

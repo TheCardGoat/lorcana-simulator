@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { heartOfTeFitiI18n } from "./164-heart-of-te-fiti.i18n";
 
 export const heartOfTeFiti: ItemCard = {
   id: "L25",
@@ -6,48 +7,6 @@ export const heartOfTeFiti: ItemCard = {
   reprints: ["set3-164", "set9-168"],
   cardType: "item",
   name: "Heart of Te Fiti",
-  i18n: {
-    en: {
-      name: "Heart of Te Fiti",
-      text: [
-        {
-          title: "CREATE LIFE",
-          description:
-            "{E}, 2 {I} — Put the top card of your deck into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Herz von Te Fiti",
-      text: [
-        {
-          title: "LEBEN ERSCHAFFEN, 2",
-          description:
-            "— Lege die oberste Karte deines Decks verdeckt und erschöpft in deinen Tintenvorrat.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le cœur de Te Fiti",
-      text: [
-        {
-          title: "ENGENDRER LA VIE, 2",
-          description:
-            "— Placez la première carte de votre pioche dans votre réserve d'encre, face cachée et épuisée.",
-        },
-      ],
-    },
-    it: {
-      name: "Cuore di Te Fiti",
-      text: [
-        {
-          title: "CREARE LA VITA, 2",
-          description:
-            "— Aggiungi la prima carta del tuo mazzo al tuo calamaio, a faccia in giù e impegnata.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Moana",
   set: "003",
@@ -85,4 +44,5 @@ export const heartOfTeFiti: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: heartOfTeFitiI18n,
 };

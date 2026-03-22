@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { poohPirateShipI18n } from "./032-pooh-pirate-ship.i18n";
 
 export const poohPirateShip: ItemCard = {
   id: "zKX",
@@ -6,45 +7,6 @@ export const poohPirateShip: ItemCard = {
   reprints: ["set6-032"],
   cardType: "item",
   name: "Pooh Pirate Ship",
-  i18n: {
-    en: {
-      name: "Pooh Pirate Ship",
-      text: [
-        {
-          title: "MAKE A RESCUE",
-          description:
-            "{E}, 3 {I} — Return a Pirate character card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Puuh-Piratenschiff",
-      text: [
-        {
-          title: "WIR WERDEN IHN RETTEN, 3",
-          description: "— Nimm einen Piraten aus deinem Ablagestapel zurück auf deine Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Bateau pirate de Winnie",
-      text: [
-        {
-          title: "SAUVETAGE EN COURS, 3",
-          description: "— Renvoyez un personnage Pirate de votre défausse dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Nave Pirata di Pooh",
-      text: [
-        {
-          title: "OPEREREMO UN SALVATAGGIO, 3",
-          description: "— Riprendi in mano una carta personaggio Pirata dai tuoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Winnie the Pooh",
   set: "006",
@@ -83,4 +45,5 @@ export const poohPirateShip: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: poohPirateShipI18n,
 };

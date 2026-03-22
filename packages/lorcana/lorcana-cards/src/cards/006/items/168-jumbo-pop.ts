@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { jumboPopI18n } from "./168-jumbo-pop.i18n";
 
 export const jumboPop: ItemCard = {
   id: "iYv",
@@ -6,48 +7,6 @@ export const jumboPop: ItemCard = {
   reprints: ["set6-168"],
   cardType: "item",
   name: "Jumbo Pop",
-  i18n: {
-    en: {
-      name: "Jumbo Pop",
-      text: [
-        {
-          title: "HERE YOU GO",
-          description:
-            "Banish this item — Remove up to 2 damage from each of your characters. Draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Riesenpfote am Stiel",
-      text: [
-        {
-          title: "BITTE SEHR",
-          description:
-            "Verbanne diesen Gegenstand — Entferne bis zu 2 Schaden von jedem deiner Charaktere. Ziehe 1 Karte.",
-        },
-      ],
-    },
-    fr: {
-      name: "Jumbo Pop",
-      text: [
-        {
-          title: "C'EST POUR TOI",
-          description:
-            "Bannissez cet objet — Retirez jusqu'à 2 dommages de chacun de vos personnages. Piochez une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Ghiacciolo Jumbo",
-      text: [
-        {
-          title: "ECCO QUA",
-          description:
-            "Esilia questo oggetto — Rimuovi fino a 2 danni da ogni tuo personaggio. Pesca una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Zootropolis",
   set: "006",
@@ -99,4 +58,5 @@ export const jumboPop: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: jumboPopI18n,
 };

@@ -1,37 +1,62 @@
 <script lang="ts">
-    import "../../../app.css";
+  import "../../../app.css";
   import { untrack } from "svelte";
-  import { m } from "$lib/paraglide/messages";
-    import * as Dialog from "$lib/design-system/primitives/dialog";
-    import * as Sidebar from "$lib/design-system/primitives/sidebar";
-    import {Toaster} from "$lib/design-system/primitives/sonner";
+  import { m } from "$lib/i18n/messages.js";
+  import { Button } from "$lib/design-system/primitives/button";
+  import * as Dialog from "$lib/design-system/primitives/dialog";
+  import * as Sidebar from "$lib/design-system/primitives/sidebar";
+  import { Toaster } from "$lib/design-system/primitives/sonner";
   import { toast } from "svelte-sonner";
-  import {DragDropProvider} from "@dnd-kit/svelte";
-  import {Feedback, PointerActivationConstraints, PointerSensor} from "@dnd-kit/dom";
+  import { DragDropProvider } from "@dnd-kit/svelte";
+  import { Feedback, PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
   import type { LorcanaEngineBase } from "@tcg/lorcana-engine";
-    import type {LorcanaSimulatorReadModel, SimulatorMoveError} from "@/features/simulator/model/contracts.js";
-    import type {LorcanaPlayerSettingsMap} from "@/features/simulator/model/player-visual-settings.js";
+  import type {
+    LorcanaSimulatorReadModel,
+    SimulatorMoveError,
+  } from "@/features/simulator/model/contracts.js";
+  import type { PendingEffectsPopoverItem } from "@/features/simulator/context/game-context.svelte.js";
+  import type { LorcanaPlayerSettingsMap } from "@/features/simulator/model/player-visual-settings.js";
 
-    import LorcanaSimulatorSidebar from "./LorcanaSimulatorSidebar.svelte";
+  import LorcanaSimulatorSidebar from "./LorcanaSimulatorSidebar.svelte";
   import LorcanaCompactPanels from "./LorcanaCompactPanels.svelte";
-    import {setSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
-    import {setLorcanaSimulatorDndContext} from "@/features/simulator/context/simulator-dnd-context.svelte.js";
-    import {CardInspectSheet, GlobalCardPreview, TabletopBoard} from "@/features/simulator/index.js";
-    import {
-        setLorcanaGameContext,
-        useLorcanaSidebarPresenter
-    } from "@/features/simulator/context/game-context.svelte.js";
-    import {SimulatorLayoutModeObserver} from "@/features/simulator/model/layout-mode.svelte.js";
-    import {getMoveCategoryGroupCount} from "@/features/simulator/model/move-presentation.js";
+  import { setSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
+  import { setLorcanaSimulatorDndContext } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
+  import { CardInspectSheet, GlobalCardPreview, TabletopBoard } from "@/features/simulator/index.js";
+  import {
+    type LorcanaGameContext,
+    setLorcanaGameContext,
+    useLorcanaSidebarPresenter,
+  } from "@/features/simulator/context/game-context.svelte.js";
+  import { SimulatorLayoutModeObserver } from "@/features/simulator/model/layout-mode.svelte.js";
+  import PostGameSummaryDialog from "@/features/simulator/post-game/PostGameSummaryDialog.svelte";
+  import {
+    createInitialPostGameModalState,
+    dismissPostGameModal,
+    reopenPostGameModal,
+    syncPostGameModalState,
+  } from "@/features/simulator/post-game/modal-state.js";
+  import { buildPostGameSummary } from "@/features/simulator/post-game/summary.js";
 
   interface LorcanaTabletopSimulatorProps {
     engine: LorcanaEngineBase;
     readModel?: Pick<LorcanaSimulatorReadModel, "getMoveLog"> &
       Partial<Pick<LorcanaSimulatorReadModel, "subscribeStateUpdates">>;
     playerSettings?: LorcanaPlayerSettingsMap;
+    gameContext?: LorcanaGameContext | null;
+    postGameGameId?: string | null;
+    onReturnToMatchmaking?: (() => void | Promise<void>) | null;
+    viewerMode?: "player" | "spectator";
   }
 
-  let { engine, readModel, playerSettings = {} }: LorcanaTabletopSimulatorProps = $props();
+  let {
+    engine,
+    readModel,
+    playerSettings = {},
+    gameContext = $bindable(null),
+    postGameGameId = null,
+    onReturnToMatchmaking = null,
+    viewerMode = "player",
+  }: LorcanaTabletopSimulatorProps = $props();
   let sidebarOpen = $state(true);
 
   const game = setLorcanaGameContext({
@@ -45,6 +70,7 @@
       return playerSettings;
     },
   });
+  gameContext = game;
 
   const sidebar = useLorcanaSidebarPresenter();
 
@@ -56,12 +82,41 @@
   const dndContext = setLorcanaSimulatorDndContext();
 
   const boardSnapshot = $derived(game.boardSnapshot());
+  const moveLogEntries = $derived(game.moveLogEntries());
+  const ownerSide = $derived(game.ownerSide());
   const pendingMoveError = $derived(sidebar.pendingMoveError);
-  const executableMoves = $derived(sidebar.executableMoves);
-  const compactActionCount = $derived(getMoveCategoryGroupCount(executableMoves));
+  const mobileNotice = $derived(sidebar.mobileNotice);
   const layout = new SimulatorLayoutModeObserver();
   const layoutMode = $derived(layout.current);
   const isCompactLayout = $derived(layout.isCompact);
+  const isPostGame = $derived(
+    Boolean(postGameGameId) && boardSnapshot?.status === "finished",
+  );
+  const isSpectator = $derived(viewerMode === "spectator");
+  const readOnlyMode = $derived(isPostGame || isSpectator);
+  const compactActionCount = $derived(isPostGame ? 0 : sidebar.moveCategoryCount);
+  const pendingEffectsPopoverItems = $derived.by(() =>
+    isPostGame ? ([] as PendingEffectsPopoverItem[]) : sidebar.pendingEffectsPopoverItems,
+  );
+  const activePlayerGuidance = $derived.by(() =>
+    isPostGame ? [] : sidebar.activePlayerGuidance,
+  );
+  const finishedGameKey = $derived.by(() =>
+    isPostGame && boardSnapshot && postGameGameId
+      ? `${postGameGameId}:${boardSnapshot.stateID ?? boardSnapshot.turnNumber}`
+      : null,
+  );
+  const postGameSummary = $derived.by(() => {
+    if (!boardSnapshot || !isPostGame || !postGameGameId) {
+      return null;
+    }
+
+    return buildPostGameSummary({
+      board: boardSnapshot,
+      entries: moveLogEntries,
+      viewerSide: ownerSide,
+    });
+  });
   // Hand cards overlap nearby drop zones, so we require a bit of movement before
   // starting a drag. Touch keeps a larger threshold to avoid long-press-only drag,
   // while mouse gets a smaller threshold so clicks do not misfire into the inkwell.
@@ -79,6 +134,9 @@
   let lastToastedMoveError = $state<SimulatorMoveError | null>(null);
   let compactPanelsOpen = $state(false);
   let compactPanelsTab = $state<"moves" | "log">("moves");
+  let lastMobileNoticeId = $state<number | null>(null);
+  let postGameModalState = $state(createInitialPostGameModalState());
+  let postGameDialogOpen = $state(false);
 
   $effect(() => {
     const nextEngine = engine;
@@ -99,6 +157,30 @@
   });
 
   $effect(() => {
+    const nextState = syncPostGameModalState(postGameModalState, finishedGameKey);
+    if (
+      nextState.open === postGameModalState.open &&
+      nextState.finishedGameKey === postGameModalState.finishedGameKey &&
+      nextState.autoOpenedFinishedGameKey === postGameModalState.autoOpenedFinishedGameKey
+    ) {
+      return;
+    }
+
+    postGameModalState = nextState;
+    postGameDialogOpen = nextState.open;
+  });
+
+  $effect(() => {
+    if (postGameDialogOpen === postGameModalState.open) {
+      return;
+    }
+
+    postGameModalState = postGameDialogOpen
+      ? reopenPostGameModal(postGameModalState)
+      : dismissPostGameModal(postGameModalState);
+  });
+
+  $effect(() => {
     if (!pendingMoveError || pendingMoveError === lastToastedMoveError) {
       return;
     }
@@ -128,6 +210,21 @@
     });
   });
 
+  $effect(() => {
+    if (!mobileNotice || mobileNotice.id === lastMobileNoticeId) {
+      return;
+    }
+
+    lastMobileNoticeId = mobileNotice.id;
+
+    if (mobileNotice.tone === "info") {
+      toast.info(mobileNotice.message);
+      return;
+    }
+
+    toast(mobileNotice.message);
+  });
+
   export function runAnimation(...args: Parameters<typeof game.runAnimation>): ReturnType<typeof game.runAnimation> {
     return game.runAnimation(...args);
   }
@@ -135,6 +232,15 @@
   function openCompactPanels(tab: "moves" | "log" = "moves"): void {
     compactPanelsTab = tab;
     compactPanelsOpen = true;
+  }
+
+  function openPostGameSummary(): void {
+    postGameModalState = reopenPostGameModal(postGameModalState);
+    postGameDialogOpen = true;
+  }
+
+  async function handleReturnToMatchmaking(): Promise<void> {
+    await onReturnToMatchmaking?.();
   }
 </script>
 
@@ -149,7 +255,7 @@
     <div class="simulator-dark simulator-v2">
       <Toaster theme="dark"/>
       {#if !isCompactLayout}
-          <LorcanaSimulatorSidebar/>
+        <LorcanaSimulatorSidebar readOnly={readOnlyMode} />
       {/if}
 
       {#if !isCompactLayout}
@@ -162,12 +268,8 @@
             <TabletopBoard
               {layoutMode}
               {compactActionCount}
-              pendingEffectsPopoverItems={sidebar.pendingEffectsPopoverItems}
-              activePlayerGuidance={sidebar.activePlayerGuidance}
-              scryResolutionOpen={sidebar.isScryResolutionOpen}
-              scryResolutionEffect={sidebar.activeScryResolution}
-              onCloseScryResolution={sidebar.closeScryResolution}
-              onConfirmScryResolution={sidebar.handleConfirmScryResolution}
+              {pendingEffectsPopoverItems}
+              {activePlayerGuidance}
             />
           {:else}
             <div class="loading">{m["sim.tabletop.loading"]({})}</div>
@@ -180,13 +282,9 @@
             <TabletopBoard
               {layoutMode}
               {compactActionCount}
-              pendingEffectsPopoverItems={sidebar.pendingEffectsPopoverItems}
-              activePlayerGuidance={sidebar.activePlayerGuidance}
-              scryResolutionOpen={sidebar.isScryResolutionOpen}
-              scryResolutionEffect={sidebar.activeScryResolution}
+              {pendingEffectsPopoverItems}
+              {activePlayerGuidance}
               onOpenCompactPanels={openCompactPanels}
-              onCloseScryResolution={sidebar.closeScryResolution}
-              onConfirmScryResolution={sidebar.handleConfirmScryResolution}
             />
           {:else}
             <div class="loading">{m["sim.tabletop.loading"]({})}</div>
@@ -222,7 +320,28 @@
       <CardInspectSheet/>
       <GlobalCardPreview/>
       {#if isCompactLayout}
-        <LorcanaCompactPanels bind:open={compactPanelsOpen} bind:activeTab={compactPanelsTab} />
+        <LorcanaCompactPanels
+          bind:open={compactPanelsOpen}
+          bind:activeTab={compactPanelsTab}
+          readOnly={readOnlyMode}
+        />
+      {/if}
+
+      {#if postGameGameId && postGameSummary}
+        <PostGameSummaryDialog
+          bind:open={postGameDialogOpen}
+          gameId={postGameGameId}
+          summary={postGameSummary}
+          onReturnToMatchmaking={handleReturnToMatchmaking}
+        />
+
+        {#if !postGameDialogOpen}
+          <div class="post-game-launcher">
+            <Button class="post-game-launcher__button" onclick={openPostGameSummary}>
+              {m["sim.postGame.viewSummary"]({})}
+            </Button>
+          </div>
+        {/if}
       {/if}
     </div>
   </Sidebar.Provider>
@@ -288,10 +407,40 @@
     overflow: hidden;
   }
 
+  .post-game-launcher {
+    position: absolute;
+    right: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    z-index: 30;
+    display: flex;
+    justify-content: flex-end;
+    pointer-events: none;
+  }
+
+  :global(.post-game-launcher__button) {
+    pointer-events: auto;
+    min-height: 2.9rem;
+    border-color: rgba(125, 211, 252, 0.42);
+    background:
+      linear-gradient(180deg, rgba(14, 116, 144, 0.92), rgba(8, 47, 73, 0.96));
+    color: #f8fafc;
+    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.42);
+  }
+
   @media (max-width: 767px) {
     .compact-inset {
       margin: 0;
       padding: 0;
+    }
+
+    .post-game-launcher {
+      right: 0.75rem;
+      left: 0.75rem;
+      justify-content: stretch;
+    }
+
+    :global(.post-game-launcher__button) {
+      width: 100%;
     }
   }
 

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hydrosIceTitanI18n } from "./039-hydros-ice-titan.i18n";
 
 export const hydrosIceTitan: CharacterCard = {
   id: "vgI",
@@ -7,48 +8,6 @@ export const hydrosIceTitan: CharacterCard = {
   cardType: "character",
   name: "Hydros",
   version: "Ice Titan",
-  i18n: {
-    en: {
-      name: "Hydros",
-      version: "Ice Titan",
-      text: [
-        {
-          title: "BLIZZARD",
-          description: "{E} — Exert chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Polaros",
-      version: "Eis Titan",
-      text: [
-        {
-          title: "BLIZZARD",
-          description: "— Erschöpfe einen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Hydros",
-      version: "Titan de glace",
-      text: [
-        {
-          title: "BLIZZARD",
-          description: "— Choisissez un personnage et épuisez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Hydros",
-      version: "Titano di Ghiaccio",
-      text: [
-        {
-          title: "TORMENTA",
-          description: "— Impegna un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Hercules",
   set: "003",
@@ -91,4 +50,5 @@ export const hydrosIceTitan: CharacterCard = {
       },
     },
   ],
+  i18n: hydrosIceTitanI18n,
 };

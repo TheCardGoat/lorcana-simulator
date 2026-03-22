@@ -25,7 +25,7 @@
  *
  * Output files:
  *   - src/cards/{set}/{type}/{card}.ts (individual card files)
- *   - src/cards/cards.ts (main aggregator)
+ *   - src/cards/catalog-data.ts (main aggregator)
  *   - src/cards/index.ts (entry point)
  *   - src/cards/types.ts (type definitions)
  *   - src/data/sets.json

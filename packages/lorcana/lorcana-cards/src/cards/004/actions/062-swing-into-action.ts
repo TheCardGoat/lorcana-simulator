@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { swingIntoActionI18n } from "./062-swing-into-action.i18n";
 
 export const swingIntoAction: ActionCard = {
   id: "bPM",
@@ -6,24 +7,6 @@ export const swingIntoAction: ActionCard = {
   reprints: ["set4-062"],
   cardType: "action",
   name: "Swing into Action",
-  i18n: {
-    en: {
-      name: "Swing into Action",
-      text: "Chosen character gains Rush this turn. (They can challenge the turn they're played.)",
-    },
-    de: {
-      name: "Mit Schwung in die Aktion",
-      text: "Ein Charakter deiner Wahl erhält in diesem Zug Rasant. (Der Charakter kann im selben Zug herausfordern, in dem er ausgespielt wird.)",
-    },
-    fr: {
-      name: "Passer à l'action",
-      text: "Choisissez un personnage qui gagne Charge pour le reste de ce tour.",
-    },
-    it: {
-      name: "Lanciarsi in Azione",
-      text: "Un personaggio a tua scelta ottiene Lesto per questo turno. (Può sfidare nel turno in cui viene giocato.)",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "004",
@@ -55,4 +38,5 @@ export const swingIntoAction: ActionCard = {
       type: "action",
     },
   ],
+  i18n: swingIntoActionI18n,
 };

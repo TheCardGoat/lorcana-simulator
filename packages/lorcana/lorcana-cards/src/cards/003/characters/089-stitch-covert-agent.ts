@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stitchCovertAgentI18n } from "./089-stitch-covert-agent.i18n";
 
 export const stitchCovertAgent: CharacterCard = {
   id: "uqB",
@@ -7,36 +8,6 @@ export const stitchCovertAgent: CharacterCard = {
   cardType: "character",
   name: "Stitch",
   version: "Covert Agent",
-  i18n: {
-    en: {
-      name: "Stitch",
-      version: "Covert Agent",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "HIDE",
-          description: "While this character is at a location, he gains Ward.",
-        },
-      ],
-    },
-    de: {
-      name: "Stitch",
-      version: "Verdeckter Ermittler",
-      text: "Wendig VERSTECKEN Solange dieser Charakter an einem Ort ist, erhält er Behütet.",
-    },
-    fr: {
-      name: "Stitch",
-      version: "Agent sous couverture",
-      text: "Insaisissable CACHÉ Tant que ce personnage se trouve sur un lieu, il gagne Hors d'atteinte",
-    },
-    it: {
-      name: "Stitch",
-      version: "Agente in Incognito",
-      text: "Sfuggente NASCONDERSI Mentre questo personaggio si trova in un luogo, ottiene Protetto. (Gli avversari non possono sceglierlo se non per sfidarlo.)",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lilo and Stitch",
   set: "003",
@@ -61,7 +32,6 @@ export const stitchCovertAgent: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Alien"],
-  missingTests: true,
   abilities: [
     {
       id: "1c3-1",
@@ -70,14 +40,19 @@ export const stitchCovertAgent: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        type: "at-location",
+      },
       effect: {
         keyword: "Ward",
         target: "SELF",
         type: "gain-keyword",
       },
       id: "1c3-2",
+      name: "HIDE",
       text: "HIDE While this character is at a location, he gains Ward.",
       type: "static",
     },
   ],
+  i18n: stitchCovertAgentI18n,
 };

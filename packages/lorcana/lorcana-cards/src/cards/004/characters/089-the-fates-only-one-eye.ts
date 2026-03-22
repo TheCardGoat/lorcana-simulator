@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theFatesOnlyOneEyeI18n } from "./089-the-fates-only-one-eye.i18n";
 
 export const theFatesOnlyOneEye: CharacterCard = {
   id: "Sh7",
@@ -7,52 +8,6 @@ export const theFatesOnlyOneEye: CharacterCard = {
   cardType: "character",
   name: "The Fates",
   version: "Only One Eye",
-  i18n: {
-    en: {
-      name: "The Fates",
-      version: "Only One Eye",
-      text: [
-        {
-          title: "ALL WILL BE SEEN",
-          description:
-            "When you play this character, look at the top card of each opponent's deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Schicksalsgöttinnen",
-      version: "Nur ein Auge",
-      text: [
-        {
-          title: "ALLES WIRD GESEHEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, schaue dir die oberste Karte des Decks aller gegnerischen Mitspielenden an.",
-        },
-      ],
-    },
-    fr: {
-      name: "Les Moires",
-      version: "Œil unique",
-      text: [
-        {
-          title: "NOUS VOYONS TOUT",
-          description:
-            "Lorsque vous jouez ce personnage, regardez la première carte de la pioche de chaque adversaire.",
-        },
-      ],
-    },
-    it: {
-      name: "Le Parche",
-      version: "Con un Solo Occhio",
-      text: [
-        {
-          title: "ONNISCIENZA",
-          description:
-            "Quando giochi questo personaggio, guarda la prima carta del mazzo di ogni avversario.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "004",
@@ -74,5 +29,23 @@ export const theFatesOnlyOneEye: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        type: "scry",
+        amount: 1,
+        target: "EACH_OPPONENT",
+      },
+      id: "Sh7-1",
+      name: "ALL WILL BE SEEN",
+      text: "ALL WILL BE SEEN When you play this character, look at the top card of each opponent's deck.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
+  ],
+  i18n: theFatesOnlyOneEyeI18n,
 };

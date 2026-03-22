@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tamatoaSeekerOfShineI18n } from "./156-tamatoa-seeker-of-shine.i18n";
 
 export const tamatoaSeekerOfShine: CharacterCard = {
   id: "lED",
@@ -7,40 +8,6 @@ export const tamatoaSeekerOfShine: CharacterCard = {
   cardType: "character",
   name: "Tamatoa",
   version: "Seeker of Shine",
-  i18n: {
-    en: {
-      name: "Tamatoa",
-      version: "Seeker of Shine",
-      text: [
-        {
-          title: "Boost 2 {I}",
-        },
-        {
-          title: "Ward",
-        },
-        {
-          title: "ANYTHING THAT GLITTERS",
-          description:
-            "Whenever you put a card under one of your characters or locations, this character gets +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Tamatoa",
-      version: "Sucher des Glanzes",
-      text: "Stärken 2 Behütet MACHE ES GLÄNZEND Jedes Mal, wenn du eine Karte unter einen deiner Charaktere oder Orte legst, erhält dieser Charakter in diesem Zug +1.",
-    },
-    fr: {
-      name: "Tamatoa",
-      version: "Chercheur de bling-bling",
-      text: "Boost 2 Hors d'atteinte TOUT CE QUI EST BRILLANT Chaque fois que vous placez une carte sous l'un de vos personnages ou de vos lieux, ce personnage-ci gagne +1 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Tamatoa",
-      version: "Cercatore di Splendore",
-      text: "Potenziamento 2, Protetto DIETRO UN LUCCICHIO Ogni volta che metti una carta sotto a uno dei tuoi personaggi o luoghi, questo personaggio riceve +1 per questo turno.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Moana",
   set: "011",
@@ -94,12 +61,13 @@ export const tamatoaSeekerOfShine: CharacterCard = {
       },
       name: "ANYTHING THAT GLITTERS",
       trigger: {
-        event: "banish",
+        event: "put-card-under",
         timing: "whenever",
-        on: "YOUR_OTHER_CHARACTERS",
+        on: "YOUR_CHARACTERS_OR_LOCATIONS",
       },
       type: "triggered",
       text: "ANYTHING THAT GLITTERS Whenever you put a card under one of your characters or locations, this character gets +1 {L} this turn.",
     },
   ],
+  i18n: tamatoaSeekerOfShineI18n,
 };

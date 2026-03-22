@@ -1,115 +1,156 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { fanTheFlames } from "@lorcanito/lorcana-engine/cards/001/actions/actions";
-// Import { hakunaMatata } from "@lorcanito/lorcana-engine/cards/001/songs/027-hakuna-matata";
-// Import { ladyTremaineSinisterSocialite } from "@lorcanito/lorcana-engine/cards/010";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Lady Tremaine - Sinister Socialite", () => {
-//   Describe("Boost ability", () => {
-//     It("should have Boost 2 ability", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [ladyTremaineSinisterSocialite],
-//       });
-//
-//       Expect(
-//         TestEngine.getCardModel(ladyTremaineSinisterSocialite).hasBoost,
-//       ).toBe(true);
-//     });
-//   });
-//
-//   Describe("EXPEDIENT SCHEMES - Whenever this character quests, if you've put a card under her this turn, you may play an action with cost 5 or less from your discard for free, then put that action card on the bottom of your deck instead of into your discard", () => {
-//     /**
-//      * TEST CASE: Quest without boosting - no trigger
-//      *
-//      * SCENARIO: Quest without using Boost this turn
-//      * EXPECTED: No trigger, normal quest
-//      */
-//     It("should not trigger when questing without boosting this turn", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [ladyTremaineSinisterSocialite],
-//         Discard: [fanTheFlames],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         LadyTremaineSinisterSocialite,
-//       );
-//
-//       // Make ready (simulate next turn after being played)
-//       CardUnderTest.updateCardMeta({ exerted: false });
-//
-//       // Quest without having boosted
-//       Await testEngine.questCard(cardUnderTest);
-//
-//       // Should just quest normally, no stack items
-//       Expect(testEngine.store.stackLayerStore.layers.length).toBe(0);
-//
-//       // Fan the Flames should still be in discard
-//       Const action = testEngine.getCardModel(fanTheFlames);
-//       Expect(action.zone).toBe("discard");
-//     });
-//
-//     /**
-//      * TEST CASE: Boost then quest - trigger fires
-//      *
-//      * SCENARIO: Use Boost, then quest with Lady Tremaine
-//      * EXPECTED: Trigger fires, can play action from discard for free
-//      *
-//      * ENGINE REQUIREMENT:
-//      * - Need condition to check if specific ability was used this turn
-//      * - Could use turn.abilities tracking: { card: instanceId, ability: "Boost 2" }
-//      * - New condition type:
-//      *   {
-//      *     Type: "ability-used-this-turn",
-//      *     Ability: "Boost 2",  // Name of the ability
-//      *     Source: "self",  // The card that used it
-//      *   }
-//      */
-//     It("should trigger when questing after boosting this turn", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: 10,
-//         Deck: 3,
-//         Play: [ladyTremaineSinisterSocialite],
-//         Discard: [hakunaMatata], // Cost 3 action - eligible
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         LadyTremaineSinisterSocialite,
-//       );
-//       Const action = testEngine.getCardModel(hakunaMatata);
-//
-//       // Use boost
-//       Await testEngine.activateCard(cardUnderTest, { ability: "Boost 2" });
-//       Expect(cardUnderTest.cardsUnder.length).toBe(1);
-//
-//       // Quest - should trigger EXPEDIENT SCHEMES
-//       Await testEngine.questCard(cardUnderTest);
-//       Expect(testEngine.store.stackLayerStore.layers.length).toBeGreaterThan(0);
-//
-//       // Resolve - choose Hakuna Matata from discard
-//       Await testEngine.acceptOptionalLayer();
-//       Await testEngine.resolveTopOfStack({ targets: [action] });
-//
-//       // Action should have been played (moved to play temporarily during resolution)
-//       // Then moved to bottom of deck instead of discard
-//       Expect(action.zone).toBe("deck");
-//
-//       // Verify it's at the bottom of the deck
-//       Const deck = testEngine.store.tableStore.getPlayerZoneCards(
-//         "player_one",
-//         "deck",
-//       );
-//       If (deck && deck.length > 0) {
-//         Const bottomCard = deck[0];
-//         If (bottomCard) {
-//           Expect(bottomCard.instanceId).toBe(action.instanceId);
-//         }
-//       }
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockAction } from "@tcg/lorcana-engine/testing";
+import { ladyTremaineSinisterSocialite } from "./124-lady-tremaine-sinister-socialite";
+
+const actionInDiscard = createMockAction({
+  id: "lt-ss-action-discard",
+  name: "Test Action",
+  cost: 4,
+  text: "A test action",
+});
+
+const expensiveActionInDiscard = createMockAction({
+  id: "lt-ss-expensive-action",
+  name: "Expensive Action",
+  cost: 6,
+  text: "An expensive action",
+});
+
+describe("Lady Tremaine - Sinister Socialite", () => {
+  describe("Boost 2", () => {
+    it("has Boost keyword", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [ladyTremaineSinisterSocialite],
+      });
+
+      expect(testEngine.hasKeyword(ladyTremaineSinisterSocialite, "Boost")).toBe(true);
+    });
+
+    it("puts a card under Lady Tremaine when Boost is activated", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: 3,
+        deck: 3,
+        play: [ladyTremaineSinisterSocialite],
+      });
+
+      expect(testEngine.getCardsUnder(ladyTremaineSinisterSocialite)).toHaveLength(0);
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .activateAbility(ladyTremaineSinisterSocialite, { ability: "Boost" }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.getCardsUnder(ladyTremaineSinisterSocialite)).toHaveLength(1);
+    });
+  });
+
+  describe("EXPEDIENT SCHEMES - Whenever this character quests, if you've put a card under her this turn, you may play an action with cost 5 or less from your discard for free, then put that action card on the bottom of your deck instead of into your discard.", () => {
+    it("does not trigger when questing without boosting this turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: ladyTremaineSinisterSocialite, isDrying: false }],
+        discard: [actionInDiscard],
+        deck: 3,
+      });
+
+      expect(testEngine.asPlayerOne().quest(ladyTremaineSinisterSocialite)).toBeSuccessfulCommand();
+
+      // No triggered ability should fire
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+
+      // Action card should still be in discard
+      expect(testEngine.asPlayerOne().getCardZone(actionInDiscard)).toBe("discard");
+    });
+
+    it("triggers when questing after boosting this turn and plays action from discard for free", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: 3,
+        deck: 3,
+        play: [{ card: ladyTremaineSinisterSocialite, isDrying: false }],
+        discard: [actionInDiscard],
+      });
+
+      // Activate Boost to put a card under Lady Tremaine
+      expect(
+        testEngine
+          .asPlayerOne()
+          .activateAbility(ladyTremaineSinisterSocialite, { ability: "Boost" }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.getCardsUnder(ladyTremaineSinisterSocialite)).toHaveLength(1);
+
+      // Quest - should trigger EXPEDIENT SCHEMES
+      expect(testEngine.asPlayerOne().quest(ladyTremaineSinisterSocialite)).toBeSuccessfulCommand();
+
+      // Should have triggered optional ability in the bag
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+
+      // Accept the optional - play action from discard for free
+      // resolvePlayCardEffect auto-selects the only eligible card without a pending selection
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // After being played, the action card should be on the bottom of deck (not in discard)
+      // The replacement effect redirects the zone-change from discard to deck bottom
+      expect(testEngine.asPlayerOne().getCardZone(actionInDiscard)).toBe("deck");
+    });
+
+    it("can decline the optional effect when condition is met", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: 3,
+        deck: 3,
+        play: [{ card: ladyTremaineSinisterSocialite, isDrying: false }],
+        discard: [actionInDiscard],
+      });
+
+      // Activate Boost
+      expect(
+        testEngine
+          .asPlayerOne()
+          .activateAbility(ladyTremaineSinisterSocialite, { ability: "Boost" }),
+      ).toBeSuccessfulCommand();
+
+      // Quest
+      expect(testEngine.asPlayerOne().quest(ladyTremaineSinisterSocialite)).toBeSuccessfulCommand();
+
+      // Decline the optional
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // Action card should remain in discard
+      expect(testEngine.asPlayerOne().getCardZone(actionInDiscard)).toBe("discard");
+    });
+
+    it("does not play an action with cost > 5 from discard", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: 3,
+        deck: 3,
+        play: [{ card: ladyTremaineSinisterSocialite, isDrying: false }],
+        discard: [expensiveActionInDiscard],
+      });
+
+      // Activate Boost
+      expect(
+        testEngine
+          .asPlayerOne()
+          .activateAbility(ladyTremaineSinisterSocialite, { ability: "Boost" }),
+      ).toBeSuccessfulCommand();
+
+      // Quest
+      expect(testEngine.asPlayerOne().quest(ladyTremaineSinisterSocialite)).toBeSuccessfulCommand();
+
+      // The optional bag effect may fire, but the expensive action is not eligible
+      const bagCount = testEngine.asPlayerOne().getBagCount();
+      if (bagCount > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        ).toBeSuccessfulCommand();
+      }
+
+      // Expensive action should remain in discard (not eligible - cost > 5)
+      expect(testEngine.asPlayerOne().getCardZone(expensiveActionInDiscard)).toBe("discard");
+    });
+  });
+});

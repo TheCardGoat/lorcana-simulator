@@ -1,43 +1,35 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   ChipFriendIndeed,
-//   DaleFriendInNeed,
-// } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Dale - Friend in Need", () => {
-//   Describe("**CHIP'S PARTNER** This character enters play exerted unless you have a character named Chip in play.", () => {
-//     It("No Chip in play", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: daleFriendInNeed.cost,
-//         Hand: [daleFriendInNeed],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(daleFriendInNeed);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//
-//       Expect(cardUnderTest.exerted).toBe(true);
-//     });
-//
-//     It("Chip in play", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: daleFriendInNeed.cost,
-//         Hand: [daleFriendInNeed],
-//         Play: [chipFriendIndeed],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(daleFriendInNeed);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//
-//       Expect(cardUnderTest.exerted).toBe(false);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { daleFriendInNeed } from "./007-dale-friend-in-need";
+
+const chipInPlay = createMockCharacter({
+  id: "dale-friend-in-need-chip",
+  name: "Chip",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+describe("Dale - Friend in Need", () => {
+  it("CHIP'S PARTNER - enters play exerted unless you have Chip in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [daleFriendInNeed],
+      inkwell: daleFriendInNeed.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(daleFriendInNeed)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().isExerted(daleFriendInNeed)).toBe(true);
+  });
+
+  it("CHIP'S PARTNER - stays ready if Chip is already in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [daleFriendInNeed],
+      inkwell: daleFriendInNeed.cost,
+      play: [chipInPlay],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(daleFriendInNeed)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().isExerted(daleFriendInNeed)).toBe(false);
+  });
+});

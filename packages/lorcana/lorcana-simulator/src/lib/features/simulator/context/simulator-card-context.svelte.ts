@@ -1,9 +1,10 @@
 import { getContext, hasContext, setContext } from "svelte";
-import { m } from "$lib/paraglide/messages.js";
+import { m } from "$lib/i18n/messages.js";
 
 import {
   useLorcanaGameContext,
   useLorcanaSidebarPresenter,
+  type PrimaryClickAction,
 } from "@/features/simulator/context/game-context.svelte.js";
 import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
 import {
@@ -11,6 +12,7 @@ import {
   type CardInteractionController,
   type CardInteractionMeta,
   type CardInteractionSelectionMode,
+  type CardSelectPayload,
 } from "@/features/simulator/context/card-interaction-context.svelte.js";
 import { SimulatorLayoutModeObserver } from "@/features/simulator/model/layout-mode.svelte.js";
 
@@ -46,6 +48,8 @@ class SimulatorCardController implements SimulatorCardContextValue {
   selectedIds = $state<string[]>([]);
   selectionMode = $state<CardInteractionSelectionMode>("single");
   previewPosition = $state<PreviewPosition>({ x: 0, y: 0 });
+  #delayedHoveredCard = $state<LorcanaCardSnapshot | null>(null);
+  #hoverTimer: ReturnType<typeof setTimeout> | null = null;
   readonly #game = useLorcanaGameContext();
   readonly #sidebar = useLorcanaSidebarPresenter();
   readonly #options: SimulatorCardContextOptions;
@@ -56,7 +60,7 @@ class SimulatorCardController implements SimulatorCardContextValue {
   }
 
   get previewCard(): LorcanaCardSnapshot | null {
-    return this.externalPreviewCard ?? this.pinnedPreviewCard ?? this.hoveredCard;
+    return this.externalPreviewCard ?? this.pinnedPreviewCard ?? this.#delayedHoveredCard;
   }
 
   get isInspectOpen(): boolean {
@@ -85,10 +89,38 @@ class SimulatorCardController implements SimulatorCardContextValue {
     this.hoveredCard = card ?? null;
     this.selectionMode = this.resolveSelectionMode(card, meta);
     this.syncSelectedIds(this.selectionMode);
+
+    if (this.#hoverTimer !== null) {
+      clearTimeout(this.#hoverTimer);
+      this.#hoverTimer = null;
+    }
+
+    const hoverCard = card ?? null;
+    const mode = this.#sidebar.cardPreviewMode;
+
+    if (mode === "disabled") {
+      this.#delayedHoveredCard = null;
+    } else if (mode === "immediate") {
+      this.#delayedHoveredCard = hoverCard;
+    } else {
+      if (hoverCard) {
+        this.#hoverTimer = setTimeout(() => {
+          this.#delayedHoveredCard = hoverCard;
+          this.#hoverTimer = null;
+        }, 5000);
+      } else {
+        this.#delayedHoveredCard = null;
+      }
+    }
   };
 
   handleLeave = (): void => {
     this.hoveredCard = null;
+    if (this.#hoverTimer !== null) {
+      clearTimeout(this.#hoverTimer);
+      this.#hoverTimer = null;
+    }
+    this.#delayedHoveredCard = null;
   };
 
   handleSelect = ({
@@ -269,20 +301,31 @@ class SimulatorCardController implements SimulatorCardContextValue {
       return;
     }
 
-    if (
-      ownerSide &&
-      card.zoneId === "play" &&
-      card.ownerSide === ownerSide &&
-      this.#game.challengeReadyCardIds().includes(card.cardId)
-    ) {
-      const challengeAction = this.#sidebar
-        .getCardActionViews(card)
-        .find((action) => action.categoryId === "challenge" && action.enabled);
-      if (challengeAction) {
-        this.#sidebar.handleCardActionClick(challengeAction);
-      }
+    if (ownerSide && card.zoneId === "play" && card.ownerSide === ownerSide) {
+      this.#triggerClickAction(card, this.#sidebar.primaryClickAction);
     }
   }
+
+  #triggerClickAction(card: LorcanaCardSnapshot, action: PrimaryClickAction): void {
+    if (action === "none") return;
+    const matchingAction = this.#sidebar
+      .getCardActionViews(card)
+      .find((a) => a.categoryId === action && a.enabled);
+    if (matchingAction) {
+      this.#sidebar.handleCardActionClick(matchingAction);
+    }
+  }
+
+  handleContextMenu = ({ card }: CardSelectPayload): void => {
+    if (!card) return;
+    const ownerSide = this.#game.ownerSide();
+    if (!ownerSide || card.zoneId !== "play" || card.ownerSide !== ownerSide) return;
+
+    const primary = this.#sidebar.primaryClickAction;
+    const secondary: PrimaryClickAction =
+      primary === "challenge" ? "quest" : primary === "quest" ? "challenge" : "none";
+    this.#triggerClickAction(card, secondary);
+  };
 }
 
 export function setSimulatorCardContext(

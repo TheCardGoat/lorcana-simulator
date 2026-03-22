@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseMusketeerChampionI18n } from "./017-minnie-mouse-musketeer-champion.i18n";
 
 export const minnieMouseMusketeerChampion: CharacterCard = {
   id: "Wtk",
@@ -7,43 +8,6 @@ export const minnieMouseMusketeerChampion: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Musketeer Champion",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Musketeer Champion",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "DRAMATIC ENTRANCE",
-          description:
-            "When you play this character, banish chosen opposing character with 5 {S} or more.",
-        },
-      ],
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Musketier-Champion",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) SPEKTAKULÄRER AUFTRITT Wenn du diesen Charakter ausspielst, verbanne einen gegnerischen Charakter deiner Wahl mit 5 oder mehr.",
-    },
-    fr: {
-      name: "Minnie",
-      version: "Championne Mousquetaire",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'un adversaire défie l'un de vos personnages, il doit, si possible, choisir l'un de vos personnages avec Rempart.) ENTRÉE THÉATRALE Lorsque vous jouez ce personnage, choisissez un personnage adverse avec 5 ou plus et bannissez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Minni",
-      version: "Paladina dei Moschettieri",
-      text: "Guardiano ENTRATA DRAMMATICA Quando giochi questo personaggio, esilia un personaggio avversario a tua scelta con 5 o superiore.",
-    },
-  },
   inkType: ["amber"],
   set: "004",
   cardNumber: 17,
@@ -97,4 +61,5 @@ export const minnieMouseMusketeerChampion: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: minnieMouseMusketeerChampionI18n,
 };

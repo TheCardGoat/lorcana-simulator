@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { percyPupsicleI18n } from "./027-percy-pupsicle.i18n";
 
 export const percyPupsicle: CharacterCard = {
   id: "0V8",
@@ -7,48 +8,6 @@ export const percyPupsicle: CharacterCard = {
   cardType: "character",
   name: "Percy",
   version: "Pupsicle",
-  i18n: {
-    en: {
-      name: "Percy",
-      version: "Pupsicle",
-      text: [
-        {
-          title: "ICE BATH",
-          description: "This character can't challenge.",
-        },
-      ],
-    },
-    de: {
-      name: "Percy",
-      version: "Kalter Hund",
-      text: [
-        {
-          title: "EISBAD",
-          description: "Dieser Charakter kann nicht herausfordern.",
-        },
-      ],
-    },
-    fr: {
-      name: "Percy",
-      version: "Chien givré",
-      text: [
-        {
-          title: "BAIN DE GLACE",
-          description: "Ce personnage ne peut pas défier.",
-        },
-      ],
-    },
-    it: {
-      name: "Perlin",
-      version: "Canghiacciolo",
-      text: [
-        {
-          title: "BAGNO DI GHIACCIO",
-          description: "Questo personaggio non può sfidare.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Pocahontas",
   set: "011",
@@ -83,4 +42,5 @@ export const percyPupsicle: CharacterCard = {
       text: "ICE BATH This character can't challenge.",
     },
   ],
+  i18n: percyPupsicleI18n,
 };

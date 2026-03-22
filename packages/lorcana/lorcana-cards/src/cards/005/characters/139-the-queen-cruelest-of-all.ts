@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theQueenCruelestOfAllI18n } from "./139-the-queen-cruelest-of-all.i18n";
 
 export const theQueenCruelestOfAll: CharacterCard = {
   id: "W5f",
@@ -7,28 +8,6 @@ export const theQueenCruelestOfAll: CharacterCard = {
   cardType: "character",
   name: "The Queen",
   version: "Cruelest of All",
-  i18n: {
-    en: {
-      name: "The Queen",
-      version: "Cruelest of All",
-      text: "Ward",
-    },
-    de: {
-      name: "Die Königin",
-      version: "Die Grausamste von allen",
-      text: "Behütet",
-    },
-    fr: {
-      name: "La Reine",
-      version: "La plus cruelle",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Regina",
-      version: "La Più Crudele del Reame",
-      text: "Protetto",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Snow White",
   set: "005",
@@ -53,4 +32,5 @@ export const theQueenCruelestOfAll: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: theQueenCruelestOfAllI18n,
 };

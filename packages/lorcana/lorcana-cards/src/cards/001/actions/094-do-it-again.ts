@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { doItAgainI18n } from "./094-do-it-again.i18n";
 
 export const doItAgain: ActionCard = {
   id: "27H",
@@ -6,24 +7,6 @@ export const doItAgain: ActionCard = {
   reprints: ["set1-094"],
   cardType: "action",
   name: "Do It Again!",
-  i18n: {
-    en: {
-      name: "Do It Again!",
-      text: "Return an action card from your discard to your hand.",
-    },
-    de: {
-      name: "Mach es noch mal!",
-      text: "Nimm 1 Aktionskarte aus deinem Ablagestapel zurück auf deine Hand.",
-    },
-    fr: {
-      name: "RECOMMENCE !",
-      text: "Reprenez en main une carte action de votre défausse.",
-    },
-    it: {
-      name: "Do It Again!",
-      text: "Return an action card from your discard to your hand.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Cinderella",
   set: "001",
@@ -46,4 +29,5 @@ export const doItAgain: ActionCard = {
       },
     },
   ],
+  i18n: doItAgainI18n,
 };

@@ -1,24 +1,43 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { cybugInvasiveEnemy } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Cy-bug - Invasive Enemy", () => {
-//   It.skip("HIVE MIND This character gets +1 {S} for each other character you have in play.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: cybugInvasiveEnemy.cost,
-//       Play: [cybugInvasiveEnemy],
-//       Hand: [cybugInvasiveEnemy],
-//     });
-//
-//     Await testEngine.playCard(cybugInvasiveEnemy);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { cybugInvasiveEnemy } from "./127-cy-bug-invasive-enemy";
+
+const otherCharacterOne = createMockCharacter({
+  id: "cybug-other-character-one",
+  name: "Other Character One",
+  cost: 1,
+  strength: 2,
+  willpower: 2,
+});
+
+const otherCharacterTwo = createMockCharacter({
+  id: "cybug-other-character-two",
+  name: "Other Character Two",
+  cost: 1,
+  strength: 3,
+  willpower: 2,
+});
+
+describe("Cy-Bug - Invasive Enemy", () => {
+  it("gets +1 strength for each other character you have in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: cybugInvasiveEnemy }, otherCharacterOne, otherCharacterTwo],
+      deck: 1,
+    });
+
+    expect(testEngine.asPlayerOne().getCardStrength(cybugInvasiveEnemy)).toBe(
+      cybugInvasiveEnemy.strength + 2,
+    );
+  });
+
+  it("does not count itself toward Hive Mind", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [cybugInvasiveEnemy],
+      deck: 1,
+    });
+
+    expect(testEngine.asPlayerOne().getCardStrength(cybugInvasiveEnemy)).toBe(
+      cybugInvasiveEnemy.strength,
+    );
+  });
+});

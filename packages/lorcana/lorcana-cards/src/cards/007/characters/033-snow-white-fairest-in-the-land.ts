@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { snowWhiteFairestInTheLandI18n } from "./033-snow-white-fairest-in-the-land.i18n";
 
 export const snowWhiteFairestInTheLand: CharacterCard = {
   id: "3bd",
@@ -7,48 +8,6 @@ export const snowWhiteFairestInTheLand: CharacterCard = {
   cardType: "character",
   name: "Snow White",
   version: "Fairest in the Land",
-  i18n: {
-    en: {
-      name: "Snow White",
-      version: "Fairest in the Land",
-      text: [
-        {
-          title: "HIDDEN AWAY",
-          description: "This character can't be challenged.",
-        },
-      ],
-    },
-    de: {
-      name: "Schneewittchen",
-      version: "Die Schönste im Land",
-      text: [
-        {
-          title: "VERSTECKT",
-          description: "Dieser Charakter kann nicht herausgefordert werden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Blanche-Neige",
-      version: "Plus belle que jamais",
-      text: [
-        {
-          title: "DISSIMULÉE",
-          description: "Ce personnage ne peut pas être défié.",
-        },
-      ],
-    },
-    it: {
-      name: "Biancaneve",
-      version: "La Più Bella del Reame",
-      text: [
-        {
-          title: "NASCOSTA",
-          description: "Questo personaggio non può essere sfidato.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "007",
@@ -83,4 +42,5 @@ export const snowWhiteFairestInTheLand: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: snowWhiteFairestInTheLandI18n,
 };

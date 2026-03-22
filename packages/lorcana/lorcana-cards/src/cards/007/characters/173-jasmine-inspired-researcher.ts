@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jasmineInspiredResearcherI18n } from "./173-jasmine-inspired-researcher.i18n";
 
 export const jasmineInspiredResearcher: CharacterCard = {
   id: "TlP",
@@ -7,52 +8,6 @@ export const jasmineInspiredResearcher: CharacterCard = {
   cardType: "character",
   name: "Jasmine",
   version: "Inspired Researcher",
-  i18n: {
-    en: {
-      name: "Jasmine",
-      version: "Inspired Researcher",
-      text: [
-        {
-          title: "EXTRA ASSISTANCE",
-          description:
-            "Whenever this character quests, if you have no cards in your hand, draw a card for each Ally character you have in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Jasmin",
-      version: "Inspirierte Forscherin",
-      text: [
-        {
-          title: "ZUSÄTZLICHE UNTERSTÜTZUNG",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, falls du keine Karten auf der Hand hast, ziehe 1 Karte für jeden Verbündeten, den du im Spiel hast.",
-        },
-      ],
-    },
-    fr: {
-      name: "Jasmine",
-      version: "Chercheuse inspirée",
-      text: [
-        {
-          title: "AIDE SUPPLÉMENTAIRE",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, si vous n'avez aucune carte en main, piochez une carte pour chaque personnage Allié que vous avez en jeu.",
-        },
-      ],
-    },
-    it: {
-      name: "Jasmine",
-      version: "Ricercatrice Ispirata",
-      text: [
-        {
-          title: "AIUTO AGGIUNTIVO",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, se non hai carte in mano, pesca una carta per ogni personaggio Alleato che hai in gioco.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire", "steel"],
   franchise: "Aladdin",
   set: "007",
@@ -77,17 +32,28 @@ export const jasmineInspiredResearcher: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [
     {
+      condition: {
+        type: "resource-count",
+        what: "cards-in-hand",
+        controller: "you",
+        comparison: "equal",
+        value: 0,
+      },
       effect: {
-        condition: {
-          expression: "you have no cards in your hand",
-          type: "if",
+        type: "draw",
+        target: "CONTROLLER",
+        amount: {
+          type: "filtered-count",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          filters: [
+            {
+              type: "has-classification",
+              classification: "Ally",
+            },
+          ],
         },
-        then: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
-        },
-        type: "conditional",
       },
       id: "4mp-1",
       name: "EXTRA ASSISTANCE",
@@ -100,4 +66,5 @@ export const jasmineInspiredResearcher: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: jasmineInspiredResearcherI18n,
 };

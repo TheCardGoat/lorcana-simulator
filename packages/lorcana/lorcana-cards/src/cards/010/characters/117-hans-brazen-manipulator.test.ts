@@ -1,124 +1,156 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   HansBrazenManipulator,
-//   MickeyMouseAmberChampion,
-//   PrinceCharmingProtectorOfTheRealm,
-// } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Hans - Brazen Manipulator", () => {
-//   Describe("JOSTLING FOR POWER - King and Queen characters can't quest", () => {
-//     It("should not affect non-King/Queen characters", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [hansBrazenManipulator, mickeyMouseAmberChampion],
-//       });
-//
-//       Const hans = testEngine.getCardModel(hansBrazenManipulator);
-//       Const mickey = testEngine.getCardModel(mickeyMouseAmberChampion);
-//
-//       // Mickey is not a King or Queen, so he can quest
-//       Expect(mickey.canQuest).toBe(true);
-//     });
-//
-//     It("should prevent King characters from questing", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [hansBrazenManipulator, princeCharmingProtectorOfTheRealm],
-//       });
-//
-//       Const hans = testEngine.getCardModel(hansBrazenManipulator);
-//       Const prince = testEngine.getCardModel(princeCharmingProtectorOfTheRealm);
-//
-//       // Prince Charming is a prince, not a king, so he should be able to quest
-//       Expect(prince.canQuest).toBe(true);
-//     });
-//   });
-//
-//   Describe("GROWING INFLUENCE - At the start of your turn, if an opponent has 2 or more ready characters in play, gain 2 lore", () => {
-//     It("should gain 2 lore when opponent has 2+ ready characters", () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [hansBrazenManipulator],
-//         },
-//         {
-//           Play: [princeCharmingProtectorOfTheRealm, mickeyMouseAmberChampion],
-//         },
-//       );
-//
-//       Const hans = testEngine.getCardModel(hansBrazenManipulator);
-//       Const player = testEngine.store.tableStore.getTable("player_one");
-//
-//       Const initialLore = player.lore;
-//
-//       // Pass turn to trigger start of turn
-//       TestEngine.passTurn();
-//       TestEngine.passTurn();
-//
-//       Const playerAfter = testEngine.store.tableStore.getTable("player_one");
-//
-//       // Should gain 2 lore because opponent has 2 ready characters
-//       Expect(playerAfter.lore).toBe(initialLore + 2);
-//     });
-//
-//     It("should not gain lore when opponent has less than 2 ready characters", () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [hansBrazenManipulator],
-//         },
-//         {
-//           Play: [princeCharmingProtectorOfTheRealm],
-//         },
-//       );
-//
-//       Const hans = testEngine.getCardModel(hansBrazenManipulator);
-//       Const player = testEngine.store.tableStore.getTable("player_one");
-//
-//       Const initialLore = player.lore;
-//
-//       // Pass turn to trigger start of turn
-//       TestEngine.passTurn();
-//       TestEngine.passTurn();
-//
-//       Const playerAfter = testEngine.store.tableStore.getTable("player_one");
-//
-//       // Should not gain lore because opponent has only 1 ready character
-//       Expect(playerAfter.lore).toBe(initialLore);
-//     });
-//
-//     It("should gain lore even if characters were exerted before (they ready at start of turn)", () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [hansBrazenManipulator],
-//         },
-//         {
-//           Play: [princeCharmingProtectorOfTheRealm, mickeyMouseAmberChampion],
-//         },
-//       );
-//
-//       Const hans = testEngine.getCardModel(hansBrazenManipulator);
-//       Const prince = testEngine.getCardModel(princeCharmingProtectorOfTheRealm);
-//       Const mickey = testEngine.getCardModel(mickeyMouseAmberChampion);
-//
-//       // Exert both opponent characters (they will ready at their start of turn)
-//       Prince.exert();
-//       Mickey.exert();
-//
-//       Const player = testEngine.store.tableStore.getTable("player_one");
-//       Const initialLore = player.lore;
-//
-//       // Pass turn twice - opponent's characters ready at their start of turn
-//       TestEngine.passTurn();
-//       TestEngine.passTurn();
-//
-//       Const playerAfter = testEngine.store.tableStore.getTable("player_one");
-//
-//       // Should gain lore because opponent characters readied during their turn
-//       Expect(playerAfter.lore).toBe(initialLore + 2);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { hansBrazenManipulator } from "./117-hans-brazen-manipulator";
+
+const kingCharacter = createMockCharacter({
+  id: "hans-brazen-king-character",
+  name: "King Character",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+  classifications: ["Storyborn", "Hero", "King"],
+});
+
+const queenCharacter = createMockCharacter({
+  id: "hans-brazen-queen-character",
+  name: "Queen Character",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+  classifications: ["Storyborn", "Hero", "Queen"],
+});
+
+const nonRoyalCharacter = createMockCharacter({
+  id: "hans-brazen-non-royal-character",
+  name: "Non-Royal Character",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+const opponentCharacterA = createMockCharacter({
+  id: "hans-brazen-opponent-char-a",
+  name: "Opponent Character A",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+const opponentCharacterB = createMockCharacter({
+  id: "hans-brazen-opponent-char-b",
+  name: "Opponent Character B",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+describe("Hans - Brazen Manipulator", () => {
+  describe("JOSTLING FOR POWER - King and Queen characters can't quest.", () => {
+    it("prevents a King character from questing while Hans is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [hansBrazenManipulator, { card: kingCharacter, isDrying: false }],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().quest(kingCharacter)).not.toBeSuccessfulCommand();
+    });
+
+    it("prevents a Queen character from questing while Hans is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [hansBrazenManipulator, { card: queenCharacter, isDrying: false }],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().quest(queenCharacter)).not.toBeSuccessfulCommand();
+    });
+
+    it("does not prevent non-King/Queen characters from questing", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [hansBrazenManipulator, { card: nonRoyalCharacter, isDrying: false }],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().quest(nonRoyalCharacter)).toBeSuccessfulCommand();
+    });
+  });
+
+  describe("GROWING INFLUENCE - At the start of your turn, if an opponent has 2 or more ready characters in play, gain 2 lore.", () => {
+    it("gains 2 lore at the start of your turn when an opponent has 2+ ready characters", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [hansBrazenManipulator],
+          deck: 2,
+        },
+        {
+          play: [opponentCharacterA, opponentCharacterB],
+          deck: 2,
+        },
+        {
+          startingLore: { [PLAYER_ONE]: 0 },
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      // Resolve any bag effects from the start-of-turn trigger
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      for (const bagEffect of bagEffects) {
+        testEngine.asPlayerOne().resolveBag(bagEffect.id);
+      }
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(2);
+    });
+
+    it("does not gain lore when opponent has fewer than 2 ready characters", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [hansBrazenManipulator],
+          deck: 2,
+        },
+        {
+          play: [opponentCharacterA],
+          deck: 2,
+        },
+        {
+          startingLore: { [PLAYER_ONE]: 0 },
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+    });
+
+    it("does not gain lore when opponent has no characters in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [hansBrazenManipulator],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+        {
+          startingLore: { [PLAYER_ONE]: 0 },
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+    });
+  });
+});

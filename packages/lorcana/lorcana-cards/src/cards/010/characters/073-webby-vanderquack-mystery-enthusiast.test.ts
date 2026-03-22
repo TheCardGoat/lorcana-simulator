@@ -1,138 +1,138 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   MickeyMouseDetective,
-//   WebbyVanderquackMysteryEnthusiast,
-// } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Webby Vanderquack - Mystery Enthusiast", () => {
-//   It("CONTAGIOUS ENERGY - Character should have correct base stats", async () => {
-//     Const testEngine = new TestEngine({
-//       Hand: [webbyVanderquackMysteryEnthusiast],
-//     });
-//
-//     Const cardUnderTest = testEngine.getByZoneAndId(
-//       "hand",
-//       WebbyVanderquackMysteryEnthusiast.id,
-//     );
-//
-//     // Check base stats
-//     Expect(cardUnderTest.cost).toBe(1);
-//     Expect(cardUnderTest.strength).toBe(1);
-//     Expect(cardUnderTest.willpower).toBe(2);
-//     Expect(cardUnderTest.lore).toBe(1);
-//     Expect(cardUnderTest.characteristics).toEqual(["storyborn", "ally"]);
-//   });
-//
-//   It("CONTAGIOUS ENERGY - Character can be played with correct cost", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: webbyVanderquackMysteryEnthusiast.cost,
-//       Hand: [webbyVanderquackMysteryEnthusiast],
-//     });
-//
-//     Const cardUnderTest = testEngine.getByZoneAndId(
-//       "hand",
-//       WebbyVanderquackMysteryEnthusiast.id,
-//     );
-//
-//     Await testEngine.playCard(cardUnderTest);
-//     Const webbyInPlay = testEngine.getByZoneAndId(
-//       "play",
-//       WebbyVanderquackMysteryEnthusiast.id,
-//     );
-//     Expect(webbyInPlay.zone).toBe("play");
-//   });
-//
-//   It("CONTAGIOUS ENERGY - When you play this character, chosen character gets +1 {S} this turn", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: webbyVanderquackMysteryEnthusiast.cost,
-//         Hand: [webbyVanderquackMysteryEnthusiast],
-//       },
-//       {
-//         Play: [mickeyMouseDetective],
-//       },
-//     );
-//
-//     Const mickey = testEngine.getCardModel(mickeyMouseDetective);
-//
-//     // Verify Mickey's base strength
-//     Expect(mickey.strength).toBe(mickeyMouseDetective.strength);
-//
-//     // Play Webby
-//     Await testEngine.playCard(webbyVanderquackMysteryEnthusiast);
-//
-//     // Target Mickey for the +1 strength bonus
-//     Await testEngine.resolveTopOfStack({ targets: [mickey] });
-//
-//     // Mickey should have +1 strength this turn
-//     Expect(mickey.strength).toBe(mickeyMouseDetective.strength + 1);
-//
-//     // Pass turn and verify the bonus expires
-//     TestEngine.passTurn();
-//     Expect(mickey.strength).toBe(mickeyMouseDetective.strength);
-//   });
-//
-//   It("CONTAGIOUS ENERGY - Can target herself for the +1 {S} bonus", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: webbyVanderquackMysteryEnthusiast.cost,
-//       Hand: [webbyVanderquackMysteryEnthusiast],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(
-//       WebbyVanderquackMysteryEnthusiast,
-//     );
-//
-//     // Play Webby
-//     Await testEngine.playCard(webbyVanderquackMysteryEnthusiast);
-//
-//     // Target herself for the +1 strength bonus
-//     Await testEngine.resolveTopOfStack({ targets: [cardUnderTest] });
-//
-//     // Webby should have +1 strength this turn
-//     Expect(cardUnderTest.strength).toBe(
-//       WebbyVanderquackMysteryEnthusiast.strength + 1,
-//     );
-//
-//     // Pass turn and verify the bonus expires
-//     TestEngine.passTurn();
-//     Expect(cardUnderTest.strength).toBe(
-//       WebbyVanderquackMysteryEnthusiast.strength,
-//     );
-//   });
-//
-//   It("CONTAGIOUS ENERGY - Ability should be present and functional", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: webbyVanderquackMysteryEnthusiast.cost,
-//       Hand: [webbyVanderquackMysteryEnthusiast],
-//     });
-//
-//     Const cardUnderTest = testEngine.getByZoneAndId(
-//       "hand",
-//       WebbyVanderquackMysteryEnthusiast.id,
-//     );
-//
-//     // Check that the ability is present
-//     Expect(webbyVanderquackMysteryEnthusiast.abilities).toBeDefined();
-//     Expect(webbyVanderquackMysteryEnthusiast.abilities?.length).toBeGreaterThan(
-//       0,
-//     );
-//     Expect(webbyVanderquackMysteryEnthusiast.abilities?.[0]?.name).toBe(
-//       "CONTAGIOUS ENERGY",
-//     );
-//
-//     // Check that the character is playable
-//     Await testEngine.playCard(cardUnderTest);
-//     Const webbyInPlay = testEngine.getByZoneAndId(
-//       "play",
-//       WebbyVanderquackMysteryEnthusiast.id,
-//     );
-//     Expect(webbyInPlay.zone).toBe("play");
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { webbyVanderquackMysteryEnthusiast } from "./073-webby-vanderquack-mystery-enthusiast";
+
+const targetCharacter = createMockCharacter({
+  id: "webby-test-target",
+  name: "Target Character",
+  cost: 2,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Webby Vanderquack - Mystery Enthusiast", () => {
+  describe("CONTAGIOUS ENERGY - When you play this character, chosen character gets +1 {S} this turn", () => {
+    it("gives chosen character +1 strength this turn when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [webbyVanderquackMysteryEnthusiast],
+          inkwell: webbyVanderquackMysteryEnthusiast.cost,
+          play: [targetCharacter],
+          deck: 5,
+        },
+        {
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().getCardStrength(targetCharacter)).toBe(3);
+
+      // Play Webby -- her triggered ability goes to the bag
+      expect(
+        testEngine.asPlayerOne().playCard(webbyVanderquackMysteryEnthusiast),
+      ).toBeSuccessfulCommand();
+
+      // Resolve the triggered ability by choosing a target
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffects.length).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          targets: [targetCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardStrength(targetCharacter)).toBe(4);
+    });
+
+    it("strength bonus expires at end of turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [webbyVanderquackMysteryEnthusiast],
+          inkwell: webbyVanderquackMysteryEnthusiast.cost,
+          play: [targetCharacter],
+          deck: 5,
+        },
+        {
+          deck: 5,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(webbyVanderquackMysteryEnthusiast),
+      ).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          targets: [targetCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardStrength(targetCharacter)).toBe(4);
+
+      // Pass turn: bonus should expire
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardStrength(targetCharacter)).toBe(3);
+    });
+
+    it("can target herself for the +1 strength bonus", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [webbyVanderquackMysteryEnthusiast],
+          inkwell: webbyVanderquackMysteryEnthusiast.cost,
+          deck: 5,
+        },
+        {
+          deck: 5,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(webbyVanderquackMysteryEnthusiast),
+      ).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          targets: [webbyVanderquackMysteryEnthusiast],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardStrength(webbyVanderquackMysteryEnthusiast)).toBe(2);
+
+      // Pass turn: bonus should expire
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardStrength(webbyVanderquackMysteryEnthusiast)).toBe(1);
+    });
+
+    it("can target opponent's character for the +1 strength bonus", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [webbyVanderquackMysteryEnthusiast],
+          inkwell: webbyVanderquackMysteryEnthusiast.cost,
+          deck: 5,
+        },
+        {
+          play: [targetCharacter],
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerTwo().getCardStrength(targetCharacter)).toBe(3);
+
+      expect(
+        testEngine.asPlayerOne().playCard(webbyVanderquackMysteryEnthusiast),
+      ).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          targets: [targetCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardStrength(targetCharacter)).toBe(4);
+    });
+  });
+});

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sisuEmboldenedWarriorI18n } from "./118-sisu-emboldened-warrior.i18n";
 
 export const sisuEmboldenedWarrior: CharacterCard = {
   id: "mUL",
@@ -7,49 +8,6 @@ export const sisuEmboldenedWarrior: CharacterCard = {
   cardType: "character",
   name: "Sisu",
   version: "Emboldened Warrior",
-  i18n: {
-    en: {
-      name: "Sisu",
-      version: "Emboldened Warrior",
-      text: [
-        {
-          title: "SURGE OF POWER",
-          description: "This character gets +1 {S} for each card in opponents' hands.",
-        },
-      ],
-    },
-    de: {
-      name: "Sisu",
-      version: "Mutige Kriegerin",
-      text: [
-        {
-          title: "ENERGIEWELLE",
-          description:
-            "Dieser Charakter erhält +1 für jede Karte auf der Hand aller gegnerischen Mitspielenden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Sisu",
-      version: "Combattante enhardie",
-      text: [
-        {
-          title: "VAGUE DE PUISSANCE",
-          description: "Ce personnage gagne +1 par carte dans les mains des adversaires.",
-        },
-      ],
-    },
-    it: {
-      name: "Sisu",
-      version: "Guerriera Rincuorata",
-      text: [
-        {
-          title: "ONDATA DI POTERE",
-          description: "Questo personaggio riceve +1 per ogni carta in mano ai tuoi avversari.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "009",
@@ -84,4 +42,5 @@ export const sisuEmboldenedWarrior: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: sisuEmboldenedWarriorI18n,
 };

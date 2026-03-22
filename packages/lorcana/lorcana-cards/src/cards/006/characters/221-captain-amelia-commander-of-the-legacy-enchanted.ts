@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { captainAmeliaCommanderOfTheLegacyEnchantedI18n } from "./221-captain-amelia-commander-of-the-legacy-enchanted.i18n";
 
 export const captainAmeliaCommanderOfTheLegacyEnchanted: CharacterCard = {
   id: "jFM",
@@ -7,65 +8,6 @@ export const captainAmeliaCommanderOfTheLegacyEnchanted: CharacterCard = {
   cardType: "character",
   name: "Captain Amelia",
   version: "Commander of the Legacy",
-  i18n: {
-    en: {
-      name: "Captain Amelia",
-      version: "Commander of the Legacy",
-      text: [
-        {
-          title: "DRIVELING GALOOTS",
-          description: "This character can't be challenged by Pirate characters.",
-        },
-        {
-          title: "EVERYTHING SHIPSHAPE",
-          description: "While being challenged, your other characters gain Resist +1.",
-        },
-      ],
-    },
-    de: {
-      name: "Käpt'n Amelia",
-      version: "Kommandantin der Legacy",
-      text: [
-        {
-          title: "EIN JÄMMERLICHER HAUFEN",
-          description: "Dieser Charakter kann nicht von Piraten herausgefordert werden.",
-        },
-        {
-          title: "ALLES TIPPTOPP",
-          description:
-            "Deine anderen Charaktere erhalten Robust +1, während sie herausgefordert werden. (Reduziere jeglichen Schaden, der ihnen zugefügt wird, um 1.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Capitaine Amélia",
-      version: "Commandante du RLS Héritage",
-      text: [
-        {
-          title: "DEMEURÉS RADOTEURS",
-          description: "Ce personnage ne peut pas être défié par un personnage Pirate.",
-        },
-        {
-          title: "ET LE BATEAU, ÇA BAIGNE?",
-          description: "Vos autres personnages gagnent Résistance +1 tant qu'ils sont défiés.",
-        },
-      ],
-    },
-    it: {
-      name: "Capitano Amelia",
-      version: "Comandante della Legacy",
-      text: [
-        {
-          title: "CANAGLIUME VARIO",
-          description: "Questo personaggio non può essere sfidato da personaggi Pirata.",
-        },
-        {
-          title: "TUTTO A POSTO",
-          description: "Mentre vengono sfidati, i tuoi altri personaggi ottengono Resistere +1.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Treasure Planet",
   set: "006",
@@ -98,6 +40,10 @@ export const captainAmeliaCommanderOfTheLegacyEnchanted: CharacterCard = {
         restriction: "cant-be-challenged",
         target: "SELF",
         type: "restriction",
+        challengerFilter: {
+          type: "has-classification",
+          classification: "Pirate",
+        },
       },
       id: "1ln-1",
       name: "DRIVELING GALOOTS",
@@ -107,7 +53,20 @@ export const captainAmeliaCommanderOfTheLegacyEnchanted: CharacterCard = {
     {
       effect: {
         keyword: "Resist",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+          filter: [
+            {
+              type: "challenge-role",
+              role: "defender",
+            },
+          ],
+        },
         type: "gain-keyword",
         value: 1,
       },
@@ -116,4 +75,5 @@ export const captainAmeliaCommanderOfTheLegacyEnchanted: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: captainAmeliaCommanderOfTheLegacyEnchantedI18n,
 };

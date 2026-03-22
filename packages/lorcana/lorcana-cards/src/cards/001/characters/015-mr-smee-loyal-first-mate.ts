@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mrSmeeLoyalFirstMateI18n } from "./015-mr-smee-loyal-first-mate.i18n";
 
 export const mrSmeeLoyalFirstMate: CharacterCard = {
   id: "ExX",
@@ -7,24 +8,6 @@ export const mrSmeeLoyalFirstMate: CharacterCard = {
   cardType: "character",
   name: "Mr. Smee",
   version: "Loyal First Mate",
-  i18n: {
-    en: {
-      name: "Mr. Smee",
-      version: "Loyal First Mate",
-    },
-    de: {
-      name: "Herr Smee",
-      version: "Loyaler Erster Maat",
-    },
-    fr: {
-      name: "MONSIEUR MOUCHE",
-      version: "Fidèle second",
-    },
-    it: {
-      name: "Mr. Smee",
-      version: "Loyal First Mate",
-    },
-  },
   inkType: ["amber"],
   franchise: "Peter Pan",
   set: "001",
@@ -41,4 +24,5 @@ export const mrSmeeLoyalFirstMate: CharacterCard = {
     tcgPlayer: 508697,
   },
   classifications: ["Dreamborn", "Ally", "Pirate"],
+  i18n: mrSmeeLoyalFirstMateI18n,
 };

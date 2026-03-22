@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckNotAgainI18n } from "./106-donald-duck-not-again.i18n";
 
 export const donaldDuckNotAgain: CharacterCard = {
   id: "2q9",
@@ -7,42 +8,6 @@ export const donaldDuckNotAgain: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Not Again!",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Not Again!",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "PHOOEY!",
-          description: "This character gets +1 {L} for each 1 damage on him.",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Nicht schon wieder!",
-      text: "Wendig ES REICHT! Dieser Charakter erhält für jeden Schaden auf ihm +1.",
-    },
-    fr: {
-      name: "Donald",
-      version: "Pas encore !",
-      text: "Insaisissable J'EN AI ASSEZ! Ce personnage gagne +1 pour chaque jeton Dommage sur lui.",
-    },
-    it: {
-      name: "Donald Duck",
-      version: "Not Again!",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) PHOOEY! This character gets +1 for each 1 damage on him.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "002",
   cardNumber: 106,
@@ -87,4 +52,5 @@ export const donaldDuckNotAgain: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: donaldDuckNotAgainI18n,
 };

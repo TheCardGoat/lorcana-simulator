@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gastonArrogantShowoffI18n } from "./129-gaston-arrogant-showoff.i18n";
 
 export const gastonArrogantShowoff: CharacterCard = {
   id: "Ooh",
@@ -7,52 +8,6 @@ export const gastonArrogantShowoff: CharacterCard = {
   cardType: "character",
   name: "Gaston",
   version: "Arrogant Showoff",
-  i18n: {
-    en: {
-      name: "Gaston",
-      version: "Arrogant Showoff",
-      text: [
-        {
-          title: "BREAK APART",
-          description:
-            "When you play this character, you may banish one of your items to give chosen character +2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Gaston",
-      version: "Arroganter Angeber",
-      text: [
-        {
-          title: "AUFBRECHEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen deiner Gegenstände verbannen, um einem Charakter deiner Wahl in diesem Zug +2 zu geben.",
-        },
-      ],
-    },
-    fr: {
-      name: "Gaston",
-      version: "Crâneur arrogant",
-      text: [
-        {
-          title: "BRISER EN DEUX",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez bannir l'un de vos objets pour choisir un personnage qui gagne +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Gaston",
-      version: "Arrogante Esibizionista",
-      text: [
-        {
-          title: "FARE A PEZZI",
-          description:
-            "Quando giochi questo personaggio, puoi esiliare uno dei tuoi oggetti per dare a un personaggio a tua scelta +2 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Beauty and the Beast",
   set: "008",
@@ -80,14 +35,32 @@ export const gastonArrogantShowoff: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "all",
-            count: "all",
-            owner: "you",
-            zones: ["play"],
-            cardTypes: ["item"],
-          },
-          type: "banish",
+          type: "sequence",
+          steps: [
+            {
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["item"],
+              },
+              type: "banish",
+            },
+            {
+              type: "conditional",
+              condition: {
+                type: "if-you-do",
+              },
+              then: {
+                duration: "this-turn",
+                modifier: 2,
+                stat: "strength",
+                target: "CHOSEN_CHARACTER",
+                type: "modify-stat",
+              },
+            },
+          ],
         },
         type: "optional",
       },
@@ -102,4 +75,5 @@ export const gastonArrogantShowoff: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: gastonArrogantShowoffI18n,
 };

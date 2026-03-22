@@ -20,6 +20,9 @@ You can use [setup.sh](./setup.sh) to set up the project.
 
 ```bash
 bun install
-cd packages/lorcana/lorcana-simulator
 bun run dev
 ```
+
+## Creating your own Bot strategy
+
+All Bot automations live under `packages/lorcana/lorcana-engine/src/automation`, you can use the [Sample Prompt](packages/lorcana/lorcana-engine/src/automation/REFINEMENT_PROMPT.md) to use an AI agent of choice (Claude code, Codex, Opencode) to create a Bot. 

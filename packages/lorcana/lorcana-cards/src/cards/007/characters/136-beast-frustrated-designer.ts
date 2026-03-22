@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { beastFrustratedDesignerI18n } from "./136-beast-frustrated-designer.i18n";
 
 export const beastFrustratedDesigner: CharacterCard = {
   id: "RJq",
@@ -7,50 +8,6 @@ export const beastFrustratedDesigner: CharacterCard = {
   cardType: "character",
   name: "Beast",
   version: "Frustrated Designer",
-  i18n: {
-    en: {
-      name: "Beast",
-      version: "Frustrated Designer",
-      text: [
-        {
-          title: "I'VE HAD IT!",
-          description: "{E}, 2 {I}, Banish 2 of your items — Deal 5 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Biest",
-      version: "Frustrierter Designer",
-      text: [
-        {
-          title: "ICH HAB' GENUG!, 2,",
-          description:
-            "Verbanne 2 deiner Gegenstände — Füge einem Charakter deiner Wahl 5 Schaden zu.",
-        },
-      ],
-    },
-    fr: {
-      name: "La Bête",
-      version: "Concepteur frustré",
-      text: [
-        {
-          title: "J'EN AI ASSEZ!, 2,",
-          description:
-            "Bannissez 2 de vos objets — Choisissez un personnage et infligez-lui 5 dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "La Bestia",
-      version: "Inventore Frustrato",
-      text: [
-        {
-          title: "NE HO ABBASTANZA!, 2,",
-          description: "esilia 2 tuoi oggetti — Infliggi 5 danni a un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby", "sapphire"],
   franchise: "Beauty and the Beast",
   set: "007",
@@ -76,16 +33,12 @@ export const beastFrustratedDesigner: CharacterCard = {
     {
       cost: {
         exert: true,
+        ink: 2,
+        banishItem: 2,
       },
       effect: {
         amount: 5,
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
-        },
+        target: "CHOSEN_CHARACTER",
         type: "deal-damage",
       },
       id: "1u2-1",
@@ -93,4 +46,5 @@ export const beastFrustratedDesigner: CharacterCard = {
       type: "activated",
     },
   ],
+  i18n: beastFrustratedDesignerI18n,
 };

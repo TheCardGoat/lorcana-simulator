@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { scarTempestuousLionI18n } from "./047-scar-tempestuous-lion.i18n";
 
 export const scarTempestuousLion: CharacterCard = {
   id: "7Y4",
@@ -7,41 +8,6 @@ export const scarTempestuousLion: CharacterCard = {
   cardType: "character",
   name: "Scar",
   version: "Tempestuous Lion",
-  i18n: {
-    en: {
-      name: "Scar",
-      version: "Tempestuous Lion",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "Challenger +3",
-        },
-      ],
-    },
-    de: {
-      name: "Scar",
-      version: "Temperamentvoller Löwe",
-      text: "Rasant Herausfordern +3",
-    },
-    fr: {
-      name: "Scar",
-      version: "Lion tempétueux",
-      text: "Charge Offensif +3",
-    },
-    it: {
-      name: "Scar",
-      version: "Leone Tempestoso",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) Sfidante +3",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Lion King",
   set: "006",
@@ -80,4 +46,5 @@ export const scarTempestuousLion: CharacterCard = {
       text: "Challenger +3",
     },
   ],
+  i18n: scarTempestuousLionI18n,
 };

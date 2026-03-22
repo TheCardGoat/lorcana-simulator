@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { ursulasTrickeryI18n } from "./096-ursulas-trickery.i18n";
 
 export const ursulasTrickery: ActionCard = {
   id: "zNr",
@@ -6,24 +7,6 @@ export const ursulasTrickery: ActionCard = {
   reprints: ["set4-096"],
   cardType: "action",
   name: "Ursula’s Trickery",
-  i18n: {
-    en: {
-      name: "Ursula’s Trickery",
-      text: "Each opponent may choose and discard a card. For each opponent who doesn't, you draw a card.",
-    },
-    de: {
-      name: "Ursulas List",
-      text: "Alle gegnerischen Mitspielenden dürfen je 1 Karte aus ihrer Hand wählen und abwerfen. Pro gegnerischer Person die keine Karte abwirft, ziehst du eine Karte.",
-    },
-    fr: {
-      name: "Ruse d'Ursula",
-      text: "Chaque adversaire peut défausser une carte de sa main. Vous piochez une carte pour chaque adversaire qui ne le fait pas.",
-    },
-    it: {
-      name: "L'Inganno di Ursula",
-      text: "Ogni avversario può scegliere e scartare una carta. Per ogni avversario che non lo fa, tu peschi una carta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Little Mermaid",
   set: "004",
@@ -69,4 +52,5 @@ export const ursulasTrickery: ActionCard = {
       type: "action",
     },
   ],
+  i18n: ursulasTrickeryI18n,
 };

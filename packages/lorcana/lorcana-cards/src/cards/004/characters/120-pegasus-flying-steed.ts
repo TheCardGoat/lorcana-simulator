@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pegasusFlyingSteedI18n } from "./120-pegasus-flying-steed.i18n";
 
 export const pegasusFlyingSteed: CharacterCard = {
   id: "iG3",
@@ -7,28 +8,6 @@ export const pegasusFlyingSteed: CharacterCard = {
   cardType: "character",
   name: "Pegasus",
   version: "Flying Steed",
-  i18n: {
-    en: {
-      name: "Pegasus",
-      version: "Flying Steed",
-      text: "Evasive",
-    },
-    de: {
-      name: "Pegasus",
-      version: "Fliegendes Ross",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Pégase",
-      version: "Destrier volant",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Pegaso",
-      version: "Destriero Volante",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Hercules",
   set: "004",
@@ -53,4 +32,5 @@ export const pegasusFlyingSteed: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: pegasusFlyingSteedI18n,
 };

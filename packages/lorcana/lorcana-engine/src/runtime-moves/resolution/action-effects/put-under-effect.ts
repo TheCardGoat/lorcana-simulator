@@ -4,6 +4,9 @@ import type { CardPlayedPayload } from "../../../types";
 import type { LorcanaCardMeta } from "../../../types";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { resolveEffectTargets } from "../../../targeting/runtime";
+import { markLastEffectPerformed } from "./event-snapshot-utils";
+import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
+import { recordCardPutUnderThisTurn } from "../../state/turn-metrics";
 
 export function isPutUnderEffect(effect: unknown): effect is PutUnderEffect {
   return (
@@ -86,6 +89,41 @@ function moveTopDeckCardUnderTarget(
   return true;
 }
 
+function moveDiscardCardUnderTarget(
+  ctx: PlayCardExecutionContext,
+  cardId: CardInstanceId,
+  ownerId: PlayerId,
+  targetId: CardInstanceId,
+): boolean {
+  const discardCards = ctx.framework.zones.getCards({
+    zone: "discard",
+    playerId: ownerId,
+  }) as CardInstanceId[];
+  if (!discardCards.includes(cardId)) {
+    return false;
+  }
+
+  removeUnderCardFromPreviousParent(ctx, cardId);
+  ctx.framework.zones.moveCard(cardId, {
+    zone: "limbo",
+    playerId: ownerId,
+  });
+  appendCardUnderParent(ctx, targetId, cardId);
+  ctx.cards.patchMeta(cardId, {
+    stackParentId: targetId,
+    cardsUnder: undefined,
+    state: undefined,
+    damage: undefined,
+    isDrying: undefined,
+    publicFaceState: undefined,
+    atLocationId: undefined,
+    playedViaShift: undefined,
+    playedCostType: undefined,
+  });
+
+  return true;
+}
+
 export function resolvePutUnderEffect(
   ctx: PlayCardExecutionContext,
   cardPlayed: CardPlayedPayload,
@@ -95,21 +133,78 @@ export function resolvePutUnderEffect(
   const underTarget =
     effect.under === "self"
       ? [cardPlayed.cardId]
-      : (resolveEffectTargets(ctx, cardPlayed, effect.under, resolutionInput.targets) ?? []);
+      : (resolveEffectTargets(
+          ctx,
+          cardPlayed,
+          effect.under,
+          resolutionInput.targets,
+          resolutionInput.eventSnapshot,
+        ) ?? []);
 
   const targetId = underTarget[0];
   if (!targetId) {
+    markLastEffectPerformed(resolutionInput.eventSnapshot, false);
     return;
   }
 
   const ownerId =
-    (ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.ownerID as PlayerId | undefined) ??
-    cardPlayed.playerId;
+    (ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined) ?? cardPlayed.playerId;
   if (!ownerId) {
+    markLastEffectPerformed(resolutionInput.eventSnapshot, false);
     return;
   }
 
+  let movedCardId: CardInstanceId | undefined;
+
   if (effect.source === "top-of-deck") {
+    const deckCards = ctx.framework.zones.getCards({
+      zone: "deck",
+      playerId: ownerId,
+    }) as CardInstanceId[];
+    movedCardId = deckCards.at(-1);
     moveTopDeckCardUnderTarget(ctx, ownerId, targetId);
+  } else if (effect.source === "discard") {
+    // resolutionInput.targets[0] holds the selected discard card ID
+    // (under: "self" frees the targets slot for this selection)
+    const selectedTargets = resolutionInput.targets;
+    const selectedCardId = Array.isArray(selectedTargets)
+      ? (selectedTargets[0] as CardInstanceId | undefined)
+      : typeof selectedTargets === "string"
+        ? (selectedTargets as CardInstanceId)
+        : undefined;
+    if (selectedCardId) {
+      if (effect.cardType) {
+        const definition = ctx.cards.getDefinition(selectedCardId) as
+          | { cardType?: string }
+          | undefined;
+        if (definition?.cardType !== effect.cardType) {
+          return;
+        }
+      }
+      const moved = moveDiscardCardUnderTarget(ctx, selectedCardId, ownerId, targetId);
+      if (moved) {
+        movedCardId = selectedCardId;
+      }
+    }
   }
+
+  if (movedCardId) {
+    // Track for turn-metric conditions (e.g. "if you've put a card under her this turn")
+    recordCardPutUnderThisTurn(ctx, targetId, movedCardId);
+
+    // subjectCardId = the destination (the character/location the card was placed under)
+    // triggerSourceCardId = the card that was placed (for reference)
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "putCardUnder",
+      { playerId: cardPlayed.playerId, cardId: movedCardId, targetId },
+      {
+        event: "put-card-under",
+        playerId: cardPlayed.playerId,
+        subjectCardId: targetId,
+        triggerSourceCardId: movedCardId,
+      },
+    );
+  }
+  markLastEffectPerformed(resolutionInput.eventSnapshot, !!movedCardId);
 }

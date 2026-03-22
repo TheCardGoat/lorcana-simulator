@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mirabelMadrigalProphecyFinderI18n } from "./019-mirabel-madrigal-prophecy-finder.i18n";
 
 export const mirabelMadrigalProphecyFinder: CharacterCard = {
   id: "tXZ",
@@ -7,28 +8,6 @@ export const mirabelMadrigalProphecyFinder: CharacterCard = {
   cardType: "character",
   name: "Mirabel Madrigal",
   version: "Prophecy Finder",
-  i18n: {
-    en: {
-      name: "Mirabel Madrigal",
-      version: "Prophecy Finder",
-      text: "Support",
-    },
-    de: {
-      name: "Mirabel Madrigal",
-      version: "Finderin der Vision",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Mirabel Madrigal",
-      version: "Découvreuse de prophétie",
-      text: "Soutien",
-    },
-    it: {
-      name: "Mirabel Madrigal",
-      version: "Cercatrice di Profezie",
-      text: "Aiutante",
-    },
-  },
   inkType: ["amber"],
   franchise: "Encanto",
   set: "004",
@@ -53,4 +32,5 @@ export const mirabelMadrigalProphecyFinder: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: mirabelMadrigalProphecyFinderI18n,
 };

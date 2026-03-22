@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jimHawkinsRiggingSpecialistI18n } from "./183-jim-hawkins-rigging-specialist.i18n";
 
 export const jimHawkinsRiggingSpecialist: CharacterCard = {
   id: "FZ4",
@@ -7,37 +8,6 @@ export const jimHawkinsRiggingSpecialist: CharacterCard = {
   cardType: "character",
   name: "Jim Hawkins",
   version: "Rigging Specialist",
-  i18n: {
-    en: {
-      name: "Jim Hawkins",
-      version: "Rigging Specialist",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "BATTLE STATION",
-          description:
-            "When you play this character, you may deal 1 damage to chosen character or location.",
-        },
-      ],
-    },
-    de: {
-      name: "Jim Hawkins",
-      version: "Takelage-Experte",
-      text: "Gestaltwandel 3 GEFECHTSSTATIONEN Wenn du diesen Charakter ausspielst, darfst du einem Charakter oder einem Ort deiner Wahl 1 Schaden zufügen.",
-    },
-    fr: {
-      name: "Jim Hawkins",
-      version: "Spécialiste en gréement",
-      text: "Alter 3 POSTE DE COMBAT Lorsque vous jouez ce personnage, vous pouvez choisir un personnage ou un lieu et lui infliger 1 dommage.",
-    },
-    it: {
-      name: "Jim Hawkins",
-      version: "Specialista del Sartiame",
-      text: "Trasformazione 3 POSTAZIONI DI COMBATTIMENTO Quando giochi questo personaggio, puoi infliggere 1 danno a un personaggio o a un luogo a tua scelta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Treasure Planet",
   set: "006",
@@ -83,7 +53,7 @@ export const jimHawkinsRiggingSpecialist: CharacterCard = {
             count: 1,
             owner: "any",
             zones: ["play"],
-            cardTypes: ["character"],
+            cardTypes: ["character", "location"],
           },
           type: "deal-damage",
         },
@@ -100,4 +70,5 @@ export const jimHawkinsRiggingSpecialist: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: jimHawkinsRiggingSpecialistI18n,
 };

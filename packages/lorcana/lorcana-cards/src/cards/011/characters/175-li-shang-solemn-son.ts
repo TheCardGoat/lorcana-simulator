@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liShangSolemnSonI18n } from "./175-li-shang-solemn-son.i18n";
 
 export const liShangSolemnSon: CharacterCard = {
   id: "e25",
@@ -7,28 +8,6 @@ export const liShangSolemnSon: CharacterCard = {
   cardType: "character",
   name: "Li Shang",
   version: "Solemn Son",
-  i18n: {
-    en: {
-      name: "Li Shang",
-      version: "Solemn Son",
-      text: "Challenger +2",
-    },
-    de: {
-      name: "Li Shang",
-      version: "Frommer Sohn",
-      text: "Herausfordern +2",
-    },
-    fr: {
-      name: "Li Shang",
-      version: "Fils solennel",
-      text: "Offensif +2",
-    },
-    it: {
-      name: "Li Shang",
-      version: "Figlio Solenne",
-      text: "Sfidante +2",
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "011",
@@ -54,4 +33,5 @@ export const liShangSolemnSon: CharacterCard = {
       text: "Challenger +2",
     },
   ],
+  i18n: liShangSolemnSonI18n,
 };

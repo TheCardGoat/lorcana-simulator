@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { alistairKreiAmbitiousEntrepreneurI18n } from "./087-alistair-krei-ambitious-entrepreneur.i18n";
 
 export const alistairKreiAmbitiousEntrepreneur: CharacterCard = {
   id: "kZO",
@@ -7,52 +8,6 @@ export const alistairKreiAmbitiousEntrepreneur: CharacterCard = {
   cardType: "character",
   name: "Alistair Krei",
   version: "Ambitious Entrepreneur",
-  i18n: {
-    en: {
-      name: "Alistair Krei",
-      version: "Ambitious Entrepreneur",
-      text: [
-        {
-          title: "AN EYE FOR TECH",
-          description:
-            "When you play this character, if an opponent has an item in play, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Alistair Krei",
-      version: "Ehrgeiziger Unternehmer",
-      text: [
-        {
-          title: "EIN AUGE FÜR TECHNIK",
-          description:
-            "Wenn du diesen Charakter ausspielst und mindestens eine gegnerische Person einen Gegenstand im Spiel hat, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Alistair Krei",
-      version: "Entrepreneur ambitieux",
-      text: [
-        {
-          title: "L'ŒIL POUR LA TECHNOLOGIE",
-          description:
-            "Lorsque vous jouez ce personnage, si un adversaire a un objet en jeu, vous gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Alistair Krei",
-      version: "Imprenditore Ambizioso",
-      text: [
-        {
-          title: "OCCHIO PER LA TECNOLOGIA",
-          description:
-            "Quando giochi questo personaggio, se un avversario ha in gioco un oggetto, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Big Hero 6",
   set: "006",
@@ -98,4 +53,5 @@ export const alistairKreiAmbitiousEntrepreneur: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: alistairKreiAmbitiousEntrepreneurI18n,
 };

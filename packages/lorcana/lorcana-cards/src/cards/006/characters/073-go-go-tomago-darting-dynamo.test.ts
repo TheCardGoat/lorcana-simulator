@@ -1,40 +1,128 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   BaymaxPersonalHealthcareCompanion,
-//   GoGoTomagoDartingDynamo,
-// } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Go Go Tomago - Darting Dynamo", () => {
-//   It("**STOP WHINING, WOMAN UP** When you play this character, you may pay 2 {I} to gain lore equal to the damage on chosen opposing character.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: goGoTomagoDartingDynamo.cost + 2,
-//         Hand: [goGoTomagoDartingDynamo],
-//       },
-//       {
-//         Play: [baymaxPersonalHealthcareCompanion],
-//       },
-//     );
-//
-//     Await testEngine.setCardDamage(baymaxPersonalHealthcareCompanion, 3);
-//
-//     Expect(testEngine.getPlayerLore()).toBe(0);
-//
-//     Await testEngine.playCard(goGoTomagoDartingDynamo);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({
-//       Targets: [baymaxPersonalHealthcareCompanion],
-//     });
-//
-//     Expect(testEngine.getPlayerLore("player_two")).toBe(0);
-//     Expect(testEngine.getPlayerLore("player_one")).toBe(3);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { goGoTomagoDartingDynamo } from "./073-go-go-tomago-darting-dynamo";
+
+const damagedOpponent = createMockCharacter({
+  id: "darting-dynamo-damaged-opponent",
+  name: "Damaged Opponent",
+  cost: 3,
+  strength: 2,
+  willpower: 5,
+  lore: 1,
+});
+
+const undamagedOpponent = createMockCharacter({
+  id: "darting-dynamo-undamaged-opponent",
+  name: "Undamaged Opponent",
+  cost: 2,
+  strength: 2,
+  willpower: 4,
+  lore: 1,
+});
+
+describe("Go Go Tomago - Darting Dynamo", () => {
+  it("gains lore equal to the damage on the chosen opposing character when paying 2 ink", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [goGoTomagoDartingDynamo],
+        inkwell: goGoTomagoDartingDynamo.cost + 2,
+        deck: 3,
+      },
+      {
+        play: [{ card: damagedOpponent, damage: 3 }],
+        deck: 3,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(goGoTomagoDartingDynamo)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolveNextBag({ resolveOptional: true, targets: [damagedOpponent] }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(3);
+    expect(testEngine.getLore(PLAYER_TWO)).toBe(0);
+  });
+
+  it("gains 0 lore if the chosen opposing character has no damage", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [goGoTomagoDartingDynamo],
+        inkwell: goGoTomagoDartingDynamo.cost + 2,
+        deck: 3,
+      },
+      {
+        play: [undamagedOpponent],
+        deck: 3,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(goGoTomagoDartingDynamo)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolveNextBag({ resolveOptional: true, targets: [undamagedOpponent] }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+  });
+
+  it("gains no lore when the optional ability is declined", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [goGoTomagoDartingDynamo],
+        inkwell: goGoTomagoDartingDynamo.cost + 2,
+        deck: 3,
+      },
+      {
+        play: [{ card: damagedOpponent, damage: 3 }],
+        deck: 3,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(goGoTomagoDartingDynamo)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+  });
+
+  it("does not trigger if player cannot pay 2 ink", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [goGoTomagoDartingDynamo],
+        inkwell: goGoTomagoDartingDynamo.cost,
+        deck: 3,
+      },
+      {
+        play: [{ card: damagedOpponent, damage: 3 }],
+        deck: 3,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(goGoTomagoDartingDynamo)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolveNextBag({ resolveOptional: true, targets: [damagedOpponent] }),
+    ).toBeSuccessfulCommand();
+
+    // No ink available to pay, no lore gained
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+  });
+});

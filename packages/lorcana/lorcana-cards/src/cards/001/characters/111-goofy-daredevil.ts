@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goofyDaredevilI18n } from "./111-goofy-daredevil.i18n";
 
 export const goofyDaredevil: CharacterCard = {
   id: "nb3",
@@ -7,33 +8,6 @@ export const goofyDaredevil: CharacterCard = {
   cardType: "character",
   name: "Goofy",
   version: "Daredevil",
-  i18n: {
-    en: {
-      name: "Goofy",
-      version: "Daredevil",
-      text: "Evasive",
-    },
-    de: {
-      name: "Goofy",
-      version: "Draufgänger",
-      text: "Wendig",
-    },
-    fr: {
-      name: "DINGO",
-      version: "Tête brulée",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Goofy",
-      version: "Daredevil",
-      text: [
-        {
-          title: "Evasive",
-          description: "(Only characters with Evasive can challenge this character.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "001",
   cardNumber: 111,
@@ -43,7 +17,6 @@ export const goofyDaredevil: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_6571a57fd39542b6945b43880bccc254",
     tcgPlayer: 490389,
@@ -58,4 +31,5 @@ export const goofyDaredevil: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: goofyDaredevilI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckDaisysDateI18n } from "./122-donald-duck-daisys-date.i18n";
 
 export const donaldDuckDaisysDate: CharacterCard = {
   id: "6ro",
@@ -7,52 +8,6 @@ export const donaldDuckDaisysDate: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Daisy's Date",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Daisy's Date",
-      text: [
-        {
-          title: "PLUCKY PLAY",
-          description:
-            "Whenever this character challenges another character, each opponent loses 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Daisys Verabredung",
-      text: [
-        {
-          title: "ENT-SCHEIDENDES SPIEL",
-          description:
-            "Jedes Mal, wenn dieser Charakter einen anderen Charakter herausfordert, verlieren alle gegnerischen Mitspielenden je 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Donald",
-      version: "Rendez-vous de Daisy",
-      text: [
-        {
-          title: "ON LES PLUMERA!",
-          description:
-            "Chaque fois que ce personnage en défie un autre, chaque adversaire perd 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Paperino",
-      version: "Ragazzo di Paperina",
-      text: [
-        {
-          title: "MOSSA SPENNACOLARE",
-          description:
-            "Ogni volta che questo personaggio sfida un altro personaggio, ogni avversario perde 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "005",
   cardNumber: 122,
@@ -92,4 +47,5 @@ export const donaldDuckDaisysDate: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: donaldDuckDaisysDateI18n,
 };

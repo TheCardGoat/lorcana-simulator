@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rabbitFedUpI18n } from "./041-rabbit-fed-up.i18n";
 
 export const rabbitFedUp: CharacterCard = {
   id: "8cq",
@@ -7,28 +8,6 @@ export const rabbitFedUp: CharacterCard = {
   cardType: "character",
   name: "Rabbit",
   version: "Fed Up",
-  i18n: {
-    en: {
-      name: "Rabbit",
-      version: "Fed Up",
-      text: "Challenger +3",
-    },
-    de: {
-      name: "Rabbit",
-      version: "Genervt",
-      text: "Herausfordern +3",
-    },
-    fr: {
-      name: "Coco Lapin",
-      version: "En a assez",
-      text: "Offensif +3",
-    },
-    it: {
-      name: "Tappo",
-      version: "Stufo",
-      text: "Sfidante +3",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Winnie the Pooh",
   set: "011",
@@ -54,4 +33,5 @@ export const rabbitFedUp: CharacterCard = {
       text: "Challenger +3",
     },
   ],
+  i18n: rabbitFedUpI18n,
 };

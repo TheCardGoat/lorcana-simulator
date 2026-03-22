@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { drHamstervielInfamousScientistI18n } from "./186-dr-hamsterviel-infamous-scientist.i18n";
 
 export const drHamstervielInfamousScientist: CharacterCard = {
   id: "U34",
@@ -7,72 +8,6 @@ export const drHamstervielInfamousScientist: CharacterCard = {
   cardType: "character",
   name: "Dr. Hamsterviel",
   version: "Infamous Scientist",
-  i18n: {
-    en: {
-      name: "Dr. Hamsterviel",
-      version: "Infamous Scientist",
-      text: [
-        {
-          title: "CONTROLLED VARIABLES",
-          description:
-            "For each Alien character card in your discard, you pay 1 {I} less to play this character.",
-        },
-        {
-          title: "AWESTRUCK",
-          description:
-            "When you play this character, chosen opposing character can't challenge during their next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Dr. Van Hamsterdam",
-      version: "Berüchtigter Wissenschaftler",
-      text: [
-        {
-          title: "KONTROLLIERTE VARIABLEN",
-          description:
-            "Für jede Alien-Charakterkarte in deinem Ablagestapel zahlst du 1 weniger, um diesen Charakter auszuspielen.",
-        },
-        {
-          title: "VERBLÜFFEND",
-          description:
-            "Wenn du diesen Charakter ausspielst, wähle einen gegnerischen Charakter. Er kann in seinem nächsten Zug nicht herausfordern.",
-        },
-      ],
-    },
-    fr: {
-      name: "Dr Hämsterviel",
-      version: "Infâme scientifique",
-      text: [
-        {
-          title: "VARIABLES CONTRÔLÉES",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins pour chaque carte Personnage Alien dans votre défausse.",
-        },
-        {
-          title: "ÉBAHI",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage adverse qui ne peut pas défier durant son prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Dr. Hamsterviel",
-      version: "Famigerato Scienziato",
-      text: [
-        {
-          title: "VARIABILI CONTROLLATE",
-          description:
-            "Per ogni carta personaggio Alieno nei tuoi scarti, paga 1 in meno per giocare questo personaggio.",
-        },
-        {
-          title: "STUPEFATTO",
-          description:
-            "Quando giochi questo personaggio, un personaggio avversario a tua scelta non può sfidare durante il suo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "011",
@@ -100,5 +35,52 @@ export const drHamstervielInfamousScientist: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Alien", "Inventor"],
-  abilities: [],
+  abilities: [
+    {
+      id: "U34-0",
+      name: "CONTROLLED VARIABLES",
+      type: "static",
+      sourceZones: ["hand"],
+      effect: {
+        type: "cost-reduction",
+        amount: {
+          type: "filtered-count",
+          cardType: "character",
+          owner: "you",
+          zones: ["discard"],
+          filters: [
+            {
+              type: "has-classification",
+              classification: "Alien",
+            },
+          ],
+        },
+      },
+      text: "CONTROLLED VARIABLES For each Alien character card in your discard, you pay 1 {I} less to play this character.",
+    },
+    {
+      id: "U34-1",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        restriction: "cant-challenge",
+        target: {
+          selector: "chosen",
+          cardTypes: ["character"],
+          owner: "opponent",
+          zones: ["play"],
+          count: 1,
+        },
+        type: "restriction",
+        duration: "their-next-turn",
+      },
+      name: "AWESTRUCK",
+      type: "triggered",
+      text: "AWESTRUCK When you play this character, chosen opposing character can't challenge during their next turn.",
+    },
+  ],
+  i18n: drHamstervielInfamousScientistI18n,
 };

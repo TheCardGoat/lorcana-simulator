@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { diabloWatchfulRavenI18n } from "./103-diablo-watchful-raven.i18n";
 
 export const diabloWatchfulRaven: CharacterCard = {
   id: "tM1",
@@ -7,24 +8,6 @@ export const diabloWatchfulRaven: CharacterCard = {
   cardType: "character",
   name: "Diablo",
   version: "Watchful Raven",
-  i18n: {
-    en: {
-      name: "Diablo",
-      version: "Watchful Raven",
-    },
-    de: {
-      name: "Diablo",
-      version: "Wachsamer Rabe",
-    },
-    fr: {
-      name: "Diablo",
-      version: "Corbeau attentif",
-    },
-    it: {
-      name: "Diablo",
-      version: "Corvo Vigile",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Sleeping Beauty",
   set: "010",
@@ -41,4 +24,5 @@ export const diabloWatchfulRaven: CharacterCard = {
     tcgPlayer: 658380,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: diabloWatchfulRavenI18n,
 };

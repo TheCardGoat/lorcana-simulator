@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { theTerrorThatFlapsInTheNightI18n } from "./197-the-terror-that-flaps-in-the-night.i18n";
 
 export const theTerrorThatFlapsInTheNight: ActionCard = {
   id: "Jrb",
@@ -6,24 +7,6 @@ export const theTerrorThatFlapsInTheNight: ActionCard = {
   reprints: ["set11-197"],
   cardType: "action",
   name: "The Terror That Flaps in the Night",
-  i18n: {
-    en: {
-      name: "The Terror That Flaps in the Night",
-      text: "Deal 2 damage to chosen opposing character. If you have a character named Darkwing Duck in play, deal 3 damage instead.",
-    },
-    de: {
-      name: "Der Schrecken in der Nacht",
-      text: "Füge einem gegnerischen Charakter deiner Wahl 2 Schaden zu. Falls du einen Darkwing-Duck-Charakter im Spiel hast, füge dem gewählten Charakter stattdessen 3 Schaden zu.",
-    },
-    fr: {
-      name: "La terreur qui corrige les erreurs",
-      text: "Choisissez un personnage adverse et infligez-lui 2 dommages. Si vous avez un personnage Myster Mask en jeu, infligez 3 dommages à la place.",
-    },
-    it: {
-      name: "Il Terrore che Svolazza nella Notte",
-      text: "Infliggi 2 danni a un personaggio avversario a tua scelta. Se hai in gioco un personaggio chiamato Darkwing Duck, infliggi invece 3 danni.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -74,4 +57,5 @@ export const theTerrorThatFlapsInTheNight: ActionCard = {
       },
     },
   ],
+  i18n: theTerrorThatFlapsInTheNightI18n,
 };

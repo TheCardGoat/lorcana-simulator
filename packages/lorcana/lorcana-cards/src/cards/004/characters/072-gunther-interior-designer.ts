@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { guntherInteriorDesignerI18n } from "./072-gunther-interior-designer.i18n";
 
 export const guntherInteriorDesigner: CharacterCard = {
   id: "2U5",
@@ -7,52 +8,6 @@ export const guntherInteriorDesigner: CharacterCard = {
   cardType: "character",
   name: "Gunther",
   version: "Interior Designer",
-  i18n: {
-    en: {
-      name: "Gunther",
-      version: "Interior Designer",
-      text: [
-        {
-          title: "SAD-EYED PUPPY",
-          description:
-            "When this character is challenged and banished, each opponent chooses one of their characters and returns that card to their hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Gunther",
-      version: "Innenarchitekt",
-      text: [
-        {
-          title: "WELPE MIT KULLERAUGEN",
-          description:
-            "Wenn dieser Charakter herausgefordert und verbannt wird, wählen alle gegnerischen Mitspielenden je einen ihrer Charaktere und nehmen diesen zurück auf ihre Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Gunther",
-      version: "Décorateur et styliste",
-      text: [
-        {
-          title: "YEUX DE CHIEN BATTU",
-          description:
-            "Lorsque ce personnage est défié et banni, chaque adversaire choisit un de ses personnages en jeu et le renvoie dans sa main.",
-        },
-      ],
-    },
-    it: {
-      name: "Gunther",
-      version: "Fissato col Design",
-      text: [
-        {
-          title: "OCCHIONI DA CUCCIOLO",
-          description:
-            "Quando questo personaggio viene sfidato ed esiliato, ogni avversario sceglie uno dei suoi personaggi e riprende in mano quella carta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Tangled",
   set: "004",
@@ -75,5 +30,29 @@ export const guntherInteriorDesigner: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "2U5-1",
+      name: "SAD-EYED PUPPY",
+      type: "triggered",
+      sourceZones: ["play", "discard"],
+      trigger: {
+        event: "challenged-and-banished",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "return-to-hand",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+      text: "SAD-EYED PUPPY When this character is challenged and banished, each opponent chooses one of their characters and returns that card to their hand.",
+    },
+  ],
+  i18n: guntherInteriorDesignerI18n,
 };

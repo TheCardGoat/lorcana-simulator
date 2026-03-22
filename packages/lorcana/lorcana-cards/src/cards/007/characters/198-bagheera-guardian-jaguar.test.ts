@@ -1,196 +1,209 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { dragonFire } from "@lorcanito/lorcana-engine/cards/001/actions/actions";
-// Import { goonsMaleficent } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { motherKnowsBest } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import { andThenAlongCameZeus } from "@lorcanito/lorcana-engine/cards/003/actions/actions";
-// Import {
-//   GantuStubbornCaptain,
-//   LiloEscapeArtist,
-//   WreckitRalphHamHands,
-// } from "@lorcanito/lorcana-engine/cards/006";
-// Import {
-//   BagheeraGuardianJaguar,
-//   BoltHeadstrongDog,
-// } from "@lorcanito/lorcana-engine/cards/007";
-// Import { deweyLovableShowoff } from "@lorcanito/lorcana-engine/cards/008";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Bagheera - Guardian Jaguar", () => {
-//   It.skip("Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [bagheeraGuardianJaguar],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(bagheeraGuardianJaguar);
-//     Expect(cardUnderTest.hasBodyguard).toBe(true);
-//   });
-//   Describe("YOU’VE GOT TO BE BRAVE When this character is banished during an opponent's turn, deal 2 damage to each opposing character.", () => {
-//     It.skip("deals 2 damage to each opposing character when Bagheera is banished on the opponent's turn", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: bagheeraGuardianJaguar.cost,
-//           Play: [bagheeraGuardianJaguar],
-//         },
-//         {
-//           Deck: 2,
-//           Inkwell: dragonFire.cost,
-//           Play: [goonsMaleficent, gantuStubbornCaptain],
-//           Hand: [dragonFire],
-//         },
-//       );
-//
-//       Await testEngine.passTurn();
-//       TestEngine.changeActivePlayer("player_two");
-//
-//       Await testEngine.playCard(dragonFire, {
-//         Targets: [bagheeraGuardianJaguar],
-//       });
-//
-//       Const goons = testEngine.getCardModel(goonsMaleficent);
-//       Const gantu = testEngine.getCardModel(gantuStubbornCaptain);
-//
-//       Await testEngine.passTurn();
-//
-//       Expect(gantu.meta.damage).toBe(2);
-//       Expect(goons.zone).toBe("discard");
-//     });
-//
-//     It.skip("does NOT deal 2 damage if Bagheera is banished on your own turn", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: dragonFire.cost,
-//           Play: [bagheeraGuardianJaguar],
-//           Hand: [dragonFire],
-//         },
-//         {
-//           Play: [gantuStubbornCaptain],
-//         },
-//       );
-//
-//       Await testEngine.playCard(dragonFire, {
-//         Targets: [bagheeraGuardianJaguar],
-//       });
-//
-//       Const gantu = testEngine.getCardModel(gantuStubbornCaptain);
-//
-//       Expect(gantu.meta.damage).toBeUndefined();
-//     });
-//
-//     It.skip("does NOT trigger if Bagheera leaves play another way (e.g., returned to hand)", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [bagheeraGuardianJaguar],
-//         },
-//         {
-//           Deck: 2,
-//           Inkwell: motherKnowsBest.cost,
-//           Play: [gantuStubbornCaptain],
-//           Hand: [motherKnowsBest],
-//         },
-//       );
-//
-//       Await testEngine.passTurn();
-//       TestEngine.changeActivePlayer("player_two");
-//
-//       Const cardUnderTest = testEngine.getCardModel(bagheeraGuardianJaguar);
-//       Await testEngine.playCard(motherKnowsBest, {
-//         Targets: [cardUnderTest],
-//       });
-//
-//       Const gantu = testEngine.getCardModel(gantuStubbornCaptain);
-//
-//       Expect(gantu.meta.damage).toBeUndefined();
-//     });
-//
-//     It("only damages opposing characters, not your own, when Bagheera is banished on the opponent's turn", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: bagheeraGuardianJaguar.cost,
-//           Play: [bagheeraGuardianJaguar, boltHeadstrongDog],
-//         },
-//         {
-//           Deck: 2,
-//           Inkwell: dragonFire.cost,
-//           Play: [gantuStubbornCaptain],
-//           Hand: [dragonFire],
-//         },
-//       );
-//
-//       Await testEngine.passTurn();
-//       TestEngine.changeActivePlayer("player_two");
-//
-//       Await testEngine.playCard(dragonFire, {
-//         Targets: [bagheeraGuardianJaguar],
-//       });
-//
-//       Const gantu = testEngine.getCardModel(gantuStubbornCaptain);
-//       Const bolt = testEngine.getCardModel(boltHeadstrongDog);
-//
-//       Expect(gantu.meta.damage).toBe(2);
-//       Expect(bolt.meta.damage).toBeUndefined();
-//     });
-//
-//     It("BUG-REPORT - Banish bagheera with a song on my opponents turn", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: bagheeraGuardianJaguar.cost,
-//           Play: [bagheeraGuardianJaguar],
-//         },
-//         {
-//           Deck: 2,
-//           Inkwell: andThenAlongCameZeus.cost,
-//           Play: [goonsMaleficent, gantuStubbornCaptain, deweyLovableShowoff],
-//           Hand: [andThenAlongCameZeus],
-//         },
-//       );
-//
-//       Await testEngine.passTurn();
-//       TestEngine.changeActivePlayer("player_two");
-//
-//       Const song = testEngine.getCardModel(andThenAlongCameZeus);
-//
-//       Await testEngine.playCard(song, {
-//         Targets: [bagheeraGuardianJaguar],
-//       });
-//
-//       Const goons = testEngine.getCardModel(goonsMaleficent);
-//       Const gantu = testEngine.getCardModel(gantuStubbornCaptain);
-//       Const dewey = testEngine.getCardModel(deweyLovableShowoff);
-//
-//       Await testEngine.passTurn();
-//
-//       Expect(gantu.meta.damage).toBe(2);
-//       Expect(goons.zone).toBe("discard");
-//       Expect(dewey.damage).toBe(2);
-//     });
-//   });
-// });
-//
-// Describe("Regression Tests for Bagheera - Guardian Jaguar", () => {
-//   It("Trying to replicate a bug, this test is not relevant", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: andThenAlongCameZeus.cost,
-//         Play: [goonsMaleficent, gantuStubbornCaptain, wreckitRalphHamHands],
-//         Hand: [andThenAlongCameZeus],
-//       },
-//       {
-//         Inkwell: bagheeraGuardianJaguar.cost,
-//         Play: [bagheeraGuardianJaguar, liloEscapeArtist],
-//       },
-//     );
-//
-//     Await testEngine.playCard(andThenAlongCameZeus, {
-//       Targets: [bagheeraGuardianJaguar],
-//     });
-//
-//     Expect(testEngine.getCardModel(gantuStubbornCaptain).meta.damage).toBe(2);
-//     Expect(testEngine.getCardModel(wreckitRalphHamHands).meta.damage).toBe(2);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { bagheeraGuardianJaguar } from "./198-bagheera-guardian-jaguar";
+import { dragonFire } from "../../001/actions/130-dragon-fire";
+
+const opponentCharA = createMockCharacter({
+  id: "bagheera-test-opponent-a",
+  name: "Opponent Character A",
+  cost: 3,
+  strength: 3,
+  willpower: 5,
+});
+
+const opponentCharB = createMockCharacter({
+  id: "bagheera-test-opponent-b",
+  name: "Opponent Character B",
+  cost: 2,
+  strength: 2,
+  willpower: 1,
+});
+
+const allyCharacter = createMockCharacter({
+  id: "bagheera-test-ally",
+  name: "Ally Character",
+  cost: 2,
+  strength: 2,
+  willpower: 5,
+});
+
+describe("Bagheera - Guardian Jaguar", () => {
+  describe("Bodyguard", () => {
+    it("has Bodyguard keyword", () => {
+      const bodyguardAbility = (bagheeraGuardianJaguar.abilities ?? []).find(
+        (a) => a.type === "keyword" && a.keyword === "Bodyguard",
+      );
+      expect(bodyguardAbility).toBeDefined();
+    });
+  });
+
+  describe("YOU MUST BE BRAVE — When this character is banished during an opponent's turn, deal 2 damage to each opposing character.", () => {
+    it("deals 2 damage to each opposing character when banished on opponent's turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [bagheeraGuardianJaguar],
+          deck: 2,
+        },
+        {
+          play: [opponentCharA, opponentCharB],
+          hand: [dragonFire],
+          inkwell: dragonFire.cost,
+          deck: 2,
+        },
+      );
+
+      // Pass to opponent's turn
+      testEngine.asPlayerOne().passTurn();
+
+      // Opponent plays Dragon Fire targeting Bagheera
+      expect(
+        testEngine.asPlayerTwo().playCard(dragonFire, { targets: [bagheeraGuardianJaguar] }),
+      ).toBeSuccessfulCommand();
+
+      // Bagheera should be banished
+      expect(testEngine.asPlayerOne().getCardZone(bagheeraGuardianJaguar)).toBe("discard");
+
+      // YOU MUST BE BRAVE triggers (mandatory)
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // Deal 2 damage to each opposing character (player two's characters)
+      expect(testEngine.asPlayerTwo()).toHaveDamage({
+        card: opponentCharA,
+        value: 2,
+      });
+      // opponentCharB has 1 willpower, 2 damage should banish it
+      expect(testEngine.asPlayerTwo().getCardZone(opponentCharB)).toBe("discard");
+    });
+
+    it("does NOT deal damage if banished on your own turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [bagheeraGuardianJaguar],
+          hand: [dragonFire],
+          inkwell: dragonFire.cost,
+          deck: 2,
+        },
+        {
+          play: [opponentCharA],
+          deck: 2,
+        },
+      );
+
+      // Play Dragon Fire on own turn targeting own Bagheera
+      expect(
+        testEngine.asPlayerOne().playCard(dragonFire, { targets: [bagheeraGuardianJaguar] }),
+      ).toBeSuccessfulCommand();
+
+      // Bagheera should be banished
+      expect(testEngine.asPlayerOne().getCardZone(bagheeraGuardianJaguar)).toBe("discard");
+
+      // No bag items — ability should NOT trigger on own turn
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+
+      // Opponent's character should NOT have damage
+      expect(testEngine.asPlayerTwo()).toHaveDamage({
+        card: opponentCharA,
+        value: 0,
+      });
+    });
+
+    it("only damages opposing characters, not your own", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [bagheeraGuardianJaguar, allyCharacter],
+          deck: 2,
+        },
+        {
+          play: [opponentCharA],
+          hand: [dragonFire],
+          inkwell: dragonFire.cost,
+          deck: 2,
+        },
+      );
+
+      // Pass to opponent's turn
+      testEngine.asPlayerOne().passTurn();
+
+      // Opponent banishes Bagheera
+      expect(
+        testEngine.asPlayerTwo().playCard(dragonFire, { targets: [bagheeraGuardianJaguar] }),
+      ).toBeSuccessfulCommand();
+
+      // Bagheera banished
+      expect(testEngine.asPlayerOne().getCardZone(bagheeraGuardianJaguar)).toBe("discard");
+
+      // Resolve the triggered ability
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // Opponent's character takes 2 damage
+      expect(testEngine.asPlayerTwo()).toHaveDamage({
+        card: opponentCharA,
+        value: 2,
+      });
+
+      // Own ally should NOT take damage
+      expect(testEngine.asPlayerOne()).toHaveDamage({
+        card: allyCharacter,
+        value: 0,
+      });
+    });
+
+    it("deals 2 damage when banished in a challenge on opponent's turn", () => {
+      const strongOpponent = createMockCharacter({
+        id: "bagheera-test-strong",
+        name: "Strong Opponent",
+        cost: 5,
+        strength: 5,
+        willpower: 5,
+      });
+
+      const weakOpponent = createMockCharacter({
+        id: "bagheera-test-weak",
+        name: "Weak Opponent",
+        cost: 1,
+        strength: 1,
+        willpower: 3,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: bagheeraGuardianJaguar, exerted: true }],
+          deck: 2,
+        },
+        {
+          play: [strongOpponent, weakOpponent],
+          deck: 2,
+        },
+      );
+
+      // Pass to opponent's turn
+      testEngine.asPlayerOne().passTurn();
+
+      // Opponent challenges Bagheera (5 str vs 3 willpower = banished)
+      expect(
+        testEngine.asPlayerTwo().challenge(strongOpponent, bagheeraGuardianJaguar),
+      ).toBeSuccessfulCommand();
+
+      // Bagheera should be banished
+      expect(testEngine.asPlayerOne().getCardZone(bagheeraGuardianJaguar)).toBe("discard");
+
+      // Resolve the triggered ability
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // weakOpponent takes 2 from ability
+      expect(testEngine.asPlayerTwo()).toHaveDamage({
+        card: weakOpponent,
+        value: 2,
+      });
+    });
+  });
+});

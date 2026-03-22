@@ -1,64 +1,143 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import {
+  createMockCharacter,
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+} from "@tcg/lorcana-engine/testing";
 import { madHatterGraciousHost } from "./086-mad-hatter-gracious-host";
 
-describe("Mad Hatter - Gracious Host", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [madHatterGraciousHost] });
-  //   Expect(testEngine.getCardModel(madHatterGraciousHost).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const attacker = createMockCharacter({
+  id: "mad-hatter-attacker",
+  name: "Attacker",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "bun:test";
-// Import {
-//   MadHatterGraciousHost,
-//   MagicBroomBucketBrigade,
-//   MauriceWorldFamousInventor,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Mad Hatter - Gracious Host", () => {
-//   It("**TEA PARTY** Whenever this character is challenged, you may draw a card.", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Play: [mauriceWorldFamousInventor],
-//       },
-//       {
-//         Deck: [magicBroomBucketBrigade],
-//         Play: [madHatterGraciousHost],
-//       },
-//     );
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       MadHatterGraciousHost.id,
-//       "player_two",
-//     );
-//
-//     Const attacker = testStore.getByZoneAndId(
-//       "play",
-//       MauriceWorldFamousInventor.id,
-//     );
-//
-//     CardUnderTest.updateCardMeta({ exerted: true });
-//     Attacker.challenge(cardUnderTest);
-//
-//     TestStore.changePlayer().resolveTopOfStack();
-//
-//     Expect(testStore.getZonesCardCount("player_one")).toEqual(
-//       Expect.objectContaining({ hand: 0, deck: 0 }),
-//     );
-//     Expect(testStore.getZonesCardCount("player_two")).toEqual(
-//       Expect.objectContaining({ hand: 1, deck: 0 }),
-//     );
-//   });
-// });
-//
+const defender = createMockCharacter({
+  id: "mad-hatter-defender",
+  name: "Defender",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+describe("Mad Hatter - Gracious Host", () => {
+  describe("TEA PARTY: Whenever this character is challenged, you may draw a card.", () => {
+    it("triggers when challenged — controller may draw a card", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: attacker, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [{ card: madHatterGraciousHost, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      const handBefore = testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand;
+      const deckBefore = testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).deck;
+
+      expect(
+        testEngine.asPlayerOne().challenge(attacker, madHatterGraciousHost),
+      ).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerTwo().getBagEffects();
+      expect(bagEffects.length).toBeGreaterThan(0);
+
+      expect(
+        testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand).toBe(handBefore + 1);
+      expect(testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).deck).toBe(deckBefore - 1);
+    });
+
+    it("is optional — controller can decline to draw", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: attacker, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [{ card: madHatterGraciousHost, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      const handBefore = testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand;
+      const deckBefore = testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).deck;
+
+      expect(
+        testEngine.asPlayerOne().challenge(attacker, madHatterGraciousHost),
+      ).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerTwo().getBagEffects();
+      expect(bagEffects.length).toBeGreaterThan(0);
+
+      expect(
+        testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand).toBe(handBefore);
+      expect(testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).deck).toBe(deckBefore);
+    });
+
+    it("does not trigger when attacking (only when being challenged)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: defender, exerted: true }],
+          deck: 2,
+        },
+        {
+          play: [{ card: madHatterGraciousHost, isDrying: false }],
+          deck: 2,
+        },
+      );
+
+      const handBefore = testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand;
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().challenge(madHatterGraciousHost, defender),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand).toBe(handBefore);
+    });
+
+    it("works when controller has no cards in deck", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: attacker, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [{ card: madHatterGraciousHost, exerted: true }],
+          deck: 0,
+        },
+      );
+
+      const handBefore = testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand;
+
+      expect(
+        testEngine.asPlayerOne().challenge(attacker, madHatterGraciousHost),
+      ).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerTwo().getBagEffects();
+      if (bagEffects.length > 0) {
+        expect(
+          testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id, { resolveOptional: true }),
+        ).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand).toBe(handBefore);
+    });
+  });
+});

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { olafTrustingCompanionI18n } from "./150-olaf-trusting-companion.i18n";
 
 export const olafTrustingCompanion: CharacterCard = {
   id: "QcK",
@@ -7,34 +8,6 @@ export const olafTrustingCompanion: CharacterCard = {
   cardType: "character",
   name: "Olaf",
   version: "Trusting Companion",
-  i18n: {
-    en: {
-      name: "Olaf",
-      version: "Trusting Companion",
-      text: "Support",
-    },
-    de: {
-      name: "Olaf",
-      version: "Vertrauensvoller Begleiter",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Olaf",
-      version: "Compagnon confiant",
-      text: [
-        {
-          title: "Soutien",
-          description:
-            "(Lorsque vous envoyez ce personnage à l'aventure, vous pouvez ajouter sa à celle d'un autre personnage au choix pour le reste de ce tour.)",
-        },
-      ],
-    },
-    it: {
-      name: "Olaf",
-      version: "Compagno Fiducioso",
-      text: "Aiutante",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Frozen",
   set: "004",
@@ -59,4 +32,5 @@ export const olafTrustingCompanion: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: olafTrustingCompanionI18n,
 };

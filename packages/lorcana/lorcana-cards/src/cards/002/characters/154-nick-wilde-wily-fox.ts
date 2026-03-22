@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { nickWildeWilyFoxI18n } from "./154-nick-wilde-wily-fox.i18n";
 
 export const nickWildeWilyFox: CharacterCard = {
   id: "0FC",
@@ -7,52 +8,6 @@ export const nickWildeWilyFox: CharacterCard = {
   cardType: "character",
   name: "Nick Wilde",
   version: "Wily Fox",
-  i18n: {
-    en: {
-      name: "Nick Wilde",
-      version: "Wily Fox",
-      text: [
-        {
-          title: "IT'S CALLED A HUSTLE",
-          description:
-            "When you play this character, you may return an item card named Pawpsicle from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Nick Wilde",
-      version: "Schlauer Fuchs",
-      text: [
-        {
-          title: "DAS WAR EIN TRICK",
-          description:
-            'Wenn du diesen Charakter ausspielst, darfst du 1 "Tatziatella"-Gegenstandskarte aus deinem Ablagestapel zurück auf deine Hand nehmen.',
-        },
-      ],
-    },
-    fr: {
-      name: "Nick Wilde",
-      version: "Rusé comme un renard",
-      text: [
-        {
-          title: "ÇA S'APPELLE UNE ARNAQUE",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez reprendre en main un objet Glace à l'eau de votre défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Nick Wilde",
-      version: "Wily Fox",
-      text: [
-        {
-          title: "IT'S CALLED A HUSTLE",
-          description:
-            "When you play this character, you may return an item card named Pawpsicle from your discard to your hand.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Zootropolis",
   set: "002",
@@ -69,13 +24,12 @@ export const nickWildeWilyFox: CharacterCard = {
   },
   text: [
     {
-      title: "IT'S CALLED A HUSTLE",
+      title: "IT'S CALLED",
       description:
-        "When you play this character, you may return an item card named Pawpsicle from your discard to your hand.",
+        "A HUSTLE When you play this character, you may return an item card named Pawpsicle from your discard to your hand.",
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -103,4 +57,6 @@ export const nickWildeWilyFox: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: nickWildeWilyFoxI18n,
 };

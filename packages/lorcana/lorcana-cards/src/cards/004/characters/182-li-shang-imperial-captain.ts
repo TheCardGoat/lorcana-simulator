@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liShangImperialCaptainI18n } from "./182-li-shang-imperial-captain.i18n";
 
 export const liShangImperialCaptain: CharacterCard = {
   id: "5lW",
@@ -7,24 +8,6 @@ export const liShangImperialCaptain: CharacterCard = {
   cardType: "character",
   name: "Li Shang",
   version: "Imperial Captain",
-  i18n: {
-    en: {
-      name: "Li Shang",
-      version: "Imperial Captain",
-    },
-    de: {
-      name: "Li Shang",
-      version: "Hauptmann des Kaisers",
-    },
-    fr: {
-      name: "Li Shang",
-      version: "Capitaine Impérial",
-    },
-    it: {
-      name: "Li Shang",
-      version: "Capitano Imperiale",
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "004",
@@ -41,4 +24,5 @@ export const liShangImperialCaptain: CharacterCard = {
     tcgPlayer: 650126,
   },
   classifications: ["Dreamborn", "Hero", "Captain"],
+  i18n: liShangImperialCaptainI18n,
 };

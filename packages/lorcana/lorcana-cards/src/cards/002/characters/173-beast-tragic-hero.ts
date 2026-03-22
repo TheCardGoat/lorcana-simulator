@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { beastTragicHeroI18n } from "./173-beast-tragic-hero.i18n";
 
 export const beastTragicHero: CharacterCard = {
   id: "VVb",
@@ -7,43 +8,6 @@ export const beastTragicHero: CharacterCard = {
   cardType: "character",
   name: "Beast",
   version: "Tragic Hero",
-  i18n: {
-    en: {
-      name: "Beast",
-      version: "Tragic Hero",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "IT'S BETTER THIS WAY",
-          description:
-            "At the start of your turn, if this character has no damage, draw a card. Otherwise, he gets +4 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Biest",
-      version: "Tragischer Held",
-      text: "Gestaltwandel 3 VIELLEICHT IST ES SO BESSER Ziehe zu Beginn deines Zuges 1 Karte, falls dieser Charakter unbeschädigt ist. Ist er beschädigt, erhält er in diesem Zug +4.",
-    },
-    fr: {
-      name: "La Bête",
-      version: "Héros tragique",
-      text: "Alter 3 C'EST PEUT-ÊTRE MIEUX COMME ÇA Si ce personnage n'a aucun jeton dommage sur lui au début de votre tour, piochez une carte. Sinon, il gagne +4 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Beast",
-      version: "Tragic Hero",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Beast.) IT'S BETTER THIS WAY At the start of your turn, if this character has no damage, draw a card. Otherwise, he gets +4 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -68,8 +32,6 @@ export const beastTragicHero: CharacterCard = {
         "At the start of your turn, if this character has no damage, draw a card. Otherwise, he gets +4 {S} this turn.",
     },
   ],
-  missingImplementation: true,
-  missingTests: true,
   classifications: ["Floodborn", "Hero", "Prince"],
   abilities: [
     {
@@ -94,20 +56,7 @@ export const beastTragicHero: CharacterCard = {
       effect: {
         type: "conditional",
         condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            reference: "source",
-            filters: [
-              {
-                type: "undamaged",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
+          type: "no-damage",
         },
         then: {
           amount: 1,
@@ -124,4 +73,5 @@ export const beastTragicHero: CharacterCard = {
       },
     },
   ],
+  i18n: beastTragicHeroI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckSleepwalkerI18n } from "./083-donald-duck-sleepwalker.i18n";
 
 export const donaldDuckSleepwalker: CharacterCard = {
   id: "oVH",
@@ -7,50 +8,6 @@ export const donaldDuckSleepwalker: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Sleepwalker",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Sleepwalker",
-      text: [
-        {
-          title: "STARTLED AWAKE",
-          description: "Whenever you play an action, this character gets +2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Schlafwandler",
-      text: [
-        {
-          title: "AUFSCHRECKEN",
-          description:
-            "Jedes Mal, wenn du eine Aktion ausspielst, erhält dieser Charakter in diesem Zug +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Donald",
-      version: "Somnambule",
-      text: [
-        {
-          title: "RÉVEIL EN SURSAUT",
-          description:
-            "Chaque fois que vous jouez une carte Action, ce personnage gagne +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Donald Duck",
-      version: "Sleepwalker",
-      text: [
-        {
-          title: "STARTLED AWAKE",
-          description: "Whenever you play an action, this character gets +2 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "009",
   cardNumber: 83,
@@ -94,4 +51,5 @@ export const donaldDuckSleepwalker: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: donaldDuckSleepwalkerI18n,
 };

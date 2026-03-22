@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { vanellopeVonSchweetzSpunkySpeedsterI18n } from "./124-vanellope-von-schweetz-spunky-speedster.i18n";
 
 export const vanellopeVonSchweetzSpunkySpeedster: CharacterCard = {
   id: "SCj",
@@ -7,28 +8,6 @@ export const vanellopeVonSchweetzSpunkySpeedster: CharacterCard = {
   cardType: "character",
   name: "Vanellope Von Schweetz",
   version: "Spunky Speedster",
-  i18n: {
-    en: {
-      name: "Vanellope Von Schweetz",
-      version: "Spunky Speedster",
-      text: "Evasive",
-    },
-    de: {
-      name: "Vanellope von Schweetz",
-      version: "Flotter Flitzer",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Vanellope von Schweetz",
-      version: "Bolide culotté",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Vanellope von Schweetz",
-      version: "Velocista Grintosa",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Wreck It Ralph",
   set: "008",
@@ -53,4 +32,5 @@ export const vanellopeVonSchweetzSpunkySpeedster: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: vanellopeVonSchweetzSpunkySpeedsterI18n,
 };

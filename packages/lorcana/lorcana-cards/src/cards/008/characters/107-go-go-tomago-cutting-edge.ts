@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goGoTomagoCuttingEdgeI18n } from "./107-go-go-tomago-cutting-edge.i18n";
 
 export const goGoTomagoCuttingEdge: CharacterCard = {
   id: "Di2",
@@ -7,40 +8,6 @@ export const goGoTomagoCuttingEdge: CharacterCard = {
   cardType: "character",
   name: "Go Go Tomago",
   version: "Cutting Edge",
-  i18n: {
-    en: {
-      name: "Go Go Tomago",
-      version: "Cutting Edge",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "ZERO RESISTANCE",
-          description:
-            "When you play this character, if you used Shift to play her, you may put chosen character into their player's inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Go Go Tomago",
-      version: "Messerscharf",
-      text: "Gestaltwandel 4 Wendig NULL WIDERSTAND Wenn du diesen Charakter mithilfe von Gestaltwandel ausspielst, darfst du einen Charakter deiner Wahl verdeckt und erschöpft in den zugehörigen Tintenvorrat legen.",
-    },
-    fr: {
-      name: "Go Go Tomago",
-      version: "À la pointe",
-      text: "Alter 4 Insaisissable ZÉRO RÉSISTANCE Si vous jouez ce personnage en utilisant sa capacité Alter, vous pouvez choisir un personnage et le placer dans la réserve d'encre de son propriétaire, face cachée et épuisé.",
-    },
-    it: {
-      name: "Go Go Tomago",
-      version: "All'Avanguardia",
-      text: "Trasformazione 4 Sfuggente ZERO RESISTENZA Quando giochi questo personaggio, se hai usato Trasformazione per giocarlo, puoi aggiungere un personaggio a tua scelta al calamaio del suo giocatore, a faccia in giù e impegnato.",
-    },
-  },
   inkType: ["emerald", "sapphire"],
   franchise: "Big Hero 6",
   set: "008",
@@ -88,15 +55,18 @@ export const goGoTomagoCuttingEdge: CharacterCard = {
     {
       effect: {
         condition: {
-          expression: "you used Shift to play her",
-          type: "if",
+          type: "used-shift",
         },
         then: {
-          exerted: true,
-          facedown: true,
-          source: "chosen-character",
-          target: "OPPONENT",
-          type: "put-into-inkwell",
+          chooser: "CONTROLLER",
+          effect: {
+            exerted: true,
+            facedown: true,
+            source: "chosen-character",
+            target: "CHOSEN_CHARACTER",
+            type: "put-into-inkwell",
+          },
+          type: "optional",
         },
         type: "conditional",
       },
@@ -111,4 +81,5 @@ export const goGoTomagoCuttingEdge: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: goGoTomagoCuttingEdgeI18n,
 };

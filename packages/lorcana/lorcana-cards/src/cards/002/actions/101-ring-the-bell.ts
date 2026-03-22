@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { ringTheBellI18n } from "./101-ring-the-bell.i18n";
 
 export const ringTheBell: ActionCard = {
   id: "9sx",
@@ -6,24 +7,6 @@ export const ringTheBell: ActionCard = {
   reprints: ["set2-101"],
   cardType: "action",
   name: "Ring the Bell",
-  i18n: {
-    en: {
-      name: "Ring the Bell",
-      text: "Banish chosen damaged character.",
-    },
-    de: {
-      name: "Läute die Glocke",
-      text: "Verbanne einen beschädigten Charakter deiner Wahl.",
-    },
-    fr: {
-      name: "Sonner la clochette",
-      text: "Choisissez un personnage blessé et bannissez-le.",
-    },
-    it: {
-      name: "Ring the Bell",
-      text: "Banish chosen damaged character.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Great Mouse Detective",
   set: "002",
@@ -56,4 +39,5 @@ export const ringTheBell: ActionCard = {
       },
     },
   ],
+  i18n: ringTheBellI18n,
 };

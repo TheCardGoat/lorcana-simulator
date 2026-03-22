@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princeJohnGreediestOfAllI18n } from "./089-prince-john-greediest-of-all.i18n";
 
 export const princeJohnGreediestOfAll: CharacterCard = {
   id: "Jlo",
@@ -7,43 +8,6 @@ export const princeJohnGreediestOfAll: CharacterCard = {
   cardType: "character",
   name: "Prince John",
   version: "Greediest of All",
-  i18n: {
-    en: {
-      name: "Prince John",
-      version: "Greediest of All",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "I SENTENCE YOU",
-          description:
-            "Whenever your opponent discards 1 or more cards, you may draw a card for each card discarded.",
-        },
-      ],
-    },
-    de: {
-      name: "Prinz John",
-      version: "Der Gierigste",
-      text: "Behütet ICH VERURTEILE DICH Jedes Mal, wenn gegnerische Mitspielende Handkarten abwerfen, darfst du für jede abgeworfene Karte 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Prince Jean",
-      version: "Le plus cupide de tous",
-      text: "Hors d'atteinte JE TE CONDAMNE Chaque fois qu'un adversaire défausse au moins une carte, vous pouvez piocher autant de cartes.",
-    },
-    it: {
-      name: "Prince John",
-      version: "Greediest of All",
-      text: [
-        {
-          title: "Ward",
-          description:
-            "(Opponents can't choose this character except to challenge.) I SENTENCE YOU Whenever your opponent discards 1 or more cards, you may draw a card for each card discarded.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "002",
@@ -69,7 +33,6 @@ export const princeJohnGreediestOfAll: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Villain", "Prince"],
-  missingTests: true,
   abilities: [
     {
       id: "9so-1",
@@ -100,4 +63,6 @@ export const princeJohnGreediestOfAll: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: princeJohnGreediestOfAllI18n,
 };

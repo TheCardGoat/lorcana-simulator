@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mowgliManCubI18n } from "./019-mowgli-man-cub.i18n";
 
 export const mowgliManCub: CharacterCard = {
   id: "65q",
@@ -7,52 +8,6 @@ export const mowgliManCub: CharacterCard = {
   cardType: "character",
   name: "Mowgli",
   version: "Man Cub",
-  i18n: {
-    en: {
-      name: "Mowgli",
-      version: "Man Cub",
-      text: [
-        {
-          title: "HAVE A BETTER LOOK",
-          description:
-            "When you play this character, chosen opponent reveals their hand and discards a non-character card of their choice.",
-        },
-      ],
-    },
-    de: {
-      name: "Mogli",
-      version: "Menschenkind",
-      text: [
-        {
-          title: "DAS MUSS ICH GENAU SEHEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, zeigt einer der gegnerischen Mitspielenden deiner Wahl alle Handkarten für alle sichtbar vor und wirft eine Karte, die keine Charakterkarte ist, ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mowgli",
-      version: "Petit d'Homme",
-      text: [
-        {
-          title: "VOIR DE PLUS PRÈS",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un adversaire qui révèle sa main et défausse une carte non-Personnage de son choix.",
-        },
-      ],
-    },
-    it: {
-      name: "Mowgli",
-      version: "Cucciolo d'Uomo",
-      text: [
-        {
-          title: "GUARDARE MEGLIO",
-          description:
-            "Quando giochi questo personaggio, un avversario a tua scelta rivela la sua mano e scarta una carta non personaggio a sua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Jungle Book",
   set: "010",
@@ -69,11 +24,12 @@ export const mowgliManCub: CharacterCard = {
   },
   text: [
     {
-      title: "HAVE A BETTER LOOK",
+      title: "HAVE",
       description:
-        "When you play this character, chosen opponent reveals their hand and discards a non-character card of their choice.",
+        "A BETTER LOOK When you play this character, chosen opponent reveals their hand and discards a non-character card of their choice.",
     },
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [],
+  i18n: mowgliManCubI18n,
 };

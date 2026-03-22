@@ -171,6 +171,21 @@ export interface ReturnedCardIsPrincessCondition {
 }
 
 /**
+ * Check if the card returned from discard (in the current sequence) has a specific name.
+ *
+ * Used in abilities of the form:
+ * "Return a character from your discard to your hand.
+ *  If that character is named <X>, you may play it for free."
+ *
+ * @example "If that character is named Tod"
+ */
+export interface ReturnedCardIsNamedCondition {
+  type: "returned-card-is-named";
+  /** The card name to check against */
+  name: string;
+}
+
+/**
  * Check if revealed card has same name
  */
 export interface RevealedHasSameNameCondition {
@@ -391,6 +406,22 @@ export interface HasCardUnderCondition {
   type: "has-card-under";
 }
 
+/**
+ * Check if the trigger subject (banished character) had cards under it
+ * Used for "draw a card for each card that was under them"
+ */
+export interface TriggerSubjectHadCardUnderCondition {
+  type: "trigger-subject-had-card-under";
+}
+
+/**
+ * Check if a card was put under the source card this turn.
+ * Used for "if you've put a card under her this turn" (Boost mechanic condition).
+ */
+export interface PutCardUnderSelfThisTurnCondition {
+  type: "put-card-under-self-this-turn";
+}
+
 // ============================================================================
 // Zone Presence Conditions (Self)
 // ============================================================================
@@ -524,6 +555,7 @@ export type ComparisonValue =
   | { type: "cards-in-hand"; controller: "you" | "opponent" }
   | { type: "cards-in-inkwell"; controller: "you" | "opponent" }
   | { type: "character-count"; controller: "you" | "opponent" }
+  | { type: "item-count"; controller: "you" | "opponent" }
   | { type: "damage-on-self" }
   | { type: "strength-of-self" }
   | { type: "constant"; value: number };
@@ -838,7 +870,9 @@ export type TurnMetric =
   | "banished-characters"
   | "damaged-characters-by-owner"
   | "discard-cards-left"
-  | "quested-characters";
+  | "quested-characters"
+  | "played-cards"
+  | "cards-drawn-by-player";
 
 export interface TurnMetricCondition {
   type: "turn-metric";
@@ -975,6 +1009,22 @@ export interface TargetIsDamagedCondition {
   type: "target-is-damaged";
 }
 
+/**
+ * Check if a card discarded during the current effect sequence has a specific classification.
+ *
+ * Used for "If an Illusion character card is discarded this way" style effects.
+ * Inspects `resolutionInput.eventSnapshot.discardedCardIds` populated by the discard step.
+ *
+ * @example "If an Illusion character card is discarded this way"
+ */
+export interface DiscardedCardHasClassificationCondition {
+  type: "discarded-card-has-classification";
+  /** The classification to check for (case-insensitive) */
+  classification: string;
+  /** Optionally require a specific card type (defaults to "character") */
+  cardType?: "character" | "action" | "item" | "location";
+}
+
 // ============================================================================
 // Combined Condition Type
 // ============================================================================
@@ -1007,6 +1057,8 @@ export type Condition =
   | IsExertedCondition
   | IsReadyCondition
   | HasCardUnderCondition
+  | TriggerSubjectHadCardUnderCondition
+  | PutCardUnderSelfThisTurnCondition
   | InInkwellCondition
   | InPlayCondition
   // Count Conditions (strict variants)
@@ -1078,6 +1130,7 @@ export type Condition =
   | HasNoDamageCondition
   | HasCharacterWithStrengthCondition
   | ReturnedCardIsPrincessCondition
+  | ReturnedCardIsNamedCondition
   | RevealedHasSameNameCondition
   | HasCharactersHereCondition
   | HasCharacterAtLocationCondition
@@ -1097,7 +1150,9 @@ export type Condition =
   | UnlessCondition
   | LoreComparisonCondition
   | SecondInTurnCondition
-  | TargetIsDamagedCondition;
+  | TargetIsDamagedCondition
+  // Discard-context conditions
+  | DiscardedCardHasClassificationCondition;
 
 // ============================================================================
 // Condition Builders (convenience)

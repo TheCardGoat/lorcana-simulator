@@ -1,55 +1,59 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   AmethystCoil,
-//   EmeraldCoil,
-//   ScroogeMcduckResourcefulMiser,
-//   SpaghettiDinner,
-//   TheGlassSlipper,
-// } from "@lorcanito/lorcana-engine/cards/007";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Scrooge Mcduck - Resourceful Miser", () => {
-//   Const items = [spaghettiDinner, emeraldCoil, theGlassSlipper, amethystCoil];
-//   It("PUT IT TO GOOD USE You may exert 4 items of yours to play this character for free.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: 0,
-//       Play: items,
-//       Hand: [scroogeMcduckResourcefulMiser],
-//     });
-//
-//     Await testEngine.playCard(scroogeMcduckResourcefulMiser, {
-//       AlternativeCosts: items,
-//     });
-//
-//     Expect(testEngine.getCardModel(scroogeMcduckResourcefulMiser).zone).toBe(
-//       "play",
-//     );
-//
-//     For (const item of items) {
-//       Expect(testEngine.getCardModel(item).exerted).toBe(true);
-//     }
-//   });
-//
-//   It("FORTUNE HUNTER When you play this character, look at the top 4 cards of your deck. You may reveal an item card and put it into your hand. Put the rest on the bottom of your deck in any order.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: scroogeMcduckResourcefulMiser.cost,
-//       Hand: [scroogeMcduckResourcefulMiser],
-//       Deck: items,
-//     });
-//
-//     Await testEngine.playCard(scroogeMcduckResourcefulMiser, {
-//       Scry: {
-//         Hand: [theGlassSlipper],
-//         Bottom: [spaghettiDinner, emeraldCoil, amethystCoil],
-//       },
-//     });
-//
-//     Expect(testEngine.getCardModel(theGlassSlipper).zone).toBe("hand");
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  createMockItem,
+} from "@tcg/lorcana-engine/testing";
+import { scroogeMcduckResourcefulMiser } from "./154-scrooge-mcduck-resourceful-miser";
+
+const matchingItem = createMockItem({
+  id: "matching-item",
+  name: "Matching Item",
+  cost: 2,
+});
+
+const nonMatchA = createMockCharacter({
+  id: "non-match-a",
+  name: "Non Match A",
+  cost: 1,
+});
+
+const nonMatchB = createMockCharacter({
+  id: "non-match-b",
+  name: "Non Match B",
+  cost: 3,
+});
+
+const nonMatchC = createMockCharacter({
+  id: "non-match-c",
+  name: "Non Match C",
+  cost: 4,
+});
+
+describe("Scrooge McDuck - Resourceful Miser", () => {
+  it("FORTUNE HUNTER - reveals an item card to hand, puts rest on bottom", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [scroogeMcduckResourcefulMiser],
+      inkwell: scroogeMcduckResourcefulMiser.cost,
+      deck: [nonMatchA, matchingItem, nonMatchB, nonMatchC],
+    });
+
+    expect(
+      testEngine.asPlayerOne().playCard(scroogeMcduckResourcefulMiser),
+    ).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [
+          { zone: "hand", cards: [matchingItem] },
+          { zone: "deck-bottom", cards: [nonMatchC, nonMatchB, nonMatchA] },
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(matchingItem)).toBe("hand");
+  });
+});

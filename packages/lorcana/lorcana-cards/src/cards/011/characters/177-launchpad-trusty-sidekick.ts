@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { launchpadTrustySidekickI18n } from "./177-launchpad-trusty-sidekick.i18n";
 
 export const launchpadTrustySidekick: CharacterCard = {
   id: "RLN",
@@ -7,52 +8,6 @@ export const launchpadTrustySidekick: CharacterCard = {
   cardType: "character",
   name: "Launchpad",
   version: "Trusty Sidekick",
-  i18n: {
-    en: {
-      name: "Launchpad",
-      version: "Trusty Sidekick",
-      text: [
-        {
-          title: "WHAT DID YOU NEED?",
-          description:
-            "{E} — Draw a card. Then, choose and discard a card unless you have a character named Darkwing Duck in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Quack, der Bruchpilot",
-      version: "Treuer Handlanger",
-      text: [
-        {
-          title: "WAS HAST DU",
-          description:
-            "BENÖTIGT? — Ziehe 1 Karte. Wähle danach 1 Karte aus deiner Hand und wirf sie ab, außer du hast einen Darkwing-Duck-Charakter im Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Flagada Jones",
-      version: "Assistant de confiance",
-      text: [
-        {
-          title: "DE QUOI AVIEZ-VOUS BESOIN?",
-          description:
-            "— Piochez une carte. Ensuite, défaussez une carte sauf si vous avez un personnage Myster Mask en jeu.",
-        },
-      ],
-    },
-    it: {
-      name: "Jet",
-      version: "Fido Assistente",
-      text: [
-        {
-          title: "DI COSA AVEVI BISOGNO?",
-          description:
-            "— Pesca una carta. Poi, scegli e scarta una carta a meno che tu non abbia in gioco un personaggio chiamato Darkwing Duck.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -78,6 +33,9 @@ export const launchpadTrustySidekick: CharacterCard = {
   abilities: [
     {
       id: "1ll-1",
+      cost: {
+        exert: true,
+      },
       effect: {
         steps: [
           {
@@ -86,16 +44,28 @@ export const launchpadTrustySidekick: CharacterCard = {
             type: "draw",
           },
           {
-            amount: 1,
-            chosen: true,
-            target: "CONTROLLER",
-            type: "discard",
+            type: "conditional",
+            condition: {
+              type: "not",
+              condition: {
+                type: "has-named-character",
+                controller: "you",
+                name: "Darkwing Duck",
+              },
+            },
+            then: {
+              amount: 1,
+              chosen: true,
+              target: "CONTROLLER",
+              type: "discard",
+            },
           },
         ],
         type: "sequence",
       },
-      type: "action",
+      type: "activated",
       text: "WHAT DID YOU NEED? {E} - Draw a card. Then, choose and discard a card unless you have a character named Darkwing Duck in play.",
     },
   ],
+  i18n: launchpadTrustySidekickI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stitchLittleTricksterI18n } from "./026-stitch-little-trickster.i18n";
 
 export const stitchLittleTrickster: CharacterCard = {
   id: "Yiv",
@@ -7,48 +8,6 @@ export const stitchLittleTrickster: CharacterCard = {
   cardType: "character",
   name: "Stitch",
   version: "Little Trickster",
-  i18n: {
-    en: {
-      name: "Stitch",
-      version: "Little Trickster",
-      text: [
-        {
-          title: "NEED A HAND? 1",
-          description: "{I} — This character gets +1 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Stitch",
-      version: "Kleiner Scherzbold",
-      text: [
-        {
-          title: "HELFENDE HAND 1",
-          description: "— Dieser Charakter erhält in diesem Zug +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Stitch",
-      version: "Petit farceur",
-      text: [
-        {
-          title: "BESOIN D'UN COUP DE MAIN? 1",
-          description: "— Ce personnage gagne +1 pour le reste du tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Stitch",
-      version: "Piccolo Imbroglione",
-      text: [
-        {
-          title: "SERVE UNA MANO? 1",
-          description: "— Questo personaggio riceve +1 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lilo and Stitch",
   set: "006",
@@ -72,6 +31,11 @@ export const stitchLittleTrickster: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Alien"],
   abilities: [
     {
+      type: "activated",
+      name: "NEED A HAND?",
+      cost: {
+        ink: 1,
+      },
       effect: {
         duration: "this-turn",
         modifier: 1,
@@ -80,8 +44,8 @@ export const stitchLittleTrickster: CharacterCard = {
         type: "modify-stat",
       },
       id: "kka-1",
-      text: "NEED A HAND? 1 {I} - This character gets +1 {S} this turn.",
-      type: "action",
+      text: "NEED A HAND? 1 {I} — This character gets +1 {S} this turn.",
     },
   ],
+  i18n: stitchLittleTricksterI18n,
 };

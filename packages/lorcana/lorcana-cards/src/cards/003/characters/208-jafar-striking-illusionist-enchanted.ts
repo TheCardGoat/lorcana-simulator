@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jafarStrikingIllusionistEnchantedI18n } from "./208-jafar-striking-illusionist-enchanted.i18n";
 
 export const jafarStrikingIllusionistEnchanted: CharacterCard = {
   id: "MT1",
@@ -7,40 +8,6 @@ export const jafarStrikingIllusionistEnchanted: CharacterCard = {
   cardType: "character",
   name: "Jafar",
   version: "Striking Illusionist",
-  i18n: {
-    en: {
-      name: "Jafar",
-      version: "Striking Illusionist",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "POWER BEYOND MEASURE",
-          description:
-            "During your turn, while this character is exerted, whenever you draw a card, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschafar",
-      version: "Verblüffender Illusionist",
-      text: "Gestaltwandel 5 Wendig GRENZENLOSE MACHT Solange dieser Charakter während deines Zuges erschöpft ist, sammelst du jedes mal 1 Legende, wenn du eine Karte ziehst.",
-    },
-    fr: {
-      name: "Jafar",
-      version: "Illusionniste ensorcelant",
-      text: "Alter 5 Insaisissable POUVOIR SANS LIMITE Tant que ce personnage est épuisé, gagnez 1 éclat de Lore pour chaque carte que vous piochez durant votre tour.",
-    },
-    it: {
-      name: "Jafar",
-      version: "Strabiliante Illusionista",
-      text: "Trasformazione 5 Sfuggente POTERE OLTRE OGNI LIMITE Durante il tuo turno, mentre questo personaggio è impegnato, ottieni 1 leggenda ogni volta che peschi una carta.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "003",
@@ -111,4 +78,5 @@ export const jafarStrikingIllusionistEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: jafarStrikingIllusionistEnchantedI18n,
 };

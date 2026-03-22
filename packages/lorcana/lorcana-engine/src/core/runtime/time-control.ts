@@ -31,7 +31,7 @@ import type {
  *
  * Uses Immer's produce() for immutability - safe to call from anywhere.
  */
-export function settleClocks<G>(state: MatchState<G>, now: number): MatchState<G> {
+export function settleClocks(state: MatchState, now: number): MatchState {
   const time = state.ctx.time;
 
   if (time.mode === "none") return state;
@@ -44,13 +44,13 @@ export function settleClocks<G>(state: MatchState<G>, now: number): MatchState<G
   return produce(state, (draft) => {
     if (time.mode === "chess") {
       settleChessClockDraft(
-        draft as MatchState<G> & { ctx: { time: ChessClockContext } },
+        draft as MatchState & { ctx: { time: ChessClockContext } },
         now,
         elapsedMs,
       );
     } else {
       settlePriorityClockDraft(
-        draft as MatchState<G> & { ctx: { time: PriorityClockContext } },
+        draft as MatchState & { ctx: { time: PriorityClockContext } },
         now,
         elapsedMs,
       );
@@ -64,8 +64,8 @@ export function settleClocks<G>(state: MatchState<G>, now: number): MatchState<G
  * In chess mode, only the active player's clock runs.
  * This function mutates the draft directly within an Immer produce() callback.
  */
-function settleChessClockDraft<G>(
-  draft: MatchState<G> & { ctx: { time: ChessClockContext } },
+function settleChessClockDraft(
+  draft: MatchState & { ctx: { time: ChessClockContext } },
   now: number,
   elapsedMs: number,
 ): void {
@@ -97,8 +97,8 @@ function settleChessClockDraft<G>(
  *
  * This function mutates the draft directly within an Immer produce() callback.
  */
-function settlePriorityClockDraft<G>(
-  draft: MatchState<G> & { ctx: { time: PriorityClockContext } },
+function settlePriorityClockDraft(
+  draft: MatchState & { ctx: { time: PriorityClockContext } },
   now: number,
   elapsedMs: number,
 ): void {
@@ -141,11 +141,7 @@ function settlePriorityClockDraft<G>(
  * Opens a new priority window for the player.
  * Uses Immer's produce() for immutability - safe to call from anywhere.
  */
-export function grantPriority<G>(
-  state: MatchState<G>,
-  playerId: string,
-  now: number,
-): MatchState<G> {
+export function grantPriority(state: MatchState, playerId: string, now: number): MatchState {
   return produce(state, (draft) => {
     draft.ctx.priority.holder = playerId;
     draft.ctx.priority.windowOpen = true;
@@ -178,7 +174,7 @@ export function grantPriority<G>(
  * Records the pass in the pass sequence.
  * Uses Immer's produce() for immutability - safe to call from anywhere.
  */
-export function passPriority<G>(state: MatchState<G>, playerId: string): MatchState<G> {
+export function passPriority(state: MatchState, playerId: string): MatchState {
   return produce(state, (draft) => {
     // Add to pass sequence if not already in it
     if (!draft.ctx.priority.passSequence.includes(playerId)) {
@@ -199,11 +195,7 @@ export function passPriority<G>(state: MatchState<G>, playerId: string): MatchSt
  * Pause the clock
  * Uses Immer's produce() for immutability - safe to call from anywhere.
  */
-export function pauseClock<G>(
-  state: MatchState<G>,
-  reason: ClockPauseReason,
-  now: number,
-): MatchState<G> {
+export function pauseClock(state: MatchState, reason: ClockPauseReason, now: number): MatchState {
   const time = state.ctx.time;
   if (time.mode === "none") return state;
 
@@ -221,11 +213,7 @@ export function pauseClock<G>(
  * Resume the clock
  * Uses Immer's produce() for immutability - safe to call from anywhere.
  */
-export function resumeClock<G>(
-  state: MatchState<G>,
-  activePlayerId: string,
-  now: number,
-): MatchState<G> {
+export function resumeClock(state: MatchState, activePlayerId: string, now: number): MatchState {
   const time = state.ctx.time;
   if (time.mode === "none") return state;
 
@@ -251,10 +239,10 @@ export function resumeClock<G>(
  * Called when a player successfully makes a move or pass in priority mode.
  * Uses Immer's produce() for immutability - safe to call from anywhere.
  */
-export function awardMoveBonus<G>(
-  state: MatchState<G> & { ctx: { time: PriorityClockContext } },
+export function awardMoveBonus(
+  state: MatchState & { ctx: { time: PriorityClockContext } },
   playerId: string,
-): MatchState<G> {
+): MatchState {
   const playerState = state.ctx.time.players[playerId];
   if (!playerState) return state;
 
@@ -276,8 +264,8 @@ export function awardMoveBonus<G>(
  * Check if a player has timed out in priority mode
  * (Pure function - no state mutation)
  */
-export function checkPriorityTimeout<G>(
-  state: MatchState<G> & { ctx: { time: PriorityClockContext } },
+export function checkPriorityTimeout(
+  state: MatchState & { ctx: { time: PriorityClockContext } },
   playerId: string,
   now: number,
 ): "window" | "reserve" | null {
@@ -305,11 +293,11 @@ export function checkPriorityTimeout<G>(
  * Default policy: auto-pass-if-legal-else-forfeit
  * Uses Immer's produce() for immutability - safe to call from anywhere.
  */
-export function handleWindowExpiry<G>(
-  state: MatchState<G>,
+export function handleWindowExpiry(
+  state: MatchState,
   playerId: string,
   canAutoPass: boolean,
-): { action: "auto-pass" | "forfeit"; state: MatchState<G> } {
+): { action: "auto-pass" | "forfeit"; state: MatchState } {
   if (canAutoPass) {
     const newState = passPriority(state, playerId);
     return { action: "auto-pass", state: newState };
@@ -331,7 +319,7 @@ export function handleWindowExpiry<G>(
  * Handle reserve expiry (loss on time)
  * Uses Immer's produce() for immutability - safe to call from anywhere.
  */
-export function handleReserveExpiry<G>(state: MatchState<G>, playerId: string): MatchState<G> {
+export function handleReserveExpiry(state: MatchState, playerId: string): MatchState {
   return produce(state, (draft) => {
     draft.ctx.status.gameEnded = true;
     draft.ctx.status.winner = getOpponentId(state, playerId);
@@ -347,7 +335,7 @@ export function handleReserveExpiry<G>(state: MatchState<G>, playerId: string): 
 // Helpers
 // =============================================================================
 
-function getOpponentId<G>(state: MatchState<G>, playerId: string): string | undefined {
+function getOpponentId(state: MatchState, playerId: string): string | undefined {
   const time = state.ctx.time;
   // Get opponent from players in time control
   if (time.mode === "none") return undefined;
@@ -358,8 +346,8 @@ function getOpponentId<G>(state: MatchState<G>, playerId: string): string | unde
 /**
  * Get remaining time summary for a player
  */
-export function getPlayerTimeSummary<G>(
-  state: MatchState<G>,
+export function getPlayerTimeSummary(
+  state: MatchState,
   playerId: string,
 ): {
   reserveMsRemaining: number;

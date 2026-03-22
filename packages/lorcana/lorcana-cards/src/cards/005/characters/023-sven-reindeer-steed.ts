@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { svenReindeerSteedI18n } from "./023-sven-reindeer-steed.i18n";
 
 export const svenReindeerSteed: CharacterCard = {
   id: "DzB",
@@ -7,52 +8,6 @@ export const svenReindeerSteed: CharacterCard = {
   cardType: "character",
   name: "Sven",
   version: "Reindeer Steed",
-  i18n: {
-    en: {
-      name: "Sven",
-      version: "Reindeer Steed",
-      text: [
-        {
-          title: "REINDEER GAMES",
-          description:
-            "When you play this character, you may ready chosen character. They can't quest or challenge for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Sven",
-      version: "Rentier",
-      text: [
-        {
-          title: "RENTIER SPIELE",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Charakter deiner Wahl bereit machen. Er kann in diesem Zug nicht mehr erkunden oder herausfordern.",
-        },
-      ],
-    },
-    fr: {
-      name: "Sven",
-      version: "Destrier renne",
-      text: [
-        {
-          title: "JEUX DE RENNES",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage et le redresser. Il ne peut ni partir à l'aventure ni défier pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Sven",
-      version: "Renna Destriero",
-      text: [
-        {
-          title: "GIOCHI DA RENNE",
-          description:
-            "Quando giochi questo personaggio, puoi preparare un personaggio a tua scelta. Non può andare all'avventura o sfidare per il resto di questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Frozen",
   set: "005",
@@ -80,10 +35,31 @@ export const svenReindeerSteed: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          duration: "this-turn",
-          restriction: "cant-quest",
-          target: "SELF",
-          type: "restriction",
+          type: "sequence",
+          steps: [
+            {
+              type: "ready",
+              target: {
+                cardTypes: ["character"],
+                count: 1,
+                owner: "any",
+                selector: "chosen",
+                zones: ["play"],
+              },
+            },
+            {
+              duration: "this-turn",
+              restriction: "cant-quest-or-challenge",
+              target: {
+                cardTypes: ["character"],
+                count: 1,
+                owner: "any",
+                selector: "chosen",
+                zones: ["play"],
+              },
+              type: "restriction",
+            },
+          ],
         },
         type: "optional",
       },
@@ -98,4 +74,5 @@ export const svenReindeerSteed: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: svenReindeerSteedI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hadesRuthlessTyrantI18n } from "./048-hades-ruthless-tyrant.i18n";
 
 export const hadesRuthlessTyrant: CharacterCard = {
   id: "C4b",
@@ -7,52 +8,6 @@ export const hadesRuthlessTyrant: CharacterCard = {
   cardType: "character",
   name: "Hades",
   version: "Ruthless Tyrant",
-  i18n: {
-    en: {
-      name: "Hades",
-      version: "Ruthless Tyrant",
-      text: [
-        {
-          title: "SHORT ON PATIENCE",
-          description:
-            "When you play this character and whenever he quests, you may deal 2 damage to another chosen character of yours to draw 2 cards.",
-        },
-      ],
-    },
-    de: {
-      name: "Hades",
-      version: "Gnadenloser Tyrann",
-      text: [
-        {
-          title: "WENIG GEDULD",
-          description:
-            "Wenn du diesen Charakter ausspielst, und jedes Mal, wenn er erkundet, darfst du einen deiner anderen Charaktere wählen und ihm 2 Schaden zufügen, um 2 Karten zu ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Hadès",
-      version: "Tyran impitoyable",
-      text: [
-        {
-          title: "À COURT DE PATIENCE",
-          description:
-            "Lorsque vous jouez ce personnage et chaque fois qu'il est envoyé à l'aventure, vous pouvez choisir un autre de vos personnages et lui infliger 2 dommages. Si vous le faites, piochez 2 cartes.",
-        },
-      ],
-    },
-    it: {
-      name: "Ade",
-      version: "Tiranno Spietato",
-      text: [
-        {
-          title: "POCA PAZIENZA",
-          description:
-            "Quando giochi questo personaggio e ogni volta che va all'avventura, puoi infliggere 2 danni a un tuo altro personaggio a tua scelta per pescare 2 carte.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst", "ruby"],
   franchise: "Hercules",
   set: "008",
@@ -80,27 +35,40 @@ export const hadesRuthlessTyrant: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 2,
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "deal-damage",
+          steps: [
+            {
+              amount: 2,
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["character"],
+                excludeSelf: true,
+              },
+              type: "deal-damage",
+            },
+            {
+              amount: 2,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+          ],
+          type: "sequence",
         },
         type: "optional",
       },
       id: "keg-1",
-      name: "SHORT ON PATIENCE When you play this character and",
+      name: "SHORT ON PATIENCE",
       text: "SHORT ON PATIENCE When you play this character and whenever he quests, you may deal 2 damage to another chosen character of yours to draw 2 cards.",
       trigger: {
         event: "play",
+        events: ["quest"],
         on: "SELF",
         timing: "when",
       },
       type: "triggered",
     },
   ],
+  i18n: hadesRuthlessTyrantI18n,
 };

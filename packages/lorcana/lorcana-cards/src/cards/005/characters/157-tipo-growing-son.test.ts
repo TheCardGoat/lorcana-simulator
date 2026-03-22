@@ -21,10 +21,7 @@ describe("Tipo - Growing Son", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
         resolveOptional: true,
         targets: [detectiveId],
       }),
@@ -43,5 +40,66 @@ describe("Tipo - Growing Son", () => {
     expect(
       testEngine.getAuthoritativeState().ctx.zones.private.cardMeta[detectiveId]?.publicFaceState,
     ).toBe("faceDown");
+  });
+
+  it("supports accepting optional first, then selecting target via pending effect", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [tipoGrowingSon, practicedDetective],
+      inkwell: tipoGrowingSon.cost,
+      deck: 1,
+    });
+    const detectiveId = testEngine.findCardInstanceId(practicedDetective, "hand", "p1");
+
+    expect(testEngine.asPlayerOne().playCard(tipoGrowingSon)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
+
+    // Accept the optional effect — the bag executes immediately and a pending effect
+    // is created for the target selection (which card to put into inkwell).
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+
+    // Bag should be resolved; a pending effect is waiting for the target selection.
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+    // Provide the target card from hand via the pending effect.
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [detectiveId] }),
+    ).toBeSuccessfulCommand();
+
+    // The effect should now be fully resolved.
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(testEngine.asPlayerOne().getCardZone(detectiveId)).toBe("inkwell");
+    expect(testEngine.asServer().getCard(detectiveId)).toEqual(
+      expect.objectContaining({ exerted: true, zone: "inkwell" }),
+    );
+  });
+
+  it("supports declining the optional effect in multi-step flow", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [tipoGrowingSon, practicedDetective],
+      inkwell: tipoGrowingSon.cost,
+      deck: 1,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(tipoGrowingSon)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
+
+    // Decline the optional effect
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+    ).toBeSuccessfulCommand();
+
+    // Bag should be empty - effect was declined
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+
+    // Card should still be in hand
+    const detectiveId = testEngine.findCardInstanceId(practicedDetective, "hand", "p1");
+    expect(testEngine.asPlayerOne().getCardZone(detectiveId)).toBe("hand");
   });
 });

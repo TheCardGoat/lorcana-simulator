@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { davidXanatosSteelClanLeaderI18n } from "./184-david-xanatos-steel-clan-leader.i18n";
 
 export const davidXanatosSteelClanLeader: CharacterCard = {
   id: "FZS",
@@ -7,52 +8,6 @@ export const davidXanatosSteelClanLeader: CharacterCard = {
   cardType: "character",
   name: "David Xanatos",
   version: "Steel Clan Leader",
-  i18n: {
-    en: {
-      name: "David Xanatos",
-      version: "Steel Clan Leader",
-      text: [
-        {
-          title: "MINOR INCONVENIENCE",
-          description:
-            "When you play this character, you may choose and discard a card to deal 2 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "David Xanatos",
-      version: "Stahl-Clan-Anführer",
-      text: [
-        {
-          title: "KLEINE UNANNEHMLICHKEIT",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du eine Karte von deiner Hand auswählen und abwerfen, um einem Charakter deiner Wahl 2 Schaden zuzufügen.",
-        },
-      ],
-    },
-    fr: {
-      name: "David Xanatos",
-      version: "Leader du Clan d'Acier",
-      text: [
-        {
-          title: "PETIT DÉSAGRÉMENT",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez défausser une carte pour choisir un personnage et lui infliger 2 dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "David Xanatos",
-      version: "Leader del Clan d'Acciaio",
-      text: [
-        {
-          title: "PICCOLO INCONVENIENTE",
-          description:
-            "Quando giochi questo personaggio, puoi scegliere e scartare una carta per infliggere 2 danni a un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Gargoyles",
   set: "010",
@@ -80,15 +35,27 @@ export const davidXanatosSteelClanLeader: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 2,
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "deal-damage",
+          type: "sequence",
+          steps: [
+            {
+              amount: 1,
+              chosen: true,
+              from: "hand",
+              target: "CONTROLLER",
+              type: "discard",
+            },
+            {
+              amount: 2,
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "any",
+                zones: ["play"],
+                cardTypes: ["character"],
+              },
+              type: "deal-damage",
+            },
+          ],
         },
         type: "optional",
       },
@@ -103,4 +70,5 @@ export const davidXanatosSteelClanLeader: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: davidXanatosSteelClanLeaderI18n,
 };

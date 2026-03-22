@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { ursulasPlanI18n } from "./063-ursulas-plan.i18n";
 
 export const ursulasPlan: ActionCard = {
   id: "SrO",
@@ -6,24 +7,6 @@ export const ursulasPlan: ActionCard = {
   reprints: ["set4-063"],
   cardType: "action",
   name: "Ursula’s Plan",
-  i18n: {
-    en: {
-      name: "Ursula’s Plan",
-      text: "Each opponent chooses and exerts one of their characters. Those characters can't ready at the start of their next turn.",
-    },
-    de: {
-      name: "Ursulas Plan",
-      text: "Alle gegnerischen Mitspielenden wählen je einen ihrer Charaktere und erschöpfen ihn. Diese werden zu Beginn ihres nächsten Zuges nicht bereit gemacht.",
-    },
-    fr: {
-      name: "Plan d'Ursula",
-      text: "Chaque adversaire choisit un de ses personnages et l'épuise. Ces personnages ne se redressent pas au début de leur prochain tour.",
-    },
-    it: {
-      name: "Il Piano di Ursula",
-      text: "Ogni avversario sceglie e impegna uno dei suoi personaggi. Questi personaggi non si possono preparare all'inizio del loro prossimo turno.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Little Mermaid",
   set: "004",
@@ -67,4 +50,5 @@ export const ursulasPlan: ActionCard = {
       type: "action",
     },
   ],
+  i18n: ursulasPlanI18n,
 };

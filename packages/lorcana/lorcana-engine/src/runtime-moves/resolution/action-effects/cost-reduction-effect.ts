@@ -70,7 +70,7 @@ export function resolveCostReductionEffect(
     return;
   }
 
-  const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+  const currentTurn = ctx.framework.state.status.turn ?? 1;
   const expiresAtTurn = resolveTemporaryEffectExpiryTurn(currentTurn, effect.duration);
   const consumeOnUse = effect.duration === "next-play-this-turn";
   const normalizedCardType = normalizeCardType(effect.cardType);

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madamMimFoxI18n } from "./046-madam-mim-fox.i18n";
 
 export const madamMimFox: CharacterCard = {
   id: "XBE",
@@ -7,55 +8,6 @@ export const madamMimFox: CharacterCard = {
   cardType: "character",
   name: "Madam Mim",
   version: "Fox",
-  i18n: {
-    en: {
-      name: "Madam Mim",
-      version: "Fox",
-      text: [
-        {
-          title: "CHASING THE RABBIT",
-          description:
-            "When you play this character, banish her or return another chosen character of yours to your hand.",
-        },
-        {
-          title: "Rush",
-        },
-      ],
-    },
-    de: {
-      name: "Madame Mim",
-      version: "Fuchs",
-      text: [
-        {
-          title: "DEM HASEN NACHJAGEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, musst du ihn verbannen oder einen deiner anderen Charaktere wählen und zurück auf deine Hand nehmen. Rasant",
-        },
-      ],
-    },
-    fr: {
-      name: "Madame Mime",
-      version: "En renard",
-      text: [
-        {
-          title: "À LA POURSUITE DU LAPIN",
-          description:
-            "Lorsque vous jouez ce personnage, bannissez-le ou renvoyez l'un de vos autres personnages en jeu dans votre main. Charge",
-        },
-      ],
-    },
-    it: {
-      name: "Maga Magò",
-      version: "Volpe",
-      text: [
-        {
-          title: "INSEGUIRE IL CONIGLIO",
-          description:
-            "Quando giochi questo personaggio, esilialo o riprendi in mano un tuo altro personaggio a tua scelta. Lesto (Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -81,7 +33,6 @@ export const madamMimFox: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer"],
-  missingTests: true,
   abilities: [
     {
       id: "1ej-1",
@@ -122,4 +73,5 @@ export const madamMimFox: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: madamMimFoxI18n,
 };

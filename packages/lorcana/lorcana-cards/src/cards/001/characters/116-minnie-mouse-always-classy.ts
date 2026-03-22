@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseAlwaysClassyI18n } from "./116-minnie-mouse-always-classy.i18n";
 
 export const minnieMouseAlwaysClassy: CharacterCard = {
   id: "YPs",
@@ -7,24 +8,6 @@ export const minnieMouseAlwaysClassy: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Always Classy",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Always Classy",
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Stets stilvoll",
-    },
-    fr: {
-      name: "MINNIE",
-      version: "Toujours élégante",
-    },
-    it: {
-      name: "Minni",
-      version: "Sempre Elegante",
-    },
-  },
   inkType: ["ruby"],
   set: "001",
   cardNumber: 116,
@@ -34,11 +17,11 @@ export const minnieMouseAlwaysClassy: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_3f9c08ed5eae46f98e593890c2ec975b",
     tcgPlayer: 505967,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: minnieMouseAlwaysClassyI18n,
 };

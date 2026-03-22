@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sourBillSurlyHenchmanI18n } from "./147-sour-bill-surly-henchman.i18n";
 
 export const sourBillSurlyHenchman: CharacterCard = {
   id: "IpU",
@@ -7,52 +8,6 @@ export const sourBillSurlyHenchman: CharacterCard = {
   cardType: "character",
   name: "Sour Bill",
   version: "Surly Henchman",
-  i18n: {
-    en: {
-      name: "Sour Bill",
-      version: "Surly Henchman",
-      text: [
-        {
-          title: "UNPALATABLE",
-          description:
-            "When you play this character, chosen opposing character gets -2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Saurer Drops",
-      version: "Mürrischer Handlanger",
-      text: [
-        {
-          title: "UNGENIESSBAR",
-          description:
-            "Wenn du diesen Charakter ausspielst, gib einem gegnerischen Charakter deiner Wahl in diesem Zug -2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Aigre Bill",
-      version: "Acolyte maussade",
-      text: [
-        {
-          title: "INDIGESTE",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage adverse qui subit -2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Aspro Bill",
-      version: "Braccio Destro Scorbutico",
-      text: [
-        {
-          title: "IMMANGIABILE",
-          description:
-            "Quando giochi questo personaggio, un personaggio avversario a tua scelta riceve -2 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Wreck It Ralph",
   set: "006",
@@ -80,7 +35,7 @@ export const sourBillSurlyHenchman: CharacterCard = {
         duration: "this-turn",
         modifier: -2,
         stat: "strength",
-        target: "CHOSEN_CHARACTER",
+        target: "CHOSEN_OPPOSING_CHARACTER",
         type: "modify-stat",
       },
       id: "1f5-1",
@@ -94,4 +49,5 @@ export const sourBillSurlyHenchman: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: sourBillSurlyHenchmanI18n,
 };

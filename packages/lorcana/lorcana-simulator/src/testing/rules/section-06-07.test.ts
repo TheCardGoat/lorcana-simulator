@@ -342,7 +342,12 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
 
       expect(
         testEngine.asPlayerOne().playCard(divebomb, {
-          targets: [arthurId, simbaId],
+          targets: [arthurId],
+        }).success,
+      ).toBe(true);
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          targets: [simbaId],
         }).success,
       ).toBe(true);
 
@@ -409,8 +414,13 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
 
       resolveOnlyBagEffect(testEngine.asPlayerOne(), {
         resolveOptional: true,
-        targets: [stormId, minnieMouseStoryteller],
+        targets: [stormId],
       });
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          targets: [minnieMouseStoryteller],
+        }).success,
+      ).toBe(true);
 
       expect(testEngine.asPlayerTwo().getCardZone(minnieMouseStoryteller)).toBe("discard");
       expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);

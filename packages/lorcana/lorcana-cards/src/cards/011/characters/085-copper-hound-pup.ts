@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { copperHoundPupI18n } from "./085-copper-hound-pup.i18n";
 
 export const copperHoundPup: CharacterCard = {
   id: "zR1",
@@ -7,50 +8,6 @@ export const copperHoundPup: CharacterCard = {
   cardType: "character",
   name: "Copper",
   version: "Hound Pup",
-  i18n: {
-    en: {
-      name: "Copper",
-      version: "Hound Pup",
-      text: [
-        {
-          title: "FOUND YA",
-          description: "When you play this character, chosen player reveals their hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Capper",
-      version: "Jagdhund-Welpe",
-      text: [
-        {
-          title: "HAB DICH",
-          description:
-            "Wenn du diesen Charakter ausspielst, zeigt eine gegnerische Person deiner Wahl alle Handkarten für alle sichtbar vor.",
-        },
-      ],
-    },
-    fr: {
-      name: "Rouky",
-      version: "Chiot de chasse",
-      text: [
-        {
-          title: "J'T'AI TROUVÉ",
-          description: "Lorsque vous jouez ce personnage, choisissez un joueur qui révèle sa main.",
-        },
-      ],
-    },
-    it: {
-      name: "Toby",
-      version: "Cucciolo di Segugio",
-      text: [
-        {
-          title: "TROVATO!",
-          description:
-            "Quando giochi questo personaggio, un giocatore a tua scelta rivela la sua mano.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Fox and the Hound",
   set: "011",
@@ -72,5 +29,22 @@ export const copperHoundPup: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Puppy"],
-  abilities: [],
+  abilities: [
+    {
+      id: "zR1-1",
+      type: "triggered",
+      name: "FOUND YA",
+      text: "FOUND YA When you play this character, chosen player reveals their hand.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "reveal-hand",
+        target: "CHOSEN_PLAYER",
+      },
+    },
+  ],
+  i18n: copperHoundPupI18n,
 };

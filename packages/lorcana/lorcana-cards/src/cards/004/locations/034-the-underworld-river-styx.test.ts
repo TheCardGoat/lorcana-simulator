@@ -22,15 +22,16 @@ describe("The Underworld - River Styx", () => {
       inkwell: 3,
       deck: 1,
     });
+    const discardedSoulId = testEngine.findCardInstanceId(discardedSoul, "discard", "p1");
 
     expect(testEngine.asPlayerOne().quest(styxQuester)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
       testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
     ).toBe(true);
-    expect(testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }).success).toBe(
-      true,
-    );
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [discardedSoulId] }),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getCardZone(discardedSoul)).toBe("hand");
   });
 });

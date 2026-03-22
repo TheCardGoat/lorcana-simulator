@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daisyDuckLovelyLadyI18n } from "./006-daisy-duck-lovely-lady.i18n";
 
 export const daisyDuckLovelyLady: CharacterCard = {
   id: "GPw",
@@ -7,24 +8,6 @@ export const daisyDuckLovelyLady: CharacterCard = {
   cardType: "character",
   name: "Daisy Duck",
   version: "Lovely Lady",
-  i18n: {
-    en: {
-      name: "Daisy Duck",
-      version: "Lovely Lady",
-    },
-    de: {
-      name: "Daisy Duck",
-      version: "Reizende Dame",
-    },
-    fr: {
-      name: "Daisy",
-      version: "Charmante Damoiselle",
-    },
-    it: {
-      name: "Paperina",
-      version: "Adorabile Dama",
-    },
-  },
   inkType: ["amber"],
   set: "004",
   cardNumber: 6,
@@ -40,4 +23,5 @@ export const daisyDuckLovelyLady: CharacterCard = {
     tcgPlayer: 543910,
   },
   classifications: ["Dreamborn", "Ally"],
+  i18n: daisyDuckLovelyLadyI18n,
 };

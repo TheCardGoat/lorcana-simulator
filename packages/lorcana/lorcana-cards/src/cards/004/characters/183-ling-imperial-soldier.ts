@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lingImperialSoldierI18n } from "./183-ling-imperial-soldier.i18n";
 
 export const lingImperialSoldier: CharacterCard = {
   id: "HyV",
@@ -7,48 +8,6 @@ export const lingImperialSoldier: CharacterCard = {
   cardType: "character",
   name: "Ling",
   version: "Imperial Soldier",
-  i18n: {
-    en: {
-      name: "Ling",
-      version: "Imperial Soldier",
-      text: [
-        {
-          title: "FULL OF SPIRIT",
-          description: "Your Hero characters get +1 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Ling",
-      version: "Soldat des Kaisers",
-      text: [
-        {
-          title: "VOLLER TATENDRANG",
-          description: "Deine anderen Heldinnen und Helden erhalten +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Ling",
-      version: "Soldat Impérial",
-      text: [
-        {
-          title: "PLEIN DE COURAGE",
-          description: "Vos personnages Héros gagnent +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Ling",
-      version: "Soldato Imperiale",
-      text: [
-        {
-          title: "PIENO DI SPIRITO I",
-          description: "tuoi personaggi Eroe ricevono +1.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "004",
@@ -75,13 +34,14 @@ export const lingImperialSoldier: CharacterCard = {
       effect: {
         modifier: 1,
         stat: "strength",
-        target: "YOUR_CHARACTERS",
+        target: "YOUR_HERO_CHARACTERS",
         type: "modify-stat",
       },
       id: "joz-1",
-      name: "FULL OF SPIRIT Your Hero",
+      name: "FULL OF SPIRIT",
       text: "FULL OF SPIRIT Your Hero characters get +1 {S}.",
       type: "static",
     },
   ],
+  i18n: lingImperialSoldierI18n,
 };

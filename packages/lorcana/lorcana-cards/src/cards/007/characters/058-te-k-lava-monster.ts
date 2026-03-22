@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { teKLavaMonsterI18n } from "./058-te-k-lava-monster.i18n";
 
 export const teKLavaMonster: CharacterCard = {
   id: "e8J",
@@ -7,28 +8,6 @@ export const teKLavaMonster: CharacterCard = {
   cardType: "character",
   name: "Te Kā",
   version: "Lava Monster",
-  i18n: {
-    en: {
-      name: "Te Kā",
-      version: "Lava Monster",
-      text: "Challenger +2",
-    },
-    de: {
-      name: "Te Kā",
-      version: "Lava-Monster",
-      text: "Herausfordern +2",
-    },
-    fr: {
-      name: "TE KĀ",
-      version: "Monstre de lave",
-      text: "Offensif +2",
-    },
-    it: {
-      name: "Te Kā",
-      version: "Mostro di Lava",
-      text: "Sfidante +2",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Moana",
   set: "007",
@@ -54,4 +33,5 @@ export const teKLavaMonster: CharacterCard = {
       text: "Challenger +2",
     },
   ],
+  i18n: teKLavaMonsterI18n,
 };

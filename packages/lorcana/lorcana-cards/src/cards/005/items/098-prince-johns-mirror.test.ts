@@ -27,9 +27,4 @@ describe("Prince John's Mirror", () => {
 
     expect(fullPriceEngine.asPlayerOne().playCard(princeJohnsMirror).success).toBe(false);
   });
-
-  it("is still marked blocked while A FEELING OF POWER does not queue correctly at runtime", () => {
-    expect(princeJohnsMirror.missingImplementation).toBe(true);
-    expect(princeJohnsMirror.missingTests).toBe(true);
-  });
 });

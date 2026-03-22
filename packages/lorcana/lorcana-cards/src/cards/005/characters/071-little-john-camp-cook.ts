@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { littleJohnCampCookI18n } from "./071-little-john-camp-cook.i18n";
 
 export const littleJohnCampCook: CharacterCard = {
   id: "Bph",
@@ -7,24 +8,6 @@ export const littleJohnCampCook: CharacterCard = {
   cardType: "character",
   name: "Little John",
   version: "Camp Cook",
-  i18n: {
-    en: {
-      name: "Little John",
-      version: "Camp Cook",
-    },
-    de: {
-      name: "Little John",
-      version: "Koch im Lager",
-    },
-    fr: {
-      name: "Petit Jean",
-      version: "Cuisinier du camp",
-    },
-    it: {
-      name: "Little John",
-      version: "Cuoco da Campo",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "005",
@@ -41,4 +24,5 @@ export const littleJohnCampCook: CharacterCard = {
     tcgPlayer: 561191,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: littleJohnCampCookI18n,
 };

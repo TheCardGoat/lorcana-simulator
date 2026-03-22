@@ -1,5 +1,6 @@
 import type {
   CommandEnvelope,
+  FilteredMatchView,
   GameLogEntry,
   PacketAnimation,
   PublishedGameEvent,
@@ -11,7 +12,7 @@ import type { NetworkMatchData } from "./network-state";
 // Protocol Version
 // =============================================================================
 
-export const PROTOCOL_VERSION = 3;
+export const PROTOCOL_VERSION = 4;
 
 // =============================================================================
 // Common Envelope
@@ -30,7 +31,12 @@ export interface ProtocolEnvelope {
 // Client -> Server Messages
 // =============================================================================
 
-export type ClientMessage = UpdateActionMessage | SyncRequestMessage | AckMessage | ChatMessage;
+export type ClientMessage =
+  | UpdateActionMessage
+  | SyncRequestMessage
+  | AckMessage
+  | ChatMessage
+  | UndoRequestMessage;
 
 export interface UpdateActionMessage extends ProtocolEnvelope {
   type: "UPDATE_ACTION";
@@ -54,14 +60,19 @@ export interface ChatMessage extends ProtocolEnvelope {
   message: string;
 }
 
+export interface UndoRequestMessage extends ProtocolEnvelope {
+  type: "UNDO_REQUEST";
+  prevStateID: number;
+}
+
 // =============================================================================
 // Server -> Client Messages
 // =============================================================================
 
-export type ServerMessage<TState = unknown, TBoard = unknown> =
+export type ServerMessage =
   | UpdatePatchMessage
-  | UpdateFullMessage<TState, TBoard>
-  | SyncFullMessage<TState, TBoard>
+  | UpdateFullMessage
+  | SyncFullMessage
   | MatchDataMessage
   | ErrorMessage
   | ChatMessage;
@@ -70,6 +81,7 @@ export interface UpdatePatchMessage extends ProtocolEnvelope {
   type: "UPDATE_PATCH";
   prevStateID: number;
   stateID: number;
+  canUndo: boolean;
   patchFormat: "immer" | "rfc6902";
   patchOps: unknown[];
   processedCommand: CommandEnvelope;
@@ -79,11 +91,12 @@ export interface UpdatePatchMessage extends ProtocolEnvelope {
   logEntriesDelta?: GameLogEntry[];
 }
 
-export interface UpdateFullMessage<TState = unknown, TBoard = unknown> extends ProtocolEnvelope {
+export interface UpdateFullMessage extends ProtocolEnvelope {
   type: "UPDATE_FULL";
   stateID: number;
-  state: TState;
-  board?: TBoard;
+  canUndo: boolean;
+  state: FilteredMatchView;
+  board?: FilteredMatchView;
   processedCommand: CommandEnvelope;
   animations: PacketAnimation[];
   deltalogDelta?: unknown[];
@@ -92,11 +105,12 @@ export interface UpdateFullMessage<TState = unknown, TBoard = unknown> extends P
   reason?: "PATCH_DISABLED" | "FILTERING_FALLBACK" | "STALE_STATE";
 }
 
-export interface SyncFullMessage<TState = unknown, TBoard = unknown> extends ProtocolEnvelope {
+export interface SyncFullMessage extends ProtocolEnvelope {
   type: "SYNC_FULL";
   stateID: number;
-  state: TState;
-  board?: TBoard;
+  canUndo: boolean;
+  state: FilteredMatchView;
+  board?: FilteredMatchView;
   deltalogDelta?: unknown[];
   gameEventsDelta?: PublishedGameEvent[];
   logEntriesDelta?: GameLogEntry[];
@@ -151,17 +165,19 @@ export function isUpdatePatchMessage(msg: unknown): msg is UpdatePatchMessage {
   );
 }
 
-export function isUpdateFullMessage<TState>(msg: unknown): msg is UpdateFullMessage<TState> {
+export function isUpdateFullMessage(msg: unknown): msg is UpdateFullMessage {
   return (
-    typeof msg === "object" &&
-    msg !== null &&
-    (msg as UpdateFullMessage<TState>).type === "UPDATE_FULL"
+    typeof msg === "object" && msg !== null && (msg as UpdateFullMessage).type === "UPDATE_FULL"
   );
 }
 
-export function isSyncFullMessage<TState>(msg: unknown): msg is SyncFullMessage<TState> {
+export function isSyncFullMessage(msg: unknown): msg is SyncFullMessage {
+  return typeof msg === "object" && msg !== null && (msg as SyncFullMessage).type === "SYNC_FULL";
+}
+
+export function isUndoRequestMessage(msg: unknown): msg is UndoRequestMessage {
   return (
-    typeof msg === "object" && msg !== null && (msg as SyncFullMessage<TState>).type === "SYNC_FULL"
+    typeof msg === "object" && msg !== null && (msg as UndoRequestMessage).type === "UNDO_REQUEST"
   );
 }
 

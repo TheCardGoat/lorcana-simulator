@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sisuWiseFriendI18n } from "./155-sisu-wise-friend.i18n";
 
 export const sisuWiseFriend: CharacterCard = {
   id: "Pec",
@@ -7,24 +8,6 @@ export const sisuWiseFriend: CharacterCard = {
   cardType: "character",
   name: "Sisu",
   version: "Wise Friend",
-  i18n: {
-    en: {
-      name: "Sisu",
-      version: "Wise Friend",
-    },
-    de: {
-      name: "Sisu",
-      version: "Weise Freundin",
-    },
-    fr: {
-      name: "Sisu",
-      version: "Amie pleine de sagesse",
-    },
-    it: {
-      name: "Sisu",
-      version: "Amica Saggia",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Raya and the Last Dragon",
   set: "004",
@@ -41,4 +24,5 @@ export const sisuWiseFriend: CharacterCard = {
     tcgPlayer: 550527,
   },
   classifications: ["Storyborn", "Hero", "Deity", "Dragon"],
+  i18n: sisuWiseFriendI18n,
 };

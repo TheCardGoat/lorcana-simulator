@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { markowskiSpaceTrooperI18n } from "./113-markowski-space-trooper.i18n";
 
 export const markowskiSpaceTrooper: CharacterCard = {
   id: "hrO",
@@ -7,28 +8,6 @@ export const markowskiSpaceTrooper: CharacterCard = {
   cardType: "character",
   name: "Markowski",
   version: "Space Trooper",
-  i18n: {
-    en: {
-      name: "Markowski",
-      version: "Space Trooper",
-      text: "Evasive",
-    },
-    de: {
-      name: "Markowski",
-      version: "Soldat im All",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Markowski",
-      version: "Soldat de l'espace",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Markowski",
-      version: "Soldato Spaziale",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Wreck It Ralph",
   set: "006",
@@ -53,4 +32,5 @@ export const markowskiSpaceTrooper: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: markowskiSpaceTrooperI18n,
 };

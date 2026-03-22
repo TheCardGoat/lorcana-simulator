@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { nessusRiverGuardianI18n } from "./118-nessus-river-guardian.i18n";
 
 export const nessusRiverGuardian: CharacterCard = {
   id: "u1p",
@@ -7,24 +8,6 @@ export const nessusRiverGuardian: CharacterCard = {
   cardType: "character",
   name: "Nessus",
   version: "River Guardian",
-  i18n: {
-    en: {
-      name: "Nessus",
-      version: "River Guardian",
-    },
-    de: {
-      name: "Nessus",
-      version: "Flusswächter",
-    },
-    fr: {
-      name: "Nessus",
-      version: "Gardien de la rivière",
-    },
-    it: {
-      name: "Nesso",
-      version: "Guardiano del Fiume",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Hercules",
   set: "004",
@@ -41,4 +24,5 @@ export const nessusRiverGuardian: CharacterCard = {
     tcgPlayer: 550595,
   },
   classifications: ["Storyborn", "Villain"],
+  i18n: nessusRiverGuardianI18n,
 };

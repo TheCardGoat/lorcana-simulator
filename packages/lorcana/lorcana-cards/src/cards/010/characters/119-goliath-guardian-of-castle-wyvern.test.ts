@@ -1,158 +1,181 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   GoliathGuardianOfCastleWyvern,
-//   MickeyMouseDetective,
-// } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Goliath - Guardian of Castle Wyvern", () => {
-//   It("Character should have correct base stats", async () => {
-//     Const testEngine = new TestEngine({
-//       Hand: [goliathGuardianOfCastleWyvern],
-//     });
-//
-//     Const cardUnderTest = testEngine.getByZoneAndId(
-//       "hand",
-//       GoliathGuardianOfCastleWyvern.id,
-//     );
-//
-//     // Check base stats
-//     Expect(cardUnderTest.cost).toBe(4);
-//     Expect(cardUnderTest.strength).toBe(5);
-//     Expect(cardUnderTest.willpower).toBe(5);
-//     Expect(cardUnderTest.lore).toBe(1);
-//     Expect(cardUnderTest.characteristics).toEqual([
-//       "storyborn",
-//       "hero",
-//       "gargoyle",
-//     ]);
-//   });
-//
-//   It("Character can be played with correct cost", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: goliathGuardianOfCastleWyvern.cost,
-//       Hand: [goliathGuardianOfCastleWyvern],
-//     });
-//
-//     Const cardUnderTest = testEngine.getByZoneAndId(
-//       "hand",
-//       GoliathGuardianOfCastleWyvern.id,
-//     );
-//
-//     Await testEngine.playCard(cardUnderTest);
-//     Const goliathInPlay = testEngine.getByZoneAndId(
-//       "play",
-//       GoliathGuardianOfCastleWyvern.id,
-//     );
-//     Expect(goliathInPlay.zone).toBe("play");
-//   });
-//
-//   It("STONE BY DAY - Should have the STONE BY DAY ability defined", () => {
-//     Const stoneByDay = goliathGuardianOfCastleWyvern.abilities?.find(
-//       (a) => "name" in a && a.name === "STONE BY DAY",
-//     );
-//
-//     Expect(stoneByDay).toBeDefined();
-//
-//     If (
-//       StoneByDay &&
-//       "conditions" in stoneByDay &&
-//       Array.isArray(stoneByDay.conditions)
-//     ) {
-//       // Should have condition checking hand count >= 3
-//       Expect(stoneByDay.conditions).toHaveLength(1);
-//       Const condition = stoneByDay.conditions[0] as any;
-//       Expect(condition.type).toBe("filter");
-//       Expect(condition.comparison.operator).toBe("gte");
-//       Expect(condition.comparison.value).toBe(3);
-//     }
-//
-//     If (
-//       StoneByDay &&
-//       "effects" in stoneByDay &&
-//       Array.isArray(stoneByDay.effects)
-//     ) {
-//       // Should have restriction effect
-//       Expect(stoneByDay.effects).toHaveLength(1);
-//       Const effect = stoneByDay.effects[0] as any;
-//       Expect(effect.type).toBe("restriction");
-//       Expect(effect.restriction).toBe("ready");
-//     }
-//   });
-//
-//   It("BE CAREFUL, ALL OF YOU - Should have the BE CAREFUL, ALL OF YOU ability defined", () => {
-//     Const beCareful = goliathGuardianOfCastleWyvern.abilities?.find(
-//       (a) => "name" in a && a.name === "BE CAREFUL, ALL OF YOU",
-//     );
-//
-//     Expect(beCareful).toBeDefined();
-//     // Check that it has the correct structure for a triggered ability
-//     Expect(beCareful).toHaveProperty("name", "BE CAREFUL, ALL OF YOU");
-//   });
-//
-//   It("BE CAREFUL, ALL OF YOU - Should have correct gargoyle filter", () => {
-//     Const beCareful = goliathGuardianOfCastleWyvern.abilities?.find(
-//       (a) => "name" in a && a.name === "BE CAREFUL, ALL OF YOU",
-//     );
-//
-//     Expect(beCareful).toBeDefined();
-//
-//     If (
-//       BeCareful &&
-//       "attackerFilter" in beCareful &&
-//       Array.isArray(beCareful.attackerFilter)
-//     ) {
-//       // Should filter for owner and gargoyle characteristics
-//       Expect(beCareful.attackerFilter).toHaveLength(2);
-//       Const ownerFilter = beCareful.attackerFilter[0] as any;
-//       Const gargoyleFilter = beCareful.attackerFilter[1] as any;
-//
-//       Expect(ownerFilter.filter).toBe("owner");
-//       Expect(ownerFilter.value).toBe("self");
-//
-//       Expect(gargoyleFilter.filter).toBe("characteristics");
-//       Expect(gargoyleFilter.value).toEqual(["gargoyle"]);
-//     }
-//   });
-//
-//   It("Should have correct lore effect", () => {
-//     Const beCareful = goliathGuardianOfCastleWyvern.abilities?.find(
-//       (a) => "name" in a && a.name === "BE CAREFUL, ALL OF YOU",
-//     );
-//
-//     Expect(beCareful).toBeDefined();
-//
-//     If (
-//       BeCareful &&
-//       "effects" in beCareful &&
-//       Array.isArray(beCareful.effects)
-//     ) {
-//       // Should have lore effect adding 1 lore
-//       Expect(beCareful.effects).toHaveLength(1);
-//       Const effect = beCareful.effects[0] as any;
-//       Expect(effect.type).toBe("lore");
-//       Expect(effect.modifier).toBe("add");
-//       Expect(effect.amount).toBe(1);
-//       Expect(effect.target.type).toBe("player");
-//       Expect(effect.target.value).toBe("self");
-//     }
-//   });
-//
-//   It("Should have both abilities present", () => {
-//     Expect(goliathGuardianOfCastleWyvern.abilities).toBeDefined();
-//     Expect(goliathGuardianOfCastleWyvern.abilities?.length).toBe(2);
-//
-//     Const abilityNames = goliathGuardianOfCastleWyvern.abilities?.map((a) =>
-//       "name" in a ? a.name : "unknown",
-//     );
-//
-//     Expect(abilityNames).toContain("BE CAREFUL, ALL OF YOU");
-//     Expect(abilityNames).toContain("STONE BY DAY");
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { goliathGuardianOfCastleWyvern } from "./119-goliath-guardian-of-castle-wyvern";
+
+const gargoyleAttacker = createMockCharacter({
+  id: "goliath-guardian-gargoyle-attacker",
+  name: "Gargoyle Attacker",
+  cost: 2,
+  strength: 4,
+  willpower: 3,
+  classifications: ["Storyborn", "Hero", "Gargoyle"],
+});
+
+const nonGargoyleAttacker = createMockCharacter({
+  id: "goliath-guardian-non-gargoyle-attacker",
+  name: "Non-Gargoyle Attacker",
+  cost: 2,
+  strength: 4,
+  willpower: 3,
+  classifications: ["Storyborn", "Hero"],
+});
+
+const defender = createMockCharacter({
+  id: "goliath-guardian-defender",
+  name: "Defender",
+  cost: 2,
+  strength: 1,
+  willpower: 2,
+});
+
+const handFiller1 = createMockCharacter({
+  id: "goliath-guardian-hand-filler-1",
+  name: "Hand Filler 1",
+  cost: 1,
+});
+
+const handFiller2 = createMockCharacter({
+  id: "goliath-guardian-hand-filler-2",
+  name: "Hand Filler 2",
+  cost: 1,
+});
+
+const handFiller3 = createMockCharacter({
+  id: "goliath-guardian-hand-filler-3",
+  name: "Hand Filler 3",
+  cost: 1,
+});
+
+describe("Goliath - Guardian of Castle Wyvern", () => {
+  describe("BE CAREFUL, ALL OF YOU - Whenever one of your Gargoyle characters challenges another character, gain 1 lore.", () => {
+    it("gains 1 lore when a Gargoyle character challenges", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [goliathGuardianOfCastleWyvern, gargoyleAttacker],
+          deck: 2,
+        },
+        {
+          play: [{ card: defender, exerted: true }],
+          deck: 2,
+        },
+        { startingLore: { player_one: 0, player_two: 0 } },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(gargoyleAttacker, defender),
+      ).toBeSuccessfulCommand();
+
+      // Resolve BE CAREFUL, ALL OF YOU bag effect (gain 1 lore)
+      const bagCount = testEngine.asPlayerOne().getBagCount();
+      if (bagCount > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        ).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
+    });
+
+    it("does NOT gain lore when a non-Gargoyle character challenges", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [goliathGuardianOfCastleWyvern, nonGargoyleAttacker],
+          deck: 2,
+        },
+        {
+          play: [{ card: defender, exerted: true }],
+          deck: 2,
+        },
+        { startingLore: { player_one: 0, player_two: 0 } },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(nonGargoyleAttacker, defender),
+      ).toBeSuccessfulCommand();
+
+      // Resolve any bag effects (none expected for lore)
+      while (testEngine.asPlayerOne().getBagCount() > 0) {
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id);
+      }
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+    });
+
+    it("gains 1 lore when Goliath himself challenges (Goliath is a Gargoyle)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [goliathGuardianOfCastleWyvern],
+          deck: 2,
+        },
+        {
+          play: [{ card: defender, exerted: true }],
+          deck: 2,
+        },
+        { startingLore: { player_one: 0, player_two: 0 } },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(goliathGuardianOfCastleWyvern, defender),
+      ).toBeSuccessfulCommand();
+
+      // Resolve BE CAREFUL, ALL OF YOU bag effect (gain 1 lore)
+      while (testEngine.asPlayerOne().getBagCount() > 0) {
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id);
+      }
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
+    });
+  });
+
+  describe("STONE BY DAY - If you have 3 or more cards in your hand, this character can't ready.", () => {
+    it("prevents Goliath from readying when controller has 3 or more cards in hand", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: goliathGuardianOfCastleWyvern, exerted: true }],
+          // Start with 3 cards so STONE BY DAY is active at the ready phase
+          // (ready happens BEFORE the draw step in turn transition)
+          hand: [handFiller1, handFiller2, handFiller3],
+          deck: 10,
+        },
+        {
+          deck: 10,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().isExerted(goliathGuardianOfCastleWyvern)).toBe(true);
+
+      // Pass p1 turn — STONE BY DAY already active (3 cards in hand) at ready phase
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      // Goliath should NOT have readied (3 cards in hand)
+      expect(testEngine.asPlayerOne().isExerted(goliathGuardianOfCastleWyvern)).toBe(true);
+    });
+
+    it("allows Goliath to ready when controller has fewer than 3 cards in hand", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: goliathGuardianOfCastleWyvern, exerted: true }],
+          hand: [handFiller1],
+          deck: 10,
+        },
+        {
+          deck: 10,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().isExerted(goliathGuardianOfCastleWyvern)).toBe(true);
+
+      // Pass p1 turn — start of p1's next turn draws → hand = 2 → STONE BY DAY NOT active
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      // Goliath should have readied (only 2 cards in hand)
+      expect(testEngine.asPlayerOne().isExerted(goliathGuardianOfCastleWyvern)).toBe(false);
+    });
+  });
+});

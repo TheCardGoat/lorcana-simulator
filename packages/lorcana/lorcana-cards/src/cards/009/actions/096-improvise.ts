@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { improviseI18n } from "./096-improvise.i18n";
 
 export const improvise: ActionCard = {
   id: "9XU",
@@ -6,24 +7,6 @@ export const improvise: ActionCard = {
   reprints: ["set2-099", "set9-096"],
   cardType: "action",
   name: "Improvise",
-  i18n: {
-    en: {
-      name: "Improvise",
-      text: "Chosen character gets +1 {S} this turn. Draw a card.",
-    },
-    de: {
-      name: "Improvisieren",
-      text: "Gib einem Charakter deiner Wahl in diesem Zug +1. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Improviser",
-      text: "Choisissez un personnage, il gagne +1 pour le reste de ce tour. Piochez une carte.",
-    },
-    it: {
-      name: "Improvvisare",
-      text: "Un personaggio a tua scelta riceve +1 per questo turno. Pesca una carta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Mulan",
   set: "009",
@@ -58,4 +41,5 @@ export const improvise: ActionCard = {
       },
     },
   ],
+  i18n: improviseI18n,
 };

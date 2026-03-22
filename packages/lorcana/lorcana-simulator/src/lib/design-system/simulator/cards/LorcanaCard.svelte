@@ -1,4 +1,5 @@
 <script lang="ts">
+  import XIcon from "@lucide/svelte/icons/x";
   import type { LorcanaCardSnapshot } from "$lib/lorcana-simulator";
   import * as HoverCard from "$lib/design-system/primitives/hover-card/index.js";
   import CardBack from "@/design-system/simulator/cards/CardBack.svelte";
@@ -73,6 +74,7 @@
 
     // Unified interaction metadata for global context dispatch
     interactionMeta?: CardInteractionMeta;
+    onSelect?: (card: LorcanaCardSnapshot, event: MouseEvent) => boolean | void;
 
     // Hover card configuration
     showHoverCard?: boolean;
@@ -100,6 +102,7 @@
     tagCollapseMode = "none",
     damage: propDamage,
     interactionMeta,
+    onSelect,
     showHoverCard = true,
     hoverShowActions = false,
     hoverAvailableInk = 0,
@@ -135,6 +138,7 @@
   const shouldRenderHoverCard = $derived(
     showHoverCard && !shouldUseTouchInspect && !isChallengeTargetSelectionActive,
   );
+  let hoverCardOpen = $state(false);
 
 
   // Calculate actual display dimensions based on image format and size
@@ -167,6 +171,10 @@
       return;
     }
 
+    if (onSelect?.(card, event) === true) {
+      return;
+    }
+
     cardInteraction?.handleSelect({
       card,
       event,
@@ -185,6 +193,21 @@
   function handleCardFaceSelect(event: CustomEvent<{ event: MouseEvent }>): void {
     handleSelect(event.detail.event);
   }
+
+  function handleCardFaceContextMenu(event: CustomEvent<{ event: MouseEvent }>): void {
+    if (!card) return;
+    cardInteraction?.handleContextMenu?.({ card, event: event.detail.event, meta: resolvedInteractionMeta });
+  }
+
+  function handleHoverCardClose(): void {
+    hoverCardOpen = false;
+  }
+
+  $effect(() => {
+    if (!shouldRenderHoverCard || !card) {
+      hoverCardOpen = false;
+    }
+  });
 </script>
 
 {#if isMasked}
@@ -199,8 +222,8 @@
     isExerted={isExertedState}
     aspectRatio={ASPECT_RATIOS[imageFormat]}
   />
-{:else if shouldRenderHoverCard && card}
-  <HoverCard.Root openDelay={200}>
+{:else if card}
+  <HoverCard.Root bind:open={hoverCardOpen} openDelay={200}>
     <HoverCard.Trigger class="block">
       <CardFace
         {card}
@@ -223,40 +246,36 @@
         on:pointerenter={handleCardFacePointerEnter}
         on:pointerleave={handleCardFacePointerLeave}
         on:select={handleCardFaceSelect}
+        on:contextmenu={handleCardFaceContextMenu}
       />
     </HoverCard.Trigger>
-    <HoverCard.Content class="w-auto p-0 border-0 bg-transparent">
-      <CardHoverCardContent
-        {card}
-        actions={hoverShowActions ? hoverActions : []}
-        contextMessage={hoverContextMessage}
-        onAction={(action) => {
-          sidebar.handleCardActionClick(action);
-        }}
-      />
-    </HoverCard.Content>
+    {#if shouldRenderHoverCard}
+      <HoverCard.Content
+        class="w-fit p-0 border-0 bg-transparent"
+        onEscapeKeydown={handleHoverCardClose}
+        onInteractOutside={handleHoverCardClose}
+      >
+        <CardHoverCardContent
+          {card}
+          actions={hoverShowActions ? hoverActions : []}
+          contextMessage={hoverContextMessage}
+          onAction={(action) => {
+            sidebar.handleCardActionClick(action, { skipConfirmation: true });
+          }}
+        >
+          {#snippet headerActions()}
+            <button
+              type="button"
+              class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
+              onclick={handleHoverCardClose}
+              aria-label={`Close ${card.label} details`}
+              title="Close"
+            >
+              <XIcon class="size-4" />
+            </button>
+          {/snippet}
+        </CardHoverCardContent>
+      </HoverCard.Content>
+    {/if}
   </HoverCard.Root>
-{:else}
-  <CardFace
-    {card}
-    {displayWidth}
-    {displayHeight}
-    {useContainerSize}
-    {size}
-    {imageFormat}
-    {isSelected}
-    isExerted={isExertedState}
-    {isGhost}
-    {isPlayable}
-    {isInvalidTarget}
-    {isBanishedPreview}
-    {isQuesting}
-    isDrying={isDryingState}
-    {damage}
-    {tagCollapseMode}
-    aspectRatio={ASPECT_RATIOS[imageFormat]}
-    on:pointerenter={handleCardFacePointerEnter}
-    on:pointerleave={handleCardFacePointerLeave}
-    on:select={handleCardFaceSelect}
-  />
 {/if}

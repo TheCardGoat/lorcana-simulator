@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sirHissAggravatingAspI18n } from "./086-sir-hiss-aggravating-asp.i18n";
 
 export const sirHissAggravatingAsp: CharacterCard = {
   id: "O7w",
@@ -7,28 +8,6 @@ export const sirHissAggravatingAsp: CharacterCard = {
   cardType: "character",
   name: "Sir Hiss",
   version: "Aggravating Asp",
-  i18n: {
-    en: {
-      name: "Sir Hiss",
-      version: "Aggravating Asp",
-      text: "Evasive",
-    },
-    de: {
-      name: "Sir Hiss",
-      version: "Geifernde Giftschlange",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Triste Sire",
-      version: "Aspic envenimant",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Sir Biss",
-      version: "Aspide Esasperante",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "003",
@@ -53,4 +32,5 @@ export const sirHissAggravatingAsp: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: sirHissAggravatingAspI18n,
 };

@@ -13,15 +13,18 @@ import type { LorcanaCard } from "@tcg/lorcana-types";
 import { createLorcanaLogMessage, type LorcanaG, type LorcanaMoveDefinition } from "../../../types";
 import { normalizeTargetDescriptor, resolveCandidateTargets } from "../../../targeting/runtime";
 import { hasKeyword } from "../../../card-utils";
-import { getEffectiveLore, type DerivedStateContext } from "../../../rules/derived-state";
-import { hasStaticSelfRestriction } from "../../rules/static-ability-utils";
+import { createProjectionState, getEffectiveLore } from "../../../rules/derived-state";
+import {
+  hasStaticSelfRestriction,
+  hasStaticCardRestriction,
+} from "../../rules/static-ability-utils";
 import { hasTemporaryKeyword, hasTemporaryRestriction } from "../../effects/temporary-effects";
 import {
   EFFECT_PENDING_ERROR_CODE,
   hasPendingActionEffectResolution,
 } from "../../resolution/action-effects/pending-action-effects";
 import type { PlayCardExecutionContext } from "../../resolution/action-effects/types";
-import type { LorcanaRuntimeCardDerivedMethods } from "../../state/runtime-card-derived";
+import type { LorcanaCardDerived } from "../../../types/projected-board";
 import { validateExertCost } from "../../rules/play-card-rules";
 import {
   emitTriggeredLorcanaEvent,
@@ -49,19 +52,11 @@ function getCardDefinitionFromContext(
 }
 
 type QuestValidationReadContext = Pick<
-  MoveValidationContext<
-    LorcanaG,
-    LorcanaCard,
-    MoveInput<unknown>,
-    LorcanaRuntimeCardDerivedMethods
-  >,
+  MoveValidationContext<MoveInput>,
   "G" | "framework" | "cards"
 >;
 
-type QuestEnumerationReadContext = Pick<
-  MoveEnumerationContext<LorcanaG, LorcanaCard, LorcanaRuntimeCardDerivedMethods>,
-  "G" | "framework" | "cards"
->;
+type QuestEnumerationReadContext = Pick<MoveEnumerationContext, "G" | "framework" | "cards">;
 
 type QuestReadableContext =
   | QuestValidationReadContext
@@ -114,7 +109,7 @@ function validateQuestCard(
     return exertValidation;
   }
 
-  const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+  const currentTurn = ctx.framework.state.status.turn ?? 1;
   const hasReckless =
     (cardDef ? hasKeyword(cardDef, "Reckless") : false) ||
     hasTemporaryKeyword(questMeta, currentTurn, "Reckless");
@@ -128,7 +123,7 @@ function validateQuestCard(
   if (
     hasTemporaryRestriction(questMeta, currentTurn, "cant-quest", {
       isSourceInPlay: (sourceId) => {
-        const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[sourceId]?.zoneKey;
+        const zoneKey = ctx.framework.zones.getCardZone(sourceId);
         return typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"));
       },
     })
@@ -156,6 +151,22 @@ function validateQuestCard(
     };
   }
 
+  if (
+    hasStaticCardRestriction({
+      state: ctx.framework.state,
+      cardId,
+      restriction: "cant-quest",
+      getDefinitionByInstanceId: (instanceId) =>
+        getCardDefinitionFromContext(ctx, instanceId) as LorcanaCard | undefined,
+    })
+  ) {
+    return {
+      valid: false,
+      error: "Character cannot quest due to a static restriction from another card",
+      errorCode: "CANT_QUEST_RESTRICTED",
+    };
+  }
+
   return { valid: true };
 }
 
@@ -166,12 +177,13 @@ function executeQuestCard(ctx: PlayCardExecutionContext, cardId: CardInstanceId)
 
   const loreValue = getEffectiveLore(
     ctx.cards.getDefinition(cardId) as any,
-    ctx.framework.state as unknown as DerivedStateContext,
+    createProjectionState(ctx.framework.state, ctx.G),
     cardId,
     (id) => ctx.cards.getDefinition(id) as any,
   );
 
-  ctx.G.lore[currentPlayer as PlayerId] += loreValue;
+  const previousLore = Number(ctx.G.lore[currentPlayer as PlayerId] ?? 0);
+  ctx.G.lore[currentPlayer as PlayerId] = previousLore + loreValue;
   ctx.G.turnMetadata.charactersQuesting.push(cardId);
 
   emitTriggeredLorcanaEvent(
@@ -182,11 +194,30 @@ function executeQuestCard(ctx: PlayCardExecutionContext, cardId: CardInstanceId)
       cardId,
       loreGained: loreValue,
     },
-    {
-      event: "quest",
-      playerId: currentPlayer,
-      subjectCardId: cardId,
-    },
+    [
+      {
+        event: "quest",
+        playerId: currentPlayer,
+        subjectCardId: cardId,
+      },
+      {
+        event: "exert",
+        playerId: currentPlayer,
+        subjectCardId: cardId,
+      },
+      ...(loreValue > 0
+        ? [
+            {
+              event: "gain-lore" as const,
+              playerId: currentPlayer as PlayerId,
+              triggerSourceCardId: cardId,
+              eventSnapshot: {
+                triggerAmount: loreValue,
+              },
+            },
+          ]
+        : []),
+    ],
   );
   flushTriggeredEventsToBag(ctx);
 
@@ -257,7 +288,7 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
         if (meta?.isDrying) {
           return false;
         }
-        const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+        const currentTurn = ctx.framework.state.status.turn ?? 1;
         if (
           (cardDef ? hasKeyword(cardDef, "Reckless") : false) ||
           hasTemporaryKeyword(meta, currentTurn, "Reckless")
@@ -267,7 +298,7 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
         if (
           hasTemporaryRestriction(meta, currentTurn, "cant-quest", {
             isSourceInPlay: (sourceId) => {
-              const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[sourceId]?.zoneKey;
+              const zoneKey = ctx.framework.zones.getCardZone(sourceId);
               return (
                 typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"))
               );

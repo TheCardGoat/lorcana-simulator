@@ -1,7 +1,6 @@
 import type {
   AutomatedActionDecisionTrace,
   AutomatedActionExecutionResult,
-  AutomatedActionStrategy,
   PlayerId,
 } from "@tcg/lorcana-engine";
 
@@ -10,17 +9,11 @@ export type AutomatedMatchPlayerSide = "playerOne" | "playerTwo";
 export interface AutomatedMatchConfig {
   playerOneDeckText: string;
   playerTwoDeckText: string;
-  playerOneFixtureName?: string;
-  playerTwoFixtureName?: string;
-  strategyId: string;
+  playerOneFixtureId?: string;
+  playerTwoFixtureId?: string;
+  playerOneStrategyId: string;
+  playerTwoStrategyId: string;
   seed: string;
-}
-
-export interface AutomatedMatchStrategyOption {
-  id: string;
-  label: string;
-  description: string;
-  strategy: AutomatedActionStrategy;
 }
 
 export type AutomatedMatchPlaybackMode = "idle" | "running" | "paused" | "complete" | "error";

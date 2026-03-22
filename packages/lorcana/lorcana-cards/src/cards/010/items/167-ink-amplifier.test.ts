@@ -1,117 +1,70 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { friendsOnTheOtherSide } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import { inkAmplifier } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Ink Amplifier", () => {
-//   It("ENERGY CAPTURE - Triggers when opponent draws their second card during their turn", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Deck: 5,
-//         Hand: [friendsOnTheOtherSide],
-//         Inkwell: friendsOnTheOtherSide.cost,
-//       },
-//       {
-//         Play: [inkAmplifier],
-//         Deck: 5,
-//       },
-//     );
-//
-//     Const initialInkwellSize =
-//       TestStore.store.tableStore.getPlayerZone("player_two", "inkwell")?.cards
-//         .length || 0;
-//
-//     // Play Friends on the Other Side which draws 2 cards for the player
-//     // First draw = beginning of turn (not trigger)
-//     // Second draw from the song effect should trigger Ink Amplifier
-//     Const songCard = testStore.getByZoneAndId("hand", friendsOnTheOtherSide.id);
-//     SongCard.playFromHand();
-//
-//     // Change to player_two (who owns Ink Amplifier) so they can resolve their optional ability
-//     TestStore.changePlayer("player_two");
-//
-//     // Player two should be prompted to use optional ability
-//     Expect(testStore.stackLayers.length).toBeGreaterThan(0);
-//
-//     TestStore.resolveOptionalAbility();
-//
-//     // Verify: Top card of player two's deck moved to inkwell
-//     Const newInkwellSize =
-//       TestStore.store.tableStore.getPlayerZone("player_two", "inkwell")?.cards
-//         .length || 0;
-//     Expect(newInkwellSize).toBe(initialInkwellSize + 1);
-//
-//     // Verify: The inkwell card is exerted (ready = false)
-//     Const inkwellCardModels = testStore.getZonesCards("player_two").inkwell;
-//     Const topInkwellCard = inkwellCardModels[inkwellCardModels.length - 1];
-//     Expect(topInkwellCard).toBeDefined();
-//     Expect(topInkwellCard?.ready).toBe(false);
-//   });
-//
-//   It("ENERGY CAPTURE - Does NOT trigger when opponent draws their first card", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Deck: 5,
-//       },
-//       {
-//         Play: [inkAmplifier],
-//         Deck: 5,
-//       },
-//     );
-//
-//     Const initialInkwellSize =
-//       TestStore.store.tableStore.getPlayerZone("player_two", "inkwell")?.cards
-//         .length || 0;
-//
-//     // Beginning of turn draw - first card drawn
-//     // This should NOT trigger Ink Amplifier
-//     TestStore.passTurn();
-//
-//     // Should NOT have any triggers on the stack
-//     Expect(testStore.stackLayers.length).toBe(0);
-//
-//     // Inkwell size should remain unchanged
-//     Const newInkwellSize =
-//       TestStore.store.tableStore.getPlayerZone("player_two", "inkwell")?.cards
-//         .length || 0;
-//     Expect(newInkwellSize).toBe(initialInkwellSize);
-//   });
-//
-//   It("ENERGY CAPTURE - Does NOT trigger during your own turn", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Play: [inkAmplifier],
-//         Deck: 5,
-//         Hand: [friendsOnTheOtherSide],
-//         Inkwell: friendsOnTheOtherSide.cost,
-//       },
-//       {
-//         Deck: 5,
-//       },
-//     );
-//
-//     Const initialInkwellSize =
-//       TestStore.store.tableStore.getPlayerZone("player_one", "inkwell")?.cards
-//         .length || 0;
-//
-//     // Player one (who owns Ink Amplifier) plays Friends on the Other Side
-//     // which draws 2 cards during their own turn
-//     Const songCard = testStore.getByZoneAndId("hand", friendsOnTheOtherSide.id);
-//     SongCard.playFromHand();
-//
-//     // Should NOT trigger (only triggers during opponent's turn)
-//     Expect(testStore.stackLayers.length).toBe(0);
-//
-//     // Inkwell size should remain unchanged
-//     Const newInkwellSize =
-//       TestStore.store.tableStore.getPlayerZone("player_one", "inkwell")?.cards
-//         .length || 0;
-//     Expect(newInkwellSize).toBe(initialInkwellSize);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { friendsOnTheOtherSide } from "../../001/actions/064-friends-on-the-other-side";
+import { inkAmplifier } from "./167-ink-amplifier";
+
+describe("Ink Amplifier", () => {
+  it("ENERGY CAPTURE - triggers when an opponent draws their second card during their turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [inkAmplifier],
+        deck: 3,
+      },
+      {
+        hand: [friendsOnTheOtherSide],
+        inkwell: friendsOnTheOtherSide.cost,
+        deck: 5,
+      },
+    );
+
+    const inkwellBefore = testEngine.asPlayerOne().getZonesCardCount().inkwell;
+
+    // P1 passes to let P2 take their turn
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    // P2's turn: mandatory draw (1st draw of turn), then plays Friends on the Other Side
+    // Friends draws 2 cards; the first drawn card is the 2nd of the turn → triggers Ink Amplifier
+    expect(testEngine.asPlayerTwo().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
+
+    // P1 should have a bag effect from Ink Amplifier
+    expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getZonesCardCount().inkwell).toBe(inkwellBefore + 1);
+  });
+
+  it("ENERGY CAPTURE - does NOT trigger on the opponent's first draw (mandatory turn draw)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [inkAmplifier],
+        deck: 3,
+      },
+      {
+        deck: 5,
+      },
+    );
+
+    // P1 passes to let P2 take their turn (mandatory draw only — no card played)
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    // P2 draws their mandatory card (1st draw) — should NOT trigger Ink Amplifier
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+  });
+
+  it("ENERGY CAPTURE - does NOT trigger when the controller draws their own cards", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [inkAmplifier],
+      hand: [friendsOnTheOtherSide],
+      inkwell: friendsOnTheOtherSide.cost,
+      deck: 5,
+    });
+
+    // P1 plays Friends on the Other Side on their own turn — draws 2 cards
+    expect(testEngine.asPlayerOne().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
+
+    // Ink Amplifier only triggers for opponent draws, not controller's own draws
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+  });
+});

@@ -1,10 +1,14 @@
 <script lang="ts">
+    import ChevronLeftIcon from "@lucide/svelte/icons/chevron-left";
+    import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
+    import ChevronUpIcon from "@lucide/svelte/icons/chevron-up";
+    import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
     import type {
         LorcanaCardSnapshot,
         LorcanaPlayerSide,
         LorcanaTableSeat
     } from "@/features/simulator/model/contracts.js";
-  import { m } from "$lib/paraglide/messages.js";
+  import { m } from "$lib/i18n/messages.js";
     import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
     import {createCardAnchorId, createZoneAnchorId} from "@/features/simulator/animations/board-move-animations.js";
     import {
@@ -13,7 +17,8 @@
     } from "@/features/simulator/context/game-context.svelte.js";
     import {
         useLorcanaSimulatorDndContext,
-        createOptionalDraggable
+        createOptionalDraggable,
+        createOptionalDroppable,
     } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
     import type {SimulatorLayoutMode} from "@/features/simulator/model/layout-mode.svelte.js";
 
@@ -22,6 +27,8 @@
     playerSide: LorcanaPlayerSide;
     seat: LorcanaTableSeat;
     isOpponent: boolean;
+    isTucked?: boolean;
+    onToggleTucked?: (() => void) | undefined;
   }
 
   let {
@@ -29,6 +36,8 @@
     playerSide,
     seat,
     isOpponent,
+    isTucked = false,
+    onToggleTucked,
   }: HandZoneProps = $props();
 
   const board = useLorcanaBoardPresenter();
@@ -40,6 +49,27 @@
   const ownerId = $derived(board.getOwnerIdForSide(playerSide));
   const selectedCardIds = $derived(board.selectedCardIds);
   const playableCardIds = $derived(board.playableHandCardIds);
+  const droppable = createOptionalDroppable({
+    zone: "hand",
+    get player() {
+      return playerSide;
+    },
+    get disabled() {
+      return isOpponent;
+    },
+  });
+  const dropState = $derived(dnd.getZoneDropState("hand", playerSide));
+  const showReturnToHandTarget = $derived(!isOpponent && dnd.isDraggingHandCard);
+  let handContainerEl = $state<HTMLDivElement | null>(null);
+  let hiddenCardsToLeft = $state(0);
+  let hiddenCardsToRight = $state(0);
+  const showMobileHandControls = $derived(layoutMode === "mobile" && !isOpponent && cards.length > 0);
+  const showDesktopTuckControl = $derived(
+    layoutMode === "desktop" && typeof onToggleTucked === "function",
+  );
+  const tuckControlLabel = $derived(
+    isTucked ? m["sim.hand.show"]({}) : m["sim.hand.hide"]({}),
+  );
 
   function getFanRotation(index: number, total: number): number {
     if (layoutMode === "mobile") {
@@ -70,19 +100,161 @@
     cards.length === 0 ? Math.min(effectiveTotal, MAX_VISIBLE_HIDDEN_CARDS) : 0,
   );
   const hiddenOverflowCount = $derived(Math.max(0, effectiveTotal - hiddenPlaceholderCount));
+
+  function getScrollableHandCards(): HTMLElement[] {
+    if (!handContainerEl) {
+      return [];
+    }
+
+    return Array.from(handContainerEl.querySelectorAll<HTMLElement>(".hand-card"));
+  }
+
+  function updateHiddenCardsToRight(): void {
+    if (layoutMode !== "mobile" || !handContainerEl) {
+      hiddenCardsToLeft = 0;
+      hiddenCardsToRight = 0;
+      return;
+    }
+
+    const viewportLeft = handContainerEl.scrollLeft;
+    const viewportRight = viewportLeft + handContainerEl.clientWidth;
+    const tolerance = 8;
+    const handCards = getScrollableHandCards();
+
+    hiddenCardsToLeft = handCards.filter((cardEl) => {
+      const cardLeft = cardEl.offsetLeft;
+      return cardLeft + tolerance < viewportLeft;
+    }).length;
+    hiddenCardsToRight = handCards.filter((cardEl) => {
+      const cardRight = cardEl.offsetLeft + cardEl.offsetWidth;
+      return cardRight - tolerance > viewportRight;
+    }).length;
+  }
+
+  function getHorizontalScrollStep(): number {
+    if (!handContainerEl) {
+      return 0;
+    }
+
+    const handCards = getScrollableHandCards();
+    const firstCard = handCards[0];
+    if (!firstCard) {
+      return handContainerEl.clientWidth * 0.8;
+    }
+
+    const secondCard = handCards[1];
+    if (secondCard) {
+      return Math.max(secondCard.offsetLeft - firstCard.offsetLeft, firstCard.offsetWidth);
+    }
+
+    return firstCard.offsetWidth;
+  }
+
+  function scrollHand(direction: "left" | "right"): void {
+    if (!handContainerEl) {
+      return;
+    }
+
+    const step = getHorizontalScrollStep();
+    if (step <= 0) {
+      return;
+    }
+
+    handContainerEl.scrollBy({
+      left: direction === "left" ? -step : step,
+      behavior: "smooth",
+    });
+  }
+
+  function handleToggleTucked(): void {
+    onToggleTucked?.();
+  }
+
+  $effect(() => {
+    if (layoutMode !== "mobile" || !handContainerEl) {
+      hiddenCardsToLeft = 0;
+      hiddenCardsToRight = 0;
+      return;
+    }
+
+    cards.length;
+    hiddenPlaceholderCount;
+
+    const container = handContainerEl;
+    const resizeObserver =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateHiddenCardsToRight);
+    const cardElements = Array.from(container.querySelectorAll<HTMLElement>(".hand-card"));
+
+    updateHiddenCardsToRight();
+    container.addEventListener("scroll", updateHiddenCardsToRight, { passive: true });
+    resizeObserver?.observe(container);
+
+    for (const cardEl of cardElements) {
+      resizeObserver?.observe(cardEl);
+    }
+
+    return () => {
+      container.removeEventListener("scroll", updateHiddenCardsToRight);
+      resizeObserver?.disconnect();
+    };
+  });
 </script>
 
 <div
   class="hand-zone"
   class:hand-zone--player-two={playerSide === "playerTwo"}
+  class:hand-zone--return-target-visible={showReturnToHandTarget}
+  class:hand-zone--drop-hover={dropState === "valid"}
+  class:hand-zone--tucked={isTucked}
   data-layout-mode={layoutMode}
   data-player-seat={seat}
+  data-player-side={playerSide}
   data-zone-id="hand"
   data-testid={`hand-zone-${playerSide}`}
 >
+  {#if showDesktopTuckControl}
+    <button
+      type="button"
+      class="hand-tuck-toggle"
+      class:hand-tuck-toggle--player-two={playerSide === "playerTwo"}
+      aria-label={tuckControlLabel}
+      aria-pressed={isTucked}
+      data-testid={`hand-tuck-toggle-${playerSide}`}
+      onclick={handleToggleTucked}
+    >
+      <span class="hand-tuck-toggle__label">{tuckControlLabel}</span>
+      {#if playerSide === "playerTwo"}
+        {#if isTucked}
+          <ChevronUpIcon class="size-4" />
+        {:else}
+          <ChevronDownIcon class="size-4" />
+        {/if}
+      {:else if isTucked}
+        <ChevronDownIcon class="size-4" />
+      {:else}
+        <ChevronUpIcon class="size-4" />
+      {/if}
+    </button>
+  {/if}
+
+  {#if showReturnToHandTarget}
+    <div
+      class="hand-return-target"
+      class:hand-return-target--hover={dropState === "valid"}
+      data-player-side={playerSide}
+      data-zone-id="hand"
+      aria-hidden="true"
+      {@attach droppable.attach}
+    >
+      <span class="hand-return-target__label">{m["sim.hand.returnToHand"]({})}</span>
+    </div>
+  {/if}
+
   <div
     class="hand-container"
+    bind:this={handContainerEl}
     data-board-anchor-id={createZoneAnchorId(playerSide, "hand")}
+    data-board-scroll-sync={layoutMode === "mobile" ? "true" : undefined}
   >
     {#if cards.length > 0}
       {#each cards as card, index (card.cardId)}
@@ -152,6 +324,34 @@
       </div>
     {/if}
   </div>
+
+  {#if showMobileHandControls}
+    <button
+      type="button"
+      class="mobile-hand-scroll-button mobile-hand-scroll-button--left"
+      aria-label={m["sim.hand.scrollLeft"]({})}
+      disabled={hiddenCardsToLeft === 0}
+      onclick={() => {
+        scrollHand("left");
+      }}
+    >
+      <ChevronLeftIcon class="size-4" />
+    </button>
+  {/if}
+
+  {#if showMobileHandControls}
+    <button
+      type="button"
+      class="mobile-hand-scroll-button mobile-hand-scroll-button--right"
+      aria-label={m["sim.hand.scrollRight"]({})}
+      disabled={hiddenCardsToRight === 0}
+      onclick={() => {
+        scrollHand("right");
+      }}
+    >
+      <ChevronRightIcon class="size-4" />
+    </button>
+  {/if}
 </div>
 
 <style>
@@ -166,12 +366,140 @@
     --hover-translate-y: -10px;
 
     display: flex;
+    position: relative;
     width: min(100%, 100%);
     flex-direction: column;
     align-items: center;
     gap: 0.25rem;
     padding: 0.1rem 0.35rem;
     pointer-events: none;
+  }
+
+  .hand-tuck-toggle {
+    position: absolute;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    z-index: 130;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    gap: 0.35rem;
+    width: max-content;
+    min-width: max-content;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    padding: 0.36rem 0.82rem;
+    border: 1px solid rgba(147, 197, 253, 0.48);
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, rgba(18, 32, 57, 0.98), rgba(8, 18, 31, 0.96)),
+      rgba(7, 18, 31, 0.96);
+    box-shadow:
+      0 10px 24px rgba(7, 18, 31, 0.42),
+      0 0 0 1px rgba(191, 219, 254, 0.12) inset;
+    color: rgba(241, 245, 249, 0.99);
+    line-height: 1;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    pointer-events: auto;
+    opacity: 0.92;
+    transition:
+      transform 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      background 160ms ease;
+  }
+
+  .hand-tuck-toggle__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .hand-tuck-toggle--player-two {
+    top: 0;
+    transform: translate(-50%, -35%);
+  }
+
+  .hand-zone:not(.hand-zone--player-two) .hand-tuck-toggle {
+    bottom: 0;
+    transform: translate(-50%, 35%);
+  }
+
+  .hand-zone--tucked .hand-tuck-toggle {
+    opacity: 1;
+    border-color: rgba(191, 219, 254, 0.72);
+    box-shadow:
+      0 12px 26px rgba(7, 18, 31, 0.48),
+      0 0 0 1px rgba(219, 234, 254, 0.22) inset;
+  }
+
+  .hand-zone--drop-hover {
+    transition: outline 180ms ease, background 180ms ease;
+  }
+
+  .hand-return-target {
+    position: absolute;
+    top: -0.55rem;
+    bottom: -0.2rem;
+    left: 50%;
+    width: clamp(10rem, 25vw, 18rem);
+    transform: translateX(-50%);
+    border: 2px dashed rgba(124, 176, 255, 0.5);
+    border-radius: 18px;
+    background:
+      linear-gradient(180deg, rgba(73, 114, 171, 0.2), rgba(34, 56, 92, 0.08)),
+      rgba(11, 24, 39, 0.18);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+      0 10px 28px rgba(7, 18, 31, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    z-index: 120;
+    transition:
+      border-color 180ms ease,
+      background 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
+  }
+
+  .hand-zone--player-two .hand-return-target {
+    top: -0.2rem;
+    bottom: -0.55rem;
+  }
+
+  .hand-return-target--hover {
+    border-color: rgba(147, 197, 253, 0.92);
+    background:
+      linear-gradient(180deg, rgba(96, 165, 250, 0.24), rgba(30, 64, 175, 0.12)),
+      rgba(15, 23, 42, 0.24);
+    box-shadow:
+      0 0 0 1px rgba(191, 219, 254, 0.12) inset,
+      0 0 22px rgba(96, 165, 250, 0.22);
+    transform: translateX(-50%) scale(1.01);
+  }
+
+  .hand-return-target__label {
+    pointer-events: none;
+    color: rgba(226, 232, 240, 0.88);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(147, 197, 253, 0.18);
+    position: relative;
+    z-index: 121;
   }
 
   .hand-container {
@@ -182,6 +510,7 @@
     min-height: var(--hand-container-height);
     position: relative;
     pointer-events: none;
+    z-index: 2;
   }
 
   .hand-zone--player-two .hand-container {
@@ -280,6 +609,8 @@
     gap: 0.45rem;
     overflow-x: auto;
     overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
     padding: 0.3rem 0.4rem 0.2rem;
     scrollbar-width: none;
     scroll-snap-type: x proximity;
@@ -295,8 +626,8 @@
     transform: none;
     transform-origin: center center;
     scroll-snap-align: center;
-    /* Let dnd-kit claim touch gestures on cards instead of the scroll container. */
-    touch-action: none;
+    /* Preserve horizontal swipe-to-scroll while still allowing vertical drag gestures. */
+    touch-action: pan-x pinch-zoom;
   }
 
   .hand-zone[data-layout-mode="mobile"] .hand-card--selected {
@@ -318,12 +649,94 @@
     margin-left: 0;
   }
 
+  .mobile-hand-scroll-button {
+    display: none;
+  }
+
   .hand-zone[data-layout-mode="mobile"] .empty-hand {
     min-height: 4.5rem;
     width: 100%;
   }
 
+  .hand-zone[data-layout-mode="mobile"] .hand-return-target {
+    top: -0.3rem;
+    bottom: -0.45rem;
+    width: clamp(8.5rem, 42vw, 13rem);
+    border-radius: 14px;
+  }
+
+  .hand-zone--player-two[data-layout-mode="mobile"] .hand-return-target {
+    top: -0.1rem;
+    bottom: -0.45rem;
+  }
+
+  .hand-zone[data-layout-mode="mobile"] .hand-return-target__label {
+    font-size: 0.62rem;
+    letter-spacing: 0.05em;
+  }
+
+  .hand-zone[data-layout-mode="mobile"] .mobile-hand-scroll-button {
+    position: absolute;
+    top: 50%;
+    z-index: 7;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 3.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(124, 176, 255, 0.25);
+    background:
+      linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(8, 12, 18, 0.94)),
+      rgba(7, 18, 31, 0.9);
+    box-shadow: 0 8px 18px rgba(7, 18, 31, 0.28);
+    color: rgba(226, 232, 240, 0.98);
+    transform: translateY(-50%);
+    pointer-events: auto;
+    touch-action: manipulation;
+  }
+
+  .hand-zone[data-layout-mode="mobile"] .mobile-hand-scroll-button--left {
+    left: -0.05rem;
+  }
+
+  .hand-zone[data-layout-mode="mobile"] .mobile-hand-scroll-button--right {
+    right: -0.05rem;
+  }
+
+  .hand-zone[data-layout-mode="mobile"] .hand-tuck-toggle {
+    display: none;
+  }
+
+  .hand-zone[data-layout-mode="mobile"] .mobile-hand-scroll-button:disabled {
+    opacity: 0.35;
+    box-shadow: none;
+  }
+
   @media (hover: hover) and (pointer: fine) {
+    .hand-zone--player-two:hover .hand-tuck-toggle,
+    .hand-zone--player-two .hand-tuck-toggle:hover,
+    .hand-zone--player-two .hand-tuck-toggle:focus-visible {
+      transform: translate(-50%, -42%);
+    }
+
+    .hand-zone:not(.hand-zone--player-two):hover .hand-tuck-toggle,
+    .hand-zone:not(.hand-zone--player-two) .hand-tuck-toggle:hover,
+    .hand-zone:not(.hand-zone--player-two) .hand-tuck-toggle:focus-visible {
+      transform: translate(-50%, 42%);
+    }
+
+    .hand-tuck-toggle:hover,
+    .hand-tuck-toggle:focus-visible {
+      border-color: rgba(147, 197, 253, 0.58);
+      box-shadow:
+        0 12px 26px rgba(7, 18, 31, 0.36),
+        0 0 0 1px rgba(191, 219, 254, 0.12) inset;
+      background:
+        linear-gradient(180deg, rgba(22, 33, 58, 0.96), rgba(8, 18, 31, 0.94)),
+        rgba(7, 18, 31, 0.94);
+    }
+
     .hand-card:hover {
       transform: rotate(0deg) scale(var(--hover-scale)) translateY(var(--hover-translate-y));
       z-index: 100;
@@ -346,19 +759,6 @@
     }
   }
 
-  .hand-zone[data-layout-mode="tablet"] {
-    --zone-card-width: 92px;
-    --hand-container-height: calc(var(--zone-card-height) + 0.5rem);
-    --hand-card-overlap: -0.78rem;
-    --hand-card-overlap-hover: 0.08rem;
-    --hover-scale: 1.04;
-    --hover-translate-y: -6px;
-  }
-
-  .hand-zone--player-two[data-layout-mode="tablet"] {
-    --zone-card-width: 84px;
-  }
-
   .hand-zone[data-layout-mode="mobile"] {
     --zone-card-width: 76px;
     --hand-container-height: calc(var(--zone-card-height) + 0.4rem);
@@ -375,7 +775,7 @@
     justify-content: flex-start;
     overflow-x: auto;
     overflow-y: visible;
-    padding: 0 0.55rem;
+    padding: 0 0.7rem;
     scrollbar-width: none;
   }
 

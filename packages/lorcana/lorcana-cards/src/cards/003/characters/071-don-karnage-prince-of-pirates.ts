@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donKarnagePrinceOfPiratesI18n } from "./071-don-karnage-prince-of-pirates.i18n";
 
 export const donKarnagePrinceOfPirates: CharacterCard = {
   id: "0La",
@@ -7,28 +8,6 @@ export const donKarnagePrinceOfPirates: CharacterCard = {
   cardType: "character",
   name: "Don Karnage",
   version: "Prince of Pirates",
-  i18n: {
-    en: {
-      name: "Don Karnage",
-      version: "Prince of Pirates",
-      text: "Evasive",
-    },
-    de: {
-      name: "Don Kanaille",
-      version: "Piratenprinz",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Don Carnage",
-      version: "Prince des pirates",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Don Massacre",
-      version: "Principe dei Pirati",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Talespin",
   set: "003",
@@ -53,4 +32,5 @@ export const donKarnagePrinceOfPirates: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: donKarnagePrinceOfPiratesI18n,
 };

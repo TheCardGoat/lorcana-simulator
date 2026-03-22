@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { getOutI18n } from "./148-get-out.i18n";
 
 export const getOut: ActionCard = {
   id: "FWW",
@@ -6,24 +7,6 @@ export const getOut: ActionCard = {
   reprints: ["set8-148"],
   cardType: "action",
   name: "Get Out!",
-  i18n: {
-    en: {
-      name: "Get Out!",
-      text: "Banish chosen character, then return an item card from your discard to your hand.",
-    },
-    de: {
-      name: "Verschwinde hier!",
-      text: "Verbanne einen Charakter deiner Wahl. Nimm 1 Gegenstandskarte aus deinem Ablagestapel zurück auf deine Hand.",
-    },
-    fr: {
-      name: "Allez-vous-en !",
-      text: "Choisissez un personnage et bannissez-le, puis renvoyez dans votre main une carte Objet de votre défausse.",
-    },
-    it: {
-      name: "Vattene!",
-      text: "Esilia un personaggio a tua scelta, poi riprendi in mano una carta oggetto dai tuoi scarti.",
-    },
-  },
   inkType: ["ruby", "sapphire"],
   franchise: "Beauty and the Beast",
   set: "008",
@@ -68,4 +51,5 @@ export const getOut: ActionCard = {
       type: "action",
     },
   ],
+  i18n: getOutI18n,
 };

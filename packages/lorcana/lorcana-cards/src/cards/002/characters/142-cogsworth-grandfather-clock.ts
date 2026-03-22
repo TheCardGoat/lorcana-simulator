@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cogsworthGrandfatherClockI18n } from "./142-cogsworth-grandfather-clock.i18n";
 
 export const cogsworthGrandfatherClock: CharacterCard = {
   id: "oib",
@@ -7,45 +8,6 @@ export const cogsworthGrandfatherClock: CharacterCard = {
   cardType: "character",
   name: "Cogsworth",
   version: "Grandfather Clock",
-  i18n: {
-    en: {
-      name: "Cogsworth",
-      version: "Grandfather Clock",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "Ward",
-        },
-        {
-          title: "UNWIND",
-          description: "Your other characters gain Resist +1",
-        },
-      ],
-    },
-    de: {
-      name: "Von Unruh",
-      version: "Standuhr",
-      text: "Gestaltwandel 3 Behütet ENTSCHLEUNIGEN Deine anderen Charaktere erhalten Robust +1 (Reduziere jeglichen Schaden, der ihnen zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "Big Ben",
-      version: "Grand-père Horloge",
-      text: "Alter 3 Hors d'atteinte REPOSÉ Vos autres personnages gagnent Résistance +1.",
-    },
-    it: {
-      name: "Cogsworth",
-      version: "Grandfather Clock",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Cogsworth.) Ward (Opponents can't choose this character except to challenge.) UNWIND Your other characters gain Resist +1 (Damage dealt to them is reduced by 1.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -73,7 +35,6 @@ export const cogsworthGrandfatherClock: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -93,7 +54,14 @@ export const cogsworthGrandfatherClock: CharacterCard = {
     {
       effect: {
         keyword: "Resist",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+        },
         type: "gain-keyword",
         value: 1,
       },
@@ -103,4 +71,5 @@ export const cogsworthGrandfatherClock: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: cogsworthGrandfatherClockI18n,
 };

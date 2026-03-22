@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { billTheLizardChimneySweepI18n } from "./090-bill-the-lizard-chimney-sweep.i18n";
 
 export const billTheLizardChimneySweep: CharacterCard = {
   id: "7bC",
@@ -7,51 +8,6 @@ export const billTheLizardChimneySweep: CharacterCard = {
   cardType: "character",
   name: "Bill the Lizard",
   version: "Chimney Sweep",
-  i18n: {
-    en: {
-      name: "Bill the Lizard",
-      version: "Chimney Sweep",
-      text: [
-        {
-          title: "NOTHING TO IT",
-          description: "While another character in play has damage, this character gains Evasive.",
-        },
-      ],
-    },
-    de: {
-      name: "Bill, die Eidechse",
-      version: "Schornsteinfeger",
-      text: [
-        {
-          title: "DAS SCHAFFST DU DOCH",
-          description:
-            "Solange mindestens ein anderer Charakter im Spiel beschädigt ist, erhält dieser Charakter Wendig.",
-        },
-      ],
-    },
-    fr: {
-      name: "Bill le Lézard",
-      version: "Ramoneur",
-      text: [
-        {
-          title: "C'EST TRÈS FACILE À FAIRE",
-          description:
-            "Tant qu'un autre personnage en jeu a au moins un dommage sur lui, ce personnage-ci gagne Insaisissable.",
-        },
-      ],
-    },
-    it: {
-      name: "Biagio Lucertola",
-      version: "Spazzacamino",
-      text: [
-        {
-          title: "ROBA DA RAGAZZI",
-          description:
-            "Mentre un altro personaggio in gioco ha danno, questo personaggio ottiene Sfuggente. (Solo altri personaggi con Sfuggente possono sfidarlo.)",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Alice in Wonderland",
   set: "008",
@@ -75,14 +31,36 @@ export const billTheLizardChimneySweep: CharacterCard = {
   classifications: ["Storyborn"],
   abilities: [
     {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+          filter: [
+            {
+              type: "status",
+              status: "damaged",
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
         keyword: "Evasive",
         target: "SELF",
         type: "gain-keyword",
       },
       id: "tc2-1",
+      name: "NOTHING TO IT",
       text: "NOTHING TO IT While another character in play has damage, this character gains Evasive.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: billTheLizardChimneySweepI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { simbaSonOfMufasaI18n } from "./192-simba-son-of-mufasa.i18n";
 
 export const simbaSonOfMufasa: CharacterCard = {
   id: "746",
@@ -7,36 +8,6 @@ export const simbaSonOfMufasa: CharacterCard = {
   cardType: "character",
   name: "Simba",
   version: "Son of Mufasa",
-  i18n: {
-    en: {
-      name: "Simba",
-      version: "Son of Mufasa",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "FEARSOME ROAR",
-          description: "When you play this character, you may banish chosen item or location.",
-        },
-      ],
-    },
-    de: {
-      name: "Simba",
-      version: "Sohn von Mufasa",
-      text: "Gestaltwandel 4 FURCHTERREGENDES GEBRÜLL Wenn du diesen Charakter ausspielst, darfst du einen Gegenstand oder Ort deiner Wahl verbannen.",
-    },
-    fr: {
-      name: "Simba",
-      version: "Fils de Mufasa",
-      text: "Alter 4 RUGISSEMENT IMPRESSIONNANT Lorsque vous jouez ce personnage, vous pouvez choisir un objet ou un lieu et le bannir.",
-    },
-    it: {
-      name: "Simba",
-      version: "Figlio di Mufasa",
-      text: "Trasformazione 4 RUGGITO SPAVENTOSO Quando giochi questo personaggio, puoi esiliare un oggetto o un luogo a tua scelta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Lion King",
   set: "005",
@@ -75,13 +46,7 @@ export const simbaSonOfMufasa: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["item"],
-          },
+          target: "CHOSEN_ITEM_OR_LOCATION",
           type: "banish",
         },
         type: "optional",
@@ -97,4 +62,5 @@ export const simbaSonOfMufasa: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: simbaSonOfMufasaI18n,
 };

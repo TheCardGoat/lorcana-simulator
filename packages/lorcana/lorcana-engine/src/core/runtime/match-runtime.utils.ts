@@ -8,16 +8,12 @@ import type { Draft } from "immer";
 import type { GameEvent, MatchState, MoveInput } from "./types";
 import type {
   MatchRuntimeConfig,
-  CardRuntimeAPI,
   DeepReadonly,
   FrameworkStateSnapshot,
-  FrameworkReadAPI,
-  FrameworkWriteAPI,
   RuntimeLifecycleContext,
   MoveInputView,
   MoveValidationContext,
   MoveExecutionContext,
-  MoveDefinition,
   QueryAPI,
   GameEndResult,
   ProjectedLogEntry,
@@ -34,20 +30,23 @@ import {
   createFrameworkReadAPI,
   createFrameworkWriteAPI,
 } from "./match-runtime.framework-api";
-import type { BaseCardDefinition, BaseCardMeta } from "./card-contracts";
+import type { LorcanaG } from "../../types/runtime-state";
 
 // =============================================================================
 // Context Builders
 // =============================================================================
 
-function createFrameworkStateSnapshot<G>(
-  state: MatchState<G> | Draft<MatchState<G>>,
+function createFrameworkStateSnapshot(
+  state: MatchState | Draft<MatchState>,
   gameEnded: boolean,
 ): FrameworkStateSnapshot {
   const ctx = state.ctx;
 
   return {
-    ctx: ctx,
+    priority: ctx.priority,
+    status: ctx.status,
+    _zonesPrivate: ctx.zones.private,
+    _zonesPublic: ctx.zones.public,
     playerIds: ctx.playerIds,
     turn: ctx.status.turn,
     phase: ctx.status.phase,
@@ -76,19 +75,13 @@ const EMPTY_QUERY_API: QueryAPI = {
   explainIllegal: () => undefined,
 };
 
-function createReadContextBase<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object = {},
-  TStateView = unknown,
->(
-  state: MatchState<G>,
+function createReadContextBase(
+  state: MatchState,
   playerId: string,
-  config: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived, TStateView>,
-  staticResources: MatchStaticResources<TCardDefinition>,
+  config: MatchRuntimeConfig,
+  staticResources: MatchStaticResources,
   effectiveGameEnded: boolean,
-): Omit<MoveValidationContext<G, TCardDefinition, MoveInput, TCardDerived>, keyof MoveInputView> {
+): Omit<MoveValidationContext<MoveInput>, keyof MoveInputView> {
   const cardsApi = createCardQueryAPIForState(
     state,
     staticResources,
@@ -98,15 +91,10 @@ function createReadContextBase<
   const frameworkState = createFrameworkStateSnapshot(state, effectiveGameEnded);
   const zones = createZoneQueryAPI(state, cardsApi);
   const time = createTimeQueryAPI(state);
-  const framework = createFrameworkReadAPI(
-    frameworkState,
-    zones,
-    time,
-    cardsApi,
-  ) as FrameworkReadAPI<TCardDefinition, BaseCardMeta, TCardDerived>;
+  const framework = createFrameworkReadAPI(frameworkState, zones, time, cardsApi);
 
   return {
-    G: state.G as DeepReadonly<G>,
+    G: state.G as DeepReadonly<LorcanaG>,
     playerId: playerId as PlayerId,
     query: EMPTY_QUERY_API,
     cards: cardsApi,
@@ -115,33 +103,23 @@ function createReadContextBase<
   };
 }
 
-function createWriteContextBase<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object = {},
-  TStateView = unknown,
->(
-  draft: Draft<MatchState<G>>,
+function createWriteContextBase(
+  draft: Draft<MatchState>,
   playerId: string | undefined,
-  config: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived, TStateView>,
-  staticResources: MatchStaticResources<TCardDefinition>,
+  config: MatchRuntimeConfig,
+  staticResources: MatchStaticResources,
   effectiveGameEnded: boolean,
   emitGameEvent: (event: GameEvent) => void,
   gameEndTracker: { ended: boolean; result?: GameEndResult },
   moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
-): RuntimeLifecycleContext<G, TCardDefinition, TCardDerived> {
+): RuntimeLifecycleContext {
   const cardsApi = createCardQueryAPIForState(
     draft,
     staticResources,
     config.deriveRuntimeCard,
     playerId,
   );
-  const cardRuntimeApi = createCardRuntimeAPI(draft, cardsApi) as CardRuntimeAPI<
-    TCardDefinition,
-    BaseCardMeta,
-    TCardDerived
-  >;
+  const cardRuntimeApi = createCardRuntimeAPI(draft, cardsApi);
   const random = createRandomAPIForDraft(draft);
   const zones = createZoneOperations(draft, emitGameEvent, {
     cardQuery: cardsApi,
@@ -159,7 +137,7 @@ function createWriteContextBase<
     events,
     cardRuntimeApi,
     moveLogSink,
-  ) as FrameworkWriteAPI<TCardDefinition, BaseCardMeta, TCardDerived>;
+  );
 
   return {
     G: draft.G,
@@ -170,22 +148,15 @@ function createWriteContextBase<
   };
 }
 
-export function buildValidationContext<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition,
-  TInput extends MoveInput,
-  TCardDerived extends object = {},
-  TStateView = unknown,
->(
-  state: MatchState<G>,
+export function buildValidationContext<TInput extends MoveInput = MoveInput>(
+  state: MatchState,
   playerId: string,
   input: TInput,
-  config: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived, TStateView>,
-  staticResources: MatchStaticResources<TCardDefinition>,
+  config: MatchRuntimeConfig,
+  staticResources: MatchStaticResources,
   gameEnded: boolean,
   validationMode: "preflight" | "final" = "final",
-): MoveValidationContext<G, TCardDefinition, TInput, TCardDerived> {
+): MoveValidationContext<TInput> {
   const base = createReadContextBase(state, playerId, config, staticResources, gameEnded);
   return {
     ...base,
@@ -194,24 +165,17 @@ export function buildValidationContext<
   };
 }
 
-export function buildExecutionContext<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition,
-  TInput extends MoveInput,
-  TCardDerived extends object = {},
-  TStateView = unknown,
->(
-  draft: Draft<MatchState<G>>,
+export function buildExecutionContext<TInput extends MoveInput = MoveInput>(
+  draft: Draft<MatchState>,
   playerId: string,
   input: TInput,
-  config: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived, TStateView>,
-  staticResources: MatchStaticResources<TCardDefinition>,
+  config: MatchRuntimeConfig,
+  staticResources: MatchStaticResources,
   gameEnded: boolean,
   emitGameEvent: (event: GameEvent) => void,
   gameEndTracker: { ended: boolean; result?: GameEndResult },
   moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
-): MoveExecutionContext<G, TCardDefinition, TInput, TCardDerived> {
+): MoveExecutionContext<TInput> {
   const lifecycleContext = buildLifecycleContext(
     draft,
     config,
@@ -230,22 +194,16 @@ export function buildExecutionContext<
   };
 }
 
-export function buildLifecycleContext<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object = {},
-  TStateView = unknown,
->(
-  draft: Draft<MatchState<G>>,
-  config: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived, TStateView>,
-  staticResources: MatchStaticResources<TCardDefinition>,
+export function buildLifecycleContext(
+  draft: Draft<MatchState>,
+  config: MatchRuntimeConfig,
+  staticResources: MatchStaticResources,
   gameEnded: boolean,
   emitGameEvent: (event: GameEvent) => void,
   gameEndTracker: { ended: boolean; result?: GameEndResult },
   playerId: string | undefined = draft.ctx.priority.holder,
   moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
-): RuntimeLifecycleContext<G, TCardDefinition, TCardDerived> {
+): RuntimeLifecycleContext {
   const effectiveGameEnded = gameEnded || draft.ctx.status.gameEnded;
   return createWriteContextBase(
     draft,
@@ -271,16 +229,11 @@ export function generateGameID(): string {
   return `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
-export function computeRulesetHash<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object = {},
->(config: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>): string {
+export function computeRulesetHash(config: MatchRuntimeConfig): string {
   // Simplified - would hash game definition in real implementation
   return `ruleset-${config.name}-${Date.now()}`;
 }
 
-export function inferQueryPlayerId<G>(state: MatchState<G>): string | undefined {
+export function inferQueryPlayerId(state: MatchState): string | undefined {
   return state.ctx.priority.holder;
 }

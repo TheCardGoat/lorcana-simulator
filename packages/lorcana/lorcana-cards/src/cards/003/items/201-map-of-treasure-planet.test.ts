@@ -1,53 +1,78 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { mickeyBraveLittleTailor } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { mapOfTreasurePlanet } from "@lorcanito/lorcana-engine/cards/003/items/items";
-// Import { bellesHouseMauricesWorkshop } from "@lorcanito/lorcana-engine/cards/003/locations/locations";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Map of Treasure Planet", () => {
-//   It("**KEY TO THE PORTAL** {E} – You pay 1 {I} less for the next location you play this turn.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: bellesHouseMauricesWorkshop.cost - 1,
-//       Hand: [bellesHouseMauricesWorkshop],
-//       Play: [mapOfTreasurePlanet],
-//     });
-//
-//     Const location = testEngine.getCardModel(bellesHouseMauricesWorkshop);
-//
-//     Expect(location.cost).toEqual(bellesHouseMauricesWorkshop.cost);
-//     Await testEngine.activateCard(mapOfTreasurePlanet);
-//     Expect(location.cost).toEqual(bellesHouseMauricesWorkshop.cost - 1);
-//
-//     Await testEngine.playCard(bellesHouseMauricesWorkshop);
-//
-//     Expect(location.zone).toEqual("play");
-//   });
-//
-//   It("**Show the Way** You pay 1 {I} less to move your characters to a location.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: mapOfTreasurePlanet.cost,
-//       Hand: [mapOfTreasurePlanet],
-//       Play: [bellesHouseMauricesWorkshop, mickeyBraveLittleTailor],
-//     });
-//
-//     Const location = testEngine.getCardModel(bellesHouseMauricesWorkshop);
-//     Const char = testEngine.getCardModel(mickeyBraveLittleTailor);
-//
-//     Expect(location.moveCostToEnterLocation(char)).toEqual(
-//       BellesHouseMauricesWorkshop.moveCost,
-//     );
-//
-//     Await testEngine.playCard(mapOfTreasurePlanet);
-//
-//     Expect(testEngine.getCardModel(mapOfTreasurePlanet).zone).toEqual("play");
-//     Expect(location.moveCostToEnterLocation(char)).toEqual(
-//       BellesHouseMauricesWorkshop.moveCost - 1,
-//     );
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { simbaScrappyCub } from "../characters";
+import { bellesHouseMauricesWorkshop } from "../locations/168-belles-house-maurices-workshop";
+import { mcduckManorScroogesMansion } from "../locations/169-mcduck-manor-scrooges-mansion";
+import { mapOfTreasurePlanet } from "./201-map-of-treasure-planet";
+
+describe("Map of Treasure Planet", () => {
+  describe("KEY TO THE PORTAL — {E} — You pay 1 {I} less for the next location you play this turn.", () => {
+    it("reduces the cost of the next location played by 1", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [mcduckManorScroogesMansion],
+        // mcduckManorScroogesMansion costs 4, we only have 3 ink
+        inkwell: mcduckManorScroogesMansion.cost - 1,
+        play: [mapOfTreasurePlanet],
+      });
+
+      expect(testEngine.asPlayerOne().canPlayCard(mcduckManorScroogesMansion)).toBe(false);
+
+      const result = testEngine.asPlayerOne().activateAbility(mapOfTreasurePlanet, {
+        ability: "KEY TO THE PORTAL",
+      });
+
+      expect(result).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().isExerted(mapOfTreasurePlanet)).toBe(true);
+      expect(testEngine.asPlayerOne().canPlayCard(mcduckManorScroogesMansion)).toBe(true);
+      expect(testEngine.asPlayerOne().playCard(mcduckManorScroogesMansion)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(mcduckManorScroogesMansion)).toBe("play");
+    });
+
+    it("does not reduce the cost of a non-location card", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [simbaScrappyCub],
+        inkwell: 0,
+        play: [mapOfTreasurePlanet],
+      });
+
+      const result = testEngine.asPlayerOne().activateAbility(mapOfTreasurePlanet, {
+        ability: "KEY TO THE PORTAL",
+      });
+
+      expect(result).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().canPlayCard(simbaScrappyCub)).toBe(false);
+    });
+  });
+
+  describe("SHOW THE WAY — You pay 1 {I} less to move your characters to a location.", () => {
+    it("reduces the move cost to enter a location by 1", () => {
+      // bellesHouseMauricesWorkshop has moveCost 2
+      // With mapOfTreasurePlanet in play, it should cost 1 to move a character there
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mapOfTreasurePlanet, bellesHouseMauricesWorkshop, simbaScrappyCub],
+        inkwell: bellesHouseMauricesWorkshop.moveCost - 1,
+      });
+
+      // Without the reduction, should need moveCost (2) ink, but we only have 1
+      // With the reduction, it should cost 1
+      expect(
+        testEngine
+          .asPlayerOne()
+          .moveCharacterToLocation(simbaScrappyCub, bellesHouseMauricesWorkshop),
+      ).toBeSuccessfulCommand();
+    });
+
+    it("without Map of Treasure Planet, full move cost is required", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [bellesHouseMauricesWorkshop, simbaScrappyCub],
+        inkwell: bellesHouseMauricesWorkshop.moveCost - 1,
+      });
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .moveCharacterToLocation(simbaScrappyCub, bellesHouseMauricesWorkshop),
+      ).not.toBeSuccessfulCommand();
+    });
+  });
+});

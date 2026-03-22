@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daisyDuckGhostFinderI18n } from "./141-daisy-duck-ghost-finder.i18n";
 
 export const daisyDuckGhostFinder: CharacterCard = {
   id: "IZj",
@@ -7,28 +8,6 @@ export const daisyDuckGhostFinder: CharacterCard = {
   cardType: "character",
   name: "Daisy Duck",
   version: "Ghost Finder",
-  i18n: {
-    en: {
-      name: "Daisy Duck",
-      version: "Ghost Finder",
-      text: "Support",
-    },
-    de: {
-      name: "Daisy Duck",
-      version: "Geistersucherin",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Daisy",
-      version: "Traqueuse de fantômes",
-      text: "Soutien",
-    },
-    it: {
-      name: "Paperina",
-      version: "Cercatrice di Fantasmi",
-      text: "Aiutante",
-    },
-  },
   inkType: ["sapphire"],
   set: "010",
   cardNumber: 141,
@@ -52,4 +31,5 @@ export const daisyDuckGhostFinder: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: daisyDuckGhostFinderI18n,
 };

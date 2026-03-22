@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { anitaRadcliffeDogLoverI18n } from "./155-anita-radcliffe-dog-lover.i18n";
 
 export const anitaRadcliffeDogLover: CharacterCard = {
   id: "q1w",
@@ -7,52 +8,6 @@ export const anitaRadcliffeDogLover: CharacterCard = {
   cardType: "character",
   name: "Anita Radcliffe",
   version: "Dog Lover",
-  i18n: {
-    en: {
-      name: "Anita Radcliffe",
-      version: "Dog Lover",
-      text: [
-        {
-          title: "I'LL TAKE CARE OF YOU",
-          description:
-            "When you play this character, you may give chosen Puppy character Resist +1 until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Anita Radcliffe",
-      version: "Hundeliebhaberin",
-      text: [
-        {
-          title: "ICH KÜMMERE MICH UM DICH",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einem Welpen deiner Wahl bis zu Beginn deines nächsten Zuges Robust +1 geben. (Reduziere jeglichen Schaden, der dem Charakter zugefügt wird, um 1.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Anita Radcliffe",
-      version: "Passionnée de chiens",
-      text: [
-        {
-          title: "JE PRENDRAI SOIN DE TOI",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage Chiot qui gagne Résistance +1 jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Anita Radcliffe",
-      version: "Amante dei Cani",
-      text: [
-        {
-          title: "MI PRENDERÒ CURA DI TE",
-          description:
-            "Quando giochi questo personaggio, puoi dare Resistere +1 a un personaggio Cucciolo a tua scelta fino all'inizio del tuo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "101 Dalmatians",
   set: "008",
@@ -77,19 +32,39 @@ export const anitaRadcliffeDogLover: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
-      effect: {
-        from: "hand",
-        type: "play-card",
-      },
-      id: "id4-1",
+      id: "q1w-1",
       name: "I'LL TAKE CARE OF YOU",
-      text: "I'LL TAKE CARE OF YOU When you play this character, you may give chosen Puppy character Resist +1 until the start of your next turn.",
+      type: "triggered",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
       },
-      type: "triggered",
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          type: "gain-keyword",
+          keyword: "Resist",
+          value: 1,
+          target: {
+            selector: "chosen",
+            cardTypes: ["character"],
+            owner: "you",
+            zones: ["play"],
+            count: 1,
+            filter: [
+              {
+                type: "has-classification",
+                classification: "Puppy",
+              },
+            ],
+          },
+          duration: "until-start-of-next-turn",
+        },
+        type: "optional",
+      },
+      text: "I'LL TAKE CARE OF YOU When you play this character, you may give chosen Puppy character Resist +1 until the start of your next turn.",
     },
   ],
+  i18n: anitaRadcliffeDogLoverI18n,
 };

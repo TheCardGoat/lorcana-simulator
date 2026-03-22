@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theMatchmakerUnforgivingExpertI18n } from "./123-the-matchmaker-unforgiving-expert.i18n";
 
 export const theMatchmakerUnforgivingExpert: CharacterCard = {
   id: "w5E",
@@ -7,52 +8,6 @@ export const theMatchmakerUnforgivingExpert: CharacterCard = {
   cardType: "character",
   name: "The Matchmaker",
   version: "Unforgiving Expert",
-  i18n: {
-    en: {
-      name: "The Matchmaker",
-      version: "Unforgiving Expert",
-      text: [
-        {
-          title: "YOU ARE A DISGRACE!",
-          description:
-            "Whenever this character challenges another character, each opponent loses 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Heiratsvermittlerin",
-      version: "Kompromisslose Expertin",
-      text: [
-        {
-          title: "DU BIST EINE SCHANDE!",
-          description:
-            "Jedes Mal, wenn dieser Charakter einen anderen Charakter herausfordert, verlieren alle gegnerischen Mitspielenden je 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "La Dame marieuse",
-      version: "Experte impitoyable",
-      text: [
-        {
-          title: "TU DEVRAIS AVOIR HONTE!",
-          description:
-            "Chaque fois que ce personnage en défie un autre, chaque adversaire perd 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "La Mezzana",
-      version: "Esperta Inflessibile",
-      text: [
-        {
-          title: "SEI UNA DISGRAZIA!",
-          description:
-            "Ogni volta che questo personaggio sfida un altro personaggio, ogni avversario perde 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mulan",
   set: "007",
@@ -69,9 +24,9 @@ export const theMatchmakerUnforgivingExpert: CharacterCard = {
   },
   text: [
     {
-      title: "YOU ARE A DISGRACE!",
+      title: "YOU ARE",
       description:
-        "Whenever this character challenges another character, each opponent loses 1 lore.",
+        "A DISGRACE! Whenever this character challenges another character, each opponent loses 1 lore.",
     },
   ],
   classifications: ["Storyborn"],
@@ -93,4 +48,5 @@ export const theMatchmakerUnforgivingExpert: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: theMatchmakerUnforgivingExpertI18n,
 };

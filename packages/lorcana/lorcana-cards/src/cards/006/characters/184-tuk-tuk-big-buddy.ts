@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tukTukBigBuddyI18n } from "./184-tuk-tuk-big-buddy.i18n";
 
 export const tukTukBigBuddy: CharacterCard = {
   id: "OzK",
@@ -7,24 +8,6 @@ export const tukTukBigBuddy: CharacterCard = {
   cardType: "character",
   name: "Tuk Tuk",
   version: "Big Buddy",
-  i18n: {
-    en: {
-      name: "Tuk Tuk",
-      version: "Big Buddy",
-    },
-    de: {
-      name: "Tuktuk",
-      version: "Großer Kumpel",
-    },
-    fr: {
-      name: "Tuk Tuk",
-      version: "Pote imposant",
-    },
-    it: {
-      name: "Tuk Tuk",
-      version: "Grande Amico",
-    },
-  },
   inkType: ["steel"],
   franchise: "Raya and the Last Dragon",
   set: "006",
@@ -41,4 +24,5 @@ export const tukTukBigBuddy: CharacterCard = {
     tcgPlayer: 593049,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: tukTukBigBuddyI18n,
 };

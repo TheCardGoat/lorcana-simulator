@@ -65,4 +65,22 @@ describe("Come Out and Fight!", () => {
     expect(testEngine.asPlayerOne().getCardZone(heiheiBoatSnack)).toBe("deck");
     expect(testEngine.asPlayerOne().getCardZone(mickeyMouseTrueFriend)).toBe("hand");
   });
+
+  it("still draws a card if the chosen card has nothing under it", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [comeOutAndFight],
+      inkwell: comeOutAndFight.cost,
+      play: [simbaProtectiveCub],
+      deck: [heiheiBoatSnack],
+    });
+
+    expect(
+      testEngine.asPlayerOne().playCard(comeOutAndFight, {
+        targets: [simbaProtectiveCub],
+      }).success,
+    ).toBe(true);
+
+    expect(testEngine.asPlayerOne().getCardZone(heiheiBoatSnack)).toBe("hand");
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
+  });
 });

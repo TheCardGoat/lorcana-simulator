@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { motherGothelUnderhandedSchemerI18n } from "./110-mother-gothel-underhanded-schemer.i18n";
 
 export const motherGothelUnderhandedSchemer: CharacterCard = {
   id: "Att",
@@ -7,50 +8,6 @@ export const motherGothelUnderhandedSchemer: CharacterCard = {
   cardType: "character",
   name: "Mother Gothel",
   version: "Underhanded Schemer",
-  i18n: {
-    en: {
-      name: "Mother Gothel",
-      version: "Underhanded Schemer",
-      text: [
-        {
-          title: "SOMEBODY'S GOT TO USE IT",
-          description: "If a character was banished this turn, this character gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Mutter Gothel",
-      version: "Hinterhältige Intrigantin",
-      text: [
-        {
-          title: "IRGENDJEMAND MUSS JA WAS DAVON HABEN",
-          description:
-            "Solange in diesem Zug ein Charakter verbannt wurde, erhält dieser Charakter +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mère Gothel",
-      version: "Fourbe conspiratrice",
-      text: [
-        {
-          title: "QUELQU'UN DOIT BIEN SE SERVIR DE ÇA",
-          description: "Si un personnage a été banni ce tour-ci, ce personnage-ci gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Madre Gothel",
-      version: "Subdola Cospiratrice",
-      text: [
-        {
-          title: "QUALCUNO DOVRÀ PURE USARLO",
-          description:
-            "Se un personaggio è stato esiliato in questo turno, questo personaggio riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Tangled",
   set: "010",
@@ -96,4 +53,5 @@ export const motherGothelUnderhandedSchemer: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: motherGothelUnderhandedSchemerI18n,
 };

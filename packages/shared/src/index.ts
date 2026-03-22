@@ -6,6 +6,7 @@
 
 export * from "./auth";
 export * from "./cards";
+export * from "./testing";
 export * from "./types";
 export * from "./utils";
 export * from "./display-name-normalize";

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { figaroTuxedoCatI18n } from "./133-figaro-tuxedo-cat.i18n";
 
 export const figaroTuxedoCat: CharacterCard = {
   id: "Nrd",
@@ -7,48 +8,6 @@ export const figaroTuxedoCat: CharacterCard = {
   cardType: "character",
   name: "Figaro",
   version: "Tuxedo Cat",
-  i18n: {
-    en: {
-      name: "Figaro",
-      version: "Tuxedo Cat",
-      text: [
-        {
-          title: "PLAYFULNESS",
-          description: "Opposing items enter play exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Figaro",
-      version: "Tuxedo-Katze",
-      text: [
-        {
-          title: "VERSPIELTHEIT",
-          description: "Gegnerische Gegenstände kommen erschöpft ins Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Figaro",
-      version: "Chat tuxedo",
-      text: [
-        {
-          title: "ESPIÈGLERIE",
-          description: "Les objets adverses entrent en jeu épuisés.",
-        },
-      ],
-    },
-    it: {
-      name: "Figaro",
-      version: "Gatto Bicolore",
-      text: [
-        {
-          title: "GIOCOSO",
-          description: "Gli oggetti avversari entrano in gioco impegnati.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Pinocchio",
   set: "008",
@@ -74,12 +33,14 @@ export const figaroTuxedoCat: CharacterCard = {
     {
       effect: {
         restriction: "enters-play-exerted",
-        target: "SELF",
+        target: "ALL_OPPOSING_ITEMS",
         type: "restriction",
       },
       id: "1w3-1",
+      name: "PLAYFULNESS",
       text: "PLAYFULNESS Opposing items enter play exerted.",
       type: "static",
     },
   ],
+  i18n: figaroTuxedoCatI18n,
 };

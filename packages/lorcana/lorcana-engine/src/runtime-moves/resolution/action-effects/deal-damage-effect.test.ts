@@ -79,20 +79,19 @@ function createTestContext(args?: {
             currentEntry.zoneKey = `${destination.zone}:${destination.playerId ?? PLAYER_ONE}`;
           }
         },
+        getCardOwner: (cardId: string) => cardIndex[cardId]?.ownerID,
+        getCardController: (cardId: string) => cardIndex[cardId]?.controllerID,
+        getCardZone: (cardId: string) => cardIndex[cardId]?.zoneKey,
       },
       state: {
-        ctx: {
-          status: { turn: args?.turn ?? 1 },
-          priority: {
-            holder: PLAYER_ONE,
-          },
-          zones: {
-            private: {
-              cardIndex,
-              zoneCards,
-              cardMeta,
-            },
-          },
+        status: { turn: args?.turn ?? 1 },
+        priority: {
+          holder: PLAYER_ONE,
+        },
+        _zonesPrivate: {
+          cardIndex,
+          zoneCards,
+          cardMeta,
         },
       },
     },
@@ -308,11 +307,13 @@ describe("deal-damage-effect", () => {
       },
     );
 
-    expect(ctx.G.triggeredAbilities?.pendingEvents).toHaveLength(1);
-    expect(ctx.G.triggeredAbilities?.pendingEvents[0]?.event).toBe("banish");
-    expect(ctx.G.triggeredAbilities?.pendingEvents[0]?.eventSnapshot?.subjectAtLocationId).toBe(
-      locationId,
-    );
+    expect(ctx.G.triggeredAbilities?.pendingEvents).toHaveLength(2);
+    // First event: "damage" trigger for the lethal damage dealt
+    expect(ctx.G.triggeredAbilities?.pendingEvents[0]?.event).toBe("damage");
+    // Second event: "banish" trigger for the card being banished
+    const banishEvent = ctx.G.triggeredAbilities?.pendingEvents[1];
+    expect(banishEvent?.event).toBe("banish");
+    expect(banishEvent?.eventSnapshot?.subjectAtLocationId).toBe(locationId);
   });
 
   it("does not apply Resist when damage is put onto a card", () => {

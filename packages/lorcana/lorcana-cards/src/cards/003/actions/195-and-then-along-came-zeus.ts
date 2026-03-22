@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { andThenAlongCameZeusI18n } from "./195-and-then-along-came-zeus.i18n";
 
 export const andThenAlongCameZeus: ActionCard = {
   id: "DXq",
@@ -6,24 +7,6 @@ export const andThenAlongCameZeus: ActionCard = {
   reprints: ["set3-195"],
   cardType: "action",
   name: "And Then Along Came Zeus",
-  i18n: {
-    en: {
-      name: "And Then Along Came Zeus",
-      text: "Deal 5 damage to chosen character or location.",
-    },
-    de: {
-      name: "Dann kam der große Zeus",
-      text: "Füge einem Charakter oder Ort deiner Wahl 5 Schaden zu.",
-    },
-    fr: {
-      name: "Quand soudain survint Zeus",
-      text: "Choisissez un personnage ou un lieu et infligez-lui 5 dommages.",
-    },
-    it: {
-      name: "Ma Un Giorno Zeus Tornò",
-      text: "(Un personaggio con costo 4 o superiore può per giocare questa canzone gratis.) Infliggi 5 danni a un personaggio o un luogo a tua scelta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Hercules",
   set: "003",
@@ -47,4 +30,5 @@ export const andThenAlongCameZeus: ActionCard = {
       type: "action",
     },
   ],
+  i18n: andThenAlongCameZeusI18n,
 };

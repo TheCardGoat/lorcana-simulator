@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { toulouseArtisticKittenI18n } from "./165-toulouse-artistic-kitten.i18n";
 
 export const toulouseArtisticKitten: CharacterCard = {
   id: "5do",
@@ -7,24 +8,6 @@ export const toulouseArtisticKitten: CharacterCard = {
   cardType: "character",
   name: "Toulouse",
   version: "Artistic Kitten",
-  i18n: {
-    en: {
-      name: "Toulouse",
-      version: "Artistic Kitten",
-    },
-    de: {
-      name: "Toulouse",
-      version: "Künstlerisches Kätzchen",
-    },
-    fr: {
-      name: "Toulouse",
-      version: "Chaton artiste",
-    },
-    it: {
-      name: "Matisse",
-      version: "Gattino Artistico",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Aristocats",
   set: "007",
@@ -41,4 +24,5 @@ export const toulouseArtisticKitten: CharacterCard = {
     tcgPlayer: 618155,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: toulouseArtisticKittenI18n,
 };

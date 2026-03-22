@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { maliciousMeanAndScaryEnchantedI18n } from "./231-malicious-mean-and-scary-enchanted.i18n";
 
 export const maliciousMeanAndScaryEnchanted: ActionCard = {
   id: "nis",
@@ -6,24 +7,6 @@ export const maliciousMeanAndScaryEnchanted: ActionCard = {
   reprints: ["set10-097"],
   cardType: "action",
   name: "Malicious, Mean, and Scary",
-  i18n: {
-    en: {
-      name: "Malicious, Mean, and Scary",
-      text: "Put 1 damage counter on each opposing character.",
-    },
-    de: {
-      name: "Furchterregend schrecklich",
-      text: "Lege je 1 Schadensmarker auf alle gegnerischen Charaktere.",
-    },
-    fr: {
-      name: "Malin, méchant, vilain",
-      text: "Placez 1 dommage sur chaque personnage adverse.",
-    },
-    it: {
-      name: "È un Piacere Spaventare",
-      text: "Metti 1 segnalino danno su ogni personaggio avversario.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Tangled",
   set: "010",
@@ -48,4 +31,5 @@ export const maliciousMeanAndScaryEnchanted: ActionCard = {
       type: "action",
     },
   ],
+  i18n: maliciousMeanAndScaryEnchantedI18n,
 };

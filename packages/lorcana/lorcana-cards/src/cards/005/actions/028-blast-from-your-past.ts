@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { blastFromYourPastI18n } from "./028-blast-from-your-past.i18n";
 
 export const blastFromYourPast: ActionCard = {
   id: "hV2",
@@ -6,24 +7,6 @@ export const blastFromYourPast: ActionCard = {
   reprints: ["set5-028"],
   cardType: "action",
   name: "Blast from Your Past",
-  i18n: {
-    en: {
-      name: "Blast from Your Past",
-      text: "Name a card. Return all character cards with that name from your discard to your hand.",
-    },
-    de: {
-      name: "Wer einmal lügt, der hat Pech",
-      text: "Benenne eine Karte. Nimm alle Charakterkarten mit dem genannten Namen aus deinem Ablagestapel zurück auf deine Hand.",
-    },
-    fr: {
-      name: "Un mirage à deux visages",
-      text: "Nommez une carte. Renvoyez dans votre main toutes les cartes Personnage portant ce nom depuis votre défausse.",
-    },
-    it: {
-      name: "Le Tue Menzogne",
-      text: "(Un personaggio con costo 6 o superiore può per cantare questa canzone gratis.) Nomina una carta. Riprendi in mano dai tuoi scarti tutte le carte personaggio con quel nome.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Aladdin",
   set: "005",
@@ -67,4 +50,5 @@ export const blastFromYourPast: ActionCard = {
       type: "action",
     },
   ],
+  i18n: blastFromYourPastI18n,
 };

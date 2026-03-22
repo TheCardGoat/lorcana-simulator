@@ -1,44 +1,83 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   LiloMakingAWish,
-//   MauiDemiGod,
-//   StichtNewDog,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { daleMischievousRanger } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Dale - Mischievous Ranger", () => {
-//   Describe("**NUTS ABOUT PRANKS** When you play this character, you may put the top 3 cards of your deck into your discard to give chosen character -3 {S} until the start of your next turn.", () => {
-//     It("should put the top 3 cards of your deck into your discard to give chosen character -3 {S} until the start of your next turn", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: daleMischievousRanger.cost,
-//         Deck: [liloMakingAWish, stichtNewDog, mauiDemiGod],
-//         Hand: [daleMischievousRanger],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(daleMischievousRanger);
-//       Const topOfDeck = [
-//         TestEngine.getCardModel(liloMakingAWish),
-//         TestEngine.getCardModel(stichtNewDog),
-//         TestEngine.getCardModel(mauiDemiGod),
-//       ];
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [daleMischievousRanger] });
-//
-//       TopOfDeck.forEach((card) => {
-//         Expect(card.zone).toEqual("discard");
-//       });
-//       Expect(cardUnderTest.strength).toEqual(
-//         DaleMischievousRanger.strength - 3,
-//       );
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { daleMischievousRanger } from "./018-dale-mischievous-ranger";
+
+const chosenCharacter = createMockCharacter({
+  id: "dale-mischievous-ranger-target",
+  name: "Chosen Character",
+  cost: 3,
+  strength: 5,
+  willpower: 5,
+});
+
+describe("Dale - Mischievous Ranger", () => {
+  describe("NUTS ABOUT PRANKS - When you play this character, you may put the top 3 cards of your deck into your discard to give chosen character -3 {S} until the start of your next turn.", () => {
+    it("mills 3 cards and gives the chosen character -3 strength until your next turn when accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [daleMischievousRanger],
+          inkwell: daleMischievousRanger.cost,
+          deck: 3,
+        },
+        {
+          play: [chosenCharacter],
+          deck: 3,
+        },
+      );
+
+      const chosenCharacterId = testEngine.findCardInstanceId(
+        chosenCharacter,
+        "play",
+        "player_two",
+      );
+      const baseStrength = testEngine.asPlayerTwo().getCardStrength(chosenCharacter);
+
+      expect(testEngine.asPlayerOne().playCard(daleMischievousRanger)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [chosenCharacterId] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
+        deck: 0,
+        discard: 3,
+        hand: 0,
+        play: 1,
+      });
+      expect(testEngine.asPlayerTwo().getCardStrength(chosenCharacter)).toBe(baseStrength - 3);
+    });
+
+    it("does nothing when the optional ability is declined", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [daleMischievousRanger],
+          inkwell: daleMischievousRanger.cost,
+          deck: 3,
+        },
+        {
+          play: [chosenCharacter],
+          deck: 3,
+        },
+      );
+
+      const baseStrength = testEngine.asPlayerTwo().getCardStrength(chosenCharacter);
+
+      expect(testEngine.asPlayerOne().playCard(daleMischievousRanger)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
+        deck: 3,
+        discard: 0,
+        hand: 0,
+        play: 1,
+      });
+      expect(testEngine.asPlayerTwo().getCardStrength(chosenCharacter)).toBe(baseStrength);
+    });
+  });
+});

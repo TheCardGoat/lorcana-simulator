@@ -58,12 +58,13 @@ function createResolverContext(args?: {
     visibleTo: "all" | PlayerId[];
   }> = [];
 
-  const cardIndex: Record<string, { ownerID: PlayerId; zoneKey: string }> = {};
+  const cardIndex: Record<string, { controllerID: PlayerId; ownerID: PlayerId; zoneKey: string }> =
+    {};
   for (const [zoneKey, cards] of Object.entries(zoneCards)) {
     const [, ownerSegment] = zoneKey.split(":");
     const ownerId = (ownerSegment ?? PLAYER_ONE) as PlayerId;
     for (const cardId of cards) {
-      cardIndex[cardId] = { ownerID: ownerId, zoneKey };
+      cardIndex[cardId] = { controllerID: ownerId, ownerID: ownerId, zoneKey };
     }
   }
 
@@ -105,6 +106,7 @@ function createResolverContext(args?: {
 
       zoneCards[targetZoneKey] = nextTargetCards;
       cardIndex[cardId] = {
+        controllerID: to.playerId,
         ownerID: to.playerId,
         zoneKey: targetZoneKey,
       };
@@ -118,6 +120,7 @@ function createResolverContext(args?: {
     shuffle: () => {},
     drawCards: () => {},
     getCardOwner: (cardId: CardInstanceId) => cardIndex[cardId]?.ownerID,
+    getCardController: (cardId: CardInstanceId) => cardIndex[cardId]?.controllerID,
     getCardZone: (cardId: CardInstanceId) => cardIndex[cardId]?.zoneKey,
   };
   const cardsApi = {
@@ -171,7 +174,9 @@ function createResolverContext(args?: {
     framework: {
       cards: cardsApi,
       state: {
-        ctx: runtimeCtx as never,
+        priority: runtimeCtx.priority as never,
+        status: runtimeCtx.status as never,
+        _zonesPrivate: runtimeCtx.zones?.private as never,
         playerIds: [PLAYER_ONE, PLAYER_TWO],
         turn: 1,
         currentPlayer: PLAYER_ONE,
@@ -297,7 +302,7 @@ describe("resolveActionEffect parity", () => {
 
     (ctx as { currentPlayer?: PlayerId }).currentPlayer = undefined;
     (ctx.framework.state as { currentPlayer?: PlayerId }).currentPlayer = undefined;
-    (ctx.framework.state.ctx.priority as { holder?: PlayerId }).holder = undefined;
+    (ctx.framework.state.priority as { holder?: PlayerId }).holder = undefined;
 
     resolveActionEffect(
       ctx,
@@ -572,7 +577,7 @@ describe("resolveActionEffect parity", () => {
 
     expect(state.zoneCards[`discard:${PLAYER_ONE}`]).toEqual([]);
     expect(state.zoneCards[`limbo:${PLAYER_ONE}`]).toEqual([replayedAction]);
-    expect(ctx.framework.state.ctx.priority.pendingChoice?.type).toBe("action-effect");
+    expect(ctx.framework.state.priority.pendingChoice?.type).toBe("action-effect");
     expect(ctx.G.pendingEffects).toHaveLength(1);
   });
 
@@ -598,8 +603,13 @@ describe("resolveActionEffect parity", () => {
         type: "discard",
         target: "CONTROLLER",
       },
-      {},
-      { discardAmount: 2 },
+      {
+        targets: [discardOne, discardTwo],
+      },
+      {
+        discardAmount: 2,
+        selectedTargets: [discardOne, discardTwo],
+      },
     );
 
     expect(state.zoneCards[`hand:${PLAYER_ONE}`]).toEqual([]);
@@ -763,7 +773,7 @@ describe("resolveActionEffect parity", () => {
     ]);
     expect(state.cardMeta[nonCharacter]?.revealed).toBe(true);
     expect(state.cardMeta[character]?.revealed).toBe(true);
-    expect(ctx.framework.state.ctx.priority.pendingChoice?.type).toBe("action-effect");
+    expect(ctx.framework.state.priority.pendingChoice?.type).toBe("action-effect");
     expect(ctx.G.pendingEffects).toHaveLength(1);
   });
 
@@ -809,7 +819,7 @@ describe("resolveActionEffect parity", () => {
     );
 
     expect(state.revealCalls).toHaveLength(1);
-    expect(ctx.framework.state.ctx.priority.pendingChoice).toBeUndefined();
+    expect(ctx.framework.state.priority.pendingChoice).toBeUndefined();
     expect(ctx.G.pendingEffects).toHaveLength(0);
     expect(state.zoneCards[`hand:${PLAYER_TWO}`]).toEqual([onlyCharacter]);
   });

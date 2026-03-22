@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mulanImperialGeneralI18n } from "./141-mulan-imperial-general.i18n";
 
 export const mulanImperialGeneral: CharacterCard = {
   id: "jFo",
@@ -7,40 +8,6 @@ export const mulanImperialGeneral: CharacterCard = {
   cardType: "character",
   name: "Mulan",
   version: "Imperial General",
-  i18n: {
-    en: {
-      name: "Mulan",
-      version: "Imperial General",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "EXCEPTIONAL LEADER",
-          description:
-            'Whenever this character challenges another character, your other characters gain "This character can challenge ready characters" this turn.',
-        },
-      ],
-    },
-    de: {
-      name: "Mulan",
-      version: "Kaiserliche Generalin",
-      text: 'Gestaltwandel 5 Wendig AUSSERGEWÖHNLICHE ANFÜHRERIN Jedes Mal, wenn dieser Charakter einen anderen Charakter herausfordert, erhalten deine anderen Charaktere in diesem Zug "Dieser Charakter kann bereite Charaktere herausfordern".',
-    },
-    fr: {
-      name: "Mulan",
-      version: "Générale impériale",
-      text: 'Alter 5 Insaisissable MENEUSE EXCEPTIONNELLE Chaque fois que ce personnage en défie un autre, vos autres personnages gagnent "Ce personnage peut défier des personnages redressés." pour le reste de ce tour.',
-    },
-    it: {
-      name: "Mulan",
-      version: "Generale Imperiale",
-      text: 'Trasformazione 5 Sfuggente LEADER ECCEZIONALE Ogni volta che questo personaggio sfida un altro personaggio, i tuoi altri personaggi ottengono "Questo personaggio può sfidare i personaggi preparati" per questo turno.',
-    },
-  },
   inkType: ["ruby", "steel"],
   franchise: "Mulan",
   set: "007",
@@ -102,4 +69,5 @@ export const mulanImperialGeneral: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mulanImperialGeneralI18n,
 };

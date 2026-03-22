@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { auroraHoldingCourtI18n } from "./006-aurora-holding-court.i18n";
 
 export const auroraHoldingCourt: CharacterCard = {
   id: "udr",
@@ -7,52 +8,6 @@ export const auroraHoldingCourt: CharacterCard = {
   cardType: "character",
   name: "Aurora",
   version: "Holding Court",
-  i18n: {
-    en: {
-      name: "Aurora",
-      version: "Holding Court",
-      text: [
-        {
-          title: "ROYAL WELCOME",
-          description:
-            "Whenever this character quests, you pay 1 {I} less for the next Princess or Queen character you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Aurora",
-      version: "Hält Hof",
-      text: [
-        {
-          title: "KÖNIGLICHER EMPFANG",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, zahlst du 1 weniger für die nächste Prinzessin oder Königin, die du in diesem Zug ausspielst.",
-        },
-      ],
-    },
-    fr: {
-      name: "Aurore",
-      version: "Tient audiance",
-      text: [
-        {
-          title: "ACCUEIL ROYAL",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, le prochain personnage Reine ou Princesse que vous jouez ce tour-ci vous coûte 1 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Aurora",
-      version: "In Ricevimento a Corte",
-      text: [
-        {
-          title: "BENVENUTO REALE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, paga 1 in meno per giocare il tuo prossimo personaggio Principessa o Regina per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Sleeping Beauty",
   set: "009",
@@ -78,8 +33,12 @@ export const auroraHoldingCourt: CharacterCard = {
   abilities: [
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 1,
+        cardType: "character",
+        classification: ["Princess", "Queen"],
+        duration: "next-play-this-turn",
+        target: "CONTROLLER",
+        type: "cost-reduction",
       },
       id: "1dm-1",
       name: "ROYAL WELCOME",
@@ -92,4 +51,5 @@ export const auroraHoldingCourt: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: auroraHoldingCourtI18n,
 };

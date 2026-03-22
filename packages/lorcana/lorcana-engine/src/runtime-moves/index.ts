@@ -117,4 +117,4 @@ export {
   manualSetLore,
   manualShuffleDeck,
 } from "./debug";
-export type { LorcanaRuntimeCardDerivedMethods } from "./state";
+export type { LorcanaCardDerived } from "./state";

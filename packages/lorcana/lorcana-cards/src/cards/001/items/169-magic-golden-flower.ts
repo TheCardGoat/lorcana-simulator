@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { magicGoldenFlowerI18n } from "./169-magic-golden-flower.i18n";
 
 export const magicGoldenFlower: ItemCard = {
   id: "evQ",
@@ -6,46 +7,6 @@ export const magicGoldenFlower: ItemCard = {
   reprints: ["set1-169"],
   cardType: "item",
   name: "Magic Golden Flower",
-  i18n: {
-    en: {
-      name: "Magic Golden Flower",
-      text: [
-        {
-          title: "HEALING POLLEN",
-          description: "Banish this item — Remove up to 3 damage from chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Magische Goldene Blume",
-      text: [
-        {
-          title: "HEILENDER",
-          description:
-            "BLÜTENSTAUB Verbanne diesen Gegenstand — entferne bis zu 3 Schaden von einem Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "FLEUR AUX PÉTALES D'OR",
-      text: [
-        {
-          title: "POLLEN",
-          description:
-            "GUÉRISSEUR Bannissez cet objet — Choisissez un personnage et retirez-lui jusqu'à 3 jetons Dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Magic Golden Flower",
-      text: [
-        {
-          title: "HEALING POLLEN",
-          description: "Banish this item — Remove up to 3 damage from chosen character.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Tangled",
   set: "001",
@@ -80,4 +41,5 @@ export const magicGoldenFlower: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: magicGoldenFlowerI18n,
 };

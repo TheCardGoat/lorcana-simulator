@@ -2,6 +2,10 @@ import { createPlayerId, type PlayerId } from "#core";
 
 type PlayerIdSource = {
   playerIds?: readonly PlayerId[] | null;
+  _zonesPrivate?: {
+    cardIndex?: Record<string, { ownerID?: string }>;
+  };
+  /** @deprecated Use _zonesPrivate instead */
   ctx?: {
     zones?: {
       zoneDefs?: Record<string, { ownerScoped?: boolean }>;
@@ -44,7 +48,7 @@ export function resolveRuntimePlayerIds(source: PlayerIdSource): PlayerId[] {
     return playerIds;
   }
 
-  const cardIndex = source.ctx?.zones?.private?.cardIndex ?? {};
+  const cardIndex = source._zonesPrivate?.cardIndex ?? source.ctx?.zones?.private?.cardIndex ?? {};
   for (const cardState of Object.values(cardIndex)) {
     const playerId = cardState?.ownerID;
     if (!playerId || seen.has(playerId)) {

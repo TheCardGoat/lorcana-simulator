@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { riseOfTheTitansI18n } from "./198-rise-of-the-titans.i18n";
 
 export const riseOfTheTitans: ActionCard = {
   id: "uvL",
@@ -6,24 +7,6 @@ export const riseOfTheTitans: ActionCard = {
   reprints: ["set3-198"],
   cardType: "action",
   name: "Rise of the Titans",
-  i18n: {
-    en: {
-      name: "Rise of the Titans",
-      text: "Banish chosen location or item.",
-    },
-    de: {
-      name: "Gib frei die Titanen",
-      text: "Verbanne einen Ort oder Gegenstand deiner Wahl.",
-    },
-    fr: {
-      name: "Libérer les Titans",
-      text: "Choisissez un lieu ou un objet et bannissez-le.",
-    },
-    it: {
-      name: "Ascesa dei Titani",
-      text: "Esilia un luogo o un oggetto a tua scelta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Hercules",
   set: "003",
@@ -45,4 +28,5 @@ export const riseOfTheTitans: ActionCard = {
       type: "action",
     },
   ],
+  i18n: riseOfTheTitansI18n,
 };

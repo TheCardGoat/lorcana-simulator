@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jasmineDisguisedI18n } from "./148-jasmine-disguised.i18n";
 
 export const jasmineDisguised: CharacterCard = {
   id: "crg",
@@ -7,24 +8,6 @@ export const jasmineDisguised: CharacterCard = {
   cardType: "character",
   name: "Jasmine",
   version: "Disguised",
-  i18n: {
-    en: {
-      name: "Jasmine",
-      version: "Disguised",
-    },
-    de: {
-      name: "Jasmin",
-      version: "Verkleidet",
-    },
-    fr: {
-      name: "JASMINE",
-      version: "Déguisée",
-    },
-    it: {
-      name: "Jasmine",
-      version: "Disguised",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Aladdin",
   set: "001",
@@ -35,11 +18,11 @@ export const jasmineDisguised: CharacterCard = {
   willpower: 3,
   lore: 2,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_c401f199cd7046b4838589db368f2391",
     tcgPlayer: 508851,
   },
   classifications: ["Storyborn", "Princess"],
+  i18n: jasmineDisguisedI18n,
 };

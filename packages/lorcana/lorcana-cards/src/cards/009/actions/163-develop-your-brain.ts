@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { developYourBrainI18n } from "./163-develop-your-brain.i18n";
 
 export const developYourBrain: ActionCard = {
   id: "Ylr",
@@ -6,24 +7,6 @@ export const developYourBrain: ActionCard = {
   reprints: ["set1-161", "set9-163"],
   cardType: "action",
   name: "Develop Your Brain",
-  i18n: {
-    en: {
-      name: "Develop Your Brain",
-      text: "Look at the top 2 cards of your deck. Put one into your hand and the other on the bottom of your deck.",
-    },
-    de: {
-      name: "Entwickle dein Gehirn",
-      text: "Schaue dir die obersten 2 Karten deines Decks an. Nimm 1 davon auf deine Hand und lege die andere unter dein Deck.",
-    },
-    fr: {
-      name: "DÉVELOPPE TON CERVEAU",
-      text: "Regardez les 2 premières cartes de votre pioche. Ajoutez-en une à votre main et remettez l'autre sous votre pioche.",
-    },
-    it: {
-      name: "Develop Your Brain",
-      text: "Look at the top 2 cards of your deck. Put one into your hand and the other on the bottom of the deck.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sword in the Stone",
   set: "009",
@@ -57,4 +40,5 @@ export const developYourBrain: ActionCard = {
       },
     },
   ],
+  i18n: developYourBrainI18n,
 };

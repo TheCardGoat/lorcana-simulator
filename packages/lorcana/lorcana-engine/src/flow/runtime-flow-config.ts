@@ -2,7 +2,7 @@ import type { MatchState, PlayerId, RuntimeFlowDefinition, RuntimeLifecycleConte
 import type { LorcanaG } from "../types";
 import { hasTemporaryRestriction } from "../runtime-moves/effects/temporary-effects";
 
-function canAutoAdvanceBeginningPhase(state: MatchState<LorcanaG>): boolean {
+function canAutoAdvanceBeginningPhase(state: MatchState): boolean {
   return (
     !state.G.pendingTurnTransition &&
     (state.G.triggeredAbilities?.bag?.items?.length ?? 0) === 0 &&
@@ -18,7 +18,7 @@ function canAutoAdvanceBeginningPhase(state: MatchState<LorcanaG>): boolean {
  * 1. startingAGame - Choose first player (OTP) and mulligan
  * 2. mainGame - Normal gameplay: beginning → main → end per turn
  */
-export const lorcanaRuntimeFlow: RuntimeFlowDefinition<LorcanaG> = {
+export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
   initialGameSegment: "startingAGame",
   gameSegments: {
     startingAGame: {
@@ -41,7 +41,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition<LorcanaG> = {
             id: "mulligan",
             name: "Alter Hand",
             order: 2,
-            onEnter: (ctx: RuntimeLifecycleContext<LorcanaG>) => {
+            onEnter: (ctx: RuntimeLifecycleContext) => {
               // Draw initial hands for each player (7 cards each)
               for (const playerId of ctx.framework.state.playerIds) {
                 ctx.framework.zones.shuffle({ zone: "deck", playerId });
@@ -63,10 +63,11 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition<LorcanaG> = {
       id: "mainGame",
       name: "Main Game",
       order: 1,
-      onEnter: (ctx: RuntimeLifecycleContext<LorcanaG>) => {
-        if (ctx.framework.state.ctx.status.otp) {
+      onEnter: (ctx: RuntimeLifecycleContext) => {
+        ctx.framework.status.incrementTurn(); // turn 0 → 1
+        if (ctx.framework.state.status.otp) {
           // This should use the framework helper to set up priority
-          ctx.framework.priority.openWindow(ctx.framework.state.ctx.status.otp as PlayerId);
+          ctx.framework.priority.openWindow(ctx.framework.state.status.otp as PlayerId);
         }
       },
       validMoves: [
@@ -91,13 +92,13 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition<LorcanaG> = {
             id: "beginning",
             name: "Beginning Phase",
             order: 1,
-            onEnter: (ctx: RuntimeLifecycleContext<LorcanaG>) => {
+            onEnter: (ctx: RuntimeLifecycleContext) => {
               // Ready exerted cards and clear drying only for the current player (play + inkwell)
-              const currentPlayer = ctx.playerId ?? ctx.framework.state.ctx.priority.holder;
+              const currentPlayer = ctx.playerId ?? ctx.framework.state.priority.holder;
               if (!currentPlayer) {
                 return;
               }
-              const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+              const currentTurn = ctx.framework.state.status.turn ?? 1;
               const playerZoneRefs = [
                 { zone: "play", playerId: currentPlayer },
                 { zone: "inkwell", playerId: currentPlayer },
@@ -112,8 +113,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition<LorcanaG> = {
                   const cantReady =
                     hasTemporaryRestriction(card.meta, currentTurn, "cant-ready", {
                       isSourceInPlay: (sourceId) => {
-                        const zoneKey =
-                          ctx.framework.state.ctx.zones.private.cardIndex[sourceId]?.zoneKey;
+                        const zoneKey = ctx.framework.zones.getCardZone(sourceId);
                         return (
                           typeof zoneKey === "string" &&
                           (zoneKey === "play" || zoneKey.startsWith("play:"))
@@ -122,8 +122,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition<LorcanaG> = {
                     }) ||
                     hasTemporaryRestriction(card.meta, currentTurn, "doesnt-ready", {
                       isSourceInPlay: (sourceId) => {
-                        const zoneKey =
-                          ctx.framework.state.ctx.zones.private.cardIndex[sourceId]?.zoneKey;
+                        const zoneKey = ctx.framework.zones.getCardZone(sourceId);
                         return (
                           typeof zoneKey === "string" &&
                           (zoneKey === "play" || zoneKey.startsWith("play:"))
@@ -191,7 +190,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition<LorcanaG> = {
             id: "end",
             name: "End Phase",
             order: 3,
-            onEnter: (_ctx: RuntimeLifecycleContext<LorcanaG>) => {},
+            onEnter: (_ctx: RuntimeLifecycleContext) => {},
             validMoves: [
               "concede",
               "resolveBag",
@@ -218,13 +217,16 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition<LorcanaG> = {
             reason: state.ctx.status.reason ?? "Game ended",
           };
         }
-        // Lore win
+        // Lore win — default threshold is 20, but win-condition-modification
+        // abilities (e.g. Donald Duck - Flustered Sorcerer) can raise it for
+        // specific players by storing overrides in G.loreToWin.
         const game: LorcanaG = state.G;
         for (const [playerId, lore] of Object.entries(game.lore)) {
-          if (lore >= 20) {
+          const loreToWin = game.loreToWin?.[playerId as PlayerId] ?? 20;
+          if (lore >= loreToWin) {
             return {
               winner: playerId,
-              reason: "Reached 20 lore",
+              reason: `Reached ${String(loreToWin)} lore`,
             };
           }
         }

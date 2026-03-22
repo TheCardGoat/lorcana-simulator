@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { shereKhanInfamousTigerI18n } from "./092-shere-khan-infamous-tiger.i18n";
 
 export const shereKhanInfamousTiger: CharacterCard = {
   id: "Y6a",
@@ -7,48 +8,6 @@ export const shereKhanInfamousTiger: CharacterCard = {
   cardType: "character",
   name: "Shere Khan",
   version: "Infamous Tiger",
-  i18n: {
-    en: {
-      name: "Shere Khan",
-      version: "Infamous Tiger",
-      text: [
-        {
-          title: "WHAT A PITY",
-          description: "When you play this character, discard your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Shir Khan",
-      version: "Berüchtigter Tiger",
-      text: [
-        {
-          title: "SO EIN JAMMER",
-          description: "Wenn du diesen Charakter ausspielst, wirf alle Karten von deiner Hand ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "Shere Khan",
-      version: "Tigre tristement célèbre",
-      text: [
-        {
-          title: "C'EST REGRETTABLE",
-          description: "Lorsque vous jouez ce personnage, défaussez votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Shere Khan",
-      version: "Tigre Famigerata",
-      text: [
-        {
-          title: "CHE PECCATO",
-          description: "Quando giochi questo personaggio, scarta la tua mano.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Jungle Book",
   set: "007",
@@ -65,8 +24,8 @@ export const shereKhanInfamousTiger: CharacterCard = {
   },
   text: [
     {
-      title: "WHAT A PITY",
-      description: "When you play this character, discard your hand.",
+      title: "WHAT",
+      description: "A PITY When you play this character, discard your hand.",
     },
   ],
   classifications: ["Storyborn", "Villain"],
@@ -88,4 +47,5 @@ export const shereKhanInfamousTiger: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: shereKhanInfamousTigerI18n,
 };

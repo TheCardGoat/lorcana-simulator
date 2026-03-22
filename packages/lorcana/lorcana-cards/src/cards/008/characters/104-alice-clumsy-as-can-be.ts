@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { aliceClumsyAsCanBeI18n } from "./104-alice-clumsy-as-can-be.i18n";
 
 export const aliceClumsyAsCanBe: CharacterCard = {
   id: "Xgj",
@@ -7,37 +8,6 @@ export const aliceClumsyAsCanBe: CharacterCard = {
   cardType: "character",
   name: "Alice",
   version: "Clumsy as Can Be",
-  i18n: {
-    en: {
-      name: "Alice",
-      version: "Clumsy as Can Be",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "ACCIDENT PRONE",
-          description:
-            "Whenever this character quests, put 1 damage counter on each other character.",
-        },
-      ],
-    },
-    de: {
-      name: "Alice",
-      version: "Ungeschickt wie immer",
-      text: "Gestaltwandel 3 UNFALLGEFÄHRDET Jedes Mal, wenn dieser Charakter erkundet, lege 1 Schadensmarker auf alle anderen Charaktere.",
-    },
-    fr: {
-      name: "Alice",
-      version: "Maladroite au possible",
-      text: "Alter 3 SUJETTE AUX ACCIDENTS Chaque fois que ce personnage est envoyé à l'aventure, placez 1 dommage sur chaque autre personnage.",
-    },
-    it: {
-      name: "Alice",
-      version: "Estremamente Goffa",
-      text: "Trasformazione 3 PROPENSA AGLI INCIDENTI Ogni volta che questo personaggio va all'avventura, metti 1 segnalino danno su ogni altro personaggio.",
-    },
-  },
   inkType: ["emerald", "ruby"],
   franchise: "Alice in Wonderland",
   set: "008",
@@ -81,6 +51,7 @@ export const aliceClumsyAsCanBe: CharacterCard = {
           owner: "any",
           selector: "all",
           zones: ["play"],
+          excludeSelf: true,
         },
         type: "put-damage",
       },
@@ -95,4 +66,5 @@ export const aliceClumsyAsCanBe: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: aliceClumsyAsCanBeI18n,
 };

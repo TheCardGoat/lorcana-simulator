@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { adelaideBonfamillePatronOfTheArtsI18n } from "./164-adelaide-bonfamille-patron-of-the-arts.i18n";
 
 export const adelaideBonfamillePatronOfTheArts: CharacterCard = {
   id: "XtA",
@@ -7,24 +8,6 @@ export const adelaideBonfamillePatronOfTheArts: CharacterCard = {
   cardType: "character",
   name: "Adelaide Bonfamille",
   version: "Patron of the Arts",
-  i18n: {
-    en: {
-      name: "Adelaide Bonfamille",
-      version: "Patron of the Arts",
-    },
-    de: {
-      name: "Madame Adelaide",
-      version: "Förderin der Kunst",
-    },
-    fr: {
-      name: "Adélaïde De Bonnefamille",
-      version: "Mécène des arts",
-    },
-    it: {
-      name: "Madame Adelaide",
-      version: "Patrona delle Arti",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Aristocats",
   set: "008",
@@ -41,4 +24,5 @@ export const adelaideBonfamillePatronOfTheArts: CharacterCard = {
     tcgPlayer: 631461,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: adelaideBonfamillePatronOfTheArtsI18n,
 };

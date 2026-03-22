@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { argesTheCyclopsI18n } from "./173-arges-the-cyclops.i18n";
 
 export const argesTheCyclops: CharacterCard = {
   id: "6DG",
@@ -7,24 +8,6 @@ export const argesTheCyclops: CharacterCard = {
   cardType: "character",
   name: "Arges",
   version: "The Cyclops",
-  i18n: {
-    en: {
-      name: "Arges",
-      version: "The Cyclops",
-    },
-    de: {
-      name: "Arges",
-      version: "Der Zyklop",
-    },
-    fr: {
-      name: "Argès",
-      version: "Le Cyclope",
-    },
-    it: {
-      name: "Arges",
-      version: "Il Ciclope",
-    },
-  },
   inkType: ["steel"],
   franchise: "Hercules",
   set: "004",
@@ -41,4 +24,5 @@ export const argesTheCyclops: CharacterCard = {
     tcgPlayer: 549558,
   },
   classifications: ["Storyborn", "Titan"],
+  i18n: argesTheCyclopsI18n,
 };

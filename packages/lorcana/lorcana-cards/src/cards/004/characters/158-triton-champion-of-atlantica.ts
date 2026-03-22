@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tritonChampionOfAtlanticaI18n } from "./158-triton-champion-of-atlantica.i18n";
 
 export const tritonChampionOfAtlantica: CharacterCard = {
   id: "0J0",
@@ -7,36 +8,6 @@ export const tritonChampionOfAtlantica: CharacterCard = {
   cardType: "character",
   name: "Triton",
   version: "Champion of Atlantica",
-  i18n: {
-    en: {
-      name: "Triton",
-      version: "Champion of Atlantica",
-      text: [
-        {
-          title: "Shift 6",
-        },
-        {
-          title: "IMPOSING PRESENCE",
-          description: "Opposing characters get -1 {S} for each location you have in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Triton",
-      version: "Herrscher von Atlantica",
-      text: "Gestaltwandel 6 EINDRUCKSVOLLE ERSCHEINUNG Gegnerische Charaktere erhalten -1 für jeden Ort, den du im Spiel hast.",
-    },
-    fr: {
-      name: "Triton",
-      version: "Champion d'Atlantica",
-      text: "Alter 6 PRÉSENCE IMPOSANTE Les personnages adverses subissent -1 pour chaque lieu que vous avez en jeu.",
-    },
-    it: {
-      name: "Tritone",
-      version: "Campione di Atlantica",
-      text: "Trasformazione 6 PRESENZA IMPONENTE I personaggi avversari ricevono -1 per ogni luogo che hai in gioco.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Little Mermaid",
   set: "004",
@@ -73,15 +44,22 @@ export const tritonChampionOfAtlantica: CharacterCard = {
     },
     {
       effect: {
-        modifier: -1,
+        modifier: {
+          type: "filtered-count",
+          filters: [],
+          owner: "you",
+          cardType: "location",
+          multiplier: -1,
+        },
         stat: "strength",
-        target: "CHOSEN_CHARACTER",
+        target: "ALL_OPPOSING_CHARACTERS",
         type: "modify-stat",
       },
       id: "1vc-2",
-      name: "IMPOSING PRESENCE Opposing",
+      name: "IMPOSING PRESENCE",
       text: "IMPOSING PRESENCE Opposing characters get -1 {S} for each location you have in play.",
       type: "static",
     },
   ],
+  i18n: tritonChampionOfAtlanticaI18n,
 };

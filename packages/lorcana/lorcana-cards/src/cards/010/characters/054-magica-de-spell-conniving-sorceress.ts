@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicaDeSpellConnivingSorceressI18n } from "./054-magica-de-spell-conniving-sorceress.i18n";
 
 export const magicaDeSpellConnivingSorceress: CharacterCard = {
   id: "dD1",
@@ -7,37 +8,6 @@ export const magicaDeSpellConnivingSorceress: CharacterCard = {
   cardType: "character",
   name: "Magica De Spell",
   version: "Conniving Sorceress",
-  i18n: {
-    en: {
-      name: "Magica De Spell",
-      version: "Conniving Sorceress",
-      text: [
-        {
-          title: "Shift 7 {I}",
-        },
-        {
-          title: "SHADOW'S GRASP",
-          description:
-            "When you play this character, if you used Shift to play her, you may draw 4 cards.",
-        },
-      ],
-    },
-    de: {
-      name: "Gundel Gaukeley",
-      version: "Hinterhältige Zauberin",
-      text: "Gestaltwandel 7 GRIFF DES SCHATTENS Wenn du diesen Charakter mithilfe von Gestaltwandel ausspielst, darfst du 4 Karten ziehen.",
-    },
-    fr: {
-      name: "Miss Tick",
-      version: "Sorcière machiavélique",
-      text: "Alter 7 EMPRISE DE L'OMBRE Si vous jouez ce personnage en utilisant sa capacité Alter, vous pouvez piocher 4 cartes.",
-    },
-    it: {
-      name: "Amelia",
-      version: "Strega Subdola",
-      text: "Trasformazione 7 NELLE GRINFIE DELL'OMBRA Quando giochi questo personaggio, se hai usato Trasformazione per giocarlo, puoi pescare 4 carte.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Ducktales",
   set: "010",
@@ -74,16 +44,17 @@ export const magicaDeSpellConnivingSorceress: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        type: "used-shift",
+      },
       effect: {
-        condition: {
-          type: "used-shift",
-        },
-        then: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "draw",
           amount: 4,
           target: "CONTROLLER",
-          type: "draw",
         },
-        type: "conditional",
       },
       id: "x7f-2",
       name: "SHADOW'S GRASP",
@@ -96,4 +67,5 @@ export const magicaDeSpellConnivingSorceress: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: magicaDeSpellConnivingSorceressI18n,
 };

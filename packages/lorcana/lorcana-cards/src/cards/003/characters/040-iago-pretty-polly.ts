@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { iagoPrettyPollyI18n } from "./040-iago-pretty-polly.i18n";
 
 export const iagoPrettyPolly: CharacterCard = {
   id: "lhS",
@@ -7,28 +8,6 @@ export const iagoPrettyPolly: CharacterCard = {
   cardType: "character",
   name: "Iago",
   version: "Pretty Polly",
-  i18n: {
-    en: {
-      name: "Iago",
-      version: "Pretty Polly",
-      text: "Evasive",
-    },
-    de: {
-      name: "Jago",
-      version: "Papageichen",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Iago",
-      version: "Gentil Coco",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Iago",
-      version: "Bel Pappagallino",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "003",
@@ -53,4 +32,5 @@ export const iagoPrettyPolly: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: iagoPrettyPollyI18n,
 };

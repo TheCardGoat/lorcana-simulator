@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { dellasMoonLullabyI18n } from "./028-dellas-moon-lullaby.i18n";
 
 export const dellasMoonLullaby: ActionCard = {
   id: "VOg",
@@ -6,24 +7,6 @@ export const dellasMoonLullaby: ActionCard = {
   reprints: ["set10-028"],
   cardType: "action",
   name: "Della's Moon Lullaby",
-  i18n: {
-    en: {
-      name: "Della's Moon Lullaby",
-      text: "Chosen opposing character gets -2 {S} until the start of your next turn. Draw a card.",
-    },
-    de: {
-      name: "Dellas Schlaflied",
-      text: "Gib einem gegnerischen Charakter deiner Wahl bis zu Beginn deines nächsten Zuges -2. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Berceuse de la Lune de Della",
-      text: "Choisissez un personnage adverse qui subit -2 jusqu'au début de votre prochain tour. Piochez une carte.",
-    },
-    it: {
-      name: "Ninna Nanna Lunare di Della",
-      text: "(Un personaggio con costo 2 o superiore può per cantare questa canzone gratis.) Un personaggio avversario a tua scelta riceve -2 fino all'inizio del tuo prossimo turno. Pesca una carta.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Ducktales",
   set: "010",
@@ -59,4 +42,5 @@ export const dellasMoonLullaby: ActionCard = {
       type: "action",
     },
   ],
+  i18n: dellasMoonLullabyI18n,
 };

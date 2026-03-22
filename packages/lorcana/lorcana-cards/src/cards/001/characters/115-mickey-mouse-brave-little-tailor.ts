@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseBraveLittleTailorI18n } from "./115-mickey-mouse-brave-little-tailor.i18n";
 
 export const mickeyMouseBraveLittleTailor: CharacterCard = {
   id: "vrS",
@@ -7,43 +8,6 @@ export const mickeyMouseBraveLittleTailor: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Brave Little Tailor",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Brave Little Tailor",
-      text: "Evasive",
-    },
-    de: {
-      name: "Mickey Mouse",
-      version: "Brave Little Tailor",
-      text: [
-        {
-          title: "Evasive",
-          description: "(Only characters with Evasive can challenge this character.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Brave Little Tailor",
-      text: [
-        {
-          title: "Evasive",
-          description: "(Only characters with Evasive can challenge this character.)",
-        },
-      ],
-    },
-    it: {
-      name: "Mickey Mouse",
-      version: "Brave Little Tailor",
-      text: [
-        {
-          title: "Evasive",
-          description: "(Only characters with Evasive can challenge this character.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "001",
   cardNumber: 115,
@@ -53,7 +17,6 @@ export const mickeyMouseBraveLittleTailor: CharacterCard = {
   willpower: 5,
   lore: 4,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_a0a1e1bb99794f04991929ced6001ae8",
     tcgPlayer: 559532,
@@ -68,4 +31,5 @@ export const mickeyMouseBraveLittleTailor: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: mickeyMouseBraveLittleTailorI18n,
 };

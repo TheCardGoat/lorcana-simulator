@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { painImmortalSidekickI18n } from "./081-pain-immortal-sidekick.i18n";
 
 export const painImmortalSidekick: CharacterCard = {
   id: "eqA",
@@ -7,24 +8,6 @@ export const painImmortalSidekick: CharacterCard = {
   cardType: "character",
   name: "Pain",
   version: "Immortal Sidekick",
-  i18n: {
-    en: {
-      name: "Pain",
-      version: "Immortal Sidekick",
-    },
-    de: {
-      name: "Pech",
-      version: "Unsterblicher Handlanger",
-    },
-    fr: {
-      name: "Peine",
-      version: "Sous-fifre immortel",
-    },
-    it: {
-      name: "Pena",
-      version: "Tirapiedi Immortale",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "004",
@@ -41,4 +24,5 @@ export const painImmortalSidekick: CharacterCard = {
     tcgPlayer: 550578,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: painImmortalSidekickI18n,
 };

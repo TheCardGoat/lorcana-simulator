@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { helgaSinclairRighthandWomanI18n } from "./175-helga-sinclair-right-hand-woman.i18n";
 
 export const helgaSinclairRighthandWoman: CharacterCard = {
   id: "Sz8",
@@ -7,28 +8,6 @@ export const helgaSinclairRighthandWoman: CharacterCard = {
   cardType: "character",
   name: "Helga Sinclair",
   version: "Right-Hand Woman",
-  i18n: {
-    en: {
-      name: "Helga Sinclair",
-      version: "Right-Hand Woman",
-      text: "Challenger +2",
-    },
-    de: {
-      name: "Helga Sinclair",
-      version: "Rechte Hand",
-      text: "Herausfordern +2",
-    },
-    fr: {
-      name: "Helga Sinclair",
-      version: "Bras droit",
-      text: "Offensif +2",
-    },
-    it: {
-      name: "Helga Sinclair",
-      version: "Braccio Destro",
-      text: "Sfidante +2",
-    },
-  },
   inkType: ["steel"],
   franchise: "Atlantis",
   set: "003",
@@ -54,4 +33,5 @@ export const helgaSinclairRighthandWoman: CharacterCard = {
       text: "Challenger +2",
     },
   ],
+  i18n: helgaSinclairRighthandWomanI18n,
 };

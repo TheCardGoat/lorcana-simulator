@@ -2,10 +2,11 @@ import type {
   CardInstanceId,
   MoveEnumerationContext,
   MoveExecutionContext,
+  MoveInput,
   MoveValidationContext,
   PlayerId,
 } from "#core";
-import type { LorcanaCard } from "@tcg/lorcana-types";
+import type { LorcanaCard, LorcanaCardDefinition } from "@tcg/lorcana-types";
 import type {
   LorcanaTargetDSL,
   LorcanaPlayerFilter,
@@ -14,8 +15,9 @@ import type {
 import { normalizeLorcanaTarget } from "@tcg/lorcana-types/targeting";
 import type { CardPlayedPayload, LorcanaG } from "../../types";
 import type { DynamicAmountEventSnapshot } from "../../types/domain-events";
-import { hasKeyword } from "../../card-utils";
+import { cardHasName, hasKeyword } from "../../card-utils";
 import {
+  createProjectionState,
   getEffectiveLore,
   getEffectiveStrength,
   type DerivedStateContext,
@@ -66,12 +68,12 @@ export type TargetSelectionInput =
   | undefined;
 
 type EffectTargetValidationContext = Pick<
-  MoveValidationContext<LorcanaG, LorcanaCard>,
+  MoveValidationContext<MoveInput>,
   "G" | "playerId" | "framework" | "cards"
 >;
 
 type EffectTargetEnumerationContext = Pick<
-  MoveEnumerationContext<LorcanaG, LorcanaCard>,
+  MoveEnumerationContext,
   "G" | "playerId" | "framework" | "cards"
 >;
 
@@ -79,7 +81,7 @@ type EffectTargetReadonlyContext = Pick<EffectTargetValidationContext, "framewor
   Partial<Pick<EffectTargetValidationContext, "G" | "playerId">>;
 
 type EffectTargetExecutionContext = Pick<
-  MoveExecutionContext<LorcanaG, LorcanaCard>,
+  MoveExecutionContext<MoveInput>,
   "G" | "playerId" | "framework" | "cards"
 >;
 
@@ -147,15 +149,12 @@ function isAwaitingParentTargetComparison(
 }
 
 function isCardStillInPlay(ctx: EffectTargetRuntimeContext, cardId: CardInstanceId): boolean {
-  const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+  const zoneKey = ctx.framework.zones.getCardZone(cardId);
   return typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"));
 }
 
 function getDerivedState(ctx: EffectTargetRuntimeContext): DerivedStateContext {
-  return {
-    ...ctx.framework.state,
-    G: ctx.G,
-  } as DerivedStateContext;
+  return createProjectionState(ctx.framework.state, ctx.G);
 }
 
 function resolveParentTargetComparisonValue(
@@ -287,7 +286,8 @@ export function isPlayerTargetDescriptor(target: unknown): target is PlayerTarge
     selector !== "opponent" &&
     selector !== "each-opponent" &&
     selector !== "each-player" &&
-    selector !== "chosen"
+    selector !== "chosen" &&
+    selector !== "challenging-player"
   ) {
     return false;
   }
@@ -302,7 +302,7 @@ export function isPlayerTargetDescriptor(target: unknown): target is PlayerTarge
 }
 
 export function resolveCurrentTurnPlayerId(ctx: EffectTargetRuntimeContext): PlayerId | undefined {
-  return (ctx.framework.state.currentPlayer ?? ctx.framework.state.ctx.priority.holder) as
+  return (ctx.framework.state.currentPlayer ?? ctx.framework.state.priority.holder) as
     | PlayerId
     | undefined;
 }
@@ -379,19 +379,19 @@ export function getTargetFilters(descriptor: FilterCarrier): FilterRecord[] {
 function getCardDefinition(
   ctx: EffectTargetRuntimeContext,
   cardId: CardInstanceId,
-): Record<string, unknown> | undefined {
+): LorcanaCardDefinition | undefined {
   const runtimeDefinition = ctx.cards.get?.(cardId)?.definition;
   if (
     runtimeDefinition &&
     typeof runtimeDefinition === "object" &&
     !Array.isArray(runtimeDefinition)
   ) {
-    return runtimeDefinition as unknown as Record<string, unknown>;
+    return runtimeDefinition as unknown as LorcanaCardDefinition;
   }
 
   const definition = ctx.cards.getDefinition(cardId);
   return definition && typeof definition === "object" && !Array.isArray(definition)
-    ? (definition as unknown as Record<string, unknown>)
+    ? (definition as unknown as LorcanaCardDefinition)
     : undefined;
 }
 
@@ -406,7 +406,10 @@ export function resolveCardParentId(
 
   const playerIds = ctx.framework.state.playerIds;
   for (const playerId of playerIds) {
-    const playCards = ctx.framework.zones.getCards({ zone: "play", playerId }) as CardInstanceId[];
+    const playCards = ctx.framework.zones.getCards({
+      zone: "play",
+      playerId,
+    }) as CardInstanceId[];
     for (const playCardId of playCards) {
       const cardsUnder = ctx.cards.require(playCardId).meta?.cardsUnder;
       if (Array.isArray(cardsUnder) && cardsUnder.includes(cardId)) {
@@ -422,6 +425,7 @@ function resolveReferenceCandidates(
   cardPlayed: CardPlayedPayload | undefined,
   descriptor: TargetDescriptor,
   queryContext: QueryResolutionContext | undefined,
+  G?: { challengeState?: { attacker?: CardInstanceId; defender?: CardInstanceId } },
 ): CardInstanceId[] {
   const reference = descriptor.reference;
   if (!reference) {
@@ -441,6 +445,11 @@ function resolveReferenceCandidates(
     | undefined;
   const triggerAttackerId = queryContext?.eventSnapshot?.attackerId as CardInstanceId | undefined;
   const triggerDefenderId = queryContext?.eventSnapshot?.defenderId as CardInstanceId | undefined;
+  const triggerDestinationZone = queryContext?.eventSnapshot?.toZone;
+  const triggerDestinationCardId =
+    typeof triggerDestinationZone === "string" && triggerDestinationZone.startsWith("location:")
+      ? (triggerDestinationZone.slice("location:".length) as CardInstanceId)
+      : undefined;
 
   switch (reference) {
     case "source":
@@ -448,12 +457,22 @@ function resolveReferenceCandidates(
       return sourceCardId ? [sourceCardId] : [];
     case "trigger-subject":
       return triggerSubjectCardId ? [triggerSubjectCardId] : [];
+    case "trigger-destination":
+      return triggerDestinationCardId ? [triggerDestinationCardId] : [];
     case "trigger-source":
       return triggerSourceCardId ? [triggerSourceCardId] : [];
     case "attacker":
-      return triggerAttackerId ? [triggerAttackerId] : [];
+      return triggerAttackerId
+        ? [triggerAttackerId]
+        : G?.challengeState?.attacker
+          ? [G.challengeState.attacker]
+          : [];
     case "defender":
-      return triggerDefenderId ? [triggerDefenderId] : [];
+      return triggerDefenderId
+        ? [triggerDefenderId]
+        : G?.challengeState?.defender
+          ? [G.challengeState.defender]
+          : [];
     case "previous-target":
     case "selected-first":
       return selectedTargets.length > 0 ? [selectedTargets[0]!] : [];
@@ -530,9 +549,7 @@ export function passesFilter(
 
     case "owner": {
       const owner = String(filter.owner ?? "any");
-      const cardOwner = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID as
-        | PlayerId
-        | undefined;
+      const cardOwner = ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined;
       if (!cardOwner) {
         return false;
       }
@@ -548,6 +565,24 @@ export function passesFilter(
     case "challenged-this-turn": {
       const challengedCharacters = ctx.G?.turnMetadata?.challengedCharactersThisTurn ?? [];
       return challengedCharacters.includes(cardId);
+    }
+
+    case "challenge-role": {
+      const role = String(filter.role ?? "");
+      const challengeState = ctx.G?.challengeState;
+      if (!challengeState) {
+        return false;
+      }
+
+      if (role === "attacker") {
+        return cardId === challengeState.attacker;
+      }
+
+      if (role === "defender") {
+        return cardId === challengeState.defender;
+      }
+
+      return false;
     }
 
     case "card-type": {
@@ -578,7 +613,7 @@ export function passesFilter(
         return true;
       }
 
-      const currentTurn = ctx.framework.state.ctx.status?.turn ?? 1;
+      const currentTurn = ctx.framework.state.status?.turn ?? 1;
       const hasStaticKeyword = cardDefinition
         ? hasKeyword(cardDefinition as never, keyword)
         : false;
@@ -591,33 +626,33 @@ export function passesFilter(
     }
 
     case "name": {
-      const cardName = typeof cardDefinition?.name === "string" ? cardDefinition.name : "";
       if (typeof filter.name === "string") {
-        return cardName === filter.name;
+        return cardDefinition ? cardHasName(cardDefinition, filter.name) : false;
       }
       if (typeof filter.equals === "string") {
-        return cardName === filter.equals;
+        return cardDefinition ? cardHasName(cardDefinition, filter.equals) : false;
       }
       if (typeof filter.contains === "string") {
+        const cardName = typeof cardDefinition?.name === "string" ? cardDefinition.name : "";
         return cardName.includes(filter.contains);
       }
       return true;
     }
 
     case "has-name": {
-      const cardName = typeof cardDefinition?.name === "string" ? cardDefinition.name : "";
       const expectedName = String(filter.name ?? "");
-      return expectedName.length > 0 ? cardName === expectedName : true;
+      return expectedName.length > 0 && cardDefinition
+        ? cardHasName(cardDefinition, expectedName)
+        : true;
     }
 
     case "named-card": {
-      const cardName = typeof cardDefinition?.name === "string" ? cardDefinition.name : "";
       const namedCardName = options?.eventSnapshot?.namedCardName?.trim();
       return (
-        cardName.length > 0 &&
         typeof namedCardName === "string" &&
         namedCardName.length > 0 &&
-        cardName === namedCardName
+        cardDefinition !== undefined &&
+        cardHasName(cardDefinition, namedCardName)
       );
     }
 
@@ -725,7 +760,7 @@ export function passesFilter(
 
     case "zone": {
       const expectedZone = String(filter.zone ?? "");
-      const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+      const zoneKey = ctx.framework.zones.getCardZone(cardId);
       if (typeof zoneKey !== "string" || expectedZone.length === 0) {
         return true;
       }
@@ -764,7 +799,19 @@ export function passesFilter(
       const targetLocationId = ctx.cards.require(cardId).meta?.atLocationId as
         | CardInstanceId
         | undefined;
-      return Boolean(sourceLocationId && targetLocationId && sourceLocationId === targetLocationId);
+      if (sourceLocationId && targetLocationId && sourceLocationId === targetLocationId) {
+        return true;
+      }
+
+      // When a location is banished, characters are evacuated (atLocationId cleared)
+      // before condition evaluation. Use the snapshot to check if the character
+      // was at the source location before banishment.
+      const charsSnapshot = options?.eventSnapshot?.charactersAtSourceLocationBeforeBanish;
+      if (sourceLocationId && !targetLocationId && Array.isArray(charsSnapshot)) {
+        return charsSnapshot.includes(cardId);
+      }
+
+      return false;
     }
 
     case "cards-under": {
@@ -781,9 +828,7 @@ export function passesFilter(
         return false;
       }
 
-      const parentOwner = ctx.framework.state.ctx.zones.private.cardIndex[parentId]?.ownerID as
-        | PlayerId
-        | undefined;
+      const parentOwner = ctx.framework.zones.getCardOwner(parentId) as PlayerId | undefined;
       const owner = String(filter.owner ?? "any");
       if (owner === "you" && parentOwner !== controllerId) {
         return false;
@@ -804,6 +849,60 @@ export function passesFilter(
         typeof parentDefinition?.cardType === "string" &&
         expectedCardTypes.includes(parentDefinition.cardType),
       );
+    }
+
+    case "ink-type": {
+      const expectedInkType = String(filter.inkType ?? "");
+      const inkTypes = cardDefinition?.inkType;
+      return (
+        expectedInkType.length > 0 &&
+        Array.isArray(inkTypes) &&
+        inkTypes.some((value) => value === expectedInkType)
+      );
+    }
+
+    case "attribute": {
+      const attribute = String(filter.attribute ?? "");
+      if (attribute === "inkwell") {
+        // AttributeBooleanFilter: { type: "attribute", attribute: "inkwell", value: boolean }
+        // Matches cards that are inkable (can be placed in inkwell)
+        const expectedValue = filter.value === true;
+        const isInkable = Boolean((cardDefinition as { inkable?: boolean } | undefined)?.inkable);
+        return isInkable === expectedValue;
+      }
+      // Numeric attributes
+      if (
+        attribute === "cost" ||
+        attribute === "strength" ||
+        attribute === "willpower" ||
+        attribute === "lore"
+      ) {
+        const operator = normalizeFilterOperator(filter);
+        const value = normalizeFilterValue(filter);
+        if (typeof value !== "number" || !Number.isFinite(value)) {
+          return false;
+        }
+        const attrValue = Number(
+          (cardDefinition as Record<string, unknown> | undefined)?.[attribute] ?? 0,
+        );
+        return compareNumbers(attrValue, operator, value);
+      }
+      // String attributes
+      if (attribute === "name" || attribute === "title") {
+        const attrValue = String(
+          (cardDefinition as Record<string, unknown> | undefined)?.[attribute] ?? "",
+        );
+        const comparison = String(filter.comparison ?? "equals");
+        const expectedStr = String(filter.value ?? "");
+        if (comparison === "equals") {
+          return attrValue === expectedStr;
+        }
+        if (comparison === "contains") {
+          return attrValue.includes(expectedStr);
+        }
+        return false;
+      }
+      return !strictUnknownFilters;
     }
 
     default:
@@ -961,8 +1060,8 @@ function resolveCandidateTargetsInternal(
   const candidates = new Set<CardInstanceId>();
 
   if (typeof descriptor.reference === "string") {
-    for (const cardId of resolveReferenceCandidates(cardPlayed, descriptor, queryContext)) {
-      if (typeof cardId === "string" && ctx.framework.state.ctx.zones.private.cardIndex[cardId]) {
+    for (const cardId of resolveReferenceCandidates(cardPlayed, descriptor, queryContext, ctx.G)) {
+      if (typeof cardId === "string" && ctx.framework.zones.getCardZone(cardId) !== undefined) {
         candidates.add(cardId);
       }
     }
@@ -980,7 +1079,7 @@ function resolveCandidateTargetsInternal(
     }
   }
 
-  const cardTypeFilters =
+  const cardTypeFilters: string[] =
     descriptor.cardTypes ?? (descriptor.cardType ? [descriptor.cardType] : []);
   let resolvedCandidates = [...candidates];
   if (queryContext?.sourceCardId && zones.includes("hand")) {
@@ -988,7 +1087,9 @@ function resolveCandidateTargetsInternal(
       (cardId) => cardId !== queryContext.sourceCardId,
     );
   }
-  if (cardTypeFilters.length > 0) {
+  // "card" is a wildcard meaning "any card type" — skip type filtering when present
+  const hasWildcardCardType = cardTypeFilters.includes("card");
+  if (cardTypeFilters.length > 0 && !hasWildcardCardType) {
     resolvedCandidates = resolvedCandidates.filter((cardId) => {
       const definition = getCardDefinition(ctx, cardId);
       return Boolean(
@@ -1014,21 +1115,21 @@ function resolveCandidateTargetsInternal(
   if (descriptor.selector === "chosen") {
     const choosingPlayerId = (ctx.playerId ??
       ctx.framework.state.currentPlayer ??
-      ctx.framework.state.ctx.priority.holder ??
+      ctx.framework.state.priority.holder ??
       controllerId) as PlayerId;
-    const currentTurn = ctx.framework.state.ctx.status?.turn ?? 1;
+    const currentTurn = ctx.framework.state.status?.turn ?? 1;
     resolvedCandidates = resolvedCandidates.filter((cardId) => {
-      const cardEntry = ctx.framework.state.ctx.zones.private.cardIndex[cardId];
-      const ownerId = cardEntry?.ownerID as PlayerId | undefined;
+      const ownerId = ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined;
       if (!ownerId || ownerId === choosingPlayerId) {
         return true;
       }
 
-      const zoneType = cardEntry?.zoneKey?.split(":")[0];
+      const zoneType = ctx.framework.zones.getCardZone(cardId)?.split(":")[0];
       const cardDefinition = getCardDefinition(ctx, cardId);
-      const isCharacter = cardDefinition?.cardType === "character";
+      const isCharacterOrItem =
+        cardDefinition?.cardType === "character" || cardDefinition?.cardType === "item";
 
-      if (!isCharacter || zoneType !== "play") {
+      if (!isCharacterOrItem || zoneType !== "play") {
         return true;
       }
 
@@ -1119,6 +1220,18 @@ export function resolvePlayerTargets(
     case "chosen":
       candidates = queryContext?.strictUnknownFilters ? [] : [...ctx.framework.state.playerIds];
       break;
+    case "challenging-player": {
+      const attackerCardId = queryContext?.eventSnapshot?.attackerId as CardInstanceId | undefined;
+      if (attackerCardId) {
+        const attackerOwner = ctx.framework.zones.getCardOwner(attackerCardId) as
+          | PlayerId
+          | undefined;
+        candidates = attackerOwner ? [attackerOwner] : [];
+      } else {
+        candidates = [];
+      }
+      break;
+    }
     default:
       candidates = [];
       break;
@@ -1284,7 +1397,7 @@ export function resolveTargetPlayerIds(
 
   const controllerId =
     options?.controllerId ??
-    ((ctx.framework.state.currentPlayer ?? ctx.framework.state.ctx.priority.holder) as
+    ((ctx.framework.state.currentPlayer ?? ctx.framework.state.priority.holder) as
       | PlayerId
       | undefined);
   if (!controllerId) {

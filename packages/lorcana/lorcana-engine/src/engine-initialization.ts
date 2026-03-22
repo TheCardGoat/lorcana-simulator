@@ -20,10 +20,10 @@ export type LorcanaBaseEngineParams = {
   matchID?: string;
   gameID?: string;
   goingFirst: PlayerId;
-  cardCatalog: CardCatalog<LorcanaCard>;
+  cardCatalog: CardCatalog;
   players: Player[];
   cardsMaps: LorcanaCardsMaps;
-  staticResources?: MatchStaticResources<LorcanaCard>;
+  staticResources?: MatchStaticResources;
   debugServerCommunication?: boolean;
 };
 
@@ -34,14 +34,14 @@ type LorcanaStaticResourcesParams = Pick<
 
 export type LorcanaBaseInitialization = {
   players: Player[];
-  cardCatalog: CardCatalog<LorcanaCard>;
-  staticResources: MatchStaticResources<LorcanaCard>;
+  cardCatalog: CardCatalog;
+  staticResources: MatchStaticResources;
   cardInstanceToDefinitionId: Map<string, string>;
 };
 
 export function resolveLorcanaStaticResources(
   init: LorcanaStaticResourcesParams,
-): MatchStaticResources<LorcanaCard> {
+): MatchStaticResources {
   return (
     init.staticResources ||
     createMatchStaticResourcesFromCardsMaps(init.cardsMaps, init.cardCatalog, lorcanaRuntimeZones)

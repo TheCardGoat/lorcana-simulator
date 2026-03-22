@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mchornIcecoldOfficerI18n } from "./181-mchorn-ice-cold-officer.i18n";
 
 export const mchornIcecoldOfficer: CharacterCard = {
   id: "8pd",
@@ -7,34 +8,6 @@ export const mchornIcecoldOfficer: CharacterCard = {
   cardType: "character",
   name: "McHorn",
   version: "Ice-Cold Officer",
-  i18n: {
-    en: {
-      name: "McHorn",
-      version: "Ice-Cold Officer",
-      text: "Bodyguard",
-    },
-    de: {
-      name: "McHorn",
-      version: "Eiskalter Offizier",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "McCorne",
-      version: "Policier glacial",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "McHorn",
-      version: "Agente Gelido",
-      text: "Guardiano",
-    },
-  },
   inkType: ["steel"],
   franchise: "Zootropolis",
   set: "011",
@@ -59,4 +32,5 @@ export const mchornIcecoldOfficer: CharacterCard = {
       text: "Bodyguard",
     },
   ],
+  i18n: mchornIcecoldOfficerI18n,
 };

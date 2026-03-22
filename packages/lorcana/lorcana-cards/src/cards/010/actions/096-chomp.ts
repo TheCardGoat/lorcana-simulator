@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { chompI18n } from "./096-chomp.i18n";
 
 export const chomp: ActionCard = {
   id: "vgW",
@@ -6,24 +7,6 @@ export const chomp: ActionCard = {
   reprints: ["set10-096"],
   cardType: "action",
   name: "Chomp!",
-  i18n: {
-    en: {
-      name: "Chomp!",
-      text: "Deal 2 damage to chosen damaged character.",
-    },
-    de: {
-      name: "Mampfen!",
-      text: "Füge einem beschädigten Charakter deiner Wahl 2 Schaden zu.",
-    },
-    fr: {
-      name: "Croque !",
-      text: "Choisissez un personnage ayant au moins un dommage et infligez-lui 2 dommages.",
-    },
-    it: {
-      name: "Gnam!",
-      text: "Infliggi 2 danni a un personaggio danneggiato a tua scelta.",
-    },
-  },
   inkType: ["emerald"],
   set: "010",
   cardNumber: 96,
@@ -45,4 +28,5 @@ export const chomp: ActionCard = {
       type: "action",
     },
   ],
+  i18n: chompI18n,
 };

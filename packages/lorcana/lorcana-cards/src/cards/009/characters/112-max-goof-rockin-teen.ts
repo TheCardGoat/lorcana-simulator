@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { maxGoofRockinTeenI18n } from "./112-max-goof-rockin-teen.i18n";
 
 export const maxGoofRockinTeen: CharacterCard = {
   id: "X6A",
@@ -7,42 +8,6 @@ export const maxGoofRockinTeen: CharacterCard = {
   cardType: "character",
   name: "Max Goof",
   version: "Rockin' Teen",
-  i18n: {
-    en: {
-      name: "Max Goof",
-      version: "Rockin' Teen",
-      text: [
-        {
-          title: "Singer 5",
-        },
-        {
-          title: "I JUST WANNA STAY HOME",
-          description: "This character can't move to locations.",
-        },
-      ],
-    },
-    de: {
-      name: "Max Goof",
-      version: "Rockiger Teenie",
-      text: [
-        {
-          title: "Singen 5",
-          description:
-            "(Die Kosten dieses Charakters gelten als 5 für das Singen von Liedern.) ICH MÖCHTE EINFACH ZU HAUSE BLEIBEN Dieser Charakter kann nicht zu Orten bewegt werden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Max Dingo",
-      version: "Ado qui rock",
-      text: "Mélomane 5 (Ce personnage est considéré comme ayant un coût de 5 pour chanter des chansons.) JE VEUX JUSTE RESTER À LA MAISON Ce personnage ne peut pas être déplacé sur un lieu.",
-    },
-    it: {
-      name: "Max Pippo",
-      version: "Adolescente che Spacca",
-      text: "Melodioso 5 VOGLIO SOLO RESTARE A CASA Questo personaggio non può spostarsi nei luoghi.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Goofy Movie",
   set: "009",
@@ -68,4 +33,5 @@ export const maxGoofRockinTeen: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [],
+  i18n: maxGoofRockinTeenI18n,
 };

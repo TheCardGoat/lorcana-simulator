@@ -317,13 +317,13 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
   - Card: `002/characters/045-kuzco-wanted-llama.ts`
     - `**OK, WHERE AM I?** When this character is banished, you may draw a card.`
 
-- [ ] **002/characters/046-madam-mim-fox.test.ts**
+- [x] **002/characters/046-madam-mim-fox.test.ts**
   - Card: `002/characters/046-madam-mim-fox.ts`
     - `**Rush** _(This character can challenge the turn they're played.)_`
     - `skipping the effect banishes her`
     - `return another chosen character of yours to your hand.`
 
-- [ ] **002/characters/047-madam-mim-purple-dragon.test.ts**
+- [x] **002/characters/047-madam-mim-purple-dragon.test.ts**
   - Card: `002/characters/047-madam-mim-purple-dragon.ts`
     - `Evasive`
     - `skipping the effect banishes her`
@@ -689,7 +689,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
   - Card: `002/characters/171-beast-forbidding-recluse.ts`
     - `**YOU'RE NOT WELCOME HERE** When you play this character, you may deal 1 damage to chosen character.`
 
-- [ ] **002/characters/172-beast-selfless-protector.test.ts**
+- [x] **002/characters/172-beast-selfless-protector.test.ts**
   - Card: `002/characters/172-beast-selfless-protector.ts`
     - `**SHIELD ANOTHER** Whenever one of your other characters would be dealt damage, put that many damage counters on this character instead.`
 
@@ -1075,7 +1075,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
   - Card: `MISSING`
     - `**IN SEARCH OF AURORA** Whenever you play a character named Maleficent, you may look at the top card of your deck. Put it on either the top or the bottom of your deck.`
 
-- [ ] **003/characters/038-genie-supportive-friend.test.ts**
+- [x] **003/characters/038-genie-supportive-friend.test.ts**
   - Card: `MISSING`
     - `**THREE WISHES** Whenever this character quests, you may shuffle this card into your deck to draw 3 cards.`
 
@@ -4366,7 +4366,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
 
 - [ ] **007/characters/013-mirabel-madrigal-hopeful-dreamer.test.ts**
   - Card: `007/characters/013-mirabel-madrigal-hopeful-dreamer.ts`
-    - `Evasive (Only characters with Evasive can challenge this character.) Singer 5 (This character counts as cost 5 to sing songs.)`
+    - `Evasive Singer 5 (This character counts as cost 5 to sing songs.)`
 
 - [ ] **007/characters/014-aurora-waking-beauty.test.ts**
   - Card: `007/characters/014-aurora-waking-beauty.ts`

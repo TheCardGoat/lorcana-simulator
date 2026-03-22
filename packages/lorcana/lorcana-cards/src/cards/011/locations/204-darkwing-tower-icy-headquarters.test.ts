@@ -77,13 +77,10 @@ const opposingNonVillain = createMockCharacter({
 
 function resolveTowerTrigger(
   testEngine: LorcanaMultiplayerTestEngine,
-  options: { resolveOptional: boolean; targets?: CardInput[] },
+  options: { resolveOptional?: boolean; targets?: CardInput[] },
 ) {
   expect(
-    testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-  ).toBeSuccessfulCommand();
-  expect(
-    testEngine.asPlayerOne().resolveNextPending({
+    testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
       resolveOptional: options.resolveOptional,
       targets: options.targets,
     }),
@@ -251,11 +248,7 @@ describe("Darkwing Tower - Icy Headquarters", () => {
       }),
     ).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({
-        resolveOptional: true,
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
         targets: [towerResident],
       }),
     ).toBeSuccessfulCommand();

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { littleJohnImpermanentOutlawI18n } from "./092-little-john-impermanent-outlaw.i18n";
 
 export const littleJohnImpermanentOutlaw: CharacterCard = {
   id: "eD4",
@@ -7,42 +8,6 @@ export const littleJohnImpermanentOutlaw: CharacterCard = {
   cardType: "character",
   name: "Little John",
   version: "Impermanent Outlaw",
-  i18n: {
-    en: {
-      name: "Little John",
-      version: "Impermanent Outlaw",
-      text: [
-        {
-          title: "Boost 3 {I}",
-        },
-        {
-          title: "READY TO RASSLE",
-          description: "Whenever you put a card under this character, ready him.",
-        },
-      ],
-    },
-    de: {
-      name: "Little John",
-      version: "Vorübergehend Geächteter",
-      text: "Stärken 3 BEREIT, ZU RANDALIEREN Jedes Mal, wenn du eine Karte unter diesen Charakter legst, mache ihn bereit.",
-    },
-    fr: {
-      name: "Petit Jean",
-      version: "Hors-la-loi éphémère",
-      text: "Boost 3 PRÊT À LA CASTAGNE Chaque fois qu'une carte est placée sous ce personnage, redressez-le.",
-    },
-    it: {
-      name: "Little John",
-      version: "Fuorilegge Fugace",
-      text: [
-        {
-          title: "Potenziamento 3",
-          description:
-            "(Una volta durante il tuo turno, puoi pagare 3 per mettere la prima carta del tuo mazzo a faccia in giù sotto a questo personaggio.) PRONTO ALLA LOTTA Ogni volta che metti una carta sotto a questo personaggio, preparalo.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "010",
@@ -77,18 +42,23 @@ export const littleJohnImpermanentOutlaw: CharacterCard = {
     },
     {
       effect: {
-        target: "CHOSEN_CHARACTER",
-        type: "ready",
+        chooser: "CONTROLLER",
+        effect: {
+          target: "SELF",
+          type: "ready",
+        },
+        type: "optional",
       },
       id: "196-2",
       name: "READY TO RASSLE",
       text: "READY TO RASSLE Whenever you put a card under this character, ready him.",
       trigger: {
-        event: "play",
+        event: "put-card-under",
         on: "SELF",
-        timing: "when",
+        timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: littleJohnImpermanentOutlawI18n,
 };

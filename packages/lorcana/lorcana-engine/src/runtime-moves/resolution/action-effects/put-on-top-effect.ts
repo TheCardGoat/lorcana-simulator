@@ -21,9 +21,8 @@ function moveCardToTopOfOwnerDeck(
   fallbackPlayerId: PlayerId,
 ): void {
   const ownerId =
-    (ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID as PlayerId | undefined) ??
-    fallbackPlayerId;
-  const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+    (ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined) ?? fallbackPlayerId;
+  const zoneKey = ctx.framework.zones.getCardZone(cardId);
 
   if (typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"))) {
     moveCardOutOfPlayWithStack(ctx, cardId, {

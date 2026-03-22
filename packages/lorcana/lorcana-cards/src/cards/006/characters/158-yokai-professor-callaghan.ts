@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yokaiProfessorCallaghanI18n } from "./158-yokai-professor-callaghan.i18n";
 
 export const yokaiProfessorCallaghan: CharacterCard = {
   id: "sac",
@@ -7,24 +8,6 @@ export const yokaiProfessorCallaghan: CharacterCard = {
   cardType: "character",
   name: "Yokai",
   version: "Professor Callaghan",
-  i18n: {
-    en: {
-      name: "Yokai",
-      version: "Professor Callaghan",
-    },
-    de: {
-      name: "Yokai",
-      version: "Professor Callaghan",
-    },
-    fr: {
-      name: "Yokai",
-      version: "Professeur Callaghan",
-    },
-    it: {
-      name: "Yokai",
-      version: "Professor Callaghan",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "006",
@@ -41,4 +24,5 @@ export const yokaiProfessorCallaghan: CharacterCard = {
     tcgPlayer: 587973,
   },
   classifications: ["Storyborn", "Villain", "Inventor"],
+  i18n: yokaiProfessorCallaghanI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { megaraLiberatedOneI18n } from "./080-megara-liberated-one.i18n";
 
 export const megaraLiberatedOne: CharacterCard = {
   id: "q5j",
@@ -7,37 +8,6 @@ export const megaraLiberatedOne: CharacterCard = {
   cardType: "character",
   name: "Megara",
   version: "Liberated One",
-  i18n: {
-    en: {
-      name: "Megara",
-      version: "Liberated One",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "PEOPLE ALWAYS DO CRAZY THINGS",
-          description:
-            "Whenever you play a character named Hercules, you may ready this character.",
-        },
-      ],
-    },
-    de: {
-      name: "Meg",
-      version: "Die Befreite",
-      text: "Behütet SCHON VERRÜCKT, WAS MENSCHEN ALLES MACHEN Jedes Mal, wenn du einen Hercules-Charakter ausspielst, darfst du diesen Charakter bereit machen.",
-    },
-    fr: {
-      name: "Mégara",
-      version: "Libérée",
-      text: "Hors d'atteinte LES GENS FONT PARFOIS DE DRÔLES DE CHOSES Chaque fois que vous jouez un personnage Hercule, vous pouvez redresser ce personnage.",
-    },
-    it: {
-      name: "Megara",
-      version: "Liberata",
-      text: "Protetto LE PERSONE FANNO SEMPRE COSE PAZZE Ogni volta che giochi un personaggio chiamato Ercole, puoi preparare questo personaggio.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "004",
@@ -98,4 +68,5 @@ export const megaraLiberatedOne: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: megaraLiberatedOneI18n,
 };

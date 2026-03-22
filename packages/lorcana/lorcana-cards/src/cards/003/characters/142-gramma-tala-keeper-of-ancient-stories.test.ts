@@ -1,32 +1,46 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import {
-//   GrammaTalaKeeperOfAncientStories,
-//   MrSmeeBumblingMate,
-// } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { cleansingRainwater } from "@lorcanito/lorcana-engine/cards/003/items/items";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Gramma Tala - Keeper of Ancient Stories", () => {
-//   It("**THERE WAS ONLY OCEAN** When you play this character, look at the top 2 cards of your deck. You may add one into your hand. Put the rest on the bottom of your deck in any order.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: grammaTalaKeeperOfAncientStories.cost,
-//       Hand: [grammaTalaKeeperOfAncientStories],
-//       Deck: [mrSmeeBumblingMate, cleansingRainwater],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "hand",
-//       GrammaTalaKeeperOfAncientStories.id,
-//     );
-//     Const target = testStore.getByZoneAndId("deck", mrSmeeBumblingMate.id);
-//     Const bottom = testStore.getByZoneAndId("deck", cleansingRainwater.id);
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveTopOfStack({ scry: { hand: [target], bottom: [bottom] } });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { grammaTalaKeeperOfAncientStories } from "./142-gramma-tala-keeper-of-ancient-stories";
+
+const fillerA = createMockCharacter({ id: "gramma-tala-filler-a", name: "Filler A", cost: 1 });
+const fillerB = createMockCharacter({ id: "gramma-tala-filler-b", name: "Filler B", cost: 2 });
+const fillerC = createMockCharacter({ id: "gramma-tala-filler-c", name: "Filler C", cost: 3 });
+
+describe("Gramma Tala - Keeper of Ancient Stories", () => {
+  describe("THERE WAS ONLY OCEAN - When you play this character, look at the top 2 cards of your deck. You may put one into your hand. Put the rest on the bottom of your deck in any order.", () => {
+    it("picks one card to hand and puts the rest on bottom when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [grammaTalaKeeperOfAncientStories],
+        inkwell: grammaTalaKeeperOfAncientStories.cost,
+        deck: [fillerA, fillerB, fillerC],
+      });
+
+      expect(
+        testEngine.asPlayerOne().playCard(grammaTalaKeeperOfAncientStories),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          destinations: [
+            { zone: "hand", cards: [fillerA] },
+            { zone: "deck-bottom", cards: [fillerB] },
+          ],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(fillerA)).toBe("hand");
+      expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
+        fillerC.id,
+        fillerB.id,
+      ]);
+    });
+  });
+});

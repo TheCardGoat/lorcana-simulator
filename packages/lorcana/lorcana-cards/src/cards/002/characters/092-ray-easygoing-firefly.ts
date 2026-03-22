@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rayEasygoingFireflyI18n } from "./092-ray-easygoing-firefly.i18n";
 
 export const rayEasygoingFirefly: CharacterCard = {
   id: "Jkc",
@@ -7,33 +8,6 @@ export const rayEasygoingFirefly: CharacterCard = {
   cardType: "character",
   name: "Ray",
   version: "Easygoing Firefly",
-  i18n: {
-    en: {
-      name: "Ray",
-      version: "Easygoing Firefly",
-      text: "Evasive",
-    },
-    de: {
-      name: "Ray",
-      version: "Unbekümmertes Glühwürmchen",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Ray",
-      version: "Luciole décontractée",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Ray",
-      version: "Easygoing Firefly",
-      text: [
-        {
-          title: "Evasive",
-          description: "(Only characters with Evasive can challenge this character.)",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Princess and the Frog",
   set: "002",
@@ -58,4 +32,5 @@ export const rayEasygoingFirefly: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: rayEasygoingFireflyI18n,
 };

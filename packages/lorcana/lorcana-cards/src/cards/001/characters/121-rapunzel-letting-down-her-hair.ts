@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rapunzelLettingDownHerHairI18n } from "./121-rapunzel-letting-down-her-hair.i18n";
 
 export const rapunzelLettingDownHerHair: CharacterCard = {
   id: "nSe",
@@ -7,49 +8,6 @@ export const rapunzelLettingDownHerHair: CharacterCard = {
   cardType: "character",
   name: "Rapunzel",
   version: "Letting Down Her Hair",
-  i18n: {
-    en: {
-      name: "Rapunzel",
-      version: "Letting Down Her Hair",
-      text: [
-        {
-          title: "TANGLE",
-          description: "When you play this character, each opponent loses 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Rapunzel",
-      version: "Lässt ihr Haar herunter",
-      text: [
-        {
-          title: "EINWICKELN",
-          description:
-            "Wenn du diesen Charakter ausspielst, verlieren alle gegnerischen Mitspielenden je 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "RAIPONCE",
-      version: "Lançant sa chevelure",
-      text: [
-        {
-          title: "ENCHEVÊTRÉ",
-          description: "Lorsque vous jouez ce personnage, chaque adversaire perd 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Rapunzel",
-      version: "Letting Down Her Hair",
-      text: [
-        {
-          title: "TANGLE",
-          description: "When you play this character, each opponent loses 1 lore.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Tangled",
   set: "001",
@@ -60,7 +18,6 @@ export const rapunzelLettingDownHerHair: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_cdba0ed02d3a4361afb0aaa7689ee1de",
     tcgPlayer: 650059,
@@ -90,4 +47,5 @@ export const rapunzelLettingDownHerHair: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: rapunzelLettingDownHerHairI18n,
 };

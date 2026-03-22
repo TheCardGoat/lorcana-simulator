@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cinderellaKnightInTrainingI18n } from "./176-cinderella-knight-in-training.i18n";
 
 export const cinderellaKnightInTraining: CharacterCard = {
   id: "FdD",
@@ -7,52 +8,6 @@ export const cinderellaKnightInTraining: CharacterCard = {
   cardType: "character",
   name: "Cinderella",
   version: "Knight in Training",
-  i18n: {
-    en: {
-      name: "Cinderella",
-      version: "Knight in Training",
-      text: [
-        {
-          title: "HAVE COURAGE",
-          description:
-            "When you play this character, you may draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Cinderella",
-      version: "Knight in Training",
-      text: [
-        {
-          title: "HAVE COURAGE",
-          description:
-            "When you play this character, you may draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-    fr: {
-      name: "Cinderella",
-      version: "Knight in Training",
-      text: [
-        {
-          title: "HAVE COURAGE",
-          description:
-            "When you play this character, you may draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-    it: {
-      name: "Cinderella",
-      version: "Knight in Training",
-      text: [
-        {
-          title: "HAVE COURAGE",
-          description:
-            "When you play this character, you may draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Cinderella",
   set: "002",
@@ -75,18 +30,28 @@ export const cinderellaKnightInTraining: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Princess", "Knight"],
-  missingTests: true,
   abilities: [
     {
       effect: {
         chooser: "CONTROLLER",
-        effect: {
-          amount: 1,
-          chosen: true,
-          target: "CONTROLLER",
-          type: "discard",
-        },
         type: "optional",
+        effect: {
+          type: "sequence",
+          steps: [
+            {
+              amount: 1,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+            {
+              amount: 1,
+              chosen: true,
+              from: "hand",
+              target: "CONTROLLER",
+              type: "discard",
+            },
+          ],
+        },
       },
       id: "8ex-1",
       name: "HAVE COURAGE",
@@ -99,4 +64,5 @@ export const cinderellaKnightInTraining: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: cinderellaKnightInTrainingI18n,
 };

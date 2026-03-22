@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mulanDisguisedSoldierI18n } from "./193-mulan-disguised-soldier.i18n";
 
 export const mulanDisguisedSoldier: CharacterCard = {
   id: "uh8",
@@ -7,52 +8,6 @@ export const mulanDisguisedSoldier: CharacterCard = {
   cardType: "character",
   name: "Mulan",
   version: "Disguised Soldier",
-  i18n: {
-    en: {
-      name: "Mulan",
-      version: "Disguised Soldier",
-      text: [
-        {
-          title: "WHERE DO I SIGN IN?",
-          description:
-            "When you play this character, you may draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Mulan",
-      version: "Disguised Soldier",
-      text: [
-        {
-          title: "WHERE DO I SIGN IN?",
-          description:
-            "When you play this character, you may draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mulan",
-      version: "Disguised Soldier",
-      text: [
-        {
-          title: "WHERE DO I SIGN IN?",
-          description:
-            "When you play this character, you may draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-    it: {
-      name: "Mulan",
-      version: "Disguised Soldier",
-      text: [
-        {
-          title: "WHERE DO I SIGN IN?",
-          description:
-            "When you play this character, you may draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "007",
@@ -69,9 +24,9 @@ export const mulanDisguisedSoldier: CharacterCard = {
   },
   text: [
     {
-      title: "WHERE DO I SIGN IN?",
+      title: "WHERE DO",
       description:
-        "When you play this character, you may draw a card, then choose and discard a card.",
+        "I SIGN IN? When you play this character, you may draw a card, then choose and discard a card.",
     },
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
@@ -109,4 +64,5 @@ export const mulanDisguisedSoldier: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mulanDisguisedSoldierI18n,
 };

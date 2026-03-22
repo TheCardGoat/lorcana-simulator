@@ -15,6 +15,7 @@ const DEBUG_BOARD_ANIMATIONS = true;
 export type BoardMoveAnimationVariant =
   | "ink-faceDown"
   | "ink-faceUp"
+  | "move-to-location"
   | "play-character"
   | "play-item"
   | "play-location"
@@ -25,10 +26,11 @@ export type SimulatorDebugAnimationPlayer = "player_one" | "player_two";
 
 export interface SimulatorDebugAnimationRequest {
   id: string;
-  kind: "play.action";
+  kind: "play.action" | "lorcana.boardMove";
   payload: {
     cardId: string;
     player: SimulatorDebugAnimationPlayer;
+    variant?: BoardMoveAnimationVariant;
   };
 }
 
@@ -96,15 +98,31 @@ type CardLocation = {
   zoneId: LorcanaZoneId;
 };
 
-const VARIANT_DURATION_MS: Record<BoardMoveAnimationVariant, number> = {
+export const VARIANT_DURATION_MS: Record<BoardMoveAnimationVariant, number> = {
   "ink-faceDown": 560,
   "ink-faceUp": 620,
-  "play-action": 840,
+  "move-to-location": 800,
+  "play-action": 2200,
   "play-action-preview": 2000,
-  "play-character": 680,
-  "play-item": 540,
-  "play-location": 760,
+  "play-character": 2000,
+  "play-item": 1800,
+  "play-location": 1800,
 };
+
+export function getAnimationSpeedMultiplier(speed: "fast" | "normal" | "slow"): number {
+  switch (speed) {
+    case "fast":
+      return 0.6;
+    case "normal":
+      return 1.0;
+    case "slow":
+      return 1.5;
+    default: {
+      const _exhaustive: never = speed;
+      return 1.0;
+    }
+  }
+}
 
 type BoardMovePacketPayload = {
   actorPlayerId: string;
@@ -272,6 +290,7 @@ export function deriveQueuedBoardMoveAnimationsFromPacket(
   nextSnapshot: LorcanaProjectedBoardView | null,
   packet: EnginePacketUpdate | null,
   resolveCard: (cardId: string) => LorcanaCardSnapshot | null,
+  durationMultiplier = 1,
 ): QueuedBoardMoveAnimation[] {
   if (!previousSnapshot || !nextSnapshot || !packet || packet.animations.length === 0) {
     return [];
@@ -314,7 +333,7 @@ export function deriveQueuedBoardMoveAnimationsFromPacket(
             }
           : buildCardDestination(nextLocation),
       destinationZoneId: payload.destinationZoneId,
-      durationMs: VARIANT_DURATION_MS[payload.variant],
+      durationMs: Math.round(VARIANT_DURATION_MS[payload.variant] * durationMultiplier),
       id: animation.id,
       impactAt: payload.impactAt,
       moveLogId: packet.processedCommand.commandID,
@@ -484,12 +503,12 @@ function derivePlayAnimation(
     destinationZoneId: nextLocation.zoneId,
     durationMs: VARIANT_DURATION_MS[variant],
     id: `${entry.id}:play:${cardId}`,
-    impactAt: variant === "play-action" ? "via" : "destination",
+    impactAt: "via",
     moveLogId: entry.id,
     renderFace: "faceUp",
     source: buildSourceAnchor(previousLocation, actorSide),
     variant,
-    via: variant === "play-action" ? { primaryId: BOARD_CENTER_ANCHOR_ID } : undefined,
+    via: { primaryId: BOARD_CENTER_ANCHOR_ID },
   };
 }
 

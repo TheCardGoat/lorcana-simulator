@@ -16,4 +16,23 @@ describe("Charge!", () => {
     expect(testEngine.getKeywordValue(goofyKnightForADay, "Challenger")).toBe(2);
     expect(testEngine.getKeywordValue(goofyKnightForADay, "Resist")).toBe(2);
   });
+
+  it("keywords expire at end of turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [charge],
+      inkwell: charge.cost,
+      play: [goofyKnightForADay],
+    });
+
+    expect(testEngine.asPlayerOne().playCardTo(charge, goofyKnightForADay)).toBeSuccessfulCommand();
+
+    expect(testEngine.getKeywordValue(goofyKnightForADay, "Challenger")).toBe(2);
+    expect(testEngine.getKeywordValue(goofyKnightForADay, "Resist")).toBe(2);
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.getKeywordValue(goofyKnightForADay, "Challenger")).toBeNull();
+    expect(testEngine.getKeywordValue(goofyKnightForADay, "Resist")).toBeNull();
+  });
 });

@@ -28,12 +28,47 @@ describe("Darkwing's Chair Set", () => {
     expect(
       testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
     ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
-    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(secretInk)).toBe("inkwell");
     expect(testEngine.asPlayerOne().isExerted(secretInk)).toBe(true);
+  });
+
+  it("can decline Secret Entrance and leave the top card in the deck", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [darkwingsChairSet],
+      deck: [secretInk],
+      inkwell: darkwingsChairSet.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(darkwingsChairSet)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: false,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(secretInk)).toBe("deck");
+    expect(testEngine.asPlayerOne().getCardZone(darkwingsChairSet)).toBe("play");
+  });
+
+  it("removes up to 2 damage from a non-Darkwing Duck character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [darkwingsChairSet, injuredAlly],
+      deck: 2,
+    });
+
+    testEngine.asServer().manualSetDamage(injuredAlly, 2);
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(darkwingsChairSet, {
+        ability: "SUDDEN SPIN",
+        targets: [injuredAlly],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(darkwingsChairSet)).toBe("discard");
+    expect(testEngine.asPlayerOne()).toHaveDamage({ card: injuredAlly, value: 0 });
   });
 
   it("removes up to 4 damage instead of 2 when the chosen character is named Darkwing Duck", () => {

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { belleStrangeButSpecialEnchantedI18n } from "./214-belle-strange-but-special-enchanted.i18n";
 
 export const belleStrangeButSpecialEnchanted: CharacterCard = {
   id: "Mfr",
@@ -7,68 +8,6 @@ export const belleStrangeButSpecialEnchanted: CharacterCard = {
   cardType: "character",
   name: "Belle",
   version: "Strange but Special",
-  i18n: {
-    en: {
-      name: "Belle",
-      version: "Strange but Special",
-      text: [
-        {
-          title: "READ A BOOK",
-          description:
-            "During your turn, you may put an additional card from your hand into your inkwell facedown.",
-        },
-        {
-          title: "MY FAVORITE PART!",
-          description:
-            "While you have 10 or more cards in your inkwell, this character gets +4 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Belle",
-      version: "Eine ganz besondere Mademoiselle",
-      text: [
-        {
-          title: "LIES EIN BUCH!",
-          description: "Du darfst in deinem Zug 1 weitere Karte tinten.",
-        },
-        {
-          title: "MEIN LIEBLINGSBUCH",
-          description:
-            "Solange du 10 oder mehr Karten in deinem Tintenvorrat hast, erhält dieser Charakter +4.",
-        },
-      ],
-    },
-    fr: {
-      name: "BELLE",
-      version: "Étrange demoiselle",
-      text: [
-        {
-          title: "LIRE UN LIVRE",
-          description: "Durant votre tour, vous pouvez encrer une carte supplémentaire.",
-        },
-        {
-          title: "MON PASSAGE PRÉFÉRÉ!",
-          description:
-            "Tant que vous avez 10 cartes ou plus dans votre réserve d'encre, ce personnage gagne +4.",
-        },
-      ],
-    },
-    it: {
-      name: "Belle",
-      version: "Strange but Special",
-      text: [
-        {
-          title: "READ A BOOK",
-          description: "During your turn, you may ink an additional card.",
-        },
-        {
-          title: "MY FAVORITE PART!",
-          description: "While you have 10 or more cards in your inkwell, this character gets +4.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "001",
@@ -80,16 +19,15 @@ export const belleStrangeButSpecialEnchanted: CharacterCard = {
   willpower: 4,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_021c1d57c42d4fb7836097cbe9eacfb7",
     tcgPlayer: 510161,
   },
   text: [
     {
-      title: "READ A BOOK",
+      title: "READ",
       description:
-        "During your turn, you may put an additional card from your hand into your inkwell facedown.",
+        "A BOOK During your turn, you may put an additional card from your hand into your inkwell facedown.",
     },
     {
       title: "MY FAVORITE PART!",
@@ -131,4 +69,5 @@ export const belleStrangeButSpecialEnchanted: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: belleStrangeButSpecialEnchantedI18n,
 };

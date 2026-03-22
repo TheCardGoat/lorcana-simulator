@@ -3,12 +3,14 @@ import type { CardInstanceId, PlayerId } from "#core";
 import type { CardPlayedPayload } from "../../../types";
 import type { PlayCardExecutionContext } from "./types";
 import {
+  analyzeEffectTargets,
   normalizeTargetDescriptor,
   resolveEffectTargets,
   resolveTargetBounds,
   resolveTargetQuery,
   resolveTargetPlayerIds as resolveRuntimeTargetPlayerIds,
   selectTargets,
+  validateAndNormalizeTargetSelection,
 } from "../../../targeting/runtime";
 
 type TestCardDefinition = {
@@ -101,7 +103,9 @@ function createTestContext(args?: {
     framework: {
       cards: cardsApi,
       state: {
-        ctx: runtimeCtx as never,
+        priority: runtimeCtx.priority as never,
+        status: runtimeCtx.status as never,
+        _zonesPrivate: runtimeCtx.zones?.private as never,
         playerIds: [PLAYER_ONE, PLAYER_TWO],
         turn: 1,
         currentPlayer,
@@ -189,6 +193,45 @@ describe("target-resolver", () => {
     expect(resolvedTargets).toEqual([selectedTarget]);
   });
 
+  it("counts a repeated chosen target descriptor only once when later steps reuse the same target", () => {
+    const source = "source" as CardInstanceId;
+    const selectedTarget = "selected-target" as CardInstanceId;
+    const ctx = createTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [selectedTarget]: { id: "selected-target", cardType: "character" },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [selectedTarget],
+      },
+    });
+
+    const analysis = analyzeEffectTargets(
+      {
+        type: "sequence",
+        steps: [
+          {
+            type: "ready",
+            target: "CHOSEN_CHARACTER",
+          },
+          {
+            type: "restriction",
+            restriction: "cant-quest",
+            duration: "this-turn",
+            target: "CHOSEN_CHARACTER",
+          },
+        ],
+      },
+      PLAYER_ONE,
+      ctx,
+      source,
+    );
+
+    expect(analysis.requiresExplicitSelection).toBe(true);
+    expect(analysis.minSelections).toBe(1);
+    expect(analysis.maxSelections).toBe(1);
+  });
+
   it("resolves trigger-subject references from the event snapshot", () => {
     const source = "source" as CardInstanceId;
     const triggeredCharacter = "triggered-character" as CardInstanceId;
@@ -216,6 +259,30 @@ describe("target-resolver", () => {
     );
 
     expect(resolvedTargets).toEqual([triggeredCharacter]);
+  });
+
+  it("resolves trigger-destination references from a move event snapshot", () => {
+    const source = "source" as CardInstanceId;
+    const destinationLocation = "destination-location" as CardInstanceId;
+    const ctx = createTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "character" },
+        [destinationLocation]: { id: "destination-location", cardType: "location" },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [source, destinationLocation],
+      },
+    });
+
+    const resolvedTargets = resolveEffectTargets(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      { ref: "trigger-destination" },
+      undefined,
+      { toZone: `location:${destinationLocation}` },
+    );
+
+    expect(resolvedTargets).toEqual([destinationLocation]);
   });
 
   it("resolves all/each selectors to all candidates", () => {
@@ -574,6 +641,37 @@ describe("target-resolver", () => {
   it("keeps optional zero-target selections empty", () => {
     const candidate = "candidate" as CardInstanceId;
     expect(selectTargets([candidate], { selector: "chosen", count: { upTo: 1 } }, [])).toEqual([]);
+  });
+
+  it("accepts explicit empty target input only when the target analysis allows zero selections", () => {
+    const emptyAllowed = validateAndNormalizeTargetSelection([], {
+      targetDsl: [],
+      cardCandidates: [],
+      playerCandidates: [],
+      allowedZones: ["play"],
+      minSelections: 0,
+      maxSelections: 1,
+      requiresExplicitSelection: true,
+      allowsDeferredResolutionWithoutInitialSelection: false,
+      allowDuplicateTargets: false,
+    });
+    expect(emptyAllowed.valid).toBe(true);
+
+    const emptyRejected = validateAndNormalizeTargetSelection([], {
+      targetDsl: [],
+      cardCandidates: [],
+      playerCandidates: [],
+      allowedZones: ["play"],
+      minSelections: 1,
+      maxSelections: 1,
+      requiresExplicitSelection: true,
+      allowsDeferredResolutionWithoutInitialSelection: false,
+      allowDuplicateTargets: false,
+    });
+    expect(emptyRejected).toMatchObject({
+      valid: false,
+      errorCode: "TOO_FEW_TARGETS",
+    });
   });
 
   it("fails closed for unknown strict player filters", () => {

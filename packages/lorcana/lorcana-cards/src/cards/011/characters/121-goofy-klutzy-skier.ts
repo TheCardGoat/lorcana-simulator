@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goofyKlutzySkierI18n } from "./121-goofy-klutzy-skier.i18n";
 
 export const goofyKlutzySkier: CharacterCard = {
   id: "4xG",
@@ -7,48 +8,6 @@ export const goofyKlutzySkier: CharacterCard = {
   cardType: "character",
   name: "Goofy",
   version: "Klutzy Skier",
-  i18n: {
-    en: {
-      name: "Goofy",
-      version: "Klutzy Skier",
-      text: [
-        {
-          title: "YAAAAAAA-HOO-HOO-HOO-HOOEY",
-          description: "{E}, Banish this character — Banish chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Goofy",
-      version: "Tollpatschiger Skifahrer",
-      text: [
-        {
-          title: "JAAAAAAA-HUU-HUU-HUU-HUIII,",
-          description: "Verbanne diesen Charakter — Verbanne einen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Dingo",
-      version: "Skieur gauche",
-      text: [
-        {
-          title: "YAAAAAAA-HOO-HOO-HOO-HOOEY,",
-          description: "Bannissez ce personnage — Choisissez un personnage et bannissez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Pippo",
-      version: "Sciatore Imbranato",
-      text: [
-        {
-          title: "YAAAAAAA-HOO-HOO-HOO-HOOEY,",
-          description: "esilia questo personaggio — Esilia un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "011",
   cardNumber: 121,
@@ -69,5 +28,21 @@ export const goofyKlutzySkier: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      id: "4xG-1",
+      name: "YAAAAAAA-HOO-HOO-HOO-HOOEY",
+      text: "YAAAAAAA-HOO-HOO-HOO-HOOEY {E}, Banish this character — Banish chosen character.",
+      type: "activated",
+      cost: {
+        exert: true,
+        banishSelf: true,
+      },
+      effect: {
+        type: "banish",
+        target: "CHOSEN_CHARACTER",
+      },
+    },
+  ],
+  i18n: goofyKlutzySkierI18n,
 };

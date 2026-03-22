@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { theBlackCauldronEnchantedI18n } from "./225-the-black-cauldron-enchanted.i18n";
 
 export const theBlackCauldronEnchanted: ItemCard = {
   id: "WLA",
@@ -6,52 +7,6 @@ export const theBlackCauldronEnchanted: ItemCard = {
   reprints: ["set10-032"],
   cardType: "item",
   name: "The Black Cauldron",
-  i18n: {
-    en: {
-      name: "The Black Cauldron",
-      text: [
-        {
-          title: "THE CAULDRON CALLS",
-          description:
-            "{E}, 1 {I} — Put a character card from your discard under this item faceup.",
-        },
-        {
-          title: "RISE AND JOIN ME!",
-          description: "{E}, 1 {I} — This turn, you may play characters from under this item.",
-        },
-      ],
-    },
-    de: {
-      name: "Der schwarze Zauberkessel",
-      text: [
-        {
-          title: "DER KESSEL RUFT, 1",
-          description:
-            "— Lege 1 Charakterkarte aus deinem Ablagestapel offen unter diesen Gegenstand. STEHT AUF UND FOLGT MIR!, 1 — Du darfst in diesem Zug Charaktere ausspielen, die unter diesem Gegenstand liegen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le Chaudron magique",
-      text: [
-        {
-          title: "L'APPEL DU CHAUDRON, 1",
-          description:
-            "— Placez une carte Personnage de votre défausse sous cet objet, face visible. LEVEZ-VOUS ET JOIGNEZ-VOUS À MOI!, 1 — Pour le reste de ce tour, vous pouvez jouer les personnages placés sous cet objet.",
-        },
-      ],
-    },
-    it: {
-      name: "La Pentola Magica",
-      text: [
-        {
-          title: "IL RICHIAMO DELLA PENTOLA, 1",
-          description:
-            "— Metti una carta personaggio dai tuoi scarti sotto a questo oggetto, a faccia in su. ALZATEVI E UNITEVI A ME!, 1 — Per questo turno, puoi giocare i personaggi da sotto questo oggetto.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Black Cauldron",
   set: "010",
@@ -74,5 +29,38 @@ export const theBlackCauldronEnchanted: ItemCard = {
       description: "{E}, 1 {I} — This turn, you may play characters from under this item.",
     },
   ],
-  abilities: [],
+  abilities: [
+    {
+      cost: {
+        exert: true,
+        ink: 1,
+      },
+      effect: {
+        source: "discard",
+        type: "put-under",
+        under: "self",
+        cardType: "character",
+      },
+      id: "WLA-1",
+      name: "THE CAULDRON CALLS",
+      text: "THE CAULDRON CALLS {E}, 1 {I} — Put a character card from your discard under this item faceup.",
+      type: "activated",
+    },
+    {
+      cost: {
+        exert: true,
+        ink: 1,
+      },
+      effect: {
+        type: "enable-play-from-under",
+        duration: "this-turn",
+        cardType: "character",
+      },
+      id: "WLA-2",
+      name: "RISE AND JOIN ME!",
+      text: "RISE AND JOIN ME! {E}, 1 {I} — This turn, you may play characters from under this item.",
+      type: "activated",
+    },
+  ],
+  i18n: theBlackCauldronEnchantedI18n,
 };

@@ -1,117 +1,98 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { robinHoodTimelyContestant } from "@lorcanito/lorcana-engine/cards/005/characters/069-robin-hood-timely-contestant";
-// Import {
-//   DonaldGhostHunter,
-//   HadesLookingForADeal,
-//   MickeyMouseDetective,
-// } from "@lorcanito/lorcana-engine/cards/010";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Hades - Looking for a Deal", () => {
-//   Describe("WHAT D'YA SAY? - Modal ability", () => {
-//     It("should allow opponent to put their character on bottom of deck", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: hadesLookingForADeal.cost,
-//           Hand: [hadesLookingForADeal],
-//           Deck: 10,
-//         },
-//         {
-//           Play: [donaldGhostHunter, mickeyMouseDetective],
-//         },
-//       );
-//
-//       Const targetCard = testEngine.getCardModel(donaldGhostHunter);
-//       Await testEngine.playCard(
-//         HadesLookingForADeal,
-//         {
-//           Targets: [targetCard],
-//           AcceptOptionalLayer: true,
-//         },
-//         True,
-//       );
-//
-//       TestEngine.changeActivePlayer("player_two");
-//       Await testEngine.resolveTopOfStack({ mode: "1" });
-//
-//       Expect(targetCard.zone).toEqual("deck");
-//       Expect(testEngine.getCardsByZone("hand", "player_one")?.length).toEqual(
-//         0,
-//       );
-//       Expect(testEngine.getCardsByZone("hand", "player_two")?.length).toEqual(
-//         0,
-//       );
-//     });
-//
-//     It("should allow opponent to let you draw 2 cards", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: hadesLookingForADeal.cost,
-//           Hand: [hadesLookingForADeal],
-//           Deck: 10,
-//         },
-//         {
-//           Play: [donaldGhostHunter, mickeyMouseDetective],
-//         },
-//       );
-//
-//       Const targetCard = testEngine.getCardModel(mickeyMouseDetective);
-//       Await testEngine.playCard(
-//         HadesLookingForADeal,
-//         {
-//           Targets: [targetCard],
-//           AcceptOptionalLayer: true,
-//         },
-//         True,
-//       );
-//
-//       TestEngine.changeActivePlayer("player_two");
-//       Await testEngine.resolveTopOfStack({ mode: "2" });
-//
-//       Expect(targetCard.zone).toEqual("play");
-//       Expect(testEngine.getCardsByZone("hand", "player_one")?.length).toEqual(
-//         2,
-//       );
-//       Expect(testEngine.getCardsByZone("hand", "player_two")?.length).toEqual(
-//         0,
-//       );
-//     });
-//   });
-// });
-//
-// Describe("Regression", () => {
-//   It("Shouldn't target characters with ward", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: hadesLookingForADeal.cost,
-//         Hand: [hadesLookingForADeal],
-//         Deck: 10,
-//       },
-//       {
-//         Play: [
-//           DonaldGhostHunter,
-//           MickeyMouseDetective,
-//           RobinHoodTimelyContestant,
-//         ],
-//       },
-//     );
-//
-//     Const targetCard = testEngine.getCardModel(robinHoodTimelyContestant);
-//     Await testEngine.playCard(
-//       HadesLookingForADeal,
-//       {
-//         Targets: [targetCard],
-//         AcceptOptionalLayer: true,
-//       },
-//       True,
-//     );
-//
-//     Expect(testEngine.engine.store.priorityPlayer).toEqual("player_one");
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, PLAYER_TWO } from "@tcg/lorcana-engine/testing";
+import { robinHoodTimelyContestant } from "../../005";
+import { donaldDuckGhostHunter, mickeyMouseDetective } from "../../010";
+import { hadesLookingForADeal } from "./056-hades-looking-for-a-deal";
+
+describe("Hades - Looking for a Deal", () => {
+  it("lets the opposing player put the chosen character on the bottom of their deck", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [hadesLookingForADeal],
+        inkwell: hadesLookingForADeal.cost,
+        deck: 10,
+      },
+      {
+        play: [donaldDuckGhostHunter, mickeyMouseDetective],
+        deck: 5,
+      },
+    );
+    const chosenId = testEngine.findCardInstanceId(donaldDuckGhostHunter, "play", PLAYER_TWO);
+
+    expect(testEngine.asPlayerOne().playCard(hadesLookingForADeal)).toBeSuccessfulCommand();
+
+    const bagEffects = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffects).toHaveLength(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        resolveOptional: true,
+        targets: [chosenId],
+      }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().respondWithChoice(0)).toBeSuccessfulCommand();
+
+    expect(testEngine.getAuthoritativeState().ctx.zones.private.cardIndex[chosenId]?.zoneKey).toBe(
+      "deck:player_two",
+    );
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+  });
+
+  it("lets the opposing player refuse and makes Hades's controller draw 2 cards", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [hadesLookingForADeal],
+        inkwell: hadesLookingForADeal.cost,
+        deck: 10,
+      },
+      {
+        play: [donaldDuckGhostHunter, mickeyMouseDetective],
+        deck: 5,
+      },
+    );
+    const chosenId = testEngine.findCardInstanceId(mickeyMouseDetective, "play", PLAYER_TWO);
+
+    expect(testEngine.asPlayerOne().playCard(hadesLookingForADeal)).toBeSuccessfulCommand();
+
+    const bagEffects = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffects).toHaveLength(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        resolveOptional: true,
+        targets: [chosenId],
+      }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().respondWithChoice(1)).toBeSuccessfulCommand();
+
+    expect(testEngine.getAuthoritativeState().ctx.zones.private.cardIndex[chosenId]?.zoneKey).toBe(
+      "play:player_two",
+    );
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(2);
+  });
+
+  it("cannot choose an opposing character with Ward", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [hadesLookingForADeal],
+        inkwell: hadesLookingForADeal.cost,
+        deck: 10,
+      },
+      {
+        play: [donaldDuckGhostHunter, robinHoodTimelyContestant],
+        deck: 5,
+      },
+    );
+    const wardedId = testEngine.findCardInstanceId(robinHoodTimelyContestant, "play", PLAYER_TWO);
+
+    expect(testEngine.asPlayerOne().playCard(hadesLookingForADeal)).toBeSuccessfulCommand();
+
+    const bagEffects = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffects).toHaveLength(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        resolveOptional: true,
+        targets: [wardedId],
+      }).success,
+    ).toBe(false);
+    expect(testEngine.asPlayerOne().getCardZone(hadesLookingForADeal)).toBe("play");
+  });
+});

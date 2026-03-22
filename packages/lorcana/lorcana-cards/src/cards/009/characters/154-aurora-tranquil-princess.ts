@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { auroraTranquilPrincessI18n } from "./154-aurora-tranquil-princess.i18n";
 
 export const auroraTranquilPrincess: CharacterCard = {
   id: "aHj",
@@ -7,28 +8,6 @@ export const auroraTranquilPrincess: CharacterCard = {
   cardType: "character",
   name: "Aurora",
   version: "Tranquil Princess",
-  i18n: {
-    en: {
-      name: "Aurora",
-      version: "Tranquil Princess",
-      text: "Ward",
-    },
-    de: {
-      name: "Aurora",
-      version: "Gelassene Prinzessin",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Aurore",
-      version: "Princesse sereine",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Aurora",
-      version: "Principessa Pacata",
-      text: "Protetto",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sleeping Beauty",
   set: "009",
@@ -53,4 +32,5 @@ export const auroraTranquilPrincess: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: auroraTranquilPrincessI18n,
 };

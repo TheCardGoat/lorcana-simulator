@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { cardSoldiersSpearI18n } from "./134-card-soldiers-spear.i18n";
 
 export const cardSoldiersSpear: ItemCard = {
   id: "bi3",
@@ -6,44 +7,6 @@ export const cardSoldiersSpear: ItemCard = {
   reprints: ["set6-134"],
   cardType: "item",
   name: "Card Soldier's Spear",
-  i18n: {
-    en: {
-      name: "Card Soldier's Spear",
-      text: [
-        {
-          title: "A SUITABLE WEAPON",
-          description: "Your damaged characters get +1 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Speer des Kartensoldaten",
-      text: [
-        {
-          title: "EINE GEEIGNETE WAFFE",
-          description: "Deine beschädigten Charaktere erhalten +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Lance de Garde carte",
-      text: [
-        {
-          title: "UNE ARME CONVENABLE",
-          description: "Vos personnages ayant au moins 1 dommage sur eux gagnent +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Lancia della Carta Soldato",
-      text: [
-        {
-          title: "UN'ARMA ASSOLUTA I",
-          description: "tuoi personaggi danneggiati ricevono +1.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Alice in Wonderland",
   set: "006",
@@ -86,4 +49,5 @@ export const cardSoldiersSpear: ItemCard = {
       type: "static",
     },
   ],
+  i18n: cardSoldiersSpearI18n,
 };

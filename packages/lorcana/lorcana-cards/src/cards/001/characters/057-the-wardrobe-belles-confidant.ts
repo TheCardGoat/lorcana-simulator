@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theWardrobeBellesConfidantI18n } from "./057-the-wardrobe-belles-confidant.i18n";
 
 export const theWardrobeBellesConfidant: CharacterCard = {
   id: "FRs",
@@ -7,24 +8,6 @@ export const theWardrobeBellesConfidant: CharacterCard = {
   cardType: "character",
   name: "The Wardrobe",
   version: "Belle’s Confidant",
-  i18n: {
-    en: {
-      name: "The Wardrobe",
-      version: "Belle’s Confidant",
-    },
-    de: {
-      name: "Mme. Kommode",
-      version: "Belles Vertraute",
-    },
-    fr: {
-      name: "MADAME DE GARDEROBE",
-      version: "Confidente de Belle",
-    },
-    it: {
-      name: "L'Armadio",
-      version: "Confidente di Belle",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Beauty and the Beast",
   set: "001",
@@ -35,11 +18,11 @@ export const theWardrobeBellesConfidant: CharacterCard = {
   willpower: 4,
   lore: 1,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_0ab2ecd7d121461e8053278706d889d5",
     tcgPlayer: 485363,
   },
   classifications: ["Dreamborn", "Ally"],
+  i18n: theWardrobeBellesConfidantI18n,
 };

@@ -1,6 +1,12 @@
 import type { PlayerId } from "@tcg/lorcana-engine";
+import { REPEATED_STATE_DEADLOCK_THRESHOLD } from "../../lib/features/simulator-devtools/automation-deadlock.js";
 
-export const STRATEGY_REPEAT_THRESHOLD = 3;
+export {
+  createRepeatedStateDeadlockTracker,
+  resolveRepeatedStateDeadlockByConceding,
+} from "../../lib/features/simulator-devtools/automation-deadlock.js";
+
+export const STRATEGY_REPEAT_THRESHOLD = REPEATED_STATE_DEADLOCK_THRESHOLD;
 export const STRATEGY_TURN_LIMIT = 35;
 export const STRATEGY_ACTION_LIMIT = 250;
 
@@ -9,42 +15,6 @@ export type StrategyMatchEndReason =
   | "turn-limit"
   | "action-limit"
   | "repeated-state-deadlock";
-
-export interface RepeatedStateObservation {
-  actorId?: PlayerId;
-  stateFingerprint: string;
-}
-
-export interface RepeatedStateObservationResult {
-  count: number;
-  key?: string;
-  repeatedStateDeadlock: boolean;
-}
-
-export function createRepeatedStateDeadlockTracker(repeatThreshold = STRATEGY_REPEAT_THRESHOLD) {
-  const seenStates = new Map<string, number>();
-
-  return {
-    observe(observation: RepeatedStateObservation): RepeatedStateObservationResult {
-      if (!observation.actorId) {
-        return {
-          count: 0,
-          repeatedStateDeadlock: false,
-        };
-      }
-
-      const key = `${observation.actorId}:${observation.stateFingerprint}`;
-      const count = (seenStates.get(key) ?? 0) + 1;
-      seenStates.set(key, count);
-
-      return {
-        count,
-        key,
-        repeatedStateDeadlock: count >= repeatThreshold,
-      };
-    },
-  };
-}
 
 export function resolveStrategyMatchEndReason(args: {
   actionCount: number;

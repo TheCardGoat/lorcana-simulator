@@ -12,6 +12,7 @@ import {
   isUpdatePatchMessage,
   isUpdateFullMessage,
   isSyncFullMessage,
+  isUndoRequestMessage,
   isErrorMessage,
   validateProtocolMessage,
 } from "./protocol-types";
@@ -19,7 +20,7 @@ import {
 describe("Protocol Types", () => {
   describe("Protocol Version", () => {
     it("should have correct protocol version", () => {
-      expect(PROTOCOL_VERSION).toBe(3);
+      expect(PROTOCOL_VERSION).toBe(4);
     });
   });
 
@@ -46,6 +47,18 @@ describe("Protocol Types", () => {
 
       expect(isSyncRequestMessage(msg)).toBe(true);
       expect(isUpdateActionMessage(msg)).toBe(false);
+    });
+
+    it("should identify UNDO_REQUEST message", () => {
+      const msg = {
+        type: "UNDO_REQUEST",
+        protocolVersion: PROTOCOL_VERSION,
+        matchID: "test-match",
+        prevStateID: 1,
+      };
+
+      expect(isUndoRequestMessage(msg)).toBe(true);
+      expect(isSyncRequestMessage(msg)).toBe(false);
     });
 
     it("should identify UPDATE_PATCH message", () => {

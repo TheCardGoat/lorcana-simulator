@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { iagoGiantSpectralParrotI18n } from "./049-iago-giant-spectral-parrot.i18n";
 
 export const iagoGiantSpectralParrot: CharacterCard = {
   id: "vao",
@@ -7,53 +8,6 @@ export const iagoGiantSpectralParrot: CharacterCard = {
   cardType: "character",
   name: "Iago",
   version: "Giant Spectral Parrot",
-  i18n: {
-    en: {
-      name: "Iago",
-      version: "Giant Spectral Parrot",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "Vanish",
-          description: "(When an opponent chooses this character for an action, banish them.)",
-        },
-      ],
-    },
-    de: {
-      name: "Jago",
-      version: "Riesiger spektraler Papagei",
-      text: [
-        {
-          title: "Wendig Verschwinden",
-          description:
-            "(Jedes Mal, wenn dieser Charakter von einer Aktion einer gegnerischen Person ausgewählt wird, verbanne ihn.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Iago",
-      version: "Gigantesque perroquet spectral",
-      text: [
-        {
-          title: "Insaisissable Dissipation",
-          description:
-            "(Lorsqu'un adversaire choisit ce personnage avec une action, bannissez-le.)",
-        },
-      ],
-    },
-    it: {
-      name: "Iago",
-      version: "Pappagallo Spettrale Gigante",
-      text: [
-        {
-          title: "Sfuggente Svanire",
-          description: "(Quando un avversario sceglie questo personaggio per un'azione, esilialo.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "007",
@@ -92,4 +46,5 @@ export const iagoGiantSpectralParrot: CharacterCard = {
       text: "Vanish",
     },
   ],
+  i18n: iagoGiantSpectralParrotI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { trialsAndTribulationsI18n } from "./043-trials-and-tribulations.i18n";
 
 export const trialsAndTribulations: ActionCard = {
   id: "yHH",
@@ -6,24 +7,6 @@ export const trialsAndTribulations: ActionCard = {
   reprints: ["set8-043"],
   cardType: "action",
   name: "Trials and Tribulations",
-  i18n: {
-    en: {
-      name: "Trials and Tribulations",
-      text: "Chosen character gets -4 {S} until the start of your next turn.",
-    },
-    de: {
-      name: "Oft war ich verzweifelt",
-      text: "Gib einem Charakter deiner Wahl bis zu Beginn deines nächsten Zuges -4.",
-    },
-    fr: {
-      name: "Je travaillerai sans trêve",
-      text: "Choisissez un personnage qui subit -4 jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Mille Ostacoli e Impedimenti",
-      text: "(Un personaggio con costo 2 o superiore può per cantare questa canzone gratis.) Un personaggio a tua scelta riceve -4 fino all'inizio del tuo prossimo turno.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Princess and the Frog",
   set: "008",
@@ -57,4 +40,5 @@ export const trialsAndTribulations: ActionCard = {
       type: "action",
     },
   ],
+  i18n: trialsAndTribulationsI18n,
 };

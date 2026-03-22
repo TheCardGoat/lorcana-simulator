@@ -9,7 +9,13 @@ export type PlayCardCostInput = "standard" | "free" | PlayCardCostObject;
 type PlayCardCostObject =
   | { cost: "standard"; amount?: number; targets?: CardInstanceId[] }
   | { cost: "free"; amount?: number; targets?: CardInstanceId[] }
-  | { cost: "shift"; shiftTarget: CardInstanceId; amount?: number; targets?: CardInstanceId[] }
+  | {
+      cost: "shift";
+      shiftTarget: CardInstanceId;
+      discardCards?: CardInstanceId[];
+      amount?: number;
+      targets?: CardInstanceId[];
+    }
   | {
       cost: "sing";
       singer: CardInstanceId;
@@ -19,6 +25,12 @@ type PlayCardCostObject =
   | {
       cost: "singTogether";
       singers: CardInstanceId[];
+      amount?: number;
+      targets?: CardInstanceId[];
+    }
+  | {
+      cost: "sacrifice";
+      sacrificeTarget: CardInstanceId;
       amount?: number;
       targets?: CardInstanceId[];
     };
@@ -128,6 +140,7 @@ export function normalizePlayCardCost(
         cardId,
         cost: "shift",
         shiftTarget: cost.shiftTarget,
+        ...(cost.discardCards ? { discardCards: cost.discardCards } : {}),
         ...actionResolutionFields,
       };
     case "sing":
@@ -142,6 +155,13 @@ export function normalizePlayCardCost(
         cardId,
         cost: "singTogether",
         singers: cost.singers,
+        ...actionResolutionFields,
+      };
+    case "sacrifice":
+      return {
+        cardId,
+        cost: "sacrifice",
+        sacrificeTarget: cost.sacrificeTarget,
         ...actionResolutionFields,
       };
   }

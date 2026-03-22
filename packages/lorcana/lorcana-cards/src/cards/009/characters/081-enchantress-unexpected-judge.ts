@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { enchantressUnexpectedJudgeI18n } from "./081-enchantress-unexpected-judge.i18n";
 
 export const enchantressUnexpectedJudge: CharacterCard = {
   id: "hyz",
@@ -7,48 +8,6 @@ export const enchantressUnexpectedJudge: CharacterCard = {
   cardType: "character",
   name: "Enchantress",
   version: "Unexpected Judge",
-  i18n: {
-    en: {
-      name: "Enchantress",
-      version: "Unexpected Judge",
-      text: [
-        {
-          title: "TRUE FORM",
-          description: "While being challenged, this character gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Zauberin",
-      version: "Unerwartetes Urteil",
-      text: [
-        {
-          title: "WAHRE GESTALT",
-          description: "Während dieser Charakter herausgefordert wird, erhält er +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "L'Enchanteresse",
-      version: "Juge inattendue",
-      text: [
-        {
-          title: "VÉRITABLE APPARENCE",
-          description: "Tant que ce personnage est défié, il gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Enchantress",
-      version: "Unexpected Judge",
-      text: [
-        {
-          title: "TRUE FORM",
-          description: "While being challenged, this character gets +2.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Beauty and the Beast",
   set: "009",
@@ -72,6 +31,10 @@ export const enchantressUnexpectedJudge: CharacterCard = {
   classifications: ["Dreamborn", "Sorcerer"],
   abilities: [
     {
+      condition: {
+        role: "defender",
+        type: "in-challenge",
+      },
       effect: {
         modifier: 2,
         stat: "strength",
@@ -79,8 +42,10 @@ export const enchantressUnexpectedJudge: CharacterCard = {
         type: "modify-stat",
       },
       id: "mk4-1",
+      name: "TRUE FORM",
       text: "TRUE FORM While being challenged, this character gets +2 {S}.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: enchantressUnexpectedJudgeI18n,
 };

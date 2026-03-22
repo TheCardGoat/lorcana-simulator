@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { royalGuardBovineProtectorI18n } from "./175-royal-guard-bovine-protector.i18n";
 
 export const royalGuardBovineProtector: CharacterCard = {
   id: "MJS",
@@ -7,24 +8,6 @@ export const royalGuardBovineProtector: CharacterCard = {
   cardType: "character",
   name: "Royal Guard",
   version: "Bovine Protector",
-  i18n: {
-    en: {
-      name: "Royal Guard",
-      version: "Bovine Protector",
-    },
-    de: {
-      name: "Königsgarde",
-      version: "Schützendes Rind",
-    },
-    fr: {
-      name: "Garde royal",
-      version: "Protecteur bovin",
-    },
-    it: {
-      name: "Guardia Reale",
-      version: "Protettore Bovino",
-    },
-  },
   inkType: ["steel"],
   franchise: "Emperors New Groove",
   set: "005",
@@ -41,4 +24,5 @@ export const royalGuardBovineProtector: CharacterCard = {
     tcgPlayer: 561476,
   },
   classifications: ["Storyborn"],
+  i18n: royalGuardBovineProtectorI18n,
 };

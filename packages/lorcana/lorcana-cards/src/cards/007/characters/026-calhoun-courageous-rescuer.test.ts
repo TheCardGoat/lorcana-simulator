@@ -1,33 +1,106 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { calhounCourageousRescuer } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Calhoun - Courageous Rescuer", () => {
-//   It.skip("Shift 4 (You may pay 4 {I} to play this on top of one of your characters named Calhoun.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [calhounCourageousRescuer],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(calhounCourageousRescuer);
-//     Expect(cardUnderTest.hasShift).toBe(true);
-//   });
-//
-//   It.skip("BACK TO START POSITIONS! Whenever this character challenges another character, you may return a Racer character card from your discard to your hand.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: calhounCourageousRescuer.cost,
-//       Play: [calhounCourageousRescuer],
-//       Hand: [calhounCourageousRescuer],
-//     });
-//
-//     Await testEngine.playCard(calhounCourageousRescuer);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { calhounCourageousRescuer } from "./026-calhoun-courageous-rescuer";
+
+const defender = createMockCharacter({
+  id: "calhoun-defender",
+  name: "Opposing Defender",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+});
+
+const racerInDiscard = createMockCharacter({
+  id: "calhoun-racer-in-discard",
+  name: "Racer In Discard",
+  cost: 2,
+  classifications: ["Dreamborn", "Hero", "Racer"],
+});
+
+const nonRacerInDiscard = createMockCharacter({
+  id: "calhoun-non-racer-in-discard",
+  name: "Non Racer In Discard",
+  cost: 2,
+  classifications: ["Storyborn", "Hero"],
+});
+
+describe("Calhoun - Courageous Rescuer", () => {
+  it("BACK TO START POSITIONS! - may return a Racer character card from discard to hand when challenging", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [calhounCourageousRescuer],
+        discard: [{ card: racerInDiscard }],
+        deck: 1,
+      },
+      {
+        play: [{ card: defender, exerted: true }],
+        deck: 1,
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().challenge(calhounCourageousRescuer, defender),
+    ).toBeSuccessfulCommand();
+
+    // Triggered ability should create a bag entry
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    // Choose the Racer card from discard if a pending choice exists
+    const pendingChoice = testEngine.asPlayerOne().getPendingChoice();
+    if (pendingChoice) {
+      const racerDiscardId = testEngine.findCardInstanceId(racerInDiscard, "discard");
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [racerDiscardId] }),
+      ).toBeSuccessfulCommand();
+    }
+
+    expect(testEngine.asPlayerOne().getCardZone(racerInDiscard)).toBe("hand");
+  });
+
+  it("BACK TO START POSITIONS! - can decline the optional ability", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [calhounCourageousRescuer],
+        discard: [{ card: racerInDiscard }],
+        deck: 1,
+      },
+      {
+        play: [{ card: defender, exerted: true }],
+        deck: 1,
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().challenge(calhounCourageousRescuer, defender),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: false,
+      }),
+    ).toBeSuccessfulCommand();
+
+    // Racer should remain in discard
+    expect(testEngine.asPlayerOne().getCardZone(racerInDiscard)).toBe("discard");
+  });
+
+  it("BACK TO START POSITIONS! - does not trigger when not challenging", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [calhounCourageousRescuer],
+      discard: [{ card: racerInDiscard }],
+      deck: 1,
+    });
+
+    // Quest instead of challenging
+    expect(testEngine.asPlayerOne().quest(calhounCourageousRescuer)).toBeSuccessfulCommand();
+
+    // No bag entry should be created
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+  });
+});

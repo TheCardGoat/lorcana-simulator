@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kingCandySweetAbominationI18n } from "./154-king-candy-sweet-abomination.i18n";
 
 export const kingCandySweetAbomination: CharacterCard = {
   id: "reF",
@@ -7,37 +8,6 @@ export const kingCandySweetAbomination: CharacterCard = {
   cardType: "character",
   name: "King Candy",
   version: "Sweet Abomination",
-  i18n: {
-    en: {
-      name: "King Candy",
-      version: "Sweet Abomination",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "CHANGING THE CODE",
-          description:
-            "When you play this character, you may draw 2 cards, then put a card from your hand on the bottom of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "King Candy",
-      version: "Süße Abscheulichkeit",
-      text: "Gestaltwandel 3 DEN CODE VERÄNDERN Wenn du diesen Charakter ausspielst, darfst du 2 Karten ziehen, lege dann eine Karte von deiner Hand unter dein Deck.",
-    },
-    fr: {
-      name: "Sa Sucrerie",
-      version: "Douce abomination",
-      text: "Alter 3 CHANGER LE CODE Lorsque vous jouez ce personnage, vous pouvez piocher 2 cartes. Si vous le faites, remettez 1 carte de votre main en-dessous de votre pioche.",
-    },
-    it: {
-      name: "Re Candito",
-      version: "Dolce Abominio",
-      text: "Trasformazione 3 MODIFICARE IL CODICE Quando giochi questo personaggio, puoi pescare 2 carte, poi metti una carta dalla tua mano in fondo al tuo mazzo.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -77,14 +47,23 @@ export const kingCandySweetAbomination: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["card"],
-          },
-          type: "put-on-bottom",
+          type: "sequence",
+          steps: [
+            {
+              amount: 2,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+            {
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["hand"],
+              },
+              type: "put-on-bottom",
+            },
+          ],
         },
         type: "optional",
       },
@@ -99,4 +78,5 @@ export const kingCandySweetAbomination: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: kingCandySweetAbominationI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ursulaSeaWitchEpicI18n } from "./208-ursula-sea-witch-epic.i18n";
 
 export const ursulaSeaWitchEpic: CharacterCard = {
   id: "FEw",
@@ -7,52 +8,6 @@ export const ursulaSeaWitchEpic: CharacterCard = {
   cardType: "character",
   name: "Ursula",
   version: "Sea Witch",
-  i18n: {
-    en: {
-      name: "Ursula",
-      version: "Sea Witch",
-      text: [
-        {
-          title: "YOU'RE TOO LATE",
-          description:
-            "Whenever this character quests, chosen opposing character can't ready at the start of their next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Ursula",
-      version: "Seehexe",
-      text: [
-        {
-          title: "ZU SPÄT!",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, wähle einen gegnerischen Charakter. Er wird zu Beginn seines nächsten Zuges nicht bereit gemacht.",
-        },
-      ],
-    },
-    fr: {
-      name: "Ursula",
-      version: "Sorcière des mers",
-      text: [
-        {
-          title: "TROP TARD",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, choisissez un personnage adverse qui ne pourra pas être redressé au début de son prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Ursula",
-      version: "Strega del Mare",
-      text: [
-        {
-          title: "ORMAI È TROPPO TARDI",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, un personaggio avversario a tua scelta non si può preparare all'inizio del suo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Little Mermaid",
   set: "009",
@@ -76,5 +31,30 @@ export const ursulaSeaWitchEpic: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Villain", "Sorcerer"],
-  abilities: [],
+  abilities: [
+    {
+      id: "FEw-1",
+      name: "YOU'RE TOO LATE",
+      text: "YOU'RE TOO LATE Whenever this character quests, chosen opposing character can't ready at the start of their next turn.",
+      type: "triggered",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "restriction",
+        restriction: "cant-ready",
+        duration: "their-next-turn",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+    },
+  ],
+  i18n: ursulaSeaWitchEpicI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jafarHighSultanOfLorcanaI18n } from "./074-jafar-high-sultan-of-lorcana.i18n";
 
 export const jafarHighSultanOfLorcana: CharacterCard = {
   id: "i56",
@@ -7,52 +8,6 @@ export const jafarHighSultanOfLorcana: CharacterCard = {
   cardType: "character",
   name: "Jafar",
   version: "High Sultan of Lorcana",
-  i18n: {
-    en: {
-      name: "Jafar",
-      version: "High Sultan of Lorcana",
-      text: [
-        {
-          title: "DARK POWER",
-          description:
-            "Whenever this character quests, you may draw a card, then choose and discard a card. If an Illusion character card is discarded this way, you may play that character for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschafar",
-      version: "Hoher Sultan von Lorcana",
-      text: [
-        {
-          title: "DUNKLE MACHT",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du 1 Karte ziehen. Wähle danach 1 Karte aus deiner Hand und wirf sie ab. Wenn du so eine Illusions-Charakterkarte abgeworfen hast, darfst du sie kostenlos ausspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Jafar",
-      version: "Grand Sultan de Lorcana",
-      text: [
-        {
-          title: "POUVOIR DES TÉNÈBRES",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez piocher une carte, puis défausser une carte. Si vous défaussez une carte Personnage Illusion de cette manière, vous pouvez la jouer gratuitement.",
-        },
-      ],
-    },
-    it: {
-      name: "Jafar",
-      version: "Sommo Sultano di Lorcana",
-      text: [
-        {
-          title: "POTERE OSCURO",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi pescare una carta, poi scegli e scarta una carta. Se hai scartato una carta personaggio Illusione in questo modo, puoi giocare quel personaggio gratis.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst", "steel"],
   franchise: "Aladdin",
   set: "008",
@@ -78,16 +33,42 @@ export const jafarHighSultanOfLorcana: CharacterCard = {
   abilities: [
     {
       effect: {
-        condition: {
-          expression: "an Illusion character card is discarded this way",
-          type: "if",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "sequence",
+          steps: [
+            {
+              amount: 1,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+            {
+              amount: 1,
+              chosen: true,
+              from: "hand",
+              target: "CONTROLLER",
+              type: "discard",
+            },
+            {
+              condition: {
+                type: "discarded-card-has-classification",
+                classification: "Illusion",
+                cardType: "character",
+              },
+              then: {
+                chooser: "CONTROLLER",
+                effect: {
+                  cost: "free",
+                  from: "discard",
+                  type: "play-card",
+                },
+                type: "optional",
+              },
+              type: "conditional",
+            },
+          ],
         },
-        then: {
-          cost: "free",
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+        type: "optional",
       },
       id: "mfw-1",
       name: "DARK POWER",
@@ -100,4 +81,5 @@ export const jafarHighSultanOfLorcana: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: jafarHighSultanOfLorcanaI18n,
 };

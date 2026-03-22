@@ -1,6 +1,6 @@
-import { createRecordCardCatalog, type CardCatalog } from "@tcg/core";
+import { createRecordCardCatalog, type CardCatalog } from "@tcg/shared";
 import type { CharacterCard, ActionCard, ItemCard, LocationCard } from "@tcg/lorcana-types";
-import { allCards, allCardsById } from "./cards";
+import { allCards, allCardsById } from "./catalog-data";
 
 let cardCatalogCache: CardCatalog<CharacterCard | ActionCard | ItemCard | LocationCard> | null =
   null;

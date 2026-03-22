@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arielSingingMermaidI18n } from "./003-ariel-singing-mermaid.i18n";
 
 export const arielSingingMermaid: CharacterCard = {
   id: "nfQ",
@@ -7,33 +8,6 @@ export const arielSingingMermaid: CharacterCard = {
   cardType: "character",
   name: "Ariel",
   version: "Singing Mermaid",
-  i18n: {
-    en: {
-      name: "Ariel",
-      version: "Singing Mermaid",
-      text: "Singer 7",
-    },
-    de: {
-      name: "Arielle",
-      version: "Singende Meerjungfrau",
-      text: [
-        {
-          title: "Singen 7",
-          description: "(Die Kosten dieses Charakters gelten als 7 für das Singen von Liedern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Ariel",
-      version: "Sirène chantante",
-      text: "Mélomane 7 (Ce personnage est considéré comme ayant un coût de 7 pour chanter des chansons.)",
-    },
-    it: {
-      name: "Ariel",
-      version: "Sirena Canterina",
-      text: "Melodioso 7",
-    },
-  },
   inkType: ["amber"],
   franchise: "Little Mermaid",
   set: "004",
@@ -59,4 +33,5 @@ export const arielSingingMermaid: CharacterCard = {
       text: "Singer 7",
     },
   ],
+  i18n: arielSingingMermaidI18n,
 };

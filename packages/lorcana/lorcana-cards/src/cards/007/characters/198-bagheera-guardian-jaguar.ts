@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { bagheeraGuardianJaguarI18n } from "./198-bagheera-guardian-jaguar.i18n";
 
 export const bagheeraGuardianJaguar: CharacterCard = {
   id: "n5M",
@@ -7,43 +8,6 @@ export const bagheeraGuardianJaguar: CharacterCard = {
   cardType: "character",
   name: "Bagheera",
   version: "Guardian Jaguar",
-  i18n: {
-    en: {
-      name: "Bagheera",
-      version: "Guardian Jaguar",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "YOU MUST BE BRAVE",
-          description:
-            "When this character is banished during an opponent's turn, deal 2 damage to each opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Baghira",
-      version: "Wächter-Jaguar",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) DU MUSST JETZT TAPFER SEIN Wenn dieser Charakter im Zug einer gegnerischen Person verbannt wird, füge jedem gegnerischen Charakter 2 Schaden zu.",
-    },
-    fr: {
-      name: "Bagheera",
-      version: "Gardien félin",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.) IL FAUT QUE TU SOIS BRAVE Lorsque ce personnage est banni durant le tour d'un adversaire, infligez 2 dommages à chaque personnage adverse.",
-        },
-      ],
-    },
-    it: {
-      name: "Bagheera",
-      version: "Giaguaro Protettore",
-      text: "Guardiano DEVI ESSERE CORAGGIOSO Durante il turno di un avversario, quando questo personaggio viene esiliato, infliggi 2 danni a ogni personaggio avversario.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Jungle Book",
   set: "007",
@@ -95,8 +59,15 @@ export const bagheeraGuardianJaguar: CharacterCard = {
         event: "banish",
         on: "SELF",
         timing: "when",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "opponent",
+          },
+        ],
       },
       type: "triggered",
     },
   ],
+  i18n: bagheeraGuardianJaguarI18n,
 };

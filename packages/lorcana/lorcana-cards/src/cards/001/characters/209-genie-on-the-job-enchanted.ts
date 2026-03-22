@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { genieOnTheJobEnchantedI18n } from "./209-genie-on-the-job-enchanted.i18n";
 
 export const genieOnTheJobEnchanted: CharacterCard = {
   id: "Qdl",
@@ -7,43 +8,6 @@ export const genieOnTheJobEnchanted: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "On the Job",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "On the Job",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "DISAPPEAR",
-          description:
-            "When you play this character, you may return chosen character to their player's hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschinni",
-      version: "Bei der Arbeit",
-      text: "Wendig VERSCHWINDEN Wenn du diesen Charakter ausspielst, darfst du einen Charakter deiner Wahl zurück auf die zugehörige Hand schicken.",
-    },
-    fr: {
-      name: "GÉNIE",
-      version: "Fait le show",
-      text: "Insaisissable TU DISPARAIS Lorsque vous jouez ce personnage, choisissez un personnage et renvoyez-le dans la main de son propriétaire.",
-    },
-    it: {
-      name: "Genie",
-      version: "On the Job",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) DISAPPEAR When you play this character, you may return chosen character to their player's hand.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aladdin",
   set: "001",
@@ -55,7 +19,6 @@ export const genieOnTheJobEnchanted: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_ae7e91462bfc4861bbf97e99ed53a1c1",
     tcgPlayer: 510155,
@@ -98,4 +61,5 @@ export const genieOnTheJobEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: genieOnTheJobEnchantedI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goofySuperGoofEnchantedI18n } from "./214-goofy-super-goof-enchanted.i18n";
 
 export const goofySuperGoofEnchanted: CharacterCard = {
   id: "8aU",
@@ -7,42 +8,6 @@ export const goofySuperGoofEnchanted: CharacterCard = {
   cardType: "character",
   name: "Goofy",
   version: "Super Goof",
-  i18n: {
-    en: {
-      name: "Goofy",
-      version: "Super Goof",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "SUPER PEANUT POWERS",
-          description: "Whenever this character challenges another character, gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Goofy",
-      version: "Supergoof",
-      text: "Rasant SUPER-ERDNUSS-KRÄFTE Jedes Mal, wenn dieser Charakter einen anderen Charakter herausfordert, sammelst du 2 Legenden.",
-    },
-    fr: {
-      name: "Dingo",
-      version: "Super Dingo",
-      text: "Charge POUVOIR DES SUPER CACAHUÈTES Chaque fois que ce personnage en défie un autre, gagnez 2 éclats de Lore.",
-    },
-    it: {
-      name: "Pippo",
-      version: "Superpippo",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) POTERE DELLE SUPER ARACHIDI Ogni volta che questo personaggio sfida un altro personaggio, ottieni 2 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "004",
   cardNumber: 214,
@@ -83,6 +48,7 @@ export const goofySuperGoofEnchanted: CharacterCard = {
       name: "SUPER PEANUT POWERS",
       text: "SUPER PEANUT POWERS Whenever this character challenges another character, gain 2 lore.",
       trigger: {
+        defender: {},
         event: "challenge",
         on: "SELF",
         timing: "whenever",
@@ -90,4 +56,5 @@ export const goofySuperGoofEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: goofySuperGoofEnchantedI18n,
 };

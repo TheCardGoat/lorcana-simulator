@@ -22,16 +22,12 @@ export type LorcanaLogLocale = (typeof REQUIRED_LORCANA_LOG_LOCALES)[number];
 
 type LorcanaLogCatalog = Record<LorcanaLogMessageKey, string>;
 
-function asLorcanaLogCatalog(catalog: Readonly<Record<string, string>>): LorcanaLogCatalog {
-  return catalog as LorcanaLogCatalog;
-}
-
-const EN_MESSAGES = asLorcanaLogCatalog(en);
-const ES_MESSAGES = asLorcanaLogCatalog(es);
-const FR_MESSAGES = asLorcanaLogCatalog(fr);
-const DE_MESSAGES = asLorcanaLogCatalog(de);
-const IT_MESSAGES = asLorcanaLogCatalog(it);
-const PT_BR_MESSAGES = asLorcanaLogCatalog(ptBr);
+const EN_MESSAGES = en satisfies LorcanaLogCatalog;
+const ES_MESSAGES = es satisfies LorcanaLogCatalog;
+const FR_MESSAGES = fr satisfies LorcanaLogCatalog;
+const DE_MESSAGES = de satisfies LorcanaLogCatalog;
+const IT_MESSAGES = it satisfies LorcanaLogCatalog;
+const PT_BR_MESSAGES = ptBr satisfies LorcanaLogCatalog;
 
 export const LORCANA_LOG_TRANSLATIONS_BY_LOCALE = {
   en: EN_MESSAGES,
@@ -62,10 +58,6 @@ export function collectLorcanaLogTranslationIssues(): string[] {
 
     for (const key of logKeys) {
       const message = catalog[key];
-      if (typeof message !== "string") {
-        issues.push(`[${locale}] ${key}: missing translation`);
-        continue;
-      }
       const expectedPlaceholders = uniqueSorted([...LORCANA_LOG_TRANSLATION_VALUE_KEYS[key]]);
       const actualPlaceholders = extractPlaceholders(message);
 

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { whatDidYouCallMeI18n } from "./132-what-did-you-call-me.i18n";
 
 export const whatDidYouCallMe: ActionCard = {
   id: "Dew",
@@ -6,24 +7,6 @@ export const whatDidYouCallMe: ActionCard = {
   reprints: ["set2-132"],
   cardType: "action",
   name: "What Did You Call Me?",
-  i18n: {
-    en: {
-      name: "What Did You Call Me?",
-      text: "Chosen damaged character gets +3 {S} this turn.",
-    },
-    de: {
-      name: "Wie hast du mich genannt?",
-      text: "Gib einem beschädigten Charakter deiner Wahl in diesem Zug +3.",
-    },
-    fr: {
-      name: "Comment m'as-tu nommé ?",
-      text: "Choisissez un personnage blessé, il gagne +3 pour le reste de ce tour.",
-    },
-    it: {
-      name: "What Did You Call Me?",
-      text: "Chosen damaged character gets +3 this turn.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Great Mouse Detective",
   set: "002",
@@ -48,4 +31,5 @@ export const whatDidYouCallMe: ActionCard = {
       },
     },
   ],
+  i18n: whatDidYouCallMeI18n,
 };

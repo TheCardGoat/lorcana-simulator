@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseMusicalArtistI18n } from "./009-minnie-mouse-musical-artist.i18n";
 
 export const minnieMouseMusicalArtist: CharacterCard = {
   id: "8V8",
@@ -7,43 +8,6 @@ export const minnieMouseMusicalArtist: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Musical Artist",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Musical Artist",
-      text: [
-        {
-          title: "Singer 3",
-        },
-        {
-          title: "ENTOURAGE",
-          description:
-            "Whenever you play a character with Bodyguard, you may remove up to 2 damage from chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Musikalische Künstlerin",
-      text: [
-        {
-          title: "Singen 3",
-          description:
-            "(Die Kosten dieses Charakters gelten als 3 für das Singen von Liedern.) ENTOURAGE Jedes Mal, wenn du einen Charakter mit Beschützen ausspielst, darfst du bis zu 2 Schaden von einem Charakter deiner Wahl entfernen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Minnie",
-      version: "Artiste musicale",
-      text: "Mélomane 3 (Ce personnage est considéré comme ayant un coût de 3 pour chanter des chansons.) GARDE DU CORPS Chaque fois que vous jouez un personnage avec Rempart, vous pouvez choisir un personnage et lui retirer jusqu'à 2 jetons Dommage.",
-    },
-    it: {
-      name: "Minni",
-      version: "Musicista",
-      text: "Melodioso 3 ENTOURAGE Ogni volta che giochi un personaggio con Guardiano, puoi rimuovere fino a 2 danni da un personaggio a tua scelta.",
-    },
-  },
   inkType: ["amber"],
   set: "003",
   cardNumber: 9,
@@ -68,7 +32,6 @@ export const minnieMouseMusicalArtist: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       id: "egy-1",
@@ -108,4 +71,5 @@ export const minnieMouseMusicalArtist: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: minnieMouseMusicalArtistI18n,
 };

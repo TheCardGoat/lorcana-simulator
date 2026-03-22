@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { zeusMrLightningBoltsI18n } from "./092-zeus-mr-lightning-bolts.i18n";
 
 export const zeusMrLightningBolts: CharacterCard = {
   id: "0AH",
@@ -7,52 +8,6 @@ export const zeusMrLightningBolts: CharacterCard = {
   cardType: "character",
   name: "Zeus",
   version: "Mr. Lightning Bolts",
-  i18n: {
-    en: {
-      name: "Zeus",
-      version: "Mr. Lightning Bolts",
-      text: [
-        {
-          title: "TARGET PRACTICE",
-          description:
-            "Whenever this character challenges another character, he gets +{S} equal to the {S} of chosen character this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Zeus",
-      version: "Der geölte Blitz persönlich",
-      text: [
-        {
-          title: "ZIELSCHEIBEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter einen anderen Charakter herausfordert, erhält er in diesem Zug so viel +, wie die eines Charakters deiner Wahl beträgt.",
-        },
-      ],
-    },
-    fr: {
-      name: "Zeus",
-      version: "M. Crache-la-Foudre",
-      text: [
-        {
-          title: "TIRER COMME DES PIGEONS",
-          description:
-            "Chaque fois que ce personnage en défie un autre, choisissez un personnage et ajoutez sa à celle de ce personnage-ci.",
-        },
-      ],
-    },
-    it: {
-      name: "Zeus",
-      version: "Mister Fulmini e Saette",
-      text: [
-        {
-          title: "TIRO AL BERSAGLIO",
-          description:
-            "Ogni volta che questo personaggio sfida un altro personaggio, riceve + pari alla di un personaggio a tua scelta per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "004",
@@ -75,5 +30,47 @@ export const zeusMrLightningBolts: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "King", "Deity"],
-  abilities: [],
+  abilities: [
+    {
+      id: "0AH-1",
+      name: "TARGET PRACTICE",
+      text: "TARGET PRACTICE Whenever this character challenges another character, he gets +{S} equal to the {S} of chosen character this turn.",
+      type: "triggered",
+      trigger: {
+        event: "challenge",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "sequence",
+        effects: [
+          {
+            type: "select-target",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          },
+          {
+            type: "modify-stat",
+            stat: "strength",
+            modifier: {
+              type: "strength-of",
+              target: {
+                ref: "previous-target",
+              },
+            },
+            duration: "this-turn",
+            target: {
+              ref: "self",
+            },
+          },
+        ],
+      },
+    },
+  ],
+  i18n: zeusMrLightningBoltsI18n,
 };

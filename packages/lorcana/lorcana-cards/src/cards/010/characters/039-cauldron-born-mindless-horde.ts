@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cauldronBornMindlessHordeI18n } from "./039-cauldron-born-mindless-horde.i18n";
 
 export const cauldronBornMindlessHorde: CharacterCard = {
   id: "Fjd",
@@ -7,24 +8,6 @@ export const cauldronBornMindlessHorde: CharacterCard = {
   cardType: "character",
   name: "Cauldron Born",
   version: "Mindless Horde",
-  i18n: {
-    en: {
-      name: "Cauldron Born",
-      version: "Mindless Horde",
-    },
-    de: {
-      name: "Im Zauberkessel Geborener",
-      version: "Willenlose Horde",
-    },
-    fr: {
-      name: "Soldats ressuscités",
-      version: "Horde sans âme",
-    },
-    it: {
-      name: "Nati dalla Pentola",
-      version: "Orda Dissennata",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Black Cauldron",
   set: "010",
@@ -41,4 +24,5 @@ export const cauldronBornMindlessHorde: CharacterCard = {
     tcgPlayer: 659446,
   },
   classifications: ["Storyborn"],
+  i18n: cauldronBornMindlessHordeI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { clawhauserDonutDetectiveI18n } from "./175-clawhauser-donut-detective.i18n";
 
 export const clawhauserDonutDetective: CharacterCard = {
   id: "6w5",
@@ -7,28 +8,6 @@ export const clawhauserDonutDetective: CharacterCard = {
   cardType: "character",
   name: "Clawhauser",
   version: "Donut Detective",
-  i18n: {
-    en: {
-      name: "Clawhauser",
-      version: "Donut Detective",
-      text: "Challenger +2",
-    },
-    de: {
-      name: "Clawhauser",
-      version: "Donut-Detektiv",
-      text: "Herausfordern +2",
-    },
-    fr: {
-      name: "Clawhauser",
-      version: "Détective à beignet",
-      text: "Offensif +2",
-    },
-    it: {
-      name: "Clawhauser",
-      version: "Detective delle Ciambelle",
-      text: "Sfidante +2",
-    },
-  },
   inkType: ["steel"],
   franchise: "Zootropolis",
   set: "010",
@@ -54,4 +33,5 @@ export const clawhauserDonutDetective: CharacterCard = {
       text: "Challenger +2",
     },
   ],
+  i18n: clawhauserDonutDetectiveI18n,
 };

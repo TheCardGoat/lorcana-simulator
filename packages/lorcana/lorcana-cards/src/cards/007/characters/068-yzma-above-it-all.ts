@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yzmaAboveItAllI18n } from "./068-yzma-above-it-all.i18n";
 
 export const yzmaAboveItAll: CharacterCard = {
   id: "JoL",
@@ -7,40 +8,6 @@ export const yzmaAboveItAll: CharacterCard = {
   cardType: "character",
   name: "Yzma",
   version: "Above It All",
-  i18n: {
-    en: {
-      name: "Yzma",
-      version: "Above It All",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "BACK TO WORK",
-          description:
-            "Whenever another character is banished in a challenge, return that card to its player's hand, then that player discards a card at random.",
-        },
-      ],
-    },
-    de: {
-      name: "Isma",
-      version: "Steht über allem",
-      text: "Gestaltwandel 5 Wendig ZURÜCK AN DIE ARBEIT Jedes Mal, wenn ein anderer Charakter durch eine Herausforderung verbannt wird, nimmt die zugehörige Person ihn auf ihre Hand zurück und wirft danach eine zufällig ausgewählte Karte von ihrer Hand ab.",
-    },
-    fr: {
-      name: "Yzma",
-      version: "Au-dessus de tout",
-      text: "Alter 5 Insaisissable AU BOULOT Chaque fois qu'un autre personnage est banni via un défi, renvoyez-le dans la main de son propriétaire, puis ce joueur se défausse d'une carte au hasard.",
-    },
-    it: {
-      name: "Yzma",
-      version: "Al di Sopra di Ogni Cosa",
-      text: "Trasformazione 5 Sfuggente AL LAVORO Ogni volta che un altro personaggio viene esiliato in una sfida, fai riprendere in mano al suo giocatore quella carta, poi quel giocatore scarta una carta a caso.",
-    },
-  },
   inkType: ["amethyst", "emerald"],
   franchise: "Emperors New Groove",
   set: "007",
@@ -69,5 +36,51 @@ export const yzmaAboveItAll: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain", "Queen"],
-  abilities: [],
+  abilities: [
+    {
+      id: "JoL-1",
+      keyword: "Shift",
+      type: "keyword",
+      text: "Shift 5",
+      cost: {
+        ink: 5,
+      },
+    },
+    {
+      id: "JoL-2",
+      keyword: "Evasive",
+      type: "keyword",
+      text: "Evasive",
+    },
+    {
+      id: "JoL-3",
+      name: "BACK TO WORK",
+      text: "BACK TO WORK Whenever another character is banished in a challenge, return that card to its player's hand, then that player discards a card at random.",
+      type: "triggered",
+      trigger: {
+        event: "banish-in-challenge",
+        on: "OTHER_CHARACTERS",
+        timing: "whenever",
+      },
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "return-to-hand",
+            target: {
+              ref: "trigger-source",
+            },
+          },
+          {
+            type: "discard",
+            amount: 1,
+            random: true,
+            from: "hand",
+            target: "TRIGGER_SOURCE_OWNER",
+          },
+        ],
+      },
+    },
+  ],
+  i18n: yzmaAboveItAllI18n,
 };

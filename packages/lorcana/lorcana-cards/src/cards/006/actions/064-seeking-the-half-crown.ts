@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { seekingTheHalfCrownI18n } from "./064-seeking-the-half-crown.i18n";
 
 export const seekingTheHalfCrown: ActionCard = {
   id: "Kza",
@@ -6,32 +7,6 @@ export const seekingTheHalfCrown: ActionCard = {
   reprints: ["set6-064"],
   cardType: "action",
   name: "Seeking the Half Crown",
-  i18n: {
-    en: {
-      name: "Seeking the Half Crown",
-      text: [
-        {
-          title:
-            "For each Sorcerer character you have in play, you pay 1 {I} less to play this action.",
-        },
-        {
-          title: "Draw 2 cards.",
-        },
-      ],
-    },
-    de: {
-      name: "Nach der Kronenhälfte suchen",
-      text: "Für jeden Magier, den du im Spiel hast, zahlst du 1 weniger, um diese Aktion auszuspielen. Ziehe 2 Karten.",
-    },
-    fr: {
-      name: "En quête de la moitié de Couronne",
-      text: "Jouer cette action coûte 1 de moins pour chaque personnage Mage que vous avez en jeu. Piochez 2 cartes.",
-    },
-    it: {
-      name: "Alla Ricerca della Mezza Corona",
-      text: "Per ogni personaggio Incantatore che hai in gioco, paga 1 in meno per giocare questa azione. Pesca 2 carte.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "006",
@@ -76,4 +51,5 @@ export const seekingTheHalfCrown: ActionCard = {
       },
     },
   ],
+  i18n: seekingTheHalfCrownI18n,
 };

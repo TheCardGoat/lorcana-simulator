@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { perplexingSignpostsI18n } from "./067-perplexing-signposts.i18n";
 
 export const perplexingSignposts: ItemCard = {
   id: "xK3",
@@ -6,46 +7,6 @@ export const perplexingSignposts: ItemCard = {
   reprints: ["set2-067"],
   cardType: "item",
   name: "Perplexing Signposts",
-  i18n: {
-    en: {
-      name: "Perplexing Signposts",
-      text: [
-        {
-          title: "TO WONDERLAND",
-          description: "Banish this item — Return chosen character of yours to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Wirre Wegweiser",
-      text: [
-        {
-          title: "INS WUNDERLAND",
-          description:
-            "Verbanne diesen Gegenstand — Wähle einen deiner Charaktere und nimm ihn zurück auf deine Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Panneaux déroutants",
-      text: [
-        {
-          title: "DIRECTION LE PAYS DES MERVEILLES",
-          description:
-            "Bannissez cet objet — Choisissez l'un de vos personnages en jeu et renvoyez-le dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Perplexing Signposts",
-      text: [
-        {
-          title: "TO WONDERLAND",
-          description: "Banish this item — Return chosen character of yours to your hand.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Alice in Wonderland",
   set: "002",
@@ -78,4 +39,5 @@ export const perplexingSignposts: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: perplexingSignpostsI18n,
 };

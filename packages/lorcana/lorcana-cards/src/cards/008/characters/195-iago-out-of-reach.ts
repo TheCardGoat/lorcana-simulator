@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { iagoOutOfReachI18n } from "./195-iago-out-of-reach.i18n";
 
 export const iagoOutOfReach: CharacterCard = {
   id: "d1f",
@@ -7,52 +8,6 @@ export const iagoOutOfReach: CharacterCard = {
   cardType: "character",
   name: "Iago",
   version: "Out of Reach",
-  i18n: {
-    en: {
-      name: "Iago",
-      version: "Out of Reach",
-      text: [
-        {
-          title: "SELF-PRESERVATION",
-          description:
-            "While you have another exerted character in play, this character can't be challenged.",
-        },
-      ],
-    },
-    de: {
-      name: "Iago",
-      version: "Out of Reach",
-      text: [
-        {
-          title: "SELF-PRESERVATION",
-          description:
-            "While you have another exerted character in play, this character can't be challenged.",
-        },
-      ],
-    },
-    fr: {
-      name: "Iago",
-      version: "Out of Reach",
-      text: [
-        {
-          title: "SELF-PRESERVATION",
-          description:
-            "While you have another exerted character in play, this character can't be challenged.",
-        },
-      ],
-    },
-    it: {
-      name: "Iago",
-      version: "Out of Reach",
-      text: [
-        {
-          title: "SELF-PRESERVATION",
-          description:
-            "While you have another exerted character in play, this character can't be challenged.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Aladdin",
   set: "008",
@@ -87,4 +42,5 @@ export const iagoOutOfReach: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: iagoOutOfReachI18n,
 };

@@ -4,4 +4,5 @@ export { default as DiscardPileDialog } from "@/features/simulator/dialogs/Disca
 export { default as GlobalCardPreview } from "@/features/simulator/dialogs/GlobalCardPreview.svelte";
 export { default as PlayerSettingsDialog } from "./PlayerSettingsDialog.svelte";
 export { default as PlayerTargetDialog } from "./PlayerTargetDialog.svelte";
-export { default as ScryResolutionDialog } from "@/features/simulator/dialogs/ScryResolutionDialog.svelte";
+export { default as SimulatorSupportDialog } from "./SimulatorSupportDialog.svelte";
+export { default as TargetSelectionDialog } from "./TargetSelectionDialog.svelte";

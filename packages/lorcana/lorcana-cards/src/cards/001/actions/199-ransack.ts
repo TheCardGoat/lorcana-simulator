@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { ransackI18n } from "./199-ransack.i18n";
 
 export const ransack: ActionCard = {
   id: "sgV",
@@ -6,24 +7,6 @@ export const ransack: ActionCard = {
   reprints: ["set1-199"],
   cardType: "action",
   name: "Ransack",
-  i18n: {
-    en: {
-      name: "Ransack",
-      text: "Draw 2 cards, then choose and discard 2 cards.",
-    },
-    de: {
-      name: "Durchwühlen",
-      text: "Ziehe 2 Karten. Wähle danach 2 Karten aus deiner Hand und wirf sie ab.",
-    },
-    fr: {
-      name: "SENS DESSUS DESSOUS",
-      text: "Piochez 2 cartes puis défaussez 2 cartes.",
-    },
-    it: {
-      name: "Ransack",
-      text: "Draw 2 cards, then choose and discard 2 cards.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Emperors New Groove",
   set: "001",
@@ -58,4 +41,5 @@ export const ransack: ActionCard = {
       },
     },
   ],
+  i18n: ransackI18n,
 };

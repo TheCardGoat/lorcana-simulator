@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { todKnowsAllTheTricksEnchantedI18n } from "./230-tod-knows-all-the-tricks-enchanted.i18n";
 
 export const todKnowsAllTheTricksEnchanted: CharacterCard = {
   id: "D1D",
@@ -7,40 +8,6 @@ export const todKnowsAllTheTricksEnchanted: CharacterCard = {
   cardType: "character",
   name: "Tod",
   version: "Knows All the Tricks",
-  i18n: {
-    en: {
-      name: "Tod",
-      version: "Knows All the Tricks",
-      text: [
-        {
-          title: "Shift 5 {I}",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "IMPRESSIVE LEAPS",
-          description:
-            "Twice during your turn, whenever this character is chosen for an action or an item's ability, you may ready him.",
-        },
-      ],
-    },
-    de: {
-      name: "Cap",
-      version: "Kennt alle Tricks",
-      text: "Gestaltwandel 5 Wendig BEEINDRUCKENDE SPRÜNGE Zweimal während deines Zuges, wenn dieser Charakter von einer Aktion oder einem Gegenstand ausgewählt wird, darfst du ihn bereit machen.",
-    },
-    fr: {
-      name: "Rox",
-      version: "A des trucs à lui",
-      text: "Alter 5 Insaisissable SAUTS IMPRESSIONNANTS Deux fois durant votre tour, lorsque ce personnage est choisi avec une action ou la capacité d'un objet, vous pouvez le redresser.",
-    },
-    it: {
-      name: "Red",
-      version: "Conosce Tutti i Trucchi",
-      text: "Trasformazione 5, Sfuggente SALTI ECCEZIONALI Due volte durante il tuo turno, ogni volta che questo personaggio viene scelto per un'azione o per l'abilità di un oggetto, puoi prepararlo.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Fox and the Hound",
   set: "011",
@@ -91,19 +58,33 @@ export const todKnowsAllTheTricksEnchanted: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: "CHOSEN_CHARACTER",
+          target: "SELF",
           type: "ready",
         },
         type: "optional",
       },
-      name: "IMPRESSIVE LEAPS Twice",
+      name: "IMPRESSIVE LEAPS",
       trigger: {
-        event: "play",
+        event: "be-chosen",
+        timing: "whenever",
         on: "SELF",
-        timing: "when",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+          {
+            type: "n-times-per-turn",
+            count: 2,
+          },
+        ],
+        sourceFilter: {
+          cardType: ["action", "item"],
+        },
       },
       type: "triggered",
       text: "IMPRESSIVE LEAPS Twice during your turn, whenever this character is chosen for an action or an item’s ability, you may ready him.",
     },
   ],
+  i18n: todKnowsAllTheTricksEnchantedI18n,
 };

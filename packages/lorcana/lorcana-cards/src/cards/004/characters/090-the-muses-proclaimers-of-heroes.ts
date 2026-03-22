@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theMusesProclaimersOfHeroesI18n } from "./090-the-muses-proclaimers-of-heroes.i18n";
 
 export const theMusesProclaimersOfHeroes: CharacterCard = {
   id: "BQW",
@@ -7,37 +8,6 @@ export const theMusesProclaimersOfHeroes: CharacterCard = {
   cardType: "character",
   name: "The Muses",
   version: "Proclaimers of Heroes",
-  i18n: {
-    en: {
-      name: "The Muses",
-      version: "Proclaimers of Heroes",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "THE GOSPEL TRUTH",
-          description:
-            "Whenever you play a song, you may return chosen character with 2 {S} or less to their player's hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Musen",
-      version: "Besingerinnen von Helden",
-      text: "Behütet JEDES WORT IST WAHR! Jedes Mal, wenn du ein Lied ausspielst, darfst du einen Charakter deiner Wahl, mit 2 oder weniger, zurück auf die zugehörige Hand schicken.",
-    },
-    fr: {
-      name: "Les Muses",
-      version: "Proclamatrices de héros",
-      text: "Hors d'atteinte DU GOSPEL PUR Chaque fois que vous jouez une chanson, vous pouvez choisir un personnage avec 2 ou moins et le renvoyer dans la main de son propriétaire.",
-    },
-    it: {
-      name: "Le Muse",
-      version: "Proclamatrici di Eroi",
-      text: "Protetto QUESTA È LA REALTÀ Ogni volta che giochi una canzone, puoi far riprendere in mano al suo giocatore un personaggio a tua scelta con 2 o inferiore.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "004",
@@ -80,6 +50,13 @@ export const theMusesProclaimersOfHeroes: CharacterCard = {
             owner: "any",
             zones: ["play"],
             cardTypes: ["character"],
+            filter: [
+              {
+                type: "strength-comparison",
+                comparison: "less-or-equal",
+                value: 2,
+              },
+            ],
           },
           type: "return-to-hand",
         },
@@ -91,7 +68,7 @@ export const theMusesProclaimersOfHeroes: CharacterCard = {
       trigger: {
         event: "play",
         on: {
-          cardType: "action",
+          cardType: "song",
           controller: "you",
         },
         timing: "whenever",
@@ -99,4 +76,5 @@ export const theMusesProclaimersOfHeroes: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: theMusesProclaimersOfHeroesI18n,
 };

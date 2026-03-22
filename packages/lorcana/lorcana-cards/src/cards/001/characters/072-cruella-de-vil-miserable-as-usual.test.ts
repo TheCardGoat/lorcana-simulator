@@ -1,102 +1,88 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
 import { cruellaDeVilMiserableAsUsual } from "./072-cruella-de-vil-miserable-as-usual";
 
-describe("Cruella De Vil - Miserable as Usual", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [cruellaDeVilMiserableAsUsual] });
-  //   Expect(testEngine.getCardModel(cruellaDeVilMiserableAsUsual).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const challenger = createMockCharacter({
+  id: "cruella-test-challenger",
+  name: "Test Challenger",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   CruellaDeVilMiserableAsUsual,
-//   TeKaTheBurningOne,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Cruella De Vil - Miserable As Usual", () => {
-//   Describe("**You'll Be Sorry** When this character is challenged and banished, you may return chosen character to their player's hand.", () => {
-//     It("should banish the challenging character", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [teKaTheBurningOne],
-//         },
-//         {
-//           Play: [cruellaDeVilMiserableAsUsual],
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         CruellaDeVilMiserableAsUsual.id,
-//         "player_two",
-//       );
-//
-//       Const attacker = testStore.getByZoneAndId("play", teKaTheBurningOne.id);
-//
-//       Expect(cardUnderTest.zone).toEqual("play");
-//       CardUnderTest.updateCardMeta({ exerted: true });
-//
-//       Attacker.challenge(cardUnderTest);
-//
-//       TestStore.changePlayer("player_two");
-//
-//       TestStore.resolveOptionalAbility();
-//       TestStore.resolveTopOfStack({ targetId: attacker.instanceId });
-//
-//       Expect(testStore.getZonesCardCount("player_two")).toEqual(
-//         Expect.objectContaining({ discard: 1, play: 0 }),
-//       );
-//       Expect(testStore.getZonesCardCount("player_one")).toEqual(
-//         Expect.objectContaining({ hand: 1, play: 0 }),
-//       );
-//       Expect(attacker.zone).toEqual("hand");
-//       Expect(testStore.store.stackLayerStore.layers).toHaveLength(0);
-//     });
-//
-//     It("skips banish effect", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [teKaTheBurningOne],
-//         },
-//         {
-//           Play: [cruellaDeVilMiserableAsUsual],
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         CruellaDeVilMiserableAsUsual.id,
-//         "player_two",
-//       );
-//
-//       Const attacker = testStore.getByZoneAndId("play", teKaTheBurningOne.id);
-//
-//       Expect(cardUnderTest.zone).toEqual("play");
-//       CardUnderTest.updateCardMeta({ exerted: true });
-//
-//       Attacker.challenge(cardUnderTest);
-//       TestStore.changePlayer().resolveOptionalAbility();
-//       TestStore.resolveTopOfStack({ skip: true });
-//
-//       Expect(testStore.getZonesCardCount("player_one")).toEqual(
-//         Expect.objectContaining({ discard: 0, play: 1 }),
-//       );
-//       Expect(testStore.getZonesCardCount("player_two")).toEqual(
-//         Expect.objectContaining({ discard: 1, play: 0 }),
-//       );
-//       Expect(testStore.store.stackLayerStore.layers).toHaveLength(0);
-//     });
-//   });
-// });
-//
+describe("Cruella De Vil - Miserable as Usual", () => {
+  it("can return the challenging character to hand when Cruella is challenged and banished", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 1,
+        play: [challenger],
+      },
+      {
+        deck: 1,
+        play: [{ card: cruellaDeVilMiserableAsUsual, exerted: true }],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().challenge(challenger, cruellaDeVilMiserableAsUsual),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
+
+    const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
+    expect(
+      testEngine.asPlayerTwo().resolveBag(bagEffect!.id, {
+        resolveOptional: true,
+        targets: [challenger],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(challenger)).toBe("hand");
+    expect(testEngine.asPlayerTwo().getCardZone(cruellaDeVilMiserableAsUsual)).toBe("discard");
+    expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_ONE)).toEqual(
+      expect.objectContaining({ hand: 1, play: 0 }),
+    );
+    expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_TWO)).toEqual(
+      expect.objectContaining({ discard: 1, play: 0 }),
+    );
+  });
+
+  it("allows the controller to decline the return-to-hand option", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 1,
+        play: [challenger],
+      },
+      {
+        deck: 1,
+        play: [{ card: cruellaDeVilMiserableAsUsual, exerted: true }],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().challenge(challenger, cruellaDeVilMiserableAsUsual),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
+
+    const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
+    expect(
+      testEngine.asPlayerTwo().resolveBag(bagEffect!.id, {
+        resolveOptional: false,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(challenger)).toBe("play");
+    expect(testEngine.asPlayerTwo().getCardZone(cruellaDeVilMiserableAsUsual)).toBe("discard");
+    expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_ONE)).toEqual(
+      expect.objectContaining({ play: 1, discard: 0 }),
+    );
+    expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_TWO)).toEqual(
+      expect.objectContaining({ discard: 1, play: 0 }),
+    );
+  });
+});

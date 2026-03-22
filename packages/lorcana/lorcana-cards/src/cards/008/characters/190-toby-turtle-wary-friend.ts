@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tobyTurtleWaryFriendI18n } from "./190-toby-turtle-wary-friend.i18n";
 
 export const tobyTurtleWaryFriend: CharacterCard = {
   id: "Qqa",
@@ -7,49 +8,6 @@ export const tobyTurtleWaryFriend: CharacterCard = {
   cardType: "character",
   name: "Toby Turtle",
   version: "Wary Friend",
-  i18n: {
-    en: {
-      name: "Toby Turtle",
-      version: "Wary Friend",
-      text: [
-        {
-          title: "HARD SHELL",
-          description: "While this character is exerted, he gains Resist +1.",
-        },
-      ],
-    },
-    de: {
-      name: "Toby Schildkröte",
-      version: "Vorsichtiger Freund",
-      text: [
-        {
-          title: "HARTE SCHALE",
-          description:
-            "Solange dieser Charakter erschöpft ist, erhält er Robust +1. (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Toby la Tortue",
-      version: "Ami prudent",
-      text: [
-        {
-          title: "CARAPACE SOLIDE",
-          description: "Tant que ce personnage est épuisé, il gagne Résistance +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Tobia",
-      version: "Amico Prudente",
-      text: [
-        {
-          title: "GUSCIO DURO",
-          description: "Mentre questo personaggio è impegnato, ottiene Resistere +1.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Robin Hood",
   set: "008",
@@ -73,6 +31,9 @@ export const tobyTurtleWaryFriend: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "is-exerted",
+      },
       effect: {
         keyword: "Resist",
         target: "SELF",
@@ -80,8 +41,10 @@ export const tobyTurtleWaryFriend: CharacterCard = {
         value: 1,
       },
       id: "1le-1",
+      name: "HARD SHELL",
       text: "HARD SHELL While this character is exerted, he gains Resist +1.",
       type: "static",
     },
   ],
+  i18n: tobyTurtleWaryFriendI18n,
 };

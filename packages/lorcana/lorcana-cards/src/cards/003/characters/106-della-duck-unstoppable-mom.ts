@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { dellaDuckUnstoppableMomI18n } from "./106-della-duck-unstoppable-mom.i18n";
 
 export const dellaDuckUnstoppableMom: CharacterCard = {
   id: "EO7",
@@ -7,28 +8,6 @@ export const dellaDuckUnstoppableMom: CharacterCard = {
   cardType: "character",
   name: "Della Duck",
   version: "Unstoppable Mom",
-  i18n: {
-    en: {
-      name: "Della Duck",
-      version: "Unstoppable Mom",
-      text: "Reckless",
-    },
-    de: {
-      name: "Della Duck",
-      version: "Unaufhaltsame Mutter",
-      text: "Impulsiv",
-    },
-    fr: {
-      name: "Della Duck",
-      version: "Mère inarrêtable",
-      text: "Combattant",
-    },
-    it: {
-      name: "Della Duck",
-      version: "Mamma Inarrestabile",
-      text: "Attaccabrighe",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Ducktales",
   set: "003",
@@ -53,4 +32,5 @@ export const dellaDuckUnstoppableMom: CharacterCard = {
       text: "Reckless",
     },
   ],
+  i18n: dellaDuckUnstoppableMomI18n,
 };

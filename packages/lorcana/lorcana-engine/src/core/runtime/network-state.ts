@@ -1,7 +1,7 @@
 import type { BaseCardDefinition } from "./card-contracts";
+import type { LorcanaG } from "../../types/runtime-state";
 import type {
   MatchRuntimeConfig,
-  MoveDefinition,
   Player,
   ZoneConfig,
   ZoneDefinitions,
@@ -23,10 +23,7 @@ import type {
 } from "./types";
 import type { MatchStaticResources } from "./static-resources";
 
-type RuntimeMoves<G, TCardDerived extends object> = Record<
-  string,
-  MoveDefinition<G, any, any, any, TCardDerived>
->;
+import type { MoveRecord } from "./match-runtime.types";
 
 type CompactZoneCardIndexEntry = Partial<ZoneCardIndexEntry>;
 
@@ -53,12 +50,12 @@ type CompactTCGCtx = {
   random?: Partial<FilteredCtxRandom>;
 };
 
-export type CompactMatchView<G> = {
-  G?: Partial<G>;
+export type CompactMatchView = {
+  G?: Partial<LorcanaG>;
   ctx?: CompactTCGCtx;
 };
 
-export type NetworkMatchView<G> = FilteredMatchView<G> | CompactMatchView<G>;
+export type NetworkMatchView = FilteredMatchView | CompactMatchView;
 
 export interface NetworkMatchData {
   gameID: string;
@@ -112,14 +109,9 @@ function deepMergeDefaults<T>(base: T, patch: unknown): T {
   return result as T;
 }
 
-function getNormalizationBaseline<
-  G,
-  Moves extends RuntimeMoves<G, TCardDerived>,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object,
->(
-  runtimeConfig: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>,
-  staticResources: MatchStaticResources<TCardDefinition>,
+function getNormalizationBaseline(
+  runtimeConfig: MatchRuntimeConfig,
+  staticResources: MatchStaticResources,
   roleCtx: ViewRoleContext,
   matchData: NetworkMatchData,
   message: { matchID: string },
@@ -175,14 +167,10 @@ function stripUndefined<T extends Record<string, unknown>>(value: T): Partial<T>
   return next;
 }
 
-function extractInitialStatusConfig<
-  G,
-  Moves extends RuntimeMoves<G, TCardDerived>,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object,
->(
-  config: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>,
-): { initialGameSegment?: string; initialPhase?: string } {
+function extractInitialStatusConfig(config: MatchRuntimeConfig): {
+  initialGameSegment?: string;
+  initialPhase?: string;
+} {
   const segmentId = config.flow.initialGameSegment ?? Object.keys(config.flow.gameSegments)[0];
   const segment = segmentId ? config.flow.gameSegments[segmentId] : undefined;
   return {
@@ -394,24 +382,19 @@ function deriveAggregateSummaries(
   }
 }
 
-function buildDefaultGameState<
-  G,
-  Moves extends RuntimeMoves<G, TCardDerived>,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object,
->(
-  runtimeConfig: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>,
-  staticResources: MatchStaticResources<TCardDefinition>,
+function buildDefaultGameState(
+  runtimeConfig: MatchRuntimeConfig,
+  staticResources: MatchStaticResources,
   playerIds: readonly string[],
-): G {
+): LorcanaG {
   const players: Player[] = playerIds.map((id) => ({ id: id as PlayerId }));
   return runtimeConfig.setup({ players, staticResources });
 }
 
-export function compactCoreNetworkView<G>(
-  state: FilteredMatchView<G>,
+export function compactCoreNetworkView(
+  state: FilteredMatchView,
   _staticResources?: MatchStaticResources,
-): CompactMatchView<G> {
+): CompactMatchView {
   const zoneDefs = state.ctx.zones.zoneDefs;
   const zoneSummaries: Record<string, PublicZoneSummary> = {};
 
@@ -428,8 +411,8 @@ export function compactCoreNetworkView<G>(
     };
   }
 
-  const compactState: CompactMatchView<G> = {
-    G: state.G as Partial<G>,
+  const compactState: CompactMatchView = {
+    G: state.G as Partial<LorcanaG>,
     ctx: {
       status: stripUndefined({
         ...state.ctx.status,
@@ -516,23 +499,18 @@ export function compactCoreNetworkView<G>(
   return compactState;
 }
 
-export function normalizeNetworkView<
-  G,
-  Moves extends RuntimeMoves<G, TCardDerived>,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object = {},
->(
-  state: NetworkMatchView<G>,
+export function normalizeNetworkView(
+  state: NetworkMatchView,
   message: {
     stateID: number;
     matchID: string;
     protocolVersion: number;
   },
-  runtimeConfig: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>,
-  staticResources: MatchStaticResources<TCardDefinition>,
+  runtimeConfig: MatchRuntimeConfig,
+  staticResources: MatchStaticResources,
   roleCtx: ViewRoleContext,
   matchData?: NetworkMatchData,
-): FilteredMatchView<G> {
+): FilteredMatchView {
   if (
     isRecord(state) &&
     isRecord((state as { ctx?: unknown }).ctx) &&
@@ -540,7 +518,7 @@ export function normalizeNetworkView<
     isRecord((state as { ctx: { zones?: unknown } }).ctx.zones) &&
     isRecord((state as { ctx: { zones: { zoneDefs?: unknown } } }).ctx.zones.zoneDefs)
   ) {
-    return state as FilteredMatchView<G>;
+    return state as FilteredMatchView;
   }
 
   if (!matchData) {
@@ -588,7 +566,7 @@ export function normalizeNetworkView<
   ctxDefaults.protocolVersion = message.protocolVersion;
   ctxDefaults._stateID = message.stateID;
 
-  const compactState = state as CompactMatchView<G>;
+  const compactState = state as CompactMatchView;
   const compactCtx = compactState.ctx ?? {};
   const compactZones = compactCtx.zones ?? {};
   const compactPublic = compactZones.public?.zoneSummaries ?? {};
@@ -659,7 +637,7 @@ export function normalizeNetworkView<
 
   inferHiddenOwnerCardIndexEntries(cardIndex, cardMeta, zoneDefs, staticResources, roleCtx);
 
-  const defaultGame = baseline.defaultGame as G;
+  const defaultGame = baseline.defaultGame as LorcanaG;
 
   return {
     G: deepMergeDefaults(defaultGame, compactState.G ?? {}),
@@ -694,5 +672,5 @@ export function normalizeNetworkView<
         ...compactCtx.random,
       },
     },
-  } as FilteredMatchView<G>;
+  } as FilteredMatchView;
 }

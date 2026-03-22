@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { palaceGuardSpectralSentryI18n } from "./045-palace-guard-spectral-sentry.i18n";
 
 export const palaceGuardSpectralSentry: CharacterCard = {
   id: "APE",
@@ -7,50 +8,6 @@ export const palaceGuardSpectralSentry: CharacterCard = {
   cardType: "character",
   name: "Palace Guard",
   version: "Spectral Sentry",
-  i18n: {
-    en: {
-      name: "Palace Guard",
-      version: "Spectral Sentry",
-      text: [
-        {
-          title: "Vanish",
-          description: "(When an opponent chooses this character for an action, banish them.)",
-        },
-      ],
-    },
-    de: {
-      name: "Palastwache",
-      version: "Spektraler Wächter",
-      text: [
-        {
-          title: "Verschwinden",
-          description:
-            "(Jedes Mal, wenn dieser Charakter von einer Aktion einer gegnerischen Person ausgewählt wird, verbanne ihn.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Garde du palais",
-      version: "Sentinelle spectrale",
-      text: [
-        {
-          title: "Dissipation",
-          description:
-            "(Lorsqu'un adversaire choisit ce personnage avec une action, bannissez-le.)",
-        },
-      ],
-    },
-    it: {
-      name: "Guardia di Palazzo",
-      version: "Sentinella Spettrale",
-      text: [
-        {
-          title: "Svanire",
-          description: "(Quando un avversario sceglie questo personaggio per un'azione, esilialo.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "008",
@@ -80,4 +37,5 @@ export const palaceGuardSpectralSentry: CharacterCard = {
       text: "Vanish",
     },
   ],
+  i18n: palaceGuardSpectralSentryI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gyroGearlooseGadgetWhizI18n } from "./144-gyro-gearloose-gadget-whiz.i18n";
 
 export const gyroGearlooseGadgetWhiz: CharacterCard = {
   id: "nxo",
@@ -7,50 +8,6 @@ export const gyroGearlooseGadgetWhiz: CharacterCard = {
   cardType: "character",
   name: "Gyro Gearloose",
   version: "Gadget Whiz",
-  i18n: {
-    en: {
-      name: "Gyro Gearloose",
-      version: "Gadget Whiz",
-      text: [
-        {
-          title: "NOW TRY TO KEEP UP",
-          description: "{E} — Put an item card from your discard on the top of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Daniel Düsentrieb",
-      version: "Technikfreak",
-      text: [
-        {
-          title: "VERSUCHEN SIE MEINER",
-          description:
-            "GENIALITÄT ZU FOLGEN — Lege 1 Gegenstandskarte aus deinem Ablagestapel zurück auf dein Deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "Géo Trouvetou",
-      version: "Génie des gadgets",
-      text: [
-        {
-          title: "SUIVEZ LES",
-          description:
-            "MÉANDRES DE MON CERVEAU GÉNIAL — Remettez une carte Objet de votre défausse sur le dessus de votre pioche.",
-        },
-      ],
-    },
-    it: {
-      name: "Archimede Pitagorico",
-      version: "Mago dei Gadget",
-      text: [
-        {
-          title: "CERCATE DI SEGUIRE LA MIA MENTE SUPERIORE",
-          description: "— Metti una carta oggetto dai tuoi scarti in cima al tuo mazzo.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Ducktales",
   set: "003",
@@ -72,7 +29,26 @@ export const gyroGearlooseGadgetWhiz: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Inventor"],
-  missingImplementation: true,
-  missingTests: true,
-  abilities: [],
+  abilities: [
+    {
+      id: "nxo-1",
+      name: "NOW TRY TO KEEP UP",
+      text: "NOW TRY TO KEEP UP {E} — Put an item card from your discard on the top of your deck.",
+      type: "activated",
+      cost: {
+        exert: true,
+      },
+      effect: {
+        type: "put-on-top",
+        source: {
+          selector: "chosen",
+          count: 1,
+          owner: "you",
+          zones: ["discard"],
+          cardTypes: ["item"],
+        },
+      },
+    },
+  ],
+  i18n: gyroGearlooseGadgetWhizI18n,
 };

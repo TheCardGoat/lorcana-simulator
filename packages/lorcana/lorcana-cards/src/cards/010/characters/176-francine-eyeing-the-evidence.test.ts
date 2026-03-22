@@ -1,14 +1,33 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { francineEyeingTheEvidence } from "./176-francine-eyeing-the-evidence";
 
 describe("Francine - Eyeing the Evidence", () => {
-  it("should have Resist 1 ability", () => {
-    const testEngine = new LorcanaTestEngine({
-      play: [francineEyeingTheEvidence],
-    });
+  const attacker = createMockCharacter({
+    id: "francine-eyeing-the-evidence-attacker",
+    name: "Attacker",
+    cost: 2,
+    strength: 2,
+    willpower: 3,
+  });
 
-    const cardUnderTest = testEngine.getCardModel(francineEyeingTheEvidence);
-    expect(cardUnderTest.hasResist).toBe(true);
+  it("reduces damage dealt to Francine by 1", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [attacker],
+      },
+      {
+        play: [{ card: francineEyeingTheEvidence, exerted: true }],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().challenge(attacker, francineEyeingTheEvidence),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo()).toHaveDamage({
+      card: francineEyeingTheEvidence,
+      value: 1,
+    });
   });
 });

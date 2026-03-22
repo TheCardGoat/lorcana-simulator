@@ -49,7 +49,6 @@ import {
 import { genieWishFulfilled, goodJob, liloEscapeArtist } from "@tcg/lorcana-cards/cards/006";
 import { showMeMore } from "@tcg/lorcana-cards/cards/007";
 import { i2i } from "@tcg/lorcana-cards/cards/009";
-import type { CommandFailure } from "@tcg/lorcana-engine";
 
 describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
   describe("# 6.1. General", () => {
@@ -78,12 +77,17 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       ).toBe(true);
       expect(challengedEngine.asPlayerTwo().getBagCount()).toBe(1);
       expect(challengedEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
+      const goodJobId = challengedEngine.findCardInstanceId(goodJob, "hand", PLAYER_ONE);
       expect(
         challengedEngine
           .asPlayerTwo()
           .resolveBag(challengedEngine.asPlayerTwo().getBagEffects()[0]!.id).success,
       ).toBe(true);
-      expect(challengedEngine.asPlayerOne().respondWith(goodJob)).toBeSuccessfulCommand();
+      expect(
+        challengedEngine.asPlayerOne().resolveNextPending({
+          targets: [goodJobId],
+        }).success,
+      ).toBe(true);
       expect(challengedEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
 
       const actionEngine = LorcanaMultiplayerTestEngine.createWithFixture({
@@ -217,8 +221,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
         expect(
           ifYouDoEngine.asPlayerOne().resolveBag(bagId, {
             resolveOptional: false,
-            // target is irrelevant here
-            // targets: [pawpsicle],
+            targets: [ifYouDoEngine.findCardInstanceId(pawpsicle, "play", PLAYER_ONE)],
           }).success,
         ).toBe(true);
 
@@ -234,7 +237,12 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
         expect(toEngine.asPlayerOne().quest(arthurWizardsApprentice)).toBeSuccessfulCommand();
         expect(toEngine.asPlayerOne().getBagCount()).toBe(1);
         const bagId1 = toEngine.asPlayerOne().getBagEffects()[0]!.id;
-        expect(toEngine.asPlayerOne().resolveBag(bagId1)).toBeSuccessfulCommand();
+        expect(
+          toEngine.asPlayerOne().resolveBag(bagId1, {
+            resolveOptional: false,
+            targets: [toEngine.findCardInstanceId(arthurWizardsApprentice, "play", PLAYER_ONE)],
+          }),
+        ).toBeSuccessfulCommand();
         expect(toEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(arthurWizardsApprentice.lore);
       });
 
@@ -245,17 +253,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
         });
 
         expect(testEngine.asPlayerOne().playCard(megaraCaptivatingCynic)).toBeSuccessfulCommand();
-        expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-        expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-        ).toBeSuccessfulCommand();
-
-        expect(testEngine.asPlayerOne().getCardZone(megaraCaptivatingCynic)).toBe("play");
-
-        // Player doesn't have a card to discard, they shouldn't be able to select this choice
-        const result = testEngine.asPlayerOne().respondWithChoice(0) as CommandFailure;
-
-        // expect(result.success).toBe(false);
+        expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
         expect(testEngine.asPlayerOne().getCardZone(megaraCaptivatingCynic)).toBe("discard");
       });
     });
@@ -443,7 +441,9 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+        }),
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toEqual(4);
     });
@@ -482,7 +482,9 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
 
       const [firstBag, secondBag] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(firstBag!.id, { resolveOptional: true }),
+        testEngine.asPlayerOne().resolveBag(firstBag!.id, {
+          resolveOptional: true,
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toEqual(4);
@@ -492,7 +494,9 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
 
       expect(
         // The second trigger should resolve with invalid target, resulting in no effect
-        testEngine.asPlayerOne().resolveBag(secondBag!.id, { resolveOptional: true }).success,
+        testEngine.asPlayerOne().resolveBag(secondBag!.id, {
+          resolveOptional: true,
+        }).success,
       ).toBe(true);
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toEqual(4);

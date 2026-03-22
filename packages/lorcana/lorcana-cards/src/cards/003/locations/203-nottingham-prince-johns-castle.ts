@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { nottinghamPrinceJohnsCastleI18n } from "./203-nottingham-prince-johns-castle.i18n";
 
 export const nottinghamPrinceJohnsCastle: LocationCard = {
   id: "cHC",
@@ -7,24 +8,6 @@ export const nottinghamPrinceJohnsCastle: LocationCard = {
   cardType: "location",
   name: "Nottingham",
   version: "Prince John's Castle",
-  i18n: {
-    en: {
-      name: "Nottingham",
-      version: "Prince John's Castle",
-    },
-    de: {
-      name: "Nottingham",
-      version: "Prinz Johns Schloss",
-    },
-    fr: {
-      name: "Nottingham",
-      version: "Château du Prince Jean",
-    },
-    it: {
-      name: "Nottingham",
-      version: "Castello del Principe Giovanni",
-    },
-  },
   inkType: ["steel"],
   franchise: "Robin Hood",
   set: "003",
@@ -40,4 +23,5 @@ export const nottinghamPrinceJohnsCastle: LocationCard = {
     lorcast: "crd_398194a72dfd4e41be4b6939e4e13ee3",
     tcgPlayer: 539118,
   },
+  i18n: nottinghamPrinceJohnsCastleI18n,
 };

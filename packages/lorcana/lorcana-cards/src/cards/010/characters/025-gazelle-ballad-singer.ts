@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gazelleBalladSingerI18n } from "./025-gazelle-ballad-singer.i18n";
 
 export const gazelleBalladSinger: CharacterCard = {
   id: "OP1",
@@ -7,43 +8,6 @@ export const gazelleBalladSinger: CharacterCard = {
   cardType: "character",
   name: "Gazelle",
   version: "Ballad Singer",
-  i18n: {
-    en: {
-      name: "Gazelle",
-      version: "Ballad Singer",
-      text: [
-        {
-          title: "Singer 7",
-        },
-        {
-          title: "CROWD FAVORITE",
-          description:
-            "When you play this character, you may put a song card from your discard on the top of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Gazelle",
-      version: "Balladensängerin",
-      text: [
-        {
-          title: "Singen 7",
-          description:
-            "(Die Kosten dieses Charakters gelten als 7 für das Singen von Liedern.) PUBLIKUMSLIEBLING Wenn du diesen Charakter ausspielst, darfst du 1 Liedkarte aus deinem Ablagestapel wählen und als oberste Karte auf dein Deck legen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Gazelle",
-      version: "Chanteuse de slow",
-      text: "Mélomane 7 (Ce personnage est considéré comme ayant un coût de 7 pour chanter des chansons.) FAVORITE DU PUBLIC Lorsque vous jouez ce personnage, vous pouvez placer sur votre pioche une carte Chanson de votre défausse.",
-    },
-    it: {
-      name: "Gazelle",
-      version: "Cantante di Ballate",
-      text: "Melodioso 7 AMATA DALLA FOLLA Quando giochi questo personaggio, puoi mettere una carta canzone dai tuoi scarti in cima al tuo mazzo.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Zootropolis",
   set: "010",
@@ -69,5 +33,36 @@ export const gazelleBalladSinger: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "OP1-1",
+      keyword: "Singer",
+      type: "keyword",
+      value: 7,
+      text: "Singer 7",
+    },
+    {
+      id: "OP1-2",
+      name: "CROWD FAVORITE",
+      text: "CROWD FAVORITE When you play this character, you may put a song card from your discard on the top of your deck.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "return-from-discard",
+          cardType: "song",
+          destination: "top-of-deck",
+          target: "CONTROLLER",
+          count: 1,
+        },
+      },
+    },
+  ],
+  i18n: gazelleBalladSingerI18n,
 };

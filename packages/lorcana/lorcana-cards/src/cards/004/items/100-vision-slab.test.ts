@@ -1,128 +1,88 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   DonaldDuck,
-//   MickeyBraveLittleTailor,
-//   RapunzelGiftedWithHealing,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import {
-//   GoofyKnightForADay,
-//   MadamMimSnake,
-// } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import {
-//   BelleAccomplishedMystic,
-//   GoofySuperGoof,
-// } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { visionSlab } from "@lorcanito/lorcana-engine/cards/004/items/items";
-// Import {
-//   LuisaMadrigalEntertainingMuscle,
-//   WhiteRabbitRoyalHerald,
-// } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Vision Slab", () => {
-//   Describe("**TRAPPED!** Damage counters can't be removed.", () => {
-//     It("Prevent Removing Damage", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [goofyKnightForADay, visionSlab],
-//         Hand: [rapunzelGiftedWithHealing],
-//         Inkwell: rapunzelGiftedWithHealing.cost,
-//       });
-//
-//       Await testEngine.setCardDamage(goofyKnightForADay, 5);
-//       Await testEngine.playCard(rapunzelGiftedWithHealing, {
-//         Targets: [goofyKnightForADay],
-//       });
-//
-//       Expect(testEngine.getCardModel(goofyKnightForADay).damage).toEqual(5);
-//     });
-//
-//     It("Prevent Moving Damage", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: belleAccomplishedMystic.cost * 2 + madamMimSnake.cost,
-//           Play: [goofySuperGoof, donaldDuck, visionSlab],
-//           Hand: [belleAccomplishedMystic, madamMimSnake],
-//         },
-//         {
-//           Play: [mickeyBraveLittleTailor, goofyKnightForADay],
-//         },
-//       );
-//
-//       Await testEngine.setCardDamage(donaldDuck, 2);
-//       Await testEngine.playCard(
-//         BelleAccomplishedMystic,
-//         {
-//           Targets: [donaldDuck],
-//         },
-//         True,
-//       );
-//       Await testEngine.resolveTopOfStack({
-//         Targets: [goofyKnightForADay],
-//       });
-//
-//       Expect(testEngine.getCardModel(donaldDuck).damage).toBe(2);
-//       Expect(testEngine.getCardModel(goofyKnightForADay).damage).toBe(0);
-//     });
-//
-//     It("Applies to both players' cards", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [whiteRabbitRoyalHerald],
-//           Hand: [visionSlab],
-//           Inkwell: visionSlab.cost,
-//         },
-//         {
-//           Play: [luisaMadrigalEntertainingMuscle],
-//         },
-//       );
-//
-//       Const ownCharacter = testEngine.getCardModel(whiteRabbitRoyalHerald);
-//       Const opponentsCard = testEngine.getCardModel(
-//         LuisaMadrigalEntertainingMuscle,
-//       );
-//
-//       Expect(
-//         TestEngine.store.effectStore.getAbilitiesForCard(ownCharacter),
-//       ).toHaveLength(0);
-//       Expect(
-//         TestEngine.store.effectStore.getAbilitiesForCard(opponentsCard),
-//       ).toHaveLength(0);
-//
-//       Await testEngine.playCard(visionSlab);
-//
-//       Expect(
-//         TestEngine.store.effectStore.getAbilitiesForCard(ownCharacter).at(0)
-//           ?.name,
-//       ).toEqual("TRAPPED!");
-//       Expect(
-//         TestEngine.store.effectStore.getAbilitiesForCard(opponentsCard).at(0)
-//           ?.name,
-//       ).toEqual("TRAPPED!");
-//     });
-//   });
-//
-//   Describe("**DANGER REVEALED** At the start of your turn, if an opposing character has damage, gain 1 lore. ", () => {
-//     It("Gives 1 lore if opponent has damaged character", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [whiteRabbitRoyalHerald],
-//         },
-//         {
-//           Play: [luisaMadrigalEntertainingMuscle, visionSlab],
-//         },
-//       );
-//
-//       Await testEngine.setCardDamage(whiteRabbitRoyalHerald, 1);
-//
-//       Expect(testEngine.getLoreForPlayer("player_two")).toEqual(0);
-//       Await testEngine.passTurn();
-//       Expect(testEngine.getLoreForPlayer("player_two")).toEqual(1);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  PLAYER_ONE,
+} from "@tcg/lorcana-engine/testing";
+import { restoringTheHeart } from "../../007/actions/039-restoring-the-heart";
+import { visionSlab } from "./100-vision-slab";
+
+const damagedCharacter = createMockCharacter({
+  id: "vision-slab-damaged",
+  name: "Damaged Character",
+  cost: 2,
+  willpower: 5,
+});
+
+describe("Vision Slab", () => {
+  describe("DANGER REVEALED — At the start of your turn, if an opposing character has damage, gain 1 lore.", () => {
+    it("gains 1 lore at the start of your turn if an opposing character has damage", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [visionSlab],
+          deck: 2,
+        },
+        {
+          play: [damagedCharacter],
+          deck: 2,
+        },
+      );
+
+      testEngine.asServer().manualSetDamage(damagedCharacter, 2);
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
+    });
+
+    it("does not gain lore if no opposing character has damage", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [visionSlab],
+          deck: 2,
+        },
+        {
+          play: [damagedCharacter],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+    });
+  });
+
+  describe("TRAPPED! — Damage counters can't be removed.", () => {
+    it("prevents damage from being removed by a heal effect", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [visionSlab, damagedCharacter],
+        hand: [restoringTheHeart],
+        inkwell: restoringTheHeart.cost,
+      });
+
+      testEngine.asServer().manualSetDamage(damagedCharacter, 3);
+      expect(testEngine.asPlayerOne().getDamage(damagedCharacter)).toBe(3);
+
+      expect(
+        testEngine.asPlayerOne().playCard(restoringTheHeart, {
+          targets: [damagedCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // TRAPPED! replaces remove-damage with amount 0, so damage is unchanged
+      expect(testEngine.asPlayerOne().getDamage(damagedCharacter)).toBe(3);
+    });
+  });
+});

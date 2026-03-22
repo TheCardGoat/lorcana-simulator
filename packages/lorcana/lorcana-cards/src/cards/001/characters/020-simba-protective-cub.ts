@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { simbaProtectiveCubI18n } from "./020-simba-protective-cub.i18n";
 
 export const simbaProtectiveCub: CharacterCard = {
   id: "ibT",
@@ -7,40 +8,6 @@ export const simbaProtectiveCub: CharacterCard = {
   cardType: "character",
   name: "Simba",
   version: "Protective Cub",
-  i18n: {
-    en: {
-      name: "Simba",
-      version: "Protective Cub",
-      text: "Bodyguard",
-    },
-    de: {
-      name: "Simba",
-      version: "Schützender Welpe",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "SIMBA",
-      version: "Lionceau protecteur",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il vous défie, un personnage adverse doit, si possible, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "Simba",
-      version: "Protective Cub",
-      text: [
-        {
-          title: "Bodyguard",
-          description:
-            "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lion King",
   set: "001",
@@ -51,7 +18,6 @@ export const simbaProtectiveCub: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_a3bd1e1b8b3a4ca094cefbc1d7bf4d60",
     tcgPlayer: 503356,
@@ -66,4 +32,5 @@ export const simbaProtectiveCub: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: simbaProtectiveCubI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gadgetHackwrenchQuirkyScientistI18n } from "./099-gadget-hackwrench-quirky-scientist.i18n";
 
 export const gadgetHackwrenchQuirkyScientist: CharacterCard = {
   id: "rbr",
@@ -7,52 +8,6 @@ export const gadgetHackwrenchQuirkyScientist: CharacterCard = {
   cardType: "character",
   name: "Gadget Hackwrench",
   version: "Quirky Scientist",
-  i18n: {
-    en: {
-      name: "Gadget Hackwrench",
-      version: "Quirky Scientist",
-      text: [
-        {
-          title: "GOLLY!",
-          description:
-            "When you play this character, if an opponent has more cards in their hand than you, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Trixi",
-      version: "Eigenwillige Wissenschaftlerin",
-      text: [
-        {
-          title: "DONNERWETTER!",
-          description:
-            "Wenn du diesen Charakter ausspielst und mindestens eine gegnerische Person mehr Karten auf der Hand hat als du, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Gadget",
-      version: "Scientifique excentrique",
-      text: [
-        {
-          title: "MINCE ALORS!",
-          description:
-            "Lorsque vous jouez ce personnage, si un adversaire a plus de cartes en main que vous, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Scheggia Hackwrench",
-      version: "Scienziata Peculiare",
-      text: [
-        {
-          title: "PERBACCO!",
-          description:
-            "Quando giochi questo personaggio, se un avversario ha in mano più carte di te, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Rescue Rangers",
   set: "008",
@@ -77,17 +32,26 @@ export const gadgetHackwrenchQuirkyScientist: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Inventor"],
   abilities: [
     {
-      effect: {
-        condition: {
-          expression: "an opponent has more cards in their hand than you",
-          type: "if",
+      condition: {
+        type: "comparison",
+        left: {
+          type: "cards-in-hand",
+          controller: "opponent",
         },
-        then: {
+        comparison: "greater-than",
+        right: {
+          type: "cards-in-hand",
+          controller: "you",
+        },
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
           amount: 1,
           target: "CONTROLLER",
           type: "draw",
         },
-        type: "conditional",
+        type: "optional",
       },
       id: "1xg-1",
       name: "GOLLY!",
@@ -100,4 +64,5 @@ export const gadgetHackwrenchQuirkyScientist: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: gadgetHackwrenchQuirkyScientistI18n,
 };

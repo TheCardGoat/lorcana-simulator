@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chiefPowhatanProtectiveLeaderI18n } from "./011-chief-powhatan-protective-leader.i18n";
 
 export const chiefPowhatanProtectiveLeader: CharacterCard = {
   id: "9DJ",
@@ -7,42 +8,6 @@ export const chiefPowhatanProtectiveLeader: CharacterCard = {
   cardType: "character",
   name: "Chief Powhatan",
   version: "Protective Leader",
-  i18n: {
-    en: {
-      name: "Chief Powhatan",
-      version: "Protective Leader",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "STANDS HIS GROUND",
-          description: "This character can't challenge.",
-        },
-      ],
-    },
-    de: {
-      name: "Häuptling Powhatan",
-      version: "Beschützender Anführer",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) STEHT SEINEN MANN Dieser Charakter kann nicht herausfordern.",
-    },
-    fr: {
-      name: "Powhatan",
-      version: "Chef protecteur",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.) TIENT SA POSITION Ce personnage ne peut pas défier.",
-        },
-      ],
-    },
-    it: {
-      name: "Capo Powhatan",
-      version: "Leader Protettivo",
-      text: "Guardiano MANTENERE LA POSIZIONE Questo personaggio non può sfidare.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Pocahontas",
   set: "011",
@@ -67,5 +32,24 @@ export const chiefPowhatanProtectiveLeader: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Mentor", "King"],
-  abilities: [],
+  abilities: [
+    {
+      id: "cpl-1",
+      keyword: "Bodyguard",
+      type: "keyword",
+      text: "Bodyguard",
+    },
+    {
+      id: "cpl-2",
+      effect: {
+        restriction: "cant-challenge",
+        target: "SELF",
+        type: "restriction",
+      },
+      name: "STANDS HIS GROUND",
+      type: "static",
+      text: "STANDS HIS GROUND This character can't challenge.",
+    },
+  ],
+  i18n: chiefPowhatanProtectiveLeaderI18n,
 };

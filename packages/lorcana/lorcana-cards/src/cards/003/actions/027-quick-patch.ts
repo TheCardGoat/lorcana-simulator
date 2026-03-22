@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { quickPatchI18n } from "./027-quick-patch.i18n";
 
 export const quickPatch: ActionCard = {
   id: "Wq8",
@@ -6,24 +7,6 @@ export const quickPatch: ActionCard = {
   reprints: ["set3-027"],
   cardType: "action",
   name: "Quick Patch",
-  i18n: {
-    en: {
-      name: "Quick Patch",
-      text: "Remove up to 3 damage from chosen location.",
-    },
-    de: {
-      name: "Provisorischer Flicken",
-      text: "Entferne bis zu 3 Schaden von einem Ort deiner Wahl.",
-    },
-    fr: {
-      name: "Réparation de fortune",
-      text: "Choisissez un lieu et retirez-lui jusqu'à 3 jetons Dommage.",
-    },
-    it: {
-      name: "Riparazione Rapida",
-      text: "Rimuovi fino a 3 danni da un luogo a tua scelta.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Talespin",
   set: "003",
@@ -53,4 +36,5 @@ export const quickPatch: ActionCard = {
       },
     },
   ],
+  i18n: quickPatchI18n,
 };

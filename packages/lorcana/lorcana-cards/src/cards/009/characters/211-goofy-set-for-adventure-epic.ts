@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goofySetForAdventureEpicI18n } from "./211-goofy-set-for-adventure-epic.i18n";
 
 export const goofySetForAdventureEpic: CharacterCard = {
   id: "Hjw",
@@ -7,31 +8,6 @@ export const goofySetForAdventureEpic: CharacterCard = {
   cardType: "character",
   name: "Goofy",
   version: "Set for Adventure",
-  i18n: {
-    en: {
-      name: "Goofy",
-      version: "Set for Adventure",
-      text: [
-        {
-          title: "FAMILY VACATION",
-          description:
-            "Once during your turn, whenever this character moves to a location, you may move one of your other characters to that location for free. If you do, draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Goofy",
-      version: "Set for Adventure",
-    },
-    fr: {
-      name: "Goofy",
-      version: "Set for Adventure",
-    },
-    it: {
-      name: "Goofy",
-      version: "Set for Adventure",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Goofy Movie",
   set: "009",
@@ -59,18 +35,45 @@ export const goofySetForAdventureEpic: CharacterCard = {
     {
       id: "1yc-1",
       effect: {
-        amount: 1,
-        target: "CONTROLLER",
-        type: "draw",
+        chooser: "CONTROLLER",
+        effect: {
+          steps: [
+            {
+              character: "ANOTHER_CHOSEN_CHARACTER_OF_YOURS",
+              cost: "free",
+              location: {
+                ref: "trigger-destination",
+              },
+              type: "move-to-location",
+            },
+            {
+              amount: 1,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+          ],
+          type: "sequence",
+        },
+        type: "optional",
       },
       name: "FAMILY VACATION Once",
       trigger: {
-        event: "banish",
+        event: "move",
+        on: "SELF",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+          {
+            type: "once-per-turn",
+          },
+        ],
         timing: "whenever",
-        on: "YOUR_OTHER_CHARACTERS",
       },
       type: "triggered",
       text: "FAMILY VACATION Once during your turn, whenever this character moves to a location, you may move one of your other characters to that location for free. If you do, draw a card.",
     },
   ],
+  i18n: goofySetForAdventureEpicI18n,
 };

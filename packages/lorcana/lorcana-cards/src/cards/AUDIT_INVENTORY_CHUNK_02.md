@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 2 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_01.md) | [Next →](AUDIT_INVENTORY_CHUNK_03.md)
-
 
 - [ ] **002/characters/108-fidget-ratigan-s-henchman.test.ts**
   - Card: `MISSING`

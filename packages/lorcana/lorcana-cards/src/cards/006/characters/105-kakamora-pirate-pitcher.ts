@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kakamoraPiratePitcherI18n } from "./105-kakamora-pirate-pitcher.i18n";
 
 export const kakamoraPiratePitcher: CharacterCard = {
   id: "AVY",
@@ -7,52 +8,6 @@ export const kakamoraPiratePitcher: CharacterCard = {
   cardType: "character",
   name: "Kakamora",
   version: "Pirate Pitcher",
-  i18n: {
-    en: {
-      name: "Kakamora",
-      version: "Pirate Pitcher",
-      text: [
-        {
-          title: "DIZZYING SPEED",
-          description:
-            "When you play this character, chosen Pirate character gains Evasive until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Kokomora",
-      version: "Piraten-Werfer",
-      text: [
-        {
-          title: "SCHWINDELERREGENDE GESCHWINDIGKEIT",
-          description:
-            "Wenn du diesen Charakter ausspielst, erhält ein Pirat deiner Wahl bis zu Beginn deines nächsten Zuges Wendig.",
-        },
-      ],
-    },
-    fr: {
-      name: "Kakamora",
-      version: "Lance-pirate",
-      text: [
-        {
-          title: "VITESSE FULGURANTE",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage Pirate qui gagne Insaisissable jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Kakamora",
-      version: "Lanciatore Pirata",
-      text: [
-        {
-          title: "VELOCITÀ DISORIENTANTE",
-          description:
-            "Quando giochi questo personaggio, un personaggio Pirata a tua scelta ottiene Sfuggente fino all'inizio del tuo prossimo turno. (Solo altri personaggi con Sfuggente possono sfidarlo.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "006",
@@ -78,8 +33,16 @@ export const kakamoraPiratePitcher: CharacterCard = {
   abilities: [
     {
       effect: {
+        duration: "until-start-of-next-turn",
         keyword: "Evasive",
-        target: "CHOSEN_CHARACTER",
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          filter: [{ type: "has-classification", classification: "Pirate" }],
+          owner: "any",
+          selector: "chosen",
+          zones: ["play"],
+        },
         type: "gain-keyword",
       },
       id: "xu8-1",
@@ -93,4 +56,5 @@ export const kakamoraPiratePitcher: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: kakamoraPiratePitcherI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { mosquitoBiteI18n } from "./096-mosquito-bite.i18n";
 
 export const mosquitoBite: ActionCard = {
   id: "wew",
@@ -6,24 +7,6 @@ export const mosquitoBite: ActionCard = {
   reprints: ["set6-096"],
   cardType: "action",
   name: "Mosquito Bite",
-  i18n: {
-    en: {
-      name: "Mosquito Bite",
-      text: "Put 1 damage counter on chosen character.",
-    },
-    de: {
-      name: "Mückenstich",
-      text: "Lege 1 Schadensmarker auf einen Charakter deiner Wahl.",
-    },
-    fr: {
-      name: "Piqûre de moustique",
-      text: "Choisissez un personnage et placez 1 dommage sur lui.",
-    },
-    it: {
-      name: "Puntura di Zanzara",
-      text: "Metti 1 segnalino danno su un personaggio a tua scelta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lilo and Stitch",
   set: "006",
@@ -52,4 +35,5 @@ export const mosquitoBite: ActionCard = {
       type: "action",
     },
   ],
+  i18n: mosquitoBiteI18n,
 };

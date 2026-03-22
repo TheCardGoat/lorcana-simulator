@@ -1,57 +1,55 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { trialsAndTribulations } from "@lorcanito/lorcana-engine/cards/008";
-// Import {
-//   MaxGoofRebelliousTeen,
-//   MotherKnowsBest,
-// } from "@lorcanito/lorcana-engine/cards/009/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Max Goof - Rebellious Teen", () => {
-//   It("PERSONAL SOUNDTRACK When you play this character, you may pay 1 {I} to return a song card with cost 3 or less from your discard to your hand.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: maxGoofRebelliousTeen.cost + 1,
-//       Hand: [maxGoofRebelliousTeen],
-//       Discard: [trialsAndTribulations],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(maxGoofRebelliousTeen);
-//     Const cardTarget = testEngine.getCardModel(trialsAndTribulations);
-//
-//     Expect(cardTarget.zone).toBe("discard");
-//
-//     Await testEngine.playCard(cardUnderTest);
-//
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({ targets: [cardTarget] });
-//
-//     Expect(cardTarget.zone).toBe("hand");
-//   });
-// });
-//
-// Describe("Regression Test", () => {
-//   It("Interaction with Mother Knows Best", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: maxGoofRebelliousTeen.cost + 1,
-//       Hand: [maxGoofRebelliousTeen],
-//       Discard: [motherKnowsBest],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(maxGoofRebelliousTeen);
-//     Const cardTarget = testEngine.getCardModel(motherKnowsBest);
-//
-//     Expect(cardTarget.zone).toBe("discard");
-//
-//     Await testEngine.playCard(cardUnderTest);
-//
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({ targets: [cardTarget] });
-//
-//     Expect(cardTarget.zone).toBe("hand");
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { trialsAndTribulations } from "../../008";
+import { motherKnowsBest } from "../actions/099-mother-knows-best";
+import { maxGoofRebelliousTeen } from "./075-max-goof-rebellious-teen";
+
+describe("Max Goof - Rebellious Teen", () => {
+  describe("PERSONAL SOUNDTRACK — When you play this character, you may pay 1 ink to return a song card with cost 3 or less from your discard to your hand.", () => {
+    it("returns a song with cost 3 or less from discard to hand", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: maxGoofRebelliousTeen.cost + 1,
+        hand: [maxGoofRebelliousTeen],
+        discard: [trialsAndTribulations],
+      });
+
+      expect(testEngine.asPlayerOne().getCardZone(trialsAndTribulations)).toBe("discard");
+
+      expect(testEngine.asPlayerOne().playCard(maxGoofRebelliousTeen)).toBeSuccessfulCommand();
+
+      // Resolve the triggered ability via bag
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
+      expect(
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          targets: [trialsAndTribulations],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(trialsAndTribulations)).toBe("hand");
+    });
+  });
+
+  describe("Regression", () => {
+    it("interaction with Mother Knows Best", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: maxGoofRebelliousTeen.cost + 1,
+        hand: [maxGoofRebelliousTeen],
+        discard: [motherKnowsBest],
+      });
+
+      expect(testEngine.asPlayerOne().getCardZone(motherKnowsBest)).toBe("discard");
+
+      expect(testEngine.asPlayerOne().playCard(maxGoofRebelliousTeen)).toBeSuccessfulCommand();
+
+      // Resolve the triggered ability via bag
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
+      expect(
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          targets: [motherKnowsBest],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(motherKnowsBest)).toBe("hand");
+    });
+  });
+});

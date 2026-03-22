@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { launchpadExceptionalPilotI18n } from "./083-launchpad-exceptional-pilot.i18n";
 
 export const launchpadExceptionalPilot: CharacterCard = {
   id: "zE0",
@@ -7,50 +8,6 @@ export const launchpadExceptionalPilot: CharacterCard = {
   cardType: "character",
   name: "Launchpad",
   version: "Exceptional Pilot",
-  i18n: {
-    en: {
-      name: "Launchpad",
-      version: "Exceptional Pilot",
-      text: [
-        {
-          title: "OFF THE MAP",
-          description: "When you play this character, you may banish chosen location.",
-        },
-      ],
-    },
-    de: {
-      name: "Quack, der Bruchpilot",
-      version: "Außergewöhnlicher Pilot",
-      text: [
-        {
-          title: "NICHT AUF DER KARTE",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Ort deiner Wahl verbannen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Flagada Jones",
-      version: "Pilote d'exception",
-      text: [
-        {
-          title: "PAS SUR LA CARTE",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un lieu et le bannir.",
-        },
-      ],
-    },
-    it: {
-      name: "Jet",
-      version: "Pilota Eccezionale",
-      text: [
-        {
-          title: "OLTRE LA MAPPA",
-          description: "Quando giochi questo personaggio, puoi esiliare un luogo a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Ducktales",
   set: "010",
@@ -99,4 +56,5 @@ export const launchpadExceptionalPilot: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: launchpadExceptionalPilotI18n,
 };

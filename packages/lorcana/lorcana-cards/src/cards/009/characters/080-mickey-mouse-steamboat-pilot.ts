@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseSteamboatPilotI18n } from "./080-mickey-mouse-steamboat-pilot.i18n";
 
 export const mickeyMouseSteamboatPilot: CharacterCard = {
   id: "vmJ",
@@ -7,24 +8,6 @@ export const mickeyMouseSteamboatPilot: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Steamboat Pilot",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Steamboat Pilot",
-    },
-    de: {
-      name: "Micky Maus",
-      version: "Dampfschiff-Kapitän",
-    },
-    fr: {
-      name: "MICKEY MOUSE",
-      version: "Pilote de bateau à vapeur",
-    },
-    it: {
-      name: "Mickey Mouse",
-      version: "Steamboat Pilot",
-    },
-  },
   inkType: ["emerald"],
   set: "009",
   cardNumber: 80,
@@ -40,4 +23,5 @@ export const mickeyMouseSteamboatPilot: CharacterCard = {
     tcgPlayer: 651112,
   },
   classifications: ["Storyborn", "Hero", "Captain"],
+  i18n: mickeyMouseSteamboatPilotI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { beastThickskinnedI18n } from "./176-beast-thick-skinned.i18n";
 
 export const beastThickskinned: CharacterCard = {
   id: "P74",
@@ -7,28 +8,6 @@ export const beastThickskinned: CharacterCard = {
   cardType: "character",
   name: "Beast",
   version: "Thick-Skinned",
-  i18n: {
-    en: {
-      name: "Beast",
-      version: "Thick-Skinned",
-      text: "Resist +1",
-    },
-    de: {
-      name: "Biest",
-      version: "Dickhäutig",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "La Bête",
-      version: "Dure à cuire",
-      text: "Résistance +1",
-    },
-    it: {
-      name: "La Bestia",
-      version: "Dalla Scorza Dura",
-      text: "Resistere +1",
-    },
-  },
   inkType: ["steel"],
   franchise: "Beauty and the Beast",
   set: "004",
@@ -54,4 +33,5 @@ export const beastThickskinned: CharacterCard = {
       text: "Resist +1",
     },
   ],
+  i18n: beastThickskinnedI18n,
 };

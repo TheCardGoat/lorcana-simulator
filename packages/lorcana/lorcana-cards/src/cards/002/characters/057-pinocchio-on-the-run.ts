@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pinocchioOnTheRunI18n } from "./057-pinocchio-on-the-run.i18n";
 
 export const pinocchioOnTheRun: CharacterCard = {
   id: "e9v",
@@ -7,43 +8,6 @@ export const pinocchioOnTheRun: CharacterCard = {
   cardType: "character",
   name: "Pinocchio",
   version: "On the Run",
-  i18n: {
-    en: {
-      name: "Pinocchio",
-      version: "On the Run",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "LISTEN TO YOUR CONSCIENCE",
-          description:
-            "When you play this character, you may return chosen character or item with cost 3 or less to their player's hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Pinocchio",
-      version: "Auf der Flucht",
-      text: "Gestaltwandel 3 HÖR AUF DEIN GEWISSEN Wenn du diesen Charakter ausspielst, darfst du einen Charakter oder Gegenstand deiner Wahl, der 3 oder weniger kostet, zurück auf die zugehörige Hand schicken.",
-    },
-    fr: {
-      name: "Pinocchio",
-      version: "Livré à lui-même",
-      text: "Alter 3 ÉCOUTE TA CONSCIENCE Lorsque vous jouez ce personnage, vous pouvez choisir soit un personnage soit un objet coûtant 3 ou moins et le renvoyer dans la main de son propriétaire.",
-    },
-    it: {
-      name: "Pinocchio",
-      version: "On the Run",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Pinocchio.) LISTEN TO YOUR CONSCIENCE When you play this character, you may return chosen character or item with cost 3 or less to their player's hand.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Pinocchio",
   set: "002",
@@ -69,7 +33,6 @@ export const pinocchioOnTheRun: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -106,4 +69,6 @@ export const pinocchioOnTheRun: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: pinocchioOnTheRunI18n,
 };

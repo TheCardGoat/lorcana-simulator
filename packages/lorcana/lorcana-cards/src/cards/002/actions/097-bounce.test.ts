@@ -48,7 +48,7 @@ describe("Bounce", () => {
     expect(result.success).toBe(false);
   });
 
-  it("returns the first character before prompting for the second selection", () => {
+  it("returns the first character and then resolves the second selection through the pending prompt", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [bounce],
@@ -69,13 +69,11 @@ describe("Bounce", () => {
     ).toBe(true);
     expect(testEngine.asPlayerOne().getCardZone(ownTargetId)).toBe("hand");
 
-    const effectId = testEngine.asServer().getState().ctx.priority.pendingChoice?.requestID;
     expect(
-      effectId
-        ? testEngine.asPlayerOne().resolveEffect(effectId, { targets: [opponentTargetId] }).success
-        : false,
+      testEngine.asPlayerOne().resolveNextPending({ targets: [opponentTargetId] }).success,
     ).toBe(true);
 
+    expect(testEngine.asPlayerOne().getCardZone(ownTargetId)).toBe("hand");
     expect(testEngine.asPlayerTwo().getCardZone(opponentTargetId)).toBe("hand");
   });
 });

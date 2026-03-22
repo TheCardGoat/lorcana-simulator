@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rayaLeaderOfHeartI18n } from "./123-raya-leader-of-heart.i18n";
 
 export const rayaLeaderOfHeart: CharacterCard = {
   id: "rSb",
@@ -7,43 +8,6 @@ export const rayaLeaderOfHeart: CharacterCard = {
   cardType: "character",
   name: "Raya",
   version: "Leader of Heart",
-  i18n: {
-    en: {
-      name: "Raya",
-      version: "Leader of Heart",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "CHAMPION OF KUMANDRA",
-          description:
-            "Whenever this character challenges a damaged character, she takes no damage from the challenge.",
-        },
-      ],
-    },
-    de: {
-      name: "Raya",
-      version: "Anführerin von Herz",
-      text: "Gestaltwandel 4 CHAMPION VON KUMANDRA Dieser Charakter erhält keinen Schaden durch Herausforderungen, während er einen beschädigten Charakter herausfordert.",
-    },
-    fr: {
-      name: "Raya",
-      version: "Cheffe des Terres de Cœur",
-      text: "Alter 4 CHAMPIONNE DE KUMANDRA Ce personnage ne subit aucun dommage lorsque qu'il défie un personnage blessé.",
-    },
-    it: {
-      name: "Raya",
-      version: "Leader of Heart",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Raya.) CHAMPION OF KUMANDRA Whenever this character challenges a damaged character, she takes no damage from the challenge.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "002",
@@ -68,8 +32,6 @@ export const rayaLeaderOfHeart: CharacterCard = {
         "Whenever this character challenges a damaged character, she takes no damage from the challenge.",
     },
   ],
-  missingImplementation: true,
-  missingTests: true,
   classifications: ["Floodborn", "Hero", "Princess"],
   abilities: [
     {
@@ -110,4 +72,6 @@ export const rayaLeaderOfHeart: CharacterCard = {
       },
     },
   ],
+  missingTests: true,
+  i18n: rayaLeaderOfHeartI18n,
 };

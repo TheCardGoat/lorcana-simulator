@@ -30,12 +30,6 @@ describe("Rapunzel - Gifted Artist", () => {
     // Resolve triggers (Rapunzel's draw)
     testEngine.asPlayerOne().resolveNextBag();
 
-    // It's optional, say yes
-    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
-    if (pendingChoice) {
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true });
-    }
-
     // Should have drawn a card
     const handSizeAfter = testEngine.getCardInstanceIdsInZone("hand", "player_one").length;
     expect(handSizeAfter).toBe(handSizeBefore + 1);

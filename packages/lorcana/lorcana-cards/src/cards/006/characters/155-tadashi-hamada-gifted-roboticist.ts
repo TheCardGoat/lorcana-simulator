@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tadashiHamadaGiftedRoboticistI18n } from "./155-tadashi-hamada-gifted-roboticist.i18n";
 
 export const tadashiHamadaGiftedRoboticist: CharacterCard = {
   id: "dkB",
@@ -7,52 +8,6 @@ export const tadashiHamadaGiftedRoboticist: CharacterCard = {
   cardType: "character",
   name: "Tadashi Hamada",
   version: "Gifted Roboticist",
-  i18n: {
-    en: {
-      name: "Tadashi Hamada",
-      version: "Gifted Roboticist",
-      text: [
-        {
-          title: "SOMEONE HAS TO HELP",
-          description:
-            "During an opponent's turn, when this character is banished, you may put the top card of your deck into your inkwell facedown. Then, put this card into your inkwell facedown.",
-        },
-      ],
-    },
-    de: {
-      name: "Tadashi Hamada",
-      version: "Talentierter Robotiker",
-      text: [
-        {
-          title: "JEMAND MUSS IHM HELFEN",
-          description:
-            "Wenn dieser Charakter im Zug einer gegnerischen Person verbannt wird, darfst du die oberste Karte deines Decks verdeckt in deinen Tintenvorrat legen. Lege danach diese Karte verdeckt in deinen Tintenvorrat.",
-        },
-      ],
-    },
-    fr: {
-      name: "Tadashi Hamada",
-      version: "Roboticien doué",
-      text: [
-        {
-          title: "IL FAUT BIEN QU'ON LE SAUVE",
-          description:
-            "Durant le tour des adversaires, lorsque ce personnage est banni, vous pouvez placer la carte du dessus de votre pioche dans votre réserve d'encre, face cachée. Ensuite, placez cette carte dans votre réserve d'encre, face cachée.",
-        },
-      ],
-    },
-    it: {
-      name: "Tadashi Hamada",
-      version: "Robotista Dotato",
-      text: [
-        {
-          title: "QUALCUNO DEVE AIUTARLO",
-          description:
-            "Durante il turno di un avversario, quando questo personaggio viene esiliato, puoi aggiungere la prima carta del tuo mazzo al tuo calamaio, a faccia in giù. Poi aggiungi questa carta al tuo calamaio, a faccia in giù.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "006",
@@ -78,18 +33,42 @@ export const tadashiHamadaGiftedRoboticist: CharacterCard = {
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          facedown: true,
-          source: "top-of-deck",
-          target: "CONTROLLER",
-          type: "put-into-inkwell",
-        },
-        type: "optional",
+        type: "sequence",
+        effects: [
+          {
+            chooser: "CONTROLLER",
+            effect: {
+              facedown: true,
+              source: "top-of-deck",
+              target: "CONTROLLER",
+              type: "put-into-inkwell",
+            },
+            type: "optional",
+          },
+          {
+            facedown: true,
+            source: "this-card",
+            target: "CONTROLLER",
+            type: "put-into-inkwell",
+          },
+        ],
       },
       id: "36l-1",
+      name: "SOMEONE HAS TO HELP",
       text: "SOMEONE HAS TO HELP During an opponent’s turn, when this character is banished, you may put the top card of your deck into your inkwell facedown. Then, put this card into your inkwell facedown.",
-      type: "action",
+      trigger: {
+        event: "banish",
+        on: "SELF",
+        timing: "when",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "opponent",
+          },
+        ],
+      },
+      type: "triggered",
     },
   ],
+  i18n: tadashiHamadaGiftedRoboticistI18n,
 };

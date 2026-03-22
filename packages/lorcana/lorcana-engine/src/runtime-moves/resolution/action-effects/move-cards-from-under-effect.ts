@@ -44,14 +44,29 @@ function removeUnderCardFromParent(
   });
 }
 
+function appendCardUnderTarget(
+  ctx: PlayCardExecutionContext,
+  parentId: CardInstanceId,
+  childId: CardInstanceId,
+): void {
+  const parentMeta = (ctx.cards.require(parentId).meta ?? {}) as LorcanaCardMeta;
+  const cardsUnder = Array.isArray(parentMeta.cardsUnder) ? [...parentMeta.cardsUnder] : [];
+  if (!cardsUnder.includes(childId)) {
+    cardsUnder.push(childId);
+  }
+
+  ctx.cards.patchMeta(parentId, {
+    cardsUnder,
+  });
+}
+
 function moveUnderCard(
   ctx: PlayCardExecutionContext,
   cardId: CardInstanceId,
   destination: NonNullable<MoveCardsFromUnderEffect["destination"]>,
+  underTargetId?: CardInstanceId,
 ): void {
-  const ownerId =
-    (ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID as PlayerId | undefined) ??
-    undefined;
+  const ownerId = (ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined) ?? undefined;
   if (!ownerId) {
     return;
   }
@@ -78,6 +93,26 @@ function moveUnderCard(
         state: undefined,
         publicFaceState: undefined,
       });
+      return;
+    case "under-chosen":
+      if (underTargetId) {
+        ctx.framework.zones.moveCard(cardId, {
+          zone: "limbo",
+          playerId: ownerId,
+        });
+        appendCardUnderTarget(ctx, underTargetId, cardId);
+        ctx.cards.patchMeta(cardId, {
+          stackParentId: underTargetId,
+          cardsUnder: undefined,
+          state: undefined,
+          damage: undefined,
+          isDrying: undefined,
+          publicFaceState: undefined,
+          atLocationId: undefined,
+          playedViaShift: undefined,
+          playedCostType: undefined,
+        });
+      }
       return;
     case "deck-bottom-random":
     default:
@@ -113,6 +148,11 @@ function resolveSourceCardIds(
     );
   }
 
+  if (effect.source === "snapshot-cards-under") {
+    const snapshotIds = resolutionInput.eventSnapshot?.cardsUnderIdsBeforeBanish;
+    return Array.isArray(snapshotIds) ? ([...snapshotIds] as CardInstanceId[]) : [];
+  }
+
   const parentIds =
     resolveEffectTargets(ctx, cardPlayed, effect.target, resolutionInput.targets) ?? [];
   return parentIds.flatMap((parentId) => {
@@ -133,13 +173,41 @@ export function resolveMoveCardsFromUnderEffect(
   const cardsToMove =
     destination === "deck-bottom-random" ? shuffleCards(uniqueSourceCardIds) : uniqueSourceCardIds;
 
-  for (const cardId of cardsToMove) {
-    const parentId = resolveCardParentId(ctx, cardId);
-    if (!parentId) {
-      continue;
+  // For "under-chosen" destination, resolve the target from resolution input
+  let underTargetId: CardInstanceId | undefined;
+  if (destination === "under-chosen") {
+    const targets = normalizeSelectedTargets(resolutionInput.targets);
+    underTargetId = targets?.[0];
+    if (!underTargetId) {
+      // Try resolving from the underTarget definition
+      const resolved = effect.underTarget
+        ? resolveEffectTargets(ctx, cardPlayed, effect.underTarget, resolutionInput.targets)
+        : undefined;
+      underTargetId = resolved?.[0];
     }
+    if (!underTargetId) {
+      return;
+    }
+  }
 
-    removeUnderCardFromParent(ctx, parentId, cardId);
-    moveUnderCard(ctx, cardId, destination);
+  for (const cardId of cardsToMove) {
+    if (destination === "under-chosen") {
+      // Cards from snapshot are already in discard — no parent to remove from
+      if (effect.source !== "snapshot-cards-under") {
+        const parentId = resolveCardParentId(ctx, cardId);
+        if (parentId) {
+          removeUnderCardFromParent(ctx, parentId, cardId);
+        }
+      }
+      moveUnderCard(ctx, cardId, destination, underTargetId);
+    } else {
+      const parentId = resolveCardParentId(ctx, cardId);
+      if (!parentId) {
+        continue;
+      }
+
+      removeUnderCardFromParent(ctx, parentId, cardId);
+      moveUnderCard(ctx, cardId, destination);
+    }
   }
 }

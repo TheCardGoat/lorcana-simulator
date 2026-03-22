@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { fidgetSneakyBatI18n } from "./106-fidget-sneaky-bat.i18n";
 
 export const fidgetSneakyBat: CharacterCard = {
   id: "xmE",
@@ -7,37 +8,6 @@ export const fidgetSneakyBat: CharacterCard = {
   cardType: "character",
   name: "Fidget",
   version: "Sneaky Bat",
-  i18n: {
-    en: {
-      name: "Fidget",
-      version: "Sneaky Bat",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "I TOOK CARE OF EVERYTHING",
-          description:
-            "Whenever this character quests, another chosen character of yours gains Evasive until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Greifer",
-      version: "Hinterhältige Fledermaus",
-      text: "Wendig ICH HABE MICH UM ALLES GEKÜMMERT Jedes Mal, wenn dieser Charakter erkundet, wähle einen deiner anderen Charaktere. Jener erhält bis zu Beginn deines nächsten Zuges Wendig.",
-    },
-    fr: {
-      name: "Fidget",
-      version: "Chauve-souris furtive",
-      text: "Insaisissable J'AI TOUT CE QU'IL VOUS FALLAIT Chaque fois que ce personnage est envoyé à l'aventure, choisissez un autre de vos personnages qui gagne Insaisissable jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Vampirello",
-      version: "Pipistrello Furtivo",
-      text: "Sfuggente HO PRESO TUTTO Ogni volta che questo personaggio va all'avventura, un tuo altro personaggio a tua scelta ottiene Sfuggente fino all'inizio del tuo prossimo turno.",
-    },
-  },
   inkType: ["emerald", "ruby"],
   franchise: "Great Mouse Detective",
   set: "007",
@@ -73,12 +43,14 @@ export const fidgetSneakyBat: CharacterCard = {
     {
       effect: {
         keyword: "Evasive",
+        duration: "until-start-of-next-turn",
         target: {
           cardTypes: ["character"],
           count: 1,
-          owner: "any",
+          owner: "you",
           selector: "chosen",
           zones: ["play"],
+          excludeSelf: true,
         },
         type: "gain-keyword",
       },
@@ -93,4 +65,5 @@ export const fidgetSneakyBat: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: fidgetSneakyBatI18n,
 };

@@ -1,16 +1,11 @@
 import type { CardInstanceId, RuntimeCardWithDefinition } from "#core";
 import type { LorcanaCard, LorcanaCardDefinition } from "@tcg/lorcana-types";
 import type { LorcanaCardMeta } from "./runtime-state";
-
-import type { LorcanaRuntimeCardDerivedMethods } from "../runtime-moves";
+import type { LorcanaCardDerived } from "./projected-board";
 
 export type LorcanaStaticCard = LorcanaCardDefinition;
 
-export type LorcanaRuntimeCard = RuntimeCardWithDefinition<
-  LorcanaCard,
-  LorcanaCardMeta,
-  LorcanaRuntimeCardDerivedMethods
->;
+export type LorcanaRuntimeCard = RuntimeCardWithDefinition;
 
 export type LorcanaDynamicCard = LorcanaRuntimeCard;
 export type CardInput = CardInstanceId | LorcanaRuntimeCard | LorcanaStaticCard;

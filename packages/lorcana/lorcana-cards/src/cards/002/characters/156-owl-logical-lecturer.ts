@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { owlLogicalLecturerI18n } from "./156-owl-logical-lecturer.i18n";
 
 export const owlLogicalLecturer: CharacterCard = {
   id: "S4z",
@@ -7,24 +8,6 @@ export const owlLogicalLecturer: CharacterCard = {
   cardType: "character",
   name: "Owl",
   version: "Logical Lecturer",
-  i18n: {
-    en: {
-      name: "Owl",
-      version: "Logical Lecturer",
-    },
-    de: {
-      name: "Eule",
-      version: "Überzeugender Redner",
-    },
-    fr: {
-      name: "Maître Hibou",
-      version: "Conférencier à la logique implacable",
-    },
-    it: {
-      name: "Owl",
-      version: "Logical Lecturer",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Winnie the Pooh",
   set: "002",
@@ -41,4 +24,5 @@ export const owlLogicalLecturer: CharacterCard = {
     tcgPlayer: 527278,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: owlLogicalLecturerI18n,
 };

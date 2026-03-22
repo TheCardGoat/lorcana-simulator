@@ -1,33 +1,51 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { cinderellaGentleAndKind } from "@lorcanito/lorcana-engine/cards/009/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Cinderella - Gentle and Kind", () => {
-//   It.skip("**Singer** 4 _(This character counts as cost 4 to sing songs.)_", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [cinderellaGentleAndKind],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(cinderellaGentleAndKind);
-//     Expect(cardUnderTest.hasSinger).toBe(true);
-//   });
-//
-//   It.skip("**A WONDERFUL DREAM** {E}− Remove up to 3 damage from chosen Princess character.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: cinderellaGentleAndKind.cost,
-//       Play: [cinderellaGentleAndKind],
-//       Hand: [cinderellaGentleAndKind],
-//     });
-//
-//     Await testEngine.playCard(cinderellaGentleAndKind);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { cinderellaGentleAndKind } from "./019-cinderella-gentle-and-kind";
+import { rapunzelSunshine } from "./008-rapunzel-sunshine";
+import { mickeyMouseTrueFriend } from "./013-mickey-mouse-true-friend";
+
+describe("Cinderella - Gentle and Kind [Set 009]", () => {
+  it("does not remove damage from a non-Princess target", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: 2,
+      play: [
+        { card: cinderellaGentleAndKind, isDrying: false },
+        rapunzelSunshine,
+        mickeyMouseTrueFriend,
+      ],
+    });
+
+    const nonPrincessId = testEngine.findCardInstanceId(mickeyMouseTrueFriend, "play", PLAYER_ONE);
+
+    expect(testEngine.asServer().manualSetDamage(rapunzelSunshine, 2)).toBeSuccessfulCommand();
+    expect(testEngine.asServer().manualSetDamage(mickeyMouseTrueFriend, 2)).toBeSuccessfulCommand();
+
+    const invalidTargetResult = testEngine.asPlayerOne().activateAbility(cinderellaGentleAndKind, {
+      targets: [nonPrincessId],
+    });
+
+    expect(invalidTargetResult.success).toBe(false);
+    expect(testEngine.asServer().getCard(nonPrincessId)?.damage).toBe(2);
+  });
+
+  it("removes damage from a chosen Princess character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: 2,
+      play: [
+        { card: cinderellaGentleAndKind, isDrying: false },
+        rapunzelSunshine,
+        mickeyMouseTrueFriend,
+      ],
+    });
+    const princessId = testEngine.findCardInstanceId(rapunzelSunshine, "play", PLAYER_ONE);
+
+    expect(testEngine.asServer().manualSetDamage(rapunzelSunshine, 2)).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(cinderellaGentleAndKind, {
+        targets: [princessId],
+      }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asServer().getCard(princessId)?.damage).toBe(0);
+  });
+});

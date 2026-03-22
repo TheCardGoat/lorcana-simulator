@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckFlusteredSorcererI18n } from "./073-donald-duck-flustered-sorcerer.i18n";
 
 export const donaldDuckFlusteredSorcerer: CharacterCard = {
   id: "Vy6",
@@ -7,48 +8,6 @@ export const donaldDuckFlusteredSorcerer: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Flustered Sorcerer",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Flustered Sorcerer",
-      text: [
-        {
-          title: "OBFUSCATE!",
-          description: "Opponents need 25 lore to win the game.",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Aufgeregter Zauberer",
-      text: [
-        {
-          title: "VERWIRREN!",
-          description: "Gegnerische Mitspielende brauchen 25 Legenden, um das Spiel zu gewinnen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Donald",
-      version: "Sorcier exaspéré",
-      text: [
-        {
-          title: "OBFUSCATION!",
-          description: "Les adversaires ont besoin de 25 éclats de Lore pour gagner la partie.",
-        },
-      ],
-    },
-    it: {
-      name: "Paperino",
-      version: "Stregone Agitato",
-      text: [
-        {
-          title: "OTTENEBRARE!",
-          description: "Gli avversari hanno bisogno di 25 leggenda per vincere la partita.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   set: "007",
   cardNumber: 73,
@@ -69,5 +28,17 @@ export const donaldDuckFlusteredSorcerer: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally", "Sorcerer"],
-  abilities: [],
+  abilities: [
+    {
+      type: "static",
+      name: "OBFUSCATE!",
+      text: "OBFUSCATE! Opponents need 25 lore to win the game.",
+      effect: {
+        type: "win-condition-modification",
+        loreRequired: 25,
+        target: "OPPONENT",
+      },
+    },
+  ],
+  i18n: donaldDuckFlusteredSorcererI18n,
 };

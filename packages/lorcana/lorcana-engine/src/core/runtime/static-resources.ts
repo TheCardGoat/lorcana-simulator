@@ -11,9 +11,9 @@ import type { ZoneConfig } from "./match-runtime.types";
 type CardInstanceId = string;
 type CardPublicId = string;
 
-export interface CardCatalog<TCardDefinition extends BaseCardDefinition = BaseCardDefinition> {
+export interface CardCatalog {
   readonly ref: string;
-  get(definitionId: CardPublicId): TCardDefinition | undefined;
+  get(definitionId: CardPublicId): BaseCardDefinition | undefined;
   has(definitionId: CardPublicId): boolean;
 }
 
@@ -30,10 +30,8 @@ export interface CardInstanceRegistry {
   entries?(): Iterable<CardInstanceRecord>;
 }
 
-export interface MatchStaticResources<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-> {
-  cards: CardCatalog<TCardDefinition>;
+export interface MatchStaticResources {
+  cards: CardCatalog;
   instances: CardInstanceRegistry;
   zoneDefinitions: Record<string, ZoneConfig>;
 }
@@ -50,18 +48,16 @@ export interface CardsMaps {
 
 type RecordLike<T> = Record<string, T> | Readonly<Record<string, T>>;
 
-class RecordCardCatalog<
-  TCardDefinition extends BaseCardDefinition,
-> implements CardCatalog<TCardDefinition> {
+class RecordCardCatalog implements CardCatalog {
   readonly ref: string;
-  readonly #definitions: RecordLike<TCardDefinition>;
+  readonly #definitions: RecordLike<BaseCardDefinition>;
 
-  constructor(ref: string, definitions: RecordLike<TCardDefinition>) {
+  constructor(ref: string, definitions: RecordLike<BaseCardDefinition>) {
     this.ref = ref;
     this.#definitions = definitions;
   }
 
-  get(definitionId: string): TCardDefinition | undefined {
+  get(definitionId: string): BaseCardDefinition | undefined {
     return this.#definitions[definitionId];
   }
 
@@ -94,10 +90,10 @@ class RecordCardInstanceRegistry implements CardInstanceRegistry {
   }
 }
 
-export function createRecordCardCatalog<TCardDefinition extends BaseCardDefinition>(
+export function createRecordCardCatalog(
   ref: string,
-  definitions: RecordLike<TCardDefinition>,
-): CardCatalog<TCardDefinition> {
+  definitions: RecordLike<BaseCardDefinition>,
+): CardCatalog {
   return new RecordCardCatalog(ref, definitions);
 }
 
@@ -108,12 +104,10 @@ export function createRecordCardInstanceRegistry(
   return new RecordCardInstanceRegistry(ref, records);
 }
 
-export function createEmptyMatchStaticResources<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
->(): MatchStaticResources<TCardDefinition> {
+export function createEmptyMatchStaticResources(): MatchStaticResources {
   return {
     zoneDefinitions: {},
-    cards: createRecordCardCatalog<TCardDefinition>("cards:none", {}),
+    cards: createRecordCardCatalog("cards:none", {}),
     instances: createRecordCardInstanceRegistry("instances:none", {}),
   };
 }
@@ -175,11 +169,11 @@ function buildRecordsFromCardsMaps(cardsMaps: CardsMaps): Record<string, CardIns
   return records;
 }
 
-export function createMatchStaticResourcesFromCardsMaps<TCardDefinition extends BaseCardDefinition>(
+export function createMatchStaticResourcesFromCardsMaps(
   cardsMaps: CardsMaps,
-  cardCatalog: CardCatalog<TCardDefinition>,
+  cardCatalog: CardCatalog,
   zoneDefinitions: Record<string, ZoneConfig>,
-): MatchStaticResources<TCardDefinition> {
+): MatchStaticResources {
   const records = buildRecordsFromCardsMaps(cardsMaps);
 
   const ref = createCardsMapsRef(cardsMaps);
@@ -193,9 +187,7 @@ export function createMatchStaticResourcesFromCardsMaps<TCardDefinition extends 
   return staticResources;
 }
 
-export function createCardsMapsFromStaticResources(
-  resources: MatchStaticResources<BaseCardDefinition>,
-): CardsMaps {
+export function createCardsMapsFromStaticResources(resources: MatchStaticResources): CardsMaps {
   if (typeof resources.instances.entries !== "function") {
     throw new Error(
       "STATIC_RESOURCES_UNSERIALIZABLE: instances registry must implement entries() to derive cardsMaps",
@@ -213,18 +205,14 @@ export function createCardsMapsFromStaticResources(
   return { cardInstances, owners };
 }
 
-export function getStaticResourceRefs(
-  resources: MatchStaticResources<BaseCardDefinition>,
-): StaticResourceRefs {
+export function getStaticResourceRefs(resources: MatchStaticResources): StaticResourceRefs {
   return {
     cardsCatalogRef: resources.cards.ref,
     cardInstancesRef: resources.instances.ref,
   };
 }
 
-export function validateMatchStaticResources<TCardDefinition extends BaseCardDefinition>(
-  resources: MatchStaticResources<TCardDefinition>,
-): void {
+export function validateMatchStaticResources(resources: MatchStaticResources): void {
   if (!resources?.cards || !resources?.instances) {
     throw new Error("STATIC_RESOURCES_INVALID: cards and instances registries are required");
   }

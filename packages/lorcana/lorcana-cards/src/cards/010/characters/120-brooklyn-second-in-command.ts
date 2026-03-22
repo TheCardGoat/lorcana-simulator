@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { brooklynSecondInCommandI18n } from "./120-brooklyn-second-in-command.i18n";
 
 export const brooklynSecondInCommand: CharacterCard = {
   id: "jg3",
@@ -7,36 +8,6 @@ export const brooklynSecondInCommand: CharacterCard = {
   cardType: "character",
   name: "Brooklyn",
   version: "Second in Command",
-  i18n: {
-    en: {
-      name: "Brooklyn",
-      version: "Second in Command",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "STONE BY DAY",
-          description: "If you have 3 or more cards in your hand, this character can't ready.",
-        },
-      ],
-    },
-    de: {
-      name: "Brooklyn",
-      version: "Zweiter Befehlshaber",
-      text: "Wendig AM TAGE AUS STEIN Solange du 3 oder mehr Karten auf der Hand hast, kann dieser Charakter nicht bereit gemacht werden.",
-    },
-    fr: {
-      name: "Brooklyn",
-      version: "Bras droit",
-      text: "Insaisissable STATUE LE JOUR Ce personnage ne peut pas se redresser si vous avez 3 cartes ou plus en main.",
-    },
-    it: {
-      name: "Brooklyn",
-      version: "Secondo in Comando",
-      text: "Sfuggente STATUE DI GIORNO Se hai 3 o più carte in mano, questo personaggio non si può preparare.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Gargoyles",
   set: "010",
@@ -69,29 +40,23 @@ export const brooklynSecondInCommand: CharacterCard = {
       type: "keyword",
     },
     {
-      effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["hand"],
-          },
-          comparison: {
-            operator: "gte",
-            value: 3,
-          },
-        },
-        then: {
-          restriction: "cant-ready",
-          target: "SELF",
-          type: "restriction",
-        },
-        type: "conditional",
-      },
       id: "nda-2",
+      name: "STONE BY DAY",
       text: "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
-      type: "action",
+      type: "static",
+      condition: {
+        type: "resource-count",
+        what: "cards-in-hand",
+        controller: "you",
+        comparison: "greater-or-equal",
+        value: 3,
+      },
+      effect: {
+        type: "restriction",
+        restriction: "cant-ready",
+        target: "SELF",
+      },
     },
   ],
+  i18n: brooklynSecondInCommandI18n,
 };

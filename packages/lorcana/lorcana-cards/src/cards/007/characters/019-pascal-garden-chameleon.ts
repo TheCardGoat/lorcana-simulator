@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pascalGardenChameleonI18n } from "./019-pascal-garden-chameleon.i18n";
 
 export const pascalGardenChameleon: CharacterCard = {
   id: "CD3",
@@ -7,28 +8,6 @@ export const pascalGardenChameleon: CharacterCard = {
   cardType: "character",
   name: "Pascal",
   version: "Garden Chameleon",
-  i18n: {
-    en: {
-      name: "Pascal",
-      version: "Garden Chameleon",
-      text: "Evasive",
-    },
-    de: {
-      name: "Pascal",
-      version: "Gartenchamäleon",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Pascal",
-      version: "Caméléon de jardin",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Pascal",
-      version: "Camaleonte da Giardino",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["amber", "amethyst"],
   franchise: "Tangled",
   set: "007",
@@ -53,4 +32,5 @@ export const pascalGardenChameleon: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: pascalGardenChameleonI18n,
 };

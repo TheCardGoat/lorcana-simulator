@@ -27,9 +27,6 @@ describe("Fortisphere", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
-    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
       expect.objectContaining({

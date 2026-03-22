@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { genieWishFulfilledI18n } from "./053-genie-wish-fulfilled.i18n";
 
 export const genieWishFulfilled: CharacterCard = {
   id: "B2Y",
@@ -7,36 +8,6 @@ export const genieWishFulfilled: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "Wish Fulfilled",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "Wish Fulfilled",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "WHAT HAPPENS NOW?",
-          description: "When you play this character, draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschinni",
-      version: "Wunsch erfüllt",
-      text: "Wendig WAS KOMMT JETZT? Wenn du diesen Charakter ausspielst, ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Génie",
-      version: "Vœu exaucé",
-      text: "Insaisissable QUE ME RÉSERVE L'AVENIR? Lorsque vous jouez ce personnage, piochez une carte.",
-    },
-    it: {
-      name: "Genio",
-      version: "Desiderio Esaudito",
-      text: "Sfuggente E ORA CHE SI FA? Quando giochi questo personaggio, pesca una carta.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "006",
@@ -85,4 +56,5 @@ export const genieWishFulfilled: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: genieWishFulfilledI18n,
 };

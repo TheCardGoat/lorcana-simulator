@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madDogKarnagesFirstMateI18n } from "./093-mad-dog-karnages-first-mate.i18n";
 
 export const madDogKarnagesFirstMate: CharacterCard = {
   id: "rMw",
@@ -7,52 +8,6 @@ export const madDogKarnagesFirstMate: CharacterCard = {
   cardType: "character",
   name: "Mad Dog",
   version: "Karnage's First Mate",
-  i18n: {
-    en: {
-      name: "Mad Dog",
-      version: "Karnage's First Mate",
-      text: [
-        {
-          title: "ARE YOU SURE THIS IS SAFE, CAPTAIN?",
-          description:
-            "If you have a character named Don Karnage in play, you pay 1 {I} less to play this character.",
-        },
-      ],
-    },
-    de: {
-      name: "Brutus",
-      version: "Kanailles Erster Offizier",
-      text: [
-        {
-          title: "IST DAS DENN WIRKLICH SICHER, KÄPT'N?",
-          description:
-            "Wenn du einen Don-Kanaille-Charakter im Spiel hast, zahlst du 1 weniger, um diesen Charakter auszuspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Truffe",
-      version: "Second de Don Carnage",
-      text: [
-        {
-          title: "VOUS ÊTES SÛR QUE C'EST SANS DANGER, CAPITAINE?",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins si vous avez un personnage nommé Don Carnage en jeu.",
-        },
-      ],
-    },
-    it: {
-      name: "Cane Pazzo",
-      version: "Braccio Destro di Massacre",
-      text: [
-        {
-          title: "SEI SICURO CHE NON SIA PERICOLOSO, CAPITANO?",
-          description:
-            "Se hai in gioco un personaggio chiamato Don Massacre, paga 1 in meno per giocare questo personaggio.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Talespin",
   set: "008",
@@ -77,35 +32,32 @@ export const madDogKarnagesFirstMate: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Pirate"],
   abilities: [
     {
+      id: "19p-1",
+      name: "ARE YOU SURE THIS IS SAFE, CAPTAIN?",
+      text: "ARE YOU SURE THIS IS SAFE, CAPTAIN? If you have a character named Don Karnage in play, you pay 1 {I} less to play this character.",
+      type: "static",
+      sourceZones: ["hand"],
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
+        type: "cost-reduction",
+        amount: {
+          type: "clamp",
+          value: {
+            type: "filtered-count",
             owner: "you",
             zones: ["play"],
             cardType: "character",
             filters: [
               {
-                type: "name",
-                equals: "Don Karnage",
+                type: "has-name",
+                name: "Don Karnage",
               },
             ],
           },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
+          max: 1,
         },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+        cardType: "character",
       },
-      id: "19p-1",
-      text: "ARE YOU SURE THIS IS SAFE, CAPTAIN? If you have a character named Don Karnage in play, you pay 1 {I} less to play this character.",
-      type: "action",
     },
   ],
+  i18n: madDogKarnagesFirstMateI18n,
 };

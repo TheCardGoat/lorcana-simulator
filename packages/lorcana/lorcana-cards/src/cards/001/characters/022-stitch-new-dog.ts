@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stitchNewDogI18n } from "./022-stitch-new-dog.i18n";
 
 export const stitchNewDog: CharacterCard = {
   id: "Weh",
@@ -7,24 +8,6 @@ export const stitchNewDog: CharacterCard = {
   cardType: "character",
   name: "Stitch",
   version: "New Dog",
-  i18n: {
-    en: {
-      name: "Stitch",
-      version: "New Dog",
-    },
-    de: {
-      name: "Stitch",
-      version: "Neuer Hund",
-    },
-    fr: {
-      name: "STITCH",
-      version: "Nouveau chien",
-    },
-    it: {
-      name: "Stitch",
-      version: "Nuovo Cagnolino",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "001",
@@ -41,4 +24,5 @@ export const stitchNewDog: CharacterCard = {
     tcgPlayer: 493499,
   },
   classifications: ["Storyborn", "Hero", "Alien"],
+  i18n: stitchNewDogI18n,
 };

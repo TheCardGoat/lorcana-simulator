@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { begoneI18n } from "./061-begone.i18n";
 
 export const begone: ActionCard = {
   id: "zPN",
@@ -6,24 +7,6 @@ export const begone: ActionCard = {
   reprints: ["set10-061"],
   cardType: "action",
   name: "Begone!",
-  i18n: {
-    en: {
-      name: "Begone!",
-      text: "Return chosen character, item, or location with cost 3 or less to their player's hand.",
-    },
-    de: {
-      name: "Hinfort!",
-      text: "Schicke einen gegnerischen Charakter, Gegenstand oder Ort deiner Wahl, der 3 oder weniger kostet, auf die zugehörige Hand zurück.",
-    },
-    fr: {
-      name: "Ouste !",
-      text: "Choisissez un objet, un lieu ou un personnage coûtant 3 ou moins et renvoyez-le dans la main de son propriétaire.",
-    },
-    it: {
-      name: "Sparisci!",
-      text: "Fai riprendere in mano al suo giocatore un personaggio, un oggetto o un luogo a tua scelta con costo 3 o inferiore.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "010",
@@ -58,4 +41,5 @@ export const begone: ActionCard = {
       type: "action",
     },
   ],
+  i18n: begoneI18n,
 };

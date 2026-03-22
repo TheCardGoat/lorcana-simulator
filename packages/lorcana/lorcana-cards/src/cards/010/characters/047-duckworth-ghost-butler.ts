@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { duckworthGhostButlerI18n } from "./047-duckworth-ghost-butler.i18n";
 
 export const duckworthGhostButler: CharacterCard = {
   id: "8zy",
@@ -7,43 +8,6 @@ export const duckworthGhostButler: CharacterCard = {
   cardType: "character",
   name: "Duckworth",
   version: "Ghost Butler",
-  i18n: {
-    en: {
-      name: "Duckworth",
-      version: "Ghost Butler",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "FINAL ACT",
-          description:
-            "During your turn, when this character is banished, you may put the top card of your deck facedown under one of your characters or locations with Boost.",
-        },
-      ],
-    },
-    de: {
-      name: "Johann",
-      version: "Geisterbutler",
-      text: "Rasant LETZTER AKT Wenn dieser Charakter in deinem Zug verbannt wird, darfst du die oberste Karte deines Decks verdeckt unter einen deiner Charaktere oder Orte mit Stärken legen.",
-    },
-    fr: {
-      name: "Arsène",
-      version: "Majordome fantôme",
-      text: "Charge DERNIER ACTE Lorsque ce personnage est banni durant votre tour, vous pouvez placer la carte du dessus de votre pioche face cachée sous l'un de vos personnages ou de vos lieux ayant Boost.",
-    },
-    it: {
-      name: "Archie",
-      version: "Maggiordomo Fantasma",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) ATTO FINALE Durante il tuo turno, quando questo personaggio viene esiliato, puoi mettere la prima carta del tuo mazzo a faccia in giù sotto a uno dei tuoi personaggi o luoghi con Potenziamento.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Ducktales",
   set: "010",
@@ -69,5 +33,51 @@ export const duckworthGhostButler: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Ghost"],
-  abilities: [],
+  abilities: [
+    {
+      id: "8zy-1",
+      keyword: "Rush",
+      type: "keyword",
+      text: "Rush",
+    },
+    {
+      id: "8zy-2",
+      name: "FINAL ACT",
+      text: "FINAL ACT During your turn, when this character is banished, you may put the top card of your deck facedown under one of your characters or locations with Boost.",
+      type: "triggered",
+      trigger: {
+        event: "banish",
+        on: "SELF",
+        timing: "when",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          source: "top-of-deck",
+          type: "put-under",
+          under: {
+            cardTypes: ["character", "location"],
+            count: 1,
+            owner: "you",
+            selector: "chosen",
+            zones: ["play"],
+            filter: [
+              {
+                keyword: "Boost",
+                type: "has-keyword",
+              },
+            ],
+          },
+        },
+        type: "optional",
+      },
+    },
+  ],
+  i18n: duckworthGhostButlerI18n,
 };

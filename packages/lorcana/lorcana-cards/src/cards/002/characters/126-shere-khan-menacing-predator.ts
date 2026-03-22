@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { shereKhanMenacingPredatorI18n } from "./126-shere-khan-menacing-predator.i18n";
 
 export const shereKhanMenacingPredator: CharacterCard = {
   id: "e9n",
@@ -7,50 +8,6 @@ export const shereKhanMenacingPredator: CharacterCard = {
   cardType: "character",
   name: "Shere Khan",
   version: "Menacing Predator",
-  i18n: {
-    en: {
-      name: "Shere Khan",
-      version: "Menacing Predator",
-      text: [
-        {
-          title: "DON'T INSULT MY INTELLIGENCE",
-          description: "Whenever one of your characters challenges another character, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Shir Khan",
-      version: "Bedrohliches Raubtier",
-      text: [
-        {
-          title: "BELEIDIGE NICHT MEINE INTELLIGENZ",
-          description:
-            "Jedes Mal, wenn einer deiner Charaktere einen anderen Charakter herausfordert, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Shere Khan",
-      version: "Prédateur menaçant",
-      text: [
-        {
-          title: "N'INSULTE PAS MON INTELLIGENCE",
-          description:
-            "Chaque fois que l'un de vos personnages en défie un autre, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Shere Khan",
-      version: "Menacing Predator",
-      text: [
-        {
-          title: "DON'T INSULT MY INTELLIGENCE",
-          description: "Whenever one of your characters challenges another character, gain 1 lore.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Jungle Book",
   set: "002",
@@ -72,7 +29,6 @@ export const shereKhanMenacingPredator: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -90,4 +46,6 @@ export const shereKhanMenacingPredator: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: shereKhanMenacingPredatorI18n,
 };

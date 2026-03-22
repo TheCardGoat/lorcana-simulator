@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { thePrinceNeverGivesUpI18n } from "./195-the-prince-never-gives-up.i18n";
 
 export const thePrinceNeverGivesUp: CharacterCard = {
   id: "jp9",
@@ -7,47 +8,6 @@ export const thePrinceNeverGivesUp: CharacterCard = {
   cardType: "character",
   name: "The Prince",
   version: "Never Gives Up",
-  i18n: {
-    en: {
-      name: "The Prince",
-      version: "Never Gives Up",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "Resist +1",
-        },
-      ],
-    },
-    de: {
-      name: "Der Prinz",
-      version: "Gibt niemals auf",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "Le Prince",
-      version: "N'abandonne jamais",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il vous défie, un personnage adverse doit, si possible, choisir l'un de vos personnages avec Rempart.) Résistance +1",
-        },
-      ],
-    },
-    it: {
-      name: "The Prince",
-      version: "Never Gives Up",
-      text: [
-        {
-          title: "Bodyguard",
-          description:
-            "(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.) Resist +1 (Damage dealt to this character is reduced by 1.)",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Snow White",
   set: "002",
@@ -86,4 +46,5 @@ export const thePrinceNeverGivesUp: CharacterCard = {
       value: 1,
     },
   ],
+  i18n: thePrinceNeverGivesUpI18n,
 };

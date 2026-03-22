@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kenaiProtectiveBrotherI18n } from "./030-kenai-protective-brother.i18n";
 
 export const kenaiProtectiveBrother: CharacterCard = {
   id: "k5M",
@@ -7,52 +8,6 @@ export const kenaiProtectiveBrother: CharacterCard = {
   cardType: "character",
   name: "Kenai",
   version: "Protective Brother",
-  i18n: {
-    en: {
-      name: "Kenai",
-      version: "Protective Brother",
-      text: [
-        {
-          title: "HE NEEDS ME",
-          description:
-            "At the end of your turn, if this character is exerted, you may ready another chosen character of yours and remove all damage from them.",
-        },
-      ],
-    },
-    de: {
-      name: "Kenai",
-      version: "Beschützender Bruder",
-      text: [
-        {
-          title: "ER BRAUCHT MICH",
-          description:
-            "Am Ende deines Zuges, falls dieser Charakter erschöpft ist, darfst du einen deiner anderen Charaktere wählen. Mache ihn bereit und entferne jeglichen Schaden von ihm.",
-        },
-      ],
-    },
-    fr: {
-      name: "Kinaï",
-      version: "Frère protecteur",
-      text: [
-        {
-          title: "IL A BESOIN DE MOI À",
-          description:
-            "la fin de votre tour, si ce personnage est épuisé, vous pouvez choisir un autre de vos personnages. Redressez-le et retirez-lui tous ses dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "Kenai",
-      version: "Fratello Protettivo",
-      text: [
-        {
-          title: "HA BISOGNO DI ME",
-          description:
-            "Alla fine del tuo turno, se questo personaggio è impegnato, puoi preparare un tuo altro personaggio a tua scelta e rimuovere tutti i danni da esso.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Brother Bear",
   set: "007",
@@ -77,23 +32,36 @@ export const kenaiProtectiveBrother: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      condition: {
+        type: "exerted",
+      },
       effect: {
         chooser: "CONTROLLER",
         effect: {
+          amount: "all",
           target: {
             selector: "chosen",
             count: 1,
-            owner: "any",
+            owner: "you",
             zones: ["play"],
             cardTypes: ["character"],
+            excludeSelf: true,
           },
-          type: "ready",
+          thenReady: true,
+          type: "remove-damage",
         },
         type: "optional",
       },
       id: "eiu-1",
+      name: "HE NEEDS ME",
       text: "HE NEEDS ME At the end of your turn, if this character is exerted, you may ready another chosen character of yours and remove all damage from them.",
-      type: "action",
+      trigger: {
+        event: "end-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      type: "triggered",
     },
   ],
+  i18n: kenaiProtectiveBrotherI18n,
 };

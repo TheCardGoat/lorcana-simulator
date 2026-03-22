@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { letItGoI18n } from "./163-let-it-go.i18n";
 
 export const letItGo: ActionCard = {
   id: "t9V",
@@ -6,36 +7,6 @@ export const letItGo: ActionCard = {
   reprints: ["set1-163", "set11-163"],
   cardType: "action",
   name: "Let It Go",
-  i18n: {
-    en: {
-      name: "Let It Go",
-      text: "Put chosen character into their player's inkwell facedown and exerted.",
-    },
-    de: {
-      name: "Let It Go",
-      text: [
-        {
-          title: "(A",
-          description:
-            "character with cost 5 or more can to sing this song for free.) Put chosen character into their player's inkwell facedown and exerted.",
-        },
-      ],
-    },
-    fr: {
-      name: "Let It Go",
-      text: [
-        {
-          title: "(A",
-          description:
-            "character with cost 5 or more can to sing this song for free.) Put chosen character into their player's inkwell facedown and exerted.",
-        },
-      ],
-    },
-    it: {
-      name: "Let It Go",
-      text: "Put chosen character into their player's inkwell facedown and exerted.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Frozen",
   set: "001",
@@ -61,4 +32,5 @@ export const letItGo: ActionCard = {
       },
     },
   ],
+  i18n: letItGoI18n,
 };

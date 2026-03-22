@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { seldomAllTheySeemI18n } from "./164-seldom-all-they-seem.i18n";
 
 export const seldomAllTheySeem: ActionCard = {
   id: "2xE",
@@ -6,24 +7,6 @@ export const seldomAllTheySeem: ActionCard = {
   reprints: ["set4-164"],
   cardType: "action",
   name: "Seldom All They Seem",
-  i18n: {
-    en: {
-      name: "Seldom All They Seem",
-      text: "Chosen character gets -3 {S} this turn.",
-    },
-    de: {
-      name: "Ich weiß was geschieht",
-      text: "Gib einem Charakter deiner Wahl in diesem Zug -3.",
-    },
-    fr: {
-      name: "J'en ai Rêvé",
-      text: "Choisissez un personnage qui subit -3 pour le reste de ce tour.",
-    },
-    it: {
-      name: "È Tutta Illusione",
-      text: "(Un personaggio con costo 2 o superiore può per cantare questa canzone gratis.) Un personaggio a tua scelta riceve -3 per questo turno.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sleeping Beauty",
   set: "004",
@@ -57,4 +40,5 @@ export const seldomAllTheySeem: ActionCard = {
       type: "action",
     },
   ],
+  i18n: seldomAllTheySeemI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { benjaGuardianOfTheDragonGemI18n } from "./180-benja-guardian-of-the-dragon-gem.i18n";
 
 export const benjaGuardianOfTheDragonGem: CharacterCard = {
   id: "amr",
@@ -7,50 +8,6 @@ export const benjaGuardianOfTheDragonGem: CharacterCard = {
   cardType: "character",
   name: "Benja",
   version: "Guardian of the Dragon Gem",
-  i18n: {
-    en: {
-      name: "Benja",
-      version: "Guardian of the Dragon Gem",
-      text: [
-        {
-          title: "WE HAVE A CHOICE",
-          description: "When you play this character, you may banish chosen item.",
-        },
-      ],
-    },
-    de: {
-      name: "Benja",
-      version: "Wächter des Drachenjuwels",
-      text: [
-        {
-          title: "WIR HABEN EINE WAHL",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Gegenstand deiner Wahl verbannen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Benja",
-      version: "Gardien de la Pierre de Dragon",
-      text: [
-        {
-          title: "NOUS DEVONS CHOISIR",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un objet et le bannir.",
-        },
-      ],
-    },
-    it: {
-      name: "Benja",
-      version: "Custode della Gemma Drago",
-      text: [
-        {
-          title: "LA SCELTA È NOSTRA",
-          description: "Quando giochi questo personaggio, puoi esiliare un oggetto a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Raya and the Last Dragon",
   set: "009",
@@ -67,8 +24,8 @@ export const benjaGuardianOfTheDragonGem: CharacterCard = {
   },
   text: [
     {
-      title: "WE HAVE A CHOICE",
-      description: "When you play this character, you may banish chosen item.",
+      title: "WE HAVE",
+      description: "A CHOICE When you play this character, you may banish chosen item.",
     },
   ],
   classifications: ["Storyborn", "Mentor", "King"],
@@ -99,4 +56,5 @@ export const benjaGuardianOfTheDragonGem: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: benjaGuardianOfTheDragonGemI18n,
 };

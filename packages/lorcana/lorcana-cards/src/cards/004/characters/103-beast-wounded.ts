@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { beastWoundedI18n } from "./103-beast-wounded.i18n";
 
 export const beastWounded: CharacterCard = {
   id: "f3O",
@@ -7,48 +8,6 @@ export const beastWounded: CharacterCard = {
   cardType: "character",
   name: "Beast",
   version: "Wounded",
-  i18n: {
-    en: {
-      name: "Beast",
-      version: "Wounded",
-      text: [
-        {
-          title: "THAT HURTS!",
-          description: "This character enters play with 4 damage.",
-        },
-      ],
-    },
-    de: {
-      name: "Biest",
-      version: "Verwundet",
-      text: [
-        {
-          title: "DAS TUT WEH!",
-          description: "Dieser Charakter kommt mit 4 Schaden auf ihm ins Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "La Bête",
-      version: "Blessée",
-      text: [
-        {
-          title: "MAIS ÇA FAIT MAL!",
-          description: "Ce personnage entre en jeu avec 4 jetons Dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "La Bestia",
-      version: "Ferita",
-      text: [
-        {
-          title: "FA MALE!",
-          description: "Questo personaggio entra in gioco con 4 danni.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Beauty and the Beast",
   set: "004",
@@ -73,8 +32,8 @@ export const beastWounded: CharacterCard = {
   abilities: [
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 4,
+        type: "enters-with-damage",
       },
       id: "hmw-1",
       name: "THAT HURTS!",
@@ -82,4 +41,5 @@ export const beastWounded: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: beastWoundedI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { moanaDeterminedExplorerI18n } from "./018-moana-determined-explorer.i18n";
 
 export const moanaDeterminedExplorer: CharacterCard = {
   id: "plr",
@@ -7,24 +8,6 @@ export const moanaDeterminedExplorer: CharacterCard = {
   cardType: "character",
   name: "Moana",
   version: "Determined Explorer",
-  i18n: {
-    en: {
-      name: "Moana",
-      version: "Determined Explorer",
-    },
-    de: {
-      name: "Vaiana",
-      version: "Entschlossene Entdeckerin",
-    },
-    fr: {
-      name: "Vaiana",
-      version: "Exploratrice résolue",
-    },
-    it: {
-      name: "Vaiana",
-      version: "Esploratrice Determinata",
-    },
-  },
   inkType: ["amber"],
   franchise: "Moana",
   set: "005",
@@ -41,4 +24,5 @@ export const moanaDeterminedExplorer: CharacterCard = {
     tcgPlayer: 561602,
   },
   classifications: ["Storyborn", "Hero", "Princess"],
+  i18n: moanaDeterminedExplorerI18n,
 };

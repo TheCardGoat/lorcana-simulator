@@ -7,6 +7,7 @@ type CardDefinitionLike = {
   actionSubtype?: string;
   cardType?: string;
   classifications?: string[];
+  cost?: number;
   name?: string;
 };
 
@@ -54,6 +55,13 @@ function matchesSearchFilter(
     }
   }
 
+  if (effect.maxCost !== undefined) {
+    const cardCost = definition.cost;
+    if (cardCost === undefined || cardCost > effect.maxCost) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -95,14 +103,23 @@ export function resolveSearchDeckEffect(
   const destination = effect.putOnTop ? "top-of-deck" : (effect.putInto ?? "hand");
   switch (destination) {
     case "play":
-      ctx.framework.zones.moveCard(chosenCardId, { zone: "play", playerId: cardPlayed.playerId });
+      ctx.framework.zones.moveCard(chosenCardId, {
+        zone: "play",
+        playerId: cardPlayed.playerId,
+      });
       break;
     case "top-of-deck":
-      ctx.framework.zones.moveCard(chosenCardId, { zone: "deck", playerId: cardPlayed.playerId });
+      ctx.framework.zones.moveCard(chosenCardId, {
+        zone: "deck",
+        playerId: cardPlayed.playerId,
+      });
       break;
     case "hand":
     default:
-      ctx.framework.zones.moveCard(chosenCardId, { zone: "hand", playerId: cardPlayed.playerId });
+      ctx.framework.zones.moveCard(chosenCardId, {
+        zone: "hand",
+        playerId: cardPlayed.playerId,
+      });
       break;
   }
 

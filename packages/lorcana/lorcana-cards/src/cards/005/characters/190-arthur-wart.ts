@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arthurWartI18n } from "./190-arthur-wart.i18n";
 
 export const arthurWart: CharacterCard = {
   id: "2AA",
@@ -7,24 +8,6 @@ export const arthurWart: CharacterCard = {
   cardType: "character",
   name: "Arthur",
   version: "Wart",
-  i18n: {
-    en: {
-      name: "Arthur",
-      version: "Wart",
-    },
-    de: {
-      name: "Arthur",
-      version: "Flo",
-    },
-    fr: {
-      name: "Arthur",
-      version: "Moustique",
-    },
-    it: {
-      name: "Artù",
-      version: "Semola",
-    },
-  },
   inkType: ["steel"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -41,4 +24,5 @@ export const arthurWart: CharacterCard = {
     tcgPlayer: 561298,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: arthurWartI18n,
 };

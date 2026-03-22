@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { basilGreatMouseDetectiveI18n } from "./138-basil-great-mouse-detective.i18n";
 
 export const basilGreatMouseDetective: CharacterCard = {
   id: "rNe",
@@ -7,43 +8,6 @@ export const basilGreatMouseDetective: CharacterCard = {
   cardType: "character",
   name: "Basil",
   version: "Great Mouse Detective",
-  i18n: {
-    en: {
-      name: "Basil",
-      version: "Great Mouse Detective",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "THERE'S ALWAYS A CHANCE",
-          description:
-            "If you used Shift to play this character, you may draw 2 cards when he enters play.",
-        },
-      ],
-    },
-    de: {
-      name: "Basil",
-      version: "Der große Mäusedetektiv",
-      text: "Gestaltwandel 5 ES GIBT IMMER EINE CHANCE Falls du Gestaltwandel benutzt hast, um diesen Charakter auszuspielen, darfst du beim Ausspielen 2 Karten ziehen.",
-    },
-    fr: {
-      name: "Basil",
-      version: "Détective Privé",
-      text: "Alter 5 TANT QU'IL Y A DE LA VIE, IL Y A DE L'ESPOIR Si vous utilisez Alter pour jouer ce personnage, vous pouvez piocher 2 cartes lorsqu'il entre en jeu.",
-    },
-    it: {
-      name: "Basil",
-      version: "Great Mouse Detective",
-      text: [
-        {
-          title: "Shift 5",
-          description:
-            "(You may pay 5 to play this on top of one of your characters named Basil.) THERE'S ALWAYS A CHANCE If you used Shift to play this character, you may draw 2 cards when he enters play.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Great Mouse Detective",
   set: "002",
@@ -63,13 +27,12 @@ export const basilGreatMouseDetective: CharacterCard = {
       title: "Shift 5",
     },
     {
-      title: "THERE'S ALWAYS A CHANCE",
+      title: "THERE'S ALWAYS",
       description:
-        "If you used Shift to play this character, you may draw 2 cards when he enters play.",
+        "A CHANCE If you used Shift to play this character, you may draw 2 cards when he enters play.",
     },
   ],
   classifications: ["Floodborn", "Hero", "Detective"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -81,21 +44,28 @@ export const basilGreatMouseDetective: CharacterCard = {
       type: "keyword",
     },
     {
+      id: "1vg-2",
+      name: "THERE'S ALWAYS A CHANCE",
+      text: "THERE'S ALWAYS A CHANCE If you used Shift to play this character, you may draw 2 cards when he enters play.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
       effect: {
-        condition: {
-          expression: "you used Shift to play this character",
-          type: "if",
-        },
-        then: {
+        chooser: "CONTROLLER",
+        effect: {
           amount: 2,
           target: "CONTROLLER",
           type: "draw",
         },
-        type: "conditional",
+        type: "optional",
       },
-      id: "1vg-2",
-      text: "THERE'S ALWAYS A CHANCE If you used Shift to play this character, you may draw 2 cards when he enters play.",
-      type: "static",
+      condition: {
+        type: "used-shift",
+      },
     },
   ],
+  i18n: basilGreatMouseDetectiveI18n,
 };

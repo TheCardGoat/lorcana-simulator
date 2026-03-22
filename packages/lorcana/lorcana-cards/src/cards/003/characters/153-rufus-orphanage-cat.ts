@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rufusOrphanageCatI18n } from "./153-rufus-orphanage-cat.i18n";
 
 export const rufusOrphanageCat: CharacterCard = {
   id: "Lpq",
@@ -7,52 +8,6 @@ export const rufusOrphanageCat: CharacterCard = {
   cardType: "character",
   name: "Rufus",
   version: "Orphanage Cat",
-  i18n: {
-    en: {
-      name: "Rufus",
-      version: "Orphanage Cat",
-      text: [
-        {
-          title: "TOO OLD TO BE CHASING MICE",
-          description:
-            "When this character is banished, you may put this card into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Rufus",
-      version: "Katze aus dem Waisenhaus",
-      text: [
-        {
-          title: "ZU ALT, ZUR MÄUSEJAGD",
-          description:
-            "Wenn dieser Charakter verbannt wird, darfst du diese Karte verdeckt und erschöpft in deinen Tintenvorrat legen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Rufus",
-      version: "Chat d'orphelinat",
-      text: [
-        {
-          title: "JE N'AI PLUS L'ÂGE POUR JOUER AU CHAT ET À LA SOURIS",
-          description:
-            "Lorsque ce personnage est banni, vous pouvez le placer dans votre réserve d'encre, face cachée et épuisé.",
-        },
-      ],
-    },
-    it: {
-      name: "Rufus",
-      version: "Gatto da Orfanotrofio",
-      text: [
-        {
-          title: "UN TANTINO TROPPO VECCHIO PER DAR LA CACCIA AI TOPI",
-          description:
-            "Quando questo personaggio viene esiliato, puoi aggiungerlo al tuo calamaio, a faccia in giù e impegnato.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Rescuers",
   set: "003",
@@ -75,7 +30,6 @@ export const rufusOrphanageCat: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -100,4 +54,5 @@ export const rufusOrphanageCat: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: rufusOrphanageCatI18n,
 };

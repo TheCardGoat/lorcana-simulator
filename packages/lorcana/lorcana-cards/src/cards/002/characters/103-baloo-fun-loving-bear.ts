@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { balooFunlovingBearI18n } from "./103-baloo-fun-loving-bear.i18n";
 
 export const balooFunlovingBear: CharacterCard = {
   id: "U0W",
@@ -7,24 +8,6 @@ export const balooFunlovingBear: CharacterCard = {
   cardType: "character",
   name: "Baloo",
   version: "Fun-Loving Bear",
-  i18n: {
-    en: {
-      name: "Baloo",
-      version: "Fun-Loving Bear",
-    },
-    de: {
-      name: "Balu",
-      version: "Lebensfroher Bär",
-    },
-    fr: {
-      name: "Baloo",
-      version: "Ours épicurien",
-    },
-    it: {
-      name: "Baloo",
-      version: "Fun-Loving Bear",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Jungle Book",
   set: "002",
@@ -41,4 +24,5 @@ export const balooFunlovingBear: CharacterCard = {
     tcgPlayer: 527752,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: balooFunlovingBearI18n,
 };

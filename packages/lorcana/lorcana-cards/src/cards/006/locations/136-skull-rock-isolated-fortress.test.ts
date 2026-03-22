@@ -39,6 +39,39 @@ describe("Skull Rock - Isolated Fortress", () => {
     expect(testEngine.asPlayerOne().getCard(outsider)?.strength).toBe(outsider.strength);
   });
 
+  // Rule 6.2.4: Secondary condition "if you have a Pirate character here" is checked
+  // at resolution. Without a Pirate at the location, the effect resolves with no effect.
+  // FAQ: "Can I use Transport Pod to move a Pirate to an empty Skull Rock in order to
+  // gain 1 lore? No. Safe Haven has a secondary condition that must be true at the start
+  // of the turn in order to trigger."
+  it("does not gain lore if no Pirate character is at the location", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [
+          skullRockIsolatedFortress,
+          { card: outsider, atLocation: skullRockIsolatedFortress },
+        ],
+        deck: 1,
+      },
+      {
+        deck: 2,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    // No bag effect should fire since the secondary condition fails
+    // (no Pirate at the location)
+    const bagCount = testEngine.asPlayerOne().getBagCount();
+    if (bagCount > 0) {
+      // If the trigger fired, resolving should produce no lore
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id);
+    }
+
+    expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+  });
+
   it("gains 1 lore at the start of your turn if you have a Pirate here", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {

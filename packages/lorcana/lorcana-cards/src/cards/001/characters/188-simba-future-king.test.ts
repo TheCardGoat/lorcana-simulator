@@ -1,15 +1,64 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { simbaFutureKing } from "./188-simba-future-king";
 
+const drawnCard = createMockCharacter({
+  id: "simba-future-king-drawn-card",
+  name: "Drawn Card",
+  cost: 1,
+});
+
+const discardFodder = createMockCharacter({
+  id: "simba-future-king-discard-fodder",
+  name: "Discard Fodder",
+  cost: 1,
+});
+
 describe("Simba - Future King", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [simbaFutureKing] });
-  //   Expect(testEngine.getCardModel(simbaFutureKing).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+  describe("GUESS WHAT? - When you play this character, you may draw a card, then choose and discard a card.", () => {
+    it("draws a card then discards a chosen card when optional ability is accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: simbaFutureKing.cost,
+        deck: [drawnCard],
+        hand: [simbaFutureKing, discardFodder],
+      });
+
+      const simbaId = testEngine.findCardInstanceId(simbaFutureKing, "hand");
+
+      testEngine.asPlayerOne().playCard(simbaId);
+
+      // There should be one optional ability in the bag
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Accept the optional ability (draw a card)
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // After drawing, hand should have discardFodder + drawnCard = 2 cards
+      expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
+        deck: 0,
+        discard: 0,
+        hand: 2,
+        play: 1,
+      });
+
+      // Now must discard a card
+      const discardFodderId = testEngine.findCardInstanceId(discardFodder, "hand", "player_one");
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [discardFodderId] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("discard");
+      expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
+      expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
+        deck: 0,
+        discard: 1,
+        hand: 1,
+        play: 1,
+      });
+    });
+  });
 });
 
 // LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!

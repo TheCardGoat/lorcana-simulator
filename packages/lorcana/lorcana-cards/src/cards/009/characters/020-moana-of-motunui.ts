@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { moanaOfMotunuiI18n } from "./020-moana-of-motunui.i18n";
 
 export const moanaOfMotunui: CharacterCard = {
   id: "lsO",
@@ -7,52 +8,6 @@ export const moanaOfMotunui: CharacterCard = {
   cardType: "character",
   name: "Moana",
   version: "Of Motunui",
-  i18n: {
-    en: {
-      name: "Moana",
-      version: "Of Motunui",
-      text: [
-        {
-          title: "WE CAN FIX IT",
-          description:
-            "Whenever this character quests, you may ready your other exerted Princess characters. If you do, they can't quest for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Vaiana",
-      version: "Von Motunui",
-      text: [
-        {
-          title: "WIR KRIEGEN DAS HIN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du deine anderen Prinzessinnen bereit machen. Sie können in diesem Zug nicht mehr erkunden.",
-        },
-      ],
-    },
-    fr: {
-      name: "VAIANA",
-      version: "de Motunui",
-      text: [
-        {
-          title: "NOUS ALLONS LE RÉPARER",
-          description:
-            "Lorsque ce personnage est envoyé à l'aventure, vous pouvez redresser vos autres personnages Princesse. Elles ne peuvent pas être envoyées à l'aventure pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Moana",
-      version: "Of Motunui",
-      text: [
-        {
-          title: "WE CAN FIX IT",
-          description:
-            "Whenever this character quests, you may ready your other Princess characters. They can't quest for the rest of this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Moana",
   set: "009",
@@ -78,29 +33,49 @@ export const moanaOfMotunui: CharacterCard = {
   abilities: [
     {
       effect: {
-        steps: [
-          {
-            chooser: "CONTROLLER",
-            effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          steps: [
+            {
               type: "ready",
               target: {
-                selector: "chosen",
-                count: 1,
-                owner: "any",
+                selector: "all",
+                count: "all",
+                owner: "you",
                 zones: ["play"],
                 cardTypes: ["character"],
+                filter: [
+                  {
+                    type: "has-classification",
+                    classification: "Princess",
+                  },
+                ],
+                excludeSelf: true,
               },
             },
-            type: "optional",
-          },
-          {
-            duration: "this-turn",
-            restriction: "cant-quest",
-            target: "SELF",
-            type: "restriction",
-          },
-        ],
-        type: "sequence",
+            {
+              duration: "this-turn",
+              restriction: "cant-quest",
+              target: {
+                selector: "all",
+                count: "all",
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["character"],
+                filter: [
+                  {
+                    type: "has-classification",
+                    classification: "Princess",
+                  },
+                ],
+                excludeSelf: true,
+              },
+              type: "restriction",
+            },
+          ],
+          type: "sequence",
+        },
+        type: "optional",
       },
       id: "n94-1",
       name: "WE CAN FIX IT",
@@ -113,4 +88,5 @@ export const moanaOfMotunui: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: moanaOfMotunuiI18n,
 };

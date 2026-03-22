@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { perditaDevotedMotherI18n } from "./015-perdita-devoted-mother.i18n";
 
 export const perditaDevotedMother: CharacterCard = {
   id: "fgK",
@@ -7,52 +8,6 @@ export const perditaDevotedMother: CharacterCard = {
   cardType: "character",
   name: "Perdita",
   version: "Devoted Mother",
-  i18n: {
-    en: {
-      name: "Perdita",
-      version: "Devoted Mother",
-      text: [
-        {
-          title: "COME ALONG, CHILDREN",
-          description:
-            "When you play this character and whenever she quests, you may play a character with cost 2 or less from your discard for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Perdi",
-      version: "Engagierte Mutter",
-      text: [
-        {
-          title: "KOMMT, KINDER",
-          description:
-            "Wenn du diesen Charakter ausspielst und jedes Mal, wenn er erkundet, darfst du einen Charakter von deinem Ablagestapel, der 2 oder weniger kostet, kostenlos ausspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Perdita",
-      version: "Mère dévouée",
-      text: [
-        {
-          title: "ALLONS, LES ENFANTS À",
-          description:
-            "chaque fois que vous jouez ce personnage ou qu'il est envoyé à l'aventure, vous pouvez jouer gratuitement un personnage de votre défausse coûtant 2 ou moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Peggy",
-      version: "Madre Devota",
-      text: [
-        {
-          title: "VENITE VIA, PICCOLI",
-          description:
-            "Quando giochi questo personaggio e ogni volta che va all'avventura, puoi giocare gratuitamente un personaggio con costo 2 o inferiore dai tuoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "101 Dalmatians",
   set: "003",
@@ -75,8 +30,6 @@ export const perditaDevotedMother: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  missingImplementation: true,
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -93,4 +46,5 @@ export const perditaDevotedMother: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: perditaDevotedMotherI18n,
 };

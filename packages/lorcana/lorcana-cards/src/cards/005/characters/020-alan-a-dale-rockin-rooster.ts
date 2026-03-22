@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { alanadaleRockinRoosterI18n } from "./020-alan-a-dale-rockin-rooster.i18n";
 
 export const alanadaleRockinRooster: CharacterCard = {
   id: "Jj0",
@@ -7,48 +8,6 @@ export const alanadaleRockinRooster: CharacterCard = {
   cardType: "character",
   name: "Alan-a-Dale",
   version: "Rockin' Rooster",
-  i18n: {
-    en: {
-      name: "Alan-a-Dale",
-      version: "Rockin' Rooster",
-      text: [
-        {
-          title: "FAN FAVORITE",
-          description: "Whenever you play a song, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Allan von Dale",
-      version: "Rockiger Hahn",
-      text: [
-        {
-          title: "FAN-LIEBLING",
-          description: "Jedes Mal, wenn du ein Lied ausspielst, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Adam de la Halle",
-      version: "Coq 'n' Roll",
-      text: [
-        {
-          title: "FAVORI DE LA FOULE",
-          description: "Chaque fois que vous jouez une chanson, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Cantagallo",
-      version: "Galletto Rock",
-      text: [
-        {
-          title: "BENIAMINO DEI FAN",
-          description: "Ogni volta che giochi una canzone, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Robin Hood",
   set: "005",
@@ -82,7 +41,7 @@ export const alanadaleRockinRooster: CharacterCard = {
       trigger: {
         event: "play",
         on: {
-          cardType: "action",
+          cardType: "song",
           controller: "you",
         },
         timing: "whenever",
@@ -90,4 +49,5 @@ export const alanadaleRockinRooster: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: alanadaleRockinRoosterI18n,
 };

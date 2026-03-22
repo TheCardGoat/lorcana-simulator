@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { mcduckManorScroogesMansionI18n } from "./169-mcduck-manor-scrooges-mansion.i18n";
 
 export const mcduckManorScroogesMansion: LocationCard = {
   id: "lTr",
@@ -7,24 +8,6 @@ export const mcduckManorScroogesMansion: LocationCard = {
   cardType: "location",
   name: "McDuck Manor",
   version: "Scrooge's Mansion",
-  i18n: {
-    en: {
-      name: "McDuck Manor",
-      version: "Scrooge's Mansion",
-    },
-    de: {
-      name: "Villa Duck",
-      version: "Dagoberts Herrenhaus",
-    },
-    fr: {
-      name: "Le Manoir de Picsou",
-      version: "Résidence de Picsou",
-    },
-    it: {
-      name: "Villa de' Paperoni",
-      version: "Residenza di Paperone",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Ducktales",
   set: "003",
@@ -40,4 +23,5 @@ export const mcduckManorScroogesMansion: LocationCard = {
     lorcast: "crd_c653c06c96ec4b699dde5bcec70e0693",
     tcgPlayer: 539104,
   },
+  i18n: mcduckManorScroogesMansionI18n,
 };

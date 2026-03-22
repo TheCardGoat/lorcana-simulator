@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { crikeeGoodLuckCharmI18n } from "./142-cri-kee-good-luck-charm.i18n";
 
 export const crikeeGoodLuckCharm: CharacterCard = {
   id: "GwP",
@@ -7,43 +8,6 @@ export const crikeeGoodLuckCharm: CharacterCard = {
   cardType: "character",
   name: "Cri-Kee",
   version: "Good Luck Charm",
-  i18n: {
-    en: {
-      name: "Cri-Kee",
-      version: "Good Luck Charm",
-      text: [
-        {
-          title: "Alert",
-          description: "(This character can challenge as if they had Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Kriki",
-      version: "Glücksbringer",
-      text: [
-        {
-          title: "Alarmiert",
-          description: "(Dieser Charakter kann herausfordern, als hätte er Wendig.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Cri-Kee",
-      version: "Charme de chance",
-      text: "Agilité (Ce personnage peut défier comme s'il avait Insaisissable.)",
-    },
-    it: {
-      name: "Cri-Cri",
-      version: "Portafortuna",
-      text: [
-        {
-          title: "Vigile",
-          description: "(Questo personaggio può sfidare come se avesse Sfuggente.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Mulan",
   set: "010",
@@ -73,4 +37,5 @@ export const crikeeGoodLuckCharm: CharacterCard = {
       text: "Alert",
     },
   ],
+  i18n: crikeeGoodLuckCharmI18n,
 };

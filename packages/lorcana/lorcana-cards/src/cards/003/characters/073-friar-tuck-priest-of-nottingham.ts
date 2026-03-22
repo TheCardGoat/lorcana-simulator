@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { friarTuckPriestOfNottinghamI18n } from "./073-friar-tuck-priest-of-nottingham.i18n";
 
 export const friarTuckPriestOfNottingham: CharacterCard = {
   id: "29m",
@@ -7,52 +8,6 @@ export const friarTuckPriestOfNottingham: CharacterCard = {
   cardType: "character",
   name: "Friar Tuck",
   version: "Priest of Nottingham",
-  i18n: {
-    en: {
-      name: "Friar Tuck",
-      version: "Priest of Nottingham",
-      text: [
-        {
-          title: "YOU THIEVING SCOUNDREL",
-          description:
-            "When you play this character, the player or players with the most cards in their hand chooses and discards a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Bruder Tack",
-      version: "Pfarrer von Nottingham",
-      text: [
-        {
-          title: "DU DIEBISCHER SCHURKE",
-          description:
-            "Wenn du diesen Charakter ausspielst, wählen alle Mitspielenden (auch du), mit den meisten Karten auf der Hand, je 1 Karte aus ihrer Hand und werfen sie ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "Frère Tuck",
-      version: "Prêtre de Nottingham",
-      text: [
-        {
-          title: "IMMONDE COQUIN",
-          description:
-            "Lorsque vous jouez ce personnage, le joueur ou les joueurs ayant le plus de cartes en main choisissent une carte et la défaussent.",
-        },
-      ],
-    },
-    it: {
-      name: "Frà Tac",
-      version: "Sacerdote di Nottingham",
-      text: [
-        {
-          title: "BRUTTA CANAGLIA DI UN LADRO",
-          description:
-            "Quando giochi questo personaggio, il giocatore o i giocatori con più carte in mano ne sceglie una e la scarta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "003",
@@ -75,13 +30,22 @@ export const friarTuckPriestOfNottingham: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       effect: {
         amount: 1,
         chosen: true,
-        target: "CONTROLLER",
+        from: "hand",
+        target: {
+          selector: "each-player",
+          filter: {
+            type: "zone-count-rank",
+            zone: "hand",
+            rank: "highest",
+            ties: "all",
+            minCount: 1,
+          },
+        },
         type: "discard",
       },
       id: "f7m-1",
@@ -95,4 +59,5 @@ export const friarTuckPriestOfNottingham: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: friarTuckPriestOfNottinghamI18n,
 };

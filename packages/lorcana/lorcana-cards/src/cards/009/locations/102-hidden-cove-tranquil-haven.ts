@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { hiddenCoveTranquilHavenI18n } from "./102-hidden-cove-tranquil-haven.i18n";
 
 export const hiddenCoveTranquilHaven: LocationCard = {
   id: "ejC",
@@ -7,48 +8,6 @@ export const hiddenCoveTranquilHaven: LocationCard = {
   cardType: "location",
   name: "Hidden Cove",
   version: "Tranquil Haven",
-  i18n: {
-    en: {
-      name: "Hidden Cove",
-      version: "Tranquil Haven",
-      text: [
-        {
-          title: "REVITALIZING WATERS",
-          description: "Characters get +1 {S} and +1 {W} while here.",
-        },
-      ],
-    },
-    de: {
-      name: "Versteckte Grotte",
-      version: "Ruhiger Hafen",
-      text: [
-        {
-          title: "BELEBENDE GEWÄSSER",
-          description: "Charaktere an diesem Ort erhalten +1 und +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "La crique cachée",
-      version: "Havre de paix",
-      text: [
-        {
-          title: "EAUX REVITALISANTES",
-          description: "Les personnages sur ce lieu gagnent +1 et +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Cala Nascosta",
-      version: "Porto Sicuro",
-      text: [
-        {
-          title: "ACQUE RIVITALIZZANTI I",
-          description: "personaggi ricevono +1 e +1 mentre si trovano in questo luogo.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lorcana",
   set: "009",
@@ -95,4 +54,5 @@ export const hiddenCoveTranquilHaven: LocationCard = {
       },
     },
   ],
+  i18n: hiddenCoveTranquilHavenI18n,
 };

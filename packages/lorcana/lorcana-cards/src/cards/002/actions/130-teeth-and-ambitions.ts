@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { teethAndAmbitionsI18n } from "./130-teeth-and-ambitions.i18n";
 
 export const teethAndAmbitions: ActionCard = {
   id: "4lC",
@@ -6,24 +7,6 @@ export const teethAndAmbitions: ActionCard = {
   reprints: ["set2-130"],
   cardType: "action",
   name: "Teeth and Ambitions",
-  i18n: {
-    en: {
-      name: "Teeth and Ambitions",
-      text: "Deal 2 damage to chosen character of yours to deal 2 damage to another chosen character.",
-    },
-    de: {
-      name: "Zähne blank wie Neid",
-      text: "Wähle einen deiner Charaktere und füge ihm 2 Schaden zu, um einem anderen Charakter deiner Wahl 2 Schaden zuzufügen.",
-    },
-    fr: {
-      name: "Votre roi vous invite à la fête",
-      text: "Choisissez l'un de vos personnages et infligez-lui 2 dommages pour infliger 2 dommages à un autre personnage au choix.",
-    },
-    it: {
-      name: "Affiliamo le Zanne",
-      text: "(Un personaggio con costo 2 o superiore può per cantare questa canzone gratis.) Infliggi 2 danni a un tuo personaggio a tua scelta per infliggere 2 danni a un altro personaggio a tua scelta.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lion King",
   set: "002",
@@ -70,4 +53,5 @@ export const teethAndAmbitions: ActionCard = {
       },
     },
   ],
+  i18n: teethAndAmbitionsI18n,
 };

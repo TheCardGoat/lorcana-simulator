@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { plutoDeterminedDefenderI18n } from "./014-pluto-determined-defender.i18n";
 
 export const plutoDeterminedDefender: CharacterCard = {
   id: "yv4",
@@ -7,45 +8,6 @@ export const plutoDeterminedDefender: CharacterCard = {
   cardType: "character",
   name: "Pluto",
   version: "Determined Defender",
-  i18n: {
-    en: {
-      name: "Pluto",
-      version: "Determined Defender",
-      text: [
-        {
-          title: "Shift 5 {I}",
-        },
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "GUARD DOG",
-          description: "At the start of your turn, remove up to 3 damage from this character.",
-        },
-      ],
-    },
-    de: {
-      name: "Pluto",
-      version: "Entschlossener Verteidiger",
-      text: "Gestaltwandel 5 Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) WACHHUND Zu Beginn deines Zuges, entferne bis zu 3 Schaden von diesem Charakter.",
-    },
-    fr: {
-      name: "Pluto",
-      version: "Protecteur déterminé",
-      text: [
-        {
-          title: "Alter 5 Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il vous défie, un personnage adverse doit, si possible, choisir l'un de vos personnages avec Rempart.) CHIEN DE GARDE Au début de votre tour, retirez jusqu'à 3 jetons Dommage de ce personnage.",
-        },
-      ],
-    },
-    it: {
-      name: "Pluto",
-      version: "Guardia Risoluta",
-      text: "Trasformazione 5 Guardiano CANE DA GUARDIA All'inizio del tuo turno, rimuovi fino a 3 danni da questo personaggio.",
-    },
-  },
   inkType: ["amber"],
   set: "009",
   cardNumber: 14,
@@ -102,8 +64,15 @@ export const plutoDeterminedDefender: CharacterCard = {
         upTo: true,
       },
       id: "zh2-3",
+      name: "GUARD DOG",
       text: "GUARD DOG At the start of your turn, remove up to 3 damage from this character.",
-      type: "action",
+      trigger: {
+        event: "start-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      type: "triggered",
     },
   ],
+  i18n: plutoDeterminedDefenderI18n,
 };

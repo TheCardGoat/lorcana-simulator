@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { antoniosJaguarFaithfulCompanionI18n } from "./031-antonios-jaguar-faithful-companion.i18n";
 
 export const antoniosJaguarFaithfulCompanion: CharacterCard = {
   id: "tDk",
@@ -7,52 +8,6 @@ export const antoniosJaguarFaithfulCompanion: CharacterCard = {
   cardType: "character",
   name: "Antonio's Jaguar",
   version: "Faithful Companion",
-  i18n: {
-    en: {
-      name: "Antonio's Jaguar",
-      version: "Faithful Companion",
-      text: [
-        {
-          title: "YOU WANT TO GO WHERE?",
-          description:
-            "When you play this character, if you have a character named Antonio Madrigal in play, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Antonios Jaguar",
-      version: "Treuer Gefährte",
-      text: [
-        {
-          title: "WOHIN WILLST DU GEHEN?",
-          description:
-            "Wenn du diesen Charakter ausspielst und einen Antonio-Madrigal-Charakter im Spiel hast, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Jaguar d’Antonio",
-      version: "Fidèle compagnon",
-      text: [
-        {
-          title: "TU VEUX ALLER OÙ!?",
-          description:
-            "Lorsque vous jouez ce personnage, si vous avez un personnage nommé Antonio Madrigal en jeu, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Giaguaro di Antonio",
-      version: "Compagno Fedele",
-      text: [
-        {
-          title: "DOV'È CHE VUOI ANDARE?",
-          description:
-            "Quando giochi questo personaggio, se hai in gioco un personaggio chiamato Antonio Madrigal, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Encanto",
   set: "008",
@@ -77,16 +32,14 @@ export const antoniosJaguarFaithfulCompanion: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "has-named-character",
+        name: "Antonio Madrigal",
+        controller: "you",
+      },
       effect: {
-        condition: {
-          expression: "you have a character named Antonio Madrigal in play",
-          type: "if",
-        },
-        then: {
-          amount: 1,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 1,
+        type: "gain-lore",
       },
       id: "c5s-1",
       name: "YOU WANT TO GO WHERE?",
@@ -99,4 +52,5 @@ export const antoniosJaguarFaithfulCompanion: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: antoniosJaguarFaithfulCompanionI18n,
 };

@@ -1,88 +1,153 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { liloGalacticHero } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { madamMimElephant } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Madam Mim - Elephant", () => {
-//   It.skip("**A LITTLE GAME** When you play this character, banish her or return another chosen character of yours to your hand.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: madamMimElephant.cost,
-//       Hand: [madamMimElephant],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(madamMimElephant);
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({});
-//   });
-//
-//   Describe("**SNEAKY MOVE** At the start of your turn, you may move up to 2 damage counters from this character to chosen opposing character.", () => {
-//     It("Moves 1 damage counters from Madam Mim to Lilo", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [liloGalacticHero],
-//         },
-//         {
-//           Play: [madamMimElephant],
-//           Deck: 1,
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getCard(madamMimElephant);
-//       Const targetCard = testStore.getCard(liloGalacticHero);
-//       CardUnderTest.updateCardDamage(1);
-//
-//       TestStore.passTurn();
-//
-//       TestStore.changePlayer("player_two");
-//       TestStore.resolveOptionalAbility();
-//       TestStore.resolveTopOfStack({ targets: [targetCard] });
-//
-//       Expect(cardUnderTest.damage).toBe(0);
-//       Expect(targetCard.damage).toBe(1);
-//     });
-//   });
-// });
-//
-// Describe("Regression test", () => {
-//   It("Doesn't trigger effect when there's no card to move damage to", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Play: [madamMimElephant],
-//         Deck: 2,
-//       },
-//       {
-//         Deck: 2,
-//       },
-//     );
-//
-//     TestStore.passTurn();
-//     TestStore.passTurn();
-//
-//     Expect(testStore.stackLayers).toHaveLength(0);
-//   });
-//
-//   It("Doesn't trigger effect when there's no damage", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Play: [madamMimElephant],
-//         Deck: 2,
-//       },
-//       {
-//         Deck: 2,
-//         Play: [liloGalacticHero],
-//       },
-//     );
-//
-//     TestStore.passTurn();
-//     TestStore.passTurn();
-//
-//     Expect(testStore.stackLayers).toHaveLength(0);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { createMockCharacter, LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { madamMimElephant } from "./044-madam-mim-elephant";
+import { goofyKnightForADay } from "../../002";
+
+const allyCharacter = createMockCharacter({
+  id: "mim-elephant-ally",
+  name: "Ally Character",
+  cost: 2,
+});
+
+describe("Madam Mim - Elephant", () => {
+  describe("A LITTLE GAME - When you play this character, banish her or return another chosen character of yours to your hand.", () => {
+    it("choosing to banish her sends her to discard", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: madamMimElephant.cost,
+        hand: [madamMimElephant],
+        play: [allyCharacter],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(madamMimElephant)).toBeSuccessfulCommand();
+
+      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 0 });
+
+      expect(testEngine.asPlayerOne().getCardZone(madamMimElephant)).toBe("discard");
+      expect(testEngine.asPlayerOne().getCardZone(allyCharacter)).toBe("play");
+    });
+
+    it("choosing to return another character sends it to hand and keeps Mim in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: madamMimElephant.cost,
+        hand: [madamMimElephant],
+        play: [allyCharacter],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(madamMimElephant)).toBeSuccessfulCommand();
+
+      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1, targets: [allyCharacter] });
+
+      expect(testEngine.asPlayerOne().getCardZone(allyCharacter)).toBe("hand");
+      expect(testEngine.asPlayerOne().getCardZone(madamMimElephant)).toBe("play");
+    });
+  });
+
+  describe("SNEAKY MOVE - At the start of your turn, you may move up to 2 damage counters from this character to chosen opposing character.", () => {
+    it("moves 1 damage counter from Madam Mim to opposing character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [goofyKnightForADay],
+        },
+        {
+          play: [{ card: madamMimElephant, damage: 1 }],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getBagCount()).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerTwo().resolveNextBag({
+          resolveOptional: true,
+          targets: [goofyKnightForADay],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getDamage(madamMimElephant)).toBe(0);
+      expect(testEngine.asPlayerOne().getDamage(goofyKnightForADay)).toBe(1);
+    });
+
+    it("moves up to 2 damage counters from Madam Mim to opposing character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [goofyKnightForADay],
+        },
+        {
+          play: [{ card: madamMimElephant, damage: 3 }],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getBagCount()).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerTwo().resolveNextBag({
+          resolveOptional: true,
+          targets: [goofyKnightForADay],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getDamage(madamMimElephant)).toBe(1);
+      expect(testEngine.asPlayerOne().getDamage(goofyKnightForADay)).toBe(2);
+    });
+
+    it("can decline the optional ability", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [goofyKnightForADay],
+        },
+        {
+          play: [{ card: madamMimElephant, damage: 2 }],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getBagCount()).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerTwo().resolveNextBag({
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getDamage(madamMimElephant)).toBe(2);
+      expect(testEngine.asPlayerOne().getDamage(goofyKnightForADay)).toBe(0);
+    });
+
+    it("does not trigger when there is no damage on Madam Mim", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [goofyKnightForADay],
+        },
+        {
+          play: [madamMimElephant],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getBagCount()).toBeGreaterThan(0);
+      expect(testEngine.asPlayerTwo().resolveNextBag()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getDamage(madamMimElephant)).toBe(0);
+      expect(testEngine.asPlayerOne().getDamage(goofyKnightForADay)).toBe(0);
+    });
+
+    it("does not trigger when there is no opposing character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {},
+        {
+          play: [{ card: madamMimElephant, damage: 2 }],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+
+      expect(testEngine.asPlayerTwo().getDamage(madamMimElephant)).toBe(2);
+    });
+  });
+});

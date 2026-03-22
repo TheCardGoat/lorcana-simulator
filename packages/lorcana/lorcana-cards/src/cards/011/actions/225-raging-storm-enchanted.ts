@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { ragingStormEnchantedI18n } from "./225-raging-storm-enchanted.i18n";
 
 export const ragingStormEnchanted: ActionCard = {
   id: "BIk",
@@ -6,24 +7,6 @@ export const ragingStormEnchanted: ActionCard = {
   reprints: ["set11-028"],
   cardType: "action",
   name: "Raging Storm",
-  i18n: {
-    en: {
-      name: "Raging Storm",
-      text: "Banish all characters.",
-    },
-    de: {
-      name: "Wütender Sturm",
-      text: "Verbanne alle Charaktere.",
-    },
-    fr: {
-      name: "Tempête violente",
-      text: "Bannissez tous les personnages.",
-    },
-    it: {
-      name: "Bufera Furiosa",
-      text: "Esilia tutti i personaggi.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "011",
@@ -47,4 +30,5 @@ export const ragingStormEnchanted: ActionCard = {
       },
     },
   ],
+  i18n: ragingStormEnchantedI18n,
 };

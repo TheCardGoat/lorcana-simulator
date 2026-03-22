@@ -7,8 +7,9 @@ import type {
   EnginePendingEffectProjection,
   EngineProjectionSnapshot,
 } from "./contracts";
+import type { LorcanaG } from "../../types/runtime-state";
 
-type ProjectableState<G> = MatchState<G> | FilteredMatchView<G>;
+type ProjectableState = MatchState | FilteredMatchView;
 type ProjectionCardMeta = Record<string, unknown>;
 type ProjectionCardMetaStore = Record<string, ProjectionCardMeta>;
 type ProjectionCardIndexEntry = {
@@ -35,22 +36,17 @@ type ProjectionPrivateZones = {
   cardIndex: Record<string, ProjectionCardIndexEntry>;
   cardMeta: ProjectionCardMetaStore;
 };
-type ProjectionGameShape<
-  TContinuousEffect = unknown,
-  TActiveEffect = unknown,
-  TPendingEffect = unknown,
-  TPendingCostReduction = unknown,
-> = {
-  continuousEffects?: { instances?: readonly TContinuousEffect[] };
-  activeEffects?: readonly TActiveEffect[];
-  pendingEffects?: readonly TPendingEffect[];
+type ProjectionGameShape = {
+  continuousEffects?: { instances?: readonly unknown[] };
+  activeEffects?: readonly unknown[];
+  pendingEffects?: readonly unknown[];
   turnMetadata?: {
-    pendingCostReductionsByPlayer?: Partial<Record<string, readonly TPendingCostReduction[]>>;
+    pendingCostReductionsByPlayer?: Partial<Record<string, readonly unknown[]>>;
   };
 };
-type ProjectionStackStorage<TStackItem> = {
+type ProjectionStackStorage = {
   _stackStorage?: {
-    items: readonly TStackItem[];
+    items: readonly unknown[];
   };
 };
 type EffectDescriptor = {
@@ -60,7 +56,7 @@ type EffectDescriptor = {
   sourceId?: string;
   sourceCardId?: string;
 };
-type PendingChoicePayload = NonNullable<MatchState<unknown>["ctx"]["priority"]["pendingChoice"]>;
+type PendingChoicePayload = NonNullable<MatchState["ctx"]["priority"]["pendingChoice"]>;
 
 const EMPTY_PRIVATE_ZONES: ProjectionPrivateZones = {
   zoneCards: {},
@@ -101,7 +97,7 @@ function toZoneConfig(zoneId: string, zoneDef?: ProjectionZoneDefs[string]): Zon
   };
 }
 
-function getStateZones<G>(state: ProjectableState<G>): {
+function getStateZones(state: ProjectableState): {
   zoneDefs: ProjectionZoneDefs;
   zoneSummaries: ProjectionZoneSummaries;
   zoneCards: ProjectionPrivateZones["zoneCards"];
@@ -123,8 +119,8 @@ function getStateZones<G>(state: ProjectableState<G>): {
   };
 }
 
-export function buildEngineBoardProjection<G>(
-  state: ProjectableState<G>,
+export function buildEngineBoardProjection(
+  state: ProjectableState,
   options?: { resolveDefinitionId?: (cardId: string) => string | undefined },
 ): EngineBoardProjection {
   const { zoneDefs, zoneSummaries, zoneCards, cardIndex, cardMeta } = getStateZones(state);
@@ -222,20 +218,10 @@ function effectTypeFromRecord(record: EffectDescriptor | undefined, fallback: st
   return fallback;
 }
 
-export function extractActiveEffects<
-  G,
-  TContinuousEffect = G extends {
-    continuousEffects?: { instances?: readonly (infer TInferredContinuousEffect)[] };
-  }
-    ? TInferredContinuousEffect
-    : never,
-  TActiveEffect = G extends { activeEffects?: readonly (infer TInferredActiveEffect)[] }
-    ? TInferredActiveEffect
-    : never,
->(state: ProjectableState<G>): EngineActiveEffectProjection<TContinuousEffect | TActiveEffect>[] {
-  const game = state.G as G & ProjectionGameShape<TContinuousEffect, TActiveEffect>;
+export function extractActiveEffects(state: ProjectableState): EngineActiveEffectProjection[] {
+  const game = state.G as LorcanaG & ProjectionGameShape;
 
-  const effects: EngineActiveEffectProjection<TContinuousEffect | TActiveEffect>[] = [];
+  const effects: EngineActiveEffectProjection[] = [];
   const continuousInstances = game.continuousEffects?.instances ?? [];
 
   for (let index = 0; index < continuousInstances.length; index++) {
@@ -264,29 +250,8 @@ export function extractActiveEffects<
   return effects;
 }
 
-export function extractPendingEffects<
-  G,
-  TStackItem = unknown,
-  TPendingEffect = G extends { pendingEffects?: readonly (infer TInferredPendingEffect)[] }
-    ? TInferredPendingEffect
-    : never,
-  TPendingCostReduction = G extends {
-    turnMetadata?: {
-      pendingCostReductionsByPlayer?: Partial<
-        Record<string, readonly (infer TInferredPendingCostReduction)[]>
-      >;
-    };
-  }
-    ? TInferredPendingCostReduction
-    : never,
->(
-  state: ProjectableState<G>,
-): EnginePendingEffectProjection<
-  PendingChoicePayload | TStackItem | TPendingEffect | TPendingCostReduction
->[] {
-  const pendingEffects: EnginePendingEffectProjection<
-    PendingChoicePayload | TStackItem | TPendingEffect | TPendingCostReduction
-  >[] = [];
+export function extractPendingEffects(state: ProjectableState): EnginePendingEffectProjection[] {
+  const pendingEffects: EnginePendingEffectProjection[] = [];
 
   const pendingChoice = state.ctx.priority.pendingChoice;
   if (pendingChoice) {
@@ -299,7 +264,7 @@ export function extractPendingEffects<
     });
   }
 
-  const ctx = state.ctx as typeof state.ctx & ProjectionStackStorage<TStackItem>;
+  const ctx = state.ctx as typeof state.ctx & ProjectionStackStorage;
   const stackItems = ctx._stackStorage?.items ?? [];
   for (let index = 0; index < stackItems.length; index++) {
     const item = stackItems[index];
@@ -313,8 +278,7 @@ export function extractPendingEffects<
     });
   }
 
-  const game = state.G as G &
-    ProjectionGameShape<never, never, TPendingEffect, TPendingCostReduction>;
+  const game = state.G as LorcanaG & ProjectionGameShape;
   const gamePendingEffects = game.pendingEffects ?? [];
   for (let index = 0; index < gamePendingEffects.length; index++) {
     const effect = gamePendingEffects[index];
@@ -341,7 +305,7 @@ export function extractPendingEffects<
           type: "cost-reduction",
           source: "game",
           sourceId: playerId,
-          payload: entry,
+          payload: entry as unknown,
         });
       }
     }
@@ -350,40 +314,11 @@ export function extractPendingEffects<
   return pendingEffects;
 }
 
-export function buildEngineProjectionSnapshot<
-  G,
-  TContinuousEffect = G extends {
-    continuousEffects?: { instances?: readonly (infer TInferredContinuousEffect)[] };
-  }
-    ? TInferredContinuousEffect
-    : never,
-  TActiveEffect = G extends { activeEffects?: readonly (infer TInferredActiveEffect)[] }
-    ? TInferredActiveEffect
-    : never,
-  TStackItem = unknown,
-  TPendingEffect = G extends { pendingEffects?: readonly (infer TInferredPendingEffect)[] }
-    ? TInferredPendingEffect
-    : never,
-  TPendingCostReduction = G extends {
-    turnMetadata?: {
-      pendingCostReductionsByPlayer?: Partial<
-        Record<string, readonly (infer TInferredPendingCostReduction)[]>
-      >;
-    };
-  }
-    ? TInferredPendingCostReduction
-    : never,
->(
-  state: ProjectableState<G>,
+export function buildEngineProjectionSnapshot(
+  state: ProjectableState,
   actorContext: EngineActorContext,
   options?: { resolveDefinitionId?: (cardId: string) => string | undefined },
-): EngineProjectionSnapshot<
-  EngineBoardProjection,
-  EngineActiveEffectProjection<TContinuousEffect | TActiveEffect>,
-  EnginePendingEffectProjection<
-    PendingChoicePayload | TStackItem | TPendingEffect | TPendingCostReduction
-  >
-> {
+): EngineProjectionSnapshot {
   return {
     stateID: state.ctx._stateID,
     actor: actorContext,

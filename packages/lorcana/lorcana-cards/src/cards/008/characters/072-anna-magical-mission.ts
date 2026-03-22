@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { annaMagicalMissionI18n } from "./072-anna-magical-mission.i18n";
 
 export const annaMagicalMission: CharacterCard = {
   id: "7E5",
@@ -7,40 +8,6 @@ export const annaMagicalMission: CharacterCard = {
   cardType: "character",
   name: "Anna",
   version: "Magical Mission",
-  i18n: {
-    en: {
-      name: "Anna",
-      version: "Magical Mission",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "Support",
-        },
-        {
-          title: "COORDINATED PLAN",
-          description:
-            "Whenever this character quests, if you have a character named Elsa in play, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Anna",
-      version: "Magische Mission",
-      text: "Gestaltwandel 4 Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) KOORDINIERTER PLAN Jedes Mal, wenn dieser Charakter erkundet, falls du einen Elsa-Charakter im Spiel hast, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Anna",
-      version: "En mission magique",
-      text: "Alter 4 Soutien PLAN COORDONNÉ Chaque fois que ce personnage est envoyé à l'aventure, si vous avez un personnage nommé Elsa en jeu, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Anna",
-      version: "In Missione Magica",
-      text: "Trasformazione 4 Aiutante PIANO COORDINATO Ogni volta che questo personaggio va all'avventura, se hai in gioco un personaggio chiamato Elsa, puoi pescare una carta.",
-    },
-  },
   inkType: ["amethyst", "sapphire"],
   franchise: "Frozen",
   set: "008",
@@ -89,13 +56,18 @@ export const annaMagicalMission: CharacterCard = {
       id: "1w2-3",
       effect: {
         condition: {
-          expression: "you have a character named Elsa in play",
-          type: "if",
+          type: "has-named-character",
+          name: "Elsa",
+          controller: "you",
         },
         then: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
+          chooser: "CONTROLLER",
+          effect: {
+            amount: 1,
+            target: "CONTROLLER",
+            type: "draw",
+          },
+          type: "optional",
         },
         type: "conditional",
       },
@@ -109,4 +81,5 @@ export const annaMagicalMission: CharacterCard = {
       text: "COORDINATED PLAN Whenever this character quests, if you have a character named Elsa in play, you may draw a card.",
     },
   ],
+  i18n: annaMagicalMissionI18n,
 };

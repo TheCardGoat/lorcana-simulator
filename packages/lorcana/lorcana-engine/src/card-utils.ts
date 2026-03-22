@@ -276,6 +276,78 @@ export function hasSameName(card1: LorcanaCardDefinition, card2: LorcanaCardDefi
   return card1.name === card2.name;
 }
 
+function normalizeCardName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function getExplicitNameAliases(card: LorcanaCardDefinition): string[] {
+  if (!card.abilities) {
+    return [];
+  }
+
+  const aliases: string[] = [];
+  for (const ability of card.abilities) {
+    if (
+      ability.type === "static" &&
+      ability.effect.type === "property-modification" &&
+      ability.effect.property === "name" &&
+      ability.effect.operation === "add-alias" &&
+      typeof ability.effect.value === "string"
+    ) {
+      const alias = ability.effect.value.trim();
+      if (alias.length > 0) {
+        aliases.push(alias);
+      }
+    }
+  }
+
+  return aliases;
+}
+
+/**
+ * Get every name this card should count as for gameplay text and targeting.
+ *
+ * This includes:
+ * - the printed name
+ * - explicit name aliases from static abilities
+ * - the two halves of ampersand names like "Flotsam & Jetsam"
+ */
+export function getCardNameVariants(card: LorcanaCardDefinition): string[] {
+  const variants = new Set<string>();
+  const printedName = card.name.trim();
+  if (printedName.length > 0) {
+    variants.add(printedName);
+  }
+
+  for (const alias of getExplicitNameAliases(card)) {
+    variants.add(alias);
+  }
+
+  const ampersandNames = getAmpersandNames(card);
+  if (ampersandNames) {
+    for (const part of ampersandNames) {
+      const variant = part.trim();
+      if (variant.length > 0) {
+        variants.add(variant);
+      }
+    }
+  }
+
+  return [...variants];
+}
+
+/**
+ * Check whether a card should be treated as having a specific name.
+ */
+export function cardHasName(card: LorcanaCardDefinition, name: string): boolean {
+  const normalizedName = normalizeCardName(name);
+  if (normalizedName.length === 0) {
+    return false;
+  }
+
+  return getCardNameVariants(card).some((variant) => normalizeCardName(variant) === normalizedName);
+}
+
 /**
  * Check if a card has a two-part name with ampersand (Rule 6.2.4.1)
  * e.g., "Flotsam & Jetsam"

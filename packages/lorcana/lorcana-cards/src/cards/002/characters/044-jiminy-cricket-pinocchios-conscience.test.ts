@@ -36,9 +36,6 @@ describe("Jiminy Cricket - Pinocchio's Conscience", () => {
     expect(
       testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
     ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
-    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
   });
@@ -53,9 +50,7 @@ describe("Jiminy Cricket - Pinocchio's Conscience", () => {
     expect(
       testEngine.asPlayerOne().playCard(jiminyCricketPinocchiosConscience),
     ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
   });
 });

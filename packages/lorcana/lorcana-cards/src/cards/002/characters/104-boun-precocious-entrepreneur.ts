@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { bounPrecociousEntrepreneurI18n } from "./104-boun-precocious-entrepreneur.i18n";
 
 export const bounPrecociousEntrepreneur: CharacterCard = {
   id: "POP",
@@ -7,24 +8,6 @@ export const bounPrecociousEntrepreneur: CharacterCard = {
   cardType: "character",
   name: "Boun",
   version: "Precocious Entrepreneur",
-  i18n: {
-    en: {
-      name: "Boun",
-      version: "Precocious Entrepreneur",
-    },
-    de: {
-      name: "Boun",
-      version: "Frühreifer Unternehmer",
-    },
-    fr: {
-      name: "Boun",
-      version: "Entrepreneur précoce",
-    },
-    it: {
-      name: "Boun",
-      version: "Precocious Entrepreneur",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "002",
@@ -41,4 +24,5 @@ export const bounPrecociousEntrepreneur: CharacterCard = {
     tcgPlayer: 527753,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: bounPrecociousEntrepreneurI18n,
 };

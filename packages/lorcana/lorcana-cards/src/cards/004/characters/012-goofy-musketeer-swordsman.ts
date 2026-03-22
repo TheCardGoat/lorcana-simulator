@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goofyMusketeerSwordsmanI18n } from "./012-goofy-musketeer-swordsman.i18n";
 
 export const goofyMusketeerSwordsman: CharacterCard = {
   id: "PI2",
@@ -7,52 +8,6 @@ export const goofyMusketeerSwordsman: CharacterCard = {
   cardType: "character",
   name: "Goofy",
   version: "Musketeer Swordsman",
-  i18n: {
-    en: {
-      name: "Goofy",
-      version: "Musketeer Swordsman",
-      text: [
-        {
-          title: "EN GAWRSH!",
-          description:
-            "Whenever you play a character with Bodyguard, ready this character. He can't quest for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Goofy",
-      version: "Musketier-Schwertkämpfer",
-      text: [
-        {
-          title: "EN GAWRSH!",
-          description:
-            "Jedes Mal, wenn du einen Charakter mit Beschützen ausspielst, mache diesen Charakter bereit. Er kann in diesem Zug nicht mehr erkunden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Dingo",
-      version: "Mousquetaire épéiste",
-      text: [
-        {
-          title: "EN GARDE, HYUCK!",
-          description:
-            "Chaque fois que vous jouez un personnage avec Rempart, redressez ce personnage-ci. Il ne peut pas être envoyé à l'aventure pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Pippo",
-      version: "Spadaccino Moschettiere",
-      text: [
-        {
-          title: "IN GWHARDIA!",
-          description:
-            "Ogni volta che giochi un personaggio con Guardiano, prepara questo personaggio. Non può andare all'avventura per il resto di questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   set: "004",
   cardNumber: 12,
@@ -79,9 +34,14 @@ export const goofyMusketeerSwordsman: CharacterCard = {
       effect: {
         steps: [
           {
-            cardType: "character",
-            from: "hand",
-            type: "play-card",
+            target: {
+              selector: "self",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+            type: "ready",
           },
           {
             duration: "this-turn",
@@ -100,10 +60,17 @@ export const goofyMusketeerSwordsman: CharacterCard = {
         on: {
           cardType: "character",
           controller: "you",
+          filters: [
+            {
+              type: "has-keyword",
+              keyword: "Bodyguard",
+            },
+          ],
         },
         timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: goofyMusketeerSwordsmanI18n,
 };

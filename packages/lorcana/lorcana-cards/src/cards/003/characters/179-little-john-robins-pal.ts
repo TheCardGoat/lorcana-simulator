@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { littleJohnRobinsPalI18n } from "./179-little-john-robins-pal.i18n";
 
 export const littleJohnRobinsPal: CharacterCard = {
   id: "9Mk",
@@ -7,43 +8,6 @@ export const littleJohnRobinsPal: CharacterCard = {
   cardType: "character",
   name: "Little John",
   version: "Robin's Pal",
-  i18n: {
-    en: {
-      name: "Little John",
-      version: "Robin's Pal",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "DISGUISED",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Little John",
-      version: "Robins Kumpel",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) VERKLEIDET In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-    },
-    fr: {
-      name: "Petit Jean",
-      version: "Compagnon de Robin",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il vous défie, un personnage adverse doit, si possible, choisir l'un de vos personnages avec Rempart.) DÉGUISÉ Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier les personnages avec Insaisissable.)",
-        },
-      ],
-    },
-    it: {
-      name: "Little John",
-      version: "Compare di Robin",
-      text: "Guardiano CAMUFFATO Durante il tuo turno, questo personaggio ottiene Sfuggente. (Può sfidare altri personaggi con Sfuggente.)",
-    },
-  },
   inkType: ["steel"],
   franchise: "Robin Hood",
   set: "003",
@@ -69,7 +33,6 @@ export const littleJohnRobinsPal: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       id: "1ta-1",
@@ -92,4 +55,5 @@ export const littleJohnRobinsPal: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: littleJohnRobinsPalI18n,
 };

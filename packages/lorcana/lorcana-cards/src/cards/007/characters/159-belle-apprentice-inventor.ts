@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { belleApprenticeInventorI18n } from "./159-belle-apprentice-inventor.i18n";
 
 export const belleApprenticeInventor: CharacterCard = {
   id: "hVz",
@@ -7,52 +8,6 @@ export const belleApprenticeInventor: CharacterCard = {
   cardType: "character",
   name: "Belle",
   version: "Apprentice Inventor",
-  i18n: {
-    en: {
-      name: "Belle",
-      version: "Apprentice Inventor",
-      text: [
-        {
-          title: "WHAT A MESS",
-          description:
-            "During your turn, you may banish chosen item of yours to play this character for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Belle",
-      version: "Apprentice Inventor",
-      text: [
-        {
-          title: "WHAT A MESS",
-          description:
-            "During your turn, you may banish chosen item of yours to play this character for free.",
-        },
-      ],
-    },
-    fr: {
-      name: "Belle",
-      version: "Apprentice Inventor",
-      text: [
-        {
-          title: "WHAT A MESS",
-          description:
-            "During your turn, you may banish chosen item of yours to play this character for free.",
-        },
-      ],
-    },
-    it: {
-      name: "Belle",
-      version: "Apprentice Inventor",
-      text: [
-        {
-          title: "WHAT A MESS",
-          description:
-            "During your turn, you may banish chosen item of yours to play this character for free.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "007",
@@ -69,9 +24,9 @@ export const belleApprenticeInventor: CharacterCard = {
   },
   text: [
     {
-      title: "WHAT A MESS",
+      title: "WHAT",
       description:
-        "During your turn, you may banish chosen item of yours to play this character for free.",
+        "A MESS During your turn, you may banish chosen item of yours to play this character for free.",
     },
   ],
   classifications: ["Storyborn", "Hero", "Princess", "Inventor"],
@@ -83,7 +38,7 @@ export const belleApprenticeInventor: CharacterCard = {
           target: {
             selector: "chosen",
             count: 1,
-            owner: "any",
+            owner: "you",
             zones: ["play"],
             cardTypes: ["item"],
           },
@@ -91,9 +46,12 @@ export const belleApprenticeInventor: CharacterCard = {
         },
         type: "optional",
       },
+      alternativeCost: "sacrifice-item",
       id: "sb6-1",
+      name: "WHAT A MESS",
       text: "WHAT A MESS During your turn, you may banish chosen item of yours to play this character for free.",
       type: "action",
     },
   ],
+  i18n: belleApprenticeInventorI18n,
 };

@@ -1,116 +1,98 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   DonaldGhostHunter,
-//   TheTwinsLostBoys,
-// } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { zootopiaPoliceHeadquarters } from "@lorcanito/lorcana-engine/cards/010/locations/203-zootopia-police-headquarters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("The Twins - Lost Boys", () => {
-//   Describe("TWO FOR ONE", () => {
-//     It("should deal 2 damage when you have a location in play", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: theTwinsLostBoys.cost,
-//           Hand: [theTwinsLostBoys],
-//           Play: [zootopiaPoliceHeadquarters],
-//         },
-//         {
-//           Play: [donaldGhostHunter],
-//         },
-//       );
-//
-//       Const targetCharacter = testEngine.getByZoneAndId(
-//         "play",
-//         DonaldGhostHunter.id,
-//         "player_two",
-//       );
-//       Const initialDamage = targetCharacter.damage;
-//
-//       Await testEngine.playCard(theTwinsLostBoys);
-//       Await testEngine.acceptOptionalLayer();
-//       Await testEngine.resolveTopOfStack({ targets: [targetCharacter] });
-//
-//       Expect(targetCharacter.damage).toBe(initialDamage + 2);
-//     });
-//
-//     It("should not trigger when you don't have a location in play", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: theTwinsLostBoys.cost,
-//           Hand: [theTwinsLostBoys],
-//         },
-//         {
-//           Play: [donaldGhostHunter],
-//         },
-//       );
-//
-//       Await testEngine.playCard(theTwinsLostBoys);
-//
-//       // Since no location is in play, no optional layer should be added
-//       Expect(testEngine.store.stackLayerStore.layers.length).toBe(0);
-//     });
-//
-//     It("should be optional", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: theTwinsLostBoys.cost,
-//           Hand: [theTwinsLostBoys],
-//           Play: [zootopiaPoliceHeadquarters],
-//         },
-//         {
-//           Play: [donaldGhostHunter],
-//         },
-//       );
-//
-//       Const targetCharacter = testEngine.getByZoneAndId(
-//         "play",
-//         DonaldGhostHunter.id,
-//         "player_two",
-//       );
-//       Const initialDamage = targetCharacter.damage;
-//
-//       Await testEngine.playCard(theTwinsLostBoys);
-//       Await testEngine.skipTopOfStack();
-//
-//       Expect(targetCharacter.damage).toBe(initialDamage);
-//     });
-//   });
-//
-//   Describe("Stats and basic properties", () => {
-//     It("should have correct stats", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [theTwinsLostBoys],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(theTwinsLostBoys);
-//
-//       Expect(cardUnderTest.strength).toBe(5);
-//       Expect(cardUnderTest.willpower).toBe(5);
-//       Expect(cardUnderTest.lore).toBe(2);
-//       Expect(cardUnderTest.cost).toBe(6);
-//     });
-//
-//     It("should be inkwell card", () => {
-//       Expect(theTwinsLostBoys.inkwell).toBe(true);
-//     });
-//
-//     It("should have correct characteristics", () => {
-//       Expect(theTwinsLostBoys.characteristics).toEqual(["storyborn", "ally"]);
-//     });
-//
-//     It("should be steel color", () => {
-//       Expect(theTwinsLostBoys.colors).toEqual(["steel"]);
-//     });
-//
-//     It("should be super rare rarity", () => {
-//       Expect(theTwinsLostBoys.rarity).toBe("super_rare");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  createMockLocation,
+} from "@tcg/lorcana-engine/testing";
+import { theTwinsLostBoys } from "./186-the-twins-lost-boys";
+
+const targetCharacter = createMockCharacter({
+  id: "twins-test-target",
+  name: "Target Character",
+  cost: 2,
+  strength: 3,
+  willpower: 5,
+  lore: 1,
+});
+
+const testLocation = createMockLocation({
+  id: "twins-test-location",
+  name: "Test Location",
+  cost: 2,
+  moveCost: 1,
+  willpower: 6,
+  lore: 1,
+});
+
+describe("The Twins - Lost Boys", () => {
+  describe("TWO FOR ONE - When you play this character, if you have a location in play, you may deal 2 damage to chosen character.", () => {
+    it("should deal 2 damage to chosen character when a location is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: theTwinsLostBoys.cost,
+          hand: [theTwinsLostBoys],
+          play: [testLocation],
+        },
+        {
+          play: [targetCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(theTwinsLostBoys)).toBeSuccessfulCommand();
+
+      // Ability is optional and should appear in the bag
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+          targets: [targetCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(2);
+    });
+
+    it("should not trigger when no location is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: theTwinsLostBoys.cost,
+          hand: [theTwinsLostBoys],
+        },
+        {
+          play: [targetCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(theTwinsLostBoys)).toBeSuccessfulCommand();
+
+      // No location in play, so no optional layer should be added
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(0);
+    });
+
+    it("should be optional - can be declined", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: theTwinsLostBoys.cost,
+          hand: [theTwinsLostBoys],
+          play: [testLocation],
+        },
+        {
+          play: [targetCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(theTwinsLostBoys)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      // Decline the optional ability
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(0);
+    });
+  });
+});

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { abuBoldHelmsmanI18n } from "./114-abu-bold-helmsman.i18n";
 
 export const abuBoldHelmsman: CharacterCard = {
   id: "t59",
@@ -7,33 +8,6 @@ export const abuBoldHelmsman: CharacterCard = {
   cardType: "character",
   name: "Abu",
   version: "Bold Helmsman",
-  i18n: {
-    en: {
-      name: "Abu",
-      version: "Bold Helmsman",
-      text: "Rush",
-    },
-    de: {
-      name: "Abu",
-      version: "Mutiger Steuermann",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Abu",
-      version: "Timonier intrépide",
-      text: "Charge",
-    },
-    it: {
-      name: "Abu",
-      version: "Timoniere Audace",
-      text: [
-        {
-          title: "Lesto",
-          description: "(Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aladdin",
   set: "006",
@@ -58,4 +32,5 @@ export const abuBoldHelmsman: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: abuBoldHelmsmanI18n,
 };

@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { ursulasGardenFullOfTheUnfortunateI18n } from "./102-ursulas-garden-full-of-the-unfortunate.i18n";
 
 export const ursulasGardenFullOfTheUnfortunate: LocationCard = {
   id: "S3h",
@@ -7,51 +8,6 @@ export const ursulasGardenFullOfTheUnfortunate: LocationCard = {
   cardType: "location",
   name: "Ursula’s Garden",
   version: "Full of the Unfortunate",
-  i18n: {
-    en: {
-      name: "Ursula’s Garden",
-      version: "Full of the Unfortunate",
-      text: [
-        {
-          title: "ABANDON HOPE",
-          description: "While you have an exerted character here, opposing characters get -1 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Ursulas Garten",
-      version: "Voll von Seelen in Not",
-      text: [
-        {
-          title: "DIE HOFFNUNG VERLIEREN",
-          description:
-            "Solange du mindestens einen erschöpften Charakter an diesem Ort hast, erhalten gegnerische Charaktere -1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Jardin d'Ursula",
-      version: "Rempli d'âmes en perdition",
-      text: [
-        {
-          title: "ESPOIR PERDU",
-          description:
-            "Tant que vous avez au moins un personnage épuisé sur ce lieu, les personnages adverses subissent -1.",
-        },
-      ],
-    },
-    it: {
-      name: "Il Giardino di Ursula",
-      version: "Pieno di Anime Sole",
-      text: [
-        {
-          title: "ABBANDONARE OGNI SPERANZA",
-          description:
-            "Mentre hai un personaggio impegnato in questo luogo, i personaggi avversari ricevono -1.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Little Mermaid",
   set: "004",
@@ -112,4 +68,5 @@ export const ursulasGardenFullOfTheUnfortunate: LocationCard = {
       type: "static",
     },
   ],
+  i18n: ursulasGardenFullOfTheUnfortunateI18n,
 };

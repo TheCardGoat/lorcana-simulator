@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { moanaCuriousExplorerIconicI18n } from "./242-moana-curious-explorer-iconic.i18n";
 
 export const moanaCuriousExplorerIconic: CharacterCard = {
   id: "uQE",
@@ -7,48 +8,6 @@ export const moanaCuriousExplorerIconic: CharacterCard = {
   cardType: "character",
   name: "Moana",
   version: "Curious Explorer",
-  i18n: {
-    en: {
-      name: "Moana",
-      version: "Curious Explorer",
-      text: [
-        {
-          title: "ANCESTRAL LEGACY",
-          description: "You can ink cards from your discard.",
-        },
-      ],
-    },
-    de: {
-      name: "Vaiana",
-      version: "Neugierige Entdeckerin",
-      text: [
-        {
-          title: "DAS ERBE DER AHNEN",
-          description: "Du kannst Karten aus deinem Ablagestapel tinten.",
-        },
-      ],
-    },
-    fr: {
-      name: "Vaiana",
-      version: "Exploratrice curieuse",
-      text: [
-        {
-          title: "HÉRITAGE ANCESTRAL",
-          description: "Vous pouvez encrer les cartes depuis votre défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Vaiana",
-      version: "Esploratrice Curiosa",
-      text: [
-        {
-          title: "EREDITÀ ANCESTRALE",
-          description: "Puoi inchiostrare carte dai tuoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Moana",
   set: "011",
@@ -71,5 +30,16 @@ export const moanaCuriousExplorerIconic: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
-  abilities: [],
+  abilities: [
+    {
+      id: "moana-ce-1",
+      name: "ANCESTRAL LEGACY",
+      text: "ANCESTRAL LEGACY You can ink cards from your discard.",
+      type: "static",
+      effect: {
+        type: "grant-discard-inkability",
+      },
+    },
+  ],
+  i18n: moanaCuriousExplorerIconicI18n,
 };

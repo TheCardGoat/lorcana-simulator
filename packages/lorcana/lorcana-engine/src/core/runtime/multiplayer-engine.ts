@@ -10,6 +10,7 @@ import type { MatchRuntime, MoveDefinition, MatchRuntimeConfig, SetupArgs } from
 import type { MatchState, CommandEnvelope, MoveInput } from "./types";
 import { createPlayerId, type PlayerId } from "../types";
 import { filterMatchView } from "./view-filter";
+import type { LorcanaG } from "../../types/runtime-state";
 
 // =============================================================================
 // Types
@@ -48,29 +49,23 @@ export interface MultiplayerEngineOptions {
   seed?: string;
 }
 
-export interface MultiplayerGameDefinition<G, Moves extends Record<string, unknown>> {
-  setup: (args: { players: EnginePlayer[] }) => G;
-  moves: Record<string, MoveDefinition<G, any, any>>;
+export interface MultiplayerGameDefinition {
+  setup: (args: { players: EnginePlayer[] }) => LorcanaG;
+  moves: Record<string, MoveDefinition<any, any>>;
 }
 
 // =============================================================================
 // MultiplayerEngine Class
 // =============================================================================
 
-export class MultiplayerEngine<
-  G = unknown,
-  Moves extends Record<string, MoveDefinition<G, any, any>> = Record<
-    string,
-    MoveDefinition<G, any, any>
-  >,
-> {
-  private runtime: MatchRuntime<G, Moves>;
+export class MultiplayerEngine {
+  private runtime: MatchRuntime;
   private history: EngineHistoryEntry[] = [];
   private options: MultiplayerEngineOptions;
-  private moveDefinitions: Record<string, MoveDefinition<G, any, any>>;
+  private moveDefinitions: Record<string, MoveDefinition<any, any>>;
 
   constructor(
-    definition: MultiplayerGameDefinition<G, Moves>,
+    definition: MultiplayerGameDefinition,
     players: EnginePlayer[],
     options: MultiplayerEngineOptions,
   ) {
@@ -78,13 +73,13 @@ export class MultiplayerEngine<
     this.moveDefinitions = definition.moves;
 
     // Build runtime config from simplified definition
-    const config: MatchRuntimeConfig<G, Moves> = {
+    const config: MatchRuntimeConfig = {
       name: "multiplayer-game",
       setup: (args: SetupArgs) =>
         definition.setup({
           players: args.players.map((p) => ({ id: p.id }) as unknown as EnginePlayer),
         }),
-      moves: definition.moves as Moves,
+      moves: definition.moves,
       flow: {
         gameSegments: {
           main: {
@@ -105,7 +100,7 @@ export class MultiplayerEngine<
       playerView: filterMatchView,
       projectBoard: (state, roleCtx, _staticResources, _projectionCtx) =>
         filterMatchView(state, roleCtx),
-      deriveRuntimeCard: () => ({}),
+      deriveRuntimeCard: () => ({}) as never,
     };
 
     // Create runtime with initial state - convert EnginePlayer to Player format
@@ -121,7 +116,7 @@ export class MultiplayerEngine<
   /**
    * Get the current game state
    */
-  getState(): G {
+  getState(): LorcanaG {
     const state = this.runtime.getState();
     return state.G;
   }
@@ -129,7 +124,7 @@ export class MultiplayerEngine<
   /**
    * Get the full match state (including ctx)
    */
-  getMatchState(): MatchState<G> {
+  getMatchState(): MatchState {
     return this.runtime.getState();
   }
 
@@ -143,7 +138,7 @@ export class MultiplayerEngine<
   /**
    * Get player-specific view of the state (hides private info)
    */
-  getPlayerView(playerId: string): G {
+  getPlayerView(playerId: string): LorcanaG {
     const filteredView = this.runtime.getFilteredView({
       role: "player",
       playerID: playerId,
@@ -224,7 +219,7 @@ export class MultiplayerEngine<
    * Load state (for deserialization)
    */
   loadState(state: unknown): void {
-    this.runtime.loadState(state as MatchState<G>);
+    this.runtime.loadState(state as MatchState);
     // Reset history on load - we're starting from a known state
     this.history = [];
   }

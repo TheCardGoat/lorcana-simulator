@@ -81,21 +81,18 @@ function createTestContext(args?: {
         state: {
           playerIds: [PLAYER_ONE, PLAYER_TWO],
           currentPlayer: PLAYER_ONE,
-          ctx: {
-            priority: {
-              holder: PLAYER_ONE,
-            },
-            zones: {
-              private: {
-                cardIndex,
-              },
-            },
+          priority: {
+            holder: PLAYER_ONE,
+          },
+          _zonesPrivate: {
+            cardIndex,
           },
         },
         zones: {
           getCards: ({ zone, playerId }: { zone: string; playerId: PlayerId }) => [
             ...(zoneCards[`${zone}:${playerId}`] ?? []),
           ],
+          getCardOwner: (cardId: string) => cardIndex[cardId]?.ownerID,
           moveCard,
         },
       },
@@ -276,5 +273,57 @@ describe("discard-effect", () => {
     ]);
     expect(state.zoneCards[`discard:${PLAYER_TWO}`]).toBeUndefined();
     expect(state.zoneCards[`hand:${PLAYER_TWO}`]).toEqual([firstCard, secondCard]);
+  });
+
+  it("resolves CARD_OWNER random discard via eventSnapshot.chosenCardId when selectedTargets is empty", () => {
+    // Reproduces the Yzma "BACK TO WORK" gap:
+    // Step 1: return-to-hand writes resolvedTargets[0] into eventSnapshot.chosenCardId.
+    // Step 2: discard with target: "CARD_OWNER" — selectedTargets is empty because no card was
+    //         passed as an explicit selection target (the card was resolved from the event snapshot
+    //         ref, not from currentTargets). The discard must fall back to chosenCardId to find the owner.
+    const source = "source" as CardInstanceId;
+    const returnedCard = "returned-card" as CardInstanceId;
+    const ownedHandCard = "owned-hand-card" as CardInstanceId;
+    const { ctx, state } = createTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "character" },
+        [returnedCard]: { id: "returned-card", cardType: "character" },
+        [ownedHandCard]: { id: "owned-hand-card", cardType: "character" },
+      },
+      zoneCards: {
+        // returnedCard has already been moved to hand by the prior step
+        [`hand:${PLAYER_TWO}`]: [returnedCard, ownedHandCard],
+      },
+    });
+
+    resolveDiscardEffect(
+      ctx,
+      {
+        cardId: source,
+        cardType: "character",
+        costType: "standard",
+        playerId: PLAYER_ONE,
+      },
+      {
+        type: "discard",
+        amount: 1,
+        random: true,
+        target: "CARD_OWNER",
+      },
+      // No explicit targets — simulates the second step of a sequence where step 1 used ref: "trigger-source"
+      {
+        eventSnapshot: {
+          // Written by return-to-hand after resolving the trigger-source ref
+          chosenCardId: returnedCard,
+        },
+      },
+      {},
+    );
+
+    // One of the two hand cards should have been discarded (owner is PLAYER_TWO)
+    const discarded = state.zoneCards[`discard:${PLAYER_TWO}`] ?? [];
+    expect(discarded).toHaveLength(1);
+    const remaining = state.zoneCards[`hand:${PLAYER_TWO}`] ?? [];
+    expect(remaining).toHaveLength(1);
   });
 });

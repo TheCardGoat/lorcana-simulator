@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { slushyGlacialGusterI18n } from "./119-slushy-glacial-guster.i18n";
 
 export const slushyGlacialGuster: CharacterCard = {
   id: "34k",
@@ -7,28 +8,6 @@ export const slushyGlacialGuster: CharacterCard = {
   cardType: "character",
   name: "Slushy",
   version: "Glacial Guster",
-  i18n: {
-    en: {
-      name: "Slushy",
-      version: "Glacial Guster",
-      text: "Evasive",
-    },
-    de: {
-      name: "Frostie",
-      version: "Eisspeier",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Blizzard",
-      version: "Souffleur de bourrasque glaciale",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Ghiaccio",
-      version: "Soffiatore Glaciale",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lilo and Stitch",
   set: "011",
@@ -53,4 +32,5 @@ export const slushyGlacialGuster: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: slushyGlacialGusterI18n,
 };

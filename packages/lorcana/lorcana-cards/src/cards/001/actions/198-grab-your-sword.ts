@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { grabYourSwordI18n } from "./198-grab-your-sword.i18n";
 
 export const grabYourSword: ActionCard = {
   id: "Sc6",
@@ -6,24 +7,6 @@ export const grabYourSword: ActionCard = {
   reprints: ["set1-198"],
   cardType: "action",
   name: "Grab Your Sword",
-  i18n: {
-    en: {
-      name: "Grab Your Sword",
-      text: "Deal 2 damage to each opposing character.",
-    },
-    de: {
-      name: "Nehmt das Schwert",
-      text: "Füge jedem gegnerischen Charakter 2 Schaden zu.",
-    },
-    fr: {
-      name: "TUONS LA BÊTE !",
-      text: "Infligez 2 dommages à chaque personnage adverse.",
-    },
-    it: {
-      name: "Grab Your Sword",
-      text: "Deal 2 damage to each opposing character.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Beauty and the Beast",
   set: "001",
@@ -47,4 +30,5 @@ export const grabYourSword: ActionCard = {
       },
     },
   ],
+  i18n: grabYourSwordI18n,
 };

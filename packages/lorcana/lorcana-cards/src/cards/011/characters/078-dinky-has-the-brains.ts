@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { dinkyHasTheBrainsI18n } from "./078-dinky-has-the-brains.i18n";
 
 export const dinkyHasTheBrains: CharacterCard = {
   id: "m5J",
@@ -7,52 +8,6 @@ export const dinkyHasTheBrains: CharacterCard = {
   cardType: "character",
   name: "Dinky",
   version: "Has the Brains",
-  i18n: {
-    en: {
-      name: "Dinky",
-      version: "Has the Brains",
-      text: [
-        {
-          title: "GET HIM!",
-          description:
-            "When you play this character, each opponent chooses one of their characters and deals 1 damage to them.",
-        },
-      ],
-    },
-    de: {
-      name: "Dinky",
-      version: "Der mit dem Verstand",
-      text: [
-        {
-          title: "SCHNAPP IHN!",
-          description:
-            "Wenn du diesen Charakter ausspielst, wählen alle gegnerischen Mitspielenden je einen ihrer Charaktere und fügen diesem 1 Schaden zu.",
-        },
-      ],
-    },
-    fr: {
-      name: "Dinky",
-      version: "A le cerveau",
-      text: [
-        {
-          title: "ATTRAPE-LE!",
-          description:
-            "Lorsque vous jouez ce personnage, chaque adversaire choisit l'un de ses personnages et lui inflige 1 dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Cippi",
-      version: "Quello con il Cervello",
-      text: [
-        {
-          title: "PRENDILO!",
-          description:
-            "Quando giochi questo personaggio, ogni avversario sceglie uno dei suoi personaggi e gli infligge 1 danno.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Fox and the Hound",
   set: "011",
@@ -78,18 +33,27 @@ export const dinkyHasTheBrains: CharacterCard = {
   abilities: [
     {
       id: "lv7-1",
-      effect: {
-        from: "hand",
-        type: "play-card",
-      },
       name: "GET HIM!",
+      type: "triggered",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
       },
-      type: "triggered",
+      effect: {
+        type: "deal-damage",
+        amount: 1,
+        chosenBy: "opponent",
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          owner: "opponent",
+          selector: "chosen",
+          zones: ["play"],
+        },
+      },
       text: "GET HIM! When you play this character, each opponent chooses one of their characters and deals 1 damage to them.",
     },
   ],
+  i18n: dinkyHasTheBrainsI18n,
 };

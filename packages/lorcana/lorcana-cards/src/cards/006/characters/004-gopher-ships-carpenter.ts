@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gopherShipsCarpenterI18n } from "./004-gopher-ships-carpenter.i18n";
 
 export const gopherShipsCarpenter: CharacterCard = {
   id: "y4b",
@@ -7,24 +8,6 @@ export const gopherShipsCarpenter: CharacterCard = {
   cardType: "character",
   name: "Gopher",
   version: "Ship's Carpenter",
-  i18n: {
-    en: {
-      name: "Gopher",
-      version: "Ship's Carpenter",
-    },
-    de: {
-      name: "Gopher",
-      version: "Zimmermann des Schiffs",
-    },
-    fr: {
-      name: "Grignotin",
-      version: "Charpentier du navire",
-    },
-    it: {
-      name: "Castor",
-      version: "Carpentiere della Nave",
-    },
-  },
   inkType: ["amber"],
   franchise: "Winnie the Pooh",
   set: "006",
@@ -41,4 +24,5 @@ export const gopherShipsCarpenter: CharacterCard = {
     tcgPlayer: 591986,
   },
   classifications: ["Storyborn", "Ally", "Pirate"],
+  i18n: gopherShipsCarpenterI18n,
 };

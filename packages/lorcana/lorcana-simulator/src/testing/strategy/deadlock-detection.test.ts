@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { PLAYER_ONE, PLAYER_TWO } from "@tcg/lorcana-engine/testing";
-import { createRepeatedStateDeadlockTracker, resolveStrategyMatchEndReason } from "./deadlock.js";
+import {
+  createRepeatedStateDeadlockTracker,
+  resolveRepeatedStateDeadlockByConceding,
+  resolveStrategyMatchEndReason,
+} from "./deadlock.js";
 
 describe("strategy deadlock detection", () => {
   it("stops a match when the same actor sees the same state three times", () => {
@@ -37,5 +41,40 @@ describe("strategy deadlock detection", () => {
         turnNumber: 2,
       }),
     ).toBe("repeated-state-deadlock");
+  });
+
+  it("concedes the stuck actor when repeated-state deadlock is detected", () => {
+    const tracker = createRepeatedStateDeadlockTracker();
+
+    tracker.observe({
+      actorId: PLAYER_ONE,
+      stateFingerprint: "repeat-state",
+    });
+    tracker.observe({
+      actorId: PLAYER_ONE,
+      stateFingerprint: "repeat-state",
+    });
+    const observation = tracker.observe({
+      actorId: PLAYER_ONE,
+      stateFingerprint: "repeat-state",
+    });
+
+    let concededActor: string | undefined;
+    const resolution = resolveRepeatedStateDeadlockByConceding({
+      actorId: PLAYER_ONE,
+      concede(actorId) {
+        concededActor = actorId;
+        return {
+          success: true,
+        };
+      },
+      observation,
+    });
+
+    expect(resolution).toEqual({
+      attempted: true,
+      conceded: true,
+    });
+    expect(concededActor).toBe(PLAYER_ONE);
   });
 });
