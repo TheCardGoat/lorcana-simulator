@@ -25,7 +25,7 @@
     "deploy:web:staging": "turbo run deploy:staging --filter=@tcg/web",
     "check": "turbo run check",
     "check-types": "turbo run check-types",
-    "dev": "turbo run @tcg/web#dev @tcg/api#dev:general @tcg/api#dev:game",
+    "dev": "turbo run @tcg/lorcana-simulator#dev",
     "test": "turbo run test",
     "ci-check": "bash ./scripts/ci-check.sh ci-check:verbose",
     "ci-check:verbose": "turbo run lint check-types test",
@@ -55,7 +55,7 @@
     "lefthook": "^2.1.0",
     "oxfmt": "^0.32.0",
     "oxlint": "^1.43.0",
-    "turbo": "^2.8.16",
+    "turbo": "^2.8.20",
     "typescript": "5.9.3"
   },
   "overrides": {
