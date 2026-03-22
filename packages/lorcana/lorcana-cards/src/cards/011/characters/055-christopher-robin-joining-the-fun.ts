@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { christopherRobinJoiningTheFunI18n } from "./055-christopher-robin-joining-the-fun.i18n";
 
 export const christopherRobinJoiningTheFun: CharacterCard = {
   id: "OZm",
@@ -7,52 +8,6 @@ export const christopherRobinJoiningTheFun: CharacterCard = {
   cardType: "character",
   name: "Christopher Robin",
   version: "Joining the Fun",
-  i18n: {
-    en: {
-      name: "Christopher Robin",
-      version: "Joining the Fun",
-      text: [
-        {
-          title: "UNDERDOG",
-          description:
-            "If this is your first turn and you're not the first player, you pay 1 {I} less to play this character.",
-        },
-      ],
-    },
-    de: {
-      name: "Christopher Robin",
-      version: "Mit Spaß bei der Sache",
-      text: [
-        {
-          title: "UNDERDOG",
-          description:
-            "Falls dies dein erster Zug ist und du das Spiel nicht begonnen hast, zahlst du 1 weniger, um diesen Charakter auszuspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Jean-Christophe",
-      version: "Se joint à la bataille",
-      text: [
-        {
-          title: "OUTSIDER",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins si c'est votre premier tour et que vous n'êtes pas le premier joueur.",
-        },
-      ],
-    },
-    it: {
-      name: "Christopher Robin",
-      version: "Che Si Unisce al Divertimento",
-      text: [
-        {
-          title: "SFAVORITO",
-          description:
-            "Se questo è il tuo primo turno e non sei il primo giocatore, paga 1 in meno per giocare questo personaggio.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Winnie the Pooh",
   set: "011",
@@ -78,18 +33,19 @@ export const christopherRobinJoiningTheFun: CharacterCard = {
   abilities: [
     {
       id: "4b3-1",
-      effect: {
-        condition: {
-          type: "first-turn-non-otp",
-        },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+      name: "UNDERDOG",
+      condition: {
+        type: "first-turn-non-otp",
       },
-      type: "action",
+      effect: {
+        amount: 1,
+        cardType: "character",
+        type: "cost-reduction",
+      },
+      sourceZones: ["hand"],
+      type: "static",
       text: "UNDERDOG If this is your first turn and you're not the first player, you pay 1 {I} less to play this character.",
     },
   ],
+  i18n: christopherRobinJoiningTheFunI18n,
 };

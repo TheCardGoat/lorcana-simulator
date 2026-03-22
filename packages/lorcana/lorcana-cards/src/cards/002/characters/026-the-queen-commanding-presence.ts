@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theQueenCommandingPresenceI18n } from "./026-the-queen-commanding-presence.i18n";
 
 export const theQueenCommandingPresence: CharacterCard = {
   id: "A9v",
@@ -7,43 +8,6 @@ export const theQueenCommandingPresence: CharacterCard = {
   cardType: "character",
   name: "The Queen",
   version: "Commanding Presence",
-  i18n: {
-    en: {
-      name: "The Queen",
-      version: "Commanding Presence",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "WHO IS THE FAIREST?",
-          description:
-            "Whenever this character quests, chosen opposing character gets -4 {S} this turn and chosen character gets +4 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Königin",
-      version: "Imposantes Auftreten",
-      text: "Gestaltwandel 2 WER IST DIE SCHÖNSTE? Jedes Mal, wenn dieser Charakter erkundet, darfst du in diesem Zug einem gegnerischen Charakter deiner Wahl -4 und einem Charakter deiner Wahl +4 geben.",
-    },
-    fr: {
-      name: "La Reine",
-      version: "Autorité naturelle",
-      text: "Alter 2 QUI EST LA PLUS BELLE? Lorsque ce personnage est envoyé à l'aventure, choisissez un personnage qui gagne +4 et un personnage adverse qui subit -4, pour le reste de ce tour.",
-    },
-    it: {
-      name: "The Queen",
-      version: "Commanding Presence",
-      text: [
-        {
-          title: "Shift 2",
-          description:
-            "(You may pay 2 to play this on top of one of your characters named The Queen.) WHO IS THE FAIREST? Whenever this character quests, chosen opposing character gets -4 this turn and chosen character gets +4 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "002",
@@ -69,7 +33,6 @@ export const theQueenCommandingPresence: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain", "Queen"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -120,4 +83,5 @@ export const theQueenCommandingPresence: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: theQueenCommandingPresenceI18n,
 };

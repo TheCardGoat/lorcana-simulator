@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kronkLaidBackI18n } from "./063-kronk-laid-back.i18n";
 
 export const kronkLaidBack: CharacterCard = {
   id: "5gf",
@@ -7,37 +8,6 @@ export const kronkLaidBack: CharacterCard = {
   cardType: "character",
   name: "Kronk",
   version: "Laid Back",
-  i18n: {
-    en: {
-      name: "Kronk",
-      version: "Laid Back",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "I'M LOVIN' THIS",
-          description:
-            "If an effect would cause you to discard one or more cards, you don't discard.",
-        },
-      ],
-    },
-    de: {
-      name: "Kronk",
-      version: "Entspannt",
-      text: "Behütet DAS GEFÄLLT MIR Wenn du durch einen Effekt 1 oder mehr Karten abwerfen müsstest, wirfst du keine Karten ab.",
-    },
-    fr: {
-      name: "Kronk",
-      version: "Décontracté",
-      text: "Hors d'atteinte QU'EST-CE QUE J'M'AMUSE Si un effet devait vous faire défausser une ou plusieurs cartes, ne les défaussez pas.",
-    },
-    it: {
-      name: "Kronk",
-      version: "Rilassato",
-      text: "Protetto LO ADORO Se un effetto ti farebbe scartare una o più carte, non scartarne.",
-    },
-  },
   inkType: ["amethyst", "emerald"],
   franchise: "Emperors New Groove",
   set: "007",
@@ -62,5 +32,19 @@ export const kronkLaidBack: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      type: "keyword",
+      keyword: "Ward",
+      text: "Ward",
+    },
+    {
+      id: "im-lovin-this",
+      type: "replacement",
+      replaces: "discard",
+      replacement: "prevent",
+      text: "I'M LOVIN' THIS - If an effect would cause you to discard one or more cards, you don't discard.",
+    },
+  ],
+  i18n: kronkLaidBackI18n,
 };

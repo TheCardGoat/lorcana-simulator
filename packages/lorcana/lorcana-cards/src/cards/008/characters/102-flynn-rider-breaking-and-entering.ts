@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flynnRiderBreakingAndEnteringI18n } from "./102-flynn-rider-breaking-and-entering.i18n";
 
 export const flynnRiderBreakingAndEntering: CharacterCard = {
   id: "gxV",
@@ -7,52 +8,6 @@ export const flynnRiderBreakingAndEntering: CharacterCard = {
   cardType: "character",
   name: "Flynn Rider",
   version: "Breaking and Entering",
-  i18n: {
-    en: {
-      name: "Flynn Rider",
-      version: "Breaking and Entering",
-      text: [
-        {
-          title: "THIS IS A VERY BIG DAY",
-          description:
-            "Whenever this character is challenged, the challenging player may choose and discard a card. If they don't, you gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Flynn Rider",
-      version: "Einbrecher",
-      text: [
-        {
-          title: "HEUTE IST EIN GANZ BESONDERER TAG",
-          description:
-            "Jedes Mal, wenn dieser Charakter herausgefordert wird, darf die herausfordernde Person 1 Karte aus ihrer Hand auswählen und abwerfen. Falls sie keine Karte abwirft, sammelst du 2 Legenden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Flynn Rider",
-      version: "Entrant par effraction",
-      text: [
-        {
-          title: "AUJOURD'HUI EST UN GRAND JOUR",
-          description:
-            "Chaque fois que ce personnage est défié, le joueur qui a lancé le défi peut défausser une carte. S'il ne le fait pas, vous gagnez 2 éclats de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Flynn Rider",
-      version: "Entrato di Soppiatto",
-      text: [
-        {
-          title: "QUESTO È DAVVERO UN GRANDE GIORNO",
-          description:
-            "Ogni volta che questo personaggio viene sfidato, il giocatore sfidante può scegliere e scartare una carta. Se non lo fa, ottieni 2 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Tangled",
   set: "008",
@@ -69,24 +24,31 @@ export const flynnRiderBreakingAndEntering: CharacterCard = {
   },
   text: [
     {
-      title: "THIS IS A VERY BIG DAY",
+      title: "THIS IS",
       description:
-        "Whenever this character is challenged, the challenging player may choose and discard a card. If they don't, you gain 2 lore.",
+        "A VERY BIG DAY Whenever this character is challenged, the challenging player may choose and discard a card. If they don't, you gain 2 lore.",
     },
   ],
   classifications: ["Storyborn", "Hero", "Prince"],
   abilities: [
     {
       effect: {
-        condition: {
-          expression: "they don't",
-          type: "if",
-        },
-        then: {
-          amount: 2,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        type: "or",
+        chooser: "OPPONENT",
+        optionLabels: ["discard a card", "you gain 2 lore"],
+        options: [
+          {
+            amount: 1,
+            chosen: true,
+            target: "OPPONENT",
+            type: "discard",
+          },
+          {
+            amount: 2,
+            target: "CONTROLLER",
+            type: "gain-lore",
+          },
+        ],
       },
       id: "o9w-1",
       name: "THIS IS A VERY BIG DAY",
@@ -99,4 +61,5 @@ export const flynnRiderBreakingAndEntering: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: flynnRiderBreakingAndEnteringI18n,
 };

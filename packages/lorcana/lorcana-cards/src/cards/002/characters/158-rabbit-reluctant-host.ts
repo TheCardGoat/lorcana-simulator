@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rabbitReluctantHostI18n } from "./158-rabbit-reluctant-host.i18n";
 
 export const rabbitReluctantHost: CharacterCard = {
   id: "Y22",
@@ -7,24 +8,6 @@ export const rabbitReluctantHost: CharacterCard = {
   cardType: "character",
   name: "Rabbit",
   version: "Reluctant Host",
-  i18n: {
-    en: {
-      name: "Rabbit",
-      version: "Reluctant Host",
-    },
-    de: {
-      name: "Rabbit",
-      version: "Zögerlicher Gastgeber",
-    },
-    fr: {
-      name: "Coco Lapin",
-      version: "Hôte malgé lui",
-    },
-    it: {
-      name: "Tappo",
-      version: "Padrone di Casa Riluttante",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Winnie the Pooh",
   set: "002",
@@ -41,4 +24,5 @@ export const rabbitReluctantHost: CharacterCard = {
     tcgPlayer: 527767,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: rabbitReluctantHostI18n,
 };

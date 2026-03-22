@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { fairyGodmotherHereToHelpI18n } from "./040-fairy-godmother-here-to-help.i18n";
 
 export const fairyGodmotherHereToHelp: CharacterCard = {
   id: "yFu",
@@ -7,24 +8,6 @@ export const fairyGodmotherHereToHelp: CharacterCard = {
   cardType: "character",
   name: "Fairy Godmother",
   version: "Here to Help",
-  i18n: {
-    en: {
-      name: "Fairy Godmother",
-      version: "Here to Help",
-    },
-    de: {
-      name: "Gute Fee",
-      version: "Hier, um zu helfen",
-    },
-    fr: {
-      name: "La Bonne Fée",
-      version: "Là pour aider",
-    },
-    it: {
-      name: "Fairy Godmother",
-      version: "Here to Help",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Cinderella",
   set: "002",
@@ -41,4 +24,5 @@ export const fairyGodmotherHereToHelp: CharacterCard = {
     tcgPlayer: 527733,
   },
   classifications: ["Storyborn", "Ally", "Fairy"],
+  i18n: fairyGodmotherHereToHelpI18n,
 };

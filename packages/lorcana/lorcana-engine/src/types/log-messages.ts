@@ -104,8 +104,7 @@ export interface ResolveBagCompletedTargetsLogValues extends ResolveBagCompleted
   targets: LogTargetId[];
 }
 
-export interface ResolveBagCompletedTargetsNamedLogValues
-  extends ResolveBagCompletedTargetsLogValues {
+export interface ResolveBagCompletedTargetsNamedLogValues extends ResolveBagCompletedTargetsLogValues {
   abilityName: string;
 }
 

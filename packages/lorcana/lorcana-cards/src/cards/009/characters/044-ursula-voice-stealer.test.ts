@@ -1,90 +1,162 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { hakunaMatata } from "@lorcanito/lorcana-engine/cards/001/songs/027-hakuna-matata";
-// Import { clarabelleLightOnHerHooves } from "@lorcanito/lorcana-engine/cards/005/characters/084-clarabelle-light-on-her-hooves";
-// Import { allIsFound } from "@lorcanito/lorcana-engine/cards/007";
-// Import {
-//   MickeyMouseBraveLittlePrince,
-//   MinnieMouseSweetheartPrincess,
-//   UrsulaVoiceStealer,
-// } from "@lorcanito/lorcana-engine/cards/009";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Ursula - Voice Stealer", () => {
-//   It("SING FOR ME When you play this character, exert chosen opposing ready character. Then, you may play a song with cost equal to or less than the exerted character's cost for free.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: ursulaVoiceStealer.cost,
-//         Hand: [ursulaVoiceStealer, hakunaMatata],
-//       },
-//       {
-//         Play: [minnieMouseSweetheartPrincess],
-//       },
-//     );
-//
-//     Await testEngine.playCard(
-//       UrsulaVoiceStealer,
-//       {
-//         AcceptOptionalLayer: true,
-//         Targets: [minnieMouseSweetheartPrincess],
-//       },
-//       True,
-//     );
-//
-//     Expect(testEngine.getCardModel(minnieMouseSweetheartPrincess).ready).toBe(
-//       False,
-//     );
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({ targets: [hakunaMatata] });
-//     Expect(testEngine.getCardModel(hakunaMatata).zone).toBe("discard");
-//   });
-//
-//   Describe("Regression", () => {
-//     It("Clarabelle interaction", async () => {
-//       Const targets = [
-//         MinnieMouseSweetheartPrincess,
-//         MickeyMouseBraveLittlePrince,
-//       ];
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: ursulaVoiceStealer.cost,
-//           Hand: [ursulaVoiceStealer, allIsFound],
-//           Discard: targets,
-//         },
-//         {
-//           Play: [clarabelleLightOnHerHooves],
-//         },
-//       );
-//
-//       Await testEngine.playCard(
-//         UrsulaVoiceStealer,
-//         {
-//           Targets: [clarabelleLightOnHerHooves],
-//           AcceptOptionalLayer: true,
-//         },
-//         True,
-//       );
-//
-//       Expect(testEngine.getCardModel(clarabelleLightOnHerHooves).ready).toBe(
-//         False,
-//       );
-//
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [allIsFound] }, true);
-//       Expect(testEngine.getCardModel(allIsFound).zone).toBe("discard");
-//
-//       Await testEngine.resolveTopOfStack({ targets: targets });
-//
-//       For (const target of targets) {
-//         // "Put up to 2 cards from your discard into your inkwell, facedown and exerted."
-//         Expect(testEngine.getCardModel(target).zone).toBe("inkwell");
-//       }
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  createMockSong,
+} from "@tcg/lorcana-engine/testing";
+import { ursulaVoiceStealer } from "./044-ursula-voice-stealer";
+
+const opposingCharacter = createMockCharacter({
+  id: "ursula-vs-opposing-character",
+  name: "Opposing Character",
+  cost: 4,
+  strength: 2,
+  willpower: 3,
+});
+
+const cheapSong = createMockSong({
+  id: "ursula-vs-cheap-song",
+  name: "Cheap Song",
+  cost: 4,
+  text: "A cheap song.",
+});
+
+const expensiveSong = createMockSong({
+  id: "ursula-vs-expensive-song",
+  name: "Expensive Song",
+  cost: 5,
+  text: "An expensive song.",
+});
+
+describe("Ursula - Voice Stealer", () => {
+  describe("SING FOR ME - When you play this character, exert chosen opposing ready character. Then, you may play a song with cost equal to or less than the exerted character's cost for free.", () => {
+    it("exerts the chosen opposing ready character when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [ursulaVoiceStealer],
+          inkwell: ursulaVoiceStealer.cost,
+        },
+        {
+          play: [opposingCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerTwo().isExerted(opposingCharacter)).toBe(false);
+
+      expect(
+        testEngine.asPlayerOne().playCard(ursulaVoiceStealer, {
+          targets: [opposingCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Resolve the triggered ability from the bag
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      if (bagEffects.length > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+            targets: [opposingCharacter],
+            resolveOptional: false,
+          }),
+        ).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.asPlayerTwo().isExerted(opposingCharacter)).toBe(true);
+    });
+
+    it("allows playing a song with cost equal to or less than the exerted character's cost for free", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [ursulaVoiceStealer, cheapSong],
+          inkwell: ursulaVoiceStealer.cost,
+        },
+        {
+          play: [opposingCharacter],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(ursulaVoiceStealer, {
+          targets: [opposingCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffects.length).toBeGreaterThan(0);
+
+      // Resolve: exert opposing character, then optionally play a song
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          targets: [opposingCharacter, cheapSong],
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().isExerted(opposingCharacter)).toBe(true);
+      expect(testEngine.asPlayerOne().getCardZone(cheapSong)).toBe("discard");
+    });
+
+    it("does not allow playing a song with cost greater than the exerted character's cost", () => {
+      // expensiveSong costs 5, opposingCharacter costs 4 => should not be playable
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [ursulaVoiceStealer, expensiveSong],
+          inkwell: ursulaVoiceStealer.cost,
+        },
+        {
+          play: [opposingCharacter],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(ursulaVoiceStealer, {
+          targets: [opposingCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      if (bagEffects.length > 0) {
+        // Attempting to play the expensive song should fail or the song should remain in hand
+        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          targets: [opposingCharacter, expensiveSong],
+          resolveOptional: true,
+        });
+      }
+
+      // The expensive song should remain in hand since it costs more than the exerted character
+      expect(testEngine.asPlayerOne().getCardZone(expensiveSong)).toBe("hand");
+    });
+
+    it("can decline to play a song after exerting the opposing character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [ursulaVoiceStealer, cheapSong],
+          inkwell: ursulaVoiceStealer.cost,
+        },
+        {
+          play: [opposingCharacter],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(ursulaVoiceStealer, {
+          targets: [opposingCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      if (bagEffects.length > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+            targets: [opposingCharacter],
+            resolveOptional: false,
+          }),
+        ).toBeSuccessfulCommand();
+      }
+
+      // Opposing character should still be exerted
+      expect(testEngine.asPlayerTwo().isExerted(opposingCharacter)).toBe(true);
+      // Song should remain in hand
+      expect(testEngine.asPlayerOne().getCardZone(cheapSong)).toBe("hand");
+    });
+  });
+});

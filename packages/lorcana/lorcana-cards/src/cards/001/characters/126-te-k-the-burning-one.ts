@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { teKTheBurningOneI18n } from "./126-te-k-the-burning-one.i18n";
 
 export const teKTheBurningOne: CharacterCard = {
   id: "Zd7",
@@ -7,28 +8,6 @@ export const teKTheBurningOne: CharacterCard = {
   cardType: "character",
   name: "Te Kā",
   version: "The Burning One",
-  i18n: {
-    en: {
-      name: "Te Kā",
-      version: "The Burning One",
-      text: "Reckless",
-    },
-    de: {
-      name: "Te Kā",
-      version: "Brandgefährlich",
-      text: "Impulsiv",
-    },
-    fr: {
-      name: "TE KĀ",
-      version: "Démon de la Terre et du Feu",
-      text: "Combattant",
-    },
-    it: {
-      name: "Te Kā",
-      version: "L'Incandescente",
-      text: "Attaccabrighe",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "001",
@@ -39,7 +18,6 @@ export const teKTheBurningOne: CharacterCard = {
   willpower: 6,
   lore: 0,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_e70380b0a938449cb7e2b433737ec824",
     tcgPlayer: 508803,
@@ -54,4 +32,5 @@ export const teKTheBurningOne: CharacterCard = {
       text: "Reckless",
     },
   ],
+  i18n: teKTheBurningOneI18n,
 };

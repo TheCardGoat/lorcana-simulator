@@ -1,5 +1,8 @@
-import type { LorcanaPlayerSide, MoveLogEntrySnapshot } from "@/features/simulator/model/contracts.js";
-import { m } from "$lib/paraglide/messages.js";
+import type {
+  LorcanaPlayerSide,
+  MoveLogEntrySnapshot,
+} from "@/features/simulator/model/contracts.js";
+import { m } from "$lib/i18n/messages.js";
 import {
   type EventLogMarkerId,
   type EventLogPlayerTone,
@@ -51,6 +54,52 @@ export function filterEntriesToLastTurns(
   }
 
   return entries.filter((entry) => recentTurns.has(entry.turnNumber));
+}
+
+export type EventLogGroup =
+  | {
+      kind: "turn-separator";
+      id: string;
+      turnNumber: number;
+      label: string;
+    }
+  | {
+      kind: "event-group";
+      id: string;
+      actor: { label: string; tone: EventLogPlayerTone };
+      rows: Extract<EventLogRow, { kind: "event-row" }>[];
+    };
+
+export function groupEventLogRows(rows: EventLogRow[]): EventLogGroup[] {
+  const groups: EventLogGroup[] = [];
+  let currentGroup: Extract<EventLogGroup, { kind: "event-group" }> | null = null;
+
+  for (const row of rows) {
+    if (row.kind === "turn-separator") {
+      currentGroup = null;
+      groups.push({
+        kind: "turn-separator",
+        id: row.id,
+        turnNumber: row.turnNumber,
+        label: row.label,
+      });
+      continue;
+    }
+
+    if (currentGroup && currentGroup.actor.tone === row.actor.tone) {
+      currentGroup.rows.push(row);
+    } else {
+      currentGroup = {
+        kind: "event-group",
+        id: row.id,
+        actor: row.actor,
+        rows: [row],
+      };
+      groups.push(currentGroup);
+    }
+  }
+
+  return groups;
 }
 
 export function buildEventLogRows(

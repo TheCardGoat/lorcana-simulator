@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { judyHoppsOnTheCaseI18n } from "./137-judy-hopps-on-the-case.i18n";
 
 export const judyHoppsOnTheCase: CharacterCard = {
   id: "MPo",
@@ -7,52 +8,6 @@ export const judyHoppsOnTheCase: CharacterCard = {
   cardType: "character",
   name: "Judy Hopps",
   version: "On the Case",
-  i18n: {
-    en: {
-      name: "Judy Hopps",
-      version: "On the Case",
-      text: [
-        {
-          title: "HIDDEN CLUES",
-          description:
-            "When you play this character, if you have another Detective character in play, you may put chosen item into its player's inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Judy Hopps",
-      version: "Am Fall dran",
-      text: [
-        {
-          title: "VERSTECKTE HINWEISE",
-          description:
-            "Wenn du diesen Charakter ausspielst und mindestens einen anderen Detektiv im Spiel hast, darfst du einen Gegenstand deiner Wahl verdeckt und erschöpft in den zugehörigen Tintenvorrat legen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Judy Hopps",
-      version: "Sur l'affaire",
-      text: [
-        {
-          title: "INDICES CACHÉS",
-          description:
-            "Lorsque vous jouez ce personnage, si vous avez un autre personnage Détective en jeu, vous pouvez choisir un objet et le placer dans la réserve d'encre de son propriétaire, face cachée et épuisé.",
-        },
-      ],
-    },
-    it: {
-      name: "Judy Hopps",
-      version: "Impegnata sul Caso",
-      text: [
-        {
-          title: "INDIZI NASCOSTI",
-          description:
-            "Quando giochi questo personaggio, se hai in gioco un altro personaggio Detective, puoi aggiungere un oggetto a tua scelta al calamaio del suo giocatore, a faccia in giù e impegnato.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Zootropolis",
   set: "010",
@@ -75,5 +30,42 @@ export const judyHoppsOnTheCase: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Detective"],
-  abilities: [],
+  abilities: [
+    {
+      condition: {
+        type: "has-character-count",
+        classification: "Detective",
+        controller: "you",
+        count: 2,
+        comparison: "greater-or-equal",
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          type: "put-into-inkwell",
+          source: "chosen-card-in-play",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["item"],
+          },
+          facedown: true,
+          exerted: true,
+        },
+        type: "optional",
+      },
+      id: "MPo-1",
+      name: "HIDDEN CLUES",
+      text: "HIDDEN CLUES When you play this character, if you have another Detective character in play, you may put chosen item into its player's inkwell facedown and exerted.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
+  ],
+  i18n: judyHoppsOnTheCaseI18n,
 };

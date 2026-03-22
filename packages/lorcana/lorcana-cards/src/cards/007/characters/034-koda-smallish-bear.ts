@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kodaSmallishBearI18n } from "./034-koda-smallish-bear.i18n";
 
 export const kodaSmallishBear: CharacterCard = {
   id: "5gA",
@@ -7,24 +8,6 @@ export const kodaSmallishBear: CharacterCard = {
   cardType: "character",
   name: "Koda",
   version: "Smallish Bear",
-  i18n: {
-    en: {
-      name: "Koda",
-      version: "Smallish Bear",
-    },
-    de: {
-      name: "Koda",
-      version: "Bärenjunge",
-    },
-    fr: {
-      name: "Koda",
-      version: "Petit nounours",
-    },
-    it: {
-      name: "Koda",
-      version: "Orsetto Cosetto",
-    },
-  },
   inkType: ["amber"],
   franchise: "Brother Bear",
   set: "007",
@@ -41,4 +24,5 @@ export const kodaSmallishBear: CharacterCard = {
     tcgPlayer: 618719,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: kodaSmallishBearI18n,
 };

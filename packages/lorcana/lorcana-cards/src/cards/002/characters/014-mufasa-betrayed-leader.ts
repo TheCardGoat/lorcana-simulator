@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mufasaBetrayedLeaderI18n } from "./014-mufasa-betrayed-leader.i18n";
 
 export const mufasaBetrayedLeader: CharacterCard = {
   id: "dcy",
@@ -7,52 +8,6 @@ export const mufasaBetrayedLeader: CharacterCard = {
   cardType: "character",
   name: "Mufasa",
   version: "Betrayed Leader",
-  i18n: {
-    en: {
-      name: "Mufasa",
-      version: "Betrayed Leader",
-      text: [
-        {
-          title: "THE SUN WILL SET",
-          description:
-            "When this character is banished, you may reveal the top card of your deck. If it's a character card, you may play that character for free and they enter play exerted. Otherwise, put it on the top of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Mufasa",
-      version: "Verratener Anführer",
-      text: [
-        {
-          title: "EINES TAGES GEHT DIE SONNE UNTER",
-          description:
-            "Wenn dieser Charakter verbannt wird, darfst du die oberste Karte deines Decks aufdecken. Falls sie eine Charakterkarte ist, darfst du sie kostenlos und erschöpft ausspielen. Falls nicht, lege sie zurück auf dein Deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mufasa",
-      version: "Roi trahi",
-      text: [
-        {
-          title: "LE SOLEIL ÉTEINDRA SUR MOI SA LUMIÈRE",
-          description:
-            "Lorsque ce personnage est banni, vous pouvez révéler la première carte de votre pioche. S'il s'agit d'un personnage, vous pouvez le jouer gratuitement. Il entre en jeu épuisé. Sinon, remettez-la sur le dessus de votre pioche.",
-        },
-      ],
-    },
-    it: {
-      name: "Mufasa",
-      version: "Betrayed Leader",
-      text: [
-        {
-          title: "THE SUN WILL SET",
-          description:
-            "When this character is banished, you may reveal the top card of your deck. If it's a character card, you may play that character for free and they enter play exerted. Otherwise, put it on the top of your deck.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lion King",
   set: "002",
@@ -74,7 +29,7 @@ export const mufasaBetrayedLeader: CharacterCard = {
         "When this character is banished, you may reveal the top card of your deck. If it's a character card, you may play that character for free and they enter play exerted. Otherwise, put it on the top of your deck.",
     },
   ],
-  classifications: ["Storyborn", "King", "Mentor"],
+  classifications: ["Storyborn", "Mentor", "King"],
   abilities: [
     {
       effect: {
@@ -102,7 +57,6 @@ export const mufasaBetrayedLeader: CharacterCard = {
                 value: 1,
               },
             },
-            // eslint-disable-next-line unicorn/no-thenable
             then: {
               effect: {
                 cost: "free",
@@ -132,4 +86,5 @@ export const mufasaBetrayedLeader: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mufasaBetrayedLeaderI18n,
 };

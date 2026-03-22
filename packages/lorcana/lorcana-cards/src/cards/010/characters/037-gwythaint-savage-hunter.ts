@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gwythaintSavageHunterI18n } from "./037-gwythaint-savage-hunter.i18n";
 
 export const gwythaintSavageHunter: CharacterCard = {
   id: "t21",
@@ -7,37 +8,6 @@ export const gwythaintSavageHunter: CharacterCard = {
   cardType: "character",
   name: "Gwythaint",
   version: "Savage Hunter",
-  i18n: {
-    en: {
-      name: "Gwythaint",
-      version: "Savage Hunter",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "SWOOPING STRIKE",
-          description:
-            "Whenever this character quests, each opponent chooses and exerts one of their ready characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Der Drache",
-      version: "Wilder Jäger",
-      text: "Wendig STURZFLUGANGRIFF Jedes Mal, wenn dieser Charakter erkundet, wählen alle gegnerischen Mitspielenden je einen ihrer bereiten Charaktere und erschöpfen ihn.",
-    },
-    fr: {
-      name: "Vouivre",
-      version: "Chasseur sauvage",
-      text: "Insaisissable ATTAQUE EN PIQUÉ Chaque fois que ce personnage est envoyé à l'aventure, chaque adversaire choisit l'un de ses personnages redressés et l'épuise.",
-    },
-    it: {
-      name: "Gwythaint",
-      version: "Cacciatore Selvaggio",
-      text: "Sfuggente ATTACCO IN PICCHIATA Ogni volta che questo personaggio va all'avventura, ogni avversario sceglie e impegna uno dei suoi personaggi preparati.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Black Cauldron",
   set: "010",
@@ -63,5 +33,41 @@ export const gwythaintSavageHunter: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Dragon"],
-  abilities: [],
+  abilities: [
+    {
+      id: "t21-1",
+      keyword: "Evasive",
+      text: "Evasive",
+      type: "keyword",
+    },
+    {
+      id: "t21-2",
+      name: "SWOOPING STRIKE",
+      text: "SWOOPING STRIKE Whenever this character quests, each opponent chooses and exerts one of their ready characters.",
+      type: "triggered",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "exert",
+        chosenBy: "opponent",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          cardTypes: ["character"],
+          zones: ["play"],
+          filter: [
+            {
+              type: "status",
+              status: "ready",
+            },
+          ],
+        },
+      },
+    },
+  ],
+  i18n: gwythaintSavageHunterI18n,
 };

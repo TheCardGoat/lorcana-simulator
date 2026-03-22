@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { johnSilverSternCaptainI18n } from "./194-john-silver-stern-captain.i18n";
 
 export const johnSilverSternCaptain: CharacterCard = {
   id: "9kF",
@@ -7,39 +8,6 @@ export const johnSilverSternCaptain: CharacterCard = {
   cardType: "character",
   name: "John Silver",
   version: "Stern Captain",
-  i18n: {
-    en: {
-      name: "John Silver",
-      version: "Stern Captain",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "Resist +2",
-        },
-        {
-          title: "DON'T JUST SIT THERE!",
-          description: "At the start of your turn, deal 1 damage to each opposing ready character.",
-        },
-      ],
-    },
-    de: {
-      name: "John Silver",
-      version: "Strenger Kapitän",
-      text: "Gestaltwandel 5 Robust +2 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 2.) SITZ NICHT EINFACH HERUM! Zu Beginn deines Zuges, füge jedem gegnerischen bereiten Charakter 1 Schaden zu.",
-    },
-    fr: {
-      name: "John Silver",
-      version: "Capitaine sévère",
-      text: "Alter 5 Résistance +2 NE RESTE PAS PLANTÉ LÀ! Au début de votre tour, infligez 1 dommage à chaque personnage adverse redressé.",
-    },
-    it: {
-      name: "John Silver",
-      version: "Capitano Severo",
-      text: "Trasformazione 5 Resistere +2 NON STARTENE LÌ IMPALATO! All'inizio del tuo turno, infliggi 1 danno a ogni personaggio avversario preparato.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Treasure Planet",
   set: "006",
@@ -89,16 +57,28 @@ export const johnSilverSternCaptain: CharacterCard = {
         amount: 1,
         target: {
           cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
+          count: "all",
+          owner: "opponent",
+          selector: "all",
           zones: ["play"],
+          filter: [
+            {
+              type: "ready",
+            },
+          ],
         },
         type: "deal-damage",
       },
       id: "19b-3",
+      name: "DON'T JUST SIT THERE!",
       text: "DON'T JUST SIT THERE! At the start of your turn, deal 1 damage to each opposing ready character.",
-      type: "action",
+      trigger: {
+        event: "start-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      type: "triggered",
     },
   ],
+  i18n: johnSilverSternCaptainI18n,
 };

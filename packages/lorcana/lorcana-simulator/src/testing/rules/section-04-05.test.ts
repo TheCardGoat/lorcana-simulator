@@ -81,6 +81,7 @@ describe("#### 4. TURN ACTIONS", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
           play: [{ card: negativeLoreQuester, isDrying: false }],
+          lore: 5,
         },
         {
           hand: [
@@ -93,12 +94,10 @@ describe("#### 4. TURN ACTIONS", () => {
         },
       );
 
-      testEngine.asServer().manualSetLore(PLAYER_ONE, 5);
+      expect(testEngine.asServer().quest(PLAYER_ONE, negativeLoreQuester)).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().quest(negativeLoreQuester)).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().isExerted(negativeLoreQuester)).toBe(true);
-      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(5);
+      expect(testEngine.asServer().isExerted(negativeLoreQuester)).toBe(true);
+      expect(testEngine.asServer().getLore(PLAYER_ONE)).toBe(5);
     });
   });
 });

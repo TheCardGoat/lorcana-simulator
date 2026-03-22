@@ -2,7 +2,6 @@ import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine, PLAYER_ONE, PLAYER_TWO } from "@tcg/lorcana-engine/testing";
 import { tiggerOneOfAKind, winnieThePoohHunnyWizard } from "../characters";
 import { christopherRobinAdventurer } from "./002-christopher-robin-adventurer";
-import { tiggerWonderfulThing } from "../../001/characters/127-tigger-wonderful-thing";
 
 describe("Christopher Robin - Adventurer", () => {
   describe("WE'LL ALWAYS BE TOGETHER Whenever you ready this character, if you have 2 or more other characters in play, gain 2 lore.", () => {

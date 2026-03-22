@@ -142,6 +142,38 @@ const optionalAction = createMockActionCard({
   ],
 });
 
+const impossibleTargetWatcher = createMockCharacter({
+  id: "impossible-target-watcher",
+  name: "Impossible Target Watcher",
+  cost: 2,
+  lore: 1,
+  abilities: [
+    {
+      id: "impossible-target-watcher-1",
+      name: "Impossible Target Watcher",
+      text: "Whenever one of your characters quests, chosen opposing character gets Reckless this turn.",
+      type: "triggered",
+      trigger: {
+        event: "quest",
+        on: "YOUR_CHARACTERS",
+        timing: "whenever",
+      },
+      effect: {
+        type: "gain-keyword",
+        keyword: "Reckless",
+        duration: "this-turn",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+    },
+  ],
+});
+
 describe("LorcanaEngineBase bag auto-resolution", () => {
   it("auto-resolves a single mandatory no-target triggered bag effect", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
@@ -236,6 +268,16 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
         targets: [simbaId],
       }),
     ).toBeSuccessfulCommand();
+  });
+
+  it("auto-resolves a single mandatory targeted bag effect when no legal targets exist", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: quester, isDrying: false }, impossibleTargetWatcher],
+      deck: 2,
+    });
+
+    expect(testEngine.asPlayerOne().quest(quester)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
   });
 
   it("keeps optional no-target triggers manual", () => {

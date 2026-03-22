@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { naniNoWorriesI18n } from "./184-nani-no-worries.i18n";
 
 export const naniNoWorries: CharacterCard = {
   id: "wNB",
@@ -7,48 +8,6 @@ export const naniNoWorries: CharacterCard = {
   cardType: "character",
   name: "Nani",
   version: "No Worries",
-  i18n: {
-    en: {
-      name: "Nani",
-      version: "No Worries",
-      text: [
-        {
-          title: "TAKE IT EASY",
-          description: "While this character has no damage, she gets +1 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Nani",
-      version: "Sorglos",
-      text: [
-        {
-          title: "LOCKER BLEIBEN",
-          description: "Solange dieser Charakter unbeschädigt ist, erhält er +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Nani",
-      version: "Sans tracas",
-      text: [
-        {
-          title: "DÉTENDS-TOI",
-          description: "Tant que ce personnage n'a aucun dommage sur lui, il gagne +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Nani",
-      version: "Rilassata",
-      text: [
-        {
-          title: "PRENDERSELA COMODA",
-          description: "Mentre questo personaggio non ha danno, riceve +1.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "011",
@@ -73,6 +32,9 @@ export const naniNoWorries: CharacterCard = {
   abilities: [
     {
       id: "1iz-1",
+      condition: {
+        type: "no-damage",
+      },
       effect: {
         modifier: 1,
         stat: "lore",
@@ -83,4 +45,5 @@ export const naniNoWorries: CharacterCard = {
       text: "TAKE IT EASY While this character has no damage, she gets +1 {L}.",
     },
   ],
+  i18n: naniNoWorriesI18n,
 };

@@ -1,8 +1,8 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "lorcana.setup.firstPlayerChosen": "A choisi {chosen} pour commencer.",
-  "lorcana.setup.mulligan.count": "A fait un mulligan de {count} cartes.",
-  "lorcana.setup.mulligan.detail": "A fait un mulligan de {count} cartes : {mulliganed}. A pioche {drawn}.",
+  "lorcana.setup.mulligan.count": "A altere {count} cartes.",
+  "lorcana.setup.mulligan.detail": "A altere {count} cartes : {mulliganed}. A pioche {drawn}.",
   "lorcana.setup.done": "Preparation terminee.",
   "lorcana.ability.activated": "A active une capacite de {cardId}.",
   "lorcana.ability.activated.named": "A active {abilityName} de {cardId}.",

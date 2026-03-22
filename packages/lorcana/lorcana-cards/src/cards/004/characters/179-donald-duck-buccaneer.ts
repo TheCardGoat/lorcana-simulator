@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckBuccaneerI18n } from "./179-donald-duck-buccaneer.i18n";
 
 export const donaldDuckBuccaneer: CharacterCard = {
   id: "LVd",
@@ -7,52 +8,6 @@ export const donaldDuckBuccaneer: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Buccaneer",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Buccaneer",
-      text: [
-        {
-          title: "BOARDING PARTY",
-          description:
-            "During your turn, whenever this character banishes a character in a challenge, your other characters get +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Buccaneer",
-      text: [
-        {
-          title: "BOARDING PARTY",
-          description:
-            "During your turn, whenever this character banishes a character in a challenge, your other characters get +1 this turn.",
-        },
-      ],
-    },
-    fr: {
-      name: "Donald Duck",
-      version: "Buccaneer",
-      text: [
-        {
-          title: "BOARDING PARTY",
-          description:
-            "During your turn, whenever this character banishes a character in a challenge, your other characters get +1 this turn.",
-        },
-      ],
-    },
-    it: {
-      name: "Donald Duck",
-      version: "Buccaneer",
-      text: [
-        {
-          title: "BOARDING PARTY",
-          description:
-            "During your turn, whenever this character banishes a character in a challenge, your other characters get +1 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   set: "004",
   cardNumber: 179,
@@ -80,18 +35,25 @@ export const donaldDuckBuccaneer: CharacterCard = {
         duration: "this-turn",
         modifier: 1,
         stat: "lore",
-        target: "YOUR_CHARACTERS",
+        target: "YOUR_OTHER_CHARACTERS",
         type: "modify-stat",
       },
       id: "va5-1",
       name: "BOARDING PARTY",
       text: "BOARDING PARTY During your turn, whenever this character banishes a character in a challenge, your other characters get +1 {L} this turn.",
       trigger: {
-        event: "play",
+        event: "banish-in-challenge",
         on: "SELF",
-        timing: "when",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
+        timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: donaldDuckBuccaneerI18n,
 };

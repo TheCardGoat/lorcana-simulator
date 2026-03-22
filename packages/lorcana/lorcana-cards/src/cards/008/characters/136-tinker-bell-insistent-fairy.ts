@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tinkerBellInsistentFairyI18n } from "./136-tinker-bell-insistent-fairy.i18n";
 
 export const tinkerBellInsistentFairy: CharacterCard = {
   id: "01E",
@@ -7,37 +8,6 @@ export const tinkerBellInsistentFairy: CharacterCard = {
   cardType: "character",
   name: "Tinker Bell",
   version: "Insistent Fairy",
-  i18n: {
-    en: {
-      name: "Tinker Bell",
-      version: "Insistent Fairy",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "PAY ATTENTION",
-          description:
-            "Whenever you play a character with 5 {S} or more, you may exert them to gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Naseweis",
-      version: "Hartnäckige Fee",
-      text: "Wendig GEBT ACHT Jedes Mal, wenn du einen Charakter mit 5 oder mehr ausspielst, darfst du jenen erschöpfen, um 2 Legenden zu sammeln.",
-    },
-    fr: {
-      name: "La Fée Clochette",
-      version: "Fée insistante",
-      text: "Insaisissable SOYEZ ATTENTIFS Chaque fois que vous jouez un personnage ayant 5 ou plus, vous pouvez l'épuiser pour gagner 2 éclats de Lore.",
-    },
-    it: {
-      name: "Trilli",
-      version: "Fata Insistente",
-      text: "Sfuggente DAMMI RETTA Ogni volta che giochi un personaggio con 5 o superiore, puoi impegnarlo per ottenere 2 leggenda.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Peter Pan",
   set: "008",
@@ -74,8 +44,19 @@ export const tinkerBellInsistentFairy: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 2,
-          type: "gain-lore",
+          effects: [
+            {
+              target: {
+                ref: "trigger-subject",
+              },
+              type: "exert",
+            },
+            {
+              amount: 2,
+              type: "gain-lore",
+            },
+          ],
+          type: "sequence",
         },
         type: "optional",
       },
@@ -87,10 +68,18 @@ export const tinkerBellInsistentFairy: CharacterCard = {
         on: {
           cardType: "character",
           controller: "you",
+          filters: [
+            {
+              type: "strength-comparison",
+              comparison: "greater-or-equal",
+              value: 5,
+            },
+          ],
         },
         timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: tinkerBellInsistentFairyI18n,
 };

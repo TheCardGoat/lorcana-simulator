@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { antonioMadrigalAnimalExpertI18n } from "./035-antonio-madrigal-animal-expert.i18n";
 
 export const antonioMadrigalAnimalExpert: CharacterCard = {
   id: "PrU",
@@ -7,24 +8,6 @@ export const antonioMadrigalAnimalExpert: CharacterCard = {
   cardType: "character",
   name: "Antonio Madrigal",
   version: "Animal Expert",
-  i18n: {
-    en: {
-      name: "Antonio Madrigal",
-      version: "Animal Expert",
-    },
-    de: {
-      name: "Antonio Madrigal",
-      version: "Tierexperte",
-    },
-    fr: {
-      name: "Antonio Madrigal",
-      version: "Expert animalier",
-    },
-    it: {
-      name: "Antonio Madrigal",
-      version: "Esperto di Animali",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "004",
@@ -41,4 +24,5 @@ export const antonioMadrigalAnimalExpert: CharacterCard = {
     tcgPlayer: 550521,
   },
   classifications: ["Storyborn", "Ally", "Madrigal"],
+  i18n: antonioMadrigalAnimalExpertI18n,
 };

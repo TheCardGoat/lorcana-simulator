@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hadesLookingForADealIconicI18n } from "./242-hades-looking-for-a-deal-iconic.i18n";
 
 export const hadesLookingForADealIconic: CharacterCard = {
   id: "R01",
@@ -7,52 +8,6 @@ export const hadesLookingForADealIconic: CharacterCard = {
   cardType: "character",
   name: "Hades",
   version: "Looking for a Deal",
-  i18n: {
-    en: {
-      name: "Hades",
-      version: "Looking for a Deal",
-      text: [
-        {
-          title: "WHAT D'YA SAY?",
-          description:
-            "When you play this character, you may choose an opposing character. If you do, draw 2 cards unless that character's player puts that card on the bottom of their deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Hades",
-      version: "Möchte ein Geschäft abschließen",
-      text: [
-        {
-          title: "NA, WAS SAGST DU?",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen gegnerischen Charakter wählen. Wenn du dies tust, ziehe 2 Karten, außer die Person, die den gewählten Charakter im Spiel hat, legt ihn unter ihr Deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "Hadès",
-      version: "Cherchant un accord",
-      text: [
-        {
-          title: "ON S'LA SERRE?",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage adverse. Si vous le faites, piochez 2 cartes sauf si son propriétaire place cette carte sous sa pioche.",
-        },
-      ],
-    },
-    it: {
-      name: "Ade",
-      version: "In Cerca di un Affare",
-      text: [
-        {
-          title: "UNA STRETTA DI MANO?",
-          description:
-            "Quando giochi questo personaggio, puoi scegliere un personaggio avversario. Se lo fai, pesca 2 carte a meno che il giocatore di quel personaggio non metta quella carta in fondo al suo mazzo.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Hercules",
   set: "010",
@@ -79,18 +34,38 @@ export const hadesLookingForADealIconic: CharacterCard = {
   abilities: [
     {
       effect: {
-        steps: [
-          {
-            from: "hand",
-            type: "play-card",
-          },
-          {
-            amount: 2,
-            target: "CONTROLLER",
-            type: "draw",
-          },
-        ],
-        type: "sequence",
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "sequence",
+          steps: [
+            {
+              type: "modify-stat",
+              stat: "strength",
+              modifier: 0,
+              duration: "this-turn",
+              target: "CHOSEN_OPPOSING_CHARACTER",
+            },
+            {
+              type: "or",
+              chooser: "OPPONENT",
+              optionLabels: ["put that character on the bottom of their deck", "you draw 2 cards"],
+              options: [
+                {
+                  type: "put-on-bottom",
+                  target: {
+                    ref: "previous-target",
+                  },
+                },
+                {
+                  amount: 2,
+                  target: "CONTROLLER",
+                  type: "draw",
+                },
+              ],
+            },
+          ],
+        },
       },
       id: "qkg-1",
       name: "WHAT D'YA SAY?",
@@ -103,4 +78,5 @@ export const hadesLookingForADealIconic: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: hadesLookingForADealIconicI18n,
 };

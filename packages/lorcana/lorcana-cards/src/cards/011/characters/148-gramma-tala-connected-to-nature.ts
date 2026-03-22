@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { grammaTalaConnectedToNatureI18n } from "./148-gramma-tala-connected-to-nature.i18n";
 
 export const grammaTalaConnectedToNature: CharacterCard = {
   id: "iSA",
@@ -7,51 +8,6 @@ export const grammaTalaConnectedToNature: CharacterCard = {
   cardType: "character",
   name: "Gramma Tala",
   version: "Connected to Nature",
-  i18n: {
-    en: {
-      name: "Gramma Tala",
-      version: "Connected to Nature",
-      text: [
-        {
-          title: "ANCESTORS' GIFT",
-          description: "For each card in your inkwell, you pay 1 {I} less to play this character.",
-        },
-      ],
-    },
-    de: {
-      name: "Gramma Tala",
-      version: "Naturverbunden",
-      text: [
-        {
-          title: "DAS GESCHENK DER AHNEN",
-          description:
-            "Für jede Karte in deinem Tintenvorrat zahlst du 1 weniger, um diesen Charakter auszuspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Grand-mère Tala",
-      version: "En communion avec la nature",
-      text: [
-        {
-          title: "DON DES ANCIENS",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins pour chaque carte dans votre réserve d'encre.",
-        },
-      ],
-    },
-    it: {
-      name: "Nonna Tala",
-      version: "Connessa con la Natura",
-      text: [
-        {
-          title: "DONO DEGLI ANTENATI",
-          description:
-            "Per ogni carta nel tuo calamaio, paga 1 in meno per giocare questo personaggio.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Moana",
   set: "011",
@@ -76,12 +32,21 @@ export const grammaTalaConnectedToNature: CharacterCard = {
   abilities: [
     {
       id: "9jo-1",
+      name: "ANCESTORS' GIFT",
+      sourceZones: ["hand"],
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: {
+          type: "filtered-count",
+          owner: "you",
+          zones: ["inkwell"],
+          filters: [],
+        },
+        cardType: "character",
+        type: "cost-reduction",
       },
-      type: "action",
+      type: "static",
       text: "ANCESTORS’ GIFT For each card in your inkwell, you pay 1 {I} less to play this character.",
     },
   ],
+  i18n: grammaTalaConnectedToNatureI18n,
 };

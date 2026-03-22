@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rancisFluggerbutterChocolateChargerI18n } from "./108-rancis-fluggerbutter-chocolate-charger.i18n";
 
 export const rancisFluggerbutterChocolateCharger: CharacterCard = {
   id: "5sW",
@@ -7,24 +8,6 @@ export const rancisFluggerbutterChocolateCharger: CharacterCard = {
   cardType: "character",
   name: "Rancis Fluggerbutter",
   version: "Chocolate Charger",
-  i18n: {
-    en: {
-      name: "Rancis Fluggerbutter",
-      version: "Chocolate Charger",
-    },
-    de: {
-      name: "Rancis Fluggerbutter",
-      version: "Aufgeladen mit Schokolade",
-    },
-    fr: {
-      name: "Jean-Hubert Lingot",
-      version: "Fonceur chocolaté",
-    },
-    it: {
-      name: "Rancis Fluggerbutter",
-      version: "Velocista di Cioccolato",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -41,4 +24,5 @@ export const rancisFluggerbutterChocolateCharger: CharacterCard = {
     tcgPlayer: 555266,
   },
   classifications: ["Storyborn", "Ally", "Racer"],
+  i18n: rancisFluggerbutterChocolateChargerI18n,
 };

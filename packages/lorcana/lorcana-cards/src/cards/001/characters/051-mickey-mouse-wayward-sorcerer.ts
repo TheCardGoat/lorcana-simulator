@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseWaywardSorcererI18n } from "./051-mickey-mouse-wayward-sorcerer.i18n";
 
 export const mickeyMouseWaywardSorcerer: CharacterCard = {
   id: "iGH",
@@ -7,68 +8,6 @@ export const mickeyMouseWaywardSorcerer: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Wayward Sorcerer",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Wayward Sorcerer",
-      text: [
-        {
-          title: "ANIMATE BROOM",
-          description: "You pay 1 {I} less to play Broom characters.",
-        },
-        {
-          title: "CEASELESS WORKER",
-          description:
-            "Whenever one of your Broom characters is banished in a challenge, you may return that card to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Micky Maus",
-      version: "Eigenwilliger Zauberer",
-      text: [
-        {
-          title: "LEBENDIGE BESEN",
-          description: "Du zahlst 1 weniger, um Besen auszuspielen.",
-        },
-        {
-          title: "UNERMÜDLICHE ARBEITER",
-          description:
-            "Jedes Mal, wenn einer deiner Besen durch eine Herausforderung verbannt wird, darfst du jene Karte zurück auf deine Hand nehmen.",
-        },
-      ],
-    },
-    fr: {
-      name: "MICKEY",
-      version: "Sorcier renégat",
-      text: [
-        {
-          title: "ANIMER LES BALAIS",
-          description: "Les personnages Balai vous coûtent 1 de moins à jouer.",
-        },
-        {
-          title: "TRAVAILLEUR INFATIGABLE",
-          description:
-            "Si l'un de vos personnages Balai est banni via un défi, vous pouvez le reprendre en main.",
-        },
-      ],
-    },
-    it: {
-      name: "Mickey Mouse",
-      version: "Wayward Sorcerer",
-      text: [
-        {
-          title: "ANIMATE BROOM",
-          description: "You pay 1 less to play Broom characters.",
-        },
-        {
-          title: "CEASELESS WORKER",
-          description:
-            "Whenever one of your Broom characters is banished in a challenge, you may return that card to your hand.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   set: "001",
   cardNumber: 51,
@@ -78,7 +17,6 @@ export const mickeyMouseWaywardSorcerer: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: true,
-  missingImplementation: true,
   externalIds: {
     lorcast: "crd_5739e1f6076840cd901a1bc283ca6e96",
     tcgPlayer: 510154,
@@ -116,4 +54,5 @@ export const mickeyMouseWaywardSorcerer: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: mickeyMouseWaywardSorcererI18n,
 };

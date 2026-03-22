@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pigletCocoaMakerI18n } from "./147-piglet-cocoa-maker.i18n";
 
 export const pigletCocoaMaker: CharacterCard = {
   id: "4rc",
@@ -7,37 +8,6 @@ export const pigletCocoaMaker: CharacterCard = {
   cardType: "character",
   name: "Piglet",
   version: "Cocoa Maker",
-  i18n: {
-    en: {
-      name: "Piglet",
-      version: "Cocoa Maker",
-      text: [
-        {
-          title: "Shift 3 {I}",
-        },
-        {
-          title: "SPECIAL RECIPE",
-          description:
-            "At the end of your turn, remove up to 2 damage from each of your characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Ferkel",
-      version: "Kakaomacher",
-      text: "Gestaltwandel 3 SPEZIALREZEPT Am Ende deines Zuges, entferne bis zu 2 Schaden von jedem deiner Charaktere.",
-    },
-    fr: {
-      name: "Porcinet",
-      version: "Fait du chocolat chaud",
-      text: "Alter 3 RECETTE SPÉCIALE À la fin de votre tour, retirez jusqu'à 2 dommages de chacun de vos personnages.",
-    },
-    it: {
-      name: "Pimpi",
-      version: "Preparatore di Cioccolata Calda",
-      text: "Trasformazione 3 RICETTA SPECIALE Alla fine del tuo turno, rimuovi fino a 2 danni da ogni tuo personaggio.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Winnie the Pooh",
   set: "011",
@@ -95,4 +65,5 @@ export const pigletCocoaMaker: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: pigletCocoaMakerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kakamoraBandOfPiratesI18n } from "./192-kakamora-band-of-pirates.i18n";
 
 export const kakamoraBandOfPirates: CharacterCard = {
   id: "TUI",
@@ -7,52 +8,6 @@ export const kakamoraBandOfPirates: CharacterCard = {
   cardType: "character",
   name: "Kakamora",
   version: "Band of Pirates",
-  i18n: {
-    en: {
-      name: "Kakamora",
-      version: "Band of Pirates",
-      text: [
-        {
-          title: "SHOWBOATING",
-          description:
-            "While you have another Pirate character in play, this character gains Challenger +3.",
-        },
-      ],
-    },
-    de: {
-      name: "Kokomora",
-      version: "Piratenbande",
-      text: [
-        {
-          title: "ANGEBEREI",
-          description:
-            "Solange du mindestens einen weiteren Piraten im Spiel hast, erhält dieser Charakter Herausfordern +3. (Während der Charakter herausfordert, erhält er +3.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Kakamora",
-      version: "Bande de pirates",
-      text: [
-        {
-          title: "FANFARONNADE",
-          description:
-            "Tant que vous avez un autre personnage Pirate en jeu, ce personnage-ci gagne Offensif +3.",
-        },
-      ],
-    },
-    it: {
-      name: "Kakamora",
-      version: "Banda di Pirati",
-      text: [
-        {
-          title: "METTERSI IN MOSTRA",
-          description:
-            "Mentre hai in gioco un altro personaggio Pirata, questo personaggio ottiene Sfidante +3.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Moana",
   set: "007",
@@ -77,15 +32,20 @@ export const kakamoraBandOfPirates: CharacterCard = {
   classifications: ["Storyborn", "Pirate"],
   abilities: [
     {
+      condition: {
+        type: "has-another-character",
+        classification: "Pirate",
+      },
       effect: {
         keyword: "Challenger",
         target: "SELF",
         type: "gain-keyword",
         value: 3,
       },
-      id: "15r-1",
+      name: "SHOWBOATING",
       text: "SHOWBOATING While you have another Pirate character in play, this character gains Challenger +3.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: kakamoraBandOfPiratesI18n,
 };

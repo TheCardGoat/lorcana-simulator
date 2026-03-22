@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rabbitIndignantPirateI18n } from "./022-rabbit-indignant-pirate.i18n";
 
 export const rabbitIndignantPirate: CharacterCard = {
   id: "p9G",
@@ -7,52 +8,6 @@ export const rabbitIndignantPirate: CharacterCard = {
   cardType: "character",
   name: "Rabbit",
   version: "Indignant Pirate",
-  i18n: {
-    en: {
-      name: "Rabbit",
-      version: "Indignant Pirate",
-      text: [
-        {
-          title: "BE MORE CAREFUL",
-          description:
-            "When you play this character, you may remove up to 1 damage from chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Rabbit",
-      version: "Empörter Pirat",
-      text: [
-        {
-          title: "SEI VORSICHTIGER",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du bis zu 1 Schaden von einem Charakter deiner Wahl entfernen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Coco Lapin",
-      version: "Pirate indigné",
-      text: [
-        {
-          title: "SOIS PLUS PRUDENT",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage et lui retirer jusqu'à 1 dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Tappo",
-      version: "Pirata Indignato",
-      text: [
-        {
-          title: "STAI PIÙ ATTENTO",
-          description:
-            "Quando giochi questo personaggio, puoi rimuovere fino a 1 danno da un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Winnie the Pooh",
   set: "006",
@@ -104,4 +59,5 @@ export const rabbitIndignantPirate: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: rabbitIndignantPirateI18n,
 };

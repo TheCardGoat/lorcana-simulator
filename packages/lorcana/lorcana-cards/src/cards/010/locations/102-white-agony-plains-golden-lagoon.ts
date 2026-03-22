@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { whiteAgonyPlainsGoldenLagoonI18n } from "./102-white-agony-plains-golden-lagoon.i18n";
 
 export const whiteAgonyPlainsGoldenLagoon: LocationCard = {
   id: "4XD",
@@ -7,48 +8,6 @@ export const whiteAgonyPlainsGoldenLagoon: LocationCard = {
   cardType: "location",
   name: "White Agony Plains",
   version: "Golden Lagoon",
-  i18n: {
-    en: {
-      name: "White Agony Plains",
-      version: "Golden Lagoon",
-      text: [
-        {
-          title: "PURE LIQUID GOLD",
-          description: "This location gets +1 {L} for each character here.",
-        },
-      ],
-    },
-    de: {
-      name: "Tal des weißen Todes",
-      version: "Goldene Lagune",
-      text: [
-        {
-          title: "REINES FLÜSSIGES GOLD",
-          description: "Dieser Ort erhält +1 für jeden Charakter an diesem Ort.",
-        },
-      ],
-    },
-    fr: {
-      name: "Plaines de l’Agonie Blanche",
-      version: "Lagon doré",
-      text: [
-        {
-          title: "DE L'OR LIQUIDE PUR",
-          description: "Ce lieu gagne +1 pour chaque personnage sur lui.",
-        },
-      ],
-    },
-    it: {
-      name: "Pianure dell'Agonia Bianca",
-      version: "Laguna Dorata",
-      text: [
-        {
-          title: "CASCATE DI ORO LIQUIDO",
-          description: "Questo luogo riceve +1 per ogni personaggio in questo luogo.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Ducktales",
   set: "010",
@@ -93,4 +52,5 @@ export const whiteAgonyPlainsGoldenLagoon: LocationCard = {
       },
     },
   ],
+  i18n: whiteAgonyPlainsGoldenLagoonI18n,
 };

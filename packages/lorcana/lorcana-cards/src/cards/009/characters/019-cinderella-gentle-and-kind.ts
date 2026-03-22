@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cinderellaGentleAndKindI18n } from "./019-cinderella-gentle-and-kind.i18n";
 
 export const cinderellaGentleAndKind: CharacterCard = {
   id: "4II",
@@ -7,48 +8,6 @@ export const cinderellaGentleAndKind: CharacterCard = {
   cardType: "character",
   name: "Cinderella",
   version: "Gentle and Kind",
-  i18n: {
-    en: {
-      name: "Cinderella",
-      version: "Gentle and Kind",
-      text: [
-        {
-          title: "Singer 5",
-        },
-        {
-          title: "A WONDERFUL DREAM",
-          description: "{E} — Remove up to 3 damage from chosen Princess character.",
-        },
-      ],
-    },
-    de: {
-      name: "Cinderella",
-      version: "Behutsam und freundlich",
-      text: [
-        {
-          title: "Singen 5",
-          description:
-            "(Die Kosten dieses Charakters gelten als 5 für das Singen von Liedern.) EIN WUNDERVOLLER TRAUM — Entferne bis zu 3 Schaden von einer Prinzessin deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "CENDRILLON",
-      version: "Douce et charmante",
-      text: "Mélomane 5 (Ce personnage est considéré comme ayant un coût de 5 pour chanter des chansons.) UN RÊVE MAGNIFIQUE — Choisissez un personnage Princesse et retirez-lui jusqu'à 3 jetons Dommage.",
-    },
-    it: {
-      name: "Cinderella",
-      version: "Gentle and Kind",
-      text: [
-        {
-          title: "Singer 5",
-          description:
-            "(This character counts as cost 5 to sing songs.) A WONDERFUL DREAM — Remove up to 3 damage from chosen Princess character.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Cinderella",
   set: "009",
@@ -90,6 +49,12 @@ export const cinderellaGentleAndKind: CharacterCard = {
         target: {
           cardTypes: ["character"],
           count: 1,
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Princess",
+            },
+          ],
           owner: "any",
           selector: "chosen",
           zones: ["play"],
@@ -102,4 +67,5 @@ export const cinderellaGentleAndKind: CharacterCard = {
       type: "activated",
     },
   ],
+  i18n: cinderellaGentleAndKindI18n,
 };

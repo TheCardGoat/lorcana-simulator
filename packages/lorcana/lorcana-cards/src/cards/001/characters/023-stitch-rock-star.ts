@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stitchRockStarI18n } from "./023-stitch-rock-star.i18n";
 
 export const stitchRockStar: CharacterCard = {
   id: "kSG",
@@ -7,55 +8,6 @@ export const stitchRockStar: CharacterCard = {
   cardType: "character",
   name: "Stitch",
   version: "Rock Star",
-  i18n: {
-    en: {
-      name: "Stitch",
-      version: "Rock Star",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "ADORING FANS",
-          description:
-            "Whenever you play a character with cost 2 or less, you may exert them to draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Stitch",
-      version: "Rock Star",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Stitch.) ADORING FANS Whenever you play a character with cost 2 or less, you may exert them to draw a card.",
-        },
-      ],
-    },
-    fr: {
-      name: "Stitch",
-      version: "Rock Star",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Stitch.) ADORING FANS Whenever you play a character with cost 2 or less, you may exert them to draw a card.",
-        },
-      ],
-    },
-    it: {
-      name: "Stitch",
-      version: "Rock Star",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Stitch.) ADORING FANS Whenever you play a character with cost 2 or less, you may exert them to draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "001",
@@ -66,7 +18,6 @@ export const stitchRockStar: CharacterCard = {
   willpower: 5,
   lore: 3,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_1135ff76d7504441942b3f9e9edae58d",
     tcgPlayer: 649952,
@@ -96,9 +47,20 @@ export const stitchRockStar: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
+          type: "sequence",
+          effects: [
+            {
+              type: "exert",
+              target: {
+                ref: "trigger-subject",
+              },
+            },
+            {
+              amount: 1,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+          ],
         },
         type: "optional",
       },
@@ -123,4 +85,5 @@ export const stitchRockStar: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: stitchRockStarI18n,
 };

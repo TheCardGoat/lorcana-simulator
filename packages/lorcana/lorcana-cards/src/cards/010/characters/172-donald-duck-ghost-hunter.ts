@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckGhostHunterI18n } from "./172-donald-duck-ghost-hunter.i18n";
 
 export const donaldDuckGhostHunter: CharacterCard = {
   id: "8QA",
@@ -7,52 +8,6 @@ export const donaldDuckGhostHunter: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Ghost Hunter",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Ghost Hunter",
-      text: [
-        {
-          title: "RAISE A RUCKUS",
-          description:
-            "When you play this character, chosen Detective character gains Challenger +2 this turn. (They get +2 {S} while challenging.)",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Geisterjäger",
-      text: [
-        {
-          title: "EINEN AUFSTAND ANZETTELN",
-          description:
-            "Wenn du diesen Charakter ausspielst, erhält ein Detektiv deiner Wahl in diesem Zug Herausfordern +2. (Während der Charakter herausfordert, erhält er +2.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Donald",
-      version: "Chasseur de fantômes",
-      text: [
-        {
-          title: "FAIRE DU GRABUGE",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage Détective qui gagne Offensif +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Paperino",
-      version: "Cacciatore di Fantasmi",
-      text: [
-        {
-          title: "ALZARE UN POLVERONE",
-          description:
-            "Quando giochi questo personaggio, un personaggio Detective a tua scelta ottiene Sfidante +2 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   set: "010",
   cardNumber: 172,
@@ -68,9 +23,9 @@ export const donaldDuckGhostHunter: CharacterCard = {
   },
   text: [
     {
-      title: "RAISE A RUCKUS",
+      title: "RAISE",
       description:
-        "When you play this character, chosen Detective character gains Challenger +2 this turn. (They get +2 {S} while challenging.)",
+        "A RUCKUS When you play this character, chosen Detective character gains Challenger +2 this turn. (They get +2 {S} while challenging.)",
     },
   ],
   classifications: ["Dreamborn", "Hero", "Detective"],
@@ -79,7 +34,19 @@ export const donaldDuckGhostHunter: CharacterCard = {
       effect: {
         duration: "this-turn",
         keyword: "Challenger",
-        target: "CHOSEN_CHARACTER",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Detective",
+            },
+          ],
+        },
         type: "gain-keyword",
         value: 2,
       },
@@ -94,4 +61,5 @@ export const donaldDuckGhostHunter: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: donaldDuckGhostHunterI18n,
 };

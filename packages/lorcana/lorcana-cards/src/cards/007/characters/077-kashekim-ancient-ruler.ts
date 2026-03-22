@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kashekimAncientRulerI18n } from "./077-kashekim-ancient-ruler.i18n";
 
 export const kashekimAncientRuler: CharacterCard = {
   id: "COQ",
@@ -7,24 +8,6 @@ export const kashekimAncientRuler: CharacterCard = {
   cardType: "character",
   name: "Kashekim",
   version: "Ancient Ruler",
-  i18n: {
-    en: {
-      name: "Kashekim",
-      version: "Ancient Ruler",
-    },
-    de: {
-      name: "Kashekim",
-      version: "Antiker Herrscher",
-    },
-    fr: {
-      name: "Kashekim",
-      version: "Souverain ancestral",
-    },
-    it: {
-      name: "Kashekim",
-      version: "Antico Sovrano",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Atlantis",
   set: "007",
@@ -41,4 +24,5 @@ export const kashekimAncientRuler: CharacterCard = {
     tcgPlayer: 618268,
   },
   classifications: ["Storyborn", "King"],
+  i18n: kashekimAncientRulerI18n,
 };

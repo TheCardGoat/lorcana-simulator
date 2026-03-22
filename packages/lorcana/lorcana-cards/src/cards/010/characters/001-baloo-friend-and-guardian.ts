@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { balooFriendAndGuardianI18n } from "./001-baloo-friend-and-guardian.i18n";
 
 export const balooFriendAndGuardian: CharacterCard = {
   id: "T1d",
@@ -7,41 +8,6 @@ export const balooFriendAndGuardian: CharacterCard = {
   cardType: "character",
   name: "Baloo",
   version: "Friend and Guardian",
-  i18n: {
-    en: {
-      name: "Baloo",
-      version: "Friend and Guardian",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "Support",
-        },
-      ],
-    },
-    de: {
-      name: "Balu",
-      version: "Freund und Beschützer",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Baloo",
-      version: "Ami et gardien",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.) Soutien",
-        },
-      ],
-    },
-    it: {
-      name: "Baloo",
-      version: "Amico e Guardiano",
-      text: "Guardiano Aiutante",
-    },
-  },
   inkType: ["amber"],
   franchise: "Jungle Book",
   set: "010",
@@ -79,4 +45,5 @@ export const balooFriendAndGuardian: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: balooFriendAndGuardianI18n,
 };

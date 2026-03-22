@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arthurWizardsApprenticeI18n } from "./035-arthur-wizards-apprentice.i18n";
 
 export const arthurWizardsApprentice: CharacterCard = {
   id: "W0X",
@@ -7,52 +8,6 @@ export const arthurWizardsApprentice: CharacterCard = {
   cardType: "character",
   name: "Arthur",
   version: "Wizard's Apprentice",
-  i18n: {
-    en: {
-      name: "Arthur",
-      version: "Wizard's Apprentice",
-      text: [
-        {
-          title: "STUDENT",
-          description:
-            "Whenever this character quests, you may return another chosen character of yours to your hand to gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Arthur",
-      version: "Zauberlehrling",
-      text: [
-        {
-          title: "SCHÜLER",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du einen deiner anderen Charaktere wählen und zurück auf deine Hand nehmen, um 2 Legenden zu sammeln.",
-        },
-      ],
-    },
-    fr: {
-      name: "Arthur",
-      version: "Apprenti de l'Enchanteur",
-      text: [
-        {
-          title: "ÉTUDIANT",
-          description:
-            "Lorsque ce personnage est envoyé à l'aventure, vous pouvez renvoyer l'un de vos autres personnages en jeu dans votre main pour gagner 2 éclats de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Arthur",
-      version: "Wizard's Apprentice",
-      text: [
-        {
-          title: "STUDENT",
-          description:
-            "Whenever this character quests, you may return another chosen character of yours to your hand to gain 2 lore.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -75,16 +30,42 @@ export const arthurWizardsApprentice: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Sorcerer"],
-  missingTests: true,
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          amount: 2,
-          type: "gain-lore",
-        },
-        type: "optional",
+        steps: [
+          {
+            chooser: "CONTROLLER",
+            effect: {
+              steps: [
+                {
+                  target: {
+                    cardTypes: ["character"],
+                    count: 1,
+                    excludeSelf: true,
+                    owner: "you",
+                    selector: "chosen",
+                    zones: ["play"],
+                  },
+                  type: "return-to-hand",
+                },
+                {
+                  condition: {
+                    type: "if-you-do",
+                  },
+                  then: {
+                    amount: 2,
+                    type: "gain-lore",
+                  },
+                  type: "conditional",
+                },
+              ],
+              type: "sequence",
+            },
+            type: "optional",
+          },
+        ],
+        type: "sequence",
       },
       trigger: {
         event: "quest",
@@ -94,4 +75,5 @@ export const arthurWizardsApprentice: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: arthurWizardsApprenticeI18n,
 };

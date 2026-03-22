@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cheshireCatPerplexingFelineI18n } from "./091-cheshire-cat-perplexing-feline.i18n";
 
 export const cheshireCatPerplexingFeline: CharacterCard = {
   id: "u62",
@@ -7,52 +8,6 @@ export const cheshireCatPerplexingFeline: CharacterCard = {
   cardType: "character",
   name: "Cheshire Cat",
   version: "Perplexing Feline",
-  i18n: {
-    en: {
-      name: "Cheshire Cat",
-      version: "Perplexing Feline",
-      text: [
-        {
-          title: "MAD GRIN",
-          description:
-            "When you play this character, you may deal 2 damage to chosen damaged character.",
-        },
-      ],
-    },
-    de: {
-      name: "Grinsekatze",
-      version: "Verwirrende Katze",
-      text: [
-        {
-          title: "VERRÜCKTES GRINSEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einem beschädigten Charakter deiner Wahl 2 Schaden zufügen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Chat du Cheshire",
-      version: "Félin déroutant",
-      text: [
-        {
-          title: "SOURIRE DÉMENT",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage avec au moins un dommage et lui infliger 2 dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "Stregatto",
-      version: "Felino Sconcertante",
-      text: [
-        {
-          title: "FOLLE GHIGNO",
-          description:
-            "Quando giochi questo personaggio, puoi infliggere 2 danni a un personaggio danneggiato a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Alice in Wonderland",
   set: "007",
@@ -103,4 +58,5 @@ export const cheshireCatPerplexingFeline: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: cheshireCatPerplexingFelineI18n,
 };

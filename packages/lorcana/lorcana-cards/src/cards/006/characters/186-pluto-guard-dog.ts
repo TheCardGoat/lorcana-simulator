@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { plutoGuardDogI18n } from "./186-pluto-guard-dog.i18n";
 
 export const plutoGuardDog: CharacterCard = {
   id: "mEY",
@@ -7,42 +8,6 @@ export const plutoGuardDog: CharacterCard = {
   cardType: "character",
   name: "Pluto",
   version: "Guard Dog",
-  i18n: {
-    en: {
-      name: "Pluto",
-      version: "Guard Dog",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "BRAVO",
-          description: "While this character has no damage, he gets +4 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Pluto",
-      version: "Wachhund",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) GUTER JUNGE Solange dieser Charakter unbeschädigt ist, erhält er +4.",
-    },
-    fr: {
-      name: "Pluto",
-      version: "Chien de garde",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'un adversaire défie l'un de vos personnages, il doit, si possible, choisir l'un de vos personnages avec Rempart.) BON CHIEN Tant que ce personnage n'a aucun dommage sur lui, il gagne +4.",
-        },
-      ],
-    },
-    it: {
-      name: "Pluto",
-      version: "Cane da Guardia",
-      text: "Guardiano BRAVO Mentre questo personaggio non ha danno, riceve +4.",
-    },
-  },
   inkType: ["steel"],
   set: "006",
   cardNumber: 186,
@@ -85,4 +50,5 @@ export const plutoGuardDog: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: plutoGuardDogI18n,
 };

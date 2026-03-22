@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { noiOrphanedThiefI18n } from "./155-noi-orphaned-thief.i18n";
 
 export const noiOrphanedThief: CharacterCard = {
   id: "blI",
@@ -7,52 +8,6 @@ export const noiOrphanedThief: CharacterCard = {
   cardType: "character",
   name: "Noi",
   version: "Orphaned Thief",
-  i18n: {
-    en: {
-      name: "Noi",
-      version: "Orphaned Thief",
-      text: [
-        {
-          title: "HIDE AND SEEK",
-          description:
-            "While you have an item in play, this character gains Resist +1 and Ward. (Damage dealt to this character is reduced by 1. Opponents can't choose this character except to challenge.)",
-        },
-      ],
-    },
-    de: {
-      name: "Kleine Noi",
-      version: "Verwaiste Diebin",
-      text: [
-        {
-          title: "VERSTECKEN SPIELEN",
-          description:
-            "Solange du mindestens einen Gegenstand im Spiel hast, erhält dieser Charakter Robust +1 und Behütet. (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1. Gegnerische Karten können ihn nicht auswählen, außer um ihn herauszufordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Bébé Noi",
-      version: "Voleuse orpheline",
-      text: [
-        {
-          title: "CACHE-CACHE",
-          description:
-            "Tant que vous avez un objet en jeu, ce personnage gagne Résistance +1 et Hors d'atteinte. (Les dommages qui lui sont infligés sont réduits de 1. Les adversaires ne peuvent pas choisir ce personnage, hormis pour un défi.)",
-        },
-      ],
-    },
-    it: {
-      name: "Noi",
-      version: "Orphaned Thief",
-      text: [
-        {
-          title: "HIDE AND SEEK",
-          description:
-            "While you have an item in play, this character gains Resist +1 and Ward. (Damage dealt to this character is reduced by 1. Opponents can't choose this character except to challenge.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Raya and the Last Dragon",
   set: "002",
@@ -75,7 +30,6 @@ export const noiOrphanedThief: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       condition: {
@@ -111,4 +65,6 @@ export const noiOrphanedThief: CharacterCard = {
       type: "static",
     },
   ],
+  missingTests: true,
+  i18n: noiOrphanedThiefI18n,
 };

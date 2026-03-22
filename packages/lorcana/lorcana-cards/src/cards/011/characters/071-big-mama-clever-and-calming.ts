@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { bigMamaCleverAndCalmingI18n } from "./071-big-mama-clever-and-calming.i18n";
 
 export const bigMamaCleverAndCalming: CharacterCard = {
   id: "vUl",
@@ -7,28 +8,6 @@ export const bigMamaCleverAndCalming: CharacterCard = {
   cardType: "character",
   name: "Big Mama",
   version: "Clever and Calming",
-  i18n: {
-    en: {
-      name: "Big Mama",
-      version: "Clever and Calming",
-      text: "Ward",
-    },
-    de: {
-      name: "Big Mama",
-      version: "Weise und beruhigend",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Big Mama",
-      version: "Astucieuse et apaisante",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Gran Ma'",
-      version: "Arguta e Rassicurante",
-      text: "Protetto",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Fox and the Hound",
   set: "011",
@@ -53,4 +32,5 @@ export const bigMamaCleverAndCalming: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: bigMamaCleverAndCalmingI18n,
 };

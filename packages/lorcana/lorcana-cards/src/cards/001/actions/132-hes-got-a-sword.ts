@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { hesGotASwordI18n } from "./132-hes-got-a-sword.i18n";
 
 export const hesGotASword: ActionCard = {
   id: "CpS",
@@ -6,24 +7,6 @@ export const hesGotASword: ActionCard = {
   reprints: ["set1-132"],
   cardType: "action",
   name: "He's Got a Sword!",
-  i18n: {
-    en: {
-      name: "He's Got a Sword!",
-      text: "Chosen character gets +2 {S} this turn.",
-    },
-    de: {
-      name: "Er hat ein Schwert!",
-      text: "Gib einem Charakter deiner Wahl in diesem Zug +2.",
-    },
-    fr: {
-      name: "IL A UN SABRE !",
-      text: "Choisissez un personnage, il gagne +2 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Ha una Spada!",
-      text: "Un personaggio a tua scelta riceve +2 per questo turno.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aladdin",
   set: "001",
@@ -48,4 +31,5 @@ export const hesGotASword: ActionCard = {
       },
     },
   ],
+  i18n: hesGotASwordI18n,
 };

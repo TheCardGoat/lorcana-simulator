@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { doloresMadrigalWithinEarshotI18n } from "./078-dolores-madrigal-within-earshot.i18n";
 
 export const doloresMadrigalWithinEarshot: CharacterCard = {
   id: "9wm",
@@ -7,52 +8,6 @@ export const doloresMadrigalWithinEarshot: CharacterCard = {
   cardType: "character",
   name: "Dolores Madrigal",
   version: "Within Earshot",
-  i18n: {
-    en: {
-      name: "Dolores Madrigal",
-      version: "Within Earshot",
-      text: [
-        {
-          title: "I HEAR YOU",
-          description:
-            "Whenever one of your characters sings a song, chosen opponent reveals their hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Dolores Madrigal",
-      version: "In Hörweite",
-      text: [
-        {
-          title: "ICH HÖR' DICH",
-          description:
-            "Jedes Mal, wenn einer deiner Charaktere ein Lied singt, zeigt eine gegnerische Person deiner Wahl all ihre Handkarten für alle sichtbar vor.",
-        },
-      ],
-    },
-    fr: {
-      name: "Dolores Madrigal",
-      version: "À portée d’oreille",
-      text: [
-        {
-          title: "JE T'ENTENDS, OUI",
-          description:
-            "Chaque fois qu'un ou plusieurs de vos personnages chantent une chanson, choisissez un adversaire qui révèle sa main.",
-        },
-      ],
-    },
-    it: {
-      name: "Dolores Madrigal",
-      version: "A Portata di Orecchio",
-      text: [
-        {
-          title: "TI SENTO",
-          description:
-            "Ogni volta che uno dei tuoi personaggi canta una canzone, un avversario a tua scelta rivela la sua mano.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "007",
@@ -75,5 +30,22 @@ export const doloresMadrigalWithinEarshot: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Madrigal"],
-  abilities: [],
+  abilities: [
+    {
+      id: "9wm-1",
+      name: "I HEAR YOU",
+      text: "I HEAR YOU Whenever one of your characters sings a song, chosen opponent reveals their hand.",
+      type: "triggered",
+      trigger: {
+        event: "sing",
+        on: "YOUR_CHARACTERS",
+        timing: "whenever",
+      },
+      effect: {
+        type: "reveal-hand",
+        target: "OPPONENT",
+      },
+    },
+  ],
+  i18n: doloresMadrigalWithinEarshotI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { giantCobraGhostlySerpentI18n } from "./057-giant-cobra-ghostly-serpent.i18n";
 
 export const giantCobraGhostlySerpent: CharacterCard = {
   id: "FdJ",
@@ -7,56 +8,6 @@ export const giantCobraGhostlySerpent: CharacterCard = {
   cardType: "character",
   name: "Giant Cobra",
   version: "Ghostly Serpent",
-  i18n: {
-    en: {
-      name: "Giant Cobra",
-      version: "Ghostly Serpent",
-      text: [
-        {
-          title: "Vanish",
-          description: "(When an opponent chooses this character for an action, banish them.)",
-        },
-        {
-          title: "MYSTERIOUS ADVANTAGE",
-          description:
-            "When you play this character, you may choose and discard a card to gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Riesenkobra",
-      version: "Geisterhafte Schlange",
-      text: [
-        {
-          title: "Verschwinden",
-          description:
-            "(Jedes Mal, wenn dieser Charakter von einer Aktion einer gegnerischen Person ausgewählt wird, verbanne ihn.) MYSTERIÖSER VORTEIL Wenn du diesen Charakter ausspielst, darfst du eine Karte von deiner Hand auswählen und abwerfen, um 2 Legenden zu sammeln.",
-        },
-      ],
-    },
-    fr: {
-      name: "Cobra géant",
-      version: "Serpent fantomatique",
-      text: [
-        {
-          title: "Dissipation",
-          description:
-            "(Lorsqu'un adversaire choisit ce personnage avec une action, bannissez-le.) MYSTÉRIEUX AVANTAGE Lorsque vous jouez ce personnage, vous pouvez défausser une carte pour gagner 2 éclats de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Cobra Gigante",
-      version: "Serpente Spettrale",
-      text: [
-        {
-          title: "Svanire",
-          description:
-            "(Quando un avversario sceglie questo personaggio per un'azione, esilialo.) VANTAGGIO MISTERIOSO Quando giochi questo personaggio, puoi scegliere e scartare una carta per ottenere 2 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst", "steel"],
   franchise: "Aladdin",
   set: "007",
@@ -94,8 +45,21 @@ export const giantCobraGhostlySerpent: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 2,
-          type: "gain-lore",
+          type: "sequence",
+          steps: [
+            {
+              amount: 1,
+              chosen: true,
+              from: "hand",
+              target: "CONTROLLER",
+              type: "discard",
+            },
+            {
+              amount: 2,
+              target: "CONTROLLER",
+              type: "gain-lore",
+            },
+          ],
         },
         type: "optional",
       },
@@ -110,4 +74,5 @@ export const giantCobraGhostlySerpent: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: giantCobraGhostlySerpentI18n,
 };

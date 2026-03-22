@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { motherGothelWitheredAndWickedI18n } from "./116-mother-gothel-withered-and-wicked.i18n";
 
 export const motherGothelWitheredAndWicked: CharacterCard = {
   id: "5YN",
@@ -7,48 +8,6 @@ export const motherGothelWitheredAndWicked: CharacterCard = {
   cardType: "character",
   name: "Mother Gothel",
   version: "Withered and Wicked",
-  i18n: {
-    en: {
-      name: "Mother Gothel",
-      version: "Withered and Wicked",
-      text: [
-        {
-          title: "WHAT HAVE YOU DONE?!",
-          description: "This character enters play with 3 damage.",
-        },
-      ],
-    },
-    de: {
-      name: "Mutter Gothel",
-      version: "Verwelkt und verrucht",
-      text: [
-        {
-          title: "WAS HAST DU GETAN?!",
-          description: "Dieser Charakter kommt mit 3 Schaden auf ihm ins Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mère Gothel",
-      version: "Mauvaise et desséchée",
-      text: [
-        {
-          title: "QU'AVEZ-VOUS FAIT?!",
-          description: "Ce personnage entre en jeu avec 3 jetons Dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Mother Gothel",
-      version: "Withered and Wicked",
-      text: [
-        {
-          title: "WHAT HAVE YOU DONE?!",
-          description: "This character enters play with 3 damage.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Tangled",
   set: "002",
@@ -70,7 +29,6 @@ export const motherGothelWitheredAndWicked: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -83,4 +41,6 @@ export const motherGothelWitheredAndWicked: CharacterCard = {
       type: "static",
     },
   ],
+  missingTests: true,
+  i18n: motherGothelWitheredAndWickedI18n,
 };

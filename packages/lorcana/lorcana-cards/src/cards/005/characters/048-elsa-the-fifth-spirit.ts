@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { elsaTheFifthSpiritI18n } from "./048-elsa-the-fifth-spirit.i18n";
 
 export const elsaTheFifthSpirit: CharacterCard = {
   id: "PX4",
@@ -7,45 +8,6 @@ export const elsaTheFifthSpirit: CharacterCard = {
   cardType: "character",
   name: "Elsa",
   version: "The Fifth Spirit",
-  i18n: {
-    en: {
-      name: "Elsa",
-      version: "The Fifth Spirit",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "CRYSTALLIZE",
-          description: "When you play this character, exert chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Elsa",
-      version: "Der fünfte Geist",
-      text: "Rasant Wendig KRISTALLISIEREN Wenn du diesen Charakter ausspielst, erschöpfe einen gegnerischen Charakter deiner Wahl.",
-    },
-    fr: {
-      name: "Elsa",
-      version: "Le cinquième esprit",
-      text: "Charge Insaisissable CRISTALLISATION Lorsque vous jouez ce personnage, choisissez un personnage adverse et épuisez-le.",
-    },
-    it: {
-      name: "Elsa",
-      version: "Il Quinto Spirito",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) Sfuggente CRISTALLIZZARE Quando giochi questo personaggio, impegna un personaggio avversario a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "005",
@@ -108,4 +70,5 @@ export const elsaTheFifthSpirit: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: elsaTheFifthSpiritI18n,
 };

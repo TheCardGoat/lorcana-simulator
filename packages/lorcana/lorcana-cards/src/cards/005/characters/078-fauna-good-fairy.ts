@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { faunaGoodFairyI18n } from "./078-fauna-good-fairy.i18n";
 
 export const faunaGoodFairy: CharacterCard = {
   id: "Frg",
@@ -7,24 +8,6 @@ export const faunaGoodFairy: CharacterCard = {
   cardType: "character",
   name: "Fauna",
   version: "Good Fairy",
-  i18n: {
-    en: {
-      name: "Fauna",
-      version: "Good Fairy",
-    },
-    de: {
-      name: "Fauna",
-      version: "Gute Fee",
-    },
-    fr: {
-      name: "Pâquerette",
-      version: "Bonne fée",
-    },
-    it: {
-      name: "Fauna",
-      version: "Buona Fata",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Sleeping Beauty",
   set: "005",
@@ -41,4 +24,5 @@ export const faunaGoodFairy: CharacterCard = {
     tcgPlayer: 561167,
   },
   classifications: ["Storyborn", "Ally", "Fairy"],
+  i18n: faunaGoodFairyI18n,
 };

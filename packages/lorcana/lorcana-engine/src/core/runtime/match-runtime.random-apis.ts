@@ -3,15 +3,15 @@
  */
 
 import type { Draft } from "immer";
+import seedrandom from "seedrandom";
 import type { MatchState } from "./types";
 import type { RandomAPI } from "./match-runtime.types";
 
-export function createRandomAPIForDraft<G>(draft: Draft<MatchState<G>>): RandomAPI {
+export function createRandomAPIForDraft(draft: Draft<MatchState>): RandomAPI {
   const random = (): number => {
     draft.ctx.random.draws++;
     const seed = draft.ctx.random.seed;
-    const x = Math.sin(seed.length * 9999 + draft.ctx.random.draws) * 10000;
-    return x - Math.floor(x);
+    return seedrandom(`${seed}:${draft.ctx.random.draws}`)();
   };
 
   return {

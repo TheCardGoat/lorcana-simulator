@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chienpoSnowWarriorI18n } from "./074-chien-po-snow-warrior.i18n";
 
 export const chienpoSnowWarrior: CharacterCard = {
   id: "dxb",
@@ -7,24 +8,6 @@ export const chienpoSnowWarrior: CharacterCard = {
   cardType: "character",
   name: "Chien-Po",
   version: "Snow Warrior",
-  i18n: {
-    en: {
-      name: "Chien-Po",
-      version: "Snow Warrior",
-    },
-    de: {
-      name: "Chien-Po",
-      version: "Schneekrieger",
-    },
-    fr: {
-      name: "Chien-Po",
-      version: "Guerrier des neiges",
-    },
-    it: {
-      name: "Chien-Po",
-      version: "Guerriero delle Nevi",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Mulan",
   set: "011",
@@ -41,4 +24,6 @@ export const chienpoSnowWarrior: CharacterCard = {
     tcgPlayer: 675388,
   },
   classifications: ["Storyborn", "Ally"],
+  abilities: [],
+  i18n: chienpoSnowWarriorI18n,
 };

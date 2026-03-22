@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { aliceWellreadWhisperI18n } from "./036-alice-well-read-whisper.i18n";
 
 export const aliceWellreadWhisper: CharacterCard = {
   id: "Sgs",
@@ -7,43 +8,6 @@ export const aliceWellreadWhisper: CharacterCard = {
   cardType: "character",
   name: "Alice",
   version: "Well-Read Whisper",
-  i18n: {
-    en: {
-      name: "Alice",
-      version: "Well-Read Whisper",
-      text: [
-        {
-          title: "Boost 2 {I}",
-        },
-        {
-          title: "MYSTICAL INSIGHT",
-          description:
-            "Whenever this character quests, put all cards from under her into your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Alice",
-      version: "Belesenes Geflüster",
-      text: "Stärken 2 MYSTISCHE EINSICHT Jedes Mal, wenn dieser Charakter erkundet, nimm alle Karten unter ihm auf deine Hand.",
-    },
-    fr: {
-      name: "Alice",
-      version: "Lueur cultivée",
-      text: "Boost 2 INTUITION MYSTIQUE Chaque fois que ce personnage est envoyé à l'aventure, placez toutes les cartes sous lui dans votre main.",
-    },
-    it: {
-      name: "Alice",
-      version: "Sussurro Istruito",
-      text: [
-        {
-          title: "Potenziamento 2",
-          description:
-            "(Una volta durante il tuo turno, puoi pagare 2 per mettere la prima carta del tuo mazzo a faccia in giù sotto a questo personaggio.) CONOSCENZA MISTICA Ogni volta che questo personaggio va all'avventura, aggiungi tutte le carte sotto di esso alla tua mano.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Alice in Wonderland",
   set: "011",
@@ -68,5 +32,48 @@ export const aliceWellreadWhisper: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Whisper"],
-  abilities: [],
+  abilities: [
+    {
+      id: "1k8-1",
+      keyword: "Boost",
+      type: "keyword",
+      value: 2,
+      text: "Boost 2 {I}",
+    },
+    {
+      id: "1k8-2",
+      name: "MYSTICAL INSIGHT",
+      text: "MYSTICAL INSIGHT Whenever this character quests, put all cards from under her into your hand.",
+      type: "triggered",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          zones: ["limbo"],
+          owner: "you",
+          filter: [
+            {
+              type: "under-parent",
+              owner: "you",
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
+      effect: {
+        type: "move-cards-from-under",
+        destination: "hand",
+        target: "SELF",
+      },
+    },
+  ],
+  i18n: aliceWellreadWhisperI18n,
 };

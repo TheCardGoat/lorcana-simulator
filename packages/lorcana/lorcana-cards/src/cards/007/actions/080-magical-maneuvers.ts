@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { magicalManeuversI18n } from "./080-magical-maneuvers.i18n";
 
 export const magicalManeuvers: ActionCard = {
   id: "9hd",
@@ -6,24 +7,6 @@ export const magicalManeuvers: ActionCard = {
   reprints: ["set7-080"],
   cardType: "action",
   name: "Magical Maneuvers",
-  i18n: {
-    en: {
-      name: "Magical Maneuvers",
-      text: "Return chosen character of yours to your hand. Exert chosen character.",
-    },
-    de: {
-      name: "Magische Manöver",
-      text: "Wähle einen deiner Charaktere und nimm ihn zurück auf deine Hand. Erschöpfe einen Charakter deiner Wahl.",
-    },
-    fr: {
-      name: "Manœuvres magiques",
-      text: "Choisissez l'un de vos personnages et renvoyez-le dans votre main. Choisissez un personnage et épuisez-le.",
-    },
-    it: {
-      name: "Manovre Magiche",
-      text: "Riprendi in mano un tuo personaggio a tua scelta. Impegna un personaggio a tua scelta.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sleeping Beauty",
   set: "007",
@@ -68,4 +51,5 @@ export const magicalManeuvers: ActionCard = {
       type: "action",
     },
   ],
+  i18n: magicalManeuversI18n,
 };

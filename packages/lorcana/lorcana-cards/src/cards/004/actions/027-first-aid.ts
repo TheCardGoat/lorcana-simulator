@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { firstAidI18n } from "./027-first-aid.i18n";
 
 export const firstAid: ActionCard = {
   id: "qRf",
@@ -6,24 +7,6 @@ export const firstAid: ActionCard = {
   reprints: ["set4-027"],
   cardType: "action",
   name: "First Aid",
-  i18n: {
-    en: {
-      name: "First Aid",
-      text: "Remove up to 1 damage from each of your characters.",
-    },
-    de: {
-      name: "Erste Hilfe",
-      text: "Entferne bis zu 1 Schaden von jedem deiner Charaktere.",
-    },
-    fr: {
-      name: "Premiers Secours",
-      text: "Retirez jusqu'à 1 jeton Dommage de chacun de vos personnages.",
-    },
-    it: {
-      name: "Primo Soccorso",
-      text: "Rimuovi fino a 1 danno da ogni tuo personaggio.",
-    },
-  },
   inkType: ["amber"],
   set: "004",
   cardNumber: 27,
@@ -55,4 +38,5 @@ export const firstAid: ActionCard = {
       type: "action",
     },
   ],
+  i18n: firstAidI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madameMedusaDiamondLoverI18n } from "./053-madame-medusa-diamond-lover.i18n";
 
 export const madameMedusaDiamondLover: CharacterCard = {
   id: "75X",
@@ -7,52 +8,6 @@ export const madameMedusaDiamondLover: CharacterCard = {
   cardType: "character",
   name: "Madame Medusa",
   version: "Diamond Lover",
-  i18n: {
-    en: {
-      name: "Madame Medusa",
-      version: "Diamond Lover",
-      text: [
-        {
-          title: "SEARCH THE SWAMP",
-          description:
-            "Whenever this character quests, you may deal 2 damage to another chosen character of yours to put the top 3 cards of chosen player's deck into their discard.",
-        },
-      ],
-    },
-    de: {
-      name: "Madam Medusa",
-      version: "Diamantenliebhaberin",
-      text: [
-        {
-          title: "SUCHE IM SUMPF",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du einen deiner Charaktere wählen und ihm 2 Schaden zufügen, um eine mitspielende Person zu wählen. Diese legt die obersten 3 Karten ihres Decks auf ihren Ablagestapel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Madame Médusa",
-      version: "Amoureuse des diamants",
-      text: [
-        {
-          title: "RECHERCHE DANS LE MARÉCAGE",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez choisir un autre de vos personnages et lui infliger 2 dommages. Si vous le faites, choisissez un joueur, il place les 3 premières cartes de sa pioche dans sa défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Madame Medusa",
-      version: "Amante dei Diamanti",
-      text: [
-        {
-          title: "SETACCIARE LA PALUDE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi infliggere 2 danni a un tuo altro personaggio a tua scelta per mettere le prime 3 carte del mazzo di un giocatore a tua scelta nei suoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst", "ruby"],
   franchise: "Rescuers",
   set: "007",
@@ -80,15 +35,36 @@ export const madameMedusaDiamondLover: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 2,
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "deal-damage",
+          type: "sequence",
+          steps: [
+            {
+              type: "select-target",
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["character"],
+                excludeSelf: true,
+              },
+            },
+            {
+              type: "deal-damage",
+              amount: 2,
+              target: {
+                reference: "selected-first",
+              },
+            },
+            {
+              type: "select-target",
+              target: "CHOSEN_PLAYER",
+            },
+            {
+              type: "mill",
+              amount: 3,
+              target: "CHOSEN_PLAYER",
+            },
+          ],
         },
         type: "optional",
       },
@@ -103,4 +79,5 @@ export const madameMedusaDiamondLover: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: madameMedusaDiamondLoverI18n,
 };

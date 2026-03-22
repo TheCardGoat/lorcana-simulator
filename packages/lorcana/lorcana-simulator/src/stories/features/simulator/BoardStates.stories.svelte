@@ -22,10 +22,10 @@
     await step("advances to the mulligan step after choosing player one", async () => {
       await userEvent.click(canvas.getByRole("button", { name: "Player One goes first" }));
 
-      await expect(canvas.getByText("Which cards to mulligan?")).toBeVisible();
+      await expect(canvas.getByText("Which cards to alter?")).toBeVisible();
       await expect(canvas.getByRole("button", { name: "Keep hand" })).toBeVisible();
-      await expect(canvas.getByRole("button", { name: "Mulligan all cards" })).toBeVisible();
-      await expect(canvas.getByRole("button", { name: "Mulligan 0 Cards" })).toBeDisabled();
+      await expect(canvas.getByRole("button", { name: "Alter all cards" })).toBeVisible();
+      await expect(canvas.getByRole("button", { name: "Alter 0 Cards" })).toBeDisabled();
       await expect(canvas.getByRole("button", { name: /Hades - Looking for a Deal, cost 5/i })).toBeVisible();
     });
   }

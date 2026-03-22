@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gazellePopStarI18n } from "./011-gazelle-pop-star.i18n";
 
 export const gazellePopStar: CharacterCard = {
   id: "5Ov",
@@ -7,33 +8,6 @@ export const gazellePopStar: CharacterCard = {
   cardType: "character",
   name: "Gazelle",
   version: "Pop Star",
-  i18n: {
-    en: {
-      name: "Gazelle",
-      version: "Pop Star",
-      text: "Singer 5",
-    },
-    de: {
-      name: "Gazelle",
-      version: "Popstar",
-      text: [
-        {
-          title: "Singen 5",
-          description: "(Die Kosten dieses Charakters gelten als 5 für das Singen von Liedern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Gazelle",
-      version: "Pop star",
-      text: "Mélomane 5 (Ce personnage est considéré comme ayant un coût de 5 pour chanter des chansons.)",
-    },
-    it: {
-      name: "Gazelle",
-      version: "Pop Star",
-      text: "Melodioso 5",
-    },
-  },
   inkType: ["amber"],
   franchise: "Zootropolis",
   set: "005",
@@ -59,4 +33,5 @@ export const gazellePopStar: CharacterCard = {
       text: "Singer 5",
     },
   ],
+  i18n: gazellePopStarI18n,
 };

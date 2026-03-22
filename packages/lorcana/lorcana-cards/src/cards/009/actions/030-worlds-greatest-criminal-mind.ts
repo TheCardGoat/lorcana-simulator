@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { worldsGreatestCriminalMindI18n } from "./030-worlds-greatest-criminal-mind.i18n";
 
 export const worldsGreatestCriminalMind: ActionCard = {
   id: "8vL",
@@ -6,24 +7,6 @@ export const worldsGreatestCriminalMind: ActionCard = {
   reprints: ["set2-031", "set9-030"],
   cardType: "action",
   name: "World's Greatest Criminal Mind",
-  i18n: {
-    en: {
-      name: "World's Greatest Criminal Mind",
-      text: "Banish chosen character with 5 {S} or more.",
-    },
-    de: {
-      name: "Oh, Rattenzahn!",
-      text: "Verbanne einen Charakter deiner Wahl mit 5 oder mehr.",
-    },
-    fr: {
-      name: "Le Grand Génie du Mal",
-      text: "Choisissez un personnage ayant au moins 5 et bannissez-le.",
-    },
-    it: {
-      name: "Oh, Rattigan!",
-      text: "(Un personaggio con costo 3 o superiore può per cantare questa canzone gratis.) Esilia un personaggio a tua scelta con 5 o superiore.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Great Mouse Detective",
   set: "009",
@@ -59,4 +42,5 @@ export const worldsGreatestCriminalMind: ActionCard = {
       },
     },
   ],
+  i18n: worldsGreatestCriminalMindI18n,
 };

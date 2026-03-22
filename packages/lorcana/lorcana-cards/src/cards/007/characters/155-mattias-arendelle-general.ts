@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mattiasArendelleGeneralI18n } from "./155-mattias-arendelle-general.i18n";
 
 export const mattiasArendelleGeneral: CharacterCard = {
   id: "YLV",
@@ -7,51 +8,6 @@ export const mattiasArendelleGeneral: CharacterCard = {
   cardType: "character",
   name: "Mattias",
   version: "Arendelle General",
-  i18n: {
-    en: {
-      name: "Mattias",
-      version: "Arendelle General",
-      text: [
-        {
-          title: "PROUD TO SERVE",
-          description: "Your Queen characters gain Ward.",
-        },
-      ],
-    },
-    de: {
-      name: "Leutnant Mattias",
-      version: "General von Arendelle",
-      text: [
-        {
-          title: "BEREIT ZU BESCHÜTZEN",
-          description:
-            "Deine Königinnen erhalten Behütet. (Gegnerische Mitspielende können diese Charaktere nicht auswählen, außer um sie herauszufordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Mattias",
-      version: "Général d’Arendelle",
-      text: [
-        {
-          title: "FIER DE SERVIR",
-          description:
-            "Vos personnages Reine gagnent Hors d'atteinte. (Les adversaires ne peuvent pas choisir ces personnages, hormis pour un défi.)",
-        },
-      ],
-    },
-    it: {
-      name: "Mattias",
-      version: "Generale di Arendelle",
-      text: [
-        {
-          title: "FIERI DI SERVIRE I",
-          description:
-            "tuoi personaggi Regina ottengono Protetto. (Gli avversari non possono sceglierli se non per sfidarli.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Frozen",
   set: "007",
@@ -86,4 +42,5 @@ export const mattiasArendelleGeneral: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: mattiasArendelleGeneralI18n,
 };

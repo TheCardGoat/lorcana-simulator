@@ -14,9 +14,11 @@ import type {
   MatchState,
   FilteredMatchView,
   MatchStaticResources,
-  MoveDefinition,
   MoveInput,
 } from "../runtime";
+import type { MoveRecord, RuntimeMoveInputMap } from "../runtime/match-runtime.types";
+
+type InferMoveInputMap<TMoves extends MoveRecord> = RuntimeMoveInputMap<TMoves>;
 import type { CardQueryAPI } from "../runtime/card-runtime";
 import { createCardQueryAPI } from "../runtime/card-runtime";
 import type { BaseCardDefinition, BaseCardMeta } from "../runtime/card-contracts";
@@ -41,57 +43,23 @@ export const SPECTATOR_PLAYER_ID = "spectator";
 export const CANONICAL_PLAYER_ONE = "player_one";
 export const CANONICAL_PLAYER_TWO = "player_two";
 
-type MultiplayerMoveDefinitions<G, TCardDerived extends object> = Record<
-  string,
-  MoveDefinition<G, any, any, unknown, TCardDerived>
->;
-
-type InferMoveInputMap<TMoves extends MultiplayerMoveDefinitions<any, any>> = {
-  [K in keyof TMoves]: TMoves[K] extends MoveDefinition<any, any, infer TInput, any, any>
-    ? TInput
-    : MoveInput;
-};
-
-export interface MultiplayerTestEngineConfig<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-  TStateView = FilteredMatchView<G>,
-> {
-  runtimeConfig: MatchRuntimeConfig<
-    G,
-    MultiplayerMoveDefinitions<G, TCardDerived>,
-    TCardDefinition,
-    TCardDerived,
-    TStateView
-  >;
+export interface MultiplayerTestEngineConfig {
+  runtimeConfig: MatchRuntimeConfig;
   players: Player[];
   seed?: string;
-  staticResources: MatchStaticResources<TCardDefinition>;
+  staticResources: MatchStaticResources;
   includeSpectator?: boolean;
   debugServerCommunication?: boolean;
   engines?: {
     clientEngines?: Record<
       string,
       {
-        engine: ClientEngine<
-          G,
-          TCardDefinition,
-          TCardDerived,
-          TStateView,
-          MultiplayerMoveDefinitions<G, TCardDerived>
-        >;
+        engine: ClientEngine;
         player: Player;
       }
     >;
-    spectatorEngine?: ClientEngine<G, TCardDefinition, TCardDerived, TStateView>;
-    serverEngine?: ServerEngine<
-      G,
-      TCardDefinition,
-      TCardDerived,
-      TStateView,
-      MultiplayerMoveDefinitions<G, TCardDerived>
-    >;
+    spectatorEngine?: ClientEngine;
+    serverEngine?: ServerEngine;
   };
 }
 
@@ -100,35 +68,19 @@ export interface SyncOptions {
   pollIntervalMs?: number;
 }
 
-export class MultiplayerTestEngine<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-  TStateView = FilteredMatchView<G>,
-> extends CoreTestEngine<TStateView, Record<string, MoveInput>, MatchState<G>> {
-  private serverEngine: ServerEngine<
-    G,
-    TCardDefinition,
-    TCardDerived,
-    TStateView,
-    MultiplayerMoveDefinitions<G, TCardDerived>
-  >;
-  private playerEngines: Map<
-    GameTestView,
-    ClientEngine<
-      G,
-      TCardDefinition,
-      TCardDerived,
-      TStateView,
-      MultiplayerMoveDefinitions<G, TCardDerived>
-    >
-  > = new Map();
+export class MultiplayerTestEngine extends CoreTestEngine<
+  FilteredMatchView,
+  Record<string, MoveInput>,
+  MatchState
+> {
+  private serverEngine: ServerEngine;
+  private playerEngines: Map<GameTestView, ClientEngine> = new Map();
   private transportPairs: Map<string, { client: InMemoryTransport; server: InMemoryTransport }> =
     new Map();
-  private config: MultiplayerTestEngineConfig<G, TCardDefinition, TCardDerived, TStateView>;
+  private config: MultiplayerTestEngineConfig;
   private initialized: boolean = false;
 
-  constructor(config: MultiplayerTestEngineConfig<G, TCardDefinition, TCardDerived, TStateView>) {
+  constructor(config: MultiplayerTestEngineConfig) {
     super();
     this.config = config;
 
@@ -211,20 +163,13 @@ export class MultiplayerTestEngine<
     this.initializeSync();
   }
 
-  static async create<
-    G,
-    TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-    TCardDerived extends object = {},
-    TStateView = FilteredMatchView<G>,
-  >(
-    config: MultiplayerTestEngineConfig<G, TCardDefinition, TCardDerived, TStateView>,
-  ): Promise<MultiplayerTestEngine<G, TCardDefinition, TCardDerived, TStateView>> {
-    const engine = new MultiplayerTestEngine<G, TCardDefinition, TCardDerived, TStateView>(config);
+  static async create(config: MultiplayerTestEngineConfig): Promise<MultiplayerTestEngine> {
+    const engine = new MultiplayerTestEngine(config);
     await engine.initialize();
     return engine;
   }
 
-  getStateForView(view: GameTestView): TStateView {
+  getStateForView(view: GameTestView): FilteredMatchView {
     if (view === "authoritative") {
       return this.getAuthoritativeVisibleState();
     }
@@ -234,10 +179,10 @@ export class MultiplayerTestEngine<
       throw new Error(`View not found: ${view}`);
     }
 
-    return engine.getBoard() as TStateView;
+    return engine.getBoard() as FilteredMatchView;
   }
 
-  getAuthoritativeState(): DeepReadonly<MatchState<G>> {
+  getAuthoritativeState(): DeepReadonly<MatchState> {
     return this.serverEngine.getState();
   }
 
@@ -271,7 +216,7 @@ export class MultiplayerTestEngine<
     return engine.validateMove(moveId, input);
   }
 
-  getEngineForView(view: GameTestView): GameEngine<TStateView> {
+  getEngineForView(view: GameTestView): GameEngine {
     if (view === "authoritative") {
       return new ServerEngineAdapter(this.serverEngine, () => this.getAuthoritativeVisibleState());
     }
@@ -288,8 +233,8 @@ export class MultiplayerTestEngine<
     return this.serverEngine.getStateID();
   }
 
-  getProjection() {
-    return this.serverEngine.getBoard();
+  getProjection(): FilteredMatchView {
+    return this.serverEngine.getBoard() as FilteredMatchView;
   }
 
   getMoveHistory(limit?: number): EngineMoveHistoryEntry[] {
@@ -308,21 +253,21 @@ export class MultiplayerTestEngine<
     this.initialized = false;
   }
 
-  asPlayerOne(): PlayerActionInterface<TStateView> {
+  asPlayerOne(): PlayerActionInterface<FilteredMatchView> {
     return this.createPlayerActionInterface(
       "playerOne",
       this.config.players[0]?.id || CANONICAL_PLAYER_ONE,
     );
   }
 
-  asPlayerTwo(): PlayerActionInterface<TStateView> {
+  asPlayerTwo(): PlayerActionInterface<FilteredMatchView> {
     return this.createPlayerActionInterface(
       "playerTwo",
       this.config.players[1]?.id || CANONICAL_PLAYER_TWO,
     );
   }
 
-  override asPlayer(playerId: string): PlayerActionInterface<TStateView> {
+  override asPlayer(playerId: string): PlayerActionInterface<FilteredMatchView> {
     const view = this.resolveViewForPlayerId(playerId);
     if (!view) {
       throw new Error(`Unknown player: ${playerId}`);
@@ -333,10 +278,10 @@ export class MultiplayerTestEngine<
   private createPlayerActionInterface(
     view: GameTestView,
     playerId: string,
-  ): PlayerActionInterface<TStateView> {
+  ): PlayerActionInterface<FilteredMatchView> {
     return {
       playerId,
-      getState: () => this.getStateForView(view) as DeepReadonly<TStateView>,
+      getState: () => this.getStateForView(view) as DeepReadonly<FilteredMatchView>,
       getBoard: () => this.getStateForView(view),
       executeMove: (moveId, params) => this.executeMoveForView(view, String(moveId), params),
       canExecuteMove: (moveId, params) =>
@@ -366,13 +311,7 @@ export class MultiplayerTestEngine<
     await this.syncToStateID(this.serverEngine.getStateID(), options);
   }
 
-  getServerEngine(): ServerEngine<
-    G,
-    TCardDefinition,
-    TCardDerived,
-    TStateView,
-    MultiplayerMoveDefinitions<G, TCardDerived>
-  > {
+  getServerEngine(): ServerEngine {
     return this.serverEngine;
   }
 
@@ -380,7 +319,7 @@ export class MultiplayerTestEngine<
    * Get the CardQueryAPI for accessing card definitions and metadata.
    * This provides rich RuntimeCardWithDefinition access without requiring manual registry building.
    */
-  getCardQuery(): CardQueryAPI<TCardDefinition, BaseCardMeta, TCardDerived> {
+  getCardQuery(): CardQueryAPI {
     const state = this.serverEngine.getRuntime().getState();
     return createCardQueryAPI(state, this.config.staticResources, {
       deriveRuntimeCard: this.config.runtimeConfig.deriveRuntimeCard,
@@ -389,29 +328,9 @@ export class MultiplayerTestEngine<
 
   getClientEngine(
     view: "playerOne" | "playerTwo" | "spectator",
-  ):
-    | ClientEngine<
-        G,
-        TCardDefinition,
-        TCardDerived,
-        TStateView,
-        MultiplayerMoveDefinitions<G, TCardDerived>
-      >
-    | GameEngine<TStateView>
-    | undefined;
-  override getClientEngine(playerId: string): GameEngine<TStateView> | undefined;
-  getClientEngine(
-    playerOrView: string,
-  ):
-    | ClientEngine<
-        G,
-        TCardDefinition,
-        TCardDerived,
-        TStateView,
-        MultiplayerMoveDefinitions<G, TCardDerived>
-      >
-    | GameEngine<TStateView>
-    | undefined {
+  ): ClientEngine | GameEngine | undefined;
+  override getClientEngine(playerId: string): GameEngine | undefined;
+  getClientEngine(playerOrView: string): ClientEngine | GameEngine | undefined {
     const view =
       playerOrView === "playerOne" || playerOrView === "playerTwo" || playerOrView === "spectator"
         ? playerOrView
@@ -464,75 +383,57 @@ export class MultiplayerTestEngine<
     return undefined;
   }
 
-  private getAuthoritativeVisibleState(): TStateView {
+  private getAuthoritativeVisibleState(): FilteredMatchView {
     if (typeof this.config.runtimeConfig.projectBoard === "function") {
       return this.serverEngine
         .getRuntime()
-        .getProjectedBoardView({ role: "judge" }, { serverTimestamp: Date.now() }) as TStateView;
+        .getProjectedBoardView(
+          { role: "judge" },
+          { serverTimestamp: Date.now() },
+        ) as FilteredMatchView;
     }
 
-    return this.serverEngine.getState().G as unknown as TStateView;
+    return this.serverEngine.getState().G as unknown as FilteredMatchView;
   }
 
-  getBoardForView(view: GameTestView): TStateView {
+  getBoardForView(view: GameTestView): FilteredMatchView {
     return this.getStateForView(view);
   }
 }
 
-class ServerEngineAdapter<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-  TStateView = FilteredMatchView<G>,
-> implements GameEngine<
-  TStateView,
-  TStateView,
-  InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>>
-> {
+class ServerEngineAdapter implements GameEngine {
   constructor(
-    private serverEngine: ServerEngine<
-      G,
-      TCardDefinition,
-      TCardDerived,
-      TStateView,
-      MultiplayerMoveDefinitions<G, TCardDerived>
-    >,
-    private readonly getVisibleState: () => TStateView,
+    private serverEngine: ServerEngine,
+    private readonly getVisibleState: () => FilteredMatchView,
   ) {}
 
-  getState(): DeepReadonly<TStateView> {
-    return this.getVisibleState() as DeepReadonly<TStateView>;
+  getState(): DeepReadonly<MatchState> {
+    return this.getVisibleState() as unknown as DeepReadonly<MatchState>;
   }
 
-  getBoard(): DeepReadonly<TStateView> {
-    return this.getVisibleState() as DeepReadonly<TStateView>;
+  getBoard(): DeepReadonly<FilteredMatchView> {
+    return this.getVisibleState() as DeepReadonly<FilteredMatchView>;
   }
 
   getStateID(): number {
     return this.serverEngine.getStateID();
   }
 
-  validateMove<
-    K extends keyof InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>> & string,
-  >(
+  validateMove<K extends keyof InferMoveInputMap<MoveRecord> & string>(
     moveId: K,
-    input: InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>>[K],
+    input: InferMoveInputMap<MoveRecord>[K],
   ): EngineMoveValidationResult {
     return this.serverEngine.validateMove(moveId, input);
   }
 
-  executeMove<
-    K extends keyof InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>> & string,
-  >(
+  executeMove<K extends keyof InferMoveInputMap<MoveRecord> & string>(
     moveId: K,
-    input: InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>>[K],
+    input: InferMoveInputMap<MoveRecord>[K],
   ): EngineMoveExecutionResult {
     return this.serverEngine.executeMove(moveId, input);
   }
 
-  enumerateMoves(): Array<
-    keyof InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>> & string
-  > {
+  enumerateMoves(): Array<keyof InferMoveInputMap<MoveRecord> & string> {
     return this.serverEngine.enumerateMoves();
   }
 
@@ -544,64 +445,49 @@ class ServerEngineAdapter<
     return { role: "judge" };
   }
 
+  canUndo(playerId: string): boolean {
+    return this.serverEngine.canUndo(playerId);
+  }
+
+  undo(playerId: string, prevStateID?: number): boolean {
+    return this.serverEngine.undo(playerId, prevStateID);
+  }
+
   async dispose(): Promise<void> {
     await this.serverEngine.dispose();
   }
 }
 
-class ClientEngineAdapter<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-  TStateView = FilteredMatchView<G>,
-> implements GameEngine<
-  TStateView,
-  TStateView,
-  InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>>
-> {
-  constructor(
-    private clientEngine: ClientEngine<
-      G,
-      TCardDefinition,
-      TCardDerived,
-      TStateView,
-      MultiplayerMoveDefinitions<G, TCardDerived>
-    >,
-  ) {}
+class ClientEngineAdapter implements GameEngine {
+  constructor(private clientEngine: ClientEngine) {}
 
-  getState(): DeepReadonly<TStateView> {
-    return this.clientEngine.getBoard() as DeepReadonly<TStateView>;
+  getState(): DeepReadonly<MatchState> {
+    return this.clientEngine.getBoard() as unknown as DeepReadonly<MatchState>;
   }
 
-  getBoard(): DeepReadonly<TStateView> {
-    return this.clientEngine.getBoard() as DeepReadonly<TStateView>;
+  getBoard(): DeepReadonly<FilteredMatchView> {
+    return this.clientEngine.getBoard() as DeepReadonly<FilteredMatchView>;
   }
 
   getStateID(): number {
     return this.clientEngine.getStateID();
   }
 
-  validateMove<
-    K extends keyof InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>> & string,
-  >(
+  validateMove<K extends keyof InferMoveInputMap<MoveRecord> & string>(
     moveId: K,
-    input: InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>>[K],
+    input: InferMoveInputMap<MoveRecord>[K],
   ): EngineMoveValidationResult {
     return this.clientEngine.validateMove(moveId, input);
   }
 
-  executeMove<
-    K extends keyof InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>> & string,
-  >(
+  executeMove<K extends keyof InferMoveInputMap<MoveRecord> & string>(
     moveId: K,
-    input: InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>>[K],
+    input: InferMoveInputMap<MoveRecord>[K],
   ): EngineMoveExecutionResult {
     return this.clientEngine.executeMove(moveId, input);
   }
 
-  enumerateMoves(): Array<
-    keyof InferMoveInputMap<MultiplayerMoveDefinitions<G, TCardDerived>> & string
-  > {
+  enumerateMoves(): Array<keyof InferMoveInputMap<MoveRecord> & string> {
     return this.clientEngine.enumerateMoves();
   }
 
@@ -611,6 +497,14 @@ class ClientEngineAdapter<
 
   getActorContext(): EngineActorContext {
     return this.clientEngine.getActorContext();
+  }
+
+  canUndo(playerId: string): boolean {
+    return this.clientEngine.canUndo(playerId);
+  }
+
+  undo(playerId: string, prevStateID?: number): boolean {
+    return this.clientEngine.undo(playerId, prevStateID);
   }
 
   async dispose(): Promise<void> {

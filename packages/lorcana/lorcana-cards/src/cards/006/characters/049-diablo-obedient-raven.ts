@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { diabloObedientRavenI18n } from "./049-diablo-obedient-raven.i18n";
 
 export const diabloObedientRaven: CharacterCard = {
   id: "kjK",
@@ -7,48 +8,6 @@ export const diabloObedientRaven: CharacterCard = {
   cardType: "character",
   name: "Diablo",
   version: "Obedient Raven",
-  i18n: {
-    en: {
-      name: "Diablo",
-      version: "Obedient Raven",
-      text: [
-        {
-          title: "FLY, MY PET!",
-          description: "When this character is banished, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Diablo",
-      version: "Ergebener Rabe",
-      text: [
-        {
-          title: "FLIEG DAHIN, MEIN LIEBLING",
-          description: "Wenn dieser Charakter verbannt wird, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Diablo",
-      version: "Corbeau docile",
-      text: [
-        {
-          title: "VOLE, MON MIGNON!",
-          description: "Lorsque ce personnage est banni, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Diablo",
-      version: "Corvo Obbediente",
-      text: [
-        {
-          title: "VOLA, MIO DILETTO!",
-          description: "Quando questo personaggio viene esiliato, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sleeping Beauty",
   set: "006",
@@ -86,4 +45,5 @@ export const diabloObedientRaven: CharacterCard = {
       text: "FLY, MY PET! When this character is banished, you may draw a card.",
     },
   ],
+  i18n: diabloObedientRavenI18n,
 };

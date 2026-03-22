@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { moanaIslandExplorerI18n } from "./134-moana-island-explorer.i18n";
 
 export const moanaIslandExplorer: CharacterCard = {
   id: "Roi",
@@ -7,37 +8,6 @@ export const moanaIslandExplorer: CharacterCard = {
   cardType: "character",
   name: "Moana",
   version: "Island Explorer",
-  i18n: {
-    en: {
-      name: "Moana",
-      version: "Island Explorer",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "ADVENTUROUS SPIRIT",
-          description:
-            "Whenever this character challenges another character, another chosen character of yours gets +3 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Vaiana",
-      version: "Erforscherin von Inseln",
-      text: "Wendig ABENTEUERGEIST Jedes Mal, wenn dieser Charakter einen anderen Charakter herausfordert, wähle einen deiner anderen Charaktere. Jener erhält in diesem Zug +3.",
-    },
-    fr: {
-      name: "Vaiana",
-      version: "Exploratrice d'île",
-      text: "Insaisissable ESPRIT D'AVENTURE Chaque fois que ce personnage en défie un autre, choisissez un autre de vos personnages qui gagne +3 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Vaiana",
-      version: "Esploratrice dell'Isola",
-      text: "Sfuggente SPIRITO AVVENTUROSO Ogni volta che questo personaggio sfida un altro personaggio, un tuo altro personaggio a tua scelta riceve +3 per questo turno.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "007",
@@ -95,4 +65,5 @@ export const moanaIslandExplorer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: moanaIslandExplorerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chipQuickThinkerI18n } from "./097-chip-quick-thinker.i18n";
 
 export const chipQuickThinker: CharacterCard = {
   id: "oOq",
@@ -7,51 +8,6 @@ export const chipQuickThinker: CharacterCard = {
   cardType: "character",
   name: "Chip",
   version: "Quick Thinker",
-  i18n: {
-    en: {
-      name: "Chip",
-      version: "Quick Thinker",
-      text: [
-        {
-          title: "I'LL HANDLE THIS",
-          description: "When you play this character, chosen opponent chooses and discards a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Chip",
-      version: "Schnelldenker",
-      text: [
-        {
-          title: "ICH KÜMMERE MICH DARUM",
-          description:
-            "Wenn du diesen Charakter ausspielst, wählt eine gegnerische Person deiner Wahl 1 Karte aus ihrer Hand und wirft sie ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "Tic",
-      version: "Vif d'esprit",
-      text: [
-        {
-          title: "JE M'EN OCCUPE",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un adversaire qui défausse une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Cip",
-      version: "Pronto all'Azione",
-      text: [
-        {
-          title: "CI PENSO IO",
-          description:
-            "Quando giochi questo personaggio, un avversario a tua scelta sceglie e scarta una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Rescue Rangers",
   set: "008",
@@ -76,12 +32,22 @@ export const chipQuickThinker: CharacterCard = {
   abilities: [
     {
       effect: {
+        amount: 1,
+        chosen: true,
         from: "hand",
-        type: "play-card",
+        target: "CHOSEN_PLAYER",
+        type: "discard",
       },
       id: "1aq-1",
-      text: "I’LL HANDLE THIS When you play this character, chosen opponent chooses and discards a card.",
-      type: "action",
+      name: "I'LL HANDLE THIS",
+      text: "I'LL HANDLE THIS When you play this character, chosen opponent chooses and discards a card.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
     },
   ],
+  i18n: chipQuickThinkerI18n,
 };

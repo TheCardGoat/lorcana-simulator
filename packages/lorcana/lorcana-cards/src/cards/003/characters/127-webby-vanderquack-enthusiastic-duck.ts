@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { webbyVanderquackEnthusiasticDuckI18n } from "./127-webby-vanderquack-enthusiastic-duck.i18n";
 
 export const webbyVanderquackEnthusiasticDuck: CharacterCard = {
   id: "3kz",
@@ -7,24 +8,6 @@ export const webbyVanderquackEnthusiasticDuck: CharacterCard = {
   cardType: "character",
   name: "Webby Vanderquack",
   version: "Enthusiastic Duck",
-  i18n: {
-    en: {
-      name: "Webby Vanderquack",
-      version: "Enthusiastic Duck",
-    },
-    de: {
-      name: "Nicky Vanderquack",
-      version: "Eifrige Ente",
-    },
-    fr: {
-      name: "Zaza",
-      version: "Canette enthousiaste",
-    },
-    it: {
-      name: "Gaia Vanderquack",
-      version: "Papera Entusiasta",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Ducktales",
   set: "003",
@@ -41,4 +24,5 @@ export const webbyVanderquackEnthusiasticDuck: CharacterCard = {
     tcgPlayer: 538351,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: webbyVanderquackEnthusiasticDuckI18n,
 };

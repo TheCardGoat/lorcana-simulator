@@ -13,6 +13,13 @@ const damagedTarget = createMockCharacter({
   willpower: 4,
 });
 
+const undamagedTarget = createMockCharacter({
+  id: "cheshire-undamaged-target",
+  name: "Undamaged Target",
+  cost: 3,
+  willpower: 4,
+});
+
 describe("Cheshire Cat - From the Shadows", () => {
   it("has Shift 5 and Evasive", () => {
     const testEngine = new LorcanaTestEngine({
@@ -45,5 +52,26 @@ describe("Cheshire Cat - From the Shadows", () => {
 
     expect(testEngine.asPlayerTwo().getCardZone(damagedTarget)).toBe("discard");
     expect(testEngine.asPlayerOne().isExerted(cheshireCatFromTheShadows)).toBe(true);
+  });
+
+  it("cannot banish an undamaged character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [cheshireCatFromTheShadows],
+        deck: 1,
+      },
+      {
+        play: [undamagedTarget],
+        deck: 1,
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(cheshireCatFromTheShadows, {
+        targets: [undamagedTarget],
+      }).success,
+    ).toBe(false);
+
+    expect(testEngine.asPlayerTwo().getCardZone(undamagedTarget)).toBe("play");
   });
 });

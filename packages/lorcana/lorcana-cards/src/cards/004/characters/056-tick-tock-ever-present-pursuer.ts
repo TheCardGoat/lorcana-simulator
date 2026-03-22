@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ticktockEverpresentPursuerI18n } from "./056-tick-tock-ever-present-pursuer.i18n";
 
 export const ticktockEverpresentPursuer: CharacterCard = {
   id: "9tn",
@@ -7,28 +8,6 @@ export const ticktockEverpresentPursuer: CharacterCard = {
   cardType: "character",
   name: "Tick-Tock",
   version: "Ever-Present Pursuer",
-  i18n: {
-    en: {
-      name: "Tick-Tock",
-      version: "Ever-Present Pursuer",
-      text: "Evasive",
-    },
-    de: {
-      name: "Ticktack",
-      version: "Ständiger Verfolger",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Tic-Tac",
-      version: "Implacable poursuivant",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Cocò",
-      version: "Inseguitore Onnipresente",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Peter Pan",
   set: "004",
@@ -53,4 +32,5 @@ export const ticktockEverpresentPursuer: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: ticktockEverpresentPursuerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gosalynMallardCuriousChildI18n } from "./149-gosalyn-mallard-curious-child.i18n";
 
 export const gosalynMallardCuriousChild: CharacterCard = {
   id: "wv3",
@@ -7,52 +8,6 @@ export const gosalynMallardCuriousChild: CharacterCard = {
   cardType: "character",
   name: "Gosalyn Mallard",
   version: "Curious Child",
-  i18n: {
-    en: {
-      name: "Gosalyn Mallard",
-      version: "Curious Child",
-      text: [
-        {
-          title: "KEEN GEAR",
-          description:
-            "When you play this character, look at the top 4 cards of your deck. You may reveal an item card and put it into your hand. Put the rest on the bottom of your deck in any order.",
-        },
-      ],
-    },
-    de: {
-      name: "Kiki Erpel",
-      version: "Neugieriges Kind",
-      text: [
-        {
-          title: "IST JA IRRE",
-          description:
-            "Wenn du diesen Charakter ausspielst, schaue dir die obersten 4 Karten deines Decks an. Du darfst 1 Gegenstandskarte daraus aufdecken und auf deine Hand nehmen. Lege die restlichen Karten in beliebiger Reihenfolge unter dein Deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "Poucinette Colvert",
-      version: "Jeune curieuse",
-      text: [
-        {
-          title: "ÉQUIPEMENT DE POINTE",
-          description:
-            "Lorsque vous jouez ce personnage, regardez les 4 cartes du dessus de votre pioche. Vous pouvez révéler une carte Objet parmi elles et l'ajouter à votre main. Placez les autres cartes sous votre pioche, dans l'ordre de votre choix.",
-        },
-      ],
-    },
-    it: {
-      name: "Ocalina Mallard",
-      version: "Bambina Curiosa",
-      text: [
-        {
-          title: "CHE SCHIANTO",
-          description:
-            "Quando giochi questo personaggio, guarda le prime 4 carte del tuo mazzo. Puoi rivelare una carta oggetto e aggiungerla alla tua mano. Metti il resto in fondo al tuo mazzo in qualsiasi ordine.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -79,12 +34,25 @@ export const gosalynMallardCuriousChild: CharacterCard = {
     {
       id: "agy-1",
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: "CHOSEN_CHARACTER",
-          type: "put-on-bottom",
-        },
-        type: "optional",
+        type: "scry",
+        amount: 4,
+        destinations: [
+          {
+            zone: "hand",
+            min: 0,
+            max: 1,
+            reveal: true,
+            filter: {
+              type: "card-type",
+              cardType: "item",
+            },
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+            ordering: "player-choice",
+          },
+        ],
       },
       name: "KEEN GEAR",
       trigger: {
@@ -96,4 +64,5 @@ export const gosalynMallardCuriousChild: CharacterCard = {
       text: "KEEN GEAR When you play this character, look at the top 4 cards of your deck. You may reveal an item card and put it into your hand. Put the rest on the bottom of your deck in any order.",
     },
   ],
+  i18n: gosalynMallardCuriousChildI18n,
 };

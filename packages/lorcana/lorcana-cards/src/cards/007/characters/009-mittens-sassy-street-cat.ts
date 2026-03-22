@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mittensSassyStreetCatI18n } from "./009-mittens-sassy-street-cat.i18n";
 
 export const mittensSassyStreetCat: CharacterCard = {
   id: "msV",
@@ -7,43 +8,6 @@ export const mittensSassyStreetCat: CharacterCard = {
   cardType: "character",
   name: "Mittens",
   version: "Sassy Street Cat",
-  i18n: {
-    en: {
-      name: "Mittens",
-      version: "Sassy Street Cat",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "NO THANKS NECESSARY",
-          description:
-            "Once during your turn, whenever a card is put into your inkwell, your other characters with Bodyguard get +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Mittens",
-      version: "Freche Straßenkatze",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) NICHTS ZU DANKEN Einmal während deines Zuges, wenn eine Karte in deinen Tintenvorrat gelegt wird, erhalten deine anderen Charaktere mit Beschützen in diesem Zug +1.",
-    },
-    fr: {
-      name: "Mitaine",
-      version: "Chatte de gouttière insolente",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.) NE ME REMERCIE PAS Une seule fois durant votre tour, lorsqu'une carte est placée dans votre réserve d'encre, vos autres personnages avec Rempart gagnent +1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Mittens",
-      version: "Insolente Gatta di Strada",
-      text: "Guardiano NON SERVE RINGRAZIARE Una volta durante il tuo turno, ogni volta che una carta viene aggiunta al tuo calamaio, i tuoi altri personaggi con Guardiano ricevono +1 per questo turno.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Bolt",
   set: "007",
@@ -95,4 +59,5 @@ export const mittensSassyStreetCat: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mittensSassyStreetCatI18n,
 };

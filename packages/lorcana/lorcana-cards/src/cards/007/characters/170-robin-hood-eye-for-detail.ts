@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { robinHoodEyeForDetailI18n } from "./170-robin-hood-eye-for-detail.i18n";
 
 export const robinHoodEyeForDetail: CharacterCard = {
   id: "JTC",
@@ -7,28 +8,6 @@ export const robinHoodEyeForDetail: CharacterCard = {
   cardType: "character",
   name: "Robin Hood",
   version: "Eye for Detail",
-  i18n: {
-    en: {
-      name: "Robin Hood",
-      version: "Eye for Detail",
-      text: "Support",
-    },
-    de: {
-      name: "Robin Hood",
-      version: "Auge fürs Detail",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Robin des Bois",
-      version: "À l’œil affûté",
-      text: "Soutien",
-    },
-    it: {
-      name: "Robin Hood",
-      version: "Attento ai Dettagli",
-      text: "Aiutante",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Robin Hood",
   set: "007",
@@ -53,4 +32,5 @@ export const robinHoodEyeForDetail: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: robinHoodEyeForDetailI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rajahGhostlyTigerI18n } from "./062-rajah-ghostly-tiger.i18n";
 
 export const rajahGhostlyTiger: CharacterCard = {
   id: "yQ2",
@@ -7,50 +8,6 @@ export const rajahGhostlyTiger: CharacterCard = {
   cardType: "character",
   name: "Rajah",
   version: "Ghostly Tiger",
-  i18n: {
-    en: {
-      name: "Rajah",
-      version: "Ghostly Tiger",
-      text: [
-        {
-          title: "Vanish",
-          description: "(When an opponent chooses this character for an action, banish them.)",
-        },
-      ],
-    },
-    de: {
-      name: "Radsha",
-      version: "Geisterhafter Tiger",
-      text: [
-        {
-          title: "Verschwinden",
-          description:
-            "(Jedes Mal, wenn dieser Charakter von einer Aktion einer gegnerischen Person ausgewählt wird, verbanne ihn.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Rajah",
-      version: "Tigre fantomatique",
-      text: [
-        {
-          title: "Dissipation",
-          description:
-            "(Lorsqu'un adversaire choisit ce personnage avec une action, bannissez-le.)",
-        },
-      ],
-    },
-    it: {
-      name: "Rajah",
-      version: "Tigre Spettrale",
-      text: [
-        {
-          title: "Svanire",
-          description: "(Quando un avversario sceglie questo personaggio per un'azione, esilialo.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "007",
@@ -80,4 +37,5 @@ export const rajahGhostlyTiger: CharacterCard = {
       text: "Vanish",
     },
   ],
+  i18n: rajahGhostlyTigerI18n,
 };

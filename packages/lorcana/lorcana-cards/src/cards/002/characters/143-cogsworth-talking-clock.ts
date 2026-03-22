@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cogsworthTalkingClockI18n } from "./143-cogsworth-talking-clock.i18n";
 
 export const cogsworthTalkingClock: CharacterCard = {
   id: "xGr",
@@ -7,48 +8,6 @@ export const cogsworthTalkingClock: CharacterCard = {
   cardType: "character",
   name: "Cogsworth",
   version: "Talking Clock",
-  i18n: {
-    en: {
-      name: "Cogsworth",
-      version: "Talking Clock",
-      text: [
-        {
-          title: "WAIT A MINUTE",
-          description: 'Your characters with Reckless gain "{E} — Gain 1 lore."',
-        },
-      ],
-    },
-    de: {
-      name: "Von Unruh",
-      version: "Sprechende Uhr",
-      text: [
-        {
-          title: "MOMENT MAL",
-          description: 'Deine Charaktere mit Impulsiv erhalten: " — Sammle 1 Legende."',
-        },
-      ],
-    },
-    fr: {
-      name: "Big Ben",
-      version: "Horloge parlante",
-      text: [
-        {
-          title: "ATTENDEZ UNE MINUTE",
-          description: 'Vos personnages avec Combattant gagnent " — Gagnez 1 éclat de Lore."',
-        },
-      ],
-    },
-    it: {
-      name: "Tockins",
-      version: "Orologio Parlante",
-      text: [
-        {
-          title: "VIENI QUI I",
-          description: 'tuoi personaggi con Attaccabrighe ottengono " — ottieni 1 leggenda."',
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -70,19 +29,42 @@ export const cogsworthTalkingClock: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
-      cost: {
-        exert: true,
-      },
       effect: {
-        amount: 1,
-        type: "gain-lore",
+        ability: {
+          cost: {
+            exert: true,
+          },
+          effect: {
+            amount: 1,
+            target: "CONTROLLER",
+            type: "gain-lore",
+          },
+          name: "WAIT A MINUTE",
+          text: "{E} - Gain 1 lore.",
+          type: "activated",
+        },
+        target: {
+          count: "all",
+          cardTypes: ["character"],
+          filter: [
+            {
+              keyword: "Reckless",
+              type: "has-keyword",
+            },
+          ],
+          owner: "you",
+          selector: "all",
+          zones: ["play"],
+        },
+        type: "grant-ability",
       },
       id: "y7r-1",
-      text: "WAIT A MINUTE Your characters with Reckless gain “{E} — Gain 1 lore.”",
-      type: "activated",
+      name: "WAIT A MINUTE",
+      text: 'WAIT A MINUTE Your characters with Reckless gain "{E} - Gain 1 lore."',
+      type: "static",
     },
   ],
+  i18n: cogsworthTalkingClockI18n,
 };

@@ -17,9 +17,7 @@ describe("Ursula - Deceiver of All", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id).success).toBe(true);
 
     expect(testEngine.asPlayerOne().getCardZone(friendsOnTheOtherSide)).toBe("deck");
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(

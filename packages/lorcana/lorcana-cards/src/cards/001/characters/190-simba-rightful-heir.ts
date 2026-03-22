@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { simbaRightfulHeirI18n } from "./190-simba-rightful-heir.i18n";
 
 export const simbaRightfulHeir: CharacterCard = {
   id: "XnN",
@@ -7,52 +8,6 @@ export const simbaRightfulHeir: CharacterCard = {
   cardType: "character",
   name: "Simba",
   version: "Rightful Heir",
-  i18n: {
-    en: {
-      name: "Simba",
-      version: "Rightful Heir",
-      text: [
-        {
-          title: "I KNOW WHAT I HAVE TO DO",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, you gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Simba",
-      version: "Rechtmäßiger Thronfolger",
-      text: [
-        {
-          title: "ICH WEISS, WAS MEINE PFLICHT IST",
-          description:
-            "Jedes Mal, wenn dieser Charakter in deinem Zug durch eine Herausforderung einen anderen Charakter verbannt, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "SIMBA",
-      version: "Héritier légitime",
-      text: [
-        {
-          title: "JE SAIS CE QUE JE DOIS FAIRE",
-          description:
-            "Lorsque ce personnage en bannit un autre via un défi durant votre tour, vous gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Simba",
-      version: "Rightful Heir",
-      text: [
-        {
-          title: "I KNOW WHAT I HAVE TO DO",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, you gain 1 lore.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Lion King",
   set: "001",
@@ -63,7 +18,6 @@ export const simbaRightfulHeir: CharacterCard = {
   willpower: 5,
   lore: 2,
   inkable: false,
-  missingImplementation: true,
   externalIds: {
     lorcast: "crd_b2976a87410e4dd5a753e7f871c2b6fc",
     tcgPlayer: 508941,
@@ -87,4 +41,5 @@ export const simbaRightfulHeir: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: simbaRightfulHeirI18n,
 };

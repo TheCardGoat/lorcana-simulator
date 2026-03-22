@@ -12,6 +12,7 @@ import type { CardPlayedPayload } from "../../../types";
 import type { PlayCardExecutionContext } from "../../resolution/action-effects/types";
 import {
   clampCharacteristicForRules,
+  createProjectionState,
   getEffectiveLore,
   getEffectiveStrength,
   type DerivedStateContext,
@@ -44,7 +45,7 @@ export interface VariableAmountResolutionContext {
 
 type CountScope = {
   owner?: "you" | "opponent" | "any";
-  zones?: TargetZone[];
+  zones?: readonly TargetZone[];
   cardType?: "character" | "item" | "location" | "action";
   cardTypes?: readonly ("character" | "item" | "location" | "action")[];
 };
@@ -52,10 +53,7 @@ type CountScope = {
 const ALL_PLAY_ZONES: TargetZone[] = ["play"];
 
 function getDerivedState(context: VariableAmountResolutionContext): DerivedStateContext {
-  return {
-    ...context.ctx.framework.state,
-    G: context.ctx.G,
-  } as DerivedStateContext;
+  return createProjectionState(context.ctx.framework.state, context.ctx.G);
 }
 
 function getControllerId(context: VariableAmountResolutionContext): PlayerId | undefined {
@@ -64,20 +62,27 @@ function getControllerId(context: VariableAmountResolutionContext): PlayerId | u
   }
 
   if (context.sourceId) {
-    const owner =
-      context.ctx.framework.state.ctx.zones.private.cardIndex[context.sourceId]?.ownerID;
+    const owner = context.ctx.framework.zones.getCardOwner(context.sourceId);
     if (typeof owner === "string" && owner.length > 0) {
       return owner as PlayerId;
     }
   }
 
   const fallback =
-    context.ctx.framework.state.currentPlayer ?? context.ctx.framework.state.ctx.priority.holder;
+    context.ctx.framework.state.currentPlayer ?? context.ctx.framework.state.priority.holder;
   return typeof fallback === "string" && fallback.length > 0 ? (fallback as PlayerId) : undefined;
 }
 
 function sanitizeNumber(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function getPublicZoneCount(
+  context: VariableAmountResolutionContext,
+  zone: TargetZone,
+  playerId: PlayerId,
+): number {
+  return sanitizeNumber(context.ctx.framework.zones.getCardCount({ zone, playerId }));
 }
 
 function getCardDamage(context: VariableAmountResolutionContext, cardId: CardInstanceId): number {
@@ -352,6 +357,24 @@ function resolveSourceAttribute(
   }
 }
 
+/**
+ * Returns true when the amount's target is a fixed card reference (e.g. { ref: "previous-target" })
+ * rather than the dynamically-resolved effect targets.
+ *
+ * Fixed-ref amounts should be computed as aggregate values (a single number) because the
+ * "source" of the value is a specific referenced card, not each effect target individually.
+ * This prevents per-target keying mismatches when the source card != the effect target card.
+ */
+function hasFixedTargetRef(amount: VariableAmount): boolean {
+  const record = amount as Record<string, unknown>;
+  const target = record.target;
+  if (!target || typeof target !== "object" || Array.isArray(target)) {
+    return false;
+  }
+  const targetRecord = target as Record<string, unknown>;
+  return typeof targetRecord.ref === "string" || typeof targetRecord.reference === "string";
+}
+
 function referencesTarget(amount: VariableAmount): boolean {
   switch (amount.type) {
     case "target-attribute":
@@ -546,8 +569,14 @@ function resolveForEachCounter(
         (counterRecord.controller as "you" | "opponent" | "opponents" | undefined) ?? "you",
       );
     }
+    case "lore-lost":
+      return sanitizeNumber(context.eventSnapshot?.triggerAmount);
     case "banished-this-way":
       return sanitizeNumber(context.eventSnapshot?.triggerAmount);
+    case "last-effect-target-count":
+      return sanitizeNumber(
+        context.eventSnapshot?.lastEffectTargetCount ?? context.eventSnapshot?.triggerAmount,
+      );
     case "target-query": {
       const query = counterRecord.query;
       if (!query || typeof query !== "object") {
@@ -692,7 +721,15 @@ function evaluateAggregate(
     case "cards-in-hand": {
       const count = resolveOpponentScopedValue(
         context,
-        (playerId) => context.ctx.framework.zones.getCards({ zone: "hand", playerId }).length,
+        (playerId) => {
+          const visibleCards = context.ctx.framework.zones.getCards({
+            zone: "hand",
+            playerId,
+          });
+          return visibleCards.length > 0
+            ? visibleCards.length
+            : getPublicZoneCount(context, "hand", playerId);
+        },
         amount.controller,
       );
       const modifier =
@@ -760,10 +797,10 @@ function evaluateAggregate(
           ? (scopedTargets[0] ?? targetId)
           : (targetId ?? scopedTargets[0]);
       const runtimeCard = resolvedTarget
-        ? (context.ctx.cards.require(resolvedTarget) as { getWillpower?: () => number } | undefined)
+        ? (context.ctx.cards.require(resolvedTarget) as { willpower?: number } | undefined)
         : undefined;
-      if (runtimeCard?.getWillpower) {
-        return sanitizeNumber(runtimeCard.getWillpower());
+      if (runtimeCard?.willpower !== undefined) {
+        return sanitizeNumber(runtimeCard.willpower);
       }
 
       if (!resolvedTarget) {
@@ -806,20 +843,43 @@ function evaluateAggregate(
       return resolveOpponentScopedValue(
         context,
         (playerId) =>
-          context.ctx.framework.zones.getCards({ zone: "play", playerId }).filter((cardId) => {
-            const definition = context.ctx.cards.getDefinition(cardId) as
-              | { cardType?: string; classifications?: unknown }
-              | undefined;
-            if (definition?.cardType !== "character") {
-              return false;
-            }
+          context.ctx.framework.zones
+            .getCards({ zone: "play", playerId })
+            .filter(
+              (cardId) => !(amount.excludeSelf && context.sourceId && cardId === context.sourceId),
+            )
+            .filter((cardId) => {
+              const definition = context.ctx.cards.getDefinition(cardId) as
+                | { cardType?: string; classifications?: unknown }
+                | undefined;
+              if (definition?.cardType !== "character") {
+                return false;
+              }
 
-            const classifications = definition.classifications;
-            return (
-              Array.isArray(classifications) &&
-              classifications.some((classification) => classification === amount.classification)
-            );
-          }).length,
+              const classifications = definition.classifications;
+              return (
+                Array.isArray(classifications) &&
+                classifications.some((classification) => classification === amount.classification)
+              );
+            }).length,
+        amount.controller,
+      );
+
+    case "name-character-count":
+      return resolveOpponentScopedValue(
+        context,
+        (playerId) =>
+          context.ctx.framework.zones
+            .getCards({ zone: "play", playerId })
+            .filter(
+              (cardId) => !(amount.excludeSelf && context.sourceId && cardId === context.sourceId),
+            )
+            .filter((cardId) => {
+              const definition = context.ctx.cards.getDefinition(cardId) as
+                | { cardType?: string; name?: unknown }
+                | undefined;
+              return definition?.cardType === "character" && definition?.name === amount.name;
+            }).length,
         amount.controller,
       );
 
@@ -867,7 +927,10 @@ function evaluateAggregate(
           return resolveOpponentScopedValue(
             context,
             (playerId) =>
-              context.ctx.framework.zones.getCards({ zone: "discard", playerId }).length,
+              context.ctx.framework.zones.getCards({
+                zone: "discard",
+                playerId,
+              }).length,
             controller,
           );
         case "characters":
@@ -928,7 +991,12 @@ export function resolveVariableAmount(
   amount: VariableAmount,
   context: VariableAmountResolutionContext,
 ): ResolvedVariableAmount {
-  if (referencesTarget(amount) && Array.isArray(context.targets) && context.targets.length > 0) {
+  if (
+    referencesTarget(amount) &&
+    !hasFixedTargetRef(amount) &&
+    Array.isArray(context.targets) &&
+    context.targets.length > 0
+  ) {
     const perTarget: ResolvedTargetAmountMap = {};
     for (const targetId of context.targets) {
       perTarget[targetId] = evaluateAggregate(amount, context, targetId);
@@ -956,12 +1024,32 @@ export function resolveAmountString(
         mode: "aggregate",
         value: Array.isArray(context.targets) ? context.targets.length : 0,
       };
+    case "DISCARDED_CARD_LORE": {
+      const discardedIds = context.eventSnapshot?.discardedCardIds;
+      if (!discardedIds || discardedIds.length === 0) {
+        return { mode: "aggregate", value: 0 };
+      }
+      const firstDiscardedId = discardedIds[0]!;
+      const definition = context.ctx.cards.getDefinition(firstDiscardedId) as
+        | { lore?: unknown }
+        | undefined;
+      return { mode: "aggregate", value: sanitizeNumber(definition?.lore) };
+    }
     case "DAMAGE_DEALT":
-      return { mode: "aggregate", value: sanitizeNumber(context.eventSnapshot?.damageDealt) };
+      return {
+        mode: "aggregate",
+        value: sanitizeNumber(context.eventSnapshot?.damageDealt),
+      };
     case "DAMAGE_REMOVED":
-      return { mode: "aggregate", value: sanitizeNumber(context.eventSnapshot?.healedAmount) };
+      return {
+        mode: "aggregate",
+        value: sanitizeNumber(context.eventSnapshot?.healedAmount),
+      };
     case "X":
-      return { mode: "aggregate", value: sanitizeNumber(context.eventSnapshot?.triggerAmount) };
+      return {
+        mode: "aggregate",
+        value: sanitizeNumber(context.eventSnapshot?.triggerAmount),
+      };
     case "TARGET_STRENGTH": {
       if (!context.targets || context.targets.length === 0) {
         return { mode: "aggregate", value: 0 };
@@ -992,10 +1080,10 @@ export function resolveAmountString(
       const perTarget: ResolvedTargetAmountMap = {};
       for (const targetId of context.targets) {
         const runtimeCard = context.ctx.cards.require(targetId) as
-          | { getWillpower?: () => number }
+          | { willpower?: number }
           | undefined;
-        if (runtimeCard?.getWillpower) {
-          perTarget[targetId] = sanitizeNumber(runtimeCard.getWillpower());
+        if (runtimeCard?.willpower !== undefined) {
+          perTarget[targetId] = sanitizeNumber(runtimeCard.willpower);
           continue;
         }
 

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { divebombI18n } from "./128-divebomb.i18n";
 
 export const divebomb: ActionCard = {
   id: "lb1",
@@ -6,24 +7,6 @@ export const divebomb: ActionCard = {
   reprints: ["set3-128"],
   cardType: "action",
   name: "Divebomb",
-  i18n: {
-    en: {
-      name: "Divebomb",
-      text: "Banish one of your characters with Reckless to banish chosen character with less {S} than that character.",
-    },
-    de: {
-      name: "Sturzbomber",
-      text: "Verbanne einen deiner Charaktere mit Impulsiv, um einen Charakter deiner Wahl, mit einer geringeren als der verbannte Charakter, zu verbannen.",
-    },
-    fr: {
-      name: "Bombardement en piqué !",
-      text: "Bannissez l'un de vos personnages avec Combattant puis choisissez un personnage ayant moins de que lui et bannissez-le.",
-    },
-    it: {
-      name: "In Picchiata",
-      text: "Esilia uno dei tuoi personaggi con Attaccabrighe per esiliare un personaggio a tua scelta con meno del tuo personaggio.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aladdin",
   set: "003",
@@ -40,8 +23,10 @@ export const divebomb: ActionCard = {
     {
       type: "action",
       effect: {
+        type: "sequence",
         steps: [
           {
+            type: "banish",
             target: {
               selector: "chosen",
               count: 1,
@@ -55,9 +40,9 @@ export const divebomb: ActionCard = {
                 },
               ],
             },
-            type: "banish",
           },
           {
+            type: "banish",
             target: {
               selector: "chosen",
               count: 1,
@@ -74,11 +59,10 @@ export const divebomb: ActionCard = {
                 },
               ],
             },
-            type: "banish",
           },
         ],
-        type: "sequence",
       },
     },
   ],
+  i18n: divebombI18n,
 };

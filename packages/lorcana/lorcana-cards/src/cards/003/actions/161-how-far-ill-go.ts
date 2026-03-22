@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { howFarIllGoI18n } from "./161-how-far-ill-go.i18n";
 
 export const howFarIllGo: ActionCard = {
   id: "r73",
@@ -6,24 +7,6 @@ export const howFarIllGo: ActionCard = {
   reprints: ["set3-161"],
   cardType: "action",
   name: "How Far I'll Go",
-  i18n: {
-    en: {
-      name: "How Far I'll Go",
-      text: "Look at the top 2 cards of your deck. Put one into your hand and the other into your inkwell facedown and exerted.",
-    },
-    de: {
-      name: "Ich bin bereit",
-      text: "Schaue dir die obersten 2 Karten deines Decks an. Nimm 1 davon auf deine Hand und lege die andere verdeckt und erschöpft in deinen Tintenvorrat.",
-    },
-    fr: {
-      name: "Le bleu lumière",
-      text: "Regardez les 2 premières cartes de votre pioche, ajoutez-en 1 à votre main et placez l'autre dans votre réserve d'encre, face cachée et épuisée.",
-    },
-    it: {
-      name: "Dov'è Che Andrò",
-      text: "(Un personaggio con costo 4 o superiore può per giocare questa canzone gratis.) Guarda le prime 2 carte del tuo mazzo, aggiungine una alla tua mano e l'altra al tuo calamaio, a faccia in giù e impegnata.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Moana",
   set: "003",
@@ -61,4 +44,5 @@ export const howFarIllGo: ActionCard = {
       type: "action",
     },
   ],
+  i18n: howFarIllGoI18n,
 };

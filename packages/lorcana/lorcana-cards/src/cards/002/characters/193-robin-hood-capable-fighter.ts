@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { robinHoodCapableFighterI18n } from "./193-robin-hood-capable-fighter.i18n";
 
 export const robinHoodCapableFighter: CharacterCard = {
   id: "4Zj",
@@ -7,48 +8,6 @@ export const robinHoodCapableFighter: CharacterCard = {
   cardType: "character",
   name: "Robin Hood",
   version: "Capable Fighter",
-  i18n: {
-    en: {
-      name: "Robin Hood",
-      version: "Capable Fighter",
-      text: [
-        {
-          title: "SKIRMISH",
-          description: "{E} — Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Robin Hood",
-      version: "Capable Fighter",
-      text: [
-        {
-          title: "SKIRMISH",
-          description: "— Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    fr: {
-      name: "Robin Hood",
-      version: "Capable Fighter",
-      text: [
-        {
-          title: "SKIRMISH",
-          description: "— Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    it: {
-      name: "Robin Hood",
-      version: "Capable Fighter",
-      text: [
-        {
-          title: "SKIRMISH",
-          description: "— Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Robin Hood",
   set: "002",
@@ -70,7 +29,6 @@ export const robinHoodCapableFighter: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -92,4 +50,6 @@ export const robinHoodCapableFighter: CharacterCard = {
       type: "activated",
     },
   ],
+  missingTests: true,
+  i18n: robinHoodCapableFighterI18n,
 };

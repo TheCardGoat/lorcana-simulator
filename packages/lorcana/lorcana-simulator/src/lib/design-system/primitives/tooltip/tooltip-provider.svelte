@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { Tooltip as TooltipPrimitive } from "bits-ui";
 
-	let { ...restProps }: TooltipPrimitive.ProviderProps = $props();
+	let { children, ...restProps }: TooltipPrimitive.ProviderProps = $props();
 </script>
 
-<TooltipPrimitive.Provider {...restProps} />
+<TooltipPrimitive.Provider {...restProps}>
+	{@render children?.()}
+</TooltipPrimitive.Provider>

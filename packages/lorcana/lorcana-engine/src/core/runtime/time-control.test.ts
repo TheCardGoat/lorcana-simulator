@@ -40,16 +40,12 @@ function asPriority(time: TimeContext): PriorityClockContext {
 // Helper to create a test match state
 type TestGameState = { turn: number };
 
-function createTestState(timeMode: "none"): MatchState<TestGameState>;
-function createTestState(
-  timeMode: "chess",
-): MatchState<TestGameState> & { ctx: { time: ChessClockContext } };
+function createTestState(timeMode: "none"): MatchState;
+function createTestState(timeMode: "chess"): MatchState & { ctx: { time: ChessClockContext } };
 function createTestState(
   timeMode: "priority",
-): MatchState<TestGameState> & { ctx: { time: PriorityClockContext } };
-function createTestState(
-  timeMode: "none" | "chess" | "priority" = "none",
-): MatchState<TestGameState> {
+): MatchState & { ctx: { time: PriorityClockContext } };
+function createTestState(timeMode: "none" | "chess" | "priority" = "none") {
   const chessConfig: ChessClockConfig = {
     initialReserveMs: 600_000,
     incrementMs: 0,
@@ -112,7 +108,7 @@ function createTestState(
   }
 
   return {
-    G: { turn: 1 },
+    G: { turn: 1 } as any,
     ctx,
   };
 }

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { weDontTalkAboutBrunoEnchantedI18n } from "./213-we-dont-talk-about-bruno-enchanted.i18n";
 
 export const weDontTalkAboutBrunoEnchanted: ActionCard = {
   id: "aXU",
@@ -6,24 +7,6 @@ export const weDontTalkAboutBrunoEnchanted: ActionCard = {
   reprints: ["set4-097"],
   cardType: "action",
   name: "We Don’t Talk About Bruno",
-  i18n: {
-    en: {
-      name: "We Don’t Talk About Bruno",
-      text: "Return chosen character to their player's hand, then that player discards a card at random.",
-    },
-    de: {
-      name: "Nur kein Wort über Bruno",
-      text: "Schicke einen Charakter deiner Wahl auf die zugehörige Hand zurück, danach muss diese Person eine zufällig ausgewählte Karte von ihrer Hand abwerfen.",
-    },
-    fr: {
-      name: "Ne parlons pas de Bruno",
-      text: "Choisissez un personnage et renvoyez-le dans la main de son propriétaire. Puis, ce joueur doit défausser une carte au hasard de sa main.",
-    },
-    it: {
-      name: "Non Si Nomina Bruno",
-      text: "(Un personaggio con costo 5 o superiore può per cantare questa canzone gratis.) Fai ripendere in mano al suo giocatore un personaggio a tua scelta, poi quel giocatore scarta una carta a caso.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Encanto",
   set: "004",
@@ -66,4 +49,5 @@ export const weDontTalkAboutBrunoEnchanted: ActionCard = {
       type: "action",
     },
   ],
+  i18n: weDontTalkAboutBrunoEnchantedI18n,
 };

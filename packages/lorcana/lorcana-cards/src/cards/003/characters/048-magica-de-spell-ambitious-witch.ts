@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicaDeSpellAmbitiousWitchI18n } from "./048-magica-de-spell-ambitious-witch.i18n";
 
 export const magicaDeSpellAmbitiousWitch: CharacterCard = {
   id: "xwX",
@@ -7,24 +8,6 @@ export const magicaDeSpellAmbitiousWitch: CharacterCard = {
   cardType: "character",
   name: "Magica De Spell",
   version: "Ambitious Witch",
-  i18n: {
-    en: {
-      name: "Magica De Spell",
-      version: "Ambitious Witch",
-    },
-    de: {
-      name: "Gundel Gaukeley",
-      version: "Ehrgeizige Hexe",
-    },
-    fr: {
-      name: "Miss Tick",
-      version: "Sorcière ambitieuse",
-    },
-    it: {
-      name: "Amelia",
-      version: "Strega Ambiziosa",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Ducktales",
   set: "003",
@@ -41,4 +24,5 @@ export const magicaDeSpellAmbitiousWitch: CharacterCard = {
     tcgPlayer: 538257,
   },
   classifications: ["Storyborn", "Villain", "Sorcerer"],
+  i18n: magicaDeSpellAmbitiousWitchI18n,
 };

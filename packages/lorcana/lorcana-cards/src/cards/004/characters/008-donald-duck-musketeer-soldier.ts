@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckMusketeerSoldierI18n } from "./008-donald-duck-musketeer-soldier.i18n";
 
 export const donaldDuckMusketeerSoldier: CharacterCard = {
   id: "1Pa",
@@ -7,42 +8,6 @@ export const donaldDuckMusketeerSoldier: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Musketeer Soldier",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Musketeer Soldier",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "WAIT FOR ME!",
-          description: "When you play this character, chosen character gets +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Musketier-Soldat",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) WARTET AUF MICH Wenn du diesen Charakter ausspielst, erhält ein Charakter deiner Wahl in diesem Zug +1.",
-    },
-    fr: {
-      name: "Donald",
-      version: "Mousquetaire soldat",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'un adversaire défie l'un de vos personnages, il doit, si possible, choisir l'un de vos personnages avec Rempart.) ATTENDEZ-MOI! Lorsque vous jouez ce personnage, choisissez un personnage qui gagne +1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Paperino",
-      version: "Soldato Moschettiere",
-      text: "Guardiano ECCOMI, ARRIVO! Quando giochi questo personaggio, un personaggio a tua scelta riceve +1 per questo turno.",
-    },
-  },
   inkType: ["amber"],
   set: "004",
   cardNumber: 8,
@@ -78,7 +43,13 @@ export const donaldDuckMusketeerSoldier: CharacterCard = {
         duration: "this-turn",
         modifier: 1,
         stat: "lore",
-        target: "SELF",
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          owner: "any",
+          selector: "chosen",
+          zones: ["play"],
+        },
         type: "modify-stat",
       },
       id: "1hr-2",
@@ -92,4 +63,5 @@ export const donaldDuckMusketeerSoldier: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: donaldDuckMusketeerSoldierI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { vinnieGreenPigeonI18n } from "./194-vinnie-green-pigeon.i18n";
 
 export const vinnieGreenPigeon: CharacterCard = {
   id: "f0C",
@@ -7,52 +8,6 @@ export const vinnieGreenPigeon: CharacterCard = {
   cardType: "character",
   name: "Vinnie",
   version: "Green Pigeon",
-  i18n: {
-    en: {
-      name: "Vinnie",
-      version: "Green Pigeon",
-      text: [
-        {
-          title: "LEARNING EXPERIENCE",
-          description:
-            "During an opponent's turn, whenever one of your other characters is banished, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Vinnie",
-      version: "Grüne Taube",
-      text: [
-        {
-          title: "LEHRSAME ERFAHRUNG",
-          description:
-            "Jedes Mal, wenn einer deiner anderen Charaktere im Zug einer gegnerischen Person verbannt wird, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Vinnie le pigeon",
-      version: "Pigeon vert",
-      text: [
-        {
-          title: "EXPÉRIENCE ENRICHISSANTE",
-          description:
-            "Durant le tour de vos adversaires, chaque fois qu'un autre de vos personnages est banni, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Vinnie",
-      version: "Piccione Verde",
-      text: [
-        {
-          title: "ESPERIENZA FORMATIVA",
-          description:
-            "Durante il turno di un avversario, ogni volta che un tuo altro personaggio viene esiliato, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Bolt",
   set: "008",
@@ -82,8 +37,21 @@ export const vinnieGreenPigeon: CharacterCard = {
         type: "gain-lore",
       },
       id: "ogk-1",
+      name: "LEARNING EXPERIENCE",
       text: "LEARNING EXPERIENCE During an opponent's turn, whenever one of your other characters is banished, gain 1 lore.",
-      type: "action",
+      trigger: {
+        event: "banish",
+        on: "YOUR_OTHER_CHARACTERS",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "opponent",
+          },
+        ],
+      },
+      type: "triggered",
     },
   ],
+  i18n: vinnieGreenPigeonI18n,
 };

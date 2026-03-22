@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { rapunzelsTowerSecludedPrisonI18n } from "./033-rapunzels-tower-secluded-prison.i18n";
 
 export const rapunzelsTowerSecludedPrison: LocationCard = {
   id: "RU5",
@@ -7,48 +8,6 @@ export const rapunzelsTowerSecludedPrison: LocationCard = {
   cardType: "location",
   name: "Rapunzel's Tower",
   version: "Secluded Prison",
-  i18n: {
-    en: {
-      name: "Rapunzel's Tower",
-      version: "Secluded Prison",
-      text: [
-        {
-          title: "SAFE AND SOUND",
-          description: "Characters get +3 {W} while here.",
-        },
-      ],
-    },
-    de: {
-      name: "Rapunzels Turm",
-      version: "Abgelegenes Gefängnis",
-      text: [
-        {
-          title: "DAMIT DIR NICHTS GESCHIEHT",
-          description: "Charaktere an diesem Ort erhalten +3.",
-        },
-      ],
-    },
-    fr: {
-      name: "Tour de Raiponce",
-      version: "Prison cachée",
-      text: [
-        {
-          title: "POUR QU'IL NE T'ARRIVE RIEN",
-          description: "Les personnages sur ce lieu gagnent +3.",
-        },
-      ],
-    },
-    it: {
-      name: "Torre di Rapunzel",
-      version: "Prigione Isolata",
-      text: [
-        {
-          title: "VEGLIO SU DI TE I",
-          description: "personaggi ricevono +3 mentre si trovano in questo luogo.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Tangled",
   set: "005",
@@ -83,4 +42,5 @@ export const rapunzelsTowerSecludedPrison: LocationCard = {
       type: "static",
     },
   ],
+  i18n: rapunzelsTowerSecludedPrisonI18n,
 };

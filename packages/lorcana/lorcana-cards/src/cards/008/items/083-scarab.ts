@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { scarabI18n } from "./083-scarab.i18n";
 
 export const scarab: ItemCard = {
   id: "wF1",
@@ -6,47 +7,6 @@ export const scarab: ItemCard = {
   reprints: ["set8-083"],
   cardType: "item",
   name: "Scarab",
-  i18n: {
-    en: {
-      name: "Scarab",
-      text: [
-        {
-          title: "SEARCH THE SANDS",
-          description:
-            "{E} 2 {I} — Return an Illusion character card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Skarabäus",
-      text: [
-        {
-          title: "DURCHSUCHT DEN SAND, 2",
-          description:
-            "— Nimm eine Illusions-Charakterkarte aus deinem Ablagestapel zurück auf deine Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Scarabée",
-      text: [
-        {
-          title: "FOUILLER LE SABLE, 2",
-          description:
-            "— Renvoyez une carte Personnage Illusion de votre défausse dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Scarabeo",
-      text: [
-        {
-          title: "CERCATE TRA LE SABBIE, 2",
-          description: "— Riprendi in mano una carta personaggio Illusione dai tuoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "008",
@@ -85,4 +45,5 @@ export const scarab: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: scarabI18n,
 };

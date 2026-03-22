@@ -29,7 +29,7 @@ export { ursulaSeaWitch } from "./037-ursula-sea-witch";
 export { jafarKeeperOfSecrets } from "./038-jafar-keeper-of-secrets";
 export { belleUntrainedMystic } from "./039-belle-untrained-mystic";
 export { belleAccomplishedMystic } from "./040-belle-accomplished-mystic";
-export { winnieThePoohHunnyWizard_set9 as winnieThePoohHunnyWizard } from "./041-winnie-the-pooh-hunny-wizard";
+export { winnieThePoohHunnyWizard } from "./041-winnie-the-pooh-hunny-wizard";
 export { peterPansShadowNotSewnOn } from "./042-peter-pans-shadow-not-sewn-on";
 export { elsaSpiritOfWinter } from "./043-elsa-spirit-of-winter";
 export { ursulaVoiceStealer } from "./044-ursula-voice-stealer";

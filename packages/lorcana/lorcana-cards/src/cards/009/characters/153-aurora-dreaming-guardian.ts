@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { auroraDreamingGuardianI18n } from "./153-aurora-dreaming-guardian.i18n";
 
 export const auroraDreamingGuardian: CharacterCard = {
   id: "klx",
@@ -7,48 +8,6 @@ export const auroraDreamingGuardian: CharacterCard = {
   cardType: "character",
   name: "Aurora",
   version: "Dreaming Guardian",
-  i18n: {
-    en: {
-      name: "Aurora",
-      version: "Dreaming Guardian",
-      text: [
-        {
-          title: "Shift 3 {I}",
-        },
-        {
-          title: "PROTECTIVE EMBRACE",
-          description: "Your other characters gain Ward.",
-        },
-      ],
-    },
-    de: {
-      name: "Aurora",
-      version: "Wächterin der Träume",
-      text: "Gestaltwandel 3 SCHÜTZENDE UMARMUNG Deine anderen Charaktere erhalten Behütet. (Gegnerische Karten können diese Charaktere nicht auswählen, außer um sie herauszufordern.)",
-    },
-    fr: {
-      name: "AURORE",
-      version: "Gardienne rêveuse",
-      text: [
-        {
-          title: "Alter 3",
-          description:
-            "(Vous pouvez payer 3 pour jouer ce personnage sur un autre personnage Aurore.) ÉTREINTE PROTECTRICE Vos autres personnages gagnent Hors d'atteinte. (Ils ne peuvent pas être choisis par vos adversaires, hormis pour un défi.)",
-        },
-      ],
-    },
-    it: {
-      name: "Aurora",
-      version: "Dreaming Guardian",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Aurora.) PROTECTIVE EMBRACE Your other characters gain Ward. (Opponents can't choose them except to challenge.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sleeping Beauty",
   set: "009",
@@ -86,7 +45,14 @@ export const auroraDreamingGuardian: CharacterCard = {
     {
       effect: {
         keyword: "Ward",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+        },
         type: "gain-keyword",
       },
       id: "11z-2",
@@ -95,4 +61,5 @@ export const auroraDreamingGuardian: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: auroraDreamingGuardianI18n,
 };

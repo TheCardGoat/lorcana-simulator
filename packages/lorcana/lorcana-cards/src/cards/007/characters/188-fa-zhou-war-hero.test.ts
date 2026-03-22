@@ -1,73 +1,139 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   FaZhouWarHero,
-//   HelgaSinclairToughAsNails,
-//   MerlinCleverClairvoyant,
-//   ThePrinceChallengerOfTheRise,
-// } from "@lorcanito/lorcana-engine/cards/007";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Fa Zhou - War Hero", () => {
-//   It("TRAINING EXERCISES Each time one of your characters challenges another, if it is the second challenge of this turn, gain 3 lore shards.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [faZhouWarHero, thePrinceChallengerOfTheRise],
-//       },
-//       {
-//         Play: [helgaSinclairToughAsNails, merlinCleverClairvoyant],
-//       },
-//     );
-//
-//     Expect(testEngine.getPlayerLore("player_one")).toBe(0);
-//     Expect(testEngine.getPlayerLore("player_two")).toBe(0);
-//
-//     Const cardUnderTest = testEngine.getCardModel(faZhouWarHero);
-//
-//     Const challenger = testEngine.getCardModel(thePrinceChallengerOfTheRise);
-//
-//     Const defender1 = testEngine.getCardModel(helgaSinclairToughAsNails);
-//
-//     Const defender2 = testEngine.getCardModel(merlinCleverClairvoyant);
-//
-//     Await testEngine.tapCard(defender1);
-//
-//     // First challenge of the turn.
-//     Challenger.challenge(defender1);
-//
-//     Expect(testEngine.getPlayerLore("player_one")).toBe(0);
-//     Expect(testEngine.getPlayerLore("player_two")).toBe(0);
-//
-//     // Ready the challanger (so it can challenge again).
-//     Await testEngine.tapCard(thePrinceChallengerOfTheRise, true);
-//
-//     // Second challenge of the turn.
-//     Challenger.challenge(defender1);
-//
-//     // Verify that there was 3 lore gained (second challenge of the turn).
-//     Expect(testEngine.getPlayerLore("player_one")).toBe(3);
-//     Expect(testEngine.getPlayerLore("player_two")).toBe(0);
-//
-//     Await testEngine.tapCard(defender2);
-//
-//     Await cardUnderTest.challenge(defender2);
-//
-//     // Verify that there was no lore gained (third challenge of the turn).
-//     Expect(testEngine.getPlayerLore("player_one")).toBe(3);
-//     Expect(testEngine.getPlayerLore("player_two")).toBe(0);
-//
-//     // Ready the challanger (so it can challenge again)
-//     Await testEngine.tapCard(cardUnderTest, true);
-//
-//     CardUnderTest.challenge(defender1);
-//
-//     // Verify that there was still no lore gained (fourth challenge of the turn).
-//     Expect(testEngine.getPlayerLore("player_one")).toBe(3);
-//     Expect(testEngine.getPlayerLore("player_two")).toBe(0);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { faZhouWarHero } from "./188-fa-zhou-war-hero";
+
+const challenger = createMockCharacter({
+  id: "fa-zhou-test-challenger",
+  name: "Challenger",
+  cost: 2,
+  strength: 1,
+  willpower: 10,
+});
+
+const defender = createMockCharacter({
+  id: "fa-zhou-test-defender",
+  name: "Defender",
+  cost: 2,
+  strength: 1,
+  willpower: 10,
+});
+
+describe("Fa Zhou - War Hero", () => {
+  describe("TRAINING EXERCISES - Whenever one of your characters challenges another character, if it's the second challenge this turn, gain 3 lore.", () => {
+    it("does NOT gain lore on the first challenge of the turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: faZhouWarHero, isDrying: false },
+            { card: challenger, isDrying: false },
+          ],
+          deck: 2,
+        },
+        {
+          play: [{ card: defender, exerted: true }],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().challenge(challenger, defender)).toBeSuccessfulCommand();
+
+      // First challenge: no lore gained
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+    });
+
+    it("gains 3 lore on the second challenge of the turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: faZhouWarHero, isDrying: false },
+            { card: challenger, isDrying: false },
+          ],
+          deck: 2,
+        },
+        {
+          play: [{ card: defender, exerted: true }],
+          deck: 2,
+        },
+      );
+
+      // First challenge
+      expect(testEngine.asPlayerOne().challenge(challenger, defender)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+
+      // Ready the challenger so it can challenge again
+      const challengerId = testEngine.findCardInstanceId(challenger, "play", PLAYER_ONE);
+      testEngine.asServer().manualReadyCard(challengerId);
+
+      // Second challenge
+      expect(testEngine.asPlayerOne().challenge(challenger, defender)).toBeSuccessfulCommand();
+
+      // 3 lore gained on second challenge
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(3);
+    });
+
+    it("does NOT gain lore on the third or subsequent challenges of the turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: faZhouWarHero, isDrying: false },
+            { card: challenger, isDrying: false },
+          ],
+          deck: 2,
+        },
+        {
+          play: [{ card: defender, exerted: true }],
+          deck: 2,
+        },
+      );
+
+      // First challenge
+      expect(testEngine.asPlayerOne().challenge(challenger, defender)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+
+      // Ready and second challenge
+      const challengerId = testEngine.findCardInstanceId(challenger, "play", PLAYER_ONE);
+      testEngine.asServer().manualReadyCard(challengerId);
+      expect(testEngine.asPlayerOne().challenge(challenger, defender)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(3);
+
+      // Ready and third challenge
+      testEngine.asServer().manualReadyCard(challengerId);
+      expect(testEngine.asPlayerOne().challenge(challenger, defender)).toBeSuccessfulCommand();
+
+      // No additional lore on third challenge
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(3);
+    });
+
+    it("triggers when Fa Zhou himself is the challenger", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: faZhouWarHero, isDrying: false },
+            { card: challenger, isDrying: false },
+          ],
+          deck: 2,
+        },
+        {
+          play: [{ card: defender, exerted: true }],
+          deck: 2,
+        },
+      );
+
+      // First challenge with the generic challenger (not Fa Zhou)
+      expect(testEngine.asPlayerOne().challenge(challenger, defender)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+
+      // Ready Fa Zhou and have him challenge second (Fa Zhou is the attacker this time)
+      const faZhouId = testEngine.findCardInstanceId(faZhouWarHero, "play", PLAYER_ONE);
+      testEngine.asServer().manualReadyCard(faZhouId);
+      expect(testEngine.asPlayerOne().challenge(faZhouWarHero, defender)).toBeSuccessfulCommand();
+
+      // 3 lore gained on second challenge (Fa Zhou challenged)
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(3);
+    });
+  });
+});

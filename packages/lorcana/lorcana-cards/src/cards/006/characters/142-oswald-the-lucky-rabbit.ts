@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { oswaldTheLuckyRabbitI18n } from "./142-oswald-the-lucky-rabbit.i18n";
 
 export const oswaldTheLuckyRabbit: CharacterCard = {
   id: "Wrn",
@@ -7,52 +8,6 @@ export const oswaldTheLuckyRabbit: CharacterCard = {
   cardType: "character",
   name: "Oswald",
   version: "The Lucky Rabbit",
-  i18n: {
-    en: {
-      name: "Oswald",
-      version: "The Lucky Rabbit",
-      text: [
-        {
-          title: "FAVORABLE CHANCE",
-          description:
-            "During your turn, whenever a card is put into your inkwell, you may reveal the top card of your deck. If it's an item card, you may play that item for free and it enters play exerted. Otherwise, put it on the bottom of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Oswald",
-      version: "The Lucky Rabbit",
-      text: [
-        {
-          title: "[FAVORABLE CHANCE]",
-          description:
-            "During your turn, whenever a card is put into your inkwell, reveal the top card of your deck. If it's an item card you may play it for free, exerted. Otherwise, put it on the bottom of your deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "Oswald",
-      version: "The Lucky Rabbit",
-      text: [
-        {
-          title: "[FAVORABLE CHANCE]",
-          description:
-            "During your turn, whenever a card is put into your inkwell, reveal the top card of your deck. If it's an item card you may play it for free, exerted. Otherwise, put it on the bottom of your deck.",
-        },
-      ],
-    },
-    it: {
-      name: "Oswald",
-      version: "The Lucky Rabbit",
-      text: [
-        {
-          title: "[FAVORABLE CHANCE]",
-          description:
-            "During your turn, whenever a card is put into your inkwell, reveal the top card of your deck. If it's an item card you may play it for free, exerted. Otherwise, put it on the bottom of your deck.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   set: "006",
   cardNumber: 142,
@@ -99,4 +54,5 @@ export const oswaldTheLuckyRabbit: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: oswaldTheLuckyRabbitI18n,
 };

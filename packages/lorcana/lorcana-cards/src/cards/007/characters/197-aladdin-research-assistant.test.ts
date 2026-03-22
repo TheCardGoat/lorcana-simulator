@@ -1,132 +1,204 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   JafarKeeperOfSecrets,
-//   JafarWicked,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { mrSmeeBumblingMate } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { docBoldKnight } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { gopherShipsCarpenter } from "@lorcanito/lorcana-engine/cards/006";
-// Import { aladdinResearchAssistant } from "@lorcanito/lorcana-engine/cards/007";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Aladdin - Research Assistant", () => {
-//   Describe("HELPING HAND Whenever this character quests, you can play an Ally character with cost 3 or less for free.", () => {
-//     It("should play an Ally character of cost 3 or less for free", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: 7,
-//         Play: [aladdinResearchAssistant],
-//         Hand: [mrSmeeBumblingMate],
-//       });
-//
-//       Await testEngine.questCard(aladdinResearchAssistant);
-//       Await testEngine.playCard(mrSmeeBumblingMate);
-//
-//       Expect(testEngine.getAvailableInkwellCardCount("player_one")).toBe(7);
-//     });
-//
-//     It("should not play an Ally character of cost 3 or more for free", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: 7,
-//         Play: [aladdinResearchAssistant],
-//         Hand: [gopherShipsCarpenter],
-//       });
-//
-//       Await testEngine.questCard(aladdinResearchAssistant);
-//       Await testEngine.playCard(gopherShipsCarpenter);
-//
-//       Expect(testEngine.getAvailableInkwellCardCount("player_one")).toBe(3);
-//     });
-//
-//     It("should not discount the cost of non-Ally characters", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: 10,
-//         Play: [aladdinResearchAssistant],
-//         Hand: [jafarWicked, jafarKeeperOfSecrets],
-//       });
-//
-//       Await testEngine.questCard(aladdinResearchAssistant);
-//       Await testEngine.playCard(jafarWicked);
-//
-//       Expect(testEngine.getAvailableInkwellCardCount("player_one")).toBe(6);
-//
-//       Await testEngine.playCard(jafarKeeperOfSecrets);
-//
-//       Expect(testEngine.getAvailableInkwellCardCount("player_one")).toBe(2);
-//     });
-//   });
-//
-//   Describe("PUT IN THE EFFORT While this character exerted, your Ally characters gain +1 {S}.", () => {
-//     It("should give +1 {S} only to Ally characters", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: 10,
-//         Play: [
-//           AladdinResearchAssistant,
-//           MrSmeeBumblingMate,
-//           GopherShipsCarpenter,
-//         ],
-//         Hand: [],
-//       });
-//
-//       TestEngine
-//         .getCardModel(aladdinResearchAssistant)
-//         .updateCardMeta({ exerted: true });
-//       Expect(
-//         TestEngine.getCardModel(aladdinResearchAssistant).meta.exerted,
-//       ).toBeTruthy();
-//
-//       Expect(testEngine.getCardModel(mrSmeeBumblingMate).strength).toEqual(4);
-//       Expect(testEngine.getCardModel(gopherShipsCarpenter).strength).toEqual(2);
-//       Expect(
-//         TestEngine.getCardModel(aladdinResearchAssistant).strength,
-//       ).toEqual(aladdinResearchAssistant.strength);
-//     });
-//
-//     It("should not give +1 {S} only to non-Ally characters", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: 10,
-//         Play: [aladdinResearchAssistant, jafarWicked, jafarKeeperOfSecrets],
-//         Hand: [],
-//       });
-//
-//       TestEngine
-//         .getCardModel(aladdinResearchAssistant)
-//         .updateCardMeta({ exerted: true });
-//       Expect(
-//         TestEngine.getCardModel(aladdinResearchAssistant).meta.exerted,
-//       ).toBeTruthy();
-//
-//       Expect(testEngine.getCardModel(jafarWicked).strength).toEqual(2);
-//       Expect(testEngine.getCardModel(jafarKeeperOfSecrets).strength).toEqual(0);
-//       Expect(
-//         TestEngine.getCardModel(aladdinResearchAssistant).strength,
-//       ).toEqual(aladdinResearchAssistant.strength);
-//     });
-//   });
-// });
-//
-// Describe("Regression", () => {
-//   It("Should trigger 'whenever played' effects for played card", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: 7,
-//       Play: [aladdinResearchAssistant],
-//       Hand: [docBoldKnight],
-//     });
-//
-//     Await testEngine.questCard(aladdinResearchAssistant);
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({ targets: [docBoldKnight] }, true);
-//
-//     Expect(testEngine.getAvailableInkwellCardCount("player_one")).toBe(7);
-//     Expect(testEngine.getCardModel(docBoldKnight).zone).toBe("play");
-//     Expect(testEngine.stackLayers).toHaveLength(1);
-//     Expect(testEngine.stackLayers.at(0)?.name).toBe(
-//       DocBoldKnight.abilities?.at(0)?.name,
-//     );
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  CANONICAL_PLAYER_ONE,
+} from "@tcg/lorcana-engine/testing";
+import { aladdinResearchAssistant } from "./197-aladdin-research-assistant";
+
+// Ally character with cost 3 or less (should be playable for free via HELPING HAND)
+const allyCharacterCost3 = createMockCharacter({
+  id: "aladdin-test-ally-cost3",
+  name: "Ally Friend",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+  classifications: ["Storyborn", "Ally"],
+});
+
+// Ally character with cost 4 (should NOT be playable for free via HELPING HAND)
+const allyCharacterCost4 = createMockCharacter({
+  id: "aladdin-test-ally-cost4",
+  name: "Expensive Ally",
+  cost: 4,
+  strength: 2,
+  willpower: 2,
+  classifications: ["Storyborn", "Ally"],
+});
+
+// Non-Ally character with cost 2 (should NOT be playable for free via HELPING HAND)
+const nonAllyCharacterCost2 = createMockCharacter({
+  id: "aladdin-test-non-ally-cost2",
+  name: "Non-Ally Hero",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  classifications: ["Storyborn", "Hero"],
+});
+
+// Non-Ally character for PUT IN THE EFFORT test
+const nonAllyCharacter = createMockCharacter({
+  id: "aladdin-test-non-ally",
+  name: "Non-Ally Character",
+  cost: 2,
+  strength: 3,
+  willpower: 3,
+  classifications: ["Storyborn", "Hero"],
+});
+
+describe("Aladdin - Research Assistant", () => {
+  describe("HELPING HAND - Whenever this character quests, you may play an Ally character with cost 3 or less for free.", () => {
+    it("should play an Ally character of cost 3 or less for free when questing", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: aladdinResearchAssistant, isDrying: false }],
+        hand: [allyCharacterCost3],
+        inkwell: 7,
+        deck: 1,
+      });
+
+      // Quest with Aladdin
+      expect(testEngine.asPlayerOne().quest(aladdinResearchAssistant)).toBeSuccessfulCommand();
+
+      // HELPING HAND triggers (optional)
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+
+      // Accept the optional effect and choose the Ally character
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+          targets: [allyCharacterCost3],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // The ally should be in play
+      expect(testEngine.asPlayerOne().getCardZone(allyCharacterCost3)).toBe("play");
+
+      // Ink should not have been spent (played for free)
+      expect(testEngine.asPlayerOne().getAvailableInk(CANONICAL_PLAYER_ONE)).toBe(7);
+    });
+
+    it("should not play an Ally character of cost 4 or more for free", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: aladdinResearchAssistant, isDrying: false }],
+        hand: [allyCharacterCost4],
+        inkwell: 7,
+        deck: 1,
+      });
+
+      // Quest with Aladdin
+      expect(testEngine.asPlayerOne().quest(aladdinResearchAssistant)).toBeSuccessfulCommand();
+
+      // HELPING HAND triggers but the Ally cost 4 does not match the cost restriction
+      const bagCount = testEngine.asPlayerOne().getBagCount();
+      if (bagCount > 0) {
+        const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+        expect(
+          testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+            resolveOptional: true,
+            targets: [allyCharacterCost4],
+          }),
+        ).toBeSuccessfulCommand();
+      }
+
+      // The expensive ally should still be in hand (not played for free)
+      expect(testEngine.asPlayerOne().getCardZone(allyCharacterCost4)).toBe("hand");
+    });
+
+    it("should not play a non-Ally character for free even if cost 3 or less", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: aladdinResearchAssistant, isDrying: false }],
+        hand: [nonAllyCharacterCost2],
+        inkwell: 7,
+        deck: 1,
+      });
+
+      // Quest with Aladdin
+      expect(testEngine.asPlayerOne().quest(aladdinResearchAssistant)).toBeSuccessfulCommand();
+
+      // HELPING HAND triggers but the only hand card is not an Ally — decline the optional
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // Non-Ally should still be in hand
+      expect(testEngine.asPlayerOne().getCardZone(nonAllyCharacterCost2)).toBe("hand");
+    });
+
+    it("should allow declining the optional trigger", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: aladdinResearchAssistant, isDrying: false }],
+        hand: [allyCharacterCost3],
+        inkwell: 7,
+        deck: 1,
+      });
+
+      expect(testEngine.asPlayerOne().quest(aladdinResearchAssistant)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Ally should still be in hand
+      expect(testEngine.asPlayerOne().getCardZone(allyCharacterCost3)).toBe("hand");
+    });
+  });
+
+  describe("PUT IN THE EFFORT - While this character is exerted, your Ally characters get +1 {S}.", () => {
+    it("should give +1 Strength to Ally characters while exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: aladdinResearchAssistant, exerted: true }, allyCharacterCost3],
+        deck: 1,
+      });
+
+      // Ally character should have +1 strength from PUT IN THE EFFORT
+      expect(testEngine.asPlayerOne().getCardStrength(allyCharacterCost3)).toBe(
+        allyCharacterCost3.strength + 1,
+      );
+    });
+
+    it("should not give +1 Strength to non-Ally characters while exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: aladdinResearchAssistant, exerted: true }, nonAllyCharacter],
+        deck: 1,
+      });
+
+      // Non-Ally character should NOT get the bonus
+      expect(testEngine.asPlayerOne().getCardStrength(nonAllyCharacter)).toBe(
+        nonAllyCharacter.strength,
+      );
+    });
+
+    it("should not give +1 Strength to Ally characters when not exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [aladdinResearchAssistant, allyCharacterCost3],
+        deck: 1,
+      });
+
+      // Ally should have base strength when Aladdin is not exerted
+      expect(testEngine.asPlayerOne().getCardStrength(allyCharacterCost3)).toBe(
+        allyCharacterCost3.strength,
+      );
+    });
+
+    it("should not buff Aladdin himself", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: aladdinResearchAssistant, exerted: true }],
+        deck: 1,
+      });
+
+      // Aladdin is not an Ally (he is Storyborn/Hero), so he should not buff himself
+      expect(testEngine.asPlayerOne().getCardStrength(aladdinResearchAssistant)).toBe(
+        aladdinResearchAssistant.strength,
+      );
+    });
+  });
+});

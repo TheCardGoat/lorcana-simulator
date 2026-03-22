@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rhinoPowerHamsterI18n } from "./030-rhino-power-hamster.i18n";
 
 export const rhinoPowerHamster: CharacterCard = {
   id: "I1B",
@@ -7,36 +8,6 @@ export const rhinoPowerHamster: CharacterCard = {
   cardType: "character",
   name: "Rhino",
   version: "Power Hamster",
-  i18n: {
-    en: {
-      name: "Rhino",
-      version: "Power Hamster",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "EPIC BALL OF AWESOME",
-          description: "While this character has no damage, he gains Resist +2.",
-        },
-      ],
-    },
-    de: {
-      name: "Dino",
-      version: "Energiegeladener Hamster",
-      text: "Gestaltwandel 2 EPISCHER BALL DER GROSSARTIGKEIT Solange dieser Charakter unbeschädigt ist, erhält er Robust +2. (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 2.)",
-    },
-    fr: {
-      name: "Rhino",
-      version: "Hamster survolté",
-      text: "Alter 2 BOULE SUPER GÉNIALE Tant que ce personnage n'a aucun dommage sur lui, il gagne Résistance +2.",
-    },
-    it: {
-      name: "Rhino",
-      version: "Criceto Potenziato",
-      text: "Trasformazione 2 PALLA EPICA E PAZZESCA Mentre questo personaggio non ha danno, ottiene Resistere +2.",
-    },
-  },
   inkType: ["amber", "steel"],
   franchise: "Bolt",
   set: "008",
@@ -83,4 +54,5 @@ export const rhinoPowerHamster: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: rhinoPowerHamsterI18n,
 };

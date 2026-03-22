@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { scarEerilyPreparedI18n } from "./153-scar-eerily-prepared.i18n";
 
 export const scarEerilyPrepared: CharacterCard = {
   id: "ETj",
@@ -7,43 +8,6 @@ export const scarEerilyPrepared: CharacterCard = {
   cardType: "character",
   name: "Scar",
   version: "Eerily Prepared",
-  i18n: {
-    en: {
-      name: "Scar",
-      version: "Eerily Prepared",
-      text: [
-        {
-          title: "Boost 2 {I}",
-        },
-        {
-          title: "SURVIVAL OF THE FITTEST",
-          description:
-            "Whenever you put a card under this character, chosen opposing character gets -5 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Scar",
-      version: "Unheimlich bereit",
-      text: "Stärken 2 DAS ÜBERLEBEN DES STÄRKEREN Jedes Mal, wenn du eine Karte unter diesen Charakter legst, gib einem gegnerischen Charakter deiner Wahl in diesem Zug -5.",
-    },
-    fr: {
-      name: "Scar",
-      version: "Étrangement prêt",
-      text: "Boost 2 SURVIE DU PLUS APTE Chaque fois que vous placez une carte sous ce personnage, choisissez un personnage adverse qui subit -5 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Scar",
-      version: "Misteriosamente Pronto",
-      text: [
-        {
-          title: "Potenziamento 2",
-          description:
-            "(Una volta durante il tuo turno, puoi pagare 2 per mettere la prima carta del tuo mazzo a faccia in giù sotto a questo personaggio.) LEGGE DELLA GIUNGLA Ogni volta che metti una carta sotto a questo personaggio, un personaggio avversario a tua scelta riceve -5 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Lion King",
   set: "010",
@@ -96,4 +60,5 @@ export const scarEerilyPrepared: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: scarEerilyPreparedI18n,
 };

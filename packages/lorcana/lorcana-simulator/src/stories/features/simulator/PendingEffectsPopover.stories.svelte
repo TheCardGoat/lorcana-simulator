@@ -93,7 +93,9 @@
       throw new Error("Window unavailable for queue overlay story.");
     }
 
-    await step("opens expanded with default anchors", async () => {
+    targetWindow.localStorage.removeItem("lorcana.simulator.pendingEffectsViewMode");
+
+    await step("opens compact with default anchors", async () => {
       const panel = canvas.getByRole("heading", { name: "Pending effects" }).closest("section");
       const reminder = canvasElement.querySelector<HTMLElement>('[data-queue-anchor="reminder"]');
       const panelAnchor = canvasElement.querySelector<HTMLElement>('[data-queue-anchor="panel"]');
@@ -101,7 +103,7 @@
       await expect(panel).toBeVisible();
       await expect(reminder).toBeTruthy();
       await expect(panelAnchor).toBeTruthy();
-      expect(panel?.getAttribute("data-view-mode")).toBe("normal");
+      expect(panel?.getAttribute("data-view-mode")).toBe("compact");
       expect(targetWindow.getComputedStyle(reminder!).top).toBe("16px");
       expect(targetWindow.getComputedStyle(reminder!).right).toBe("16px");
       expect(targetWindow.getComputedStyle(panelAnchor!).right).toBe("16px");
@@ -113,10 +115,10 @@
     });
 
     await step("toggles compact mode", async () => {
-      const compactButton = canvas.getByRole("button", { name: "Compact" });
+      const compactButton = canvas.getByRole("button", { name: "Switch to full view" });
       compactButton.click();
       const panel = canvas.getByRole("heading", { name: "Pending effects" }).closest("section");
-      expect(panel?.getAttribute("data-view-mode")).toBe("compact");
+      expect(panel?.getAttribute("data-view-mode")).toBe("normal");
     });
 
     await step("drags reminder without moving the panel", async () => {

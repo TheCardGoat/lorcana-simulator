@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ladyTremaineSinisterSocialiteEnchantedI18n } from "./233-lady-tremaine-sinister-socialite-enchanted.i18n";
 
 export const ladyTremaineSinisterSocialiteEnchanted: CharacterCard = {
   id: "IiM",
@@ -7,37 +8,6 @@ export const ladyTremaineSinisterSocialiteEnchanted: CharacterCard = {
   cardType: "character",
   name: "Lady Tremaine",
   version: "Sinister Socialite",
-  i18n: {
-    en: {
-      name: "Lady Tremaine",
-      version: "Sinister Socialite",
-      text: [
-        {
-          title: "Boost 2 {I}",
-        },
-        {
-          title: "EXPEDIENT SCHEMES",
-          description:
-            "Whenever this character quests, if you've put a card under her this turn, you may play an action with cost 5 or less from your discard for free, then put that action card on the bottom of your deck instead of into your discard.",
-        },
-      ],
-    },
-    de: {
-      name: "Gräfin Tremaine",
-      version: "Unheilbringende Prominenz",
-      text: "Stärken 2 ZWECKMÄSSIGE INTRIGEN Jedes Mal, wenn dieser Charakter erkundet, falls du in diesem Zug mindestens eine Karte unter diesen Charakter gelegt hast, darfst du eine Aktionskarte von deinem Ablagestapel, die 5 oder weniger kostet, kostenlos ausspielen. Lege sie danach unter dein Deck.",
-    },
-    fr: {
-      name: "Madame de Trémaine",
-      version: "Mondaine sinistre",
-      text: "Boost 2 PLANS OPPORTUNISTES Chaque fois que ce personnage est envoyé à l'aventure, si vous avez placé une carte sous lui ce tour-ci, vous pouvez jouer gratuitement une action coûtant 5 ou moins de votre défausse. Placez-la ensuite sous votre pioche.",
-    },
-    it: {
-      name: "La Matrigna",
-      version: "Nobildonna Sinistra",
-      text: "Potenziamento 2 COMPLOTTI VANTAGGIOSI Ogni volta che questo personaggio va all'avventura, se hai messo una carta sotto di esso in questo turno, puoi giocare un'azione con costo 5 o inferiore dai tuoi scarti gratis, poi metti quella carta azione in fondo al tuo mazzo invece che nei tuoi scarti.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Cinderella",
   set: "010",
@@ -73,22 +43,41 @@ export const ladyTremaineSinisterSocialiteEnchanted: CharacterCard = {
       value: 2,
     },
     {
+      condition: {
+        type: "put-card-under-self-this-turn",
+      },
       effect: {
-        condition: {
-          expression: "you've put a card under her this turn",
-          type: "if",
+        chooser: "CONTROLLER",
+        effect: {
+          steps: [
+            {
+              duration: "this-turn",
+              replacement: {
+                consumeOnApply: true,
+                eventKinds: ["zone-change"],
+                fromZones: ["play", "limbo"],
+                replacementPosition: "bottom",
+                replacementZone: "deck",
+                targetRef: "selected-target",
+                toZone: "discard",
+                type: "zone-destination",
+              },
+              type: "create-replacement-effect",
+            },
+            {
+              cardType: "action",
+              cost: "free",
+              costRestriction: {
+                comparison: "less-or-equal",
+                value: 5,
+              },
+              from: "discard",
+              type: "play-card",
+            },
+          ],
+          type: "sequence",
         },
-        then: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["card"],
-          },
-          type: "put-on-bottom",
-        },
-        type: "conditional",
+        type: "optional",
       },
       id: "a1d-2",
       name: "EXPEDIENT SCHEMES",
@@ -101,4 +90,5 @@ export const ladyTremaineSinisterSocialiteEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: ladyTremaineSinisterSocialiteEnchantedI18n,
 };

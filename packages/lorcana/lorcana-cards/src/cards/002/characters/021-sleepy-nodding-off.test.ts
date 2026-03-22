@@ -5,18 +5,12 @@ import { sleepyNoddingOff } from "./021-sleepy-nodding-off";
 describe("Sleepy - Nodding Off", () => {
   it("YAWN! - Enters play exerted", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      hand: [{ card: sleepyNoddingOff }],
-      inkwell: Array.from({ length: 5 }).map(() => ({ card: sleepyNoddingOff })),
+      hand: [sleepyNoddingOff],
+      inkwell: sleepyNoddingOff.cost,
     });
 
-    const sleepyId = testEngine.findCardInstanceId(sleepyNoddingOff, "hand");
+    expect(testEngine.asPlayerOne().playCard(sleepyNoddingOff)).toBeSuccessfulCommand();
 
-    // Play Sleepy
-    testEngine.asPlayerOne().playCard(sleepyId);
-
-    // Sleepy should be in play and exerted
-    const sleepy = testEngine.asServer().getCard(sleepyId);
-    expect(sleepy.zone).toBe("play");
-    expect(sleepy.exerted).toBe(true);
+    expect(testEngine.asPlayerOne().isExerted(sleepyNoddingOff)).toBe(true);
   });
 });

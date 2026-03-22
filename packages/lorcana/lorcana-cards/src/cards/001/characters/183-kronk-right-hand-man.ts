@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kronkRighthandManI18n } from "./183-kronk-right-hand-man.i18n";
 
 export const kronkRighthandMan: CharacterCard = {
   id: "pxO",
@@ -7,24 +8,6 @@ export const kronkRighthandMan: CharacterCard = {
   cardType: "character",
   name: "Kronk",
   version: "Right-Hand Man",
-  i18n: {
-    en: {
-      name: "Kronk",
-      version: "Right-Hand Man",
-    },
-    de: {
-      name: "Kronk",
-      version: "Rechte Hand",
-    },
-    fr: {
-      name: "KRONK",
-      version: "Fidèle bras droit",
-    },
-    it: {
-      name: "Kronk",
-      version: "Right-Hand Man",
-    },
-  },
   inkType: ["steel"],
   franchise: "Emperors New Groove",
   set: "001",
@@ -41,4 +24,5 @@ export const kronkRighthandMan: CharacterCard = {
     tcgPlayer: 503320,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: kronkRighthandManI18n,
 };

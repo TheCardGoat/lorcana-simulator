@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { heathcliffStoicButlerI18n } from "./078-heathcliff-stoic-butler.i18n";
 
 export const heathcliffStoicButler: CharacterCard = {
   id: "tMg",
@@ -7,28 +8,6 @@ export const heathcliffStoicButler: CharacterCard = {
   cardType: "character",
   name: "Heathcliff",
   version: "Stoic Butler",
-  i18n: {
-    en: {
-      name: "Heathcliff",
-      version: "Stoic Butler",
-      text: "Ward",
-    },
-    de: {
-      name: "Heathcliff",
-      version: "Aristokratischer Butler",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Heathcliff",
-      version: "Majordome stoïque",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Heathcliff",
-      version: "Stoico Maggiordomo",
-      text: "Protetto",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Big Hero 6",
   set: "006",
@@ -53,4 +32,5 @@ export const heathcliffStoicButler: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: heathcliffStoicButlerI18n,
 };

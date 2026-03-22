@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hadesKingOfOlympusEnchantedI18n } from "./205-hades-king-of-olympus-enchanted.i18n";
 
 export const hadesKingOfOlympusEnchanted: CharacterCard = {
   id: "QmK",
@@ -7,43 +8,6 @@ export const hadesKingOfOlympusEnchanted: CharacterCard = {
   cardType: "character",
   name: "Hades",
   version: "King of Olympus",
-  i18n: {
-    en: {
-      name: "Hades",
-      version: "King of Olympus",
-      text: [
-        {
-          title: "Shift 6",
-        },
-        {
-          title: "SINISTER PLOT",
-          description:
-            "This character gets +1 {L} for each other Villain character you have in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Hades",
-      version: "König des Olymps",
-      text: "Gestaltwandel 6 FINSTERE VERSCHWÖRUNG Dieser Charakter erhält +1 für jede weitere Schurkin und jeden weiteren Schurken, die du im Spiel hast.",
-    },
-    fr: {
-      name: "HADES",
-      version: "Roi de l'Olympe",
-      text: "Alter 6 SINISTRE COMPLOT Ce personnage a + 1 pour chaque autre personnage Méchant que vous avez en jeu.",
-    },
-    it: {
-      name: "Hades",
-      version: "King of Olympus",
-      text: [
-        {
-          title: "Shift 6",
-          description:
-            "(You may pay 6 to play this on top of one of your characters named Hades.) SINISTER PLOT This character gets +1 for each other Villain character you have in play.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Hercules",
   set: "001",
@@ -55,7 +19,6 @@ export const hadesKingOfOlympusEnchanted: CharacterCard = {
   willpower: 7,
   lore: 1,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_a9c86e6316084d76a03b32be95977091",
     tcgPlayer: 510148,
@@ -85,6 +48,7 @@ export const hadesKingOfOlympusEnchanted: CharacterCard = {
         modifier: {
           classification: "Villain",
           controller: "you",
+          excludeSelf: true,
           type: "classification-character-count",
         },
         stat: "lore",
@@ -97,4 +61,5 @@ export const hadesKingOfOlympusEnchanted: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: hadesKingOfOlympusEnchantedI18n,
 };

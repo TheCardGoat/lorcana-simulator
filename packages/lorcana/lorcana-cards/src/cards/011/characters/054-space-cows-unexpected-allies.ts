@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { spaceCowsUnexpectedAlliesI18n } from "./054-space-cows-unexpected-allies.i18n";
 
 export const spaceCowsUnexpectedAllies: CharacterCard = {
   id: "Qo1",
@@ -7,24 +8,6 @@ export const spaceCowsUnexpectedAllies: CharacterCard = {
   cardType: "character",
   name: "Space Cows",
   version: "Unexpected Allies",
-  i18n: {
-    en: {
-      name: "Space Cows",
-      version: "Unexpected Allies",
-    },
-    de: {
-      name: "Weltraum-Kühe",
-      version: "Unerwartete Verbündete",
-    },
-    fr: {
-      name: "Vaches de l’espace",
-      version: "Alliées inattendues",
-    },
-    it: {
-      name: "Mucche Spaziali",
-      version: "Alleati Inaspettati",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -41,4 +24,5 @@ export const spaceCowsUnexpectedAllies: CharacterCard = {
     tcgPlayer: 677134,
   },
   classifications: ["Storyborn", "Ally", "Alien"],
+  i18n: spaceCowsUnexpectedAlliesI18n,
 };

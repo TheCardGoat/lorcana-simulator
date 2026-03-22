@@ -1,301 +1,191 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-// Import { bellwetherMasterManipulator } from "./082-bellwether-master-manipulator";
-//
-// Describe("Bellwether - Master Manipulator", () => {
-//   Describe("VENDETTA - Basic Functionality", () => {
-//     It.skip("puts 1 damage counter on each opposing character when challenged and banished", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [bellwetherMasterManipulator],
-//         },
-//         {
-//           Play: [bellwetherMasterManipulator, bellwetherMasterManipulator],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         BellwetherMasterManipulator,
-//         0,
-//       );
-//       Const attacker = testEngine.getCardModel(bellwetherMasterManipulator, 1);
-//       Const target2 = testEngine.getCardModel(bellwetherMasterManipulator, 2);
-//
-//       Expect(cardUnderTest.zone).toBe("play");
-//       Expect(attacker.damage).toBe(0);
-//       Expect(target2.damage).toBe(0);
-//
-//       // Exert defender to allow challenge
-//       Await testEngine.exertCard(cardUnderTest);
-//
-//       // Opponent challenges and banishes Bellwether
-//       Await testEngine.passTurn();
-//       Await testEngine.challenge({ attacker, defender: cardUnderTest });
-//
-//       // Change back to player_one to resolve the ability
-//       Await testEngine.changeActivePlayer("player_one");
-//       // Resolve the triggered ability (no targets needed, targets all opposing characters automatically)
-//       Await testEngine.resolveTopOfStack({});
-//
-//       // Bellwether should be banished
-//       Expect(cardUnderTest.zone).toBe("discard");
-//
-//       // Attacker should also be banished from the challenge
-//       Expect(attacker.zone).toBe("discard");
-//       // Only target2 (the other opposing character still in play) should have 1 damage
-//       Expect(target2.damage).toBe(1);
-//     });
-//
-//     It("triggers even when all opposing characters are banished in the challenge", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [bellwetherMasterManipulator],
-//         },
-//         {
-//           Play: [bellwetherMasterManipulator],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         BellwetherMasterManipulator,
-//         0,
-//       );
-//       Const attacker = testEngine.getCardModel(bellwetherMasterManipulator, 1);
-//
-//       Expect(attacker.damage).toBe(0);
-//
-//       // Exert defender to allow challenge
-//       Await testEngine.exertCard(cardUnderTest);
-//
-//       Await testEngine.passTurn();
-//       Await testEngine.challenge({ attacker, defender: cardUnderTest });
-//
-//       // Change back to player_one to resolve the ability
-//       Await testEngine.changeActivePlayer("player_one");
-//       // Resolve the triggered ability (no valid targets since attacker is also banished)
-//       Await testEngine.resolveTopOfStack({});
-//
-//       Expect(cardUnderTest.zone).toBe("discard");
-//       // Attacker should also be banished from the challenge (no characters left to damage)
-//       Expect(attacker.zone).toBe("discard");
-//     });
-//
-//     It.skip("affects all opposing characters in play", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [bellwetherMasterManipulator],
-//         },
-//         {
-//           Play: [
-//             BellwetherMasterManipulator,
-//             BellwetherMasterManipulator,
-//             BellwetherMasterManipulator,
-//           ],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         BellwetherMasterManipulator,
-//         0,
-//       );
-//       Const attacker = testEngine.getCardModel(bellwetherMasterManipulator, 1);
-//       Const target2 = testEngine.getCardModel(bellwetherMasterManipulator, 2);
-//       Const target3 = testEngine.getCardModel(bellwetherMasterManipulator, 3);
-//
-//       // Exert defender to allow challenge
-//       Await testEngine.exertCard(cardUnderTest);
-//
-//       Await testEngine.passTurn();
-//       Await testEngine.challenge({ attacker, defender: cardUnderTest });
-//
-//       // Change back to player_one to resolve the ability
-//       Await testEngine.changeActivePlayer("player_one");
-//       // Resolve the triggered ability
-//       Await testEngine.resolveTopOfStack({});
-//
-//       Expect(cardUnderTest.zone).toBe("discard");
-//       // Attacker should be banished from the challenge
-//       Expect(attacker.zone).toBe("discard");
-//       // The other two opposing characters should each have 1 damage
-//       Expect(target2.damage).toBe(1);
-//       Expect(target3.damage).toBe(1);
-//     });
-//   });
-//
-//   Describe("VENDETTA - Does Not Affect Own Characters", () => {
-//     It("only damages opposing characters, not own characters", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [bellwetherMasterManipulator, bellwetherMasterManipulator],
-//         },
-//         {
-//           Play: [bellwetherMasterManipulator],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         BellwetherMasterManipulator,
-//         0,
-//       );
-//       Const ownCharacter = testEngine.getCardModel(
-//         BellwetherMasterManipulator,
-//         1,
-//       );
-//       Const attacker = testEngine.getCardModel(bellwetherMasterManipulator, 2);
-//
-//       Expect(ownCharacter.damage).toBe(0);
-//       Expect(attacker.damage).toBe(0);
-//
-//       // Exert defender to allow challenge
-//       Await testEngine.exertCard(cardUnderTest);
-//
-//       Await testEngine.passTurn();
-//       Await testEngine.challenge({ attacker, defender: cardUnderTest });
-//
-//       // Change back to player_one to resolve the ability
-//       Await testEngine.changeActivePlayer("player_one");
-//       // Resolve the triggered ability
-//       Await testEngine.resolveTopOfStack({});
-//
-//       Expect(cardUnderTest.zone).toBe("discard");
-//       // Own character should not be damaged
-//       Expect(ownCharacter.damage).toBe(0);
-//       // Attacker should be banished from the challenge (no damage from VENDETTA)
-//       Expect(attacker.zone).toBe("discard");
-//     });
-//   });
-//
-//   Describe("VENDETTA - Edge Cases", () => {
-//     It("damages all other opposing characters when attacker is also banished in the challenge", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [bellwetherMasterManipulator],
-//         },
-//         {
-//           Play: [
-//             BellwetherMasterManipulator,
-//             BellwetherMasterManipulator,
-//             BellwetherMasterManipulator,
-//           ],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         BellwetherMasterManipulator,
-//         0,
-//       );
-//       Const attacker = testEngine.getCardModel(bellwetherMasterManipulator, 1);
-//       Const target2 = testEngine.getCardModel(bellwetherMasterManipulator, 2);
-//       Const target3 = testEngine.getCardModel(bellwetherMasterManipulator, 3);
-//
-//       Expect(cardUnderTest.zone).toBe("play");
-//       Expect(attacker.zone).toBe("play");
-//       Expect(target2.zone).toBe("play");
-//       Expect(target3.zone).toBe("play");
-//       Expect(target2.damage).toBe(0);
-//       Expect(target3.damage).toBe(0);
-//
-//       // Exert defender to allow challenge
-//       Await testEngine.exertCard(cardUnderTest);
-//
-//       // Opponent challenges and both characters are banished (3 strength vs 3 willpower each)
-//       Await testEngine.passTurn();
-//       Await testEngine.challenge({ attacker, defender: cardUnderTest });
-//
-//       // Change back to player_one to resolve the ability
-//       Await testEngine.changeActivePlayer("player_one");
-//       // Resolve the triggered ability
-//       Await testEngine.resolveTopOfStack({});
-//
-//       // Both Bellwether and attacker should be banished from the challenge
-//       Expect(cardUnderTest.zone).toBe("discard");
-//       Expect(attacker.zone).toBe("discard");
-//
-//       // The other two opposing characters should each have 1 damage from VENDETTA
-//       // (VENDETTA triggers only once when Bellwether as defender is banished)
-//       Expect(target2.damage).toBe(1);
-//       Expect(target3.damage).toBe(1);
-//     });
-//
-//     It.skip("damages surviving opposing characters that were already damaged", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [bellwetherMasterManipulator],
-//         },
-//         {
-//           Play: [bellwetherMasterManipulator, bellwetherMasterManipulator],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         BellwetherMasterManipulator,
-//         0,
-//       );
-//       Const attacker = testEngine.getCardModel(bellwetherMasterManipulator, 1);
-//       Const target2 = testEngine.getCardModel(bellwetherMasterManipulator, 2);
-//
-//       // Pre-damage target2
-//       Target2.updateCardDamage(1, "add");
-//       Expect(target2.damage).toBe(1);
-//
-//       // Exert defender to allow challenge
-//       Await testEngine.exertCard(cardUnderTest);
-//
-//       Await testEngine.passTurn();
-//       Await testEngine.challenge({ attacker, defender: cardUnderTest });
-//
-//       // Change back to player_one to resolve the ability
-//       Await testEngine.changeActivePlayer("player_one");
-//       // Resolve the triggered ability
-//       Await testEngine.resolveTopOfStack({});
-//
-//       Expect(cardUnderTest.zone).toBe("discard");
-//       // Attacker should be banished from the challenge
-//       Expect(attacker.zone).toBe("discard");
-//       // Should add 1 more damage to already damaged character (1 + 1 = 2)
-//       Expect(target2.damage).toBe(2);
-//     });
-//
-//     It("can banish characters if damage exceeds willpower", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [bellwetherMasterManipulator],
-//         },
-//         {
-//           Play: [bellwetherMasterManipulator],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         BellwetherMasterManipulator,
-//         0,
-//       );
-//       Const attacker = testEngine.getCardModel(bellwetherMasterManipulator, 1);
-//
-//       // Pre-damage attacker to 2 (willpower is 3)
-//       Attacker.updateCardDamage(2, "add");
-//       Expect(attacker.damage).toBe(2);
-//
-//       // Exert defender to allow challenge
-//       Await testEngine.exertCard(cardUnderTest);
-//
-//       Await testEngine.passTurn();
-//       Await testEngine.challenge({ attacker, defender: cardUnderTest });
-//
-//       // Change back to player_one to resolve the ability
-//       Await testEngine.changeActivePlayer("player_one");
-//       // Resolve the triggered ability
-//       Await testEngine.resolveTopOfStack({});
-//
-//       Expect(cardUnderTest.zone).toBe("discard");
-//       // Attacker should be banished (2 + 1 = 3 damage on 3 willpower)
-//       Expect(attacker.zone).toBe("discard");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { bellwetherMasterManipulator } from "./082-bellwether-master-manipulator";
+
+const attacker = createMockCharacter({
+  id: "bellwether-test-attacker",
+  name: "Test Attacker",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
+});
+
+const bystander = createMockCharacter({
+  id: "bellwether-test-bystander",
+  name: "Test Bystander",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Bellwether - Master Manipulator", () => {
+  describe("VENDETTA - When this character is challenged and banished, put 1 damage counter on each opposing character", () => {
+    it("triggers even when all opposing characters are banished in the challenge", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [attacker],
+          deck: 1,
+        },
+        {
+          play: [{ card: bellwetherMasterManipulator, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      // Attacker challenges Bellwether, both have 3 str / 3 wp so both are banished
+      expect(
+        testEngine.asPlayerOne().challenge(attacker, bellwetherMasterManipulator),
+      ).toBeSuccessfulCommand();
+
+      // Bellwether should be banished
+      expect(testEngine.asPlayerTwo().getCardZone(bellwetherMasterManipulator)).toBe("discard");
+      // Attacker should also be banished from the challenge damage
+      expect(testEngine.asPlayerOne().getCardZone(attacker)).toBe("discard");
+    });
+
+    it("puts 1 damage counter on each opposing character when challenged and banished", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [attacker, bystander],
+          deck: 1,
+        },
+        {
+          play: [{ card: bellwetherMasterManipulator, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(attacker, bellwetherMasterManipulator),
+      ).toBeSuccessfulCommand();
+
+      // Check if there's a bag effect to resolve
+      const bagCount = testEngine.asPlayerTwo().getBagCount();
+      if (bagCount > 0) {
+        const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
+        expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      }
+
+      // Bellwether should be banished
+      expect(testEngine.asPlayerTwo().getCardZone(bellwetherMasterManipulator)).toBe("discard");
+      // Attacker should also be banished (3 str vs 3 wp)
+      expect(testEngine.asPlayerOne().getCardZone(attacker)).toBe("discard");
+      // Bystander should have 1 damage from VENDETTA
+      expect(testEngine.asPlayerOne().getDamage(bystander)).toBe(1);
+    });
+
+    it("damages all opposing characters in play", () => {
+      const bystander2 = createMockCharacter({
+        id: "bellwether-test-bystander-2",
+        name: "Test Bystander 2",
+        cost: 2,
+        strength: 2,
+        willpower: 3,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [attacker, bystander, bystander2],
+          deck: 1,
+        },
+        {
+          play: [{ card: bellwetherMasterManipulator, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(attacker, bellwetherMasterManipulator),
+      ).toBeSuccessfulCommand();
+
+      const bagCount = testEngine.asPlayerTwo().getBagCount();
+      if (bagCount > 0) {
+        const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
+        expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.asPlayerTwo().getCardZone(bellwetherMasterManipulator)).toBe("discard");
+      expect(testEngine.asPlayerOne().getCardZone(attacker)).toBe("discard");
+      // Both bystanders should have 1 damage
+      expect(testEngine.asPlayerOne().getDamage(bystander)).toBe(1);
+      expect(testEngine.asPlayerOne().getDamage(bystander2)).toBe(1);
+    });
+
+    it("only damages opposing characters, not own characters", () => {
+      const ownBystander = createMockCharacter({
+        id: "bellwether-own-bystander",
+        name: "Own Bystander",
+        cost: 2,
+        strength: 2,
+        willpower: 3,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [attacker, bystander],
+          deck: 1,
+        },
+        {
+          play: [{ card: bellwetherMasterManipulator, exerted: true }, ownBystander],
+          deck: 1,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(attacker, bellwetherMasterManipulator),
+      ).toBeSuccessfulCommand();
+
+      const bagCount = testEngine.asPlayerTwo().getBagCount();
+      if (bagCount > 0) {
+        const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
+        expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.asPlayerTwo().getCardZone(bellwetherMasterManipulator)).toBe("discard");
+      // Own character should NOT be damaged
+      expect(testEngine.asPlayerTwo().getDamage(ownBystander)).toBe(0);
+      // Opposing bystander SHOULD be damaged
+      expect(testEngine.asPlayerOne().getDamage(bystander)).toBe(1);
+    });
+
+    it("can banish opposing characters if damage exceeds their willpower", () => {
+      const weakBystander = createMockCharacter({
+        id: "bellwether-weak-bystander",
+        name: "Weak Bystander",
+        cost: 1,
+        strength: 1,
+        willpower: 1,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [attacker, weakBystander],
+          deck: 1,
+        },
+        {
+          play: [{ card: bellwetherMasterManipulator, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(attacker, bellwetherMasterManipulator),
+      ).toBeSuccessfulCommand();
+
+      const bagCount = testEngine.asPlayerTwo().getBagCount();
+      if (bagCount > 0) {
+        const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
+        expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.asPlayerTwo().getCardZone(bellwetherMasterManipulator)).toBe("discard");
+      // Weak bystander has 1 willpower, 1 damage = banished
+      expect(testEngine.asPlayerOne().getCardZone(weakBystander)).toBe("discard");
+    });
+  });
+});

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { bagheeraCautiousExplorerI18n } from "./012-bagheera-cautious-explorer.i18n";
 
 export const bagheeraCautiousExplorer: CharacterCard = {
   id: "G0X",
@@ -7,24 +8,6 @@ export const bagheeraCautiousExplorer: CharacterCard = {
   cardType: "character",
   name: "Bagheera",
   version: "Cautious Explorer",
-  i18n: {
-    en: {
-      name: "Bagheera",
-      version: "Cautious Explorer",
-    },
-    de: {
-      name: "Baghira",
-      version: "Vorsichtiger Entdecker",
-    },
-    fr: {
-      name: "Bagheera",
-      version: "Explorateur prudent",
-    },
-    it: {
-      name: "Bagheera",
-      version: "Esploratore Cauto",
-    },
-  },
   inkType: ["amber"],
   franchise: "Jungle Book",
   set: "010",
@@ -41,4 +24,5 @@ export const bagheeraCautiousExplorer: CharacterCard = {
     tcgPlayer: 659180,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: bagheeraCautiousExplorerI18n,
 };

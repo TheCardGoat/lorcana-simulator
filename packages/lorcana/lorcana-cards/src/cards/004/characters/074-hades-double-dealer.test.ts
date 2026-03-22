@@ -1,43 +1,90 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   MickeyBraveLittleTailor,
-//   MickeyMouseTrueFriend,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { madamMimFox } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import { hadesDoubleDealer } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Hades - Double Dealer", () => {
-//   It("**GET DOWN TO BUSINESS** {E},  Banish chosen character of yours - Play another character from your hand with the same name.", () => {
-//     Const testEngine = new TestEngine({
-//       Play: [hadesDoubleDealer, mickeyBraveLittleTailor],
-//       Hand: [mickeyMouseTrueFriend, madamMimFox],
-//     });
-//
-//     TestEngine.activateCard(hadesDoubleDealer);
-//     TestEngine.resolveTopOfStack({ targets: [mickeyBraveLittleTailor] }, true);
-//     Expect(testEngine.getCardZone(mickeyBraveLittleTailor)).toBe("discard");
-//
-//     TestEngine.resolveTopOfStack({ targets: [mickeyMouseTrueFriend] }, true);
-//     Expect(testEngine.getCardZone(mickeyMouseTrueFriend)).toBe("play");
-//   });
-//   It("Cannot play a character with a different name", () => {
-//     Const testEngine = new TestEngine({
-//       Play: [hadesDoubleDealer, mickeyBraveLittleTailor],
-//       Hand: [mickeyMouseTrueFriend, madamMimFox],
-//     });
-//
-//     TestEngine.activateCard(hadesDoubleDealer);
-//     TestEngine.resolveTopOfStack({ targets: [mickeyBraveLittleTailor] }, true);
-//     Expect(testEngine.getCardZone(mickeyBraveLittleTailor)).toBe("discard");
-//
-//     TestEngine.resolveTopOfStack({ targets: [madamMimFox] }, true);
-//     Expect(testEngine.getCardZone(madamMimFox)).toBe("hand");
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { hadesDoubleDealer } from "./074-hades-double-dealer";
+
+const mickeyBraveLittleTailor = createMockCharacter({
+  id: "hades-double-dealer-mickey-brave-little-tailor",
+  name: "Mickey Mouse",
+  cost: 8,
+});
+
+const mickeyMouseTrueFriend = createMockCharacter({
+  id: "hades-double-dealer-mickey-mouse-true-friend",
+  name: "Mickey Mouse",
+  cost: 3,
+});
+
+const madamMimFox = createMockCharacter({
+  id: "hades-double-dealer-madam-mim-fox",
+  name: "Madam Mim",
+  cost: 3,
+});
+
+describe("Hades - Double Dealer", () => {
+  describe("HERE'S THE TRADE-OFF - {E}, Banish one of your other characters - Play a character with the same name as the banished character for free.", () => {
+    it("banishes another one of your characters and plays a same-name character from your hand for free", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [hadesDoubleDealer, mickeyBraveLittleTailor],
+        hand: [mickeyMouseTrueFriend, madamMimFox],
+      });
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(hadesDoubleDealer, {
+          ability: "HERE'S THE TRADE-OFF",
+          costs: {
+            banishCharacters: [
+              testEngine.findCardInstanceId(mickeyBraveLittleTailor, "play", "player_one"),
+            ],
+          },
+          targets: [mickeyMouseTrueFriend],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(mickeyBraveLittleTailor)).toBe("discard");
+      expect(testEngine.asPlayerOne().getCardZone(mickeyMouseTrueFriend)).toBe("play");
+      expect(testEngine.asPlayerOne().getCardZone(madamMimFox)).toBe("hand");
+      expect(testEngine.asPlayerOne().isExerted(hadesDoubleDealer)).toBe(true);
+    });
+
+    it("does not let you banish Hades himself as the character cost", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [hadesDoubleDealer],
+        hand: [mickeyMouseTrueFriend],
+      });
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(hadesDoubleDealer, {
+          ability: "HERE'S THE TRADE-OFF",
+          costs: {
+            banishCharacters: [
+              testEngine.findCardInstanceId(hadesDoubleDealer, "play", "player_one"),
+            ],
+          },
+          targets: [mickeyMouseTrueFriend],
+        }).success,
+      ).toBe(false);
+    });
+
+    it("does not let you play a character with a different name than the banished character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [hadesDoubleDealer, mickeyBraveLittleTailor],
+        hand: [madamMimFox],
+      });
+
+      testEngine.asPlayerOne().activateAbility(hadesDoubleDealer, {
+        ability: "HERE'S THE TRADE-OFF",
+        costs: {
+          banishCharacters: [
+            testEngine.findCardInstanceId(mickeyBraveLittleTailor, "play", "player_one"),
+          ],
+        },
+        targets: [madamMimFox],
+      });
+
+      expect(testEngine.asPlayerOne().getCardZone(mickeyBraveLittleTailor)).toBe("play");
+      expect(testEngine.asPlayerOne().getCardZone(madamMimFox)).toBe("hand");
+      expect(testEngine.asPlayerOne().getCardZone(hadesDoubleDealer)).toBe("play");
+      expect(testEngine.asPlayerOne().isExerted(hadesDoubleDealer)).toBe(false);
+    });
+  });
+});

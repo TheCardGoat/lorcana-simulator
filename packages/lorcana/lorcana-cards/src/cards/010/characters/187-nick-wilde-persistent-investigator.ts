@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { nickWildePersistentInvestigatorI18n } from "./187-nick-wilde-persistent-investigator.i18n";
 
 export const nickWildePersistentInvestigator: CharacterCard = {
   id: "DbJ",
@@ -7,37 +8,6 @@ export const nickWildePersistentInvestigator: CharacterCard = {
   cardType: "character",
   name: "Nick Wilde",
   version: "Persistent Investigator",
-  i18n: {
-    en: {
-      name: "Nick Wilde",
-      version: "Persistent Investigator",
-      text: [
-        {
-          title: "Shift 3 {I}",
-        },
-        {
-          title: "CASE CLOSED",
-          description:
-            "During your turn, whenever one of your Detective characters banishes another character in a challenge, draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Nick Wilde",
-      version: "Hartnäckiger Ermittler",
-      text: "Gestaltwandel 3 FALL ABGESCHLOSSEN Jedes Mal während deines Zuges, wenn einer deiner Detektive durch eine Herausforderung einen anderen Charakter verbannt, ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Nick Wilde",
-      version: "Investigateur tenace",
-      text: "Alter 3 AFFAIRE CLASSÉE Durant votre tour, chaque fois que l'un de vos personnages Détective bannit un autre personnage via un défi, piochez une carte.",
-    },
-    it: {
-      name: "Nick Wilde",
-      version: "Investigatore Ostinato",
-      text: "Trasformazione 3 CASO RISOLTO Durante il tuo turno, ogni volta che uno dei tuoi personaggi Detective esilia un altro personaggio in una sfida, pesca una carta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Zootropolis",
   set: "010",
@@ -90,4 +60,5 @@ export const nickWildePersistentInvestigator: CharacterCard = {
       text: "CASE CLOSED During your turn, whenever one of your Detective characters banishes another character in a challenge, draw a card.",
     },
   ],
+  i18n: nickWildePersistentInvestigatorI18n,
 };

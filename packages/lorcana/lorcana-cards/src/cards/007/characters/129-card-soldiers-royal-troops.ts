@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cardSoldiersRoyalTroopsI18n } from "./129-card-soldiers-royal-troops.i18n";
 
 export const cardSoldiersRoyalTroops: CharacterCard = {
   id: "HaH",
@@ -7,50 +8,6 @@ export const cardSoldiersRoyalTroops: CharacterCard = {
   cardType: "character",
   name: "Card Soldiers",
   version: "Royal Troops",
-  i18n: {
-    en: {
-      name: "Card Soldiers",
-      version: "Royal Troops",
-      text: [
-        {
-          title: "TAKE POINT",
-          description: "While a damaged character is in play, this character gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Kartensoldaten",
-      version: "Königliche Truppen",
-      text: [
-        {
-          title: "DEN PUNKT NEHMEN",
-          description:
-            "Solange ein beschädigter Charakter im Spiel ist, erhält dieser Charakter +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Gardes cartes",
-      version: "Troupes royales",
-      text: [
-        {
-          title: "PRENDRE POSITION",
-          description: "Tant qu'un personnage a au moins un dommage, ce personnage-ci gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Carte Soldato",
-      version: "Truppe Reali",
-      text: [
-        {
-          title: "PRENDERE IL COMANDO",
-          description:
-            "Mentre un personaggio danneggiato è in gioco, questo personaggio riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Alice in Wonderland",
   set: "007",
@@ -80,9 +37,18 @@ export const cardSoldiersRoyalTroops: CharacterCard = {
         target: "SELF",
         type: "modify-stat",
       },
+      condition: {
+        type: "resource-count",
+        what: "damaged-characters",
+        controller: "any",
+        comparison: "greater-or-equal",
+        value: 1,
+      },
       id: "1p8-1",
+      name: "TAKE POINT",
       text: "TAKE POINT While a damaged character is in play, this character gets +2 {S}.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: cardSoldiersRoyalTroopsI18n,
 };

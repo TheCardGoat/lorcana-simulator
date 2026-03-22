@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { queenOfHeartsImpulsiveRulerI18n } from "./119-queen-of-hearts-impulsive-ruler.i18n";
 
 export const queenOfHeartsImpulsiveRuler: CharacterCard = {
   id: "D0w",
@@ -7,33 +8,6 @@ export const queenOfHeartsImpulsiveRuler: CharacterCard = {
   cardType: "character",
   name: "Queen of Hearts",
   version: "Impulsive Ruler",
-  i18n: {
-    en: {
-      name: "Queen of Hearts",
-      version: "Impulsive Ruler",
-      text: "Rush",
-    },
-    de: {
-      name: "Die Herzkönigin",
-      version: "Impulsive Herrscherin",
-      text: "Rasant",
-    },
-    fr: {
-      name: "La Reine de Cœur",
-      version: "Souveraine impulsive",
-      text: "Charge",
-    },
-    it: {
-      name: "Queen of Hearts",
-      version: "Impulsive Ruler",
-      text: [
-        {
-          title: "Rush",
-          description: "(This character can challenge the turn they're played.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Alice in Wonderland",
   set: "002",
@@ -58,4 +32,5 @@ export const queenOfHeartsImpulsiveRuler: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: queenOfHeartsImpulsiveRulerI18n,
 };

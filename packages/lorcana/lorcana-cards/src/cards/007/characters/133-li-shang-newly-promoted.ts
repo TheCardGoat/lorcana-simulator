@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liShangNewlyPromotedI18n } from "./133-li-shang-newly-promoted.i18n";
 
 export const liShangNewlyPromoted: CharacterCard = {
   id: "8NZ",
@@ -7,64 +8,6 @@ export const liShangNewlyPromoted: CharacterCard = {
   cardType: "character",
   name: "Li Shang",
   version: "Newly Promoted",
-  i18n: {
-    en: {
-      name: "Li Shang",
-      version: "Newly Promoted",
-      text: [
-        {
-          title: "I WON'T LET YOU DOWN",
-          description: "This character can challenge ready characters.",
-        },
-        {
-          title: "BIG RESPONSIBILITY",
-          description: "While this character is damaged, he gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Li Shang",
-      version: "Frisch befördert",
-      text: [
-        {
-          title: "DARAUF KÖNNT IHR EUCH VERLASSEN",
-          description: "Dieser Charakter kann bereite Charaktere herausfordern.",
-        },
-        {
-          title: "SEHR VIEL VERANTWORTUNG",
-          description: "Solange dieser Charakter beschädigt ist, erhält er +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Li Shang",
-      version: "Nouvellement promu",
-      text: [
-        {
-          title: "JE FERAI TOUT CE QUI EST EN MON POUVOIR",
-          description: "Ce personnage peut défier des personnages redressés.",
-        },
-        {
-          title: "UNE ÉNORME RESPONSABILITÉ",
-          description: "Tant que ce personnage a au moins un dommage, il gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Li Shang",
-      version: "Appena Promosso",
-      text: [
-        {
-          title: "NON TI DELUDERÒ",
-          description: "Questo personaggio può sfidare i personaggi preparati.",
-        },
-        {
-          title: "ENORME RESPONSABILITÀ",
-          description: "Mentre questo personaggio ha danno, riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby", "steel"],
   franchise: "Mulan",
   set: "007",
@@ -114,4 +57,5 @@ export const liShangNewlyPromoted: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: liShangNewlyPromotedI18n,
 };

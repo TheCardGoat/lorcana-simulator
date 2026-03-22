@@ -1,43 +1,90 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { auroraBriarRose } from "./138-aurora-briar-rose";
 
-describe("Aurora - Briar Rose", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [auroraBriarRose] });
-  //   Expect(testEngine.getCardModel(auroraBriarRose).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const targetCharacter = createMockCharacter({
+  id: "aurora-test-target",
+  name: "Target Character",
+  cost: 3,
+  strength: 4,
+  willpower: 5,
+  lore: 1,
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   AuroraBriarRose,
-//   MickeyMouseTrueFriend,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Aurora Briar Rose!", () => {
-//   It("DISARMING BEAUTY effect - Chosen characters gets -2 {S} this turn.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: auroraBriarRose.cost,
-//       Hand: [auroraBriarRose],
-//       Play: [mickeyMouseTrueFriend],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId("hand", auroraBriarRose.id);
-//     Const target = testStore.getByZoneAndId("play", mickeyMouseTrueFriend.id);
-//
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveTopOfStack({ targetId: target.instanceId });
-//
-//     Expect(target.strength).toEqual((target.lorcanitoCard.strength || 0) - 2);
-//   });
-// });
-//
+const anotherCharacter = createMockCharacter({
+  id: "aurora-test-another",
+  name: "Another Character",
+  cost: 2,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Aurora - Briar Rose", () => {
+  describe("DISARMING BEAUTY - When you play this character, chosen character gets -2 {S} this turn.", () => {
+    it("gives chosen character -2 strength this turn when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [auroraBriarRose],
+          inkwell: auroraBriarRose.cost,
+        },
+        {
+          play: [targetCharacter],
+        },
+      );
+
+      const baseStrength = targetCharacter.strength;
+
+      expect(testEngine.asPlayerOne().playCard(auroraBriarRose)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [targetCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardStrength(targetCharacter)).toBe(baseStrength - 2);
+    });
+
+    it("strength reduction expires at end of turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [auroraBriarRose],
+          inkwell: auroraBriarRose.cost,
+        },
+        {
+          play: [targetCharacter],
+        },
+      );
+
+      const baseStrength = targetCharacter.strength;
+
+      expect(testEngine.asPlayerOne().playCard(auroraBriarRose)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [targetCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardStrength(targetCharacter)).toBe(baseStrength - 2);
+
+      // Pass turn — effect should expire
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardStrength(targetCharacter)).toBe(baseStrength);
+    });
+
+    it("can target own character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [auroraBriarRose],
+        play: [targetCharacter],
+        inkwell: auroraBriarRose.cost,
+      });
+
+      const baseStrength = targetCharacter.strength;
+
+      expect(testEngine.asPlayerOne().playCard(auroraBriarRose)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [targetCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardStrength(targetCharacter)).toBe(baseStrength - 2);
+    });
+  });
+});

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { tugofwarI18n } from "./196-tug-of-war.i18n";
 
 export const tugofwar: ActionCard = {
   id: "J1D",
@@ -6,34 +7,6 @@ export const tugofwar: ActionCard = {
   reprints: ["set5-196"],
   cardType: "action",
   name: "Tug-of-War",
-  i18n: {
-    en: {
-      name: "Tug-of-War",
-      text: [
-        {
-          title: "Choose one:",
-        },
-        {
-          title: "• Deal 1 damage to each opposing character without Evasive.",
-        },
-        {
-          title: "• Deal 3 damage to each opposing character with Evasive.",
-        },
-      ],
-    },
-    de: {
-      name: "Tauziehen",
-      text: "Wähle eine Möglichkeit aus: • Füge jedem gegnerischen Charakter ohne Wendig 1 Schaden zu. • Füge jedem gegnerischen Charakter mit Wendig 3 Schaden zu.",
-    },
-    fr: {
-      name: "Tir à la corde",
-      text: "Choisissez entre: • Infligez 1 dommage à chaque personnage adverse sans Insaisissable. • Infligez 3 dommages à chaque personnage adverse avec Insaisissable.",
-    },
-    it: {
-      name: "Tiro alla Fune",
-      text: "Scegli uno: • Infliggi 1 danno a ogni personaggio avversario senza Sfuggente. • Infliggi 3 danni a ogni personaggio avversario con Sfuggente.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Peter Pan",
   set: "005",
@@ -103,4 +76,5 @@ export const tugofwar: ActionCard = {
       },
     },
   ],
+  i18n: tugofwarI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { judyHoppsResourcefulRabbitI18n } from "./015-judy-hopps-resourceful-rabbit.i18n";
 
 export const judyHoppsResourcefulRabbit: CharacterCard = {
   id: "Z78",
@@ -7,36 +8,6 @@ export const judyHoppsResourcefulRabbit: CharacterCard = {
   cardType: "character",
   name: "Judy Hopps",
   version: "Resourceful Rabbit",
-  i18n: {
-    en: {
-      name: "Judy Hopps",
-      version: "Resourceful Rabbit",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "NEED SOME HELP?",
-          description: "At the end of your turn, you may ready another chosen character of yours.",
-        },
-      ],
-    },
-    de: {
-      name: "Judy Hopps",
-      version: "Einfallsreiche Häsin",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) BRAUCHST DU HILFE? Am Ende deines Zuges darfst du einen deiner anderen Charaktere wählen und bereit machen.",
-    },
-    fr: {
-      name: "Judy Hopps",
-      version: "Lapine pleine de ressources",
-      text: "Soutien UN P'TIT COUP DE PATTE? À la fin de votre tour, vous pouvez choisir et redresser un autre de vos personnages.",
-    },
-    it: {
-      name: "Judy Hopps",
-      version: "Coniglietta Intraprendente",
-      text: "Aiutante UN AIUTINO? Alla fine del tuo turno, puoi preparare un tuo altro personaggio a tua scelta.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Zootropolis",
   set: "006",
@@ -75,9 +46,10 @@ export const judyHoppsResourcefulRabbit: CharacterCard = {
           target: {
             selector: "chosen",
             count: 1,
-            owner: "any",
+            owner: "you",
             zones: ["play"],
             cardTypes: ["character"],
+            excludeSelf: true,
           },
           type: "ready",
         },
@@ -93,4 +65,5 @@ export const judyHoppsResourcefulRabbit: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: judyHoppsResourcefulRabbitI18n,
 };

@@ -16,14 +16,8 @@ describe("Snow White - Well Wisher", () => {
     testEngine.asPlayerOne().quest(snowWhiteId);
     testEngine.asPlayerOne().resolveNextBag();
 
-    // Optional trigger
-    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
-    if (pendingChoice) {
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true });
-    }
-
     // Target (choose card from discard)
-    pendingChoice = testEngine.asPlayerOne().getPendingChoice();
+    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
     if (pendingChoice) {
       testEngine.asPlayerOne().resolveNextPending({ targets: [gastonDiscardId] });
     }
@@ -42,24 +36,8 @@ describe("Snow White - Well Wisher", () => {
 
     testEngine.asPlayerOne().quest(snowWhiteId);
 
-    // Bag item should be there
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-    testEngine.asPlayerOne().resolveNextBag();
-
-    // Optional trigger check
-    let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
-
-    // If there are no valid targets, does the engine skip the optional prompt?
-    // Or does it prompt and then realize there are no targets?
-    // Usually if the effect cannot happen (no targets), the ability might fizzle or be skipped.
-    // But since it's "optional", maybe it prompts.
-
-    if (pendingChoice) {
-      // If it prompts, we can decline.
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: false });
-    }
-
+    // When there are no valid targets in discard, the optional ability should not be queued at all.
+    // Lorcana rules: optional effects with no valid targets are suppressed.
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
   });
 });

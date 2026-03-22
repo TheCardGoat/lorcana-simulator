@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { auroraLoreGuardianI18n } from "./140-aurora-lore-guardian.i18n";
 
 export const auroraLoreGuardian: CharacterCard = {
   id: "k2u",
@@ -7,41 +8,6 @@ export const auroraLoreGuardian: CharacterCard = {
   cardType: "character",
   name: "Aurora",
   version: "Lore Guardian",
-  i18n: {
-    en: {
-      name: "Aurora",
-      version: "Lore Guardian",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "PRESERVER",
-          description: "Opponents can't choose your items for abilities or effects.",
-        },
-        {
-          title: "ROYAL INVENTORY",
-          description:
-            "{E} one of your items — Look at the top card of your deck and put it on either the top or the bottom of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Aurora",
-      version: "Wächterin der Legenden",
-      text: "Gestaltwandel 2 BEWAHRERIN Gegnerische Karten können deine Gegenstände nicht auswählen. KÖNIGLICHES SORTIMENT einen deiner Gegenstände — Schaue dir die oberste Karte deines Decks an und lege sie anschließend entweder auf dein Deck oder darunter.",
-    },
-    fr: {
-      name: "Aurore",
-      version: "Gardienne de Lore",
-      text: "Alter 2 SAUVEUSE Vos adversaires ne peuvent pas choisir vos objets avec leurs capacités et effets de cartes. INVENTAIRE ROYAL l'un de vos objets — Regardez la première carte de votre pioche. Remettez-la soit sur le dessus, soit en-dessous.",
-    },
-    it: {
-      name: "Aurora",
-      version: "Guardiana della Leggenda",
-      text: "Trasformazione 2 CONSERVATRICE Gli avversari non possono scegliere i tuoi oggetti per abilità o effetti. INVENTARIO REALE uno dei tuoi oggetti — Guarda la prima carta del tuo mazzo e mettila in cima o in fondo al tuo mazzo.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sleeping Beauty",
   set: "004",
@@ -71,5 +37,57 @@ export const auroraLoreGuardian: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
-  abilities: [],
+  abilities: [
+    {
+      cost: {
+        ink: 2,
+      },
+      id: "k2u-1",
+      keyword: "Shift",
+      text: "Shift 2 {I}",
+      type: "keyword",
+    },
+    {
+      effect: {
+        keyword: "Ward",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["item"],
+        },
+        type: "gain-keyword",
+      },
+      id: "k2u-2",
+      name: "PRESERVER",
+      text: "PRESERVER Opponents can't choose your items for abilities or effects.",
+      type: "static",
+    },
+    {
+      cost: {
+        exertItems: 1,
+      },
+      effect: {
+        type: "scry",
+        amount: 1,
+        destinations: [
+          {
+            zone: "deck-top",
+            min: 0,
+            max: 1,
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+          },
+        ],
+      },
+      id: "k2u-3",
+      name: "ROYAL INVENTORY",
+      text: "ROYAL INVENTORY {E} one of your items — Look at the top card of your deck and put it on either the top or the bottom of your deck.",
+      type: "activated",
+    },
+  ],
+  i18n: auroraLoreGuardianI18n,
 };

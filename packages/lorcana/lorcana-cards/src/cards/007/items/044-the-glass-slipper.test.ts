@@ -16,6 +16,13 @@ const princessCard = createMockCharacter({
   classifications: ["Storyborn", "Princess"],
 });
 
+const nonPrinceCharacter = createMockCharacter({
+  id: "glass-slipper-non-prince",
+  name: "Non-Prince Character",
+  cost: 2,
+  classifications: ["Storyborn", "Hero"],
+});
+
 describe("The Glass Slipper", () => {
   it("banishes itself and exerts your Prince to find a Princess character card", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
@@ -35,5 +42,24 @@ describe("The Glass Slipper", () => {
     expect(testEngine.asPlayerOne().getCardZone(theGlassSlipper)).toBe("discard");
     expect(testEngine.asPlayerOne().isExerted(princeCharacter)).toBe(true);
     expect(testEngine.asPlayerOne().getCardZone(princessCard)).toBe("hand");
+  });
+
+  it("cannot use a non-Prince character to pay the exert cost", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [princessCard],
+      play: [theGlassSlipper, { card: nonPrinceCharacter, isDrying: false }],
+    });
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(theGlassSlipper, {
+        ability: "SEARCH THE KINGDOM",
+        costs: {
+          exertCharacters: [nonPrinceCharacter],
+        },
+      }),
+    ).not.toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(theGlassSlipper)).toBe("play");
+    expect(testEngine.asPlayerOne().isExerted(nonPrinceCharacter)).toBe(false);
   });
 });

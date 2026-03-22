@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daisyDuckSecretAgentI18n } from "./093-daisy-duck-secret-agent.i18n";
 
 export const daisyDuckSecretAgent: CharacterCard = {
   id: "TtR",
@@ -7,50 +8,6 @@ export const daisyDuckSecretAgent: CharacterCard = {
   cardType: "character",
   name: "Daisy Duck",
   version: "Secret Agent",
-  i18n: {
-    en: {
-      name: "Daisy Duck",
-      version: "Secret Agent",
-      text: [
-        {
-          title: "THWART",
-          description: "Whenever this character quests, each opponent chooses and discards a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Daisy Duck",
-      version: "Geheimagentin",
-      text: [
-        {
-          title: "SABOTIEREN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, wählen alle gegnerischen Mitspielenden je 1 Karte aus ihrer Hand und werfen diese ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "Daisy",
-      version: "Agente secrète",
-      text: [
-        {
-          title: "DÉJOUER",
-          description:
-            "Lorsque ce personnage est envoyé à l'aventure, chaque adversaire choisit une carte et la défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Daisy Duck",
-      version: "Secret Agent",
-      text: [
-        {
-          title: "THWART",
-          description: "Whenever this character quests, each opponent chooses and discards a card.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "009",
   cardNumber: 93,
@@ -90,4 +47,5 @@ export const daisyDuckSecretAgent: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: daisyDuckSecretAgentI18n,
 };

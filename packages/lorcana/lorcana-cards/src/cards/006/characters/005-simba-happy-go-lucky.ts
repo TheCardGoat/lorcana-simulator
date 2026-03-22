@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { simbaHappygoluckyI18n } from "./005-simba-happy-go-lucky.i18n";
 
 export const simbaHappygolucky: CharacterCard = {
   id: "FnI",
@@ -7,24 +8,6 @@ export const simbaHappygolucky: CharacterCard = {
   cardType: "character",
   name: "Simba",
   version: "Happy-Go-Lucky",
-  i18n: {
-    en: {
-      name: "Simba",
-      version: "Happy-Go-Lucky",
-    },
-    de: {
-      name: "Simba",
-      version: "Sorgenfrei",
-    },
-    fr: {
-      name: "Simba",
-      version: "Insouciant",
-    },
-    it: {
-      name: "Simba",
-      version: "Spensierato",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lion King",
   set: "006",
@@ -41,4 +24,5 @@ export const simbaHappygolucky: CharacterCard = {
     tcgPlayer: 586882,
   },
   classifications: ["Storyborn", "Hero", "Prince"],
+  i18n: simbaHappygoluckyI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { taranMagicallyArmedI18n } from "./044-taran-magically-armed.i18n";
 
 export const taranMagicallyArmed: CharacterCard = {
   id: "8Qz",
@@ -7,34 +8,6 @@ export const taranMagicallyArmed: CharacterCard = {
   cardType: "character",
   name: "Taran",
   version: "Magically Armed",
-  i18n: {
-    en: {
-      name: "Taran",
-      version: "Magically Armed",
-      text: "Rush WEAKEN THE CAULDRON When you play this character, put up to 2 cards from chosen player's discard on the bottom of their deck in any order.",
-    },
-    de: {
-      name: "Taran",
-      version: "Magisch bewaffnet",
-      text: "Rasant SCHWÄCHE DEN KESSEL Wenn du diesen Charakter ausspielst, lege bis zu 2 Karten aus einem Ablagestapel deiner Wahl in beliebiger Reihenfolge unter das zugehörige Deck.",
-    },
-    fr: {
-      name: "Taram",
-      version: "Magiquement armé",
-      text: "Charge AFFAIBLIR LE CHAUDRON Lorsque vous jouez ce personnage, choisissez un joueur et placez jusqu'à 2 cartes de sa défausse sous sa pioche, dans l'ordre de votre choix.",
-    },
-    it: {
-      name: "Taron",
-      version: "Armato Magicamente",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) INDEBOLIRE LA PENTOLA Quando giochi questo personaggio, metti fino a 2 carte dagli scarti di un giocatore a tua scelta in fondo al suo mazzo in qualsiasi ordine.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Black Cauldron",
   set: "011",
@@ -54,24 +27,35 @@ export const taranMagicallyArmed: CharacterCard = {
   abilities: [
     {
       id: "u75-1",
+      keyword: "Rush",
+      type: "keyword",
+      text: "Rush",
+    },
+    {
+      id: "u75-2",
       effect: {
+        orderBy: "owner",
+        ordering: "player-choice",
         target: {
           cardTypes: ["card"],
-          count: 1,
+          count: {
+            upTo: 2,
+          },
           owner: "any",
           selector: "chosen",
-          zones: ["play"],
+          zones: ["discard"],
         },
         type: "put-on-bottom",
       },
-      name: "Rush WEAKEN THE CAULDRON",
+      name: "WEAKEN THE CAULDRON",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
       },
       type: "triggered",
-      text: "Rush WEAKEN THE CAULDRON When you play this character, put up to 2 cards from chosen player's discard on the bottom of their deck in any order.",
+      text: "WEAKEN THE CAULDRON When you play this character, put up to 2 cards from chosen player's discard on the bottom of their deck in any order.",
     },
   ],
+  i18n: taranMagicallyArmedI18n,
 };

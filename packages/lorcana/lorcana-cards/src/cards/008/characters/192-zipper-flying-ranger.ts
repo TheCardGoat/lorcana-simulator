@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { zipperFlyingRangerI18n } from "./192-zipper-flying-ranger.i18n";
 
 export const zipperFlyingRanger: CharacterCard = {
   id: "ogS",
@@ -7,72 +8,6 @@ export const zipperFlyingRanger: CharacterCard = {
   cardType: "character",
   name: "Zipper",
   version: "Flying Ranger",
-  i18n: {
-    en: {
-      name: "Zipper",
-      version: "Flying Ranger",
-      text: [
-        {
-          title: "BEST MATES",
-          description:
-            "If you have a character named Monterey Jack in play, you pay 1 {I} less to play this character.",
-        },
-        {
-          title: "BURST OF SPEED",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Summi",
-      version: "Fliegender Ritter des Rechts",
-      text: [
-        {
-          title: "BESTE KUMPEL",
-          description:
-            "Wenn du einen Samson-Charakter im Spiel hast, zahlst du 1 weniger, um diesen Charakter auszuspielen.",
-        },
-        {
-          title: "GESCHWINDIGKEITSSCHUB",
-          description:
-            "In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Ruzor",
-      version: "Ranger volant",
-      text: [
-        {
-          title: "MEILLEURS COPAINS",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins si vous avez un personnage Jack le Costaud en jeu.",
-        },
-        {
-          title: "ACCÉLÉRATION",
-          description:
-            "Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier des personnages avec Insaisissable.)",
-        },
-      ],
-    },
-    it: {
-      name: "Zipper",
-      version: "Agente Speciale Volante",
-      text: [
-        {
-          title: "AMICI DEL CUORE",
-          description:
-            "Se hai in gioco un personaggio chiamato Monterey Jack, paga 1 in meno per giocare questo personaggio.",
-        },
-        {
-          title: "SCATTO VELOCE",
-          description:
-            "Durante il tuo turno, questo personaggio ottiene Sfuggente. (Può sfidare altri personaggi con Sfuggente.)",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Rescue Rangers",
   set: "008",
@@ -102,35 +37,31 @@ export const zipperFlyingRanger: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      id: "8ix-1",
+      name: "BEST MATES",
+      text: "BEST MATES If you have a character named Monterey Jack in play, you pay 1 {I} less to play this character.",
+      type: "static",
+      sourceZones: ["hand"],
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
+        type: "cost-reduction",
+        amount: {
+          type: "clamp",
+          value: {
+            type: "filtered-count",
             owner: "you",
             zones: ["play"],
             cardType: "character",
             filters: [
               {
-                type: "name",
-                equals: "Monterey Jack",
+                type: "has-name",
+                name: "Monterey Jack",
               },
             ],
           },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
+          max: 1,
         },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+        cardType: "character",
       },
-      id: "8ix-1",
-      text: "BEST MATES If you have a character named Monterey Jack in play, you pay 1 {I} less to play this character.",
-      type: "action",
     },
     {
       condition: {
@@ -147,4 +78,5 @@ export const zipperFlyingRanger: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: zipperFlyingRangerI18n,
 };

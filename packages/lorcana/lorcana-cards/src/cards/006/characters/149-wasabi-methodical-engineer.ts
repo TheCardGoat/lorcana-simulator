@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { wasabiMethodicalEngineerI18n } from "./149-wasabi-methodical-engineer.i18n";
 
 export const wasabiMethodicalEngineer: CharacterCard = {
   id: "2ZH",
@@ -7,72 +8,6 @@ export const wasabiMethodicalEngineer: CharacterCard = {
   cardType: "character",
   name: "Wasabi",
   version: "Methodical Engineer",
-  i18n: {
-    en: {
-      name: "Wasabi",
-      version: "Methodical Engineer",
-      text: [
-        {
-          title: "BLADES OF FURY",
-          description:
-            "When you play this character, you may banish chosen item. Its player gains 1 lore.",
-        },
-        {
-          title: "QUICK REFLEXES",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Wasabi",
-      version: "Systematischer Ingenieur",
-      text: [
-        {
-          title: "KLINGEN DES ZORNS",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Gegenstand deiner Wahl verbannen. Wer den Gegenstand im Spiel hatte, sammelt 1 Legende.",
-        },
-        {
-          title: "SCHNELLE REFLEXE",
-          description:
-            "In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Wasabi",
-      version: "Ingénieur méthodique",
-      text: [
-        {
-          title: "LA FUREUR VERTE!",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un objet et le bannir. Son propriétaire gagne 1 éclat de Lore.",
-        },
-        {
-          title: "RÉFLEXES VIFS",
-          description:
-            "Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier des personnages avec Insaisissable.)",
-        },
-      ],
-    },
-    it: {
-      name: "Wasabi",
-      version: "Ingegnere Metodico",
-      text: [
-        {
-          title: "LAME VERDI",
-          description:
-            "Quando giochi questo personaggio, puoi esiliare un oggetto a tua scelta. Il suo giocatore ottiene 1 leggenda.",
-        },
-        {
-          title: "RIFLESSI FULMINEI",
-          description:
-            "Durante il tuo turno, questo personaggio ottiene Sfuggente (Può sfidare altri personaggi con Sfuggente.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "006",
@@ -105,14 +40,24 @@ export const wasabiMethodicalEngineer: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["item"],
-          },
-          type: "banish",
+          type: "sequence",
+          steps: [
+            {
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "any",
+                zones: ["play"],
+                cardTypes: ["item"],
+              },
+              type: "banish",
+            },
+            {
+              amount: 1,
+              target: "CARD_OWNER",
+              type: "gain-lore",
+            },
+          ],
         },
         type: "optional",
       },
@@ -141,4 +86,5 @@ export const wasabiMethodicalEngineer: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: wasabiMethodicalEngineerI18n,
 };

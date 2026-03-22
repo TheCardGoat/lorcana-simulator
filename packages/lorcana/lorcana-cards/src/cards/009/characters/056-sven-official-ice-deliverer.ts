@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { svenOfficialIceDelivererI18n } from "./056-sven-official-ice-deliverer.i18n";
 
 export const svenOfficialIceDeliverer: CharacterCard = {
   id: "GzC",
@@ -7,24 +8,6 @@ export const svenOfficialIceDeliverer: CharacterCard = {
   cardType: "character",
   name: "Sven",
   version: "Official Ice Deliverer",
-  i18n: {
-    en: {
-      name: "Sven",
-      version: "Official Ice Deliverer",
-    },
-    de: {
-      name: "Sven",
-      version: "Offizieller Eislieferant",
-    },
-    fr: {
-      name: "SVEN",
-      version: "Fournisseur officiel de glace",
-    },
-    it: {
-      name: "Sven",
-      version: "Official Ice Deliverer",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "009",
@@ -41,4 +24,5 @@ export const svenOfficialIceDeliverer: CharacterCard = {
     tcgPlayer: 650000,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: svenOfficialIceDelivererI18n,
 };

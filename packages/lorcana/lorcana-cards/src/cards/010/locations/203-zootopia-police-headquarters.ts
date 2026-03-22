@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { zootopiaPoliceHeadquartersI18n } from "./203-zootopia-police-headquarters.i18n";
 
 export const zootopiaPoliceHeadquarters: LocationCard = {
   id: "hOa",
@@ -7,52 +8,6 @@ export const zootopiaPoliceHeadquarters: LocationCard = {
   cardType: "location",
   name: "Zootopia",
   version: "Police Headquarters",
-  i18n: {
-    en: {
-      name: "Zootopia",
-      version: "Police Headquarters",
-      text: [
-        {
-          title: "NEW INFORMATION",
-          description:
-            "Once during your turn, whenever you move a character here, you may draw a card, then choose and discard a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Zoomania",
-      version: "Polizeistation",
-      text: [
-        {
-          title: "NEUE INFORMATIONEN",
-          description:
-            "Einmal während deines Zuges, wenn einer deiner Charaktere an diesen Ort bewegt wird, darfst du 1 Karte ziehen. Wähle danach 1 Karte aus deiner Hand und wirf sie ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "Zootopie",
-      version: "Commissariat central",
-      text: [
-        {
-          title: "NOUVEAUX ÉLÉMENTS",
-          description:
-            "Une fois durant votre tour, lorsque vous déplacez un personnage sur ce lieu, vous pouvez piocher une carte puis en défausser une.",
-        },
-      ],
-    },
-    it: {
-      name: "Zootropolis",
-      version: "Quartier Generale della Polizia",
-      text: [
-        {
-          title: "NUOVE INFORMAZIONI",
-          description:
-            "Una volta durante il tuo turno, ogni volta che sposti un personaggio in questo luogo, puoi pescare una carta, poi scegli e scarta una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Zootropolis",
   set: "010",
@@ -117,4 +72,5 @@ export const zootopiaPoliceHeadquarters: LocationCard = {
       type: "triggered",
     },
   ],
+  i18n: zootopiaPoliceHeadquartersI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stitchCarefreeSnowboarderEpicI18n } from "./207-stitch-carefree-snowboarder-epic.i18n";
 
 export const stitchCarefreeSnowboarderEpic: CharacterCard = {
   id: "VLK",
@@ -7,52 +8,6 @@ export const stitchCarefreeSnowboarderEpic: CharacterCard = {
   cardType: "character",
   name: "Stitch",
   version: "Carefree Snowboarder",
-  i18n: {
-    en: {
-      name: "Stitch",
-      version: "Carefree Snowboarder",
-      text: [
-        {
-          title: "BRING YOUR FRIENDS",
-          description:
-            "Whenever this character quests, if you have 2 or more other characters in play, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Stitch",
-      version: "Sorgloser Snowboarder",
-      text: [
-        {
-          title: "BRINGT EURE FREUNDE MIT",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet und du mindestens 2 weitere Charaktere im Spiel hast, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Stitch",
-      version: "Snowboardeur insouciant",
-      text: [
-        {
-          title: "AMÈNE TES AMIS",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, si vous avez 2 autres personnages ou plus en jeu, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Stitch",
-      version: "Snowboarder Spensierato",
-      text: [
-        {
-          title: "PORTA I TUOI AMICI",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, se hai in gioco 2 o più altri personaggi, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "011",
@@ -100,4 +55,5 @@ export const stitchCarefreeSnowboarderEpic: CharacterCard = {
       text: "BRING YOUR FRIENDS Whenever this character quests, if you have 2 or more other characters in play, you may draw a card.",
     },
   ],
+  i18n: stitchCarefreeSnowboarderEpicI18n,
 };

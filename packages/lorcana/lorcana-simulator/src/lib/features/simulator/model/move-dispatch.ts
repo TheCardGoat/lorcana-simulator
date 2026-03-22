@@ -1,7 +1,6 @@
-import { m } from "$lib/paraglide/messages.js";
+import { m } from "$lib/i18n/messages.js";
 import type { CardInstanceId, CommandResult, PlayerId } from "@tcg/lorcana-engine";
 import type { CardInput, LorcanaEngineBase, PlayCardExecutionOptions } from "@tcg/lorcana-engine";
-
 import type {
   LorcanaSimulatorMoveId,
   LorcanaSimulatorMoveParams,
@@ -305,6 +304,8 @@ export function dispatchSimulatorMove<K extends LorcanaSimulatorMoveId>(
     }
     case "passTurn":
       return engine.passTurn(playerId);
+    case "undo":
+      return engine.undo(playerId);
     case "concede":
       return engine.concede(playerId);
     default:

@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { bellesHouseMauricesWorkshopEnchantedI18n } from "./219-belles-house-maurices-workshop-enchanted.i18n";
 
 export const bellesHouseMauricesWorkshopEnchanted: LocationCard = {
   id: "h8f",
@@ -7,51 +8,6 @@ export const bellesHouseMauricesWorkshopEnchanted: LocationCard = {
   cardType: "location",
   name: "Belle's House",
   version: "Maurice's Workshop",
-  i18n: {
-    en: {
-      name: "Belle's House",
-      version: "Maurice's Workshop",
-      text: [
-        {
-          title: "LABORATORY",
-          description: "If you have a character here, you pay 1 {I} less to play items.",
-        },
-      ],
-    },
-    de: {
-      name: "Belles Zuhause",
-      version: "Maurices Werkstatt",
-      text: [
-        {
-          title: "LABORATORIUM",
-          description:
-            "Solange du mindestens einen Charakter an diesem Ort hast, zahlst du 1 weniger, um Gegenstände auszuspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "La maison de Belle",
-      version: "Atelier de Maurice",
-      text: [
-        {
-          title: "LABORATOIRE",
-          description:
-            "Tant que vous avez au moins un personnage sur ce lieu, les objets vous coûtent 1 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Casa di Belle",
-      version: "Officina di Maurice",
-      text: [
-        {
-          title: "LABORATORIO",
-          description:
-            "Mentre hai uno o più personaggi in questo luogo, paga 1 in meno per giocare gli oggetti.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "003",
@@ -101,4 +57,5 @@ export const bellesHouseMauricesWorkshopEnchanted: LocationCard = {
       type: "static",
     },
   ],
+  i18n: bellesHouseMauricesWorkshopEnchantedI18n,
 };

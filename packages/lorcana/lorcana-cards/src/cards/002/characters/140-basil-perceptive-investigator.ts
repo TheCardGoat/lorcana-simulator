@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { basilPerceptiveInvestigatorI18n } from "./140-basil-perceptive-investigator.i18n";
 
 export const basilPerceptiveInvestigator: CharacterCard = {
   id: "Vg9",
@@ -7,24 +8,6 @@ export const basilPerceptiveInvestigator: CharacterCard = {
   cardType: "character",
   name: "Basil",
   version: "Perceptive Investigator",
-  i18n: {
-    en: {
-      name: "Basil",
-      version: "Perceptive Investigator",
-    },
-    de: {
-      name: "Basil",
-      version: "Scharfsinniger Ermittler",
-    },
-    fr: {
-      name: "Basil",
-      version: "Enquêteur perspicace",
-    },
-    it: {
-      name: "Basil",
-      version: "Perceptive Investigator",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Great Mouse Detective",
   set: "002",
@@ -41,4 +24,5 @@ export const basilPerceptiveInvestigator: CharacterCard = {
     tcgPlayer: 525243,
   },
   classifications: ["Storyborn", "Hero", "Detective"],
+  i18n: basilPerceptiveInvestigatorI18n,
 };

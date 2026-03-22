@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arielSpectacularSingerI18n } from "./002-ariel-spectacular-singer.i18n";
 
 export const arielSpectacularSinger: CharacterCard = {
   id: "Z4N",
@@ -7,49 +8,6 @@ export const arielSpectacularSinger: CharacterCard = {
   cardType: "character",
   name: "Ariel",
   version: "Spectacular Singer",
-  i18n: {
-    en: {
-      name: "Ariel",
-      version: "Spectacular Singer",
-      text: [
-        {
-          title: "Singer 5",
-        },
-        {
-          title: "MUSICAL DEBUT",
-          description:
-            "When you play this character, look at the top 4 cards of your deck. You may reveal a song card and put it into your hand. Put the rest on the bottom of your deck in any order.",
-        },
-      ],
-    },
-    de: {
-      name: "Arielle",
-      version: "Spektakuläre Sängerin",
-      text: [
-        {
-          title: "Singen 5",
-          description:
-            "(Die Kosten dieses Charakters gelten als 5 für das Singen von Liedern.) MUSIKALISCHES DEBÜT Wenn du diesen Charakter ausspielst, schaue dir die obersten 4 Karten deines Decks an. Du darfst 1 Liedkarte daraus aufdecken und auf deine Hand nehmen. Lege die restlichen Karten in beliebiger Reihenfolge unter dein Deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "ARIEL",
-      version: "Chanteuse exceptionnelle",
-      text: "Mélomane 5 (Ce personnage est considéré comme ayant un coût de 5 pour chanter des chansons.) DÉBUTS MUSICAUX Lorsque vous jouez ce personnage, regardez les 4 premières cartes de votre pioche. Vous pouvez révéler une carte chanson parmi elles et l'ajouter à votre main. Remettez les autres sous votre pioche, dans l'ordre de votre choix.",
-    },
-    it: {
-      name: "Ariel",
-      version: "Spectacular Singer",
-      text: [
-        {
-          title: "Singer 5",
-          description:
-            "(This character counts as cost 5 to sing songs.) MUSICAL DEBUT When you play this character, look at the top 4 cards of your deck. You may reveal a song card and put it into your hand. Put the rest on the bottom of your deck in any order.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Little Mermaid",
   set: "001",
@@ -60,7 +18,6 @@ export const arielSpectacularSinger: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_be92bba983424f2f9546f237e65ce357",
     tcgPlayer: 504451,
@@ -116,4 +73,5 @@ export const arielSpectacularSinger: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: arielSpectacularSingerI18n,
 };

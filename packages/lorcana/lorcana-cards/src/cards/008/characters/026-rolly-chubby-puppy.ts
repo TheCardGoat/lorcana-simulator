@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rollyChubbyPuppyI18n } from "./026-rolly-chubby-puppy.i18n";
 
 export const rollyChubbyPuppy: CharacterCard = {
   id: "3aw",
@@ -7,37 +8,6 @@ export const rollyChubbyPuppy: CharacterCard = {
   cardType: "character",
   name: "Rolly",
   version: "Chubby Puppy",
-  i18n: {
-    en: {
-      name: "Rolly",
-      version: "Chubby Puppy",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "ADORABLE ANTICS",
-          description:
-            "When you play this character, you may put a character card from your discard into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Rolly",
-      version: "Pummeliger Welpe",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) ENTZÜCKENDE POSSEN Wenn du diesen Charakter ausspielst, darfst du 1 Charakterkarte aus deinem Ablagestapel verdeckt und erschöpft in deinen Tintenvorrat legen.",
-    },
-    fr: {
-      name: "Rolly",
-      version: "Chiot potelé",
-      text: "Soutien ADORABLES CABRIOLES Lorsque vous jouez ce personnage, vous pouvez placer une carte Personnage de votre défausse dans votre réserve d'encre, face cachée et épuisée.",
-    },
-    it: {
-      name: "Rolly",
-      version: "Cucciolo Cicciottello",
-      text: "Aiutante SCENATE ADORABILI Quando giochi questo personaggio, puoi aggiungere al tuo calamaio una carta personaggio dai tuoi scarti, a faccia in giù e impegnata.",
-    },
-  },
   inkType: ["amber", "sapphire"],
   franchise: "101 Dalmatians",
   set: "008",
@@ -93,4 +63,5 @@ export const rollyChubbyPuppy: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: rollyChubbyPuppyI18n,
 };

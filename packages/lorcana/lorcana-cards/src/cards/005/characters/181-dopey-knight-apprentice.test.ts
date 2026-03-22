@@ -1,3 +1,85 @@
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { dopeyKnightApprentice } from "./181-dopey-knight-apprentice";
+import { dopeyAlwaysPlayful } from "../../002/characters/006-dopey-always-playful";
+import { sleepySluggishKnight } from "./177-sleepy-sluggish-knight";
+
+const targetCharacter = createMockCharacter({
+  id: "dopey-ka-target",
+  name: "Target Character",
+  cost: 2,
+  willpower: 5,
+});
+
+describe("Dopey - Knight Apprentice", () => {
+  describe("STRONGER TOGETHER - When you play this character, if you have another Knight character in play, you may deal 1 damage to chosen character or location.", () => {
+    it("does not trigger when Dopey is the only Knight in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [dopeyKnightApprentice],
+          inkwell: dopeyKnightApprentice.cost,
+          play: [dopeyAlwaysPlayful],
+        },
+        {
+          play: [targetCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(dopeyKnightApprentice)).toBeSuccessfulCommand();
+      // No bag should be created since the condition is not met
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
+    it("triggers and deals 1 damage when another Knight is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [dopeyKnightApprentice],
+          inkwell: dopeyKnightApprentice.cost,
+          play: [sleepySluggishKnight],
+        },
+        {
+          play: [targetCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(dopeyKnightApprentice)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [targetCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(1);
+    });
+
+    it("can decline the optional effect when another Knight is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [dopeyKnightApprentice],
+          inkwell: dopeyKnightApprentice.cost,
+          play: [sleepySluggishKnight],
+        },
+        {
+          play: [targetCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(dopeyKnightApprentice)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(0);
+    });
+  });
+});
+
 // LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
 // /**
 //  * @jest-environment node

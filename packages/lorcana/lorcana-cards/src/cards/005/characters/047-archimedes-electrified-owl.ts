@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { archimedesElectrifiedOwlI18n } from "./047-archimedes-electrified-owl.i18n";
 
 export const archimedesElectrifiedOwl: CharacterCard = {
   id: "IT1",
@@ -7,38 +8,6 @@ export const archimedesElectrifiedOwl: CharacterCard = {
   cardType: "character",
   name: "Archimedes",
   version: "Electrified Owl",
-  i18n: {
-    en: {
-      name: "Archimedes",
-      version: "Electrified Owl",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "Challenger +3",
-        },
-      ],
-    },
-    de: {
-      name: "Archimedes",
-      version: "Elektrifizierte Eule",
-      text: "Gestaltwandel 3 Wendig Herausfordern +3",
-    },
-    fr: {
-      name: "Archimède",
-      version: "Hibou électrique",
-      text: "Alter 3 Insaisissable Offensif +3",
-    },
-    it: {
-      name: "Anacleto",
-      version: "Gufo Elettrizzato",
-      text: "Trasformazione 3 Sfuggente Sfidante +3",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -89,4 +58,5 @@ export const archimedesElectrifiedOwl: CharacterCard = {
       text: "Challenger +3",
     },
   ],
+  i18n: archimedesElectrifiedOwlI18n,
 };

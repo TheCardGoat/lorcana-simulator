@@ -1,52 +1,72 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { magicCarpetFlyingRug } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { hiddenCoveTranquilHaven } from "@lorcanito/lorcana-engine/cards/004/locations/locations";
-// Import { taffytaMuttonfudgeSourSpeedster } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { rapunzelsTowerSecludedPrison } from "@lorcanito/lorcana-engine/cards/005/locations/locations";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Magic Carpet - Flying Rug", () => {
-//   Describe("**FIND THE WAY** {E} – Move a character of yours to a location for free.", () => {
-//     It("should move a character to a location for free", async () => {
-//       Const testStore = new TestStore({
-//         Play: [magicCarpetFlyingRug, rapunzelsTowerSecludedPrison],
-//       });
-//
-//       Const cardUnderTest = testStore.getCard(magicCarpetFlyingRug);
-//       Const locationUnderTest = testStore.getCard(rapunzelsTowerSecludedPrison);
-//
-//       CardUnderTest.activate();
-//       TestStore.resolveTopOfStack({ targets: [cardUnderTest] }, true);
-//       TestStore.resolveTopOfStack({ targets: [locationUnderTest] });
-//       Expect(cardUnderTest.isAtLocation(locationUnderTest)).toBe(true);
-//     });
-//
-//     It("Should trigger enter location triggers", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [
-//           HiddenCoveTranquilHaven,
-//           MagicCarpetFlyingRug,
-//           TaffytaMuttonfudgeSourSpeedster,
-//         ],
-//       });
-//
-//       Await testEngine.activateCard(magicCarpetFlyingRug);
-//       Await testEngine.resolveTopOfStack(
-//         { targets: [taffytaMuttonfudgeSourSpeedster] },
-//         True,
-//       );
-//       Await testEngine.resolveTopOfStack({
-//         Targets: [hiddenCoveTranquilHaven],
-//       });
-//
-//       Expect(testEngine.getLoreForPlayer("player_one")).toBe(2);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { hiddenCoveTranquilHaven } from "../../009/locations/102-hidden-cove-tranquil-haven";
+import { taffytaMuttonfudgeSourSpeedster } from "../../005/characters/117-taffyta-muttonfudge-sour-speedster";
+import { magicCarpetFlyingRug } from "./047-magic-carpet-flying-rug";
+
+describe("Magic Carpet - Flying Rug", () => {
+  describe("FIND THE WAY — {E} Move a character of yours to a location for free.", () => {
+    it("moves a character to a location for free", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [
+          { card: magicCarpetFlyingRug, exerted: false },
+          hiddenCoveTranquilHaven,
+          taffytaMuttonfudgeSourSpeedster,
+        ],
+        deck: 2,
+      });
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(magicCarpetFlyingRug, {
+          ability: "FIND THE WAY",
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          targets: [taffytaMuttonfudgeSourSpeedster, hiddenCoveTranquilHaven],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne()).toBeAtLocation({
+        card: taffytaMuttonfudgeSourSpeedster,
+        location: hiddenCoveTranquilHaven,
+      });
+    });
+
+    it("triggers enter location abilities when a character moves to a location", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [
+          { card: magicCarpetFlyingRug, exerted: false },
+          hiddenCoveTranquilHaven,
+          taffytaMuttonfudgeSourSpeedster,
+        ],
+        deck: 2,
+      });
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(magicCarpetFlyingRug, {
+          ability: "FIND THE WAY",
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          targets: [taffytaMuttonfudgeSourSpeedster, hiddenCoveTranquilHaven],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne()).toBeAtLocation({
+        card: taffytaMuttonfudgeSourSpeedster,
+        location: hiddenCoveTranquilHaven,
+      });
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(2);
+    });
+  });
+});

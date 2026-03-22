@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { basilOfBakerStreetI18n } from "./139-basil-of-baker-street.i18n";
 
 export const basilOfBakerStreet: CharacterCard = {
   id: "sCa",
@@ -7,28 +8,6 @@ export const basilOfBakerStreet: CharacterCard = {
   cardType: "character",
   name: "Basil",
   version: "Of Baker Street",
-  i18n: {
-    en: {
-      name: "Basil",
-      version: "Of Baker Street",
-      text: "Support",
-    },
-    de: {
-      name: "Basil",
-      version: "Aus der Baker Street",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Basil",
-      version: "De Baker Street",
-      text: "Soutien",
-    },
-    it: {
-      name: "Basil",
-      version: "Di Baker Street",
-      text: "Aiutante",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Great Mouse Detective",
   set: "002",
@@ -53,4 +32,5 @@ export const basilOfBakerStreet: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: basilOfBakerStreetI18n,
 };

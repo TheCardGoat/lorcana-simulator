@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { maleficentSinisterVisitorI18n } from "./150-maleficent-sinister-visitor.i18n";
 
 export const maleficentSinisterVisitor: CharacterCard = {
   id: "LcD",
@@ -7,24 +8,6 @@ export const maleficentSinisterVisitor: CharacterCard = {
   cardType: "character",
   name: "Maleficent",
   version: "Sinister Visitor",
-  i18n: {
-    en: {
-      name: "Maleficent",
-      version: "Sinister Visitor",
-    },
-    de: {
-      name: "Malefiz",
-      version: "Böser Besuch",
-    },
-    fr: {
-      name: "MALÉFIQUE",
-      version: "Sinistre visiteuse",
-    },
-    it: {
-      name: "Maleficent",
-      version: "Sinister Visitor",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sleeping Beauty",
   set: "001",
@@ -35,11 +18,11 @@ export const maleficentSinisterVisitor: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_071ac28029b947ea8bf6b77d287ff401",
     tcgPlayer: 493493,
   },
   classifications: ["Storyborn", "Villain", "Sorcerer"],
+  i18n: maleficentSinisterVisitorI18n,
 };

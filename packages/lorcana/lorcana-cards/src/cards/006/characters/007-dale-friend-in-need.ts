@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daleFriendInNeedI18n } from "./007-dale-friend-in-need.i18n";
 
 export const daleFriendInNeed: CharacterCard = {
   id: "y2t",
@@ -7,52 +8,6 @@ export const daleFriendInNeed: CharacterCard = {
   cardType: "character",
   name: "Dale",
   version: "Friend in Need",
-  i18n: {
-    en: {
-      name: "Dale",
-      version: "Friend in Need",
-      text: [
-        {
-          title: "CHIP'S PARTNER",
-          description:
-            "This character enters play exerted unless you have a character named Chip in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Chap",
-      version: "Freund in der Not",
-      text: [
-        {
-          title: "CHIPS PARTNER",
-          description:
-            "Dieser Charakter kommt erschöpft ins Spiel, außer du hast mindestens einen Chip-Charakter im Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Tac",
-      version: "Ami dans le besoin",
-      text: [
-        {
-          title: "PARTENAIRE DE TIC",
-          description:
-            "Ce personnage entre en jeu épuisé à moins que vous n'ayez un personnage Tic en jeu.",
-        },
-      ],
-    },
-    it: {
-      name: "Ciop",
-      version: "Amico Bisognoso",
-      text: [
-        {
-          title: "PARTNER DI CIP",
-          description:
-            "Questo personaggio entra in gioco impegnato a meno che tu non abbia in gioco un personaggio chiamato Cip.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Rescue Rangers",
   set: "006",
@@ -77,6 +32,14 @@ export const daleFriendInNeed: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      condition: {
+        type: "not",
+        condition: {
+          controller: "you",
+          name: "Chip",
+          type: "has-named-character",
+        },
+      },
       effect: {
         restriction: "enters-play-exerted",
         target: "SELF",
@@ -88,4 +51,5 @@ export const daleFriendInNeed: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: daleFriendInNeedI18n,
 };

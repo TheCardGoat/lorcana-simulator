@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { brunoMadrigalSingingSeerI18n } from "./020-bruno-madrigal-singing-seer.i18n";
 
 export const brunoMadrigalSingingSeer: CharacterCard = {
   id: "7WL",
@@ -7,37 +8,6 @@ export const brunoMadrigalSingingSeer: CharacterCard = {
   cardType: "character",
   name: "Bruno Madrigal",
   version: "Singing Seer",
-  i18n: {
-    en: {
-      name: "Bruno Madrigal",
-      version: "Singing Seer",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "BRIGHT FUTURE",
-          description:
-            "Whenever this character sings a song, you may draw a card for each character you have in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Bruno Madrigal",
-      version: "Singender Seher",
-      text: "Gestaltwandel 5 STRAHLENDE ZUKUNFT Jedes Mal, wenn dieser Charakter ein Lied singt, darfst du für jeden deiner Charaktere im Spiel eine Karte ziehen.",
-    },
-    fr: {
-      name: "Bruno Madrigal",
-      version: "Oracle chantant",
-      text: "Alter 5 UN AVENIR RADIEUX Chaque fois que ce personnage chante une chanson, vous pouvez piocher une carte pour chaque personnage que vous avez en jeu.",
-    },
-    it: {
-      name: "Bruno Madrigal",
-      version: "Veggente Canoro",
-      text: "Trasformazione 5 FUTURO PROSPERO Ogni volta che questo personaggio canta una canzone, puoi pescare una carta per ogni personaggio che hai in gioco.",
-    },
-  },
   inkType: ["amber", "amethyst"],
   franchise: "Encanto",
   set: "008",
@@ -77,7 +47,10 @@ export const brunoMadrigalSingingSeer: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 1,
+          amount: {
+            controller: "you",
+            type: "characters-in-play",
+          },
           target: "CONTROLLER",
           type: "draw",
         },
@@ -87,11 +60,12 @@ export const brunoMadrigalSingingSeer: CharacterCard = {
       name: "BRIGHT FUTURE",
       text: "BRIGHT FUTURE Whenever this character sings a song, you may draw a card for each character you have in play.",
       trigger: {
-        event: "play",
+        event: "sing",
         on: "SELF",
-        timing: "when",
+        timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: brunoMadrigalSingingSeerI18n,
 };

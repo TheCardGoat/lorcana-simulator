@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goofyMarleysClumsySpiritI18n } from "./120-goofy-marleys-clumsy-spirit.i18n";
 
 export const goofyMarleysClumsySpirit: CharacterCard = {
   id: "z3A",
@@ -7,52 +8,6 @@ export const goofyMarleysClumsySpirit: CharacterCard = {
   cardType: "character",
   name: "Goofy",
   version: "Marley's Clumsy Spirit",
-  i18n: {
-    en: {
-      name: "Goofy",
-      version: "Marley's Clumsy Spirit",
-      text: [
-        {
-          title: "PREPARE YOURSELF",
-          description:
-            "When you play this character, you may ready chosen character. If you do, they can't quest for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Goofy",
-      version: "Marleys ungeschickter Geist",
-      text: [
-        {
-          title: "MACH DICH BEREIT",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Charakter deiner Wahl bereit machen. Wenn du dies tust, kann er in diesem Zug nicht mehr erkunden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Dingo",
-      version: "Esprit maladroit de Marley",
-      text: [
-        {
-          title: "PRÉPAREZ-VOUS",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage et le redresser. Si vous le faites, il ne peut pas être envoyé à l'aventure pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Pippo",
-      version: "Spirito Imbranato di Marley",
-      text: [
-        {
-          title: "PREPARATI",
-          description:
-            "Quando giochi questo personaggio, puoi preparare un personaggio a tua scelta. Se lo fai, non può andare all'avventura per il resto di questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mickey's Christmas Carol",
   set: "011",
@@ -96,7 +51,9 @@ export const goofyMarleysClumsySpirit: CharacterCard = {
           },
           {
             restriction: "cant-quest",
-            target: "SELF",
+            target: {
+              ref: "previous-target",
+            },
             type: "restriction",
             duration: "this-turn",
           },
@@ -113,4 +70,5 @@ export const goofyMarleysClumsySpirit: CharacterCard = {
       text: "PREPARE YOURSELF When you play this character, you may ready chosen character. If you do, they can't quest for the rest of this turn.",
     },
   ],
+  i18n: goofyMarleysClumsySpiritI18n,
 };

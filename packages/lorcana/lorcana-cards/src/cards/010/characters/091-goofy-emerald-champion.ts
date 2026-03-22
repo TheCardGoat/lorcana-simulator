@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goofyEmeraldChampionI18n } from "./091-goofy-emerald-champion.i18n";
 
 export const goofyEmeraldChampion: CharacterCard = {
   id: "ogQ",
@@ -7,71 +8,6 @@ export const goofyEmeraldChampion: CharacterCard = {
   cardType: "character",
   name: "Goofy",
   version: "Emerald Champion",
-  i18n: {
-    en: {
-      name: "Goofy",
-      version: "Emerald Champion",
-      text: [
-        {
-          title: "EVEN THE SCORE",
-          description:
-            "Whenever one of your other Emerald characters is challenged and banished, banish the challenging character.",
-        },
-        {
-          title: "PROVIDE COVER",
-          description: "Your other Emerald characters gain Ward.",
-        },
-      ],
-    },
-    de: {
-      name: "Goofy",
-      version: "Emerald Champion",
-      text: [
-        {
-          title: "EVEN THE SCORE",
-          description:
-            "Whenever one of your other Emerald characters is challenged and banished, banish the challenging character.",
-        },
-        {
-          title: "PROVIDE COVER",
-          description:
-            "Your other Emerald characters gain Ward. (Opponents can't choose them except to challenge.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Goofy",
-      version: "Emerald Champion",
-      text: [
-        {
-          title: "EVEN THE SCORE",
-          description:
-            "Whenever one of your other Emerald characters is challenged and banished, banish the challenging character.",
-        },
-        {
-          title: "PROVIDE COVER",
-          description:
-            "Your other Emerald characters gain Ward. (Opponents can't choose them except to challenge.)",
-        },
-      ],
-    },
-    it: {
-      name: "Goofy",
-      version: "Emerald Champion",
-      text: [
-        {
-          title: "EVEN THE SCORE",
-          description:
-            "Whenever one of your other Emerald characters is challenged and banished, banish the challenging character.",
-        },
-        {
-          title: "PROVIDE COVER",
-          description:
-            "Your other Emerald characters gain Ward. (Opponents can't choose them except to challenge.)",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "010",
   cardNumber: 91,
@@ -103,7 +39,9 @@ export const goofyEmeraldChampion: CharacterCard = {
       text: "EVEN THE SCORE Whenever one of your other Emerald characters is challenged and banished, banish the challenging character.",
       name: "EVEN THE SCORE",
       effect: {
-        target: "challenging-character",
+        target: {
+          ref: "attacker",
+        },
         type: "banish",
       },
       trigger: {
@@ -113,7 +51,14 @@ export const goofyEmeraldChampion: CharacterCard = {
         event: "challenged-and-banished",
         on: {
           controller: "you",
+          cardType: "character",
           excludeSelf: true,
+          filters: [
+            {
+              type: "ink-type",
+              inkType: "emerald",
+            },
+          ],
         },
         timing: "whenever",
       },
@@ -123,7 +68,8 @@ export const goofyEmeraldChampion: CharacterCard = {
       id: "bau-2",
       text: "PROVIDE COVER Your other Emerald characters gain Ward.",
       name: "PROVIDE COVER",
-      affects: {
+      effect: {
+        keyword: "Ward",
         target: {
           cardTypes: ["character"],
           count: "all",
@@ -131,14 +77,17 @@ export const goofyEmeraldChampion: CharacterCard = {
           selector: "all",
           zones: ["play"],
           excludeSelf: true,
+          filter: [
+            {
+              type: "ink-type",
+              inkType: "emerald",
+            },
+          ],
         },
-        type: "characters",
-      },
-      effect: {
-        keyword: "Ward",
         type: "gain-keyword",
       },
       type: "static",
     },
   ],
+  i18n: goofyEmeraldChampionI18n,
 };

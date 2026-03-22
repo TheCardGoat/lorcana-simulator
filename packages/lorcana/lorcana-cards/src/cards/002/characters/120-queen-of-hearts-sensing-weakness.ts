@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { queenOfHeartsSensingWeaknessI18n } from "./120-queen-of-hearts-sensing-weakness.i18n";
 
 export const queenOfHeartsSensingWeakness: CharacterCard = {
   id: "DCW",
@@ -7,43 +8,6 @@ export const queenOfHeartsSensingWeakness: CharacterCard = {
   cardType: "character",
   name: "Queen of Hearts",
   version: "Sensing Weakness",
-  i18n: {
-    en: {
-      name: "Queen of Hearts",
-      version: "Sensing Weakness",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "LET THE GAME BEGIN",
-          description:
-            "Whenever one of your characters challenges another character, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Herzkönigin",
-      version: "Wittert Schwäche",
-      text: "Gestaltwandel 2 DANN SOLL DAS SPIEL BEGINNEN! Jedes Mal, wenn einer deiner Charaktere einen gegnerischen Charakter herausfordert, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "La Reine de Cœur",
-      version: "Utilise les faiblesses",
-      text: "Alter 2 QUE LA PARTIE COMMENCE Chaque fois que l'un de vos personnages en défie un autre, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Queen of Hearts",
-      version: "Sensing Weakness",
-      text: [
-        {
-          title: "Shift 2",
-          description:
-            "(You may pay 2 to play this on top of one of your characters named Queen of Hearts.) LET THE GAME BEGIN Whenever one of your characters challenges another character, you may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Alice in Wonderland",
   set: "002",
@@ -69,7 +33,6 @@ export const queenOfHeartsSensingWeakness: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain", "Queen"],
-  missingTests: true,
   abilities: [
     {
       id: "1je-1",
@@ -93,12 +56,14 @@ export const queenOfHeartsSensingWeakness: CharacterCard = {
       },
       name: "LET THE GAME BEGIN",
       trigger: {
-        event: "banish",
+        event: "challenge",
         timing: "whenever",
-        on: "YOUR_OTHER_CHARACTERS",
+        on: "YOUR_CHARACTERS",
       },
       type: "triggered",
       text: "LET THE GAME BEGIN Whenever one of your characters challenges another character, you may draw a card.",
     },
   ],
+  missingTests: true,
+  i18n: queenOfHeartsSensingWeaknessI18n,
 };

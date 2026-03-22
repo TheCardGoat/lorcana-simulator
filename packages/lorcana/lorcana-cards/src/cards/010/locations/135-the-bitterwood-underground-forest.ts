@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { theBitterwoodUndergroundForestI18n } from "./135-the-bitterwood-underground-forest.i18n";
 
 export const theBitterwoodUndergroundForest: LocationCard = {
   id: "XY0",
@@ -7,52 +8,6 @@ export const theBitterwoodUndergroundForest: LocationCard = {
   cardType: "location",
   name: "The Bitterwood",
   version: "Underground Forest",
-  i18n: {
-    en: {
-      name: "The Bitterwood",
-      version: "Underground Forest",
-      text: [
-        {
-          title: "GATHER RESOURCES",
-          description:
-            "Once during your turn, whenever you move a character with 5 {S} or more here, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Der Bitterwald",
-      version: "Unterirdischer Wald",
-      text: [
-        {
-          title: "RESSOURCEN SAMMELN",
-          description:
-            "Einmal während deines Zuges, wenn einer deiner Charaktere mit 5 oder mehr an diesen Ort bewegt wird, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le Bois-Amer",
-      version: "Forêt souterraine",
-      text: [
-        {
-          title: "RASSEMBLER DES RESSOURCES",
-          description:
-            "Une fois durant votre tour, lorsque vous déplacez sur ce lieu un personnage ayant 5 ou plus, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Il Bosco Amaro",
-      version: "Foresta Sotterranea",
-      text: [
-        {
-          title: "RACCOGLIERE RISORSE",
-          description:
-            "Una volta durante il tuo turno, ogni volta che sposti un personaggio con 5 o superiore in questo luogo, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lorcana",
   set: "010",
@@ -119,4 +74,5 @@ export const theBitterwoodUndergroundForest: LocationCard = {
       type: "triggered",
     },
   ],
+  i18n: theBitterwoodUndergroundForestI18n,
 };

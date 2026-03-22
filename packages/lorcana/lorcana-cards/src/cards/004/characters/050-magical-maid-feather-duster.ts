@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicalMaidFeatherDusterI18n } from "./050-magical-maid-feather-duster.i18n";
 
 export const magicalMaidFeatherDuster: CharacterCard = {
   id: "S5i",
@@ -7,24 +8,6 @@ export const magicalMaidFeatherDuster: CharacterCard = {
   cardType: "character",
   name: "Magical Maid",
   version: "Feather Duster",
-  i18n: {
-    en: {
-      name: "Magical Maid",
-      version: "Feather Duster",
-    },
-    de: {
-      name: "Magisches Dienstmädchen",
-      version: "Staubwedel",
-    },
-    fr: {
-      name: "Domestique Magique",
-      version: "Plumette",
-    },
-    it: {
-      name: "Domestica Magica",
-      version: "Spolverina",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Beauty and the Beast",
   set: "004",
@@ -41,4 +24,5 @@ export const magicalMaidFeatherDuster: CharacterCard = {
     tcgPlayer: 550568,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: magicalMaidFeatherDusterI18n,
 };

@@ -1,97 +1,41 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { blackHeronRealBadEgg } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe.skip("Black Heron - Real Bad Egg", () => {
-//   It("should be a vanilla character with correct stats and no special abilities", () => {
-//     Const testEngine = new TestEngine({
-//       Play: [blackHeronRealBadEgg],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(blackHeronRealBadEgg);
-//
-//     // Verify card is in play
-//     Expect(cardUnderTest.zone).toBe("play");
-//
-//     // Verify base stats
-//     Expect(cardUnderTest.lorcanitoCard.cost).toBe(2);
-//     Expect(cardUnderTest.lorcanitoCard.strength).toBe(2);
-//     Expect(cardUnderTest.lorcanitoCard.willpower).toBe(4);
-//     Expect(cardUnderTest.lorcanitoCard.lore).toBe(1);
-//
-//     // Verify characteristics
-//     Expect(cardUnderTest.lorcanitoCard.characteristics).toContain("storyborn");
-//     Expect(cardUnderTest.lorcanitoCard.characteristics).toContain("villain");
-//
-//     // Verify color and inkwell
-//     Expect(cardUnderTest.lorcanitoCard.colors).toContain("steel");
-//     Expect(cardUnderTest.lorcanitoCard.inkwell).toBe(true);
-//
-//     // Verify no special abilities
-//     Expect(cardUnderTest.lorcanitoCard.abilities).toEqual([]);
-//   });
-//
-//   It("should be able to quest for lore", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [blackHeronRealBadEgg],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(blackHeronRealBadEgg);
-//
-//     Const initialLore = testEngine.store.tableStore.getTable("player_one").lore;
-//
-//     CardUnderTest.quest();
-//
-//     Expect(testEngine.store.tableStore.getTable("player_one").lore).toBe(
-//       InitialLore + 1,
-//     );
-//     Expect(cardUnderTest.meta.exerted).toBe(true);
-//   });
-//
-//   It("should be playable from hand with correct ink cost", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: blackHeronRealBadEgg.cost,
-//       Hand: [blackHeronRealBadEgg],
-//     });
-//
-//     Const cardModel = testEngine.getCardModel(blackHeronRealBadEgg);
-//
-//     Expect(cardModel.zone).toBe("hand");
-//
-//     Await testEngine.playCard(blackHeronRealBadEgg);
-//
-//     Expect(cardModel.zone).toBe("play");
-//     Expect(
-//       TestEngine.store.tableStore.getTable("player_one").inkAvailable(),
-//     ).toBe(0);
-//   });
-//
-//   It("should be able to be used as ink", async () => {
-//     Const testEngine = new TestEngine({
-//       Hand: [blackHeronRealBadEgg],
-//     });
-//
-//     Const cardModel = testEngine.getCardModel(blackHeronRealBadEgg);
-//
-//     Expect(cardModel.zone).toBe("hand");
-//     Expect(cardModel.lorcanitoCard.inkwell).toBe(true);
-//
-//     Const initialInkwellSize =
-//       TestEngine.store.tableStore.getTable("player_one").zones.inkwell.cards
-//         .length;
-//
-//     CardModel.addToInkwell();
-//
-//     Expect(cardModel.zone).toBe("inkwell");
-//     Expect(
-//       TestEngine.store.tableStore.getTable("player_one").zones.inkwell.cards
-//         .length,
-//     ).toBe(initialInkwellSize + 1);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { blackHeronRealBadEgg } from "./182-black-heron-real-bad-egg";
+
+describe("Black Heron - Real Bad Egg", () => {
+  it("should have the printed vanilla stats and characteristics", () => {
+    expect(blackHeronRealBadEgg.cost).toBe(2);
+    expect(blackHeronRealBadEgg.strength).toBe(3);
+    expect(blackHeronRealBadEgg.willpower).toBe(3);
+    expect(blackHeronRealBadEgg.lore).toBe(1);
+    expect(blackHeronRealBadEgg.inkable).toBe(true);
+    expect(blackHeronRealBadEgg.vanilla).toBe(true);
+    expect(blackHeronRealBadEgg.classifications).toEqual(["Storyborn", "Villain"]);
+  });
+
+  it("should be playable as a vanilla character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [blackHeronRealBadEgg],
+      inkwell: blackHeronRealBadEgg.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(blackHeronRealBadEgg)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardZone(blackHeronRealBadEgg)).toBe("play");
+  });
+
+  it("should be able to quest for lore", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [blackHeronRealBadEgg],
+      inkwell: blackHeronRealBadEgg.cost,
+      deck: 5,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(blackHeronRealBadEgg)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().quest(blackHeronRealBadEgg)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getLore("player_one")).toBe(1);
+  });
+});

@@ -10,10 +10,16 @@ describe("Fishbone Quill", () => {
       play: [fishboneQuill],
     });
 
-    const result = testEngine.asPlayerOne().activateAbility(fishboneQuill);
+    const mickeyId = testEngine.findCardInstanceId(mickeyMouseTrueFriend, "hand", "p1");
 
-    expect(result).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().activateAbility(fishboneQuill)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().isExerted(fishboneQuill)).toBe(true);
+
+    // Resolving the pending target selection: which card from hand to put into inkwell
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [mickeyId] }),
+    ).toBeSuccessfulCommand();
+
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
       expect.objectContaining({ hand: 0, inkwell: 1 }),
     );

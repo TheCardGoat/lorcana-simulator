@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { bellwetherMasterManipulatorI18n } from "./082-bellwether-master-manipulator.i18n";
 
 export const bellwetherMasterManipulator: CharacterCard = {
   id: "bgf",
@@ -7,52 +8,6 @@ export const bellwetherMasterManipulator: CharacterCard = {
   cardType: "character",
   name: "Bellwether",
   version: "Master Manipulator",
-  i18n: {
-    en: {
-      name: "Bellwether",
-      version: "Master Manipulator",
-      text: [
-        {
-          title: "VENDETTA",
-          description:
-            "When this character is challenged and banished, put 1 damage counter on each opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Bellwether",
-      version: "Meisterhafte Manipulatorin",
-      text: [
-        {
-          title: "VENDETTA",
-          description:
-            "Wenn dieser Charakter herausgefordert und verbannt wird, lege 1 Schadensmarker auf jeden gegnerischen Charakter.",
-        },
-      ],
-    },
-    fr: {
-      name: "Bellwether",
-      version: "Maîtresse en manipulation",
-      text: [
-        {
-          title: "VENDETTA",
-          description:
-            "Lorsque ce personnage est défié et banni, placez 1 dommage sur chaque personnage adverse.",
-        },
-      ],
-    },
-    it: {
-      name: "Bellwether",
-      version: "Magistrale Manipolatrice",
-      text: [
-        {
-          title: "VENDETTA",
-          description:
-            "Quando questo personaggio viene sfidato ed esiliato, metti 1 segnalino danno su ogni personaggio avversario.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Zootropolis",
   set: "010",
@@ -100,4 +55,5 @@ export const bellwetherMasterManipulator: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: bellwetherMasterManipulatorI18n,
 };

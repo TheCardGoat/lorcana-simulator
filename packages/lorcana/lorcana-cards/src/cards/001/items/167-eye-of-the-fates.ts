@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { eyeOfTheFatesI18n } from "./167-eye-of-the-fates.i18n";
 
 export const eyeOfTheFates: ItemCard = {
   id: "xSb",
@@ -6,44 +7,6 @@ export const eyeOfTheFates: ItemCard = {
   reprints: ["set1-167"],
   cardType: "item",
   name: "Eye of the Fates",
-  i18n: {
-    en: {
-      name: "Eye of the Fates",
-      text: [
-        {
-          title: "SEE THE FUTURE",
-          description: "{E} — Chosen character gets +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Auge der Moiren",
-      text: [
-        {
-          title: "DIE ZUKUNFT OFFENBAREN",
-          description: "— Gib einem Charakter deiner Wahl in diesem Zug +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "ŒIL DES MOIRES",
-      text: [
-        {
-          title: "VOIR L'AVENIR",
-          description: "— Choisissez un personnage, il gagne +1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Eye of the Fates",
-      text: [
-        {
-          title: "SEE THE FUTURE",
-          description: "— Chosen character gets +1 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Hercules",
   set: "001",
@@ -79,4 +42,5 @@ export const eyeOfTheFates: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: eyeOfTheFatesI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { grammaTalaStorytellerI18n } from "./146-gramma-tala-storyteller.i18n";
 
 export const grammaTalaStoryteller: CharacterCard = {
   id: "ROE",
@@ -7,52 +8,6 @@ export const grammaTalaStoryteller: CharacterCard = {
   cardType: "character",
   name: "Gramma Tala",
   version: "Storyteller",
-  i18n: {
-    en: {
-      name: "Gramma Tala",
-      version: "Storyteller",
-      text: [
-        {
-          title: "I WILL BE WITH YOU",
-          description:
-            "When this character is banished, you may put this card into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Gramma Tala",
-      version: "Geschichtenerzählerin",
-      text: [
-        {
-          title: "ICH WERDE DICH BEGLEITEN",
-          description:
-            "Wenn dieser Charakter verbannt wird, darfst du diese Karte verdeckt und erschöpft in deinen Tintenvorrat legen.",
-        },
-      ],
-    },
-    fr: {
-      name: "GRAND-MÈRE TALA",
-      version: "Conteuse",
-      text: [
-        {
-          title: "TOUJOURS PRÈS DE TOI",
-          description:
-            "Lorsque ce personnage est banni, vous pouvez la placer dans votre réserve d'encre, face cachée et épuisée.",
-        },
-      ],
-    },
-    it: {
-      name: "Gramma Tala",
-      version: "Storyteller",
-      text: [
-        {
-          title: "I WILL BE WITH YOU",
-          description:
-            "When this character is banished, you may put this card into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Moana",
   set: "001",
@@ -63,7 +18,6 @@ export const grammaTalaStoryteller: CharacterCard = {
   willpower: 1,
   lore: 1,
   inkable: true,
-  missingImplementation: true,
   externalIds: {
     lorcast: "crd_2556ec8a10224e6bb75f2bd54e7a612f",
     tcgPlayer: 508842,
@@ -78,6 +32,7 @@ export const grammaTalaStoryteller: CharacterCard = {
   classifications: ["Storyborn", "Mentor"],
   abilities: [
     {
+      name: "I WILL BE WITH YOU",
       effect: {
         chooser: "CONTROLLER",
         effect: {
@@ -91,7 +46,13 @@ export const grammaTalaStoryteller: CharacterCard = {
       },
       id: "n00-1",
       text: "**I WILL BE WITH YOU** When this character is banished, you may put this card into your inkwell facedown and exerted.",
-      type: "action",
+      trigger: {
+        event: "banish",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
     },
   ],
+  i18n: grammaTalaStorytellerI18n,
 };

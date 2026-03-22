@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { captainHookThinkingAHappyThoughtI18n } from "./175-captain-hook-thinking-a-happy-thought.i18n";
 
 export const captainHookThinkingAHappyThought: CharacterCard = {
   id: "3Ri",
@@ -7,45 +8,6 @@ export const captainHookThinkingAHappyThought: CharacterCard = {
   cardType: "character",
   name: "Captain Hook",
   version: "Thinking a Happy Thought",
-  i18n: {
-    en: {
-      name: "Captain Hook",
-      version: "Thinking a Happy Thought",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "Challenger +3",
-        },
-        {
-          title: "STOLEN DUST",
-          description: "Characters with cost 3 or less can't challenge this character.",
-        },
-      ],
-    },
-    de: {
-      name: "Käpt'n Hook",
-      version: "Ein feiner Gedanke",
-      text: "Gestaltwandel 3 Herausfordern +3 GESTOHLENER GLANZ Charaktere, die 3 oder weniger kosten, können diesen Charakter nicht herausfordern.",
-    },
-    fr: {
-      name: "CAPITAINE CROCHET",
-      version: "Rêve d'aventure",
-      text: "Alter 3 Offensif +3 POUSSIÈRE VOLÉE Les personnages coûtant 3 ou moins ne peuvent pas défier ce personnage.",
-    },
-    it: {
-      name: "Captain Hook",
-      version: "Thinking a Happy Thought",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Captain Hook.) Challenger +3 (While challenging, this character gets +3.) STOLEN DUST Characters with cost 3 or less can't challenge this character.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Peter Pan",
   set: "001",
@@ -92,9 +54,14 @@ export const captainHookThinkingAHappyThought: CharacterCard = {
     },
     {
       effect: {
-        restriction: "cant-challenge",
+        restriction: "cant-be-challenged",
         target: "SELF",
         type: "restriction",
+        challengerFilter: {
+          type: "cost-comparison",
+          operator: "lte",
+          value: 3,
+        },
       },
       id: "4hp-3",
       name: "STOLEN DUST",
@@ -102,4 +69,5 @@ export const captainHookThinkingAHappyThought: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: captainHookThinkingAHappyThoughtI18n,
 };

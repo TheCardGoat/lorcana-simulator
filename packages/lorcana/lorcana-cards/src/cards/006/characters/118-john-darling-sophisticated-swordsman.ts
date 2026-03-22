@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { johnDarlingSophisticatedSwordsmanI18n } from "./118-john-darling-sophisticated-swordsman.i18n";
 
 export const johnDarlingSophisticatedSwordsman: CharacterCard = {
   id: "0gP",
@@ -7,24 +8,6 @@ export const johnDarlingSophisticatedSwordsman: CharacterCard = {
   cardType: "character",
   name: "John Darling",
   version: "Sophisticated Swordsman",
-  i18n: {
-    en: {
-      name: "John Darling",
-      version: "Sophisticated Swordsman",
-    },
-    de: {
-      name: "Klaus Darling",
-      version: "Anspruchsvoller Schwertkämpfer",
-    },
-    fr: {
-      name: "John Darling",
-      version: "Épéiste distingué",
-    },
-    it: {
-      name: "Gianni Darling",
-      version: "Spadaccino Sofisticato",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Peter Pan",
   set: "006",
@@ -41,4 +24,5 @@ export const johnDarlingSophisticatedSwordsman: CharacterCard = {
     tcgPlayer: 593017,
   },
   classifications: ["Storyborn", "Ally", "Pirate"],
+  i18n: johnDarlingSophisticatedSwordsmanI18n,
 };

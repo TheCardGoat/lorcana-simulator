@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckNephewFredI18n } from "./105-donald-duck-nephew-fred.i18n";
 
 export const donaldDuckNephewFred: CharacterCard = {
   id: "Sjs",
@@ -7,24 +8,6 @@ export const donaldDuckNephewFred: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Nephew Fred",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Nephew Fred",
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Neffe Fred",
-    },
-    fr: {
-      name: "Donald",
-      version: "Neveu Fred",
-    },
-    it: {
-      name: "Paperino",
-      version: "Nipote Fred",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mickey's Christmas Carol",
   set: "011",
@@ -41,4 +24,5 @@ export const donaldDuckNephewFred: CharacterCard = {
     tcgPlayer: 675405,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: donaldDuckNephewFredI18n,
 };

@@ -196,6 +196,14 @@ export function createLogEntry(
 }
 
 export function createSampleLog(count: number = 5): MoveLogEntrySnapshot[] {
+  const moveIds = [
+    "passTurn",
+    "playCard",
+    "quest",
+    "challenge",
+    "putCardIntoInkwell",
+    "passTurn",
+  ] as const satisfies readonly MoveLogEntrySnapshot["moveId"][];
   const actions = [
     { title: "Drew a card", detail: "Drew Captain Hook - Forceful Duelist" },
     { title: "Played a card", detail: "Played Mickey Mouse - Brave Little Tailor for 3 ink" },
@@ -209,7 +217,7 @@ export function createSampleLog(count: number = 5): MoveLogEntrySnapshot[] {
     createLogEntry(action.title, {
       detail: action.detail,
       actorSide: i % 2 === 0 ? "playerOne" : "playerTwo",
-      moveId: ["passTurn", "playCard", "quest", "challenge", "putCardIntoInkwell", "passTurn"][i],
+      moveId: moveIds[i] ?? "passTurn",
     }),
   );
 }

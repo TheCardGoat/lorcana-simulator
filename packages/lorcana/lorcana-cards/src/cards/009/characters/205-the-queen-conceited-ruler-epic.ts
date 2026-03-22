@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theQueenConceitedRulerEpicI18n } from "./205-the-queen-conceited-ruler-epic.i18n";
 
 export const theQueenConceitedRulerEpic: CharacterCard = {
   id: "4Tp",
@@ -7,37 +8,6 @@ export const theQueenConceitedRulerEpic: CharacterCard = {
   cardType: "character",
   name: "The Queen",
   version: "Conceited Ruler",
-  i18n: {
-    en: {
-      name: "The Queen",
-      version: "Conceited Ruler",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "ROYAL SUMMONS",
-          description:
-            "At the start of your turn, you may choose and discard a Princess or Queen character card to return a character card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Königin",
-      version: "Eingebildete Herrscherin",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) KÖNIGLICHE VORLADUNG Zu Beginn deines Zuges darfst du eine Prinzessinnen- oder Königinnen-Charakterkarte von deiner Hand auswählen und abwerfen, um eine Charakterkarte aus deinem Ablagestapel zurück auf deine Hand zu nehmen.",
-    },
-    fr: {
-      name: "La Reine",
-      version: "Souveraine vaniteuse",
-      text: "Soutien CONVOCATION ROYALE Au début de votre tour, vous pouvez défausser une carte Personnage Princesse ou Reine pour renvoyer dans votre main une carte Personnage de votre défausse.",
-    },
-    it: {
-      name: "Regina",
-      version: "Monarca Presuntuosa",
-      text: "Aiutante CONVOCAZIONE REALE All'inizio del tuo turno, puoi scegliere e scartare una carta personaggio Principessa o Regina per riprendere in mano una carta personaggio dai tuoi scarti.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "009",
@@ -86,4 +56,5 @@ export const theQueenConceitedRulerEpic: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: theQueenConceitedRulerEpicI18n,
 };

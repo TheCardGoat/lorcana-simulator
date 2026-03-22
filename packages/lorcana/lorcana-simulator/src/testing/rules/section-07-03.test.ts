@@ -55,8 +55,13 @@ describe("#### 7. ZONES", () => {
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
+      const goodJobId = testEngine.findCardInstanceId(goodJob, "hand", "player_one");
       expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().respondWith(goodJob)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          targets: [goodJobId],
+        }),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
       expect(testEngine.asPlayerOne().getCardZone(goodJob)).toBe("discard");

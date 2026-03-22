@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { herculesDaringDemigodI18n } from "./109-hercules-daring-demigod.i18n";
 
 export const herculesDaringDemigod: CharacterCard = {
   id: "044",
@@ -7,41 +8,6 @@ export const herculesDaringDemigod: CharacterCard = {
   cardType: "character",
   name: "Hercules",
   version: "Daring Demigod",
-  i18n: {
-    en: {
-      name: "Hercules",
-      version: "Daring Demigod",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "Reckless",
-        },
-      ],
-    },
-    de: {
-      name: "Hercules",
-      version: "Wagemutiger Halbgott",
-      text: "Rasant Impulsiv",
-    },
-    fr: {
-      name: "Hercule",
-      version: "Demi-dieu intrépide",
-      text: "Charge Combattant",
-    },
-    it: {
-      name: "Ercole",
-      version: "Audace Semidio",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) Attaccabrighe",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Hercules",
   set: "004",
@@ -79,4 +45,5 @@ export const herculesDaringDemigod: CharacterCard = {
       text: "Reckless",
     },
   ],
+  i18n: herculesDaringDemigodI18n,
 };

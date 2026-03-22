@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { robinHoodSharpshooterEnchantedI18n } from "./215-robin-hood-sharpshooter-enchanted.i18n";
 
 export const robinHoodSharpshooterEnchanted: CharacterCard = {
   id: "Uem",
@@ -7,52 +8,6 @@ export const robinHoodSharpshooterEnchanted: CharacterCard = {
   cardType: "character",
   name: "Robin Hood",
   version: "Sharpshooter",
-  i18n: {
-    en: {
-      name: "Robin Hood",
-      version: "Sharpshooter",
-      text: [
-        {
-          title: "MY GREATEST PERFORMANCE",
-          description:
-            "Whenever this character quests, look at the top 4 cards of your deck. You may reveal an action card with cost 6 or less and play it for free. Put the rest in your discard.",
-        },
-      ],
-    },
-    de: {
-      name: "Robin Hood",
-      version: "Scharfschütze",
-      text: [
-        {
-          title: "MEIN GRÖSSTER AUFTRITT",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, schaue dir die obersten 4 Karten deines Decks an. Du darfst 1 Aktionskarte daraus, die 6 oder weniger kostet, aufdecken und kostenlos ausspielen. Lege die restlichen Karten auf deinen Ablagestapel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Robin des Bois",
-      version: "Tireur d'élite",
-      text: [
-        {
-          title: "MON PLUS MERVEILLEUX EXPLOIT",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, regardez les 4 cartes du dessus de votre pioche. Parmi ces cartes, vous pouvez révéler et jouer gratuitement une carte Action coûtant 6 ou moins. Placez le reste dans votre défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Robin Hood",
-      version: "Tiratore Scelto",
-      text: [
-        {
-          title: "LA MIA PIÙ GRANDE INTERPRETAZIONE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, guarda le prime 4 carte del tuo mazzo. Puoi rivelare una carta azione con costo 6 o inferiore e giocarla gratis. Metti il resto nei tuoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Robin Hood",
   set: "005",
@@ -79,13 +34,32 @@ export const robinHoodSharpshooterEnchanted: CharacterCard = {
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          cost: "free",
-          from: "hand",
-          type: "play-card",
-        },
-        type: "optional",
+        type: "scry",
+        amount: 4,
+        destinations: [
+          {
+            zone: "play",
+            min: 0,
+            max: 1,
+            reveal: true,
+            cost: "free",
+            filters: [
+              {
+                type: "card-type",
+                cardType: "action",
+              },
+              {
+                type: "cost",
+                comparison: "lte",
+                value: 6,
+              },
+            ],
+          },
+          {
+            zone: "discard",
+            remainder: true,
+          },
+        ],
       },
       id: "1w7-1",
       name: "MY GREATEST PERFORMANCE",
@@ -98,4 +72,5 @@ export const robinHoodSharpshooterEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: robinHoodSharpshooterEnchantedI18n,
 };

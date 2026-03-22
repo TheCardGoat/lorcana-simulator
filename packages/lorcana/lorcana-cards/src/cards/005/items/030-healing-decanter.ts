@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { healingDecanterI18n } from "./030-healing-decanter.i18n";
 
 export const healingDecanter: ItemCard = {
   id: "5HB",
@@ -6,44 +7,6 @@ export const healingDecanter: ItemCard = {
   reprints: ["set5-030"],
   cardType: "item",
   name: "Healing Decanter",
-  i18n: {
-    en: {
-      name: "Healing Decanter",
-      text: [
-        {
-          title: "RENEWING ESSENCE",
-          description: "{E} — Remove up to 2 damage from chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Heilende Karaffe",
-      text: [
-        {
-          title: "ERNEUERNDE ESSENZ",
-          description: "— Entferne bis zu 2 Schaden von einem Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Philtre de guérison",
-      text: [
-        {
-          title: "SOLUTION",
-          description: "RÉGÉNÉRANTE — Choisissez un personnage et retirez-lui jusqu'à 2 dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "Ampolla Curativa",
-      text: [
-        {
-          title: "ESSENZA DI RINNOVAMENTO",
-          description: "— Rimuovi fino a 2 danni da un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lorcana",
   set: "005",
@@ -78,4 +41,5 @@ export const healingDecanter: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: healingDecanterI18n,
 };

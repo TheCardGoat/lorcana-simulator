@@ -32,7 +32,7 @@ import type {
 } from "../expressions";
 
 /** Lorcana zone IDs */
-export type LorcanaZoneId = "deck" | "hand" | "play" | "discard" | "inkwell";
+export type LorcanaZoneId = "deck" | "hand" | "play" | "discard" | "inkwell" | "limbo";
 
 export type LorcanaFilter = CanonicalCardFilter;
 export type LorcanaPlayerFilter = CanonicalPlayerFilter;

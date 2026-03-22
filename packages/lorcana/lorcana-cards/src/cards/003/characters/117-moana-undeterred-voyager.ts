@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { moanaUndeterredVoyagerI18n } from "./117-moana-undeterred-voyager.i18n";
 
 export const moanaUndeterredVoyager: CharacterCard = {
   id: "XuG",
@@ -7,28 +8,6 @@ export const moanaUndeterredVoyager: CharacterCard = {
   cardType: "character",
   name: "Moana",
   version: "Undeterred Voyager",
-  i18n: {
-    en: {
-      name: "Moana",
-      version: "Undeterred Voyager",
-      text: "Evasive",
-    },
-    de: {
-      name: "Vaiana",
-      version: "Unerschrockene Seefahrerin",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Vaiana",
-      version: "Voyageuse jamais découragée",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Vaiana",
-      version: "Viaggiatrice Imperterrita",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "003",
@@ -53,4 +32,5 @@ export const moanaUndeterredVoyager: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: moanaUndeterredVoyagerI18n,
 };

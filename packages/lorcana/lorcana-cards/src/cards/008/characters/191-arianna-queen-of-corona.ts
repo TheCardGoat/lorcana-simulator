@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ariannaQueenOfCoronaI18n } from "./191-arianna-queen-of-corona.i18n";
 
 export const ariannaQueenOfCorona: CharacterCard = {
   id: "vpw",
@@ -7,24 +8,6 @@ export const ariannaQueenOfCorona: CharacterCard = {
   cardType: "character",
   name: "Arianna",
   version: "Queen of Corona",
-  i18n: {
-    en: {
-      name: "Arianna",
-      version: "Queen of Corona",
-    },
-    de: {
-      name: "Arianna",
-      version: "Königin von Corona",
-    },
-    fr: {
-      name: "Arianna",
-      version: "Reine de Corona",
-    },
-    it: {
-      name: "Arianna",
-      version: "Regina di Corona",
-    },
-  },
   inkType: ["steel"],
   franchise: "Tangled",
   set: "008",
@@ -41,4 +24,5 @@ export const ariannaQueenOfCorona: CharacterCard = {
     tcgPlayer: 631475,
   },
   classifications: ["Storyborn", "Queen"],
+  i18n: ariannaQueenOfCoronaI18n,
 };

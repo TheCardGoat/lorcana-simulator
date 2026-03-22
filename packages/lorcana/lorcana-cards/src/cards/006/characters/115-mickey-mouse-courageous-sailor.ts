@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseCourageousSailorI18n } from "./115-mickey-mouse-courageous-sailor.i18n";
 
 export const mickeyMouseCourageousSailor: CharacterCard = {
   id: "N8b",
@@ -7,48 +8,6 @@ export const mickeyMouseCourageousSailor: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Courageous Sailor",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Courageous Sailor",
-      text: [
-        {
-          title: "SOLID GROUND",
-          description: "While this character is at a location, he gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Micky Maus",
-      version: "Mutiger Seemann",
-      text: [
-        {
-          title: "FESTER BODEN",
-          description: "Solange dieser Charakter an einem Ort ist, erhält er +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Marin courageux",
-      text: [
-        {
-          title: "TERRE FERME",
-          description: "Tant que ce personnage est sur un lieu, il gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Topolino",
-      version: "Marinaio Coraggioso",
-      text: [
-        {
-          title: "TERRAFERMA",
-          description: "Mentre questo personaggio si trova in un luogo, riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "006",
   cardNumber: 115,
@@ -82,4 +41,5 @@ export const mickeyMouseCourageousSailor: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: mickeyMouseCourageousSailorI18n,
 };

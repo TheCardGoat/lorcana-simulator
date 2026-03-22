@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { perlaNimbleSeamstressI18n } from "./032-perla-nimble-seamstress.i18n";
 
 export const perlaNimbleSeamstress: CharacterCard = {
   id: "D8H",
@@ -7,35 +8,6 @@ export const perlaNimbleSeamstress: CharacterCard = {
   cardType: "character",
   name: "Perla",
   version: "Nimble Seamstress",
-  i18n: {
-    en: {
-      name: "Perla",
-      version: "Nimble Seamstress",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "Support",
-        },
-      ],
-    },
-    de: {
-      name: "Perla",
-      version: "Flinke Näherin",
-      text: "Wendig Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Perla",
-      version: "Couturière agile",
-      text: "Insaisissable Soutien",
-    },
-    it: {
-      name: "Perla",
-      version: "Agile Sarta",
-      text: "Sfuggente Aiutante",
-    },
-  },
   inkType: ["amber", "emerald"],
   franchise: "Cinderella",
   set: "007",
@@ -73,4 +45,5 @@ export const perlaNimbleSeamstress: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: perlaNimbleSeamstressI18n,
 };

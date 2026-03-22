@@ -105,11 +105,29 @@ export type {
   MatchState,
   TemporaryGrantedAbilityPayload,
   TemporaryRestrictionPayload,
+  TemporaryKeywordPayload,
   TemporaryPlayerRestrictionsState,
   TurnMetadata,
 } from "./runtime-state";
 
 export { createDefaultCardMeta, createInitialLorcanaG } from "./runtime-state";
+
+export type {
+  ChoiceResolutionSelectionContext,
+  NameCardResolutionSelectionContext,
+  OptionalResolutionSelectionContext,
+  ResolutionSelectionContext,
+  ResolutionSelectionCurrentSelection,
+  ResolutionSelectionDestination,
+  ResolutionSelectionDestinationRule,
+  ResolutionSelectionKind,
+  ResolutionSelectionOption,
+  ResolutionSelectionOrigin,
+  ResolutionSelectionSubmitField,
+  ResolutionSelectionZone,
+  ScryResolutionSelectionContext,
+  TargetResolutionSelectionContext,
+} from "./resolution-selection";
 
 export type {
   LorcanaRuntimeMoveInputs,
@@ -138,6 +156,7 @@ export type {
   LorcanaProjectedBagEffect,
   LorcanaProjectedCard,
   LorcanaProjectedCardId,
+  LorcanaProjectedPendingEffect,
   LorcanaProjectedPendingChoice,
   LorcanaProjectedPlayerBoard,
   LorcanaProjectedTimerPlayer,

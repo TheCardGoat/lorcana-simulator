@@ -11,4 +11,13 @@ describe("Ursula - Vanessa", () => {
     const cardUnderTest = testEngine.getCardModel(ursulaVanessa);
     expect(cardUnderTest.hasSinger()).toBe(true);
   });
+
+  it("should have singer cost of 4", () => {
+    const testEngine = new LorcanaTestEngine({
+      play: [ursulaVanessa],
+    });
+
+    const cardUnderTest = testEngine.getCardModel(ursulaVanessa);
+    expect(cardUnderTest.singerCost).toBe(4);
+  });
 });

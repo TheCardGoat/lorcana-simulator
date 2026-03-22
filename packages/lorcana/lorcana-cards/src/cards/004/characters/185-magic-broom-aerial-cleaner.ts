@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicBroomAerialCleanerI18n } from "./185-magic-broom-aerial-cleaner.i18n";
 
 export const magicBroomAerialCleaner: CharacterCard = {
   id: "KvN",
@@ -7,52 +8,6 @@ export const magicBroomAerialCleaner: CharacterCard = {
   cardType: "character",
   name: "Magic Broom",
   version: "Aerial Cleaner",
-  i18n: {
-    en: {
-      name: "Magic Broom",
-      version: "Aerial Cleaner",
-      text: [
-        {
-          title: "WINGED FOR A DAY",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Zauberbesen",
-      version: "Luftreiniger",
-      text: [
-        {
-          title: "FÜR EINEN TAG BEFLÜGELT",
-          description:
-            "In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Balais Magiques",
-      version: "Nettoyeur aérien",
-      text: [
-        {
-          title: "AILÉ POUR UN JOUR",
-          description:
-            "Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier les personnages avec Insaisissable.)",
-        },
-      ],
-    },
-    it: {
-      name: "Scopa Magica",
-      version: "Pulitrice Volante",
-      text: [
-        {
-          title: "ALATA PER UN GIORNO",
-          description:
-            "Durante il tuo turno, questo personaggio ottiene Sfuggente. (Può sfidare altri personaggi con Sfuggente.)",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Fantasia",
   set: "004",
@@ -69,9 +24,9 @@ export const magicBroomAerialCleaner: CharacterCard = {
   },
   text: [
     {
-      title: "WINGED FOR A DAY",
+      title: "WINGED FOR",
       description:
-        "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
+        "A DAY During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
     },
   ],
   classifications: ["Dreamborn", "Broom"],
@@ -91,4 +46,5 @@ export const magicBroomAerialCleaner: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: magicBroomAerialCleanerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { archimedesExceptionalOwlI18n } from "./076-archimedes-exceptional-owl.i18n";
 
 export const archimedesExceptionalOwl: CharacterCard = {
   id: "8Al",
@@ -7,52 +8,6 @@ export const archimedesExceptionalOwl: CharacterCard = {
   cardType: "character",
   name: "Archimedes",
   version: "Exceptional Owl",
-  i18n: {
-    en: {
-      name: "Archimedes",
-      version: "Exceptional Owl",
-      text: [
-        {
-          title: "MORE TO LEARN",
-          description:
-            "Whenever an opponent chooses this character for an action or ability, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Archimedes",
-      version: "Außergewöhnliche Eule",
-      text: [
-        {
-          title: "MEHR ZU LERNEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter von einer Aktion oder Fähigkeit einer gegnerischen Person ausgewählt wird, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Archimède",
-      version: "Hibou exceptionnel",
-      text: [
-        {
-          title: "TANT À APPRENDRE",
-          description:
-            "Chaque fois qu'un adversaire choisit ce personnage avec une action ou une capacité, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Anacleto",
-      version: "Gufo Eccezionale",
-      text: [
-        {
-          title: "TANTO DA IMPARARE",
-          description:
-            "Ogni volta che un avversario sceglie questo personaggio per un'azione o un'abilità, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "007",
@@ -89,12 +44,16 @@ export const archimedesExceptionalOwl: CharacterCard = {
       },
       name: "MORE TO LEARN",
       trigger: {
-        event: "play",
+        event: "be-chosen",
         on: "SELF",
-        timing: "when",
+        timing: "whenever",
+        sourceFilter: {
+          sourceController: "opponent",
+        },
       },
       type: "triggered",
       text: "MORE TO LEARN Whenever an opponent chooses this character for an action or ability, you may draw a card.",
     },
   ],
+  i18n: archimedesExceptionalOwlI18n,
 };

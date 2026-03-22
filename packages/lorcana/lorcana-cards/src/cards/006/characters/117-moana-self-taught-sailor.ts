@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { moanaSelftaughtSailorI18n } from "./117-moana-self-taught-sailor.i18n";
 
 export const moanaSelftaughtSailor: CharacterCard = {
   id: "DbC",
@@ -7,52 +8,6 @@ export const moanaSelftaughtSailor: CharacterCard = {
   cardType: "character",
   name: "Moana",
   version: "Self-Taught Sailor",
-  i18n: {
-    en: {
-      name: "Moana",
-      version: "Self-Taught Sailor",
-      text: [
-        {
-          title: "LEARNING THE ROPES",
-          description:
-            "This character can't challenge unless you have a Captain character in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Vaiana",
-      version: "Autodidaktische Seglerin",
-      text: [
-        {
-          title: "ARBEITET SICH EIN",
-          description:
-            "Dieser Charakter kann nicht herausfordern, außer du hast mindestens einen Kapitän im Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Vaiana",
-      version: "Navigatrice autodidacte",
-      text: [
-        {
-          title: "APPRENDRE LES FICELLES DU MÉTIER",
-          description:
-            "Ce personnage ne peut pas défier à moins que vous n'ayez un personnage Capitaine en jeu.",
-        },
-      ],
-    },
-    it: {
-      name: "Vaiana",
-      version: "Marinaia Autodidatta",
-      text: [
-        {
-          title: "IMPARARE LE BASI",
-          description:
-            "Questo personaggio non può sfidare a meno che tu non abbia in gioco un personaggio Capitano.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "006",
@@ -87,4 +42,5 @@ export const moanaSelftaughtSailor: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: moanaSelftaughtSailorI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tinkerBellPeterPansAllyI18n } from "./058-tinker-bell-peter-pans-ally.i18n";
 
 export const tinkerBellPeterPansAlly: CharacterCard = {
   id: "52N",
@@ -7,34 +8,6 @@ export const tinkerBellPeterPansAlly: CharacterCard = {
   cardType: "character",
   name: "Tinker Bell",
   version: "Peter Pan’s Ally",
-  i18n: {
-    en: {
-      name: "Tinker Bell",
-      version: "Peter Pan’s Ally",
-      text: "Evasive LOYAL AND DEVOTED Your characters named Peter Pan gain Challenger +1. (They get +1 while challenging.)",
-    },
-    de: {
-      name: "Naseweis",
-      version: "Peter Pans Verbündete",
-      text: "Wendig LOYAL UND HINGEBUNGSVOLL Deine Peter-Pan-Charaktere erhalten Herausfordern +1. (Während sie herausfordern, erhalten sie +1.)",
-    },
-    fr: {
-      name: "LA FÉE CLOCHETTE",
-      version: "Alliée de Peter Pan",
-      text: "Insaisissable LOYALE ET DÉVOUÉE Vos personnages Peter Pan gagnent Offensif + 1. (Ils gagnent +1 lorsqu'ils défient.)",
-    },
-    it: {
-      name: "Tinker Bell",
-      version: "Peter Pan’s Ally",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) LOYAL AND DEVOTED Your characters named Peter Pan gain Challenger +1. (They get +1 while challenging.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Peter Pan",
   set: "001",
@@ -45,7 +18,6 @@ export const tinkerBellPeterPansAlly: CharacterCard = {
   willpower: 3,
   lore: 2,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_3ac122b5a08e42ac986aa536da6c1000",
     tcgPlayer: 507488,
@@ -54,18 +26,35 @@ export const tinkerBellPeterPansAlly: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Fairy"],
   abilities: [
     {
+      id: "52N-1",
       keyword: "Evasive",
       type: "keyword",
+      text: "Evasive",
     },
     {
+      id: "52N-2",
+      name: "LOYAL AND DEVOTED",
+      text: "LOYAL AND DEVOTED Your characters named Peter Pan gain Challenger +1.",
+      type: "static",
       effect: {
-        duration: "this-turn",
         keyword: "Challenger",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-name",
+              name: "Peter Pan",
+            },
+          ],
+        },
         type: "gain-keyword",
         value: 1,
       },
-      type: "static",
     },
   ],
+  i18n: tinkerBellPeterPansAllyI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { leadTheWayI18n } from "./129-lead-the-way.i18n";
 
 export const leadTheWay: ActionCard = {
   id: "4h8",
@@ -6,29 +7,6 @@ export const leadTheWay: ActionCard = {
   reprints: ["set6-129"],
   cardType: "action",
   name: "Lead the Way",
-  i18n: {
-    en: {
-      name: "Lead the Way",
-      text: "Your characters get +2 {S} this turn.",
-    },
-    de: {
-      name: "Den Weg weisen",
-      text: "Deine Charaktere erhalten in diesem Zug +2.",
-    },
-    fr: {
-      name: "Montrer la voie",
-      text: "Vos personnages gagnent +2 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Fare Strada",
-      text: [
-        {
-          title: "I",
-          description: "tuoi personaggi ricevono +2 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aladdin",
   set: "006",
@@ -55,4 +33,5 @@ export const leadTheWay: ActionCard = {
       type: "action",
     },
   ],
+  i18n: leadTheWayI18n,
 };

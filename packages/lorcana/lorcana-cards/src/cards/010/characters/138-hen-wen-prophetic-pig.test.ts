@@ -1,70 +1,37 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   ArielSpectacularSinger,
-//   GoofyDaredevil,
-//   HerculesTrueHero,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { henWenPropheticPig } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Hen Wen - Prophetic Pig", () => {
-//   Describe("FUTURE SIGHT Whenever this character quests, look at the top card of your deck. Put it on either the top or the bottom of your deck.", () => {
-//     It("allows putting the card on top of the deck", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: henWenPropheticPig.cost,
-//         Play: [henWenPropheticPig],
-//         Deck: [herculesTrueHero, goofyDaredevil, arielSpectacularSinger],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(henWenPropheticPig);
-//       Const topCard = testEngine.getCardModel(herculesTrueHero);
-//
-//       Expect(testEngine.getLoreForPlayer("player_one")).toEqual(0);
-//
-//       Await testEngine.questCard(cardUnderTest);
-//
-//       Expect(testEngine.getLoreForPlayer("player_one")).toEqual(1);
-//
-//       // Resolve scry: put 1 card on top
-//       Await testEngine.resolveTopOfStack({
-//         Scry: {
-//           Top: [herculesTrueHero],
-//         },
-//       });
-//
-//       Expect(topCard.zone).toBe("deck");
-//     });
-//
-//     It("allows putting the card on bottom of the deck", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: henWenPropheticPig.cost,
-//         Play: [henWenPropheticPig],
-//         Deck: [herculesTrueHero, goofyDaredevil, arielSpectacularSinger],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(henWenPropheticPig);
-//       Const topCard = testEngine.getCardModel(herculesTrueHero);
-//
-//       Expect(testEngine.getLoreForPlayer("player_one")).toEqual(0);
-//
-//       Await testEngine.questCard(cardUnderTest);
-//
-//       Expect(testEngine.getLoreForPlayer("player_one")).toEqual(1);
-//
-//       // Resolve scry: put 1 card on bottom
-//       Await testEngine.resolveTopOfStack({
-//         Scry: {
-//           Bottom: [herculesTrueHero],
-//         },
-//       });
-//
-//       Expect(topCard.zone).toBe("deck");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { henWenPropheticPig } from "./138-hen-wen-prophetic-pig";
+
+const topCard = createMockCharacter({ id: "hen-wen-top-card", name: "Top Card", cost: 1 });
+const secondCard = createMockCharacter({ id: "hen-wen-second-card", name: "Second Card", cost: 2 });
+
+describe("Hen Wen - Prophetic Pig", () => {
+  it("FUTURE SIGHT - looks at top card and can put it on bottom when questing", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [topCard, secondCard],
+      play: [{ card: henWenPropheticPig, isDrying: false }],
+    });
+
+    expect(testEngine.asPlayerOne().quest(henWenPropheticPig)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [
+          { zone: "deck-top", cards: [] },
+          { zone: "deck-bottom", cards: [topCard] },
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    // Verify order: secondCard on top, topCard on bottom
+    const deckIds = testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE);
+    expect(deckIds).toEqual([secondCard.id, topCard.id]);
+  });
+});

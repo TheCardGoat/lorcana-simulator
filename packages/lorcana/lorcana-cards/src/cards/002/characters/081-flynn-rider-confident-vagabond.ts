@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flynnRiderConfidentVagabondI18n } from "./081-flynn-rider-confident-vagabond.i18n";
 
 export const flynnRiderConfidentVagabond: CharacterCard = {
   id: "Svn",
@@ -7,24 +8,6 @@ export const flynnRiderConfidentVagabond: CharacterCard = {
   cardType: "character",
   name: "Flynn Rider",
   version: "Confident Vagabond",
-  i18n: {
-    en: {
-      name: "Flynn Rider",
-      version: "Confident Vagabond",
-    },
-    de: {
-      name: "Flynn Rider",
-      version: "Selbstbewusster Vagabund",
-    },
-    fr: {
-      name: "Flynn Rider",
-      version: "Vagabond sûr de lui",
-    },
-    it: {
-      name: "Flynn Rider",
-      version: "Confident Vagabond",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Tangled",
   set: "002",
@@ -41,4 +24,5 @@ export const flynnRiderConfidentVagabond: CharacterCard = {
     tcgPlayer: 517453,
   },
   classifications: ["Storyborn", "Hero", "Prince"],
+  i18n: flynnRiderConfidentVagabondI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicBroomBrigadeCommanderI18n } from "./186-magic-broom-brigade-commander.i18n";
 
 export const magicBroomBrigadeCommander: CharacterCard = {
   id: "g7O",
@@ -7,37 +8,6 @@ export const magicBroomBrigadeCommander: CharacterCard = {
   cardType: "character",
   name: "Magic Broom",
   version: "Brigade Commander",
-  i18n: {
-    en: {
-      name: "Magic Broom",
-      version: "Brigade Commander",
-      text: [
-        {
-          title: "Resist +1",
-        },
-        {
-          title: "ARMY OF BROOMS",
-          description:
-            "This character gets +2 {S} for each other character named Magic Broom you have in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Zauberbesen",
-      version: "Marschmeister",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.) ARMEE VON BESEN Dieser Charakter erhält +2 für jeden weiteren Zauberbesen-Charakter, den du im Spiel hast.",
-    },
-    fr: {
-      name: "Balais Magiques",
-      version: "Commandant de brigade",
-      text: "Résistance +1 ARMÉE DE BALAIS Ce personnage gagne +2 pour chaque autre personnage Balais magiques que vous avez en jeu.",
-    },
-    it: {
-      name: "Scopa Magica",
-      version: "Capitano di Brigata",
-      text: "Resistere +1 ARMATA DI SCOPE Questo personaggio riceve +2 per ogni altro personaggio chiamato Scopa Magica che hai in gioco.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Fantasia",
   set: "004",
@@ -73,14 +43,23 @@ export const magicBroomBrigadeCommander: CharacterCard = {
     },
     {
       effect: {
-        modifier: 2,
+        modifier: {
+          type: "filtered-count",
+          filters: [{ type: "has-name", name: "Magic Broom" }],
+          owner: "you",
+          cardType: "character",
+          excludeSelf: true,
+          multiplier: 2,
+        },
         stat: "strength",
         target: "SELF",
         type: "modify-stat",
       },
       id: "pct-2",
+      name: "ARMY OF BROOMS",
       text: "ARMY OF BROOMS This character gets +2 {S} for each other character named Magic Broom you have in play.",
       type: "static",
     },
   ],
+  i18n: magicBroomBrigadeCommanderI18n,
 };

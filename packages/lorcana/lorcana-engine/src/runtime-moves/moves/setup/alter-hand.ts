@@ -32,7 +32,7 @@ export const alterHand: LorcanaMoveDefinition<"alterHand"> = {
       return { valid: false, error: "Invalid player", errorCode: "INVALID_PLAYER" };
     }
 
-    const pendingMulligan = ctx.framework.state.ctx.status.pendingMulligan ?? [];
+    const pendingMulligan = ctx.framework.state.status.pendingMulligan ?? [];
     if (!pendingMulligan.includes(playerId as PlayerId)) {
       return {
         valid: false,
@@ -84,7 +84,7 @@ export const alterHand: LorcanaMoveDefinition<"alterHand"> = {
       },
     });
 
-    const pendingMulligan = (ctx.framework.state.ctx.status.pendingMulligan ?? []) as PlayerId[];
+    const pendingMulligan = (ctx.framework.state.status.pendingMulligan ?? []) as PlayerId[];
     const nextPending = pendingMulligan.filter((id) => id !== playerId);
 
     ctx.framework.status.patch({
@@ -105,7 +105,7 @@ export const alterHand: LorcanaMoveDefinition<"alterHand"> = {
 
   available: (ctx) => {
     const handZoneId = `hand:${ctx.playerId}`;
-    const handCards = ctx.framework.state.ctx.zones.private.zoneCards[handZoneId] || [];
+    const handCards = ctx.framework.zones.getCards({ zone: "hand", playerId: ctx.playerId });
     const allHandCards = handCards as CardInstanceId[];
     return enumerateCardSelections(allHandCards).length > 0;
   },

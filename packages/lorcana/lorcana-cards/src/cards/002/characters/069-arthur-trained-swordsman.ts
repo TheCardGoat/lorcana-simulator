@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arthurTrainedSwordsmanI18n } from "./069-arthur-trained-swordsman.i18n";
 
 export const arthurTrainedSwordsman: CharacterCard = {
   id: "Dov",
@@ -7,24 +8,6 @@ export const arthurTrainedSwordsman: CharacterCard = {
   cardType: "character",
   name: "Arthur",
   version: "Trained Swordsman",
-  i18n: {
-    en: {
-      name: "Arthur",
-      version: "Trained Swordsman",
-    },
-    de: {
-      name: "Arthur",
-      version: "Ausgebildeter Schwertkämpfer",
-    },
-    fr: {
-      name: "Arthur",
-      version: "Devenu fine lame",
-    },
-    it: {
-      name: "Arthur",
-      version: "Trained Swordsman",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -41,4 +24,5 @@ export const arthurTrainedSwordsman: CharacterCard = {
     tcgPlayer: 527744,
   },
   classifications: ["Dreamborn", "Hero"],
+  i18n: arthurTrainedSwordsmanI18n,
 };

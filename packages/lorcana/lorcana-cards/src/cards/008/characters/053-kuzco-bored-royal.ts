@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kuzcoBoredRoyalI18n } from "./053-kuzco-bored-royal.i18n";
 
 export const kuzcoBoredRoyal: CharacterCard = {
   id: "AdI",
@@ -7,52 +8,6 @@ export const kuzcoBoredRoyal: CharacterCard = {
   cardType: "character",
   name: "Kuzco",
   version: "Bored Royal",
-  i18n: {
-    en: {
-      name: "Kuzco",
-      version: "Bored Royal",
-      text: [
-        {
-          title: "LLAMA BREATH",
-          description:
-            "When you play this character, you may return chosen character, item, or location with cost 2 or less to their player's hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Kusco",
-      version: "Gelangweilter König",
-      text: [
-        {
-          title: "LAMA-ATEM",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Charakter, Gegenstand oder Ort deiner Wahl, der 2 oder weniger kostet, zurück auf die zugehörige Hand schicken.",
-        },
-      ],
-    },
-    fr: {
-      name: "Kuzco",
-      version: "Ennui royal",
-      text: [
-        {
-          title: "HALEINE DE LAMA",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage, un objet ou un lieu coûtant 2 ou moins et le renvoyer dans la main de son propriétaire.",
-        },
-      ],
-    },
-    it: {
-      name: "Kuzco",
-      version: "Reale Annoiato",
-      text: [
-        {
-          title: "ALITO DI LAMA",
-          description:
-            "Quando giochi questo personaggio, puoi far riprendere in mano al suo giocatore un personaggio, un oggetto o un luogo a tua scelta con costo 2 o inferiore.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Emperors New Groove",
   set: "008",
@@ -85,7 +40,14 @@ export const kuzcoBoredRoyal: CharacterCard = {
             count: 1,
             owner: "any",
             zones: ["play"],
-            cardTypes: ["character"],
+            cardTypes: ["character", "item", "location"],
+            filter: [
+              {
+                type: "cost-comparison",
+                comparison: "less-or-equal",
+                value: 2,
+              },
+            ],
           },
           type: "return-to-hand",
         },
@@ -102,4 +64,5 @@ export const kuzcoBoredRoyal: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: kuzcoBoredRoyalI18n,
 };

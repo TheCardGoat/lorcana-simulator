@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theQueenConceitedRulerI18n } from "./001-the-queen-conceited-ruler.i18n";
 
 export const theQueenConceitedRuler: CharacterCard = {
   id: "5oZ",
@@ -7,37 +8,6 @@ export const theQueenConceitedRuler: CharacterCard = {
   cardType: "character",
   name: "The Queen",
   version: "Conceited Ruler",
-  i18n: {
-    en: {
-      name: "The Queen",
-      version: "Conceited Ruler",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "ROYAL SUMMONS",
-          description:
-            "At the start of your turn, you may choose and discard a Princess or Queen character card to return a character card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Königin",
-      version: "Eingebildete Herrscherin",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) KÖNIGLICHE VORLADUNG Zu Beginn deines Zuges darfst du eine Prinzessinnen- oder Königinnen-Charakterkarte von deiner Hand auswählen und abwerfen, um eine Charakterkarte aus deinem Ablagestapel zurück auf deine Hand zu nehmen.",
-    },
-    fr: {
-      name: "La Reine",
-      version: "Souveraine vaniteuse",
-      text: "Soutien CONVOCATION ROYALE Au début de votre tour, vous pouvez défausser une carte Personnage Princesse ou Reine pour renvoyer dans votre main une carte Personnage de votre défausse.",
-    },
-    it: {
-      name: "Regina",
-      version: "Monarca Presuntuosa",
-      text: "Aiutante CONVOCAZIONE REALE All'inizio del tuo turno, puoi scegliere e scartare una carta personaggio Principessa o Regina per riprendere in mano una carta personaggio dai tuoi scarti.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "009",
@@ -74,15 +44,52 @@ export const theQueenConceitedRuler: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          cardType: "character",
-          target: "CONTROLLER",
-          type: "return-from-discard",
+          steps: [
+            {
+              type: "discard",
+              amount: 1,
+              chosen: true,
+              target: "CONTROLLER",
+              from: "hand",
+              filter: {
+                cardType: "character",
+              },
+              filters: [
+                {
+                  type: "or",
+                  filters: [
+                    {
+                      type: "has-classification",
+                      classification: "Princess",
+                    },
+                    {
+                      type: "has-classification",
+                      classification: "Queen",
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              cardType: "character",
+              target: "CONTROLLER",
+              type: "return-from-discard",
+            },
+          ],
+          type: "sequence",
         },
         type: "optional",
       },
       id: "3l5-2",
+      name: "ROYAL SUMMONS",
       text: "ROYAL SUMMONS At the start of your turn, you may choose and discard a Princess or Queen character card to return a character card from your discard to your hand.",
-      type: "action",
+      trigger: {
+        event: "start-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      type: "triggered",
     },
   ],
+  i18n: theQueenConceitedRulerI18n,
 };

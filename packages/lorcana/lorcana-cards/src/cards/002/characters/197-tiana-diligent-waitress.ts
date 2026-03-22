@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tianaDiligentWaitressI18n } from "./197-tiana-diligent-waitress.i18n";
 
 export const tianaDiligentWaitress: CharacterCard = {
   id: "XAu",
@@ -7,24 +8,6 @@ export const tianaDiligentWaitress: CharacterCard = {
   cardType: "character",
   name: "Tiana",
   version: "Diligent Waitress",
-  i18n: {
-    en: {
-      name: "Tiana",
-      version: "Diligent Waitress",
-    },
-    de: {
-      name: "Tiana",
-      version: "Fleißige Kellnerin",
-    },
-    fr: {
-      name: "Tiana",
-      version: "Serveuse consciencieuse",
-    },
-    it: {
-      name: "Tiana",
-      version: "Diligent Waitress",
-    },
-  },
   inkType: ["steel"],
   franchise: "Princess and the Frog",
   set: "002",
@@ -41,4 +24,5 @@ export const tianaDiligentWaitress: CharacterCard = {
     tcgPlayer: 650112,
   },
   classifications: ["Storyborn", "Hero", "Princess"],
+  i18n: tianaDiligentWaitressI18n,
 };

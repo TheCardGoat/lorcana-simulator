@@ -1,51 +1,71 @@
 import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { annaHeirToArendelle } from "./035-anna-heir-to-arendelle";
+import { elsaQueenRegent } from "./040-elsa-queen-regent";
+
+const opponentCharacter = createMockCharacter({
+  id: "opp-char",
+  name: "Opponent Character",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
 
 describe("Anna - Heir to Arendelle", () => {
-  it("has triggered ability with Elsa condition and restriction effect", () => {
-    expect(annaHeirToArendelle.abilities).toHaveLength(1);
-    // Biome-ignore lint/style/noNonNullAssertion: length check above guarantees existence
-    const ability = annaHeirToArendelle.abilities![0] as {
-      type: string;
-      name: string;
-      trigger: unknown;
-      condition: unknown;
-      effect?: {
-        type: string;
-        restriction: string;
-        duration: string;
-        target: unknown;
-      };
-    };
+  describe("LOVING HEART — When you play this character, if you have a character named Elsa in play, choose an opposing character. The chosen character doesn't ready at the start of their next turn.", () => {
+    it("does not trigger when no Elsa is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [annaHeirToArendelle],
+          inkwell: annaHeirToArendelle.cost,
+          deck: 2,
+        },
+        {
+          play: [opponentCharacter],
+          deck: 2,
+        },
+      );
 
-    // Verify ability type and name
-    expect(ability.type).toBe("triggered");
-    expect(ability.name).toBe("LOVING HEART");
+      expect(testEngine.asPlayerOne().playCard(annaHeirToArendelle)).toBeSuccessfulCommand();
 
-    // Verify trigger is "when you play this character"
-    expect(ability.trigger).toMatchObject({
-      event: "play",
-      on: "SELF",
-      timing: "when",
+      // No triggered ability should fire — bag should be empty
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
-    // Verify condition checks for Elsa
-    expect(ability.condition).toMatchObject({
-      controller: "you",
-      name: "Elsa",
-      type: "has-named-character",
-    });
+    it("applies cant-ready restriction to chosen opposing character when Elsa is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [annaHeirToArendelle],
+          inkwell: annaHeirToArendelle.cost,
+          play: [elsaQueenRegent],
+          deck: 2,
+        },
+        {
+          play: [{ card: opponentCharacter, exerted: true }],
+          deck: 2,
+        },
+      );
 
-    // Verify effect is a restriction
-    expect(ability.effect?.type).toBe("restriction");
-    expect(ability.effect?.restriction).toBe("cant-ready");
-    expect(ability.effect?.duration).toBe("until-start-of-next-turn");
+      expect(testEngine.asPlayerOne().playCard(annaHeirToArendelle)).toBeSuccessfulCommand();
 
-    // Verify target is opposing character
-    expect(ability.effect?.target).toMatchObject({
-      count: 1,
-      owner: "opponent",
-      selector: "chosen",
+      // Triggered ability should be on the stack
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+
+      // Resolve the triggered ability targeting the opponent's character
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      // The opponent character should have the cant-ready restriction
+      expect(testEngine.asPlayerTwo()).toHaveRestriction({
+        card: opponentCharacter,
+        restriction: "cant-ready",
+      });
+
+      // Pass player one's turn — at start of player two's turn, the character should NOT ready
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.isExerted(opponentCharacter)).toBe(true);
     });
   });
 });

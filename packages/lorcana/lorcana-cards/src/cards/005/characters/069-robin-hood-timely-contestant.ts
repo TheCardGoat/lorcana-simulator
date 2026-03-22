@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { robinHoodTimelyContestantI18n } from "./069-robin-hood-timely-contestant.i18n";
 
 export const robinHoodTimelyContestant: CharacterCard = {
   id: "LKY",
@@ -7,55 +8,6 @@ export const robinHoodTimelyContestant: CharacterCard = {
   cardType: "character",
   name: "Robin Hood",
   version: "Timely Contestant",
-  i18n: {
-    en: {
-      name: "Robin Hood",
-      version: "Timely Contestant",
-      text: [
-        {
-          title: "TAG ME IN!",
-          description:
-            "For each 1 damage on opposing characters, you pay 1 {I} less to play this character.",
-        },
-        {
-          title: "Ward",
-        },
-      ],
-    },
-    de: {
-      name: "Robin Hood",
-      version: "Rechtzeitiger Teilnehmer",
-      text: [
-        {
-          title: "ICH BIN DRAN!",
-          description:
-            "Für jeden Schaden auf gegnerischen Charakteren, zahlst du 1 weniger, um diesen Charakter auszuspielen. Behütet",
-        },
-      ],
-    },
-    fr: {
-      name: "Robin des Bois",
-      version: "Candidat opportun",
-      text: [
-        {
-          title: "J'ARRIVE!",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins par dommage sur les personnages adverses. Hors d'atteinte",
-        },
-      ],
-    },
-    it: {
-      name: "Robin Hood",
-      version: "Concorrente Tempestivo",
-      text: [
-        {
-          title: "MANDAMI IN CAMPO!",
-          description:
-            "Per ogni singolo danno sui personaggi avversari, paga 1 in meno per giocare questo personaggio. Protetto",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "005",
@@ -98,4 +50,5 @@ export const robinHoodTimelyContestant: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: robinHoodTimelyContestantI18n,
 };

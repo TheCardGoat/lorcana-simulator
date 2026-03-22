@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { queenOfHeartsQuicktemperedI18n } from "./090-queen-of-hearts-quick-tempered.i18n";
 
 export const queenOfHeartsQuicktempered: CharacterCard = {
   id: "VtO",
@@ -7,52 +8,6 @@ export const queenOfHeartsQuicktempered: CharacterCard = {
   cardType: "character",
   name: "Queen of Hearts",
   version: "Quick-Tempered",
-  i18n: {
-    en: {
-      name: "Queen of Hearts",
-      version: "Quick-Tempered",
-      text: [
-        {
-          title: "ROYAL RAGE",
-          description:
-            "When you play this character, deal 1 damage to chosen damaged opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Herzkönigin",
-      version: "Jähzornig",
-      text: [
-        {
-          title: "ICH WARNE DICH, KIND!",
-          description:
-            "Wenn du diesen Charakter ausspielst, füge einem beschädigten gegnerischen Charakter deiner Wahl 1 Schaden zu.",
-        },
-      ],
-    },
-    fr: {
-      name: "La Reine de Cœur",
-      version: "Rapidement en colère",
-      text: [
-        {
-          title: "FUREUR ROYALE",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage adverse blessé et infligez-lui 1 dommage supplémentaire.",
-        },
-      ],
-    },
-    it: {
-      name: "Queen of Hearts",
-      version: "Quick-Tempered",
-      text: [
-        {
-          title: "ROYAL RAGE",
-          description:
-            "When you play this character, deal 1 damage to chosen damaged opposing character.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Alice in Wonderland",
   set: "002",
@@ -75,7 +30,6 @@ export const queenOfHeartsQuicktempered: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Villain", "Queen"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -100,4 +54,6 @@ export const queenOfHeartsQuicktempered: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: queenOfHeartsQuicktemperedI18n,
 };

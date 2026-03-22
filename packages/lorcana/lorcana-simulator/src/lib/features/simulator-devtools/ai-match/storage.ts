@@ -16,19 +16,27 @@ function normalizeStoredAutomatedMatchConfig(
 ): AutomatedMatchConfig | null {
   const playerOneDeckText = value.playerOneDeckText?.trim();
   const playerTwoDeckText = value.playerTwoDeckText?.trim();
-  const strategyId = value.strategyId?.trim();
+  const playerOneStrategyId = value.playerOneStrategyId?.trim();
+  const playerTwoStrategyId = value.playerTwoStrategyId?.trim();
   const seed = value.seed?.trim();
 
-  if (!playerOneDeckText || !playerTwoDeckText || !strategyId || !seed) {
+  if (
+    !playerOneDeckText ||
+    !playerTwoDeckText ||
+    !playerOneStrategyId ||
+    !playerTwoStrategyId ||
+    !seed
+  ) {
     return null;
   }
 
   return {
     playerOneDeckText,
     playerTwoDeckText,
-    playerOneFixtureName: value.playerOneFixtureName?.trim() || undefined,
-    playerTwoFixtureName: value.playerTwoFixtureName?.trim() || undefined,
-    strategyId,
+    playerOneFixtureId: value.playerOneFixtureId?.trim() || undefined,
+    playerTwoFixtureId: value.playerTwoFixtureId?.trim() || undefined,
+    playerOneStrategyId,
+    playerTwoStrategyId,
     seed,
   };
 }

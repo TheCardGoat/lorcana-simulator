@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mufasaKingOfThePrideLandsI18n } from "./155-mufasa-king-of-the-pride-lands.i18n";
 
 export const mufasaKingOfThePrideLands: CharacterCard = {
   id: "4nl",
@@ -7,24 +8,6 @@ export const mufasaKingOfThePrideLands: CharacterCard = {
   cardType: "character",
   name: "Mufasa",
   version: "King of the Pride Lands",
-  i18n: {
-    en: {
-      name: "Mufasa",
-      version: "King of the Pride Lands",
-    },
-    de: {
-      name: "Mufasa",
-      version: "König des Geweihten Landes",
-    },
-    fr: {
-      name: "MUFASA",
-      version: "Roi de la Terre des Lions",
-    },
-    it: {
-      name: "Mufasa",
-      version: "King of the Pride Lands",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Lion King",
   set: "001",
@@ -41,4 +24,5 @@ export const mufasaKingOfThePrideLands: CharacterCard = {
     tcgPlayer: 650079,
   },
   classifications: ["Storyborn", "Mentor", "King"],
+  i18n: mufasaKingOfThePrideLandsI18n,
 };

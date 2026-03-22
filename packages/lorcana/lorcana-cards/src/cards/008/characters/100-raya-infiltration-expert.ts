@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rayaInfiltrationExpertI18n } from "./100-raya-infiltration-expert.i18n";
 
 export const rayaInfiltrationExpert: CharacterCard = {
   id: "XZW",
@@ -7,52 +8,6 @@ export const rayaInfiltrationExpert: CharacterCard = {
   cardType: "character",
   name: "Raya",
   version: "Infiltration Expert",
-  i18n: {
-    en: {
-      name: "Raya",
-      version: "Infiltration Expert",
-      text: [
-        {
-          title: "UNCONVENTIONAL TACTICS",
-          description:
-            "Whenever this character quests, you may pay 2 {I} to ready another chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Raya",
-      version: "Expertin für Infiltrationen",
-      text: [
-        {
-          title: "UNGEWÖHNLICHE TAKTIKEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du 2 bezahlen, um einen anderen Charakter deiner Wahl bereit zu machen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Raya",
-      version: "Experte en infiltration",
-      text: [
-        {
-          title: "TACTIQUE PEU CONVENTIONNELLE",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez payer 2 pour choisir un autre personnage et le redresser.",
-        },
-      ],
-    },
-    it: {
-      name: "Raya",
-      version: "Esperta di Infiltrazioni",
-      text: [
-        {
-          title: "TATTICHE NON CONVENZIONALI",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi pagare 2 per preparare un altro personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Raya and the Last Dragon",
   set: "008",
@@ -76,4 +31,5 @@ export const rayaInfiltrationExpert: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [],
+  i18n: rayaInfiltrationExpertI18n,
 };

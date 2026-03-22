@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jasmineQueenOfAgrabahI18n } from "./149-jasmine-queen-of-agrabah.i18n";
 
 export const jasmineQueenOfAgrabah: CharacterCard = {
   id: "Abg",
@@ -7,37 +8,6 @@ export const jasmineQueenOfAgrabah: CharacterCard = {
   cardType: "character",
   name: "Jasmine",
   version: "Queen of Agrabah",
-  i18n: {
-    en: {
-      name: "Jasmine",
-      version: "Queen of Agrabah",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "CARETAKER",
-          description:
-            "When you play this character and whenever she quests, you may remove up to 2 damage from each of your characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Jasmin",
-      version: "Königin von Agrabah",
-      text: "Gestaltwandel 3 FÜRSORGE Wenn du diesen Charakter ausspielst und jedes Mal, wenn er erkundet, darfst du bis zu 2 Schaden von jedem deiner Charaktere entfernen.",
-    },
-    fr: {
-      name: "JASMINE",
-      version: "Reine d'Agrabah",
-      text: "Alter 3 PROTECTRICE Lorsque vous jouez ce personnage ou qu'elle est envoyée à l'aventure, vous pouvez retirer jusqu'à 2 jetons Dommage de chacun de vos personnages.",
-    },
-    it: {
-      name: "Jasmine",
-      version: "Regina di Agrabah",
-      text: "Trasformazione 3 PROVVIDENTE Quando giochi questo personaggio e ogni volta che va all'avventura, puoi rimuovere fino a 2 danni da ogni tuo personaggio.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Aladdin",
   set: "001",
@@ -94,5 +64,27 @@ export const jasmineQueenOfAgrabah: CharacterCard = {
       },
       type: "triggered",
     },
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          amount: 2,
+          target: "YOUR_CHARACTERS",
+          type: "remove-damage",
+          upTo: true,
+        },
+        type: "optional",
+      },
+      id: "8w9-3",
+      name: "CARETAKER",
+      text: "CARETAKER When you play this character and whenever she quests, you may remove up to 2 damage from each of your characters.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
   ],
+  i18n: jasmineQueenOfAgrabahI18n,
 };

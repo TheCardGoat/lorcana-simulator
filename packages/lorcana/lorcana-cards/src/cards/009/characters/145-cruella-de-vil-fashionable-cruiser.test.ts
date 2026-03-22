@@ -1,13 +1,23 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-//
-// Describe("Cruella De Vil - Fashionable Cruiser", () => {
-//   It("**NOW GET GOING** During your turn, this character gains **Evasive**. _(They can challenge characters with Evasive.)_", async () => {
-//     Expect(true).toBeTruthy();
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { cruellaDeVilFashionableCruiser } from "./145-cruella-de-vil-fashionable-cruiser";
+
+describe("Cruella De Vil - Fashionable Cruiser", () => {
+  it("gains Evasive during your turn only", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [cruellaDeVilFashionableCruiser],
+        deck: 5,
+      },
+      {
+        deck: 5,
+      },
+    );
+
+    expect(testEngine.hasKeyword(cruellaDeVilFashionableCruiser, "Evasive")).toBe(true);
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.hasKeyword(cruellaDeVilFashionableCruiser, "Evasive")).toBe(false);
+  });
+});

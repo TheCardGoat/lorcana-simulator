@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { buckySquirrelSqueakTutorI18n } from "./073-bucky-squirrel-squeak-tutor.i18n";
 
 export const buckySquirrelSqueakTutor: CharacterCard = {
   id: "IGz",
@@ -7,52 +8,6 @@ export const buckySquirrelSqueakTutor: CharacterCard = {
   cardType: "character",
   name: "Bucky",
   version: "Squirrel Squeak Tutor",
-  i18n: {
-    en: {
-      name: "Bucky",
-      version: "Squirrel Squeak Tutor",
-      text: [
-        {
-          title: "SQUEAK",
-          description:
-            "Whenever you play a Floodborn character, if you used Shift to play them, each opponent chooses and discards a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Bucky",
-      version: "Squirrel Squeak Tutor",
-      text: [
-        {
-          title: "SQUEAK",
-          description:
-            "Whenever you play a Floodborn character, each opponent chooses and discards a card.",
-        },
-      ],
-    },
-    fr: {
-      name: "Bucky",
-      version: "Squirrel Squeak Tutor",
-      text: [
-        {
-          title: "SQUEAK",
-          description:
-            "Whenever you play a Floodborn character, each opponent chooses and discards a card.",
-        },
-      ],
-    },
-    it: {
-      name: "Bucky",
-      version: "Squirrel Squeak Tutor",
-      text: [
-        {
-          title: "SQUEAK",
-          description:
-            "Whenever you play a Floodborn character, each opponent chooses and discards a card.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Emperors New Groove",
   set: "002",
@@ -75,7 +30,6 @@ export const buckySquirrelSqueakTutor: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -106,4 +60,6 @@ export const buckySquirrelSqueakTutor: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: buckySquirrelSqueakTutorI18n,
 };

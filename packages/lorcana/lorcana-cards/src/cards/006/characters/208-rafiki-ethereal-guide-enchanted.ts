@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rafikiEtherealGuideEnchantedI18n } from "./208-rafiki-ethereal-guide-enchanted.i18n";
 
 export const rafikiEtherealGuideEnchanted: CharacterCard = {
   id: "mMK",
@@ -7,37 +8,6 @@ export const rafikiEtherealGuideEnchanted: CharacterCard = {
   cardType: "character",
   name: "Rafiki",
   version: "Ethereal Guide",
-  i18n: {
-    en: {
-      name: "Rafiki",
-      version: "Ethereal Guide",
-      text: [
-        {
-          title: "Shift 7",
-        },
-        {
-          title: "ASTRAL ATTUNEMENT",
-          description:
-            "During your turn, whenever a card is put into your inkwell, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Rafiki",
-      version: "Geistiger Ratgeber",
-      text: "Gestaltwandel 7 ASTRALE EINSTIMMUNG Jedes Mal während deines Zuges, wenn eine Karte in deinen Tintenvorrat gelegt wird, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Rafiki",
-      version: "Guide éthéré",
-      text: "Alter 7 HARMONISATION ASTRALE Durant votre tour, chaque fois qu'une carte est placée dans votre réserve d'encre, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Rafiki",
-      version: "Guida Eterea",
-      text: "Trasformazione 7 SINTONIZZAZIONE ASTRALE Durante il tuo turno, ogni volta che una carta viene aggiunta al tuo calamaio, puoi pescare una carta.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Lion King",
   set: "006",
@@ -95,4 +65,5 @@ export const rafikiEtherealGuideEnchanted: CharacterCard = {
       text: "ASTRAL ATTUNEMENT During your turn, whenever a card is put into your inkwell, you may draw a card.",
     },
   ],
+  i18n: rafikiEtherealGuideEnchantedI18n,
 };

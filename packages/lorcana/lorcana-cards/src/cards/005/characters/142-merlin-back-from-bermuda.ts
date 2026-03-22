@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { merlinBackFromBermudaI18n } from "./142-merlin-back-from-bermuda.i18n";
 
 export const merlinBackFromBermuda: CharacterCard = {
   id: "gdk",
@@ -7,52 +8,6 @@ export const merlinBackFromBermuda: CharacterCard = {
   cardType: "character",
   name: "Merlin",
   version: "Back from Bermuda",
-  i18n: {
-    en: {
-      name: "Merlin",
-      version: "Back from Bermuda",
-      text: [
-        {
-          title: "LONG LIVE THE KING!",
-          description: "Your characters named Arthur gain Resist +1.",
-        },
-      ],
-    },
-    de: {
-      name: "Merlin",
-      version: "Zurück von den Bermudas",
-      text: [
-        {
-          title: "LANG LEBE DER KÖNIG!",
-          description:
-            "Deine Arthur-Charaktere erhalten Robust +1 (Reduziere jeglichen Schaden, der ihnen zugefügt wird, um 1.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Merlin",
-      version: "De retour de Saint-Trop'",
-      text: [
-        {
-          title: "VIVE LE ROI ARTHUR!",
-          description: "Vos personnages Arthur gagnent Résistance +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Merlino",
-      version: "Tornato da Honolulu",
-      text: [
-        {
-          title: "EVVIVA IL RE!",
-        },
-        {
-          title: "I",
-          description: "tuoi personaggi chiamati Artù ottengono Resistere +1.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -87,4 +42,5 @@ export const merlinBackFromBermuda: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: merlinBackFromBermudaI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { scroogeMcduckGhostlyEbenezerI18n } from "./104-scrooge-mcduck-ghostly-ebenezer.i18n";
 
 export const scroogeMcduckGhostlyEbenezer: CharacterCard = {
   id: "cXq",
@@ -7,42 +8,6 @@ export const scroogeMcduckGhostlyEbenezer: CharacterCard = {
   cardType: "character",
   name: "Scrooge McDuck",
   version: "Ghostly Ebenezer",
-  i18n: {
-    en: {
-      name: "Scrooge McDuck",
-      version: "Ghostly Ebenezer",
-      text: [
-        {
-          title: "Boost 1 {I}",
-        },
-        {
-          title: "COUNTING COINS",
-          description: "This character gets +1 {S} and +1 {W} for each card under him.",
-        },
-      ],
-    },
-    de: {
-      name: "Dagobert Duck",
-      version: "Geisterhafter Ebenezer",
-      text: "Stärken 1 MÜNZEN ZÄHLEN Dieser Charakter erhält für jede Karte unter ihm +1 und +1.",
-    },
-    fr: {
-      name: "Balthazar Picsou",
-      version: "Ebenezer fantôme",
-      text: "Boost 1 COMPTANT LES PIÈCES Ce personnage gagne +1 et +1 pour chaque carte sous lui.",
-    },
-    it: {
-      name: "Paperon de' Paperoni",
-      version: "Ebenezer Spettrale",
-      text: [
-        {
-          title: "Potenziamento 1",
-          description:
-            "(Una volta durante il tuo turno, puoi pagare 1 per mettere la prima carta del tuo mazzo a faccia in giù sotto a questo personaggio.) CONTARE LE MONETE Questo personaggio riceve +1 e +1 per ogni carta sotto di sé.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mickey's Christmas Carol",
   set: "011",
@@ -87,4 +52,5 @@ export const scroogeMcduckGhostlyEbenezer: CharacterCard = {
       text: "COUNTING COINS This character gets +1 {S} and +1 {W} for each card under him.",
     },
   ],
+  i18n: scroogeMcduckGhostlyEbenezerI18n,
 };

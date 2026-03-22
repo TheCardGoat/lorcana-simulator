@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { balooOlIronPawsI18n } from "./142-baloo-ol-iron-paws.i18n";
 
 export const balooOlIronPaws: CharacterCard = {
   id: "ye2",
@@ -7,49 +8,6 @@ export const balooOlIronPaws: CharacterCard = {
   cardType: "character",
   name: "Baloo",
   version: "Ol' Iron Paws",
-  i18n: {
-    en: {
-      name: "Baloo",
-      version: "Ol' Iron Paws",
-      text: [
-        {
-          title: "FIGHT LIKE A BEAR",
-          description: "Your characters with 7 {S} or more can't be dealt damage.",
-        },
-      ],
-    },
-    de: {
-      name: "Balu",
-      version: "Alter Box-Komiker",
-      text: [
-        {
-          title: "WIE MAN ALS BÄR KÄMPFT",
-          description: "Deinen Charakteren mit 7 oder mehr kann kein Schaden zugefügt werden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Baloo",
-      version: "Griffes d’acier",
-      text: [
-        {
-          title: "COMMENT SE BATTENT LES OURS",
-          description:
-            "Vos personnages avec une de 7 ou plus ne peuvent se voir infliger aucun dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Baloo",
-      version: "Vecchio Artigli di Ferro",
-      text: [
-        {
-          title: "BATTERTI COME UN ORSO I",
-          description: "tuoi personaggi con 7 o superiore non possono subire danni.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Jungle Book",
   set: "007",
@@ -66,10 +24,36 @@ export const balooOlIronPaws: CharacterCard = {
   },
   text: [
     {
-      title: "FIGHT LIKE A BEAR",
-      description: "Your characters with 7 {S} or more can't be dealt damage.",
+      title: "FIGHT LIKE",
+      description: "A BEAR Your characters with 7 {S} or more can't be dealt damage.",
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "ye2-1",
+      name: "FIGHT LIKE A BEAR",
+      type: "static",
+      text: "FIGHT LIKE A BEAR Your characters with 7 {S} or more can't be dealt damage.",
+      effect: {
+        type: "restriction",
+        restriction: "cant-be-dealt-damage",
+        target: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "strength-comparison",
+              comparison: "or-more",
+              value: 7,
+            },
+          ],
+          count: "all",
+        },
+      },
+    },
+  ],
+  i18n: balooOlIronPawsI18n,
 };

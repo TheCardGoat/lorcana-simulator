@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { robinHoodSneakySleuthI18n } from "./088-robin-hood-sneaky-sleuth.i18n";
 
 export const robinHoodSneakySleuth: CharacterCard = {
   id: "9VF",
@@ -7,36 +8,6 @@ export const robinHoodSneakySleuth: CharacterCard = {
   cardType: "character",
   name: "Robin Hood",
   version: "Sneaky Sleuth",
-  i18n: {
-    en: {
-      name: "Robin Hood",
-      version: "Sneaky Sleuth",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "CLEVER PLAN",
-          description: "This character gets +1 {L} for each opposing damaged character in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Robin Hood",
-      version: "Raffinierter Spion",
-      text: "Gestaltwandel 3 SCHLAUER PLAN Dieser Charakter erhält +1 für jeden beschädigten Charakter aller gegnerischen Mitspielenden im Spiel.",
-    },
-    fr: {
-      name: "Robin des Bois",
-      version: "Limier furtif",
-      text: "Alter 3 UN PLAN BRILLANT Ce personnage gagne +1 pour chaque personnage adverse ayant au moins un dommage sur lui.",
-    },
-    it: {
-      name: "Robin Hood",
-      version: "Segugio Furtivo",
-      text: "Trasformazione 3 PIANO ASTUTO Questo personaggio riceve +1 per ogni personaggio avversario danneggiato in gioco.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "005",
@@ -83,4 +54,5 @@ export const robinHoodSneakySleuth: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: robinHoodSneakySleuthI18n,
 };

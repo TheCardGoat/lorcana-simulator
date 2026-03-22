@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { helgaSinclairToughAsNailsI18n } from "./183-helga-sinclair-tough-as-nails.i18n";
 
 export const helgaSinclairToughAsNails: CharacterCard = {
   id: "lpp",
@@ -7,37 +8,6 @@ export const helgaSinclairToughAsNails: CharacterCard = {
   cardType: "character",
   name: "Helga Sinclair",
   version: "Tough as Nails",
-  i18n: {
-    en: {
-      name: "Helga Sinclair",
-      version: "Tough as Nails",
-      text: [
-        {
-          title: "Challenger +3 (While challenging, this character gets +3 {S}).",
-        },
-        {
-          title: "QUICK REFLEXES",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Helga Sinclair",
-      version: "Knallhart",
-      text: "Herausfordern +3 SCHNELLE REFLEXE In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-    },
-    fr: {
-      name: "Helga Sinclair",
-      version: "Dure à cuire",
-      text: "Offensif +3 BONS RÉFLEXES Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier des personnages avec Insaisissable.)",
-    },
-    it: {
-      name: "Helga Sinclair",
-      version: "Dura Come la Roccia",
-      text: "Sfidante +3 RIFLESSI FULMINEI Durante il tuo turno, questo personaggio ottiene Sfuggente. (Può sfidare altri personaggi con Sfuggente.)",
-    },
-  },
   inkType: ["steel"],
   franchise: "Atlantis",
   set: "007",
@@ -86,4 +56,5 @@ export const helgaSinclairToughAsNails: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: helgaSinclairToughAsNailsI18n,
 };

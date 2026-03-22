@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cinderellaStoutheartedI18n } from "./177-cinderella-stouthearted.i18n";
 
 export const cinderellaStouthearted: CharacterCard = {
   id: "T3C",
@@ -7,58 +8,6 @@ export const cinderellaStouthearted: CharacterCard = {
   cardType: "character",
   name: "Cinderella",
   version: "Stouthearted",
-  i18n: {
-    en: {
-      name: "Cinderella",
-      version: "Stouthearted",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "Resist +2",
-        },
-        {
-          title: "THE SINGING SWORD",
-          description:
-            "Whenever you play a song, this character may challenge ready characters this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Cinderella",
-      version: "Stouthearted",
-      text: [
-        {
-          title: "Shift 5",
-          description:
-            "(You may pay 5 to play this on top of one of your characters named Cinderella.) Resist +2 (Damage dealt to this character is reduced by 2.) THE SINGING SWORD Whenever you play a song, this character may challenge ready characters this turn.",
-        },
-      ],
-    },
-    fr: {
-      name: "Cinderella",
-      version: "Stouthearted",
-      text: [
-        {
-          title: "Shift 5",
-          description:
-            "(You may pay 5 to play this on top of one of your characters named Cinderella.) Resist +2 (Damage dealt to this character is reduced by 2.) THE SINGING SWORD Whenever you play a song, this character may challenge ready characters this turn.",
-        },
-      ],
-    },
-    it: {
-      name: "Cinderella",
-      version: "Stouthearted",
-      text: [
-        {
-          title: "Shift 5",
-          description:
-            "(You may pay 5 to play this on top of one of your characters named Cinderella.) Resist +2 (Damage dealt to this character is reduced by 2.) THE SINGING SWORD Whenever you play a song, this character may challenge ready characters this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Cinderella",
   set: "002",
@@ -125,4 +74,5 @@ export const cinderellaStouthearted: CharacterCard = {
       },
     },
   ],
+  i18n: cinderellaStoutheartedI18n,
 };

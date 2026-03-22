@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { vanellopeVonSchweetzCandyMechanicI18n } from "./009-vanellope-von-schweetz-candy-mechanic.i18n";
 
 export const vanellopeVonSchweetzCandyMechanic: CharacterCard = {
   id: "gcm",
@@ -7,52 +8,6 @@ export const vanellopeVonSchweetzCandyMechanic: CharacterCard = {
   cardType: "character",
   name: "Vanellope von Schweetz",
   version: "Candy Mechanic",
-  i18n: {
-    en: {
-      name: "Vanellope von Schweetz",
-      version: "Candy Mechanic",
-      text: [
-        {
-          title: "YOU'VE GOT TO PAY TO PLAY",
-          description:
-            "Whenever this character quests, chosen opposing character gets -1 {S} until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Vanellope von Schweetz",
-      version: "Süßigkeiten-Mechanikerin",
-      text: [
-        {
-          title: "WER SPIELEN WILL, MUSS BEZAHLEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, erhält ein gegnerischer Charakter deiner Wahl bis zu Beginn deines nächsten Zuges -1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Vanellope von Schweetz",
-      version: "Mécanicienne de bonbons",
-      text: [
-        {
-          title: "IL FAUT PAYER POUR JOUER",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, choisissez un personnage adverse qui subit -1 jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Vanellope von Schweetz",
-      version: "Meccanica di Dolcetti",
-      text: [
-        {
-          title: "DEVI PAGARE PER GIOCARE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, un personaggio avversario a tua scelta riceve -1 fino all'inizio del tuo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -78,9 +33,10 @@ export const vanellopeVonSchweetzCandyMechanic: CharacterCard = {
   abilities: [
     {
       effect: {
+        duration: "until-start-of-next-turn",
         modifier: -1,
         stat: "strength",
-        target: "SELF",
+        target: "CHOSEN_OPPOSING_CHARACTER",
         type: "modify-stat",
       },
       id: "18i-1",
@@ -94,4 +50,5 @@ export const vanellopeVonSchweetzCandyMechanic: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: vanellopeVonSchweetzCandyMechanicI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kristoffReindeerKeeperI18n } from "./013-kristoff-reindeer-keeper.i18n";
 
 export const kristoffReindeerKeeper: CharacterCard = {
   id: "AZZ",
@@ -7,55 +8,6 @@ export const kristoffReindeerKeeper: CharacterCard = {
   cardType: "character",
   name: "Kristoff",
   version: "Reindeer Keeper",
-  i18n: {
-    en: {
-      name: "Kristoff",
-      version: "Reindeer Keeper",
-      text: [
-        {
-          title: "SONG OF THE HERD",
-          description:
-            "For each song card in your discard, you pay 1 {I} less to play this character.",
-        },
-        {
-          title: "Bodyguard",
-        },
-      ],
-    },
-    de: {
-      name: "Kristoff",
-      version: "Rentier Hüter",
-      text: [
-        {
-          title: "GESANG DER HERDE",
-          description:
-            "Für jede Liedkarte in deinem Ablagestapel, zahlst du 1 weniger, um diesen Charakter auszuspielen. Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Kristoff",
-      version: "Garde-rennes",
-      text: [
-        {
-          title: "CHANT DU TROUPEAU",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins par carte Chanson dans votre défausse. Rempart (Ce personnage peut entrer en jeu épuisé. Lorsqu'un adversaire défie l'un de vos personnages, il doit, si possible, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "Kristoff",
-      version: "Custode delle Renne",
-      text: [
-        {
-          title: "CANZONE DEL BRANCO",
-          description:
-            "Per ogni carta canzone nei tuoi scarti, paga 1 in meno per giocare questo personaggio. Guardiano",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Frozen",
   set: "005",
@@ -82,13 +34,25 @@ export const kristoffReindeerKeeper: CharacterCard = {
   classifications: ["Dreamborn", "Ally"],
   abilities: [
     {
-      effect: {
-        from: "hand",
-        type: "play-card",
-      },
       id: "1qs-1",
+      name: "SONG OF THE HERD",
+      effect: {
+        type: "cost-reduction",
+        amount: {
+          type: "filtered-count",
+          owner: "you",
+          zones: ["discard"],
+          filters: [
+            {
+              type: "song",
+            },
+          ],
+        },
+        cardType: "character",
+      },
+      sourceZones: ["hand"],
       text: "SONG OF THE HERD For each song card in your discard, you pay 1 {I} less to play this character.",
-      type: "action",
+      type: "static",
     },
     {
       id: "1qs-2",
@@ -97,4 +61,5 @@ export const kristoffReindeerKeeper: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: kristoffReindeerKeeperI18n,
 };

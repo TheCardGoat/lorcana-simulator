@@ -1,203 +1,271 @@
 <script lang="ts">
-  import type { Snippet } from "svelte";
-  import type {
-    CardActionView,
-    LorcanaCardSnapshot,
-    LorcanaCardTextEntrySnapshot,
-    LorcanaSimulatorMoveParams,
-  } from "@/features/simulator/model/contracts.js";
-  import CardTagStrip from "@/design-system/simulator/cards/CardTagStrip.svelte";
-  import { getLorcanaCardTags } from "./card-tags.js";
-  import {getInkHex, getInkRgb} from "@/features/simulator/model/lorcana-colors.js";
-  import {getInkSymbolUrl, getRarityIconUrl, getStatIconUrl} from "@/features/simulator/model/asset-urls.js";
-  import type {LorcanaInkName} from "@/features/simulator/model/lorcana-colors.js";
+import type { Snippet } from "svelte";
+import type {
+	CardActionView,
+	LorcanaCardSnapshot,
+	LorcanaCardTextEntrySnapshot,
+	LorcanaSimulatorMoveParams,
+} from "@/features/simulator/model/contracts.js";
+import CardTagStrip from "@/design-system/simulator/cards/CardTagStrip.svelte";
+import { getLorcanaCardTags } from "./card-tags.js";
+import {
+	getInkHex,
+	getInkRgb,
+} from "@/features/simulator/model/lorcana-colors.js";
+import {
+	getInkableIconUrl,
+	getInkSymbolUrl,
+	getLoreIconUrl,
+	getStatSmallIconUrl,
+} from "@/features/simulator/model/asset-urls.js";
+import { buildSimulatorAssetUrl } from "$lib/config/public-url-config.js";
+import type { LorcanaInkName } from "@/features/simulator/model/lorcana-colors.js";
+import { getCardActionCategoryIcon } from "@/features/simulator/model/action-icons.js";
 
-  interface CardHoverCardContentProps {
-    card: LorcanaCardSnapshot;
-    actions?: CardActionView[];
-    contextMessage?: string | null;
-    onAction?: (action: CardActionView) => void;
-    headerActions?: Snippet;
-  }
+interface CardHoverCardContentProps {
+	card: LorcanaCardSnapshot;
+	actions?: CardActionView[];
+	contextMessage?: string | null;
+	onAction?: (action: CardActionView) => void;
+	headerActions?: Snippet;
+}
 
-  let {
-    card,
-    actions = [],
-    contextMessage = null,
-    onAction,
-    headerActions,
-  }: CardHoverCardContentProps = $props();
+let {
+	card,
+	actions = [],
+	contextMessage = null,
+	onAction,
+	headerActions,
+}: CardHoverCardContentProps = $props();
 
-  interface RenderableRulesEntry extends LorcanaCardTextEntrySnapshot {
-    kind: "keyword" | "ability";
-    textEntryIndex: number;
-  }
+interface RenderableRulesEntry extends LorcanaCardTextEntrySnapshot {
+	kind: "keyword" | "ability";
+	textEntryIndex: number;
+	/** Index within ability-only entries (excluding keywords), matching engine's abilityIndex */
+	activatedAbilityIndex: number;
+}
 
-  interface TextToken {
-    type: "text" | "symbol";
-    value: string;
-  }
+interface TextToken {
+	type: "text" | "symbol";
+	value: string;
+}
 
-  const TEXT_SYMBOL_BASE_URL = "https://r2.tcg.online/public/lorcana/simulator/symbols";
-  const TEXT_SYMBOLS: Record<string, string> = {
-    E: "exert.svg",
-    W: "defense.svg",
-    L: "inkpot.svg",
-    S: "strength.svg",
-    I: "cost.svg",
-  };
-  const TEXT_SYMBOL_PATTERN = /\{([EWLSI])\}/gi;
+const TEXT_SYMBOL_BASE_URL = buildSimulatorAssetUrl("symbols");
+const TEXT_SYMBOLS: Record<string, string> = {
+	E: "exert.svg",
+	W: "willpower-2.svg",
+	L: "lore-2.svg",
+	S: "strength-simple-2.svg",
+	I: "ink-simple-2.svg",
+};
+const TEXT_SYMBOL_PATTERN = /\{([EWLSI])\}/gi;
 
-  const SIMPLE_KEYWORD_PATTERN = /^(Rush|Ward|Evasive|Bodyguard|Support|Reckless|Vanish|Alert)$/i;
-  const CHALLENGER_PATTERN = /^Challenger \+(\d+)$/i;
-  const RESIST_PATTERN = /^Resist \+(\d+)$/i;
-  const SINGER_PATTERN = /^Singer (\d+)$/i;
-  const SING_TOGETHER_PATTERN = /^Sing Together (\d+)$/i;
-  const BOOST_PATTERN = /^Boost (\d+)(?: \{I\})?$/i;
-  const SHIFT_PATTERN = /^(Shift|Puppy Shift|Universal Shift) (\d+)(?: \{I\})?$/i;
+const SIMPLE_KEYWORD_PATTERN =
+	/^(Rush|Ward|Evasive|Bodyguard|Support|Reckless|Vanish|Alert)$/i;
+const CHALLENGER_PATTERN = /^Challenger \+(\d+)$/i;
+const RESIST_PATTERN = /^Resist \+(\d+)$/i;
+const SINGER_PATTERN = /^Singer (\d+)$/i;
+const SING_TOGETHER_PATTERN = /^Sing Together (\d+)$/i;
+const BOOST_PATTERN = /^Boost (\d+)(?: \{I\})?$/i;
+const SHIFT_PATTERN = /^(Shift|Puppy Shift|Universal Shift) (\d+)(?: \{I\})?$/i;
 
-  function isKeywordTitle(title: string): boolean {
-    const normalized = title.trim();
-    if (!normalized) {
-      return false;
-    }
+function isKeywordTitle(title: string): boolean {
+	const normalized = title.trim();
+	if (!normalized) {
+		return false;
+	}
 
-    return (
-      SIMPLE_KEYWORD_PATTERN.test(normalized) ||
-      CHALLENGER_PATTERN.test(normalized) ||
-      RESIST_PATTERN.test(normalized) ||
-      SINGER_PATTERN.test(normalized) ||
-      SING_TOGETHER_PATTERN.test(normalized) ||
-      BOOST_PATTERN.test(normalized) ||
-      SHIFT_PATTERN.test(normalized)
-    );
-  }
+	return (
+		SIMPLE_KEYWORD_PATTERN.test(normalized) ||
+		CHALLENGER_PATTERN.test(normalized) ||
+		RESIST_PATTERN.test(normalized) ||
+		SINGER_PATTERN.test(normalized) ||
+		SING_TOGETHER_PATTERN.test(normalized) ||
+		BOOST_PATTERN.test(normalized) ||
+		SHIFT_PATTERN.test(normalized)
+	);
+}
 
-  function formatCardType(type: string | undefined): string {
-    if (!type) return "Card";
-    return type.charAt(0).toUpperCase() + type.slice(1);
-  }
+function formatCardType(type: string | undefined): string {
+	if (!type) return "Card";
+	return type.charAt(0).toUpperCase() + type.slice(1);
+}
 
-  function getTypeLineLabel(cardSnapshot: LorcanaCardSnapshot): string {
-    const classifications = cardSnapshot.classifications?.filter((classification) =>
-      Boolean(classification?.trim()),
-    );
+function getTypeLineLabel(cardSnapshot: LorcanaCardSnapshot): string {
+	const classifications = cardSnapshot.classifications?.filter(
+		(classification) => Boolean(classification?.trim()),
+	);
 
-    if (classifications && classifications.length > 0) {
-      return classifications.join(" · ");
-    }
+	if (classifications && classifications.length > 0) {
+		return classifications.join(" · ");
+	}
 
-    return formatCardType(cardSnapshot.cardType);
-  }
+	return formatCardType(cardSnapshot.cardType);
+}
 
-  function normalizeInk(ink: string): LorcanaInkName {
-    const normalized = ink.toLowerCase() as LorcanaInkName;
-    // Validate it's a valid ink type
-    if (["amber", "amethyst", "emerald", "ruby", "sapphire", "steel"].includes(normalized)) {
-      return normalized;
-    }
-    return "amber"; // fallback
-  }
+function normalizeInk(ink: string): LorcanaInkName {
+	const normalized = ink.toLowerCase() as LorcanaInkName;
+	// Validate it's a valid ink type
+	if (
+		["amber", "amethyst", "emerald", "ruby", "sapphire", "steel"].includes(
+			normalized,
+		)
+	) {
+		return normalized;
+	}
+	return "amber"; // fallback
+}
 
-  function tokenizeTextWithSymbols(text: string | undefined): TextToken[] {
-    if (!text) {
-      return [];
-    }
+function tokenizeTextWithSymbols(text: string | undefined): TextToken[] {
+	if (!text) {
+		return [];
+	}
 
-    const tokens: TextToken[] = [];
-    let lastIndex = 0;
+	const tokens: TextToken[] = [];
+	let lastIndex = 0;
 
-    for (const match of text.matchAll(TEXT_SYMBOL_PATTERN)) {
-      const [fullMatch, symbolCode] = match;
-      const start = match.index ?? 0;
-      const symbolFile = TEXT_SYMBOLS[symbolCode.toUpperCase()];
+	for (const match of text.matchAll(TEXT_SYMBOL_PATTERN)) {
+		const [fullMatch, symbolCode] = match;
+		const start = match.index ?? 0;
+		const symbolFile = TEXT_SYMBOLS[symbolCode.toUpperCase()];
 
-      if (start > lastIndex) {
-        tokens.push({ type: "text", value: text.slice(lastIndex, start) });
-      }
+		if (start > lastIndex) {
+			tokens.push({ type: "text", value: text.slice(lastIndex, start) });
+		}
 
-      if (symbolFile) {
-        tokens.push({ type: "symbol", value: symbolFile });
-      } else {
-        tokens.push({ type: "text", value: fullMatch });
-      }
+		if (symbolFile) {
+			tokens.push({ type: "symbol", value: symbolFile });
+		} else {
+			tokens.push({ type: "text", value: fullMatch });
+		}
 
-      lastIndex = start + fullMatch.length;
-    }
+		lastIndex = start + fullMatch.length;
+	}
 
-    if (lastIndex < text.length) {
-      tokens.push({ type: "text", value: text.slice(lastIndex) });
-    }
+	if (lastIndex < text.length) {
+		tokens.push({ type: "text", value: text.slice(lastIndex) });
+	}
 
-    return tokens;
-  }
+	return tokens;
+}
 
-  function isActivateAbilityMove(
-    move: CardActionView["moves"][number] | undefined,
-  ): move is CardActionView["moves"][number] & {
-    moveId: "activateAbility";
-    params: LorcanaSimulatorMoveParams["activateAbility"];
-  } {
-    return move?.moveId === "activateAbility";
-  }
+function isActivateAbilityMove(
+	move: CardActionView["moves"][number] | undefined,
+): move is CardActionView["moves"][number] & {
+	moveId: "activateAbility";
+	params: LorcanaSimulatorMoveParams["activateAbility"];
+} {
+	return move?.moveId === "activateAbility";
+}
 
-  // Derived state
-  const primaryInk = $derived(normalizeInk(card.inkType?.[0] ?? "amber"));
-  const inkColor = $derived(getInkHex(primaryInk));
-  const inkRgb = $derived(getInkRgb(primaryInk));
-  const effectiveWillpower = $derived((card.willpower ?? 0) - (card.damage ?? 0));
-  const hasCharacterStats = $derived(
-    card.cardType === "character" &&
-      (card.strength !== undefined || card.willpower !== undefined || card.loreValue !== undefined),
-  );
-  const textEntries = $derived(
-    (card.textEntries ?? []).reduce<RenderableRulesEntry[]>((entries, entry, textEntryIndex) => {
-      const title = entry.title.trim();
-      if (!title) {
-        return entries;
-      }
+// Derived state
+const primaryInk = $derived(normalizeInk(card.inkType?.[0] ?? "amber"));
+const secondaryInk = $derived(
+	normalizeInk(card.inkType?.[1] ?? card.inkType?.[0] ?? "amber"),
+);
+const inkColor = $derived(getInkHex(primaryInk));
+const inkRgb = $derived(getInkRgb(primaryInk));
+const secondaryInkRgb = $derived(getInkRgb(secondaryInk));
+const effectiveWillpower = $derived((card.willpower ?? 0) - (card.damage ?? 0));
+const hasCharacterStats = $derived(
+	card.cardType === "character" &&
+		(card.strength !== undefined ||
+			card.willpower !== undefined ||
+			card.loreValue !== undefined),
+);
+const textEntries = $derived(
+	(() => {
+		let abilityCounter = 0;
+		return (card.textEntries ?? []).reduce<RenderableRulesEntry[]>(
+			(entries, entry, textEntryIndex) => {
+				const title = entry.title.trim();
+				if (!title) {
+					return entries;
+				}
 
-      const description = entry.description?.trim();
-      entries.push({
-        title,
-        ...(description ? { description } : {}),
-        kind: isKeywordTitle(title) ? "keyword" : "ability",
-        textEntryIndex,
-      });
+				const kind = isKeywordTitle(title) ? "keyword" : "ability";
+				const activatedAbilityIndex =
+					kind === "ability" ? abilityCounter++ : -1;
+				const description = entry.description?.trim();
+				entries.push({
+					title,
+					...(description ? { description } : {}),
+					kind,
+					textEntryIndex,
+					activatedAbilityIndex,
+				});
 
-      return entries;
-    }, []),
-  );
-  const hasStructuredText = $derived(textEntries.length > 0);
-  const activatedAbilityActionsByIndex = $derived(
-    new Map(
-      actions.flatMap((action) => {
-        if (action.categoryId !== "activate-ability") {
-          return [];
-        }
+				return entries;
+			},
+			[],
+		);
+	})(),
+);
+const hasStructuredText = $derived(textEntries.length > 0);
+const activatedAbilityActionsByIndex = $derived(
+	new Map(
+		actions.flatMap((action) => {
+			if (action.categoryId !== "activate-ability") {
+				return [];
+			}
 
-        return action.moves.flatMap((move) => {
-          if (!isActivateAbilityMove(move)) {
-            return [];
-          }
+			return action.moves.flatMap((move) => {
+				if (!isActivateAbilityMove(move)) {
+					return [];
+				}
 
-          const abilityIndex =
-            typeof move.params.abilityIndex === "number" ? move.params.abilityIndex : 0;
-          return [[abilityIndex, action]] as const;
-        });
-      }),
-    ),
-  );
-  const nonAbilityActions = $derived(actions.filter((action) => action.categoryId !== "activate-ability"));
-  const cardText = $derived(card.text?.trim() ?? "");
-  const hasActions = $derived(nonAbilityActions.length > 0);
-  const hasTextBoxContent = $derived(hasStructuredText || Boolean(cardText) || hasActions);
-  const cardTags = $derived(getLorcanaCardTags(card));
+				const abilityIndex =
+					typeof move.params.abilityIndex === "number"
+						? move.params.abilityIndex
+						: 0;
+				const singleMoveAction: CardActionView = {
+					...action,
+					moves: [move],
+				};
+				return [[abilityIndex, singleMoveAction]] as const;
+			});
+		}),
+	),
+);
+const nonAbilityActions = $derived(
+	actions.filter((action) => action.categoryId !== "activate-ability"),
+);
+const enabledNonAbilityActions = $derived(
+	nonAbilityActions.filter((a) => a.enabled),
+);
+const disabledNonAbilityActions = $derived(
+	nonAbilityActions.filter((a) => !a.enabled),
+);
+const grantSourceByTitle = $derived(
+	new Map(
+		(card.grantSources ?? []).flatMap((source) =>
+			source.grants.map((grant) => [grant, source.sourceLabel] as const),
+		),
+	),
+);
+const cardText = $derived(card.text?.trim() ?? "");
+const cardTextLines = $derived(
+	cardText
+		? cardText
+				.split("\n")
+				.map((line) => ({
+					text: line.trim(),
+					isKeyword: isKeywordTitle(line.trim()),
+				}))
+				.filter((line) => line.text.length > 0)
+		: [],
+);
+const hasActions = $derived(nonAbilityActions.length > 0);
+const hasTextBoxContent = $derived(
+	hasStructuredText || Boolean(cardText),
+);
+const cardTags = $derived(getLorcanaCardTags(card));
 </script>
 
 <div
   class="card-skeleton"
-  style="--ink-color: {inkColor}; --ink-rgb: {inkRgb.replace('rgb(', '').replace(')', '')};"
+  class:card-skeleton--with-utility-actions={Boolean(headerActions)}
+  style="--ink-color: {inkColor}; --ink-rgb: {inkRgb.replace('rgb(', '').replace(')', '')}; --ink-rgb-secondary: {secondaryInkRgb.replace('rgb(', '').replace(')', '')};"
 >
   {#if headerActions}
     <div class="card-utility-actions">
@@ -207,7 +275,10 @@
 
   <!-- Name Banner -->
   <div class="name-banner">
-    <img src={getInkSymbolUrl(primaryInk)} alt="" class="banner-ink" />
+    <div class="cost-icon-element">
+      <img src={getInkableIconUrl(card.inkable)} alt="" class="ink-bg" />
+      <span class="cost-value">{card.cost ?? 0}</span>
+    </div>
     <span class="card-name">
       {#if card.label.includes(" - ")}
         {@const [name, version] = card.label.split(" - ")}
@@ -217,6 +288,13 @@
         <span class="name-text">{card.label}</span>
       {/if}
     </span>
+    {#if card.inkType && card.inkType.length > 0}
+      <div class="ink-icons">
+        {#each card.inkType as ink (ink)}
+          <img src={getInkSymbolUrl(ink)} alt={ink} title={ink} class="ink-icon-small" />
+        {/each}
+      </div>
+    {/if}
   </div>
 
   {#if hasCharacterStats}
@@ -224,39 +302,25 @@
     <div class="meta-row">
       <div class="type-line type-line--compact">
         <span class="card-type">{getTypeLineLabel(card)}</span>
-        {#if card.inkType && card.inkType.length > 0}
-          <span class="separator">·</span>
-          <div class="ink-icons">
-            {#each card.inkType as ink (ink)}
-              <img src={getInkSymbolUrl(ink)} alt={ink} title={ink} class="ink-icon-small" />
-            {/each}
-          </div>
-        {/if}
+
       </div>
 
       <div class="stats-row stats-row--compact">
-        <div class="cost-hexagon">
-          <img src={getInkSymbolUrl(primaryInk)} alt="" class="ink-bg" />
-          <span class="cost-value">{card.cost ?? 0}</span>
-        </div>
-        {#if card.rarity}
-          <img src={getRarityIconUrl(card.rarity)} alt={card.rarity} class="rarity-icon" />
-        {/if}
         {#if card.strength !== undefined}
           <div class="stat-box stat-strength">
-            <img src={getStatIconUrl("strength")} alt="Strength" class="stat-icon" />
+            <img src={getStatSmallIconUrl("strength")} alt="Strength" class="stat-icon" />
             <span class="stat-value">{card.strength}</span>
           </div>
         {/if}
         {#if card.willpower !== undefined}
           <div class="stat-box stat-willpower">
-            <img src={getStatIconUrl("defense")} alt="Willpower" class="stat-icon" />
+            <img src={getStatSmallIconUrl("defense")} alt="Willpower" class="stat-icon" />
             <span class="stat-value">{effectiveWillpower}</span>
           </div>
         {/if}
         {#if card.loreValue !== undefined}
           <div class="stat-box stat-lore">
-            <span class="lore-icon">◆</span>
+            <img src={getLoreIconUrl()} alt="lore" class="stat-icon" />
             <span class="stat-value">{card.loreValue}</span>
           </div>
         {/if}
@@ -266,14 +330,6 @@
     <!-- Type Line -->
     <div class="type-line">
       <span class="card-type">{getTypeLineLabel(card)}</span>
-      {#if card.inkType && card.inkType.length > 0}
-        <span class="separator">·</span>
-        <div class="ink-icons">
-          {#each card.inkType as ink (ink)}
-            <img src={getInkSymbolUrl(ink)} alt={ink} title={ink} class="ink-icon-small" />
-          {/each}
-        </div>
-      {/if}
     </div>
   {/if}
 
@@ -290,7 +346,8 @@
       {#if hasStructuredText}
         {#each textEntries as entry, index (`${entry.title}-${index}`)}
           {@const entryAction =
-            entry.kind === "ability" ? activatedAbilityActionsByIndex.get(entry.textEntryIndex) : undefined}
+            entry.kind === "ability" ? activatedAbilityActionsByIndex.get(entry.activatedAbilityIndex) : undefined}
+          {@const grantedBy = grantSourceByTitle.get(entry.title)}
           {#if entryAction}
             <button
               type="button"
@@ -314,7 +371,9 @@
                   {/if}
                 {/each}
               </span>
-              {#if entry.description}
+              {#if entryAction.reason && !entryAction.enabled}
+                <span class="entry-description">{entryAction.reason}</span>
+              {:else if entry.description}
                 <span class="entry-description">
                   {#each tokenizeTextWithSymbols(entry.description) as token, tokenIndex (`${token.type}-${token.value}-${tokenIndex}`)}
                     {#if token.type === "symbol"}
@@ -328,6 +387,9 @@
                     {/if}
                   {/each}
                 </span>
+              {/if}
+              {#if grantedBy}
+                <span class="granted-by-annotation">Granted by {grantedBy}</span>
               {/if}
             </button>
           {:else}
@@ -376,40 +438,84 @@
                   {/each}
                 </span>
               {/if}
+              {#if grantedBy}
+                <span class="granted-by-annotation">Granted by {grantedBy}</span>
+              {/if}
             </p>
           {/if}
         {/each}
       {:else if cardText}
-        <p class="ability-text">
-          {#each tokenizeTextWithSymbols(cardText) as token, tokenIndex (`${token.type}-${token.value}-${tokenIndex}`)}
-            {#if token.type === "symbol"}
-              <img src={`${TEXT_SYMBOL_BASE_URL}/${token.value}`} alt="" class="inline-symbol inline-symbol--body" />
-            {:else}
-              {token.value}
-            {/if}
-          {/each}
-        </p>
+        {#each cardTextLines as line, lineIndex (`line-${lineIndex}`)}
+          {#if line.isKeyword}
+            <p class="rules-entry rules-entry--keyword">
+              <span class="keyword-title">{line.text}</span>
+            </p>
+          {:else}
+            <p class="ability-text">
+              {#each tokenizeTextWithSymbols(line.text) as token, tokenIndex (`${token.type}-${token.value}-${tokenIndex}`)}
+                {#if token.type === "symbol"}
+                  <img src={`${TEXT_SYMBOL_BASE_URL}/${token.value}`} alt="" class="inline-symbol inline-symbol--body" />
+                {:else}
+                  {token.value}
+                {/if}
+              {/each}
+            </p>
+          {/if}
+        {/each}
       {/if}
 
-      {#each nonAbilityActions as action (action.id)}
-        <button
-          type="button"
-          class="rules-entry rules-entry--action rules-entry--inline-ability"
-          class:rules-entry--action-disabled={!action.enabled}
-          disabled={!action.enabled}
-          onclick={() => onAction?.(action)}
-          aria-label={action.reason ? `${action.label}: ${action.reason}` : action.label}
-          title={action.reason ?? action.label}
-        >
-          <span class="ability-title">{action.label}</span>
-          {#if action.detail}
-            <span class="entry-description">{action.detail}</span>
-          {/if}
-          {#if action.reason && !action.enabled}
-            <span class="entry-description">{action.reason}</span>
-          {/if}
-        </button>
-      {/each}
+    </div>
+  {/if}
+
+  {#if hasActions}
+    <div class="action-chip-section" data-testid="card-hover-action-chip-section">
+      <div class="action-chip-row">
+        {#each enabledNonAbilityActions as action (action.id)}
+          {@const ActionIcon = getCardActionCategoryIcon(action.categoryId)}
+          <button
+            type="button"
+            class="action-chip"
+            onclick={() => onAction?.(action)}
+            aria-label={action.detail ? `${action.label}: ${action.detail}` : action.label}
+            title={action.detail ?? action.label}
+            data-testid={`card-hover-action-chip-${action.categoryId}`}
+          >
+            <span class="action-chip__icon-shell" data-action-icon={action.categoryId} aria-hidden="true">
+              <ActionIcon class="action-chip__icon" />
+            </span>
+            <span class="action-chip__content">
+              <span class="action-chip__label">{action.label}</span>
+              {#if action.detail}
+                <span class="action-chip__detail">{action.detail}</span>
+              {/if}
+            </span>
+          </button>
+        {/each}
+
+        {#each disabledNonAbilityActions as action (action.id)}
+          {@const ActionIcon = getCardActionCategoryIcon(action.categoryId)}
+          <button
+            type="button"
+            class="action-chip action-chip--disabled"
+            disabled
+            aria-label={action.reason ? `${action.label}: ${action.reason}` : action.label}
+            title={action.reason ?? action.detail ?? action.label}
+            data-testid={`card-hover-action-chip-${action.categoryId}`}
+          >
+            <span class="action-chip__icon-shell" data-action-icon={action.categoryId} aria-hidden="true">
+              <ActionIcon class="action-chip__icon" />
+            </span>
+            <span class="action-chip__content">
+              <span class="action-chip__label">{action.label}</span>
+              {#if action.detail}
+                <span class="action-chip__detail">{action.detail}</span>
+              {:else if action.reason}
+                <span class="action-chip__detail">{action.reason}</span>
+              {/if}
+            </span>
+          </button>
+        {/each}
+      </div>
     </div>
   {/if}
 
@@ -424,6 +530,7 @@
   .card-skeleton {
     --ink-color: #888;
     --ink-rgb: 136, 136, 136;
+    --ink-rgb-secondary: 136, 136, 136;
 
     position: relative;
     width: min(100%, 22rem);
@@ -448,9 +555,24 @@
     z-index: 3;
   }
 
+  .card-skeleton--with-utility-actions .name-banner {
+    padding-right: 3.25rem;
+  }
+
   .tag-section {
     padding-top: 2px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .action-chip-section {
+    padding-top: 2px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .action-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
   }
 
   .context-banner {
@@ -487,25 +609,20 @@
     align-items: flex-start;
   }
 
-  .cost-hexagon {
-    width: 38px;
+  .cost-icon-element {
+    width: 42px;
     height: 42px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Hexagonal shape */
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    background: var(--ink-color);
-    box-shadow: 0 2px 8px rgba(var(--ink-rgb), 0.4);
   }
 
-  .cost-hexagon .ink-bg {
+  .cost-icon-element .ink-bg {
     position: absolute;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.3;
   }
 
   .cost-value {
@@ -566,8 +683,9 @@
     background: linear-gradient(
       90deg,
       rgba(var(--ink-rgb), 0.9) 0%,
-      rgba(var(--ink-rgb), 0.7) 50%,
-      rgba(var(--ink-rgb), 0.5) 100%
+      rgba(var(--ink-rgb), 0.72) 42%,
+      rgba(var(--ink-rgb-secondary), 0.72) 58%,
+      rgba(var(--ink-rgb-secondary), 0.9) 100%
     );
     border-radius: 8px;
     box-shadow:
@@ -641,19 +759,6 @@
     letter-spacing: 0.045em;
   }
 
-  .type-line--compact .separator {
-    opacity: 0.7;
-  }
-
-  .type-line--compact .ink-icons {
-    gap: 3px;
-  }
-
-  .type-line--compact .ink-icon-small {
-    width: 12px;
-    height: 12px;
-  }
-
   .card-type {
     font-size: 0.75rem;
     /*font-family:*/
@@ -676,8 +781,8 @@
   }
 
   .ink-icon-small {
-    width: 16px;
-    height: 16px;
+    width: 32px;
+    height: 32px;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
   }
 
@@ -697,20 +802,6 @@
     white-space: nowrap;
   }
 
-  .stats-row--compact .cost-hexagon {
-    width: 26px;
-    height: 29px;
-  }
-
-  .stats-row--compact .cost-value {
-    font-size: 0.85rem;
-  }
-
-  .stats-row--compact .rarity-icon {
-    width: 16px;
-    height: 16px;
-  }
-
   .stats-row--compact .stat-box {
     gap: 4px;
     padding: 3px 7px;
@@ -718,23 +809,19 @@
   }
 
   .stats-row--compact .stat-icon {
-    width: 12px;
-    height: 12px;
+    width: 24px;
+    height: 24px;
   }
 
   .stats-row--compact .stat-value {
     font-size: 0.74rem;
   }
 
-  .stats-row--compact .lore-icon {
-    font-size: 0.75rem;
-  }
-
   .stat-box {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
+    padding: 12px 12px;
     background: rgba(0, 0, 0, 0.4);
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -742,8 +829,8 @@
   }
 
   .stat-icon {
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
     filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
   }
 
@@ -754,21 +841,51 @@
   }
 
   .stat-strength {
+    position: relative;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    gap: 0;
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(185, 28, 28, 0.3) 100%);
     border-color: rgba(239, 68, 68, 0.4);
   }
 
   .stat-strength .stat-value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: #fca5a5;
+    z-index: 1;
   }
 
   .stat-willpower {
+    position: relative;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    gap: 0;
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.3) 100%);
     border-color: rgba(59, 130, 246, 0.4);
   }
 
   .stat-willpower .stat-value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: #93c5fd;
+    z-index: 1;
+  }
+
+  .stat-strength .stat-icon,
+  .stat-willpower .stat-icon {
+    width: 100%;
+    height: 100%;
   }
 
   .stat-lore {
@@ -780,6 +897,19 @@
     font-size: 1rem;
     color: #fcd34d;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  }
+
+  .stats-row--compact .stat-strength,
+  .stats-row--compact .stat-willpower {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  .stats-row--compact .stat-strength .stat-value,
+  .stats-row--compact .stat-willpower .stat-value {
+    font-size: 0.8rem;
   }
 
   .stat-lore .stat-value {
@@ -883,6 +1013,96 @@
   .rules-entry--action .entry-description {
     margin-left: 0.34rem;
     font-style: normal;
+  }
+
+  .granted-by-annotation {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.62rem;
+    font-style: italic;
+    color: rgba(100, 80, 60, 0.7);
+    line-height: 1.3;
+  }
+
+  .action-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    max-width: 100%;
+    border: 1px solid rgba(var(--ink-rgb), 0.42);
+    border-radius: 999px;
+    padding: 0.34rem 0.62rem 0.34rem 0.42rem;
+    background:
+      linear-gradient(180deg, rgba(var(--ink-rgb), 0.2) 0%, rgba(var(--ink-rgb), 0.12) 100%),
+      rgba(15, 22, 36, 0.86);
+    color: #edf4ff;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 4px 10px rgba(0, 0, 0, 0.18);
+    transition:
+      transform 140ms ease,
+      border-color 140ms ease,
+      background 140ms ease,
+      box-shadow 140ms ease;
+  }
+
+  .action-chip:hover:enabled {
+    transform: translateY(-1px);
+    border-color: rgba(var(--ink-rgb), 0.58);
+    background:
+      linear-gradient(180deg, rgba(var(--ink-rgb), 0.28) 0%, rgba(var(--ink-rgb), 0.16) 100%),
+      rgba(18, 28, 45, 0.9);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 8px 16px rgba(0, 0, 0, 0.22);
+  }
+
+  .action-chip--disabled {
+    cursor: not-allowed;
+    opacity: 0.78;
+    border-color: rgba(115, 124, 144, 0.28);
+    background:
+      linear-gradient(180deg, rgba(92, 100, 118, 0.18) 0%, rgba(62, 67, 83, 0.12) 100%),
+      rgba(15, 22, 36, 0.72);
+  }
+
+  .action-chip__icon-shell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 999px;
+    background: rgba(8, 12, 22, 0.34);
+    color: rgba(255, 255, 255, 0.92);
+    flex-shrink: 0;
+  }
+
+  .action-chip__icon {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .action-chip__content {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .action-chip__label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #f8fbff;
+  }
+
+  .action-chip__detail {
+    font-size: 0.66rem;
+    line-height: 1.2;
+    color: rgba(227, 237, 252, 0.78);
   }
 
   .ability-title {

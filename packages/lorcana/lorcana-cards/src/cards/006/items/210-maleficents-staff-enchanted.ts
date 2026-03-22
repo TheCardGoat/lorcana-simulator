@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { maleficentsStaffEnchantedI18n } from "./210-maleficents-staff-enchanted.i18n";
 
 export const maleficentsStaffEnchanted: ItemCard = {
   id: "09M",
@@ -6,48 +7,6 @@ export const maleficentsStaffEnchanted: ItemCard = {
   reprints: ["set6-065"],
   cardType: "item",
   name: "Maleficent's Staff",
-  i18n: {
-    en: {
-      name: "Maleficent's Staff",
-      text: [
-        {
-          title: "BACK, FOOLS!",
-          description:
-            "Whenever one of your opponents' characters, items, or locations is returned to their hand from play, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Malefiz’ Stab",
-      text: [
-        {
-          title: "ZURÜCK, IHR NARREN!",
-          description:
-            "Jedes Mal, wenn ein gegnerischer Charakter, Gegenstand oder Ort zurück auf die zugehörige Hand geschickt wird, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Sceptre de Maléfique",
-      text: [
-        {
-          title: "REVENEZ, IMBÉCILES!",
-          description:
-            "Chaque fois qu'un personnage, un objet ou un lieu d'un adversaire est renvoyé dans sa main depuis le jeu, vous gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Bastone di Malefica",
-      text: [
-        {
-          title: "INDIETRO, PAZZI!",
-          description:
-            "Ogni volta che uno dei personaggi, degli oggetti o dei luoghi dei tuoi avversari viene ripreso in mano dal gioco, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sleeping Beauty",
   set: "006",
@@ -67,7 +26,24 @@ export const maleficentsStaffEnchanted: ItemCard = {
         "Whenever one of your opponents' characters, items, or locations is returned to their hand from play, gain 1 lore.",
     },
   ],
-  missingImplementation: true,
-  missingTests: true,
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        amount: 1,
+        type: "gain-lore",
+      },
+      id: "09M-1",
+      name: "BACK, FOOLS!",
+      text: "BACK, FOOLS! Whenever one of your opponents' characters, items, or locations is returned to their hand from play, gain 1 lore.",
+      trigger: {
+        event: "return-to-hand",
+        on: {
+          controller: "opponent",
+        },
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
+  i18n: maleficentsStaffEnchantedI18n,
 };

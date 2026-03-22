@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { fixitFelixJrTrustyBuilderI18n } from "./010-fix-it-felix-jr-trusty-builder.i18n";
 
 export const fixitFelixJrTrustyBuilder: CharacterCard = {
   id: "pKi",
@@ -7,34 +8,6 @@ export const fixitFelixJrTrustyBuilder: CharacterCard = {
   cardType: "character",
   name: "Fix-It Felix, Jr.",
   version: "Trusty Builder",
-  i18n: {
-    en: {
-      name: "Fix-It Felix, Jr.",
-      version: "Trusty Builder",
-      text: "Bodyguard",
-    },
-    de: {
-      name: "Fix-It Felix, Jr.",
-      version: "Zuverlässiger Erbauer",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "Félix Fixe Junior",
-      version: "Constructeur fiable",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'un adversaire défie l'un de vos personnages, il doit, si possible, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "Felix Aggiustatutto Jr.",
-      version: "Costruttore Fidato",
-      text: "Guardiano",
-    },
-  },
   inkType: ["amber"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -59,4 +32,5 @@ export const fixitFelixJrTrustyBuilder: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: fixitFelixJrTrustyBuilderI18n,
 };

@@ -1,24 +1,60 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { chipFriendIndeed } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Chip - Friend Indeed", () => {
-//   It("**DALE'S PARTNER** When you play this character, chosen character gets +1 {L} this turn.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: chipFriendIndeed.cost,
-//       Hand: [chipFriendIndeed],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(chipFriendIndeed);
-//     Await testEngine.playCard(cardUnderTest);
-//
-//     Await testEngine.resolveTopOfStack({ targets: [cardUnderTest] });
-//     Expect(cardUnderTest.lore).toEqual(chipFriendIndeed.lore + 1);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { chipFriendIndeed } from "./006-chip-friend-indeed";
+
+const targetCharacter = createMockCharacter({
+  id: "target-character",
+  name: "Target Character",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+describe("Chip - Friend Indeed", () => {
+  it("DALE'S PARTNER - When you play this character, chosen character gets +1 lore this turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [chipFriendIndeed],
+      inkwell: chipFriendIndeed.cost,
+      play: [targetCharacter],
+      deck: 2,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(chipFriendIndeed)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [targetCharacter] }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardLore(targetCharacter)).toBe(targetCharacter.lore + 1);
+  });
+
+  it("DALE'S PARTNER - lore bonus expires at end of turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [chipFriendIndeed],
+        inkwell: chipFriendIndeed.cost,
+        play: [targetCharacter],
+        deck: 2,
+      },
+      {
+        deck: 2,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(chipFriendIndeed)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [targetCharacter] }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardLore(targetCharacter)).toBe(targetCharacter.lore + 1);
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardLore(targetCharacter)).toBe(targetCharacter.lore);
+  });
+});

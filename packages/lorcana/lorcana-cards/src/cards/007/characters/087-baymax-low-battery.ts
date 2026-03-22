@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { baymaxLowBatteryI18n } from "./087-baymax-low-battery.i18n";
 
 export const baymaxLowBattery: CharacterCard = {
   id: "7jV",
@@ -7,48 +8,6 @@ export const baymaxLowBattery: CharacterCard = {
   cardType: "character",
   name: "Baymax",
   version: "Low Battery",
-  i18n: {
-    en: {
-      name: "Baymax",
-      version: "Low Battery",
-      text: [
-        {
-          title: "SHHHHH",
-          description: "This character enters play exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Baymax",
-      version: "Niedriger Akkustand",
-      text: [
-        {
-          title: "SCHHHHH",
-          description: "Dieser Charakter kommt erschöpft ins Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Baymax",
-      version: "Batterie faible",
-      text: [
-        {
-          title: "PSSSHH",
-          description: "Ce personnage entre en jeu épuisé.",
-        },
-      ],
-    },
-    it: {
-      name: "Baymax",
-      version: "Batteria Scarica",
-      text: [
-        {
-          title: "SHHHHH",
-          description: "Questo personaggio entra in gioco impegnato.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Big Hero 6",
   set: "007",
@@ -83,4 +42,5 @@ export const baymaxLowBattery: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: baymaxLowBatteryI18n,
 };

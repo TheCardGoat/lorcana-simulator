@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { moanaKakamoraLeaderI18n } from "./121-moana-kakamora-leader.i18n";
 
 export const moanaKakamoraLeader: CharacterCard = {
   id: "OXn",
@@ -7,37 +8,6 @@ export const moanaKakamoraLeader: CharacterCard = {
   cardType: "character",
   name: "Moana",
   version: "Kakamora Leader",
-  i18n: {
-    en: {
-      name: "Moana",
-      version: "Kakamora Leader",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "GATHERING FORCES",
-          description:
-            "When you play this character, you may move any number of your characters to the same location for free. Gain 1 lore for each character you moved.",
-        },
-      ],
-    },
-    de: {
-      name: "Vaiana",
-      version: "Anführerin der Kokomora",
-      text: "Gestaltwandel 5 KRÄFTE VEREINEN Wenn du diesen Charakter ausspielst, darfst du beliebig viele deiner Charaktere kostenlos zu demselben Ort bewegen. Sammle 1 Legende für jeden Charakter, den du auf diese Weise bewegt hast.",
-    },
-    fr: {
-      name: "Vaiana",
-      version: "Cheffe des Kakamora",
-      text: "Alter 5 RASSEMBLEMENT DES FORCES Lorsque vous jouez ce personnage, vous pouvez déplacer gratuitement n'importe quel nombre de vos personnages sur le même lieu. Gagnez 1 éclat de Lore par personnage déplacé de cette façon.",
-    },
-    it: {
-      name: "Vaiana",
-      version: "Leader dei Kakamora",
-      text: "Trasformazione 5 RADUNARE LE TRUPPE Quando giochi questo personaggio, puoi spostare un qualsiasi numero di tuoi personaggi nello stesso luogo, gratis. Ottieni 1 leggenda per ogni personaggio che hai spostato.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "006",
@@ -93,4 +63,5 @@ export const moanaKakamoraLeader: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: moanaKakamoraLeaderI18n,
 };

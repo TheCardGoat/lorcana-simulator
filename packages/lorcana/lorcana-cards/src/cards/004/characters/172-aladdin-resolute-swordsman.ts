@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { aladdinResoluteSwordsmanI18n } from "./172-aladdin-resolute-swordsman.i18n";
 
 export const aladdinResoluteSwordsman: CharacterCard = {
   id: "LOo",
@@ -7,24 +8,6 @@ export const aladdinResoluteSwordsman: CharacterCard = {
   cardType: "character",
   name: "Aladdin",
   version: "Resolute Swordsman",
-  i18n: {
-    en: {
-      name: "Aladdin",
-      version: "Resolute Swordsman",
-    },
-    de: {
-      name: "Aladdin",
-      version: "Entschiedener Schwertkämpfer",
-    },
-    fr: {
-      name: "Aladdin",
-      version: "Sabreur résolu",
-    },
-    it: {
-      name: "Aladdin",
-      version: "Spadaccino Risoluto",
-    },
-  },
   inkType: ["steel"],
   franchise: "Aladdin",
   set: "004",
@@ -41,4 +24,5 @@ export const aladdinResoluteSwordsman: CharacterCard = {
     tcgPlayer: 550617,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: aladdinResoluteSwordsmanI18n,
 };

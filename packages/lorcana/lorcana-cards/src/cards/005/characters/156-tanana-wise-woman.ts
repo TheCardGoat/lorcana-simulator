@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tananaWiseWomanI18n } from "./156-tanana-wise-woman.i18n";
 
 export const tananaWiseWoman: CharacterCard = {
   id: "PPy",
@@ -7,52 +8,6 @@ export const tananaWiseWoman: CharacterCard = {
   cardType: "character",
   name: "Tanana",
   version: "Wise Woman",
-  i18n: {
-    en: {
-      name: "Tanana",
-      version: "Wise Woman",
-      text: [
-        {
-          title: "YOUR BROTHERS NEED GUIDANCE",
-          description:
-            "When you play this character, you may remove up to 1 damage from chosen character or location.",
-        },
-      ],
-    },
-    de: {
-      name: "Tanana",
-      version: "Weise Frau",
-      text: [
-        {
-          title: "DEINE BRÜDER BEDÜRFEN DEINER FÜHRUNG",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du bis zu 1 Schaden von einem Charakter oder Ort deiner Wahl entfernen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Nanaka",
-      version: "Femme avisée",
-      text: [
-        {
-          title: "TES FRÈRES ONT BESOIN D'ÊTRE GUIDÉS",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage ou un lieu et lui retirer jusqu'à 1 dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Tanana",
-      version: "Saggia Donna",
-      text: [
-        {
-          title: "I TUOI FRATELLI HANNO BISOGNO DELLA TUA GUIDA",
-          description:
-            "Quando giochi questo personaggio, puoi rimuovere fino a 1 danno da un personaggio o da un luogo a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Brother Bear",
   set: "005",
@@ -104,4 +59,5 @@ export const tananaWiseWoman: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: tananaWiseWomanI18n,
 };

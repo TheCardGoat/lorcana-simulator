@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicaDeSpellTheMidasTouchI18n } from "./049-magica-de-spell-the-midas-touch.i18n";
 
 export const magicaDeSpellTheMidasTouch: CharacterCard = {
   id: "XJy",
@@ -7,37 +8,6 @@ export const magicaDeSpellTheMidasTouch: CharacterCard = {
   cardType: "character",
   name: "Magica De Spell",
   version: "The Midas Touch",
-  i18n: {
-    en: {
-      name: "Magica De Spell",
-      version: "The Midas Touch",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "ALL MINE",
-          description:
-            "Whenever this character quests, gain lore equal to the cost of one of your items in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Gundel Gaukeley",
-      version: "Der Midas-Effekt",
-      text: "Gestaltwandel 5 ALLES MEINS Jedes Mal, wenn dieser Charakter erkundet, sammle so viele Legenden, wie die Kosten eines deiner Gegenstände im Spiel betragen.",
-    },
-    fr: {
-      name: "Miss Tick",
-      version: "Toucher de Midas",
-      text: "Alter 5 TOUT EST À MOI Chaque fois que ce personnage est envoyé à l'aventure, gagnez un nombre d'éclats de Lore égal au coût d'un de vos objets en jeu.",
-    },
-    it: {
-      name: "Amelia",
-      version: "Il Tocco di Mida",
-      text: "Trasformazione 5 TUTTA MIA Ogni volta che questo personaggio va all'avventura, ottieni leggenda pari al costo di uno dei tuoi oggetti in gioco.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Ducktales",
   set: "003",
@@ -63,7 +33,44 @@ export const magicaDeSpellTheMidasTouch: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain", "Sorcerer"],
-  missingImplementation: true,
-  missingTests: true,
-  abilities: [],
+  abilities: [
+    {
+      id: "XJy-0",
+      keyword: "Shift",
+      type: "keyword",
+      text: "Shift 5",
+      cost: { ink: 5 },
+    },
+    {
+      id: "XJy-1",
+      name: "ALL MINE",
+      type: "triggered",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "select-target",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["item"],
+            },
+          },
+          {
+            type: "gain-lore",
+            amount: "TARGET_COST",
+          },
+        ],
+      },
+      text: "ALL MINE Whenever this character quests, gain lore equal to the cost of one of your items in play.",
+    },
+  ],
+  i18n: magicaDeSpellTheMidasTouchI18n,
 };

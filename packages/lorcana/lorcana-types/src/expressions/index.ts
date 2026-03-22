@@ -73,6 +73,11 @@ export interface InkableFilterExpr {
   value: boolean;
 }
 
+export interface InkTypeFilterExpr {
+  type: "ink-type";
+  inkType: string;
+}
+
 export type NameFilterExpr = { type: "name"; equals: string } | { type: "name"; contains: string };
 
 export interface HasNameFilterExpr {
@@ -103,6 +108,7 @@ export interface CardSelectionFilter {
   classification?: string;
   name?: string;
   sameNameAsSource?: boolean;
+  sameNameAsChosenCard?: boolean;
   sameInstanceAsSource?: boolean;
   excludeChosenCard?: boolean;
 }
@@ -199,7 +205,7 @@ export interface ChallengeRoleFilterExpr {
 
 export interface ZoneFilterExpr {
   type: "zone";
-  zone: TargetZone | TargetZone[];
+  zone: TargetZone | readonly TargetZone[];
 }
 
 export interface OwnerFilterExpr {
@@ -218,7 +224,7 @@ export interface NamedCardFilterExpr {
 export interface UnderParentFilterExpr {
   type: "under-parent";
   owner?: "you" | "opponent" | "any";
-  cardTypes?: ("character" | "item" | "location" | "action")[];
+  cardTypes?: readonly ("character" | "item" | "location" | "action")[];
 }
 
 export interface PlayerLoreFilterExpr {
@@ -252,6 +258,7 @@ type CardOnlyFilterExpr =
   | ClassificationFilterExpr
   | HasClassificationFilterExpr
   | InkableFilterExpr
+  | InkTypeFilterExpr
   | NameFilterExpr
   | HasNameFilterExpr
   | CardTypeFilterExpr
@@ -286,12 +293,12 @@ type PlayerOnlyFilterExpr =
 
 export interface AndFilterExpr<Subject extends FilterSubject> {
   type: "and";
-  filters: FilterExpr<Subject>[];
+  filters: readonly FilterExpr<Subject>[];
 }
 
 export interface OrFilterExpr<Subject extends FilterSubject> {
   type: "or";
-  filters: FilterExpr<Subject>[];
+  filters: readonly FilterExpr<Subject>[];
 }
 
 export interface NotFilterExpr<Subject extends FilterSubject> {
@@ -334,6 +341,7 @@ export type ForEachCounterType =
   | "cards-in-inkwell-over-limit"
   | "damage-on-self"
   | "damage-on-target"
+  | "last-effect-target-count"
   | "cards-under-self"
   | "exerted-characters"
   | "characters-that-sang";
@@ -368,7 +376,7 @@ export type VariableAmount =
       excludeSelf?: boolean;
       multiplier?: number;
       owner?: "you" | "opponent" | "any";
-      zones?: TargetZone[];
+      zones?: readonly TargetZone[];
       cardType?: "character" | "item" | "location" | "action";
       cardTypes?: readonly ("character" | "item" | "location" | "action")[];
     }
@@ -384,7 +392,7 @@ export type VariableAmount =
       filters: readonly CardFilter[];
       excludeSelf?: boolean;
       owner?: "you" | "opponent" | "any";
-      zones?: TargetZone[];
+      zones?: readonly TargetZone[];
       cardType?: "character" | "item" | "location" | "action";
       cardTypes?: readonly ("character" | "item" | "location" | "action")[];
     }
@@ -397,6 +405,7 @@ export type VariableAmount =
   | { type: "trigger-amount" }
   | { type: "damage-on-target" }
   | { type: "damage-on-self" }
+  | { type: "last-effect-target-count" }
   | {
       type: "cards-in-hand";
       controller: CountController;
@@ -416,6 +425,13 @@ export type VariableAmount =
       type: "classification-character-count";
       classification: string;
       controller: "you" | "opponent" | "opponents";
+      excludeSelf?: boolean;
+    }
+  | {
+      type: "name-character-count";
+      name: string;
+      controller: "you" | "opponent" | "opponents";
+      excludeSelf?: boolean;
     }
   | { type: "locations-in-play"; controller: "you" | "opponent" | "opponents" }
   | {

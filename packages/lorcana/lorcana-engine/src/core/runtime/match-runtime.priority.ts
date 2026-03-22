@@ -6,24 +6,24 @@ import { produce } from "immer";
 import type { GameEvent, MatchState } from "./types";
 import { expireReveals } from "./zone-operations";
 
-export interface PriorityPassContext<G> {
-  state: MatchState<G>;
+export interface PriorityPassContext {
+  state: MatchState;
   currentStateID: number;
 }
 
 interface InternalPriorityPassSuccess {
   success: true;
   stateID: number;
-  state: MatchState<unknown>;
+  state: MatchState;
   patches: [];
   pendingGameEvents: GameEvent[];
 }
 
-export function executePriorityPass<G>(
+export function executePriorityPass(
   playerId: string,
   timestamp: number,
-  ctx: PriorityPassContext<G>,
-): { result: InternalPriorityPassSuccess; newState: MatchState<G> } {
+  ctx: PriorityPassContext,
+): { result: InternalPriorityPassSuccess; newState: MatchState } {
   let newState = ctx.state;
 
   newState = produce(ctx.state, (draft) => {
@@ -77,7 +77,7 @@ export function executePriorityPass<G>(
     result: {
       success: true,
       stateID: newState.ctx._stateID,
-      state: newState as MatchState<unknown>,
+      state: newState as MatchState,
       patches: [],
       pendingGameEvents: [
         {

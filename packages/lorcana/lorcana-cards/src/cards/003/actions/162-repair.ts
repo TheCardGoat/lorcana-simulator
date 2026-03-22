@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { repairI18n } from "./162-repair.i18n";
 
 export const repair: ActionCard = {
   id: "2j4",
@@ -6,24 +7,6 @@ export const repair: ActionCard = {
   reprints: ["set3-162"],
   cardType: "action",
   name: "Repair",
-  i18n: {
-    en: {
-      name: "Repair",
-      text: "Remove up to 3 damage from one of your locations or characters.",
-    },
-    de: {
-      name: "Reparieren",
-      text: "Entferne bis zu 3 Schaden von einem deiner Charaktere oder Orte.",
-    },
-    fr: {
-      name: "Réparation",
-      text: "Retirez jusqu'à 3 jetons Dommage de l'un de vos lieux ou personnages.",
-    },
-    it: {
-      name: "Riparare",
-      text: "Rimuovi fino a 3 danni da un tuo luogo o personaggio.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Atlantis",
   set: "003",
@@ -53,4 +36,5 @@ export const repair: ActionCard = {
       },
     },
   ],
+  i18n: repairI18n,
 };

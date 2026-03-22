@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { heiheiPersistentPresenceI18n } from "./043-heihei-persistent-presence.i18n";
 
 export const heiheiPersistentPresence: CharacterCard = {
   id: "ziG",
@@ -7,51 +8,6 @@ export const heiheiPersistentPresence: CharacterCard = {
   cardType: "character",
   name: "HeiHei",
   version: "Persistent Presence",
-  i18n: {
-    en: {
-      name: "HeiHei",
-      version: "Persistent Presence",
-      text: [
-        {
-          title: "HE'S BACK!",
-          description:
-            "When this character is banished in a challenge, return this card to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "HeiHei",
-      version: "Wiederkehrende Erscheinung",
-      text: [
-        {
-          title: "ER IST ZURÜCK!",
-          description:
-            "Wenn dieser Charakter durch eine Herausforderung verbannt wird, nimm ihn zurück auf deine Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Heihei",
-      version: "Volatile tenace",
-      text: [
-        {
-          title: "IL EST DE RETOUR",
-          description: "Lorsque ce personnage est banni via un défi, renvoyez-le dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Heihei",
-      version: "Presenza Persistente",
-      text: [
-        {
-          title: "È TORNATO!",
-          description:
-            "Quando questo personaggio viene esiliato in una sfida, riprendi in mano questa carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Moana",
   set: "002",
@@ -73,22 +29,31 @@ export const heiheiPersistentPresence: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       id: "1a9-1",
+      sourceZones: ["play", "discard"],
       effect: {
-        target: "CONTROLLER",
-        type: "return-from-discard",
+        target: {
+          ref: "self",
+        },
+        type: "return-to-hand",
       },
       name: "HE'S BACK!",
       trigger: {
         event: "banish",
         on: "SELF",
+        restrictions: [
+          {
+            type: "in-challenge",
+          },
+        ],
         timing: "when",
       },
       type: "triggered",
       text: "HE'S BACK! When this character is banished in a challenge, return this card from your discard to your hand.",
     },
   ],
+  missingTests: true,
+  i18n: heiheiPersistentPresenceI18n,
 };

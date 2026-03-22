@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { picoHelpfulToucanI18n } from "./055-pico-helpful-toucan.i18n";
 
 export const picoHelpfulToucan: CharacterCard = {
   id: "Aav",
@@ -7,24 +8,6 @@ export const picoHelpfulToucan: CharacterCard = {
   cardType: "character",
   name: "Pico",
   version: "Helpful Toucan",
-  i18n: {
-    en: {
-      name: "Pico",
-      version: "Helpful Toucan",
-    },
-    de: {
-      name: "Pico",
-      version: "Hilfsbereiter Tukan",
-    },
-    fr: {
-      name: "Pico",
-      version: "Toucan serviable",
-    },
-    it: {
-      name: "Pico",
-      version: "Utile Tucano",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "004",
@@ -41,4 +24,5 @@ export const picoHelpfulToucan: CharacterCard = {
     tcgPlayer: 550569,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: picoHelpfulToucanI18n,
 };

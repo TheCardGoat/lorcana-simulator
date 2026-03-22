@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tiggerOneOfAKindI18n } from "./127-tigger-one-of-a-kind.i18n";
 
 export const tiggerOneOfAKind: CharacterCard = {
   id: "n3U",
@@ -7,50 +8,6 @@ export const tiggerOneOfAKind: CharacterCard = {
   cardType: "character",
   name: "Tigger",
   version: "One of a Kind",
-  i18n: {
-    en: {
-      name: "Tigger",
-      version: "One of a Kind",
-      text: [
-        {
-          title: "ENERGETIC",
-          description: "Whenever you play an action, this character gets +2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Tigger",
-      version: "Einzigartig",
-      text: [
-        {
-          title: "VOLLER ENERGIE",
-          description:
-            "Jedes Mal, wenn du eine Aktion ausspielst, erhält dieser Charakter in diesem Zug +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Tigrou",
-      version: "Unique en son genre",
-      text: [
-        {
-          title: "ÉNERGIQUE",
-          description:
-            "Chaque fois que vous jouez une carte Action, ce personnage gagne +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Tigger",
-      version: "One of a Kind",
-      text: [
-        {
-          title: "ENERGETIC",
-          description: "Whenever you play an action, this character gets +2 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Winnie the Pooh",
   set: "002",
@@ -72,7 +29,6 @@ export const tiggerOneOfAKind: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Tigger"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -96,4 +52,5 @@ export const tiggerOneOfAKind: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: tiggerOneOfAKindI18n,
 };

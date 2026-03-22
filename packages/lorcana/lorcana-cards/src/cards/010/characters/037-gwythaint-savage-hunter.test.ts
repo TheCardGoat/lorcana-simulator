@@ -1,76 +1,115 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { deweyLovableShowoff } from "@lorcanito/lorcana-engine/cards/008";
-// Import { gwythaintSavageHunter } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Gwythaint - Savage Hunter", () => {
-//   It("should have Evasive keyword", () => {
-//     Const testEngine = new TestEngine({
-//       Play: [gwythaintSavageHunter],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(gwythaintSavageHunter);
-//     Expect(cardUnderTest.hasEvasive).toBe(true);
-//   });
-//
-//   It("should have SWOOPING STRIKE ability", () => {
-//     Const ability = gwythaintSavageHunter.abilities?.find(
-//       (a) => a.name === "SWOOPING STRIKE",
-//     );
-//     Expect(ability).toBeDefined();
-//   });
-//
-//   It("SWOOPING STRIKE - Whenever this character quests, each opponent chooses and exerts one of their ready characters", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [gwythaintSavageHunter],
-//       },
-//       {
-//         Play: [deweyLovableShowoff],
-//       },
-//     );
-//
-//     Const opponentCard = testEngine.getCardModel(deweyLovableShowoff);
-//
-//     Expect(opponentCard.ready).toBe(true);
-//
-//     Await testEngine.questCard(gwythaintSavageHunter);
-//
-//     Expect(testEngine.store.stackLayerStore.layers).toHaveLength(1);
-//     Expect(testEngine.store.priorityPlayer).toEqual("player_two");
-//
-//     TestEngine.changeActivePlayer("player_two");
-//     Await testEngine.resolveTopOfStack({ targets: [opponentCard] });
-//
-//     Expect(opponentCard.ready).toBe(false);
-//   });
-//
-//   It("SWOOPING STRIKE - Should not require a target when opponent has no ready characters", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [gwythaintSavageHunter],
-//       },
-//       {
-//         Play: [deweyLovableShowoff],
-//       },
-//     );
-//
-//     Const opponentCard = testEngine.getCardModel(deweyLovableShowoff);
-//
-//     // Exert the opponent's character so it's not ready
-//     OpponentCard.updateCardMeta({ exerted: true });
-//     Expect(opponentCard.ready).toBe(false);
-//
-//     Await testEngine.questCard(gwythaintSavageHunter);
-//
-//     // The ability should still trigger but auto-resolve since there are no valid targets
-//     Expect(testEngine.store.stackLayerStore.layers).toHaveLength(0);
-//     Expect(opponentCard.ready).toBe(false);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { gwythaintSavageHunter } from "./037-gwythaint-savage-hunter";
+
+const nonEvasiveAttacker = createMockCharacter({
+  id: "gwythaint-non-evasive-attacker",
+  name: "Non-Evasive Attacker",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+});
+
+const evasiveAttacker = createMockCharacter({
+  id: "gwythaint-evasive-attacker",
+  name: "Evasive Attacker",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  abilities: [
+    {
+      id: "gwythaint-evasive-attacker-kw",
+      keyword: "Evasive",
+      text: "Evasive",
+      type: "keyword",
+    },
+  ],
+});
+
+const readyOpponentA = createMockCharacter({
+  id: "gwythaint-ready-opponent-a",
+  name: "Ready Opponent A",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+});
+
+const readyOpponentB = createMockCharacter({
+  id: "gwythaint-ready-opponent-b",
+  name: "Ready Opponent B",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+});
+
+const exertedOpponent = createMockCharacter({
+  id: "gwythaint-exerted-opponent",
+  name: "Exerted Opponent",
+  cost: 2,
+  strength: 1,
+  willpower: 4,
+});
+
+describe("Gwythaint - Savage Hunter", () => {
+  it("cannot be challenged by non-Evasive characters, but can be challenged by Evasive ones", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: gwythaintSavageHunter, exerted: true }],
+        deck: 1,
+      },
+      {
+        play: [nonEvasiveAttacker, evasiveAttacker],
+        deck: 1,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().canChallenge(nonEvasiveAttacker, gwythaintSavageHunter)).toBe(
+      false,
+    );
+    expect(testEngine.asPlayerTwo().canChallenge(evasiveAttacker, gwythaintSavageHunter)).toBe(
+      true,
+    );
+  });
+
+  describe("SWOOPING STRIKE", () => {
+    it("makes each opponent choose and exert one of their ready characters after Gwythaint quests", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: gwythaintSavageHunter, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [readyOpponentA, readyOpponentB],
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().quest(gwythaintSavageHunter)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({ targets: [readyOpponentA] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().isExerted(readyOpponentA)).toBe(true);
+      expect(testEngine.asPlayerTwo().isExerted(readyOpponentB)).toBe(false);
+    });
+
+    it("does not prompt an opponent that has no ready characters to choose", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: gwythaintSavageHunter, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [{ card: exertedOpponent, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().quest(gwythaintSavageHunter)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
+      expect(testEngine.asPlayerTwo().isExerted(exertedOpponent)).toBe(true);
+    });
+  });
+});

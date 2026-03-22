@@ -2,8 +2,11 @@ import { describe, expect, it } from "bun:test";
 import type { I18nProperties } from "@tcg/lorcana-types";
 import {
   buildEnglishI18nProperties,
+  buildLocalizedI18nProperties,
   cardTextToRulesText,
   embedI18nInCanonicalCards,
+  splitLocalizedCardText,
+  splitKeywordAwareCardText,
 } from "../embed-card-i18n";
 import type { CanonicalCard, CardsAuxKv, LocalizationData } from "../types";
 
@@ -117,6 +120,280 @@ describe("embedI18nInCanonicalCards", () => {
         it: {},
       }),
     ).toThrow("Missing de localization");
+  });
+});
+
+describe("buildLocalizedI18nProperties", () => {
+  it("splits flat string text into structured entries", () => {
+    const result = buildLocalizedI18nProperties(
+      {
+        name: "Dingo",
+        version: "Fantôme de Jacob Marley",
+        text: "Boost 2 CONSÉQUENCE SÉPULCRALE Lorsque ce personnage est banni, chaque adversaire défausse une carte pour chaque carte sous ce personnage.",
+      },
+      "fr",
+    );
+
+    expect(result).toEqual({
+      name: "Dingo",
+      version: "Fantôme de Jacob Marley",
+      text: [
+        { title: "Boost 2" },
+        {
+          title: "CONSÉQUENCE SÉPULCRALE",
+          description:
+            "Lorsque ce personnage est banni, chaque adversaire défausse une carte pour chaque carte sous ce personnage.",
+        },
+      ],
+    });
+  });
+
+  it("passes through already-structured text unchanged", () => {
+    const structured = [
+      { title: "Potenziamento 2", description: "(Paga 2 per mettere una carta sotto.)" },
+    ];
+    const result = buildLocalizedI18nProperties(
+      {
+        name: "Pippo",
+        version: "Fantasma",
+        text: structured,
+      },
+      "it",
+    );
+
+    expect(result.text).toEqual(structured);
+  });
+});
+
+describe("splitKeywordAwareCardText", () => {
+  it("splits EN text with leading Evasive keyword", () => {
+    const result = splitKeywordAwareCardText(
+      "Evasive SINISTER SLITHER Your characters named Flotsam gain Evasive.",
+      "en",
+    );
+
+    expect(result).toEqual([
+      { title: "Evasive" },
+      {
+        title: "SINISTER SLITHER",
+        description: "Your characters named Flotsam gain Evasive.",
+      },
+    ]);
+  });
+
+  it("splits DE text with leading Wendig keyword", () => {
+    const result = splitKeywordAwareCardText(
+      "Wendig VERSCHWINDEN Wenn du diesen Charakter ausspielst, darfst du einen Charakter deiner Wahl zurück auf die zugehörige Hand schicken.",
+      "de",
+    );
+
+    expect(result).toEqual([
+      { title: "Wendig" },
+      {
+        title: "VERSCHWINDEN",
+        description:
+          "Wenn du diesen Charakter ausspielst, darfst du einen Charakter deiner Wahl zurück auf die zugehörige Hand schicken.",
+      },
+    ]);
+  });
+
+  it("splits FR text with leading Insaisissable keyword", () => {
+    const result = splitKeywordAwareCardText(
+      "Insaisissable TU DISPARAIS Lorsque vous jouez ce personnage, choisissez un personnage et renvoyez-le dans la main de son propriétaire.",
+      "fr",
+    );
+
+    expect(result).toEqual([
+      { title: "Insaisissable" },
+      {
+        title: "TU DISPARAIS",
+        description:
+          "Lorsque vous jouez ce personnage, choisissez un personnage et renvoyez-le dans la main de son propriétaire.",
+      },
+    ]);
+  });
+
+  it("splits text with multiple leading keywords (Rush + Challenger + Evasive in DE)", () => {
+    const result = splitKeywordAwareCardText("Rasant Herausfordern +3 Wendig", "de");
+
+    expect(result).toEqual([
+      { title: "Rasant" },
+      { title: "Herausfordern +3" },
+      { title: "Wendig" },
+    ]);
+  });
+
+  it("splits text with Shift keyword and named ability in DE", () => {
+    const result = splitKeywordAwareCardText(
+      "Gestaltwandel 5 Wendig BÖSES LÄCHELN {E} — Ziehe 1 Karte und wirf dann 1 Karte ab.",
+      "de",
+    );
+
+    expect(result).toEqual([
+      { title: "Gestaltwandel 5" },
+      { title: "Wendig" },
+      {
+        title: "BÖSES LÄCHELN",
+        description: "{E} — Ziehe 1 Karte und wirf dann 1 Karte ab.",
+      },
+    ]);
+  });
+
+  it("returns plain string for text that is just a keyword", () => {
+    expect(splitKeywordAwareCardText("Wendig", "de")).toBe("Wendig");
+  });
+
+  it("does not interfere with text that has no keywords", () => {
+    const result = splitKeywordAwareCardText(
+      "MAGICAL BLAST Deal 3 damage to chosen character.",
+      "en",
+    );
+
+    expect(result).toEqual([
+      {
+        title: "MAGICAL BLAST",
+        description: "Deal 3 damage to chosen character.",
+      },
+    ]);
+  });
+
+  it("splits DE text with trailing keyword (Singer)", () => {
+    const result = splitKeywordAwareCardText(
+      "UNDERDOG Falls dies dein erster Zug ist und du das Spiel nicht begonnen hast, zahlst du 1 weniger, um diesen Charakter auszuspielen. Singen 3",
+      "de",
+    );
+
+    expect(result).toEqual([
+      {
+        title: "UNDERDOG",
+        description:
+          "Falls dies dein erster Zug ist und du das Spiel nicht begonnen hast, zahlst du 1 weniger, um diesen Charakter auszuspielen.",
+      },
+      { title: "Singen 3" },
+    ]);
+  });
+});
+
+describe("splitLocalizedCardText", () => {
+  it("uses EN template to split DE text with leading keyword", () => {
+    const enText = [
+      { title: "Evasive" },
+      {
+        title: "DISAPPEAR",
+        description:
+          "When you play this character, you may return chosen character to their player's hand.",
+      },
+    ];
+
+    const result = splitLocalizedCardText(
+      "Wendig VERSCHWINDEN Wenn du diesen Charakter ausspielst, darfst du einen Charakter deiner Wahl zurück auf die zugehörige Hand schicken.",
+      "de",
+      enText,
+    );
+
+    expect(result).toEqual([
+      { title: "Wendig" },
+      {
+        title: "VERSCHWINDEN",
+        description:
+          "Wenn du diesen Charakter ausspielst, darfst du einen Charakter deiner Wahl zurück auf die zugehörige Hand schicken.",
+      },
+    ]);
+  });
+
+  it("fixes IT text that merged abilities into one entry using EN template", () => {
+    const enText = [
+      { title: "Evasive" },
+      {
+        title: "DISAPPEAR",
+        description:
+          "When you play this character, you may return chosen character to their player's hand.",
+      },
+    ];
+
+    const itText = [
+      {
+        title: "Evasive",
+        description:
+          "DISAPPEAR When you play this character, you may return chosen character to their player's hand.",
+      },
+    ];
+
+    const result = splitLocalizedCardText(itText, "it", enText);
+
+    expect(result).toEqual([
+      { title: "Evasive" },
+      {
+        title: "DISAPPEAR",
+        description:
+          "When you play this character, you may return chosen character to their player's hand.",
+      },
+    ]);
+  });
+
+  it("uses EN template to split FR text with three abilities", () => {
+    const enText = [
+      { title: "Shift 5" },
+      { title: "Evasive" },
+      {
+        title: "WICKED SMILE",
+        description: "{E} — Draw a card, then choose and discard a card.",
+      },
+    ];
+
+    const result = splitLocalizedCardText(
+      "Alter 5 Insaisissable SOURIRE MALICIEUX {E} — Piochez 1 carte, puis choisissez et défaussez 1 carte.",
+      "fr",
+      enText,
+    );
+
+    expect(result).toEqual([
+      { title: "Alter 5" },
+      { title: "Insaisissable" },
+      {
+        title: "SOURIRE MALICIEUX",
+        description: "{E} — Piochez 1 carte, puis choisissez et défaussez 1 carte.",
+      },
+    ]);
+  });
+
+  it("leaves well-structured text unchanged when it matches EN entry count", () => {
+    const enText = [{ title: "Evasive" }, { title: "PIXIE DUST", description: "Draw a card." }];
+
+    const localizedText = [
+      { title: "Wendig" },
+      { title: "FEENGLANZ", description: "Ziehe 1 Karte." },
+    ];
+
+    const result = splitLocalizedCardText(localizedText, "de", enText);
+
+    expect(result).toEqual(localizedText);
+  });
+
+  it("uses EN template to split DE text with trailing Singer keyword", () => {
+    const enText = [
+      {
+        title: "UNDERDOG",
+        description:
+          "If this is your first turn and you're not the first player, you pay 1 less to play this character.",
+      },
+      { title: "Singer 3" },
+    ];
+
+    const result = splitLocalizedCardText(
+      "UNDERDOG Falls dies dein erster Zug ist und du das Spiel nicht begonnen hast, zahlst du 1 weniger, um diesen Charakter auszuspielen. Singen 3 (Die Kosten dieses Charakters gelten als 3 für das Singen von Liedern.)",
+      "de",
+      enText,
+    );
+
+    expect(result).toEqual([
+      {
+        title: "UNDERDOG",
+        description:
+          "Falls dies dein erster Zug ist und du das Spiel nicht begonnen hast, zahlst du 1 weniger, um diesen Charakter auszuspielen.",
+      },
+      { title: "Singen 3" },
+    ]);
   });
 });
 

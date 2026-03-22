@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arielWhoseitCollectorI18n } from "./137-ariel-whoseit-collector.i18n";
 
 export const arielWhoseitCollector: CharacterCard = {
   id: "5XS",
@@ -7,49 +8,6 @@ export const arielWhoseitCollector: CharacterCard = {
   cardType: "character",
   name: "Ariel",
   version: "Whoseit Collector",
-  i18n: {
-    en: {
-      name: "Ariel",
-      version: "Whoseit Collector",
-      text: [
-        {
-          title: "LOOK AT THIS STUFF",
-          description: "Whenever you play an item, you may ready this character.",
-        },
-      ],
-    },
-    de: {
-      name: "Arielle",
-      version: "Krimskrams-Sammlerin",
-      text: [
-        {
-          title: "SIEHST DU DEN KRAM?",
-          description:
-            "Jedes Mal, wenn du einen Gegenstand ausspielst, darfst du diesen Charakter bereit machen.",
-        },
-      ],
-    },
-    fr: {
-      name: "ARIEL",
-      version: "Collectionneuse de couics et de couacs",
-      text: [
-        {
-          title: "VOIS CES TRÉSORS",
-          description: "Chaque fois que vous jouez un objet, vous pouvez redresser ce personnage.",
-        },
-      ],
-    },
-    it: {
-      name: "Ariel",
-      version: "Whoseit Collector",
-      text: [
-        {
-          title: "LOOK AT THIS STUFF",
-          description: "Whenever you play an item, you may ready this character.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Little Mermaid",
   set: "001",
@@ -60,7 +18,6 @@ export const arielWhoseitCollector: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: false,
-  missingImplementation: true,
   externalIds: {
     lorcast: "crd_a23c99ed9f3243969466fb000bd139dc",
     tcgPlayer: 502532,
@@ -77,20 +34,21 @@ export const arielWhoseitCollector: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "self",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
+          target: "SELF",
           type: "ready",
         },
         type: "optional",
       },
       id: "c6b-1",
-      text: "**PRINCE'S CHARM** You may ready this character.",
-      type: "action",
+      name: "LOOK AT THIS STUFF",
+      text: "LOOK AT THIS STUFF Whenever you play an item, you may ready this character.",
+      trigger: {
+        event: "play",
+        on: "YOUR_ITEMS",
+        timing: "whenever",
+      },
+      type: "triggered",
     },
   ],
+  i18n: arielWhoseitCollectorI18n,
 };

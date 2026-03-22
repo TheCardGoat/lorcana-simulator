@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chienpoImperialSoldierI18n } from "./178-chien-po-imperial-soldier.i18n";
 
 export const chienpoImperialSoldier: CharacterCard = {
   id: "Z6w",
@@ -7,34 +8,6 @@ export const chienpoImperialSoldier: CharacterCard = {
   cardType: "character",
   name: "Chien-Po",
   version: "Imperial Soldier",
-  i18n: {
-    en: {
-      name: "Chien-Po",
-      version: "Imperial Soldier",
-      text: "Bodyguard",
-    },
-    de: {
-      name: "Chien-Po",
-      version: "Soldat des Kaisers",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "Chien-Po",
-      version: "Soldat Impérial",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'un adversaire défie l'un de vos personnages, il doit, si possible, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "Chien-Po",
-      version: "Soldato Imperiale",
-      text: "Guardiano",
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "004",
@@ -59,4 +32,5 @@ export const chienpoImperialSoldier: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: chienpoImperialSoldierI18n,
 };

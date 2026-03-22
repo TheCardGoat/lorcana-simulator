@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMousePirateLookoutI18n } from "./120-minnie-mouse-pirate-lookout.i18n";
 
 export const minnieMousePirateLookout: CharacterCard = {
   id: "D2o",
@@ -7,52 +8,6 @@ export const minnieMousePirateLookout: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Pirate Lookout",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Pirate Lookout",
-      text: [
-        {
-          title: "LAND, HO!",
-          description:
-            "Once during your turn, whenever a card is put into your inkwell, you may return a location card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Minnie Mouse",
-      version: "Pirate Lookout",
-      text: [
-        {
-          title: "LAND, HO!",
-          description:
-            "Once during your turn, whenever a card is put into your inkwell, you may return a location card from your discard to your hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Minnie Mouse",
-      version: "Pirate Lookout",
-      text: [
-        {
-          title: "LAND, HO!",
-          description:
-            "Once during your turn, whenever a card is put into your inkwell, you may return a location card from your discard to your hand.",
-        },
-      ],
-    },
-    it: {
-      name: "Minnie Mouse",
-      version: "Pirate Lookout",
-      text: [
-        {
-          title: "LAND, HO!",
-          description:
-            "Once during your turn, whenever a card is put into your inkwell, you may return a location card from your discard to your hand.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "006",
   cardNumber: 120,
@@ -90,4 +45,5 @@ export const minnieMousePirateLookout: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: minnieMousePirateLookoutI18n,
 };

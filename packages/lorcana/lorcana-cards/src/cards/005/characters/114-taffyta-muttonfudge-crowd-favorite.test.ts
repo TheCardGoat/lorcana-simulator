@@ -1,41 +1,73 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { taffytaMuttonfudgeCrowdFavorite } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { rapunzelsTowerSecludedPrison } from "@lorcanito/lorcana-engine/cards/005/locations/locations";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Taffyta Muttonfudge - Crowd Favorite", () => {
-//   Describe("**SHOWSTOPPER** When you play this character, if you have a location in play, each opponent loses 1 lore.", () => {
-//     It("Has location in play", () => {
-//       Const testStore = new TestStore({
-//         Inkwell: taffytaMuttonfudgeCrowdFavorite.cost,
-//         Hand: [taffytaMuttonfudgeCrowdFavorite],
-//         Play: [rapunzelsTowerSecludedPrison],
-//       });
-//
-//       TestStore.store.tableStore.getTable("player_two").lore = 5;
-//       Const cardUnderTest = testStore.getCard(taffytaMuttonfudgeCrowdFavorite);
-//       CardUnderTest.playFromHand();
-//       TestStore.resolveTopOfStack({});
-//       Expect(testStore.getPlayerLore("player_two")).toBe(4);
-//     });
-//
-//     It("Doesn't have location in play", () => {
-//       Const testStore = new TestStore({
-//         Inkwell: taffytaMuttonfudgeCrowdFavorite.cost,
-//         Hand: [taffytaMuttonfudgeCrowdFavorite],
-//       });
-//
-//       TestStore.store.tableStore.getTable("player_two").lore = 5;
-//       Const cardUnderTest = testStore.getCard(taffytaMuttonfudgeCrowdFavorite);
-//       CardUnderTest.playFromHand();
-//       TestStore.resolveTopOfStack({});
-//       Expect(testStore.getPlayerLore("player_two")).toBe(5);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_TWO,
+  createMockLocation,
+} from "@tcg/lorcana-engine/testing";
+import { taffytaMuttonfudgeCrowdFavorite } from "./114-taffyta-muttonfudge-crowd-favorite";
+
+const mockLocation = createMockLocation({
+  id: "taffyta-test-location",
+  name: "Test Location",
+  cost: 2,
+});
+
+describe("Taffyta Muttonfudge - Crowd Favorite", () => {
+  describe("SHOWSTOPPER - When you play this character, if you have a location in play, each opponent loses 1 lore.", () => {
+    it("reduces each opponent lore by 1 when played with a location in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: taffytaMuttonfudgeCrowdFavorite.cost,
+          hand: [taffytaMuttonfudgeCrowdFavorite],
+          play: [mockLocation],
+        },
+        {
+          lore: 5,
+        },
+      );
+
+      expect(testEngine.getLore(PLAYER_TWO)).toBe(5);
+
+      expect(
+        testEngine.asPlayerOne().playCard(taffytaMuttonfudgeCrowdFavorite),
+      ).toBeSuccessfulCommand();
+
+      // Resolve triggered ability (SHOWSTOPPER)
+      if (testEngine.asPlayerOne().getBagCount() > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        ).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.getLore(PLAYER_TWO)).toBe(4);
+    });
+
+    it("does not reduce opponent lore when played without a location in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: taffytaMuttonfudgeCrowdFavorite.cost,
+          hand: [taffytaMuttonfudgeCrowdFavorite],
+        },
+        {
+          lore: 5,
+        },
+      );
+
+      expect(testEngine.getLore(PLAYER_TWO)).toBe(5);
+
+      expect(
+        testEngine.asPlayerOne().playCard(taffytaMuttonfudgeCrowdFavorite),
+      ).toBeSuccessfulCommand();
+
+      // No bag effects should be present (condition was not met)
+      if (testEngine.asPlayerOne().getBagCount() > 0) {
+        const effects = testEngine.asPlayerOne().getBagEffects();
+        if (effects.length > 0) {
+          testEngine.asPlayerOne().resolveBag(effects[0]!.id);
+        }
+      }
+
+      expect(testEngine.getLore(PLAYER_TWO)).toBe(5);
+    });
+  });
+});

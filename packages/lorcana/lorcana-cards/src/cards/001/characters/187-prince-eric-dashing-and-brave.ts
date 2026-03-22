@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princeEricDashingAndBraveI18n } from "./187-prince-eric-dashing-and-brave.i18n";
 
 export const princeEricDashingAndBrave: CharacterCard = {
   id: "yeQ",
@@ -7,28 +8,6 @@ export const princeEricDashingAndBrave: CharacterCard = {
   cardType: "character",
   name: "Prince Eric",
   version: "Dashing and Brave",
-  i18n: {
-    en: {
-      name: "Prince Eric",
-      version: "Dashing and Brave",
-      text: "Challenger +2",
-    },
-    de: {
-      name: "Prinz Eric",
-      version: "Elegant und kühn",
-      text: "Herausfordern +2",
-    },
-    fr: {
-      name: "PRINCE ERIC",
-      version: "Fougueux et courageux",
-      text: "Offensif +2",
-    },
-    it: {
-      name: "Prince Eric",
-      version: "Dashing and Brave",
-      text: "Challenger +2 (While challenging, this character gets +2.)",
-    },
-  },
   inkType: ["steel"],
   franchise: "Little Mermaid",
   set: "001",
@@ -54,4 +33,5 @@ export const princeEricDashingAndBrave: CharacterCard = {
       text: "Challenger +2.",
     },
   ],
+  i18n: princeEricDashingAndBraveI18n,
 };

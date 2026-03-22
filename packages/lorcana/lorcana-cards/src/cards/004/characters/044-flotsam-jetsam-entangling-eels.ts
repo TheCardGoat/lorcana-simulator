@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flotsamJetsamEntanglingEelsI18n } from "./044-flotsam-jetsam-entangling-eels.i18n";
 
 export const flotsamJetsamEntanglingEels: CharacterCard = {
   id: "Eq7",
@@ -7,36 +8,6 @@ export const flotsamJetsamEntanglingEels: CharacterCard = {
   cardType: "character",
   name: "Flotsam & Jetsam",
   version: "Entangling Eels",
-  i18n: {
-    en: {
-      name: "Flotsam & Jetsam",
-      version: "Entangling Eels",
-      text: [
-        {
-          title:
-            "Shift: Discard 2 cards (You may discard 2 cards to play this on top of one of your characters named Flotsam or Jetsam.)",
-        },
-        {
-          title: "(This character counts as being named both Flotsam and Jetsam.)",
-        },
-      ],
-    },
-    de: {
-      name: "Flotsam & Jetsam",
-      version: "Entangling Eels",
-      text: "Shift: Discard 2 cards (You may discard 2 cards to play this on top of one of your characters named Flotsam or Jetsam.) (This character counts as being named both Flotsam and Jetsam.)",
-    },
-    fr: {
-      name: "Flotsam & Jetsam",
-      version: "Entangling Eels",
-      text: "Shift: Discard 2 cards (You may discard 2 cards to play this on top of one of your characters named Flotsam or Jetsam.) (This character counts as being named both Flotsam and Jetsam.)",
-    },
-    it: {
-      name: "Flotsam & Jetsam",
-      version: "Entangling Eels",
-      text: "Shift: Discard 2 cards (You may discard 2 cards to play this on top of one of your characters named Flotsam or Jetsam.) (This character counts as being named both Flotsam and Jetsam.)",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Little Mermaid",
   set: "004",
@@ -61,5 +32,16 @@ export const flotsamJetsamEntanglingEels: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      type: "keyword",
+      keyword: "Shift",
+      cost: {
+        discardCards: 2,
+      },
+      shiftTarget: "Flotsam or Jetsam",
+      text: "Shift: Discard 2 cards (You may discard 2 cards to play this on top of one of your characters named Flotsam or Jetsam.)",
+    },
+  ],
+  i18n: flotsamJetsamEntanglingEelsI18n,
 };

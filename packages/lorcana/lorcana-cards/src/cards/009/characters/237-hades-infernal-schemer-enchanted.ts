@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hadesInfernalSchemerEnchantedI18n } from "./237-hades-infernal-schemer-enchanted.i18n";
 
 export const hadesInfernalSchemerEnchanted: CharacterCard = {
   id: "zLd",
@@ -7,52 +8,6 @@ export const hadesInfernalSchemerEnchanted: CharacterCard = {
   cardType: "character",
   name: "Hades",
   version: "Infernal Schemer",
-  i18n: {
-    en: {
-      name: "Hades",
-      version: "Infernal Schemer",
-      text: [
-        {
-          title: "IS THERE A DOWNSIDE TO THIS?",
-          description:
-            "When you play this character, you may put chosen opposing character into their player's inkwell facedown.",
-        },
-      ],
-    },
-    de: {
-      name: "Hades",
-      version: "Höllischer Intrigant",
-      text: [
-        {
-          title: "KÖNNTE DA EIN HAKEN SEIN?",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen gegnerischen Charakter deiner Wahl verdeckt in den zugehörigen Tintenvorrat legen.",
-        },
-      ],
-    },
-    fr: {
-      name: "HADÈS",
-      version: "Conspirateur infernal",
-      text: [
-        {
-          title: "Y AURAIT-IL UN OS LA-DESSOUS?",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage adverse et le placer, face cachée, dans la réserve d'encre de son propriétaire.",
-        },
-      ],
-    },
-    it: {
-      name: "Hades",
-      version: "Infernal Schemer",
-      text: [
-        {
-          title: "IS THERE A DOWNSIDE TO THIS?",
-          description:
-            "When you play this character, you may put chosen opposing character into their player's inkwell facedown.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Hercules",
   set: "009",
@@ -70,9 +25,9 @@ export const hadesInfernalSchemerEnchanted: CharacterCard = {
   },
   text: [
     {
-      title: "IS THERE A DOWNSIDE TO THIS?",
+      title: "IS THERE",
       description:
-        "When you play this character, you may put chosen opposing character into their player's inkwell facedown.",
+        "A DOWNSIDE TO THIS? When you play this character, you may put chosen opposing character into their player's inkwell facedown.",
     },
   ],
   classifications: ["Dreamborn", "Villain", "Deity"],
@@ -82,7 +37,13 @@ export const hadesInfernalSchemerEnchanted: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           facedown: true,
-          source: "chosen-character",
+          source: {
+            selector: "chosen",
+            count: 1,
+            owner: "opponent",
+            zones: ["play"],
+            cardTypes: ["character"],
+          },
           target: "OPPONENT",
           type: "put-into-inkwell",
         },
@@ -99,4 +60,5 @@ export const hadesInfernalSchemerEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: hadesInfernalSchemerEnchantedI18n,
 };

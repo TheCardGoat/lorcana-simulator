@@ -47,9 +47,6 @@ describe("The Bayou - Mysterious Swamp", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }).success).toBe(
-      true,
-    );
     expect(testEngine.asPlayerOne().resolveNextPending({ targets: [discardFodder] }).success).toBe(
       true,
     );

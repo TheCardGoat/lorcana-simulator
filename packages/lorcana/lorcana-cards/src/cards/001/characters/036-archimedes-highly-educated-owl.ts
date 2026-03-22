@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { archimedesHighlyEducatedOwlI18n } from "./036-archimedes-highly-educated-owl.i18n";
 
 export const archimedesHighlyEducatedOwl: CharacterCard = {
   id: "mgF",
@@ -7,24 +8,6 @@ export const archimedesHighlyEducatedOwl: CharacterCard = {
   cardType: "character",
   name: "Archimedes",
   version: "Highly Educated Owl",
-  i18n: {
-    en: {
-      name: "Archimedes",
-      version: "Highly Educated Owl",
-    },
-    de: {
-      name: "Archimedes",
-      version: "Hochgebildeter Kauz",
-    },
-    fr: {
-      name: "ARCHIMÈDE",
-      version: "Hibou extrêmement instruit",
-    },
-    it: {
-      name: "Archimedes",
-      version: "Highly Educated Owl",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "001",
@@ -41,4 +24,5 @@ export const archimedesHighlyEducatedOwl: CharacterCard = {
     tcgPlayer: 501406,
   },
   classifications: ["Dreamborn", "Ally"],
+  i18n: archimedesHighlyEducatedOwlI18n,
 };

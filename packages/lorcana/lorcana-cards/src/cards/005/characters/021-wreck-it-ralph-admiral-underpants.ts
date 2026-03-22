@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { wreckitRalphAdmiralUnderpantsI18n } from "./021-wreck-it-ralph-admiral-underpants.i18n";
 
 export const wreckitRalphAdmiralUnderpants: CharacterCard = {
   id: "rui",
@@ -7,52 +8,6 @@ export const wreckitRalphAdmiralUnderpants: CharacterCard = {
   cardType: "character",
   name: "Wreck-It Ralph",
   version: "Admiral Underpants",
-  i18n: {
-    en: {
-      name: "Wreck-It Ralph",
-      version: "Admiral Underpants",
-      text: [
-        {
-          title: "I'VE GOT THE COOLEST FRIEND",
-          description:
-            "When you play this character, return a character card from your discard to your hand. If that card is a Princess character card, gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Randale Ralph",
-      version: "Admiral Unterbuxe",
-      text: [
-        {
-          title: "ICH HABE DIE COOLSTE FREUNDIN",
-          description:
-            "Wenn du diesen Charakter ausspielst, nimm 1 Charakterkarte aus deinem Ablagestapel zurück auf deine Hand. Falls jene Karte eine Prinzessin-Charakterkarte ist, sammelst du 2 Legenden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Ralph la Casse",
-      version: "Amiral Couche-culotte",
-      text: [
-        {
-          title: "LA MEILLEURE AMIE DU MONDE",
-          description:
-            "Lorsque vous jouez ce personnage, renvoyez une carte Personnage de votre défausse dans votre main. S'il s'agit d'un personnage Princesse, gagnez 2 éclats de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Ralph Spaccatutto",
-      version: "Ammiraglio Mutandoni",
-      text: [
-        {
-          title: "HO L'AMICA PIÙ STRAORDINARIA",
-          description:
-            "Quando giochi questo personaggio, riprendi in mano una carta personaggio dai tuoi scarti. Se quella carta è una carta personaggio Principessa, ottieni 2 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -78,17 +33,26 @@ export const wreckitRalphAdmiralUnderpants: CharacterCard = {
   abilities: [
     {
       effect: {
-        condition: {
-          expression: "that card is a Princess character card",
-          type: "if",
-        },
-        then: {
-          amount: 2,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        type: "sequence",
+        steps: [
+          {
+            type: "return-from-discard",
+            cardType: "character",
+            target: "CONTROLLER",
+          },
+          {
+            type: "conditional",
+            condition: {
+              type: "returned-card-is-princess",
+            },
+            then: {
+              amount: 2,
+              type: "gain-lore",
+            },
+          },
+        ],
       },
-      id: "147-1",
+      id: "rui-1",
       name: "I'VE GOT THE COOLEST FRIEND",
       text: "I'VE GOT THE COOLEST FRIEND When you play this character, return a character card from your discard to your hand. If that card is a Princess character card, gain 2 lore.",
       trigger: {
@@ -99,4 +63,5 @@ export const wreckitRalphAdmiralUnderpants: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: wreckitRalphAdmiralUnderpantsI18n,
 };

@@ -29,6 +29,7 @@ function createBoard(): LorcanaProjectedBoardView {
     playerOrder: [playerOneId, playerTwoId],
     players: {
       [playerOneId]: {
+        canAddCardToInkwell: false,
         deckCount: 10,
         discard: [],
         hand: [],
@@ -38,6 +39,7 @@ function createBoard(): LorcanaProjectedBoardView {
         play: [],
       },
       [playerTwoId]: {
+        canAddCardToInkwell: false,
         deckCount: 12,
         discard: [],
         hand: [],
@@ -61,7 +63,6 @@ function createBoard(): LorcanaProjectedBoardView {
     winner: null,
   };
 }
-
 function createEngine(board: LorcanaProjectedBoardView): LorcanaEngineBase {
   return {
     engine: Object.create(null) as LorcanaEngineBase["engine"],
@@ -69,6 +70,9 @@ function createEngine(board: LorcanaProjectedBoardView): LorcanaEngineBase {
     getBoard: () => board,
     getClientPlayerId: () => "player-two",
     enumerateMoves: () => [],
+    getAvailableMoves: () => [],
+    getMoveOptions: () => [],
+    validateMove: () => ({ success: true }),
   } as unknown as LorcanaEngineBase;
 }
 
@@ -111,11 +115,11 @@ describe("visual settings render integration", () => {
 
     expect(body).toContain('data-owner-id="player-one"');
     expect(body).toContain(
-      "https://r2.tcg.online/public/lorcana/simulator/card-back/back-white.webp",
+      "https://r2.tcg.online/public/lorcana/simulator/card-back/back-white-square.webp",
     );
     expect(body).toContain('data-owner-id="player-two"');
     expect(body).toContain(
-      "https://r2.tcg.online/public/lorcana/simulator/card-back/back-yellow.webp",
+      "https://r2.tcg.online/public/lorcana/simulator/card-back/back-yellow-square.webp",
     );
   });
 });

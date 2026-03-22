@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 14 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_13.md) | [Next →](AUDIT_INVENTORY_CHUNK_15.md)
-
 
 - [ ] **009/actions/emerald/094-stand-out.test.ts**
   - Card: `009/actions/emerald/094-stand-out.ts`

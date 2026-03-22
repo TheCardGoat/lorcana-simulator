@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { magicalAidI18n } from "./063-magical-aid.i18n";
 
 export const magicalAid: ActionCard = {
   id: "ntG",
@@ -6,24 +7,6 @@ export const magicalAid: ActionCard = {
   reprints: ["set5-063"],
   cardType: "action",
   name: "Magical Aid",
-  i18n: {
-    en: {
-      name: "Magical Aid",
-      text: 'Chosen character gains Challenger +3 and "When this character is banished in a challenge, return this card to your hand" this turn. (They get +3 {S} while challenging.)',
-    },
-    de: {
-      name: "Magische Unterstützung",
-      text: 'Ein Charakter deiner Wahl erhält in diesem Zug: "Wenn dieser Charakter durch eine Herausforderung verbannt wird, nimm ihn zurück auf deine Hand" und Herausfordern +3. (Während der Charakter herausfordert, erhält er +3.)',
-    },
-    fr: {
-      name: "Assistance magique",
-      text: 'Choisissez un personnage qui gagne Offensif +3 et "lorsque ce personnage est banni via un défi, renvoyez cette carte dans votre main" pour le reste de ce tour.',
-    },
-    it: {
-      name: "Aiuto Magico",
-      text: 'Un personaggio a tua scelta ottiene Sfidante +3 e "Quando questo personaggio viene esiliato in una sfida, riprendi in mano questa carta" per questo turno.',
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "005",
@@ -69,4 +52,5 @@ export const magicalAid: ActionCard = {
       type: "action",
     },
   ],
+  i18n: magicalAidI18n,
 };

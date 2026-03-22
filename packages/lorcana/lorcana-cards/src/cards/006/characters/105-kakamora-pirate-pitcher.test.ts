@@ -1,42 +1,129 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { mrSmeeBumblingMate } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { tipoGrowingSon } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { kakamoraPiratePitcher } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Kakamora - Pirate Pitcher", () => {
-//   It("DIZZYING SPEED When you play this character, chosen Pirate character gains Evasive until the start of your next turn. (Only characters with Evasive can challenge them.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: kakamoraPiratePitcher.cost,
-//       Hand: [kakamoraPiratePitcher],
-//       Play: [mrSmeeBumblingMate],
-//     });
-//     Const target = testEngine.getCardModel(mrSmeeBumblingMate);
-//
-//     Await testEngine.playCard(kakamoraPiratePitcher, {
-//       Targets: [mrSmeeBumblingMate],
-//     });
-//     Expect(target.hasEvasive);
-//   });
-//
-//   It("Cannot target non-pirate character.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: kakamoraPiratePitcher.cost,
-//       Hand: [kakamoraPiratePitcher],
-//       Play: [tipoGrowingSon],
-//     });
-//
-//     Await testEngine.playCard(kakamoraPiratePitcher);
-//     Const target = testEngine.getCardModel(tipoGrowingSon);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Expect(testEngine.stackLayers).toHaveLength(0);
-//     Expect(!target.hasEvasive);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { kakamoraPiratePitcher } from "./105-kakamora-pirate-pitcher";
+
+const pirateCharacter = createMockCharacter({
+  id: "kakamora-test-pirate",
+  name: "Friendly Pirate",
+  cost: 3,
+  classifications: ["Storyborn", "Pirate"],
+});
+
+const nonPirateCharacter = createMockCharacter({
+  id: "kakamora-test-non-pirate",
+  name: "Non-Pirate Character",
+  cost: 3,
+  classifications: ["Storyborn", "Hero"],
+});
+
+describe("Kakamora - Pirate Pitcher", () => {
+  describe("DIZZYING SPEED - When you play this character, chosen Pirate character gains Evasive until the start of your next turn.", () => {
+    it("grants Evasive to chosen Pirate character when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: kakamoraPiratePitcher.cost,
+          hand: [kakamoraPiratePitcher],
+          play: [pirateCharacter],
+          deck: 2,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().hasKeyword(pirateCharacter, "Evasive")).toBe(false);
+
+      expect(testEngine.asPlayerOne().playCard(kakamoraPiratePitcher)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          resolveOptional: true,
+          targets: [pirateCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().hasKeyword(pirateCharacter, "Evasive")).toBe(true);
+    });
+
+    it("Evasive expires at the start of your next turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: kakamoraPiratePitcher.cost,
+          hand: [kakamoraPiratePitcher],
+          play: [pirateCharacter],
+          deck: 2,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(kakamoraPiratePitcher)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          resolveOptional: true,
+          targets: [pirateCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().hasKeyword(pirateCharacter, "Evasive")).toBe(true);
+
+      // Player one passes turn — Evasive should still be active during opponent's turn
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().hasKeyword(pirateCharacter, "Evasive")).toBe(true);
+
+      // Opponent passes turn — Evasive expires at start of player one's next turn
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().hasKeyword(pirateCharacter, "Evasive")).toBe(false);
+    });
+
+    it("cannot target a non-Pirate character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: kakamoraPiratePitcher.cost,
+          hand: [kakamoraPiratePitcher],
+          play: [nonPirateCharacter],
+          deck: 2,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(kakamoraPiratePitcher)).toBeSuccessfulCommand();
+
+      // No valid Pirate targets exist — trying to target non-pirate should fail
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      if (bagEffects.length > 0) {
+        const bagId = bagEffects[0]!.id;
+        expect(
+          testEngine.asPlayerOne().resolveBag(bagId, {
+            resolveOptional: true,
+            targets: [nonPirateCharacter],
+          }),
+        ).not.toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.asPlayerOne().hasKeyword(nonPirateCharacter, "Evasive")).toBe(false);
+    });
+
+    it("is optional and can be declined", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: kakamoraPiratePitcher.cost,
+          hand: [kakamoraPiratePitcher],
+          play: [pirateCharacter],
+          deck: 2,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(kakamoraPiratePitcher)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // Evasive not granted since the effect was declined
+      expect(testEngine.asPlayerOne().hasKeyword(pirateCharacter, "Evasive")).toBe(false);
+    });
+  });
+});

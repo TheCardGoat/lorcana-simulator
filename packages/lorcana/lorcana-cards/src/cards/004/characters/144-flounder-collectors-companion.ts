@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flounderCollectorsCompanionI18n } from "./144-flounder-collectors-companion.i18n";
 
 export const flounderCollectorsCompanion: CharacterCard = {
   id: "xbo",
@@ -7,37 +8,6 @@ export const flounderCollectorsCompanion: CharacterCard = {
   cardType: "character",
   name: "Flounder",
   version: "Collector’s Companion",
-  i18n: {
-    en: {
-      name: "Flounder",
-      version: "Collector’s Companion",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "I'M NOT A GUPPY",
-          description:
-            "If you have a character named Ariel in play, you pay 1 {I} less to play this character.",
-        },
-      ],
-    },
-    de: {
-      name: "Fabius",
-      version: "Begleiter der Sammlerin",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) ICH BIN KEINE KAULQUAPPE Wenn du einen Arielle-Charakter im Spiel hast, zahlst du 1 weniger, um diesen Charakter auszuspielen.",
-    },
-    fr: {
-      name: "Polochon",
-      version: "Compagnon de la collectionneuse",
-      text: "Soutien JE NE SUIS PAS UN POISSON-LUNE Si vous avez un personnage Ariel en jeu, jouer ce personnage coûte 1 de moins.",
-    },
-    it: {
-      name: "Flounder",
-      version: "Compagno della Collezionista",
-      text: "Aiutante NON SONO UN PESCE ROSSO Se hai in gioco un personaggio chiamato Ariel, paga 1 in meno per giocare questo personaggio.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Little Mermaid",
   set: "004",
@@ -57,9 +27,9 @@ export const flounderCollectorsCompanion: CharacterCard = {
       title: "Support",
     },
     {
-      title: "I'M NOT A GUPPY",
+      title: "I'M NOT",
       description:
-        "If you have a character named Ariel in play, you pay 1 {I} less to play this character.",
+        "A GUPPY If you have a character named Ariel in play, you pay 1 {I} less to play this character.",
     },
   ],
   classifications: ["Storyborn", "Ally"],
@@ -71,35 +41,22 @@ export const flounderCollectorsCompanion: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        controller: "you",
+        name: "Ariel",
+        type: "has-named-character",
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            filters: [
-              {
-                type: "name",
-                equals: "Ariel",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+        amount: 1,
+        cardType: "character",
+        type: "cost-reduction",
       },
       id: "1n4-2",
+      name: "I'M NOT A GUPPY",
+      sourceZones: ["hand"],
       text: "I'M NOT A GUPPY If you have a character named Ariel in play, you pay 1 {I} less to play this character.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: flounderCollectorsCompanionI18n,
 };

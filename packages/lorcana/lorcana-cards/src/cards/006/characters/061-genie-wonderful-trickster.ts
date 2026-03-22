@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { genieWonderfulTricksterI18n } from "./061-genie-wonderful-trickster.i18n";
 
 export const genieWonderfulTrickster: CharacterCard = {
   id: "o38",
@@ -7,41 +8,6 @@ export const genieWonderfulTrickster: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "Wonderful Trickster",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "Wonderful Trickster",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "YOUR REWARD AWAITS",
-          description: "Whenever you play a card, draw a card.",
-        },
-        {
-          title: "FORBIDDEN TREASURE",
-          description:
-            "At the end of your turn, put all the cards in your hand on the bottom of your deck in any order.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschinni",
-      version: "Wunderbarer Zauberkünstler",
-      text: "Gestaltwandel 5 DEINE BELOHNUNG WARTET Jedes Mal, wenn du eine Karte ausspielst, ziehe 1 Karte. VERBOTENER SCHATZ Am Ende deines Zuges, lege alle Karten aus deiner Hand in beliebiger Reihenfolge unter dein Deck.",
-    },
-    fr: {
-      name: "Génie",
-      version: "Farceur merveilleux",
-      text: "Alter 5 TA RÉCOMPENSE T'ATTEND Chaque fois que vous jouez une carte, piochez une carte. TRÉSOR INTERDIT À la fin de votre tour, placez toutes les cartes de votre main sous votre pioche dans l'ordre de votre choix.",
-    },
-    it: {
-      name: "Genio",
-      version: "Incredibile Prestigiatore",
-      text: "Trasformazione 5 IL TUO PREMIO TI ATTENDE Ogni volta che giochi una carta, pesca una carta. TESORO PROIBITO Alla fine del tuo turno, metti tutte le carte nella tua mano in fondo al tuo mazzo in qualsiasi ordine.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "006",
@@ -93,27 +59,34 @@ export const genieWonderfulTrickster: CharacterCard = {
       trigger: {
         event: "play",
         on: {
-          cardType: "card",
           controller: "you",
+          excludeSelf: true,
         },
         timing: "whenever",
       },
       type: "triggered",
     },
     {
+      id: "1yx-3",
+      name: "FORBIDDEN TREASURE",
+      trigger: {
+        event: "end-turn",
+        on: "YOU",
+        timing: "at",
+      },
       effect: {
+        ordering: "player-choice",
         target: {
-          cardTypes: ["card"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["hand"],
         },
         type: "put-on-bottom",
       },
-      id: "1yx-3",
       text: "FORBIDDEN TREASURE At the end of your turn, put all the cards in your hand on the bottom of your deck in any order.",
-      type: "action",
+      type: "triggered",
     },
   ],
+  i18n: genieWonderfulTricksterI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madHatterUnrulyEccentricEnchantedI18n } from "./213-mad-hatter-unruly-eccentric-enchanted.i18n";
 
 export const madHatterUnrulyEccentricEnchanted: CharacterCard = {
   id: "b11",
@@ -7,52 +8,6 @@ export const madHatterUnrulyEccentricEnchanted: CharacterCard = {
   cardType: "character",
   name: "Mad Hatter",
   version: "Unruly Eccentric",
-  i18n: {
-    en: {
-      name: "Mad Hatter",
-      version: "Unruly Eccentric",
-      text: [
-        {
-          title: "UNBIRTHDAY PRESENT",
-          description:
-            "Whenever a damaged character challenges another character, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Mad Hatter",
-      version: "Unruly Eccentric",
-      text: [
-        {
-          title: "UNBIRTHDAY PRESENT",
-          description:
-            "Whenever a damaged character challenges another character, you may draw a card.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mad Hatter",
-      version: "Unruly Eccentric",
-      text: [
-        {
-          title: "UNBIRTHDAY PRESENT",
-          description:
-            "Whenever a damaged character challenges another character, you may draw a card.",
-        },
-      ],
-    },
-    it: {
-      name: "Mad Hatter",
-      version: "Unruly Eccentric",
-      text: [
-        {
-          title: "UNBIRTHDAY PRESENT",
-          description:
-            "Whenever a damaged character challenges another character, you may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald", "ruby"],
   franchise: "Alice in Wonderland",
   set: "007",
@@ -98,4 +53,5 @@ export const madHatterUnrulyEccentricEnchanted: CharacterCard = {
       text: "UNBIRTHDAY PRESENT Whenever a damaged character challenges another character, you may draw a card.",
     },
   ],
+  i18n: madHatterUnrulyEccentricEnchantedI18n,
 };

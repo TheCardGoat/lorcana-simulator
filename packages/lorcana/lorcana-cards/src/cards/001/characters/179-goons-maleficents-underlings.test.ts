@@ -1,13 +1,34 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { goonsMaleficentsUnderlings } from "./179-goons-maleficents-underlings";
 
 describe("Goons - Maleficent’s Underlings", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [goonsMaleficent] });
-  //   Expect(testEngine.getCardModel(goonsMaleficent).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+  it("can be played and quest on a later turn like a vanilla character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [goonsMaleficentsUnderlings],
+        inkwell: goonsMaleficentsUnderlings.cost,
+        deck: 5,
+      },
+      {
+        deck: 5,
+      },
+    );
+
+    expect(goonsMaleficentsUnderlings.vanilla).toBe(true);
+
+    expect(testEngine.asPlayerOne().playCard(goonsMaleficentsUnderlings)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardZone(goonsMaleficentsUnderlings)).toBe("play");
+    expect(testEngine.asPlayerOne().getCard(goonsMaleficentsUnderlings)).toMatchObject({
+      strength: 2,
+      willpower: 2,
+      lore: 1,
+    });
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().quest(goonsMaleficentsUnderlings)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getLore("player_one")).toBe(1);
+  });
 });

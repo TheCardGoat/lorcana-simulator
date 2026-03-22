@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { francineEyeingTheEvidenceI18n } from "./176-francine-eyeing-the-evidence.i18n";
 
 export const francineEyeingTheEvidence: CharacterCard = {
   id: "tji",
@@ -7,28 +8,6 @@ export const francineEyeingTheEvidence: CharacterCard = {
   cardType: "character",
   name: "Francine",
   version: "Eyeing the Evidence",
-  i18n: {
-    en: {
-      name: "Francine",
-      version: "Eyeing the Evidence",
-      text: "Resist +1",
-    },
-    de: {
-      name: "Francine",
-      version: "Die Beweise im Blick",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "Francine",
-      version: "Examinant les preuves",
-      text: "Résistance +1",
-    },
-    it: {
-      name: "Francine",
-      version: "Che Esamina le Prove",
-      text: "Resistere +1",
-    },
-  },
   inkType: ["steel"],
   franchise: "Zootropolis",
   set: "010",
@@ -54,4 +33,5 @@ export const francineEyeingTheEvidence: CharacterCard = {
       text: "Resist +1",
     },
   ],
+  i18n: francineEyeingTheEvidenceI18n,
 };

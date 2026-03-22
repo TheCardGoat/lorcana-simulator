@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { winnieThePoohHungryBearI18n } from "./151-winnie-the-pooh-hungry-bear.i18n";
 
 export const winnieThePoohHungryBear: CharacterCard = {
   id: "h5D",
@@ -7,52 +8,6 @@ export const winnieThePoohHungryBear: CharacterCard = {
   cardType: "character",
   name: "Winnie the Pooh",
   version: "Hungry Bear",
-  i18n: {
-    en: {
-      name: "Winnie the Pooh",
-      version: "Hungry Bear",
-      text: [
-        {
-          title: "LOOKING FOR A MORSEL",
-          description:
-            "When you play this character, you may return an item card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Winnie Puuh",
-      version: "Hungriger Bär",
-      text: [
-        {
-          title: "AUF DER SUCHE NACH EINEM HÄPPCHEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du 1 Gegenstandskarte aus deinem Ablagestapel zurück auf deine Hand nehmen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Winnie l'ourson",
-      version: "Ours affamé",
-      text: [
-        {
-          title: "CHERCHER DE QUOI GRIGNOTER",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez renvoyer dans votre main une carte Objet de votre défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Winnie the Pooh",
-      version: "Orso Affamato",
-      text: [
-        {
-          title: "IN CERCA DI UNA GOCCIA",
-          description:
-            "Quando giochi questo personaggio, puoi riprendere in mano una carta oggetto dai tuoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Winnie the Pooh",
   set: "011",
@@ -69,9 +24,9 @@ export const winnieThePoohHungryBear: CharacterCard = {
   },
   text: [
     {
-      title: "LOOKING FOR A MORSEL",
+      title: "LOOKING FOR",
       description:
-        "When you play this character, you may return an item card from your discard to your hand.",
+        "A MORSEL When you play this character, you may return an item card from your discard to your hand.",
     },
   ],
   classifications: ["Storyborn", "Hero"],
@@ -97,4 +52,5 @@ export const winnieThePoohHungryBear: CharacterCard = {
       text: "LOOKING FOR A MORSEL When you play this character, you may return an item card from your discard to your hand.",
     },
   ],
+  i18n: winnieThePoohHungryBearI18n,
 };

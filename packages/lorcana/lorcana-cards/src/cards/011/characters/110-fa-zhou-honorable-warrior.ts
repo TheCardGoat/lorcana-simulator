@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { faZhouHonorableWarriorI18n } from "./110-fa-zhou-honorable-warrior.i18n";
 
 export const faZhouHonorableWarrior: CharacterCard = {
   id: "nta",
@@ -7,48 +8,6 @@ export const faZhouHonorableWarrior: CharacterCard = {
   cardType: "character",
   name: "Fa Zhou",
   version: "Honorable Warrior",
-  i18n: {
-    en: {
-      name: "Fa Zhou",
-      version: "Honorable Warrior",
-      text: [
-        {
-          title: "BATTLE WOUND",
-          description: "This character enters play with 2 damage.",
-        },
-      ],
-    },
-    de: {
-      name: "Fa Zhou",
-      version: "Ehrenwerter Krieger",
-      text: [
-        {
-          title: "KRIEGSWUNDE",
-          description: "Dieser Charakter kommt mit 2 Schaden auf ihm ins Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Fa Zhou",
-      version: "Guerrier honorable",
-      text: [
-        {
-          title: "BLESSURE AU COMBAT",
-          description: "Ce personnage entre en jeu avec 2 dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "Fa Zhou",
-      version: "Guerriero Onorevole",
-      text: [
-        {
-          title: "FERITA DI GUERRA",
-          description: "Questo personaggio entra in gioco con 2 danni.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mulan",
   set: "011",
@@ -74,12 +33,13 @@ export const faZhouHonorableWarrior: CharacterCard = {
     {
       id: "12j-1",
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 2,
+        type: "enters-with-damage",
       },
       type: "static",
       name: "BATTLE WOUND",
       text: "BATTLE WOUND This character enters play with 2 damage.",
     },
   ],
+  i18n: faZhouHonorableWarriorI18n,
 };

@@ -1,92 +1,92 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { donaldDuckMusketeer } from "./177-donald-duck-musketeer";
+import { goofyMusketeer } from "./004-goofy-musketeer";
+import { mickeyMouseMusketeer } from "./186-mickey-mouse-musketeer";
+import { lefouBumbler } from "./008-lefou-bumbler";
 
-describe("Donald Duck - Musketeer", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [donaldDuckMusketeer] });
-  //   Expect(testEngine.getCardModel(donaldDuckMusketeer).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const nonMusketeerCharacter = createMockCharacter({
+  id: "non-musketeer-char",
+  name: "Non Musketeer Character",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   DonaldDuckMusketeer,
-//   GoofyMusketeer,
-//   JumbaJokibaaRenegadeScientist,
-//   LefouBumbler,
-//   MickeyMouseMusketeer,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Donald Duck - Musketeer", () => {
-//   Describe("**STAY ALERT!** During your turn, your Musketeer characters gain **Evasive.** _(They can challenge characters with Evasive.)_", () => {
-//     It("during your turn, Musketeer characters gain **Evasive.**", () => {
-//       Const testStore = new TestStore({
-//         Play: [mickeyMouseMusketeer, donaldDuckMusketeer, goofyMusketeer],
-//       });
-//
-//       Const target = testStore.getByZoneAndId("play", mickeyMouseMusketeer.id);
-//       Const anotherTarget = testStore.getByZoneAndId("play", goofyMusketeer.id);
-//
-//       Expect(target.hasEvasive).toEqual(true);
-//       Expect(anotherTarget.hasEvasive).toEqual(true);
-//     });
-//
-//     It("during OPPONENT's turn, Musketeer characters DON'T gain **Evasive.**", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [mickeyMouseMusketeer, donaldDuckMusketeer, goofyMusketeer],
-//         },
-//         {
-//           Deck: 1,
-//         },
-//       );
-//
-//       Const target = testStore.getByZoneAndId("play", mickeyMouseMusketeer.id);
-//       Const anotherTarget = testStore.getByZoneAndId("play", goofyMusketeer.id);
-//
-//       TestStore.store.passTurn("player_one");
-//
-//       Expect(target.hasEvasive).toEqual(false);
-//       Expect(anotherTarget.hasEvasive).toEqual(false);
-//     });
-//
-//     It("Non-musketeers don't get the bonus", () => {
-//       Const testStore = new TestStore({
-//         Play: [lefouBumbler, jumbaJokibaaRenegadeScientist],
-//       });
-//
-//       Const target = testStore.getByZoneAndId("play", lefouBumbler.id);
-//       Const anotherTarget = testStore.getByZoneAndId(
-//         "play",
-//         JumbaJokibaaRenegadeScientist.id,
-//       );
-//
-//       Expect(target.hasEvasive).toEqual(false);
-//       Expect(anotherTarget.hasEvasive).toEqual(false);
-//     });
-//   });
-//
-//   It("**Bodyguard** _(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)_", () => {
-//     Const testStore = new TestStore({
-//       Play: [donaldDuckMusketeer],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       DonaldDuckMusketeer.id,
-//     );
-//
-//     Expect(cardUnderTest.hasBodyguard).toBe(true);
-//   });
-// });
-//
+describe("Donald Duck - Musketeer", () => {
+  it("has Bodyguard", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [donaldDuckMusketeer],
+      deck: 1,
+    });
+
+    expect(testEngine.asPlayerOne()).toHaveKeyword({
+      card: donaldDuckMusketeer,
+      keyword: "Bodyguard",
+    });
+  });
+
+  describe("STAY ALERT! — During your turn, your Musketeer characters gain Evasive.", () => {
+    it("during your turn, Musketeer characters gain Evasive", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [donaldDuckMusketeer, mickeyMouseMusketeer, goofyMusketeer],
+          deck: 1,
+        },
+        {
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.hasKeyword(mickeyMouseMusketeer, "Evasive")).toBe(true);
+      expect(testEngine.hasKeyword(goofyMusketeer, "Evasive")).toBe(true);
+    });
+
+    it("during your turn, Donald Duck himself gains Evasive", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [donaldDuckMusketeer],
+          deck: 1,
+        },
+        {
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.hasKeyword(donaldDuckMusketeer, "Evasive")).toBe(true);
+    });
+
+    it("during OPPONENT's turn, Musketeer characters do NOT gain Evasive", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [donaldDuckMusketeer, mickeyMouseMusketeer, goofyMusketeer],
+          deck: 1,
+        },
+        {
+          deck: 1,
+        },
+      );
+
+      testEngine.asServer().passTurn();
+
+      expect(testEngine.hasKeyword(mickeyMouseMusketeer, "Evasive")).toBe(false);
+      expect(testEngine.hasKeyword(goofyMusketeer, "Evasive")).toBe(false);
+    });
+
+    it("non-Musketeer characters do NOT gain Evasive", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [donaldDuckMusketeer, lefouBumbler, nonMusketeerCharacter],
+          deck: 1,
+        },
+        {
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.hasKeyword(lefouBumbler, "Evasive")).toBe(false);
+      expect(testEngine.hasKeyword(nonMusketeerCharacter, "Evasive")).toBe(false);
+    });
+  });
+});

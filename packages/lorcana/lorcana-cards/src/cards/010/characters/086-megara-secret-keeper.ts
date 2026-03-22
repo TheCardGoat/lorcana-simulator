@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { megaraSecretKeeperI18n } from "./086-megara-secret-keeper.i18n";
 
 export const megaraSecretKeeper: CharacterCard = {
   id: "YZf",
@@ -7,43 +8,6 @@ export const megaraSecretKeeper: CharacterCard = {
   cardType: "character",
   name: "Megara",
   version: "Secret Keeper",
-  i18n: {
-    en: {
-      name: "Megara",
-      version: "Secret Keeper",
-      text: [
-        {
-          title: "Boost 1 {I}",
-        },
-        {
-          title: "I'LL BE FINE",
-          description:
-            'While there\'s a card under this character, she gets +1 {L} and gains "Whenever this character is challenged, each opponent chooses and discards a card."',
-        },
-      ],
-    },
-    de: {
-      name: "Meg",
-      version: "Geheimnishüterin",
-      text: 'Stärken 1 ES WIRD SCHON WIEDER Solange dieser Charakter mindestens eine Karte unter sich hat, erhält er +1 und "Jedes Mal, wenn dieser Charakter herausgefordert wird, wählen alle gegnerischen Mitspielenden je 1 Karte aus ihrer Hand und werfen sie ab".',
-    },
-    fr: {
-      name: "Mégara",
-      version: "Gardienne du secret",
-      text: 'Boost 1 OH, JE SURVIVRAI Tant qu\'il y a une carte sous ce personnage, il gagne +1 et "Chaque fois que ce personnage est défié, chaque adversaire défausse une carte."',
-    },
-    it: {
-      name: "Megara",
-      version: "Custode dei Segreti",
-      text: [
-        {
-          title: "Potenziamento 1",
-          description:
-            '(Una volta durante il tuo turno, puoi pagare 1 per mettere la prima carta del tuo mazzo a faccia in giù sotto a questo personaggio.) STO BENISSIMO Mentre c\'è una carta sotto a questo personaggio, questo riceve +1 e ottiene "Ogni volta che questo personaggio viene sfidato, ogni avversario sceglie e scarta una carta".',
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "010",
@@ -89,4 +53,5 @@ export const megaraSecretKeeper: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: megaraSecretKeeperI18n,
 };

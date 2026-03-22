@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { michaelDarlingPlayfulSwordsmanI18n } from "./111-michael-darling-playful-swordsman.i18n";
 
 export const michaelDarlingPlayfulSwordsman: CharacterCard = {
   id: "SP2",
@@ -7,24 +8,6 @@ export const michaelDarlingPlayfulSwordsman: CharacterCard = {
   cardType: "character",
   name: "Michael Darling",
   version: "Playful Swordsman",
-  i18n: {
-    en: {
-      name: "Michael Darling",
-      version: "Playful Swordsman",
-    },
-    de: {
-      name: "Michael Darling",
-      version: "Verspielter Schwertkämpfer",
-    },
-    fr: {
-      name: "Michel Darling",
-      version: "Épéiste joueur",
-    },
-    it: {
-      name: "Michele Darling",
-      version: "Spadaccino Giocoso",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Peter Pan",
   set: "006",
@@ -41,4 +24,5 @@ export const michaelDarlingPlayfulSwordsman: CharacterCard = {
     tcgPlayer: 593025,
   },
   classifications: ["Storyborn", "Ally", "Pirate"],
+  i18n: michaelDarlingPlayfulSwordsmanI18n,
 };

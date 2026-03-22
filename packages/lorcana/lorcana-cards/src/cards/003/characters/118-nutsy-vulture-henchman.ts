@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { nutsyVultureHenchmanI18n } from "./118-nutsy-vulture-henchman.i18n";
 
 export const nutsyVultureHenchman: CharacterCard = {
   id: "RJ7",
@@ -7,24 +8,6 @@ export const nutsyVultureHenchman: CharacterCard = {
   cardType: "character",
   name: "Nutsy",
   version: "Vulture Henchman",
-  i18n: {
-    en: {
-      name: "Nutsy",
-      version: "Vulture Henchman",
-    },
-    de: {
-      name: "Nutsy",
-      version: "Geier-Handlanger",
-    },
-    fr: {
-      name: "Niquedouille",
-      version: "Sbire vautour",
-    },
-    it: {
-      name: "Tonto",
-      version: "Avvoltoio Tirapiedi",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Robin Hood",
   set: "003",
@@ -41,4 +24,5 @@ export const nutsyVultureHenchman: CharacterCard = {
     tcgPlayer: 537940,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: nutsyVultureHenchmanI18n,
 };

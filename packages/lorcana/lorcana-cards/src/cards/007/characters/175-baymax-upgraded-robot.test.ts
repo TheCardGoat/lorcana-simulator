@@ -1,31 +1,57 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { baymaxUpgradedRobot } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Baymax - Upgraded Robot", () => {
-//   It.skip("Support (Whenever this character quests, you may add their {S} to another chosen character's {S} this turn.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [baymaxUpgradedRobot],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(baymaxUpgradedRobot);
-//     Expect(cardUnderTest.hasSupport).toBe(true);
-//   });
-//
-//   It.skip("ADVANCED SCANNER When you play this character, look at the top 4 cards of your deck. You may reveal a Floodborn character card and put it into your hand. Put the rest on the bottom of your deck in any order.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: baymaxUpgradedRobot.cost,
-//       Hand: [baymaxUpgradedRobot],
-//     });
-//
-//     Await testEngine.playCard(baymaxUpgradedRobot);
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { baymaxUpgradedRobot } from "./175-baymax-upgraded-robot";
+
+const floodbornCharacter = createMockCharacter({
+  id: "floodborn-match",
+  name: "Floodborn Match",
+  cost: 3,
+  classifications: ["Floodborn", "Hero"],
+});
+
+const nonMatchA = createMockCharacter({
+  id: "non-match-a",
+  name: "Non Match A",
+  cost: 2,
+  classifications: ["Storyborn", "Hero"],
+});
+
+const nonMatchB = createMockCharacter({
+  id: "non-match-b",
+  name: "Non Match B",
+  cost: 1,
+  classifications: ["Dreamborn", "Villain"],
+});
+
+const nonMatchC = createMockCharacter({
+  id: "non-match-c",
+  name: "Non Match C",
+  cost: 4,
+  classifications: ["Storyborn", "Ally"],
+});
+
+describe("Baymax - Upgraded Robot", () => {
+  it("ADVANCED SCANNER - reveals a Floodborn character to hand, puts rest on bottom", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [baymaxUpgradedRobot],
+      inkwell: baymaxUpgradedRobot.cost,
+      deck: [nonMatchA, floodbornCharacter, nonMatchB, nonMatchC],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(baymaxUpgradedRobot)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [
+          { zone: "hand", cards: [floodbornCharacter] },
+          { zone: "deck-bottom", cards: [nonMatchC, nonMatchB, nonMatchA] },
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(floodbornCharacter)).toBe("hand");
+  });
+});

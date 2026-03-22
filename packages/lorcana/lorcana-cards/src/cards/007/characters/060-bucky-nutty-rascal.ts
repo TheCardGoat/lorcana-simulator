@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { buckyNuttyRascalI18n } from "./060-bucky-nutty-rascal.i18n";
 
 export const buckyNuttyRascal: CharacterCard = {
   id: "SiS",
@@ -7,51 +8,6 @@ export const buckyNuttyRascal: CharacterCard = {
   cardType: "character",
   name: "Bucky",
   version: "Nutty Rascal",
-  i18n: {
-    en: {
-      name: "Bucky",
-      version: "Nutty Rascal",
-      text: [
-        {
-          title: "POP!",
-          description: "When this character is banished in a challenge, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Bucky",
-      version: "Nussiger Schlingel",
-      text: [
-        {
-          title: "POP!",
-          description:
-            "Wenn dieser Charakter durch eine Herausforderung verbannt wird, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Bucky",
-      version: "Chenapan à la noix",
-      text: [
-        {
-          title: "BANG!",
-          description:
-            "Lorsque ce personnage est banni via un défi, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Bucky",
-      version: "Bricconcello Svitato",
-      text: [
-        {
-          title: "POP!",
-          description:
-            "Quando questo personaggio viene esiliato in una sfida, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Emperors New Groove",
   set: "007",
@@ -95,4 +51,5 @@ export const buckyNuttyRascal: CharacterCard = {
       text: "POP! When this character is banished in a challenge, you may draw a card.",
     },
   ],
+  i18n: buckyNuttyRascalI18n,
 };

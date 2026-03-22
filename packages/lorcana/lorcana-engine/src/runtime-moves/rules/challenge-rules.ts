@@ -11,11 +11,20 @@ import type { CharacterCard, LorcanaCard, LocationCard } from "@tcg/lorcana-type
 import { isCharacterCard, isLocationCard } from "@tcg/lorcana-types";
 import { getTotalKeyword, hasKeyword } from "../../card-utils";
 import { projectLorcanaCardDerived } from "../../projection/card-derived";
+import { createProjectionState } from "../../rules/derived-state";
 import { resolveCandidateTargets } from "../../targeting/runtime";
-import type { LorcanaCardMeta, LorcanaG, LorcanaRuntimeMoveInputs } from "../../types";
-import type { LorcanaRuntimeCardDerivedMethods } from "../state/runtime-card-derived";
-import { hasStaticCardRestriction, hasStaticPlayerRestriction } from "./static-ability-utils";
+import type { ChallengeState, LorcanaCardMeta, LorcanaRuntimeMoveInputs } from "../../types";
+import type { LorcanaCardDerived } from "../../types/projected-board";
+type LorcanaRuntimeCard = RuntimeCardWithDefinition & LorcanaCardDerived;
 import {
+  hasStaticCardRestriction,
+  hasStaticChallengerFilteredRestriction,
+  hasStaticPlayerRestriction,
+  isCardInPlay,
+  evaluateStaticCondition,
+} from "./static-ability-utils";
+import {
+  getTemporaryAbilityPayload,
   hasTemporaryAbility,
   hasTemporaryPlayerRestriction,
   hasTemporaryRestriction,
@@ -29,30 +38,15 @@ export const CHALLENGE_DEFENDER_TARGET_DSL = {
 } as const;
 
 export type ChallengeValidationContext = MoveValidationContext<
-  LorcanaG,
-  LorcanaCard,
-  LorcanaRuntimeMoveInputs["challenge"],
-  LorcanaRuntimeCardDerivedMethods
+  LorcanaRuntimeMoveInputs["challenge"]
 >;
 
-export type ChallengeEnumerationContext = MoveEnumerationContext<
-  LorcanaG,
-  LorcanaCard,
-  LorcanaRuntimeCardDerivedMethods
->;
+export type ChallengeEnumerationContext = MoveEnumerationContext;
 
-export type ChallengeExecutionContext = MoveExecutionContext<
-  LorcanaG,
-  LorcanaCard,
-  LorcanaRuntimeMoveInputs["challenge"],
-  LorcanaRuntimeCardDerivedMethods
->;
+export type ChallengeExecutionContext = MoveExecutionContext<LorcanaRuntimeMoveInputs["challenge"]>;
 
 type ChallengeIntentValidationContext = MoveValidationContext<
-  LorcanaG,
-  LorcanaCard,
-  LorcanaRuntimeMoveInputs[keyof LorcanaRuntimeMoveInputs],
-  LorcanaRuntimeCardDerivedMethods
+  LorcanaRuntimeMoveInputs[keyof LorcanaRuntimeMoveInputs]
 >;
 
 type ChallengeIntentContext = ChallengeIntentValidationContext | ChallengeEnumerationContext;
@@ -62,14 +56,10 @@ type ChallengeCardReadContext = { cards: unknown };
 type ChallengeFrameworkReadContext = Pick<ChallengeAnyContext, "framework" | "G">;
 type ChallengeCardStateContext = ChallengeCardReadContext & ChallengeFrameworkReadContext;
 
-type RuntimeLorcanaCardWithDerived = RuntimeCardWithDefinition<
-  LorcanaCard,
-  LorcanaCardMeta,
-  LorcanaRuntimeCardDerivedMethods
->;
+type RuntimeLorcanaCardWithDerived = RuntimeCardWithDefinition;
 
 function isCardStillInPlay(ctx: ChallengeAnyContext, sourceId: string): boolean {
-  const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[sourceId]?.zoneKey;
+  const zoneKey = ctx.framework.zones.getCardZone(sourceId);
   return typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"));
 }
 
@@ -103,7 +93,7 @@ function isReady(meta: LorcanaCardMeta): boolean {
 }
 
 function getCurrentTurn(ctx: ChallengeFrameworkReadContext): number {
-  return ctx.framework.state.ctx.status.turn ?? 1;
+  return ctx.framework.state.status.turn ?? 1;
 }
 
 function hasKeywordIncludingTemporary(
@@ -115,10 +105,7 @@ function hasKeywordIncludingTemporary(
   const derived = projectLorcanaCardDerived({
     definition: runtimeCard.definition,
     meta: runtimeCard.meta,
-    state: {
-      ctx: ctx.framework.state.ctx,
-      G: ctx.G,
-    },
+    state: createProjectionState(ctx.framework.state, ctx.G),
     cardInstanceId: cardId,
     ownerID: runtimeCard.ownerID as PlayerId,
     controllerID: runtimeCard.controllerID as PlayerId,
@@ -136,22 +123,172 @@ function hasRushForChallenge(ctx: ChallengeAnyContext, cardId: CardInstanceId): 
 function canChallengeReadyCharacters(
   ctx: ChallengeAnyContext,
   attackerId: CardInstanceId,
+  defenderId?: CardInstanceId,
 ): boolean {
   const currentTurn = getCurrentTurn(ctx);
   const attackerMeta = getCardMeta(ctx, attackerId);
-  return hasTemporaryAbility(attackerMeta, currentTurn, "can-challenge-ready");
+  const evaluateClassificationRestriction = (classification: unknown): boolean => {
+    if (typeof classification !== "string" || classification.length === 0) {
+      return true;
+    }
+
+    if (!defenderId) {
+      return false;
+    }
+
+    const defenderRuntimeCard = getCardsApi(ctx).get(defenderId);
+    if (!defenderRuntimeCard) {
+      return false;
+    }
+
+    const defenderDerived = projectLorcanaCardDerived({
+      definition: defenderRuntimeCard.definition,
+      meta: defenderRuntimeCard.meta,
+      state: createProjectionState(ctx.framework.state, ctx.G),
+      cardInstanceId: defenderId,
+      ownerID: defenderRuntimeCard.ownerID as PlayerId,
+      controllerID: defenderRuntimeCard.controllerID as PlayerId,
+      zoneID: defenderRuntimeCard.zoneID,
+      getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+    });
+
+    return Array.isArray(defenderDerived.classifications)
+      ? defenderDerived.classifications.includes(classification)
+      : false;
+  };
+
+  const temporaryReadyGrant = hasTemporaryAbility(attackerMeta, currentTurn, "can-challenge-ready");
+  if (temporaryReadyGrant) {
+    const payload = getTemporaryAbilityPayload(attackerMeta, currentTurn, "can-challenge-ready");
+    return evaluateClassificationRestriction(
+      payload && typeof payload === "object" && !Array.isArray(payload)
+        ? (payload as { classification?: unknown }).classification
+        : undefined,
+    );
+  }
+
+  const attackerRuntime = getCardsApi(ctx).get(attackerId);
+  const attackerDefinition = attackerRuntime?.definition;
+  if (!attackerDefinition) {
+    return false;
+  }
+
+  const evaluateDamagedRestriction = (onlyDamaged: unknown): boolean => {
+    if (!onlyDamaged) {
+      return true;
+    }
+
+    if (!defenderId) {
+      return false;
+    }
+
+    const defenderMeta = getCardMeta(ctx, defenderId);
+    return Number(defenderMeta.damage ?? 0) > 0;
+  };
+
+  const matchesStaticReadyGrant = (attackerDefinition.abilities ?? []).some((ability) => {
+    if (ability.type !== "static" || ability.effect.type !== "grant-ability") {
+      return false;
+    }
+
+    if (ability.effect.target !== undefined && ability.effect.target !== "SELF") {
+      return false;
+    }
+
+    const grantedAbility = ability.effect.ability;
+    const grantedAbilityType =
+      typeof grantedAbility === "string"
+        ? grantedAbility
+        : grantedAbility && typeof grantedAbility === "object" && !Array.isArray(grantedAbility)
+          ? grantedAbility.type
+          : undefined;
+
+    if (grantedAbilityType !== "can-challenge-ready") {
+      return false;
+    }
+
+    const grantedClassification =
+      grantedAbility && typeof grantedAbility === "object" && !Array.isArray(grantedAbility)
+        ? (grantedAbility as { classification?: unknown }).classification
+        : undefined;
+
+    const grantedOnlyDamaged =
+      grantedAbility && typeof grantedAbility === "object" && !Array.isArray(grantedAbility)
+        ? (grantedAbility as { onlyDamaged?: unknown }).onlyDamaged
+        : undefined;
+
+    return (
+      evaluateClassificationRestriction(grantedClassification) &&
+      evaluateDamagedRestriction(grantedOnlyDamaged)
+    );
+  });
+
+  return matchesStaticReadyGrant;
 }
 
 function takesNoDamageFromChallenges(
   ctx: ChallengeCardStateContext,
   cardId: CardInstanceId,
+  opponentCardId?: CardInstanceId,
 ): boolean {
   const currentTurn = getCurrentTurn(ctx);
   const cardMeta = getCardMeta(ctx, cardId);
-  return hasTemporaryAbility(cardMeta, currentTurn, "takes-no-damage-from-challenges");
+
+  // Unconditional "takes no damage from challenges"
+  if (hasTemporaryAbility(cardMeta, currentTurn, "takes-no-damage-from-challenges")) {
+    return true;
+  }
+
+  // Conditional variant: "takes no damage from challenges against <classification>"
+  if (
+    opponentCardId &&
+    hasTemporaryAbility(cardMeta, currentTurn, "takes-no-damage-from-challenges-conditional")
+  ) {
+    const payload = getTemporaryAbilityPayload(
+      cardMeta,
+      currentTurn,
+      "takes-no-damage-from-challenges-conditional",
+    );
+    if (payload && typeof payload.type === "string") {
+      const requiredClassification = payload.type;
+      const opponentDef = getCardDefinition(ctx, opponentCardId);
+      if (opponentDef && "classifications" in opponentDef) {
+        const classifications = (opponentDef as { classifications?: string[] }).classifications;
+        if (Array.isArray(classifications) && classifications.includes(requiredClassification)) {
+          return true;
+        }
+      }
+      // Also check derived/projected classifications for runtime modifications
+      const runtimeCard = getCardsApi(ctx).get(opponentCardId);
+      if (runtimeCard) {
+        const derived = projectLorcanaCardDerived({
+          definition: runtimeCard.definition,
+          meta: runtimeCard.meta,
+          state: createProjectionState(ctx.framework.state, ctx.G),
+          cardInstanceId: opponentCardId,
+          ownerID: runtimeCard.ownerID as PlayerId,
+          controllerID: runtimeCard.controllerID as PlayerId,
+          zoneID: runtimeCard.zoneID,
+          getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+        });
+        if (
+          Array.isArray(derived.classifications) &&
+          derived.classifications.includes(requiredClassification)
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
-function cantBeChallenged(ctx: ChallengeAnyContext, cardId: CardInstanceId): boolean {
+function cantBeChallenged(
+  ctx: ChallengeAnyContext,
+  cardId: CardInstanceId,
+  attackerId?: CardInstanceId,
+): boolean {
   const currentTurn = getCurrentTurn(ctx);
   const cardMeta = getCardMeta(ctx, cardId);
   if (
@@ -167,20 +304,30 @@ function cantBeChallenged(ctx: ChallengeAnyContext, cardId: CardInstanceId): boo
     return false;
   }
 
-  return (
+  if (
     hasTemporaryPlayerRestriction(
       ctx.G.temporaryPlayerRestrictions,
       ownerId,
       currentTurn,
       "cant-be-challenged",
-    ) ||
-    hasStaticCardRestriction({
+    )
+  ) {
+    return true;
+  }
+
+  // Check for static cant-be-challenged restrictions, including challenger-filtered ones
+  if (
+    hasStaticChallengerFilteredRestriction({
       state: ctx.framework.state,
       cardId,
-      restriction: "cant-be-challenged",
+      attackerId,
       getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
     })
-  );
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function canChallengeEvasive(ctx: ChallengeAnyContext, attackerId: CardInstanceId): boolean {
@@ -256,7 +403,7 @@ function isChallengeReadyAttacker(ctx: ChallengeAnyContext, attackerId: CardInst
 
 function getActingPlayerId(ctx: ChallengeIntentContext): PlayerId | undefined {
   const candidate =
-    ctx.framework.state.currentPlayer ?? ctx.playerId ?? ctx.framework.state.ctx.priority.holder;
+    ctx.framework.state.currentPlayer ?? ctx.playerId ?? ctx.framework.state.priority.holder;
   return typeof candidate === "string" && candidate.length > 0
     ? (candidate as PlayerId)
     : undefined;
@@ -397,7 +544,10 @@ function isLegalDefenderForAttacker(
 
   if (isCharacterCard(defenderDef)) {
     const defenderMeta = getCardMeta(ctx, defenderId);
-    if (defenderMeta.state !== "exerted" && !canChallengeReadyCharacters(ctx, attackerId)) {
+    if (
+      defenderMeta.state !== "exerted" &&
+      !canChallengeReadyCharacters(ctx, attackerId, defenderId)
+    ) {
       return false;
     }
   }
@@ -541,13 +691,16 @@ export function validateChallengeAction(ctx: ChallengeValidationContext): Runtim
     );
   }
 
-  if (cantBeChallenged(ctx, defenderId)) {
+  if (cantBeChallenged(ctx, defenderId, attackerId)) {
     return createFailure("Defender can't be challenged", "DEFENDER_CANT_BE_CHALLENGED");
   }
 
   if (isCharacterCard(defenderDef)) {
     const defenderMeta = getCardMeta(ctx, defenderId);
-    if (defenderMeta.state !== "exerted" && !canChallengeReadyCharacters(ctx, attackerId)) {
+    if (
+      defenderMeta.state !== "exerted" &&
+      !canChallengeReadyCharacters(ctx, attackerId, defenderId)
+    ) {
       return createFailure("Defending character must be exerted", "DEFENDER_CHARACTER_NOT_EXERTED");
     }
   }
@@ -601,20 +754,35 @@ function resolveChallengeStrength(
   ctx: ChallengeCardStateContext,
   card: RuntimeLorcanaCardWithDerived,
   challenging: boolean,
+  challengeContext?: { attackerId: CardInstanceId; defenderId: CardInstanceId },
 ): number {
   const cardDef = card.definition;
   if (!isCharacterCard(cardDef)) {
     return 0;
   }
 
-  const currentTurn = getCurrentTurn(ctx);
+  // Build a challenge-aware G so that "while being challenged/challenging" static
+  // conditions (type: "in-challenge") resolve correctly during strength projection.
+  let projectionG = ctx.G;
+  if (challengeContext) {
+    const attackerEntry =
+      ctx.framework.state._zonesPrivate?.cardIndex?.[challengeContext.attackerId];
+    const defenderEntry =
+      ctx.framework.state._zonesPrivate?.cardIndex?.[challengeContext.defenderId];
+    const syntheticChallengeState: ChallengeState = {
+      attacker: challengeContext.attackerId,
+      defender: challengeContext.defenderId,
+      attackerOwnerId: (attackerEntry?.controllerID ?? attackerEntry?.ownerID ?? "") as PlayerId,
+      defenderOwnerId: (defenderEntry?.controllerID ?? defenderEntry?.ownerID ?? "") as PlayerId,
+      stage: "damage",
+    };
+    projectionG = { ...ctx.G, challengeState: syntheticChallengeState };
+  }
+
   const derived = projectLorcanaCardDerived({
     definition: card.definition,
     meta: card.meta,
-    state: {
-      ctx: ctx.framework.state.ctx,
-      G: ctx.G,
-    },
+    state: createProjectionState(ctx.framework.state, projectionG),
     cardInstanceId: card.instanceId as CardInstanceId,
     ownerID: card.ownerID as PlayerId,
     controllerID: card.controllerID as PlayerId,
@@ -624,7 +792,11 @@ function resolveChallengeStrength(
   const challengerBonus = challenging ? (derived.keywordValues?.challenger ?? 0) : 0;
 
   const dynamic = resolveDynamicCombatModifierTODO(card.instanceId as CardInstanceId);
-  const totalStrength = card.getStrength() + challengerBonus + dynamic.strengthModifier;
+  // Use derived.strength (which includes static modify-stat effects with in-challenge
+  // conditions evaluated against the synthetic challengeState) instead of the
+  // pre-projected card strength to correctly handle "while being challenged" bonuses.
+  const baseStrength = derived.strength ?? (card as LorcanaRuntimeCard).strength;
+  const totalStrength = baseStrength + challengerBonus + dynamic.strengthModifier;
 
   return Math.max(0, totalStrength);
 }
@@ -640,10 +812,7 @@ function reduceDamageByResist(
   const derived = projectLorcanaCardDerived({
     definition: runtimeCard.definition,
     meta: runtimeCard.meta,
-    state: {
-      ctx: ctx.framework.state.ctx,
-      G: ctx.G,
-    },
+    state: createProjectionState(ctx.framework.state, ctx.G),
     cardInstanceId: targetId,
     ownerID: runtimeCard.ownerID as PlayerId,
     controllerID: runtimeCard.controllerID as PlayerId,
@@ -661,9 +830,10 @@ export function finalizeChallengeDamageAmount(
   targetId: CardInstanceId,
   targetDef: CharacterCard | LocationCard,
   incomingDamage: number,
+  opponentCardId?: CardInstanceId,
 ): number {
   const reduced = reduceDamageByResist(ctx, targetId, targetDef, incomingDamage);
-  if (takesNoDamageFromChallenges(ctx, targetId)) {
+  if (takesNoDamageFromChallenges(ctx, targetId, opponentCardId)) {
     return 0;
   }
 
@@ -716,9 +886,10 @@ export function computeChallengeDamageResult(
     throw new Error("Challenge combatants are unavailable in runtime card query");
   }
 
-  const attackerStrength = resolveChallengeStrength(ctx, attackerRuntime, true);
+  const challengeContext = { attackerId, defenderId };
+  const attackerStrength = resolveChallengeStrength(ctx, attackerRuntime, true, challengeContext);
   const defenderStrength = isCharacterCard(defenderDef)
-    ? resolveChallengeStrength(ctx, defenderRuntime, false)
+    ? resolveChallengeStrength(ctx, defenderRuntime, false, challengeContext)
     : 0;
 
   const rawAttackerToDefenderDamage = attackerStrength;
@@ -736,8 +907,8 @@ export function computeChallengeDamageResult(
   const attackerNextDamage = attackerCurrentDamage + defenderToAttackerDamage;
   const defenderNextDamage = defenderCurrentDamage + attackerToDefenderDamage;
 
-  const attackerWillpower = attackerRuntime.getWillpower();
-  const defenderWillpower = defenderRuntime.getWillpower();
+  const attackerWillpower = (attackerRuntime as LorcanaRuntimeCard).willpower;
+  const defenderWillpower = (defenderRuntime as LorcanaRuntimeCard).willpower;
 
   const attackerLethal = attackerWillpower > 0 && attackerNextDamage >= attackerWillpower;
   const defenderLethal = defenderWillpower > 0 && defenderNextDamage >= defenderWillpower;

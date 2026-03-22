@@ -5,6 +5,7 @@
   "files": [
     "src/"
   ],
+  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.d.ts",
   "exports": {
@@ -12,8 +13,10 @@
     "./utils": "./src/utils.ts",
     "./types": "./src/types.ts",
     "./auth": "./src/auth/index.ts",
+    "./testing": "./src/testing/index.ts",
     "./cards": "./src/cards/index.ts",
     "./cards/images": "./src/cards/images.ts",
+    "./cards/catalog": "./src/cards/catalog.ts",
     "./deck-list-normalize": "./src/deck-list-normalize.ts",
     "./deck-list-parse": "./src/deck-list-parse.ts",
     "./deck-list-errors": "./src/deck-list-errors.ts",

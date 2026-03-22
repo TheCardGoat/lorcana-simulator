@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lumiereNimbleCandelabraI18n } from "./128-lumiere-nimble-candelabra.i18n";
 
 export const lumiereNimbleCandelabra: CharacterCard = {
   id: "p7H",
@@ -7,51 +8,6 @@ export const lumiereNimbleCandelabra: CharacterCard = {
   cardType: "character",
   name: "Lumiere",
   version: "Nimble Candelabra",
-  i18n: {
-    en: {
-      name: "Lumiere",
-      version: "Nimble Candelabra",
-      text: [
-        {
-          title: "QUICK-STEP",
-          description: "While you have an item card in your discard, this character gains Evasive.",
-        },
-      ],
-    },
-    de: {
-      name: "Lumière",
-      version: "Flinker Kerzenleuchter",
-      text: [
-        {
-          title: "MIT SCHNELLEN SCHRITTEN",
-          description:
-            "Solange du mindestens eine Gegenstandskarte in deinem Ablagestapel hast, erhält dieser Charakter Wendig.",
-        },
-      ],
-    },
-    fr: {
-      name: "Lumière",
-      version: "Candelabre agile",
-      text: [
-        {
-          title: "DÉMARCHE RAPIDE",
-          description:
-            "Tant que vous avez une carte Objet dans votre défausse, ce personnage gagne Insaisissable.",
-        },
-      ],
-    },
-    it: {
-      name: "Lumiere",
-      version: "Agile Candelabro",
-      text: [
-        {
-          title: "PASSO RAPIDO",
-          description:
-            "Mentre hai una carta oggetto nei tuoi scarti, questo personaggio ottiene Sfuggente. (Solo altri personaggi con Sfuggente possono sfidarlo.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Beauty and the Beast",
   set: "008",
@@ -75,14 +31,28 @@ export const lumiereNimbleCandelabra: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      id: "1k4-1",
+      type: "static",
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["discard"],
+          cardTypes: ["item"],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
         keyword: "Evasive",
         target: "SELF",
         type: "gain-keyword",
       },
-      id: "1k4-1",
       text: "QUICK-STEP While you have an item card in your discard, this character gains Evasive.",
-      type: "action",
     },
   ],
+  i18n: lumiereNimbleCandelabraI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { akelaWolfPackElderI18n } from "./182-akela-wolf-pack-elder.i18n";
 
 export const akelaWolfPackElder: CharacterCard = {
   id: "uB3",
@@ -7,24 +8,6 @@ export const akelaWolfPackElder: CharacterCard = {
   cardType: "character",
   name: "Akela",
   version: "Wolf Pack Elder",
-  i18n: {
-    en: {
-      name: "Akela",
-      version: "Wolf Pack Elder",
-    },
-    de: {
-      name: "Akela",
-      version: "Rudelältester",
-    },
-    fr: {
-      name: "Akela",
-      version: "Ancien du clan des loups",
-    },
-    it: {
-      name: "Akela",
-      version: "Anziano del Branco di Lupi",
-    },
-  },
   inkType: ["steel"],
   franchise: "Jungle Book",
   set: "007",
@@ -41,4 +24,5 @@ export const akelaWolfPackElder: CharacterCard = {
     tcgPlayer: 618713,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: akelaWolfPackElderI18n,
 };

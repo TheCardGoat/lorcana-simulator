@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { genieCrampedInTheLampI18n } from "./141-genie-cramped-in-the-lamp.i18n";
 
 export const genieCrampedInTheLamp: CharacterCard = {
   id: "rD1",
@@ -7,24 +8,6 @@ export const genieCrampedInTheLamp: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "Cramped in the Lamp",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "Cramped in the Lamp",
-    },
-    de: {
-      name: "Dschinni",
-      version: "In der Lampe eingezwängt",
-    },
-    fr: {
-      name: "Génie",
-      version: "Coincé dans la lampe",
-    },
-    it: {
-      name: "Genio",
-      version: "In un Minuscolo Spazio Vitale",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Aladdin",
   set: "003",
@@ -41,4 +24,5 @@ export const genieCrampedInTheLamp: CharacterCard = {
     tcgPlayer: 539095,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: genieCrampedInTheLampI18n,
 };

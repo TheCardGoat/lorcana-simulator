@@ -1,1 +1,1 @@
-export type { LorcanaRuntimeCardDerivedMethods } from "./runtime-card-derived-methods";
+export type { LorcanaCardDerived } from "../../types/projected-board";

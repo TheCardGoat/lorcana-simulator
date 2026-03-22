@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madamMimPurpleDragonEnchantedI18n } from "./208-madam-mim-purple-dragon-enchanted.i18n";
 
 export const madamMimPurpleDragonEnchanted: CharacterCard = {
   id: "1uc",
@@ -7,43 +8,6 @@ export const madamMimPurpleDragonEnchanted: CharacterCard = {
   cardType: "character",
   name: "Madam Mim",
   version: "Purple Dragon",
-  i18n: {
-    en: {
-      name: "Madam Mim",
-      version: "Purple Dragon",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "I WIN, I WIN!",
-          description:
-            "When you play this character, banish her or return another 2 chosen characters of yours to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Madame Mim",
-      version: "Lila Drache",
-      text: "Wendig GEWONNEN, GEWONNEN! Wenn du diesen Charakter ausspielst, musst du ihn verbannen oder 2 deiner anderen Charaktere wählen und zurück auf deine Hand nehmen.",
-    },
-    fr: {
-      name: "Madame Mime",
-      version: "En dragon",
-      text: "Insaisissable JE L'AI EU, J'AI GAGNÉ! Lorsque vous jouez ce personnage, bannissez-le ou renvoyez 2 de vos autres personnages en jeu dans votre main.",
-    },
-    it: {
-      name: "Madam Mim",
-      version: "Purple Dragon",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) I WIN, I WIN! When you play this character, banish her or return another 2 chosen characters of yours to your hand.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -70,7 +34,6 @@ export const madamMimPurpleDragonEnchanted: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer", "Dragon"],
-  missingTests: true,
   abilities: [
     {
       id: "12t-1",
@@ -111,4 +74,5 @@ export const madamMimPurpleDragonEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: madamMimPurpleDragonEnchantedI18n,
 };

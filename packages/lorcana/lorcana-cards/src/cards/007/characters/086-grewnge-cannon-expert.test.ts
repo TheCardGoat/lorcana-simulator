@@ -1,31 +1,52 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { hypnotize } from "@lorcanito/lorcana-engine/cards/002/actions/actions";
-// Import { dodge } from "@lorcanito/lorcana-engine/cards/004/actions/actions";
-// Import { grewngeCannonExpert } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("RAPID FIRE Whenever this character quests, you pay 1 {I} less for the next action you play this turn.", () => {
-//   It("should pay 1 {i} less for the next action", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: 7,
-//       Play: [grewngeCannonExpert],
-//       Hand: [hypnotize, dodge],
-//     });
-//
-//     Await testEngine.questCard(grewngeCannonExpert);
-//     Await testEngine.playCard(hypnotize);
-//
-//     Await expect(testEngine.getAvailableInkwellCardCount("player_one")).toBe(5);
-//
-//     /*HAD TO GO DEEPER IN TEST ENGINE, CAUSE TWO INTERACTIONS DON'T WORK WELL. EFFECT SHOULD BE OK BASED ON PREVIOUES ONES.
-//     Await testEngine.playCard(dodge);
-//
-//     Expect(testEngine.getAvailableInkwellCardCount("player_one")).toBe(3);*/
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { nothingToHide } from "../../002";
+import { magicalManeuvers } from "../actions";
+import { grewngeCannonExpert } from "./086-grewnge-cannon-expert";
+
+const opposingTarget = createMockCharacter({
+  id: "grewnge-opposing-target",
+  name: "Opposing Target",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+describe("Grewnge - Cannon Expert", () => {
+  it("reduces the cost of the next action you play this turn after Grewnge quests", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: grewngeCannonExpert, isDrying: false }],
+        hand: [magicalManeuvers, nothingToHide],
+        inkwell: 1,
+        deck: 3,
+      },
+      {
+        play: [opposingTarget],
+        deck: 3,
+      },
+    );
+    const grewngeId = testEngine.findCardInstanceId(grewngeCannonExpert, "play");
+    const opposingTargetId = testEngine.findCardInstanceId(opposingTarget, "play", "player_two");
+
+    const preQuestPlayResult = testEngine.asPlayerOne().playCard(magicalManeuvers, {
+      targets: [grewngeId, opposingTargetId],
+    });
+    expect(preQuestPlayResult.success).toBe(false);
+    expect(testEngine.asPlayerOne().getCardZone(magicalManeuvers)).toBe("hand");
+
+    expect(testEngine.asPlayerOne().quest(grewngeCannonExpert)).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().playCard(magicalManeuvers, {
+        targets: [grewngeId, opposingTargetId],
+      }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardZone(magicalManeuvers)).toBe("discard");
+
+    const secondActionResult = testEngine.asPlayerOne().playCard(nothingToHide);
+    expect(secondActionResult.success).toBe(false);
+    expect(testEngine.asPlayerOne().getCardZone(nothingToHide)).toBe("hand");
+  });
+});

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { taffytaMuttonfudgeRuthlessRivalI18n } from "./103-taffyta-muttonfudge-ruthless-rival.i18n";
 
 export const taffytaMuttonfudgeRuthlessRival: CharacterCard = {
   id: "arh",
@@ -7,24 +8,6 @@ export const taffytaMuttonfudgeRuthlessRival: CharacterCard = {
   cardType: "character",
   name: "Taffyta Muttonfudge",
   version: "Ruthless Rival",
-  i18n: {
-    en: {
-      name: "Taffyta Muttonfudge",
-      version: "Ruthless Rival",
-    },
-    de: {
-      name: "Taffyta Muttonfudge",
-      version: "Rücksichtslose Rivalin",
-    },
-    fr: {
-      name: "Taffyta Crème Brûlée",
-      version: "Rivale implacable",
-    },
-    it: {
-      name: "Taffyta Muttonfudge",
-      version: "Rivale Senza Scrupoli",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -41,4 +24,5 @@ export const taffytaMuttonfudgeRuthlessRival: CharacterCard = {
     tcgPlayer: 555252,
   },
   classifications: ["Storyborn", "Ally", "Racer"],
+  i18n: taffytaMuttonfudgeRuthlessRivalI18n,
 };

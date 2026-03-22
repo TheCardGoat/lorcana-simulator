@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { launchI18n } from "./164-launch.i18n";
 
 export const launch: ActionCard = {
   id: "Ysg",
@@ -6,24 +7,6 @@ export const launch: ActionCard = {
   reprints: ["set2-164"],
   cardType: "action",
   name: "Launch",
-  i18n: {
-    en: {
-      name: "Launch",
-      text: "Banish chosen item of yours to deal 5 damage to chosen character.",
-    },
-    de: {
-      name: "Abschuss",
-      text: "Verbanne einen deiner Gegenstände, um einem Charakter deiner Wahl 5 Schaden zuzufügen.",
-    },
-    fr: {
-      name: "Projectile de fortune",
-      text: "Choisissez l'un de vos objets et bannissez-le pour infliger 5 dommages à un personnage au choix.",
-    },
-    it: {
-      name: "Launch",
-      text: "Banish chosen item of yours to deal 5 damage to chosen character.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Lorcana",
   set: "002",
@@ -73,4 +56,5 @@ export const launch: ActionCard = {
       type: "action",
     },
   ],
+  i18n: launchI18n,
 };

@@ -28,10 +28,7 @@ import { applyPatches, type Patch } from "immer";
  * This is the core filtering function that ensures hidden information
  * is never leaked to unauthorized clients.
  */
-export function filterMatchView<G>(
-  state: MatchState<G>,
-  roleCtx: ViewRoleContext,
-): FilteredMatchView<G> {
+export function filterMatchView(state: MatchState, roleCtx: ViewRoleContext): FilteredMatchView {
   const { role, playerID } = roleCtx;
 
   // Filter ctx based on role
@@ -315,9 +312,9 @@ export function getPublicZoneSummary(
  *
  * Patches that modify secret zones must be filtered or removed.
  */
-export function filterPatches<G>(
+export function filterPatches(
   patches: Patch[],
-  state: MatchState<G>,
+  state: MatchState,
   roleCtx: ViewRoleContext,
 ): Patch[] {
   const { role } = roleCtx;
@@ -400,8 +397,8 @@ function isRngPath(pointerSegments: string[]): boolean {
   );
 }
 
-function isCardVisibleViaReveal<G>(
-  state: MatchState<G>,
+function isCardVisibleViaReveal(
+  state: MatchState,
   cardId: string,
   roleCtx: ViewRoleContext,
 ): boolean {
@@ -417,8 +414,8 @@ function isCardVisibleViaReveal<G>(
   return visibleReveals.some((reveal) => reveal.cardIDs.includes(cardId));
 }
 
-function getZoneCardIdFromPatch<G>(
-  state: MatchState<G>,
+function getZoneCardIdFromPatch(
+  state: MatchState,
   patch: unknown,
   pointerSegments: string[],
 ): string | undefined {
@@ -444,10 +441,10 @@ function getZoneCardIdFromPatch<G>(
   return typeof existingCardId === "string" ? existingCardId : undefined;
 }
 
-function canViewPrivatePatch<G>(
+function canViewPrivatePatch(
   patch: unknown,
   pointerSegments: string[],
-  state: MatchState<G>,
+  state: MatchState,
   roleCtx: ViewRoleContext,
 ): boolean {
   const { role, playerID } = roleCtx;
@@ -558,9 +555,9 @@ function canViewPrivatePatch<G>(
  *
  * These invariants should be tested to ensure filtering correctness.
  */
-export function verifyNoSecretLeakage<G>(
-  originalState: MatchState<G>,
-  filteredState: FilteredMatchView<G>,
+export function verifyNoSecretLeakage(
+  originalState: MatchState,
+  filteredState: FilteredMatchView,
   roleCtx: ViewRoleContext,
 ): { valid: true } | { valid: false; violations: string[] } {
   const violations: string[] = [];

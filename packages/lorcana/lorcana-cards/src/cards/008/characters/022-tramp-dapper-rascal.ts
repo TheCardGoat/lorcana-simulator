@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { trampDapperRascalI18n } from "./022-tramp-dapper-rascal.i18n";
 
 export const trampDapperRascal: CharacterCard = {
   id: "M9y",
@@ -7,37 +8,6 @@ export const trampDapperRascal: CharacterCard = {
   cardType: "character",
   name: "Tramp",
   version: "Dapper Rascal",
-  i18n: {
-    en: {
-      name: "Tramp",
-      version: "Dapper Rascal",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "PLAY IT COOL",
-          description:
-            "During an opponent's turn, whenever one of your characters is banished, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Strolch",
-      version: "Eleganter Rabauke",
-      text: "Gestaltwandel 4 BLEIB COOL Jedes Mal, wenn einer deiner Charaktere im Zug einer gegnerischen Person verbannt wird, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Clochard",
-      version: "Voyou élégant",
-      text: "Alter 4 GARDER SON SANG-FROID Durant le tour d'un adversaire, chaque fois que l'un de vos personnages est banni, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Biagio",
-      version: "Elegante Mascalzone",
-      text: "Trasformazione 4 RESTARE CALMO Durante il turno di un avversario, ogni volta che uno dei tuoi personaggi viene esiliato, puoi pescare una carta.",
-    },
-  },
   inkType: ["amber", "emerald"],
   franchise: "Lady and the Tramp",
   set: "008",
@@ -75,6 +45,18 @@ export const trampDapperRascal: CharacterCard = {
     },
     {
       id: "1x4-2",
+      name: "PLAY IT COOL",
+      trigger: {
+        event: "banish",
+        on: "YOUR_CHARACTERS",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "opponent",
+          },
+        ],
+      },
       effect: {
         chooser: "CONTROLLER",
         effect: {
@@ -84,8 +66,9 @@ export const trampDapperRascal: CharacterCard = {
         },
         type: "optional",
       },
-      type: "action",
+      type: "triggered",
       text: "PLAY IT COOL During an opponent’s turn, whenever one of your characters is banished, you may draw a card.",
     },
   ],
+  i18n: trampDapperRascalI18n,
 };

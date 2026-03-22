@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theQueenHatefulRivalI18n } from "./057-the-queen-hateful-rival.i18n";
 
 export const theQueenHatefulRival: CharacterCard = {
   id: "F4E",
@@ -7,24 +8,6 @@ export const theQueenHatefulRival: CharacterCard = {
   cardType: "character",
   name: "The Queen",
   version: "Hateful Rival",
-  i18n: {
-    en: {
-      name: "The Queen",
-      version: "Hateful Rival",
-    },
-    de: {
-      name: "Die Königin",
-      version: "Hasserfüllte Rivalin",
-    },
-    fr: {
-      name: "La Reine",
-      version: "Rivale haineuse",
-    },
-    it: {
-      name: "Regina",
-      version: "Rivale Rancorosa",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Snow White",
   set: "003",
@@ -41,4 +24,5 @@ export const theQueenHatefulRival: CharacterCard = {
     tcgPlayer: 539076,
   },
   classifications: ["Dreamborn", "Villain", "Queen", "Sorcerer"],
+  i18n: theQueenHatefulRivalI18n,
 };

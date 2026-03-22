@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 12 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_11.md) | [Next →](AUDIT_INVENTORY_CHUNK_13.md)
-
 
 - [ ] **007/items/203-steel-coil.test.ts**
   - Card: `007/items/203-steel-coil.ts`

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kaaSecretiveSnakeI18n } from "./079-kaa-secretive-snake.i18n";
 
 export const kaaSecretiveSnake: CharacterCard = {
   id: "I5f",
@@ -7,28 +8,6 @@ export const kaaSecretiveSnake: CharacterCard = {
   cardType: "character",
   name: "Kaa",
   version: "Secretive Snake",
-  i18n: {
-    en: {
-      name: "Kaa",
-      version: "Secretive Snake",
-      text: "Evasive",
-    },
-    de: {
-      name: "Kaa",
-      version: "Geheimnisvolle Schlange",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Kaa",
-      version: "Serpent dissimulé",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Kaa",
-      version: "Serpente sulle Sue",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Jungle Book",
   set: "010",
@@ -53,4 +32,5 @@ export const kaaSecretiveSnake: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: kaaSecretiveSnakeI18n,
 };

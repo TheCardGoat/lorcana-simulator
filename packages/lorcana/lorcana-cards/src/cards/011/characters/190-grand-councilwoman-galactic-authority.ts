@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { grandCouncilwomanGalacticAuthorityI18n } from "./190-grand-councilwoman-galactic-authority.i18n";
 
 export const grandCouncilwomanGalacticAuthority: CharacterCard = {
   id: "x6z",
@@ -7,24 +8,6 @@ export const grandCouncilwomanGalacticAuthority: CharacterCard = {
   cardType: "character",
   name: "Grand Councilwoman",
   version: "Galactic Authority",
-  i18n: {
-    en: {
-      name: "Grand Councilwoman",
-      version: "Galactic Authority",
-    },
-    de: {
-      name: "Präsidentin des Hohen Rats",
-      version: "Galaktische Autorität",
-    },
-    fr: {
-      name: "Présidente du Grand Conseil",
-      version: "Autorité galactique",
-    },
-    it: {
-      name: "Gran Consigliera",
-      version: "Autorità Galattica",
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "011",
@@ -41,4 +24,6 @@ export const grandCouncilwomanGalacticAuthority: CharacterCard = {
     tcgPlayer: 676244,
   },
   classifications: ["Dreamborn", "Alien"],
+  abilities: [],
+  i18n: grandCouncilwomanGalacticAuthorityI18n,
 };

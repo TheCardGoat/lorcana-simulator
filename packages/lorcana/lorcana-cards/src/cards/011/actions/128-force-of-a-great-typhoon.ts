@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { forceOfAGreatTyphoonI18n } from "./128-force-of-a-great-typhoon.i18n";
 
 export const forceOfAGreatTyphoon: ActionCard = {
   id: "f7h",
@@ -6,24 +7,6 @@ export const forceOfAGreatTyphoon: ActionCard = {
   reprints: ["set11-128"],
   cardType: "action",
   name: "Force of a Great Typhoon",
-  i18n: {
-    en: {
-      name: "Force of a Great Typhoon",
-      text: "Chosen character gets +5 {S} this turn.",
-    },
-    de: {
-      name: "Stark wie ein Taifun",
-      text: "Ein Charakter deiner Wahl erhält in diesem Zug +5.",
-    },
-    fr: {
-      name: "Plus puissant que les ouragans",
-      text: "Choisissez un personnage qui gagne +5 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Un Uomo Vero Senza Timori",
-      text: "(Un personaggio con costo 2 o superiore può per cantare questa canzone gratis.) Un personaggio a tua scelta riceve +5 per questo turno.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mulan",
   set: "011",
@@ -50,4 +33,5 @@ export const forceOfAGreatTyphoon: ActionCard = {
       },
     },
   ],
+  i18n: forceOfAGreatTyphoonI18n,
 };

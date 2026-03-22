@@ -162,6 +162,7 @@ export type ForEachCounter =
     }
   | { type: "damage-on-self" }
   | { type: "damage-on-target" }
+  | { type: "last-effect-target-count" }
   | { type: "damage-removed" }
   | { type: "lore-lost" }
   | {
@@ -279,6 +280,10 @@ export type ReplacementAbilityKind =
       type: "redirect-damage";
       appliesTo: "your-other-characters";
       redirectTo: "self";
+    }
+  | {
+      type: "prevent-remove-damage";
+      appliesTo: "all";
     };
 
 export type ReplacementRegistrationKind =

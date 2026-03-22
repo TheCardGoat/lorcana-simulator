@@ -19,7 +19,7 @@ export const chooseWhoGoesFirst: LorcanaMoveDefinition<"chooseWhoGoesFirst"> = {
     }
     const resolvedPlayerIds = resolveRuntimePlayerIds({
       playerIds: framework.state.playerIds,
-      ctx: { zones: framework.state.ctx?.zones },
+      _zonesPrivate: framework.state._zonesPrivate,
     });
 
     // Validate player exists
@@ -35,7 +35,7 @@ export const chooseWhoGoesFirst: LorcanaMoveDefinition<"chooseWhoGoesFirst"> = {
     const chosenPlayer = playerId as PlayerId;
     const resolvedPlayerIds = resolveRuntimePlayerIds({
       playerIds: framework.state.playerIds,
-      ctx: { zones: framework.state.ctx?.zones },
+      _zonesPrivate: framework.state._zonesPrivate,
     });
     // Historical save-games may omit `playerIds` from move context; fallback to the chosen
     // player so mulligan flow still has a valid starting player list.
@@ -65,7 +65,7 @@ export const chooseWhoGoesFirst: LorcanaMoveDefinition<"chooseWhoGoesFirst"> = {
   available: ({ framework }) => {
     const resolvedPlayerIds = resolveRuntimePlayerIds({
       playerIds: framework.state.playerIds,
-      ctx: { zones: framework.state.ctx?.zones },
+      _zonesPrivate: framework.state._zonesPrivate,
     });
     return resolvedPlayerIds.length > 0;
   },

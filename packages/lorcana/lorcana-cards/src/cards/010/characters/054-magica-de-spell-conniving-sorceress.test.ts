@@ -1,88 +1,109 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   MagicaDeSpellConnivingSorceress,
-//   MagicaDeSpellShadowyAndSinister,
-// } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Magica De Spell - Conniving Sorceress", () => {
-//   It("should have Shift 7", () => {
-//     Const testEngine = new TestEngine({
-//       Play: [magicaDeSpellConnivingSorceress],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(
-//       MagicaDeSpellConnivingSorceress,
-//     );
-//     Expect(cardUnderTest.hasShift).toBe(true);
-//   });
-//
-//   It("SHADOW'S GRASP - Should draw 4 cards when played with Shift", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: magicaDeSpellConnivingSorceress.cost,
-//       Play: [magicaDeSpellShadowyAndSinister],
-//       Hand: [magicaDeSpellConnivingSorceress],
-//       Deck: 10,
-//     });
-//
-//     Expect(testEngine.getZonesCardCount("player_one").hand).toBe(1);
-//
-//     // Shift Conniving Sorceress on top of Shadowy and Sinister
-//     Await testEngine.shiftCard({
-//       Shifted: magicaDeSpellShadowyAndSinister,
-//       Shifter: magicaDeSpellConnivingSorceress,
-//     });
-//
-//     // Accept the optional ability
-//     Await testEngine.acceptOptionalAbility();
-//
-//     // Should have drawn 4 cards (1 initial + 4 drawn)
-//     Expect(testEngine.getZonesCardCount("player_one").hand).toBe(4);
-//   });
-//
-//   It("SHADOW'S GRASP - Should be optional", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: magicaDeSpellConnivingSorceress.cost,
-//       Play: [magicaDeSpellShadowyAndSinister],
-//       Hand: [magicaDeSpellConnivingSorceress],
-//       Deck: 10,
-//     });
-//
-//     Expect(testEngine.getZonesCardCount("player_one").hand).toBe(1);
-//
-//     // Shift Conniving Sorceress on top of Shadowy and Sinister
-//     Await testEngine.shiftCard({
-//       Shifted: magicaDeSpellShadowyAndSinister,
-//       Shifter: magicaDeSpellConnivingSorceress,
-//     });
-//
-//     // Decline the optional ability
-//     Await testEngine.skipTopOfStack();
-//
-//     // Should not have drawn any cards (still 0 because shifted card went to play)
-//     Expect(testEngine.getZonesCardCount("player_one").hand).toBe(0);
-//   });
-//
-//   It("SHADOW'S GRASP - Should NOT trigger when played normally (without Shift)", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: magicaDeSpellConnivingSorceress.cost,
-//       Hand: [magicaDeSpellConnivingSorceress],
-//       Deck: 10,
-//     });
-//
-//     Expect(testEngine.getZonesCardCount("player_one").hand).toBe(1);
-//
-//     // Play normally (not shifting)
-//     Await testEngine.playCard(magicaDeSpellConnivingSorceress);
-//
-//     // Should not have drawn any cards
-//     Expect(testEngine.getZonesCardCount("player_one").hand).toBe(0);
-//     Expect(testEngine.store.stackLayerStore.layers).toHaveLength(0);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { magicaDeSpellConnivingSorceress } from "./054-magica-de-spell-conniving-sorceress";
+import { magicaDeSpellShadowyAndSinister } from "./041-magica-de-spell-shadowy-and-sinister";
+
+describe("Magica De Spell - Conniving Sorceress", () => {
+  it("should have Shift 7 keyword ability", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [magicaDeSpellConnivingSorceress],
+    });
+
+    expect(testEngine.hasKeyword(magicaDeSpellConnivingSorceress, "Shift")).toBe(true);
+  });
+
+  describe("SHADOW'S GRASP - When you play this character, if you used Shift to play her, you may draw 4 cards.", () => {
+    it("draws 4 cards when played via Shift and ability is accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: 7,
+        hand: [magicaDeSpellConnivingSorceress],
+        play: [magicaDeSpellShadowyAndSinister],
+        deck: 10,
+      });
+
+      const shiftTarget = testEngine.findCardInstanceId(
+        magicaDeSpellShadowyAndSinister,
+        "play",
+        "player_one",
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(magicaDeSpellConnivingSorceress, {
+          cost: {
+            cost: "shift",
+            shiftTarget,
+          },
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
+        hand: 4,
+        deck: 6,
+      });
+    });
+
+    it("is optional - can decline to draw 4 cards", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: 7,
+        hand: [magicaDeSpellConnivingSorceress],
+        play: [magicaDeSpellShadowyAndSinister],
+        deck: 10,
+      });
+
+      const shiftTarget = testEngine.findCardInstanceId(
+        magicaDeSpellShadowyAndSinister,
+        "play",
+        "player_one",
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(magicaDeSpellConnivingSorceress, {
+          cost: {
+            cost: "shift",
+            shiftTarget,
+          },
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
+        hand: 0,
+        deck: 10,
+      });
+    });
+
+    it("does not trigger when played normally without Shift", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: magicaDeSpellConnivingSorceress.cost,
+        hand: [magicaDeSpellConnivingSorceress],
+        deck: 10,
+      });
+
+      expect(
+        testEngine.asPlayerOne().playCard(magicaDeSpellConnivingSorceress),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+
+      expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
+        hand: 0,
+        deck: 10,
+      });
+    });
+  });
+});

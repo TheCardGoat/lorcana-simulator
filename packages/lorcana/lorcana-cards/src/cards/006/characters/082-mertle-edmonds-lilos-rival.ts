@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mertleEdmondsLilosRivalI18n } from "./082-mertle-edmonds-lilos-rival.i18n";
 
 export const mertleEdmondsLilosRival: CharacterCard = {
   id: "Tkf",
@@ -7,24 +8,6 @@ export const mertleEdmondsLilosRival: CharacterCard = {
   cardType: "character",
   name: "Mertle Edmonds",
   version: "Lilo's Rival",
-  i18n: {
-    en: {
-      name: "Mertle Edmonds",
-      version: "Lilo's Rival",
-    },
-    de: {
-      name: "Mertle",
-      version: "Lilos Rivalin",
-    },
-    fr: {
-      name: "Mertle Edmonds",
-      version: "Rivale de Lilo",
-    },
-    it: {
-      name: "Mertle Edmonds",
-      version: "Rivale di Lilo",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lilo and Stitch",
   set: "006",
@@ -41,4 +24,5 @@ export const mertleEdmondsLilosRival: CharacterCard = {
     tcgPlayer: 588339,
   },
   classifications: ["Storyborn"],
+  i18n: mertleEdmondsLilosRivalI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseMrsCratchitI18n } from "./088-minnie-mouse-mrs-cratchit.i18n";
 
 export const minnieMouseMrsCratchit: CharacterCard = {
   id: "g4Z",
@@ -7,37 +8,6 @@ export const minnieMouseMrsCratchit: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Mrs. Cratchit",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Mrs. Cratchit",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "A MOTHER'S LOVE",
-          description:
-            "When you play this character, you may put the top card of your deck facedown under one of your characters or locations with Boost. If you do, draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Frau Cratchit",
-      text: "Behütet DIE LIEBE EINER MUTTER Wenn du diesen Charakter ausspielst, darfst du die oberste Karte deines Decks verdeckt unter einen deiner Charaktere oder Orte mit Stärken legen. Wenn du dies tust, ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Minnie",
-      version: "Mme Cratchit",
-      text: "Hors d'atteinte L'AMOUR D'UNE MÈRE Lorsque vous jouez ce personnage, vous pouvez placer la carte du dessus de votre pioche, face cachée, sous l'un de vos personnages ou de vos lieux avec Boost. Si vous le faites, piochez une carte.",
-    },
-    it: {
-      name: "Minni",
-      version: "Signora Cratchit",
-      text: "Protetto L'AMORE DI UNA MADRE Quando giochi questo personaggio, puoi mettere la prima carta del tuo mazzo a faccia in giù sotto a uno dei tuoi personaggi o luoghi con Potenziamento. Se lo fai, pesca una carta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Mickey's Christmas Carol",
   set: "011",
@@ -72,26 +42,52 @@ export const minnieMouseMrsCratchit: CharacterCard = {
     },
     {
       id: "18q-2",
+      name: "A MOTHER’S LOVE",
       effect: {
-        optionLabels: [
-          "A MOTHER’S LOVE When you play this character, you may put the top card of your deck facedown under one of your characters",
-          "locations with Boost. If you do, draw a card.",
-        ],
-        options: [
+        steps: [
           {
-            from: "hand",
-            type: "play-card",
+            chooser: "CONTROLLER",
+            effect: {
+              type: "put-under",
+              source: "top-of-deck",
+              under: {
+                cardTypes: ["character", "location"],
+                count: 1,
+                owner: "you",
+                selector: "chosen",
+                zones: ["play"],
+                filter: [
+                  {
+                    keyword: "Boost",
+                    type: "has-keyword",
+                  },
+                ],
+              },
+            },
+            type: "optional",
           },
           {
-            amount: 1,
-            target: "CONTROLLER",
-            type: "draw",
+            condition: {
+              type: "if-you-do",
+            },
+            then: {
+              amount: 1,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+            type: "conditional",
           },
         ],
-        type: "choice",
+        type: "sequence",
       },
-      type: "action",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
       text: "A MOTHER’S LOVE When you play this character, you may put the top card of your deck facedown under one of your characters or locations with Boost. If you do, draw a card.",
     },
   ],
+  i18n: minnieMouseMrsCratchitI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { fixitFelixJrPintsizedHeroI18n } from "./022-fix-it-felix-jr-pint-sized-hero.i18n";
 
 export const fixitFelixJrPintsizedHero: CharacterCard = {
   id: "zSu",
@@ -7,52 +8,6 @@ export const fixitFelixJrPintsizedHero: CharacterCard = {
   cardType: "character",
   name: "Fix-It Felix, Jr.",
   version: "Pint-Sized Hero",
-  i18n: {
-    en: {
-      name: "Fix-It Felix, Jr.",
-      version: "Pint-Sized Hero",
-      text: [
-        {
-          title: "LET'S GET TO WORK",
-          description:
-            "Whenever you return a Racer character card from your discard to your hand, you may ready chosen Racer character. They can't quest for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Fix-It Felix, Jr.",
-      version: "Kleinwüchsiger Held",
-      text: [
-        {
-          title: "LOS, AN DIE ARBEIT",
-          description:
-            "Jedes Mal, wenn du eine Rennfahrer-Charakterkarte aus deinem Ablagestapel zurück auf deine Hand nimmst, darfst du einen Rennfahrer deiner Wahl bereit machen. Er kann in diesem Zug nicht mehr erkunden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Félix Fixe Junior",
-      version: "Héros demi-portion",
-      text: [
-        {
-          title: "AU TRAVAIL",
-          description:
-            "Chaque fois que vous renvoyez une carte Pilote de votre défausse dans votre main, vous pouvez choisir un Pilote et le redresser. Ce personnage ne peut pas être envoyé à l'aventure pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Felix Aggiustatutto Jr.",
-      version: "Tappetto Eroico",
-      text: [
-        {
-          title: "AL LAVORO",
-          description:
-            "Ogni volta che riprendi in mano una carta personaggio Pilota dai tuoi scarti, puoi preparare un personaggio Pilota a tua scelta. Non può andare all'avventura per il resto di questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber", "ruby"],
   franchise: "Wreck It Ralph",
   set: "007",
@@ -80,10 +35,33 @@ export const fixitFelixJrPintsizedHero: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          duration: "this-turn",
-          restriction: "cant-quest",
-          target: "SELF",
-          type: "restriction",
+          type: "sequence",
+          steps: [
+            {
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                cardTypes: ["character"],
+                zones: ["play"],
+                filter: [
+                  {
+                    type: "has-classification",
+                    classification: "Racer",
+                  },
+                ],
+              },
+              type: "ready",
+            },
+            {
+              duration: "this-turn",
+              restriction: "cant-quest",
+              target: {
+                reference: "selected-first",
+              },
+              type: "restriction",
+            },
+          ],
         },
         type: "optional",
       },
@@ -91,11 +69,21 @@ export const fixitFelixJrPintsizedHero: CharacterCard = {
       name: "LET'S GET TO WORK",
       text: "LET'S GET TO WORK Whenever you return a Racer character card from your discard to your hand, you may ready chosen Racer character. They can't quest for the rest of this turn.",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "return-to-hand",
+        on: {
+          controller: "you",
+          cardType: "character",
+          classification: "Racer",
+        },
+        restrictions: [
+          {
+            type: "from-discard",
+          },
+        ],
+        timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: fixitFelixJrPintsizedHeroI18n,
 };

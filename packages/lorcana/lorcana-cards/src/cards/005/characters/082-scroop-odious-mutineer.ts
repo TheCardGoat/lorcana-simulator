@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { scroopOdiousMutineerI18n } from "./082-scroop-odious-mutineer.i18n";
 
 export const scroopOdiousMutineer: CharacterCard = {
   id: "6v8",
@@ -7,40 +8,6 @@ export const scroopOdiousMutineer: CharacterCard = {
   cardType: "character",
   name: "Scroop",
   version: "Odious Mutineer",
-  i18n: {
-    en: {
-      name: "Scroop",
-      version: "Odious Mutineer",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "DO SAY HELLO TO MR.",
-        },
-        {
-          title: "ARROW",
-          description:
-            "When you play this character, you may pay 3 {I} to banish chosen damaged character.",
-        },
-      ],
-    },
-    de: {
-      name: "Scroop",
-      version: "Abscheulicher Meuterer",
-      text: "Wendig SCHÖNE GRÜSSE AN MR. ARROW Wenn du diesen Charakter ausspielst, darfst du 3 bezahlen, um einen beschädigten Charakter deiner Wahl zu verbannen.",
-    },
-    fr: {
-      name: "Scroop",
-      version: "Odieux mutin",
-      text: "Insaisissable VA SALUER DE MA PART M. ARROW Lorsque vous jouez ce personnage, vous pouvez payer 3 pour choisir un personnage ayant au moins un dommage sur lui et le bannir.",
-    },
-    it: {
-      name: "Scroop",
-      version: "Ammutinato Detestabile",
-      text: "Sfuggente SALUTA IL SIGNOR ARROW DA PARTE MIA Quando giochi questo personaggio, puoi pagare 3 per esiliare un personaggio danneggiato a tua scelta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Treasure Planet",
   set: "005",
@@ -86,4 +53,5 @@ export const scroopOdiousMutineer: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: scroopOdiousMutineerI18n,
 };

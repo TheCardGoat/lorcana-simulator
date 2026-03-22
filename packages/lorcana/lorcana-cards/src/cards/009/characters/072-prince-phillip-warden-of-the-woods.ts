@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princePhillipWardenOfTheWoodsI18n } from "./072-prince-phillip-warden-of-the-woods.i18n";
 
 export const princePhillipWardenOfTheWoods: CharacterCard = {
   id: "zIZ",
@@ -7,51 +8,6 @@ export const princePhillipWardenOfTheWoods: CharacterCard = {
   cardType: "character",
   name: "Prince Phillip",
   version: "Warden of the Woods",
-  i18n: {
-    en: {
-      name: "Prince Phillip",
-      version: "Warden of the Woods",
-      text: [
-        {
-          title: "SHINING BEACON",
-          description: "Your other Hero characters gain Ward.",
-        },
-      ],
-    },
-    de: {
-      name: "Prinz Phillip",
-      version: "Hüter des Waldes",
-      text: [
-        {
-          title: "STRAHLENDES LEUCHTFEUER",
-          description:
-            "Deine anderen Heldinnen und Helden erhalten Behütet. (Gegnerische Karten können diese Charaktere nicht auswählen, außer um sie herauszufordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Prince Philippe",
-      version: "Gardien de la forêt",
-      text: [
-        {
-          title: "FLAMBEAU RAYONNANT",
-          description:
-            "Vos autres personnages Héros gagnent Hors d'atteinte. (Les adversaires ne peuvent pas choisir ces personnages, hormis pour un défi.)",
-        },
-      ],
-    },
-    it: {
-      name: "Principe Filippo",
-      version: "Guardiano delle Foreste",
-      text: [
-        {
-          title: "FARO SPLENDENTE I",
-          description:
-            "tuoi altri personaggi Eroe ottengono Protetto. (Gli avversari non possono sceglierli se non per sfidarli.)",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Sleeping Beauty",
   set: "009",
@@ -86,4 +42,5 @@ export const princePhillipWardenOfTheWoods: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: princePhillipWardenOfTheWoodsI18n,
 };

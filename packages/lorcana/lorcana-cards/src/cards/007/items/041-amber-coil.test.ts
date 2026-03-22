@@ -25,13 +25,35 @@ describe("Amber Coil", () => {
 
     expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolveNextPending({
         resolveOptional: true,
         targets: [damagedTarget],
       }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne()).toHaveDamage({ card: damagedTarget, value: 1 });
+  });
+
+  it("lets you decline the healing trigger", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [inkCard],
+      play: [amberCoil, damagedTarget],
+    });
+
+    testEngine.asServer().manualSetDamage(damagedTarget, 2);
+
+    expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne()).toHaveDamage({ card: damagedTarget, value: 2 });
   });
 });

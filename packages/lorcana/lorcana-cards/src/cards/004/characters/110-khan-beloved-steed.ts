@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { khanBelovedSteedI18n } from "./110-khan-beloved-steed.i18n";
 
 export const khanBelovedSteed: CharacterCard = {
   id: "CdR",
@@ -7,24 +8,6 @@ export const khanBelovedSteed: CharacterCard = {
   cardType: "character",
   name: "Khan",
   version: "Beloved Steed",
-  i18n: {
-    en: {
-      name: "Khan",
-      version: "Beloved Steed",
-    },
-    de: {
-      name: "Khan",
-      version: "Geliebtes Ross",
-    },
-    fr: {
-      name: "Khan",
-      version: "Destrier adoré",
-    },
-    it: {
-      name: "Khan",
-      version: "Destriero Adorato",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mulan",
   set: "004",
@@ -41,4 +24,5 @@ export const khanBelovedSteed: CharacterCard = {
     tcgPlayer: 547780,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: khanBelovedSteedI18n,
 };

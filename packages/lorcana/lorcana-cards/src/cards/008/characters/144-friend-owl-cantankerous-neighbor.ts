@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { friendOwlCantankerousNeighborI18n } from "./144-friend-owl-cantankerous-neighbor.i18n";
 
 export const friendOwlCantankerousNeighbor: CharacterCard = {
   id: "CQX",
@@ -7,24 +8,6 @@ export const friendOwlCantankerousNeighbor: CharacterCard = {
   cardType: "character",
   name: "Friend Owl",
   version: "Cantankerous Neighbor",
-  i18n: {
-    en: {
-      name: "Friend Owl",
-      version: "Cantankerous Neighbor",
-    },
-    de: {
-      name: "Freund Eule",
-      version: "Mürrischer Nachbar",
-    },
-    fr: {
-      name: "Monsieur Hibou",
-      version: "Voisin acariâtre",
-    },
-    it: {
-      name: "Amico Gufo",
-      version: "Vicino Irascibile",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Bambi",
   set: "008",
@@ -41,4 +24,5 @@ export const friendOwlCantankerousNeighbor: CharacterCard = {
     tcgPlayer: 631444,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: friendOwlCantankerousNeighborI18n,
 };

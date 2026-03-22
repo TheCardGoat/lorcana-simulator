@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stabbingtonBrotherWithoutAPatchI18n } from "./125-stabbington-brother-without-a-patch.i18n";
 
 export const stabbingtonBrotherWithoutAPatch: CharacterCard = {
   id: "ij4",
@@ -7,34 +8,6 @@ export const stabbingtonBrotherWithoutAPatch: CharacterCard = {
   cardType: "character",
   name: "Stabbington Brother",
   version: "Without a Patch",
-  i18n: {
-    en: {
-      name: "Stabbington Brother",
-      version: "Without a Patch",
-      text: "Rush GET 'EM! Your other characters named Stabbington Brother gain Rush.",
-    },
-    de: {
-      name: "Stabbington-Bruder",
-      version: "Ohne Augenklappe",
-      text: "Rasant SCHNAPP SIE! Deine anderen Stabbington-Bruder-Charaktere erhalten Rasant.",
-    },
-    fr: {
-      name: "Un frère Stabbington",
-      version: "Celui sans cache-œil",
-      text: "Charge ATTRAPE-LES! Vos autres personnages Un frère Stabbington gagnent Charge.",
-    },
-    it: {
-      name: "Fratello Stabbington",
-      version: "Senza la Benda",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) PRENDILI! I tuoi altri personaggi chiamati Fratello Stabbington ottengono Lesto.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Tangled",
   set: "007",
@@ -53,14 +26,35 @@ export const stabbingtonBrotherWithoutAPatch: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      id: "ij4-1",
+      keyword: "Rush",
+      text: "Rush",
+      type: "keyword",
+    },
+    {
       effect: {
         keyword: "Rush",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          excludeSelf: true,
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-name",
+              name: "Stabbington Brother",
+            },
+          ],
+        },
         type: "gain-keyword",
       },
-      id: "103-1",
-      text: "Rush GET 'EM! Your other characters named Stabbington Brother gain Rush.",
-      type: "action",
+      id: "ij4-2",
+      name: "GET 'EM!",
+      text: "GET 'EM! Your other characters named Stabbington Brother gain Rush.",
+      type: "static",
     },
   ],
+  i18n: stabbingtonBrotherWithoutAPatchI18n,
 };

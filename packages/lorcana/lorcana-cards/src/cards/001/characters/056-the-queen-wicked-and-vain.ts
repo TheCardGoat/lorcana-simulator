@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theQueenWickedAndVainI18n } from "./056-the-queen-wicked-and-vain.i18n";
 
 export const theQueenWickedAndVain: CharacterCard = {
   id: "KjI",
@@ -7,48 +8,6 @@ export const theQueenWickedAndVain: CharacterCard = {
   cardType: "character",
   name: "The Queen",
   version: "Wicked and Vain",
-  i18n: {
-    en: {
-      name: "The Queen",
-      version: "Wicked and Vain",
-      text: [
-        {
-          title: "I SUMMON THEE",
-          description: "{E} — Draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Königin",
-      version: "Boshaft und eitel",
-      text: [
-        {
-          title: "HÖRE MICH!",
-          description: "— Ziehe 1 Karte.",
-        },
-      ],
-    },
-    fr: {
-      name: "LA REINE",
-      version: "Vaniteuse et malfaisante",
-      text: [
-        {
-          title: "JE TE L'ORDONNE",
-          description: "— Piochez une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "The Queen",
-      version: "Wicked and Vain",
-      text: [
-        {
-          title: "I SUMMON THEE",
-          description: "— Draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Snow White",
   set: "001",
@@ -85,4 +44,5 @@ export const theQueenWickedAndVain: CharacterCard = {
       text: "I SUMMON THEE {E} — Draw a card.",
     },
   ],
+  i18n: theQueenWickedAndVainI18n,
 };

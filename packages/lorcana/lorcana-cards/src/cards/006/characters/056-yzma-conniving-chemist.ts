@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yzmaConnivingChemistI18n } from "./056-yzma-conniving-chemist.i18n";
 
 export const yzmaConnivingChemist: CharacterCard = {
   id: "5QH",
@@ -7,51 +8,6 @@ export const yzmaConnivingChemist: CharacterCard = {
   cardType: "character",
   name: "Yzma",
   version: "Conniving Chemist",
-  i18n: {
-    en: {
-      name: "Yzma",
-      version: "Conniving Chemist",
-      text: [
-        {
-          title: "FEEL THE POWER",
-          description:
-            "{E} — If you have fewer than 3 cards in your hand, draw until you have 3 cards in your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Isma",
-      version: "Hinterhältige Chemikerin",
-      text: [
-        {
-          title: "FÜHL DIE MACHT",
-          description:
-            "— Wenn du weniger als 3 Karten auf deiner Hand hast, ziehe so viele Karten, bis du 3 Karten auf deiner Hand hast.",
-        },
-      ],
-    },
-    fr: {
-      name: "Yzma",
-      version: "Chimiste sournoise",
-      text: [
-        {
-          title: "SENS LA PUISSANCE",
-          description:
-            "— Si vous avez moins de 3 cartes en main, piochez jusqu'à avoir 3 cartes en main.",
-        },
-      ],
-    },
-    it: {
-      name: "Yzma",
-      version: "Subdola Chimica",
-      text: [
-        {
-          title: "AVVERTI IL NERO POTERE",
-          description: "— Se hai meno di 3 carte in mano, pesca finché non hai 3 carte in mano.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Emperors New Groove",
   set: "006",
@@ -74,5 +30,28 @@ export const yzmaConnivingChemist: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer"],
-  abilities: [],
+  abilities: [
+    {
+      id: "5QH-1",
+      name: "FEEL THE POWER",
+      text: "FEEL THE POWER {E} - If you have fewer than 3 cards in your hand, draw until you have 3 cards in your hand.",
+      type: "activated",
+      cost: {
+        exert: true,
+      },
+      condition: {
+        type: "resource-count",
+        what: "cards-in-hand",
+        controller: "you",
+        comparison: "less-than",
+        value: 3,
+      },
+      effect: {
+        type: "draw-until-hand-size",
+        size: 3,
+        target: "CONTROLLER",
+      },
+    },
+  ],
+  i18n: yzmaConnivingChemistI18n,
 };

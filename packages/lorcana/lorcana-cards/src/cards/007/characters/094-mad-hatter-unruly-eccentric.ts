@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madHatterUnrulyEccentricI18n } from "./094-mad-hatter-unruly-eccentric.i18n";
 
 export const madHatterUnrulyEccentric: CharacterCard = {
   id: "RyL",
@@ -7,52 +8,6 @@ export const madHatterUnrulyEccentric: CharacterCard = {
   cardType: "character",
   name: "Mad Hatter",
   version: "Unruly Eccentric",
-  i18n: {
-    en: {
-      name: "Mad Hatter",
-      version: "Unruly Eccentric",
-      text: [
-        {
-          title: "UNBIRTHDAY PRESENT",
-          description:
-            "Whenever a damaged character challenges another character, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Mad Hatter",
-      version: "Unruly Eccentric",
-      text: [
-        {
-          title: "UNBIRTHDAY PRESENT",
-          description:
-            "Whenever a damaged character challenges another character, you may draw a card.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mad Hatter",
-      version: "Unruly Eccentric",
-      text: [
-        {
-          title: "UNBIRTHDAY PRESENT",
-          description:
-            "Whenever a damaged character challenges another character, you may draw a card.",
-        },
-      ],
-    },
-    it: {
-      name: "Mad Hatter",
-      version: "Unruly Eccentric",
-      text: [
-        {
-          title: "UNBIRTHDAY PRESENT",
-          description:
-            "Whenever a damaged character challenges another character, you may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald", "ruby"],
   franchise: "Alice in Wonderland",
   set: "007",
@@ -89,12 +44,16 @@ export const madHatterUnrulyEccentric: CharacterCard = {
       },
       name: "UNBIRTHDAY PRESENT",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "challenge",
+        timing: "whenever",
+        on: "ANY_CHARACTER",
+        attacker: {
+          filters: [{ type: "damaged" }],
+        },
       },
       type: "triggered",
       text: "UNBIRTHDAY PRESENT Whenever a damaged character challenges another character, you may draw a card.",
     },
   ],
+  i18n: madHatterUnrulyEccentricI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { edgarBalthazarAmbitiousButlerI18n } from "./146-edgar-balthazar-ambitious-butler.i18n";
 
 export const edgarBalthazarAmbitiousButler: CharacterCard = {
   id: "24D",
@@ -7,24 +8,6 @@ export const edgarBalthazarAmbitiousButler: CharacterCard = {
   cardType: "character",
   name: "Edgar Balthazar",
   version: "Ambitious Butler",
-  i18n: {
-    en: {
-      name: "Edgar Balthazar",
-      version: "Ambitious Butler",
-    },
-    de: {
-      name: "Edgar Balthazar",
-      version: "Ehrgeiziger Butler",
-    },
-    fr: {
-      name: "Edgar Balthazar",
-      version: "Majordome ambitieux",
-    },
-    it: {
-      name: "Edgar Balthazar",
-      version: "Maggiordomo Ambizioso",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aristocats",
   set: "007",
@@ -41,4 +24,5 @@ export const edgarBalthazarAmbitiousButler: CharacterCard = {
     tcgPlayer: 618154,
   },
   classifications: ["Storyborn", "Villain"],
+  i18n: edgarBalthazarAmbitiousButlerI18n,
 };

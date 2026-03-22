@@ -24,7 +24,7 @@ export { fourDozenEggs } from "./164-four-dozen-eggs";
 export { oneJumpAhead } from "./165-one-jump-ahead";
 export { digALittleDeeper } from "./166-dig-a-little-deeper";
 export { oneLastHope } from "./197-one-last-hope";
-export { smash_set9 as smash } from "./198-smash";
+export { smash } from "./198-smash";
 export { iFindEmIFlattenEm } from "./199-i-find-em-i-flatten-em";
 export { fireTheCannons } from "./200-fire-the-cannons";
 export { strengthOfARagingFire } from "./201-strength-of-a-raging-fire";

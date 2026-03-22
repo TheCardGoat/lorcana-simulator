@@ -1,23 +1,110 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { clarabelleContentedWallflower } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Clarabelle - Contented Wallflower", () => {
-//   It.skip("**ONE STEP BEHIND** When you play this character, if an opponent has more cards in their hand than you, you may draw a card.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: clarabelleContentedWallflower.cost,
-//       Hand: [clarabelleContentedWallflower],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(clarabelleContentedWallflower);
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { clarabelleContentedWallflower } from "./090-clarabelle-contented-wallflower";
+
+const drawnCard = createMockCharacter({
+  id: "clarabelle-drawn-card",
+  name: "Drawn Card",
+  cost: 1,
+});
+
+describe("Clarabelle - Contented Wallflower", () => {
+  describe("ONE STEP BEHIND - When you play this character, if an opponent has more cards in their hand than you, you may draw a card.", () => {
+    it("draws a card when opponent has more cards in hand", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [clarabelleContentedWallflower],
+          inkwell: clarabelleContentedWallflower.cost,
+          deck: [drawnCard],
+        },
+        {
+          hand: 5,
+        },
+      );
+
+      // Player one has 1 card in hand (Clarabelle), opponent has 5
+      expect(
+        testEngine.asPlayerOne().playCard(clarabelleContentedWallflower),
+      ).toBeSuccessfulCommand();
+
+      // Should have a triggered ability in the bag
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Resolve the optional ability (accept it)
+      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+
+      // Should have drawn a card
+      expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
+    });
+
+    it("can decline the optional ability", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [clarabelleContentedWallflower],
+          inkwell: clarabelleContentedWallflower.cost,
+          deck: [drawnCard],
+        },
+        {
+          hand: 5,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(clarabelleContentedWallflower),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Decline the optional ability
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // Should NOT have drawn a card
+      expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
+    });
+
+    it("does not trigger when opponent has fewer cards in hand", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [clarabelleContentedWallflower],
+          inkwell: clarabelleContentedWallflower.cost,
+          deck: [drawnCard],
+        },
+        {
+          hand: 0,
+        },
+      );
+
+      // Player one has 1 card, opponent has 0 - condition not met
+      expect(
+        testEngine.asPlayerOne().playCard(clarabelleContentedWallflower),
+      ).toBeSuccessfulCommand();
+
+      // Should NOT have a triggered ability since condition is not met
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
+    });
+
+    it("does not trigger when opponent has the same number of cards in hand", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [clarabelleContentedWallflower],
+          inkwell: clarabelleContentedWallflower.cost,
+          deck: [drawnCard],
+        },
+        {
+          hand: 0,
+        },
+      );
+
+      // After playing Clarabelle, player has 0 cards in hand, opponent has 0 - equal, no trigger
+      expect(
+        testEngine.asPlayerOne().playCard(clarabelleContentedWallflower),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
+    });
+  });
+});

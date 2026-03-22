@@ -135,6 +135,7 @@ export interface ShuffleIntoDeckEffect {
 export interface PutOnBottomEffect {
   type: "put-on-bottom";
   target: CharacterTarget | ItemTarget | LocationTarget | CardTarget;
+  chooser?: PlayerTarget;
   chosenBy?: "you" | "opponent" | "TARGET";
   ordering?: "player-choice";
   orderBy?: "owner" | "controller";
@@ -143,8 +144,10 @@ export interface PutOnBottomEffect {
 export interface MoveCardsFromUnderEffect {
   type: "move-cards-from-under";
   target?: CharacterTarget | ItemTarget | LocationTarget | CardTarget;
-  source?: "target" | "selected";
-  destination?: "deck-bottom-random" | "inkwell-facedown-exerted" | "hand";
+  source?: "target" | "selected" | "snapshot-cards-under";
+  destination?: "deck-bottom-random" | "inkwell-facedown-exerted" | "hand" | "under-chosen";
+  /** When destination is "under-chosen", specifies what can be chosen */
+  underTarget?: CharacterTarget | LocationTarget;
 }
 
 // ============================================================================
@@ -203,6 +206,13 @@ export interface MoveToLocationEffect {
   character: CharacterTarget;
   location?: LocationTarget;
   cost?: "free" | "normal";
+  /**
+   * When true, the source card (the card with the ability) is also moved
+   * to the same location, in addition to the selected character(s).
+   *
+   * @example Tuk Tuk - Lively Partner: "move him and one of your other characters to the same location"
+   */
+  includeSelf?: boolean;
 }
 
 /**

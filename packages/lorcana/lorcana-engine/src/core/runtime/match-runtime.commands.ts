@@ -1,79 +1,59 @@
 /**
  * MatchRuntime Command Processing
  *
- * Command execution logic.
+ * Command execution logic — pure function, no class dependencies.
  */
 
-import { produce, type Patch, type Draft } from "immer";
+import { produce, type Patch } from "immer";
 import type { GameEvent, MatchState, MoveInput } from "./types";
 import type {
-  MoveDefinition,
+  MatchRuntimeConfig,
   GameEndResult,
-  RuntimeLifecycleContext,
-  MoveValidationContext,
-  MoveExecutionContext,
   RuntimeActorRole,
-  RuntimeFlowDefinition,
   CommandFailure,
   ProjectedLogEntry,
 } from "./match-runtime.types";
 import { resolveFlowTransitionsOnDraft, checkGameEndCondition } from "./match-runtime.flow";
 import { validateCommand } from "./match-runtime.validation";
+import {
+  buildExecutionContext as buildExecutionContextFromUtils,
+  buildLifecycleContext as buildLifecycleContextFromUtils,
+} from "./match-runtime.utils";
+import type { MatchStaticResources } from "./static-resources";
 import type { BaseCardDefinition } from "./card-contracts";
 import { expireReveals } from "./zone-operations";
+import type { LorcanaG } from "../../types/runtime-state";
 
-interface InternalCommandSuccess<G> {
+interface InternalCommandSuccess {
   success: true;
   stateID: number;
-  state: MatchState<G>;
+  state: MatchState;
   patches: Patch[];
   pendingGameEvents: GameEvent[];
   moveLogEntries: ProjectedLogEntry[];
+  undoable: boolean;
 }
 
-export interface CommandExecutionContext<
-  G,
-  Moves,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object = {},
-> {
-  state: MatchState<G>;
-  config: {
-    moves: Moves;
-    flow?: RuntimeFlowDefinition<G, TCardDefinition, TCardDerived>;
-  };
+const INFORMATION_REVEALING_EVENT_KINDS: ReadonlySet<string> = new Set([
+  "CARDS_DRAWN",
+  "CARDS_MILLED",
+  "MULLIGAN_PERFORMED",
+]);
+
+function isInformationRevealed(events: GameEvent[]): boolean {
+  return events.some((event) => INFORMATION_REVEALING_EVENT_KINDS.has(event.kind));
+}
+
+export interface CommandExecutionContext {
+  state: MatchState;
+  config: MatchRuntimeConfig;
+  staticResources: MatchStaticResources;
   actorRole: RuntimeActorRole;
   gameEnded: boolean;
   currentStateID: number;
-  buildValidationContext: (
-    playerId: string,
-    input: MoveInput,
-    validationMode: "preflight" | "final",
-  ) => MoveValidationContext<G, TCardDefinition, MoveInput, TCardDerived>;
-  buildExecutionContext: (
-    draft: Draft<MatchState<G>>,
-    playerId: string,
-    input: MoveInput,
-    endGameTracker: { ended: boolean; result?: GameEndResult },
-    emitGameEvent: (event: GameEvent) => void,
-    moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
-  ) => MoveExecutionContext<G, TCardDefinition, MoveInput, TCardDerived>;
-  buildLifecycleContext: (
-    draft: Draft<MatchState<G>>,
-    playerId: string | undefined,
-    gameEnded: boolean,
-    emitGameEvent: (event: GameEvent) => void,
-    endGameTracker: { ended: boolean; result?: GameEndResult },
-    moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
-  ) => RuntimeLifecycleContext<G, TCardDefinition, TCardDerived>;
 }
 
-export function executeCommand<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object = {},
->(
+export function executeCommand(
   command: {
     commandID?: string;
     move: string;
@@ -83,10 +63,10 @@ export function executeCommand<
   playerId: string,
   prevStateID: number,
   timestamp: number,
-  ctx: CommandExecutionContext<G, Moves, TCardDefinition, TCardDerived>,
+  ctx: CommandExecutionContext,
 ): {
-  result: InternalCommandSuccess<G> | CommandFailure;
-  newState: MatchState<G>;
+  result: InternalCommandSuccess | CommandFailure;
+  newState: MatchState;
   gameEnded: boolean;
   gameEndResult?: GameEndResult;
 } {
@@ -108,10 +88,10 @@ export function executeCommand<
   const validation = validateCommand({ ...command, input: commandInput }, playerId, prevStateID, {
     state: ctx.state,
     config: ctx.config,
+    staticResources: ctx.staticResources,
     actorRole: ctx.actorRole,
     gameEnded: ctx.gameEnded,
     currentStateID: ctx.currentStateID,
-    buildValidationContext: ctx.buildValidationContext,
   });
 
   if (!validation.valid) {
@@ -142,17 +122,23 @@ export function executeCommand<
     newState = produce(
       ctx.state,
       (draft) => {
-        const executionContext = ctx.buildExecutionContext(
+        const emitGameEvent = (event: GameEvent) => {
+          pendingGameEvents.push(event);
+        };
+        const moveLogSink = (entries: readonly ProjectedLogEntry[]) => {
+          moveLogEntries.push(...entries);
+        };
+
+        const executionContext = buildExecutionContextFromUtils(
           draft,
           actingPlayerId,
           commandInput,
+          ctx.config,
+          ctx.staticResources,
+          ctx.gameEnded,
+          emitGameEvent,
           endGameTracker,
-          (event) => {
-            pendingGameEvents.push(event);
-          },
-          (entries) => {
-            moveLogEntries.push(...entries);
-          },
+          moveLogSink,
         );
 
         // Step 5: Execute the move reducer
@@ -163,17 +149,15 @@ export function executeCommand<
           draft,
           ctx.config.flow,
           (draftState, lifecycleGameEnded, lifecyclePlayerId) =>
-            ctx.buildLifecycleContext(
+            buildLifecycleContextFromUtils(
               draftState,
-              lifecyclePlayerId,
+              ctx.config,
+              ctx.staticResources,
               lifecycleGameEnded,
-              (event) => {
-                pendingGameEvents.push(event);
-              },
+              emitGameEvent,
               endGameTracker,
-              (entries) => {
-                moveLogEntries.push(...entries);
-              },
+              lifecyclePlayerId,
+              moveLogSink,
             ),
         );
 
@@ -237,6 +221,7 @@ export function executeCommand<
         patches,
         pendingGameEvents,
         moveLogEntries,
+        undoable: !isInformationRevealed(pendingGameEvents),
       },
       newState,
       gameEnded: endGameTracker.ended,

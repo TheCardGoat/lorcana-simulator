@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gastonArrogantHunterI18n } from "./115-gaston-arrogant-hunter.i18n";
 
 export const gastonArrogantHunter: CharacterCard = {
   id: "Wks",
@@ -7,43 +8,6 @@ export const gastonArrogantHunter: CharacterCard = {
   cardType: "character",
   name: "Gaston",
   version: "Arrogant Hunter",
-  i18n: {
-    en: {
-      name: "Gaston",
-      version: "Arrogant Hunter",
-      text: "Reckless",
-    },
-    de: {
-      name: "Gaston",
-      version: "Arrogant Hunter",
-      text: [
-        {
-          title: "Reckless",
-          description: "(This character can't quest and must challenge each turn if able.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Gaston",
-      version: "Arrogant Hunter",
-      text: [
-        {
-          title: "Reckless",
-          description: "(This character can't quest and must challenge each turn if able.)",
-        },
-      ],
-    },
-    it: {
-      name: "Gaston",
-      version: "Arrogant Hunter",
-      text: [
-        {
-          title: "Reckless",
-          description: "(This character can't quest and must challenge each turn if able.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Beauty and the Beast",
   set: "009",
@@ -68,4 +32,5 @@ export const gastonArrogantHunter: CharacterCard = {
       text: "Reckless",
     },
   ],
+  i18n: gastonArrogantHunterI18n,
 };

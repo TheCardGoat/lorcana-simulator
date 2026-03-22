@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { genieSupportiveFriendI18n } from "./038-genie-supportive-friend.i18n";
 
 export const genieSupportiveFriend: CharacterCard = {
   id: "0Ac",
@@ -7,52 +8,6 @@ export const genieSupportiveFriend: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "Supportive Friend",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "Supportive Friend",
-      text: [
-        {
-          title: "THREE WISHES",
-          description:
-            "Whenever this character quests, you may shuffle this card into your deck to draw 3 cards.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschinni",
-      version: "Hilfsbereiter Freund",
-      text: [
-        {
-          title: "DREI WÜNSCHE",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du diese Karte in dein Deck mischen, um 3 Karten zu ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Génie",
-      version: "Ami encourageant",
-      text: [
-        {
-          title: "TROIS VŒUX",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez le remélanger dans votre pioche, puis piocher 3 cartes.",
-        },
-      ],
-    },
-    it: {
-      name: "Genio",
-      version: "Amico Solidale",
-      text: [
-        {
-          title: "TRE DESIDERI",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi rimescolare questa carta nel mazzo per pescare 3 carte.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "003",
@@ -75,15 +30,24 @@ export const genieSupportiveFriend: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          intoDeck: "owner",
-          target: "SELF",
-          type: "shuffle-into-deck",
+          type: "sequence",
+          steps: [
+            {
+              intoDeck: "owner",
+              target: "SELF",
+              type: "shuffle-into-deck",
+            },
+            {
+              type: "draw",
+              amount: 3,
+              target: "CONTROLLER",
+            },
+          ],
         },
         type: "optional",
       },
@@ -98,4 +62,5 @@ export const genieSupportiveFriend: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: genieSupportiveFriendI18n,
 };

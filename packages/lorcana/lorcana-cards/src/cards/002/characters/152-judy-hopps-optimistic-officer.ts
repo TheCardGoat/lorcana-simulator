@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { judyHoppsOptimisticOfficerI18n } from "./152-judy-hopps-optimistic-officer.i18n";
 
 export const judyHoppsOptimisticOfficer: CharacterCard = {
   id: "mSk",
@@ -7,52 +8,6 @@ export const judyHoppsOptimisticOfficer: CharacterCard = {
   cardType: "character",
   name: "Judy Hopps",
   version: "Optimistic Officer",
-  i18n: {
-    en: {
-      name: "Judy Hopps",
-      version: "Optimistic Officer",
-      text: [
-        {
-          title: "DON'T CALL ME CUTE",
-          description:
-            "When you play this character, you may banish chosen item. Its player draws a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Judy Hopps",
-      version: "Optimistische Polizistin",
-      text: [
-        {
-          title: "NENNEN SIE MICH NICHT NIEDLICH!",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Gegenstand deiner Wahl verbannen. Wer den Gegenstand im Spiel hatte, zieht 1 Karte.",
-        },
-      ],
-    },
-    fr: {
-      name: "Judy Hopps",
-      version: "Policière optimiste",
-      text: [
-        {
-          title: "ME TRAITEZ PAS DE MIGNON",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un objet et le bannir. Son propriétaire pioche une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Judy Hopps",
-      version: "Optimistic Officer",
-      text: [
-        {
-          title: "DON'T CALL ME CUTE",
-          description:
-            "When you play this character, you may banish chosen item. Its player draws a card.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Zootropolis",
   set: "002",
@@ -75,7 +30,6 @@ export const judyHoppsOptimisticOfficer: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -119,4 +73,5 @@ export const judyHoppsOptimisticOfficer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: judyHoppsOptimisticOfficerI18n,
 };

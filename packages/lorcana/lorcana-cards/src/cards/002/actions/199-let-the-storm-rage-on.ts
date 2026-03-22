@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { letTheStormRageOnI18n } from "./199-let-the-storm-rage-on.i18n";
 
 export const letTheStormRageOn: ActionCard = {
   id: "404",
@@ -6,24 +7,6 @@ export const letTheStormRageOn: ActionCard = {
   reprints: ["set2-199"],
   cardType: "action",
   name: "Let the Storm Rage On",
-  i18n: {
-    en: {
-      name: "Let the Storm Rage On",
-      text: "Deal 2 damage to chosen character. Draw a card.",
-    },
-    de: {
-      name: "Ein Sturm zieht auf",
-      text: "Füge einem Charakter deiner Wahl 2 Schaden zu. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Perdue dans l'hiver",
-      text: "Choisissez un personnage et infligez-lui 2 dommages. Piochez une carte.",
-    },
-    it: {
-      name: "Ecco Qua la Tempesta",
-      text: "(Un personaggio con costo 3 o superiore può per cantare questa canzone gratis.) Infliggi 2 danni a un personaggio a tua scelta. Pesca una carta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Frozen",
   set: "002",
@@ -57,4 +40,5 @@ export const letTheStormRageOn: ActionCard = {
       type: "action",
     },
   ],
+  i18n: letTheStormRageOnI18n,
 };

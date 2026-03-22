@@ -6,12 +6,9 @@ import {
   type LorcanaLogMessageMap,
   type PlayerId,
 } from "@tcg/lorcana-engine";
-import {
-  getLorcanaLogTemplate,
-  type LorcanaLogLocale,
-} from "@tcg/lorcana-engine/i18n";
-import { m } from "$lib/paraglide/messages.js";
-import { getLocale } from "$lib/paraglide/runtime";
+import { getLorcanaLogTemplate, type LorcanaLogLocale } from "@tcg/lorcana-engine/i18n";
+import { m } from "$lib/i18n/messages.js";
+import { getLocale } from "$lib/paraglide/runtime.js";
 import type {
   LorcanaCardSnapshot,
   LorcanaPlayerSide,
@@ -134,13 +131,7 @@ const MARKER_BY_LOG_KEY: Record<LorcanaLogMessageKey, EventLogMarkerId> = {
   "lorcana.effect.resolve.scrySelection": "ability",
 };
 
-const PLAYER_VALUE_KEYS = new Set([
-  "chooser",
-  "chosen",
-  "newPlayer",
-  "playerId",
-  "previousPlayer",
-]);
+const PLAYER_VALUE_KEYS = new Set(["chooser", "chosen", "newPlayer", "playerId", "previousPlayer"]);
 const CARD_VALUE_KEYS = new Set([
   "attackerId",
   "cardId",
@@ -167,6 +158,7 @@ const FALLBACK_MESSAGE_BY_MOVE_ID = {
   putCardIntoInkwell: "sim.eventLog.fallback.putCardIntoInkwell",
   quest: "sim.eventLog.fallback.quest",
   questWithAll: "sim.eventLog.fallback.questWithAll",
+  undo: "sim.eventLog.fallback.undo",
   sing: "sim.eventLog.fallback.sing",
   singTogether: "sim.eventLog.fallback.singTogether",
   resolveBag: "sim.eventLog.fallback.resolveBag",
@@ -193,6 +185,7 @@ const MARKER_BY_MOVE_ID: Record<MoveLogEntrySnapshot["moveId"], EventLogMarkerId
   putCardIntoInkwell: "ink",
   quest: "quest",
   questWithAll: "quest",
+  undo: "pass",
   sing: "play",
   singTogether: "play",
   resolveBag: "ability",
@@ -926,6 +919,10 @@ function buildFallbackSegments(
       }
       break;
     }
+    default: {
+      // Exhaustiveness check - unknown move IDs fall through to fallback text
+      break;
+    }
   }
 
   return [{ kind: "text", text }];
@@ -936,7 +933,7 @@ function selectPrimaryMessage(messages: LorcanaLogMessage[]): LorcanaLogMessage 
   let bestPriority = -1;
 
   for (const message of messages) {
-    const priority = MESSAGE_PRIORITY[message.key];
+    const priority = MESSAGE_PRIORITY[message.key] ?? -1;
     if (priority > bestPriority) {
       bestMessage = message;
       bestPriority = priority;
@@ -984,6 +981,11 @@ function entitySegment(
   viewerSide?: LorcanaPlayerSide | null,
   locale?: LorcanaSimulatorLocale,
 ): EventLogSegment {
+  const card = cardsById.get(value);
+  if (card) {
+    return { kind: "card", text: card.label, card };
+  }
+
   const resolvedSide = resolveSideForPlayerId(entry, value);
   if (resolvedSide) {
     const actor = buildActor(resolvedSide, viewerSide, locale);
@@ -1015,11 +1017,15 @@ function resolveSideForPlayerId(
     return actorSide;
   }
 
-  if (!actorSide) {
-    return null;
+  if (playerId === "player_one") {
+    return "playerOne";
   }
 
-  return actorSide === "playerOne" ? "playerTwo" : "playerOne";
+  if (playerId === "player_two") {
+    return "playerTwo";
+  }
+
+  return null;
 }
 
 function buildActor(

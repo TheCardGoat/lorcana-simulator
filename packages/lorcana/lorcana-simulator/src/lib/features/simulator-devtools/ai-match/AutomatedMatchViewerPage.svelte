@@ -13,16 +13,16 @@
     LorcanaTabletopSimulator,
     type LorcanaSimulatorReadModel,
   } from "$lib";
-  import type { LorcanaServer } from "@tcg/lorcana-engine";
+  import { getAutomatedActionStrategyOption, type LorcanaServer } from "@tcg/lorcana-engine";
   import { onMount } from "svelte";
   import {
     AutomatedMatchPlaybackController,
-    getAutomatedMatchStrategyOption,
     readStoredAutomatedMatchConfig,
     type AutomatedMatchStorage,
     type AutomatedMatchPlaybackState,
     type AutomatedMatchStatusSnapshot,
   } from "./index.js";
+  import { createAutomatedMatchSeed } from "./config.js";
 
   interface AutomatedMatchViewerPageProps {
     onNavigateToSetup?: (path: string) => Promise<void> | void;
@@ -54,7 +54,8 @@
     actionsExecuted: 0,
     turnNumber: 0,
   });
-  let strategyLabel = $state("Automated strategy");
+  let playerOneStrategyLabel = $state("Player one strategy");
+  let playerTwoStrategyLabel = $state("Player two strategy");
 
   interface OverlayDragState {
     originX: number;
@@ -74,9 +75,12 @@
 
     playbackSnapshot = controller.getPlaybackState();
     statusSnapshot = controller.getStatusSnapshot();
-    strategyLabel =
-      getAutomatedMatchStrategyOption(controller.getConfig().strategyId)?.label ??
-      "Automated strategy";
+    playerOneStrategyLabel =
+      getAutomatedActionStrategyOption(controller.getConfig().playerOneStrategyId)?.label ??
+      "Player one strategy";
+    playerTwoStrategyLabel =
+      getAutomatedActionStrategyOption(controller.getConfig().playerTwoStrategyId)?.label ??
+      "Player two strategy";
   }
 
   onMount(() => {
@@ -90,7 +94,7 @@
       const nextController = new AutomatedMatchPlaybackController<
         LorcanaServer,
         LorcanaSimulatorReadModel
-      >(storedConfig);
+      >({ ...storedConfig, seed: createAutomatedMatchSeed() });
       const unsubscribe = nextController.subscribe(forceRefresh);
       controller = nextController;
       forceRefresh();
@@ -237,7 +241,7 @@
 
           <div class="flex items-center justify-between gap-3 lg:justify-end">
             <p class="truncate text-sm font-medium text-slate-200">
-              {strategyLabel}
+              P1: {playerOneStrategyLabel} | P2: {playerTwoStrategyLabel}
             </p>
             <button
               type="button"
@@ -272,18 +276,11 @@
               {playbackSnapshot.mode === "running" ? "Pause" : "Play"}
             </Button>
             <Button
-              variant="secondary"
-              class="cursor-pointer rounded-2xl bg-white text-slate-950 hover:bg-slate-100"
-              onclick={() => activeController.restart()}
-            >
-              Restart
-            </Button>
-            <Button
               variant="ghost"
               class="cursor-pointer rounded-2xl text-white hover:bg-white/10 hover:text-white"
               onclick={() => onNavigateToSetup(setupPath)}
             >
-              Setup
+              Restart
             </Button>
           </div>
 
@@ -293,10 +290,10 @@
                 Speed
               </label>
               <Select
-                id="speed-select"
-                value={String(playbackSnapshot.speedMs)}
-                class="cursor-pointer border-0 bg-transparent text-right text-base text-slate-100 shadow-none focus-visible:ring-0"
-                onchange={(event) =>
+                      id="speed-select"
+                      value={String(playbackSnapshot.speedMs)}
+                      class="cursor-pointer border-0 bg-transparent text-right text-base text-slate-100 shadow-none focus-visible:ring-0"
+                      onchange={(event) =>
                   activeController.setSpeed(
                     parseSpeedValue((event.currentTarget as HTMLSelectElement).value),
                   )}
@@ -305,11 +302,6 @@
                   <option value={String(option.value)}>{option.label}</option>
                 {/each}
               </Select>
-            </div>
-
-            <div class="flex min-w-0 items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-300">
-              <span class="shrink-0 uppercase tracking-[0.18em] text-slate-500">Decision</span>
-              <span class="truncate">{describeLastDecision(playbackSnapshot)}</span>
             </div>
           </div>
         </div>

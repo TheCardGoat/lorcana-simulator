@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { elsaSpiritOfWinterI18n } from "./043-elsa-spirit-of-winter.i18n";
 
 export const elsaSpiritOfWinter: CharacterCard = {
   id: "7oH",
@@ -7,43 +8,6 @@ export const elsaSpiritOfWinter: CharacterCard = {
   cardType: "character",
   name: "Elsa",
   version: "Spirit of Winter",
-  i18n: {
-    en: {
-      name: "Elsa",
-      version: "Spirit of Winter",
-      text: [
-        {
-          title: "Shift 6 {I}",
-        },
-        {
-          title: "DEEP FREEZE",
-          description:
-            "When you play this character, exert up to 2 chosen characters. They can't ready at the start of their next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Elsa",
-      version: "Magie des Winters",
-      text: "Gestaltwandel 6 EISESKÄLTE Wenn du diesen Charakter ausspielst, erschöpfe bis zu 2 Charaktere deiner Wahl. Sie werden zu Beginn ihres nächsten Zugs nicht bereit gemacht.",
-    },
-    fr: {
-      name: "ELSA",
-      version: "Esprit de l'hiver",
-      text: "Alter 6 GEL INTENSE\\ Lorsque vous jouez ce personnage, choisissez jusqu'à 2 personnages et épuisez-les. Ils ne peuvent pas être redressés au début de leur prochain tour.",
-    },
-    it: {
-      name: "Elsa",
-      version: "Spirit of Winter",
-      text: [
-        {
-          title: "Shift 6",
-          description:
-            "(You may pay 6 to play this on top of one of your characters named Elsa.) DEEP FREEZE When you play this character, exert up to 2 chosen characters. They can't ready at the start of their next turn.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "009",
@@ -81,14 +45,35 @@ export const elsaSpiritOfWinter: CharacterCard = {
     },
     {
       effect: {
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
-        },
-        type: "exert",
+        type: "sequence",
+        effects: [
+          {
+            type: "exert",
+            target: {
+              selector: "chosen",
+              count: {
+                upTo: 2,
+              },
+              owner: "any",
+              cardTypes: ["character"],
+              zones: ["play"],
+            },
+          },
+          {
+            type: "restriction",
+            restriction: "cant-ready",
+            duration: "their-next-turn",
+            target: {
+              selector: "chosen",
+              count: {
+                upTo: 2,
+              },
+              owner: "any",
+              cardTypes: ["character"],
+              zones: ["play"],
+            },
+          },
+        ],
       },
       id: "95w-2",
       name: "DEEP FREEZE",
@@ -101,4 +86,5 @@ export const elsaSpiritOfWinter: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: elsaSpiritOfWinterI18n,
 };

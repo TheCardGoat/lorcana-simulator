@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flashRecordsSpecialistI18n } from "./014-flash-records-specialist.i18n";
 
 export const flashRecordsSpecialist: CharacterCard = {
   id: "dQW",
@@ -7,83 +8,6 @@ export const flashRecordsSpecialist: CharacterCard = {
   cardType: "character",
   name: "Flash",
   version: "Records Specialist",
-  i18n: {
-    en: {
-      name: "Flash",
-      version: "Records Specialist",
-      text: [
-        {
-          title: "HOLD...",
-        },
-        {
-          title: "YOUR HORSES",
-          description: "This character enters play exerted.",
-        },
-        {
-          title: "DEEP RESEARCH",
-          description:
-            "Whenever this character quests, you may give chosen Detective character +2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Flash",
-      version: "Spezialist für Aktenführung",
-      text: [
-        {
-          title: "IMMER MIT DER...",
-        },
-        {
-          title: "RUHE",
-          description: "Dieser Charakter kommt erschöpft ins Spiel.",
-        },
-        {
-          title: "INTENSIVE FORSCHUNG",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du einem Detektiv deiner Wahl in diesem Zug +2 geben.",
-        },
-      ],
-    },
-    fr: {
-      name: "Flash",
-      version: "Spécialiste des archives",
-      text: [
-        {
-          title: "UNE...",
-        },
-        {
-          title: "PETITE...",
-        },
-        {
-          title: "MINUTE...",
-          description: "Ce personnage entre en jeu épuisé.",
-        },
-        {
-          title: "RECHERCHE APPROFONDIE",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez choisir un personnage Détective qui gagne +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Flash",
-      version: "Specialista degli Archivi",
-      text: [
-        {
-          title: "ASPETTA...",
-        },
-        {
-          title: "UN ATTIMO",
-          description: "Questo personaggio entra in gioco impegnato.",
-        },
-        {
-          title: "RICERCA APPROFONDITA",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi dare +2 a un personaggio Detective a tua scelta per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Zootropolis",
   set: "010",
@@ -113,5 +37,52 @@ export const flashRecordsSpecialist: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        restriction: "enters-play-exerted",
+        target: "SELF",
+        type: "restriction",
+      },
+      id: "dQW-1",
+      name: "YOUR HORSES",
+      text: "HOLD... YOUR HORSES This character enters play exerted.",
+      type: "static",
+    },
+    {
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "modify-stat",
+          stat: "strength",
+          modifier: 2,
+          duration: "this-turn",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["character"],
+            filter: [
+              {
+                type: "has-classification",
+                classification: "Detective",
+              },
+            ],
+          },
+        },
+      },
+      id: "dQW-2",
+      name: "DEEP RESEARCH",
+      text: "DEEP RESEARCH Whenever this character quests, you may give chosen Detective character +2 {S} this turn.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
+  i18n: flashRecordsSpecialistI18n,
 };

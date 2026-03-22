@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lenaSabrewingRebelliousTeenagerI18n } from "./043-lena-sabrewing-rebellious-teenager.i18n";
 
 export const lenaSabrewingRebelliousTeenager: CharacterCard = {
   id: "tnp",
@@ -7,33 +8,6 @@ export const lenaSabrewingRebelliousTeenager: CharacterCard = {
   cardType: "character",
   name: "Lena Sabrewing",
   version: "Rebellious Teenager",
-  i18n: {
-    en: {
-      name: "Lena Sabrewing",
-      version: "Rebellious Teenager",
-      text: "Rush",
-    },
-    de: {
-      name: "Lena Degenflügel",
-      version: "Rebellischer Teenager",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Lena de Sortilège",
-      version: "Adolescente rebelle",
-      text: "Charge",
-    },
-    it: {
-      name: "Lena Sabrewing",
-      version: "Adolescente Ribelle",
-      text: [
-        {
-          title: "Lesto",
-          description: "(Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Ducktales",
   set: "003",
@@ -58,4 +32,5 @@ export const lenaSabrewingRebelliousTeenager: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: lenaSabrewingRebelliousTeenagerI18n,
 };

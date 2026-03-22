@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { johnSmithUndauntedProtectorI18n } from "./193-john-smith-undaunted-protector.i18n";
 
 export const johnSmithUndauntedProtector: CharacterCard = {
   id: "h1O",
@@ -7,42 +8,6 @@ export const johnSmithUndauntedProtector: CharacterCard = {
   cardType: "character",
   name: "John Smith",
   version: "Undaunted Protector",
-  i18n: {
-    en: {
-      name: "John Smith",
-      version: "Undaunted Protector",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "DO YOUR WORST",
-          description: "Opponents must choose this character for actions and abilities if able.",
-        },
-      ],
-    },
-    de: {
-      name: "John Smith",
-      version: "Unerschrockener Beschützer",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) TU, WAS DU NICHT LASSEN KANNST Gegnerische Mitspielende müssen mit ihren Aktionen und Fähigkeiten diesen Charakter auswählen, wenn möglich.",
-    },
-    fr: {
-      name: "John Smith",
-      version: "Protecteur impavide",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.) TENTE TA CHANCE Les adversaires doivent, s'ils le peuvent, choisir ce personnage avec toute action ou capacité.",
-        },
-      ],
-    },
-    it: {
-      name: "John Smith",
-      version: "Protettore Indomito",
-      text: "Guardiano FAI DEL TUO PEGGIO Gli avversari devono scegliere questo personaggio per azioni e abilità, se possibile.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Pocahontas",
   set: "011",
@@ -85,4 +50,5 @@ export const johnSmithUndauntedProtector: CharacterCard = {
       },
     },
   ],
+  i18n: johnSmithUndauntedProtectorI18n,
 };

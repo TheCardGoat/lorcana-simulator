@@ -1,7 +1,9 @@
 import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
-import type { KeywordAbilityDefinition, LorcanaCard } from "@tcg/lorcana-types";
+import type { KeywordAbilityDefinition, LorcanaCardDefinition } from "@tcg/lorcana-types";
 import { isShiftKeywordAbility, isValueKeywordAbility } from "@tcg/lorcana-types";
 import type { LorcanaCardMeta } from "../../types";
+import { cardHasName } from "../../card-utils";
+import { getActiveStatModifierTotal } from "../effects/continuous-effects";
 import { getStaticPropertyModifierTotal } from "./static-ability-utils";
 
 const INKWELL_ZONE_PREFIX = "inkwell:";
@@ -16,8 +18,14 @@ export type ShiftTargetMode =
   | { type: "classification"; classification: string }
   | { type: "name"; name: string };
 
+export interface ShiftDiscardCost {
+  discardCards: number;
+  discardCardType?: string;
+}
+
 export interface ShiftRules {
   inkCost?: number;
+  discardCost?: ShiftDiscardCost;
   rawLabel?: string;
   targetMode: ShiftTargetMode;
   unsupportedReason?: string;
@@ -25,14 +33,9 @@ export interface ShiftRules {
 
 type BasicCostValidationContext = {
   framework: {
-    state: {
-      ctx: {
-        zones: {
-          private: {
-            zoneCards: Record<string, readonly string[] | undefined>;
-          };
-        };
-      };
+    state: object;
+    zones: {
+      getCards: (zone: { zone: string; playerId: string }) => string[];
     };
     cards: {
       require: (cardId: string) => { meta?: LorcanaCardMeta };
@@ -58,7 +61,14 @@ function sameWord(left: string, right: string): boolean {
   return normalizeWord(left) === normalizeWord(right);
 }
 
-function extractTextParts(cardDef: LorcanaCard | undefined): string[] {
+function resolveShiftTargetNames(name: string): string[] {
+  return name
+    .split(/\s+(?:or|and)\s+/i)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+}
+
+function extractTextParts(cardDef: LorcanaCardDefinition | undefined): string[] {
   if (!cardDef) {
     return [];
   }
@@ -86,7 +96,7 @@ function extractTextParts(cardDef: LorcanaCard | undefined): string[] {
 }
 
 function extractShiftTextParts(
-  cardDef: LorcanaCard | undefined,
+  cardDef: LorcanaCardDefinition | undefined,
   shiftKeyword?: KeywordAbilityDefinition,
   shiftLabel?: string,
 ): string[] {
@@ -138,7 +148,9 @@ function extractShiftTextParts(
   return values;
 }
 
-function getShiftKeyword(cardDef: LorcanaCard | undefined): KeywordAbilityDefinition | undefined {
+function getShiftKeyword(
+  cardDef: LorcanaCardDefinition | undefined,
+): KeywordAbilityDefinition | undefined {
   if (!cardDef || !Array.isArray(cardDef.abilities)) {
     return undefined;
   }
@@ -150,7 +162,7 @@ function getShiftKeyword(cardDef: LorcanaCard | undefined): KeywordAbilityDefini
 }
 
 function inferShiftLabel(
-  cardDef: LorcanaCard | undefined,
+  cardDef: LorcanaCardDefinition | undefined,
   shiftKeyword?: KeywordAbilityDefinition,
 ): string | undefined {
   if (shiftKeyword?.text && /Shift/i.test(shiftKeyword.text)) {
@@ -192,7 +204,7 @@ function parseShiftModeFromLabel(label: string | undefined): ShiftTargetMode | u
 }
 
 function parseShiftNameTargetFromText(
-  cardDef: LorcanaCard | undefined,
+  cardDef: LorcanaCardDefinition | undefined,
   shiftKeyword?: KeywordAbilityDefinition,
   shiftLabel?: string,
 ): string | undefined {
@@ -214,7 +226,7 @@ function parseShiftNameTargetFromText(
 }
 
 function parseShiftClassificationFromText(
-  cardDef: LorcanaCard | undefined,
+  cardDef: LorcanaCardDefinition | undefined,
   shiftKeyword?: KeywordAbilityDefinition,
   shiftLabel?: string,
 ): string | undefined {
@@ -231,7 +243,7 @@ function parseShiftClassificationFromText(
 }
 
 function parseUniversalShiftFromText(
-  cardDef: LorcanaCard | undefined,
+  cardDef: LorcanaCardDefinition | undefined,
   shiftKeyword?: KeywordAbilityDefinition,
   shiftLabel?: string,
 ): boolean {
@@ -262,19 +274,30 @@ function parseShiftCostFromLabel(label: string | undefined): number | undefined 
 function resolveShiftCostSupport(
   shiftKeyword: KeywordAbilityDefinition | undefined,
   fallbackLabel: string | undefined,
-): { inkCost?: number; unsupportedReason?: string } {
+): { inkCost?: number; discardCost?: ShiftDiscardCost; unsupportedReason?: string } {
   if (shiftKeyword && isShiftKeywordAbility(shiftKeyword)) {
-    const nonInkCostKeys = Object.keys(shiftKeyword.cost).filter(
-      (key) =>
-        key !== "ink" && shiftKeyword.cost[key as keyof typeof shiftKeyword.cost] !== undefined,
+    const cost = shiftKeyword.cost;
+
+    // Check for discard-based shift cost (e.g., "Shift: Discard a location card")
+    if (typeof cost.discardCards === "number" && cost.discardCards > 0) {
+      return {
+        discardCost: {
+          discardCards: cost.discardCards,
+          discardCardType: cost.discardCardType as string | undefined,
+        },
+      };
+    }
+
+    const nonInkCostKeys = Object.keys(cost).filter(
+      (key) => key !== "ink" && cost[key as keyof typeof cost] !== undefined,
     );
 
     if (nonInkCostKeys.length > 0) {
       return { unsupportedReason: UNSUPPORTED_SHIFT_COST_TODO };
     }
 
-    if (typeof shiftKeyword.cost.ink === "number") {
-      return { inkCost: shiftKeyword.cost.ink };
+    if (typeof cost.ink === "number") {
+      return { inkCost: cost.ink };
     }
   }
 
@@ -282,7 +305,7 @@ function resolveShiftCostSupport(
 }
 
 function resolveShiftTargetMode(
-  cardDef: LorcanaCard,
+  cardDef: LorcanaCardDefinition,
   shiftKeyword: KeywordAbilityDefinition | undefined,
   shiftLabel: string | undefined,
 ): ShiftTargetMode {
@@ -321,11 +344,11 @@ function resolveShiftTargetMode(
   return { type: "name", name: cardDef.name };
 }
 
-function getCharacterCost(cardDef: LorcanaCard | undefined): number {
+function getCharacterCost(cardDef: LorcanaCardDefinition | undefined): number {
   return cardDef?.cardType === "character" ? cardDef.cost : 0;
 }
 
-function getKeywordSingerThreshold(cardDef: LorcanaCard | undefined): number | undefined {
+function getKeywordSingerThreshold(cardDef: LorcanaCardDefinition | undefined): number | undefined {
   if (!cardDef || !Array.isArray(cardDef.abilities)) {
     return undefined;
   }
@@ -343,7 +366,9 @@ function getKeywordSingerThreshold(cardDef: LorcanaCard | undefined): number | u
   return undefined;
 }
 
-function getKeywordSingTogetherThreshold(cardDef: LorcanaCard | undefined): number | undefined {
+function getKeywordSingTogetherThreshold(
+  cardDef: LorcanaCardDefinition | undefined,
+): number | undefined {
   if (!cardDef || !Array.isArray(cardDef.abilities)) {
     return undefined;
   }
@@ -361,7 +386,9 @@ function getKeywordSingTogetherThreshold(cardDef: LorcanaCard | undefined): numb
   return undefined;
 }
 
-function parseTextSingTogetherThreshold(cardDef: LorcanaCard | undefined): number | undefined {
+function parseTextSingTogetherThreshold(
+  cardDef: LorcanaCardDefinition | undefined,
+): number | undefined {
   for (const text of extractTextParts(cardDef)) {
     const match = text.match(SING_TOGETHER_PATTERN);
     if (match?.[1]) {
@@ -380,14 +407,8 @@ export function getInkwellZoneId(playerId: PlayerId): string {
 export function getAvailableInk(
   state: {
     framework: {
-      state: {
-        ctx: {
-          zones: {
-            private: {
-              zoneCards: Record<string, readonly string[] | undefined>;
-            };
-          };
-        };
+      zones: {
+        getCards: (zone: { zone: string; playerId: string }) => string[];
       };
       cards: {
         require: (cardId: string) => { meta?: LorcanaCardMeta };
@@ -396,8 +417,7 @@ export function getAvailableInk(
   },
   playerId: PlayerId,
 ): number {
-  const zoneId = getInkwellZoneId(playerId);
-  const cards = state.framework.state.ctx.zones.private.zoneCards[zoneId] ?? [];
+  const cards = state.framework.zones.getCards({ zone: "inkwell", playerId }) as string[];
   return cards.filter((id) => state.framework.cards.require(id).meta?.state !== "exerted").length;
 }
 
@@ -407,8 +427,7 @@ export function spendInk(
   playerId: PlayerId,
   amount: number,
 ): CardInstanceId[] {
-  const zoneId = getInkwellZoneId(playerId);
-  const cards = ctx.framework.state.ctx.zones.private.zoneCards[zoneId] ?? [];
+  const cards = ctx.framework.zones.getCards({ zone: "inkwell", playerId }) as string[];
   const paidWith: CardInstanceId[] = [];
 
   for (const cardId of cards) {
@@ -425,12 +444,12 @@ export function spendInk(
   return paidWith;
 }
 
-export function isSongCard(cardDef: LorcanaCard | undefined): boolean {
+export function isSongCard(cardDef: LorcanaCardDefinition | undefined): boolean {
   return cardDef?.cardType === "action" && cardDef.actionSubtype === "song";
 }
 
 /** Singer threshold = Singer X when present, otherwise character's printed cost. */
-export function getSingerThreshold(cardDef: LorcanaCard | undefined): number | null {
+export function getSingerThreshold(cardDef: LorcanaCardDefinition | undefined): number | null {
   if (!cardDef || cardDef.cardType !== "character") {
     return null;
   }
@@ -441,28 +460,39 @@ export function getSingerThreshold(cardDef: LorcanaCard | undefined): number | n
 export function getSingerThresholdForInstance(args: {
   framework: BasicCostValidationContext["framework"];
   singerId: CardInstanceId;
-  singerDef: LorcanaCard | undefined;
-  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCard | undefined;
+  singerDef: LorcanaCardDefinition | undefined;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  G?: { continuousEffects?: unknown };
 }): number | null {
-  const { framework, singerId, singerDef, getDefinitionByInstanceId } = args;
+  const { framework, singerId, singerDef, getDefinitionByInstanceId, G } = args;
   const baseThreshold = getSingerThreshold(singerDef);
   if (baseThreshold == null) {
     return null;
   }
 
-  return (
-    baseThreshold +
-    getStaticPropertyModifierTotal({
-      state: framework.state as Parameters<typeof getStaticPropertyModifierTotal>[0]["state"],
-      cardId: singerId,
-      property: "singer-threshold",
-      getDefinitionByInstanceId,
-    })
-  );
+  const staticModifier = getStaticPropertyModifierTotal({
+    state: framework.state as Parameters<typeof getStaticPropertyModifierTotal>[0]["state"],
+    cardId: singerId,
+    property: "singer-threshold",
+    getDefinitionByInstanceId,
+  });
+
+  const continuousModifier = G
+    ? getActiveStatModifierTotal(
+        { G, framework } as Parameters<typeof getActiveStatModifierTotal>[0],
+        singerId,
+        "singer-threshold",
+        getDefinitionByInstanceId,
+      )
+    : 0;
+
+  return baseThreshold + staticModifier + continuousModifier;
 }
 
 /** Sing Together N from keyword data when available, else from card text fallback. */
-export function getSingTogetherThreshold(cardDef: LorcanaCard | undefined): number | null {
+export function getSingTogetherThreshold(
+  cardDef: LorcanaCardDefinition | undefined,
+): number | null {
   if (!isSongCard(cardDef)) {
     return null;
   }
@@ -476,14 +506,17 @@ export function getSingTogetherThreshold(cardDef: LorcanaCard | undefined): numb
  * Extract Shift rules from keyword data with text fallbacks.
  * Returns explicit TODO paths for unsupported non-ink Shift costs.
  */
-export function getShiftRules(cardDef: LorcanaCard | undefined): ShiftRules | null {
+export function getShiftRules(cardDef: LorcanaCardDefinition | undefined): ShiftRules | null {
   if (!cardDef) {
     return null;
   }
 
   const shiftKeyword = getShiftKeyword(cardDef);
   const fallbackLabel = inferShiftLabel(cardDef, shiftKeyword);
-  const { inkCost, unsupportedReason } = resolveShiftCostSupport(shiftKeyword, fallbackLabel);
+  const { inkCost, discardCost, unsupportedReason } = resolveShiftCostSupport(
+    shiftKeyword,
+    fallbackLabel,
+  );
 
   if (!shiftKeyword && fallbackLabel == null) {
     return null;
@@ -491,6 +524,7 @@ export function getShiftRules(cardDef: LorcanaCard | undefined): ShiftRules | nu
 
   return {
     inkCost,
+    discardCost,
     rawLabel: fallbackLabel,
     unsupportedReason,
     targetMode: resolveShiftTargetMode(cardDef, shiftKeyword, fallbackLabel),
@@ -500,7 +534,7 @@ export function getShiftRules(cardDef: LorcanaCard | undefined): ShiftRules | nu
 export function resolveShiftTargetCandidates(
   shiftRules: ShiftRules | null,
   candidates: readonly CardInstanceId[],
-  getCardDefinition: (cardId: CardInstanceId) => LorcanaCard | undefined,
+  getCardDefinition: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
 ): CardInstanceId[] {
   if (!shiftRules) {
     return [];
@@ -526,9 +560,13 @@ export function resolveShiftTargetCandidates(
   }
 
   const { name } = shiftRules.targetMode;
+  const targetNames = resolveShiftTargetNames(name);
   return candidates.filter((cardId) => {
     const candidate = getCardDefinition(cardId);
-    return candidate?.cardType === "character" && sameWord(candidate.name, name);
+    if (candidate?.cardType !== "character") {
+      return false;
+    }
+    return targetNames.some((targetName) => cardHasName(candidate, targetName));
   });
 }
 

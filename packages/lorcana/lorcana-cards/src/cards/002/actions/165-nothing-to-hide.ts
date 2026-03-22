@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { nothingToHideI18n } from "./165-nothing-to-hide.i18n";
 
 export const nothingToHide: ActionCard = {
   id: "VnI",
@@ -6,24 +7,6 @@ export const nothingToHide: ActionCard = {
   reprints: ["set2-165"],
   cardType: "action",
   name: "Nothing to Hide",
-  i18n: {
-    en: {
-      name: "Nothing to Hide",
-      text: "Each opponent reveals their hand. Draw a card.",
-    },
-    de: {
-      name: "Nichts zu verstecken",
-      text: "Alle gegnerischen Mitspielenden zeigen ihre Handkarten für alle sichtbar vor. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Rien à cacher",
-      text: "Chaque adversaire révèle sa main. Piochez une carte.",
-    },
-    it: {
-      name: "Nothing to Hide",
-      text: "Each opponent reveals their hand. Draw a card.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -55,4 +38,5 @@ export const nothingToHide: ActionCard = {
       type: "action",
     },
   ],
+  i18n: nothingToHideI18n,
 };

@@ -1,22 +1,85 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { belleUntrainedMystic } from "@lorcanito/lorcana-engine/cards/009/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Belle - Untrained Mystic", () => {
-//   It.skip("**HERE NOW, DON'T DO THAT** When you play this character, move up to 1 damage counter from chosen character to chosen opposing character.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: belleUntrainedMystic.cost,
-//       Hand: [belleUntrainedMystic],
-//     });
-//
-//     Await testEngine.playCard(belleUntrainedMystic);
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { simbaProtectiveCub } from "../../001";
+import { goofyKnightForADay } from "../../002";
+import { belleUntrainedMystic } from "./039-belle-untrained-mystic";
+
+describe("Belle - Untrained Mystic", () => {
+  describe("HERE NOW, DON'T DO THAT - When you play this character, move up to 1 damage counter from chosen character to chosen opposing character.", () => {
+    it("moves 1 damage from a friendly character to an opposing character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [belleUntrainedMystic],
+          inkwell: belleUntrainedMystic.cost,
+          play: [{ card: simbaProtectiveCub, damage: 2 }],
+        },
+        {
+          play: [goofyKnightForADay],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(belleUntrainedMystic)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          resolveOptional: true,
+          targets: [simbaProtectiveCub, goofyKnightForADay],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Only 1 damage should be moved (up to 1)
+      expect(testEngine.asPlayerOne().getDamage(simbaProtectiveCub)).toBe(1);
+      expect(testEngine.asPlayerTwo().getDamage(goofyKnightForADay)).toBe(1);
+    });
+
+    it("can decline the optional ability", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [belleUntrainedMystic],
+          inkwell: belleUntrainedMystic.cost,
+          play: [{ card: simbaProtectiveCub, damage: 2 }],
+        },
+        {
+          play: [goofyKnightForADay],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(belleUntrainedMystic)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getDamage(simbaProtectiveCub)).toBe(2);
+      expect(testEngine.asPlayerTwo().getDamage(goofyKnightForADay)).toBe(0);
+    });
+
+    it("moves 1 damage even if source has only 1 damage", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [belleUntrainedMystic],
+          inkwell: belleUntrainedMystic.cost,
+          play: [{ card: simbaProtectiveCub, damage: 1 }],
+        },
+        {
+          play: [goofyKnightForADay],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(belleUntrainedMystic)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          resolveOptional: true,
+          targets: [simbaProtectiveCub, goofyKnightForADay],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getDamage(simbaProtectiveCub)).toBe(0);
+      expect(testEngine.asPlayerTwo().getDamage(goofyKnightForADay)).toBe(1);
+    });
+  });
+});

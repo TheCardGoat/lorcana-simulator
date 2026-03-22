@@ -1,4 +1,4 @@
-import { allCardsById } from "../cards/cards";
+import { allCardsById } from "../cards/catalog-data";
 
 type CardPublicId = string;
 type CardInstanceId = string;

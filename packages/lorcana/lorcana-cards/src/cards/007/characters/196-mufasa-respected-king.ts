@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mufasaRespectedKingI18n } from "./196-mufasa-respected-king.i18n";
 
 export const mufasaRespectedKing: CharacterCard = {
   id: "kH7",
@@ -7,24 +8,6 @@ export const mufasaRespectedKing: CharacterCard = {
   cardType: "character",
   name: "Mufasa",
   version: "Respected King",
-  i18n: {
-    en: {
-      name: "Mufasa",
-      version: "Respected King",
-    },
-    de: {
-      name: "Mufasa",
-      version: "Respektierter König",
-    },
-    fr: {
-      name: "Mufasa",
-      version: "Roi respecté",
-    },
-    it: {
-      name: "Mufasa",
-      version: "Re Rispettato",
-    },
-  },
   inkType: ["steel"],
   franchise: "Lion King",
   set: "007",
@@ -41,4 +24,5 @@ export const mufasaRespectedKing: CharacterCard = {
     tcgPlayer: 618730,
   },
   classifications: ["Storyborn", "Mentor", "King"],
+  i18n: mufasaRespectedKingI18n,
 };

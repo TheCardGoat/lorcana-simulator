@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flixMadrigalFunlovingFamilyManI18n } from "./009-flix-madrigal-fun-loving-family-man.i18n";
 
 export const flixMadrigalFunlovingFamilyMan: CharacterCard = {
   id: "ROB",
@@ -7,24 +8,6 @@ export const flixMadrigalFunlovingFamilyMan: CharacterCard = {
   cardType: "character",
   name: "Félix Madrigal",
   version: "Fun-Loving Family Man",
-  i18n: {
-    en: {
-      name: "Félix Madrigal",
-      version: "Fun-Loving Family Man",
-    },
-    de: {
-      name: "Félix Madrigal",
-      version: "Lebensfroher Familienvater",
-    },
-    fr: {
-      name: "Félix Madrigal",
-      version: "Père de famille enjoué",
-    },
-    it: {
-      name: "Félix Madrigal",
-      version: "Parente Mattacchione",
-    },
-  },
   inkType: ["amber"],
   franchise: "Encanto",
   set: "004",
@@ -41,4 +24,5 @@ export const flixMadrigalFunlovingFamilyMan: CharacterCard = {
     tcgPlayer: 543896,
   },
   classifications: ["Storyborn", "Ally", "Madrigal"],
+  i18n: flixMadrigalFunlovingFamilyManI18n,
 };

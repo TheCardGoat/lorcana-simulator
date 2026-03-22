@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arielOnHumanLegsI18n } from "./001-ariel-on-human-legs.i18n";
 
 export const arielOnHumanLegs: CharacterCard = {
   id: "WeA",
@@ -7,48 +8,6 @@ export const arielOnHumanLegs: CharacterCard = {
   cardType: "character",
   name: "Ariel",
   version: "On Human Legs",
-  i18n: {
-    en: {
-      name: "Ariel",
-      version: "On Human Legs",
-      text: [
-        {
-          title: "VOICELESS",
-          description: "This character can't {E} to sing songs.",
-        },
-      ],
-    },
-    de: {
-      name: "Arielle",
-      version: "Auf menschlichen Beinen",
-      text: [
-        {
-          title: "VERSTUMMT",
-          description: "Dieser Charakter kann nicht, um Lieder zu singen.",
-        },
-      ],
-    },
-    fr: {
-      name: "ARIEL",
-      version: "Sur des jambes humaines",
-      text: [
-        {
-          title: "SANS VOIX",
-          description: "Ce personnage ne peut pas être pour chanter des chansons.",
-        },
-      ],
-    },
-    it: {
-      name: "Ariel",
-      version: "On Human Legs",
-      text: [
-        {
-          title: "VOICELESS",
-          description: "This character can't to sing songs.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Little Mermaid",
   set: "001",
@@ -59,7 +18,6 @@ export const arielOnHumanLegs: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_d9f3b86af85f48579ed9d0d7ce0de129",
     tcgPlayer: 494102,
@@ -84,4 +42,5 @@ export const arielOnHumanLegs: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: arielOnHumanLegsI18n,
 };

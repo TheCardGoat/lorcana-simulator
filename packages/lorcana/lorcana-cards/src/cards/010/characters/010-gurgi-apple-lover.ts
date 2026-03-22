@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gurgiAppleLoverI18n } from "./010-gurgi-apple-lover.i18n";
 
 export const gurgiAppleLover: CharacterCard = {
   id: "KY3",
@@ -7,52 +8,6 @@ export const gurgiAppleLover: CharacterCard = {
   cardType: "character",
   name: "Gurgi",
   version: "Apple Lover",
-  i18n: {
-    en: {
-      name: "Gurgi",
-      version: "Apple Lover",
-      text: [
-        {
-          title: "HAPPY DAY",
-          description:
-            "When you play this character, you may remove up to 2 damage from chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Gurgi",
-      version: "Apfelliebhaber",
-      text: [
-        {
-          title: "GLÜCKSTAG",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du bis zu 2 Schaden von einem Charakter deiner Wahl entfernen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Gurgi",
-      version: "Mordu de pommes",
-      text: [
-        {
-          title: "CHANCE LUI SOURIT",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage et lui retirer jusqu'à 2 dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "Gurghi",
-      version: "Amante delle Mele",
-      text: [
-        {
-          title: "GIORNO FORTUNATO",
-          description:
-            "Quando giochi questo personaggio, puoi rimuovere fino a 2 danni da un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Black Cauldron",
   set: "010",
@@ -104,4 +59,5 @@ export const gurgiAppleLover: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: gurgiAppleLoverI18n,
 };

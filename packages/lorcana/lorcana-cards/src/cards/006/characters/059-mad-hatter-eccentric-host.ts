@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madHatterEccentricHostI18n } from "./059-mad-hatter-eccentric-host.i18n";
 
 export const madHatterEccentricHost: CharacterCard = {
   id: "u3f",
@@ -7,52 +8,6 @@ export const madHatterEccentricHost: CharacterCard = {
   cardType: "character",
   name: "Mad Hatter",
   version: "Eccentric Host",
-  i18n: {
-    en: {
-      name: "Mad Hatter",
-      version: "Eccentric Host",
-      text: [
-        {
-          title: "WE'LL HAVE TO LOOK INTO THIS",
-          description:
-            "Whenever this character quests, you may look at the top card of chosen player's deck. Put it on top of their deck or into their discard.",
-        },
-      ],
-    },
-    de: {
-      name: "Der verrückte Hutmacher",
-      version: "Exzentrischer Gastgeber",
-      text: [
-        {
-          title: "JETZT SEHEN WIR MAL REIN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du dir die oberste Karte vom Deck einer ausgewählten mitspielenden Person ansehen. Lege die gewählte Karte als oberste Karte auf das zugehörige Deck oder den Ablagestapel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le Chapelier Fou",
-      version: "Hôte excentrique",
-      text: [
-        {
-          title: "NOUS ALLONS ARRANGER ÇA",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez choisir un joueur et regarder la carte du dessus de sa pioche. Replacez-la sur sa pioche ou placez-la dans sa défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Il Cappellaio Matto",
-      version: "Ospite Eccentrico",
-      text: [
-        {
-          title: "BISOGNA GUARDARE DENTRO",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi guardare la prima carta del mazzo di un giocatore a tua scelta. Mettila in cima al suo mazzo, o nei suoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Alice in Wonderland",
   set: "006",
@@ -75,5 +30,38 @@ export const madHatterEccentricHost: CharacterCard = {
     },
   ],
   classifications: ["Storyborn"],
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          type: "scry",
+          amount: 1,
+          target: "CHOSEN_PLAYER",
+          destinations: [
+            {
+              zone: "deck-top",
+              min: 0,
+              max: 1,
+            },
+            {
+              zone: "discard",
+              remainder: true,
+            },
+          ],
+        },
+        type: "optional",
+      },
+      id: "u3f-1",
+      name: "WE'LL HAVE TO LOOK INTO THIS",
+      text: "WE'LL HAVE TO LOOK INTO THIS Whenever this character quests, you may look at the top card of chosen player's deck. Put it on top of their deck or into their discard.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
+  i18n: madHatterEccentricHostI18n,
 };

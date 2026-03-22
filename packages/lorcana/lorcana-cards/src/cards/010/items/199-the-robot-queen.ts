@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { theRobotQueenI18n } from "./199-the-robot-queen.i18n";
 
 export const theRobotQueen: ItemCard = {
   id: "Msu",
@@ -6,48 +7,6 @@ export const theRobotQueen: ItemCard = {
   reprints: ["set10-199"],
   cardType: "item",
   name: "The Robot Queen",
-  i18n: {
-    en: {
-      name: "The Robot Queen",
-      text: [
-        {
-          title: "MAJOR MALFUNCTION",
-          description:
-            "Whenever you play a character, you may pay 1 {I} and banish this item to deal 2 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Robo-Königin",
-      text: [
-        {
-          title: "LETZTER AKT",
-          description:
-            "Jedes Mal, wenn du einen Charakter ausspielst, darfst du 1 bezahlen und diesen Gegenstand verbannen, um einem Charakter deiner Wahl 2 Schaden zuzufügen.",
-        },
-      ],
-    },
-    fr: {
-      name: "La Reine robot",
-      text: [
-        {
-          title: "DYSFONCTIONNEMENT MAJEUR",
-          description:
-            "Chaque fois que vous jouez un personnage, vous pouvez payer 1 et bannir cet objet pour choisir un personnage et lui infliger 2 dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "La Regina Robot",
-      text: [
-        {
-          title: "GRAVE MALFUNZIONAMENTO",
-          description:
-            "Ogni volta che giochi un personaggio, puoi pagare 1 ed esiliare questo oggetto per infliggere 2 danni a un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Great Mouse Detective",
   set: "010",
@@ -114,4 +73,5 @@ export const theRobotQueen: ItemCard = {
       type: "triggered",
     },
   ],
+  i18n: theRobotQueenI18n,
 };

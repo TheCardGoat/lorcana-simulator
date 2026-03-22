@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rayaFierceProtectorI18n } from "./121-raya-fierce-protector.i18n";
 
 export const rayaFierceProtector: CharacterCard = {
   id: "l0K",
@@ -7,52 +8,6 @@ export const rayaFierceProtector: CharacterCard = {
   cardType: "character",
   name: "Raya",
   version: "Fierce Protector",
-  i18n: {
-    en: {
-      name: "Raya",
-      version: "Fierce Protector",
-      text: [
-        {
-          title: "DON'T CROSS ME",
-          description:
-            "Whenever this character challenges another character, gain 1 lore for each other damaged character you have in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Raya",
-      version: "Treue Beschützerin",
-      text: [
-        {
-          title: "KOMM MIR NICHT IN DIE QUERE",
-          description:
-            "Jedes Mal, wenn dieser Charakter einen anderen Charakter herausfordert, sammelst du 1 Legende für jeden deiner anderen Charaktere, der beschädigt ist.",
-        },
-      ],
-    },
-    fr: {
-      name: "Raya",
-      version: "Protectrice acharnée",
-      text: [
-        {
-          title: "NE ME CONTRARIEZ PAS",
-          description:
-            "Chaque fois que ce personnage en défie un autre, gagnez 1 éclat de Lore pour chaque autre personnage que vous avez en jeu ayant au moins un jeton Dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Raya",
-      version: "Protettrice Feroce",
-      text: [
-        {
-          title: "NON PROVOCARMI",
-          description:
-            "Ogni volta che questo personaggio sfida un altro personaggio, ottieni 1 leggenda per ogni altro personaggio danneggiato che hai in gioco.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "004",
@@ -92,4 +47,5 @@ export const rayaFierceProtector: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: rayaFierceProtectorI18n,
 };

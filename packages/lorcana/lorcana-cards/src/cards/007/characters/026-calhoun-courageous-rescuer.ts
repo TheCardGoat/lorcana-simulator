@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { calhounCourageousRescuerI18n } from "./026-calhoun-courageous-rescuer.i18n";
 
 export const calhounCourageousRescuer: CharacterCard = {
   id: "Vkp",
@@ -7,37 +8,6 @@ export const calhounCourageousRescuer: CharacterCard = {
   cardType: "character",
   name: "Calhoun",
   version: "Courageous Rescuer",
-  i18n: {
-    en: {
-      name: "Calhoun",
-      version: "Courageous Rescuer",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "BACK TO START POSITIONS!",
-          description:
-            "Whenever this character challenges another character, you may return a Racer character card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Sergeant Calhoun",
-      version: "Mutige Retterin",
-      text: "Gestaltwandel 4 ZURÜCK ZU DEN STARTPOSITIONEN! Jedes Mal, wenn dieser Charakter einen anderen Charakter herausfordert, darfst du eine Rennfahrer-Charakterkarte aus deinem Ablagestapel zurück auf deine Hand nehmen.",
-    },
-    fr: {
-      name: "Calhoun",
-      version: "Sauveteuse pleine de courage",
-      text: "Alter 4 REPRENEZ VOTRE POSITION DE DÉPART! Chaque fois que ce personnage en défie un autre, vous pouvez renvoyer une carte Pilote de votre défausse dans votre main.",
-    },
-    it: {
-      name: "Calhoun",
-      version: "Soccorritrice Coraggiosa",
-      text: "Trasformazione 4 IN POSIZIONE DI PARTENZA! Ogni volta che questo personaggio sfida un altro personaggio, puoi riprendere in mano una carta personaggio Pilota dai tuoi scarti.",
-    },
-  },
   inkType: ["amber", "ruby"],
   franchise: "Wreck It Ralph",
   set: "007",
@@ -93,4 +63,5 @@ export const calhounCourageousRescuer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: calhounCourageousRescuerI18n,
 };

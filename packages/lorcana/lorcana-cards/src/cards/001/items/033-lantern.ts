@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { lanternI18n } from "./033-lantern.i18n";
 
 export const lantern: ItemCard = {
   id: "Dig",
@@ -6,45 +7,6 @@ export const lantern: ItemCard = {
   reprints: ["set1-033", "set9-032"],
   cardType: "item",
   name: "Lantern",
-  i18n: {
-    en: {
-      name: "Lantern",
-      text: [
-        {
-          title: "BIRTHDAY LIGHTS",
-          description: "{E} — You pay 1 {I} less for the next character you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Himmelslaterne",
-      text: [
-        {
-          title: "GEBURTSTAGSLICHTER",
-          description:
-            "— Du zahlst 1 weniger für den nächsten Charakter, den du in diesem Zug ausspielst.",
-        },
-      ],
-    },
-    fr: {
-      name: "LANTERNE",
-      text: [
-        {
-          title: "LUMIÈRES D'ANNIVERSAIRE",
-          description: "— Le prochain personnage que vous jouez durant ce tour coûte 1 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Lanterna",
-      text: [
-        {
-          title: "LUCI DI COMPLEANNO",
-          description: "— Paga 1 in meno per giocare il tuo prossimo personaggio per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Tangled",
   set: "001",
@@ -80,4 +42,5 @@ export const lantern: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: lanternI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { scroogeMcduckUncleMoneybagsI18n } from "./155-scrooge-mcduck-uncle-moneybags.i18n";
 
 export const scroogeMcduckUncleMoneybags: CharacterCard = {
   id: "nL2",
@@ -7,52 +8,6 @@ export const scroogeMcduckUncleMoneybags: CharacterCard = {
   cardType: "character",
   name: "Scrooge McDuck",
   version: "Uncle Moneybags",
-  i18n: {
-    en: {
-      name: "Scrooge McDuck",
-      version: "Uncle Moneybags",
-      text: [
-        {
-          title: "TREASURE FINDER",
-          description:
-            "Whenever this character quests, you pay 1 {I} less for the next item you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Scrooge McDuck",
-      version: "Uncle Moneybags",
-      text: [
-        {
-          title: "TREASURE FINDER",
-          description:
-            "Whenever this character quests, you pay 1 less for the next item you play this turn.",
-        },
-      ],
-    },
-    fr: {
-      name: "Scrooge McDuck",
-      version: "Uncle Moneybags",
-      text: [
-        {
-          title: "TREASURE FINDER",
-          description:
-            "Whenever this character quests, you pay 1 less for the next item you play this turn.",
-        },
-      ],
-    },
-    it: {
-      name: "Scrooge McDuck",
-      version: "Uncle Moneybags",
-      text: [
-        {
-          title: "TREASURE FINDER",
-          description:
-            "Whenever this character quests, you pay 1 less for the next item you play this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Ducktales",
   set: "003",
@@ -75,7 +30,6 @@ export const scroogeMcduckUncleMoneybags: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -93,4 +47,5 @@ export const scroogeMcduckUncleMoneybags: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: scroogeMcduckUncleMoneybagsI18n,
 };

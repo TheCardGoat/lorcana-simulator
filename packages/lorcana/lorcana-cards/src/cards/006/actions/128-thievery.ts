@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { thieveryI18n } from "./128-thievery.i18n";
 
 export const thievery: ActionCard = {
   id: "C0T",
@@ -6,24 +7,6 @@ export const thievery: ActionCard = {
   reprints: ["set6-128"],
   cardType: "action",
   name: "Thievery",
-  i18n: {
-    en: {
-      name: "Thievery",
-      text: "Chosen opponent loses 1 lore. Gain 1 lore.",
-    },
-    de: {
-      name: "Diebstahl",
-      text: "Eine gegnerische Person deiner Wahl verliert 1 Legende. Sammle 1 Legende.",
-    },
-    fr: {
-      name: "Chapardage",
-      text: "Choisissez un adversaire qui perd 1 éclat de Lore. Gagnez 1 éclat de Lore.",
-    },
-    it: {
-      name: "Furto",
-      text: "Un avversario a tua scelta perde 1 leggenda. Ottieni 1 leggenda.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aladdin",
   set: "006",
@@ -57,4 +40,5 @@ export const thievery: ActionCard = {
       type: "action",
     },
   ],
+  i18n: thieveryI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kuzcoWantedLlamaI18n } from "./045-kuzco-wanted-llama.i18n";
 
 export const kuzcoWantedLlama: CharacterCard = {
   id: "mVP",
@@ -7,48 +8,6 @@ export const kuzcoWantedLlama: CharacterCard = {
   cardType: "character",
   name: "Kuzco",
   version: "Wanted Llama",
-  i18n: {
-    en: {
-      name: "Kuzco",
-      version: "Wanted Llama",
-      text: [
-        {
-          title: "OK, WHERE AM I?",
-          description: "When this character is banished, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Kusco",
-      version: "Gesuchtes Lama",
-      text: [
-        {
-          title: "ALSO, WO BIN ICH?",
-          description: "Wenn dieser Charakter verbannt wird, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Kuzco",
-      version: "Lama recherché",
-      text: [
-        {
-          title: "BON, ALORS, J'SUIS OÙ?",
-          description: "Lorsque ce personnage est banni, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Kuzco",
-      version: "Wanted Llama",
-      text: [
-        {
-          title: "OK, WHERE AM I?",
-          description: "When this character is banished, you may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Emperors New Groove",
   set: "002",
@@ -65,12 +24,10 @@ export const kuzcoWantedLlama: CharacterCard = {
   },
   text: [
     {
-      title: "OK, WHERE AM I?",
-      description: "When this character is banished, you may draw a card.",
+      title: "OK, WHERE AM",
+      description: "I? When this character is banished, you may draw a card.",
     },
   ],
-  missingImplementation: true,
-  missingTests: true,
   classifications: ["Storyborn", "King"],
   abilities: [
     {
@@ -94,4 +51,5 @@ export const kuzcoWantedLlama: CharacterCard = {
       },
     },
   ],
+  i18n: kuzcoWantedLlamaI18n,
 };

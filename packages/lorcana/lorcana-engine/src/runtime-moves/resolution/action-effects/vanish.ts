@@ -8,7 +8,7 @@ import { resolveBanishEffect } from "./banish-effect";
 const CHOSEN_SELECTOR_FIELDS = ["target", "character", "location", "from", "to"] as const;
 
 function getCardZone(ctx: PlayCardExecutionContext, cardId: CardInstanceId): string | undefined {
-  return ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+  return ctx.framework.zones.getCardZone(cardId);
 }
 
 export function recordVanishChosenTargets(args: {
@@ -68,7 +68,7 @@ export function resolveRecordedVanishTargets(
   const targetIds: CardInstanceId[] = [];
   for (const { cardId, chooserId } of vanishChosenCards) {
     const definition = ctx.cards.getDefinition(cardId);
-    const ownerId = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID;
+    const ownerId = ctx.framework.zones.getCardOwner(cardId);
     if (!definition || !ownerId || ownerId === chooserId || !hasVanish(definition)) {
       continue;
     }

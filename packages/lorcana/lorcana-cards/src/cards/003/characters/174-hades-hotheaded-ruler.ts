@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hadesHotheadedRulerI18n } from "./174-hades-hotheaded-ruler.i18n";
 
 export const hadesHotheadedRuler: CharacterCard = {
   id: "3Tj",
@@ -7,48 +8,6 @@ export const hadesHotheadedRuler: CharacterCard = {
   cardType: "character",
   name: "Hades",
   version: "Hotheaded Ruler",
-  i18n: {
-    en: {
-      name: "Hades",
-      version: "Hotheaded Ruler",
-      text: [
-        {
-          title: "CALL THE TITANS",
-          description: "{E} — Ready your Titan characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Hades",
-      version: "Hitzköpfiger Herrscher",
-      text: [
-        {
-          title: "DIE TITANEN RUFEN",
-          description: "— Mache alle deine Titanen bereit.",
-        },
-      ],
-    },
-    fr: {
-      name: "Hadès",
-      version: "Souverain enflammé",
-      text: [
-        {
-          title: "APPEL DES TITANS",
-          description: "— Redressez vos personnages Titan.",
-        },
-      ],
-    },
-    it: {
-      name: "Ade",
-      version: "Governante Irascibile",
-      text: [
-        {
-          title: "RICHIAMARE I TITANI",
-          description: "— Prepara i tuoi personaggi Titano.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Hercules",
   set: "003",
@@ -97,4 +56,5 @@ export const hadesHotheadedRuler: CharacterCard = {
       },
     },
   ],
+  i18n: hadesHotheadedRulerI18n,
 };

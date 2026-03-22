@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { fredGiantsizedI18n } from "./098-fred-giant-sized.i18n";
 
 export const fredGiantsized: CharacterCard = {
   id: "Hxd",
@@ -7,37 +8,6 @@ export const fredGiantsized: CharacterCard = {
   cardType: "character",
   name: "Fred",
   version: "Giant-Sized",
-  i18n: {
-    en: {
-      name: "Fred",
-      version: "Giant-Sized",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "I LIKE WHERE THIS IS HEADING",
-          description:
-            "Whenever this character quests, reveal cards from the top of your deck until you reveal a Floodborn character card. Put that card into your hand and shuffle the rest into your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Fred",
-      version: "Riesengroß",
-      text: "Gestaltwandel 5 JETZT WIRD'S TOTAL KRASS Jedes Mal, wenn dieser Charakter erkundet, decke so lange die oberste Karte deines Decks auf, bis du eine Flutgestalt-Charakterkarte aufdeckst. Nimm jene auf deine Hand und mische die restlichen aufgedeckten Karten in dein Deck.",
-    },
-    fr: {
-      name: "Fred",
-      version: "Version géante",
-      text: "Alter 5 J'ADORE, ÇA S'ANNONCE BIEN Chaque fois que ce personnage est envoyé à l'aventure, révélez des cartes du dessus de votre pioche jusqu'à révéler une carte Personnage Floodborn. Mettez cette carte dans votre main et mélangez les autres cartes révélées dans votre pioche.",
-    },
-    it: {
-      name: "Fred",
-      version: "Gigantesco",
-      text: "Trasformazione 5 LA COSA SI FA INTERESSANTE Ogni volta che questo personaggio va all'avventura, rivela carte dalla cima del tuo mazzo finché non riveli una carta personaggio Imbevuto. Aggiungi quella carta alla tua mano e rimescola il resto nel tuo mazzo.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Big Hero 6",
   set: "008",
@@ -75,9 +45,12 @@ export const fredGiantsized: CharacterCard = {
     },
     {
       effect: {
-        intoDeck: "owner",
-        target: "CHOSEN_CHARACTER",
-        type: "shuffle-into-deck",
+        type: "reveal-until-match",
+        target: "CONTROLLER",
+        cardType: "character",
+        classification: "Floodborn",
+        putInto: "hand",
+        shuffle: true,
       },
       id: "1d3-2",
       name: "I LIKE WHERE THIS IS HEADING",
@@ -90,4 +63,5 @@ export const fredGiantsized: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: fredGiantsizedI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { distractI18n } from "./164-distract.i18n";
 
 export const distract: ActionCard = {
   id: "d5v",
@@ -6,24 +7,6 @@ export const distract: ActionCard = {
   reprints: ["set3-159", "set11-164"],
   cardType: "action",
   name: "Distract",
-  i18n: {
-    en: {
-      name: "Distract",
-      text: "Chosen character gets -2 {S} this turn. Draw a card.",
-    },
-    de: {
-      name: "Ablenken",
-      text: "Gib einem Charakter deiner Wahl in diesem Zug -2. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Distraction",
-      text: "Choisissez un personnage, il subit -2 pour le reste de ce tour. Piochez une carte.",
-    },
-    it: {
-      name: "Distrarre",
-      text: "Un personaggio a tua scelta riceve -2 per questo turno. Pesca una carta.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Mickey's Christmas Carol",
   set: "011",
@@ -58,4 +41,5 @@ export const distract: ActionCard = {
       },
     },
   ],
+  i18n: distractI18n,
 };

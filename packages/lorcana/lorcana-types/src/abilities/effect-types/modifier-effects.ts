@@ -11,9 +11,15 @@
 
 import type { Classification } from "../../cards/classifications";
 import type { CardType } from "../../cards/card-types";
-import type { AmountExpr, EffectDuration } from "../../expressions";
+import type { AmountExpr, EffectDuration, VariableAmount } from "../../expressions";
 import type { Condition } from "../condition-types";
-import type { CardTarget, CharacterTarget, LocationTarget, PlayerTarget } from "../target-types";
+import type {
+  CardTarget,
+  CharacterTarget,
+  ItemTarget,
+  LocationTarget,
+  PlayerTarget,
+} from "../target-types";
 import type { NumericSelfReplacement } from "./basic-effects";
 
 // ============================================================================
@@ -28,7 +34,7 @@ import type { NumericSelfReplacement } from "./basic-effects";
  */
 export interface ModifyStatEffect {
   type: "modify-stat";
-  stat?: "strength" | "willpower" | "lore";
+  stat?: "strength" | "willpower" | "lore" | "singer-threshold";
   modifier?: AmountExpr;
   target?: CharacterTarget | LocationTarget;
   chosenBy?: "you" | "opponent";
@@ -89,8 +95,8 @@ export interface GainKeywordEffect {
     | "Singer"
     | "Sing Together"
     | string; // Allow any keyword string for flexibility
-  /** For Challenger +X and Resist +X */
-  value?: number;
+  /** For Challenger +X and Resist +X — may be a fixed number or a variable amount */
+  value?: number | VariableAmount;
   target?: CharacterTarget | LocationTarget;
   duration?: EffectDuration;
 }
@@ -135,12 +141,36 @@ export interface RestrictionEffect {
     | "cant-play" // Generic can't play restriction
     | "must-be-chosen-for-effects" // Opponents must choose this character for actions and abilities if able
     // Extended restrictions for card text coverage
-    | "doesnt-ready"; // Character doesn't ready (alias for cant-ready)
-  target?: CharacterTarget | LocationTarget | PlayerTarget;
+    | "doesnt-ready" // Character doesn't ready (alias for cant-ready)
+    | "ready-only-one-character"; // Can't ready more than 1 character at start of turn
+  target?: CharacterTarget | LocationTarget | ItemTarget | PlayerTarget;
   duration?: EffectDuration;
   /** Condition for when the restriction applies */
   condition?: Condition;
   linkedToSource?: boolean;
+  /**
+   * For "cant-be-challenged" restrictions: filter describing which attackers
+   * are prevented from challenging this character.
+   *
+   * @example Characters with cost 3 or less can't challenge this character.
+   * ```
+   * challengerFilter: { type: "cost-comparison", operator: "lte", value: 3 }
+   * ```
+   */
+  challengerFilter?:
+    | {
+        type: "cost-comparison";
+        operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte";
+        value: number;
+      }
+    | {
+        type: "has-classification";
+        classification: string;
+      }
+    | {
+        /** Challenger must have at least 1 damage counter */
+        type: "is-damaged";
+      };
 }
 
 /**
@@ -183,9 +213,32 @@ export interface CostReductionEffect {
   /** Alternative field for reduction amount */
   reduction?: { ink: AmountExpr };
   cardType?: CardType | "song";
-  classification?: Classification;
+  classification?: Classification | Classification[];
+  /** Restrict reduction to cards with this specific name */
+  name?: string;
   target?: PlayerTarget; // Who gets the reduction (usually YOU)
   duration?: EffectDuration;
+  /**
+   * When set, the reduction only applies when playing a card via the specified method.
+   * - "shift": only reduces the Shift cost
+   * - "standard": only reduces the standard play cost
+   * When omitted, applies to all play methods.
+   */
+  playMethod?: "shift" | "standard";
+  /** When set, the reduction only applies to cards with this exact name */
+  cardName?: string;
+}
+
+/**
+ * Increase cost effect — all players pay more to play certain card types.
+ *
+ * @example "Each player pays 2 more to play actions or items."
+ */
+export interface CostIncreaseEffect {
+  type: "cost-increase";
+  amount: number;
+  /** Card type(s) affected. When absent, applies to all card types. */
+  cardType?: CardType | (CardType | "song")[];
 }
 
 // ============================================================================
@@ -273,9 +326,43 @@ export interface SearchDeckEffect {
   cardType?: CardType | "song" | "floodborn";
   cardName?: string;
   classification?: string;
+  maxCost?: number;
   putInto?: "hand" | "top-of-deck" | "play";
   /** Alias for putInto: "top-of-deck" */
   putOnTop?: boolean;
   reveal?: boolean;
   shuffle?: boolean;
+}
+
+/**
+ * Reveal cards from the top of a deck until a matching card is found.
+ *
+ * The revealed matching card can be moved into the target player's hand and
+ * the rest of the deck can then be shuffled.
+ */
+export interface RevealUntilMatchEffect {
+  type: "reveal-until-match";
+  target?: PlayerTarget;
+  cardType?: CardType | "song" | "floodborn";
+  classification?: Classification;
+  putInto?: "hand";
+  shuffle?: boolean;
+}
+
+/**
+ * Grant hand inkability effect
+ *
+ * @example "All cards in your hand count as having inkwell symbol"
+ */
+export interface GrantHandInkabilityEffect {
+  type: "grant-hand-inkability";
+}
+
+/**
+ * Grants the ability to ink cards from the discard pile
+ *
+ * @example "You can ink cards from your discard."
+ */
+export interface GrantDiscardInkabilityEffect {
+  type: "grant-discard-inkability";
 }

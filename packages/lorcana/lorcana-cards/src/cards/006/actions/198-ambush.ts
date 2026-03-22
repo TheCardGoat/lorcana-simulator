@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { ambushI18n } from "./198-ambush.i18n";
 
 export const ambush: ActionCard = {
   id: "UOR",
@@ -6,30 +7,6 @@ export const ambush: ActionCard = {
   reprints: ["set6-198"],
   cardType: "action",
   name: "Ambush!",
-  i18n: {
-    en: {
-      name: "Ambush!",
-      text: [
-        {
-          title: "{E}",
-          description:
-            "one of your characters to deal damage equal to their {S} to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Überfall!",
-      text: "einen deiner Charaktere, um einem Charakter deiner Wahl Schaden in Höhe der des erschöpften Charakters zuzufügen.",
-    },
-    fr: {
-      name: "Embuscade !",
-      text: "l'un de vos personnages pour infliger autant de dommages que sa à un personnage de votre choix.",
-    },
-    it: {
-      name: "Imboscata!",
-      text: "uno dei tuoi personaggi per infliggere danno pari alla sua a un personaggio a tua scelta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Peter Pan",
   set: "006",
@@ -41,12 +18,7 @@ export const ambush: ActionCard = {
     lorcast: "crd_35df29e6893942a38a14f775719ce522",
     tcgPlayer: 587971,
   },
-  text: [
-    {
-      title: "{E}",
-      description: "one of your characters to deal damage equal to their {S} to chosen character.",
-    },
-  ],
+  text: "{E} one of your characters to deal damage equal to their {S} to chosen character.",
   abilities: [
     {
       type: "action",
@@ -95,4 +67,5 @@ export const ambush: ActionCard = {
       },
     },
   ],
+  i18n: ambushI18n,
 };

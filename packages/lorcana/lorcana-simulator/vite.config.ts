@@ -8,14 +8,14 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const hotUpdateDelayMs = Number(env.HOT_UPDATE_DELAY_MS ?? 0);
   const shouldDelayHotUpdates = Number.isFinite(hotUpdateDelayMs) && hotUpdateDelayMs > 0;
-  const paraglideGeneratedWatchIgnore = ["**/src/lib/paraglide-generated/**"];
+  const paraglideWatchIgnore = ["**/src/lib/paraglide/**"];
 
   return {
     server: {
       watch: {
         // Paraglide regenerates this directory during dev. Watching it causes
         // Vite to invalidate the graph from its own generated output.
-        ignored: paraglideGeneratedWatchIgnore,
+        ignored: paraglideWatchIgnore,
         ...(shouldDelayHotUpdates
           ? {
               awaitWriteFinish: {
@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       tailwindcss(),
       sveltekit(),
-      paraglideVitePlugin({ project: "./project.inlang", outdir: "./src/lib/paraglide-generated" }),
+      paraglideVitePlugin({ project: "./project.inlang", outdir: "./src/lib/paraglide" }),
     ],
   };
 });

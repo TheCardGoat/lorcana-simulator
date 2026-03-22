@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { vixeyForestFriendI18n } from "./086-vixey-forest-friend.i18n";
 
 export const vixeyForestFriend: CharacterCard = {
   id: "tPQ",
@@ -7,55 +8,6 @@ export const vixeyForestFriend: CharacterCard = {
   cardType: "character",
   name: "Vixey",
   version: "Forest Friend",
-  i18n: {
-    en: {
-      name: "Vixey",
-      version: "Forest Friend",
-      text: [
-        {
-          title: "SHOWIN' UP",
-          description:
-            "If you have a character named Tod in play, you pay 1 {I} less to play this character.",
-        },
-        {
-          title: "Evasive",
-        },
-      ],
-    },
-    de: {
-      name: "Trixi, die Füchsin",
-      version: "Freundin des Waldes",
-      text: [
-        {
-          title: "KOMMST DU?",
-          description:
-            "Falls du einen Cap-Charakter im Spiel hast, zahlst du 1 weniger, um diesen Charakter auszuspielen. Wendig",
-        },
-      ],
-    },
-    fr: {
-      name: "Vixy",
-      version: "Amie de la forêt",
-      text: [
-        {
-          title: "CELLE QUI T'ATTEND",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins si vous avez un personnage Rox en jeu. Insaisissable",
-        },
-      ],
-    },
-    it: {
-      name: "Vicky",
-      version: "Amica del Bosco",
-      text: [
-        {
-          title: "FARTI NOTARE",
-          description:
-            "Se hai in gioco un personaggio chiamato Red, paga 1 meno per giocare questo personaggio. Sfuggente",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Fox and the Hound",
   set: "011",
@@ -84,33 +36,19 @@ export const vixeyForestFriend: CharacterCard = {
   abilities: [
     {
       id: "q34-1",
-      effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            filters: [
-              {
-                type: "name",
-                equals: "Tod",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+      name: "SHOWIN' UP",
+      condition: {
+        controller: "you",
+        name: "Tod",
+        type: "has-named-character",
       },
-      type: "action",
+      effect: {
+        amount: 1,
+        cardType: "character",
+        type: "cost-reduction",
+      },
+      sourceZones: ["hand"],
+      type: "static",
       text: "SHOWIN' UP If you have a character named Tod in play, you pay 1 {I} less to play this character.",
     },
     {
@@ -120,4 +58,5 @@ export const vixeyForestFriend: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: vixeyForestFriendI18n,
 };

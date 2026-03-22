@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 16 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_15.md) | [Next →](AUDIT_INVENTORY_CHUNK_17.md)
-
 
 - [ ] **010/characters/091-goofy-emerald-champion.test.ts**
   - Card: `010/characters/091-goofy-emerald-champion.ts`

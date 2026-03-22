@@ -1,22 +1,73 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { judyHoppsUncoveringClues } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Judy Hopps - Uncovering Clues", () => {
-//   It.skip("THOROUGH INVESTIGATION When you play this character and whenever she quests, look at the top 3 cards of your deck. You may reveal a Detective character card and put it into your hand. Put the rest on the bottom of your deck in any order.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: judyHoppsUncoveringClues.cost,
-//       Hand: [judyHoppsUncoveringClues],
-//     });
-//
-//     Await testEngine.playCard(judyHoppsUncoveringClues);
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { judyHoppsUncoveringClues } from "./156-judy-hopps-uncovering-clues";
+
+const detectiveCharacter = createMockCharacter({
+  id: "detective-match",
+  name: "Detective Match",
+  cost: 2,
+  classifications: ["Storyborn", "Detective"],
+});
+
+const nonMatchA = createMockCharacter({
+  id: "non-match-a",
+  name: "Non Match A",
+  cost: 1,
+  classifications: ["Storyborn", "Hero"],
+});
+
+const nonMatchB = createMockCharacter({
+  id: "non-match-b",
+  name: "Non Match B",
+  cost: 3,
+  classifications: ["Dreamborn", "Villain"],
+});
+
+describe("Judy Hopps - Uncovering Clues", () => {
+  it("THOROUGH INVESTIGATION - on play, reveals a Detective character to hand, puts rest on bottom", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [judyHoppsUncoveringClues],
+      inkwell: judyHoppsUncoveringClues.cost,
+      deck: [nonMatchA, detectiveCharacter, nonMatchB],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(judyHoppsUncoveringClues)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [
+          { zone: "hand", cards: [detectiveCharacter] },
+          { zone: "deck-bottom", cards: [nonMatchB, nonMatchA] },
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(detectiveCharacter)).toBe("hand");
+  });
+
+  it("THOROUGH INVESTIGATION - on quest, reveals a Detective character to hand, puts rest on bottom", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [judyHoppsUncoveringClues],
+      deck: [nonMatchA, detectiveCharacter, nonMatchB],
+    });
+
+    expect(testEngine.asPlayerOne().quest(judyHoppsUncoveringClues)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [
+          { zone: "hand", cards: [detectiveCharacter] },
+          { zone: "deck-bottom", cards: [nonMatchB, nonMatchA] },
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(detectiveCharacter)).toBe("hand");
+  });
+});

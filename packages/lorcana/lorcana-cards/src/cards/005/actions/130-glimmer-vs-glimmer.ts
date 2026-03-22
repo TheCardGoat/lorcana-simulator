@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { glimmerVsGlimmerI18n } from "./130-glimmer-vs-glimmer.i18n";
 
 export const glimmerVsGlimmer: ActionCard = {
   id: "xCq",
@@ -6,24 +7,6 @@ export const glimmerVsGlimmer: ActionCard = {
   reprints: ["set5-130"],
   cardType: "action",
   name: "Glimmer vs Glimmer",
-  i18n: {
-    en: {
-      name: "Glimmer vs Glimmer",
-      text: "Banish chosen character of yours to banish chosen character.",
-    },
-    de: {
-      name: "Glimmer gegen Glimmer",
-      text: "Wähle und verbanne einen deiner Charaktere, um einen Charakter deiner Wahl zu verbannen.",
-    },
-    fr: {
-      name: "Glimmer contre Glimmer",
-      text: "Choisissez et bannissez l'un de vos personnages pour choisir et bannir un autre personnage.",
-    },
-    it: {
-      name: "Glimmer contro Glimmer",
-      text: "Esilia un tuo personaggio a tua scelta per esiliare un personaggio a tua scelta.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lorcana",
   set: "005",
@@ -75,4 +58,5 @@ export const glimmerVsGlimmer: ActionCard = {
       type: "action",
     },
   ],
+  i18n: glimmerVsGlimmerI18n,
 };

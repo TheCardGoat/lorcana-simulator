@@ -1,6 +1,8 @@
 <script lang="ts">
   import CardBack from "./CardBack.svelte";
 
+  const ART_ONLY_ASPECT_RATIO = 734 / 602;
+
   interface DeckStackProps {
     count?: number;
     showCount?: boolean;
@@ -18,28 +20,31 @@
   <div class="deck-card absolute inset-0">
     <CardBack
       {ownerId}
-      displayWidth={40}
-      displayHeight={56}
-      aspectRatio={40 / 56}
+      displayWidth={49}
+      displayHeight={40}
+      aspectRatio={ART_ONLY_ASPECT_RATIO}
       useContainerSize={true}
+      imageFormat="art_only"
     />
   </div>
   <div class="deck-card absolute inset-0">
     <CardBack
       {ownerId}
-      displayWidth={40}
-      displayHeight={56}
-      aspectRatio={40 / 56}
+      displayWidth={49}
+      displayHeight={40}
+      aspectRatio={ART_ONLY_ASPECT_RATIO}
       useContainerSize={true}
+      imageFormat="art_only"
     />
   </div>
   <div class="deck-card absolute inset-0">
     <CardBack
       {ownerId}
-      displayWidth={40}
-      displayHeight={56}
-      aspectRatio={40 / 56}
+      displayWidth={49}
+      displayHeight={40}
+      aspectRatio={ART_ONLY_ASPECT_RATIO}
       useContainerSize={true}
+      imageFormat="art_only"
     />
   </div>
   {#if showCount && count !== undefined}

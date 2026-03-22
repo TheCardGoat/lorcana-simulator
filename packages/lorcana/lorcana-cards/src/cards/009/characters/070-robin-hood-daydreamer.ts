@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { robinHoodDaydreamerI18n } from "./070-robin-hood-daydreamer.i18n";
 
 export const robinHoodDaydreamer: CharacterCard = {
   id: "a5G",
@@ -7,24 +8,6 @@ export const robinHoodDaydreamer: CharacterCard = {
   cardType: "character",
   name: "Robin Hood",
   version: "Daydreamer",
-  i18n: {
-    en: {
-      name: "Robin Hood",
-      version: "Daydreamer",
-    },
-    de: {
-      name: "Robin Hood",
-      version: "Tagträumer",
-    },
-    fr: {
-      name: "Robin des Bois",
-      version: "Rêveur éveillé",
-    },
-    it: {
-      name: "Robin Hood",
-      version: "Sognatore",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "009",
@@ -41,4 +24,5 @@ export const robinHoodDaydreamer: CharacterCard = {
     tcgPlayer: 650012,
   },
   classifications: ["Dreamborn", "Hero"],
+  i18n: robinHoodDaydreamerI18n,
 };

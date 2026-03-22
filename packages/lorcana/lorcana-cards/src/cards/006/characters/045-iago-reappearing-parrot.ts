@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { iagoReappearingParrotI18n } from "./045-iago-reappearing-parrot.i18n";
 
 export const iagoReappearingParrot: CharacterCard = {
   id: "Swd",
@@ -7,51 +8,6 @@ export const iagoReappearingParrot: CharacterCard = {
   cardType: "character",
   name: "Iago",
   version: "Reappearing Parrot",
-  i18n: {
-    en: {
-      name: "Iago",
-      version: "Reappearing Parrot",
-      text: [
-        {
-          title: "GUESS WHO",
-          description:
-            "When this character is banished in a challenge, return this card to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Jago",
-      version: "Wiederauftauchender Papagei",
-      text: [
-        {
-          title: "RATE MAL",
-          description:
-            "Wenn dieser Charakter durch eine Herausforderung verbannt wird, nimm ihn zurück auf deine Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Iago",
-      version: "Perroquet tenace",
-      text: [
-        {
-          title: "DEVINE QUI C'EST",
-          description: "Lorsque ce personnage est banni via un défi, renvoyez-le dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Iago",
-      version: "Pappagallo Ricomparso",
-      text: [
-        {
-          title: "INDOVINA CHI C'È",
-          description:
-            "Quando questo personaggio viene esiliato in una sfida, riprendi in mano questa carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "006",
@@ -90,4 +46,5 @@ export const iagoReappearingParrot: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: iagoReappearingParrotI18n,
 };

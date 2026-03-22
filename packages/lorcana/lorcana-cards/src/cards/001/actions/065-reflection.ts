@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { reflectionI18n } from "./065-reflection.i18n";
 
 export const reflection: ActionCard = {
   id: "wVZ",
@@ -6,24 +7,6 @@ export const reflection: ActionCard = {
   reprints: ["set1-065"],
   cardType: "action",
   name: "Reflection",
-  i18n: {
-    en: {
-      name: "Reflection",
-      text: "Look at the top 3 cards of your deck. Put them back on the top of your deck in any order.",
-    },
-    de: {
-      name: "Wer bin ich?",
-      text: "Schaue dir die obersten 3 Karten deines Decks an. Lege sie in beliebiger Reihenfolge zurück auf dein Deck.",
-    },
-    fr: {
-      name: "Réflexion",
-      text: "Regardez les 3 premières cartes de votre pioche. Remettez-les sur le dessus de votre pioche, dans l'ordre de votre choix.",
-    },
-    it: {
-      name: "Riflesso",
-      text: "(Un personaggio con costo 1 o superiore può per cantare questa canzone gratis.) Guarda le prime 3 carte del tuo mazzo. Rimettile in cima al tuo mazzo in qualsiasi ordine.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Mulan",
   set: "001",
@@ -53,4 +36,5 @@ export const reflection: ActionCard = {
       },
     },
   ],
+  i18n: reflectionI18n,
 };

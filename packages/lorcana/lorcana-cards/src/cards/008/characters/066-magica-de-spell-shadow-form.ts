@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicaDeSpellShadowFormI18n } from "./066-magica-de-spell-shadow-form.i18n";
 
 export const magicaDeSpellShadowForm: CharacterCard = {
   id: "dre",
@@ -7,37 +8,6 @@ export const magicaDeSpellShadowForm: CharacterCard = {
   cardType: "character",
   name: "Magica De Spell",
   version: "Shadow Form",
-  i18n: {
-    en: {
-      name: "Magica De Spell",
-      version: "Shadow Form",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "DANCE OF DARKNESS",
-          description:
-            "When you play this character, you may return one of your other characters to your hand to draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Gundel Gaukeley",
-      version: "Schattenform",
-      text: "Wendig TANZ DER DUNKELHEIT Wenn du diesen Charakter ausspielst, darfst du einen deiner anderen Charaktere wählen und zurück auf deine Hand nehmen, um eine Karte zu ziehen.",
-    },
-    fr: {
-      name: "Miss Tick",
-      version: "Sous forme d’ombre",
-      text: "Insaisissable DANSE DES TÉNÈBRES Lorsque vous jouez ce personnage, vous pouvez choisir et renvoyer l'un de vos personnages dans votre main pour piocher une carte.",
-    },
-    it: {
-      name: "Amelia",
-      version: "In Forma d'Ombra",
-      text: "Sfuggente DANZA DELLE OMBRE Quando giochi questo personaggio, puoi riprendere in mano un tuo altro personaggio a tua scelta per pescare una carta.",
-    },
-  },
   inkType: ["amethyst", "emerald"],
   franchise: "Ducktales",
   set: "008",
@@ -72,18 +42,39 @@ export const magicaDeSpellShadowForm: CharacterCard = {
     },
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: {
-            selector: "all",
-            count: "all",
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
+        steps: [
+          {
+            chooser: "CONTROLLER",
+            effect: {
+              steps: [
+                {
+                  target: {
+                    cardTypes: ["character"],
+                    count: 1,
+                    excludeSelf: true,
+                    owner: "you",
+                    selector: "chosen",
+                    zones: ["play"],
+                  },
+                  type: "return-to-hand",
+                },
+                {
+                  condition: {
+                    type: "if-you-do",
+                  },
+                  then: {
+                    amount: 1,
+                    type: "draw",
+                  },
+                  type: "conditional",
+                },
+              ],
+              type: "sequence",
+            },
+            type: "optional",
           },
-          type: "return-to-hand",
-        },
-        type: "optional",
+        ],
+        type: "sequence",
       },
       id: "sma-2",
       name: "DANCE OF DARKNESS",
@@ -96,4 +87,5 @@ export const magicaDeSpellShadowForm: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: magicaDeSpellShadowFormI18n,
 };

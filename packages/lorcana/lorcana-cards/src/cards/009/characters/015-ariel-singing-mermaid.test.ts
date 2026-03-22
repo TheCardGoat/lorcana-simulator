@@ -10,5 +10,6 @@ describe("Ariel - Singing Mermaid", () => {
 
     const cardUnderTest = testEngine.getCardModel(arielSingingMermaid);
     expect(cardUnderTest.hasSinger()).toBe(true);
+    expect(cardUnderTest.singerCost).toBe(7);
   });
 });

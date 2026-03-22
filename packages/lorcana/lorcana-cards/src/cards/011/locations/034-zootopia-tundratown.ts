@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { zootopiaTundratownI18n } from "./034-zootopia-tundratown.i18n";
 
 export const zootopiaTundratown: LocationCard = {
   id: "tpz",
@@ -7,24 +8,6 @@ export const zootopiaTundratown: LocationCard = {
   cardType: "location",
   name: "Zootopia",
   version: "Tundratown",
-  i18n: {
-    en: {
-      name: "Zootopia",
-      version: "Tundratown",
-    },
-    de: {
-      name: "Zoomania",
-      version: "Tundratown",
-    },
-    fr: {
-      name: "Zootopie",
-      version: "Toundraville",
-    },
-    it: {
-      name: "Zootropolis",
-      version: "Tundratown",
-    },
-  },
   inkType: ["amber"],
   franchise: "Zootropolis",
   set: "011",
@@ -40,4 +23,5 @@ export const zootopiaTundratown: LocationCard = {
     lorcast: "crd_7a26dcac46ba4e0291bf8bedaec4923d",
     tcgPlayer: 674833,
   },
+  i18n: zootopiaTundratownI18n,
 };

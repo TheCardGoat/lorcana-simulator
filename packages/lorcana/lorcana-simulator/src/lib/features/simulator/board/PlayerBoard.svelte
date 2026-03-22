@@ -139,7 +139,7 @@
   }
 
   .player-board--opponent .hand-overlay {
-    top: -2rem;
+    top: -5.5rem;
   }
 
   .hand-overlay :global(.hand-fan) {

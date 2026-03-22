@@ -1,250 +1,229 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { pawpsicle } from "@lorcanito/lorcana-engine/cards/002/items/169-pawpsicle";
-// Import { mouseArmor } from "@lorcanito/lorcana-engine/cards/002/items/items";
-// Import { vladimirCeramicUnicornFan } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Vladimir - Ceramic Unicorn Fan", () => {
-//   Describe("HIGH STANDARDS - Basic Functionality", () => {
-//     It("triggers when character quests and banishes chosen item", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [vladimirCeramicUnicornFan, pawpsicle],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(vladimirCeramicUnicornFan);
-//       Const target = testEngine.getCardModel(pawpsicle);
-//
-//       Expect(target.zone).toBe("play");
-//
-//       Await testEngine.questCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//       Expect(target.zone).toBe("discard");
-//     });
-//
-//     It("can banish any item in play", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [vladimirCeramicUnicornFan, mouseArmor],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(vladimirCeramicUnicornFan);
-//       Const target = testEngine.getCardModel(mouseArmor);
-//
-//       Expect(target.zone).toBe("play");
-//
-//       Await testEngine.questCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//       Expect(target.zone).toBe("discard");
-//     });
-//
-//     It("can banish opponent's items", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [vladimirCeramicUnicornFan],
-//         },
-//         {
-//           Play: [pawpsicle],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(vladimirCeramicUnicornFan);
-//       Const opponentItem = testEngine.getCardModel(pawpsicle);
-//
-//       Expect(opponentItem.zone).toBe("play");
-//
-//       Await testEngine.questCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [opponentItem] });
-//
-//       Expect(opponentItem.zone).toBe("discard");
-//     });
-//
-//     It("can banish own items", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [vladimirCeramicUnicornFan, pawpsicle],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(vladimirCeramicUnicornFan);
-//       Const ownItem = testEngine.getCardModel(pawpsicle);
-//
-//       Expect(ownItem.zone).toBe("play");
-//
-//       Await testEngine.questCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [ownItem] });
-//
-//       Expect(ownItem.zone).toBe("discard");
-//     });
-//   });
-//
-//   Describe("HIGH STANDARDS - Optional Ability", () => {
-//     It("ability is optional - can decline to banish", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [vladimirCeramicUnicornFan, pawpsicle],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(vladimirCeramicUnicornFan);
-//       Const target = testEngine.getCardModel(pawpsicle);
-//
-//       Await testEngine.questCard(cardUnderTest);
-//
-//       // Decline the optional ability
-//       Await testEngine.skipTopOfStack();
-//
-//       // Item should remain in play
-//       Expect(target.zone).toBe("play");
-//     });
-//   });
-//
-//   Describe("HIGH STANDARDS - Trigger Conditions", () => {
-//     It("only triggers when Vladimir quests, not other characters", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [vladimirCeramicUnicornFan, pawpsicle],
-//         },
-//         {
-//           Play: [mouseArmor],
-//         },
-//       );
-//
-//       Const ownItem = testEngine.getCardModel(pawpsicle);
-//       Const opponentItem = testEngine.getCardModel(mouseArmor);
-//
-//       Expect(ownItem.zone).toBe("play");
-//       Expect(opponentItem.zone).toBe("play");
-//
-//       // Quest with Vladimir
-//       Await testEngine.questCard(vladimirCeramicUnicornFan);
-//
-//       // Should have ability on stack
-//       Expect(testEngine.store.stackLayerStore.layers.length).toBeGreaterThan(0);
-//     });
-//
-//     It("does not trigger when character is played", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: vladimirCeramicUnicornFan.cost,
-//         Hand: [vladimirCeramicUnicornFan],
-//         Play: [pawpsicle],
-//       });
-//
-//       Const target = testEngine.getCardModel(pawpsicle);
-//
-//       Await testEngine.playCard(vladimirCeramicUnicornFan);
-//
-//       // Should not have any ability on stack (no "when you play" trigger)
-//       Expect(testEngine.store.stackLayerStore.layers.length).toBe(0);
-//       Expect(target.zone).toBe("play");
-//     });
-//
-//     It("triggers every time Vladimir quests", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [vladimirCeramicUnicornFan, pawpsicle],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(vladimirCeramicUnicornFan);
-//       Const firstItem = testEngine.getCardModel(pawpsicle);
-//
-//       // First quest - banish item
-//       Await testEngine.questCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [firstItem] });
-//
-//       Expect(firstItem.zone).toBe("discard");
-//
-//       // Verify the ability actually triggered
-//       Expect(cardUnderTest.ready).toBe(false);
-//     });
-//   });
-//
-//   Describe("HIGH STANDARDS - Edge Cases", () => {
-//     It("works when no items are in play", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [vladimirCeramicUnicornFan],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(vladimirCeramicUnicornFan);
-//
-//       // Should quest successfully even with no valid targets
-//       Await testEngine.questCard(cardUnderTest);
-//
-//       // Ability should still trigger but resolve without effect
-//       Expect(cardUnderTest.ready).toBe(false);
-//     });
-//
-//     It("only banishes one item per quest", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [vladimirCeramicUnicornFan, pawpsicle, mouseArmor],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(vladimirCeramicUnicornFan);
-//       Const firstItem = testEngine.getCardModel(pawpsicle);
-//       Const secondItem = testEngine.getCardModel(mouseArmor);
-//
-//       Await testEngine.questCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [firstItem] });
-//
-//       // Only first item should be banished
-//       Expect(firstItem.zone).toBe("discard");
-//       Expect(secondItem.zone).toBe("play");
-//     });
-//
-//     It("cannot target characters, only items", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [vladimirCeramicUnicornFan],
-//         },
-//         {
-//           Play: [vladimirCeramicUnicornFan], // Another character, not an item
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         VladimirCeramicUnicornFan,
-//         0,
-//       );
-//
-//       Await testEngine.questCard(cardUnderTest);
-//
-//       // Ability triggers but has no valid targets (no items in play), so it's skipped
-//       // Both characters should still be in play
-//       Expect(testEngine.getCardModel(vladimirCeramicUnicornFan, 0).zone).toBe(
-//         "play",
-//       );
-//       Expect(testEngine.getCardModel(vladimirCeramicUnicornFan, 1).zone).toBe(
-//         "play",
-//       );
-//     });
-//   });
-//
-//   Describe("HIGH STANDARDS - Multiple Items Scenario", () => {
-//     It("allows player to choose which item to banish when multiple are available", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [vladimirCeramicUnicornFan, pawpsicle, mouseArmor],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(vladimirCeramicUnicornFan);
-//       Const item1 = testEngine.getCardModel(pawpsicle);
-//       Const item2 = testEngine.getCardModel(mouseArmor);
-//
-//       Await testEngine.questCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//
-//       // Choose to banish the second item
-//       Await testEngine.resolveTopOfStack({ targets: [item2] });
-//
-//       // Only the chosen item should be banished
-//       Expect(item1.zone).toBe("play");
-//       Expect(item2.zone).toBe("discard");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockItem,
+  createMockCharacter,
+  PLAYER_ONE,
+  PLAYER_TWO,
+} from "@tcg/lorcana-engine/testing";
+import { vladimirCeramicUnicornFan } from "./075-vladimir-ceramic-unicorn-fan";
+
+const ownItem = createMockItem({
+  id: "vladimir-test-own-item",
+  name: "Own Item",
+  cost: 2,
+});
+
+const anotherItem = createMockItem({
+  id: "vladimir-test-another-item",
+  name: "Another Item",
+  cost: 3,
+});
+
+const opponentItem = createMockItem({
+  id: "vladimir-test-opponent-item",
+  name: "Opponent Item",
+  cost: 2,
+});
+
+const anotherCharacter = createMockCharacter({
+  id: "vladimir-test-another-character",
+  name: "Another Character",
+  cost: 3,
+  strength: 2,
+  willpower: 4,
+  lore: 1,
+});
+
+describe("Vladimir - Ceramic Unicorn Fan", () => {
+  describe("HIGH STANDARDS - Whenever this character quests, you may banish chosen item.", () => {
+    it("triggers a bag effect when Vladimir quests and items are in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vladimirCeramicUnicornFan, ownItem],
+        },
+        {},
+      );
+
+      expect(testEngine.asPlayerOne().quest(vladimirCeramicUnicornFan)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+    });
+
+    it("banishes own item when ability is accepted and item is chosen", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vladimirCeramicUnicornFan, ownItem],
+        },
+        {},
+      );
+
+      expect(testEngine.asPlayerOne().getCardZone(ownItem)).toBe("play");
+
+      expect(testEngine.asPlayerOne().quest(vladimirCeramicUnicornFan)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      const ownItemId = testEngine.findCardInstanceId(ownItem, "play", PLAYER_ONE);
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [ownItemId] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(ownItem)).toBe("discard");
+    });
+
+    it("banishes opponent's item when chosen", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vladimirCeramicUnicornFan],
+        },
+        {
+          play: [opponentItem],
+        },
+      );
+
+      expect(testEngine.asPlayerTwo().getCardZone(opponentItem)).toBe("play");
+
+      expect(testEngine.asPlayerOne().quest(vladimirCeramicUnicornFan)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      const opponentItemId = testEngine.findCardInstanceId(opponentItem, "play", PLAYER_TWO);
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [opponentItemId] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(opponentItem)).toBe("discard");
+    });
+
+    it("allows choosing which item to banish when multiple items are in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vladimirCeramicUnicornFan, ownItem, anotherItem],
+        },
+        {},
+      );
+
+      expect(testEngine.asPlayerOne().quest(vladimirCeramicUnicornFan)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // Choose to banish the second item
+      const anotherItemId = testEngine.findCardInstanceId(anotherItem, "play", PLAYER_ONE);
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [anotherItemId] }),
+      ).toBeSuccessfulCommand();
+
+      // Only the chosen item is banished
+      expect(testEngine.asPlayerOne().getCardZone(ownItem)).toBe("play");
+      expect(testEngine.asPlayerOne().getCardZone(anotherItem)).toBe("discard");
+    });
+
+    it("ability is optional — can be declined and item remains in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vladimirCeramicUnicornFan, ownItem],
+        },
+        {},
+      );
+
+      expect(testEngine.asPlayerOne().quest(vladimirCeramicUnicornFan)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // Item should remain in play since ability was declined
+      expect(testEngine.asPlayerOne().getCardZone(ownItem)).toBe("play");
+    });
+
+    it("exerts Vladimir after questing", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vladimirCeramicUnicornFan, ownItem],
+        },
+        {},
+      );
+
+      expect(testEngine.asPlayerOne().quest(vladimirCeramicUnicornFan)).toBeSuccessfulCommand();
+
+      // Vladimir should be exerted after questing
+      expect(testEngine.isExerted(vladimirCeramicUnicornFan)).toBe(true);
+    });
+
+    it("only banishes items, not characters", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vladimirCeramicUnicornFan, anotherCharacter],
+        },
+        {},
+      );
+
+      expect(testEngine.asPlayerOne().quest(vladimirCeramicUnicornFan)).toBeSuccessfulCommand();
+
+      // If there are no items, the bag effect may still appear (optional) but no valid targets for items
+      const bagCount = testEngine.asPlayerOne().getBagCount();
+      if (bagCount > 0) {
+        const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+        // Accept the optional
+        expect(
+          testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        ).toBeSuccessfulCommand();
+      }
+
+      // The character should not be banished
+      expect(testEngine.asPlayerOne().getCardZone(anotherCharacter)).toBe("play");
+    });
+
+    it("does not trigger when Vladimir is played, only when questing", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [vladimirCeramicUnicornFan],
+          inkwell: vladimirCeramicUnicornFan.cost,
+          play: [ownItem],
+        },
+        {},
+      );
+
+      expect(testEngine.asPlayerOne().playCard(vladimirCeramicUnicornFan)).toBeSuccessfulCommand();
+
+      // No bag effect should appear when just playing the card
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getCardZone(ownItem)).toBe("play");
+    });
+
+    it("gains lore for the player when Vladimir quests", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vladimirCeramicUnicornFan],
+        },
+        {},
+      );
+
+      const loreBefore = testEngine.asPlayerOne().getLore(PLAYER_ONE);
+
+      expect(testEngine.asPlayerOne().quest(vladimirCeramicUnicornFan)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(
+        loreBefore + vladimirCeramicUnicornFan.lore,
+      );
+    });
+  });
+});

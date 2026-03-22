@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { maleficentMonstrousDragonI18n } from "./108-maleficent-monstrous-dragon.i18n";
 
 export const maleficentMonstrousDragon: CharacterCard = {
   id: "N2j",
@@ -7,48 +8,6 @@ export const maleficentMonstrousDragon: CharacterCard = {
   cardType: "character",
   name: "Maleficent",
   version: "Monstrous Dragon",
-  i18n: {
-    en: {
-      name: "Maleficent",
-      version: "Monstrous Dragon",
-      text: [
-        {
-          title: "DRAGON FIRE",
-          description: "When you play this character, you may banish chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Maleficent",
-      version: "Monstrous Dragon",
-      text: [
-        {
-          title: "DRAGON FIRE",
-          description: "When you play this character, you may banish chosen character.",
-        },
-      ],
-    },
-    fr: {
-      name: "Maleficent",
-      version: "Monstrous Dragon",
-      text: [
-        {
-          title: "DRAGON FIRE",
-          description: "When you play this character, you may banish chosen character.",
-        },
-      ],
-    },
-    it: {
-      name: "Maleficent",
-      version: "Monstrous Dragon",
-      text: [
-        {
-          title: "DRAGON FIRE",
-          description: "When you play this character, you may banish chosen character.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Sleeping Beauty",
   set: "009",
@@ -97,4 +56,5 @@ export const maleficentMonstrousDragon: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: maleficentMonstrousDragonI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { feliciaAlwaysHungryI18n } from "./107-felicia-always-hungry.i18n";
 
 export const feliciaAlwaysHungry: CharacterCard = {
   id: "Wz0",
@@ -7,33 +8,6 @@ export const feliciaAlwaysHungry: CharacterCard = {
   cardType: "character",
   name: "Felicia",
   version: "Always Hungry",
-  i18n: {
-    en: {
-      name: "Felicia",
-      version: "Always Hungry",
-      text: "Reckless",
-    },
-    de: {
-      name: "Felizita",
-      version: "Immer hungrig",
-      text: "Impulsiv",
-    },
-    fr: {
-      name: "Félicia",
-      version: "Toujours affamée",
-      text: "Combattant",
-    },
-    it: {
-      name: "Felicia",
-      version: "Always Hungry",
-      text: [
-        {
-          title: "Reckless",
-          description: "(This character can't quest and must challenge each turn if able.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Great Mouse Detective",
   set: "002",
@@ -58,4 +32,5 @@ export const feliciaAlwaysHungry: CharacterCard = {
       text: "Reckless",
     },
   ],
+  i18n: feliciaAlwaysHungryI18n,
 };

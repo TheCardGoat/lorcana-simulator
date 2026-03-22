@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theDodoOutlandishStorytellerI18n } from "./126-the-dodo-outlandish-storyteller.i18n";
 
 export const theDodoOutlandishStoryteller: CharacterCard = {
   id: "Bfj",
@@ -7,48 +8,6 @@ export const theDodoOutlandishStoryteller: CharacterCard = {
   cardType: "character",
   name: "The Dodo",
   version: "Outlandish Storyteller",
-  i18n: {
-    en: {
-      name: "The Dodo",
-      version: "Outlandish Storyteller",
-      text: [
-        {
-          title: "EXTRAORDINARY SITUATION",
-          description: "This character gets +1 {S} for each 1 damage on him.",
-        },
-      ],
-    },
-    de: {
-      name: "Der Dodo",
-      version: "Schräger Geschichtenerzähler",
-      text: [
-        {
-          title: "EINE ÄUSSERST FATALE SITUATION",
-          description: "Dieser Charakter erhält für jeden Schaden auf ihm +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Dodo",
-      version: "Conteur saugrenu",
-      text: [
-        {
-          title: "C'EST UNE SITUATION EXTRAORDINAIRE",
-          description: "Ce personnage a +1 pour chaque dommage sur lui.",
-        },
-      ],
-    },
-    it: {
-      name: "Capitan Libeccio",
-      version: "Narratore Stravagante",
-      text: [
-        {
-          title: "STRAORDINARIA SITUAZIONE",
-          description: "Questo personaggio riceve +1 per ogni singolo danno su di esso.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Alice in Wonderland",
   set: "008",
@@ -73,14 +32,18 @@ export const theDodoOutlandishStoryteller: CharacterCard = {
   abilities: [
     {
       effect: {
-        modifier: 1,
+        modifier: {
+          type: "damage-on-self",
+        },
         stat: "strength",
         target: "SELF",
         type: "modify-stat",
       },
       id: "dac-1",
+      name: "EXTRAORDINARY SITUATION",
       text: "EXTRAORDINARY SITUATION This character gets +1 {S} for each 1 damage on him.",
       type: "static",
     },
   ],
+  i18n: theDodoOutlandishStorytellerI18n,
 };

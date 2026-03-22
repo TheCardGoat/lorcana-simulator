@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arthurNoviceSparrowI18n } from "./121-arthur-novice-sparrow.i18n";
 
 export const arthurNoviceSparrow: CharacterCard = {
   id: "WQv",
@@ -7,28 +8,6 @@ export const arthurNoviceSparrow: CharacterCard = {
   cardType: "character",
   name: "Arthur",
   version: "Novice Sparrow",
-  i18n: {
-    en: {
-      name: "Arthur",
-      version: "Novice Sparrow",
-      text: "Reckless",
-    },
-    de: {
-      name: "Arthur",
-      version: "Spatz-Anfänger",
-      text: "Impulsiv",
-    },
-    fr: {
-      name: "Arthur",
-      version: "Moineau novice",
-      text: "Combattant",
-    },
-    it: {
-      name: "Artù",
-      version: "Passerotto Principiante",
-      text: "Attaccabrighe",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -53,4 +32,5 @@ export const arthurNoviceSparrow: CharacterCard = {
       text: "Reckless",
     },
   ],
+  i18n: arthurNoviceSparrowI18n,
 };

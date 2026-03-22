@@ -1,24 +1,27 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { drCalicoGreeneyedMan } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Dr. Calico - Green-Eyed Man", () => {
-//   It.skip("YOU'RE BEGINNING TO IRK ME While this character has no damage, he gains Resist +2. (Damage dealt to them is reduced by 2.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: drCalicoGreeneyedMan.cost,
-//       Play: [drCalicoGreeneyedMan],
-//       Hand: [drCalicoGreeneyedMan],
-//     });
-//
-//     Await testEngine.playCard(drCalicoGreeneyedMan);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { drCalicoGreeneyedMan } from "./181-dr-calico-green-eyed-man";
+
+describe("Dr. Calico - Green-Eyed Man", () => {
+  describe("YOU'RE BEGINNING TO IRK ME", () => {
+    it("should have Resist +2 when undamaged", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [drCalicoGreeneyedMan],
+      });
+
+      const card = testEngine.getCard(drCalicoGreeneyedMan);
+      expect(card.keywordValues?.resist).toBe(2);
+    });
+
+    it("should lose Resist when damaged", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [drCalicoGreeneyedMan],
+      });
+
+      testEngine.asServer().manualSetDamage(drCalicoGreeneyedMan, 1);
+
+      const card = testEngine.getCard(drCalicoGreeneyedMan);
+      expect(card.keywordValues?.resist ?? 0).toBe(0);
+    });
+  });
+});

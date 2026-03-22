@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jimHawkinsSpaceTravelerI18n } from "./109-jim-hawkins-space-traveler.i18n";
 
 export const jimHawkinsSpaceTraveler: CharacterCard = {
   id: "emY",
@@ -7,71 +8,6 @@ export const jimHawkinsSpaceTraveler: CharacterCard = {
   cardType: "character",
   name: "Jim Hawkins",
   version: "Space Traveler",
-  i18n: {
-    en: {
-      name: "Jim Hawkins",
-      version: "Space Traveler",
-      text: [
-        {
-          title: "THIS IS IT!",
-          description:
-            "When you play this character, you may play a location with cost 4 or less for free.",
-        },
-        {
-          title: "TAKE THE HELM",
-          description: "Whenever you play a location, this character may move there for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Jim Hawkins",
-      version: "Raumfahrer",
-      text: [
-        {
-          title: "DAS IST ES!",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Ort, der 4 oder weniger kostet, kostenlos ausspielen.",
-        },
-        {
-          title: "ANS RUDER STELLEN",
-          description:
-            "Jedes Mal, wenn du einen Ort ausspielst, darfst du diesen Charakter kostenlos zu diesem Ort bewegen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Jim Hawkins",
-      version: "Voyageur de l'espace",
-      text: [
-        {
-          title: "C'EST GAGNÉ!",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez jouer gratuitement un lieu coûtant 4 ou moins.",
-        },
-        {
-          title: "IL FAUT TE METTRE À LA BARRE",
-          description:
-            "Chaque fois que vous jouez un lieu, vous pouvez y déplacer ce personnage gratuitement.",
-        },
-      ],
-    },
-    it: {
-      name: "Jim Hawkins",
-      version: "Viaggiatore Spaziale",
-      text: [
-        {
-          title: "GUARDA QUI!",
-          description:
-            "Quando giochi questo personaggio, puoi giocare gratis un luogo con costo 4 o inferiore.",
-        },
-        {
-          title: "PRENDERE IN MANO IL TIMONE",
-          description:
-            "Ogni volta che giochi un luogo, questo personaggio può spostarsi in quel luogo gratis.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Treasure Planet",
   set: "003",
@@ -98,7 +34,58 @@ export const jimHawkinsSpaceTraveler: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  missingImplementation: true,
-  missingTests: true,
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          cardType: "location",
+          cost: "free",
+          costRestriction: {
+            comparison: "less-or-equal",
+            value: 4,
+          },
+          from: "hand",
+          type: "play-card",
+        },
+        type: "optional",
+      },
+      id: "emY-1",
+      name: "THIS IS IT!",
+      text: "THIS IS IT! When you play this character, you may play a location with cost 4 or less for free.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          character: "SELF",
+          cost: "free",
+          location: {
+            ref: "trigger-subject",
+          },
+          type: "move-to-location",
+        },
+        type: "optional",
+      },
+      id: "emY-2",
+      name: "TAKE THE HELM",
+      text: "TAKE THE HELM Whenever you play a location, this character may move there for free.",
+      trigger: {
+        event: "play",
+        on: {
+          cardType: "location",
+          controller: "you",
+        },
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
+  i18n: jimHawkinsSpaceTravelerI18n,
 };

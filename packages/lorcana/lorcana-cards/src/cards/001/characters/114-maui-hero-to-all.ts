@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mauiHeroToAllI18n } from "./114-maui-hero-to-all.i18n";
 
 export const mauiHeroToAll: CharacterCard = {
   id: "bes",
@@ -7,41 +8,6 @@ export const mauiHeroToAll: CharacterCard = {
   cardType: "character",
   name: "Maui",
   version: "Hero to All",
-  i18n: {
-    en: {
-      name: "Maui",
-      version: "Hero to All",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "Reckless",
-        },
-      ],
-    },
-    de: {
-      name: "Maui",
-      version: "Held von Allen",
-      text: "Rasant Impulsiv",
-    },
-    fr: {
-      name: "MAUI",
-      version: "Idole des Hommes",
-      text: "Charge Combattant",
-    },
-    it: {
-      name: "Maui",
-      version: "Hero to All",
-      text: [
-        {
-          title: "Rush",
-          description:
-            "(This character can challenge the turn they're played.) Reckless (This character can't quest and must challenge each turn if able.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "001",
@@ -52,7 +18,6 @@ export const mauiHeroToAll: CharacterCard = {
   willpower: 5,
   lore: 0,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_f839f8a7cb9a47ae962503f3ea69bec5",
     tcgPlayer: 510158,
@@ -80,4 +45,5 @@ export const mauiHeroToAll: CharacterCard = {
       text: "Reckless",
     },
   ],
+  i18n: mauiHeroToAllI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { pouncingPracticeI18n } from "./176-pouncing-practice.i18n";
 
 export const pouncingPractice: ActionCard = {
   id: "kf3",
@@ -6,24 +7,6 @@ export const pouncingPractice: ActionCard = {
   reprints: ["set8-176"],
   cardType: "action",
   name: "Pouncing Practice",
-  i18n: {
-    en: {
-      name: "Pouncing Practice",
-      text: "Chosen character gets -2 {S} this turn. Chosen character of yours gains Evasive this turn. (They can challenge characters with Evasive.)",
-    },
-    de: {
-      name: "Springen üben",
-      text: "Gib einem Charakter deiner Wahl in diesem Zug -2. Wähle einen deiner Charaktere. Jener erhält in diesem Zug Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-    },
-    fr: {
-      name: "Entraînement au bond",
-      text: "Choisissez un personnage qui subit -2 pour le reste de ce tour. Choisissez l'un de vos personnages qui gagne Insaisissable pour le reste de ce tour. (Il peut défier des personnages avec Insaisissable.)",
-    },
-    it: {
-      name: "Lezione d'Agguato",
-      text: "Un personaggio a tua scelta riceve -2 per questo turno. Un tuo personaggio a tua scelta ottiene Sfuggente per questo turno. (Può sfidare altri personaggi con Sfuggente.)",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Lion King",
   set: "008",
@@ -73,4 +56,5 @@ export const pouncingPractice: ActionCard = {
       type: "action",
     },
   ],
+  i18n: pouncingPracticeI18n,
 };

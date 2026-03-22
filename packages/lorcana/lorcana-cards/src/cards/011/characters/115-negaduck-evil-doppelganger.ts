@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { negaduckEvilDoppelgangerI18n } from "./115-negaduck-evil-doppelganger.i18n";
 
 export const negaduckEvilDoppelganger: CharacterCard = {
   id: "PG5",
@@ -7,24 +8,6 @@ export const negaduckEvilDoppelganger: CharacterCard = {
   cardType: "character",
   name: "Negaduck",
   version: "Evil Doppelganger",
-  i18n: {
-    en: {
-      name: "Negaduck",
-      version: "Evil Doppelganger",
-    },
-    de: {
-      name: "Fiesoduck",
-      version: "Böser Doppelgänger",
-    },
-    fr: {
-      name: "Sinister Mask",
-      version: "Double maléfique",
-    },
-    it: {
-      name: "Negaduck",
-      version: "Sosia Malvagio",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -41,4 +24,5 @@ export const negaduckEvilDoppelganger: CharacterCard = {
     tcgPlayer: 675501,
   },
   classifications: ["Storyborn", "Super", "Villain"],
+  i18n: negaduckEvilDoppelgangerI18n,
 };

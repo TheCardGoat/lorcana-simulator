@@ -1,6 +1,6 @@
 <script lang="ts">
     import * as Dialog from "$lib/design-system/primitives/dialog";
-  import { m } from "$lib/paraglide/messages.js";
+  import { m } from "$lib/i18n/messages.js";
   import type {
     LorcanaCardSnapshot,
     LorcanaPlayerSide,

@@ -3,6 +3,7 @@ import type {
   Condition,
   ConditionComparison,
   ConditionComparisonOperator,
+  ComparisonValue,
   LorcanaCardDefinition,
   TargetAggregateComparisonCondition,
   TargetQueryCondition,
@@ -14,25 +15,36 @@ import type {
 } from "@tcg/lorcana-types";
 import type { LorcanaG, CardPlayedPayload, LorcanaMatchState } from "../types";
 import type { ActionResolutionInput } from "../runtime-moves/resolution/action-effects/types";
-import { getEffectiveLore, getEffectiveStrength, type DerivedStateContext } from "./derived-state";
+import { cardHasName } from "../card-utils";
+import {
+  getEffectiveLore,
+  getEffectiveStrength,
+  getEffectiveWillpower,
+  type DerivedStateContext,
+} from "./derived-state";
+import type { ZoneRuntimeState } from "../core/runtime/types";
 import { normalizeSelectedTargets, resolveTargetQuery } from "../targeting/runtime";
 import { didLastEffectPerform } from "../runtime-moves/resolution/action-effects/event-snapshot-utils";
+import { getCombinedSelectionInput } from "../runtime-moves/resolution/action-effects/selection-state";
 
 export interface ConditionEvaluationContext {
   framework: {
     state: {
-      ctx: DeepReadonly<LorcanaMatchState["ctx"]>;
+      priority: DeepReadonly<LorcanaMatchState["ctx"]["priority"]>;
+      status: DeepReadonly<LorcanaMatchState["ctx"]["status"]>;
+      _zonesPrivate?: DeepReadonly<ZoneRuntimeState["private"]>;
       playerIds: readonly PlayerId[];
       currentPlayer?: PlayerId;
     };
     zones: {
-      getCards: (query: { zone: string; playerId: PlayerId }) => readonly CardInstanceId[];
+      getCards: (query: { zone: string; playerId: PlayerId }) => readonly string[];
+      getCardZone?: (cardId: CardInstanceId) => string | undefined;
     };
   };
   cards: {
     getDefinition: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
     require: (cardId: CardInstanceId) => { meta?: Record<string, unknown> };
-    get?: (cardId: CardInstanceId) => { definition?: LorcanaCardDefinition };
+    get?: (cardId: CardInstanceId) => { definition?: LorcanaCardDefinition } | undefined;
   };
   G: DeepReadonly<LorcanaG>;
   playerId: PlayerId;
@@ -41,6 +53,19 @@ export interface ConditionEvaluationContext {
   // Optional action-specific context
   cardPlayed?: CardPlayedPayload;
   resolutionInput?: ActionResolutionInput;
+}
+
+function buildDerivedStateFromConditionCtx(ctx: ConditionEvaluationContext): DerivedStateContext {
+  return {
+    ctx: {
+      priority: ctx.framework.state.priority,
+      status: ctx.framework.state.status,
+      zones: ctx.framework.state._zonesPrivate
+        ? { private: ctx.framework.state._zonesPrivate }
+        : undefined,
+    },
+    G: ctx.G,
+  };
 }
 
 const DEFAULT_EXISTS_COMPARISON: ConditionComparison = {
@@ -82,20 +107,90 @@ function compareNumbers(
   }
 }
 
+function resolveComparisonValue(value: ComparisonValue, ctx: ConditionEvaluationContext): number {
+  switch (value.type) {
+    case "constant":
+      return value.value;
+    case "lore":
+      return ctx.G.lore[playerIdForScope(value.controller, ctx)] ?? 0;
+    case "cards-in-hand":
+      return countCardsInZoneForScope("hand", value.controller, ctx);
+    case "cards-in-inkwell":
+      return countCardsInZoneForScope("inkwell", value.controller, ctx);
+    case "character-count":
+      return countCardsOfTypeInPlayForScope("character", value.controller, ctx);
+    case "item-count":
+      return countCardsOfTypeInPlayForScope("item", value.controller, ctx);
+    case "damage-on-self":
+      return ctx.sourceCardId ? Number(ctx.cards.require(ctx.sourceCardId).meta?.damage ?? 0) : 0;
+    case "strength-of-self": {
+      if (!ctx.sourceCardId) {
+        return 0;
+      }
+      const derivedState = buildDerivedStateFromConditionCtx(ctx);
+      const definition = ctx.cards.getDefinition(ctx.sourceCardId);
+
+      return getEffectiveStrength(
+        definition,
+        derivedState,
+        ctx.sourceCardId,
+        ctx.cards.getDefinition,
+      );
+    }
+  }
+}
+
+function playerIdForScope(
+  controller: "you" | "opponent",
+  ctx: ConditionEvaluationContext,
+): PlayerId {
+  if (controller === "you") {
+    return ctx.playerId;
+  }
+
+  return (
+    ctx.framework.state.playerIds.find((playerId) => playerId !== ctx.playerId) ?? ctx.playerId
+  );
+}
+
+function countCardsInZoneForScope(
+  zone: string,
+  controller: "you" | "opponent",
+  ctx: ConditionEvaluationContext,
+): number {
+  return ctx.framework.zones.getCards({
+    zone,
+    playerId: playerIdForScope(controller, ctx),
+  }).length;
+}
+
+function countCardsOfTypeInPlayForScope(
+  cardType: "character" | "item" | "location",
+  controller: "you" | "opponent",
+  ctx: ConditionEvaluationContext,
+): number {
+  return countCardsOfTypeInPlay(ctx, playerIdForScope(controller, ctx), cardType);
+}
+
 function getSelectedTargets(ctx: ConditionEvaluationContext): CardInstanceId[] {
-  return normalizeSelectedTargets(ctx.resolutionInput?.targets) ?? [];
+  return ctx.resolutionInput
+    ? (normalizeSelectedTargets(getCombinedSelectionInput(ctx.resolutionInput)) ?? [])
+    : [];
 }
 
 function resolveScopedPlayerIds(
-  scope: "you" | "opponent" | "any" | undefined,
+  scope: "you" | "opponent" | "any" | "active" | undefined,
   controllerId: PlayerId,
   allPlayers: readonly PlayerId[],
+  activePlayerId?: PlayerId,
 ): PlayerId[] {
   switch (scope) {
     case "you":
       return [controllerId];
     case "opponent":
       return allPlayers.filter((playerId) => playerId !== controllerId);
+    case "active":
+      return activePlayerId ? [activePlayerId] : [controllerId];
     case "any":
     default:
       return [...allPlayers];
@@ -138,7 +233,7 @@ function getCardNumericAttribute(
     case "strength": {
       return getEffectiveStrength(
         definition,
-        ctx.framework.state as unknown as DerivedStateContext,
+        buildDerivedStateFromConditionCtx(ctx),
         cardId,
         ctx.cards.getDefinition,
       );
@@ -152,7 +247,7 @@ function getCardNumericAttribute(
     case "lore":
       return getEffectiveLore(
         definition,
-        ctx.framework.state as unknown as DerivedStateContext,
+        buildDerivedStateFromConditionCtx(ctx),
         cardId,
         ctx.cards.getDefinition,
       );
@@ -342,6 +437,19 @@ function evaluateTurnMetricCondition(
       break;
     }
 
+    case "played-cards":
+      value = ctx.G.turnMetadata?.cardsPlayedThisTurn?.length ?? 0;
+      break;
+
+    case "cards-drawn-by-player":
+      value = resolveScopedPlayerCount(
+        ctx.G.turnMetadata?.cardsDrawnThisTurnByPlayer ?? {},
+        condition.playerScope,
+        controllerId,
+        ctx.framework.state.playerIds,
+      );
+      break;
+
     default:
       value = 0;
       break;
@@ -394,7 +502,22 @@ function countCardsOfTypeInPlay(
     ).length;
 }
 
-function countDamagedCharactersInPlay(ctx: ConditionEvaluationContext, playerId: PlayerId): number {
+export interface DamagedCharactersContext {
+  framework: {
+    zones: {
+      getCards: (query: { zone: string; playerId: PlayerId }) => readonly string[];
+    };
+  };
+  cards: {
+    getDefinition: (cardId: CardInstanceId) => { id: string; cardType?: string } | undefined;
+    require: (cardId: CardInstanceId) => { meta?: Record<string, unknown> };
+  };
+}
+
+export function countDamagedCharactersInPlay(
+  ctx: DamagedCharactersContext,
+  playerId: PlayerId,
+): number {
   return ctx.framework.zones.getCards({ zone: "play", playerId }).filter((cardId) => {
     if (ctx.cards.getDefinition(cardId as CardInstanceId)?.cardType !== "character") {
       return false;
@@ -422,6 +545,7 @@ function evaluateLegacyCardTypeCountCondition(
     condition.controller,
     ctx.playerId,
     ctx.framework.state.playerIds,
+    ctx.framework.state.currentPlayer,
   );
   const expectedType = condition.type === "has-item-count" ? "item" : "location";
   const value = playerIds.reduce(
@@ -440,6 +564,7 @@ function evaluateResourceCountCondition(
     condition.controller,
     ctx.playerId,
     ctx.framework.state.playerIds,
+    ctx.framework.state.currentPlayer,
   );
 
   const value = (() => {
@@ -543,7 +668,7 @@ function evaluateStaticTurnCondition(
   condition: Extract<Condition, { type: "turn" | "during-turn" | "your-turn" }>,
   ctx: ConditionEvaluationContext,
 ): boolean {
-  const activePlayer = ctx.framework.state.currentPlayer ?? ctx.framework.state.ctx.priority.holder;
+  const activePlayer = ctx.framework.state.currentPlayer ?? ctx.framework.state.priority.holder;
   if (!activePlayer) return false;
 
   switch (condition.type) {
@@ -594,7 +719,17 @@ export function evaluateCondition(
       );
 
     case "used-shift":
-      return ctx.cardPlayed?.usedShift === true;
+      return (
+        ctx.cardPlayed?.usedShift === true ||
+        ctx.resolutionInput?.eventSnapshot?.playedCardUsedShift === true
+      );
+
+    case "comparison":
+      return compareNumbers(
+        resolveComparisonValue(condition.left, ctx),
+        condition.comparison,
+        resolveComparisonValue(condition.right, ctx),
+      );
 
     case "resource-count":
       return evaluateResourceCountCondition(condition, ctx);
@@ -602,6 +737,17 @@ export function evaluateCondition(
     case "has-item-count":
     case "has-location-count":
       return evaluateLegacyCardTypeCountCondition(condition, ctx);
+
+    case "has-location-in-play": {
+      const controller = condition.controller ?? "you";
+      const playerIds = resolveScopedPlayerIds(
+        controller,
+        ctx.playerId,
+        ctx.framework.state.playerIds,
+        ctx.framework.state.currentPlayer,
+      );
+      return playerIds.some((playerId) => countCardsOfTypeInPlay(ctx, playerId, "location") > 0);
+    }
 
     case "has-character-count": {
       // Map to target query to avoid duplication
@@ -614,7 +760,10 @@ export function evaluateCondition(
           owner: condition.controller,
           filters: [
             condition.classification
-              ? { type: "classification", classification: condition.classification }
+              ? {
+                  type: "classification",
+                  classification: condition.classification,
+                }
               : undefined,
             condition.keyword ? { type: "keyword", keyword: condition.keyword } : undefined,
           ].filter((f) => !!f) as any,
@@ -625,6 +774,41 @@ export function evaluateCondition(
             : "gte") as ConditionComparisonOperator,
           value: condition.count ?? 0,
         },
+      };
+      return evaluateTargetQueryCondition(query, ctx);
+    }
+
+    case "has-character-with-classification": {
+      const query: TargetQueryCondition = {
+        type: "target-query",
+        query: {
+          selector: "all",
+          zones: ["play"],
+          cardType: "character",
+          owner: condition.controller,
+          filters: [
+            {
+              type: "classification",
+              classification: condition.classification,
+            },
+          ] as any,
+        },
+        comparison: { operator: "gte", value: 1 },
+      };
+      return evaluateTargetQueryCondition(query, ctx);
+    }
+
+    case "has-character-with-keyword": {
+      const query: TargetQueryCondition = {
+        type: "target-query",
+        query: {
+          selector: "all",
+          zones: ["play"],
+          cardType: "character",
+          owner: condition.controller,
+          filters: [{ type: "has-keyword", keyword: condition.keyword }] as any,
+        },
+        comparison: { operator: "gte", value: 1 },
       };
       return evaluateTargetQueryCondition(query, ctx);
     }
@@ -644,8 +828,41 @@ export function evaluateCondition(
       return evaluateTargetQueryCondition(query, ctx);
     }
 
+    case "has-another-character": {
+      // Check if the controller has another character in play besides self (sourceCardId),
+      // optionally filtered by classification or name.
+      const playCards = ctx.framework.zones.getCards({ zone: "play", playerId: ctx.playerId });
+      return playCards.some((cardId) => {
+        // Exclude self
+        if (cardId === ctx.sourceCardId) {
+          return false;
+        }
+        const definition = ctx.cards.getDefinition(cardId as CardInstanceId);
+        if (!definition || definition.cardType !== "character") {
+          return false;
+        }
+        // Optional classification filter
+        if (condition.classification) {
+          const classifications = (definition as { classifications?: string[] }).classifications;
+          if (!Array.isArray(classifications)) {
+            return false;
+          }
+          if (!classifications.includes(condition.classification)) {
+            return false;
+          }
+        }
+        // Optional name filter
+        if (condition.name) {
+          if (!cardHasName(definition, condition.name)) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
     case "first-turn-non-otp": {
-      const otp = ctx.framework.state.ctx.status.otp as PlayerId | undefined;
+      const otp = ctx.framework.state.status.otp as PlayerId | undefined;
       if (!otp) return false;
       if (otp === ctx.playerId) return false;
       const turnsCompleted = ctx.G.turnsCompletedByPlayer?.[ctx.playerId] ?? 0;
@@ -668,7 +885,13 @@ export function evaluateCondition(
       const chosenName = chosenCardId ? ctx.cards.getDefinition(chosenCardId)?.name : undefined;
 
       return (
-        typeof revealedName === "string" && revealedName.length > 0 && revealedName === chosenName
+        typeof revealedName === "string" &&
+        revealedName.length > 0 &&
+        typeof chosenName === "string" &&
+        chosenName.length > 0 &&
+        revealedCardId !== undefined &&
+        chosenCardId !== undefined &&
+        cardHasName(ctx.cards.getDefinition(revealedCardId)!, chosenName)
       );
     }
 
@@ -676,23 +899,20 @@ export function evaluateCondition(
       const revealedCardId = ctx.resolutionInput?.eventSnapshot?.revealedCardIds?.[0] as
         | CardInstanceId
         | undefined;
-      const revealedName = revealedCardId
-        ? ctx.cards.getDefinition(revealedCardId)?.name
-        : undefined;
       const namedCardName = ctx.resolutionInput?.eventSnapshot?.namedCardName?.trim();
 
       return (
-        typeof revealedName === "string" &&
-        revealedName.length > 0 &&
         typeof namedCardName === "string" &&
         namedCardName.length > 0 &&
-        revealedName === namedCardName
+        revealedCardId !== undefined &&
+        cardHasName(ctx.cards.getDefinition(revealedCardId)!, namedCardName)
       );
     }
 
+    case "is-exerted":
     case "exerted": {
       const selectedTargets = normalizeSelectedTargets(ctx.resolutionInput?.targets) ?? [];
-      const target = condition.target ?? "SELF";
+      const target = "target" in condition && condition.target ? condition.target : "SELF";
       const targetId = target === "SELF" ? ctx.sourceCardId : selectedTargets[0];
       if (!targetId) {
         return false;
@@ -702,6 +922,19 @@ export function evaluateCondition(
 
     case "if-you-do":
       return didLastEffectPerform(ctx.resolutionInput?.eventSnapshot);
+
+    case "returned-card-is-named": {
+      const returnedCardId = ctx.resolutionInput?.eventSnapshot?.lastReturnedFromDiscardCardId as
+        | CardInstanceId
+        | undefined;
+      if (!returnedCardId) {
+        return false;
+      }
+      const returnedCardDef = ctx.cards.getDefinition(returnedCardId);
+      return typeof condition.name === "string" && returnedCardDef
+        ? cardHasName(returnedCardDef, condition.name)
+        : false;
+    }
 
     case "in-challenge":
       return evaluateInChallengeCondition(condition, ctx);
@@ -714,9 +947,169 @@ export function evaluateCondition(
     case "your-turn":
       return evaluateStaticTurnCondition(condition, ctx);
 
+    case "no-damage":
+    case "has-no-damage": {
+      const targetId = ctx.sourceCardId;
+      if (!targetId) {
+        return false;
+      }
+      const damage = Number(ctx.cards.require(targetId).meta?.damage ?? 0);
+      return damage === 0;
+    }
+
+    case "self-has-damage": {
+      const targetId = ctx.sourceCardId;
+      if (!targetId) {
+        return false;
+      }
+      const damage = Number(ctx.cards.require(targetId).meta?.damage ?? 0);
+      return damage > 0;
+    }
+
+    case "opponent-has-damaged-character": {
+      const opponentIds = ctx.framework.state.playerIds.filter(
+        (playerId) => playerId !== ctx.playerId,
+      );
+      return opponentIds.some((playerId) => countDamagedCharactersInPlay(ctx, playerId) > 0);
+    }
+
+    case "has-card-under": {
+      const targetId = ctx.sourceCardId;
+      if (!targetId) {
+        return false;
+      }
+
+      const cardsUnder = ctx.cards.require(targetId).meta?.cardsUnder;
+      return Array.isArray(cardsUnder) && cardsUnder.length > 0;
+    }
+
+    case "trigger-subject-had-card-under": {
+      const snapshotCount = ctx.resolutionInput?.eventSnapshot?.cardsUnderCountBeforeBanish;
+      return typeof snapshotCount === "number" && snapshotCount > 0;
+    }
+
+    case "put-card-under-self-this-turn": {
+      const targetId = ctx.sourceCardId;
+      if (!targetId) {
+        return false;
+      }
+      const cardsUnderThisTurn = ctx.G.turnMetadata?.cardsUnderThisTurn;
+      if (!cardsUnderThisTurn) {
+        return false;
+      }
+      const underCards = cardsUnderThisTurn[targetId];
+      return Array.isArray(underCards) && underCards.length > 0;
+    }
+
+    case "stat-threshold": {
+      const targetId =
+        condition.target === "SELF" || !condition.target ? ctx.sourceCardId : undefined;
+      if (!targetId) {
+        return false;
+      }
+      const derivedState = buildDerivedStateFromConditionCtx(ctx);
+      const definition = ctx.cards.getDefinition(targetId);
+      let statValue: number;
+      switch (condition.stat) {
+        case "strength":
+          statValue = getEffectiveStrength(
+            definition,
+            derivedState,
+            targetId,
+            ctx.cards.getDefinition,
+          );
+          break;
+        case "lore":
+          statValue = getEffectiveLore(definition, derivedState, targetId, ctx.cards.getDefinition);
+          break;
+        case "willpower":
+          statValue = getEffectiveWillpower(
+            definition,
+            derivedState,
+            targetId,
+            ctx.cards.getDefinition,
+          );
+          break;
+        default:
+          return false;
+      }
+      return compareNumbers(statValue, condition.comparison, condition.value);
+    }
+
+    case "at-location": {
+      const targetId = ctx.sourceCardId;
+      if (!targetId) {
+        return false;
+      }
+      const meta = ctx.cards.require(targetId).meta;
+      const atLocationId = meta?.atLocationId;
+      if (!atLocationId) {
+        return false;
+      }
+      // Verify the location is still in play
+      const locationZone = ctx.framework.zones.getCardZone?.(atLocationId as CardInstanceId);
+      if (!locationZone || (locationZone !== "play" && !locationZone.startsWith("play:"))) {
+        return false;
+      }
+      // If a specific location name is required, check it
+      if (condition.locationName) {
+        const locationDef = ctx.cards.getDefinition(atLocationId as CardInstanceId);
+        return locationDef?.name === condition.locationName;
+      }
+      return true;
+    }
+
+    case "inkwell-count": {
+      const inkwellCount = countCardsInZoneForScope("inkwell", condition.controller ?? "you", ctx);
+      const threshold = condition.count ?? condition.minimum ?? 0;
+      const comparison = condition.comparison ?? "greater-or-equal";
+      return compareNumbers(inkwellCount, comparison, threshold);
+    }
+
+    case "discarded-card-has-classification": {
+      const discardedCardIds =
+        (ctx.resolutionInput?.eventSnapshot?.discardedCardIds as
+          | readonly CardInstanceId[]
+          | undefined) ?? [];
+      if (discardedCardIds.length === 0) {
+        return false;
+      }
+      const expectedClassification = condition.classification.toLowerCase();
+      const expectedCardType = condition.cardType ?? "character";
+      return discardedCardIds.some((cardId) => {
+        const definition = ctx.cards.getDefinition(cardId as CardInstanceId);
+        if (!definition) {
+          return false;
+        }
+        if (definition.cardType !== expectedCardType) {
+          return false;
+        }
+        const classifications = (definition as { classifications?: unknown }).classifications;
+        if (!Array.isArray(classifications)) {
+          return false;
+        }
+        return (classifications as readonly string[]).some(
+          (c) => c.toLowerCase() === expectedClassification,
+        );
+      });
+    }
+
     case "if":
       // Unsupported
       return false;
+
+    case "returned-card-is-princess": {
+      const selectedTargets = getSelectedTargets(ctx);
+      return selectedTargets.some((cardId) => {
+        const definition = ctx.cards.getDefinition(cardId as CardInstanceId);
+        return (
+          Array.isArray(definition?.classifications) &&
+          (definition.classifications as readonly string[]).some(
+            (c) => c.toLowerCase() === "princess",
+          )
+        );
+      });
+    }
 
     default:
       return false;

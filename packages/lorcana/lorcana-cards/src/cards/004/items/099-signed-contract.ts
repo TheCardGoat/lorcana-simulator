@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { signedContractI18n } from "./099-signed-contract.i18n";
 
 export const signedContract: ItemCard = {
   id: "hYT",
@@ -6,46 +7,6 @@ export const signedContract: ItemCard = {
   reprints: ["set4-099", "set9-101"],
   cardType: "item",
   name: "Signed Contract",
-  i18n: {
-    en: {
-      name: "Signed Contract",
-      text: [
-        {
-          title: "FINE PRINT",
-          description: "Whenever an opponent plays a song, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Unterschriebener Vertrag",
-      text: [
-        {
-          title: "KLEINGEDRUCKTES",
-          description:
-            "Jedes Mal, wenn eine gegnerische Person ein Lied spielt, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Contrat signé",
-      text: [
-        {
-          title: "PETITS CARACTÈRES",
-          description:
-            "Chaque fois qu'un adversaire joue une chanson, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Contratto Firmato",
-      text: [
-        {
-          title: "CLAUSOLE IN PICCOLO",
-          description: "Ogni volta che un avversario gioca una canzone, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Little Mermaid",
   set: "004",
@@ -88,4 +49,5 @@ export const signedContract: ItemCard = {
       text: "FINE PRINT Whenever an opponent plays a song, you may draw a card.",
     },
   ],
+  i18n: signedContractI18n,
 };

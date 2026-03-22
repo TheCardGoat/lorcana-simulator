@@ -1,49 +1,109 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { pawpsicle } from "@lorcanito/lorcana-engine/cards/002/items/169-pawpsicle";
-// Import { deweyLovableShowoff } from "@lorcanito/lorcana-engine/cards/008";
-// Import { aliceAccidentallyAdrift } from "@lorcanito/lorcana-engine/cards/009/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Alice - Accidentally Adrift", () => {
-//   It("WASHED AWAY When you play this character, you may put chosen item into its player's inkwell facedown and exerted.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: aliceAccidentallyAdrift.cost,
-//       Hand: [aliceAccidentallyAdrift],
-//       Play: [pawpsicle],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(aliceAccidentallyAdrift);
-//     Const target = testEngine.getCardModel(pawpsicle);
-//
-//     Await testEngine.playCard(cardUnderTest);
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//     Expect(target.zone).toBe("inkwell");
-//   });
-//
-//   It("MAKING WAVES Whenever this character quests, chosen opposing character gets -2 {S} this turn.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [aliceAccidentallyAdrift],
-//       },
-//       {
-//         Play: [deweyLovableShowoff],
-//       },
-//     );
-//
-//     Const cardUnderTest = testEngine.getCardModel(aliceAccidentallyAdrift);
-//     Const target = testEngine.getCardModel(deweyLovableShowoff);
-//
-//     Await testEngine.questCard(cardUnderTest);
-//     Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//     Expect(target.strength).toEqual(deweyLovableShowoff.strength - 2);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, PLAYER_ONE, PLAYER_TWO } from "@tcg/lorcana-engine/testing";
+import { simbaProtectiveCub } from "../../001";
+import { dinglehopper } from "../../001";
+import { aliceAccidentallyAdrift } from "./141-alice-accidentally-adrift";
+
+describe("Alice - Accidentally Adrift", () => {
+  describe("WASHED AWAY", () => {
+    it("when played, optionally puts chosen item into its player's inkwell facedown and exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [aliceAccidentallyAdrift],
+          inkwell: aliceAccidentallyAdrift.cost,
+          play: [dinglehopper],
+        },
+        {
+          play: [simbaProtectiveCub],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(aliceAccidentallyAdrift)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(aliceAccidentallyAdrift)).toBe("play");
+
+      // Expect optional bag for WASHED AWAY
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Accept the optional and target the item in one call
+      const itemId = testEngine.findCardInstanceId(dinglehopper, "play", PLAYER_ONE);
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({ targets: [itemId] }),
+      ).toBeSuccessfulCommand();
+
+      // Item should now be in inkwell
+      expect(testEngine.asPlayerOne().getCardZone(dinglehopper)).toBe("inkwell");
+    });
+
+    it("can decline the optional trigger", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [aliceAccidentallyAdrift],
+          inkwell: aliceAccidentallyAdrift.cost,
+          play: [dinglehopper],
+        },
+        {
+          play: [simbaProtectiveCub],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(aliceAccidentallyAdrift)).toBeSuccessfulCommand();
+
+      // Decline the optional trigger
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // Item should stay in play
+      expect(testEngine.asPlayerOne().getCardZone(dinglehopper)).toBe("play");
+    });
+  });
+
+  describe("MAKING WAVES", () => {
+    it("when questing, chosen opposing character gets -2 strength this turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [aliceAccidentallyAdrift],
+        },
+        {
+          play: [simbaProtectiveCub],
+        },
+      );
+      const targetId = testEngine.findCardInstanceId(simbaProtectiveCub, "play", PLAYER_TWO);
+
+      expect(testEngine.asPlayerOne().quest(aliceAccidentallyAdrift)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({ targets: [targetId] }),
+      ).toBeSuccessfulCommand();
+
+      // simbaProtectiveCub has 2 strength, should be 0 after -2
+      expect(testEngine.asPlayerTwo().getCardStrength(simbaProtectiveCub)).toBe(0);
+    });
+
+    it("-2 strength expires at end of turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          deck: 2,
+          play: [aliceAccidentallyAdrift],
+        },
+        {
+          deck: 2,
+          play: [simbaProtectiveCub],
+        },
+      );
+      const targetId = testEngine.findCardInstanceId(simbaProtectiveCub, "play", PLAYER_TWO);
+
+      expect(testEngine.asPlayerOne().quest(aliceAccidentallyAdrift)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({ targets: [targetId] }),
+      ).toBeSuccessfulCommand();
+
+      // Effect active this turn
+      expect(testEngine.asPlayerTwo().getCardStrength(simbaProtectiveCub)).toBe(0);
+
+      // Pass turn - effect should expire
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardStrength(simbaProtectiveCub)).toBe(2);
+    });
+  });
+});

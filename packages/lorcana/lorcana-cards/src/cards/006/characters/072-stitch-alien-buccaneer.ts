@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stitchAlienBuccaneerI18n } from "./072-stitch-alien-buccaneer.i18n";
 
 export const stitchAlienBuccaneer: CharacterCard = {
   id: "z1V",
@@ -7,37 +8,6 @@ export const stitchAlienBuccaneer: CharacterCard = {
   cardType: "character",
   name: "Stitch",
   version: "Alien Buccaneer",
-  i18n: {
-    en: {
-      name: "Stitch",
-      version: "Alien Buccaneer",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "READY FOR ACTION",
-          description:
-            "When you play this character, if you used Shift to play him, you may put an action card from your discard on the top of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Stitch",
-      version: "Alien-Seeräuber",
-      text: "Gestaltwandel 3 BEREIT FÜR ACTION Wenn du diesen Charakter ausspielst, falls du Gestaltwandel benutzt hast, um diesen Charakter auszuspielen, darfst du 1 Aktionskarte aus deinem Ablagestapel wählen und als oberste Karte auf dein Deck legen.",
-    },
-    fr: {
-      name: "Stitch",
-      version: "Boucanier alien",
-      text: "Alter 3 PARÉ POUR L'ACTION Si vous jouez ce personnage en utilisant sa capacité Alter, vous pouvez placer une carte Action de votre défausse sur votre pioche.",
-    },
-    it: {
-      name: "Stitch",
-      version: "Bucaniere Alieno",
-      text: "Trasformazione 3 PRONTO ALL'AZIONE Quando giochi questo personaggio, se hai usato Trasformazione per giocarlo, puoi mettere in cima al tuo mazzo una carta azione dai tuoi scarti.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lilo and Stitch",
   set: "006",
@@ -74,9 +44,19 @@ export const stitchAlienBuccaneer: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        type: "used-shift",
+      },
       effect: {
-        from: "discard",
-        type: "play-card",
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "return-from-discard",
+          cardType: "action",
+          destination: "top-of-deck",
+          target: "CONTROLLER",
+          count: 1,
+        },
       },
       id: "19n-2",
       name: "READY FOR ACTION",
@@ -89,4 +69,5 @@ export const stitchAlienBuccaneer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: stitchAlienBuccaneerI18n,
 };

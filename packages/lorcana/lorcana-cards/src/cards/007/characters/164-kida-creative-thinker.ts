@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kidaCreativeThinkerI18n } from "./164-kida-creative-thinker.i18n";
 
 export const kidaCreativeThinker: CharacterCard = {
   id: "F39",
@@ -7,37 +8,6 @@ export const kidaCreativeThinker: CharacterCard = {
   cardType: "character",
   name: "Kida",
   version: "Creative Thinker",
-  i18n: {
-    en: {
-      name: "Kida",
-      version: "Creative Thinker",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "KEY TO THE PUZZLE",
-          description:
-            "{E} — Look at the top 2 cards of your deck. Put one into your ink supply, face down and exerted, and the other on top of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Kida",
-      version: "Kreative Denkerin",
-      text: "Behütet DER SCHLÜSSEL ZUM RÄTSEL — Schaue dir die obersten 2 Karten deines Decks an. Lege eine davon verdeckt und erschöpft in deinen Tintenvorrat und die andere zurück auf dein Deck.",
-    },
-    fr: {
-      name: "Kida",
-      version: "Penseuse créative",
-      text: "Hors d'atteinte CLÉ DE L'ÉNIGME — Regardez les 2 premières cartes de votre pioche. Placez-en une dans votre réserve d'encre, face cachée et épuisée, et l'autre sur votre pioche.",
-    },
-    it: {
-      name: "Kida",
-      version: "Pensatrice Creativa",
-      text: "Protetto CHIAVE DELL'ENIGMA — Guarda le prime 2 carte del tuo mazzo. Aggiungine una al tuo calamaio, a faccia in giù e impegnata, e metti l'altra in cima al tuo mazzo.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Atlantis",
   set: "007",
@@ -71,21 +41,31 @@ export const kidaCreativeThinker: CharacterCard = {
       type: "keyword",
     },
     {
+      cost: {
+        exert: true,
+      },
       effect: {
+        type: "scry",
         amount: 2,
         destinations: [
           {
-            ordering: "player-choice",
+            zone: "inkwell",
+            min: 1,
+            max: 1,
+            exerted: true,
+            facedown: true,
+          },
+          {
+            zone: "deck-top",
             remainder: true,
-            zone: "deck-bottom",
           },
         ],
-        target: "CONTROLLER",
-        type: "scry",
       },
       id: "13v-2",
+      name: "KEY TO THE PUZZLE",
       text: "KEY TO THE PUZZLE {E} – Look at the top 2 cards of your deck. Put one into your ink supply, face down and exerted, and the other on top of your deck.",
-      type: "action",
+      type: "activated",
     },
   ],
+  i18n: kidaCreativeThinkerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jetsamUrsulasSpyI18n } from "./046-jetsam-ursulas-spy.i18n";
 
 export const jetsamUrsulasSpy: CharacterCard = {
   id: "0Bx",
@@ -7,34 +8,6 @@ export const jetsamUrsulasSpy: CharacterCard = {
   cardType: "character",
   name: "Jetsam",
   version: "Ursula’s Spy",
-  i18n: {
-    en: {
-      name: "Jetsam",
-      version: "Ursula’s Spy",
-      text: "Evasive SINISTER SLITHER Your characters named Flotsam gain Evasive.",
-    },
-    de: {
-      name: "Meerschaum",
-      version: "Ursulas Spion",
-      text: "Wendig FIES UND GLITSCHIG Deine Abschaum-Charaktere erhalten Wendig.",
-    },
-    fr: {
-      name: "JETSAM",
-      version: "Espion d'Ursula",
-      text: "Insaisissable SINISTRE ONDULATION Vos personnages Flotsam gagnent Insaisissable.",
-    },
-    it: {
-      name: "Jetsam",
-      version: "Ursula’s Spy",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) SINISTER SLITHER Your characters named Flotsam gain Evasive.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Little Mermaid",
   set: "001",
@@ -45,12 +18,19 @@ export const jetsamUrsulasSpy: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_3725a62bd3aa40a086ad041a84a910d3",
     tcgPlayer: 503317,
   },
-  text: "Evasive SINISTER SLITHER Your characters named Flotsam gain Evasive.",
+  text: [
+    {
+      title: "Evasive",
+    },
+    {
+      title: "SINISTER SLITHER",
+      description: "Your characters named Flotsam gain Evasive.",
+    },
+  ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
@@ -61,9 +41,20 @@ export const jetsamUrsulasSpy: CharacterCard = {
     },
     {
       effect: {
-        duration: "this-turn",
         keyword: "Evasive",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-name",
+              name: "Flotsam",
+            },
+          ],
+        },
         type: "gain-keyword",
       },
       id: "cdv-2",
@@ -72,4 +63,5 @@ export const jetsamUrsulasSpy: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: jetsamUrsulasSpyI18n,
 };

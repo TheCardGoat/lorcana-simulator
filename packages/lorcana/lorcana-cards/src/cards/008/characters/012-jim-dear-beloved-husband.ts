@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jimDearBelovedHusbandI18n } from "./012-jim-dear-beloved-husband.i18n";
 
 export const jimDearBelovedHusband: CharacterCard = {
   id: "3Cr",
@@ -7,34 +8,6 @@ export const jimDearBelovedHusband: CharacterCard = {
   cardType: "character",
   name: "Jim Dear",
   version: "Beloved Husband",
-  i18n: {
-    en: {
-      name: "Jim Dear",
-      version: "Beloved Husband",
-      text: "Bodyguard",
-    },
-    de: {
-      name: "Jim",
-      version: "Geliebter Ehemann",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "Jim Chéri",
-      version: "Époux bien-aimé",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "Gianni Caro",
-      version: "Marito Adorato",
-      text: "Guardiano",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lady and the Tramp",
   set: "008",
@@ -59,4 +32,5 @@ export const jimDearBelovedHusband: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: jimDearBelovedHusbandI18n,
 };

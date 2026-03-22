@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { clarabelleClumsyGuestI18n } from "./086-clarabelle-clumsy-guest.i18n";
 
 export const clarabelleClumsyGuest: CharacterCard = {
   id: "EZO",
@@ -7,51 +8,6 @@ export const clarabelleClumsyGuest: CharacterCard = {
   cardType: "character",
   name: "Clarabelle",
   version: "Clumsy Guest",
-  i18n: {
-    en: {
-      name: "Clarabelle",
-      version: "Clumsy Guest",
-      text: [
-        {
-          title: "BUTTERFINGERS",
-          description: "When you play this character, you may pay 2 {I} to banish chosen item.",
-        },
-      ],
-    },
-    de: {
-      name: "Klarabella",
-      version: "Tollpatschiger Gast",
-      text: [
-        {
-          title: "BUTTERFINGER",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du 2 bezahlen, um einen Gegenstand deiner Wahl zu verbannen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Clarabelle",
-      version: "Invitée maladroite",
-      text: [
-        {
-          title: "DEUX MAINS GAUCHES",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez payer 2 pour choisir un objet et le bannir.",
-        },
-      ],
-    },
-    it: {
-      name: "Clarabella",
-      version: "Ospite Pasticciona",
-      text: [
-        {
-          title: "MANI DI PASTA FROLLA",
-          description:
-            "Quando giochi questo personaggio, puoi pagare 2 per esiliare un oggetto a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "005",
   cardNumber: 86,
@@ -72,5 +28,38 @@ export const clarabelleClumsyGuest: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          type: "pay-cost",
+          cost: {
+            ink: 2,
+          },
+          effect: {
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["item"],
+            },
+            type: "banish",
+          },
+        },
+        type: "optional",
+      },
+      id: "EZO-1",
+      name: "BUTTERFINGERS",
+      text: "BUTTERFINGERS When you play this character, you may pay 2 {I} to banish chosen item.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
+  ],
+  i18n: clarabelleClumsyGuestI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { razoulPalaceGuardI18n } from "./188-razoul-palace-guard.i18n";
 
 export const razoulPalaceGuard: CharacterCard = {
   id: "Lj2",
@@ -7,48 +8,6 @@ export const razoulPalaceGuard: CharacterCard = {
   cardType: "character",
   name: "Razoul",
   version: "Palace Guard",
-  i18n: {
-    en: {
-      name: "Razoul",
-      version: "Palace Guard",
-      text: [
-        {
-          title: "LOOKY HERE",
-          description: "While this character has no damage, he gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Rasul",
-      version: "Palastwache",
-      text: [
-        {
-          title: "SEHT EUCH DAS AN",
-          description: "Solange dieser Charakter unbeschädigt ist, erhält er +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Razoul",
-      version: "Garde du palais",
-      text: [
-        {
-          title: "REGARDEZ",
-          description: "Tant que ce personnage n'a aucun jeton Dommage sur lui, il gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Razoul",
-      version: "Guardia di Palazzo",
-      text: [
-        {
-          title: "GUARDATE UN PO'",
-          description: "Mentre questo personaggio non ha danno, riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Aladdin",
   set: "003",
@@ -70,7 +29,6 @@ export const razoulPalaceGuard: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Captain"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -84,4 +42,5 @@ export const razoulPalaceGuard: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: razoulPalaceGuardI18n,
 };

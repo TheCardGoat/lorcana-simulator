@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { naniProtectiveSisterI18n } from "./017-nani-protective-sister.i18n";
 
 export const naniProtectiveSister: CharacterCard = {
   id: "UJ6",
@@ -7,34 +8,6 @@ export const naniProtectiveSister: CharacterCard = {
   cardType: "character",
   name: "Nani",
   version: "Protective Sister",
-  i18n: {
-    en: {
-      name: "Nani",
-      version: "Protective Sister",
-      text: "Bodyguard",
-    },
-    de: {
-      name: "Nani",
-      version: "Beschützende Schwester",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "Nani",
-      version: "Sœur protectrice",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il vous défie, un personnage adverse doit, si possible, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "Nani",
-      version: "Sorella Protettiva",
-      text: "Guardiano",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "009",
@@ -59,4 +32,5 @@ export const naniProtectiveSister: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: naniProtectiveSisterI18n,
 };

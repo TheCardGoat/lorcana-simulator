@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { monstroWhaleOfAWhaleI18n } from "./052-monstro-whale-of-a-whale.i18n";
 
 export const monstroWhaleOfAWhale: CharacterCard = {
   id: "Adw",
@@ -7,24 +8,6 @@ export const monstroWhaleOfAWhale: CharacterCard = {
   cardType: "character",
   name: "Monstro",
   version: "Whale of a Whale",
-  i18n: {
-    en: {
-      name: "Monstro",
-      version: "Whale of a Whale",
-    },
-    de: {
-      name: "Monstro",
-      version: "Wal aller Wale",
-    },
-    fr: {
-      name: "Monstro",
-      version: "Baleine formidable",
-    },
-    it: {
-      name: "Balena",
-      version: "Grande Come una Casa",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Pinocchio",
   set: "005",
@@ -41,4 +24,5 @@ export const monstroWhaleOfAWhale: CharacterCard = {
     tcgPlayer: 559512,
   },
   classifications: ["Storyborn"],
+  i18n: monstroWhaleOfAWhaleI18n,
 };

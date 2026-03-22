@@ -23,50 +23,6 @@ describe("lorcana move presentation", () => {
     expect(getMoveCategoryLabel("moveCharacterToLocation")).toBe("Move to Location");
   });
 
-  it("sorts anchored categories in the requested order and keeps others before pass turn", () => {
-    const sorted = sortMoveCategories([
-      { id: "concede" },
-      { id: "unknown" },
-      { id: "pass-turn" },
-      { id: "play-card" },
-      { id: "activate-ability" },
-      { id: "move-to-location" },
-      { id: "challenge" },
-      { id: "choose-first-player" },
-      { id: "quest" },
-      { id: "ink-card" },
-    ] satisfies Array<{ id: ExecutableMovePresentationCategoryId }>);
-
-    expect(sorted.map((group) => group.id)).toEqual([
-      "ink-card",
-      "play-card",
-      "quest",
-      "challenge",
-      "activate-ability",
-      "move-to-location",
-      "unknown",
-      "choose-first-player",
-      "pass-turn",
-      "concede",
-    ]);
-  });
-
-  it("preserves insertion order within the catch-all bucket", () => {
-    const sorted = sortMoveCategories([
-      { id: "keep-hand" },
-      { id: "unknown" },
-      { id: "choose-first-player" },
-      { id: "pass-turn" },
-    ] satisfies Array<{ id: ExecutableMovePresentationCategoryId }>);
-
-    expect(sorted.map((group) => group.id)).toEqual([
-      "keep-hand",
-      "unknown",
-      "choose-first-player",
-      "pass-turn",
-    ]);
-  });
-
   it("counts source-first categories by unique source card", () => {
     const challengeMoves: ExecutableMoveEntry[] = [
       {

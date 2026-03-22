@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { cutToTheChaseI18n } from "./129-cut-to-the-chase.i18n";
 
 export const cutToTheChase: ActionCard = {
   id: "VLl",
@@ -6,24 +7,6 @@ export const cutToTheChase: ActionCard = {
   reprints: ["set1-129"],
   cardType: "action",
   name: "Cut to the Chase",
-  i18n: {
-    en: {
-      name: "Cut to the Chase",
-      text: "Chosen character gains Rush this turn. (They can challenge the turn they're played.)",
-    },
-    de: {
-      name: "Mit schnellen Schnitten",
-      text: "Ein Charakter deiner Wahl erhält in diesem Zug Rasant. (Der Charakter kann im selben Zug herausfordern, in dem er ausgespielt wird.)",
-    },
-    fr: {
-      name: "DROIT AU BUT",
-      text: "Choisissez un personnage, il gagne Charge pour le reste de ce tour. (Il peut défier le tour où il est joué.)",
-    },
-    it: {
-      name: "Cut to the Chase",
-      text: "Chosen character gains Rush this turn. (They can challenge the turn they're played.)",
-    },
-  },
   inkType: ["ruby"],
   set: "001",
   cardNumber: 129,
@@ -46,4 +29,5 @@ export const cutToTheChase: ActionCard = {
       },
     },
   ],
+  i18n: cutToTheChaseI18n,
 };

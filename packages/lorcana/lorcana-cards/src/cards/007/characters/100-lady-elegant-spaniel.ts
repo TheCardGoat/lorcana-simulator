@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ladyElegantSpanielI18n } from "./100-lady-elegant-spaniel.i18n";
 
 export const ladyElegantSpaniel: CharacterCard = {
   id: "8jF",
@@ -7,52 +8,6 @@ export const ladyElegantSpaniel: CharacterCard = {
   cardType: "character",
   name: "Lady",
   version: "Elegant Spaniel",
-  i18n: {
-    en: {
-      name: "Lady",
-      version: "Elegant Spaniel",
-      text: [
-        {
-          title: "A DOG'S LIFE",
-          description:
-            "While you have a character named Tramp in play, this character gets +1 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Susi",
-      version: "Elegante Spaniel",
-      text: [
-        {
-          title: "EIN HUNDELEBEN",
-          description:
-            "Solange du mindestens einen Strolch-Charakter im Spiel hast, erhält dieser Charakter +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Lady",
-      version: "Épagneule élégante",
-      text: [
-        {
-          title: "LES DROITS DU CITOYEN CHIEN",
-          description:
-            "Tant que vous avez un personnage Clochard en jeu, ce personnage-ci gagne +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Lilli",
-      version: "Elegante Cocker",
-      text: [
-        {
-          title: "LA VITA D'UN CANE",
-          description:
-            "Mentre hai in gioco un personaggio chiamato Biagio, questo personaggio riceve +1.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lady and the Tramp",
   set: "007",
@@ -76,15 +31,22 @@ export const ladyElegantSpaniel: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      id: "14v-1",
+      name: "A DOG'S LIFE",
+      type: "static",
+      condition: {
+        type: "has-named-character",
+        controller: "you",
+        name: "Tramp",
+      },
       effect: {
         modifier: 1,
         stat: "lore",
         target: "SELF",
         type: "modify-stat",
       },
-      id: "14v-1",
       text: "A DOG'S LIFE While you have a character named Tramp in play, this character gets +1 {L}.",
-      type: "action",
     },
   ],
+  i18n: ladyElegantSpanielI18n,
 };

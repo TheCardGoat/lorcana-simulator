@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yokaiScientificSupervillainI18n } from "./160-yokai-scientific-supervillain.i18n";
 
 export const yokaiScientificSupervillain: CharacterCard = {
   id: "dzp",
@@ -7,41 +8,6 @@ export const yokaiScientificSupervillain: CharacterCard = {
   cardType: "character",
   name: "Yokai",
   version: "Scientific Supervillain",
-  i18n: {
-    en: {
-      name: "Yokai",
-      version: "Scientific Supervillain",
-      text: [
-        {
-          title: "Shift 6",
-        },
-        {
-          title: "NEUROTRANSMITTER",
-          description: "You may play items named Microbots for free.",
-        },
-        {
-          title: "TECHNICAL GAIN",
-          description:
-            "Whenever this character quests, draw a card for each opposing character with {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Yokai",
-      version: "Wissenschaftlicher Superschurke",
-      text: "Gestaltwandel 6 NEUROTRANSMITTER Du darfst Microbots-Gegenstände kostenlos ausspielen. TECHNISCHER FORTSCHRITT Jedes Mal, wenn dieser Charakter erkundet, ziehe 1 Karte für jeden gegnerischen Charakter mit 0.",
-    },
-    fr: {
-      name: "Yokai",
-      version: "Super-méchant scientifique",
-      text: "Alter 6 NEUROTRANSMETTEUR Vous pouvez jouer des objets Microrobots gratuitement. PROGRÈS TECHNIQUE Chaque fois que ce personnage est envoyé à l'aventure, piochez une carte pour chaque personnage adverse avec une de 0.",
-    },
-    it: {
-      name: "Yokai",
-      version: "Supercattivo Scientifico",
-      text: "Trasformazione 6 TRASMETTITORE NEURALE Puoi giocare gratis gli oggetti chiamati Microbot. CONQUISTA TECNICA Ogni volta che questo personaggio va all'avventura, pesca una carta per ogni personaggio avversario con 0.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "006",
@@ -83,17 +49,15 @@ export const yokaiScientificSupervillain: CharacterCard = {
     },
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          cost: "free",
-          from: "hand",
-          type: "play-card",
-        },
-        type: "optional",
+        type: "cost-reduction",
+        cardType: "item",
+        cardName: "Microbots",
+        amount: 99,
       },
       id: "11l-2",
+      name: "NEUROTRANSMITTER",
       text: "NEUROTRANSMITTER You may play items named Microbots for free.",
-      type: "action",
+      type: "static",
     },
     {
       effect: {
@@ -124,4 +88,5 @@ export const yokaiScientificSupervillain: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: yokaiScientificSupervillainI18n,
 };

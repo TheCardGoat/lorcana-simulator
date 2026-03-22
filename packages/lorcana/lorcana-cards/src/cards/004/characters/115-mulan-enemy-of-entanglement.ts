@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mulanEnemyOfEntanglementI18n } from "./115-mulan-enemy-of-entanglement.i18n";
 
 export const mulanEnemyOfEntanglement: CharacterCard = {
   id: "Pd1",
@@ -7,51 +8,6 @@ export const mulanEnemyOfEntanglement: CharacterCard = {
   cardType: "character",
   name: "Mulan",
   version: "Enemy of Entanglement",
-  i18n: {
-    en: {
-      name: "Mulan",
-      version: "Enemy of Entanglement",
-      text: [
-        {
-          title: "TIME TO SHINE",
-          description: "Whenever you play an action, this character gets +2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Mulan",
-      version: "Feindin der Verstrickung",
-      text: [
-        {
-          title: "ZEIT ZU GLÄNZEN",
-          description:
-            "Jedes Mal, wenn du eine Aktion ausspielst, erhält dieser Charakter in diesem Zug +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mulan",
-      version: "Ennemie de l'envoutement",
-      text: [
-        {
-          title: "IL EST TEMPS DE BRILLER",
-          description:
-            "Chaque fois que vous jouez une action, ce personnage gagne +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Mulan",
-      version: "Nemica del Groviglio",
-      text: [
-        {
-          title: "MOMENTO DI GLORIA",
-          description:
-            "Ogni volta che giochi un'azione, questo personaggio riceve +2 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mulan",
   set: "004",
@@ -96,4 +52,5 @@ export const mulanEnemyOfEntanglement: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mulanEnemyOfEntanglementI18n,
 };

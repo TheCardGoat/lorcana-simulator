@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hadesInfernalSchemerI18n } from "./147-hades-infernal-schemer.i18n";
 
 export const hadesInfernalSchemer: CharacterCard = {
   id: "iRC",
@@ -7,52 +8,6 @@ export const hadesInfernalSchemer: CharacterCard = {
   cardType: "character",
   name: "Hades",
   version: "Infernal Schemer",
-  i18n: {
-    en: {
-      name: "Hades",
-      version: "Infernal Schemer",
-      text: [
-        {
-          title: "IS THERE A DOWNSIDE TO THIS?",
-          description:
-            "When you play this character, you may put chosen opposing character into their player's inkwell facedown.",
-        },
-      ],
-    },
-    de: {
-      name: "Hades",
-      version: "Höllischer Intrigant",
-      text: [
-        {
-          title: "KÖNNTE DA EIN HAKEN SEIN?",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen gegnerischen Charakter deiner Wahl verdeckt in den zugehörigen Tintenvorrat legen.",
-        },
-      ],
-    },
-    fr: {
-      name: "HADÈS",
-      version: "Conspirateur infernal",
-      text: [
-        {
-          title: "Y AURAIT-IL UN OS LA-DESSOUS?",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage adverse et le placer, face cachée, dans la réserve d'encre de son propriétaire.",
-        },
-      ],
-    },
-    it: {
-      name: "Hades",
-      version: "Infernal Schemer",
-      text: [
-        {
-          title: "IS THERE A DOWNSIDE TO THIS?",
-          description:
-            "When you play this character, you may put chosen opposing character into their player's inkwell facedown.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Hercules",
   set: "001",
@@ -63,16 +18,15 @@ export const hadesInfernalSchemer: CharacterCard = {
   willpower: 6,
   lore: 2,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_050ae6da90154532905911c8c2569802",
     tcgPlayer: 651117,
   },
   text: [
     {
-      title: "IS THERE A DOWNSIDE TO THIS?",
+      title: "IS THERE",
       description:
-        "When you play this character, you may put chosen opposing character into their player's inkwell facedown.",
+        "A DOWNSIDE TO THIS? When you play this character, you may put chosen opposing character into their player's inkwell facedown.",
     },
   ],
   classifications: ["Dreamborn", "Villain", "Deity"],
@@ -82,7 +36,13 @@ export const hadesInfernalSchemer: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           facedown: true,
-          source: "chosen-character",
+          source: {
+            selector: "chosen",
+            count: 1,
+            owner: "opponent",
+            zones: ["play"],
+            cardTypes: ["character"],
+          },
           target: "OPPONENT",
           type: "put-into-inkwell",
         },
@@ -99,4 +59,5 @@ export const hadesInfernalSchemer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: hadesInfernalSchemerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { todAllAloneI18n } from "./087-tod-all-alone.i18n";
 
 export const todAllAlone: CharacterCard = {
   id: "oKC",
@@ -7,24 +8,6 @@ export const todAllAlone: CharacterCard = {
   cardType: "character",
   name: "Tod",
   version: "All Alone",
-  i18n: {
-    en: {
-      name: "Tod",
-      version: "All Alone",
-    },
-    de: {
-      name: "Cap",
-      version: "Einsam",
-    },
-    fr: {
-      name: "Rox",
-      version: "Tout seul",
-    },
-    it: {
-      name: "Red",
-      version: "Tutto Solo",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Fox and the Hound",
   set: "011",
@@ -41,4 +24,5 @@ export const todAllAlone: CharacterCard = {
     tcgPlayer: 676205,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: todAllAloneI18n,
 };

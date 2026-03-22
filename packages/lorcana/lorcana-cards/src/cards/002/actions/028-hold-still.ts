@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { holdStillI18n } from "./028-hold-still.i18n";
 
 export const holdStill: ActionCard = {
   id: "T4i",
@@ -6,24 +7,6 @@ export const holdStill: ActionCard = {
   reprints: ["set2-028"],
   cardType: "action",
   name: "Hold Still",
-  i18n: {
-    en: {
-      name: "Hold Still",
-      text: "Remove up to 4 damage from chosen character.",
-    },
-    de: {
-      name: "Nun halt doch still",
-      text: "Entferne bis zu 4 Schaden von einem Charakter deiner Wahl.",
-    },
-    fr: {
-      name: "Ne bougez pas",
-      text: "Choisissez un personnage et retirez-lui jusqu'à 4 jetons Dommage.",
-    },
-    it: {
-      name: "Hold Still",
-      text: "Remove up to 4 damage from chosen character.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -47,4 +30,5 @@ export const holdStill: ActionCard = {
       },
     },
   ],
+  i18n: holdStillI18n,
 };

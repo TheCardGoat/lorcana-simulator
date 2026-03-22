@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boltDownButNotOutI18n } from "./029-bolt-down-but-not-out.i18n";
 
 export const boltDownButNotOut: CharacterCard = {
   id: "9Ny",
@@ -7,48 +8,6 @@ export const boltDownButNotOut: CharacterCard = {
   cardType: "character",
   name: "Bolt",
   version: "Down but Not Out",
-  i18n: {
-    en: {
-      name: "Bolt",
-      version: "Down but Not Out",
-      text: [
-        {
-          title: "NONE OF YOUR POWERS ARE WORKING",
-          description: "This character enters play exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Bolt",
-      version: "Am Boden, aber nicht am Ende",
-      text: [
-        {
-          title: "DEINE SUPERKRÄFTE FUNKTIONIEREN NICHT",
-          description: "Dieser Charakter kommt erschöpft ins Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Volt",
-      version: "Abattu mais pas vaincu",
-      text: [
-        {
-          title: "TOUS TES POUVOIRS ONT DISPARU",
-          description: "Ce personnage entre en jeu épuisé.",
-        },
-      ],
-    },
-    it: {
-      name: "Bolt",
-      version: "Abbattuto ma Non Sconfitto",
-      text: [
-        {
-          title: "I TUOI POTERI NON FUNZIONANO",
-          description: "Questo personaggio entra in gioco impegnato.",
-        },
-      ],
-    },
-  },
   inkType: ["amber", "steel"],
   franchise: "Bolt",
   set: "008",
@@ -83,4 +42,5 @@ export const boltDownButNotOut: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: boltDownButNotOutI18n,
 };

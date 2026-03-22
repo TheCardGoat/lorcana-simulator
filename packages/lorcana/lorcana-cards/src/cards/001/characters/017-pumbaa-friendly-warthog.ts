@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pumbaaFriendlyWarthogI18n } from "./017-pumbaa-friendly-warthog.i18n";
 
 export const pumbaaFriendlyWarthog: CharacterCard = {
   id: "Itm",
@@ -7,24 +8,6 @@ export const pumbaaFriendlyWarthog: CharacterCard = {
   cardType: "character",
   name: "Pumbaa",
   version: "Friendly Warthog",
-  i18n: {
-    en: {
-      name: "Pumbaa",
-      version: "Friendly Warthog",
-    },
-    de: {
-      name: "Pumbaa",
-      version: "Freundliches Warzenschwein",
-    },
-    fr: {
-      name: "PUMBAA",
-      version: "Poète qui sommeille",
-    },
-    it: {
-      name: "Pumbaa",
-      version: "Friendly Warthog",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lion King",
   set: "001",
@@ -41,4 +24,5 @@ export const pumbaaFriendlyWarthog: CharacterCard = {
     tcgPlayer: 508701,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: pumbaaFriendlyWarthogI18n,
 };

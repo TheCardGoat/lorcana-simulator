@@ -2,10 +2,11 @@
   "name": "@tcg/lorcana-engine",
   "version": "0.1.0",
   "private": true,
-  "description": "Disney Lorcana TCG engine implementation using @tcg/core framework",
+  "description": "Disney Lorcana TCG engine implementation with an internal runtime core",
   "files": [
     "src/"
   ],
+  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.d.ts",
   "imports": {

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mufasaAmongTheStarsI18n } from "./079-mufasa-among-the-stars.i18n";
 
 export const mufasaAmongTheStars: CharacterCard = {
   id: "ClW",
@@ -7,38 +8,6 @@ export const mufasaAmongTheStars: CharacterCard = {
   cardType: "character",
   name: "Mufasa",
   version: "Among the Stars",
-  i18n: {
-    en: {
-      name: "Mufasa",
-      version: "Among the Stars",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "Resist +1",
-        },
-      ],
-    },
-    de: {
-      name: "Mufasa",
-      version: "Bei den Sternen",
-      text: "Gestaltwandel 5 Wendig Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "Mufasa",
-      version: "Parmi les étoiles",
-      text: "Alter 5 Insaisissable Résistance +1",
-    },
-    it: {
-      name: "Mufasa",
-      version: "Tra le Stelle",
-      text: "Trasformazione 5 Sfuggente Resistere +1",
-    },
-  },
   inkType: ["amethyst", "steel"],
   franchise: "Lion King",
   set: "007",
@@ -89,4 +58,5 @@ export const mufasaAmongTheStars: CharacterCard = {
       text: "Resist +1",
     },
   ],
+  i18n: mufasaAmongTheStarsI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yzmaScaryBeyondAllReasonI18n } from "./060-yzma-scary-beyond-all-reason.i18n";
 
 export const yzmaScaryBeyondAllReason: CharacterCard = {
   id: "mCu",
@@ -7,43 +8,6 @@ export const yzmaScaryBeyondAllReason: CharacterCard = {
   cardType: "character",
   name: "Yzma",
   version: "Scary Beyond All Reason",
-  i18n: {
-    en: {
-      name: "Yzma",
-      version: "Scary Beyond All Reason",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "CRUEL IRONY",
-          description:
-            "When you play this character, shuffle another chosen character card into their player's deck. That player draws 2 cards.",
-        },
-      ],
-    },
-    de: {
-      name: "Isma",
-      version: "Schreckensvision",
-      text: "Gestaltwandel 4 IRONIE DES SCHICKSALS Wenn du diesen Charakter ausspielst, darfst du einen anderen Charakter deiner Wahl zurück in das zugehörige Deck mischen. Wer jenen Charakter im Spiel hatte, zieht 2 Karten.",
-    },
-    fr: {
-      name: "Yzma",
-      version: "Fait peur sans faire exprès",
-      text: "Alter 4 IRONIE DU SORT Lorsque vous jouez ce personnage, vous pouvez choisir un autre personnage et le renvoyer dans la pioche de son propriétaire. Il mélange sa pioche puis pioche 2 cartes.",
-    },
-    it: {
-      name: "Yzma",
-      version: "Scary Beyond All Reason",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Yzma.) CRUEL IRONY When you play this character, shuffle another chosen character card into their player's deck. That player draws 2 cards.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Emperors New Groove",
   set: "002",
@@ -69,7 +33,6 @@ export const yzmaScaryBeyondAllReason: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain", "Sorcerer"],
-  missingTests: true,
   abilities: [
     {
       id: "1c0-1",
@@ -83,9 +46,26 @@ export const yzmaScaryBeyondAllReason: CharacterCard = {
     {
       id: "1c0-2",
       effect: {
-        amount: 2,
-        target: "CONTROLLER",
-        type: "draw",
+        type: "sequence",
+        steps: [
+          {
+            type: "shuffle-into-deck",
+            intoDeck: "owner",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+              excludeSelf: true,
+            },
+          },
+          {
+            amount: 2,
+            target: "CARD_OWNER",
+            type: "draw",
+          },
+        ],
       },
       name: "CRUEL IRONY",
       trigger: {
@@ -97,4 +77,5 @@ export const yzmaScaryBeyondAllReason: CharacterCard = {
       text: "CRUEL IRONY When you play this character, shuffle another chosen character card into their player's deck. That player draws 2 cards.",
     },
   ],
+  i18n: yzmaScaryBeyondAllReasonI18n,
 };

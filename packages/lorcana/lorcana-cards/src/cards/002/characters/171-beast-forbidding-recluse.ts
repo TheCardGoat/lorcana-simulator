@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { beastForbiddingRecluseI18n } from "./171-beast-forbidding-recluse.i18n";
 
 export const beastForbiddingRecluse: CharacterCard = {
   id: "LxQ",
@@ -7,50 +8,6 @@ export const beastForbiddingRecluse: CharacterCard = {
   cardType: "character",
   name: "Beast",
   version: "Forbidding Recluse",
-  i18n: {
-    en: {
-      name: "Beast",
-      version: "Forbidding Recluse",
-      text: [
-        {
-          title: "YOU'RE NOT WELCOME HERE",
-          description: "When you play this character, you may deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Biest",
-      version: "Furchteinflößender Einsiedler",
-      text: [
-        {
-          title: "DU BIST HIER NICHT WILLKOMMEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einem Charakter deiner Wahl 1 Schaden zufügen.",
-        },
-      ],
-    },
-    fr: {
-      name: "La Bête",
-      version: "Reclus inhospitalier",
-      text: [
-        {
-          title: "VOTRE PRÉSENCE M'EST INTOLÉRABLE",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage et lui infliger 1 dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Beast",
-      version: "Forbidding Recluse",
-      text: [
-        {
-          title: "YOU'RE NOT WELCOME HERE",
-          description: "When you play this character, you may deal 1 damage to chosen character.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -72,7 +29,6 @@ export const beastForbiddingRecluse: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Prince"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -101,4 +57,5 @@ export const beastForbiddingRecluse: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: beastForbiddingRecluseI18n,
 };

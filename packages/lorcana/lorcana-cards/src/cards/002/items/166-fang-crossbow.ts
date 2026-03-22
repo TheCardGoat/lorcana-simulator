@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { fangCrossbowI18n } from "./166-fang-crossbow.i18n";
 
 export const fangCrossbow: ItemCard = {
   id: "B1T",
@@ -6,54 +7,6 @@ export const fangCrossbow: ItemCard = {
   reprints: ["set2-166"],
   cardType: "item",
   name: "Fang Crossbow",
-  i18n: {
-    en: {
-      name: "Fang Crossbow",
-      text: [
-        {
-          title: "CAREFUL AIM",
-          description: "{E}, 2 {I} — Chosen character gets -2 {S} this turn.",
-        },
-        {
-          title: "STAY BACK!",
-        },
-        {
-          title: "{E},",
-          description: "Banish this item — Banish chosen Dragon character.",
-        },
-      ],
-    },
-    de: {
-      name: "Armbrust aus Zahn",
-      text: [
-        {
-          title: "SORGFÄLTIG ZIELEN",
-          description:
-            "2, — Gib einem Charakter deiner Wahl in diesem Zug -2. ZURÜCK MIT EUCH!, Verbanne diesen Gegenstand — Verbanne einen Drachen deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Arbalète de Croc du Dragon",
-      text: [
-        {
-          title: "VISÉE PRÉCISE,",
-          description:
-            "2 — Choisissez un personnage, il subit -2 pour le reste de ce tour. N'APPROCHEZ PAS!, bannissez cet objet — Choisissez un personnage Dragon et bannissez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Fang Crossbow",
-      text: [
-        {
-          title: "CAREFUL AIM, 2",
-          description:
-            "— Chosen character gets -2 this turn. STAY BACK!, Banish this item — Banish chosen Dragon character.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Raya and the Last Dragon",
   set: "002",
@@ -72,10 +25,7 @@ export const fangCrossbow: ItemCard = {
     },
     {
       title: "STAY BACK!",
-    },
-    {
-      title: "{E},",
-      description: "Banish this item — Banish chosen Dragon character.",
+      description: "{E}, Banish this item — Banish chosen Dragon character.",
     },
   ],
   abilities: [
@@ -123,4 +73,5 @@ export const fangCrossbow: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: fangCrossbowI18n,
 };

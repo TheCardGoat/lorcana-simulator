@@ -1,33 +1,62 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { brunoMadrigalUndetectedUncle } from "@lorcanito/lorcana-engine/cards/009/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Bruno Madrigal - Undetected Uncle", () => {
-//   It.skip("**Evasive** _(Only characters with Evasive can challenge this character.)_", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [brunoMadrigalUndetectedUncle],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(brunoMadrigalUndetectedUncle);
-//     Expect(cardUnderTest.hasEvasive).toBe(true);
-//   });
-//
-//   It.skip("**YOU JUST HAVE TO SEE IT** {E} − Name a card, then reveal the top card of your deck. If it's the named card, put that card into your hand and gain 3 lore. Otherwise, put it on the top of your deck.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: brunoMadrigalUndetectedUncle.cost,
-//       Play: [brunoMadrigalUndetectedUncle],
-//       Hand: [brunoMadrigalUndetectedUncle],
-//     });
-//
-//     Await testEngine.playCard(brunoMadrigalUndetectedUncle);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { simbaScrappyCub } from "../../003/characters";
+import { brunoMadrigalUndetectedUncle } from "./000-bruno-madrigal-undetected-uncle";
+
+describe("Bruno Madrigal - Undetected Uncle (set9-000)", () => {
+  it("has Evasive keyword", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [brunoMadrigalUndetectedUncle],
+    });
+
+    expect(testEngine.asPlayerOne().getCard(brunoMadrigalUndetectedUncle)?.keywords).toContain(
+      "Evasive",
+    );
+  });
+
+  it("puts the revealed card into your hand and gains 3 lore when it matches the named card", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [simbaScrappyCub],
+      play: [brunoMadrigalUndetectedUncle],
+    });
+
+    const result = testEngine.asPlayerOne().activateAbility(brunoMadrigalUndetectedUncle, {
+      ability: "YOU JUST HAVE TO SEE IT",
+    });
+
+    expect(result).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+    expect(
+      testEngine.asPlayerOne().resolvePendingEffect(brunoMadrigalUndetectedUncle, {
+        namedCard: "Simba",
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().isExerted(brunoMadrigalUndetectedUncle)).toBe(true);
+    expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, deck: 0 });
+    expect(testEngine.asPlayerOne().getCardZone(simbaScrappyCub)).toBe("hand");
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(3);
+  });
+
+  it("keeps the revealed card on top of your deck and does not gain lore when it does not match", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [simbaScrappyCub],
+      play: [brunoMadrigalUndetectedUncle],
+    });
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(brunoMadrigalUndetectedUncle, {
+        ability: "YOU JUST HAVE TO SEE IT",
+      }),
+    ).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingEffect(brunoMadrigalUndetectedUncle, {
+        namedCard: "Jafar",
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 1 });
+    expect(testEngine.asPlayerOne().getCardZone(simbaScrappyCub)).toBe("deck");
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+  });
+});

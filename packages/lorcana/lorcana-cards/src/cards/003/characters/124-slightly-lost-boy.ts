@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { slightlyLostBoyI18n } from "./124-slightly-lost-boy.i18n";
 
 export const slightlyLostBoy: CharacterCard = {
   id: "pa7",
@@ -7,55 +8,6 @@ export const slightlyLostBoy: CharacterCard = {
   cardType: "character",
   name: "Slightly",
   version: "Lost Boy",
-  i18n: {
-    en: {
-      name: "Slightly",
-      version: "Lost Boy",
-      text: [
-        {
-          title: "THE FOX",
-          description:
-            "If you have a character named Peter Pan in play, you pay 1 {I} less to play this character.",
-        },
-        {
-          title: "Evasive",
-        },
-      ],
-    },
-    de: {
-      name: "Schlauli",
-      version: "Verwunschenes Kind",
-      text: [
-        {
-          title: "DER FUCHS",
-          description:
-            "Wenn du einen Peter-Pan-Charakter im Spiel hast, zahlst du 1 weniger, um diesen Charakter auszuspielen. Wendig",
-        },
-      ],
-    },
-    fr: {
-      name: "La Plume",
-      version: "Enfant perdu",
-      text: [
-        {
-          title: "LE RENARD",
-          description:
-            "Si vous avez un personnage Peter Pan en jeu, jouer ce personnage vous coûte 1 de moins. Insaisissable",
-        },
-      ],
-    },
-    it: {
-      name: "Slightly",
-      version: "Bimbo Sperduto",
-      text: [
-        {
-          title: "LA VOLPE",
-          description:
-            "Se hai in gioco un personaggio chiamato Peter Pan, paga 1 in meno per giocare questo personaggio. Sfuggente",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Peter Pan",
   set: "003",
@@ -81,39 +33,33 @@ export const slightlyLostBoy: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingImplementation: true,
-  missingTests: true,
   abilities: [
     {
+      id: "1pb-1",
+      name: "THE FOX",
+      text: "THE FOX If you have a character named Peter Pan in play, you pay 1 {I} less to play this character.",
+      type: "static",
+      sourceZones: ["hand"],
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
+        type: "cost-reduction",
+        amount: {
+          type: "clamp",
+          value: {
+            type: "filtered-count",
             owner: "you",
             zones: ["play"],
             cardType: "character",
             filters: [
               {
-                type: "name",
-                equals: "Peter Pan",
+                type: "has-name",
+                name: "Peter Pan",
               },
             ],
           },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
+          max: 1,
         },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+        cardType: "character",
       },
-      id: "1pb-1",
-      text: "THE FOX If you have a character named Peter Pan in play, you pay 1 {I} less to play this character.",
-      type: "action",
     },
     {
       id: "1pb-2",
@@ -122,4 +68,5 @@ export const slightlyLostBoy: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: slightlyLostBoyI18n,
 };

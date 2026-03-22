@@ -27,4 +27,43 @@ describe("Avalanche", () => {
     expect(testEngine.asPlayerTwo().getDamage(simbaProtectiveCub)).toBe(1);
     expect(testEngine.asPlayerTwo().getDamage(arielOnHumanLegs)).toBe(1);
   });
+
+  it("deals 1 damage to each opposing character and can decline to banish a location", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [avalanche],
+        inkwell: avalanche.cost,
+      },
+      {
+        play: [duckburgFunsosFunzone, simbaProtectiveCub, arielOnHumanLegs],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(avalanche, {
+        resolveOptional: false,
+      }).success,
+    ).toBe(true);
+
+    expect(testEngine.asPlayerTwo().getCardZone(duckburgFunsosFunzone)).toBe("play");
+    expect(testEngine.asPlayerTwo().getDamage(simbaProtectiveCub)).toBe(1);
+    expect(testEngine.asPlayerTwo().getDamage(arielOnHumanLegs)).toBe(1);
+  });
+
+  it("deals 1 damage to each opposing character when no locations are in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [avalanche],
+        inkwell: avalanche.cost,
+      },
+      {
+        play: [simbaProtectiveCub, arielOnHumanLegs],
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(avalanche).success).toBe(true);
+
+    expect(testEngine.asPlayerTwo().getDamage(simbaProtectiveCub)).toBe(1);
+    expect(testEngine.asPlayerTwo().getDamage(arielOnHumanLegs)).toBe(1);
+  });
 });

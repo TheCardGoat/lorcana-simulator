@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { freezeI18n } from "./063-freeze.i18n";
 
 export const freeze: ActionCard = {
   id: "D1e",
@@ -6,24 +7,6 @@ export const freeze: ActionCard = {
   reprints: ["set1-063"],
   cardType: "action",
   name: "Freeze",
-  i18n: {
-    en: {
-      name: "Freeze",
-      text: "Exert chosen opposing character.",
-    },
-    de: {
-      name: "Einfrieren",
-      text: "Erschöpfe einen gegnerischen Charakter deiner Wahl.",
-    },
-    fr: {
-      name: "GEL",
-      text: "Choisissez un personnage adverse et épuisez-le.",
-    },
-    it: {
-      name: "Freeze",
-      text: "Exert chosen opposing character.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "001",
@@ -45,4 +28,5 @@ export const freeze: ActionCard = {
       },
     },
   ],
+  i18n: freezeI18n,
 };

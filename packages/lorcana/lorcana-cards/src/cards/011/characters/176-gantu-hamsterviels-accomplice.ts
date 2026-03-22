@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gantuHamstervielsAccompliceI18n } from "./176-gantu-hamsterviels-accomplice.i18n";
 
 export const gantuHamstervielsAccomplice: CharacterCard = {
   id: "qvC",
@@ -7,49 +8,6 @@ export const gantuHamstervielsAccomplice: CharacterCard = {
   cardType: "character",
   name: "Gantu",
   version: "Hamsterviel's Accomplice",
-  i18n: {
-    en: {
-      name: "Gantu",
-      version: "Hamsterviel's Accomplice",
-      text: [
-        {
-          title: "EASY TARGET",
-          description: "When you play this character, choose and discard a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Gantu",
-      version: "Van Hamsterdams Komplize",
-      text: [
-        {
-          title: "LEICHTES ZIEL",
-          description:
-            "Wenn du diesen Charakter ausspielst, wähle 1 Karte aus deiner Hand und wirf sie ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "Gantu",
-      version: "Complice de Hämsterviel",
-      text: [
-        {
-          title: "CIBLE FACILE",
-          description: "Lorsque vous jouez ce personnage, défaussez une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Gantu",
-      version: "Complice di Hamsterviel",
-      text: [
-        {
-          title: "BERSAGLIO FACILE",
-          description: "Quando giochi questo personaggio, scegli e scarta una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "011",
@@ -90,4 +48,5 @@ export const gantuHamstervielsAccomplice: CharacterCard = {
       text: "EASY TARGET When you play this character, choose and discard a card.",
     },
   ],
+  i18n: gantuHamstervielsAccompliceI18n,
 };

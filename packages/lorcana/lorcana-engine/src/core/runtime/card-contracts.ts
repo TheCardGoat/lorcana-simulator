@@ -1,14 +1,12 @@
+import type { LorcanaCardDefinition } from "@tcg/lorcana-types";
+
 /**
- * Minimal static card shape required by the core runtime.
+ * The card definition type used throughout the Lorcana engine runtime.
  *
- * Game-specific definitions can extend this with any additional fields.
+ * Now that generic type parameters have been removed from the embedded core,
+ * this is hardcoded to LorcanaCardDefinition.
  */
-export interface BaseCardDefinition {
-  id: string;
-  canonicalId: string;
-  reprints?: string[];
-  name: string;
-}
+export type BaseCardDefinition = LorcanaCardDefinition;
 
 /**
  * Minimal runtime metadata shape attached to card instances.

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chernabogUnnaturalForceI18n } from "./077-chernabog-unnatural-force.i18n";
 
 export const chernabogUnnaturalForce: CharacterCard = {
   id: "OZJ",
@@ -7,52 +8,6 @@ export const chernabogUnnaturalForce: CharacterCard = {
   cardType: "character",
   name: "Chernabog",
   version: "Unnatural Force",
-  i18n: {
-    en: {
-      name: "Chernabog",
-      version: "Unnatural Force",
-      text: [
-        {
-          title: "DARK DANCE",
-          description:
-            "When you play this character, you may shuffle chosen opposing character into their player's deck. If you do, that player may play a character from their discard for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Chernabog",
-      version: "Unnatürliche Macht",
-      text: [
-        {
-          title: "DUNKLER TANZ",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen gegnerischen Charakter deiner Wahl zurück in das zugehörige Deck mischen. Wenn du dies tust, darf die Person, die den Charakter im Spiel hatte, einen Charakter aus ihrem Ablagestapel kostenlos ausspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Chernabog",
-      version: "Force contre nature",
-      text: [
-        {
-          title: "DANSE DES TÉNÈBRES",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage adverse et le mélanger dans la pioche de son propriétaire. Si vous le faites, son propriétaire peut jouer gratuitement un personnage de sa défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Chernabog",
-      version: "Forza Innaturale",
-      text: [
-        {
-          title: "DANZA OSCURA",
-          description:
-            "Quando giochi questo personaggio, puoi mescolare un personaggio avversario a tua scelta nel mazzo del suo giocatore. Se lo fai, quel giocatore può giocare un personaggio dai suoi scarti, gratis.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Fantasia",
   set: "011",
@@ -78,20 +33,50 @@ export const chernabogUnnaturalForce: CharacterCard = {
   abilities: [
     {
       id: "1yh-1",
-      effect: {
-        from: "hand",
-        type: "play-card",
-        cardType: "character",
-        cost: "free",
-      },
       name: "DARK DANCE",
+      type: "triggered",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
       },
-      type: "triggered",
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "optional",
+            chooser: "CONTROLLER",
+            effect: {
+              type: "shuffle-into-deck",
+              target: {
+                cardTypes: ["character"],
+                count: 1,
+                owner: "opponent",
+                selector: "chosen",
+                zones: ["play"],
+              },
+            },
+          },
+          {
+            type: "conditional",
+            condition: {
+              type: "if-you-do",
+            },
+            then: {
+              type: "optional",
+              chooser: "OPPONENT",
+              effect: {
+                type: "play-card",
+                from: "discard",
+                cardType: "character",
+                cost: "free",
+              },
+            },
+          },
+        ],
+      },
       text: "DARK DANCE When you play this character, you may shuffle chosen opposing character into their player’s deck. If you do, that player may play a character from their discard for free.",
     },
   ],
+  i18n: chernabogUnnaturalForceI18n,
 };

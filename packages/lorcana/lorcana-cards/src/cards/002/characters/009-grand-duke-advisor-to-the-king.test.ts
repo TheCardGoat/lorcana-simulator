@@ -6,6 +6,7 @@ import { arielOnHumanLegs } from "../../001/characters/001-ariel-on-human-legs";
 import { hadesKingOfOlympus } from "../../001/characters/005-hades-king-of-olympus";
 import { elsaQueenRegent } from "../../001/characters/040-elsa-queen-regent";
 import { aladdinStreetRat } from "../../001/characters/105-aladdin-street-rat";
+import { jasmineQueenOfAgrabah } from "../../001/characters/149-jasmine-queen-of-agrabah";
 
 describe("Grand Duke - Advisor to the King", () => {
   it("YES, YOUR MAJESTY - Grants +1 Strength to Prince, Princess, King, Queen", () => {
@@ -42,5 +43,17 @@ describe("Grand Duke - Advisor to the King", () => {
 
     // Hero: 2 base + 0 = 2
     expect(testEngine.asServer().getCard(heroId).strength).toBe(aladdinStreetRat.strength);
+  });
+
+  it("applies the royal bonus only once to characters with multiple matching classifications", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: grandDukeAdvisorToTheKing }, { card: jasmineQueenOfAgrabah }],
+    });
+
+    const jasmineId = testEngine.findCardInstanceId(jasmineQueenOfAgrabah, "play");
+
+    expect(testEngine.asServer().getCard(jasmineId).strength).toBe(
+      jasmineQueenOfAgrabah.strength + 1,
+    );
   });
 });

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { marchHareHarebrainedEccentricI18n } from "./091-march-hare-hare-brained-eccentric.i18n";
 
 export const marchHareHarebrainedEccentric: CharacterCard = {
   id: "tzo",
@@ -7,52 +8,6 @@ export const marchHareHarebrainedEccentric: CharacterCard = {
   cardType: "character",
   name: "March Hare",
   version: "Hare-Brained Eccentric",
-  i18n: {
-    en: {
-      name: "March Hare",
-      version: "Hare-Brained Eccentric",
-      text: [
-        {
-          title: "LIGHT THE CANDLES",
-          description:
-            "When you play this character, you may deal 2 damage to chosen damaged character.",
-        },
-      ],
-    },
-    de: {
-      name: "Der Märzhase",
-      version: "Exzentriker mit Hasenhirn",
-      text: [
-        {
-          title: "ENTZÜNDE DIE KERZEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einem beschädigten Charakter deiner Wahl 2 Schaden zufügen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le Lièvre de Mars",
-      version: "Farfelu excentrique",
-      text: [
-        {
-          title: "ALLUMER LES BOUGIES",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage ayant un dommage ou plus et lui infliger 2 dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "Leprotto Bisestile",
-      version: "Eccentrico Strampalato",
-      text: [
-        {
-          title: "ACCENDERE LE CANDELINE",
-          description:
-            "Quando giochi questo personaggio, puoi infliggere 2 danni a un personaggio danneggiato a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Alice in Wonderland",
   set: "008",
@@ -103,4 +58,5 @@ export const marchHareHarebrainedEccentric: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: marchHareHarebrainedEccentricI18n,
 };

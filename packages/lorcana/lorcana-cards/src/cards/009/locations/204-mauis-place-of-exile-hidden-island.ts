@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { mauisPlaceOfExileHiddenIslandI18n } from "./204-mauis-place-of-exile-hidden-island.i18n";
 
 export const mauisPlaceOfExileHiddenIsland: LocationCard = {
   id: "3Ro",
@@ -7,49 +8,6 @@ export const mauisPlaceOfExileHiddenIsland: LocationCard = {
   cardType: "location",
   name: "Maui's Place of Exile",
   version: "Hidden Island",
-  i18n: {
-    en: {
-      name: "Maui's Place of Exile",
-      version: "Hidden Island",
-      text: [
-        {
-          title: "ISOLATED",
-          description: "Characters gain Resist +1 while here.",
-        },
-      ],
-    },
-    de: {
-      name: "Mauis Insel im Exil",
-      version: "Verborgene Insel",
-      text: [
-        {
-          title: "ISOLIERT",
-          description:
-            "Charaktere an diesem Ort erhalten Robust +1. (Reduziere jeglichen Schaden, der den Charakteren zugefügt wird, um 1.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Île d'exil de Maui",
-      version: "Rocher caché",
-      text: [
-        {
-          title: "ISOLÉ",
-          description: "Les personnages sur ce lieu gagnent Résistance +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Luogo dell'Esilio di Maui",
-      version: "Isola Nascosta",
-      text: [
-        {
-          title: "ISOLATA I",
-          description: "personaggi ottengono Resistere +1 mentre si trovano in questo luogo.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Moana",
   set: "009",
@@ -84,4 +42,5 @@ export const mauisPlaceOfExileHiddenIsland: LocationCard = {
       type: "static",
     },
   ],
+  i18n: mauisPlaceOfExileHiddenIslandI18n,
 };

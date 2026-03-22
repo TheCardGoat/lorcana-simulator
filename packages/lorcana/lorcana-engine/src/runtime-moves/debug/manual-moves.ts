@@ -18,10 +18,11 @@ import {
   snapshotTriggeredCandidatesForCard,
 } from "../effects/triggered-abilities";
 import { advanceTurnToNextPlayer } from "../moves/turn/pass-turn";
-import { getEffectiveStrength } from "../../rules/derived-state";
+import { createProjectionState, getEffectiveStrength } from "../../rules/derived-state";
 import { moveCardOutOfPlayWithStack } from "../state/shift-stack";
 import { isDiscardZoneKey, recordDiscardExitThisTurn } from "../state/turn-metrics";
 import { validateCardExists } from "../shared/validation-helpers";
+import { getKeywordsBeforeBanish } from "../shared/banish-snapshot";
 
 type ZoneRefLike = { zone: string; playerId?: string };
 
@@ -55,7 +56,7 @@ export const manualMoveCard: LorcanaMoveDefinition<"manualMoveCard"> = {
     }
 
     // Move card to target zone
-    const currentZoneKey = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+    const currentZoneKey = ctx.framework.state._zonesPrivate.cardIndex[cardId]?.zoneKey;
     const cardMeta = ctx.cards.require(cardId).meta;
     const isFromPlay = currentZoneKey?.startsWith("play:") ?? false;
     const isToPlay = targetZoneRef.zone === "play";
@@ -71,6 +72,24 @@ export const manualMoveCard: LorcanaMoveDefinition<"manualMoveCard"> = {
 
     if (isDiscardZoneKey(currentZoneKey) && targetZoneRef.zone !== "discard") {
       recordDiscardExitThisTurn(ctx);
+      const ownerId = ctx.framework.state._zonesPrivate.cardIndex[cardId]?.ownerID as
+        | PlayerId
+        | undefined;
+      if (ownerId) {
+        emitTriggeredLorcanaEvent(
+          ctx,
+          "cardLeftDiscard",
+          { cardId, ownerId, toZone: targetZoneRef.zone },
+          {
+            event: "leave-discard",
+            playerId: ownerId,
+            subjectCardId: cardId,
+            fromZone: "discard",
+            toZone: targetZoneRef.zone,
+          },
+        );
+        flushTriggeredEventsToBag(ctx);
+      }
     }
   },
 
@@ -132,7 +151,7 @@ export const manualReadyCard: LorcanaMoveDefinition<"manualReadyCard"> = {
 
     // Set card to ready state
     ctx.cards.patchMeta(cardId, { state: "ready" });
-    const playerId = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID;
+    const playerId = ctx.framework.state._zonesPrivate.cardIndex[cardId]?.ownerID;
     if (playerId) {
       emitTriggeredLorcanaEvent(
         ctx,
@@ -176,7 +195,7 @@ export const manualSetDamage: LorcanaMoveDefinition<"manualSetDamage"> = {
     const cardExists = validateCardExists(ctx, cardId);
     if (!cardExists.valid) return cardExists;
 
-    const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+    const zoneKey = ctx.framework.state._zonesPrivate.cardIndex[cardId]?.zoneKey;
     if (!zoneKey?.startsWith("play:")) {
       return { valid: false, error: "Card must be in play", errorCode: "INVALID_CARD_ZONE" };
     }
@@ -203,14 +222,16 @@ export const manualSetDamage: LorcanaMoveDefinition<"manualSetDamage"> = {
 
     if (typeof willpower === "number" && damage >= willpower) {
       // Card should be banished
-      const ownerId = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID;
+      const ownerId = ctx.framework.state._zonesPrivate.cardIndex[cardId]?.ownerID;
       const meta = ctx.cards.require(cardId).meta ?? {};
       const subjectAtLocationId = meta.atLocationId as CardInstanceId | undefined;
+      const keywordsBeforeBanish = getKeywordsBeforeBanish(ctx, cardId, ctx.playerId);
 
       if (ownerId) {
+        const derivedState = createProjectionState(ctx.framework.state, ctx.G);
         const strengthBeforeBanish = getEffectiveStrength(
-          targetDefinition as any,
-          ctx.framework.state as any,
+          ctx.cards.getDefinition(cardId),
+          derivedState,
           cardId,
           (id) => ctx.cards.getDefinition(id),
         );
@@ -226,7 +247,12 @@ export const manualSetDamage: LorcanaMoveDefinition<"manualSetDamage"> = {
           {
             cardId,
             sourceId: cardId,
-            snapshot: { damageDealt: damage, subjectAtLocationId, strengthBeforeBanish },
+            snapshot: {
+              damageDealt: damage,
+              keywordsBeforeBanish,
+              subjectAtLocationId,
+              strengthBeforeBanish,
+            },
             reason: "lethal damage (manual)",
           },
           {
@@ -237,6 +263,7 @@ export const manualSetDamage: LorcanaMoveDefinition<"manualSetDamage"> = {
             triggerSourceCardId: cardId,
             triggerCandidates,
             eventSnapshot: {
+              keywordsBeforeBanish,
               subjectAtLocationId,
               strengthBeforeBanish,
             },
@@ -329,24 +356,20 @@ type ManualEnumerationContext = {
   G: { lore: Record<string, number> };
   framework: {
     state: {
-      ctx: {
-        zones: {
-          private: {
-            cardIndex: Record<string, { zoneKey?: string } | undefined>;
-            zoneCards: Record<string, readonly string[]>;
-          };
-        };
+      _zonesPrivate: {
+        cardIndex: Record<string, { zoneKey?: string } | undefined>;
+        zoneCards: Record<string, readonly string[]>;
       };
     };
   };
 };
 
 function getAllCardIds(ctx: ManualEnumerationContext): CardInstanceId[] {
-  return Object.keys(ctx.framework.state.ctx.zones.private.cardIndex) as CardInstanceId[];
+  return Object.keys(ctx.framework.state._zonesPrivate.cardIndex) as CardInstanceId[];
 }
 
 function getAllZoneIds(ctx: ManualEnumerationContext): ZoneId[] {
-  return Object.keys(ctx.framework.state.ctx.zones.private.zoneCards)
+  return Object.keys(ctx.framework.state._zonesPrivate.zoneCards)
     .filter((zoneId) => zoneId.includes(":"))
     .map((zoneId) => zoneId as ZoneId);
 }

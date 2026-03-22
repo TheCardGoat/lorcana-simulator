@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { thomasOmalleyFelineCharmerI18n } from "./088-thomas-omalley-feline-charmer.i18n";
 
 export const thomasOmalleyFelineCharmer: CharacterCard = {
   id: "Gg5",
@@ -7,28 +8,6 @@ export const thomasOmalleyFelineCharmer: CharacterCard = {
   cardType: "character",
   name: "Thomas O'Malley",
   version: "Feline Charmer",
-  i18n: {
-    en: {
-      name: "Thomas O'Malley",
-      version: "Feline Charmer",
-      text: "Ward",
-    },
-    de: {
-      name: "Thomas O’Malley",
-      version: "Charmanter Kater",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Thomas O’Malley",
-      version: "Félin charmeur",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Romeo",
-      version: "Seduttore Felino",
-      text: "Protetto",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aristocats",
   set: "007",
@@ -53,4 +32,5 @@ export const thomasOmalleyFelineCharmer: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: thomasOmalleyFelineCharmerI18n,
 };

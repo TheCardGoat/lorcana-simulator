@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mauiHalfsharkI18n } from "./124-maui-half-shark.i18n";
 
 export const mauiHalfshark: CharacterCard = {
   id: "HTB",
@@ -7,41 +8,6 @@ export const mauiHalfshark: CharacterCard = {
   cardType: "character",
   name: "Maui",
   version: "Half-Shark",
-  i18n: {
-    en: {
-      name: "Maui",
-      version: "Half-Shark",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "CHEEEEOHOOOO!",
-          description:
-            "Whenever this character challenges another character, you may return an action card from your discard to your hand.",
-        },
-        {
-          title: "WAYFINDING",
-          description: "Whenever you play an action, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Maui",
-      version: "Halb-Hai",
-      text: "Wendig CHUUUUHUUUU! Jedes Mal, wenn dieser Charakter einen anderen Charakter herausfordert, darfst du 1 Aktionskarte aus deinem Ablagestapel zurück auf deine Hand nehmen. WEGWEISEND Jedes Mal, wenn du eine Aktion ausspielst, sammelst du 1 Legende.",
-    },
-    fr: {
-      name: "Maui",
-      version: "Demi-requin",
-      text: "Insaisissable CHEEEEHOOOO! Chaque fois que ce personnage en défie un autre, vous pouvez renvoyer une carte Action de votre défausse dans votre main. GUIDAGE Chaque fois que vous jouez une action, gagnez 1 éclat de Lore.",
-    },
-    it: {
-      name: "Maui",
-      version: "Mezzo Squalo",
-      text: "Sfuggente TAAAHOOO! Ogni volta che questo personaggio sfida un altro personaggio, puoi riprendere in mano una carta azione dai tuoi scarti. ORIENTARSI Ogni volta che giochi un'azione, ottieni 1 leggenda.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "006",
@@ -117,4 +83,5 @@ export const mauiHalfshark: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mauiHalfsharkI18n,
 };

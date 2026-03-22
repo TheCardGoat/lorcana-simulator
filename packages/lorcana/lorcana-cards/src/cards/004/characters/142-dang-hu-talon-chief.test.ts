@@ -1,24 +1,42 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { dangHuTalonChief } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Dang Hu - Talon Chief", () => {
-//   It.skip("**YOU BETTER TALK FAST** Your other Villain characters gain **Support.** _(Whenever they quest, you mad add their {S} to another chosen character's {S} this turn.)_", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: dangHuTalonChief.cost,
-//       Play: [dangHuTalonChief],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId("play", dangHuTalonChief.id);
-//
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { createMockCharacter, LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { dangHuTalonChief } from "./142-dang-hu-talon-chief";
+
+const villainAlly = createMockCharacter({
+  id: "dang-hu-villain-ally",
+  name: "Villain Ally",
+  cost: 2,
+  classifications: ["Storyborn", "Villain"],
+});
+
+const villainOpponent = createMockCharacter({
+  id: "dang-hu-villain-opponent",
+  name: "Villain Opponent",
+  cost: 2,
+  classifications: ["Storyborn", "Villain"],
+});
+
+const heroAlly = createMockCharacter({
+  id: "dang-hu-hero-ally",
+  name: "Hero Ally",
+  cost: 2,
+  classifications: ["Storyborn", "Hero"],
+});
+
+describe("Dang Hu - Talon Chief", () => {
+  it("grants Support to your other Villain characters only", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [dangHuTalonChief, villainAlly, heroAlly],
+      },
+      {
+        play: [villainOpponent],
+      },
+    );
+
+    expect(testEngine.hasKeyword(villainAlly, "Support")).toBe(true);
+    expect(testEngine.hasKeyword(heroAlly, "Support")).toBe(false);
+    expect(testEngine.hasKeyword(villainOpponent, "Support")).toBe(false);
+    expect(testEngine.hasKeyword(dangHuTalonChief, "Support")).toBe(false);
+  });
+});

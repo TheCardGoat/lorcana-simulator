@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseDaringDefenderI18n } from "./006-minnie-mouse-daring-defender.i18n";
 
 export const minnieMouseDaringDefender: CharacterCard = {
   id: "t5R",
@@ -7,42 +8,6 @@ export const minnieMouseDaringDefender: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Daring Defender",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Daring Defender",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "TRUE VALOR",
-          description: "This character gets +1 {S} for each 1 damage on her.",
-        },
-      ],
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Wagemutige Beschützerin",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) WAHRE TAPFERKEIT Dieser Charakter erhält +1 für jeden Schaden auf ihm.",
-    },
-    fr: {
-      name: "Minnie",
-      version: "Défenseuse hardie",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.) BRAVOURE VÉRITABLE Ce personnage gagne +1 pour chaque dommage sur lui.",
-        },
-      ],
-    },
-    it: {
-      name: "Minni",
-      version: "Difenditrice Coraggiosa",
-      text: "Guardiano VERO VALORE Questo personaggio riceve +1 per ogni singolo danno su di esso.",
-    },
-  },
   inkType: ["amber", "ruby"],
   set: "008",
   cardNumber: 6,
@@ -85,4 +50,5 @@ export const minnieMouseDaringDefender: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: minnieMouseDaringDefenderI18n,
 };

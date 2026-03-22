@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kingStefanNewFatherI18n } from "./003-king-stefan-new-father.i18n";
 
 export const kingStefanNewFather: CharacterCard = {
   id: "156",
@@ -7,24 +8,6 @@ export const kingStefanNewFather: CharacterCard = {
   cardType: "character",
   name: "King Stefan",
   version: "New Father",
-  i18n: {
-    en: {
-      name: "King Stefan",
-      version: "New Father",
-    },
-    de: {
-      name: "König Stefan",
-      version: "Frischgebackener Vater",
-    },
-    fr: {
-      name: "Le Roi Stéphane",
-      version: "Jeune papa",
-    },
-    it: {
-      name: "Re Stefano",
-      version: "Padre Novello",
-    },
-  },
   inkType: ["amber"],
   franchise: "Sleeping Beauty",
   set: "007",
@@ -41,4 +24,5 @@ export const kingStefanNewFather: CharacterCard = {
     tcgPlayer: 618685,
   },
   classifications: ["Storyborn", "Mentor", "King"],
+  i18n: kingStefanNewFatherI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stitchAlienTroublemakerI18n } from "./200-stitch-alien-troublemaker.i18n";
 
 export const stitchAlienTroublemaker: CharacterCard = {
   id: "gd1",
@@ -7,52 +8,6 @@ export const stitchAlienTroublemaker: CharacterCard = {
   cardType: "character",
   name: "Stitch",
   version: "Alien Troublemaker",
-  i18n: {
-    en: {
-      name: "Stitch",
-      version: "Alien Troublemaker",
-      text: [
-        {
-          title: "I WIN!",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, you may draw a card and gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Stitch",
-      version: "Alien-Unruhestifter",
-      text: [
-        {
-          title: "ICH GEWINNE!",
-          description:
-            "Jedes Mal, wenn dieser Charakter in deinem Zug durch eine Herausforderung einen anderen Charakter verbannt, darfst du 1 Karte ziehen und 1 Legende sammeln.",
-        },
-      ],
-    },
-    fr: {
-      name: "Stitch",
-      version: "Fauteur de trouble extraterrestre",
-      text: [
-        {
-          title: "J'AI GAGNÉ!",
-          description:
-            "Durant votre tour, chaque fois que ce personnage en bannit un autre via un défi, vous pouvez piocher une carte et gagner 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Stitch",
-      version: "Alieno Piantagrane",
-      text: [
-        {
-          title: "HO VINTO!",
-          description:
-            "Durante il tuo turno, ogni volta che questo personaggio esilia un altro personaggio in una sfida, puoi pescare una carta e ottenere 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "008",
@@ -77,23 +32,36 @@ export const stitchAlienTroublemaker: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Alien"],
   abilities: [
     {
-      effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          amount: 1,
-          type: "gain-lore",
-        },
-        type: "optional",
-      },
       id: "aiz-1",
       name: "I WIN!",
       text: "I WIN! During your turn, whenever this character banishes another character in a challenge, you may draw a card and gain 1 lore.",
-      trigger: {
-        event: "banish",
-        on: "OPPONENT_CHARACTERS",
-        timing: "whenever",
-      },
       type: "triggered",
+      trigger: {
+        event: "banish-in-challenge",
+        on: "SELF",
+        timing: "whenever",
+        restrictions: [{ type: "during-turn", whose: "your" }],
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "sequence",
+          steps: [
+            {
+              type: "draw",
+              amount: 1,
+              target: "CONTROLLER",
+            },
+            {
+              type: "gain-lore",
+              amount: 1,
+              target: "CONTROLLER",
+            },
+          ],
+        },
+      },
     },
   ],
+  i18n: stitchAlienTroublemakerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tipoJuniorChipmunkI18n } from "./089-tipo-junior-chipmunk.i18n";
 
 export const tipoJuniorChipmunk: CharacterCard = {
   id: "xfC",
@@ -7,28 +8,6 @@ export const tipoJuniorChipmunk: CharacterCard = {
   cardType: "character",
   name: "Tipo",
   version: "Junior Chipmunk",
-  i18n: {
-    en: {
-      name: "Tipo",
-      version: "Junior Chipmunk",
-      text: "Evasive",
-    },
-    de: {
-      name: "Tipo",
-      version: "Junior Chipmunk",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Tipo",
-      version: "Ragondin Junior",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Tipo",
-      version: "Giovane Marmotta",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Emperors New Groove",
   set: "008",
@@ -53,4 +32,5 @@ export const tipoJuniorChipmunk: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: tipoJuniorChipmunkI18n,
 };

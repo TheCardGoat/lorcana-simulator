@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { idunaAlarmedQueenI18n } from "./113-iduna-alarmed-queen.i18n";
 
 export const idunaAlarmedQueen: CharacterCard = {
   id: "whR",
@@ -7,28 +8,6 @@ export const idunaAlarmedQueen: CharacterCard = {
   cardType: "character",
   name: "Iduna",
   version: "Alarmed Queen",
-  i18n: {
-    en: {
-      name: "Iduna",
-      version: "Alarmed Queen",
-      text: "Evasive",
-    },
-    de: {
-      name: "Iduna",
-      version: "Alarmierte Königin",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Iduna",
-      version: "Reine inquiète",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Iduna",
-      version: "Regina Allarmata",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Frozen",
   set: "011",
@@ -53,4 +32,5 @@ export const idunaAlarmedQueen: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: idunaAlarmedQueenI18n,
 };

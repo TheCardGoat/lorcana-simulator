@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mrSnoopsIneptBusinessmanI18n } from "./011-mr-snoops-inept-businessman.i18n";
 
 export const mrSnoopsIneptBusinessman: CharacterCard = {
   id: "kVc",
@@ -7,24 +8,6 @@ export const mrSnoopsIneptBusinessman: CharacterCard = {
   cardType: "character",
   name: "Mr. Snoops",
   version: "Inept Businessman",
-  i18n: {
-    en: {
-      name: "Mr. Snoops",
-      version: "Inept Businessman",
-    },
-    de: {
-      name: "Mr. Snoops",
-      version: "Ungeschickter Geschäftsmann",
-    },
-    fr: {
-      name: "Mr. Snoops",
-      version: "Homme d'affaires inepte",
-    },
-    it: {
-      name: "Signor Snoops",
-      version: "Imprenditore Inetto",
-    },
-  },
   inkType: ["amber"],
   franchise: "Rescuers",
   set: "003",
@@ -41,4 +24,5 @@ export const mrSnoopsIneptBusinessman: CharacterCard = {
     tcgPlayer: 539064,
   },
   classifications: ["Dreamborn", "Ally"],
+  i18n: mrSnoopsIneptBusinessmanI18n,
 };

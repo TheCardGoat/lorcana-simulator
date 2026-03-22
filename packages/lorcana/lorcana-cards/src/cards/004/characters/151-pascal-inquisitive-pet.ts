@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pascalInquisitivePetI18n } from "./151-pascal-inquisitive-pet.i18n";
 
 export const pascalInquisitivePet: CharacterCard = {
   id: "5d3",
@@ -7,52 +8,6 @@ export const pascalInquisitivePet: CharacterCard = {
   cardType: "character",
   name: "Pascal",
   version: "Inquisitive Pet",
-  i18n: {
-    en: {
-      name: "Pascal",
-      version: "Inquisitive Pet",
-      text: [
-        {
-          title: "COLORFUL TACTICS",
-          description:
-            "When you play this character, look at the top 3 cards of your deck and put them back in any order.",
-        },
-      ],
-    },
-    de: {
-      name: "Pascal",
-      version: "Neugieriges Haustier",
-      text: [
-        {
-          title: "FARBENFROHE TAKTIK",
-          description:
-            "Wenn du diesen Charakter ausspielst, schaue dir die obersten 3 Karten deines Decks an und lege sie in beliebiger Reihenfolge zurück.",
-        },
-      ],
-    },
-    fr: {
-      name: "Pascal",
-      version: "Animal de compagnie curieux",
-      text: [
-        {
-          title: "TACTIQUE COLORÉE",
-          description:
-            "Lorsque vous jouez ce personnage, regardez les 3 premières carte de votre pioche. Remettez-les sur le dessus de votre pioche dans l'ordre de votre choix.",
-        },
-      ],
-    },
-    it: {
-      name: "Pascal",
-      version: "Animaletto Curioso",
-      text: [
-        {
-          title: "TATTICHE COLORATE",
-          description:
-            "Quando giochi questo personaggio, guarda le prime 3 carte del tuo mazzo e rimettile in cima al mazzo in qualsiasi ordine.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Tangled",
   set: "004",
@@ -100,4 +55,5 @@ export const pascalInquisitivePet: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: pascalInquisitivePetI18n,
 };

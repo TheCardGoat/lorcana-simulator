@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kingCandySovereignOfSugarI18n } from "./137-king-candy-sovereign-of-sugar.i18n";
 
 export const kingCandySovereignOfSugar: CharacterCard = {
   id: "M35",
@@ -7,24 +8,6 @@ export const kingCandySovereignOfSugar: CharacterCard = {
   cardType: "character",
   name: "King Candy",
   version: "Sovereign of Sugar",
-  i18n: {
-    en: {
-      name: "King Candy",
-      version: "Sovereign of Sugar",
-    },
-    de: {
-      name: "King Candy",
-      version: "Zuckerherrscher",
-    },
-    fr: {
-      name: "Sa Sucrerie",
-      version: "Souverain du Saccharose",
-    },
-    it: {
-      name: "Re Candito",
-      version: "Sovrano dello Zucchero",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -41,4 +24,5 @@ export const kingCandySovereignOfSugar: CharacterCard = {
     tcgPlayer: 559789,
   },
   classifications: ["Storyborn", "Villain", "King", "Racer"],
+  i18n: kingCandySovereignOfSugarI18n,
 };

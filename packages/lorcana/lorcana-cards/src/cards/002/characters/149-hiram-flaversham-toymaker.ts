@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hiramFlavershamToymakerI18n } from "./149-hiram-flaversham-toymaker.i18n";
 
 export const hiramFlavershamToymaker: CharacterCard = {
   id: "LsX",
@@ -7,52 +8,6 @@ export const hiramFlavershamToymaker: CharacterCard = {
   cardType: "character",
   name: "Hiram Flaversham",
   version: "Toymaker",
-  i18n: {
-    en: {
-      name: "Hiram Flaversham",
-      version: "Toymaker",
-      text: [
-        {
-          title: "ARTIFICER",
-          description:
-            "When you play this character and whenever he quests, you may banish one of your items to draw 2 cards.",
-        },
-      ],
-    },
-    de: {
-      name: "Xaver Hampelmann",
-      version: "Spielzeugmacher",
-      text: [
-        {
-          title: "HANDWERKER",
-          description:
-            "Wenn du diesen Charakter ausspielst und jedes Mal, wenn er erkundet, darfst du einen deiner Gegenstände verbannen, um 2 Karten zu ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Flaversham",
-      version: "Fabricant de jouets",
-      text: [
-        {
-          title: "MAÎTRE ARTISAN",
-          description:
-            "Lorsque vous jouez ce personnage ou lorsque vous l'envoyez à l'aventure, vous pouvez bannir l'un de vos objets pour piocher 2 cartes.",
-        },
-      ],
-    },
-    it: {
-      name: "Hiram Flaversham",
-      version: "Toymaker",
-      text: [
-        {
-          title: "ARTIFICER",
-          description:
-            "When you play this character and whenever he quests, you may banish one of your items to draw 2 cards.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Great Mouse Detective",
   set: "002",
@@ -75,7 +30,6 @@ export const hiramFlavershamToymaker: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Inventor"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -103,4 +57,6 @@ export const hiramFlavershamToymaker: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: hiramFlavershamToymakerI18n,
 };

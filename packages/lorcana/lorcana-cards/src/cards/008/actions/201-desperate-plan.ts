@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { desperatePlanI18n } from "./201-desperate-plan.i18n";
 
 export const desperatePlan: ActionCard = {
   id: "uXE",
@@ -6,24 +7,6 @@ export const desperatePlan: ActionCard = {
   reprints: ["set8-201"],
   cardType: "action",
   name: "Desperate Plan",
-  i18n: {
-    en: {
-      name: "Desperate Plan",
-      text: "If you have no cards in your hand, draw until you have 3 cards in your hand. Otherwise, choose and discard any number of cards, then draw that many cards.",
-    },
-    de: {
-      name: "Verzweifelter Plan",
-      text: "Falls du keine Karten auf der Hand hast, ziehe so viele Karten, bis du 3 Karten auf deiner Hand hast. Andernfalls, wähle eine beliebige Anzahl an Karten von deiner Hand aus und wirf sie ab, um dieselbe Anzahl an Karten zu ziehen.",
-    },
-    fr: {
-      name: "Plan désespéré",
-      text: "Si vous n'avez aucune carte en main, piochez jusqu'à avoir 3 cartes en main. Sinon, défaussez n'importe quel nombre de cartes et piochez-en autant.",
-    },
-    it: {
-      name: "Piano Disperato",
-      text: "Se non hai carte in mano, pesca finché non hai 3 carte in mano. Altrimenti, scegli e scarta un qualsiasi numero di carte, poi pesca altrettante carte.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Raya and the Last Dragon",
   set: "008",
@@ -73,4 +56,5 @@ export const desperatePlan: ActionCard = {
       },
     },
   ],
+  i18n: desperatePlanI18n,
 };

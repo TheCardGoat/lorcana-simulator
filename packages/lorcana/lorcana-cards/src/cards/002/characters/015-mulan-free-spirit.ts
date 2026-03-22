@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mulanFreeSpiritI18n } from "./015-mulan-free-spirit.i18n";
 
 export const mulanFreeSpirit: CharacterCard = {
   id: "8GL",
@@ -7,28 +8,6 @@ export const mulanFreeSpirit: CharacterCard = {
   cardType: "character",
   name: "Mulan",
   version: "Free Spirit",
-  i18n: {
-    en: {
-      name: "Mulan",
-      version: "Free Spirit",
-      text: "Support",
-    },
-    de: {
-      name: "Mulan",
-      version: "Freigeist",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Mulan",
-      version: "Esprit libre",
-      text: "Soutien",
-    },
-    it: {
-      name: "Mulan",
-      version: "Spirito Libero",
-      text: "Aiutante",
-    },
-  },
   inkType: ["amber"],
   franchise: "Mulan",
   set: "002",
@@ -53,4 +32,5 @@ export const mulanFreeSpirit: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: mulanFreeSpiritI18n,
 };

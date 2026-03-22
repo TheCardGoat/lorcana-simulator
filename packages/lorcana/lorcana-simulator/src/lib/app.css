@@ -67,6 +67,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --lorcana-font-fallback-bogle: "Bogle", "Trebuchet MS", "Segoe UI", sans-serif;
   --lorcana-font-card-name:
     "The Bystander Collection Sans Medium", var(--lorcana-font-fallback-bogle);
@@ -136,6 +137,68 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+}
+
+html,
+body {
+  height: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  background: #020617;
+}
+
+body {
+  overscroll-behavior-y: auto;
+}
+
+html[data-immersive-app="active"],
+body[data-immersive-app="active"] {
+  height: 100dvh;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 28%),
+    linear-gradient(180deg, #020617 0%, #020617 46%, #030712 100%);
+}
+
+body[data-immersive-app="active"] {
+  -webkit-touch-callout: none;
+}
+
+body[data-immersive-app="active"] button,
+body[data-immersive-app="active"] [role="button"],
+body[data-immersive-app="active"] a,
+body[data-immersive-app="active"] input,
+body[data-immersive-app="active"] select,
+body[data-immersive-app="active"] textarea {
+  touch-action: manipulation;
+}
+
+body[data-immersive-app="active"] main {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+}
+
+.immersive-app-shell {
+  box-sizing: border-box;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  overflow: hidden;
+}
+
+.immersive-app-shell button,
+.immersive-app-shell [role="button"],
+.immersive-app-shell nav,
+.immersive-app-shell [data-board-anchor-id] {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .dark,

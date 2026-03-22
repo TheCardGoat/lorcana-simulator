@@ -2,21 +2,21 @@ import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { halfHexwellCrownEpic } from "./223-half-hexwell-crown-epic";
 
-const epicDraw = createMockCharacter({
+const crownDraw = createMockCharacter({
   id: "half-crown-epic-draw",
-  name: "Epic Draw",
+  name: "Half Crown Epic Draw",
   cost: 1,
 });
 
 const discardCostCard = createMockCharacter({
   id: "half-crown-epic-discard",
-  name: "Epic Discard",
+  name: "Epic Discard Cost Card",
   cost: 2,
 });
 
 const exertTarget = createMockCharacter({
   id: "half-crown-epic-target",
-  name: "Epic Target",
+  name: "Epic Exert Target",
   cost: 3,
 });
 
@@ -24,7 +24,7 @@ describe("Half Hexwell Crown - Epic", () => {
   it("draws a card with AN UNEXPECTED FIND", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
-        deck: [epicDraw],
+        deck: [crownDraw],
         inkwell: 2,
         play: [halfHexwellCrownEpic],
       },
@@ -39,7 +39,7 @@ describe("Half Hexwell Crown - Epic", () => {
       }),
     ).toBeSuccessfulCommand();
 
-    expect(testEngine.asPlayerOne().getCardZone(epicDraw)).toBe("hand");
+    expect(testEngine.asPlayerOne().getCardZone(crownDraw)).toBe("hand");
   });
 
   it("discards a chosen card to exert the chosen character with A PERILOUS POWER", () => {

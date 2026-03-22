@@ -1,24 +1,40 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { fredMascotByDay } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Fred - Mascot by Day", () => {
-//   It.skip("**HOW COOL IS THAT** Whenever this character is challenged, gain 2 lore.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: fredMascotByDay.cost,
-//       Play: [fredMascotByDay],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(fredMascotByDay);
-//
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { fredMascotByDay } from "./075-fred-mascot-by-day";
+
+const challenger = createMockCharacter({
+  id: "fred-mascot-challenger",
+  name: "Challenger",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Fred - Mascot by Day", () => {
+  it("gains 2 lore when he is challenged", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: challenger, isDrying: false }],
+        deck: 1,
+      },
+      {
+        play: [{ card: fredMascotByDay, exerted: true }],
+        deck: 1,
+      },
+    );
+
+    expect(testEngine.asPlayerTwo().getLore(PLAYER_TWO)).toBe(0);
+    expect(testEngine.asPlayerOne().challenge(challenger, fredMascotByDay)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
+    expect(bagEffect).toBeDefined();
+    expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getLore(PLAYER_TWO)).toBe(2);
+  });
+});

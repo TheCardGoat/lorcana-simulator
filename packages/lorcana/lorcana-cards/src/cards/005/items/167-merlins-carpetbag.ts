@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { merlinsCarpetbagI18n } from "./167-merlins-carpetbag.i18n";
 
 export const merlinsCarpetbag: ItemCard = {
   id: "0a0",
@@ -6,45 +7,6 @@ export const merlinsCarpetbag: ItemCard = {
   reprints: ["set5-167"],
   cardType: "item",
   name: "Merlin's Carpetbag",
-  i18n: {
-    en: {
-      name: "Merlin's Carpetbag",
-      text: [
-        {
-          title: "HOCKETY POCKETY",
-          description: "{E}, 1 {I} — Return an item card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Merlins Reisetasche",
-      text: [
-        {
-          title: "HOCKETI POCKETI, 1",
-          description: "— Nimm 1 Gegenstandskarte aus deinem Ablagestapel zurück auf deine Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Sac de voyage de Merlin",
-      text: [
-        {
-          title: "HOCKETY POCKETY, 1",
-          description:
-            "— Choisissez une carte Objet de votre défausse et placez-la dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Borsa da Viaggio di Merlino",
-      text: [
-        {
-          title: "HOCKETY POCKETY, 1",
-          description: "— Riprendi in mano una carta oggetto dai tuoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -79,4 +41,5 @@ export const merlinsCarpetbag: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: merlinsCarpetbagI18n,
 };

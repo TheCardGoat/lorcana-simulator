@@ -1,0 +1,72 @@
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { dukeWeaseltonSurlyCrook } from "./182-duke-weaselton-surly-crook";
+
+const cheapCharacter = createMockCharacter({
+  id: "duke-cheap-char",
+  name: "Cheap Character",
+  strength: 1,
+  willpower: 1,
+  cost: 2,
+});
+
+describe("Duke Weaselton - Surly Crook", () => {
+  it("triggers APPREHENDED when banished, creating a bag effect", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [dukeWeaseltonSurlyCrook],
+      hand: [cheapCharacter],
+      deck: 5,
+    });
+
+    // Banish Duke via lethal damage
+    testEngine.asServer().manualSetDamage(dukeWeaseltonSurlyCrook, 3);
+
+    expect(testEngine.asPlayerOne().getCardZone(dukeWeaseltonSurlyCrook)).toBe("discard");
+
+    // The triggered ability should create a bag effect for the optional play
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+  });
+
+  it("APPREHENDED - plays cheap character for free when banished", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [dukeWeaseltonSurlyCrook],
+      hand: [cheapCharacter],
+      deck: 5,
+    });
+
+    testEngine.asServer().manualSetDamage(dukeWeaseltonSurlyCrook, 3);
+
+    expect(testEngine.asPlayerOne().getCardZone(dukeWeaseltonSurlyCrook)).toBe("discard");
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: true,
+        targets: [cheapCharacter],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("play");
+  });
+
+  it("allows declining the optional play when banished", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [dukeWeaseltonSurlyCrook],
+      hand: [cheapCharacter],
+      deck: 5,
+    });
+
+    testEngine.asServer().manualSetDamage(dukeWeaseltonSurlyCrook, 3);
+
+    expect(testEngine.asPlayerOne().getCardZone(dukeWeaseltonSurlyCrook)).toBe("discard");
+
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: false,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("hand");
+  });
+});

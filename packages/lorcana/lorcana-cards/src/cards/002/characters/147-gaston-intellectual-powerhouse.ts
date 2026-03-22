@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gastonIntellectualPowerhouseI18n } from "./147-gaston-intellectual-powerhouse.i18n";
 
 export const gastonIntellectualPowerhouse: CharacterCard = {
   id: "E5w",
@@ -7,37 +8,6 @@ export const gastonIntellectualPowerhouse: CharacterCard = {
   cardType: "character",
   name: "Gaston",
   version: "Intellectual Powerhouse",
-  i18n: {
-    en: {
-      name: "Gaston",
-      version: "Intellectual Powerhouse",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "DEVELOPED BRAIN",
-          description:
-            "When you play this character, look at the top 3 cards of your deck. You may put one into your hand. Put the rest on the bottom of your deck in any order.",
-        },
-      ],
-    },
-    de: {
-      name: "Gaston",
-      version: "Intellektuelles Kraftpaket",
-      text: "Gestaltwandel 4 ENTWICKELTES GEHIRN Wenn du diesen Charakter ausspielst, darfst du dir die obersten 3 Karten deines Decks anschauen. Du darfst 1 davon auf deine Hand nehmen. Lege den Rest in beliebiger Reihenfolge unter dein Deck.",
-    },
-    fr: {
-      name: "Gaston",
-      version: "Fort du cerveau",
-      text: "Alter 4 ESPRIT DÉVELOPPÉ Lorsque vous jouez ce personnage, regardez les 3 premières cartes de votre pioche, vous pouvez ajouter l'une d'elles à votre main. Remettez le reste sous votre pioche, dans l'ordre de votre choix.",
-    },
-    it: {
-      name: "Gaston",
-      version: "Concentrato di Intelligenza",
-      text: "Trasformazione 4 CERVELLO SVILUPPATO Quando giochi questo personaggio, guarda le prime 3 carte del tuo mazzo. Puoi aggiungerne una alla tua mano. Metti il resto in fondo al tuo mazzo in qualsiasi ordine.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -63,7 +33,6 @@ export const gastonIntellectualPowerhouse: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -76,12 +45,20 @@ export const gastonIntellectualPowerhouse: CharacterCard = {
     },
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: "CHOSEN_CHARACTER",
-          type: "put-on-bottom",
-        },
-        type: "optional",
+        type: "scry",
+        amount: 3,
+        destinations: [
+          {
+            zone: "hand",
+            min: 0,
+            max: 1,
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+            ordering: "player-choice",
+          },
+        ],
       },
       id: "14c-2",
       name: "DEVELOPED BRAIN",
@@ -94,4 +71,5 @@ export const gastonIntellectualPowerhouse: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: gastonIntellectualPowerhouseI18n,
 };

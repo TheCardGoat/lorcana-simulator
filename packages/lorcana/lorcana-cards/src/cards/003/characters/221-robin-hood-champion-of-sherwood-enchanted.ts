@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { robinHoodChampionOfSherwoodEnchantedI18n } from "./221-robin-hood-champion-of-sherwood-enchanted.i18n";
 
 export const robinHoodChampionOfSherwoodEnchanted: CharacterCard = {
   id: "FBp",
@@ -7,41 +8,6 @@ export const robinHoodChampionOfSherwoodEnchanted: CharacterCard = {
   cardType: "character",
   name: "Robin Hood",
   version: "Champion of Sherwood",
-  i18n: {
-    en: {
-      name: "Robin Hood",
-      version: "Champion of Sherwood",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "SKILLED COMBATANT",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, gain 2 lore.",
-        },
-        {
-          title: "THE GOOD OF OTHERS",
-          description: "When this character is banished in a challenge, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Robin Hood",
-      version: "Champion von Sherwood",
-      text: "Gestaltwandel 3 ERFAHRENER KÄMPFER Jedes Mal, wenn dieser Charakter in deinem Zug durch eine Herausforderung einen anderen Charakter verbannt, sammelst du 2 Legenden. DAS WOHL DER ANDEREN Wenn dieser Charakter durch eine Herausforderung verbannt wird, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Robin des Bois",
-      version: "Champion de Sherwood",
-      text: "Alter 3 COMBATTANT ÉMÉRITE Chaque fois que ce personnage en bannit un autre via un défi durant votre tour, gagnez 2 éclats de Lore. POUR LE BIEN D'AUTRUI Si ce personnage est banni via un défi, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Robin Hood",
-      version: "Campione di Sherwood",
-      text: "Trasformazione 3 COMBATTENTE ESPERTO Durante il tuo turno, ogni volta che questo personaggio esilia un altro personaggio in una sfida, ottieni 2 leggenda. PER IL BENE DEGLI ALTRI Quando questo personaggio viene esiliato in una sfida, puoi pescare una carta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Robin Hood",
   set: "003",
@@ -118,4 +84,5 @@ export const robinHoodChampionOfSherwoodEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: robinHoodChampionOfSherwoodEnchantedI18n,
 };

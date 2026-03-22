@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rafikiMysteriousSageI18n } from "./054-rafiki-mysterious-sage.i18n";
 
 export const rafikiMysteriousSage: CharacterCard = {
   id: "HXN",
@@ -7,33 +8,6 @@ export const rafikiMysteriousSage: CharacterCard = {
   cardType: "character",
   name: "Rafiki",
   version: "Mysterious Sage",
-  i18n: {
-    en: {
-      name: "Rafiki",
-      version: "Mysterious Sage",
-      text: "Rush",
-    },
-    de: {
-      name: "Rafiki",
-      version: "Geheimnisvoller Weiser",
-      text: "Rasant",
-    },
-    fr: {
-      name: "RAFIKI",
-      version: "Mystérieux sage",
-      text: "Charge",
-    },
-    it: {
-      name: "Rafiki",
-      version: "Mysterious Sage",
-      text: [
-        {
-          title: "Rush",
-          description: "(This character can challenge the turn they're played.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Lion King",
   set: "001",
@@ -44,7 +18,6 @@ export const rafikiMysteriousSage: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_3939d10a183b4eb48b843a68c74ed87b",
     tcgPlayer: 501405,
@@ -59,4 +32,5 @@ export const rafikiMysteriousSage: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: rafikiMysteriousSageI18n,
 };

@@ -7,6 +7,7 @@ import { downInNewOrleans } from "./177-down-in-new-orleans";
 import { lightTheFuse } from "./149-light-the-fuse";
 import { wrongLever } from "./116-wrong-lever";
 import { desperatePlan } from "./201-desperate-plan";
+import { kuzcoImpulsiveLlama } from "../characters/067-kuzco-impulsive-llama";
 
 describe("Down in New Orleans", () => {
   it("plays one eligible card for free and puts the rest on the bottom in the chosen order", () => {
@@ -52,5 +53,26 @@ describe("Down in New Orleans", () => {
       wrongLever.id,
       lightTheFuse.id,
     ]);
+  });
+
+  it("rejects placing a cost-7 character into the play destination (cost filter enforced)", () => {
+    // kuzcoImpulsiveLlama costs 7 — exceeds the cost 6 threshold
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [downInNewOrleans],
+      inkwell: downInNewOrleans.cost,
+      deck: [kuzcoImpulsiveLlama, fairyGodmothersWand, duckburgFunsosFunzone],
+    });
+
+    // Attempt to illegally play a cost-7 character for free
+    testEngine
+      .asPlayerOne()
+      .playCardWithDestinations(
+        downInNewOrleans,
+        { zone: "play", cards: kuzcoImpulsiveLlama },
+        { zone: "deck-bottom", cards: [fairyGodmothersWand, duckburgFunsosFunzone] },
+      );
+
+    // The command was rejected (server-side); kuzco must still be in the deck (not in play)
+    expect(testEngine.asPlayerOne().getCardZone(kuzcoImpulsiveLlama)).not.toBe("play");
   });
 });

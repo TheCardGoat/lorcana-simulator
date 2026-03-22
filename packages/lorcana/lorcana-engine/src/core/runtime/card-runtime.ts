@@ -11,75 +11,38 @@ type CardInstanceId = string;
 
 export type { BaseCardDefinition, BaseCardMeta } from "./card-contracts";
 
-export type StaticCard<TCardDefinition extends BaseCardDefinition = BaseCardDefinition> =
-  TCardDefinition;
+export type StaticCard = BaseCardDefinition;
 
-export interface RuntimeCardBase<TCardMeta extends BaseCardMeta = BaseCardMeta> {
+export interface RuntimeCardBase {
   instanceId: string;
   definitionId: string;
   ownerID: string;
   controllerID: string;
   zoneID?: string;
   zoneIndex?: number;
-  meta: TCardMeta;
+  meta: BaseCardMeta;
 }
 
-export interface RuntimeCardWithDefinitionBase<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-> extends RuntimeCardBase<TCardMeta> {
-  definition: StaticCard<TCardDefinition>;
+export interface RuntimeCardWithDefinitionBase extends RuntimeCardBase {
+  definition: StaticCard;
 }
 
-export type RuntimeCard<
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-> = RuntimeCardBase<TCardMeta> & Omit<TCardDerived, keyof RuntimeCardBase<TCardMeta>>;
+export type RuntimeCard = RuntimeCardBase & Omit<{}, keyof RuntimeCardBase>;
 
-export type RuntimeCardWithDefinition<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-> = RuntimeCardWithDefinitionBase<TCardDefinition, TCardMeta> &
-  Omit<TCardDerived, keyof RuntimeCardWithDefinitionBase<TCardDefinition, TCardMeta>>;
+export type RuntimeCardWithDefinition = RuntimeCardWithDefinitionBase &
+  Omit<{}, keyof RuntimeCardWithDefinitionBase>;
 
-export type AnyRuntimeCardWithDefinition = RuntimeCardWithDefinitionBase<
-  BaseCardDefinition,
-  BaseCardMeta
->;
+export type AnyRuntimeCardWithDefinition = RuntimeCardWithDefinitionBase;
 
-export type RuntimeCardDefinitionOf<TRuntimeCard extends AnyRuntimeCardWithDefinition> =
-  TRuntimeCard["definition"];
-
-export type RuntimeCardMetaOf<TRuntimeCard extends AnyRuntimeCardWithDefinition> =
-  TRuntimeCard["meta"];
-
-export type RuntimeCardDerivedOf<TRuntimeCard extends AnyRuntimeCardWithDefinition> = Omit<
-  TRuntimeCard,
-  keyof RuntimeCardWithDefinitionBase<
-    RuntimeCardDefinitionOf<TRuntimeCard>,
-    RuntimeCardMetaOf<TRuntimeCard>
-  >
->;
-
-export interface RuntimeCardDeriveContext<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-> {
+export interface RuntimeCardDeriveContext {
   cardId: CardInstanceId;
-  card: RuntimeCardWithDefinitionBase<TCardDefinition, TCardMeta>;
+  card: RuntimeCardWithDefinitionBase;
   actorPlayerId?: string;
-  state: MatchState<G>;
-  staticResources: MatchStaticResources<TCardDefinition>;
+  state: MatchState;
+  staticResources: MatchStaticResources;
 }
 
-export type RuntimeCardDeriver<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-> = (context: RuntimeCardDeriveContext<G, TCardDefinition, TCardMeta>) => TCardDerived;
+export type RuntimeCardDeriver = (context: RuntimeCardDeriveContext) => Record<string, unknown>;
 
 export type RuntimeCardTargetQuery = {
   owner?: TargetDSL["owner"];
@@ -92,55 +55,35 @@ export type RuntimeCardTargetQuery = {
   sourceCardId?: string;
 } & Record<string, unknown>;
 
-export interface CardQueryAPI<
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-> {
-  get(
-    cardId: string,
-  ): RuntimeCardWithDefinition<TCardDefinition, TCardMeta, TCardDerived> | undefined;
-  require(cardId: string): RuntimeCardWithDefinition<TCardDefinition, TCardMeta, TCardDerived>;
-  getDefinition(cardId: string): TCardDefinition | undefined;
-  getDefinitionById(definitionId: string): TCardDefinition | undefined;
-  getMeta(cardId: string): TCardMeta | undefined;
-  inZone(zoneId: string): RuntimeCardWithDefinition<TCardDefinition, TCardMeta, TCardDerived>[];
-  queryTargetDsl?<TResult = RuntimeCardWithDefinition<TCardDefinition, TCardMeta, TCardDerived>>(
+export interface CardQueryAPI {
+  get(cardId: string): RuntimeCardWithDefinition | undefined;
+  require(cardId: string): RuntimeCardWithDefinition;
+  getDefinition(cardId: string): BaseCardDefinition | undefined;
+  getDefinitionById(definitionId: string): BaseCardDefinition | undefined;
+  getMeta(cardId: string): BaseCardMeta | undefined;
+  inZone(zoneId: string): RuntimeCardWithDefinition[];
+  queryTargetDsl?<TResult = RuntimeCardWithDefinition>(
     targetDsl: RuntimeCardTargetQuery,
-    projector?: (
-      card: RuntimeCardWithDefinition<TCardDefinition, TCardMeta, TCardDerived>,
-    ) => TResult,
+    projector?: (card: RuntimeCardWithDefinition) => TResult,
   ): TResult[];
-  queryRuntime<TResult = RuntimeCardWithDefinition<TCardDefinition, TCardMeta, TCardDerived>>(
+  queryRuntime<TResult = RuntimeCardWithDefinition>(
     targetDsl: RuntimeCardTargetQuery,
-    projector?: (
-      card: RuntimeCardWithDefinition<TCardDefinition, TCardMeta, TCardDerived>,
-    ) => TResult,
+    projector?: (card: RuntimeCardWithDefinition) => TResult,
   ): TResult[];
 }
 
-interface CardQueryOptions<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
-> {
+interface CardQueryOptions {
   actorPlayerId?: string;
-  deriveRuntimeCard: RuntimeCardDeriver<G, TCardDefinition, TCardMeta, TCardDerived>;
+  deriveRuntimeCard: RuntimeCardDeriver;
 }
 
-export function createCardQueryAPI<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardMeta extends BaseCardMeta = BaseCardMeta,
-  TCardDerived extends object = {},
->(
-  state: MatchState<G>,
-  staticResources: MatchStaticResources<TCardDefinition>,
-  options: CardQueryOptions<G, TCardDefinition, TCardMeta, TCardDerived>,
-): CardQueryAPI<TCardDefinition, TCardMeta, TCardDerived> {
-  type RuntimeView = RuntimeCardWithDefinition<TCardDefinition, TCardMeta, TCardDerived>;
-  type RuntimeBaseView = RuntimeCardWithDefinitionBase<TCardDefinition, TCardMeta>;
+export function createCardQueryAPI(
+  state: MatchState,
+  staticResources: MatchStaticResources,
+  options: CardQueryOptions,
+): CardQueryAPI {
+  type RuntimeView = RuntimeCardWithDefinition;
+  type RuntimeBaseView = RuntimeCardWithDefinitionBase;
 
   const zones = state.ctx.zones;
   const actorPlayerId = options?.actorPlayerId;
@@ -162,7 +105,7 @@ export function createCardQueryAPI<
     }
 
     const indexEntry = zones.private.cardIndex[cardId];
-    const meta = (zones.private.cardMeta[cardId] ?? {}) as TCardMeta;
+    const meta = (zones.private.cardMeta[cardId] ?? {}) as BaseCardMeta;
 
     const baseCard: RuntimeBaseView = {
       instanceId: cardId,
@@ -356,7 +299,7 @@ export function createCardQueryAPI<
       return card;
     },
 
-    getDefinition(cardId: CardInstanceId): TCardDefinition | undefined {
+    getDefinition(cardId: CardInstanceId): BaseCardDefinition | undefined {
       const instance = staticResources.instances.get(cardId);
       if (!instance) {
         return undefined;
@@ -364,12 +307,12 @@ export function createCardQueryAPI<
       return staticResources.cards.get(instance.definitionId);
     },
 
-    getDefinitionById(definitionId: CardPublicId): TCardDefinition | undefined {
+    getDefinitionById(definitionId: CardPublicId): BaseCardDefinition | undefined {
       return staticResources.cards.get(definitionId);
     },
 
-    getMeta(cardId: string): TCardMeta | undefined {
-      return zones.private.cardMeta[cardId] as TCardMeta | undefined;
+    getMeta(cardId: string): BaseCardMeta | undefined {
+      return zones.private.cardMeta[cardId] as BaseCardMeta | undefined;
     },
 
     inZone(zoneId: string): RuntimeView[] {

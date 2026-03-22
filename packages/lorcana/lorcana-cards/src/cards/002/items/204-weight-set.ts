@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { weightSetI18n } from "./204-weight-set.i18n";
 
 export const weightSet: ItemCard = {
   id: "X1T",
@@ -6,48 +7,6 @@ export const weightSet: ItemCard = {
   reprints: ["set2-204"],
   cardType: "item",
   name: "Weight Set",
-  i18n: {
-    en: {
-      name: "Weight Set",
-      text: [
-        {
-          title: "TRAINING",
-          description:
-            "Whenever you play a character with 4 {S} or more, you may pay 1 {I} to draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Hantel",
-      text: [
-        {
-          title: "KRAFTTRAINING",
-          description:
-            "Jedes Mal, wenn du einen Charakter mit 4 oder mehr ausspielst, darfst du 1 bezahlen, um 1 Karte zu ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Haltères",
-      text: [
-        {
-          title: "ENTRAINEMENT",
-          description:
-            "Chaque fois que vous jouez un personnage ayant au moins 4, vous pouvez payer 1 pour piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Weight Set",
-      text: [
-        {
-          title: "TRAINING",
-          description:
-            "Whenever you play a character with 4 or more, you may pay 1 to draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Hercules",
   set: "002",
@@ -101,4 +60,5 @@ export const weightSet: ItemCard = {
       type: "triggered",
     },
   ],
+  i18n: weightSetI18n,
 };

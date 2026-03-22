@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { circleOfLifeI18n } from "./026-circle-of-life.i18n";
 
 export const circleOfLife: ActionCard = {
   id: "SRg",
@@ -6,41 +7,6 @@ export const circleOfLife: ActionCard = {
   reprints: ["set9-026"],
   cardType: "action",
   name: "Circle of Life",
-  i18n: {
-    en: {
-      name: "Circle of Life",
-      text: [
-        {
-          title: "Sing Together 8",
-          description:
-            "(Any number of your or your teammates' characters with total cost 8 or more may {E} to sing this song for free.) Play a character from your discard for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Der ewige Kreis",
-      text: "Gemeinsam singen 8 (Du kannst beliebig viele deiner Charaktere oder Charaktere deiner Teammitglieder, die zusammen 8 oder mehr kosten,, damit sie dieses Lied kostenlos singen.) Spiele eine Charakterkarte kostenlos aus deinem Ablagestapel aus.",
-    },
-    fr: {
-      name: "L'histoire de la vie",
-      text: [
-        {
-          title: "À",
-          description: "l'unisson 8 Jouez gratuitement un personnage de votre défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Il Cerchio della Vita",
-      text: [
-        {
-          title: "Cantare Insieme 8",
-          description:
-            "(Un qualsiasi numero di personaggi tuoi o dei tuoi compagni di squadra con costo totale 8 o superiore può per cantare questa canzone gratis.) Gioca un personaggio dai tuoi scarti gratis.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lion King",
   set: "009",
@@ -73,4 +39,5 @@ export const circleOfLife: ActionCard = {
       type: "action",
     },
   ],
+  i18n: circleOfLifeI18n,
 };

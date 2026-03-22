@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { vanellopeVonSchweetzSugarRushPrincessI18n } from "./019-vanellope-von-schweetz-sugar-rush-princess.i18n";
 
 export const vanellopeVonSchweetzSugarRushPrincess: CharacterCard = {
   id: "5Sq",
@@ -7,55 +8,6 @@ export const vanellopeVonSchweetzSugarRushPrincess: CharacterCard = {
   cardType: "character",
   name: "Vanellope von Schweetz",
   version: "Sugar Rush Princess",
-  i18n: {
-    en: {
-      name: "Vanellope von Schweetz",
-      version: "Sugar Rush Princess",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "I HEREBY DECREE",
-          description:
-            "Whenever you play another Princess character, all opposing characters get -1 {S} until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Vanellope von Schweetz",
-      version: "Sugar Rush Princess",
-      text: [
-        {
-          title: "Shift 2",
-          description:
-            "(You may pay 2 to play this on top of one of your characters named Vanellope von Schweetz.) I HEREBY DECREE Whenever you play another Princess character, all opposing characters get -1 until the start of your next turn.",
-        },
-      ],
-    },
-    fr: {
-      name: "Vanellope von Schweetz",
-      version: "Sugar Rush Princess",
-      text: [
-        {
-          title: "Shift 2",
-          description:
-            "(You may pay 2 to play this on top of one of your characters named Vanellope von Schweetz.) I HEREBY DECREE Whenever you play another Princess character, all opposing characters get -1 until the start of your next turn.",
-        },
-      ],
-    },
-    it: {
-      name: "Vanellope von Schweetz",
-      version: "Sugar Rush Princess",
-      text: [
-        {
-          title: "Shift 2",
-          description:
-            "(You may pay 2 to play this on top of one of your characters named Vanellope von Schweetz.) I HEREBY DECREE Whenever you play another Princess character, all opposing characters get -1 until the start of your next turn.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -93,9 +45,10 @@ export const vanellopeVonSchweetzSugarRushPrincess: CharacterCard = {
     },
     {
       effect: {
+        duration: "until-start-of-next-turn",
         modifier: -1,
         stat: "strength",
-        target: "CHOSEN_CHARACTER",
+        target: "ALL_OPPOSING_CHARACTERS",
         type: "modify-stat",
       },
       id: "s65-2",
@@ -103,10 +56,16 @@ export const vanellopeVonSchweetzSugarRushPrincess: CharacterCard = {
       text: "I HEREBY DECREE Whenever you play another Princess character, all opposing characters get -1 {S} until the start of your next turn.",
       trigger: {
         event: "play",
-        on: "SELF",
-        timing: "when",
+        on: {
+          controller: "you",
+          cardType: "character",
+          classification: "Princess",
+          excludeSelf: true,
+        },
+        timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: vanellopeVonSchweetzSugarRushPrincessI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rafikiMysticalFighterI18n } from "./036-rafiki-mystical-fighter.i18n";
 
 export const rafikiMysticalFighter: CharacterCard = {
   id: "MwD",
@@ -7,37 +8,6 @@ export const rafikiMysticalFighter: CharacterCard = {
   cardType: "character",
   name: "Rafiki",
   version: "Mystical Fighter",
-  i18n: {
-    en: {
-      name: "Rafiki",
-      version: "Mystical Fighter",
-      text: [
-        {
-          title: "Challenger +3",
-        },
-        {
-          title: "ANCIENT SKILLS",
-          description:
-            "Whenever he challenges a Hyena character, this character takes no damage from the challenge.",
-        },
-      ],
-    },
-    de: {
-      name: "Rafiki",
-      version: "Mystischer Kämpfer",
-      text: "Herausfordern +3 URALTE KENNTNISSE Dieser Charakter erhält keinen Schaden durch Herausforderungen, während er eine Hyäne herausfordert.",
-    },
-    fr: {
-      name: "Rafiki",
-      version: "Combattant mystique",
-      text: "Offensif +3 TALENT ANCESTRAL Lorsque ce personnage défie un personnage Hyène, il ne subit aucun dommage pour ce défi.",
-    },
-    it: {
-      name: "Rafiki",
-      version: "Combattente Mistico",
-      text: "Sfidante +3 ANTICHE ABILITÀ Ogni volta che sfida un personaggio Iena, questo personaggio non subisce danni dalla sfida.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Lion King",
   set: "009",
@@ -101,4 +71,5 @@ export const rafikiMysticalFighter: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: rafikiMysticalFighterI18n,
 };

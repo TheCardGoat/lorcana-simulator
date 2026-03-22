@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tinkerBellFastFlierI18n } from "./043-tinker-bell-fast-flier.i18n";
 
 export const tinkerBellFastFlier: CharacterCard = {
   id: "kEF",
@@ -7,28 +8,6 @@ export const tinkerBellFastFlier: CharacterCard = {
   cardType: "character",
   name: "Tinker Bell",
   version: "Fast Flier",
-  i18n: {
-    en: {
-      name: "Tinker Bell",
-      version: "Fast Flier",
-      text: "Evasive",
-    },
-    de: {
-      name: "Naseweis",
-      version: "Flinke Fliegerin",
-      text: "Wendig",
-    },
-    fr: {
-      name: "La Fée Clochette",
-      version: "Volant à toute allure",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Trilli",
-      version: "Ali Rapide",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Peter Pan",
   set: "006",
@@ -53,4 +32,5 @@ export const tinkerBellFastFlier: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: tinkerBellFastFlierI18n,
 };

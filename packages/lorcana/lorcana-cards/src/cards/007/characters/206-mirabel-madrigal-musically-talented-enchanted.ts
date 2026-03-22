@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mirabelMadrigalMusicallyTalentedEnchantedI18n } from "./206-mirabel-madrigal-musically-talented-enchanted.i18n";
 
 export const mirabelMadrigalMusicallyTalentedEnchanted: CharacterCard = {
   id: "m94",
@@ -7,37 +8,6 @@ export const mirabelMadrigalMusicallyTalentedEnchanted: CharacterCard = {
   cardType: "character",
   name: "Mirabel Madrigal",
   version: "Musically Talented",
-  i18n: {
-    en: {
-      name: "Mirabel Madrigal",
-      version: "Musically Talented",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "HER OWN SPECIAL GIFT",
-          description:
-            "Whenever this character quests, you may return a song card with cost 3 or less from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Mirabel Madrigal",
-      version: "Musikalisch begabt",
-      text: "Gestaltwandel 4 IHRE EIGENE BESONDERE GABE Jedes Mal, wenn dieser Charakter erkundet, darfst du 1 Liedkarte, die 3 oder weniger kostet, aus deinem Ablagestapel zurück auf deine Hand nehmen.",
-    },
-    fr: {
-      name: "Mirabel Madrigal",
-      version: "Musicalement talentueuse",
-      text: "Alter 4 SON PROPRE POUVOIR Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez renvoyer une carte Chanson coûtant 3 ou moins de votre défausse dans votre main.",
-    },
-    it: {
-      name: "Mirabel Madrigal",
-      version: "Musicista Dotata",
-      text: "Trasformazione 4 IL SUO TALENTO SPECIALE Ogni volta che questo personaggio va all'avventura, puoi riprendere in mano una carta canzone con costo 3 o inferiore dai tuoi scarti.",
-    },
-  },
   inkType: ["amber", "amethyst"],
   franchise: "Encanto",
   set: "007",
@@ -100,4 +70,5 @@ export const mirabelMadrigalMusicallyTalentedEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mirabelMadrigalMusicallyTalentedEnchantedI18n,
 };

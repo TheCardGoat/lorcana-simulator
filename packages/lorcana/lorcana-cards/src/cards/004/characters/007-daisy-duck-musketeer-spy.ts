@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daisyDuckMusketeerSpyI18n } from "./007-daisy-duck-musketeer-spy.i18n";
 
 export const daisyDuckMusketeerSpy: CharacterCard = {
   id: "de6",
@@ -7,51 +8,6 @@ export const daisyDuckMusketeerSpy: CharacterCard = {
   cardType: "character",
   name: "Daisy Duck",
   version: "Musketeer Spy",
-  i18n: {
-    en: {
-      name: "Daisy Duck",
-      version: "Musketeer Spy",
-      text: [
-        {
-          title: "INFILTRATION",
-          description: "When you play this character, each opponent chooses and discards a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Daisy Duck",
-      version: "Musketier-Spionin",
-      text: [
-        {
-          title: "INFILTRATION",
-          description:
-            "Wenn du diesen Charakter ausspielst, wählen alle gegnerischen Mitspielenden je 1 Karte aus ihrer Hand und werfen sie ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "Daisy",
-      version: "Mousquetaire espionne",
-      text: [
-        {
-          title: "INFILTRATION",
-          description:
-            "Lorsque vous jouez ce personnage, chaque adversaire choisit une carte de sa main et la défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Paperina",
-      version: "Spia dei Moschettieri",
-      text: [
-        {
-          title: "INFILTRARSI",
-          description:
-            "Quando giochi questo personaggio, ogni avversario sceglie e scarta una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   set: "004",
   cardNumber: 7,
@@ -91,4 +47,5 @@ export const daisyDuckMusketeerSpy: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: daisyDuckMusketeerSpyI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { genieInvestigativeMindI18n } from "./146-genie-investigative-mind.i18n";
 
 export const genieInvestigativeMind: CharacterCard = {
   id: "wxG",
@@ -7,24 +8,6 @@ export const genieInvestigativeMind: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "Investigative Mind",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "Investigative Mind",
-    },
-    de: {
-      name: "Dschinni",
-      version: "Forschergeist",
-    },
-    fr: {
-      name: "Génie",
-      version: "Esprit d'investigation",
-    },
-    it: {
-      name: "Genio",
-      version: "Mente Indagatrice",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Aladdin",
   set: "010",
@@ -41,4 +24,5 @@ export const genieInvestigativeMind: CharacterCard = {
     tcgPlayer: 659382,
   },
   classifications: ["Storyborn", "Ally", "Detective"],
+  i18n: genieInvestigativeMindI18n,
 };

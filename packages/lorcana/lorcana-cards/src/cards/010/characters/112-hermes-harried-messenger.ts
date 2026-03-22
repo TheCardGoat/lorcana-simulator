@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hermesHarriedMessengerI18n } from "./112-hermes-harried-messenger.i18n";
 
 export const hermesHarriedMessenger: CharacterCard = {
   id: "RlF",
@@ -7,33 +8,6 @@ export const hermesHarriedMessenger: CharacterCard = {
   cardType: "character",
   name: "Hermes",
   version: "Harried Messenger",
-  i18n: {
-    en: {
-      name: "Hermes",
-      version: "Harried Messenger",
-      text: "Rush",
-    },
-    de: {
-      name: "Hermes",
-      version: "Gestresster Bote",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Hermès",
-      version: "Messager pressé",
-      text: "Charge",
-    },
-    it: {
-      name: "Hermes",
-      version: "Messaggero Stressato",
-      text: [
-        {
-          title: "Lesto",
-          description: "(Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Hercules",
   set: "010",
@@ -58,4 +32,5 @@ export const hermesHarriedMessenger: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: hermesHarriedMessengerI18n,
 };

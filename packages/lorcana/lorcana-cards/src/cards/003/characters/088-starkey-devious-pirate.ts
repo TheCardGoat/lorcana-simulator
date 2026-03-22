@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { starkeyDeviousPirateI18n } from "./088-starkey-devious-pirate.i18n";
 
 export const starkeyDeviousPirate: CharacterCard = {
   id: "j3Z",
@@ -7,24 +8,6 @@ export const starkeyDeviousPirate: CharacterCard = {
   cardType: "character",
   name: "Starkey",
   version: "Devious Pirate",
-  i18n: {
-    en: {
-      name: "Starkey",
-      version: "Devious Pirate",
-    },
-    de: {
-      name: "Starkey",
-      version: "Hinterhältiger Pirat",
-    },
-    fr: {
-      name: "Monsieur Starkey",
-      version: "Pirate sournois",
-    },
-    it: {
-      name: "Dente Duro",
-      version: "Subdolo Pirata",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Peter Pan",
   set: "003",
@@ -41,4 +24,5 @@ export const starkeyDeviousPirate: CharacterCard = {
     tcgPlayer: 537946,
   },
   classifications: ["Storyborn", "Ally", "Pirate"],
+  i18n: starkeyDeviousPirateI18n,
 };

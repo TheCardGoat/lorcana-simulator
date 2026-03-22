@@ -35,9 +35,6 @@ describe("Rescue Rangers Submarine - Mobile Headquarters", () => {
     expect(
       testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
     ).toBe(true);
-    expect(testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }).success).toBe(
-      true,
-    );
 
     expect(testEngine.asPlayerOne().getCardZone(topDeckCard)).toBe("inkwell");
     expect(

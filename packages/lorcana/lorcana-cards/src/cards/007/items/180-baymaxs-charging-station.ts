@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { baymaxsChargingStationI18n } from "./180-baymaxs-charging-station.i18n";
 
 export const baymaxsChargingStation: ItemCard = {
   id: "Xqf",
@@ -6,48 +7,6 @@ export const baymaxsChargingStation: ItemCard = {
   reprints: ["set7-180"],
   cardType: "item",
   name: "Baymax's Charging Station",
-  i18n: {
-    en: {
-      name: "Baymax's Charging Station",
-      text: [
-        {
-          title: "ENERGY CONVERTER",
-          description:
-            "Whenever you play a Floodborn character, if you used Shift to play them, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Baymax’ Ladestation",
-      text: [
-        {
-          title: "ENERGIEWANDLER",
-          description:
-            "Jedes Mal, wenn du mithilfe von Gestaltwandel eine Flutgestalt ausspielst, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Chargeur de Baymax",
-      text: [
-        {
-          title: "CONVERTISSEUR D'ÉNERGIE",
-          description:
-            "Chaque fois que vous jouez un personnage Floodborn en utilisant sa capacité Alter, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Stazione di Ricarica di Baymax",
-      text: [
-        {
-          title: "CONVERTITORE DI ENERGIA",
-          description:
-            "Ogni volta che giochi un personaggio Imbevuto, se hai usato Trasformazione per giocarlo, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "007",
@@ -99,4 +58,5 @@ export const baymaxsChargingStation: ItemCard = {
       type: "triggered",
     },
   ],
+  i18n: baymaxsChargingStationI18n,
 };

@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { motunuiIslandParadiseI18n } from "./170-motunui-island-paradise.i18n";
 
 export const motunuiIslandParadise: LocationCard = {
   id: "32z",
@@ -7,52 +8,6 @@ export const motunuiIslandParadise: LocationCard = {
   cardType: "location",
   name: "Motunui",
   version: "Island Paradise",
-  i18n: {
-    en: {
-      name: "Motunui",
-      version: "Island Paradise",
-      text: [
-        {
-          title: "REINCARNATION",
-          description:
-            "Whenever a character is banished while here, you may put that card into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Motunui",
-      version: "Insel-Paradies",
-      text: [
-        {
-          title: "REINKARNATION",
-          description:
-            "Jedes Mal, wenn einer deiner Charaktere an diesem Ort verbannt wird, darfst du jenen verdeckt und erschöpft in deinen Tintenvorrat legen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Motunui",
-      version: "Île paradisiaque",
-      text: [
-        {
-          title: "RÉINCARNATION",
-          description:
-            "Chaque fois qu'un personnage sur ce lieu est banni, vous pouvez le placer dans votre réserve d'encre, face cachée et épuisé.",
-        },
-      ],
-    },
-    it: {
-      name: "Motunui",
-      version: "Isola Paradisiaca",
-      text: [
-        {
-          title: "REINCARNAZIONE",
-          description:
-            "Ogni volta che un personaggio viene esiliato mentre si trova in questo luogo, puoi aggiungere quella carta al tuo calamaio, a faccia in giù e impegnata.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Moana",
   set: "003",
@@ -97,4 +52,5 @@ export const motunuiIslandParadise: LocationCard = {
       type: "triggered",
     },
   ],
+  i18n: motunuiIslandParadiseI18n,
 };

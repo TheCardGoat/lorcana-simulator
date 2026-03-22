@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { fredMajorScienceEnthusiastI18n } from "./092-fred-major-science-enthusiast.i18n";
 
 export const fredMajorScienceEnthusiast: CharacterCard = {
   id: "7A9",
@@ -7,50 +8,6 @@ export const fredMajorScienceEnthusiast: CharacterCard = {
   cardType: "character",
   name: "Fred",
   version: "Major Science Enthusiast",
-  i18n: {
-    en: {
-      name: "Fred",
-      version: "Major Science Enthusiast",
-      text: [
-        {
-          title: "SPITTING FIRE!",
-          description: "When you play this character, you may banish chosen item.",
-        },
-      ],
-    },
-    de: {
-      name: "Fred",
-      version: "Wissenschaftsenthusiast",
-      text: [
-        {
-          title: "SPUCKE FEUER!",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Gegenstand deiner Wahl verbannen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Fred",
-      version: "Adore la science",
-      text: [
-        {
-          title: "J'CRACHE DU FEU!",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un objet et le bannir.",
-        },
-      ],
-    },
-    it: {
-      name: "Fred",
-      version: "Grandissimo Fanatico della Scienza",
-      text: [
-        {
-          title: "SPUTAFUOCO!",
-          description: "Quando giochi questo personaggio, puoi esiliare un oggetto a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Big Hero 6",
   set: "008",
@@ -99,4 +56,5 @@ export const fredMajorScienceEnthusiast: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: fredMajorScienceEnthusiastI18n,
 };

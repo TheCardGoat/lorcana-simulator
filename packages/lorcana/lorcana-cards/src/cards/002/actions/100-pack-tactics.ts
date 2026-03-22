@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { packTacticsI18n } from "./100-pack-tactics.i18n";
 
 export const packTactics: ActionCard = {
   id: "GkR",
@@ -6,24 +7,6 @@ export const packTactics: ActionCard = {
   reprints: ["set2-100"],
   cardType: "action",
   name: "Pack Tactics",
-  i18n: {
-    en: {
-      name: "Pack Tactics",
-      text: "Gain 1 lore for each damaged character opponents have in play.",
-    },
-    de: {
-      name: "Rudeltaktiken",
-      text: "Sammle 1 Legende für jeden gegnerischen Charakter, der beschädigt ist.",
-    },
-    fr: {
-      name: "Tactique de meute",
-      text: "Gagnez 1 éclat de Lore pour chaque personnage adverse blessé en jeu.",
-    },
-    it: {
-      name: "Pack Tactics",
-      text: "Gain 1 lore for each damaged character opponents have in play.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Emperors New Groove",
   set: "002",
@@ -53,4 +36,5 @@ export const packTactics: ActionCard = {
       },
     },
   ],
+  i18n: packTacticsI18n,
 };

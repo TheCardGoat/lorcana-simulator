@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { showMeMoreI18n } from "./082-show-me-more.i18n";
 
 export const showMeMore: ActionCard = {
   id: "475",
@@ -6,29 +7,6 @@ export const showMeMore: ActionCard = {
   reprints: ["set7-082"],
   cardType: "action",
   name: "Show Me More!",
-  i18n: {
-    en: {
-      name: "Show Me More!",
-      text: "Each player draws 3 cards.",
-    },
-    de: {
-      name: "Zeig mir mehr!",
-      text: [
-        {
-          title: "Alle Mitspielenden",
-          description: "(auch du) ziehen je 3 Karten.",
-        },
-      ],
-    },
-    fr: {
-      name: "Montre-m’en davantage !",
-      text: "Chaque joueur pioche 3 cartes.",
-    },
-    it: {
-      name: "Mostrami di Più!",
-      text: "Ogni giocatore pesca 3 carte.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Snow White",
   set: "007",
@@ -53,4 +31,5 @@ export const showMeMore: ActionCard = {
       text: "Each player draws 3 cards.",
     },
   ],
+  i18n: showMeMoreI18n,
 };

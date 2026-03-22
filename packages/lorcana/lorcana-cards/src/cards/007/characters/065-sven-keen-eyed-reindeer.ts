@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { svenKeeneyedReindeerI18n } from "./065-sven-keen-eyed-reindeer.i18n";
 
 export const svenKeeneyedReindeer: CharacterCard = {
   id: "snv",
@@ -7,42 +8,6 @@ export const svenKeeneyedReindeer: CharacterCard = {
   cardType: "character",
   name: "Sven",
   version: "Keen-Eyed Reindeer",
-  i18n: {
-    en: {
-      name: "Sven",
-      version: "Keen-Eyed Reindeer",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "FORMIDABLE GLARE",
-          description: "When you play this character, chosen character gets -3 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Sven",
-      version: "Scharfsichtiges Rentier",
-      text: "Rasant AUSSERORDENTLICH SCHARFER BLICK Wenn du diesen Charakter ausspielst, gib einem Charakter deiner Wahl in diesem Zug -3.",
-    },
-    fr: {
-      name: "Sven",
-      version: "Renne aux aguets",
-      text: "Charge REGARD REDOUTABLE Lorsque vous jouez ce personnage, choisissez un personnage qui subit -3 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Sven",
-      version: "Renna dallo Sguardo Acuto",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) OCCHIATACCIA FORMIDABILE Quando giochi questo personaggio, un personaggio a tua scelta riceve -3 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst", "sapphire"],
   franchise: "Frozen",
   set: "007",
@@ -99,4 +64,5 @@ export const svenKeeneyedReindeer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: svenKeeneyedReindeerI18n,
 };

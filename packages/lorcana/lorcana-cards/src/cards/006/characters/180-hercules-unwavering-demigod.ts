@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { herculesUnwaveringDemigodI18n } from "./180-hercules-unwavering-demigod.i18n";
 
 export const herculesUnwaveringDemigod: CharacterCard = {
   id: "jJs",
@@ -7,28 +8,6 @@ export const herculesUnwaveringDemigod: CharacterCard = {
   cardType: "character",
   name: "Hercules",
   version: "Unwavering Demigod",
-  i18n: {
-    en: {
-      name: "Hercules",
-      version: "Unwavering Demigod",
-      text: "Challenger +2 (While challenging, this character gets +2 {S}).",
-    },
-    de: {
-      name: "Hercules",
-      version: "Unermüdlicher Halbgott",
-      text: "Herausfordern +2",
-    },
-    fr: {
-      name: "Hercule",
-      version: "Demi-dieu inébranlable",
-      text: "Offensif +2",
-    },
-    it: {
-      name: "Ercole",
-      version: "Semidio Risoluto",
-      text: "Sfidante +2",
-    },
-  },
   inkType: ["steel"],
   franchise: "Hercules",
   set: "006",
@@ -54,4 +33,5 @@ export const herculesUnwaveringDemigod: CharacterCard = {
       text: "Challenger +2.",
     },
   ],
+  i18n: herculesUnwaveringDemigodI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madHatterGraciousHostI18n } from "./086-mad-hatter-gracious-host.i18n";
 
 export const madHatterGraciousHost: CharacterCard = {
   id: "7zd",
@@ -7,49 +8,6 @@ export const madHatterGraciousHost: CharacterCard = {
   cardType: "character",
   name: "Mad Hatter",
   version: "Gracious Host",
-  i18n: {
-    en: {
-      name: "Mad Hatter",
-      version: "Gracious Host",
-      text: [
-        {
-          title: "TEA PARTY",
-          description: "Whenever this character is challenged, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Der verrückte Hutmacher",
-      version: "Generöser Gastgeber",
-      text: [
-        {
-          title: "TEE-PARTY",
-          description:
-            "Jedes Mal, wenn dieser Charakter herausgefordert wird, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "LE CHAPELIER FOU",
-      version: "Hôte courtois",
-      text: [
-        {
-          title: "HEURE DU THÉ",
-          description: "Chaque fois que ce personnage est défié, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Mad Hatter",
-      version: "Gracious Host",
-      text: [
-        {
-          title: "TEA PARTY",
-          description: "Whenever this character is challenged, you may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Alice in Wonderland",
   set: "001",
@@ -93,4 +51,5 @@ export const madHatterGraciousHost: CharacterCard = {
       text: "TEA PARTY Whenever this character is challenged, you may draw a card.",
     },
   ],
+  i18n: madHatterGraciousHostI18n,
 };

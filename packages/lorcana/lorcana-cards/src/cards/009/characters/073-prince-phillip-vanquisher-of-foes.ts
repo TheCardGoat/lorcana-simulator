@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princePhillipVanquisherOfFoesI18n } from "./073-prince-phillip-vanquisher-of-foes.i18n";
 
 export const princePhillipVanquisherOfFoes: CharacterCard = {
   id: "5fm",
@@ -7,39 +8,6 @@ export const princePhillipVanquisherOfFoes: CharacterCard = {
   cardType: "character",
   name: "Prince Phillip",
   version: "Vanquisher of Foes",
-  i18n: {
-    en: {
-      name: "Prince Phillip",
-      version: "Vanquisher of Foes",
-      text: [
-        {
-          title: "Shift 6 {I}",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "SWIFT AND SURE",
-          description: "When you play this character, banish all opposing damaged characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Prinz Phillip",
-      version: "Bezwinger der Feinde",
-      text: "Gestaltwandel 6 Wendig SCHICKE VERDERBEN Wenn du diesen Charakter ausspielst, verbanne alle gegnerischen beschädigten Charaktere.",
-    },
-    fr: {
-      name: "Prince Philippe",
-      version: "Pourfendeur d'ennemis",
-      text: "Alter 6 Insaisissable FRAPPE AU CŒUR Lorsque vous jouez ce personnage, bannissez tous les personnages adverses ayant au moins un jeton Dommage.",
-    },
-    it: {
-      name: "Principe Filippo",
-      version: "Distruttore di Nemici",
-      text: "Trasformazione 6 Sfuggente SPADA MAGICA Quando giochi questo personaggio, esilia tutti i personaggi avversari danneggiati.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Sleeping Beauty",
   set: "009",
@@ -105,4 +73,5 @@ export const princePhillipVanquisherOfFoes: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: princePhillipVanquisherOfFoesI18n,
 };

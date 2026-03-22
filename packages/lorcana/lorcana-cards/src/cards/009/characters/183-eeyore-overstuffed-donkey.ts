@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { eeyoreOverstuffedDonkeyI18n } from "./183-eeyore-overstuffed-donkey.i18n";
 
 export const eeyoreOverstuffedDonkey: CharacterCard = {
   id: "5Xs",
@@ -7,28 +8,6 @@ export const eeyoreOverstuffedDonkey: CharacterCard = {
   cardType: "character",
   name: "Eeyore",
   version: "Overstuffed Donkey",
-  i18n: {
-    en: {
-      name: "Eeyore",
-      version: "Overstuffed Donkey",
-      text: "Resist +1",
-    },
-    de: {
-      name: "I-Aah",
-      version: "Trübsinniger Esel",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "Bourriquet",
-      version: "Âne trop rembourré",
-      text: "Résistance +1",
-    },
-    it: {
-      name: "Ih-Oh",
-      version: "Asinello Molto Imbottito",
-      text: "Resistere +1",
-    },
-  },
   inkType: ["steel"],
   franchise: "Winnie the Pooh",
   set: "009",
@@ -54,4 +33,5 @@ export const eeyoreOverstuffedDonkey: CharacterCard = {
       text: "Resist +1",
     },
   ],
+  i18n: eeyoreOverstuffedDonkeyI18n,
 };

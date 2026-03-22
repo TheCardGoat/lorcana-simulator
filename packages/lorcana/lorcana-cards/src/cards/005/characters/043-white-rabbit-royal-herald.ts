@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { whiteRabbitRoyalHeraldI18n } from "./043-white-rabbit-royal-herald.i18n";
 
 export const whiteRabbitRoyalHerald: CharacterCard = {
   id: "QPW",
@@ -7,24 +8,6 @@ export const whiteRabbitRoyalHerald: CharacterCard = {
   cardType: "character",
   name: "White Rabbit",
   version: "Royal Herald",
-  i18n: {
-    en: {
-      name: "White Rabbit",
-      version: "Royal Herald",
-    },
-    de: {
-      name: "Weißes Kaninchen",
-      version: "Königlicher Herold",
-    },
-    fr: {
-      name: "Le lapin blanc",
-      version: "Héraut royal",
-    },
-    it: {
-      name: "Bianconiglio",
-      version: "Nunzio Reale",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Alice in Wonderland",
   set: "005",
@@ -41,4 +24,5 @@ export const whiteRabbitRoyalHerald: CharacterCard = {
     tcgPlayer: 561166,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: whiteRabbitRoyalHeraldI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rafikiShamanOfTheSavannaI18n } from "./042-rafiki-shaman-of-the-savanna.i18n";
 
 export const rafikiShamanOfTheSavanna: CharacterCard = {
   id: "9vV",
@@ -7,24 +8,6 @@ export const rafikiShamanOfTheSavanna: CharacterCard = {
   cardType: "character",
   name: "Rafiki",
   version: "Shaman of the Savanna",
-  i18n: {
-    en: {
-      name: "Rafiki",
-      version: "Shaman of the Savanna",
-    },
-    de: {
-      name: "Rafiki",
-      version: "Schamane der Savanne",
-    },
-    fr: {
-      name: "Rafiki",
-      version: "Chaman de la savane",
-    },
-    it: {
-      name: "Rafiki",
-      version: "Sciamano della Savana",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Lion King",
   set: "006",
@@ -41,4 +24,5 @@ export const rafikiShamanOfTheSavanna: CharacterCard = {
     tcgPlayer: 587269,
   },
   classifications: ["Storyborn", "Mentor", "Sorcerer"],
+  i18n: rafikiShamanOfTheSavannaI18n,
 };

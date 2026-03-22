@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princeCharmingHeirToTheThroneI18n } from "./157-prince-charming-heir-to-the-throne.i18n";
 
 export const princeCharmingHeirToTheThrone: CharacterCard = {
   id: "MlM",
@@ -7,24 +8,6 @@ export const princeCharmingHeirToTheThrone: CharacterCard = {
   cardType: "character",
   name: "Prince Charming",
   version: "Heir to the Throne",
-  i18n: {
-    en: {
-      name: "Prince Charming",
-      version: "Heir to the Throne",
-    },
-    de: {
-      name: "Prinz Charming",
-      version: "Thronerbe",
-    },
-    fr: {
-      name: "Prince charmant",
-      version: "Héritier du trône",
-    },
-    it: {
-      name: "Prince Charming",
-      version: "Heir to the Throne",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Cinderella",
   set: "002",
@@ -41,4 +24,5 @@ export const princeCharmingHeirToTheThrone: CharacterCard = {
     tcgPlayer: 522718,
   },
   classifications: ["Dreamborn", "Hero", "Prince"],
+  i18n: princeCharmingHeirToTheThroneI18n,
 };

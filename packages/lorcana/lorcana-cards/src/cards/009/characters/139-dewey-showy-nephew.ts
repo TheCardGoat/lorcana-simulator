@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { deweyShowyNephewI18n } from "./139-dewey-showy-nephew.i18n";
 
 export const deweyShowyNephew: CharacterCard = {
   id: "7di",
@@ -7,28 +8,6 @@ export const deweyShowyNephew: CharacterCard = {
   cardType: "character",
   name: "Dewey",
   version: "Showy Nephew",
-  i18n: {
-    en: {
-      name: "Dewey",
-      version: "Showy Nephew",
-      text: "Support",
-    },
-    de: {
-      name: "Trick Duck",
-      version: "Angeberischer Neffe",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Fifi",
-      version: "Neveu frimeur",
-      text: "Soutien",
-    },
-    it: {
-      name: "Quo",
-      version: "Nipote Appariscente",
-      text: "Aiutante",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Ducktales",
   set: "009",
@@ -53,4 +32,5 @@ export const deweyShowyNephew: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: deweyShowyNephewI18n,
 };

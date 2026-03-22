@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { pickAFightI18n } from "./200-pick-a-fight.i18n";
 
 export const pickAFight: ActionCard = {
   id: "3r0",
@@ -6,24 +7,6 @@ export const pickAFight: ActionCard = {
   reprints: ["set2-200"],
   cardType: "action",
   name: "Pick a Fight",
-  i18n: {
-    en: {
-      name: "Pick a Fight",
-      text: "Chosen character can challenge ready characters this turn.",
-    },
-    de: {
-      name: "Streit anzetteln",
-      text: "Wähle einen Charakter. Er kann in diesem Zug bereite Charaktere herausfordern.",
-    },
-    fr: {
-      name: "Choisir son combat",
-      text: "Choisissez un personnage, il peut défier des personnages redressés pour le reste de ce tour.",
-    },
-    it: {
-      name: "Attaccare Briga",
-      text: "Un personaggio a tua scelta può sfidare i personaggi preparati per questo turno.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Wreck It Ralph",
   set: "002",
@@ -47,4 +30,5 @@ export const pickAFight: ActionCard = {
       },
     },
   ],
+  i18n: pickAFightI18n,
 };

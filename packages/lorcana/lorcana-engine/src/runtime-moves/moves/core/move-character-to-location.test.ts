@@ -27,5 +27,22 @@ describe("moveCharacterToLocation", () => {
     expect(testEngine.asPlayerOne().getCard(exertedTraveler).atLocationId).toBe(
       testEngine.asPlayerOne().getCard(hiddenCoveTranquilHaven).id,
     );
+
+    const travelerId = testEngine.findCardInstanceId(exertedTraveler, "play", "player_one");
+    const locationId = testEngine.findCardInstanceId(hiddenCoveTranquilHaven, "play", "player_one");
+    const moveEntry = testEngine
+      .getServerEngine()
+      .getRuntime()
+      .getGameLog()
+      .find((entry) => entry.defaultMessage?.key === "lorcana.move.moveCharacterToLocation");
+
+    expect(moveEntry?.defaultMessage).toMatchObject({
+      key: "lorcana.move.moveCharacterToLocation",
+      values: {
+        playerId: "player_one",
+        characterId: travelerId,
+        locationId,
+      },
+    });
   });
 });

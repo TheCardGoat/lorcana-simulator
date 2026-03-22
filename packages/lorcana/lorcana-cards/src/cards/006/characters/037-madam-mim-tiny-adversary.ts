@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madamMimTinyAdversaryI18n } from "./037-madam-mim-tiny-adversary.i18n";
 
 export const madamMimTinyAdversary: CharacterCard = {
   id: "SKE",
@@ -7,36 +8,6 @@ export const madamMimTinyAdversary: CharacterCard = {
   cardType: "character",
   name: "Madam Mim",
   version: "Tiny Adversary",
-  i18n: {
-    en: {
-      name: "Madam Mim",
-      version: "Tiny Adversary",
-      text: [
-        {
-          title: "Challenger +1",
-        },
-        {
-          title: "ZIM ZABBERIM ZIM",
-          description: "Your other characters gain Challenger +1.",
-        },
-      ],
-    },
-    de: {
-      name: "Madame Mim",
-      version: "Winzige Widersacherin",
-      text: "Herausfordern +1 SIMSALARIMBIM Deine anderen Charaktere erhalten Herausfordern +1.",
-    },
-    fr: {
-      name: "Madame Mime",
-      version: "Minuscule adversaire",
-      text: "Offensif +1 ZIM ZABBERIM BIM Vos autres personnages gagnent Offensif +1.",
-    },
-    it: {
-      name: "Maga Magò",
-      version: "Minuscola Avversaria",
-      text: "Sfidante +1 ZUM PARAPIM PIM I tuoi altri personaggi ottengono Sfidante +1.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "006",
@@ -72,7 +43,14 @@ export const madamMimTinyAdversary: CharacterCard = {
     {
       effect: {
         keyword: "Challenger",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+        },
         type: "gain-keyword",
         value: 1,
       },
@@ -82,4 +60,5 @@ export const madamMimTinyAdversary: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: madamMimTinyAdversaryI18n,
 };

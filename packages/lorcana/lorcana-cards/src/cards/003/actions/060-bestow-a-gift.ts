@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { bestowAGiftI18n } from "./060-bestow-a-gift.i18n";
 
 export const bestowAGift: ActionCard = {
   id: "3hQ",
@@ -6,24 +7,6 @@ export const bestowAGift: ActionCard = {
   reprints: ["set3-060"],
   cardType: "action",
   name: "Bestow a Gift",
-  i18n: {
-    en: {
-      name: "Bestow a Gift",
-      text: "Move 1 damage counter from chosen character to chosen opposing character.",
-    },
-    de: {
-      name: "Ein Geschenk machen",
-      text: "Verschiebe 1 Schadensmarker von einem Charakter deiner Wahl zu einem gegnerischen Charakter deiner Wahl.",
-    },
-    fr: {
-      name: "Offrir un don",
-      text: "Choisissez un personnage, déplacez 1 de ses jetons Dommage sur un personnage adverse de votre choix.",
-    },
-    it: {
-      name: "Porgere un Dono",
-      text: "Sposta 1 segnalino danno da un personaggio a tua scelta a un personaggio avversario a tua scelta.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sleeping Beauty",
   set: "003",
@@ -48,4 +31,5 @@ export const bestowAGift: ActionCard = {
       },
     },
   ],
+  i18n: bestowAGiftI18n,
 };

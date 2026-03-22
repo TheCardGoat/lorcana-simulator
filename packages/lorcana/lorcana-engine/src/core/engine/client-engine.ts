@@ -15,7 +15,6 @@ import {
   type DeepReadonly,
   type MatchRuntimeConfig,
   type MatchStaticResources,
-  type MoveDefinition,
   type MoveInput,
   type NetworkMatchData,
   type Player,
@@ -31,7 +30,6 @@ import type {
   UpdateFullMessage,
   SyncFullMessage,
 } from "../runtime/protocol-types";
-import type { BaseCardDefinition } from "../runtime/card-contracts";
 import {
   PROTOCOL_VERSION,
   isUpdatePatchMessage,
@@ -49,7 +47,6 @@ import type {
   EngineMoveHistoryEntry,
 } from "./contracts";
 import { buildEngineProjectionSnapshot } from "./projection";
-
 const logger = getLogger(["core-engine", "client-engine"]);
 const PROJECTED_VIEW_AUTHORITATIVE_KEYS = new Set<PropertyKey>(["ctx", "G"]);
 
@@ -57,10 +54,7 @@ function isDevelopmentEnvironment(): boolean {
   return process.env.NODE_ENV !== "production";
 }
 
-function guardProjectedViewInDevelopment<TBoardView>(
-  view: TBoardView,
-  identifier?: string,
-): TBoardView {
+function guardProjectedViewInDevelopment<T>(view: T, identifier?: string): T {
   if (!isDevelopmentEnvironment() || view === null || typeof view !== "object") {
     return view;
   }
@@ -77,77 +71,48 @@ function guardProjectedViewInDevelopment<TBoardView>(
 
       return Reflect.get(target, property, receiver);
     },
-  }) as TBoardView;
+  }) as T;
 }
 
-type ClientMoveDefinitions<G, TCardDerived extends object> = Record<
-  string,
-  MoveDefinition<G, any, any, any, TCardDerived>
->;
+import type { MoveRecord, RuntimeMoveInputMap } from "../runtime/match-runtime.types";
 
-export interface ClientEngineConfig<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-  TStateView = FilteredMatchView<G>,
-  TMoves extends ClientMoveDefinitions<G, TCardDerived> = ClientMoveDefinitions<G, TCardDerived>,
-> {
+export interface ClientEngineConfig {
   playerId: string;
   transport?: InMemoryTransport;
   role: "player" | "spectator";
-  runtimeConfig: MatchRuntimeConfig<G, TMoves, TCardDefinition, TCardDerived, TStateView>;
-  staticResources: MatchStaticResources<TCardDefinition>;
+  runtimeConfig: MatchRuntimeConfig;
+  staticResources: MatchStaticResources;
   debugMode?: boolean;
   identifier?: string;
   players: Player[];
   seed?: string;
 }
 
-type EngineMoveDefinitions<G, TCardDerived extends object = {}> = Record<
-  string,
-  MoveDefinition<G, any, any, unknown, TCardDerived>
->;
+type InferMoveInputMap<TMoves extends MoveRecord> = RuntimeMoveInputMap<TMoves>;
 
-type InferMoveInputMap<TMoves extends EngineMoveDefinitions<any, any>> = {
-  [K in keyof TMoves]: TMoves[K] extends MoveDefinition<any, any, infer TInput, any, any>
-    ? TInput
-    : MoveInput;
-};
-
-export class ClientEngine<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-  TBoardView = FilteredMatchView<G>,
-  TMoves extends ClientMoveDefinitions<G, TCardDerived> = ClientMoveDefinitions<G, TCardDerived>,
-> implements GameEngine<MatchState<G>, TBoardView, InferMoveInputMap<TMoves>> {
+export class ClientEngine implements GameEngine {
   private transport?: InMemoryTransport;
   // Cached client-facing view only. When `projectBoard` is enabled this is a projected snapshot,
   // not authoritative match state, so `ctx`/`G` reads must go through `runtime.getState()`.
-  private localView: TBoardView | null = null;
+  private localView: FilteredMatchView | null = null;
   private stateID: number = 0;
   private stateUpdateHandlers: Array<
-    (state: TBoardView, stateID: number, packet: EnginePacketUpdate | null) => void
+    (state: FilteredMatchView, stateID: number, packet: EnginePacketUpdate | null) => void
   > = [];
   private moveHistory: EngineMoveHistoryEntry[] = [];
-  private config: ClientEngineConfig<G, TCardDefinition, TCardDerived, TBoardView, TMoves>;
+  private config: ClientEngineConfig;
   // Consolidated runtime config with proper typing (single cast point)
-  private readonly runtimeConfig: MatchRuntimeConfig<
-    G,
-    TMoves,
-    TCardDefinition,
-    TCardDerived,
-    TBoardView
-  >;
+  private readonly runtimeConfig: MatchRuntimeConfig;
   private connected: boolean = false;
   private commandCounter: number = 0;
   private matchData?: NetworkMatchData;
   private lastPacketUpdate: EnginePacketUpdate | null = null;
   private debug: boolean;
   private identifier?: string;
-  private runtime: MatchRuntime<G, TMoves, TCardDefinition, TCardDerived, TBoardView>;
+  private runtime: MatchRuntime;
+  private canUndoState: boolean = false;
 
-  constructor(config: ClientEngineConfig<G, TCardDefinition, TCardDerived, TBoardView, TMoves>) {
+  constructor(config: ClientEngineConfig) {
     this.debug = config.debugMode ?? false;
     this.identifier = config.identifier;
     this.config = config;
@@ -177,7 +142,7 @@ export class ClientEngine<
   // TODO: Replace by BoardProjection
   private setupTransportHandlers(): void {
     this.transport?.onMessage((message) => {
-      const typedMessage = message as ServerMessage<TBoardView>;
+      const typedMessage = message as ServerMessage;
 
       if (this.debug) {
         logger.debug(`[${this.identifier}] Received ${message.type} message from server.`, {
@@ -187,9 +152,9 @@ export class ClientEngine<
 
       if (isUpdatePatchMessage(typedMessage)) {
         this.applyPatch(typedMessage);
-      } else if (isUpdateFullMessage<TBoardView>(typedMessage)) {
+      } else if (isUpdateFullMessage(typedMessage)) {
         this.applyFullState(typedMessage);
-      } else if (isSyncFullMessage<TBoardView>(typedMessage)) {
+      } else if (isSyncFullMessage(typedMessage)) {
         this.applyFullState(typedMessage);
       } else if (isErrorMessage(typedMessage)) {
         this.handleFatalSyncError(`Authoritative command rejected (${typedMessage.code})`, {
@@ -212,11 +177,13 @@ export class ClientEngine<
 
     try {
       this.localView = applyPatches(this.localView, message.patchOps as Patch[]);
-      this.runtime.loadState(this.localView as unknown as MatchState<G>);
+      this.runtime.loadState(this.localView as unknown as MatchState);
       this.stateID = message.stateID;
+      this.canUndoState = message.canUndo;
       this.lastPacketUpdate = {
         processedCommand: message.processedCommand,
         animations: [...message.animations],
+        canUndo: message.canUndo,
       };
       this.stateUpdateHandlers.forEach((h) =>
         h(this.localView!, this.stateID, this.lastPacketUpdate),
@@ -228,40 +195,40 @@ export class ClientEngine<
     }
   }
 
-  private applyFullState(
-    message: UpdateFullMessage<TBoardView> | SyncFullMessage<TBoardView>,
-  ): void {
+  private applyFullState(message: UpdateFullMessage | SyncFullMessage): void {
     if ("matchData" in message && message.matchData) {
       this.matchData = message.matchData;
     }
-    const normalizedState = normalizeNetworkView<G, TMoves, TCardDefinition, TCardDerived>(
+    const normalizedState = normalizeNetworkView(
       message.state as never,
       {
         stateID: message.stateID,
         matchID: message.matchID,
         protocolVersion: message.protocolVersion,
       },
-      this.runtimeConfig as unknown as MatchRuntimeConfig<G, TMoves, TCardDefinition, TCardDerived>,
+      this.runtimeConfig as unknown as MatchRuntimeConfig,
       this.config.staticResources,
       this.config.role === "player"
         ? { role: "player", playerID: this.config.playerId }
         : { role: "spectator" },
       this.matchData,
     );
-    this.runtime.loadState(normalizedState as MatchState<G>);
+    this.runtime.loadState(normalizedState as MatchState);
     this.localView =
       typeof this.runtimeConfig.projectBoard === "function"
         ? guardProjectedViewInDevelopment(
-            (message.board ?? this.runtime.getBoard()) as TBoardView,
+            (message.board ?? this.runtime.getBoard()) as FilteredMatchView,
             this.identifier,
           )
-        : (normalizedState as TBoardView);
+        : (normalizedState as FilteredMatchView);
     this.stateID = message.stateID;
+    this.canUndoState = message.canUndo;
     this.lastPacketUpdate =
       "processedCommand" in message
         ? {
             processedCommand: message.processedCommand,
             animations: [...message.animations],
+            canUndo: message.canUndo,
           }
         : null;
     this.stateUpdateHandlers.forEach((h) =>
@@ -278,7 +245,7 @@ export class ClientEngine<
       type: "SYNC_REQUEST",
       lastKnownStateID: this.stateID,
       protocolVersion: PROTOCOL_VERSION,
-      matchID: "test-match",
+      matchID: this.getMatchID(),
     });
   }
 
@@ -302,7 +269,7 @@ export class ClientEngine<
     this.transport.send({
       type: "SYNC_REQUEST",
       protocolVersion: PROTOCOL_VERSION,
-      matchID: "test-match",
+      matchID: this.getMatchID(),
     });
     // In sync mode, localView is set immediately via the synchronous message handler
   }
@@ -338,7 +305,7 @@ export class ClientEngine<
   }
 
   onStateUpdate(
-    handler: (state: TBoardView, stateID: number, packet: EnginePacketUpdate | null) => void,
+    handler: (state: FilteredMatchView, stateID: number, packet: EnginePacketUpdate | null) => void,
   ): () => void {
     this.stateUpdateHandlers.push(handler);
     return () => {
@@ -347,17 +314,17 @@ export class ClientEngine<
     };
   }
 
-  getState(): DeepReadonly<MatchState<G>> {
-    return this.runtime.getState() as DeepReadonly<MatchState<G>>;
+  getState(): DeepReadonly<MatchState> {
+    return this.runtime.getState() as DeepReadonly<MatchState>;
   }
 
-  loadState(state: MatchState<G>): void {
+  loadState(state: MatchState): void {
     this.runtime.loadState(state);
     this.stateID = state.ctx._stateID;
   }
 
-  getBoard(): DeepReadonly<TBoardView> {
-    return this.runtime.getBoard() as DeepReadonly<TBoardView>;
+  getBoard(): DeepReadonly<FilteredMatchView> {
+    return this.runtime.getBoard() as DeepReadonly<FilteredMatchView>;
   }
 
   getStateID(): number {
@@ -418,7 +385,7 @@ export class ClientEngine<
       command,
       prevStateID: this.stateID,
       protocolVersion: PROTOCOL_VERSION,
-      matchID: "test-match",
+      matchID: this.getMatchID(),
     });
 
     const currentTurn = this.runtime.getState().ctx.status.turn;
@@ -431,33 +398,60 @@ export class ClientEngine<
       timestamp: Date.now(),
       stateID: this.stateID,
       turnNumber: currentTurn,
+      transitionType: "move",
     });
 
     return { success: true };
   }
 
-  enumerateMoves(): Array<keyof InferMoveInputMap<TMoves> & string> {
+  enumerateMoves(): Array<keyof InferMoveInputMap<MoveRecord> & string> {
     if (this.config.role !== "player") {
       return [];
     }
 
     return this.runtime.enumerateMovesForPlayer(this.config.playerId, "player") as Array<
-      keyof InferMoveInputMap<TMoves> & string
+      keyof InferMoveInputMap<MoveRecord> & string
     >;
   }
 
-  enumerateMovesForPlayer(playerId: string): Array<keyof InferMoveInputMap<TMoves> & string> {
+  enumerateMovesForPlayer(playerId: string): Array<keyof InferMoveInputMap<MoveRecord> & string> {
     if (this.config.role !== "player" || playerId !== this.config.playerId) {
       return [];
     }
 
     return this.runtime.enumerateMovesForPlayer(playerId, "player") as Array<
-      keyof InferMoveInputMap<TMoves> & string
+      keyof InferMoveInputMap<MoveRecord> & string
     >;
   }
 
   getMoveHistory(limit?: number): EngineMoveHistoryEntry[] {
     return limit && limit > 0 ? this.moveHistory.slice(-limit) : [...this.moveHistory];
+  }
+
+  canUndo(playerId: string): boolean {
+    return this.config.role === "player" && playerId === this.config.playerId && this.canUndoState;
+  }
+
+  undo(playerId: string, prevStateID?: number): boolean {
+    if (
+      !this.connected ||
+      !this.transport ||
+      this.config.role !== "player" ||
+      playerId !== this.config.playerId ||
+      !this.canUndoState
+    ) {
+      return false;
+    }
+
+    this.transport.send({
+      type: "UNDO_REQUEST",
+      prevStateID: prevStateID ?? this.stateID,
+      protocolVersion: PROTOCOL_VERSION,
+      matchID: this.getMatchID(),
+      playerID: this.config.playerId,
+    });
+
+    return true;
   }
 
   getActorContext(): EngineActorContext {
@@ -468,6 +462,7 @@ export class ClientEngine<
     await this.disconnect(skipLogs);
     this.stateUpdateHandlers = [];
     this.localView = null;
+    this.canUndoState = false;
   }
 
   isSynced(): boolean {
@@ -487,7 +482,12 @@ export class ClientEngine<
       ? {
           processedCommand: this.lastPacketUpdate.processedCommand,
           animations: [...this.lastPacketUpdate.animations],
+          canUndo: this.lastPacketUpdate.canUndo,
         }
       : null;
+  }
+
+  private getMatchID(): string {
+    return this.runtime.getState().ctx.matchID;
   }
 }

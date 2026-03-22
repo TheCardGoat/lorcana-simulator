@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { invitedToTheBallI18n } from "./029-invited-to-the-ball.i18n";
 
 export const invitedToTheBall: ActionCard = {
   id: "20P",
@@ -6,24 +7,6 @@ export const invitedToTheBall: ActionCard = {
   reprints: ["set5-029"],
   cardType: "action",
   name: "Invited to the Ball",
-  i18n: {
-    en: {
-      name: "Invited to the Ball",
-      text: "Reveal the top 2 cards of your deck. Put revealed character cards into your hand. Put the rest on the bottom of your deck in any order.",
-    },
-    de: {
-      name: "Invited to the Ball",
-      text: "Reveal the top 2 cards of your deck. Put revealed character cards into your hand. Put the rest on the bottom of your deck in any order.",
-    },
-    fr: {
-      name: "Invited to the Ball",
-      text: "Reveal the top 2 cards of your deck. Put revealed character cards into your hand. Put the rest on the bottom of your deck in any order.",
-    },
-    it: {
-      name: "Invited to the Ball",
-      text: "Reveal the top 2 cards of your deck. Put revealed character cards into your hand. Put the rest on the bottom of your deck in any order.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Cinderella",
   set: "005",
@@ -65,4 +48,5 @@ export const invitedToTheBall: ActionCard = {
       type: "action",
     },
   ],
+  i18n: invitedToTheBallI18n,
 };

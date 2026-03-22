@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMousePirateCaptainI18n } from "./103-mickey-mouse-pirate-captain.i18n";
 
 export const mickeyMousePirateCaptain: CharacterCard = {
   id: "xEw",
@@ -7,55 +8,6 @@ export const mickeyMousePirateCaptain: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Pirate Captain",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "MARINER'S MIGHT",
-          description:
-            'Whenever this character quests, chosen Pirate character gets +2 {S} and gains "This character takes no damage from challenges" this turn.',
-        },
-      ],
-    },
-    de: {
-      name: "Mickey Mouse",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            '(You may pay 3 to play this on top of one of your characters named Mickey Mouse.) MARINER\'S MIGHT Whenever this character quests, chosen Pirate character gets +2 and gains "This character takes no damage from challenges" this turn.',
-        },
-      ],
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            '(You may pay 3 to play this on top of one of your characters named Mickey Mouse.) MARINER\'S MIGHT Whenever this character quests, chosen Pirate character gets +2 and gains "This character takes no damage from challenges" this turn.',
-        },
-      ],
-    },
-    it: {
-      name: "Mickey Mouse",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            '(You may pay 3 to play this on top of one of your characters named Mickey Mouse.) MARINER\'S MIGHT Whenever this character quests, chosen Pirate character gets +2 and gains "This character takes no damage from challenges" this turn.',
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "006",
   cardNumber: 103,
@@ -103,4 +55,5 @@ export const mickeyMousePirateCaptain: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: mickeyMousePirateCaptainI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { creeperLoyalLackeyI18n } from "./050-creeper-loyal-lackey.i18n";
 
 export const creeperLoyalLackey: CharacterCard = {
   id: "FR8",
@@ -7,24 +8,6 @@ export const creeperLoyalLackey: CharacterCard = {
   cardType: "character",
   name: "Creeper",
   version: "Loyal Lackey",
-  i18n: {
-    en: {
-      name: "Creeper",
-      version: "Loyal Lackey",
-    },
-    de: {
-      name: "Kribbel",
-      version: "Loyaler Lakai",
-    },
-    fr: {
-      name: "Crapaud",
-      version: "Fidèle laquais",
-    },
-    it: {
-      name: "Rospus",
-      version: "Scagnozzo Leale",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Black Cauldron",
   set: "010",
@@ -41,4 +24,5 @@ export const creeperLoyalLackey: CharacterCard = {
     tcgPlayer: 659182,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: creeperLoyalLackeyI18n,
 };

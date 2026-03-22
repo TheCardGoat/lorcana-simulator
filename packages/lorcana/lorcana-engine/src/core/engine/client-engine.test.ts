@@ -63,4 +63,27 @@ describe("ClientEngine move history", () => {
       turnNumber: 1,
     });
   });
+
+  it("tracks undo availability from server sync and sends undo requests", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [coveGuest],
+      deck: 1,
+    });
+
+    const client = testEngine.getClientEngine("playerOne");
+    const playerOne = testEngine.asPlayerOne();
+
+    expect(client?.engine.canUndo("player_one")).toBe(false);
+    expect(playerOne.getStateID()).toBe(0);
+
+    expect(playerOne.ink(coveGuest)).toBeSuccessfulCommand();
+    expect(client?.engine.canUndo("player_one")).toBe(true);
+    expect(playerOne.getStateID()).toBe(1);
+
+    const undoResult = playerOne.undo();
+    expect(undoResult.success).toBe(true);
+    expect(client?.engine.canUndo("player_one")).toBe(false);
+    expect(playerOne.getCardZone(coveGuest)).toBe("hand");
+    expect(playerOne.getStateID()).toBe(2);
+  });
 });

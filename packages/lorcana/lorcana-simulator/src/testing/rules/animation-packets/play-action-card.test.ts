@@ -7,7 +7,7 @@ import {
 } from "@tcg/lorcana-cards/cards/001";
 
 describe("Play Action Card Animation", () => {
-  it("emits the current packet payload through the real client transport path", () => {
+  it("emits boardMove and play.action packets for action cards", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [developYourBrain],
       inkwell: developYourBrain.cost,
@@ -17,10 +17,24 @@ describe("Play Action Card Animation", () => {
     const card = testEngine.asServer().getCard(developYourBrain);
     testEngine.asLorcanaPlayerOne().playCard(developYourBrain);
     const packet = testEngine.asLorcanaPlayerOne().getLastPacketUpdate();
-    const animation = packet?.animations?.at(0);
-    console.log(animation);
-    expect(animation?.kind).toEqual("play.action");
-    expect(animation?.payload).toEqual(
+    const animations = packet?.animations ?? [];
+
+    const boardMoveAnimation = animations.find((a) => a.kind === "lorcana.boardMove");
+    expect(boardMoveAnimation).toBeDefined();
+    expect(boardMoveAnimation?.payload).toEqual(
+      expect.objectContaining({
+        variant: "play-action",
+        sourceZoneId: "hand",
+        destinationZoneId: "discard",
+        impactAt: "via",
+        renderFace: "faceUp",
+        actorSide: "playerOne",
+      }),
+    );
+
+    const playActionAnimation = animations.find((a) => a.kind === "play.action");
+    expect(playActionAnimation).toBeDefined();
+    expect(playActionAnimation?.payload).toEqual(
       expect.objectContaining({
         cardId: card.definitionId,
         player: card.ownerId,

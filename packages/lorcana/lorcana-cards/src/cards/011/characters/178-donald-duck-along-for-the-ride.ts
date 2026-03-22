@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckAlongForTheRideI18n } from "./178-donald-duck-along-for-the-ride.i18n";
 
 export const donaldDuckAlongForTheRide: CharacterCard = {
   id: "I70",
@@ -7,50 +8,6 @@ export const donaldDuckAlongForTheRide: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Along for the Ride",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Along for the Ride",
-      text: [
-        {
-          title: "COMIN' THROUGH!",
-          description: "When you play this character, you may banish chosen item.",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Mit auf der Reise",
-      text: [
-        {
-          title: "ICH BRECHE DURCH!",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Gegenstand deiner Wahl verbannen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Donald",
-      version: "Se laisse embarquer",
-      text: [
-        {
-          title: "ATTENTION, J'ARRIVE!",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un objet et le bannir.",
-        },
-      ],
-    },
-    it: {
-      name: "Paperino",
-      version: "Che Si Lascia Trasportare",
-      text: [
-        {
-          title: "FATE LARGO!",
-          description: "Quando giochi questo personaggio, puoi esiliare un oggetto a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   set: "011",
   cardNumber: 178,
@@ -74,6 +31,11 @@ export const donaldDuckAlongForTheRide: CharacterCard = {
   abilities: [
     {
       id: "s02-1",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
       effect: {
         chooser: "CONTROLLER",
         effect: {
@@ -88,8 +50,9 @@ export const donaldDuckAlongForTheRide: CharacterCard = {
         },
         type: "optional",
       },
-      type: "action",
+      type: "triggered",
       text: "COMIN’ THROUGH! When you play this character, you may banish chosen item.",
     },
   ],
+  i18n: donaldDuckAlongForTheRideI18n,
 };

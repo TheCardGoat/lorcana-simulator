@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { naniCaringSisterI18n } from "./019-nani-caring-sister.i18n";
 
 export const naniCaringSister: CharacterCard = {
   id: "eOi",
@@ -7,36 +8,6 @@ export const naniCaringSister: CharacterCard = {
   cardType: "character",
   name: "Nani",
   version: "Caring Sister",
-  i18n: {
-    en: {
-      name: "Nani",
-      version: "Caring Sister",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "I AM SO SORRY 2",
-          description: "{I} — Chosen character gets -1 {S} until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Nani",
-      version: "Fürsorgliche Schwester",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) ES TUT MIR SO LEID 2 — Gib einem Charakter deiner Wahl bis zu Beginn deines nächsten Zuges -1.",
-    },
-    fr: {
-      name: "Nani",
-      version: "Sœur bienveillante",
-      text: "Soutien JE SUIS SINCÈREMENT DÉSOLÉE 2 — Choisissez un personnage qui subit -1 jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Nani",
-      version: "Sorella Premurosa",
-      text: "Aiutante MI DISPIACE MOLTO 2 — Un personaggio a tua scelta riceve -1 fino all'inizio del tuo prossimo turno.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "006",
@@ -86,4 +57,5 @@ export const naniCaringSister: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: naniCaringSisterI18n,
 };

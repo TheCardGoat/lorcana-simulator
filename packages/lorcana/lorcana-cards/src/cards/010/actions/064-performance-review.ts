@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { performanceReviewI18n } from "./064-performance-review.i18n";
 
 export const performanceReview: ActionCard = {
   id: "Alh",
@@ -6,30 +7,6 @@ export const performanceReview: ActionCard = {
   reprints: ["set10-064"],
   cardType: "action",
   name: "Performance Review",
-  i18n: {
-    en: {
-      name: "Performance Review",
-      text: [
-        {
-          title: "{E}",
-          description:
-            "chosen ready character of yours to draw cards equal to that character's {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Leistungsbewertung",
-      text: "einen deiner bereiten Charaktere, um so viele Karten zu ziehen, wie dieser hat.",
-    },
-    fr: {
-      name: "Bilan de performance",
-      text: "Choisissez et l'un de vos personnages redressés pour piocher autant de cartes que son.",
-    },
-    it: {
-      name: "Valutazione delle Prestazioni",
-      text: "un tuo personaggio preparato a tua scelta per pescare carte pari al di quel personaggio.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Hercules",
   set: "010",
@@ -41,12 +18,7 @@ export const performanceReview: ActionCard = {
     lorcast: "crd_222374c54b4848939d442c144758404e",
     tcgPlayer: 660367,
   },
-  text: [
-    {
-      title: "{E}",
-      description: "chosen ready character of yours to draw cards equal to that character's {L}.",
-    },
-  ],
+  text: "{E} chosen ready character of yours to draw cards equal to that character's {L}.",
   abilities: [
     {
       type: "action",
@@ -80,4 +52,5 @@ export const performanceReview: ActionCard = {
       },
     },
   ],
+  i18n: performanceReviewI18n,
 };

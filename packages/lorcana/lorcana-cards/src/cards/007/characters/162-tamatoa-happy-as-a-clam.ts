@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tamatoaHappyAsAClamI18n } from "./162-tamatoa-happy-as-a-clam.i18n";
 
 export const tamatoaHappyAsAClam: CharacterCard = {
   id: "c1L",
@@ -7,71 +8,6 @@ export const tamatoaHappyAsAClam: CharacterCard = {
   cardType: "character",
   name: "Tamatoa",
   version: "Happy as a Clam",
-  i18n: {
-    en: {
-      name: "Tamatoa",
-      version: "Happy as a Clam",
-      text: [
-        {
-          title: "COOLEST COLLECTION",
-          description:
-            "When you play this character, return up to 2 item cards from your discard to your hand.",
-        },
-        {
-          title: "I'M BEAUTIFUL, BABY!",
-          description: "Whenever this character quests, you may play an item for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Tamatoa",
-      version: "Ist er nicht souverän",
-      text: [
-        {
-          title: "SAGENHAFTE SAMMLUNG",
-          description:
-            "Wenn du diesen Charakter ausspielst, nimm bis zu 2 Gegenstandskarten aus deinem Ablagestapel zurück auf deine Hand.",
-        },
-        {
-          title: "ICH BIN STRAHLEND SCHÖN, BABY!",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du einen Gegenstand kostenlos ausspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Tamatoa",
-      version: "Peut enfin sécher ses larmes",
-      text: [
-        {
-          title: "LA PLUS BELLE DES COLLECTIONS",
-          description:
-            "Lorsque vous jouez ce personnage, renvoyez dans votre main jusqu'à 2 objets de votre défausse.",
-        },
-        {
-          title: "ON M'APPELLE L'ARTISTE",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez jouer un objet gratuitement.",
-        },
-      ],
-    },
-    it: {
-      name: "Tamatoa",
-      version: "Fama Trovata",
-      text: [
-        {
-          title: "INCREDIBILE COLLEZIONE",
-          description:
-            "Quando giochi questo personaggio, riprendi in mano fino a 2 carte oggetto dai tuoi scarti.",
-        },
-        {
-          title: "IO SONO IL PIÙ BELLO, BABY!",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi giocare un oggetto gratis.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Moana",
   set: "007",
@@ -101,14 +37,11 @@ export const tamatoaHappyAsAClam: CharacterCard = {
   abilities: [
     {
       effect: {
-        target: {
-          cardTypes: ["item"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
-        },
-        type: "return-to-hand",
+        type: "return-from-discard",
+        cardType: "item",
+        count: 2,
+        target: "CONTROLLER",
+        destination: "hand",
       },
       id: "1i4-1",
       name: "COOLEST COLLECTION",
@@ -132,8 +65,15 @@ export const tamatoaHappyAsAClam: CharacterCard = {
         type: "optional",
       },
       id: "1i4-2",
+      name: "I'M BEAUTIFUL, BABY!",
       text: "I'M BEAUTIFUL, BABY! Whenever this character quests, you may play an item for free.",
-      type: "action",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
     },
   ],
+  i18n: tamatoaHappyAsAClamI18n,
 };

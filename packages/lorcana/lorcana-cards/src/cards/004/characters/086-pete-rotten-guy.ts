@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { peteRottenGuyI18n } from "./086-pete-rotten-guy.i18n";
 
 export const peteRottenGuy: CharacterCard = {
   id: "qJb",
@@ -7,24 +8,6 @@ export const peteRottenGuy: CharacterCard = {
   cardType: "character",
   name: "Pete",
   version: "Rotten Guy",
-  i18n: {
-    en: {
-      name: "Pete",
-      version: "Rotten Guy",
-    },
-    de: {
-      name: "Kater Karlo",
-      version: "Hässlich und Kugelrund",
-    },
-    fr: {
-      name: "Pat",
-      version: "Sale type",
-    },
-    it: {
-      name: "Gambadilegno",
-      version: "Spregevole Fino al Midollo",
-    },
-  },
   inkType: ["emerald"],
   set: "004",
   cardNumber: 86,
@@ -40,4 +23,5 @@ export const peteRottenGuy: CharacterCard = {
     tcgPlayer: 549516,
   },
   classifications: ["Storyborn", "Villain", "Musketeer"],
+  i18n: peteRottenGuyI18n,
 };

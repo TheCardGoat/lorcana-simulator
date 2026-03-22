@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mulanConsiderateDiplomatEnchantedI18n } from "./235-mulan-considerate-diplomat-enchanted.i18n";
 
 export const mulanConsiderateDiplomatEnchanted: CharacterCard = {
   id: "oiE",
@@ -7,52 +8,6 @@ export const mulanConsiderateDiplomatEnchanted: CharacterCard = {
   cardType: "character",
   name: "Mulan",
   version: "Considerate Diplomat",
-  i18n: {
-    en: {
-      name: "Mulan",
-      version: "Considerate Diplomat",
-      text: [
-        {
-          title: "IMPERIAL INVITATION",
-          description:
-            "Whenever this character quests, look at the top 4 cards of your deck. You may reveal a Princess character card and put it into your hand. Put the rest on the bottom of your deck in any order.",
-        },
-      ],
-    },
-    de: {
-      name: "Mulan",
-      version: "Besonnene Diplomatin",
-      text: [
-        {
-          title: "KAISERLICHE EINLADUNG",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, schaue dir die obersten 4 Karten deines Decks an. Du darfst 1 Prinzessinnen-Charakterkarte daraus aufdecken und auf deine Hand nehmen. Lege die restlichen Karten in beliebiger Reihenfolge unter dein Deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mulan",
-      version: "Diplomate prévenante",
-      text: [
-        {
-          title: "INVITATION IMPÉRIALE",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, regardez les 4 cartes du dessus de votre pioche. Vous pouvez révéler une carte Personnage Princesse parmi elles et l'ajouter à votre main. Placez les autres cartes sous votre pioche dans l'ordre de votre choix.",
-        },
-      ],
-    },
-    it: {
-      name: "Mulan",
-      version: "Diplomatica Rispettosa",
-      text: [
-        {
-          title: "INVITO IMPERIALE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, guarda le prime 4 carte del tuo mazzo. Puoi rivelare una carta personaggio Principessa e aggiungerla alla tua mano. Metti il resto in fondo al tuo mazzo in qualsiasi ordine.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Mulan",
   set: "009",
@@ -79,12 +34,31 @@ export const mulanConsiderateDiplomatEnchanted: CharacterCard = {
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: "CHOSEN_CHARACTER",
-          type: "put-on-bottom",
-        },
-        type: "optional",
+        type: "scry",
+        amount: 4,
+        destinations: [
+          {
+            zone: "hand",
+            min: 0,
+            max: 1,
+            reveal: true,
+            filters: [
+              {
+                type: "card-type",
+                cardType: "character",
+              },
+              {
+                type: "classification",
+                classification: "Princess",
+              },
+            ],
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+            ordering: "player-choice",
+          },
+        ],
       },
       id: "1t2-1",
       name: "IMPERIAL INVITATION",
@@ -97,4 +71,5 @@ export const mulanConsiderateDiplomatEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mulanConsiderateDiplomatEnchantedI18n,
 };

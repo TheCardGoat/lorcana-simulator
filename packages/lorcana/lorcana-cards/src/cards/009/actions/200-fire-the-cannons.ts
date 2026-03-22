@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { fireTheCannonsI18n } from "./200-fire-the-cannons.i18n";
 
 export const fireTheCannons: ActionCard = {
   id: "K4W",
@@ -6,24 +7,6 @@ export const fireTheCannons: ActionCard = {
   reprints: ["set1-197", "set9-200"],
   cardType: "action",
   name: "Fire the Cannons!",
-  i18n: {
-    en: {
-      name: "Fire the Cannons!",
-      text: "Deal 2 damage to chosen character.",
-    },
-    de: {
-      name: "Feuert die Kanonen!",
-      text: "Füge einem Charakter deiner Wahl 2 Schaden zu.",
-    },
-    fr: {
-      name: "ALLUMEZ LES MÊCHES !",
-      text: "Choisissez un personnage et infligez-lui 2 dommages.",
-    },
-    it: {
-      name: "Fire the Cannons!",
-      text: "Deal 2 damage to chosen character.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Peter Pan",
   set: "009",
@@ -46,4 +29,5 @@ export const fireTheCannons: ActionCard = {
       },
     },
   ],
+  i18n: fireTheCannonsI18n,
 };

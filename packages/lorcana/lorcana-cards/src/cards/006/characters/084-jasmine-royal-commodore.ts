@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jasmineRoyalCommodoreI18n } from "./084-jasmine-royal-commodore.i18n";
 
 export const jasmineRoyalCommodore: CharacterCard = {
   id: "J56",
@@ -7,37 +8,6 @@ export const jasmineRoyalCommodore: CharacterCard = {
   cardType: "character",
   name: "Jasmine",
   version: "Royal Commodore",
-  i18n: {
-    en: {
-      name: "Jasmine",
-      version: "Royal Commodore",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "RULER OF THE SEAS",
-          description:
-            "When you play this character, if you used Shift to play her, return all other exerted characters to their players' hands.",
-        },
-      ],
-    },
-    de: {
-      name: "Jasmin",
-      version: "Königliche Kommodorin",
-      text: "Gestaltwandel 5 HERRSCHERIN DER MEERE Falls du Gestaltwandel benutzt hast, um diesen Charakter auszuspielen, schicke alle anderen erschöpften Charaktere auf die zugehörigen Hände zurück.",
-    },
-    fr: {
-      name: "Jasmine",
-      version: "Commodore royale",
-      text: "Alter 5 RÉGENTE DES MERS Si vous jouez ce personnage en utilisant sa capacité Alter, renvoyez tous les autres personnages épuisés dans la main de leur propriétaire.",
-    },
-    it: {
-      name: "Jasmine",
-      version: "Commodoro Reale",
-      text: "Trasformazione 5 SOVRANA DEI MARI Quando giochi questo personaggio, se hai usato Trasformazione per giocarlo, fai riprendere in mano ai loro giocatori tutti gli altri personaggi impegnati.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aladdin",
   set: "006",
@@ -74,9 +44,20 @@ export const jasmineRoyalCommodore: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        type: "used-shift",
+      },
       effect: {
-        from: "hand",
-        type: "play-card",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [{ type: "exerted" }],
+          excludeSelf: true,
+        },
+        type: "return-to-hand",
       },
       id: "8v1-2",
       name: "RULER OF THE SEAS",
@@ -89,4 +70,5 @@ export const jasmineRoyalCommodore: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: jasmineRoyalCommodoreI18n,
 };

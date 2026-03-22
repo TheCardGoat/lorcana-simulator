@@ -65,6 +65,20 @@ describe("quest", () => {
     expect(playCards.find((card) => card.fullName === "Ready Quester")?.exerted).toBe(true);
     expect(playCards.find((card) => card.fullName === "Reckless Quester")?.exerted).toBe(false);
     expect(playCards.find((card) => card.fullName === "Drying Quester")?.drying).toBe(true);
+
+    const questEntry = engine
+      .getServerEngine()
+      .getRuntime()
+      .getGameLog()
+      .find((entry) => entry.defaultMessage?.key === "lorcana.move.questWithAll");
+    expect(questEntry?.defaultMessage).toMatchObject({
+      key: "lorcana.move.questWithAll",
+      values: {
+        playerId: PLAYER_ONE,
+        loreGained: 2,
+        count: 1,
+      },
+    });
   });
 
   it("returns NO_ELIGIBLE_QUESTERS when no characters can quest", () => {
@@ -114,6 +128,19 @@ describe("quest", () => {
     expect(engine.asPlayerOne().getCardLore(gloomyQuester)).toBe(-1);
     expect(engine.asPlayerOne().quest(gloomyQuester).success).toBe(true);
     expect(engine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+
+    const questEntry = engine
+      .getServerEngine()
+      .getRuntime()
+      .getGameLog()
+      .find((entry) => entry.defaultMessage?.key === "lorcana.move.quest");
+    expect(questEntry?.defaultMessage).toMatchObject({
+      key: "lorcana.move.quest",
+      values: {
+        playerId: PLAYER_ONE,
+        loreGained: 0,
+      },
+    });
   });
 
   it.skip("resolves temporary lore-loss abilities granted for questing", () => {

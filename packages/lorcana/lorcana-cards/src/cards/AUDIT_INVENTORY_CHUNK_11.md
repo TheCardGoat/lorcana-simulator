@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 11 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_10.md) | [Next →](AUDIT_INVENTORY_CHUNK_12.md)
-
 
 - [ ] **007/characters/087-baymax-low-battery.test.ts**
   - Card: `007/characters/087-baymax-low-battery.ts`

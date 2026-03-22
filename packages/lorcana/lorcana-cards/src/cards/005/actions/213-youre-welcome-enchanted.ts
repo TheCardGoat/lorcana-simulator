@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { youreWelcomeEnchantedI18n } from "./213-youre-welcome-enchanted.i18n";
 
 export const youreWelcomeEnchanted: ActionCard = {
   id: "huo",
@@ -6,24 +7,6 @@ export const youreWelcomeEnchanted: ActionCard = {
   reprints: ["set5-096"],
   cardType: "action",
   name: "You're Welcome",
-  i18n: {
-    en: {
-      name: "You're Welcome",
-      text: "Shuffle chosen character, item, or location into their player's deck. That player draws 2 cards.",
-    },
-    de: {
-      name: "Voll gerne",
-      text: "Mische einen Charakter, Gegenstand oder Ort deiner Wahl zurück in das zugehörige Deck. Wer jenen im Spiel hatte, zieht 2 Karten.",
-    },
-    fr: {
-      name: "Pour les hommes",
-      text: "Choisissez un personnage, un objet ou un lieu et mélangez-le dans la pioche de son propriétaire. Ce joueur pioche 2 cartes.",
-    },
-    it: {
-      name: "Tranquilla",
-      text: "(Un personaggio con costo 4 o superiore può per cantare questa canzone gratis.) Rimescola un personaggio, un oggetto o un luogo a tua scelta nel mazzo del suo giocatore. Quel giocatore pesca 2 carte.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Moana",
   set: "005",
@@ -65,4 +48,5 @@ export const youreWelcomeEnchanted: ActionCard = {
       text: "Shuffle chosen character, item, or location into their player's deck. That player draws 2 cards.",
     },
   ],
+  i18n: youreWelcomeEnchantedI18n,
 };

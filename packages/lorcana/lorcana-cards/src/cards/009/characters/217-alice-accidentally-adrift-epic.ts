@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { aliceAccidentallyAdriftEpicI18n } from "./217-alice-accidentally-adrift-epic.i18n";
 
 export const aliceAccidentallyAdriftEpic: CharacterCard = {
   id: "5i2",
@@ -7,72 +8,6 @@ export const aliceAccidentallyAdriftEpic: CharacterCard = {
   cardType: "character",
   name: "Alice",
   version: "Accidentally Adrift",
-  i18n: {
-    en: {
-      name: "Alice",
-      version: "Accidentally Adrift",
-      text: [
-        {
-          title: "WASHED AWAY",
-          description:
-            "When you play this character, you may put chosen item into its player's inkwell facedown and exerted.",
-        },
-        {
-          title: "MAKING WAVES",
-          description:
-            "Whenever this character quests, chosen opposing character gets -2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Alice",
-      version: "Versehentlich verirrt",
-      text: [
-        {
-          title: "WEGGESPÜLT",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Gegenstand deiner Wahl verdeckt und erschöpft in den zugehörigen Tintenvorrat legen.",
-        },
-        {
-          title: "WELLEN SCHLAGEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, gib einem gegnerischen Charakter deiner Wahl in diesem Zug -2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Alice",
-      version: "Accidentellement à la dérive",
-      text: [
-        {
-          title: "À VAU-L'EAU",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un objet et le placer dans la réserve d'encre de son propriétaire, face cachée et épuisé.",
-        },
-        {
-          title: "FAIRE DES VAGUES",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, choisissez un personnage adverse qui subit -2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Alice",
-      version: "Naufraga per Caso",
-      text: [
-        {
-          title: "PORTATA VIA",
-          description:
-            "Quando giochi questo personaggio, puoi aggiungere un oggetto a tua scelta al calamaio del suo giocatore, a faccia in giù e impegnato.",
-        },
-        {
-          title: "SMUOVERE LE ACQUE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, un personaggio avversario a tua scelta riceve -2 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Alice in Wonderland",
   set: "009",
@@ -101,5 +36,58 @@ export const aliceAccidentallyAdriftEpic: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      id: "5i2-1",
+      name: "WASHED AWAY",
+      text: "WASHED AWAY When you play this character, you may put chosen item into its player's inkwell facedown and exerted.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "optional",
+        effect: {
+          type: "put-into-inkwell",
+          source: "chosen-card-in-play",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["item"],
+          },
+          facedown: true,
+          exerted: true,
+        },
+      },
+    },
+    {
+      id: "5i2-2",
+      name: "MAKING WAVES",
+      text: "MAKING WAVES Whenever this character quests, chosen opposing character gets -2 {S} this turn.",
+      type: "triggered",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "modify-stat",
+        stat: "strength",
+        modifier: -2,
+        duration: "this-turn",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+    },
+  ],
+  i18n: aliceAccidentallyAdriftEpicI18n,
 };

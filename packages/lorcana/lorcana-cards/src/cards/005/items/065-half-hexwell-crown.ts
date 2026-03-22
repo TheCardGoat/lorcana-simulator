@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { halfHexwellCrownI18n } from "./065-half-hexwell-crown.i18n";
 
 export const halfHexwellCrown: ItemCard = {
   id: "UGD",
@@ -6,51 +7,6 @@ export const halfHexwellCrown: ItemCard = {
   reprints: ["set5-065"],
   cardType: "item",
   name: "Half Hexwell Crown",
-  i18n: {
-    en: {
-      name: "Half Hexwell Crown",
-      text: [
-        {
-          title: "AN UNEXPECTED FIND",
-          description: "{E}, 2 {I} — Draw a card.",
-        },
-        {
-          title: "A PERILOUS POWER",
-          description: "{E}, 2 {I}, Discard a card — Exert chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Hälfte der Hexwell-Krone",
-      text: [
-        {
-          title: "UNERWARTETER FUND, 2",
-          description:
-            "— Ziehe 1 Karte. GEFÄHRLICHE MACHT, 2, Wirf 1 Karte ab — Erschöpfe einen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Moitié de la Couronne d'Hexasort",
-      text: [
-        {
-          title: "TROUVAILLE INATTENDUE, 2",
-          description:
-            "— Piochez une carte. UN POUVOIR PÉRILLEUX, 2, Défaussez une carte — Choisissez un personnage et épuisez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Mezza Corona Esamantica",
-      text: [
-        {
-          title: "UN RITROVAMENTO INASPETTATO, 2",
-          description:
-            "— Pesca una carta. UN POTERE RISCHIOSO, 2, scarta una carta — Impegna un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Lorcana",
   set: "005",
@@ -105,4 +61,5 @@ export const halfHexwellCrown: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: halfHexwellCrownI18n,
 };

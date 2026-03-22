@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { drFacilierCharlatanI18n } from "./038-dr-facilier-charlatan.i18n";
 
 export const drFacilierCharlatan: CharacterCard = {
   id: "wGC",
@@ -7,28 +8,6 @@ export const drFacilierCharlatan: CharacterCard = {
   cardType: "character",
   name: "Dr. Facilier",
   version: "Charlatan",
-  i18n: {
-    en: {
-      name: "Dr. Facilier",
-      version: "Charlatan",
-      text: "Challenger +2",
-    },
-    de: {
-      name: "Dr. Facilier",
-      version: "Scharlatan",
-      text: "Herausfordern +2",
-    },
-    fr: {
-      name: "DR. FACILIER",
-      version: "Charlatan",
-      text: "Offensif +2",
-    },
-    it: {
-      name: "Dr. Facilier",
-      version: "Charlatan",
-      text: "Challenger +2 (While challenging, this character gets +2.)",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Princess and the Frog",
   set: "001",
@@ -39,7 +18,6 @@ export const drFacilierCharlatan: CharacterCard = {
   willpower: 4,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_17c7228380dd4d8e8b5e2cce3058d9d3",
     tcgPlayer: 494099,
@@ -55,4 +33,5 @@ export const drFacilierCharlatan: CharacterCard = {
       text: "Challenger +2",
     },
   ],
+  i18n: drFacilierCharlatanI18n,
 };

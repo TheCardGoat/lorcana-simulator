@@ -14,6 +14,18 @@ const topDeckCard = createMockCharacter({
   cost: 1,
 });
 
+const backupDeckCard = createMockCharacter({
+  id: "graveyard-backup-deck",
+  name: "Graveyard Backup Deck",
+  cost: 1,
+});
+
+const thirdDeckCard = createMockCharacter({
+  id: "graveyard-third-deck",
+  name: "Graveyard Third Deck",
+  cost: 1,
+});
+
 describe("Graveyard of Christmas Future - Lonely Resting Place", () => {
   it("is playable as a location", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
@@ -34,7 +46,7 @@ describe("Graveyard of Christmas Future - Lonely Resting Place", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       play: [graveyardOfChristmasFutureLonelyRestingPlace, graveyardResident],
       inkwell: graveyardOfChristmasFutureLonelyRestingPlace.moveCost,
-      deck: [topDeckCard],
+      deck: [backupDeckCard, topDeckCard],
     });
 
     expect(
@@ -46,27 +58,60 @@ describe("Graveyard of Christmas Future - Lonely Resting Place", () => {
     expect(testEngine.getCardsUnder(graveyardOfChristmasFutureLonelyRestingPlace)).toHaveLength(1);
   });
 
-  it("returns all cards from under it to your hand at the start of your turn, then banishes itself", () => {
+  it("returns the stored deck card to your hand at the start of your turn, then banishes itself", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       play: [graveyardOfChristmasFutureLonelyRestingPlace, graveyardResident],
-      deck: 2,
+      inkwell: graveyardOfChristmasFutureLonelyRestingPlace.moveCost,
+      deck: [backupDeckCard, thirdDeckCard, topDeckCard],
     });
 
-    testEngine.putCardUnder(graveyardOfChristmasFutureLonelyRestingPlace, graveyardResident);
+    expect(
+      testEngine
+        .asPlayerOne()
+        .moveCharacterToLocation(graveyardResident, graveyardOfChristmasFutureLonelyRestingPlace),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.getCardsUnder(graveyardOfChristmasFutureLonelyRestingPlace)).toHaveLength(1);
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: true,
+      }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.getCardsUnder(graveyardOfChristmasFutureLonelyRestingPlace)).toHaveLength(0);
-    expect(testEngine.asPlayerOne().getCardZone(graveyardResident)).toBe("hand");
+    expect(testEngine.asPlayerOne().getCardZone(topDeckCard)).toBe("hand");
     expect(testEngine.asPlayerOne().getCardZone(graveyardOfChristmasFutureLonelyRestingPlace)).toBe(
       "discard",
+    );
+  });
+
+  it("keeps the stored cards under it when you decline another chance", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [graveyardOfChristmasFutureLonelyRestingPlace, graveyardResident],
+      inkwell: graveyardOfChristmasFutureLonelyRestingPlace.moveCost,
+      deck: [backupDeckCard, thirdDeckCard, topDeckCard],
+    });
+
+    expect(
+      testEngine
+        .asPlayerOne()
+        .moveCharacterToLocation(graveyardResident, graveyardOfChristmasFutureLonelyRestingPlace),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: false,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.getCardsUnder(graveyardOfChristmasFutureLonelyRestingPlace)).toHaveLength(1);
+    expect(testEngine.asPlayerOne().getCardZone(topDeckCard)).not.toBe("hand");
+    expect(testEngine.asPlayerOne().getCardZone(graveyardOfChristmasFutureLonelyRestingPlace)).toBe(
+      "play",
     );
   });
 });

@@ -29,9 +29,6 @@ describe("Ursula's Shell Necklace", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
-    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(inkedCard)).toBe("inkwell");
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
@@ -53,9 +50,6 @@ describe("Ursula's Shell Necklace", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
-    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(inkedCard)).toBe("inkwell");
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");

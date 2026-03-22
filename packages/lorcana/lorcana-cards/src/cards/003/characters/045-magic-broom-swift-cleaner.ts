@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicBroomSwiftCleanerI18n } from "./045-magic-broom-swift-cleaner.i18n";
 
 export const magicBroomSwiftCleaner: CharacterCard = {
   id: "sUV",
@@ -7,43 +8,6 @@ export const magicBroomSwiftCleaner: CharacterCard = {
   cardType: "character",
   name: "Magic Broom",
   version: "Swift Cleaner",
-  i18n: {
-    en: {
-      name: "Magic Broom",
-      version: "Swift Cleaner",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "CLEAN THIS, CLEAN THAT",
-          description:
-            "When you play this character, you may shuffle all Broom cards from your discard into your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Zauberbesen",
-      version: "Rasanter Saubermacher",
-      text: "Rasant REINIGE DIES, PUTZE DAS Wenn du diesen Charakter ausspielst, darfst du alle Besen aus deinem Ablagestapel zurück in dein Deck mischen.",
-    },
-    fr: {
-      name: "Balais magiques",
-      version: "Nettoyeur rapide",
-      text: "Charge NETTOIE CECI, NETTOIE CELA Lorsque vous jouez ce personnage, vous pouvez remélanger toutes les cartes Balai de votre défausse dans votre pioche.",
-    },
-    it: {
-      name: "Scopa Magica",
-      version: "Pulitore Rapido",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) PULISCI QUESTO, PULISCI QUELLO Quando giochi questo personaggio, puoi rimescolare nel tuo mazzo tutte le carte Scopa presenti nei tuoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Fantasia",
   set: "003",
@@ -69,8 +33,6 @@ export const magicBroomSwiftCleaner: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Broom"],
-  missingImplementation: true,
-  missingTests: true,
   abilities: [
     {
       id: "114-1",
@@ -79,24 +41,35 @@ export const magicBroomSwiftCleaner: CharacterCard = {
       type: "keyword",
     },
     {
+      id: "114-2",
+      name: "CLEAN THIS, CLEAN THAT",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
       effect: {
-        chooser: "CONTROLLER",
+        type: "optional",
         effect: {
+          type: "shuffle-into-deck",
           intoDeck: "owner",
           target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["card"],
+            selector: "all",
+            count: "all",
+            owner: "you",
+            zones: ["discard"],
+            filter: [
+              {
+                type: "has-classification",
+                classification: "Broom",
+              },
+            ],
           },
-          type: "shuffle-into-deck",
         },
-        type: "optional",
       },
-      id: "114-2",
       text: "CLEAN THIS, CLEAN THAT When you play this character, you may shuffle all Broom cards from your discard into your deck.",
-      type: "action",
     },
   ],
+  i18n: magicBroomSwiftCleanerI18n,
 };

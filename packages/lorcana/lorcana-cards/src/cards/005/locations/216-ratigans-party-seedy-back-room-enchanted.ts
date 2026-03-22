@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { ratigansPartySeedyBackRoomEnchantedI18n } from "./216-ratigans-party-seedy-back-room-enchanted.i18n";
 
 export const ratigansPartySeedyBackRoomEnchanted: LocationCard = {
   id: "pPD",
@@ -7,51 +8,6 @@ export const ratigansPartySeedyBackRoomEnchanted: LocationCard = {
   cardType: "location",
   name: "Ratigan's Party",
   version: "Seedy Back Room",
-  i18n: {
-    en: {
-      name: "Ratigan's Party",
-      version: "Seedy Back Room",
-      text: [
-        {
-          title: "MISFITS' REVELRY",
-          description: "While you have a damaged character here, this location gets +2 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Rattenzahns Party",
-      version: "Zwielichtiges Hinterzimmer",
-      text: [
-        {
-          title: "FEIER DER MISSETÄTER",
-          description:
-            "Solange du mindestens einen beschädigten Charakter an diesem Ort hast, erhält dieser Ort +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Fête de Ratigan",
-      version: "Arrière-salle sordide",
-      text: [
-        {
-          title: "FÊTE DES PARIAS",
-          description:
-            "Tant que vous avez un personnage ayant au moins un dommage sur lui sur ce lieu, ce lieu gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Festa di Rattigan",
-      version: "Stanzino Squallido",
-      text: [
-        {
-          title: "LA BALDORIA DEI BALORDI",
-          description:
-            "Mentre hai un personaggio danneggiato in questo luogo, questo luogo riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Great Mouse Detective",
   set: "005",
@@ -108,4 +64,5 @@ export const ratigansPartySeedyBackRoomEnchanted: LocationCard = {
       type: "static",
     },
   ],
+  i18n: ratigansPartySeedyBackRoomEnchantedI18n,
 };

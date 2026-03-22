@@ -2,8 +2,8 @@
   import XIcon from "@lucide/svelte/icons/x";
   import * as Dialog from "$lib/design-system/primitives/dialog/index.js";
   import { IsTouchInteraction } from "$lib/hooks/is-touch-interaction.svelte.js";
-  import { m } from "$lib/paraglide/messages.js";
-  import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+  import { m } from "$lib/i18n/messages.js";
+  import CardImage from "$lib/design-system/simulator/cards/CardImage.svelte";
   import {useSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
 
   const PREVIEW_WIDTH = 280;
@@ -88,11 +88,7 @@
       !simulatorCardContext.previewCard.isMasked &&
       simulatorCardContext.previewCard.cardId !== dismissedPreviewCardId,
   );
-  const previewCard = $derived(
-    simulatorCardContext.previewCard
-      ? { ...simulatorCardContext.previewCard, readyState: "ready" as const }
-      : null,
-  );
+  const previewCard = $derived(simulatorCardContext.previewCard);
   const shouldRotatePreview = $derived(previewCard?.cardType === "location");
   const isMobilePreview = $derived(isTouchInteraction.current && simulatorCardContext.isGlobalPreviewOpen);
 
@@ -171,14 +167,14 @@
             <XIcon class="size-4" />
           </Dialog.Close>
 
-          <div class="preview-content">
-            {#if previewCard}
-              <LorcanaCard
-                card={previewCard}
-                useContainerSize
-                imageFormat="full"
-                isExerted={shouldRotatePreview}
-                showHoverCard={false}
+          <div class="preview-content" class:preview-content--rotated={shouldRotatePreview}>
+            {#if previewCard?.set && previewCard?.cardNumber}
+              <CardImage
+                set={previewCard.set}
+                number={previewCard.cardNumber}
+                crop="full"
+                alt={previewCard.label ?? "Card preview"}
+                class="w-full h-full object-cover rounded-lg"
               />
             {/if}
           </div>
@@ -224,14 +220,14 @@
         <XIcon class="size-4" />
       </button>
 
-      <div class="preview-content">
-        {#if previewCard}
-          <LorcanaCard
-            card={previewCard}
-            useContainerSize
-            imageFormat="full"
-            isExerted={shouldRotatePreview}
-            showHoverCard={false}
+      <div class="preview-content" class:preview-content--rotated={shouldRotatePreview}>
+        {#if previewCard?.set && previewCard?.cardNumber}
+          <CardImage
+            set={previewCard.set}
+            number={previewCard.cardNumber}
+            crop="full"
+            alt={previewCard.label ?? "Card preview"}
+            class="w-full h-full object-cover rounded-lg"
           />
         {/if}
       </div>
@@ -263,6 +259,11 @@
   .preview-content {
     padding: 0;
     display: flex;
+    width: var(--zone-card-width);
+  }
+
+  .preview-content--rotated {
+    transform: rotate(90deg);
   }
 
   .drag-handle {

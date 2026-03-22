@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { galacticCommunicatorI18n } from "./099-galactic-communicator.i18n";
 
 export const galacticCommunicator: ItemCard = {
   id: "SR9",
@@ -6,48 +7,6 @@ export const galacticCommunicator: ItemCard = {
   reprints: ["set6-099"],
   cardType: "item",
   name: "Galactic Communicator",
-  i18n: {
-    en: {
-      name: "Galactic Communicator",
-      text: [
-        {
-          title: "RESOURCE ALLOCATION 1",
-          description:
-            "{I}, Banish this item — Return chosen character with 2 {S} or less to their player's hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Galaktischer Kommunikator",
-      text: [
-        {
-          title: "RESSOURCENZUTEILUNG 1,",
-          description:
-            "Verbanne diesen Gegenstand — Schicke einen Charakter deiner Wahl mit 2 oder weniger auf die zugehörige Hand zurück.",
-        },
-      ],
-    },
-    fr: {
-      name: "Communicateur galactique",
-      text: [
-        {
-          title: "ALLOCATION DES RESSOURCES 1,",
-          description:
-            "bannissez cet objet — Renvoyez dans la main de son propriétaire un personnage avec une de 2 ou moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Comunicatore Galattico",
-      text: [
-        {
-          title: "INVIO DI RISORSE 1,",
-          description:
-            "esilia questo oggetto — Fai riprendere in mano al suo giocatore un personaggio a tua scelta con 2 o inferiore.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lilo and Stitch",
   set: "006",
@@ -95,4 +54,5 @@ export const galacticCommunicator: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: galacticCommunicatorI18n,
 };

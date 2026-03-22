@@ -1,30 +1,13 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { winnieThePoohHunnyWizardI18n } from "./041-winnie-the-pooh-hunny-wizard.i18n";
 
-export const winnieThePoohHunnyWizard_set9: CharacterCard = {
+export const winnieThePoohHunnyWizard: CharacterCard = {
   id: "PZk",
   canonicalId: "ci_ITi",
   reprints: ["set2-059", "set9-041"],
   cardType: "character",
   name: "Winnie the Pooh",
   version: "Hunny Wizard",
-  i18n: {
-    en: {
-      name: "Winnie the Pooh",
-      version: "Hunny Wizard",
-    },
-    de: {
-      name: "Winnie Puuh",
-      version: "Honigzauberer",
-    },
-    fr: {
-      name: "Winnie l'Ourson",
-      version: "Magicien mellifique",
-    },
-    it: {
-      name: "Winnie the Pooh",
-      version: "Mago del Miele",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Winnie the Pooh",
   set: "009",
@@ -41,4 +24,5 @@ export const winnieThePoohHunnyWizard_set9: CharacterCard = {
     tcgPlayer: 651107,
   },
   classifications: ["Dreamborn", "Hero", "Sorcerer", "Hunny"],
+  i18n: winnieThePoohHunnyWizardI18n,
 };

@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { visionSlabI18n } from "./100-vision-slab.i18n";
 
 export const visionSlab: ItemCard = {
   id: "Kxi",
@@ -6,67 +7,6 @@ export const visionSlab: ItemCard = {
   reprints: ["set4-100"],
   cardType: "item",
   name: "Vision Slab",
-  i18n: {
-    en: {
-      name: "Vision Slab",
-      text: [
-        {
-          title: "DANGER REVEALED",
-          description:
-            "At the start of your turn, if an opposing character has damage, gain 1 lore.",
-        },
-        {
-          title: "TRAPPED!",
-          description: "Damage counters can't be removed.",
-        },
-      ],
-    },
-    de: {
-      name: "Visionsplatte",
-      text: [
-        {
-          title: "ENTHÜLLTE GEFAHR",
-          description:
-            "Zu Beginn deines Zuges, wenn mindestens eine gegnerische Person einen beschädigten Charakter im Spiel hat, sammelst du 1 Legende.",
-        },
-        {
-          title: "IN DER FALLE!",
-          description: "Schadensmarker können nicht entfernt werden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Plaque de vision",
-      text: [
-        {
-          title: "DANGER RÉVÉLÉ",
-          description:
-            "Au début de votre tour, si un personnage adverse a au moins un jeton Dommage, gagnez 1 éclat de Lore.",
-        },
-        {
-          title: "PIÉGÉ!",
-          description: "Aucun jeton Dommage ne peut être retiré.",
-        },
-      ],
-    },
-    it: {
-      name: "Tavoletta della Visione",
-      text: [
-        {
-          title: "PERICOLO RIVELATO",
-          description:
-            "All'inizio del tuo turno, se un personaggio avversario è danneggiato, ottieni 1 leggenda.",
-        },
-        {
-          title: "IN TRAPPOLA!",
-        },
-        {
-          title: "I",
-          description: "segnalini danno non possono essere rimossi.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Encanto",
   set: "004",
@@ -88,5 +28,37 @@ export const visionSlab: ItemCard = {
       description: "Damage counters can't be removed.",
     },
   ],
-  abilities: [],
+  abilities: [
+    {
+      id: "Kxi-1",
+      name: "DANGER REVEALED",
+      text: "DANGER REVEALED At the start of your turn, if an opposing character has damage, gain 1 lore.",
+      type: "triggered",
+      trigger: {
+        event: "start-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      condition: {
+        type: "opponent-has-damaged-character",
+      },
+      effect: {
+        type: "gain-lore",
+        amount: 1,
+        target: "CONTROLLER",
+      },
+    },
+    {
+      id: "Kxi-2",
+      name: "TRAPPED!",
+      text: "TRAPPED! Damage counters can't be removed.",
+      type: "replacement",
+      replaces: "remove-damage",
+      replacement: {
+        type: "prevent-remove-damage",
+        appliesTo: "all",
+      },
+    },
+  ],
+  i18n: visionSlabI18n,
 };

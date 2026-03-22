@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mulanSoldierInTrainingI18n } from "./117-mulan-soldier-in-training.i18n";
 
 export const mulanSoldierInTraining: CharacterCard = {
   id: "d6s",
@@ -7,33 +8,6 @@ export const mulanSoldierInTraining: CharacterCard = {
   cardType: "character",
   name: "Mulan",
   version: "Soldier in Training",
-  i18n: {
-    en: {
-      name: "Mulan",
-      version: "Soldier in Training",
-      text: "Rush",
-    },
-    de: {
-      name: "Mulan",
-      version: "Soldatin in Ausbildung",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Mulan",
-      version: "Tout juste sortie de l'entraînement",
-      text: "Charge",
-    },
-    it: {
-      name: "Mulan",
-      version: "Soldier in Training",
-      text: [
-        {
-          title: "Rush",
-          description: "(This character can challenge the turn they're played.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mulan",
   set: "002",
@@ -58,4 +32,5 @@ export const mulanSoldierInTraining: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: mulanSoldierInTrainingI18n,
 };

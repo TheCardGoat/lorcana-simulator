@@ -11,9 +11,9 @@ import {
 } from "$lib/design-system/primitives/card";
 import { Select } from "$lib/design-system/primitives/select";
 import { Separator } from "$lib/design-system/primitives/separator";
+import { AUTOMATED_ACTION_STRATEGIES } from "@tcg/lorcana-engine";
 import { DECK_FIXTURES } from "../deck-fixtures/index.js";
 import {
-	AUTOMATED_MATCH_STRATEGIES,
 	loadAutomatedMatchConfig,
 	replaceDeckTextWithFixture,
 	saveAutomatedMatchConfig,
@@ -68,7 +68,7 @@ function updateDeckText(side: "playerOne" | "playerTwo", value: string): void {
 		persistConfig({
 			...config,
 			playerOneDeckText: value,
-			playerOneFixtureName: undefined,
+			playerOneFixtureId: undefined,
 		});
 		return;
 	}
@@ -76,13 +76,13 @@ function updateDeckText(side: "playerOne" | "playerTwo", value: string): void {
 	persistConfig({
 		...config,
 		playerTwoDeckText: value,
-		playerTwoFixtureName: undefined,
+		playerTwoFixtureId: undefined,
 	});
 }
 
 function updateFixture(
 	side: "playerOne" | "playerTwo",
-	fixtureName: string,
+	fixtureId: string,
 ): void {
 	validationErrors = {
 		...validationErrors,
@@ -90,14 +90,21 @@ function updateFixture(
 			? { playerOneDeckText: undefined }
 			: { playerTwoDeckText: undefined }),
 	};
-	persistConfig(replaceDeckTextWithFixture(config, side, fixtureName));
+	persistConfig(replaceDeckTextWithFixture(config, side, fixtureId));
 }
 
-function updateStrategy(strategyId: string): void {
-	persistConfig({
-		...config,
-		strategyId,
-	});
+function updateStrategy(side: "playerOne" | "playerTwo", strategyId: string): void {
+	persistConfig(
+		side === "playerOne"
+			? {
+					...config,
+					playerOneStrategyId: strategyId,
+				}
+			: {
+					...config,
+					playerTwoStrategyId: strategyId,
+				},
+	);
 }
 
 function countDeckCards(deckText: string): number {
@@ -175,12 +182,12 @@ async function simulateMatch(): Promise<void> {
             <Select
               id="player-one-fixture"
               aria-label="Player one default fixture"
-              value={config.playerOneFixtureName ?? ""}
+              value={config.playerOneFixtureId ?? ""}
               onchange={(event) =>
                 updateFixture("playerOne", (event.currentTarget as HTMLSelectElement).value)}
             >
               {#each DECK_FIXTURES as fixture}
-                <option value={fixture.name}>{fixture.name}</option>
+                <option value={fixture.id}>{fixture.name}</option>
               {/each}
             </Select>
           </div>
@@ -219,12 +226,12 @@ async function simulateMatch(): Promise<void> {
             <Select
               id="player-two-fixture"
               aria-label="Player two default fixture"
-              value={config.playerTwoFixtureName ?? ""}
+              value={config.playerTwoFixtureId ?? ""}
               onchange={(event) =>
                 updateFixture("playerTwo", (event.currentTarget as HTMLSelectElement).value)}
             >
               {#each DECK_FIXTURES as fixture}
-                <option value={fixture.name}>{fixture.name}</option>
+                <option value={fixture.id}>{fixture.name}</option>
               {/each}
             </Select>
           </div>
@@ -257,20 +264,40 @@ async function simulateMatch(): Promise<void> {
         </CardHeader>
         <CardContent class="space-y-5">
           <div class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400" for="strategy-select">
-              Strategy
+            <label class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400" for="player-one-strategy-select">
+              Player one strategy
             </label>
             <Select
-              id="strategy-select"
-              value={config.strategyId}
-              onchange={(event) => updateStrategy((event.currentTarget as HTMLSelectElement).value)}
+              id="player-one-strategy-select"
+              value={config.playerOneStrategyId}
+              onchange={(event) =>
+                updateStrategy("playerOne", (event.currentTarget as HTMLSelectElement).value)}
             >
-              {#each AUTOMATED_MATCH_STRATEGIES as strategyOption}
+              {#each AUTOMATED_ACTION_STRATEGIES as strategyOption}
                 <option value={strategyOption.id}>{strategyOption.label}</option>
               {/each}
             </Select>
             <p class="text-sm leading-6 text-slate-400">
-              {AUTOMATED_MATCH_STRATEGIES.find((strategyOption) => strategyOption.id === config.strategyId)?.description}
+              {AUTOMATED_ACTION_STRATEGIES.find((strategyOption) => strategyOption.id === config.playerOneStrategyId)?.description}
+            </p>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400" for="player-two-strategy-select">
+              Player two strategy
+            </label>
+            <Select
+              id="player-two-strategy-select"
+              value={config.playerTwoStrategyId}
+              onchange={(event) =>
+                updateStrategy("playerTwo", (event.currentTarget as HTMLSelectElement).value)}
+            >
+              {#each AUTOMATED_ACTION_STRATEGIES as strategyOption}
+                <option value={strategyOption.id}>{strategyOption.label}</option>
+              {/each}
+            </Select>
+            <p class="text-sm leading-6 text-slate-400">
+              {AUTOMATED_ACTION_STRATEGIES.find((strategyOption) => strategyOption.id === config.playerTwoStrategyId)?.description}
             </p>
           </div>
 

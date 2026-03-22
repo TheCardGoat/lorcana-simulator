@@ -1,109 +1,86 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { kenaiBigBrother } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-// Import { brawl } from "../../004/actions/130-brawl";
-// Import { kodaSmallishBear } from "../../007";
-// Import {
-//   CharlotteLaBouffMardiGrasPrincess,
-//   DeweyLovableShowoff,
-// } from "../../008";
-//
-// Describe("Kenai - Big Brother", () => {
-//   It("**BROTHERS FOREVER** While this character is exerted, your characters named Koda can’t be challenged.", () => {
-//     Const testStore = new TestEngine(
-//       {
-//         Inkwell: kenaiBigBrother.cost,
-//         Play: [
-//           KenaiBigBrother,
-//           KodaSmallishBear,
-//           CharlotteLaBouffMardiGrasPrincess,
-//         ],
-//       },
-//       {
-//         Play: [deweyLovableShowoff],
-//       },
-//     );
-//
-//     Const cardUnderTest = testStore.getCardModel(kenaiBigBrother);
-//     Const coda = testStore.getCardModel(kodaSmallishBear);
-//     Const oppoCard = testStore.getCardModel(deweyLovableShowoff);
-//     Const charlotte = testStore.getCardModel(charlotteLaBouffMardiGrasPrincess);
-//
-//     CardUnderTest.exert();
-//     Coda.exert();
-//     Charlotte.exert();
-//
-//     Expect(cardUnderTest.exerted).toBe(true);
-//     Expect(coda.exerted).toBe(true);
-//
-//     TestStore.passTurn();
-//
-//     Expect(coda.canBeChallenged(oppoCard)).toBe(false);
-//     Expect(charlotte.canBeChallenged(oppoCard)).toBe(true);
-//
-//     TestStore.challenge({
-//       Attacker: oppoCard,
-//       Defender: coda,
-//     });
-//
-//     Expect(coda.zone).toEqual("play");
-//
-//     TestStore.challenge({
-//       Attacker: oppoCard,
-//       Defender: charlotte,
-//     });
-//
-//     Expect(charlotte.zone).toEqual("discard");
-//   });
-//
-//   It("**BROTHERS FOREVER** While this character is exerted, your characters named Koda can’t be challenged. But if Kenai will be banished, koda can be challenged.", async () => {
-//     Const testStore = new TestEngine(
-//       {
-//         Inkwell: kenaiBigBrother.cost,
-//         Play: [
-//           KenaiBigBrother,
-//           KodaSmallishBear,
-//           CharlotteLaBouffMardiGrasPrincess,
-//         ],
-//       },
-//       {
-//         Inkwell: brawl.cost,
-//         Hand: [brawl],
-//         Play: [deweyLovableShowoff],
-//       },
-//     );
-//
-//     Const cardUnderTest = testStore.getCardModel(kenaiBigBrother);
-//     Const coda = testStore.getCardModel(kodaSmallishBear);
-//     Const oppoCard = testStore.getCardModel(deweyLovableShowoff);
-//     Const charlotte = testStore.getCardModel(charlotteLaBouffMardiGrasPrincess);
-//
-//     CardUnderTest.exert();
-//     Coda.exert();
-//     Charlotte.exert();
-//
-//     Expect(cardUnderTest.exerted).toBe(true);
-//     Expect(coda.exerted).toBe(true);
-//
-//     TestStore.passTurn();
-//
-//     Expect(coda.canBeChallenged(oppoCard)).toBe(false);
-//     Expect(charlotte.canBeChallenged(oppoCard)).toBe(true);
-//
-//     TestStore.playCard(brawl);
-//     TestStore.resolveTopOfStack({ targets: [cardUnderTest] });
-//
-//     Expect(cardUnderTest.zone).toEqual("discard");
-//     Expect(coda.zone).toEqual("play");
-//     Expect(charlotte.zone).toEqual("play");
-//
-//     Expect(coda.canBeChallenged(oppoCard)).toBe(true);
-//     Expect(charlotte.canBeChallenged(oppoCard)).toBe(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { kenaiBigBrother } from "./005-kenai-big-brother";
+import { kodaSmallishBear } from "../../007/characters/034-koda-smallish-bear";
+
+const mockAttacker = createMockCharacter({
+  id: "kenai-test-attacker",
+  name: "Mock Attacker",
+  cost: 3,
+  strength: 2,
+  willpower: 5,
+  lore: 1,
+});
+
+const notKoda = createMockCharacter({
+  id: "kenai-test-not-koda",
+  name: "Not Koda",
+  cost: 2,
+  strength: 1,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Kenai - Big Brother", () => {
+  describe("BROTHERS FOREVER: While this character is exerted, your characters named Koda can't be challenged.", () => {
+    it("Koda can't be challenged while Kenai is exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: mockAttacker, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [
+            { card: kenaiBigBrother, exerted: true },
+            { card: kodaSmallishBear, exerted: true },
+          ],
+          deck: 1,
+        },
+      );
+
+      const result = testEngine.asPlayerOne().challenge(mockAttacker, kodaSmallishBear);
+
+      expect(result).not.toBeSuccessfulCommand();
+    });
+
+    it("other characters (not named Koda) can still be challenged while Kenai is exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: mockAttacker, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [
+            { card: kenaiBigBrother, exerted: true },
+            { card: notKoda, exerted: true },
+          ],
+          deck: 1,
+        },
+      );
+
+      const result = testEngine.asPlayerOne().challenge(mockAttacker, notKoda);
+
+      expect(result).toBeSuccessfulCommand();
+    });
+
+    it("Koda can be challenged when Kenai is not exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: mockAttacker, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [
+            { card: kenaiBigBrother, exerted: false },
+            { card: kodaSmallishBear, exerted: true },
+          ],
+          deck: 1,
+        },
+      );
+
+      const result = testEngine.asPlayerOne().challenge(mockAttacker, kodaSmallishBear);
+
+      expect(result).toBeSuccessfulCommand();
+    });
+  });
+});

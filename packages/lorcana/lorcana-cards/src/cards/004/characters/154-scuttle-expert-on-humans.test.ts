@@ -1,56 +1,57 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { cleansingRainwater } from "@lorcanito/lorcana-engine/cards/003/items/items";
-// Import {
-//   AladdinResoluteSwordsman,
-//   ScuttleExpertOnHumans,
-//   SisuWiseFriend,
-//   TukTukCuriousPartner,
-// } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Scuttle - Expert on Humans", () => {
-//   It("**LET ME SEE** When you play this character, look at the top 4 cards of your deck. You may reveal an item card and put it in your hand. Put the rest on the bottom of your deck in any order.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: scuttleExpertOnHumans.cost,
-//       Hand: [scuttleExpertOnHumans],
-//       Deck: [
-//         SisuWiseFriend,
-//         TukTukCuriousPartner,
-//         AladdinResoluteSwordsman,
-//         CleansingRainwater,
-//       ],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "hand",
-//       ScuttleExpertOnHumans.id,
-//     );
-//     Const targetCard = testStore.getByZoneAndId("deck", cleansingRainwater.id);
-//     Const otherCards = [
-//       TestStore.getByZoneAndId("deck", sisuWiseFriend.id),
-//       TestStore.getByZoneAndId("deck", aladdinResoluteSwordsman.id),
-//       TestStore.getByZoneAndId("deck", tukTukCuriousPartner.id),
-//     ];
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveTopOfStack({
-//       Scry: { bottom: otherCards, hand: [targetCard] },
-//     });
-//
-//     Expect(targetCard.zone).toBe("hand");
-//     Expect(
-//       TestStore.store.tableStore
-//         .getPlayerZoneCards("player_one", "deck")
-//         .map((card) => card.lorcanitoCard?.name),
-//     ).toEqual([
-//       SisuWiseFriend.name,
-//       AladdinResoluteSwordsman.name,
-//       TukTukCuriousPartner.name,
-//     ]);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  createMockItem,
+} from "@tcg/lorcana-engine/testing";
+import { scuttleExpertOnHumans } from "./154-scuttle-expert-on-humans";
+
+const matchingItem = createMockItem({
+  id: "matching-item",
+  name: "Matching Item",
+  cost: 2,
+});
+
+const nonMatchA = createMockCharacter({
+  id: "non-match-a",
+  name: "Non Match A",
+  cost: 1,
+});
+
+const nonMatchB = createMockCharacter({
+  id: "non-match-b",
+  name: "Non Match B",
+  cost: 3,
+});
+
+const nonMatchC = createMockCharacter({
+  id: "non-match-c",
+  name: "Non Match C",
+  cost: 4,
+});
+
+describe("Scuttle - Expert on Humans", () => {
+  it("LET ME SEE - reveals an item card to hand, puts rest on bottom", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [scuttleExpertOnHumans],
+      inkwell: scuttleExpertOnHumans.cost,
+      deck: [nonMatchA, matchingItem, nonMatchB, nonMatchC],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(scuttleExpertOnHumans)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [
+          { zone: "hand", cards: [matchingItem] },
+          { zone: "deck-bottom", cards: [nonMatchC, nonMatchB, nonMatchA] },
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(matchingItem)).toBe("hand");
+  });
+});

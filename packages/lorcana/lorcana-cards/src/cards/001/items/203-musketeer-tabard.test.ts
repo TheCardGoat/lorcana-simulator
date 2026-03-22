@@ -1,15 +1,92 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { liloMakingAWish, simbaProtectiveCub, teKTheBurningOne } from "../characters";
+import { soMuchToGive } from "../../007/actions/038-so-much-to-give";
 import { musketeerTabard } from "./203-musketeer-tabard";
 
-describe("Musketeer Tabard - undefined", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [musketeerTabard] });
-  //   Expect(testEngine.getCardModel(musketeerTabard).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+describe("Musketeer Tabard", () => {
+  it("lets you draw a card when one of your Bodyguard characters is banished", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 2,
+        play: [musketeerTabard, simbaProtectiveCub],
+      },
+      {
+        deck: 1,
+        play: [{ card: teKTheBurningOne, exerted: true }],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().challenge(simbaProtectiveCub, teKTheBurningOne),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardZone(simbaProtectiveCub)).toBe("discard");
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(1);
+  });
+
+  it("does not trigger when one of your non-Bodyguard characters is banished", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 2,
+        play: [musketeerTabard, liloMakingAWish],
+      },
+      {
+        deck: 1,
+        play: [{ card: teKTheBurningOne, exerted: true }],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().challenge(liloMakingAWish, teKTheBurningOne),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardZone(liloMakingAWish)).toBe("discard");
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(2);
+  });
+
+  it("triggers when one of your characters that gained Bodyguard is banished", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [soMuchToGive],
+        inkwell: soMuchToGive.cost,
+        deck: [simbaProtectiveCub, simbaProtectiveCub, simbaProtectiveCub],
+        play: [musketeerTabard, liloMakingAWish],
+      },
+      {
+        deck: 1,
+        play: [{ card: teKTheBurningOne, exerted: true }],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(soMuchToGive, {
+        targets: [liloMakingAWish],
+      }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.hasKeyword(liloMakingAWish, "Bodyguard")).toBe(true);
+
+    expect(
+      testEngine.asPlayerOne().challenge(liloMakingAWish, teKTheBurningOne),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardZone(liloMakingAWish)).toBe("discard");
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(1);
+  });
 });
 
 // LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!

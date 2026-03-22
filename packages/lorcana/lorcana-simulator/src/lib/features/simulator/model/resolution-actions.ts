@@ -9,6 +9,7 @@ type ResolutionActionSourceItem = {
   canAccept?: boolean;
   canReject?: boolean;
   primaryActionLabel?: string;
+  statusMessage?: string;
   onResolve?: () => void;
   onPrimaryAction?: () => void;
   onAccept?: () => void;
@@ -30,6 +31,10 @@ export function buildResolutionActionViews(params: {
   const actions: ResolutionActionView[] = [];
 
   for (const item of params.items) {
+    if (item.statusMessage) {
+      continue;
+    }
+
     const isBagItem = item.kind === "bag" || item.id.startsWith("bag:");
 
     if (isBagItem) {

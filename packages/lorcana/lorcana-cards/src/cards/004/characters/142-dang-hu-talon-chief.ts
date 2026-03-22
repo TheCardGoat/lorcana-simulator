@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { dangHuTalonChiefI18n } from "./142-dang-hu-talon-chief.i18n";
 
 export const dangHuTalonChief: CharacterCard = {
   id: "52U",
@@ -7,52 +8,6 @@ export const dangHuTalonChief: CharacterCard = {
   cardType: "character",
   name: "Dang Hu",
   version: "Talon Chief",
-  i18n: {
-    en: {
-      name: "Dang Hu",
-      version: "Talon Chief",
-      text: [
-        {
-          title: "YOU BETTER TALK FAST",
-          description:
-            "Your other Villain characters gain Support. (Whenever they quest, you may add their {S} to another chosen character's {S} this turn.)",
-        },
-      ],
-    },
-    de: {
-      name: "Dang Hu",
-      version: "Oberhaupt von Klaue",
-      text: [
-        {
-          title: "BEEIL DICH BEIM SPRECHEN",
-          description:
-            "Deine anderen Schurkinnen und Schurken erhalten Unterstützen. (Jedes Mal, wenn die Charaktere erkunden, darfst du ihre in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Dang Hu",
-      version: "Cheffe de Griffes du Dragon",
-      text: [
-        {
-          title: "DÉCIDEZ-VOUS VITE",
-          description:
-            "Vos autres personnages Méchant gagnent Soutien. (Lorsqu'ils sont envoyés à l'aventure, vous pouvez ajouter leur à celle d'un autre personnage au choix pour le reste de ce tour.)",
-        },
-      ],
-    },
-    it: {
-      name: "Dang Hu",
-      version: "Capo di Artiglio",
-      text: [
-        {
-          title: "È MEGLIO SE FAI IN FRETTA I",
-          description:
-            "tuoi altri personaggi Cattivo ottengono Aiutante. (Ogni volta che vanno all'avventura, puoi aggiungere la loro alla di un altro personaggio a tua scelta per questo turno.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Raya and the Last Dragon",
   set: "004",
@@ -79,7 +34,20 @@ export const dangHuTalonChief: CharacterCard = {
     {
       effect: {
         keyword: "Support",
-        target: "CHOSEN_CHARACTER",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Villain",
+            },
+          ],
+          excludeSelf: true,
+        },
         type: "gain-keyword",
       },
       id: "tq9-1",
@@ -88,4 +56,5 @@ export const dangHuTalonChief: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: dangHuTalonChiefI18n,
 };

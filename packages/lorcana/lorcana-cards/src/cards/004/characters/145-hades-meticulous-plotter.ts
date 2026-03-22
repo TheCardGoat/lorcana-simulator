@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hadesMeticulousPlotterI18n } from "./145-hades-meticulous-plotter.i18n";
 
 export const hadesMeticulousPlotter: CharacterCard = {
   id: "Otw",
@@ -7,24 +8,6 @@ export const hadesMeticulousPlotter: CharacterCard = {
   cardType: "character",
   name: "Hades",
   version: "Meticulous Plotter",
-  i18n: {
-    en: {
-      name: "Hades",
-      version: "Meticulous Plotter",
-    },
-    de: {
-      name: "Hades",
-      version: "Akribischer Planer",
-    },
-    fr: {
-      name: "Hadès",
-      version: "Conspirateur méticuleux",
-    },
-    it: {
-      name: "Ade",
-      version: "Pianificatore Meticoloso",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Hercules",
   set: "004",
@@ -41,4 +24,5 @@ export const hadesMeticulousPlotter: CharacterCard = {
     tcgPlayer: 550606,
   },
   classifications: ["Storyborn", "Villain", "Deity"],
+  i18n: hadesMeticulousPlotterI18n,
 };

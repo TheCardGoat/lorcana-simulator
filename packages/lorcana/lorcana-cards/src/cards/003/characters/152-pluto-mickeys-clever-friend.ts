@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { plutoMickeysCleverFriendI18n } from "./152-pluto-mickeys-clever-friend.i18n";
 
 export const plutoMickeysCleverFriend: CharacterCard = {
   id: "bHm",
@@ -7,24 +8,6 @@ export const plutoMickeysCleverFriend: CharacterCard = {
   cardType: "character",
   name: "Pluto",
   version: "Mickey's Clever Friend",
-  i18n: {
-    en: {
-      name: "Pluto",
-      version: "Mickey's Clever Friend",
-    },
-    de: {
-      name: "Pluto",
-      version: "Mickys kluger Freund",
-    },
-    fr: {
-      name: "Pluto",
-      version: "Ami futé de Mickey",
-    },
-    it: {
-      name: "Pluto",
-      version: "Amico Sveglio di Topolino",
-    },
-  },
   inkType: ["sapphire"],
   set: "003",
   cardNumber: 152,
@@ -40,4 +23,5 @@ export const plutoMickeysCleverFriend: CharacterCard = {
     tcgPlayer: 539099,
   },
   classifications: ["Dreamborn", "Ally"],
+  i18n: plutoMickeysCleverFriendI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { painUnderworldImpI18n } from "./086-pain-underworld-imp.i18n";
 
 export const painUnderworldImp: CharacterCard = {
   id: "qfi",
@@ -7,48 +8,6 @@ export const painUnderworldImp: CharacterCard = {
   cardType: "character",
   name: "Pain",
   version: "Underworld Imp",
-  i18n: {
-    en: {
-      name: "Pain",
-      version: "Underworld Imp",
-      text: [
-        {
-          title: "COMING, YOUR MOST LUGUBRIOUSNESS",
-          description: "While this character has 5 {S} or more, he gets +2 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Pech",
-      version: "Schelm der Unterwelt",
-      text: [
-        {
-          title: "ICH KOMME, EURE DÜSTERE VERBROCHENHEIT",
-          description: "Solange dieser Charakter 5 oder mehr hat, erhält er +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Peine",
-      version: "Diablotin des Enfers",
-      text: [
-        {
-          title: "JE VIENS, VOTRE LUGUBRE NOIRCEUR",
-          description: "Tant que ce personnage a au moins 5, il gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Pain",
-      version: "Underworld Imp",
-      text: [
-        {
-          title: "COMING, YOUR MOST LUGUBRIOUSNESS",
-          description: "While this character has 5 or more, he gets +2.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "002",
@@ -70,7 +29,6 @@ export const painUnderworldImp: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       id: "8up-1",
@@ -92,4 +50,6 @@ export const painUnderworldImp: CharacterCard = {
       },
     },
   ],
+  missingTests: true,
+  i18n: painUnderworldImpI18n,
 };

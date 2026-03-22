@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { bambiPrinceOfTheForestI18n } from "./057-bambi-prince-of-the-forest.i18n";
 
 export const bambiPrinceOfTheForest: CharacterCard = {
   id: "wU9",
@@ -7,24 +8,6 @@ export const bambiPrinceOfTheForest: CharacterCard = {
   cardType: "character",
   name: "Bambi",
   version: "Prince of the Forest",
-  i18n: {
-    en: {
-      name: "Bambi",
-      version: "Prince of the Forest",
-    },
-    de: {
-      name: "Bambi",
-      version: "Prinz des Waldes",
-    },
-    fr: {
-      name: "Bambi",
-      version: "Prince de la forêt",
-    },
-    it: {
-      name: "Bambi",
-      version: "Principe della Foresta",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Bambi",
   set: "008",
@@ -41,4 +24,5 @@ export const bambiPrinceOfTheForest: CharacterCard = {
     tcgPlayer: 631339,
   },
   classifications: ["Storyborn", "Hero", "Prince"],
+  i18n: bambiPrinceOfTheForestI18n,
 };

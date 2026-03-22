@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lawrenceJealousManservantI18n } from "./187-lawrence-jealous-manservant.i18n";
 
 export const lawrenceJealousManservant: CharacterCard = {
   id: "BUx",
@@ -7,48 +8,6 @@ export const lawrenceJealousManservant: CharacterCard = {
   cardType: "character",
   name: "Lawrence",
   version: "Jealous Manservant",
-  i18n: {
-    en: {
-      name: "Lawrence",
-      version: "Jealous Manservant",
-      text: [
-        {
-          title: "PAYBACK",
-          description: "While this character has no damage, he gets +4 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Lawrence",
-      version: "Neidischer Hausdiener",
-      text: [
-        {
-          title: "VERGELTUNG",
-          description: "Solange dieser Charakter unbeschädigt ist, erhält er +4.",
-        },
-      ],
-    },
-    fr: {
-      name: "Lawrence",
-      version: "Valet jaloux",
-      text: [
-        {
-          title: "REVANCHE",
-          description: "Tant que ce personnage n'a aucun jeton Dommage sur lui, il gagne +4.",
-        },
-      ],
-    },
-    it: {
-      name: "Lawrence",
-      version: "Jealous Manservant",
-      text: [
-        {
-          title: "PAYBACK",
-          description: "While this character has no damage, he gets +4.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Princess and the Frog",
   set: "009",
@@ -83,4 +42,5 @@ export const lawrenceJealousManservant: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: lawrenceJealousManservantI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pigletEntrancedBySnowI18n } from "./139-piglet-entranced-by-snow.i18n";
 
 export const pigletEntrancedBySnow: CharacterCard = {
   id: "N08",
@@ -7,24 +8,6 @@ export const pigletEntrancedBySnow: CharacterCard = {
   cardType: "character",
   name: "Piglet",
   version: "Entranced by Snow",
-  i18n: {
-    en: {
-      name: "Piglet",
-      version: "Entranced by Snow",
-    },
-    de: {
-      name: "Ferkel",
-      version: "Vom Schnee verzaubert",
-    },
-    fr: {
-      name: "Porcinet",
-      version: "Émerveillé par la neige",
-    },
-    it: {
-      name: "Pimpi",
-      version: "Incantato dalla Neve",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Winnie the Pooh",
   set: "011",
@@ -41,4 +24,5 @@ export const pigletEntrancedBySnow: CharacterCard = {
     tcgPlayer: 676219,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: pigletEntrancedBySnowI18n,
 };

@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 5 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_04.md) | [Next →](AUDIT_INVENTORY_CHUNK_06.md)
-
 
 - [ ] **004/characters/016-mickey-mouse-musketeer-captain.test.ts**
   - Card: `MISSING`

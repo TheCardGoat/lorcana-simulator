@@ -1,46 +1,76 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { genieWonderfulTrickster } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Genie - Wonderful Trickster", () => {
-//   It("Shift 5 (You may pay 5 {I} to play this on top of one of your characters named Genie.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [genieWonderfulTrickster],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(genieWonderfulTrickster);
-//     Expect(cardUnderTest.hasShift).toBe(true);
-//   });
-//
-//   It.skip("YOUR REWARD AWAITS Whenever you play a card, draw a card.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: genieWonderfulTrickster.cost,
-//       Play: [genieWonderfulTrickster],
-//       Hand: [genieWonderfulTrickster],
-//     });
-//
-//     Await testEngine.playCard(genieWonderfulTrickster);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-//
-//   It.skip("FORBIDDEN TREASURE At the end of your turn, put all the cards in your hand on the bottom of your deck in any order.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: genieWonderfulTrickster.cost,
-//       Play: [genieWonderfulTrickster],
-//       Hand: [genieWonderfulTrickster],
-//     });
-//
-//     Await testEngine.playCard(genieWonderfulTrickster);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { genieWonderfulTrickster } from "./061-genie-wonderful-trickster";
+
+const playedCard = createMockCharacter({
+  id: "genie-wonderful-trickster-played-card",
+  name: "Played Card",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+});
+
+const drawnCard = createMockCharacter({
+  id: "genie-wonderful-trickster-drawn-card",
+  name: "Drawn Card",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+});
+
+const handCardA = createMockCharacter({
+  id: "genie-wonderful-trickster-hand-a",
+  name: "Hand A",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+});
+
+const handCardB = createMockCharacter({
+  id: "genie-wonderful-trickster-hand-b",
+  name: "Hand B",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+});
+
+describe("Genie - Wonderful Trickster", () => {
+  it("draws a card whenever you play another card", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [genieWonderfulTrickster],
+      hand: [playedCard],
+      inkwell: playedCard.cost,
+      deck: [drawnCard],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(playedCard)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+
+    expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
+    expect(testEngine.asPlayerOne().getCardZone(playedCard)).toBe("play");
+  });
+
+  it("puts all cards in your hand on the bottom of your deck at the end of your turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [genieWonderfulTrickster],
+      hand: [handCardA, handCardB],
+      deck: 5,
+    });
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [handCardA, handCardB] }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(handCardA)).toBe("deck");
+    expect(testEngine.asPlayerOne().getCardZone(handCardB)).toBe("deck");
+    expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
+      expect.objectContaining({
+        hand: 0,
+        deck: 7,
+      }),
+    );
+  });
+});

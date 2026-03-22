@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { camiloMadrigalCenterStageI18n } from "./075-camilo-madrigal-center-stage.i18n";
 
 export const camiloMadrigalCenterStage: CharacterCard = {
   id: "lBR",
@@ -7,63 +8,6 @@ export const camiloMadrigalCenterStage: CharacterCard = {
   cardType: "character",
   name: "Camilo Madrigal",
   version: "Center Stage",
-  i18n: {
-    en: {
-      name: "Camilo Madrigal",
-      version: "Center Stage",
-      text: [
-        {
-          title: "ENCORE!",
-        },
-        {
-          title: "ENCORE!",
-          description:
-            "When this character is banished in a challenge, return this card to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Camilo Madrigal",
-      version: "Bühnen-Mittelpunkt",
-      text: [
-        {
-          title: "ZUGABE!",
-        },
-        {
-          title: "ZUGABE!",
-          description:
-            "Wenn dieser Charakter durch eine Herausforderung verbannt wird, nimm ihn zurück auf deine Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Camilo Madrigal",
-      version: "Sur le devant de la scène",
-      text: [
-        {
-          title: "BIS!",
-        },
-        {
-          title: "BIS!",
-          description: "Lorsque ce personnage est banni via un défi, renvoyez-le dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Camilo Madrigal",
-      version: "Al Centro dell'Attenzione",
-      text: [
-        {
-          title: "BIS!",
-        },
-        {
-          title: "BIS!",
-          description:
-            "Quando questo personaggio viene esiliato in una sfida, riprendi in mano questa carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "008",
@@ -90,19 +34,28 @@ export const camiloMadrigalCenterStage: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Madrigal"],
   abilities: [
     {
-      effect: {
-        target: "SELF",
-        type: "return-to-hand",
-      },
       id: "p4d-1",
       name: "ENCORE! ENCORE!",
       text: "ENCORE! ENCORE! When this character is banished in a challenge, return this card to your hand.",
+      type: "triggered",
+      sourceZones: ["play", "discard"],
       trigger: {
         event: "banish",
         on: "SELF",
+        restrictions: [
+          {
+            type: "in-challenge",
+          },
+        ],
         timing: "when",
       },
-      type: "triggered",
+      effect: {
+        target: {
+          ref: "self",
+        },
+        type: "return-to-hand",
+      },
     },
   ],
+  i18n: camiloMadrigalCenterStageI18n,
 };

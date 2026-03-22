@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lythosRockTitanI18n } from "./180-lythos-rock-titan.i18n";
 
 export const lythosRockTitan: CharacterCard = {
   id: "Hi2",
@@ -7,36 +8,6 @@ export const lythosRockTitan: CharacterCard = {
   cardType: "character",
   name: "Lythos",
   version: "Rock Titan",
-  i18n: {
-    en: {
-      name: "Lythos",
-      version: "Rock Titan",
-      text: [
-        {
-          title: "Resist +2",
-        },
-        {
-          title: "STONE SKIN",
-          description: "{E} — Chosen character gains Resist +2 this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Granitos",
-      version: "Stein Titan",
-      text: "Robust +2 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 2.) STEINHAUT — Ein Charakter deiner Wahl erhält in diesem Zuges Robust +2.",
-    },
-    fr: {
-      name: "Lythos",
-      version: "Titan de pierre",
-      text: "Résistance +2 PEAU DE PIERRE — Choisissez un personnage, il gagne Résistance +2 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Lythos",
-      version: "Titano di Roccia",
-      text: "Resistere +2 PELLE DI PIETRA — Un personaggio a tua scelta ottiene Resistere +2 per questo turno.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Hercules",
   set: "003",
@@ -61,7 +32,6 @@ export const lythosRockTitan: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Titan"],
-  missingTests: true,
   abilities: [
     {
       id: "ae9-1",
@@ -92,4 +62,5 @@ export const lythosRockTitan: CharacterCard = {
       type: "activated",
     },
   ],
+  i18n: lythosRockTitanI18n,
 };

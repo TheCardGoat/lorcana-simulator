@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stitchLittleRocketI18n } from "./125-stitch-little-rocket.i18n";
 
 export const stitchLittleRocket: CharacterCard = {
   id: "1PU",
@@ -7,33 +8,6 @@ export const stitchLittleRocket: CharacterCard = {
   cardType: "character",
   name: "Stitch",
   version: "Little Rocket",
-  i18n: {
-    en: {
-      name: "Stitch",
-      version: "Little Rocket",
-      text: "Rush",
-    },
-    de: {
-      name: "Stitch",
-      version: "Kleine Rakete",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Stitch",
-      version: "Petite fusée",
-      text: "Charge",
-    },
-    it: {
-      name: "Stitch",
-      version: "Piccolo Razzo",
-      text: [
-        {
-          title: "Lesto",
-          description: "(Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lilo and Stitch",
   set: "003",
@@ -58,4 +32,5 @@ export const stitchLittleRocket: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: stitchLittleRocketI18n,
 };

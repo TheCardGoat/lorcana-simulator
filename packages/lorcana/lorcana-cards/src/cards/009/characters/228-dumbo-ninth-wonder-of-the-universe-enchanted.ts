@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { dumboNinthWonderOfTheUniverseEnchantedI18n } from "./228-dumbo-ninth-wonder-of-the-universe-enchanted.i18n";
 
 export const dumboNinthWonderOfTheUniverseEnchanted: CharacterCard = {
   id: "cqc",
@@ -7,41 +8,6 @@ export const dumboNinthWonderOfTheUniverseEnchanted: CharacterCard = {
   cardType: "character",
   name: "Dumbo",
   version: "Ninth Wonder of the Universe",
-  i18n: {
-    en: {
-      name: "Dumbo",
-      version: "Ninth Wonder of the Universe",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "BREAKING RECORDS",
-          description: "{E}, 1 {I} — Draw a card and gain 1 lore.",
-        },
-        {
-          title: "MAKING HISTORY",
-          description:
-            'Your other characters with Evasive gain "{E}, 1 {I} — Draw a card and gain 1 lore."',
-        },
-      ],
-    },
-    de: {
-      name: "Dumbo",
-      version: "Das neunte Weltwunder",
-      text: 'Wendig REKORDE BRECHEN, 1 — Ziehe 1 Karte und sammle 1 Legende. GESCHICHTE SCHREIBEN Deine anderen Charaktere mit Wendig erhalten ", 1 — Ziehe 1 Karte und sammle 1 Legende".',
-    },
-    fr: {
-      name: "Dumbo",
-      version: "Neuvième merveille du monde",
-      text: "Insaisissable BATTANT DES RECORDS, 1 — Piochez une carte et gagnez 1 éclat de Lore. LA UNE DE TOUS LES JOURNAUX Vos autres personnages avec Insaisissable gagnent «, 1 — Piochez une carte. Gagnez 1 éclat de Lore. »",
-    },
-    it: {
-      name: "Dumbo",
-      version: "Nona Meraviglia dell'Universo",
-      text: 'Sfuggente SUPERARE I RECORD, 1 — Pesca una carta e ottieni 1 leggenda. PASSERAI ALLA STORIA I tuoi altri personaggi con Sfuggente ottengono ", 1 — Pesca una carta e ottieni 1 leggenda".',
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Dumbo",
   set: "009",
@@ -80,6 +46,14 @@ export const dumboNinthWonderOfTheUniverseEnchanted: CharacterCard = {
       type: "keyword",
     },
     {
+      id: "181-2",
+      name: "BREAKING RECORDS",
+      text: "BREAKING RECORDS {E}, 1 {I} – Draw a card and gain 1 lore.",
+      type: "activated",
+      cost: {
+        exert: true,
+        ink: 1,
+      },
       effect: {
         steps: [
           {
@@ -94,28 +68,43 @@ export const dumboNinthWonderOfTheUniverseEnchanted: CharacterCard = {
         ],
         type: "sequence",
       },
-      id: "181-2",
-      text: "BREAKING RECORDS {E}, 1 {I} – Draw a card and gain 1 lore.",
-      type: "action",
     },
     {
+      id: "181-3",
+      name: "MAKING HISTORY",
+      text: 'MAKING HISTORY Your other characters with Evasive gain "{E}, 1 {I} – Draw a card and gain 1 lore."',
+      type: "static",
       effect: {
-        steps: [
+        type: "grant-abilities-while-here",
+        target: "YOUR_OTHER_EVASIVE_CHARACTERS",
+        abilities: [
           {
-            amount: 1,
-            target: "CONTROLLER",
-            type: "draw",
-          },
-          {
-            amount: 1,
-            type: "gain-lore",
+            id: "181-3a",
+            name: "BREAKING RECORDS",
+            text: "{E}, 1 {I} – Draw a card and gain 1 lore.",
+            type: "activated",
+            cost: {
+              exert: true,
+              ink: 1,
+            },
+            effect: {
+              steps: [
+                {
+                  amount: 1,
+                  target: "CONTROLLER",
+                  type: "draw",
+                },
+                {
+                  amount: 1,
+                  type: "gain-lore",
+                },
+              ],
+              type: "sequence",
+            },
           },
         ],
-        type: "sequence",
       },
-      id: "181-3",
-      text: 'MAKING HISTORY Your other characters with Evasive gain "{E}, 1 {I} – Draw a card and gain 1 lore."',
-      type: "action",
     },
   ],
+  i18n: dumboNinthWonderOfTheUniverseEnchantedI18n,
 };

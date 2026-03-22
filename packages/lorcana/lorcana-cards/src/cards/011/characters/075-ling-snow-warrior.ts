@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lingSnowWarriorI18n } from "./075-ling-snow-warrior.i18n";
 
 export const lingSnowWarrior: CharacterCard = {
   id: "09Z",
@@ -7,48 +8,6 @@ export const lingSnowWarrior: CharacterCard = {
   cardType: "character",
   name: "Ling",
   version: "Snow Warrior",
-  i18n: {
-    en: {
-      name: "Ling",
-      version: "Snow Warrior",
-      text: [
-        {
-          title: "BUILDING MUSCLES 1",
-          description: "{I} — Chosen character gets +1 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Ling",
-      version: "Schneekrieger",
-      text: [
-        {
-          title: "MUSKELN AUFBAUEN 1",
-          description: "— Ein Charakter deiner Wahl erhält in diesem Zug +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Ling",
-      version: "Guerrier des neiges",
-      text: [
-        {
-          title: "PRENDRE DU MUSCLE 1",
-          description: "— Choisissez un personnage qui gagne +1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Ling",
-      version: "Guerriero delle Nevi",
-      text: [
-        {
-          title: "METTERE SU MUSCOLI 1",
-          description: "— Un personaggio a tua scelta riceve +1 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Mulan",
   set: "011",
@@ -74,7 +33,7 @@ export const lingSnowWarrior: CharacterCard = {
     {
       id: "bl8-1",
       cost: {
-        exert: true,
+        ink: 1,
       },
       effect: {
         modifier: 1,
@@ -93,4 +52,5 @@ export const lingSnowWarrior: CharacterCard = {
       text: "BUILDING MUSCLES 1 {I} — Chosen character gets +1 {S} this turn.",
     },
   ],
+  i18n: lingSnowWarriorI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { maxGoofChartTopperEnchantedI18n } from "./230-max-goof-chart-topper-enchanted.i18n";
 
 export const maxGoofChartTopperEnchanted: CharacterCard = {
   id: "35K",
@@ -7,37 +8,6 @@ export const maxGoofChartTopperEnchanted: CharacterCard = {
   cardType: "character",
   name: "Max Goof",
   version: "Chart Topper",
-  i18n: {
-    en: {
-      name: "Max Goof",
-      version: "Chart Topper",
-      text: [
-        {
-          title: "Shift 4 {I}",
-        },
-        {
-          title: "NUMBER ONE HIT",
-          description:
-            "Whenever this character quests, you may play a song card with cost 4 or less from your discard for free, then put it on the bottom of your deck instead of into your discard.",
-        },
-      ],
-    },
-    de: {
-      name: "Max Goof",
-      version: "Chartstürmer",
-      text: "Gestaltwandel 4 NUMMER-EINS-HIT Jedes Mal, wenn dieser Charakter erkundet, darfst du eine Liedkarte von deinem Ablagestapel, die 4 oder weniger kostet, kostenlos ausspielen. Lege sie danach unter dein Deck.",
-    },
-    fr: {
-      name: "Max Dingo",
-      version: "En tête du hit-parade",
-      text: "Alter 4 NUMÉRO UN DU TOP Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez jouer gratuitement une carte Chanson avec un coût de 4 ou moins depuis votre défausse. Placez-la ensuite sous votre pioche.",
-    },
-    it: {
-      name: "Max Pippo",
-      version: "In Vetta alle Classifiche",
-      text: "Trasformazione 4 HIT NUMERO UNO Ogni volta che questo personaggio va all'avventura, puoi giocare una carta canzone con costo 4 o inferiore dai tuoi scarti gratis, poi mettila in fondo al tuo mazzo invece che nei tuoi scarti.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Goofy Movie",
   set: "009",
@@ -119,4 +89,5 @@ export const maxGoofChartTopperEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: maxGoofChartTopperEnchantedI18n,
 };

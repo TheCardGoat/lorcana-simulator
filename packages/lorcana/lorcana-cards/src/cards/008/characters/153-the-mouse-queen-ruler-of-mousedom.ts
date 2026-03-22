@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theMouseQueenRulerOfMousedomI18n } from "./153-the-mouse-queen-ruler-of-mousedom.i18n";
 
 export const theMouseQueenRulerOfMousedom: CharacterCard = {
   id: "SM3",
@@ -7,24 +8,6 @@ export const theMouseQueenRulerOfMousedom: CharacterCard = {
   cardType: "character",
   name: "The Mouse Queen",
   version: "Ruler of Mousedom",
-  i18n: {
-    en: {
-      name: "The Mouse Queen",
-      version: "Ruler of Mousedom",
-    },
-    de: {
-      name: "Die Mäusekönigin",
-      version: "Herrscherin des Mäusereichs",
-    },
-    fr: {
-      name: "La Reine Moustoria",
-      version: "Régente du Royaume des souris",
-    },
-    it: {
-      name: "La Regina dei Topi",
-      version: "Governatrice di Tutti i Topi",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Great Mouse Detective",
   set: "008",
@@ -41,4 +24,5 @@ export const theMouseQueenRulerOfMousedom: CharacterCard = {
     tcgPlayer: 631453,
   },
   classifications: ["Storyborn", "Ally", "Queen"],
+  i18n: theMouseQueenRulerOfMousedomI18n,
 };

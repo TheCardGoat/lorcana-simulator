@@ -3,9 +3,7 @@
 Legacy implementation base directory: /Users/wazar/projects/lorcanito/packages/lorcana-engine/src/cards
 New implementation base directory: /Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-cards/src/cards
 
-
 **Chunk 18 of 18** | [← Previous](AUDIT_INVENTORY_CHUNK_17.md)
-
 
 - [x] **011/characters/103-wreck-it-ralph-raging-wrecker.test.ts**
   - Card: `011/characters/103-wreck-it-ralph-raging-wrecker.ts`
@@ -29,7 +27,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should not banish characters with higher strength`
     - `should banish opponent Ward character when targeting all (all effects bypass Ward)`
 
-- [ ] **011/characters/104-scrooge-mcduck-ghostly-ebenezer.test.ts**
+- [x] **011/characters/104-scrooge-mcduck-ghostly-ebenezer.test.ts**
   - Card: `011/characters/104-scrooge-mcduck-ghostly-ebenezer.ts`
     - `should have correct stats`
     - `should not be inkwell card`
@@ -47,12 +45,12 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should get +2 strength and +2 willpower with 2 cards under him`
     - `should get +3 strength and +3 willpower with 3 cards under him`
 
-- [ ] **011/characters/105-donald-duck-nephew-fred.test.ts**
+- [x] **011/characters/105-donald-duck-nephew-fred.test.ts**
   - Card: `011/characters/105-donald-duck-nephew-fred.ts`
     - `should be a vanilla character with no abilities `
     - `should be able to quest for 1 lore`
 
-- [ ] **011/characters/107-copper-on-the-scent.test.ts**
+- [x] **011/characters/107-copper-on-the-scent.test.ts**
   - Card: `011/characters/107-copper-on-the-scent.ts`
     - `should have Rush keyword`
     - `should be able to challenge the turn it's played`
@@ -60,7 +58,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should not be able to quest due to Reckless`
     - `should have 0 lore value`
 
-- [ ] **011/characters/108-mulan-ready-for-battle.test.ts**
+- [x] **011/characters/108-mulan-ready-for-battle.test.ts**
   - Card: `011/characters/108-mulan-ready-for-battle.ts`
     - `should cost full price when no damaged characters in play`
     - `should cost 1 less when a character has damage`
@@ -70,24 +68,24 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should cost 2 less when conditions are met by different characters`
     - `should be playable for 2 ink when both conditions are met`
 
-- [ ] **011/characters/109-maui-snow-slider.test.ts**
+- [x] **011/characters/109-maui-snow-slider.test.ts**
   - Card: `011/characters/109-maui-snow-slider.ts`
     - `should have Rush keyword`
     - `should be able to challenge the turn it's played`
 
-- [ ] **011/characters/110-fa-zhou-honorable-warrior.test.ts**
+- [x] **011/characters/110-fa-zhou-honorable-warrior.test.ts**
   - Card: `011/characters/110-fa-zhou-honorable-warrior.ts`
     - `should have 2 damage when played from hand`
     - `should have base willpower of 4 with 2 damage (2 more damage to banish)`
     - `should be banished if willpower is reduced to match damage`
 
-- [ ] **011/characters/111-liquidator-iced-over.test.ts**
+- [x] **011/characters/111-liquidator-iced-over.test.ts**
   - Card: `011/characters/111-liquidator-iced-over.ts`
     - `First Turn, Not First Player`
     - `First Turn, Not First Player, No ink`
     - `First Turn, First Player`
 
-- [ ] **011/characters/112-elisa-maza-transformed-gargoyle.test.ts**
+- [x] **011/characters/112-elisa-maza-transformed-gargoyle.test.ts**
   - Card: `011/characters/112-elisa-maza-transformed-gargoyle.ts`
     - `should prevent Elisa's own strength from being reduced below printed value`
     - `should prevent other friendly characters' strength from being reduced below printed value`
@@ -96,7 +94,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should prevent readying when player has 3+ cards in hand`
     - `should allow readying when player has less than 3 cards in hand`
 
-- [ ] **011/characters/114-agnarr-king-of-arendelle.test.ts**
+- [x] **011/characters/114-agnarr-king-of-arendelle.test.ts**
   - Card: `011/characters/114-agnarr-king-of-arendelle.ts`
     - `should have base strength when no Queen is in play`
     - `should get +2 strength when a Queen character is in play`
@@ -104,7 +102,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should NOT get +2 strength when non-Queen character is in play`
     - `should still only get +2 strength when multiple Queens are in play`
 
-- [ ] **011/characters/116-negaduck-public-enemy-number-one.test.ts**
+- [x] **011/characters/116-negaduck-public-enemy-number-one.test.ts**
   - Card: `011/characters/116-negaduck-public-enemy-number-one.ts`
     - `Test 1: has Shift ability`
     - `Test 2: can shift onto another Negaduck`
@@ -115,7 +113,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `Test 7: works correctly when challenging exerted characters`
     - `Test 8: opponent can have negative lore`
 
-- [ ] **011/characters/117-hercules-spectral-demigod.test.ts**
+- [x] **011/characters/117-hercules-spectral-demigod.test.ts**
   - Card: `011/characters/117-hercules-spectral-demigod.ts`
     - `should have Boost ability`
     - `should allow paying 2 ink to put top card of deck under this character`
@@ -124,7 +122,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should maintain +3 strength bonus as long as card remains under`
     - `should not affect willpower (only strength)`
 
-- [ ] **011/characters/118-beast-snowfield-troublemaker.test.ts**
+- [x] **011/characters/118-beast-snowfield-troublemaker.test.ts**
   - Card: `011/characters/118-beast-snowfield-troublemaker.ts`
     - `should have Rush keyword`
     - `should take no damage when challenging while at a location`
@@ -134,18 +132,18 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should take damage if the location is banished before the ability resolves`
     - `should take damage if the location is banished before the ability resolves`
 
-- [ ] **011/characters/120-goofy-marley-s-clumsy-spirit.test.ts**
+- [x] **011/characters/120-goofy-marley-s-clumsy-spirit.test.ts**
   - Card: `011/characters/120-goofy-marley-s-clumsy-spirit.ts`
     - `should ready an exerted character when ability is accepted`
     - `should keep target exerted when ability is declined`
     - `should prevent the readied character from questing for the rest of the turn`
 
-- [ ] **011/characters/121-goofy-klutzy-skier.test.ts**
+- [x] **011/characters/121-goofy-klutzy-skier.test.ts**
   - Card: `011/characters/121-goofy-klutzy-skier.ts`
     - `banishes self and chosen character when activated`
     - `cannot activate if already exerted`
 
-- [ ] **011/characters/122-olaf-snowman-of-action.test.ts**
+- [x] **011/characters/122-olaf-snowman-of-action.test.ts**
   - Card: `011/characters/122-olaf-snowman-of-action.ts`
     - `should have ABOUT TIME! ability with correct structure`
     - `should be playable with full cost (no action cards in discard)`
@@ -156,7 +154,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should cause opponent to lose 2 lore when played`
     - `should not reduce opponent lore below 0`
 
-- [ ] **011/characters/123-elsa-ice-artisan.test.ts**
+- [x] **011/characters/123-elsa-ice-artisan.test.ts**
   - Card: `011/characters/123-elsa-ice-artisan.ts`
     - `on play: exerts chosen character with 3 strength or less`
     - `on location play: exerts chosen character with 3 strength or less`
@@ -165,7 +163,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `gets +3 Lore when at a location`
     - `does not have bonus when not at a location`
 
-- [ ] **011/characters/124-scrooge-mcduck-ebenezer-scrooge.test.ts**
+- [x] **011/characters/124-scrooge-mcduck-ebenezer-scrooge.test.ts**
   - Card: `011/characters/124-scrooge-mcduck-ebenezer-scrooge.ts`
     - `should make opponent lose 1 lore when questing`
     - `should draw 1 card when opponent loses 1 lore`
@@ -174,7 +172,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should gain 1 lore at end of turn when opponent has 0 lore`
     - `should not gain lore at end of turn when opponent has lore`
 
-- [ ] **011/characters/125-elsa-concerned-sister.test.ts**
+- [x] **011/characters/125-elsa-concerned-sister.test.ts**
   - Card: `011/characters/125-elsa-concerned-sister.ts`
     - `Test 1: triggers when Elsa is played`
     - `Test 2: next location costs 2 less`
@@ -184,7 +182,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `Test 6: reduction does not apply to characters or items`
     - `Test 7: works with location cost 1 (becomes free with reduction)`
 
-- [ ] **011/characters/126-willie-the-giant-ghost-of-christmas-present.test.ts**
+- [x] **011/characters/126-willie-the-giant-ghost-of-christmas-present.test.ts**
   - Card: `011/characters/126-willie-the-giant-ghost-of-christmas-present.ts`
     - `should be able to use Boost ability`
     - `should not be able to quest unless card put under him this turn`
@@ -194,7 +192,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should have challenge restriction again after passing turn`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/137-roo-little-helper.test.ts**
+- [x] **011/characters/137-roo-little-helper.test.ts**
   - Card: `011/characters/137-roo-little-helper.ts`
     - `should put this character facedown under a character with Boost when activated`
     - `should require exerting Roo to activate the ability`
@@ -202,7 +200,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should NOT be able to activate if Roo is already exerted`
     - `should only target your own characters or locations with Boost`
 
-- [ ] **011/characters/138-kanga-peaceful-gatherer.test.ts**
+- [x] **011/characters/138-kanga-peaceful-gatherer.test.ts**
   - Card: `011/characters/138-kanga-peaceful-gatherer.ts`
     - `has Boost 2 ability`
     - `Boost 2: places the top card under Kanga when activated`
@@ -210,12 +208,12 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `EXTRA HELP: lore bonus is removed when card under leaves`
     - `EXTRA HELP: no lore bonus without card under`
 
-- [ ] **011/characters/139-piglet-entranced-by-snow.test.ts**
+- [x] **011/characters/139-piglet-entranced-by-snow.test.ts**
   - Card: `011/characters/139-piglet-entranced-by-snow.ts`
     - `should be a vanilla character with no abilities`
     - `should be able to quest for 1 lore`
 
-- [ ] **011/characters/141-minnie-mouse-tiny-tim-s-mother.test.ts**
+- [x] **011/characters/141-minnie-mouse-tiny-tim-s-mother.test.ts**
   - Card: `011/characters/141-minnie-mouse-tiny-tim-s-mother.ts`
     - `Test 1: has Support ability`
     - `Test 2: triggers when Minnie quests`
@@ -227,7 +225,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `Test 8: can support different characters on different turns`
     - `Test 9: Minnie herself still quests for her lore value`
 
-- [ ] **011/characters/142-sina-vigilant-parent.test.ts**
+- [x] **011/characters/142-sina-vigilant-parent.test.ts**
   - Card: `011/characters/142-sina-vigilant-parent.ts`
     - `should have alert ability`
     - `should have correct stats`
@@ -241,12 +239,12 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should be able to quest for lore`
     - `should be able to be used as ink`
 
-- [ ] **011/characters/143-honker-muddlefoot-timid-genius.test.ts**
+- [x] **011/characters/143-honker-muddlefoot-timid-genius.test.ts**
   - Card: `011/characters/143-honker-muddlefoot-timid-genius.ts`
     - `BE CAREFUL! Your characters named Darkwing Duck gain Resist +1. (Damage dealt to them is reduced by 1.)`
     - `Darkwing Duck does not gain Resist +1 when Honker is not in play`
 
-- [ ] **011/characters/145-darkwing-duck-drake-mallard.test.ts**
+- [x] **011/characters/145-darkwing-duck-drake-mallard.test.ts**
   - Card: `011/characters/145-darkwing-duck-drake-mallard.ts`
     - `should have ward ability`
     - `should have correct stats`
@@ -261,7 +259,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should be able to quest for lore`
     - `should be able to be used as ink`
 
-- [ ] **011/characters/146-jiminy-cricket-ghost-of-christmas-past.test.ts**
+- [x] **011/characters/146-jiminy-cricket-ghost-of-christmas-past.test.ts**
   - Card: `011/characters/146-jiminy-cricket-ghost-of-christmas-past.ts`
     - `should have correct stats`
     - `should be inkwell card`
@@ -279,7 +277,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should not trigger when there are no cards in discard`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/147-piglet-cocoa-maker.test.ts**
+- [x] **011/characters/147-piglet-cocoa-maker.test.ts**
   - Card: `011/characters/147-piglet-cocoa-maker.ts`
     - `should have correct stats`
     - `should be inkwell card`
@@ -294,7 +292,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should not remove more damage than the character has`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/148-gramma-tala-connected-to-nature.test.ts**
+- [x] **011/characters/148-gramma-tala-connected-to-nature.test.ts**
   - Card: `011/characters/148-gramma-tala-connected-to-nature.ts`
     - `should have correct stats`
     - `should not be inkwell card`
@@ -308,26 +306,26 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `can be played with sufficient ink (including cost reduction)`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/149-gosalyn-mallard-curious-child.test.ts**
+- [x] **011/characters/149-gosalyn-mallard-curious-child.test.ts**
   - Card: `011/characters/149-gosalyn-mallard-curious-child.ts`
     - `allows tutoring an item card from top 4 cards to hand`
     - `allows putting all cards on bottom if no item is chosen`
     - `can only tutor item cards, not characters`
     - `can tutor one of multiple items if available`
 
-- [ ] **011/characters/150-darkwing-duck-dashing-gadgeteer.test.ts**
+- [x] **011/characters/150-darkwing-duck-dashing-gadgeteer.test.ts**
   - Card: `011/characters/150-darkwing-duck-dashing-gadgeteer.ts`
     - `MODERN MARVEL: Should accept and resolve - move item to bottom of deck`
     - `MODERN MARVEL: If you do - should play item for free after moving item to deck`
     - `MODERN MARVEL: If you do - should skip second effect if first effect is declined`
     - `MODERN MARVEL: Should move item to deck AND play another item for free from discard`
 
-- [ ] **011/characters/151-winnie-the-pooh-hungry-bear.test.ts**
+- [x] **011/characters/151-winnie-the-pooh-hungry-bear.test.ts**
   - Card: `011/characters/151-winnie-the-pooh-hungry-bear.ts`
     - `should return an item card from discard to hand when played`
     - `should allow choosing from multiple items in discard`
 
-- [ ] **011/characters/152-scrooge-mcduck-reformed-ebenezer.test.ts**
+- [x] **011/characters/152-scrooge-mcduck-reformed-ebenezer.test.ts**
   - Card: `011/characters/152-scrooge-mcduck-reformed-ebenezer.ts`
     - `should have correct stats`
     - `should be inkwell card`
@@ -346,14 +344,14 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should work correctly when there are no other characters in play`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/154-pete-ghost-of-christmas-future.test.ts**
+- [x] **011/characters/154-pete-ghost-of-christmas-future.test.ts**
   - Card: `011/characters/154-pete-ghost-of-christmas-future.ts`
     - `with 0 cards under him, should look at 0 cards (no scry effect)`
     - `should not trigger if another character has cards under them`
     - `with 1 card under him, should look at 1 card and put it in hand`
     - `with 2 card under him, should look at 2 card and put it in hand`
 
-- [ ] **011/characters/155-moana-curious-explorer.test.ts**
+- [x] **011/characters/155-moana-curious-explorer.test.ts**
   - Card: `011/characters/155-moana-curious-explorer.ts`
     - `should allow inking cards with inkwell from discard when Moana is in play`
     - `should allow inking from discard when an ink-permission effect is active`
@@ -361,7 +359,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should NOT allow inking cards without inkwell symbol from discard even when Moana is in play`
     - `should NOT allow inking twice in the same turn (one from hand, one from discard)`
 
-- [ ] **011/characters/156-tamatoa-seeker-of-shine.test.ts**
+- [x] **011/characters/156-tamatoa-seeker-of-shine.test.ts**
   - Card: `011/characters/156-tamatoa-seeker-of-shine.ts`
     - `should have correct stats`
     - `should be inkwell card`
@@ -379,7 +377,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should gain +2 lore when using Boost and Emily Quackfaster adds another card`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/157-morty-fieldmouse-tiny-tim.test.ts**
+- [x] **011/characters/157-morty-fieldmouse-tiny-tim.test.ts**
   - Card: `011/characters/157-morty-fieldmouse-tiny-tim.ts`
     - `should put a card under Morty when putting a card under another character`
     - `should only trigger once per turn`
@@ -387,12 +385,12 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should gain +1 {L} for each card under him`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/158-belle-snowfield-strategist.test.ts**
+- [x] **011/characters/158-belle-snowfield-strategist.test.ts**
   - Card: `011/characters/158-belle-snowfield-strategist.ts`
     - `Resolving the ability puts the card from the discard into the inkwell facedown and exerted`
     - `Resolving the ability after the card leaves the discard, should not put the card into the inkwell`
 
-- [ ] **011/characters/159-mickey-mouse-bob-cratchit.test.ts**
+- [x] **011/characters/159-mickey-mouse-bob-cratchit.test.ts**
   - Card: `011/characters/159-mickey-mouse-bob-cratchit.ts`
     - `puts a card under Mickey when he quests`
     - `puts multiple cards under Mickey when he quests multiple times`
@@ -407,7 +405,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `does not trigger when Mickey is banished outside of a challenge`
     - `transfers cards after state sync (e.g. simulator/multiplayer rehydration)`
 
-- [ ] **011/characters/160-scrooge-mcduck-miserly-ebenezer.test.ts**
+- [x] **011/characters/160-scrooge-mcduck-miserly-ebenezer.test.ts**
   - Card: `011/characters/160-scrooge-mcduck-miserly-ebenezer.ts`
     - `Test 1: should have the BAH, HUMBUG ability defined`
     - `Test 2: should trigger when a card is put into inkwell during your turn`
@@ -424,7 +422,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should be card number 160`
     - `should have storyborn and villain characteristics`
 
-- [ ] **011/characters/161-chief-tui-weaving-a-tale.test.ts**
+- [x] **011/characters/161-chief-tui-weaving-a-tale.test.ts**
   - Card: `011/characters/161-chief-tui-weaving-a-tale.ts`
     - `should have correct stats`
     - `should be inkwell card`
@@ -444,7 +442,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `Test 6: should reset timesPerTurn at start of new turn`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/171-rapunzel-ethereal-protector.test.ts**
+- [x] **011/characters/171-rapunzel-ethereal-protector.test.ts**
   - Card: `011/characters/171-rapunzel-ethereal-protector.ts`
     - `should have Boost 2 ability`
     - `can activate Boost ability with 2 ink to put top card under character`
@@ -461,7 +459,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should be from SET 011`
     - `should be card number 171`
 
-- [ ] **011/characters/172-launchpad-hideout-defender.test.ts**
+- [x] **011/characters/172-launchpad-hideout-defender.test.ts**
   - Card: `011/characters/172-launchpad-hideout-defender.ts`
     - `should grant Resist +1 to your locations while Launchpad is in play`
     - `should grant Resist +1 to multiple locations`
@@ -474,7 +472,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should have Challenger ability`
     - `should get +2 strength while challenging`
 
-- [ ] **011/characters/176-gantu-hamsterviel-s-accomplice.test.ts**
+- [x] **011/characters/176-gantu-hamsterviel-s-accomplice.test.ts**
   - Card: `011/characters/176-gantu-hamsterviel-s-accomplice.ts`
     - `should prompt to discard a card from hand when played`
     - `should allow choosing any card from hand to discard`
@@ -487,7 +485,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should be steel color`
     - `should be uncommon rarity`
 
-- [ ] **011/characters/177-launchpad-trusty-sidekick.test.ts**
+- [x] **011/characters/177-launchpad-trusty-sidekick.test.ts**
   - Card: `011/characters/177-launchpad-trusty-sidekick.ts`
     - `Test 1: should draw and auto-discard when no Darkwing Duck in play`
     - `Test 2: should result in net zero hand change without Darkwing Duck`
@@ -497,14 +495,14 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `Test 6: should complete successfully with 1 ink available`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/178-donald-duck-along-for-the-ride.test.ts**
+- [x] **011/characters/178-donald-duck-along-for-the-ride.test.ts**
   - Card: `011/characters/178-donald-duck-along-for-the-ride.ts`
     - `should banish chosen item when accepting the optional ability`
     - `should be able to banish opponent's item`
     - `should not banish item when declining the optional ability`
     - `should still trigger when there are no items in play (but have no valid targets)`
 
-- [ ] **011/characters/179-chief-seasoned-tracker.test.ts**
+- [x] **011/characters/179-chief-seasoned-tracker.test.ts**
   - Card: `011/characters/179-chief-seasoned-tracker.ts`
     - `should have correct cost, strength, willpower, and lore`
     - `should have correct characteristics`
@@ -515,7 +513,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should reset condition after turn ends - ability should NOT work next turn without new banish`
     - `should allow multiple activations in the same turn if Chief is readied (e.g., with a card effect)`
 
-- [ ] **011/characters/180-amos-slade-tenacious-tracker.test.ts**
+- [x] **011/characters/180-amos-slade-tenacious-tracker.test.ts**
   - Card: `011/characters/180-amos-slade-tenacious-tracker.ts`
     - `should have alert ability`
     - `should have correct stats`
@@ -528,7 +526,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should be playable from hand`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/181-mchorn-ice-cold-officer.test.ts**
+- [x] **011/characters/181-mchorn-ice-cold-officer.test.ts**
   - Card: `011/characters/181-mchorn-ice-cold-officer.ts`
     - `should have bodyguard ability`
     - `should have correct stats`
@@ -541,7 +539,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should be able to quest for lore`
     - `should be able to be used as ink`
 
-- [ ] **011/characters/182-duke-weaselton-surly-crook.test.ts**
+- [x] **011/characters/182-duke-weaselton-surly-crook.test.ts**
   - Card: `011/characters/182-duke-weaselton-surly-crook.ts`
     - `should allow playing a character with cost 2 or less for free when banished`
     - `should allow declining the optional ability`
@@ -554,12 +552,12 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should have shift 4 in abilities array`
     - `should have shift ability text mentioning Li Shang`
 
-- [ ] **011/characters/184-nani-no-worries.test.ts**
+- [x] **011/characters/184-nani-no-worries.test.ts**
   - Card: `011/characters/184-nani-no-worries.ts`
     - `While this character has no damage, she gets +1 lore.`
     - `While this character has damage, she doesn't get +1 lore.`
 
-- [ ] **011/characters/185-stitch-high-badness-level.test.ts**
+- [x] **011/characters/185-stitch-high-badness-level.test.ts**
   - Card: `011/characters/185-stitch-high-badness-level.ts`
     - `should have Challenger +3 when Lilo is in play`
     - `should not have Challenger when Lilo is not in play`
@@ -574,7 +572,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should be able to quest for lore`
     - `should be able to be used as ink`
 
-- [ ] **011/characters/186-dr-hamsterviel-infamous-scientist.test.ts**
+- [x] **011/characters/186-dr-hamsterviel-infamous-scientist.test.ts**
   - Card: `011/characters/186-dr-hamsterviel-infamous-scientist.ts`
     - `should have CONTROLLED VARIABLES ability with correct structure`
     - `should be playable with full cost (no Alien in discard)`
@@ -595,7 +593,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should be playable from hand with enough ink and Alien discount`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/187-angela-night-warrior.test.ts**
+- [x] **011/characters/187-angela-night-warrior.test.ts**
   - Card: `011/characters/187-angela-night-warrior.ts`
     - `should trigger when Angela is played`
     - `should give chosen character Challenger +2 and Resist +2`
@@ -610,7 +608,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should only affect owner's Gargoyles, not opponent's`
     - `should affect all owner's Gargoyles with Stone by Day`
 
-- [ ] **011/characters/188-darkwing-duck-darkwarrior.test.ts**
+- [x] **011/characters/188-darkwing-duck-darkwarrior.test.ts**
   - Card: `011/characters/188-darkwing-duck-darkwarrior.ts`
     - `should have Challenger ability`
     - `should deal base strength + 2 when challenging`
@@ -621,13 +619,13 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should lose Resist at the start of your next turn`
     - `should trigger when opponent's item is banished during your turn`
 
-- [ ] **011/characters/189-gigi-best-in-snow.test.ts**
+- [x] **011/characters/189-gigi-best-in-snow.test.ts**
   - Card: `011/characters/189-gigi-best-in-snow.ts`
     - `should have Alert ability`
     - `should have +2 strength when undamaged`
     - `should lose +2 strength when damaged`
 
-- [ ] **011/characters/191-angel-experiment-624.test.ts**
+- [x] **011/characters/191-angel-experiment-624.test.ts**
   - Card: `011/characters/191-angel-experiment-624.ts`
     - `should have Resist +2 when hand is empty`
     - `should not have Resist when hand has cards`
@@ -645,7 +643,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should be playable from hand`
     - `should be able to quest for lore`
 
-- [ ] **011/characters/192-darkwing-duck-cool-under-pressure.test.ts**
+- [x] **011/characters/192-darkwing-duck-cool-under-pressure.test.ts**
   - Card: `011/characters/192-darkwing-duck-cool-under-pressure.ts`
     - `should have 'super' characteristic`
     - `should have 'detective' characteristic`
@@ -670,7 +668,7 @@ New implementation base directory: /Users/wazar/projects/the-card-goat-online/pa
     - `should not affect effects that target all characters`
     - `should allow targeting others when John Smith has Ward ('if able')`
 
-- [ ] **011/characters/194-judy-hopps-snowball-patrol.test.ts**
+- [x] **011/characters/194-judy-hopps-snowball-patrol.test.ts**
   - Card: `011/characters/194-judy-hopps-snowball-patrol.ts`
     - `should reduce cost by 1 on first turn when not first player`
     - `should NOT reduce cost on first turn when first player`

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jafarWickedSorcererI18n } from "./045-jafar-wicked-sorcerer.i18n";
 
 export const jafarWickedSorcerer: CharacterCard = {
   id: "APi",
@@ -7,28 +8,6 @@ export const jafarWickedSorcerer: CharacterCard = {
   cardType: "character",
   name: "Jafar",
   version: "Wicked Sorcerer",
-  i18n: {
-    en: {
-      name: "Jafar",
-      version: "Wicked Sorcerer",
-      text: "Challenger +3",
-    },
-    de: {
-      name: "Dschafar",
-      version: "Hinterhältiger Hexer",
-      text: "Herausfordern +3",
-    },
-    fr: {
-      name: "JAFAR",
-      version: "Sorcier maléfique",
-      text: "Offensif +3",
-    },
-    it: {
-      name: "Jafar",
-      version: "Stregone Malvagio",
-      text: "Sfidante +3",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "001",
@@ -39,7 +18,6 @@ export const jafarWickedSorcerer: CharacterCard = {
   willpower: 5,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_695cab1b70c24a0289cc2d3c2316dfed",
     tcgPlayer: 494098,
@@ -55,4 +33,5 @@ export const jafarWickedSorcerer: CharacterCard = {
       text: "Challenger +3",
     },
   ],
+  i18n: jafarWickedSorcererI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { svenLeapingReindeerI18n } from "./060-sven-leaping-reindeer.i18n";
 
 export const svenLeapingReindeer: CharacterCard = {
   id: "JOj",
@@ -7,44 +8,6 @@ export const svenLeapingReindeer: CharacterCard = {
   cardType: "character",
   name: "Sven",
   version: "Leaping Reindeer",
-  i18n: {
-    en: {
-      name: "Sven",
-      version: "Leaping Reindeer",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "Challenger +3",
-        },
-        {
-          title: "Evasive",
-        },
-      ],
-    },
-    de: {
-      name: "Sven",
-      version: "Springendes Rentier",
-      text: "Rasant Herausfordern +3 Wendig",
-    },
-    fr: {
-      name: "Sven",
-      version: "Renne en plein saut",
-      text: "Charge Offensif +3 Insaisissable",
-    },
-    it: {
-      name: "Sven",
-      version: "Renna Salterina",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) Sfidante +3 Sfuggente",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "011",
@@ -92,4 +55,5 @@ export const svenLeapingReindeer: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: svenLeapingReindeerI18n,
 };

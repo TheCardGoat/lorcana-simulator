@@ -226,8 +226,10 @@ export type {
   ExertEffect,
   ForEachCounter,
   ForEachEffect,
+  ForEachOpponentEffect,
   // Keyword effects
   GainKeywordEffect,
+  GainKeywordsEffect,
   // Lore effects
   GainLoreEffect,
   GrantAbilityEffect,
@@ -266,6 +268,7 @@ export type {
   // Zone movement effects
   ReturnToHandEffect,
   RevealHandEffect,
+  RevealUntilMatchEffect,
   // Reveal effects
   RevealTopCardEffect,
   // Scry effect (look at top X cards)
@@ -281,6 +284,7 @@ export type {
   ScryPlayDestination,
   // Search effects
   SearchDeckEffect,
+  SelectTargetEffect,
   SelfReplacementCondition,
   // Control flow effects
   SequenceEffect,

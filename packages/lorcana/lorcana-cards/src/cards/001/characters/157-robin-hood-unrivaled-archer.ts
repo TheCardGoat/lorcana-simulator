@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { robinHoodUnrivaledArcherI18n } from "./157-robin-hood-unrivaled-archer.i18n";
 
 export const robinHoodUnrivaledArcher: CharacterCard = {
   id: "0is",
@@ -7,72 +8,6 @@ export const robinHoodUnrivaledArcher: CharacterCard = {
   cardType: "character",
   name: "Robin Hood",
   version: "Unrivaled Archer",
-  i18n: {
-    en: {
-      name: "Robin Hood",
-      version: "Unrivaled Archer",
-      text: [
-        {
-          title: "FEED THE POOR",
-          description:
-            "When you play this character, if an opponent has more cards in their hand than you, draw a card.",
-        },
-        {
-          title: "GOOD SHOT",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Robin Hood",
-      version: "Unrivaled Archer",
-      text: [
-        {
-          title: "FEED THE POOR",
-          description:
-            "When you play this character, if an opponent has more cards in their hand than you, draw a card.",
-        },
-        {
-          title: "GOOD SHOT",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Robin Hood",
-      version: "Unrivaled Archer",
-      text: [
-        {
-          title: "FEED THE POOR",
-          description:
-            "When you play this character, if an opponent has more cards in their hand than you, draw a card.",
-        },
-        {
-          title: "GOOD SHOT",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    it: {
-      name: "Robin Hood",
-      version: "Unrivaled Archer",
-      text: [
-        {
-          title: "FEED THE POOR",
-          description:
-            "When you play this character, if an opponent has more cards in their hand than you, draw a card.",
-        },
-        {
-          title: "GOOD SHOT",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Robin Hood",
   set: "001",
@@ -83,7 +18,6 @@ export const robinHoodUnrivaledArcher: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_b00a7190a315433ebbd327dd79450960",
     tcgPlayer: 650096,
@@ -140,4 +74,5 @@ export const robinHoodUnrivaledArcher: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: robinHoodUnrivaledArcherI18n,
 };

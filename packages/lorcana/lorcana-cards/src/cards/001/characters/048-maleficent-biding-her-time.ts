@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { maleficentBidingHerTimeI18n } from "./048-maleficent-biding-her-time.i18n";
 
 export const maleficentBidingHerTime: CharacterCard = {
   id: "6FJ",
@@ -7,24 +8,6 @@ export const maleficentBidingHerTime: CharacterCard = {
   cardType: "character",
   name: "Maleficent",
   version: "Biding Her Time",
-  i18n: {
-    en: {
-      name: "Maleficent",
-      version: "Biding Her Time",
-    },
-    de: {
-      name: "Malefiz",
-      version: "Auf der Lauer",
-    },
-    fr: {
-      name: "MALÉFIQUE",
-      version: "Attendant son heure",
-    },
-    it: {
-      name: "Maleficent",
-      version: "Biding Her Time",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sleeping Beauty",
   set: "001",
@@ -35,11 +18,11 @@ export const maleficentBidingHerTime: CharacterCard = {
   willpower: 1,
   lore: 2,
   inkable: false,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_ed5b22e519844e948a57784cdc4d5a48",
     tcgPlayer: 493485,
   },
   classifications: ["Dreamborn", "Villain", "Sorcerer"],
+  i18n: maleficentBidingHerTimeI18n,
 };

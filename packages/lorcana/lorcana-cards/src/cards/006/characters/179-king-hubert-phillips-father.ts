@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kingHubertPhillipsFatherI18n } from "./179-king-hubert-phillips-father.i18n";
 
 export const kingHubertPhillipsFather: CharacterCard = {
   id: "k5F",
@@ -7,24 +8,6 @@ export const kingHubertPhillipsFather: CharacterCard = {
   cardType: "character",
   name: "King Hubert",
   version: "Phillip's Father",
-  i18n: {
-    en: {
-      name: "King Hubert",
-      version: "Phillip's Father",
-    },
-    de: {
-      name: "König Hubert",
-      version: "Phillips Vater",
-    },
-    fr: {
-      name: "Le Roi Hubert",
-      version: "Père de Philippe",
-    },
-    it: {
-      name: "Re Uberto",
-      version: "Padre di Filippo",
-    },
-  },
   inkType: ["steel"],
   franchise: "Sleeping Beauty",
   set: "006",
@@ -41,4 +24,5 @@ export const kingHubertPhillipsFather: CharacterCard = {
     tcgPlayer: 587756,
   },
   classifications: ["Storyborn", "Mentor", "King"],
+  i18n: kingHubertPhillipsFatherI18n,
 };

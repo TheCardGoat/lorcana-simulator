@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { scuttleExpertOnHumansI18n } from "./154-scuttle-expert-on-humans.i18n";
 
 export const scuttleExpertOnHumans: CharacterCard = {
   id: "IaS",
@@ -7,52 +8,6 @@ export const scuttleExpertOnHumans: CharacterCard = {
   cardType: "character",
   name: "Scuttle",
   version: "Expert on Humans",
-  i18n: {
-    en: {
-      name: "Scuttle",
-      version: "Expert on Humans",
-      text: [
-        {
-          title: "LET ME SEE",
-          description:
-            "When you play this character, look at the top 4 cards of your deck. You may reveal an item card and put it into your hand. Put the rest on the bottom of your deck in any order.",
-        },
-      ],
-    },
-    de: {
-      name: "Scuttle",
-      version: "Experte für Menschen",
-      text: [
-        {
-          title: "LASST MAL SEHEN",
-          description:
-            "Wenn du diesen Charakter ausspielst, schaue dir die obersten 4 Karten deines Decks an. Du darfst 1 Gegenstandskarte daraus aufdecken und auf deine Hand nehmen. Lege die restlichen Karten in beliebiger Reihenfolge unter dein Deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "Eurêka",
-      version: "Expert en humains",
-      text: [
-        {
-          title: "VOYONS VOIR",
-          description:
-            "Lorsque vous jouez ce personnage, regardez les 4 premières cartes de votre pioche. Vous pouvez révéler une carte Objet et l'ajouter à votre main. Remettez le reste sous votre pioche, dans l'ordre de votre choix.",
-        },
-      ],
-    },
-    it: {
-      name: "Scuttle",
-      version: "Esperto in Umani",
-      text: [
-        {
-          title: "FATE UN PO' VEDERE",
-          description:
-            "Quando giochi questo personaggio, guarda le prime 4 carte del tuo mazzo. Puoi rivelare una carta oggetto e aggiungerla alla tua mano. Metti il resto in fondo al tuo mazzo in qualsiasi ordine.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Little Mermaid",
   set: "004",
@@ -78,12 +33,25 @@ export const scuttleExpertOnHumans: CharacterCard = {
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: "CHOSEN_CHARACTER",
-          type: "put-on-bottom",
-        },
-        type: "optional",
+        type: "scry",
+        amount: 4,
+        destinations: [
+          {
+            zone: "hand",
+            min: 0,
+            max: 1,
+            reveal: true,
+            filter: {
+              type: "card-type",
+              cardType: "item",
+            },
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+            ordering: "player-choice",
+          },
+        ],
       },
       id: "dpt-1",
       name: "LET ME SEE",
@@ -96,4 +64,5 @@ export const scuttleExpertOnHumans: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: scuttleExpertOnHumansI18n,
 };

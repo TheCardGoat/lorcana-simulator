@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { imperialProclamationI18n } from "./131-imperial-proclamation.i18n";
 
 export const imperialProclamation: ItemCard = {
   id: "NaH",
@@ -6,48 +7,6 @@ export const imperialProclamation: ItemCard = {
   reprints: ["set4-131"],
   cardType: "item",
   name: "Imperial Proclamation",
-  i18n: {
-    en: {
-      name: "Imperial Proclamation",
-      text: [
-        {
-          title: "CALL TO THE FRONT",
-          description:
-            "Whenever one of your characters challenges another character, you pay 1 {I} less for the next character you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Kaiserliche Bekanntmachung",
-      text: [
-        {
-          title: "RUF AN DIE FRONT",
-          description:
-            "Jedes Mal, wenn einer deiner Charaktere einen anderen Charakter herausfordert, zahlst du 1 weniger für den nächsten Charakter, den du in diesem Zug ausspielst.",
-        },
-      ],
-    },
-    fr: {
-      name: "Décret Impérial",
-      text: [
-        {
-          title: "APPELÉ AU FRONT",
-          description:
-            "Chaque fois que l'un de vos personnages en défie un autre, le prochain personnage que vous jouez durant ce tour coûte 1 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Proclama Imperiale",
-      text: [
-        {
-          title: "CHIAMATA ALLE ARMI",
-          description:
-            "Ogni volta che uno dei tuoi personaggi sfida un altro personaggio, paga 1 in meno per giocare il tuo prossimo personaggio per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mulan",
   set: "004",
@@ -68,19 +27,22 @@ export const imperialProclamation: ItemCard = {
   ],
   abilities: [
     {
-      effect: {
-        from: "hand",
-        type: "play-card",
-      },
-      id: "12k-1",
+      id: "NaH-1",
       name: "CALL TO THE FRONT",
       text: "CALL TO THE FRONT Whenever one of your characters challenges another character, you pay 1 {I} less for the next character you play this turn.",
+      type: "triggered",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "challenge",
+        on: "YOUR_CHARACTERS",
         timing: "whenever",
       },
-      type: "triggered",
+      effect: {
+        type: "cost-reduction",
+        amount: 1,
+        cardType: "character",
+        duration: "next-play-this-turn",
+      },
     },
   ],
+  i18n: imperialProclamationI18n,
 };

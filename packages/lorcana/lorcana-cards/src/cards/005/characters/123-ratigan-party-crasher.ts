@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ratiganPartyCrasherI18n } from "./123-ratigan-party-crasher.i18n";
 
 export const ratiganPartyCrasher: CharacterCard = {
   id: "7v2",
@@ -7,39 +8,6 @@ export const ratiganPartyCrasher: CharacterCard = {
   cardType: "character",
   name: "Ratigan",
   version: "Party Crasher",
-  i18n: {
-    en: {
-      name: "Ratigan",
-      version: "Party Crasher",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "DELIGHTFULLY WICKED",
-          description: "Your damaged characters get +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Rattenzahn",
-      version: "Partycrasher",
-      text: "Gestaltwandel 4 Wendig FANTASTISCH NIEDERTRÄCHTIG Deine beschädigten Charaktere erhalten +2.",
-    },
-    fr: {
-      name: "Ratigan",
-      version: "Trouble-fête",
-      text: "Alter 4 Insaisissable DÉLICIEUSEMENT VILAIN Vos personnages ayant au moins un dommage sur eux gagnent +2.",
-    },
-    it: {
-      name: "Rattigan",
-      version: "Guastafeste",
-      text: "Trasformazione 4 Sfuggente DELIZIOSAMENTE CRUDELE I tuoi personaggi danneggiati ricevono +2.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Great Mouse Detective",
   set: "005",
@@ -96,4 +64,5 @@ export const ratiganPartyCrasher: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: ratiganPartyCrasherI18n,
 };

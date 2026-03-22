@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chiefTuiRespectedLeaderI18n } from "./143-chief-tui-respected-leader.i18n";
 
 export const chiefTuiRespectedLeader: CharacterCard = {
   id: "DmB",
@@ -7,28 +8,6 @@ export const chiefTuiRespectedLeader: CharacterCard = {
   cardType: "character",
   name: "Chief Tui",
   version: "Respected Leader",
-  i18n: {
-    en: {
-      name: "Chief Tui",
-      version: "Respected Leader",
-      text: "Support",
-    },
-    de: {
-      name: "Tui",
-      version: "Respektierter Anführer",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "TUI",
-      version: "Chef respecté",
-      text: "Soutien",
-    },
-    it: {
-      name: "Capo Tui",
-      version: "Leader Rispettato",
-      text: "Aiutante",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Moana",
   set: "001",
@@ -39,7 +18,6 @@ export const chiefTuiRespectedLeader: CharacterCard = {
   willpower: 6,
   lore: 3,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_2bd7564121d5445ab350345c91a45ef4",
     tcgPlayer: 508819,
@@ -53,5 +31,24 @@ export const chiefTuiRespectedLeader: CharacterCard = {
       type: "keyword",
       text: "Support",
     },
+    {
+      id: "qai-2",
+      type: "triggered",
+      text: "Support (Whenever this character quests, you may add their {S} to another chosen character's {S} this turn.)",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "support",
+          target: "ANOTHER_CHOSEN_CHARACTER_OF_YOURS",
+        },
+      },
+    },
   ],
+  i18n: chiefTuiRespectedLeaderI18n,
 };

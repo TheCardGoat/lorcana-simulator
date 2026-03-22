@@ -18,6 +18,7 @@ import type {
 } from "@tcg/lorcana-types";
 import type { CardInstanceId, MatchState, PlayerId } from "#core";
 import type { CardPlayedPayload, DynamicAmountEventSnapshot } from "./domain-events";
+import type { ResolutionSelectionContext } from "./resolution-selection";
 
 // Re-export MatchState for convenience
 export type { MatchState };
@@ -59,7 +60,7 @@ export interface ChallengeState {
  * Supported continuous-effect stat keys.
  * Keep this union broad enough for future stat-mod effect coverage.
  */
-export type ContinuousEffectStat = "strength" | "willpower" | "lore";
+export type ContinuousEffectStat = "strength" | "willpower" | "lore" | "singer-threshold";
 
 /**
  * Continuous effect instance for stat modifiers.
@@ -124,14 +125,35 @@ export interface TurnMetadata {
   discardCardsLeftThisTurn: number;
   /** Pending temporary play-cost reductions keyed by controller */
   pendingCostReductionsByPlayer: Record<PlayerId, PendingCostReduction[]>;
+  /** Cards drawn this turn, counted per player (for Ink Amplifier and similar) */
+  cardsDrawnThisTurnByPlayer: Record<PlayerId, number>;
+  /** Temporary permission to play characters from under an item this turn */
+  pendingPlayFromUnder: PlayFromUnderPermission[];
+  /** Cards put under a character this turn, keyed by the character's instance ID */
+  cardsUnderThisTurn?: Record<CardInstanceId, CardInstanceId[]>;
 }
 
 export interface PendingCostReduction {
   amount: number;
   cardType?: "character" | "item" | "location" | "action" | "song";
-  classification?: Classification;
+  classification?: Classification | Classification[] | readonly Classification[];
   expiresAtTurn: number;
   consumeOnUse: boolean;
+}
+
+/**
+ * Temporary permission to play a card from under a specific item this turn.
+ * Created by "RISE AND JOIN ME!" style effects.
+ */
+export interface PlayFromUnderPermission {
+  /** The item whose cards may be played */
+  sourceItemId: CardInstanceId;
+  /** Which turn this expires at (end-of-turn cleanup) */
+  expiresAtTurn: number;
+  /** If set, only cards of this type may be played (e.g. "character") */
+  cardType?: string;
+  /** The player who activated the effect (only their cards should be playable) */
+  controllerId: PlayerId;
 }
 
 export interface TemporaryGrantedAbilityPayload {
@@ -140,6 +162,12 @@ export interface TemporaryGrantedAbilityPayload {
 }
 
 export interface TemporaryRestrictionPayload {
+  type: string;
+  sourceId?: CardInstanceId;
+  activeWhileSourceInPlay?: boolean;
+}
+
+export interface TemporaryKeywordPayload {
   type: string;
   sourceId?: CardInstanceId;
   activeWhileSourceInPlay?: boolean;
@@ -160,9 +188,19 @@ export type BufferedTriggeredEvent =
   | "banish"
   | "banish-in-challenge"
   | "remove-damage"
+  | "return-to-hand"
   | "ink"
   | "start-turn"
-  | "end-turn";
+  | "end-turn"
+  | "be-chosen"
+  | "boost"
+  | "put-card-under"
+  | "damage"
+  | "deal-damage"
+  | "exert"
+  | "gain-lore"
+  | "lose-lore"
+  | "leave-discard";
 
 export interface PendingTriggeredEvent {
   id: string;
@@ -173,6 +211,8 @@ export interface PendingTriggeredEvent {
   toZone?: string;
   subjectCardId?: CardInstanceId;
   triggerSourceCardId?: CardInstanceId;
+  /** The card type of the source that caused this event (e.g., "action", "item") */
+  sourceCardType?: "character" | "action" | "item" | "location";
   attackerId?: CardInstanceId;
   defenderId?: CardInstanceId;
   happenedInChallenge?: boolean;
@@ -342,10 +382,18 @@ export type PendingActionEffectKind =
 
 export interface PendingActionEffectContinuation {
   remainingEffects?: unknown[];
+  stagedSequence?: {
+    sequenceEffect: unknown;
+    collectedTargets: Array<CardInstanceId | PlayerId>;
+    collectedTargetCounts: number[];
+    remainingSteps: unknown[];
+  };
 }
 
 export interface PendingActionResolutionInput {
   targets?: CardInstanceId | PlayerId | readonly (CardInstanceId | PlayerId)[];
+  currentTargets?: CardInstanceId | PlayerId | readonly (CardInstanceId | PlayerId)[];
+  contextTargets?: CardInstanceId | PlayerId | readonly (CardInstanceId | PlayerId)[];
   amount?: Amount;
   namedCard?: string;
   resolveOptional?: boolean;
@@ -371,6 +419,7 @@ export interface PendingActionEffect {
   effect: unknown;
   continuation?: PendingActionEffectContinuation;
   resolutionInput: PendingActionResolutionInput;
+  selectionContext?: ResolutionSelectionContext;
 }
 
 /**
@@ -404,6 +453,12 @@ export interface LorcanaCardMeta extends Record<string, unknown> {
   temporaryKeywordStarts?: Record<string, number>;
   /** Temporary values for parameterized keywords (e.g. Challenger/Resist) */
   temporaryKeywordValues?: Record<string, number>;
+  /** Structured payloads for temporary keywords keyed by keyword name */
+  temporaryKeywordPayloads?: Record<string, TemporaryKeywordPayload>;
+  /** Temporary classifications granted by action effects and their inclusive expiration turn */
+  temporaryClassifications?: Record<string, number>;
+  /** Inclusive start turns for temporary classifications */
+  temporaryClassificationStarts?: Record<string, number>;
   /** Temporary granted non-keyword abilities and their inclusive expiration turn */
   temporaryAbilities?: Record<string, number>;
   /** Inclusive start turns for temporary non-keyword abilities */
@@ -434,6 +489,17 @@ export interface LorcanaCardMeta extends Record<string, unknown> {
 export interface LorcanaG {
   /** Lore totals for each player (win at 20) */
   lore: Record<PlayerId, number>;
+
+  /**
+   * Override lore required to win for specific players.
+   * When a player appears in this map, they need that much lore to win
+   * instead of the default 20. Populated by win-condition-modification
+   * static abilities (e.g. Donald Duck - Flustered Sorcerer).
+   *
+   * Keys are the player IDs whose win threshold is raised.
+   * The map only contains overrides — missing entries use the default 20.
+   */
+  loreToWin?: Record<PlayerId, number>;
 
   /** Turn metadata - reset each turn */
   turnMetadata: TurnMetadata;
@@ -466,9 +532,9 @@ export interface LorcanaG {
 /**
  * Lorcana Match State
  *
- * Full state type: MatchState<LorcanaG>
+ * Full state type: MatchState
  */
-export type LorcanaMatchState = MatchState<LorcanaG>;
+export type LorcanaMatchState = MatchState;
 
 /**
  * Create initial Lorcana G state
@@ -492,6 +558,8 @@ export function createInitialLorcanaG(player1Id: PlayerId, player2Id: PlayerId):
       banishedCharactersInChallengeByOwnerThisTurn: {},
       discardCardsLeftThisTurn: 0,
       pendingCostReductionsByPlayer: {},
+      cardsDrawnThisTurnByPlayer: {} as Record<PlayerId, number>,
+      pendingPlayFromUnder: [],
     },
     triggeredAbilities: {
       pendingEvents: [],

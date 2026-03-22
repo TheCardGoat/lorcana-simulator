@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { philoctetesTrainerOfHeroesI18n } from "./156-philoctetes-trainer-of-heroes.i18n";
 
 export const philoctetesTrainerOfHeroes: CharacterCard = {
   id: "BXf",
@@ -7,34 +8,6 @@ export const philoctetesTrainerOfHeroes: CharacterCard = {
   cardType: "character",
   name: "Philoctetes",
   version: "Trainer of Heroes",
-  i18n: {
-    en: {
-      name: "Philoctetes",
-      version: "Trainer of Heroes",
-      text: "Support",
-    },
-    de: {
-      name: "Phil",
-      version: "Trainer der Helden",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "PHILOCTÈTE",
-      version: "Entraineur de héros",
-      text: "Soutien",
-    },
-    it: {
-      name: "Philoctetes",
-      version: "Trainer of Heroes",
-      text: [
-        {
-          title: "Support",
-          description:
-            "(Whenever this character quests, you may add their to another chosen character's this turn.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Hercules",
   set: "001",
@@ -45,7 +18,6 @@ export const philoctetesTrainerOfHeroes: CharacterCard = {
   willpower: 1,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_3d8ce215614244a483a06d6ecf99c2e2",
     tcgPlayer: 508875,
@@ -60,4 +32,5 @@ export const philoctetesTrainerOfHeroes: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: philoctetesTrainerOfHeroesI18n,
 };

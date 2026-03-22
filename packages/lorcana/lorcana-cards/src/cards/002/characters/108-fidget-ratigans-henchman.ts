@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { fidgetRatigansHenchmanI18n } from "./108-fidget-ratigans-henchman.i18n";
 
 export const fidgetRatigansHenchman: CharacterCard = {
   id: "HKW",
@@ -7,33 +8,6 @@ export const fidgetRatigansHenchman: CharacterCard = {
   cardType: "character",
   name: "Fidget",
   version: "Ratigan's Henchman",
-  i18n: {
-    en: {
-      name: "Fidget",
-      version: "Ratigan's Henchman",
-      text: "Evasive",
-    },
-    de: {
-      name: "Greifer",
-      version: "Rattenzahns Handlanger",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Fidget",
-      version: "Homme de main de Ratigan",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Fidget",
-      version: "Ratigan's Henchman",
-      text: [
-        {
-          title: "Evasive",
-          description: "(Only characters with Evasive can challenge this character.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Great Mouse Detective",
   set: "002",
@@ -58,4 +32,5 @@ export const fidgetRatigansHenchman: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: fidgetRatigansHenchmanI18n,
 };

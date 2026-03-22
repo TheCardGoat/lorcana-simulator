@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jafarKeeperOfSecretsI18n } from "./038-jafar-keeper-of-secrets.i18n";
 
 export const jafarKeeperOfSecrets: CharacterCard = {
   id: "j6N",
@@ -7,48 +8,6 @@ export const jafarKeeperOfSecrets: CharacterCard = {
   cardType: "character",
   name: "Jafar",
   version: "Keeper of Secrets",
-  i18n: {
-    en: {
-      name: "Jafar",
-      version: "Keeper of Secrets",
-      text: [
-        {
-          title: "HIDDEN WONDERS",
-          description: "This character gets +1 {S} for each card in your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschafar",
-      version: "Hüter der Geheimnisse",
-      text: [
-        {
-          title: "VERSTECKTE WUNDER",
-          description: "Dieser Charakter erhält +1 für jede Karte auf deiner Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "JAFAR",
-      version: "Gardien des Secrets",
-      text: [
-        {
-          title: "MERVEILLES CACHÉES",
-          description: "La de ce personnage augmente de 1 par carte dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Jafar",
-      version: "Custode dei Segreti",
-      text: [
-        {
-          title: "MERAVIGLIE NASCOSTE",
-          description: "Questo personaggio riceve +1 per ogni carta nella tua mano.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "009",
@@ -73,7 +32,10 @@ export const jafarKeeperOfSecrets: CharacterCard = {
   abilities: [
     {
       effect: {
-        modifier: 1,
+        modifier: {
+          type: "cards-in-hand",
+          controller: "you",
+        },
         stat: "strength",
         target: "SELF",
         type: "modify-stat",
@@ -83,4 +45,5 @@ export const jafarKeeperOfSecrets: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: jafarKeeperOfSecretsI18n,
 };

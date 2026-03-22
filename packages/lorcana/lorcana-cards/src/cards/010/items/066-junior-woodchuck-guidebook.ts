@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { juniorWoodchuckGuidebookI18n } from "./066-junior-woodchuck-guidebook.i18n";
 
 export const juniorWoodchuckGuidebook: ItemCard = {
   id: "kZV",
@@ -6,44 +7,6 @@ export const juniorWoodchuckGuidebook: ItemCard = {
   reprints: ["set10-066"],
   cardType: "item",
   name: "Junior Woodchuck Guidebook",
-  i18n: {
-    en: {
-      name: "Junior Woodchuck Guidebook",
-      text: [
-        {
-          title: "THE BOOK KNOWS EVERYTHING",
-          description: "{E}, 1 {I}, Banish this item — Draw 2 cards.",
-        },
-      ],
-    },
-    de: {
-      name: "Das schlaue Buch",
-      text: [
-        {
-          title: "DAS BUCH WEISS ALLES, 1,",
-          description: "Verbanne diesen Gegenstand — Ziehe 2 Karten.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le Manuel des Castors Juniors",
-      text: [
-        {
-          title: "CE MANUEL SAIT ABSOLUMENT TOUT, 1,",
-          description: "Bannissez cet objet — Piochez 2 cartes.",
-        },
-      ],
-    },
-    it: {
-      name: "Manuale delle Giovani Marmotte",
-      text: [
-        {
-          title: "IL MANUALE SA SEMPRE TUTTO, 1,",
-          description: "esilia questo oggetto — Pesca 2 carte.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Ducktales",
   set: "010",
@@ -79,4 +42,5 @@ export const juniorWoodchuckGuidebook: ItemCard = {
       text: "THE BOOK KNOWS EVERYTHING {E}, 1 {I}, Banish this item — Draw 2 cards.",
     },
   ],
+  i18n: juniorWoodchuckGuidebookI18n,
 };

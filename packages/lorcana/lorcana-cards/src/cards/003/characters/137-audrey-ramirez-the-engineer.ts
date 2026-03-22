@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { audreyRamirezTheEngineerI18n } from "./137-audrey-ramirez-the-engineer.i18n";
 
 export const audreyRamirezTheEngineer: CharacterCard = {
   id: "2j6",
@@ -7,36 +8,6 @@ export const audreyRamirezTheEngineer: CharacterCard = {
   cardType: "character",
   name: "Audrey Ramirez",
   version: "The Engineer",
-  i18n: {
-    en: {
-      name: "Audrey Ramirez",
-      version: "The Engineer",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "SPARE PARTS",
-          description: "Whenever this character quests, ready one of your items.",
-        },
-      ],
-    },
-    de: {
-      name: "Anna Ramirez",
-      version: "Die Ingenieurin",
-      text: "Behütet ERSATZTEILE Jedes Mal, wenn dieser Charakter erkundet, mache einen deiner Gegenstände bereit.",
-    },
-    fr: {
-      name: "Audrey Ramirez",
-      version: "L'ingénieure",
-      text: "Hors d'atteinte PIÈCES DÉTACHÉES Chaque fois que ce personnage est envoyé à l'aventure, redressez l'un de vos objets.",
-    },
-    it: {
-      name: "Audrey Ramirez",
-      version: "L'Ingegnere",
-      text: "Protetto PARTI DI RICAMBIO Ogni volta che questo personaggio va all'avventura, prepara uno dei tuoi oggetti.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Atlantis",
   set: "003",
@@ -90,4 +61,5 @@ export const audreyRamirezTheEngineer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: audreyRamirezTheEngineerI18n,
 };

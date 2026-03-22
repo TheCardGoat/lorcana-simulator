@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { maleficentVengefulSorceressI18n } from "./054-maleficent-vengeful-sorceress.i18n";
 
 export const maleficentVengefulSorceress: CharacterCard = {
   id: "vpH",
@@ -7,24 +8,6 @@ export const maleficentVengefulSorceress: CharacterCard = {
   cardType: "character",
   name: "Maleficent",
   version: "Vengeful Sorceress",
-  i18n: {
-    en: {
-      name: "Maleficent",
-      version: "Vengeful Sorceress",
-    },
-    de: {
-      name: "Malefiz",
-      version: "Rachsüchtige Hexe",
-    },
-    fr: {
-      name: "Maléfique",
-      version: "Sorcière revancharde",
-    },
-    it: {
-      name: "Malefica",
-      version: "Incantatrice Vendicativa",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sleeping Beauty",
   set: "005",
@@ -41,4 +24,5 @@ export const maleficentVengefulSorceress: CharacterCard = {
     tcgPlayer: 560519,
   },
   classifications: ["Storyborn", "Villain", "Sorcerer"],
+  i18n: maleficentVengefulSorceressI18n,
 };

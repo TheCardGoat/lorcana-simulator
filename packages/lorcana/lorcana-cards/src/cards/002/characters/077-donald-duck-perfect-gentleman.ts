@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckPerfectGentlemanI18n } from "./077-donald-duck-perfect-gentleman.i18n";
 
 export const donaldDuckPerfectGentleman: CharacterCard = {
   id: "fS0",
@@ -7,42 +8,6 @@ export const donaldDuckPerfectGentleman: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Perfect Gentleman",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Perfect Gentleman",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "ALLOW ME",
-          description: "At the start of your turn, each player may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Perfekter Gentleman",
-      text: "Gestaltwandel 3 GESTATTEN? Jedes Mal zu Beginn deines Zuges dürfen alle Mitspielenden (auch du) je 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Donald",
-      version: "Parfait gentleman",
-      text: "Alter 3 PERMETTEZ-MOI Au début de chacun de vos tours, chaque joueur peut piocher une carte.",
-    },
-    it: {
-      name: "Donald Duck",
-      version: "Perfect Gentleman",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Donald Duck.) ALLOW ME At the start of your turn, each player may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "002",
   cardNumber: 77,
@@ -65,8 +30,6 @@ export const donaldDuckPerfectGentleman: CharacterCard = {
       description: "At the start of your turn, each player may draw a card.",
     },
   ],
-  missingImplementation: true,
-  missingTests: true,
   classifications: ["Floodborn", "Ally"],
   abilities: [
     {
@@ -113,4 +76,5 @@ export const donaldDuckPerfectGentleman: CharacterCard = {
       },
     },
   ],
+  i18n: donaldDuckPerfectGentlemanI18n,
 };

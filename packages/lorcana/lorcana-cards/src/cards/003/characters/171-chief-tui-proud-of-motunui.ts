@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chiefTuiProudOfMotunuiI18n } from "./171-chief-tui-proud-of-motunui.i18n";
 
 export const chiefTuiProudOfMotunui: CharacterCard = {
   id: "a46",
@@ -7,24 +8,6 @@ export const chiefTuiProudOfMotunui: CharacterCard = {
   cardType: "character",
   name: "Chief Tui",
   version: "Proud of Motunui",
-  i18n: {
-    en: {
-      name: "Chief Tui",
-      version: "Proud of Motunui",
-    },
-    de: {
-      name: "Tui",
-      version: "Stolz von Motunui",
-    },
-    fr: {
-      name: "Tui",
-      version: "Fier de Motunui",
-    },
-    it: {
-      name: "Capo Tui",
-      version: "Fiero di Motunui",
-    },
-  },
   inkType: ["steel"],
   franchise: "Moana",
   set: "003",
@@ -41,4 +24,5 @@ export const chiefTuiProudOfMotunui: CharacterCard = {
     tcgPlayer: 538328,
   },
   classifications: ["Storyborn", "Mentor", "King"],
+  i18n: chiefTuiProudOfMotunuiI18n,
 };

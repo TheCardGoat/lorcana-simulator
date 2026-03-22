@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jumbaJookibaCriticalScientistI18n } from "./173-jumba-jookiba-critical-scientist.i18n";
 
 export const jumbaJookibaCriticalScientist: CharacterCard = {
   id: "Jir",
@@ -7,24 +8,6 @@ export const jumbaJookibaCriticalScientist: CharacterCard = {
   cardType: "character",
   name: "Jumba Jookiba",
   version: "Critical Scientist",
-  i18n: {
-    en: {
-      name: "Jumba Jookiba",
-      version: "Critical Scientist",
-    },
-    de: {
-      name: "Jamba Jookiba",
-      version: "Kritischer Wissenschaftler",
-    },
-    fr: {
-      name: "Jumba Jookiba",
-      version: "Scientifique analytique",
-    },
-    it: {
-      name: "Jumba Jookiba",
-      version: "Scenziato Critico",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Lilo and Stitch",
   set: "008",
@@ -41,4 +24,5 @@ export const jumbaJookibaCriticalScientist: CharacterCard = {
     tcgPlayer: 631468,
   },
   classifications: ["Storyborn", "Alien", "Inventor"],
+  i18n: jumbaJookibaCriticalScientistI18n,
 };

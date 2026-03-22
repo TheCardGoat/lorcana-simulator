@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rooLittlestPirateI18n } from "./023-roo-littlest-pirate.i18n";
 
 export const rooLittlestPirate: CharacterCard = {
   id: "JPo",
@@ -7,52 +8,6 @@ export const rooLittlestPirate: CharacterCard = {
   cardType: "character",
   name: "Roo",
   version: "Littlest Pirate",
-  i18n: {
-    en: {
-      name: "Roo",
-      version: "Littlest Pirate",
-      text: [
-        {
-          title: "I'M A PIRATE TOO!",
-          description:
-            "When you play this character, you may give chosen character -2 {S} until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Ruh",
-      version: "Jüngster Pirat",
-      text: [
-        {
-          title: "ICH BIN AUCH EIN PIRAT!",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einem Charakter deiner Wahl bis zu Beginn deines nächsten Zuges -2 geben.",
-        },
-      ],
-    },
-    fr: {
-      name: "Petit Gourou",
-      version: "Le plus petit des pirates",
-      text: [
-        {
-          title: "MOI AUSSI, J'SUIS UN PIRATE!",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage qui subit -2 jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Ro",
-      version: "Piccolissimo Pirata",
-      text: [
-        {
-          title: "ANCHE IO SONO UN PIRATA!",
-          description:
-            "Quando giochi questo personaggio, puoi dare a un personaggio a tua scelta -2 fino all'inizio del tuo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Winnie the Pooh",
   set: "006",
@@ -69,9 +24,9 @@ export const rooLittlestPirate: CharacterCard = {
   },
   text: [
     {
-      title: "I'M A PIRATE TOO!",
+      title: "I'M",
       description:
-        "When you play this character, you may give chosen character -2 {S} until the start of your next turn.",
+        "A PIRATE TOO! When you play this character, you may give chosen character -2 {S} until the start of your next turn.",
     },
   ],
   classifications: ["Dreamborn", "Ally", "Pirate"],
@@ -92,4 +47,5 @@ export const rooLittlestPirate: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: rooLittlestPirateI18n,
 };

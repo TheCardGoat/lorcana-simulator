@@ -1,202 +1,109 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   FlintheartGlomgoldSchemingBillionaire,
-//   MickeyMouseDetective,
-// } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Flintheart Glomgold - Scheming Billionaire", () => {
-//   It("Character should have correct base stats", async () => {
-//     Const testEngine = new TestEngine({
-//       Hand: [flintheartGlomgoldSchemingBillionaire],
-//     });
-//
-//     Const cardUnderTest = testEngine.getByZoneAndId(
-//       "hand",
-//       FlintheartGlomgoldSchemingBillionaire.id,
-//     );
-//
-//     // Check base stats
-//     Expect(cardUnderTest.cost).toBe(4);
-//     Expect(cardUnderTest.strength).toBe(1);
-//     Expect(cardUnderTest.willpower).toBe(4);
-//     Expect(cardUnderTest.lore).toBe(3);
-//     Expect(cardUnderTest.characteristics).toEqual(["storyborn", "villain"]);
-//   });
-//
-//   It("Character can be played with correct cost", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: flintheartGlomgoldSchemingBillionaire.cost,
-//       Hand: [flintheartGlomgoldSchemingBillionaire],
-//     });
-//
-//     Const cardUnderTest = testEngine.getByZoneAndId(
-//       "hand",
-//       FlintheartGlomgoldSchemingBillionaire.id,
-//     );
-//
-//     Await testEngine.playCard(cardUnderTest);
-//     Const flintheartInPlay = testEngine.getByZoneAndId(
-//       "play",
-//       FlintheartGlomgoldSchemingBillionaire.id,
-//     );
-//     Expect(flintheartInPlay.zone).toBe("play");
-//   });
-//
-//   It("Should have inkwell ability", async () => {
-//     Const testEngine = new TestEngine({
-//       Hand: [flintheartGlomgoldSchemingBillionaire],
-//     });
-//
-//     Const cardUnderTest = testEngine.getByZoneAndId(
-//       "hand",
-//       FlintheartGlomgoldSchemingBillionaire.id,
-//     );
-//
-//     Expect(cardUnderTest.inkwell).toBe(true);
-//   });
-//
-//   It("TRY ME - Should have the ability defined", () => {
-//     Const tryMe = flintheartGlomgoldSchemingBillionaire.abilities?.find(
-//       (a) => "name" in a && a.name === "TRY ME",
-//     );
-//
-//     Expect(tryMe).toBeDefined();
-//   });
-//
-//   It("TRY ME - Should have Ward ability effect", () => {
-//     Const tryMe = flintheartGlomgoldSchemingBillionaire.abilities?.find(
-//       (a) => "name" in a && a.name === "TRY ME",
-//     );
-//
-//     Expect(tryMe).toBeDefined();
-//
-//     If (
-//       TryMe &&
-//       "ability" in tryMe &&
-//       TryMe.ability === "gain-ability" &&
-//       "gainedAbility" in tryMe
-//     ) {
-//       // Should grant Ward ability
-//       Expect((tryMe as any).gainedAbility.ability).toBe("ward");
-//     }
-//   });
-//
-//   It("TRY ME - Should target this character", () => {
-//     Const tryMe = flintheartGlomgoldSchemingBillionaire.abilities?.find(
-//       (a) => "name" in a && a.name === "TRY ME",
-//     );
-//
-//     Expect(tryMe).toBeDefined();
-//
-//     If (
-//       TryMe &&
-//       "ability" in tryMe &&
-//       TryMe.ability === "gain-ability" &&
-//       "target" in tryMe
-//     ) {
-//       // Should target this character
-//       Expect((tryMe as any).target).toBeDefined();
-//     }
-//   });
-//
-//   It("TRY ME - Should have correct condition for cards under characters/locations", () => {
-//     Const tryMe = flintheartGlomgoldSchemingBillionaire.abilities?.find(
-//       (a) => "name" in a && a.name === "TRY ME",
-//     );
-//
-//     Expect(tryMe).toBeDefined();
-//
-//     If (tryMe && "conditions" in tryMe && Array.isArray(tryMe.conditions)) {
-//       // Should have condition for cards under characters or locations
-//       Expect(tryMe.conditions).toHaveLength(1);
-//       Const condition = tryMe.conditions[0] as any;
-//       Expect(condition.type).toBe("filter");
-//       Expect(condition.comparison.operator).toBe("gte");
-//       Expect(condition.comparison.value).toBe(1);
-//
-//       // Should filter for owner, type, zone, and has_card_under_them
-//       Expect(condition.filters).toHaveLength(4);
-//       Expect(condition.filters).toEqual(
-//         Expect.arrayContaining([
-//           Expect.objectContaining({ filter: "owner", value: "self" }),
-//           Expect.objectContaining({
-//             Filter: "type",
-//             Value: ["character", "location"],
-//           }),
-//           Expect.objectContaining({ filter: "zone", value: "play" }),
-//           Expect.objectContaining({
-//             Filter: "has_card_under_them",
-//             Comparison: { operator: "gte", value: 1 },
-//           }),
-//         ]),
-//       );
-//     }
-//   });
-//
-//   It("Should have correct rarity and set info", () => {
-//     Expect(flintheartGlomgoldSchemingBillionaire.rarity).toBe("uncommon");
-//     Expect(flintheartGlomgoldSchemingBillionaire.set).toBe("010");
-//     Expect(flintheartGlomgoldSchemingBillionaire.number).toBe(76);
-//     Expect(flintheartGlomgoldSchemingBillionaire.inkwell).toBe(true);
-//     Expect(flintheartGlomgoldSchemingBillionaire.colors).toEqual(["emerald"]);
-//   });
-//
-//   It("Should have the TRY ME ability present", () => {
-//     Expect(flintheartGlomgoldSchemingBillionaire.abilities).toBeDefined();
-//     Expect(flintheartGlomgoldSchemingBillionaire.abilities?.length).toBe(1);
-//
-//     Const abilityNames = flintheartGlomgoldSchemingBillionaire.abilities?.map(
-//       (a) => ("name" in a ? a.name : "unknown"),
-//     );
-//
-//     Expect(abilityNames).toContain("TRY ME");
-//   });
-//
-//   It("TRY ME - Should have correct text", () => {
-//     Const tryMe = flintheartGlomgoldSchemingBillionaire.abilities?.find(
-//       (a) => "name" in a && a.name === "TRY ME",
-//     );
-//
-//     Expect(tryMe).toBeDefined();
-//     If (tryMe && "text" in tryMe) {
-//       Expect(tryMe.text).toContain(
-//         "While you have a character or location in play with a card under them",
-//       );
-//       Expect(tryMe.text).toContain("this character gains Ward");
-//       Expect(tryMe.text).toContain(
-//         "(Opponents can't choose them except to challenge.)",
-//       );
-//     }
-//   });
-//
-//   It("Should have correct trigger text", () => {
-//     Expect(flintheartGlomgoldSchemingBillionaire.text).toContain("TRY ME");
-//     Expect(flintheartGlomgoldSchemingBillionaire.text).toContain(
-//       "While you have a character or location in play with a card under them",
-//     );
-//     Expect(flintheartGlomgoldSchemingBillionaire.text).toContain(
-//       "this character gains Ward",
-//     );
-//     Expect(flintheartGlomgoldSchemingBillionaire.text).toContain(
-//       "(Opponents can't choose them except to challenge.)",
-//     );
-//   });
-//
-//   It("TRY ME - Should be a static ability", () => {
-//     Const tryMe = flintheartGlomgoldSchemingBillionaire.abilities?.find(
-//       (a) => "name" in a && a.name === "TRY ME",
-//     );
-//
-//     Expect(tryMe).toBeDefined();
-//     If (tryMe && "type" in tryMe) {
-//       Expect(tryMe.type).toBe("static");
-//     }
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  createMockLocation,
+} from "@tcg/lorcana-engine/testing";
+import { dragonFire } from "../../001/actions/130-dragon-fire";
+import { flintheartGlomgoldSchemingBillionaire } from "./076-flintheart-glomgold-scheming-billionaire";
+
+const underCard = createMockCharacter({
+  id: "flintheart-under-card",
+  name: "Under Card",
+  cost: 1,
+});
+
+const underLocationCard = createMockCharacter({
+  id: "flintheart-under-location-card",
+  name: "Under Location Card",
+  cost: 1,
+});
+
+const underLocation = createMockLocation({
+  id: "flintheart-under-location",
+  name: "Under Location",
+  cost: 2,
+  moveCost: 1,
+});
+
+describe("Flintheart Glomgold - Scheming Billionaire", () => {
+  it("should have correct base stats", () => {
+    expect(flintheartGlomgoldSchemingBillionaire.cost).toBe(4);
+    expect(flintheartGlomgoldSchemingBillionaire.strength).toBe(1);
+    expect(flintheartGlomgoldSchemingBillionaire.willpower).toBe(4);
+    expect(flintheartGlomgoldSchemingBillionaire.lore).toBe(3);
+  });
+
+  it("should have correct metadata", () => {
+    expect(flintheartGlomgoldSchemingBillionaire.set).toBe("010");
+    expect(flintheartGlomgoldSchemingBillionaire.cardNumber).toBe(76);
+    expect(flintheartGlomgoldSchemingBillionaire.rarity).toBe("uncommon");
+    expect(flintheartGlomgoldSchemingBillionaire.inkable).toBe(true);
+    expect(flintheartGlomgoldSchemingBillionaire.inkType).toEqual(["emerald"]);
+  });
+
+  describe("TRY ME - While you have a character or location in play with a card under them, this character gains Ward.", () => {
+    it("does not have Ward when nothing is under your play cards", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [flintheartGlomgoldSchemingBillionaire],
+        deck: 5,
+      });
+
+      expect(
+        testEngine.asPlayerOne().hasKeyword(flintheartGlomgoldSchemingBillionaire, "Ward"),
+      ).toBe(false);
+    });
+
+    it("gains Ward while a friendly character has a card under them", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [
+          { card: flintheartGlomgoldSchemingBillionaire },
+          { card: underCard, cardsUnder: [underLocationCard] },
+        ],
+        hand: [dragonFire],
+        inkwell: dragonFire.cost,
+        deck: 5,
+      });
+
+      expect(
+        testEngine.asPlayerOne().hasKeyword(flintheartGlomgoldSchemingBillionaire, "Ward"),
+      ).toBe(true);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().playCard(dragonFire, {
+          targets: [flintheartGlomgoldSchemingBillionaire],
+        }),
+      ).not.toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(flintheartGlomgoldSchemingBillionaire)).toBe(
+        "play",
+      );
+    });
+
+    it("gains Ward while a friendly location has a card under it", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [
+          { card: flintheartGlomgoldSchemingBillionaire },
+          { card: underLocation, cardsUnder: [underLocationCard] },
+        ],
+        hand: [dragonFire],
+        inkwell: dragonFire.cost,
+        deck: 5,
+      });
+
+      expect(
+        testEngine.asPlayerOne().hasKeyword(flintheartGlomgoldSchemingBillionaire, "Ward"),
+      ).toBe(true);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().playCard(dragonFire, {
+          targets: [flintheartGlomgoldSchemingBillionaire],
+        }),
+      ).not.toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(flintheartGlomgoldSchemingBillionaire)).toBe(
+        "play",
+      );
+    });
+  });
+});

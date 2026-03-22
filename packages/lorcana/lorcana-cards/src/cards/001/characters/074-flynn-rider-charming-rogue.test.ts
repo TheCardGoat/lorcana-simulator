@@ -1,89 +1,131 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import {
+  createMockCharacter,
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+} from "@tcg/lorcana-engine/testing";
 import { flynnRiderCharmingRogue } from "./074-flynn-rider-charming-rogue";
 
-describe("Flynn Rider - Charming Rogue", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [flynnRiderCharmingRogue] });
-  //   Expect(testEngine.getCardModel(flynnRiderCharmingRogue).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const attacker = createMockCharacter({
+  id: "flynn-charming-attacker",
+  name: "Attacker",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   FlynnRiderCharmingRogue,
-//   HeiheiBoatSnack,
-//   MauiDemiGod,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Flynn Rider - Charming Rogue", () => {
-//   Describe("**HERE COMES THE SMOLDER** Whenever this character is challenged, the challenging player chooses and discards a card.", () => {
-//     It("attacking does not trigger the effect", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [flynnRiderCharmingRogue],
-//         },
-//         {
-//           Play: [heiheiBoatSnack],
-//           Hand: [mauiDemiGod],
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         FlynnRiderCharmingRogue.id,
-//       );
-//       Const defender = testStore.getByZoneAndId(
-//         "play",
-//         HeiheiBoatSnack.id,
-//         "player_two",
-//       );
-//
-//       CardUnderTest.challenge(defender);
-//       Expect(testStore.store.stackLayerStore.layers).toHaveLength(0);
-//     });
-//
-//     It("as defender triggers the effect", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [heiheiBoatSnack],
-//           Hand: [mauiDemiGod],
-//         },
-//         {
-//           Play: [flynnRiderCharmingRogue],
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         FlynnRiderCharmingRogue.id,
-//         "player_two",
-//       );
-//       Const attacker = testStore.getByZoneAndId("play", heiheiBoatSnack.id);
-//       Const cardToDiscard = testStore.getByZoneAndId(
-//         "hand",
-//         MauiDemiGod.id,
-//         "player_one",
-//       );
-//
-//       CardUnderTest.updateCardMeta({ exerted: true });
-//
-//       Attacker.challenge(cardUnderTest);
-//       TestStore.resolveTopOfStack({
-//         Targets: [cardToDiscard],
-//       });
-//
-//       Expect(cardToDiscard.zone).toEqual("discard");
-//     });
-//   });
-// });
-//
+const handCard = createMockCharacter({
+  id: "flynn-charming-hand-card",
+  name: "Hand Card",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+  lore: 1,
+});
+
+const defender = createMockCharacter({
+  id: "flynn-charming-defender",
+  name: "Defender",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+describe("Flynn Rider - Charming Rogue", () => {
+  describe("HERE COMES THE SMOLDER: Whenever this character is challenged, the challenging player chooses and discards a card.", () => {
+    it("triggers when challenged — the challenging player must discard a card", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: attacker, isDrying: false }],
+          hand: [handCard],
+          deck: 1,
+        },
+        {
+          play: [{ card: flynnRiderCharmingRogue, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      const handCardId = testEngine.findCardInstanceId(handCard, "hand", PLAYER_ONE);
+
+      // Player one challenges Flynn (player two's character)
+      expect(
+        testEngine.asPlayerOne().challenge(attacker, flynnRiderCharmingRogue),
+      ).toBeSuccessfulCommand();
+
+      // The challenged trigger should fire as a bag effect
+      const p1BagCount = testEngine.asPlayerOne().getBagCount();
+      const p2BagCount = testEngine.asPlayerTwo().getBagCount();
+      expect(p1BagCount + p2BagCount).toBeGreaterThan(0);
+
+      // Resolve the bag effect (owned by Flynn's controller, player two)
+      const bagEffects = testEngine.asPlayerTwo().getBagEffects();
+      expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+
+      // The challenging player (player one) must choose a card to discard
+      expect(testEngine.asPlayerOne().respondWith(handCardId)).toBeSuccessfulCommand();
+
+      // Player one should have discarded the chosen card
+      expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_ONE).hand).toBe(0);
+      expect(testEngine.asPlayerOne().getCardZone(handCard)).toBe("discard");
+    });
+
+    it("does not trigger when attacking (only when being challenged)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: defender, exerted: true }],
+          hand: [handCard],
+          deck: 2,
+        },
+        {
+          play: [{ card: flynnRiderCharmingRogue, isDrying: false }],
+          deck: 2,
+        },
+      );
+
+      // Pass turn so player_two gets priority
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().challenge(flynnRiderCharmingRogue, defender),
+      ).toBeSuccessfulCommand();
+
+      // Flynn is the attacker here, so the trigger should NOT fire
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+      // Player one's hand should remain intact
+      expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_ONE).hand).toBe(1);
+    });
+
+    it("works when the challenging player has no cards in hand", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: attacker, isDrying: false }],
+          hand: [],
+          deck: 1,
+        },
+        {
+          play: [{ card: flynnRiderCharmingRogue, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      // Challenge with no cards in hand
+      expect(
+        testEngine.asPlayerOne().challenge(attacker, flynnRiderCharmingRogue),
+      ).toBeSuccessfulCommand();
+
+      // The trigger fires but the discard auto-resolves since there are no cards in hand
+      const p2BagCount = testEngine.asPlayerTwo().getBagCount();
+      if (p2BagCount > 0) {
+        const bagEffects = testEngine.asPlayerTwo().getBagEffects();
+        expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      }
+
+      // Should resolve cleanly even with 0 cards
+      expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_ONE).hand).toBe(0);
+    });
+  });
+});

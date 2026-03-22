@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tukTukCuriousPartnerI18n } from "./161-tuk-tuk-curious-partner.i18n";
 
 export const tukTukCuriousPartner: CharacterCard = {
   id: "DHE",
@@ -7,24 +8,6 @@ export const tukTukCuriousPartner: CharacterCard = {
   cardType: "character",
   name: "Tuk Tuk",
   version: "Curious Partner",
-  i18n: {
-    en: {
-      name: "Tuk Tuk",
-      version: "Curious Partner",
-    },
-    de: {
-      name: "Tuktuk",
-      version: "Neugieriger Partner",
-    },
-    fr: {
-      name: "Tuk Tuk",
-      version: "Partenaire curieux",
-    },
-    it: {
-      name: "Tuk Tuk",
-      version: "Compagno Curioso",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Raya and the Last Dragon",
   set: "004",
@@ -41,4 +24,5 @@ export const tukTukCuriousPartner: CharacterCard = {
     tcgPlayer: 550613,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: tukTukCuriousPartnerI18n,
 };

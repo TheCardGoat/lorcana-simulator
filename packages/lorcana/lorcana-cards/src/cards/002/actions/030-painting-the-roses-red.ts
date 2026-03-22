@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { paintingTheRosesRedI18n } from "./030-painting-the-roses-red.i18n";
 
 export const paintingTheRosesRed: ActionCard = {
   id: "jP1",
@@ -6,24 +7,6 @@ export const paintingTheRosesRed: ActionCard = {
   reprints: ["set2-030"],
   cardType: "action",
   name: "Painting the Roses Red",
-  i18n: {
-    en: {
-      name: "Painting the Roses Red",
-      text: "Up to 2 chosen characters get -1 {S} this turn. Draw a card.",
-    },
-    de: {
-      name: "Wir malen die Rosen rot",
-      text: "Gib bis zu 2 Charakteren deiner Wahl in diesem Zug jeweils -1. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Peignons les roses en rouge",
-      text: "Choisissez jusqu'à 2 personnages, ils subissent -1 pour le reste de ce tour. Piochez 1 carte.",
-    },
-    it: {
-      name: "Painting the Roses Red",
-      text: "Up to 2 chosen characters get -1 this turn. Draw a card.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Alice in Wonderland",
   set: "002",
@@ -67,4 +50,5 @@ export const paintingTheRosesRed: ActionCard = {
       },
     },
   ],
+  i18n: paintingTheRosesRedI18n,
 };

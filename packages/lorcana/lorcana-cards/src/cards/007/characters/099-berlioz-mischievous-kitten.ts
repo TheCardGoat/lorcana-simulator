@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { berliozMischievousKittenI18n } from "./099-berlioz-mischievous-kitten.i18n";
 
 export const berliozMischievousKitten: CharacterCard = {
   id: "J54",
@@ -7,24 +8,6 @@ export const berliozMischievousKitten: CharacterCard = {
   cardType: "character",
   name: "Berlioz",
   version: "Mischievous Kitten",
-  i18n: {
-    en: {
-      name: "Berlioz",
-      version: "Mischievous Kitten",
-    },
-    de: {
-      name: "Berlioz",
-      version: "Schelmisches Kätzchen",
-    },
-    fr: {
-      name: "Berlioz",
-      version: "Chaton espiègle",
-    },
-    it: {
-      name: "Bizet",
-      version: "Gattino Monello",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aristocats",
   set: "007",
@@ -41,4 +24,5 @@ export const berliozMischievousKitten: CharacterCard = {
     tcgPlayer: 618148,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: berliozMischievousKittenI18n,
 };

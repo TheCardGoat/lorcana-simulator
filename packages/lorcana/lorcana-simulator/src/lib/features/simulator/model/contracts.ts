@@ -91,6 +91,16 @@ export interface LorcanaCardSnapshot {
   cardsUnderCount?: number;
   facePresentation: CardFacePresentation;
 
+  // Grant source indicators (cards granting abilities/keywords to this card)
+  grantSources?: Array<{
+    sourceCardId: string;
+    sourceLabel: string;
+    sourceSet?: string;
+    sourceCardNumber?: number;
+    sourceInkType?: string[];
+    grants: string[];
+  }>;
+
   // Image metadata
   set?: string;
   cardNumber?: number;
@@ -112,6 +122,7 @@ export type ActionCandidateId =
   | "ink-card"
   | "quest"
   | "challenge"
+  | "undo"
   | "pass-turn"
   | "concede";
 
@@ -132,6 +143,14 @@ export interface ExecutableMoveEntry {
   presentation: ExecutableMovePresentation;
 }
 
+export interface MoveCategorySummary {
+  categoryId: ExecutableMovePresentationCategoryId;
+  categoryLabel: string;
+  sourceCardIds: readonly string[];
+  count: number;
+  isDirect: boolean;
+}
+
 export interface ResolutionActionView {
   id: string;
   label: string;
@@ -140,8 +159,111 @@ export interface ResolutionActionView {
   onClick: () => void;
 }
 
+export type AvailableMovesSelectionPhase =
+  | "choose-source"
+  | "choose-option"
+  | "choose-target"
+  | "confirm";
+
+export type AvailableMovesSelectionEntryKind =
+  | "card"
+  | "option"
+  | "player"
+  | "named-card"
+  | "scry-card";
+
+export interface AvailableMovesSelectionEntry {
+  id: string;
+  kind: AvailableMovesSelectionEntryKind;
+  label: string;
+  detail?: string;
+  cardId?: string;
+  moveId?: string;
+  playerId?: string;
+  selected: boolean;
+  disabled?: boolean;
+  disabledReason?: string;
+}
+
+interface AvailableMovesSelectionBase {
+  mode:
+    | "action"
+    | "resolution-target"
+    | "resolution-choice"
+    | "resolution-optional"
+    | "resolution-name-card"
+    | "resolution-scry";
+  categoryId: ExecutableMovePresentationCategoryId;
+  categoryLabel: string;
+  title: string;
+  message: string;
+  canBack: boolean;
+  canCancel: boolean;
+  canConfirm: boolean;
+}
+
+export interface ActionAvailableMovesSelectionState extends AvailableMovesSelectionBase {
+  mode: "action";
+  phase: AvailableMovesSelectionPhase;
+  entries: AvailableMovesSelectionEntry[];
+  sourceCardId: string | null;
+  sourceLabel: string | null;
+  targetCardId: string | null;
+  targetLabel: string | null;
+  selectedMoveId: string | null;
+  selectedMoveLabel: string | null;
+}
+
+export interface ResolutionTargetAvailableMovesSelectionState extends AvailableMovesSelectionBase {
+  mode: "resolution-target";
+  entries: AvailableMovesSelectionEntry[];
+  selectedTargetLabels: string[];
+  minimumSelections: number;
+  maximumSelections: number;
+}
+
+export interface ResolutionChoiceAvailableMovesSelectionState extends AvailableMovesSelectionBase {
+  mode: "resolution-choice";
+  entries: AvailableMovesSelectionEntry[];
+}
+
+export interface ResolutionOptionalAvailableMovesSelectionState extends AvailableMovesSelectionBase {
+  mode: "resolution-optional";
+  entries: AvailableMovesSelectionEntry[];
+}
+
+export interface ResolutionNameCardAvailableMovesSelectionState extends AvailableMovesSelectionBase {
+  mode: "resolution-name-card";
+  entries: AvailableMovesSelectionEntry[];
+  query: string;
+  selectedLabel: string | null;
+}
+
+export interface AvailableMovesScryDestinationState {
+  id: string;
+  zone: string;
+  label: string;
+  detail: string;
+  cards: AvailableMovesSelectionEntry[];
+}
+
+export interface ResolutionScryAvailableMovesSelectionState extends AvailableMovesSelectionBase {
+  mode: "resolution-scry";
+  entries: AvailableMovesSelectionEntry[];
+  destinations: AvailableMovesScryDestinationState[];
+}
+
+export type AvailableMovesSelectionState =
+  | ActionAvailableMovesSelectionState
+  | ResolutionTargetAvailableMovesSelectionState
+  | ResolutionChoiceAvailableMovesSelectionState
+  | ResolutionOptionalAvailableMovesSelectionState
+  | ResolutionNameCardAvailableMovesSelectionState
+  | ResolutionScryAvailableMovesSelectionState;
+
 export type ExecutableMovePresentationCategoryId =
   | "activate-ability"
+  | "alter-hand"
   | "choose-first-player"
   | "challenge"
   | "concede"
@@ -151,6 +273,10 @@ export type ExecutableMovePresentationCategoryId =
   | "pass-turn"
   | "play-card"
   | "quest"
+  | "quest-all"
+  | "shift-card"
+  | "sing-card"
+  | "undo"
   | "unknown";
 
 export type ExecutableMovePresentation =
@@ -172,7 +298,9 @@ export type CardActionCategoryId =
   | "ink-card"
   | "move-to-location"
   | "play-card"
-  | "quest";
+  | "quest"
+  | "shift-card"
+  | "sing-card";
 
 export interface CardActionView {
   id: string;
@@ -281,6 +409,7 @@ export const LORCANA_SIMULATOR_MOVE_ID_REGISTRY = {
   putCardIntoInkwell: true,
   quest: true,
   questWithAll: true,
+  undo: true,
   sing: true,
   singTogether: true,
   resolveBag: true,
@@ -293,12 +422,12 @@ export const LORCANA_SIMULATOR_MOVE_ID_REGISTRY = {
   manualSetLore: true,
   manualShuffleDeck: true,
   manualPassTurn: true,
-} as const satisfies Record<keyof LorcanaRuntimeMoveParams, true>;
+} as const satisfies Record<keyof LorcanaRuntimeMoveParams | "undo", true>;
 
 export type LorcanaSimulatorMoveId = keyof typeof LORCANA_SIMULATOR_MOVE_ID_REGISTRY;
 
 export function isLorcanaSimulatorMoveId(value: string): value is LorcanaSimulatorMoveId {
-  return value in LORCANA_SIMULATOR_MOVE_ID_REGISTRY;
+  return Object.hasOwn(LORCANA_SIMULATOR_MOVE_ID_REGISTRY, value);
 }
 
 export function assertLorcanaSimulatorMoveId(value: string): LorcanaSimulatorMoveId {
@@ -345,6 +474,7 @@ export type LorcanaSimulatorMoveParams = ExactMoveParamMap<{
   putCardIntoInkwell: { cardId: string };
   quest: { cardId: string };
   questWithAll: Record<string, never>;
+  undo: Record<string, never>;
   sing: { singerId: string; songId: string };
   singTogether: { singerIds: string[]; songId: string };
   resolveBag: { bagId: string; params?: Record<string, unknown> };

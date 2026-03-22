@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { brunoMadrigalSinglemindedI18n } from "./051-bruno-madrigal-single-minded.i18n";
 
 export const brunoMadrigalSingleminded: CharacterCard = {
   id: "qZd",
@@ -7,52 +8,6 @@ export const brunoMadrigalSingleminded: CharacterCard = {
   cardType: "character",
   name: "Bruno Madrigal",
   version: "Single-Minded",
-  i18n: {
-    en: {
-      name: "Bruno Madrigal",
-      version: "Single-Minded",
-      text: [
-        {
-          title: "STANDING TALL",
-          description:
-            "When you play this character, chosen opposing character can't ready at the start of their next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Bruno Madrigal",
-      version: "Zielstrebig",
-      text: [
-        {
-          title: "STEHT AUFRECHT",
-          description:
-            "Wenn du diesen Charakter ausspielst, wähle einen gegnerischen Charakter. Er wird zu Beginn seines nächsten Zuges nicht bereit gemacht.",
-        },
-      ],
-    },
-    fr: {
-      name: "Bruno Madrigal",
-      version: "Obsessionnel",
-      text: [
-        {
-          title: "FIÈREMENT DRESSÉ",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage adverse qui ne se redresse pas au début de son prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Bruno Madrigal",
-      version: "Determinato",
-      text: [
-        {
-          title: "A TESTA ALTA",
-          description:
-            "Quando giochi questo personaggio, un personaggio avversario a tua scelta non si può preparare all'inizio del suo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "008",
@@ -78,9 +33,9 @@ export const brunoMadrigalSingleminded: CharacterCard = {
   abilities: [
     {
       effect: {
-        duration: "until-start-of-next-turn",
+        duration: "their-next-turn",
         restriction: "cant-ready",
-        target: "SELF",
+        target: "CHOSEN_OPPOSING_CHARACTER",
         type: "restriction",
       },
       id: "1a1-1",
@@ -94,4 +49,5 @@ export const brunoMadrigalSingleminded: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: brunoMadrigalSinglemindedI18n,
 };

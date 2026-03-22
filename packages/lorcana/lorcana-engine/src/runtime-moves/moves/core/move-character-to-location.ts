@@ -4,7 +4,11 @@
 import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
 import type { LorcanaCard } from "@tcg/lorcana-types";
 import { getMoveCost, isCharacter, isLocation } from "../../../card-utils";
-import { createLorcanaLogMessage, type Classification, type LorcanaMoveDefinition } from "../../../types";
+import {
+  createLorcanaLogMessage,
+  type Classification,
+  type LorcanaMoveDefinition,
+} from "../../../types";
 import {
   EFFECT_PENDING_ERROR_CODE,
   hasPendingActionEffectResolution,
@@ -42,7 +46,7 @@ type StaticMoveCostReductionEffect = {
 };
 
 function getCardOwnerId(ctx: MoveReadableContext, cardId: CardInstanceId): PlayerId | undefined {
-  return ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID;
+  return ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined;
 }
 
 function getCurrentPlayerId(ctx: MoveReadableContext): PlayerId | undefined {
@@ -65,18 +69,11 @@ function getStaticMoveCostReduction(
   const characterDefinition = getCardDefinition(ctx, characterId);
   let reduction = 0;
 
-  for (const sourceId of Object.keys(
-    ctx.framework.state.ctx.zones.private.cardIndex ?? {},
-  ) as CardInstanceId[]) {
-    const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[sourceId]?.zoneKey;
-    if (!(zoneKey === "play" || zoneKey?.startsWith("play:"))) {
-      continue;
-    }
-
-    if (getCardOwnerId(ctx, sourceId) !== currentPlayer) {
-      continue;
-    }
-
+  const playCards = ctx.framework.zones.getCards({
+    zone: "play",
+    playerId: currentPlayer,
+  }) as CardInstanceId[];
+  for (const sourceId of playCards) {
     const sourceDefinition = getCardDefinition(ctx, sourceId);
     if (!sourceDefinition) {
       continue;
@@ -88,11 +85,19 @@ function getStaticMoveCostReduction(
       }
 
       const effect = ability.effect as StaticMoveCostReductionEffect;
-      const targetLocationId =
-        effect.location === "here" || effect.location === undefined ? sourceId : undefined;
-      if (targetLocationId !== locationId) {
-        continue;
+      // "here" means this card's location; undefined on a non-location card means any location
+      const sourceCardType = sourceDefinition.cardType;
+      if (effect.location === "here") {
+        if (sourceId !== locationId) {
+          continue;
+        }
+      } else if (effect.location === undefined && sourceCardType === "location") {
+        // Location card with no explicit location: treat as "here"
+        if (sourceId !== locationId) {
+          continue;
+        }
       }
+      // effect.location === undefined on a non-location card: applies to all locations (no filter)
 
       if (
         !evaluateStaticCondition({
@@ -143,8 +148,8 @@ function validateMoveCharacterToLocation(
     };
   }
 
-  const characterZoneKey = ctx.framework.state.ctx.zones.private.cardIndex[characterId]?.zoneKey;
-  const locationZoneKey = ctx.framework.state.ctx.zones.private.cardIndex[locationId]?.zoneKey;
+  const characterZoneKey = ctx.framework.zones.getCardZone(characterId);
+  const locationZoneKey = ctx.framework.zones.getCardZone(locationId);
   if (!characterZoneKey?.startsWith("play:")) {
     return {
       valid: false,

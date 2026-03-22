@@ -1,20 +1,100 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { duckworthGhostButler } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Duckworth - Ghost Butler", () => {
-//   It.skip("Rush (This character can challenge the turn they're played.) FINAL ACT During your turn, when this character is banished, you may put the top card of your deck facedown under one of your characters or locations with Boost.", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [duckworthGhostButler],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(duckworthGhostButler);
-//     Expect(cardUnderTest.hasRush).toBe(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { smash, aladdinPrinceAli } from "../../001";
+import { duckworthGhostButler } from "./047-duckworth-ghost-butler";
+import { megaraSecretKeeper } from "./086-megara-secret-keeper";
+
+describe("Duckworth - Ghost Butler", () => {
+  it("has Rush ability", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [duckworthGhostButler],
+      deck: 2,
+    });
+
+    expect(testEngine.asPlayerOne().hasKeyword(duckworthGhostButler, "Rush")).toBe(true);
+  });
+
+  describe("FINAL ACT — During your turn, when this character is banished, you may put the top card of your deck facedown under one of your characters or locations with Boost.", () => {
+    it("triggers when Duckworth is banished during your turn and puts top card under a character with Boost", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [duckworthGhostButler, megaraSecretKeeper],
+          hand: [smash],
+          inkwell: smash.cost,
+          deck: [aladdinPrinceAli],
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      const storedCardId = testEngine.findCardInstanceId(aladdinPrinceAli, "deck", "p1");
+
+      expect(
+        testEngine.asPlayerOne().playCard(smash, { targets: [duckworthGhostButler] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(duckworthGhostButler)).toBe("discard");
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          resolveOptional: true,
+          targets: [megaraSecretKeeper],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.getCardsUnder(megaraSecretKeeper)).toEqual([storedCardId]);
+    });
+
+    it("does not trigger when Duckworth is banished during the opponent's turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [duckworthGhostButler, megaraSecretKeeper],
+          deck: 2,
+        },
+        {
+          hand: [smash],
+          inkwell: smash.cost,
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().playCard(smash, { targets: [duckworthGhostButler] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(duckworthGhostButler)).toBe("discard");
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
+    it("is optional — can decline to put card under", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [duckworthGhostButler, megaraSecretKeeper],
+          hand: [smash],
+          inkwell: smash.cost,
+          deck: [aladdinPrinceAli],
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(smash, { targets: [duckworthGhostButler] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.getCardsUnder(megaraSecretKeeper)).toEqual([]);
+    });
+  });
+});

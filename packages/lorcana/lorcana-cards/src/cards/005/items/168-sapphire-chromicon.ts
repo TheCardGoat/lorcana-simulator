@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { sapphireChromiconI18n } from "./168-sapphire-chromicon.i18n";
 
 export const sapphireChromicon: ItemCard = {
   id: "Xd5",
@@ -6,51 +7,6 @@ export const sapphireChromicon: ItemCard = {
   reprints: ["set5-168"],
   cardType: "item",
   name: "Sapphire Chromicon",
-  i18n: {
-    en: {
-      name: "Sapphire Chromicon",
-      text: [
-        {
-          title: "POWERING UP",
-          description: "This item enters play exerted.",
-        },
-        {
-          title: "SAPPHIRE LIGHT",
-          description: "{E}, 2 {I}, Banish one of your items — Gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Saphir Chromikon",
-      text: [
-        {
-          title: "LADEVORGANG",
-          description:
-            "Dieser Gegenstand kommt erschöpft ins Spiel. SAPHIRFARBENES LICHT, 2, Verbanne einen deiner Gegenstände — Sammle 2 Legenden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Chromicône de Saphir",
-      text: [
-        {
-          title: "EN CHARGE",
-          description:
-            "Cet objet arrive en jeu épuisé. LUEUR DE SAPHIR, 2, bannissez l'un de vos objets — Gagnez 2 éclats de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Cromicon di Zaffiro",
-      text: [
-        {
-          title: "ACCENSIONE",
-          description:
-            "Questo oggetto entra in gioco impegnato. LUCE DI ZAFFIRO, 2, esilia uno dei tuoi oggetti — Ottieni 2 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Lorcana",
   set: "005",
@@ -100,4 +56,5 @@ export const sapphireChromicon: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: sapphireChromiconI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { suddenChillI18n } from "./098-sudden-chill.i18n";
 
 export const suddenChill: ActionCard = {
   id: "DDi",
@@ -6,24 +7,6 @@ export const suddenChill: ActionCard = {
   reprints: ["set1-098", "set9-095"],
   cardType: "action",
   name: "Sudden Chill",
-  i18n: {
-    en: {
-      name: "Sudden Chill",
-      text: "Each opponent chooses and discards a card.",
-    },
-    de: {
-      name: "Durchbohrender Blick",
-      text: "Alle gegnerischen Mitspielenden wählen je 1 Karte aus ihrer Hand und werfen sie ab.",
-    },
-    fr: {
-      name: "CRUELLE DIABLESSE",
-      text: "Chaque adversaire choisit et défausse une carte de sa main.",
-    },
-    it: {
-      name: "Sudden Chill",
-      text: "Each opponent chooses and discards a card.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "101 Dalmatians",
   set: "001",
@@ -49,4 +32,5 @@ export const suddenChill: ActionCard = {
       },
     },
   ],
+  i18n: suddenChillI18n,
 };

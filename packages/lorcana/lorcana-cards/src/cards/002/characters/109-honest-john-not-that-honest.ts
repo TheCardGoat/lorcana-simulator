@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { honestJohnNotThatHonestI18n } from "./109-honest-john-not-that-honest.i18n";
 
 export const honestJohnNotThatHonest: CharacterCard = {
   id: "3zO",
@@ -7,50 +8,6 @@ export const honestJohnNotThatHonest: CharacterCard = {
   cardType: "character",
   name: "Honest John",
   version: "Not That Honest",
-  i18n: {
-    en: {
-      name: "Honest John",
-      version: "Not That Honest",
-      text: [
-        {
-          title: "EASY STREET",
-          description: "Whenever you play a Floodborn character, each opponent loses 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Ehrenwerter John",
-      version: "Nicht sehr ehrenwert",
-      text: [
-        {
-          title: "GEMACHTE LEUTE",
-          description:
-            "Jedes Mal, wenn du eine Flutgestalt ausspielst, verlieren alle gegnerischen Mitspielenden je 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Grand Coquin",
-      version: "Porte bien son nom",
-      text: [
-        {
-          title: "LA BELLE VIE",
-          description:
-            "Chaque fois que vous jouez un personnage Floodborn, chaque adversaire perd 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Honest John",
-      version: "Not That Honest",
-      text: [
-        {
-          title: "EASY STREET",
-          description: "Whenever you play a Floodborn character, each opponent loses 1 lore.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Pinocchio",
   set: "002",
@@ -72,7 +29,6 @@ export const honestJohnNotThatHonest: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -95,4 +51,6 @@ export const honestJohnNotThatHonest: CharacterCard = {
       type: "triggered",
     },
   ],
+  missingTests: true,
+  i18n: honestJohnNotThatHonestI18n,
 };

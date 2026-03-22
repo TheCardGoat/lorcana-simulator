@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theQueenDisguisedPeddlerI18n } from "./093-the-queen-disguised-peddler.i18n";
 
 export const theQueenDisguisedPeddler: CharacterCard = {
   id: "zX1",
@@ -7,52 +8,6 @@ export const theQueenDisguisedPeddler: CharacterCard = {
   cardType: "character",
   name: "The Queen",
   version: "Disguised Peddler",
-  i18n: {
-    en: {
-      name: "The Queen",
-      version: "Disguised Peddler",
-      text: [
-        {
-          title: "A PERFECT DISGUISE",
-          description:
-            "{E}, Choose and discard a character card — Gain lore equal to the discarded character's {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Die Königin",
-      version: "Verkleidete Hausiererin",
-      text: [
-        {
-          title: "NIEMAND WIRD MICH ERKENNEN,",
-          description:
-            "Wirf eine Charakterkarte aus deiner Hand ab — Sammle so viele Legenden, wie der -Wert des abgeworfenen Charakters beträgt.",
-        },
-      ],
-    },
-    fr: {
-      name: "La Reine",
-      version: "Déguisée en mendiante",
-      text: [
-        {
-          title: "LE",
-          description:
-            "DÉGUISEMENT PARFAIT, Choisissez une carte Personnage et défaussez-la — Vous gagnez un nombre d'éclats de Lore égal à la du personnage défaussé.",
-        },
-      ],
-    },
-    it: {
-      name: "The Queen",
-      version: "Disguised Peddler",
-      text: [
-        {
-          title: "A PERFECT DISGUISE,",
-          description:
-            "Choose and discard a character card — Gain lore equal to the discarded character's.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Snow White",
   set: "002",
@@ -93,4 +48,5 @@ export const theQueenDisguisedPeddler: CharacterCard = {
       },
     },
   ],
+  i18n: theQueenDisguisedPeddlerI18n,
 };

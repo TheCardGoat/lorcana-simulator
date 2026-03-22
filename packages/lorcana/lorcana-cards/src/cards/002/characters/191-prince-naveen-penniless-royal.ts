@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princeNaveenPennilessRoyalI18n } from "./191-prince-naveen-penniless-royal.i18n";
 
 export const princeNaveenPennilessRoyal: CharacterCard = {
   id: "A9R",
@@ -7,24 +8,6 @@ export const princeNaveenPennilessRoyal: CharacterCard = {
   cardType: "character",
   name: "Prince Naveen",
   version: "Penniless Royal",
-  i18n: {
-    en: {
-      name: "Prince Naveen",
-      version: "Penniless Royal",
-    },
-    de: {
-      name: "Prinz Naveen",
-      version: "Mittelloser Prinz",
-    },
-    fr: {
-      name: "Prince Naveen",
-      version: "Prince sans le sou",
-    },
-    it: {
-      name: "Prince Naveen",
-      version: "Penniless Royal",
-    },
-  },
   inkType: ["steel"],
   franchise: "Princess and the Frog",
   set: "002",
@@ -41,4 +24,5 @@ export const princeNaveenPennilessRoyal: CharacterCard = {
     tcgPlayer: 650115,
   },
   classifications: ["Storyborn", "Prince"],
+  i18n: princeNaveenPennilessRoyalI18n,
 };

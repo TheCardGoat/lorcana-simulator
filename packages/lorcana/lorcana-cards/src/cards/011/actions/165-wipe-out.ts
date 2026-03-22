@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { wipeOutI18n } from "./165-wipe-out.i18n";
 
 export const wipeOut: ActionCard = {
   id: "5P4",
@@ -6,24 +7,6 @@ export const wipeOut: ActionCard = {
   reprints: ["set11-165"],
   cardType: "action",
   name: "Wipe Out!",
-  i18n: {
-    en: {
-      name: "Wipe Out!",
-      text: "Put chosen character with Bodyguard or item into their player's inkwell facedown and exerted.",
-    },
-    de: {
-      name: "Wegrutschen!",
-      text: "Lege einen Charakter deiner Wahl mit Beschützen oder einen Gegenstand deiner Wahl verdeckt und erschöpft in den zugehörigen Tintenvorrat.",
-    },
-    fr: {
-      name: "Chute !",
-      text: "Choisissez un personnage avec Rempart ou un objet et placez-le dans la réserve d'encre de son propriétaire, face cachée et épuisé.",
-    },
-    it: {
-      name: "Precipitare!",
-      text: "Aggiungi un personaggio con Guardiano o un oggetto a tua scelta al calamaio del suo giocatore, a faccia in giù e impegnato.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Lilo and Stitch",
   set: "011",
@@ -79,4 +62,5 @@ export const wipeOut: ActionCard = {
       },
     },
   ],
+  i18n: wipeOutI18n,
 };

@@ -256,12 +256,8 @@ describe("#### 4. TURN ACTIONS", () => {
       ).toBe(true);
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
-      while (testEngine.asPlayerOne().getBagCount() > 0) {
-        const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-        const resolvingPlayer =
-          bagEffect!.chooserId === PLAYER_ONE ? testEngine.asPlayerOne() : testEngine.asPlayerTwo();
-        expect(resolvingPlayer.resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-      }
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(2);
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
@@ -329,10 +325,9 @@ describe("#### 4. TURN ACTIONS", () => {
 
         // player one resolves the bag, moving marshmallow to hand
         expect(
-          testEngine
-            .asPlayerOne()
-            .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: true })
-            .success,
+          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+            resolveOptional: true,
+          }).success,
         ).toBe(true);
         expect(testEngine.asPlayerOne().getCardZone(marshmallowPersistentGuardian)).toBe("hand");
 

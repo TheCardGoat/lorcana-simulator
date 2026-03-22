@@ -1,10 +1,15 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
+  import * as Tooltip from "$lib/design-system/primitives/tooltip/index.js";
   import type { LorcanaCardSnapshot } from "$lib/lorcana-simulator";
-  import { m } from "$lib/paraglide/messages.js";
+  import { m } from "$lib/i18n/messages.js";
   import CardImage from "$lib/design-system/simulator/cards/CardImage.svelte";
+  import CardGrantSourceBadges from "@/design-system/simulator/cards/CardGrantSourceBadges.svelte";
   import CardTagStrip from "@/design-system/simulator/cards/CardTagStrip.svelte";
-  import {getLorcanaCardTags} from "./card-tags.js";
+  import {
+    getLorcanaCardTagGroups,
+    type LorcanaCardStatModifier,
+  } from "./card-tags.js";
 
 
   type ImageFormat = "full" | "art_only" | "art_and_name";
@@ -65,6 +70,7 @@
     pointerenter: { event: MouseEvent };
     pointerleave: void;
     select: { event: MouseEvent };
+    contextmenu: { event: MouseEvent };
   }>();
 
   function getCost(): string {
@@ -98,6 +104,11 @@
     dispatch("select", { event });
   }
 
+  function handleContextMenu(event: MouseEvent) {
+    event.preventDefault();
+    dispatch("contextmenu", { event });
+  }
+
   function handleImageLoad() {
     imageLoaded = true;
   }
@@ -106,7 +117,55 @@
     imageError = true;
   }
 
-  const cardTags = $derived(card ? getLorcanaCardTags(card) : []);
+  function handleStatModifierClick(event: MouseEvent) {
+    event.stopPropagation();
+  }
+
+  function getModifierToneClass(tone: LorcanaCardStatModifier["tone"]): string {
+    switch (tone) {
+      case "success":
+        return "border-emerald-300/65 bg-emerald-500/88 text-emerald-50";
+      case "warning":
+        return "border-amber-200/75 bg-amber-500/90 text-amber-950";
+      case "danger":
+        return "border-rose-300/65 bg-rose-500/88 text-rose-50";
+      case "info":
+        return "border-sky-300/65 bg-sky-500/88 text-sky-50";
+      default:
+        return "border-slate-100/20 bg-slate-950/82 text-slate-50";
+    }
+  }
+
+  const tagGroups = $derived(
+    card ? getLorcanaCardTagGroups(card) : { tags: [], statModifiers: [] },
+  );
+  const cardTags = $derived(tagGroups.tags.filter((tag) => tag.id !== "damage"));
+  const statModifiers = $derived(tagGroups.statModifiers);
+  const modifierChipClass = $derived.by(() => {
+    if (size === "micro" || size === "tiny") {
+      return "min-h-5 min-w-[2.15rem] gap-0.75 rounded-md px-1 py-0.5 text-[0.54rem]";
+    }
+
+    if (size === "small") {
+      return "min-h-6 min-w-[2.45rem] gap-0.75 rounded-md px-1.5 py-0.5 text-[0.6rem]";
+    }
+
+    return "min-h-6 min-w-[2.7rem] gap-1 rounded-md px-1.5 py-0.5 text-[0.68rem]";
+  });
+  const modifierIconClass = $derived(
+    size === "micro" || size === "tiny" ? "h-2.25 w-2.25" : "h-2.75 w-2.75",
+  );
+  const modifierValueClass = $derived.by(() => {
+    if (size === "micro" || size === "tiny") {
+      return "text-[0.66rem]";
+    }
+
+    if (size === "small") {
+      return "text-[0.74rem]";
+    }
+
+    return "text-[0.82rem]";
+  });
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -127,17 +186,17 @@
   style:height={useContainerSize ? "var(--zone-card-height, 128px)" : `${displayHeight}px`}
   style:transform={isHovering && !isGhost ? "scale3d(1.02, 1.02, 1.02)" : "scale3d(1, 1, 1)"}
   data-card-id={card?.cardId}
+  data-card-size={size}
   data-player-id={card?.ownerId}
   data-zone-id={card?.zoneId}
   onclick={handleClick}
+  oncontextmenu={handleContextMenu}
   onmouseenter={handleMouseEnter}
   onmouseleave={handleMouseLeave}
   aria-label={m["sim.card.ariaLabel"]({ label: getCardLabel(), cost: getCost() })}
 >
       <div
         class="card-frame w-full h-full relative overflow-hidden"
-        class:rounded-md={size !== "tiny" && size !== "micro"}
-        class:rounded-sm={size === "tiny" || size === "micro"}
         class:grayscale={isBanishedPreview}
       >
       <!-- Card Art Area (fills entire card) -->
@@ -150,7 +209,7 @@
               number={card.cardNumber}
               crop={imageFormat}
               alt={getCardLabel()}
-              class="w-full h-full object-cover rounded-lg"
+              class="card-image w-full h-full object-cover"
               onLoad={handleImageLoad}
               onError={handleImageError}
             />
@@ -158,7 +217,7 @@
         {/if}
 
         <!-- Placeholder (shown while loading, on error, or when no image) -->
-        <div class="art-placeholder w-full h-full flex items-center justify-center p-2 rounded-lg border border-white/5" class:hidden={imageLoaded && !imageError}>
+        <div class="art-placeholder w-full h-full flex items-center justify-center p-2 border border-white/5" class:hidden={imageLoaded && !imageError}>
           <div class="flex flex-col items-center justify-center">
             <!-- Center: Card Name -->
             <div class="flex flex-col items-center text-center gap-[0.15rem] px-2">
@@ -175,7 +234,7 @@
 
         <!-- Questing Overlay -->
         {#if isQuesting}
-          <div class="questing-overlay absolute inset-0 flex items-center justify-center bg-yellow-400/15 rounded-md">
+          <div class="questing-overlay absolute inset-0 flex items-center justify-center bg-yellow-400/15">
             <span class="text-1.5rem text-yellow-400 [text-shadow:0_0_10px_rgba(255,215,0,0.8)] animate-quest-icon-spin">✦</span>
           </div>
         {/if}
@@ -183,13 +242,61 @@
 
       <!-- Damage Indicator -->
       {#if damage > 0}
-        <div class="damage-indicator absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-500/90 text-white px-2 py-1 rounded-md font-extrabold text-xs shadow-[0_0_15px_rgba(239,68,68,0.6)] animate-damage-pulse z-20">
+        <div
+          data-testid="card-face-damage-indicator"
+          class="damage-indicator absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md bg-red-500/90 px-2 py-1 text-xs font-extrabold text-white shadow-[0_0_15px_rgba(239,68,68,0.6)] animate-damage-pulse"
+        >
           <span>-{damage}</span>
         </div>
       {/if}
 
+      {#if card?.grantSources && card.grantSources.length > 0}
+        <div class="pointer-events-none absolute right-1.5 top-1.5 z-20">
+          <CardGrantSourceBadges sources={card.grantSources} />
+        </div>
+      {/if}
+
+      {#if statModifiers.length > 0}
+        <div
+          data-testid="card-face-stat-modifiers"
+          class="pointer-events-none absolute right-1.5 bottom-1.5 z-20 flex max-w-[72%] flex-row items-end justify-end gap-1"
+        >
+          {#each statModifiers as modifier (modifier.id)}
+            <Tooltip.Root>
+              <Tooltip.Trigger>
+                {#snippet child({ props })}
+                  <button
+                    type="button"
+                    {...props}
+                    data-testid={`card-face-stat-modifier-${modifier.stat}`}
+                    class={`pointer-events-auto inline-flex items-center justify-end border shadow-[0_6px_12px_rgba(15,23,42,0.28)] backdrop-blur-sm ${modifierChipClass} ${getModifierToneClass(modifier.tone)}`}
+                    aria-label={modifier.label}
+                    onclick={handleStatModifierClick}>
+                    <img src={modifier.iconUrl} alt="" class={`${modifierIconClass} shrink-0 brightness-0 invert`} />
+                    <span class={`leading-none font-black tracking-[-0.03em] tabular-nums ${modifierValueClass}`}>
+                      {modifier.signedValue}
+                    </span>
+                  </button>
+                {/snippet}
+              </Tooltip.Trigger>
+              <Tooltip.Content
+                side="top"
+                sideOffset={8}
+                class="max-w-[220px] rounded-lg border border-white/10 bg-slate-950/95 px-2.5 py-2 text-[0.7rem] leading-snug text-slate-100 shadow-xl"
+              >
+                <div class="font-semibold">{modifier.label}</div>
+                <div class="mt-1 text-slate-300">{modifier.tooltip}</div>
+              </Tooltip.Content>
+            </Tooltip.Root>
+          {/each}
+        </div>
+      {/if}
+
       {#if cardTags.length > 0}
-        <div class="pointer-events-none absolute inset-x-1.5 bottom-1.5 z-20">
+        <div
+          data-testid="card-face-tag-strip"
+          class="pointer-events-none absolute inset-x-1.5 bottom-1.5 z-20"
+        >
           <CardTagStrip
             tags={cardTags}
             maxVisible={4}
@@ -203,12 +310,12 @@
 
   <!-- Selection Indicator -->
   {#if isSelected}
-    <div class="selection-indicator absolute -inset-1 border-2 border-amber-500 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.6)] pointer-events-none animate-selection-pulse z-20"></div>
+    <div class="selection-indicator absolute -inset-1 border-2 border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.6)] pointer-events-none animate-selection-pulse z-20"></div>
   {/if}
 
   <!-- Playable Glow -->
   {#if isPlayable}
-    <div class="playable-glow absolute -inset-0.5 rounded-xl pointer-events-none animate-playable-pulse"></div>
+    <div class="playable-glow absolute -inset-0.5 pointer-events-none animate-playable-pulse"></div>
   {/if}
 
   <!-- Drying Indicator -->
@@ -228,6 +335,8 @@
     --playable-highlight: rgba(250, 204, 21, 0.95);
     --playable-glow: rgba(250, 204, 21, 0.58);
     --questing-glow: rgba(255, 215, 0, 0.4);
+    --card-corner-radius: 0.42rem;
+    --card-overlay-radius: 0.58rem;
 
     position: relative;
     background: transparent;
@@ -240,7 +349,14 @@
     transition: transform 0.1s ease-out;
   }
 
+  .card-face[data-card-size="tiny"],
+  .card-face[data-card-size="micro"] {
+    --card-corner-radius: 0.32rem;
+    --card-overlay-radius: 0.46rem;
+  }
+
   .card-frame {
+    border-radius: var(--card-corner-radius);
     background: var(--card-bg);
     box-shadow:
       0 4px 12px rgba(0, 0, 0, 0.3),
@@ -252,6 +368,7 @@
   }
 
   .card-image-wrapper {
+    border-radius: var(--card-corner-radius);
     opacity: 0;
     transition: opacity 0.3s ease-out;
   }
@@ -260,7 +377,12 @@
     opacity: 1;
   }
 
+  .card-image {
+    border-radius: var(--card-corner-radius);
+  }
+
   .art-placeholder {
+    border-radius: var(--card-corner-radius);
     background:
       radial-gradient(ellipse at 30% 30%, rgba(100, 180, 255, 0.2) 0%, transparent 50%),
       radial-gradient(ellipse at 70% 70%, rgba(100, 255, 200, 0.15) 0%, transparent 50%),
@@ -271,6 +393,12 @@
   .art-placeholder.hidden {
     opacity: 0;
     pointer-events: none;
+  }
+
+  .questing-overlay,
+  .selection-indicator,
+  .playable-glow {
+    border-radius: var(--card-overlay-radius);
   }
 
   /* STATE MODIFIERS */

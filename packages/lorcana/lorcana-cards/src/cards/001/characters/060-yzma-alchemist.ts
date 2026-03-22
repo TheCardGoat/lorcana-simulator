@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yzmaAlchemistI18n } from "./060-yzma-alchemist.i18n";
 
 export const yzmaAlchemist: CharacterCard = {
   id: "WU8",
@@ -7,52 +8,6 @@ export const yzmaAlchemist: CharacterCard = {
   cardType: "character",
   name: "Yzma",
   version: "Alchemist",
-  i18n: {
-    en: {
-      name: "Yzma",
-      version: "Alchemist",
-      text: [
-        {
-          title: "YOU'RE EXCUSED",
-          description:
-            "Whenever this character quests, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Yzma",
-      version: "Alchemist",
-      text: [
-        {
-          title: "YOU'RE EXCUSED",
-          description:
-            "Whenever this character quests, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "Yzma",
-      version: "Alchemist",
-      text: [
-        {
-          title: "YOU'RE EXCUSED",
-          description:
-            "Whenever this character quests, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
-        },
-      ],
-    },
-    it: {
-      name: "Yzma",
-      version: "Alchemist",
-      text: [
-        {
-          title: "YOU'RE EXCUSED",
-          description:
-            "Whenever this character quests, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Emperors New Groove",
   set: "001",
@@ -104,4 +59,5 @@ export const yzmaAlchemist: CharacterCard = {
       },
     },
   ],
+  i18n: yzmaAlchemistI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hadesLordOfTheUnderworldI18n } from "./006-hades-lord-of-the-underworld.i18n";
 
 export const hadesLordOfTheUnderworld: CharacterCard = {
   id: "gvD",
@@ -7,52 +8,6 @@ export const hadesLordOfTheUnderworld: CharacterCard = {
   cardType: "character",
   name: "Hades",
   version: "Lord of the Underworld",
-  i18n: {
-    en: {
-      name: "Hades",
-      version: "Lord of the Underworld",
-      text: [
-        {
-          title: "WELL OF SOULS",
-          description:
-            "When you play this character, return a character card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Hades",
-      version: "Herrscher der Unterwelt",
-      text: [
-        {
-          title: "FLUSS DES TODES",
-          description:
-            "Wenn du diesen Charakter ausspielst, nimm 1 Charakterkarte aus deinem Ablagestapel zurück auf deine Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "HADÈS",
-      version: "Seigneur des Enfers",
-      text: [
-        {
-          title: "PUITS DES ÂMES",
-          description:
-            "Lorsque vous jouez ce personnage, reprenez en main une carte personnage de votre défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Ade",
-      version: "Signore dell'Oltretomba",
-      text: [
-        {
-          title: "POZZO DELLE ANIME",
-          description:
-            "Quando giochi questo personaggio, riprendi in mano una carta personaggio dai tuoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Hercules",
   set: "001",
@@ -63,7 +18,6 @@ export const hadesLordOfTheUnderworld: CharacterCard = {
   willpower: 2,
   lore: 1,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_4c9f441611314185a25b1fca893f6643",
     tcgPlayer: 493480,
@@ -94,4 +48,5 @@ export const hadesLordOfTheUnderworld: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: hadesLordOfTheUnderworldI18n,
 };

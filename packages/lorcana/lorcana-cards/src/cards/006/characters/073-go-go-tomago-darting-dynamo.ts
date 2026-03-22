@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goGoTomagoDartingDynamoI18n } from "./073-go-go-tomago-darting-dynamo.i18n";
 
 export const goGoTomagoDartingDynamo: CharacterCard = {
   id: "4JN",
@@ -7,37 +8,6 @@ export const goGoTomagoDartingDynamo: CharacterCard = {
   cardType: "character",
   name: "Go Go Tomago",
   version: "Darting Dynamo",
-  i18n: {
-    en: {
-      name: "Go Go Tomago",
-      version: "Darting Dynamo",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "STOP WHINING, WOMAN UP",
-          description:
-            "When you play this character, you may pay 2 {I} to gain lore equal to the damage on chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Go Go Tomago",
-      version: "Flitzender Dynamo",
-      text: "Wendig HÖR AUF ZU FLENNEN Wenn du diesen Charakter ausspielst, darfst du 2 bezahlen. Wenn du dies tust, wähle einen gegnerischen Charakter und zähle den Schaden auf ihm. Sammle diese Anzahl an Legenden.",
-    },
-    fr: {
-      name: "Go Go Tomago",
-      version: "Pile survoltée",
-      text: "Insaisissable ARRÊTE DE PLEURNICHER. SOIS UNE FEMME Lorsque vous jouez ce personnage, vous pouvez payer 2 pour choisir un personnage adverse et gagnez autant d'éclats de Lore qu'il y a de dommages sur lui.",
-    },
-    it: {
-      name: "Go Go Tomago",
-      version: "Energica e Sfrecciante",
-      text: "Sfuggente BASTA FRIGNARE, FAI LA DONNA Quando giochi questo personaggio, puoi pagare 2 per ottenere leggenda pari al danno presente su un personaggio avversario a tua scelta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Big Hero 6",
   set: "006",
@@ -72,12 +42,37 @@ export const goGoTomagoDartingDynamo: CharacterCard = {
     },
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "pay-cost",
+          cost: {
+            ink: 2,
+          },
+          effect: {
+            type: "for-each",
+            counter: {
+              type: "damage-on-target",
+            },
+            target: "CHOSEN_OPPOSING_CHARACTER",
+            effect: {
+              amount: 1,
+              target: "CONTROLLER",
+              type: "gain-lore",
+            },
+          },
+        },
       },
       id: "1b9-2",
+      name: "STOP WHINING, WOMAN UP",
       text: "STOP WHINING, WOMAN UP When you play this character, you may pay 2 {I} to gain lore equal to the damage on chosen opposing character.",
-      type: "action",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
     },
   ],
+  i18n: goGoTomagoDartingDynamoI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { scroogeMcduckAfficionadoOfAntiquitiesI18n } from "./140-scrooge-mcduck-afficionado-of-antiquities.i18n";
 
 export const scroogeMcduckAfficionadoOfAntiquities: CharacterCard = {
   id: "fV0",
@@ -7,24 +8,6 @@ export const scroogeMcduckAfficionadoOfAntiquities: CharacterCard = {
   cardType: "character",
   name: "Scrooge McDuck",
   version: "Afficionado of Antiquities",
-  i18n: {
-    en: {
-      name: "Scrooge McDuck",
-      version: "Afficionado of Antiquities",
-    },
-    de: {
-      name: "Dagobert Duck",
-      version: "Antiquitätenhändler",
-    },
-    fr: {
-      name: "Balthazar Picsou",
-      version: "Amateur d'antiquités",
-    },
-    it: {
-      name: "Paperon de' Paperoni",
-      version: "Aficionado di Antichità",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Ducktales",
   set: "005",
@@ -41,4 +24,5 @@ export const scroogeMcduckAfficionadoOfAntiquities: CharacterCard = {
     tcgPlayer: 561642,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: scroogeMcduckAfficionadoOfAntiquitiesI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { copperOnTheScentI18n } from "./107-copper-on-the-scent.i18n";
 
 export const copperOnTheScent: CharacterCard = {
   id: "5td",
@@ -7,41 +8,6 @@ export const copperOnTheScent: CharacterCard = {
   cardType: "character",
   name: "Copper",
   version: "On the Scent",
-  i18n: {
-    en: {
-      name: "Copper",
-      version: "On the Scent",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "Reckless",
-        },
-      ],
-    },
-    de: {
-      name: "Capper",
-      version: "Auf der Spur",
-      text: "Rasant Impulsiv",
-    },
-    fr: {
-      name: "Rouky",
-      version: "Sur une piste",
-      text: "Charge Combattant",
-    },
-    it: {
-      name: "Toby",
-      version: "Sulle Tracce",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) Attaccabrighe",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Fox and the Hound",
   set: "011",
@@ -79,4 +45,5 @@ export const copperOnTheScent: CharacterCard = {
       text: "Reckless",
     },
   ],
+  i18n: copperOnTheScentI18n,
 };

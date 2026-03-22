@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { greatStoneDragonI18n } from "./167-great-stone-dragon.i18n";
 
 export const greatStoneDragon: ItemCard = {
   id: "BvX",
@@ -6,52 +7,6 @@ export const greatStoneDragon: ItemCard = {
   reprints: ["set4-167"],
   cardType: "item",
   name: "Great Stone Dragon",
-  i18n: {
-    en: {
-      name: "Great Stone Dragon",
-      text: [
-        {
-          title: "ASLEEP",
-          description: "This item enters play exerted.",
-        },
-        {
-          title: "AWAKEN",
-          description:
-            "{E} — Put a character card from your discard into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Großer Stein-Drache",
-      text: [
-        {
-          title: "SCHLAFEND",
-          description:
-            "Dieser Gegenstand kommt erschöpft ins Spiel. ERWECKEN — Lege 1 Charakterkarte aus deinem Ablagestapel verdeckt und erschöpft in deinen Tintenvorrat.",
-        },
-      ],
-    },
-    fr: {
-      name: "Grand Dragon de Pierre",
-      text: [
-        {
-          title: "ENDORMI",
-          description:
-            "Cet objet entre en jeu épuisé. RÉVEILLÉ — Choisissez une carte Personnage de votre défausse et placez-la dans votre réserve d'encre, face cachée et épuisée.",
-        },
-      ],
-    },
-    it: {
-      name: "Grande Drago di Pietra",
-      text: [
-        {
-          title: "DORMIENTE",
-          description:
-            "Questo oggetto entra in gioco impegnato. RIDESTARSI — Aggiungi una carta personaggio dai tuoi scarti al tuo calamaio, a faccia in giù e impegnata.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Mulan",
   set: "004",
@@ -109,4 +64,5 @@ export const greatStoneDragon: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: greatStoneDragonI18n,
 };

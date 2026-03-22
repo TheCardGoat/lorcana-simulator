@@ -1,22 +1,66 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { bobbyZimuruskiSprayCheeseKid } from "@lorcanito/lorcana-engine/cards/009";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Bobby Zimuruski - Spray Cheese Kid", () => {
-//   It.skip("SO CHEESY When you play this character, you may draw a card, then choose and discard a card.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: bobbyZimuruskiSprayCheeseKid.cost,
-//       Hand: [bobbyZimuruskiSprayCheeseKid],
-//     });
-//
-//     Await testEngine.playCard(bobbyZimuruskiSprayCheeseKid);
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { bobbyZimuruskiSprayCheeseKid } from "./078-bobby-zimuruski-spray-cheese-kid";
+
+const drawnCard = createMockCharacter({
+  id: "bobby-zimuruski-spray-cheese-kid-drawn-card",
+  name: "Drawn Card",
+  cost: 1,
+});
+
+const discardFodder = createMockCharacter({
+  id: "bobby-zimuruski-spray-cheese-kid-discard-fodder",
+  name: "Discard Fodder",
+  cost: 1,
+});
+
+describe("Bobby Zimuruski - Spray Cheese Kid", () => {
+  it("draws a card, then lets you choose and discard a card when played", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [drawnCard],
+      hand: [bobbyZimuruskiSprayCheeseKid, discardFodder],
+      inkwell: bobbyZimuruskiSprayCheeseKid.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(bobbyZimuruskiSprayCheeseKid)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(2);
+
+    const discardFodderId = testEngine.findCardInstanceId(discardFodder, "hand", "player_one");
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        targets: [discardFodderId],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("discard");
+    expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
+  });
+
+  it("can decline the optional trigger", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [drawnCard],
+      hand: [bobbyZimuruskiSprayCheeseKid],
+      inkwell: bobbyZimuruskiSprayCheeseKid.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(bobbyZimuruskiSprayCheeseKid)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: false,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+  });
+});

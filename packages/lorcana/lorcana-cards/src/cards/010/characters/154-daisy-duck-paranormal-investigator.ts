@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daisyDuckParanormalInvestigatorI18n } from "./154-daisy-duck-paranormal-investigator.i18n";
 
 export const daisyDuckParanormalInvestigator: CharacterCard = {
   id: "yOS",
@@ -7,39 +8,6 @@ export const daisyDuckParanormalInvestigator: CharacterCard = {
   cardType: "character",
   name: "Daisy Duck",
   version: "Paranormal Investigator",
-  i18n: {
-    en: {
-      name: "Daisy Duck",
-      version: "Paranormal Investigator",
-      text: [
-        {
-          title: "Shift 4 {I}",
-        },
-        {
-          title: "Support",
-        },
-        {
-          title: "STRANGE HAPPENINGS",
-          description: "While this character is exerted, cards enter opponents' inkwells exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Daisy Duck",
-      version: "Paranormale Ermittlerin",
-      text: "Gestaltwandel 4 Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) MERKWÜRDIGE GESCHEHNISSE Solange dieser Charakter erschöpft ist, betreten gegnerische Karten ihre Tintenvorräte erschöpft.",
-    },
-    fr: {
-      name: "Daisy",
-      version: "Investigatrice du paranormal",
-      text: "Alter 4 Soutien ÉTRANGES PHÉNOMÈNES Tant que ce personnage est épuisé, les cartes entrent épuisées dans la réserve d'encre de vos adversaires.",
-    },
-    it: {
-      name: "Paperina",
-      version: "Investigatrice del Paranormale",
-      text: "Trasformazione 4 Aiutante STRANI FENOMENI Mentre questo personaggio è impegnato, le carte entrano nei calamai degli avversari impegnate.",
-    },
-  },
   inkType: ["sapphire"],
   set: "010",
   cardNumber: 154,
@@ -66,5 +34,42 @@ export const daisyDuckParanormalInvestigator: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "Detective"],
-  abilities: [],
+  abilities: [
+    {
+      id: "yOS-1",
+      keyword: "Shift",
+      cost: {
+        ink: 4,
+      },
+      text: "Shift 4 {I}",
+      type: "keyword",
+    },
+    {
+      id: "yOS-2",
+      keyword: "Support",
+      text: "Support",
+      type: "keyword",
+    },
+    {
+      id: "yOS-3",
+      condition: {
+        type: "is-exerted",
+      },
+      effect: {
+        type: "exert",
+        target: {
+          ref: "trigger-subject",
+        },
+      },
+      name: "STRANGE HAPPENINGS",
+      text: "STRANGE HAPPENINGS While this character is exerted, cards enter opponents' inkwells exerted.",
+      trigger: {
+        event: "ink",
+        on: "OPPONENT",
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
+  i18n: daisyDuckParanormalInvestigatorI18n,
 };

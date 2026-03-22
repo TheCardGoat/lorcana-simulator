@@ -32,4 +32,16 @@ describe("Sudden Chill", () => {
     expect(testEngine.asPlayerTwo().getCardZone(magicBroomBucketBrigade)).toEqual("hand");
     expect(testEngine.asPlayerTwo().getCardZone(aladdinHeroicOutlaw)).toEqual("hand");
   });
+
+  it("resolves successfully when the opponent has no cards in hand", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [suddenChill],
+      inkwell: suddenChill.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(suddenChill)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+    expect(testEngine.asPlayerTwo()).toHaveZoneCounts({ hand: 0, discard: 0 });
+    expect(testEngine.asPlayerOne().getCardZone(suddenChill)).toEqual("discard");
+  });
 });

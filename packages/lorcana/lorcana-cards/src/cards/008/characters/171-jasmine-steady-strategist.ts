@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jasmineSteadyStrategistI18n } from "./171-jasmine-steady-strategist.i18n";
 
 export const jasmineSteadyStrategist: CharacterCard = {
   id: "iaq",
@@ -7,37 +8,6 @@ export const jasmineSteadyStrategist: CharacterCard = {
   cardType: "character",
   name: "Jasmine",
   version: "Steady Strategist",
-  i18n: {
-    en: {
-      name: "Jasmine",
-      version: "Steady Strategist",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "ALWAYS PLANNING",
-          description:
-            "Whenever this character quests, look at the top 3 cards of your deck. You may reveal an Ally character card and put it into your hand. Put the rest on the bottom of your deck in any order.",
-        },
-      ],
-    },
-    de: {
-      name: "Jasmin",
-      version: "Unermüdliche Strategin",
-      text: "Gestaltwandel 2 STETS AM PLANEN Jedes Mal, wenn dieser Charakter erkundet, schaue dir die obersten 3 Karten deines Decks an. Du darfst 1 Verbündeten-Charakterkarte daraus aufdecken und auf deine Hand nehmen. Lege die restlichen Karten in beliebiger Reihenfolge unter dein Deck.",
-    },
-    fr: {
-      name: "Jasmine",
-      version: "Stratège fiable",
-      text: "Alter 2 TOUJOURS À PLANIFIER Chaque fois que ce personnage est envoyé à l'aventure, regardez les 3 cartes du dessus de votre pioche. Vous pouvez révéler une carte Personnage Allié et la placer dans votre main. Placez les autres cartes sous votre pioche, dans l'ordre de votre choix.",
-    },
-    it: {
-      name: "Jasmine",
-      version: "Stratega Sicura",
-      text: "Trasformazione 2 SEMPRE A PIANIFICARE Ogni volta che questo personaggio va all'avventura, guarda le prime 3 carte del tuo mazzo. Puoi rivelare una carta personaggio Alleato e aggiungerla alla tua mano. Metti il resto in fondo al tuo mazzo in qualsiasi ordine.",
-    },
-  },
   inkType: ["sapphire", "steel"],
   franchise: "Aladdin",
   set: "008",
@@ -75,12 +45,31 @@ export const jasmineSteadyStrategist: CharacterCard = {
     },
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: "CHOSEN_CHARACTER",
-          type: "put-on-bottom",
-        },
-        type: "optional",
+        type: "scry",
+        amount: 3,
+        destinations: [
+          {
+            zone: "hand",
+            min: 0,
+            max: 1,
+            reveal: true,
+            filters: [
+              {
+                type: "card-type",
+                cardType: "character",
+              },
+              {
+                type: "classification",
+                classification: "Ally",
+              },
+            ],
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+            ordering: "player-choice",
+          },
+        ],
       },
       id: "13i-2",
       name: "ALWAYS PLANNING",
@@ -93,4 +82,5 @@ export const jasmineSteadyStrategist: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: jasmineSteadyStrategistI18n,
 };

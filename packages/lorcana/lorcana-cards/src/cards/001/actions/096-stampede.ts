@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { stampedeI18n } from "./096-stampede.i18n";
 
 export const stampede: ActionCard = {
   id: "0r9",
@@ -6,24 +7,6 @@ export const stampede: ActionCard = {
   reprints: ["set1-096"],
   cardType: "action",
   name: "Stampede",
-  i18n: {
-    en: {
-      name: "Stampede",
-      text: "Deal 2 damage to chosen damaged character.",
-    },
-    de: {
-      name: "Stampede",
-      text: "Füge einem beschädigten Charakter deiner Wahl 2 Schaden zu.",
-    },
-    fr: {
-      name: "RUÉE",
-      text: "Choisissez un personnage ayant au moins un jeton Dommage et infligez-lui 2 dommages supplémentaires.",
-    },
-    it: {
-      name: "Stampede",
-      text: "Deal 2 damage to chosen damaged character.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lion King",
   set: "001",
@@ -58,4 +41,5 @@ export const stampede: ActionCard = {
       },
     },
   ],
+  i18n: stampedeI18n,
 };

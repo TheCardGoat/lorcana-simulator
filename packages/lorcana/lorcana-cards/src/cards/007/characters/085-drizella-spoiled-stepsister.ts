@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { drizellaSpoiledStepsisterI18n } from "./085-drizella-spoiled-stepsister.i18n";
 
 export const drizellaSpoiledStepsister: CharacterCard = {
   id: "ZR7",
@@ -7,24 +8,6 @@ export const drizellaSpoiledStepsister: CharacterCard = {
   cardType: "character",
   name: "Drizella",
   version: "Spoiled Stepsister",
-  i18n: {
-    en: {
-      name: "Drizella",
-      version: "Spoiled Stepsister",
-    },
-    de: {
-      name: "Drisella",
-      version: "Verwöhnte Stiefschwester",
-    },
-    fr: {
-      name: "Javotte",
-      version: "Belle-sœur pourrie gâtée",
-    },
-    it: {
-      name: "Genoveffa",
-      version: "Sorellastra Viziata",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Cinderella",
   set: "007",
@@ -41,4 +24,5 @@ export const drizellaSpoiledStepsister: CharacterCard = {
     tcgPlayer: 619452,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: drizellaSpoiledStepsisterI18n,
 };

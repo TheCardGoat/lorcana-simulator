@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { luisaMadrigalRockOfTheFamilyI18n } from "./184-luisa-madrigal-rock-of-the-family.i18n";
 
 export const luisaMadrigalRockOfTheFamily: CharacterCard = {
   id: "sIB",
@@ -7,49 +8,6 @@ export const luisaMadrigalRockOfTheFamily: CharacterCard = {
   cardType: "character",
   name: "Luisa Madrigal",
   version: "Rock of the Family",
-  i18n: {
-    en: {
-      name: "Luisa Madrigal",
-      version: "Rock of the Family",
-      text: [
-        {
-          title: "I'M THE STRONG ONE",
-          description: "While you have another character in play, this character gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Luisa Madrigal",
-      version: "Fels in der Brandung",
-      text: [
-        {
-          title: "ICH BIN STARK",
-          description:
-            "Solange du mindestens einen weiteren Charakter im Spiel hast, erhält dieser Charakter +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Luisa Madrigal",
-      version: "Roc de la famille",
-      text: [
-        {
-          title: "JE SUIS SOLIDE",
-          description: "Tant que vous avez un autre personnage en jeu, ce personnage gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Luisa Madrigal",
-      version: "Roccia della Famiglia",
-      text: [
-        {
-          title: "SONO FORTE",
-          description: "Mentre hai in gioco un altro personaggio, questo personaggio riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Encanto",
   set: "004",
@@ -73,6 +31,20 @@ export const luisaMadrigalRockOfTheFamily: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Madrigal"],
   abilities: [
     {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
         modifier: 2,
         stat: "strength",
@@ -80,8 +52,10 @@ export const luisaMadrigalRockOfTheFamily: CharacterCard = {
         type: "modify-stat",
       },
       id: "10a-1",
+      name: "I'M THE STRONG ONE",
       text: "I'M THE STRONG ONE While you have another character in play, this character gets +2 {S}.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: luisaMadrigalRockOfTheFamilyI18n,
 };

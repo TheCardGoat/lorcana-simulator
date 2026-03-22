@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { mauricesWorkshopI18n } from "./168-maurices-workshop.i18n";
 
 export const mauricesWorkshop: ItemCard = {
   id: "Xlt",
@@ -6,46 +7,6 @@ export const mauricesWorkshop: ItemCard = {
   reprints: ["set2-168"],
   cardType: "item",
   name: "Maurice's Workshop",
-  i18n: {
-    en: {
-      name: "Maurice's Workshop",
-      text: [
-        {
-          title: "LOOKING FOR THIS?",
-          description: "Whenever you play another item, you may pay 1 {I} to draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Maurice‘ Werkstatt",
-      text: [
-        {
-          title: "SUCHST DU DAS HIER?",
-          description:
-            "Jedes Mal, wenn du einen anderen Gegenstand ausspielst, darfst du 1 bezahlen, um 1 Karte zu ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Atelier de Maurice",
-      text: [
-        {
-          title: "C'EST ÇA QUE TU CHERCHES?",
-          description:
-            "Chaque fois que vous jouez un autre objet, vous pouvez payer 1 pour piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Maurice's Workshop",
-      text: [
-        {
-          title: "LOOKING FOR THIS?",
-          description: "Whenever you play another item, you may pay 1 to draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -68,9 +29,15 @@ export const mauricesWorkshop: ItemCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
+          type: "pay-cost",
+          cost: {
+            ink: 1,
+          },
+          effect: {
+            amount: 1,
+            target: "CONTROLLER",
+            type: "draw",
+          },
         },
         type: "optional",
       },
@@ -79,10 +46,15 @@ export const mauricesWorkshop: ItemCard = {
       text: "LOOKING FOR THIS? Whenever you play another item, you may pay 1 {I} to draw a card.",
       trigger: {
         event: "play",
-        on: "SELF",
-        timing: "when",
+        on: {
+          cardType: "item",
+          controller: "you",
+          excludeSelf: true,
+        },
+        timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: mauricesWorkshopI18n,
 };

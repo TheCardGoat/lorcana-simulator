@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tananaTribalElderI18n } from "./046-tanana-tribal-elder.i18n";
 
 export const tananaTribalElder: CharacterCard = {
   id: "ZGZ",
@@ -7,24 +8,6 @@ export const tananaTribalElder: CharacterCard = {
   cardType: "character",
   name: "Tanana",
   version: "Tribal Elder",
-  i18n: {
-    en: {
-      name: "Tanana",
-      version: "Tribal Elder",
-    },
-    de: {
-      name: "Tanana",
-      version: "Stammesälteste",
-    },
-    fr: {
-      name: "Nanaka",
-      version: "Ancienne de la tribu",
-    },
-    it: {
-      name: "Tanana",
-      version: "Anziana della Tribù",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Brother Bear",
   set: "007",
@@ -41,4 +24,5 @@ export const tananaTribalElder: CharacterCard = {
     tcgPlayer: 618695,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: tananaTribalElderI18n,
 };

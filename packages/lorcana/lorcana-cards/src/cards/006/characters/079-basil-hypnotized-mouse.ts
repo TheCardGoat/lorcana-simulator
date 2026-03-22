@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { basilHypnotizedMouseI18n } from "./079-basil-hypnotized-mouse.i18n";
 
 export const basilHypnotizedMouse: CharacterCard = {
   id: "Fyz",
@@ -7,28 +8,6 @@ export const basilHypnotizedMouse: CharacterCard = {
   cardType: "character",
   name: "Basil",
   version: "Hypnotized Mouse",
-  i18n: {
-    en: {
-      name: "Basil",
-      version: "Hypnotized Mouse",
-      text: "Evasive",
-    },
-    de: {
-      name: "Basil",
-      version: "Hypnotisierte Maus",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Basil",
-      version: "Souris hypnotisée",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Basil",
-      version: "Topo Ipnotizzato",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Great Mouse Detective",
   set: "006",
@@ -53,4 +32,5 @@ export const basilHypnotizedMouse: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: basilHypnotizedMouseI18n,
 };

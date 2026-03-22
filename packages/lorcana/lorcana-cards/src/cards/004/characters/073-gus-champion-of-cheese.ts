@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gusChampionOfCheeseI18n } from "./073-gus-champion-of-cheese.i18n";
 
 export const gusChampionOfCheese: CharacterCard = {
   id: "wxy",
@@ -7,24 +8,6 @@ export const gusChampionOfCheese: CharacterCard = {
   cardType: "character",
   name: "Gus",
   version: "Champion of Cheese",
-  i18n: {
-    en: {
-      name: "Gus",
-      version: "Champion of Cheese",
-    },
-    de: {
-      name: "Karli",
-      version: "Käsemeister",
-    },
-    fr: {
-      name: "Gus",
-      version: "Champion du fromage",
-    },
-    it: {
-      name: "Gas-Gas",
-      version: "Campione del Formaggio",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Cinderella",
   set: "004",
@@ -41,4 +24,5 @@ export const gusChampionOfCheese: CharacterCard = {
     tcgPlayer: 549680,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: gusChampionOfCheeseI18n,
 };

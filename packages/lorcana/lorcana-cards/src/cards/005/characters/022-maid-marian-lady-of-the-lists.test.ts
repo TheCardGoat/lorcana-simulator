@@ -1,24 +1,57 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { maidMarianLadyOfTheLists } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Maid Marian - Lady of the Lists", () => {
-//   It.skip("IF THE LADY WANTS IT", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: maidMarianLadyOfTheLists.cost,
-//       Play: [maidMarianLadyOfTheLists],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(maidMarianLadyOfTheLists);
-//
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { maidMarianLadyOfTheLists } from "./022-maid-marian-lady-of-the-lists";
+
+const opposingCharacter = createMockCharacter({
+  id: "maid-marian-opponent",
+  name: "Opponent Character",
+  cost: 3,
+  strength: 6,
+  willpower: 4,
+});
+
+describe("Maid Marian - Lady of the Lists", () => {
+  describe("IF IT PLEASES THE LADY - When you play this character, chosen opposing character gets -5 {S} until the start of your next turn.", () => {
+    it("reduces the chosen opposing character's strength by 5 until the start of your next turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [maidMarianLadyOfTheLists],
+          inkwell: maidMarianLadyOfTheLists.cost,
+        },
+        {
+          play: [opposingCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(maidMarianLadyOfTheLists)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ targets: [opposingCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(
+        opposingCharacter.strength - 5,
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(
+        opposingCharacter.strength - 5,
+      );
+
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(
+        opposingCharacter.strength,
+      );
+    });
+
+    it("fizzles when there are no opposing characters to target", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [maidMarianLadyOfTheLists],
+        inkwell: maidMarianLadyOfTheLists.cost,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(maidMarianLadyOfTheLists)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(maidMarianLadyOfTheLists)).toBe("play");
+    });
+  });
+});

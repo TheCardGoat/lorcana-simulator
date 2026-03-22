@@ -1,157 +1,190 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// Import { describe, expect, it } from "@jest/globals";
-// Import type { LorcanitoCharacterCard } from "@lorcanito/lorcana-engine";
-// Import { arielSpectacularSinger } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import {
-//   DaisyDuckDonaldsDate,
-//   PrinceNaveenUkulelePlayer,
-//   VanellopeVonSchweetzSugarRushChamp,
-//   VanellopeVonSchweetzSugarRushPrincess,
-// } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Vanellope von Schweetz - Sugar Rush Princess", () => {
-//   It("Shift", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: 2,
-//       Hand: [vanellopeVonSchweetzSugarRushPrincess],
-//       Play: [vanellopeVonSchweetzSugarRushChamp],
-//     });
-//
-//     Await testEngine.shiftCard({
-//       Shifted: vanellopeVonSchweetzSugarRushChamp,
-//       Shifter: vanellopeVonSchweetzSugarRushPrincess,
-//     });
-//     Expect(
-//       TestEngine.getCardModel(vanellopeVonSchweetzSugarRushChamp).zone,
-//     ).toBe("play");
-//   });
-//
-//   It("**I HEARBY DECREE** Whenever you play another Princess character, all opposing characters get -1 {S} until the start of your next turn.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: vanellopeVonSchweetzSugarRushChamp.cost,
-//         Hand: [vanellopeVonSchweetzSugarRushChamp],
-//         Play: [vanellopeVonSchweetzSugarRushPrincess],
-//       },
-//       {
-//         Play: [daisyDuckDonaldsDate, princeNaveenUkulelePlayer],
-//       },
-//     );
-//
-//     Const trigger = testEngine.getCardModel(vanellopeVonSchweetzSugarRushChamp);
-//     Const target1 = testEngine.getCardModel(daisyDuckDonaldsDate);
-//     Const target2 = testEngine.getCardModel(princeNaveenUkulelePlayer);
-//
-//     Expect(target1.strength).toBe(daisyDuckDonaldsDate.strength);
-//     Expect(target2.strength).toBe(princeNaveenUkulelePlayer.strength);
-//     Await testEngine.playCard(trigger);
-//     Expect(target1.strength).toBe(daisyDuckDonaldsDate.strength - 1);
-//     Expect(target2.strength).toBe(princeNaveenUkulelePlayer.strength - 1);
-//
-//     Await testEngine.passTurn();
-//     Await testEngine.passTurn();
-//
-//     Expect(target1.strength).toBe(daisyDuckDonaldsDate.strength);
-//     Expect(target2.strength).toBe(princeNaveenUkulelePlayer.strength);
-//   });
-//
-//   It("Triggers when playing Ariel - Spectacular Singer (another Princess)", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: arielSpectacularSinger.cost,
-//         Hand: [arielSpectacularSinger],
-//         Play: [vanellopeVonSchweetzSugarRushPrincess],
-//       },
-//       {
-//         Play: [daisyDuckDonaldsDate],
-//       },
-//     );
-//
-//     Const trigger = testEngine.getCardModel(arielSpectacularSinger);
-//     Const target = testEngine.getCardModel(daisyDuckDonaldsDate);
-//
-//     Await testEngine.playCard(trigger, {});
-//
-//     Const deck = testEngine.getCardsByZone("deck");
-//     Const top4 = deck.slice(-4);
-//
-//     Await testEngine.resolveTopOfStack(
-//       {
-//         Scry: {
-//           Bottom: top4,
-//         },
-//       },
-//       True,
-//     );
-//     Expect(target.strength).toBe(daisyDuckDonaldsDate.strength - 1);
-//   });
-//
-//   It("Triggers when playing another copy of Vanellope von Schweetz - Sugar Rush Princess", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: vanellopeVonSchweetzSugarRushPrincess.cost,
-//         Hand: [vanellopeVonSchweetzSugarRushPrincess],
-//         Play: [vanellopeVonSchweetzSugarRushPrincess],
-//       },
-//       {
-//         Play: [daisyDuckDonaldsDate],
-//       },
-//     );
-//
-//     Const handCards = testEngine.getCardsByZone("hand");
-//     Const trigger = handCards?.find(
-//       (c) => c.lorcanitoCard.id === vanellopeVonSchweetzSugarRushPrincess.id,
-//     );
-//
-//     If (!trigger) {
-//       Throw new Error("Could not find trigger card in hand");
-//     }
-//
-//     Const target = testEngine.getCardModel(daisyDuckDonaldsDate);
-//
-//     Await testEngine.playCard(trigger, {});
-//     Expect(target.strength).toBe(daisyDuckDonaldsDate.strength - 1);
-//   });
-//
-//   It("Triggers when Shifting another Princess", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: 10,
-//         Hand: [vanellopeVonSchweetzSugarRushPrincess],
-//         Play: [
-//           VanellopeVonSchweetzSugarRushPrincess,
-//           VanellopeVonSchweetzSugarRushChamp,
-//         ],
-//       },
-//       {
-//         Play: [daisyDuckDonaldsDate],
-//       },
-//     );
-//
-//     Const handCards = testEngine.getCardsByZone("hand");
-//     Const shifter = handCards?.find(
-//       (c) => c.lorcanitoCard.id === vanellopeVonSchweetzSugarRushPrincess.id,
-//     );
-//     Const playCards = testEngine.getCardsByZone("play");
-//     Const shifted = playCards?.find(
-//       (c) => c.lorcanitoCard.id === vanellopeVonSchweetzSugarRushChamp.id,
-//     );
-//     Const target = testEngine
-//       .getCardsByZone("play", "player_two")
-//       ?.find((c) => c.lorcanitoCard.id === daisyDuckDonaldsDate.id);
-//
-//     If (!(shifter && shifted && target)) {
-//       Throw new Error("Could not find shifter, shifted, or target card");
-//     }
-//
-//     Await testEngine.shiftCard({
-//       Shifter: shifter,
-//       Shifted: shifted.lorcanitoCard as LorcanitoCharacterCard,
-//     });
-//
-//     // testEngine.resolveTopOfStack({});
-//     Expect(target.strength).toBe(daisyDuckDonaldsDate.strength - 1);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { vanellopeVonSchweetzSugarRushPrincess } from "./019-vanellope-von-schweetz-sugar-rush-princess";
+import { vanellopeVonSchweetzSugarRushChamp } from "./006-vanellope-von-schweetz-sugar-rush-champ";
+
+const opponentCharacter1 = createMockCharacter({
+  id: "vanellope-princess-opponent-1",
+  name: "Opponent Character 1",
+  cost: 3,
+  strength: 4,
+  willpower: 4,
+  lore: 1,
+});
+
+const opponentCharacter2 = createMockCharacter({
+  id: "vanellope-princess-opponent-2",
+  name: "Opponent Character 2",
+  cost: 2,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
+});
+
+const anotherPrincess = createMockCharacter({
+  id: "vanellope-princess-another-princess",
+  name: "Another Princess",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+  classifications: ["Princess"],
+});
+
+const nonPrincess = createMockCharacter({
+  id: "vanellope-princess-non-princess",
+  name: "Non Princess",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Vanellope von Schweetz - Sugar Rush Princess", () => {
+  it("has Shift 2 keyword", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [vanellopeVonSchweetzSugarRushPrincess],
+    });
+
+    expect(testEngine.hasKeyword(vanellopeVonSchweetzSugarRushPrincess, "Shift")).toBe(true);
+  });
+
+  it("can be shifted onto another Vanellope character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [vanellopeVonSchweetzSugarRushPrincess],
+      play: [vanellopeVonSchweetzSugarRushChamp],
+      inkwell: 2,
+    });
+
+    const shiftTarget = testEngine.findCardInstanceId(
+      vanellopeVonSchweetzSugarRushChamp,
+      "play",
+      "player_one",
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(vanellopeVonSchweetzSugarRushPrincess, {
+        cost: { cost: "shift", shiftTarget },
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(vanellopeVonSchweetzSugarRushPrincess)).toBe(
+      "play",
+    );
+  });
+
+  describe("I HEREBY DECREE - Whenever you play another Princess character, all opposing characters get -1 {S} until the start of your next turn.", () => {
+    it("triggers when another Princess character is played and reduces all opposing characters' strength by 1", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vanellopeVonSchweetzSugarRushPrincess],
+          hand: [anotherPrincess],
+          inkwell: anotherPrincess.cost,
+        },
+        {
+          play: [opponentCharacter1, opponentCharacter2],
+        },
+      );
+
+      const strengthBefore1 = testEngine.asPlayerTwo().getCardStrength(opponentCharacter1);
+      const strengthBefore2 = testEngine.asPlayerTwo().getCardStrength(opponentCharacter2);
+
+      expect(testEngine.asPlayerOne().playCard(anotherPrincess)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardStrength(opponentCharacter1)).toBe(
+        strengthBefore1 - 1,
+      );
+      expect(testEngine.asPlayerTwo().getCardStrength(opponentCharacter2)).toBe(
+        strengthBefore2 - 1,
+      );
+    });
+
+    it("strength reduction expires at the start of the next turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vanellopeVonSchweetzSugarRushPrincess],
+          hand: [anotherPrincess],
+          inkwell: anotherPrincess.cost,
+        },
+        {
+          play: [opponentCharacter1],
+        },
+      );
+
+      const strengthBefore = testEngine.asPlayerTwo().getCardStrength(opponentCharacter1);
+
+      expect(testEngine.asPlayerOne().playCard(anotherPrincess)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardStrength(opponentCharacter1)).toBe(strengthBefore - 1);
+
+      // Effect persists during opponent's turn
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardStrength(opponentCharacter1)).toBe(strengthBefore - 1);
+
+      // Effect expires at start of player one's next turn
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardStrength(opponentCharacter1)).toBe(strengthBefore);
+    });
+
+    it("does not trigger when a non-Princess character is played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vanellopeVonSchweetzSugarRushPrincess],
+          hand: [nonPrincess],
+          inkwell: nonPrincess.cost,
+        },
+        {
+          play: [opponentCharacter1],
+        },
+      );
+
+      const strengthBefore = testEngine.asPlayerTwo().getCardStrength(opponentCharacter1);
+
+      expect(testEngine.asPlayerOne().playCard(nonPrincess)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardStrength(opponentCharacter1)).toBe(strengthBefore);
+    });
+
+    it("does not trigger when Vanellope herself is played (only triggers for another Princess)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [vanellopeVonSchweetzSugarRushPrincess],
+          inkwell: vanellopeVonSchweetzSugarRushPrincess.cost,
+        },
+        {
+          play: [opponentCharacter1],
+        },
+      );
+
+      const strengthBefore = testEngine.asPlayerTwo().getCardStrength(opponentCharacter1);
+
+      expect(
+        testEngine.asPlayerOne().playCard(vanellopeVonSchweetzSugarRushPrincess),
+      ).toBeSuccessfulCommand();
+
+      // Vanellope is a Princess but "another" means it shouldn't trigger on itself
+      expect(testEngine.asPlayerTwo().getCardStrength(opponentCharacter1)).toBe(strengthBefore);
+    });
+
+    it("triggers when another copy of Vanellope Sugar Rush Princess is played while one is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [vanellopeVonSchweetzSugarRushPrincess],
+          hand: [vanellopeVonSchweetzSugarRushChamp],
+          inkwell: vanellopeVonSchweetzSugarRushChamp.cost,
+        },
+        {
+          play: [opponentCharacter1],
+        },
+      );
+
+      const strengthBefore = testEngine.asPlayerTwo().getCardStrength(opponentCharacter1);
+
+      expect(
+        testEngine.asPlayerOne().playCard(vanellopeVonSchweetzSugarRushChamp),
+      ).toBeSuccessfulCommand();
+
+      // Champ is a Princess - should trigger the decree
+      expect(testEngine.asPlayerTwo().getCardStrength(opponentCharacter1)).toBe(strengthBefore - 1);
+    });
+  });
+});

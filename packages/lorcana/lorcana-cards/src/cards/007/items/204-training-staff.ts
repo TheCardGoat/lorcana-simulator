@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { trainingStaffI18n } from "./204-training-staff.i18n";
 
 export const trainingStaff: ItemCard = {
   id: "T3y",
@@ -6,47 +7,6 @@ export const trainingStaff: ItemCard = {
   reprints: ["set7-204"],
   cardType: "item",
   name: "Training Staff",
-  i18n: {
-    en: {
-      name: "Training Staff",
-      text: [
-        {
-          title: "PRECISION STRIKE",
-          description:
-            "{E}, 1 {I} — Chosen character gains Challenger +2 this turn. (They get +2 {S} while challenging.)",
-        },
-      ],
-    },
-    de: {
-      name: "Übungsstab",
-      text: [
-        {
-          title: "PRÄZISIONSSCHLAG,",
-          description:
-            "1 — Ein Charakter deiner Wahl erhält in diesem Zug Herausfordern +2. (Während der Charakter herausfordert, erhält er +2.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Bâton d’entraînement",
-      text: [
-        {
-          title: "FRAPPE",
-          description:
-            "PRÉCISE, 1 — Choisissez un personnage qui gagne Offensif +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Bastone da Allenamento",
-      text: [
-        {
-          title: "COLPO DI PRECISIONE, 1",
-          description: "— Un personaggio a tua scelta ottiene Sfidante +2 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "007",
@@ -90,4 +50,5 @@ export const trainingStaff: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: trainingStaffI18n,
 };

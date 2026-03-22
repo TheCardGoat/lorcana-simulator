@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yelanaNorthuldraLeaderI18n } from "./055-yelana-northuldra-leader.i18n";
 
 export const yelanaNorthuldraLeader: CharacterCard = {
   id: "umw",
@@ -7,52 +8,6 @@ export const yelanaNorthuldraLeader: CharacterCard = {
   cardType: "character",
   name: "Yelana",
   version: "Northuldra Leader",
-  i18n: {
-    en: {
-      name: "Yelana",
-      version: "Northuldra Leader",
-      text: [
-        {
-          title: "WE ONLY TRUST NATURE",
-          description:
-            "When you play this character, chosen character gains Challenger +2 this turn. (They get +2 {S} while challenging.)",
-        },
-      ],
-    },
-    de: {
-      name: "Yelena",
-      version: "Anführerin der Northuldra",
-      text: [
-        {
-          title: "WIR VERTRAUEN NUR AUF DIE NATUR",
-          description:
-            "Wenn du diesen Charakter ausspielst, erhält ein Charakter deiner Wahl in diesem Zug Herausfordern +2. (Während der Charakter herausfordert, erhält er +2).",
-        },
-      ],
-    },
-    fr: {
-      name: "Yelena",
-      version: "Cheffe des Northuldra",
-      text: [
-        {
-          title: "NOUS N'AVONS CONFIANCE QU'EN LA NATURE",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage qui gagne Offensif +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Yelena",
-      version: "Capo dei Northuldri",
-      text: [
-        {
-          title: "CI FIDIAMO SOLO DELLA NATURA",
-          description:
-            "Quando giochi questo personaggio, un personaggio a tua scelta ottiene Sfidante +2 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "008",
@@ -101,4 +56,5 @@ export const yelanaNorthuldraLeader: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: yelanaNorthuldraLeaderI18n,
 };

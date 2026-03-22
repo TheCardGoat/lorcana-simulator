@@ -14,11 +14,7 @@ describe("Coconut Basket", () => {
     expect(testEngine.asPlayerOne().playCard(peterPanNeverLanding)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({
-        resolveOptional: true,
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
         targets: [mauiHeroToAll],
       }),
     ).toBeSuccessfulCommand();
@@ -28,11 +24,7 @@ describe("Coconut Basket", () => {
     expect(testEngine.asPlayerOne().playCard(mickeyMouseBraveLittleTailor)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({
-        resolveOptional: true,
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
         targets: [mauiHeroToAll],
       }),
     ).toBeSuccessfulCommand();

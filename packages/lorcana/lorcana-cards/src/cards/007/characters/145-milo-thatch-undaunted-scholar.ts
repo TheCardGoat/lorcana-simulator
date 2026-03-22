@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { miloThatchUndauntedScholarI18n } from "./145-milo-thatch-undaunted-scholar.i18n";
 
 export const miloThatchUndauntedScholar: CharacterCard = {
   id: "eBp",
@@ -7,52 +8,6 @@ export const miloThatchUndauntedScholar: CharacterCard = {
   cardType: "character",
   name: "Milo Thatch",
   version: "Undaunted Scholar",
-  i18n: {
-    en: {
-      name: "Milo Thatch",
-      version: "Undaunted Scholar",
-      text: [
-        {
-          title: "I'M YOUR GUY",
-          description:
-            "Whenever you play an action, you may give chosen character +2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Milo Thatch",
-      version: "Unerschrockener Wissenschaftler",
-      text: [
-        {
-          title: "ICH BIN DEIN MANN",
-          description:
-            "Jedes Mal, wenn du eine Aktion ausspielst, darfst du einem Charakter deiner Wahl in diesem Zug +2 geben.",
-        },
-      ],
-    },
-    fr: {
-      name: "Milo Thatch",
-      version: "Universitaire intrépide",
-      text: [
-        {
-          title: "JE SUIS VOTRE HOMME",
-          description:
-            "Chaque fois que vous jouez une action, vous pouvez choisir un personnage qui gagne +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Milo Thatch",
-      version: "Studioso Imperterrito",
-      text: [
-        {
-          title: "SONO IL TUO UOMO",
-          description:
-            "Ogni volta che giochi un'azione, puoi dare +2 a un personaggio a tua scelta per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Atlantis",
   set: "007",
@@ -95,4 +50,5 @@ export const miloThatchUndauntedScholar: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: miloThatchUndauntedScholarI18n,
 };

@@ -72,6 +72,7 @@ export function resolveEffectWindow(
           expiresAtTurn: turn + 1,
         };
       case "permanent":
+      case "while-in-play":
         return {
           startsAtTurn: turn,
           expiresAtTurn: Number.MAX_SAFE_INTEGER,

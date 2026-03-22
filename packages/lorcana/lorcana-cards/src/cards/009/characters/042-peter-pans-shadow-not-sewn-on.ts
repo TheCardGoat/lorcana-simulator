@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { peterPansShadowNotSewnOnI18n } from "./042-peter-pans-shadow-not-sewn-on.i18n";
 
 export const peterPansShadowNotSewnOn: CharacterCard = {
   id: "o8t",
@@ -7,45 +8,6 @@ export const peterPansShadowNotSewnOn: CharacterCard = {
   cardType: "character",
   name: "Peter Pan's Shadow",
   version: "Not Sewn On",
-  i18n: {
-    en: {
-      name: "Peter Pan's Shadow",
-      version: "Not Sewn On",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "TIPTOE",
-          description: "Your other characters with Rush gain Evasive.",
-        },
-      ],
-    },
-    de: {
-      name: "Peter Pans Schatten",
-      version: "Nicht angenäht",
-      text: "Wendig Rasant AUF ZEHENSPITZEN Deine anderen Charaktere mit Rasant erhalten Wendig.",
-    },
-    fr: {
-      name: "Ombre de Peter Pan",
-      version: "Décousue",
-      text: "Insaisissable Charge SUR LA POINTE DES PIEDS Vos autres personnages avec Charge gagnent Insaisissable.",
-    },
-    it: {
-      name: "Peter Pan's Shadow",
-      version: "Not Sewn On",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) Rush (This character can challenge the turn they're played.) TIPTOE Your other characters with Rush gain Evasive.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Peter Pan",
   set: "009",
@@ -97,4 +59,5 @@ export const peterPansShadowNotSewnOn: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: peterPansShadowNotSewnOnI18n,
 };

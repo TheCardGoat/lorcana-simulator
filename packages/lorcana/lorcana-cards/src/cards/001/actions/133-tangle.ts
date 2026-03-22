@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { tangleI18n } from "./133-tangle.i18n";
 
 export const tangle: ActionCard = {
   id: "X1Y",
@@ -6,24 +7,6 @@ export const tangle: ActionCard = {
   reprints: ["set1-133"],
   cardType: "action",
   name: "Tangle",
-  i18n: {
-    en: {
-      name: "Tangle",
-      text: "Each opponent loses 1 lore.",
-    },
-    de: {
-      name: "Einwickeln",
-      text: "Alle gegnerischen Mitspielenden verlieren je 1 Legende.",
-    },
-    fr: {
-      name: "ENCHEVÊTRÉ",
-      text: "Chaque adversaire perd 1 éclat de Lore.",
-    },
-    it: {
-      name: "Tangle",
-      text: "Each opponent loses 1 lore.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Tangled",
   set: "001",
@@ -46,4 +29,5 @@ export const tangle: ActionCard = {
       type: "action",
     },
   ],
+  i18n: tangleI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { whenWillMyLifeBeginI18n } from "./197-when-will-my-life-begin.i18n";
 
 export const whenWillMyLifeBegin: ActionCard = {
   id: "6iQ",
@@ -6,24 +7,6 @@ export const whenWillMyLifeBegin: ActionCard = {
   reprints: ["set5-197"],
   cardType: "action",
   name: "When Will My Life Begin?",
-  i18n: {
-    en: {
-      name: "When Will My Life Begin?",
-      text: "Chosen character can't challenge during their next turn. Draw a card.",
-    },
-    de: {
-      name: "Wann fängt mein Leben an?",
-      text: "Wähle einen Charakter. Er kann in seinem nächsten Zug nicht herausfordern. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Où est la vraie vie ?",
-      text: "Choisissez un personnage qui ne pourra pas défier lors de son prochain tour. Piochez une carte.",
-    },
-    it: {
-      name: "Aspetto Quel che Succederà",
-      text: "(Un personaggio con costo 3 o superiore può per cantare questa canzone gratis.) Un personaggio a tua scelta non può sfidare durante il suo prossimo turno. Pesca una carta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Tangled",
   set: "005",
@@ -66,4 +49,5 @@ export const whenWillMyLifeBegin: ActionCard = {
       type: "action",
     },
   ],
+  i18n: whenWillMyLifeBeginI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { denahiImpatientHunterI18n } from "./124-denahi-impatient-hunter.i18n";
 
 export const denahiImpatientHunter: CharacterCard = {
   id: "OYJ",
@@ -7,35 +8,6 @@ export const denahiImpatientHunter: CharacterCard = {
   cardType: "character",
   name: "Denahi",
   version: "Impatient Hunter",
-  i18n: {
-    en: {
-      name: "Denahi",
-      version: "Impatient Hunter",
-      text: [
-        {
-          title: "Reckless",
-        },
-        {
-          title: "Resist +2",
-        },
-      ],
-    },
-    de: {
-      name: "Denahi",
-      version: "Ungeduldiger Jäger",
-      text: "Impulsiv Robust +2 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 2.)",
-    },
-    fr: {
-      name: "Denahi",
-      version: "Chasseur impatient",
-      text: "Combattant Résistance +2",
-    },
-    it: {
-      name: "Denahi",
-      version: "Cacciatore Impaziente",
-      text: "Attaccabrighe Resistere +2",
-    },
-  },
   inkType: ["ruby", "steel"],
   franchise: "Brother Bear",
   set: "007",
@@ -74,4 +46,5 @@ export const denahiImpatientHunter: CharacterCard = {
       text: "Resist +2",
     },
   ],
+  i18n: denahiImpatientHunterI18n,
 };

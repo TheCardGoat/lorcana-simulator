@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ratiganGreedyGeniusI18n } from "./167-ratigan-greedy-genius.i18n";
 
 export const ratiganGreedyGenius: CharacterCard = {
   id: "Ca0",
@@ -7,37 +8,6 @@ export const ratiganGreedyGenius: CharacterCard = {
   cardType: "character",
   name: "Ratigan",
   version: "Greedy Genius",
-  i18n: {
-    en: {
-      name: "Ratigan",
-      version: "Greedy Genius",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "TIME RUNS OUT",
-          description:
-            "At the end of your turn, if you didn't put any cards into your inkwell this turn, banish this character.",
-        },
-      ],
-    },
-    de: {
-      name: "Rattenzahn",
-      version: "Gieriges Genie",
-      text: "Behütet DIE ZEIT LÄUFT AB Am Ende deines Zuges, falls du in diesem Zug keine Karte in deinen Tintenvorrat gelegt hast, verbanne diesen Charakter.",
-    },
-    fr: {
-      name: "Ratigan",
-      version: "Génie cupide",
-      text: "Hors d'atteinte LE TEMPS PRESSE À la fin de votre tour, si vous n'avez placé aucune carte dans votre réserve d'encre ce tour-ci, bannissez ce personnage.",
-    },
-    it: {
-      name: "Rattigan",
-      version: "Avido Genio",
-      text: "Protetto TEMPO SCADUTO Alla fine del tuo turno, se non hai aggiunto nessuna carta al tuo calamaio in questo turno, esilia questo personaggio.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Great Mouse Detective",
   set: "008",
@@ -97,4 +67,5 @@ export const ratiganGreedyGenius: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: ratiganGreedyGeniusI18n,
 };

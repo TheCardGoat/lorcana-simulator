@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { theMagicFeatherI18n } from "./064-the-magic-feather.i18n";
 
 export const theMagicFeather: ItemCard = {
   id: "sHD",
@@ -6,52 +7,6 @@ export const theMagicFeather: ItemCard = {
   reprints: ["set9-064"],
   cardType: "item",
   name: "The Magic Feather",
-  i18n: {
-    en: {
-      name: "The Magic Feather",
-      text: [
-        {
-          title: "NOW YOU CAN FLY!",
-          description:
-            "When you play this item, choose a character of yours. While this item is in play, that character gains Evasive.",
-        },
-        {
-          title: "GROUNDED 3",
-          description: "{I} — Return this item to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Die magische Feder",
-      text: [
-        {
-          title: "JETZT KANNST DU FLIEGEN!",
-          description:
-            "Wenn du diesen Gegenstand ausspielst, wähle einen deiner Charaktere. Solange dieser Gegenstand im Spiel ist, erhält jener Charakter Wendig. GEERDET 3 — Nimm diesen Gegenstand zurück auf deine Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "La plume magique",
-      text: [
-        {
-          title: "TU VAS POUVOIR VOLER!",
-          description:
-            "Lorsque vous jouez cet objet, choisissez l'un de vos personnages. Tant que cet objet est en jeu, le personnage ainsi choisi gagne Insaisissable. AU SOL 3 — Renvoyez cet objet dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "La Piuma Magica",
-      text: [
-        {
-          title: "ORA POTRAI VOLARE!",
-          description:
-            "Quando giochi questo oggetto, scegli un tuo personaggio. Mentre questo oggetto è in gioco, quel personaggio ottiene Sfuggente. (Solo altri personaggi con Sfuggente possono sfidarlo.) A TERRA 3 — Riprendi in mano questo oggetto.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Dumbo",
   set: "009",
@@ -76,6 +31,29 @@ export const theMagicFeather: ItemCard = {
   ],
   abilities: [
     {
+      effect: {
+        duration: "while-in-play",
+        keyword: "Evasive",
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          owner: "you",
+          selector: "chosen",
+          zones: ["play"],
+        },
+        type: "gain-keyword",
+      },
+      id: "cfx-1",
+      name: "NOW YOU CAN FLY!",
+      text: "NOW YOU CAN FLY! When you play this item, choose a character of yours. While this item is in play, that character gains Evasive.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
+    {
       cost: {
         ink: 3,
       },
@@ -95,4 +73,5 @@ export const theMagicFeather: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: theMagicFeatherI18n,
 };

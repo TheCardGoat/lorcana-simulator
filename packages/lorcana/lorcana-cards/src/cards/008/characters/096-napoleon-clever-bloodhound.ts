@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { napoleonCleverBloodhoundI18n } from "./096-napoleon-clever-bloodhound.i18n";
 
 export const napoleonCleverBloodhound: CharacterCard = {
   id: "BpJ",
@@ -7,24 +8,6 @@ export const napoleonCleverBloodhound: CharacterCard = {
   cardType: "character",
   name: "Napoleon",
   version: "Clever Bloodhound",
-  i18n: {
-    en: {
-      name: "Napoleon",
-      version: "Clever Bloodhound",
-    },
-    de: {
-      name: "Napoleon",
-      version: "Schlauer Bluthund",
-    },
-    fr: {
-      name: "Napoléon",
-      version: "Limier futé",
-    },
-    it: {
-      name: "Napoleone",
-      version: "Segugio Intelligente",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aristocats",
   set: "008",
@@ -41,4 +24,5 @@ export const napoleonCleverBloodhound: CharacterCard = {
     tcgPlayer: 631690,
   },
   classifications: ["Storyborn"],
+  i18n: napoleonCleverBloodhoundI18n,
 };

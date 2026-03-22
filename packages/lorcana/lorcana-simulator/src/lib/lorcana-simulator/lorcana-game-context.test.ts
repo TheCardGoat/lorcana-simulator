@@ -18,6 +18,7 @@ interface TestEngine {
   getBoard: () => LorcanaProjectedBoardView;
   getClientPlayerId: () => string | undefined;
   enumerateMoves: () => [];
+  canUndo?: (playerId?: string) => boolean;
   getMoveLog?: () => MoveLogEntrySnapshot[];
   previewChallenge?: (attackerId: string, defenderId: string) => ChallengePreviewResult | null;
 }
@@ -58,6 +59,7 @@ function createBoard(stateID: number): LorcanaProjectedBoardView {
     cards: {},
     players: {
       player_one: {
+        canAddCardToInkwell: false,
         lore: 5,
         deckCount: 50,
         handCount: 7,
@@ -67,6 +69,7 @@ function createBoard(stateID: number): LorcanaProjectedBoardView {
         discard: [],
       },
       player_two: {
+        canAddCardToInkwell: false,
         lore: 3,
         deckCount: 50,
         handCount: 7,
@@ -95,6 +98,9 @@ function createEngine(options?: {
     getBoard: () => board,
     getClientPlayerId: () => "player_one",
     enumerateMoves: () => [],
+    getAvailableMoves: () => [],
+    getMoveOptions: () => [],
+    validateMove: () => ({ success: true }),
     getMoveLog: () => moveLogEntries,
     previewChallenge: () => null,
     setBoard(nextBoard: LorcanaProjectedBoardView) {

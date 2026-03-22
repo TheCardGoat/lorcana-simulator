@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yzmaTransformedKittenI18n } from "./059-yzma-transformed-kitten.i18n";
 
 export const yzmaTransformedKitten: CharacterCard = {
   id: "uOG",
@@ -7,52 +8,6 @@ export const yzmaTransformedKitten: CharacterCard = {
   cardType: "character",
   name: "Yzma",
   version: "Transformed Kitten",
-  i18n: {
-    en: {
-      name: "Yzma",
-      version: "Transformed Kitten",
-      text: [
-        {
-          title: "I WIN",
-          description:
-            "When this character is banished, if you have more cards in your hand than each opponent, you may return this card to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Isma",
-      version: "Verwandeltes Kätzchen",
-      text: [
-        {
-          title: "GEWONNEN",
-          description:
-            "Wenn dieser Charakter verbannt wird und du mehr Karten als jede gegnerische Person auf der Hand hast, darfst du diese Karte zurück auf deine Hand nehmen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Yzma",
-      version: "Changée en chaton",
-      text: [
-        {
-          title: "J'AI GAGNÉ",
-          description:
-            "Lorsque ce personnage est banni, si vous avez plus de cartes en main que chaque adversaire, vous pouvez renvoyer cette carte dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Yzma",
-      version: "Trasformata in Gattina",
-      text: [
-        {
-          title: "HO VINTO",
-          description:
-            "Quando questo personaggio viene esiliato, se hai in mano più carte di ogni avversario, puoi riprendere in mano questa carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Emperors New Groove",
   set: "007",
@@ -78,15 +33,14 @@ export const yzmaTransformedKitten: CharacterCard = {
   abilities: [
     {
       effect: {
-        condition: {
-          expression: "you have more cards in your hand than each opponent",
-          type: "if",
-        },
-        then: {
-          target: "SELF",
+        chooser: "CONTROLLER",
+        type: "optional",
+        effect: {
+          target: {
+            ref: "trigger-source",
+          },
           type: "return-to-hand",
         },
-        type: "conditional",
       },
       id: "192-1",
       name: "I WIN",
@@ -95,8 +49,21 @@ export const yzmaTransformedKitten: CharacterCard = {
         event: "banish",
         on: "SELF",
         timing: "when",
+        condition: {
+          type: "comparison",
+          left: {
+            type: "cards-in-hand",
+            controller: "you",
+          },
+          comparison: "greater-than",
+          right: {
+            type: "cards-in-hand",
+            controller: "opponent",
+          },
+        },
       },
       type: "triggered",
     },
   ],
+  i18n: yzmaTransformedKittenI18n,
 };

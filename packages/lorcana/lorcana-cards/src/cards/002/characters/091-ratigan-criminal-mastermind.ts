@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ratiganCriminalMastermindI18n } from "./091-ratigan-criminal-mastermind.i18n";
 
 export const ratiganCriminalMastermind: CharacterCard = {
   id: "yTi",
@@ -7,33 +8,6 @@ export const ratiganCriminalMastermind: CharacterCard = {
   cardType: "character",
   name: "Ratigan",
   version: "Criminal Mastermind",
-  i18n: {
-    en: {
-      name: "Ratigan",
-      version: "Criminal Mastermind",
-      text: "Evasive",
-    },
-    de: {
-      name: "Rattenzahn",
-      version: "Kriminelles Genie",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Ratigan",
-      version: "Génie du crime",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Ratigan",
-      version: "Criminal Mastermind",
-      text: [
-        {
-          title: "Evasive",
-          description: "(Only characters with Evasive can challenge this character.)",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Great Mouse Detective",
   set: "002",
@@ -58,4 +32,5 @@ export const ratiganCriminalMastermind: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: ratiganCriminalMastermindI18n,
 };

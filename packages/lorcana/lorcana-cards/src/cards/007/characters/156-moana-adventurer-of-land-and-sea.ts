@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { moanaAdventurerOfLandAndSeaI18n } from "./156-moana-adventurer-of-land-and-sea.i18n";
 
 export const moanaAdventurerOfLandAndSea: CharacterCard = {
   id: "xp6",
@@ -7,24 +8,6 @@ export const moanaAdventurerOfLandAndSea: CharacterCard = {
   cardType: "character",
   name: "Moana",
   version: "Adventurer of Land and Sea",
-  i18n: {
-    en: {
-      name: "Moana",
-      version: "Adventurer of Land and Sea",
-    },
-    de: {
-      name: "Vaiana",
-      version: "Abenteurerin zu Land und See",
-    },
-    fr: {
-      name: "Vaiana",
-      version: "Aventurière de la terre et de la mer",
-    },
-    it: {
-      name: "Vaiana",
-      version: "Avventuriera per Terra e per Mare",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Moana",
   set: "007",
@@ -41,4 +24,5 @@ export const moanaAdventurerOfLandAndSea: CharacterCard = {
     tcgPlayer: 618357,
   },
   classifications: ["Storyborn", "Hero", "Princess"],
+  i18n: moanaAdventurerOfLandAndSeaI18n,
 };

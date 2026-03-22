@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { lastStandI18n } from "./029-last-stand.i18n";
 
 export const lastStand: ActionCard = {
   id: "Eg2",
@@ -6,24 +7,6 @@ export const lastStand: ActionCard = {
   reprints: ["set2-029"],
   cardType: "action",
   name: "Last Stand",
-  i18n: {
-    en: {
-      name: "Last Stand",
-      text: "Banish chosen character who was challenged this turn.",
-    },
-    de: {
-      name: "Letztes Gefecht",
-      text: "Verbanne einen Charakter deiner Wahl, der in diesem Zug herausgefordert wurde.",
-    },
-    fr: {
-      name: "Ultime combat",
-      text: "Choisissez un personnage qui a été défié durant ce tour et bannissez-le.",
-    },
-    it: {
-      name: "Last Stand",
-      text: "Banish chosen character who was challenged this turn.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Raya and the Last Dragon",
   set: "002",
@@ -56,4 +39,5 @@ export const lastStand: ActionCard = {
       },
     },
   ],
+  i18n: lastStandI18n,
 };

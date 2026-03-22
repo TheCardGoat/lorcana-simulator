@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { herculesDivineHeroI18n } from "./181-hercules-divine-hero.i18n";
 
 export const herculesDivineHero: CharacterCard = {
   id: "D18",
@@ -7,41 +8,6 @@ export const herculesDivineHero: CharacterCard = {
   cardType: "character",
   name: "Hercules",
   version: "Divine Hero",
-  i18n: {
-    en: {
-      name: "Hercules",
-      version: "Divine Hero",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "Resist +2",
-        },
-      ],
-    },
-    de: {
-      name: "Hercules",
-      version: "Göttlicher Held",
-      text: "Gestaltwandel 4 Robust +2 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 2.)",
-    },
-    fr: {
-      name: "Hercule",
-      version: "Héros divin",
-      text: "Alter 4 Résistance +2",
-    },
-    it: {
-      name: "Hercules",
-      version: "Divine Hero",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Hercules.) Resist +2 (Damage dealt to this character is reduced by 2.)",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Hercules",
   set: "002",
@@ -83,4 +49,5 @@ export const herculesDivineHero: CharacterCard = {
       text: "Resist +2",
     },
   ],
+  i18n: herculesDivineHeroI18n,
 };

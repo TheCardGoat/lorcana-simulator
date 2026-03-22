@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseTrueFriendI18n } from "./012-mickey-mouse-true-friend.i18n";
 
 export const mickeyMouseTrueFriend: CharacterCard = {
   id: "xhF",
@@ -7,24 +8,6 @@ export const mickeyMouseTrueFriend: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "True Friend",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "True Friend",
-    },
-    de: {
-      name: "Micky Maus",
-      version: "Wahrer Freund",
-    },
-    fr: {
-      name: "MICKEY MOUSE",
-      version: "Véritable ami",
-    },
-    it: {
-      name: "Topolino",
-      version: "Vero Amico",
-    },
-  },
   inkType: ["amber"],
   set: "001",
   cardNumber: 12,
@@ -40,4 +23,5 @@ export const mickeyMouseTrueFriend: CharacterCard = {
     tcgPlayer: 649962,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: mickeyMouseTrueFriendI18n,
 };

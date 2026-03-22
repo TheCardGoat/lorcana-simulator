@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hadesStrongArmI18n } from "./125-hades-strong-arm.i18n";
 
 export const hadesStrongArm: CharacterCard = {
   id: "XQk",
@@ -7,48 +8,6 @@ export const hadesStrongArm: CharacterCard = {
   cardType: "character",
   name: "Hades",
   version: "Strong Arm",
-  i18n: {
-    en: {
-      name: "Hades",
-      version: "Strong Arm",
-      text: [
-        {
-          title: "WHAT ARE YOU GONNA DO?",
-          description: "{E}, 3 {I}, Banish one of your characters — Banish chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Hades",
-      version: "Starker Arm",
-      text: [
-        {
-          title: "WAS WIRST DU TUN?, 3,",
-          description: "Verbanne einen deiner Charaktere — Verbanne einen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Hadès",
-      version: "Forçant la main",
-      text: [
-        {
-          title: "C'EST LA VIE, 3,",
-          description: "bannissez l'un de vos personnages — Choisissez et bannissez un personnage.",
-        },
-      ],
-    },
-    it: {
-      name: "Ade",
-      version: "Braccio Armato",
-      text: [
-        {
-          title: "COSA FARAI MAI?, 3,",
-          description: "esilia uno dei tuoi personaggi — Esilia un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Hercules",
   set: "006",
@@ -70,5 +29,28 @@ export const hadesStrongArm: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Deity"],
-  abilities: [],
+  abilities: [
+    {
+      id: "XQk-1",
+      name: "WHAT ARE YOU GONNA DO?",
+      text: "WHAT ARE YOU GONNA DO? {E}, 3 {I}, Banish one of your characters — Banish chosen character.",
+      type: "activated",
+      cost: {
+        exert: true,
+        ink: 3,
+        banishCharacter: true,
+      },
+      effect: {
+        type: "banish",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+    },
+  ],
+  i18n: hadesStrongArmI18n,
 };

@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { healWhatHasBeenHurtI18n } from "./027-heal-what-has-been-hurt.i18n";
 
 export const healWhatHasBeenHurt: ActionCard = {
   id: "65f",
@@ -6,24 +7,6 @@ export const healWhatHasBeenHurt: ActionCard = {
   reprints: ["set3-026", "set9-027"],
   cardType: "action",
   name: "Heal What Has Been Hurt",
-  i18n: {
-    en: {
-      name: "Heal What Has Been Hurt",
-      text: "Remove up to 3 damage from chosen character. Draw a card.",
-    },
-    de: {
-      name: "Lass mich nicht allein",
-      text: "Entferne bis zu 3 Schaden von einem Charakter deiner Wahl. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Guéris les blessures",
-      text: "Choisissez un personnage et retirez-lui jusqu'à 3 jetons Dommage. Piochez une carte.",
-    },
-    it: {
-      name: "Incanto della Guarigione",
-      text: "(Un personaggio con costo 3 o superiore può per giocare questa canzone gratis.) Rimuovi fino a 3 danni da un personaggio a tua scelta. Pesca una carta.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Tangled",
   set: "009",
@@ -58,4 +41,5 @@ export const healWhatHasBeenHurt: ActionCard = {
       },
     },
   ],
+  i18n: healWhatHasBeenHurtI18n,
 };

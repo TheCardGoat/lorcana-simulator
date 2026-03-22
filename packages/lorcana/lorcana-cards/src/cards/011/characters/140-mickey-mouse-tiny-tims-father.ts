@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseTinyTimsFatherI18n } from "./140-mickey-mouse-tiny-tims-father.i18n";
 
 export const mickeyMouseTinyTimsFather: CharacterCard = {
   id: "mnX",
@@ -7,24 +8,6 @@ export const mickeyMouseTinyTimsFather: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Tiny Tim's Father",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Tiny Tim's Father",
-    },
-    de: {
-      name: "Micky Maus",
-      version: "Vater des kleinen Tim",
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Père de Tiny Tim",
-    },
-    it: {
-      name: "Topolino",
-      version: "Papà del Piccolo Tim",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Mickey's Christmas Carol",
   set: "011",
@@ -41,4 +24,5 @@ export const mickeyMouseTinyTimsFather: CharacterCard = {
     tcgPlayer: 676220,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: mickeyMouseTinyTimsFatherI18n,
 };

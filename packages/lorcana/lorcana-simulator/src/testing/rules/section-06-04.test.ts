@@ -128,7 +128,9 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
 
       expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toEqual(0);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+        }),
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getAvailableInk(PLAYER_ONE)).toBe(0);
       expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toEqual(1);

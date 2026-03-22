@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { elsaIceMakerI18n } from "./069-elsa-ice-maker.i18n";
 
 export const elsaIceMaker: CharacterCard = {
   id: "EtJ",
@@ -7,55 +8,6 @@ export const elsaIceMaker: CharacterCard = {
   cardType: "character",
   name: "Elsa",
   version: "Ice Maker",
-  i18n: {
-    en: {
-      name: "Elsa",
-      version: "Ice Maker",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "WINTER WALL",
-          description:
-            "Whenever this character quests, you may exert chosen character. If you do and you have a character named Anna in play, the chosen character can't ready at the start of their next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Elsa",
-      version: "Ice Maker",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Elsa.) WINTER WALL Whenever this character quests, you may exert chosen character. If you do and you have a character named Anna in play, the chosen character can't ready at the start of their next turn.",
-        },
-      ],
-    },
-    fr: {
-      name: "Elsa",
-      version: "Ice Maker",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Elsa.) WINTER WALL Whenever this character quests, you may exert chosen character. If you do and you have a character named Anna in play, the chosen character can't ready at the start of their next turn.",
-        },
-      ],
-    },
-    it: {
-      name: "Elsa",
-      version: "Ice Maker",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Elsa.) WINTER WALL Whenever this character quests, you may exert chosen character. If you do and you have a character named Anna in play, the chosen character can't ready at the start of their next turn.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst", "sapphire"],
   franchise: "Frozen",
   set: "007",
@@ -117,4 +69,5 @@ export const elsaIceMaker: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: elsaIceMakerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { johnSilverVengefulPirateI18n } from "./109-john-silver-vengeful-pirate.i18n";
 
 export const johnSilverVengefulPirate: CharacterCard = {
   id: "haz",
@@ -7,65 +8,6 @@ export const johnSilverVengefulPirate: CharacterCard = {
   cardType: "character",
   name: "John Silver",
   version: "Vengeful Pirate",
-  i18n: {
-    en: {
-      name: "John Silver",
-      version: "Vengeful Pirate",
-      text: [
-        {
-          title: "DRAWN TO A FIGHT",
-          description:
-            "If an opposing character was damaged this turn, you pay 2 {I} less to play this character.",
-        },
-        {
-          title: "Resist +1",
-        },
-        {
-          title: "I AIN'T GONE SOFT!",
-          description:
-            "Whenever you play an action that isn't a song, you may deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "John Silver",
-      version: "Rachsüchtiger Pirat",
-      text: [
-        {
-          title: "ZUM KAMPF HINGEZOGEN",
-          description:
-            "Falls ein gegnerischer Charakter in diesem Zug Schaden erhalten hat, zahlst du 2 weniger, um diesen Charakter auszuspielen. Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-        },
-        {
-          title: "ICH BIN NICHT WEICH GEWORDEN!",
-          description:
-            "Jedes Mal, wenn du eine Aktion ausspielst, die kein Lied ist, darfst du einem Charakter deiner Wahl 1 Schaden zufügen.",
-        },
-      ],
-    },
-    fr: {
-      name: "John Silver",
-      version: "Pirate revanchard",
-      text: [
-        {
-          title: "ATTIRÉ PAR LE COMBAT",
-          description:
-            "Jouer ce personnage vous coûte 2 de moins si un personnage adverse a subi au moins un dommage ce tour-ci. Résistance +1 CROIS SURTOUT PAS QUE J'ME DÉGONFLE! Chaque fois que vous jouez une action qui n'est pas une chanson, vous pouvez choisir un personnage et lui infliger 1 dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "John Silver",
-      version: "Pirata Vendicativo",
-      text: [
-        {
-          title: "ATTRATTO DALLE ZUFFE",
-          description:
-            "Se un personaggio avversario è stato danneggiato in questo turno, paga 2 in meno per giocare questo personaggio. Resistere +1 NON MI SONO RAMMOLLITO Ogni volta che giochi un'azione che non è una canzone, puoi infliggere 1 danno a un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald", "steel"],
   franchise: "Treasure Planet",
   set: "007",
@@ -82,9 +24,9 @@ export const johnSilverVengefulPirate: CharacterCard = {
   },
   text: [
     {
-      title: "DRAWN TO A FIGHT",
+      title: "DRAWN TO",
       description:
-        "If an opposing character was damaged this turn, you pay 2 {I} less to play this character.",
+        "A FIGHT If an opposing character was damaged this turn, you pay 2 {I} less to play this character.",
     },
     {
       title: "Resist +1",
@@ -98,25 +40,24 @@ export const johnSilverVengefulPirate: CharacterCard = {
   classifications: ["Storyborn", "Villain", "Alien", "Pirate", "Captain"],
   abilities: [
     {
+      condition: {
+        type: "turn-metric",
+        metric: "damaged-characters-by-owner",
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+        ownerScope: "opponent",
+      },
       effect: {
-        condition: {
-          type: "turn-metric",
-          metric: "damaged-characters-by-owner",
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-          ownerScope: "opponent",
-        },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+        amount: 2,
+        target: "CONTROLLER",
+        type: "cost-reduction",
       },
       id: "1p4-1",
+      name: "DRAWN TO A FIGHT",
       text: "DRAWN TO A FIGHT If an opposing character was damaged this turn, you pay 2 {I} less to play this character.",
-      type: "action",
+      type: "static",
     },
     {
       id: "1p4-2",
@@ -149,10 +90,12 @@ export const johnSilverVengefulPirate: CharacterCard = {
         on: {
           cardType: "action",
           controller: "you",
+          excludeSong: true,
         },
         timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: johnSilverVengefulPirateI18n,
 };

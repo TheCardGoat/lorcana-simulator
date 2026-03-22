@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { winnieThePoohHunnyPirateI18n } from "./003-winnie-the-pooh-hunny-pirate.i18n";
 
 export const winnieThePoohHunnyPirate: CharacterCard = {
   id: "R7L",
@@ -7,37 +8,6 @@ export const winnieThePoohHunnyPirate: CharacterCard = {
   cardType: "character",
   name: "Winnie the Pooh",
   version: "Hunny Pirate",
-  i18n: {
-    en: {
-      name: "Winnie the Pooh",
-      version: "Hunny Pirate",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "WE'RE PIRATES, YOU SEE",
-          description:
-            "Whenever this character quests, you pay 1 {I} less for the next Pirate character you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Winnie Puuh",
-      version: "Honigpirat",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) WIR SIND PIRATEN, SIEHST DU? Jedes Mal, wenn dieser Charakter erkundet, zahlst du 1 weniger für den nächsten Piraten, den du in diesem Zug ausspielst.",
-    },
-    fr: {
-      name: "Winnie l'ourson",
-      version: "Pirate miel sabords",
-      text: "Soutien ON EST DES PIRATES, VOUS VOYEZ Chaque fois que ce personnage est envoyé à l'aventure, le prochain personnage Pirate que vous jouez ce tour-ci coûte 1 de moins.",
-    },
-    it: {
-      name: "Winnie the Pooh",
-      version: "Pirata del Miele",
-      text: "Aiutante SIAMO DEI PIRATI, SAI? Ogni volta che questo personaggio va all'avventura, paga 1 in meno per giocare il tuo prossimo personaggio Pirata per questo turno.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Winnie the Pooh",
   set: "006",
@@ -72,12 +42,23 @@ export const winnieThePoohHunnyPirate: CharacterCard = {
     },
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 1,
+        cardType: "character",
+        classification: "Pirate",
+        duration: "next-play-this-turn",
+        target: "CONTROLLER",
+        type: "cost-reduction",
       },
       id: "1v3-2",
+      name: "WE'RE PIRATES, YOU SEE",
       text: "WE'RE PIRATES, YOU SEE Whenever this character quests, you pay 1 {I} less for the next Pirate character you play this turn.",
-      type: "action",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
     },
   ],
+  i18n: winnieThePoohHunnyPirateI18n,
 };

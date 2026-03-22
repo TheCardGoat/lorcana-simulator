@@ -11,8 +11,12 @@ describe("Merlin's Carpetbag", () => {
       inkwell: 1,
       play: [merlinsCarpetbag],
     });
+    const healingDecanterId = testEngine.findCardInstanceId(healingDecanter, "discard", "p1");
 
     expect(testEngine.asPlayerOne().activateAbility(merlinsCarpetbag)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [healingDecanterId] }),
+    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(healingDecanter)).toBe("hand");
   });

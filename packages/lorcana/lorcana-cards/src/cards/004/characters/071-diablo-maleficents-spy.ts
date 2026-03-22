@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { diabloMaleficentsSpyI18n } from "./071-diablo-maleficents-spy.i18n";
 
 export const diabloMaleficentsSpy: CharacterCard = {
   id: "hgt",
@@ -7,51 +8,6 @@ export const diabloMaleficentsSpy: CharacterCard = {
   cardType: "character",
   name: "Diablo",
   version: "Maleficent's Spy",
-  i18n: {
-    en: {
-      name: "Diablo",
-      version: "Maleficent's Spy",
-      text: [
-        {
-          title: "SCOUT AHEAD",
-          description: "When you play this character, you may look at each opponent's hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Diablo",
-      version: "Malefiz' Spion",
-      text: [
-        {
-          title: "SPÄHER VORAUS",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du dir die Handkarten aller gegnerischen Mitspielenden anschauen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Diablo",
-      version: "Espion de Maléfique",
-      text: [
-        {
-          title: "EN ÉCLAIREUR",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez regarder la main de chaque adversaire.",
-        },
-      ],
-    },
-    it: {
-      name: "Diablo",
-      version: "Spia di Malefica",
-      text: [
-        {
-          title: "AVANSCOPERTA",
-          description:
-            "Quando giochi questo personaggio, puoi guardare la mano di ogni avversario.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Sleeping Beauty",
   set: "004",
@@ -74,4 +30,5 @@ export const diabloMaleficentsSpy: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [],
+  i18n: diabloMaleficentsSpyI18n,
 };

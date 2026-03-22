@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { timonSnowballSwiperI18n } from "./016-timon-snowball-swiper.i18n";
 
 export const timonSnowballSwiper: CharacterCard = {
   id: "owY",
@@ -7,52 +8,6 @@ export const timonSnowballSwiper: CharacterCard = {
   cardType: "character",
   name: "Timon",
   version: "Snowball Swiper",
-  i18n: {
-    en: {
-      name: "Timon",
-      version: "Snowball Swiper",
-      text: [
-        {
-          title: "GET RID OF THAT",
-          description:
-            "When you play this character, chosen opponent reveals their hand and discards a non-character card of your choice.",
-        },
-      ],
-    },
-    de: {
-      name: "Timon",
-      version: "Schneeballschlitterer",
-      text: [
-        {
-          title: "DAS MUSS WEG",
-          description:
-            "Wenn du diesen Charakter ausspielst, zeigt einer der gegnerischen Mitspielenden deiner Wahl alle Handkarten für alle sichtbar vor und wirft eine Karte deiner Wahl, die keine Charakterkarte ist, ab.",
-        },
-      ],
-    },
-    fr: {
-      name: "Timon",
-      version: "Glisse avec des boules de neige",
-      text: [
-        {
-          title: "DÉBARRASSE-TOI DE ÇA",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un adversaire qui révèle sa main et défausse une carte non-Personnage de votre choix.",
-        },
-      ],
-    },
-    it: {
-      name: "Timon",
-      version: "Rubapalle di Neve",
-      text: [
-        {
-          title: "SBARAZZATENE",
-          description:
-            "Quando giochi questo personaggio, un avversario a tua scelta rivela la sua mano e scarta una carta non personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lion King",
   set: "011",
@@ -75,5 +30,38 @@ export const timonSnowballSwiper: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "owY-1",
+      type: "triggered",
+      name: "GET RID OF THAT",
+      text: "GET RID OF THAT When you play this character, chosen opponent reveals their hand and discards a non-character card of your choice.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "reveal-hand",
+            target: "OPPONENT",
+          },
+          {
+            type: "discard",
+            amount: 1,
+            target: "OPPONENT",
+            from: "hand",
+            chosen: true,
+            chosenBy: "you",
+            filter: {
+              notCardType: "character",
+            },
+          },
+        ],
+      },
+    },
+  ],
+  i18n: timonSnowballSwiperI18n,
 };

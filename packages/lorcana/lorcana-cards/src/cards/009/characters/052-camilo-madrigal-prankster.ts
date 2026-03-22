@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { camiloMadrigalPranksterI18n } from "./052-camilo-madrigal-prankster.i18n";
 
 export const camiloMadrigalPrankster: CharacterCard = {
   id: "h3m",
@@ -7,46 +8,6 @@ export const camiloMadrigalPrankster: CharacterCard = {
   cardType: "character",
   name: "Camilo Madrigal",
   version: "Prankster",
-  i18n: {
-    en: {
-      name: "Camilo Madrigal",
-      version: "Prankster",
-      text: "MANY FORMS At the start of your turn, you may choose one:\n- This character gets +1 {L} this turn.\n- This character gains Challenger +2 this turn.",
-    },
-    de: {
-      name: "Camilo Madrigal",
-      version: "Scherzkeks",
-      text: [
-        {
-          title: "VIELE FORMEN",
-          description:
-            "Zu Beginn deines Zuges, darfst du eine Möglichkeit auswählen: • Dieser Charakter erhält in diesem Zug +1. • Dieser Charakter erhält in diesem Zug Herausfordern +2. (Während der Charakter herausfordert, erhält er +2.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Camilo Madrigal",
-      version: "Farceur",
-      text: [
-        {
-          title: "MÉTAMORPHOSES",
-          description:
-            "Au début de votre tour, choisissez entre: • Ce personnage gagne +1 pour le reste de ce tour. • Ce personnage gagne Offensif +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Camilo Madrigal",
-      version: "Spiritosone",
-      text: [
-        {
-          title: "MOLTE FORME",
-          description:
-            "All'inizio del tuo turno puoi scegliere uno: • Questo personaggio riceve +1 per questo turno. • Questo personaggio ottiene Sfidante +2 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "009",
@@ -64,4 +25,5 @@ export const camiloMadrigalPrankster: CharacterCard = {
   text: "MANY FORMS At the start of your turn, you may choose one:\n- This character gets +1 {L} this turn.\n- This character gains Challenger +2 this turn.",
   classifications: ["Storyborn", "Ally", "Madrigal"],
   abilities: [],
+  i18n: camiloMadrigalPranksterI18n,
 };

@@ -1,5 +1,8 @@
-import { nanoid } from "nanoid";
 import type { CardInstanceId, GameId, PlayerId, ZoneId } from "@tcg/lorcana-types";
+
+function createBrandedId<T extends string>(id?: string): T {
+  return (id ?? crypto.randomUUID()) as T;
+}
 
 /**
  * Creates a CardId from a string or generates a new unique ID
@@ -9,9 +12,7 @@ import type { CardInstanceId, GameId, PlayerId, ZoneId } from "@tcg/lorcana-type
 export function createCardId(): CardInstanceId;
 export function createCardId(id: string): CardInstanceId;
 export function createCardId(id?: string): CardInstanceId {
-  // Type assertion is acceptable here as this is the only way to create branded types
-  // Biome-ignore lint/suspicious/noExplicitAny: Required for branded type creation
-  return (id ?? nanoid()) as any;
+  return createBrandedId<CardInstanceId>(id);
 }
 
 /**
@@ -22,9 +23,7 @@ export function createCardId(id?: string): CardInstanceId {
 export function createPlayerId(): PlayerId;
 export function createPlayerId(id: string): PlayerId;
 export function createPlayerId(id?: string): PlayerId {
-  // Type assertion is acceptable here as this is the only way to create branded types
-  // Biome-ignore lint/suspicious/noExplicitAny: Required for branded type creation
-  return (id ?? nanoid()) as any;
+  return createBrandedId<PlayerId>(id);
 }
 
 /**
@@ -35,9 +34,7 @@ export function createPlayerId(id?: string): PlayerId {
 export function createGameId(): GameId;
 export function createGameId(id: string): GameId;
 export function createGameId(id?: string): GameId {
-  // Type assertion is acceptable here as this is the only way to create branded types
-  // Biome-ignore lint/suspicious/noExplicitAny: Required for branded type creation
-  return (id ?? nanoid()) as any;
+  return createBrandedId<GameId>(id);
 }
 
 /**
@@ -48,9 +45,7 @@ export function createGameId(id?: string): GameId {
 export function createZoneId(): ZoneId;
 export function createZoneId(id: string): ZoneId;
 export function createZoneId(id?: string): ZoneId {
-  // Type assertion is acceptable here as this is the only way to create branded types
-  // Biome-ignore lint/suspicious/noExplicitAny: Required for branded type creation
-  return (id ?? nanoid()) as any;
+  return createBrandedId<ZoneId>(id);
 }
 
 // =============================================================================

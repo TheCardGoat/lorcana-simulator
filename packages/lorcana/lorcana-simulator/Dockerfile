@@ -5,15 +5,18 @@ FROM oven/bun:1.3.9 AS build
 
 WORKDIR /app
 
-# Copy local code to the container image.
-COPY . ./
+# Copy everything to better leverage turbo cache
+COPY . .
 
 RUN bun install
 
 ENV NODE_ENV=production
 ENV PLATFORM=node
 
-RUN bunx turbo run build:node --filter=@tcg/lorcana-simulator --output-logs=errors-only
+# Build the simulator package directly inside the container. The root Turbo
+# wrapper is not required here and has been failing on Railway with an
+# environment-specific I/O error before task execution begins.
+RUN bun run --cwd packages/lorcana/lorcana-simulator build:node
 
 FROM oven/bun:1.3.9 AS runtime
 

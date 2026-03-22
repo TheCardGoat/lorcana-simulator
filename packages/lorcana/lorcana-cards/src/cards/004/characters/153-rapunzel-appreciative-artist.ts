@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rapunzelAppreciativeArtistI18n } from "./153-rapunzel-appreciative-artist.i18n";
 
 export const rapunzelAppreciativeArtist: CharacterCard = {
   id: "Mbz",
@@ -7,52 +8,6 @@ export const rapunzelAppreciativeArtist: CharacterCard = {
   cardType: "character",
   name: "Rapunzel",
   version: "Appreciative Artist",
-  i18n: {
-    en: {
-      name: "Rapunzel",
-      version: "Appreciative Artist",
-      text: [
-        {
-          title: "PERCEPTIVE PARTNER",
-          description:
-            "While you have a character named Pascal in play, this character gains Ward.",
-        },
-      ],
-    },
-    de: {
-      name: "Rapunzel",
-      version: "Wertschätzende Künstlerin",
-      text: [
-        {
-          title: "EINFÜHLSAME PARTNERIN",
-          description:
-            "Solange du mindestens einen Pascal-Charakter im Spiel hast, erhält dieser Charakter Behütet.",
-        },
-      ],
-    },
-    fr: {
-      name: "Raiponce",
-      version: "Artiste sensible",
-      text: [
-        {
-          title: "PARTENAIRE PERSPICACE",
-          description:
-            "Tant que vous avez un personnage Pascal en jeu, ce personnage-ci gagne Hors d'atteinte.",
-        },
-      ],
-    },
-    it: {
-      name: "Rapunzel",
-      version: "Artista Entusiasta",
-      text: [
-        {
-          title: "COMPAGNO PERSPICACE",
-          description:
-            "Mentre hai in gioco un personaggio chiamato Pascal, questo personaggio ottiene Protetto. (Gli avversari non possono sceglierlo se non per sfidarlo.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Tangled",
   set: "004",
@@ -86,4 +41,5 @@ export const rapunzelAppreciativeArtist: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: rapunzelAppreciativeArtistI18n,
 };

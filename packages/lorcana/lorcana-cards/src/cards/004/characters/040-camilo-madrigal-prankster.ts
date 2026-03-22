@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { camiloMadrigalPranksterI18n } from "./040-camilo-madrigal-prankster.i18n";
 
 export const camiloMadrigalPrankster: CharacterCard = {
   id: "I0K",
@@ -7,57 +8,6 @@ export const camiloMadrigalPrankster: CharacterCard = {
   cardType: "character",
   name: "Camilo Madrigal",
   version: "Prankster",
-  i18n: {
-    en: {
-      name: "Camilo Madrigal",
-      version: "Prankster",
-      text: [
-        {
-          title: "MANY FORMS",
-          description: "At the start of your turn, you may choose one:",
-        },
-        {
-          title: "• This character gets +1 {L} this turn.",
-        },
-        {
-          title: "• This character gains Challenger +2 this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Camilo Madrigal",
-      version: "Scherzkeks",
-      text: [
-        {
-          title: "VIELE FORMEN",
-          description:
-            "Zu Beginn deines Zuges, darfst du eine Möglichkeit auswählen: • Dieser Charakter erhält in diesem Zug +1. • Dieser Charakter erhält in diesem Zug Herausfordern +2. (Während der Charakter herausfordert, erhält er +2.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Camilo Madrigal",
-      version: "Farceur",
-      text: [
-        {
-          title: "MÉTAMORPHOSES",
-          description:
-            "Au début de votre tour, choisissez entre: • Ce personnage gagne +1 pour le reste de ce tour. • Ce personnage gagne Offensif +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Camilo Madrigal",
-      version: "Spiritosone",
-      text: [
-        {
-          title: "MOLTE FORME",
-          description:
-            "All'inizio del tuo turno puoi scegliere uno: • Questo personaggio riceve +1 per questo turno. • Questo personaggio ottiene Sfidante +2 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Encanto",
   set: "004",
@@ -85,5 +35,44 @@ export const camiloMadrigalPrankster: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Madrigal"],
-  abilities: [],
+  abilities: [
+    {
+      id: "I0K-1",
+      name: "MANY FORMS",
+      text: "MANY FORMS At the start of your turn, you may choose one: • This character gets +1 {L} this turn. • This character gains Challenger +2 this turn.",
+      type: "triggered",
+      trigger: {
+        event: "start-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      effect: {
+        type: "optional",
+        effect: {
+          type: "choice",
+          optionLabels: [
+            "This character gets +1 lore this turn.",
+            "This character gains Challenger +2 this turn.",
+          ],
+          options: [
+            {
+              type: "modify-stat",
+              stat: "lore",
+              modifier: 1,
+              target: "SELF",
+              duration: "this-turn",
+            },
+            {
+              type: "gain-keyword",
+              keyword: "Challenger",
+              value: 2,
+              target: "SELF",
+              duration: "this-turn",
+            },
+          ],
+        },
+      },
+    },
+  ],
+  i18n: camiloMadrigalPranksterI18n,
 };

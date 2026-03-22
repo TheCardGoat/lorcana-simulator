@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { sardineCanI18n } from "./170-sardine-can.i18n";
 
 export const sardineCan: ItemCard = {
   id: "QGa",
@@ -6,47 +7,6 @@ export const sardineCan: ItemCard = {
   reprints: ["set2-170"],
   cardType: "item",
   name: "Sardine Can",
-  i18n: {
-    en: {
-      name: "Sardine Can",
-      text: [
-        {
-          title: "FLIGHT CABIN",
-          description: "Your exerted characters gain Ward.",
-        },
-      ],
-    },
-    de: {
-      name: "Sardinenbüchse",
-      text: [
-        {
-          title: "FLUGKABINE",
-          description:
-            "Deine erschöpften Charaktere erhalten Behütet. (Gegnerische Karten können die Charaktere nicht auswählen, außer um sie herauszufordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Boîte de sardines",
-      text: [
-        {
-          title: "CABINE DE VOL",
-          description:
-            "Vos personnages épuisés gagnent Hors d'atteinte. (Ils ne peuvent pas être choisis par vos adversaires, hormis pour un défi.)",
-        },
-      ],
-    },
-    it: {
-      name: "Sardine Can",
-      text: [
-        {
-          title: "FLIGHT CABIN",
-          description:
-            "Your exerted characters gain Ward. (Opponents can't choose them except to challenge.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Rescuers",
   set: "002",
@@ -68,7 +28,7 @@ export const sardineCan: ItemCard = {
     {
       effect: {
         keyword: "Ward",
-        target: "YOUR_CHARACTERS",
+        target: "YOUR_EXERTED_CHARACTERS",
         type: "gain-keyword",
       },
       id: "2oi-1",
@@ -77,4 +37,5 @@ export const sardineCan: ItemCard = {
       type: "static",
     },
   ],
+  i18n: sardineCanI18n,
 };

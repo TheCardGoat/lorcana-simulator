@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { goofyKnightForADayI18n } from "./180-goofy-knight-for-a-day.i18n";
 
 export const goofyKnightForADay: CharacterCard = {
   id: "JDP",
@@ -7,24 +8,6 @@ export const goofyKnightForADay: CharacterCard = {
   cardType: "character",
   name: "Goofy",
   version: "Knight for a Day",
-  i18n: {
-    en: {
-      name: "Goofy",
-      version: "Knight for a Day",
-    },
-    de: {
-      name: "Goofy",
-      version: "Ritter für einen Tag",
-    },
-    fr: {
-      name: "Dingo",
-      version: "Chevalier pour un jour",
-    },
-    it: {
-      name: "Goofy",
-      version: "Knight for a Day",
-    },
-  },
   inkType: ["steel"],
   set: "002",
   cardNumber: 180,
@@ -40,4 +23,5 @@ export const goofyKnightForADay: CharacterCard = {
     tcgPlayer: 524364,
   },
   classifications: ["Dreamborn", "Hero", "Knight"],
+  i18n: goofyKnightForADayI18n,
 };

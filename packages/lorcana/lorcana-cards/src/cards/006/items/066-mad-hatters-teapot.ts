@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { madHattersTeapotI18n } from "./066-mad-hatters-teapot.i18n";
 
 export const madHattersTeapot: ItemCard = {
   id: "fMK",
@@ -6,48 +7,6 @@ export const madHattersTeapot: ItemCard = {
   reprints: ["set6-066"],
   cardType: "item",
   name: "Mad Hatter's Teapot",
-  i18n: {
-    en: {
-      name: "Mad Hatter's Teapot",
-      text: [
-        {
-          title: "NO ROOM, NO ROOM",
-          description:
-            "{E}, 1 {I} — Each opponent puts the top card of their deck into their discard.",
-        },
-      ],
-    },
-    de: {
-      name: "Teekanne des verrückten Hutmachers",
-      text: [
-        {
-          title: "HIER IST KEIN PLATZ MEHR, 1",
-          description:
-            "— Alle gegnerischen Mitspielenden legen die oberste Karte ihres Decks auf ihren Ablagestapel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Théière du Chapelier Fou",
-      text: [
-        {
-          title: "PAS D'PLACE, PAS D'PLACE, 1",
-          description:
-            "— Chaque adversaire place la carte du dessus de sa pioche dans sa défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Teiera del Cappellaio Matto",
-      text: [
-        {
-          title: "NON",
-          description:
-            "C'È POSTO, NON C'È POSTO, 1 — Ogni avversario mette la prima carta del suo mazzo nei suoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Alice in Wonderland",
   set: "006",
@@ -82,4 +41,5 @@ export const madHattersTeapot: ItemCard = {
       text: "NO ROOM, NO ROOM {E}, 1 {I} — Each opponent puts the top card of their deck into their discard.",
     },
   ],
+  i18n: madHattersTeapotI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cruellaDeVilPerfectlyWretchedI18n } from "./145-cruella-de-vil-perfectly-wretched.i18n";
 
 export const cruellaDeVilPerfectlyWretched: CharacterCard = {
   id: "8wy",
@@ -7,43 +8,6 @@ export const cruellaDeVilPerfectlyWretched: CharacterCard = {
   cardType: "character",
   name: "Cruella De Vil",
   version: "Perfectly Wretched",
-  i18n: {
-    en: {
-      name: "Cruella De Vil",
-      version: "Perfectly Wretched",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "OH, NO YOU DON'T",
-          description:
-            "Whenever this character quests, chosen opposing character gets -2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Cruella De Vil",
-      version: "Fühlt sich elend",
-      text: "Gestaltwandel 3 OH NEIN, DAS WIRST DU NICHT! Jedes Mal, wenn dieser Charakter erkundet, gib einem gegnerischen Charakter deiner Wahl in diesem Zug -2.",
-    },
-    fr: {
-      name: "Cruella d'Enfer",
-      version: "Cruellement infecte",
-      text: "Alter 3 OH NON, PAS QUESTION! Lorsque ce personnage est envoyé à l'aventure, choisissez un personnage adverse, il subit -2 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Cruella De Vil",
-      version: "Perfectly Wretched",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Cruella De Vil.) OH, NO YOU DON'T Whenever this character quests, chosen opposing character gets -2 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "101 Dalmatians",
   set: "002",
@@ -69,7 +33,6 @@ export const cruellaDeVilPerfectlyWretched: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -99,4 +62,5 @@ export const cruellaDeVilPerfectlyWretched: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: cruellaDeVilPerfectlyWretchedI18n,
 };

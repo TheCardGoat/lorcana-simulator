@@ -22,8 +22,9 @@ import SwordsIcon from "@lucide/svelte/icons/swords";
 import TriangleAlertIcon from "@lucide/svelte/icons/triangle-alert";
 import WindIcon from "@lucide/svelte/icons/wind";
 import ZapIcon from "@lucide/svelte/icons/zap";
-import { m } from "$lib/paraglide/messages.js";
+import { m } from "$lib/i18n/messages.js";
 import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
+import { getStatSmallIconUrl, getLoreIconUrl } from "@/features/simulator/model/asset-urls.js";
 
 type TagTone = "default" | "info" | "success" | "warning" | "danger";
 
@@ -33,6 +34,18 @@ export interface LorcanaCardTag {
   tooltip: string;
   icon: Component<{ class?: string }>;
   tone?: TagTone;
+}
+
+export interface LorcanaCardStatModifier extends LorcanaCardTag {
+  stat: "strength" | "willpower" | "lore";
+  value: number;
+  signedValue: string;
+  iconUrl: string;
+}
+
+export interface LorcanaCardTagGroups {
+  tags: LorcanaCardTag[];
+  statModifiers: LorcanaCardStatModifier[];
 }
 
 const INTEGER_PATTERN = /(\d+)/;
@@ -87,8 +100,12 @@ function getAtLocationTooltip(card: LorcanaCardSnapshot): string {
   return m["sim.card.tags.atLocation.tooltip"]({});
 }
 
-export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] {
-  const tags: LorcanaCardTag[] = [];
+function buildLorcanaCardTagGroups(card: LorcanaCardSnapshot): LorcanaCardTagGroups & {
+  orderedTags: LorcanaCardTag[];
+} {
+  const preStatTags: LorcanaCardTag[] = [];
+  const postStatTags: LorcanaCardTag[] = [];
+  const statModifiers: LorcanaCardStatModifier[] = [];
   const strengthDelta =
     typeof card.strength === "number" && typeof card.baseStrength === "number"
       ? card.strength - card.baseStrength
@@ -110,7 +127,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
     card.keywordValues?.challenger ?? parseNumericKeyword(card, "Challenger") ?? 0;
 
   pushTag(
-    tags,
+    preStatTags,
     card.isDrying
       ? {
           id: "fresh-ink",
@@ -123,7 +140,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    preStatTags,
     card.damage && card.damage > 0
       ? {
           id: "damage",
@@ -137,8 +154,9 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
 
   if (loreDelta !== 0) {
     const signedCopy = getSignedCopy(loreDelta);
-    pushTag(tags, {
+    statModifiers.push({
       id: "lore-bonus",
+      stat: "lore",
       label: m["sim.card.tags.loreDelta.label"]({
         amount: signedCopy.amount,
         sign: signedCopy.sign,
@@ -148,14 +166,18 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
         sign: signedCopy.sign,
       }),
       icon: StarIcon,
+      iconUrl: getLoreIconUrl(),
       tone: loreDelta > 0 ? "success" : "warning",
+      value: loreDelta,
+      signedValue: `${signedCopy.sign}${signedCopy.amount}`,
     });
   }
 
   if (strengthDelta !== 0) {
     const signedCopy = getSignedCopy(strengthDelta);
-    pushTag(tags, {
+    statModifiers.push({
       id: "strength-bonus",
+      stat: "strength",
       label: m["sim.card.tags.strengthDelta.label"]({
         amount: signedCopy.amount,
         sign: signedCopy.sign,
@@ -165,14 +187,18 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
         sign: signedCopy.sign,
       }),
       icon: SwordsIcon,
+      iconUrl: getStatSmallIconUrl("strength"),
       tone: strengthDelta > 0 ? "success" : "warning",
+      value: strengthDelta,
+      signedValue: `${signedCopy.sign}${signedCopy.amount}`,
     });
   }
 
   if (willpowerDelta !== 0) {
     const signedCopy = getSignedCopy(willpowerDelta);
-    pushTag(tags, {
+    statModifiers.push({
       id: "willpower-bonus",
+      stat: "willpower",
       label: m["sim.card.tags.willpowerDelta.label"]({
         amount: signedCopy.amount,
         sign: signedCopy.sign,
@@ -182,12 +208,15 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
         sign: signedCopy.sign,
       }),
       icon: HeartIcon,
+      iconUrl: getStatSmallIconUrl("defense"),
       tone: willpowerDelta > 0 ? "success" : "warning",
+      value: willpowerDelta,
+      signedValue: `${signedCopy.sign}${signedCopy.amount}`,
     });
   }
 
   pushTag(
-    tags,
+    postStatTags,
     card.readyState === "exerted"
       ? {
           id: "exerted",
@@ -200,7 +229,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     card.atLocationId
       ? {
           id: "at-location",
@@ -213,7 +242,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasRestriction(card, "cant-ready")
       ? {
           id: "cant-ready",
@@ -226,7 +255,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasRestriction(card, "cant-challenge")
       ? {
           id: "cant-challenge",
@@ -239,7 +268,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     card.hasQuestRestriction
       ? {
           id: "cant-quest",
@@ -252,7 +281,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasKeyword(card, "Ward")
       ? {
           id: "ward",
@@ -265,7 +294,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasKeyword(card, "Vanish")
       ? {
           id: "vanish",
@@ -278,7 +307,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasKeyword(card, "Support")
       ? {
           id: "support",
@@ -291,7 +320,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasKeyword(card, "Singer")
       ? {
           id: "singer",
@@ -308,7 +337,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasKeyword(card, "Sing Together")
       ? {
           id: "sing-together",
@@ -325,7 +354,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     (card.cardsUnderCount ?? 0) > 0
       ? {
           id: "shifted",
@@ -338,7 +367,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasKeyword(card, "Shift")
       ? {
           id: "shift",
@@ -355,7 +384,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasKeyword(card, "Evasive")
       ? {
           id: "evasive",
@@ -368,7 +397,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     challengerValue > 0
       ? {
           id: "challenger",
@@ -381,7 +410,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasKeyword(card, "Boost")
       ? {
           id: "boost",
@@ -398,7 +427,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasKeyword(card, "Rush")
       ? {
           id: "rush",
@@ -411,7 +440,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasKeyword(card, "Bodyguard")
       ? {
           id: "bodyguard",
@@ -424,7 +453,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     hasKeyword(card, "Reckless")
       ? {
           id: "reckless",
@@ -437,7 +466,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     resistValue > 0
       ? {
           id: "resist",
@@ -450,7 +479,7 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
   );
 
   pushTag(
-    tags,
+    postStatTags,
     (card.cardsUnderCount ?? 0) > 0
       ? {
           id: "cards-under",
@@ -462,5 +491,20 @@ export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] 
       : null,
   );
 
-  return tags;
+  const tags = [...preStatTags, ...postStatTags];
+
+  return {
+    tags,
+    statModifiers,
+    orderedTags: [...preStatTags, ...statModifiers, ...postStatTags],
+  };
+}
+
+export function getLorcanaCardTagGroups(card: LorcanaCardSnapshot): LorcanaCardTagGroups {
+  const { tags, statModifiers } = buildLorcanaCardTagGroups(card);
+  return { tags, statModifiers };
+}
+
+export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] {
+  return buildLorcanaCardTagGroups(card).orderedTags;
 }

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gastonBaritoneBullyI18n } from "./008-gaston-baritone-bully.i18n";
 
 export const gastonBaritoneBully: CharacterCard = {
   id: "Rc3",
@@ -7,38 +8,6 @@ export const gastonBaritoneBully: CharacterCard = {
   cardType: "character",
   name: "Gaston",
   version: "Baritone Bully",
-  i18n: {
-    en: {
-      name: "Gaston",
-      version: "Baritone Bully",
-      text: "Singer 5",
-    },
-    de: {
-      name: "Gaston",
-      version: "Bariton-Bully",
-      text: [
-        {
-          title: "Singen 5",
-          description: "(Die Kosten dieses Charakters gelten als 5 für das Singen von Liedern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Gaston",
-      version: "Brute et baryton",
-      text: "Mélomane 5 (Ce personnage est considéré comme ayant un coût de 5 pour chanter des chansons.)",
-    },
-    it: {
-      name: "Gaston",
-      version: "Baritone Bully",
-      text: [
-        {
-          title: "Singer 5",
-          description: "(This character counts as cost 5 to sing songs.)",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -64,4 +33,5 @@ export const gastonBaritoneBully: CharacterCard = {
       text: "Singer 5",
     },
   ],
+  i18n: gastonBaritoneBullyI18n,
 };

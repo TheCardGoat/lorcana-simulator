@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { grumpyBadtemperedI18n } from "./010-grumpy-bad-tempered.i18n";
 
 export const grumpyBadtempered: CharacterCard = {
   id: "Xv5",
@@ -7,43 +8,6 @@ export const grumpyBadtempered: CharacterCard = {
   cardType: "character",
   name: "Grumpy",
   version: "Bad-Tempered",
-  i18n: {
-    en: {
-      name: "Grumpy",
-      version: "Bad-Tempered",
-      text: [
-        {
-          title: "THERE'S TROUBLE A-BREWIN'",
-          description: "Your other Seven Dwarfs characters get +1 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Brummbär",
-      version: "Schlecht gelaunt",
-      text: [
-        {
-          title: "UNS STEHT UNHEIL BEVOR",
-          description: "Deine anderen Sieben Zwerge erhalten +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Grincheux",
-      version: "Sale caractère",
-      text: [
-        {
-          title: "IL Y A QUELQUE CHOSE DE LOUCHE",
-          description: "Vos autres personnages Sept Nains gagnent +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Grumpy",
-      version: "Bad-Tempered",
-      text: "There's Trouble A-Brewin'\\ Your other Seven Dwarfs characters get +1.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "002",
@@ -76,4 +40,5 @@ export const grumpyBadtempered: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: grumpyBadtemperedI18n,
 };

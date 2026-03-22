@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { fixitFelixJrDelightedSightseerI18n } from "./017-fix-it-felix-jr-delighted-sightseer.i18n";
 
 export const fixitFelixJrDelightedSightseer: CharacterCard = {
   id: "3wx",
@@ -7,51 +8,6 @@ export const fixitFelixJrDelightedSightseer: CharacterCard = {
   cardType: "character",
   name: "Fix-It Felix, Jr.",
   version: "Delighted Sightseer",
-  i18n: {
-    en: {
-      name: "Fix-It Felix, Jr.",
-      version: "Delighted Sightseer",
-      text: [
-        {
-          title: "OH, MY LAND!",
-          description: "When you play this character, if you have a location in play, draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Fix-It Felix, Jr.",
-      version: "Entzückter Ausflügler",
-      text: [
-        {
-          title: "ACH DU MEINE GÜTE!",
-          description:
-            "Wenn du diesen Charakter ausspielst und mindestens einen Ort im Spiel hast, ziehe 1 Karte.",
-        },
-      ],
-    },
-    fr: {
-      name: "Félix Fixe Junior",
-      version: "Promeneur ravi",
-      text: [
-        {
-          title: "NOM D'UN PETIT BONUS!",
-          description:
-            "Lorsque vous jouez ce personnage, si vous avez un lieu en jeu, piochez une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Felix Aggiustatutto Jr.",
-      version: "Turista Deliziato",
-      text: [
-        {
-          title: "PER TUTTE LE LAND!",
-          description:
-            "Quando giochi questo personaggio, se hai in gioco un luogo, pesca una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Wreck It Ralph",
   set: "005",
@@ -76,6 +32,7 @@ export const fixitFelixJrDelightedSightseer: CharacterCard = {
   abilities: [
     {
       id: "108-1",
+      name: "OH, MY LAND!",
       effect: {
         condition: {
           type: "target-query",
@@ -98,8 +55,14 @@ export const fixitFelixJrDelightedSightseer: CharacterCard = {
         },
         type: "conditional",
       },
-      type: "action",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
       text: "OH, MY LAND! When you play this character, if you have a location in play, draw a card.",
     },
   ],
+  i18n: fixitFelixJrDelightedSightseerI18n,
 };

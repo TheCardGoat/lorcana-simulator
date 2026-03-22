@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { dukeWeaseltonSurlyCrookI18n } from "./182-duke-weaselton-surly-crook.i18n";
 
 export const dukeWeaseltonSurlyCrook: CharacterCard = {
   id: "aK6",
@@ -7,52 +8,6 @@ export const dukeWeaseltonSurlyCrook: CharacterCard = {
   cardType: "character",
   name: "Duke Weaselton",
   version: "Surly Crook",
-  i18n: {
-    en: {
-      name: "Duke Weaselton",
-      version: "Surly Crook",
-      text: [
-        {
-          title: "APPREHENDED",
-          description:
-            "When this character is banished, you may play a character with cost 2 or less for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Herzog von Pitzbühl",
-      version: "Mürrischer Gauner",
-      text: [
-        {
-          title: "FESTGENOMMEN",
-          description:
-            "Wenn dieser Charakter verbannt wird, darfst du einen Charakter, der 2 oder weniger kostet, kostenlos ausspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Duke Weaselton",
-      version: "Arnaqueur revêche",
-      text: [
-        {
-          title: "APPRÉHENDÉ",
-          description:
-            "Lorsque ce personnage est banni, vous pouvez jouer gratuitement un personnage coûtant 2 ou moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Duke Donnolesi",
-      version: "Furfante Scontroso",
-      text: [
-        {
-          title: "ARRESTATO",
-          description:
-            "Quando questo personaggio viene esiliato, puoi giocare un personaggio con costo 2 o inferiore gratis.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Zootropolis",
   set: "011",
@@ -81,6 +36,7 @@ export const dukeWeaseltonSurlyCrook: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
+          cardType: "character",
           cost: "free",
           costRestriction: {
             comparison: "less-or-equal",
@@ -101,4 +57,5 @@ export const dukeWeaseltonSurlyCrook: CharacterCard = {
       text: "APPREHENDED When this character is banished, you may play a character with cost 2 or less for free.",
     },
   ],
+  i18n: dukeWeaseltonSurlyCrookI18n,
 };

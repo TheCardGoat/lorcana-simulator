@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { wasabiAlwaysPreparedI18n } from "./158-wasabi-always-prepared.i18n";
 
 export const wasabiAlwaysPrepared: CharacterCard = {
   id: "PYV",
@@ -7,28 +8,6 @@ export const wasabiAlwaysPrepared: CharacterCard = {
   cardType: "character",
   name: "Wasabi",
   version: "Always Prepared",
-  i18n: {
-    en: {
-      name: "Wasabi",
-      version: "Always Prepared",
-      text: "Support",
-    },
-    de: {
-      name: "Wasabi",
-      version: "Auf alles vorbereitet",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Wasabi",
-      version: "Toujours prêt",
-      text: "Soutien",
-    },
-    it: {
-      name: "Wasabi",
-      version: "Sempre Pronto",
-      text: "Aiutante",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "008",
@@ -53,4 +32,5 @@ export const wasabiAlwaysPrepared: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: wasabiAlwaysPreparedI18n,
 };

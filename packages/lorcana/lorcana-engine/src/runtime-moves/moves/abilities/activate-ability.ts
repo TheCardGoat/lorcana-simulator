@@ -8,6 +8,7 @@ import type {
 import { createLorcanaLogMessage } from "../../../types";
 import {
   analyzeEffectTargets,
+  analyzeTargetSelectionAvailabilityFromAnalysis,
   flattenNormalizedTargetSelection,
   validateAndNormalizeTargetSelection,
 } from "../../../targeting/runtime";
@@ -26,8 +27,14 @@ import {
   queueTriggeredEvent,
   snapshotTriggeredCandidatesForCard,
 } from "../../effects/triggered-abilities";
+import { emitBeChosenEvents } from "../../effects/be-chosen";
 import { recordBanishedCharacterThisTurn } from "../../state/turn-metrics";
 import { getGrantedActivatedAbilities } from "../../rules/static-ability-utils";
+import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
+import {
+  evaluateCondition,
+  type ConditionEvaluationContext,
+} from "../../../rules/condition-evaluator";
 
 type ActivatedAbilityValidationContext = Parameters<
   NonNullable<LorcanaMoveDefinition<"activateAbility">["validate"]>
@@ -86,9 +93,14 @@ function getActivatedAbilityByIndex(
 
 function getUsesPerTurn(ability: ActivatedAbilityDefinition): number | undefined {
   const rawUsesPerTurn = (ability as { usesPerTurn?: unknown }).usesPerTurn;
-  return typeof rawUsesPerTurn === "number" && Number.isFinite(rawUsesPerTurn)
-    ? rawUsesPerTurn
-    : undefined;
+  if (typeof rawUsesPerTurn === "number" && Number.isFinite(rawUsesPerTurn)) {
+    return rawUsesPerTurn;
+  }
+  const restrictions = (ability as { restrictions?: readonly { type: string }[] }).restrictions;
+  if (restrictions?.some((r) => r.type === "once-per-turn")) {
+    return 1;
+  }
+  return undefined;
 }
 
 function getAbilityUsageCount(
@@ -124,6 +136,115 @@ function getRequestedExertCharacterCosts(ctx: ActivatedAbilityReadableContext): 
   return requestedCosts.filter((cardId): cardId is CardInstanceId => typeof cardId === "string");
 }
 
+function getRequestedExertItemCosts(ctx: ActivatedAbilityReadableContext): CardInstanceId[] {
+  const requestedCosts = ctx.args.costs?.exertItems;
+  if (!Array.isArray(requestedCosts)) {
+    return [];
+  }
+
+  return requestedCosts.filter((cardId): cardId is CardInstanceId => typeof cardId === "string");
+}
+
+function getRequiredExertItemCostCount(ability: ActivatedAbilityDefinition): number {
+  const cost = ability.cost ?? {};
+  if (typeof cost.exertItems === "number" && Number.isFinite(cost.exertItems)) {
+    return Math.max(0, Math.floor(cost.exertItems));
+  }
+  return 0;
+}
+
+function getEligibleExertItemCostCards(
+  ctx: ActivatedAbilityReadableContext,
+  currentPlayer: PlayerId,
+): CardInstanceId[] {
+  return getControlledCardsInPlay(ctx, currentPlayer).filter((cardId) => {
+    const definition = getCardDefinitionFromContext(ctx, cardId);
+    if (!definition || definition.cardType !== "item") {
+      return false;
+    }
+    const cardMeta = ctx.cards.require(cardId).meta as LorcanaCardMeta | undefined;
+    return cardMeta?.state !== "exerted";
+  }) as CardInstanceId[];
+}
+
+function validateExertItemCostSelections(
+  ctx: ActivatedAbilityValidationContext,
+  currentPlayer: PlayerId,
+  ability: ActivatedAbilityDefinition,
+): RuntimeValidationResult {
+  const requiredCount = getRequiredExertItemCostCount(ability);
+  const requestedCosts = getRequestedExertItemCosts(ctx);
+
+  if (requiredCount === 0) {
+    if (requestedCosts.length > 0) {
+      return createFailure(
+        "Ability does not use exerted item costs",
+        "ABILITY_COST_SELECTION_UNEXPECTED",
+      );
+    }
+    return { valid: true };
+  }
+
+  const eligibleCosts = getEligibleExertItemCostCards(ctx, currentPlayer);
+  if (eligibleCosts.length < requiredCount) {
+    return createFailure(
+      "Not enough eligible items in play to pay the exert cost",
+      "ABILITY_COST_SELECTION_UNAVAILABLE",
+    );
+  }
+
+  if (requestedCosts.length === 0) {
+    if (eligibleCosts.length > requiredCount) {
+      return createFailure(
+        `Ability requires ${requiredCount} exert item cost selection${requiredCount === 1 ? "" : "s"}`,
+        "ABILITY_COST_SELECTION_MISSING",
+      );
+    }
+    return { valid: true };
+  }
+
+  if (requestedCosts.length !== requiredCount) {
+    return createFailure(
+      `Ability requires ${requiredCount} exert item cost selection${requiredCount === 1 ? "" : "s"}`,
+      "ABILITY_COST_SELECTION_MISMATCH",
+    );
+  }
+
+  if (new Set(requestedCosts).size !== requestedCosts.length) {
+    return createFailure("Exerted item costs must be unique", "ABILITY_COST_SELECTION_DUPLICATE");
+  }
+
+  const eligibleSet = new Set(eligibleCosts);
+  for (const cardId of requestedCosts) {
+    if (!eligibleSet.has(cardId)) {
+      return createFailure(
+        "Exerted item cost must be one of your ready items in play",
+        "ABILITY_COST_CARD_INVALID",
+      );
+    }
+  }
+
+  return { valid: true };
+}
+
+function resolveExertItemCostCards(
+  ctx: ActivatedAbilityReadableContext,
+  currentPlayer: PlayerId,
+  ability: ActivatedAbilityDefinition,
+): CardInstanceId[] {
+  const requestedCosts = getRequestedExertItemCosts(ctx);
+  if (requestedCosts.length > 0) {
+    return requestedCosts;
+  }
+
+  const requiredCount = getRequiredExertItemCostCount(ability);
+  if (requiredCount === 0) {
+    return [];
+  }
+
+  return getEligibleExertItemCostCards(ctx, currentPlayer).slice(0, requiredCount);
+}
+
 function getRequestedBanishItemCosts(ctx: ActivatedAbilityReadableContext): CardInstanceId[] {
   const requestedCosts = ctx.args.costs?.banishItems;
   if (!Array.isArray(requestedCosts)) {
@@ -152,7 +273,11 @@ function getRequiredExertCharacterCostCount(ability: ActivatedAbilityDefinition)
 }
 
 function getRequiredBanishItemCostCount(ability: ActivatedAbilityDefinition): number {
-  return ability.cost?.banishItem ? 1 : 0;
+  const banishItem = ability.cost?.banishItem;
+  if (typeof banishItem === "number") {
+    return Math.max(0, Math.floor(banishItem));
+  }
+  return banishItem ? 1 : 0;
 }
 
 function getRequiredBanishCharacterCostCount(ability: ActivatedAbilityDefinition): number {
@@ -181,8 +306,17 @@ function getEligibleBanishItemCostCards(
 function getEligibleBanishCharacterCostCards(
   ctx: ActivatedAbilityReadableContext,
   currentPlayer: PlayerId,
+  ability: ActivatedAbilityDefinition,
+  sourceCardId?: CardInstanceId,
 ): CardInstanceId[] {
   return getControlledCardsInPlay(ctx, currentPlayer).filter((cardId) => {
+    if (
+      ability.cost?.banishCharacterTarget === "another" &&
+      sourceCardId &&
+      cardId === sourceCardId
+    ) {
+      return false;
+    }
     const definition = getCardDefinitionFromContext(ctx, cardId);
     return definition?.cardType === "character";
   }) as CardInstanceId[];
@@ -210,6 +344,7 @@ function resolveBanishCharacterCostCards(
   ctx: ActivatedAbilityReadableContext,
   currentPlayer: PlayerId,
   ability: ActivatedAbilityDefinition,
+  sourceCardId?: CardInstanceId,
 ): CardInstanceId[] {
   const requestedCosts = getRequestedBanishCharacterCosts(ctx);
   if (requestedCosts.length > 0) {
@@ -221,7 +356,10 @@ function resolveBanishCharacterCostCards(
     return [];
   }
 
-  return getEligibleBanishCharacterCostCards(ctx, currentPlayer).slice(0, requiredCount);
+  return getEligibleBanishCharacterCostCards(ctx, currentPlayer, ability, sourceCardId).slice(
+    0,
+    requiredCount,
+  );
 }
 
 function getRequiredDiscardCardCostCount(ability: ActivatedAbilityDefinition): number {
@@ -392,6 +530,7 @@ function validateBanishCharacterCostSelections(
   ctx: ActivatedAbilityValidationContext,
   currentPlayer: PlayerId,
   ability: ActivatedAbilityDefinition,
+  sourceCardId?: CardInstanceId,
 ): RuntimeValidationResult {
   const requiredCount = getRequiredBanishCharacterCostCount(ability);
   const requestedCosts = getRequestedBanishCharacterCosts(ctx);
@@ -407,7 +546,12 @@ function validateBanishCharacterCostSelections(
     return { valid: true };
   }
 
-  const eligibleCosts = getEligibleBanishCharacterCostCards(ctx, currentPlayer);
+  const eligibleCosts = getEligibleBanishCharacterCostCards(
+    ctx,
+    currentPlayer,
+    ability,
+    sourceCardId,
+  );
   if (eligibleCosts.length < requiredCount) {
     return createFailure(
       "Not enough eligible characters in play to pay the banish cost",
@@ -500,6 +644,18 @@ function validateExertCharacterCostSelections(
         "Additional exerted character cost must be a character",
         "ABILITY_COST_CARD_TYPE_INVALID",
       );
+    }
+
+    // Check classification restriction if specified
+    const requiredClassification = ability.cost?.exertCharactersClassification;
+    if (requiredClassification) {
+      const classifications = (costCardDef as { classifications?: string[] }).classifications ?? [];
+      if (!classifications.includes(requiredClassification)) {
+        return createFailure(
+          `Exerted character cost must have the ${requiredClassification} classification`,
+          "ABILITY_COST_CARD_CLASSIFICATION_INVALID",
+        );
+      }
     }
 
     // Check that the character is ready to be exerted
@@ -612,6 +768,14 @@ function buildExertCostCards(
   return exertCards;
 }
 
+function buildExertItemCostCards(
+  ctx: ActivatedAbilityReadableContext,
+  currentPlayer: PlayerId,
+  ability: ActivatedAbilityDefinition,
+): CardInstanceId[] {
+  return resolveExertItemCostCards(ctx, currentPlayer, ability);
+}
+
 function validateAbilityTargeting(
   ctx: ActivatedAbilityValidationContext,
   cardId: CardInstanceId,
@@ -627,6 +791,20 @@ function validateAbilityTargeting(
     currentPlayer,
     ctx,
   });
+  if (!selectionValidation.valid && selectionValidation.errorCode === "TOO_FEW_TARGETS") {
+    analyzeTargetSelectionAvailabilityFromAnalysis(ability.effect, analysis);
+    return validateAndNormalizeTargetSelection(
+      ctx.args.targets,
+      {
+        ...analysis,
+        minSelections: 0,
+      },
+      {
+        currentPlayer,
+        ctx,
+      },
+    );
+  }
   if (!selectionValidation.valid) {
     return selectionValidation;
   }
@@ -679,6 +857,34 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       return createFailure("Activated ability not found", "ABILITY_NOT_FOUND");
     }
 
+    if (ability.condition !== undefined) {
+      const conditionCtx: ConditionEvaluationContext = {
+        framework: {
+          state: {
+            priority: ctx.framework.state.priority,
+            status: ctx.framework.state.status,
+            playerIds: ctx.framework.state.playerIds,
+            currentPlayer: currentPlayer,
+          },
+          zones: {
+            getCards: (query: { zone: string; playerId: PlayerId }) =>
+              ctx.framework.zones.getCards(query) as unknown as readonly CardInstanceId[],
+          },
+        },
+        cards: {
+          getDefinition: ctx.cards.getDefinition,
+          require: ctx.cards.require,
+        },
+        G: ctx.G,
+        playerId: currentPlayer,
+        sourceCardId: cardId as CardInstanceId,
+      };
+      const conditionMet = evaluateCondition(ability.condition, conditionCtx);
+      if (!conditionMet) {
+        return createFailure("Ability condition not met", "ABILITY_CONDITION_NOT_MET");
+      }
+    }
+
     const cardMeta = (ctx.cards.require(cardId).meta ?? {}) as LorcanaCardMeta;
     const cost = ability.cost ?? {};
 
@@ -691,6 +897,11 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       return exertCharacterCostValidation;
     }
 
+    const exertItemCostValidation = validateExertItemCostSelections(ctx, currentPlayer, ability);
+    if (!exertItemCostValidation.valid) {
+      return exertItemCostValidation;
+    }
+
     const banishItemCostValidation = validateBanishItemCostSelections(ctx, currentPlayer, ability);
     if (!banishItemCostValidation.valid) {
       return banishItemCostValidation;
@@ -700,6 +911,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       ctx,
       currentPlayer,
       ability,
+      cardId as CardInstanceId,
     );
     if (!banishCharacterCostValidation.valid) {
       return banishCharacterCostValidation;
@@ -731,7 +943,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
 
     const usesPerTurn = getUsesPerTurn(ability);
     if (usesPerTurn !== undefined) {
-      const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+      const currentTurn = ctx.framework.state.status.turn ?? 1;
       const usageCount = getAbilityUsageCount(
         cardMeta,
         ability.id ?? `ability-${abilityIndex}`,
@@ -752,7 +964,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
     const { cardId, abilityIndex, targets } = ctx.args;
     const currentPlayer = (ctx.framework.state.currentPlayer ??
       ctx.playerId ??
-      ctx.framework.state.ctx.priority.holder) as PlayerId | undefined;
+      ctx.framework.state.priority.holder) as PlayerId | undefined;
 
     if (!currentPlayer) {
       throw new Error("activateAbility execution requires an active player");
@@ -776,10 +988,25 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
     const cost = ability.cost ?? {};
     const currentMeta = (ctx.cards.require(cardId).meta ?? {}) as LorcanaCardMeta;
     const banishItemCostCards = resolveBanishItemCostCards(ctx, currentPlayer, ability);
-    const banishCharacterCostCards = resolveBanishCharacterCostCards(ctx, currentPlayer, ability);
+    const banishCharacterCostCards = resolveBanishCharacterCostCards(
+      ctx,
+      currentPlayer,
+      ability,
+      cardId as CardInstanceId,
+    );
     const discardCostCards = resolveDiscardCostCards(ctx, currentPlayer, ability);
 
+    const exertItemCostCards = buildExertItemCostCards(ctx, currentPlayer, ability);
+
     // Pay basic costs (ink and exert)
+    const allExertCards = [
+      ...buildExertCostCards(ctx, cardId as CardInstanceId, cardDef, ability),
+      ...exertItemCostCards.map((itemCardId) => ({
+        cardId: itemCardId,
+        cardType: getCardDefinitionFromContext(ctx, itemCardId)?.cardType,
+        subject: "Item cost",
+      })),
+    ];
     const payResult = payBasicCost(
       {
         framework: ctx.framework,
@@ -788,7 +1015,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       },
       {
         ink: cost.ink,
-        exertCards: buildExertCostCards(ctx, cardId as CardInstanceId, cardDef, ability),
+        exertCards: allExertCards,
       },
     );
     if (!payResult.success) {
@@ -818,6 +1045,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
     for (const banishItemCardId of banishItemCostCards) {
       const costCardMeta = (ctx.cards.require(banishItemCardId).meta ?? {}) as LorcanaCardMeta;
       const subjectAtLocationId = costCardMeta.atLocationId as CardInstanceId | undefined;
+      const keywordsBeforeBanish = getKeywordsBeforeBanish(ctx, banishItemCardId, currentPlayer);
       const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, banishItemCardId);
       moveCardOutOfPlayWithStack(ctx, banishItemCardId, {
         zone: "discard",
@@ -830,6 +1058,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
           cardId: banishItemCardId,
           sourceId: cardId as CardInstanceId,
           snapshot: {
+            keywordsBeforeBanish,
             subjectAtLocationId,
           },
           reason: "activated ability cost",
@@ -841,6 +1070,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
           triggerSourceCardId: banishItemCardId,
           triggerCandidates,
           eventSnapshot: {
+            keywordsBeforeBanish,
             subjectAtLocationId,
           },
         },
@@ -850,6 +1080,11 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
     for (const banishCharacterCardId of banishCharacterCostCards) {
       const costCardMeta = (ctx.cards.require(banishCharacterCardId).meta ?? {}) as LorcanaCardMeta;
       const subjectAtLocationId = costCardMeta.atLocationId as CardInstanceId | undefined;
+      const keywordsBeforeBanish = getKeywordsBeforeBanish(
+        ctx,
+        banishCharacterCardId,
+        currentPlayer,
+      );
       const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, banishCharacterCardId);
       moveCardOutOfPlayWithStack(ctx, banishCharacterCardId, {
         zone: "discard",
@@ -862,6 +1097,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
           cardId: banishCharacterCardId,
           sourceId: cardId as CardInstanceId,
           snapshot: {
+            keywordsBeforeBanish,
             subjectAtLocationId,
           },
           reason: "activated ability cost",
@@ -873,6 +1109,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
           triggerSourceCardId: banishCharacterCardId,
           triggerCandidates,
           eventSnapshot: {
+            keywordsBeforeBanish,
             subjectAtLocationId,
           },
         },
@@ -880,7 +1117,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       recordBanishedCharacterThisTurn(ctx, banishCharacterCardId);
     }
 
-    const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+    const currentTurn = ctx.framework.state.status.turn ?? 1;
     const abilityId = ability.id ?? `ability-${abilityIndex}`;
     const usageCount = getAbilityUsageCount(currentMeta, abilityId, currentTurn) + 1;
 
@@ -888,6 +1125,11 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
     if (cost.banishSelf) {
       const currentCardMeta = ctx.cards.require(cardId as CardInstanceId).meta ?? {};
       const subjectAtLocationId = currentCardMeta.atLocationId as CardInstanceId | undefined;
+      const keywordsBeforeBanish = getKeywordsBeforeBanish(
+        ctx,
+        cardId as CardInstanceId,
+        currentPlayer,
+      );
       const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId as CardInstanceId);
       moveCardOutOfPlayWithStack(ctx, cardId as CardInstanceId, {
         zone: "discard",
@@ -900,6 +1142,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
           cardId: cardId as CardInstanceId,
           sourceId: cardId as CardInstanceId,
           snapshot: {
+            keywordsBeforeBanish,
             subjectAtLocationId,
           },
           reason: "activated ability cost",
@@ -911,6 +1154,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
           triggerSourceCardId: cardId as CardInstanceId,
           triggerCandidates,
           eventSnapshot: {
+            keywordsBeforeBanish,
             subjectAtLocationId,
           },
         },
@@ -970,14 +1214,31 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       currentPlayer,
       ctx,
     });
-    if (!normalizedSelection.valid) {
+    const finalSelection =
+      !normalizedSelection.valid && normalizedSelection.errorCode === "TOO_FEW_TARGETS"
+        ? (() => {
+            analyzeTargetSelectionAvailabilityFromAnalysis(ability.effect, analysis);
+            return validateAndNormalizeTargetSelection(
+              targets,
+              {
+                ...analysis,
+                minSelections: 0,
+              },
+              {
+                currentPlayer,
+                ctx,
+              },
+            );
+          })()
+        : normalizedSelection;
+    if (!finalSelection.valid) {
       throw new Error(
-        `Invalid ability targets: ${normalizedSelection.error} (${normalizedSelection.errorCode})`,
+        `Invalid ability targets: ${finalSelection.error} (${finalSelection.errorCode})`,
       );
     }
 
     const resolutionInput: ActionResolutionInput = {};
-    const flattenedTargets = flattenNormalizedTargetSelection(normalizedSelection.selection);
+    const flattenedTargets = flattenNormalizedTargetSelection(finalSelection.selection);
     if (flattenedTargets) {
       resolutionInput.targets = flattenedTargets;
     }
@@ -987,13 +1248,33 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
         chosenCardId: banishCharacterCostCards[0],
       };
     }
+    if (discardCostCards.length > 0) {
+      resolutionInput.eventSnapshot = {
+        ...resolutionInput.eventSnapshot,
+        discardedCardIds: discardCostCards,
+      };
+    }
     if (ctx.args.choiceIndex !== undefined) {
       resolutionInput.choiceIndex = ctx.args.choiceIndex;
     }
 
-    const result = resolveActionEffect(ctx, source, ability.effect, resolutionInput);
+    // Emit be-chosen events for targets of this activated ability
+    emitBeChosenEvents(ctx, source, resolutionInput);
+
+    const result = resolveActionEffect(ctx, source, ability.effect, resolutionInput, {
+      allowPromptForExistingChosenTargets: true,
+    });
     if (result.status === "suspended") {
       return;
+    }
+
+    if (ability.name?.startsWith("Boost")) {
+      queueTriggeredEvent(ctx, {
+        event: "boost",
+        playerId: currentPlayer,
+        subjectCardId: cardId as CardInstanceId,
+        triggerSourceCardId: cardId as CardInstanceId,
+      });
     }
 
     flushTriggeredEventsToBag(ctx);

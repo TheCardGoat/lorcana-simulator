@@ -119,13 +119,14 @@ function isLikelyStandaloneTitlePrefix(prefix: string): boolean {
 function isLikelyAllCapsWord(token: string): boolean {
   const lettersOnly = token.trim().replace(/[^\p{L}]/gu, "");
 
-  if (!lettersOnly) return false;
+  if (lettersOnly.length < 2) return false;
 
   return /\p{Lu}/u.test(lettersOnly) && !/\p{Ll}/u.test(lettersOnly);
 }
 
 function startsSentenceBoundary(previousToken: string | undefined): boolean {
   if (!previousToken) return true;
+  if (/^\d+$/.test(previousToken)) return true;
 
   return /[.!?]["')\]]*$/.test(previousToken);
 }
@@ -154,21 +155,37 @@ function splitNamedAbilitySegments(segment: string): string[] {
       continue;
     }
 
-    if (!/\p{Ll}/u.test(words[titleEnd]!.part)) {
+    const hasLowercaseAhead = words
+      .slice(titleEnd, titleEnd + 3)
+      .some((w) => /\p{Ll}/u.test(w.part));
+    if (!hasLowercaseAhead) {
       continue;
     }
 
     startIndexes.push(currentWord.index);
   }
 
-  if (startIndexes.length <= 1 || startIndexes[0] !== 0) {
+  if (startIndexes.length === 0) {
     return [segment];
   }
 
-  return startIndexes.map((start, index) => {
-    const end = index + 1 < startIndexes.length ? startIndexes[index + 1]! : parts.length;
-    return parts.slice(start, end).join("").trim();
-  });
+  if (startIndexes[0] === 0 && startIndexes.length <= 1) {
+    return [segment];
+  }
+
+  const result: string[] = [];
+
+  if (startIndexes[0]! !== 0) {
+    result.push(parts.slice(0, startIndexes[0]!).join("").trim());
+  }
+
+  for (let i = 0; i < startIndexes.length; i++) {
+    const start = startIndexes[i]!;
+    const end = i + 1 < startIndexes.length ? startIndexes[i + 1]! : parts.length;
+    result.push(parts.slice(start, end).join("").trim());
+  }
+
+  return result.filter(Boolean);
 }
 
 function splitAtUppercaseRun(segment: string): CardTextEntry | null {

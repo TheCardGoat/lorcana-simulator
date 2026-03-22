@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { baymaxArmoredCompanionI18n } from "./157-baymax-armored-companion.i18n";
 
 export const baymaxArmoredCompanion: CharacterCard = {
   id: "w4v",
@@ -7,52 +8,6 @@ export const baymaxArmoredCompanion: CharacterCard = {
   cardType: "character",
   name: "Baymax",
   version: "Armored Companion",
-  i18n: {
-    en: {
-      name: "Baymax",
-      version: "Armored Companion",
-      text: [
-        {
-          title: "THE TREATMENT IS WORKING",
-          description:
-            "When you play this character and whenever he quests, you may remove up to 2 damage from another chosen character of yours. Gain 1 lore for each 1 damage removed this way.",
-        },
-      ],
-    },
-    de: {
-      name: "Baymax",
-      version: "Armored Companion",
-      text: [
-        {
-          title: "THE TREATMENT IS WORKING",
-          description:
-            "When you play this character and whenever he quests, you may remove up to 2 damage from another chosen character of yours. Gain 1 lore for each 1 damage removed this way.",
-        },
-      ],
-    },
-    fr: {
-      name: "Baymax",
-      version: "Armored Companion",
-      text: [
-        {
-          title: "THE TREATMENT IS WORKING",
-          description:
-            "When you play this character and whenever he quests, you may remove up to 2 damage from another chosen character of yours. Gain 1 lore for each 1 damage removed this way.",
-        },
-      ],
-    },
-    it: {
-      name: "Baymax",
-      version: "Armored Companion",
-      text: [
-        {
-          title: "THE TREATMENT IS WORKING",
-          description:
-            "When you play this character and whenever he quests, you may remove up to 2 damage from another chosen character of yours. Gain 1 lore for each 1 damage removed this way.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "006",
@@ -80,28 +35,45 @@ export const baymaxArmoredCompanion: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 2,
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "remove-damage",
-          upTo: true,
+          type: "sequence",
+          steps: [
+            {
+              amount: 2,
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["character"],
+                excludeSelf: true,
+              },
+              type: "remove-damage",
+              upTo: true,
+            },
+            {
+              type: "gain-lore",
+              amount: {
+                type: "for-each",
+                counter: {
+                  type: "damage-removed",
+                },
+              },
+            },
+          ],
         },
         type: "optional",
       },
       id: "12n-1",
-      name: "THE TREATMENT IS WORKING When you play this character and",
+      name: "THE TREATMENT IS WORKING",
       text: "THE TREATMENT IS WORKING When you play this character and whenever he quests, you may remove up to 2 damage from another chosen character of yours. Gain 1 lore for each 1 damage removed this way.",
       trigger: {
         event: "play",
+        events: ["quest"],
         on: "SELF",
         timing: "when",
       },
       type: "triggered",
     },
   ],
+  i18n: baymaxArmoredCompanionI18n,
 };

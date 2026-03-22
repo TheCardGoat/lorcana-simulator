@@ -3,12 +3,15 @@ import type {
   PendingActionEffect,
   PendingActionEffectContinuation,
   PendingActionEffectKind,
+  ResolutionSelectionContext,
 } from "../../../types";
 import type { CardPlayedPayload } from "../../../types";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { applyReplacementEffects } from "../../effects/replacement-effects";
 import type { ReplacementEvent } from "../../effects/replacement-effects";
 import { getLorcanaCardName, traceLorcanaRuntimeStep } from "../../../runtime-trace";
+import { buildResolutionSelectionContext } from "./selection-context";
+import { cloneSelectionInput } from "./selection-state";
 
 type PendingActionEffectReadableContext = {
   G: {
@@ -16,21 +19,18 @@ type PendingActionEffectReadableContext = {
   };
   framework: {
     state: {
-      ctx: {
-        priority: {
-          pendingChoice?: {
-            type?: string;
-          };
+      priority: {
+        pendingChoice?: {
+          type?: string;
         };
-        zones: {
-          private: {
-            cardIndex: Record<string, { zoneKey?: string } | undefined>;
-          };
-        };
+      };
+      _zonesPrivate: {
+        cardIndex: Record<string, { zoneKey?: string } | undefined>;
       };
     };
     zones: {
       moveCard: PlayCardExecutionContext["framework"]["zones"]["moveCard"];
+      getCardZone: PlayCardExecutionContext["framework"]["zones"]["getCardZone"];
     };
   };
   cards: Pick<PlayCardExecutionContext["cards"], "clearMeta">;
@@ -47,6 +47,7 @@ type PendingActionEffectParams = {
   effect: unknown;
   continuation?: PendingActionEffectContinuation;
   resolutionInput: ActionResolutionInput;
+  selectionContext?: ResolutionSelectionContext;
 };
 
 export function cloneActionResolutionInput(
@@ -66,11 +67,9 @@ export function cloneActionResolutionInput(
 
   return {
     ...resolutionInput,
-    targets: Array.isArray(resolutionInput.targets)
-      ? ([...resolutionInput.targets] as Array<CardInstanceId | PlayerId>)
-      : typeof resolutionInput.targets === "string"
-        ? resolutionInput.targets
-        : undefined,
+    targets: cloneSelectionInput(resolutionInput.targets),
+    currentTargets: cloneSelectionInput(resolutionInput.currentTargets),
+    contextTargets: cloneSelectionInput(resolutionInput.contextTargets),
     destinations: Array.isArray(resolutionInput.destinations)
       ? resolutionInput.destinations.map((destination) => ({
           zone: destination.zone,
@@ -84,22 +83,111 @@ export function cloneActionResolutionInput(
   };
 }
 
+function clonePendingActionEffectContinuation(
+  continuation: PendingActionEffectContinuation | undefined,
+): PendingActionEffectContinuation | undefined {
+  if (!continuation) {
+    return undefined;
+  }
+
+  return {
+    ...continuation,
+    remainingEffects: continuation.remainingEffects
+      ? [...continuation.remainingEffects]
+      : undefined,
+    stagedSequence: continuation.stagedSequence
+      ? {
+          sequenceEffect: continuation.stagedSequence.sequenceEffect,
+          collectedTargets: [...continuation.stagedSequence.collectedTargets],
+          collectedTargetCounts: [...continuation.stagedSequence.collectedTargetCounts],
+          remainingSteps: [...continuation.stagedSequence.remainingSteps],
+        }
+      : undefined,
+  };
+}
+
 function getPendingEffectId(
   ctx: PlayCardExecutionContext,
   sourceCardId: CardInstanceId,
   chooserId: PlayerId,
 ): string {
-  const stateId = ctx.framework.state.ctx._stateID ?? 0;
+  const stateId = ctx.framework.state.stateID ?? 0;
   const nextIndex = (ctx.G.pendingEffects?.length ?? 0) + 1;
   return `pending-action:${stateId}:${sourceCardId}:${chooserId}:${nextIndex}`;
+}
+
+function cloneResolutionSelectionContext(
+  selectionContext: ResolutionSelectionContext | undefined,
+): ResolutionSelectionContext | undefined {
+  if (!selectionContext) {
+    return undefined;
+  }
+
+  return {
+    ...selectionContext,
+    currentSelection: {
+      ...selectionContext.currentSelection,
+      targets: selectionContext.currentSelection.targets
+        ? [...selectionContext.currentSelection.targets]
+        : undefined,
+      destinations: selectionContext.currentSelection.destinations
+        ? selectionContext.currentSelection.destinations.map((destination) => ({
+            zone: destination.zone,
+            cards: [...destination.cards],
+          }))
+        : undefined,
+    },
+    ...(selectionContext.kind === "target-selection" || selectionContext.kind === "discard-choice"
+      ? {
+          targetDsl: [...selectionContext.targetDsl],
+          cardCandidateIds: [...selectionContext.cardCandidateIds],
+          playerCandidateIds: [...selectionContext.playerCandidateIds],
+          allowedZones: [...selectionContext.allowedZones],
+        }
+      : {}),
+    ...(selectionContext.kind === "choice-selection"
+      ? {
+          options: selectionContext.options.map((option) => ({ ...option })),
+        }
+      : {}),
+    ...(selectionContext.kind === "scry-selection"
+      ? {
+          revealedCardIds: [...selectionContext.revealedCardIds],
+          destinationRules: selectionContext.destinationRules.map((rule) => ({ ...rule })),
+        }
+      : {}),
+  };
 }
 
 export function createPendingActionEffect(
   ctx: PlayCardExecutionContext,
   params: PendingActionEffectParams,
 ): PendingActionEffect {
+  const pendingEffectId = getPendingEffectId(ctx, params.sourceCardId, params.chooserId);
+  const projectedSelectionContext =
+    params.selectionContext ??
+    buildResolutionSelectionContext({
+      origin: "pending-effect",
+      requestId: pendingEffectId,
+      sourceCardId: params.sourceCardId,
+      chooserId: params.chooserId,
+      cardPlayed: params.cardPlayed,
+      effect: params.effect,
+      resolutionInput: params.resolutionInput,
+      ctx,
+    });
+  const selectionContext = projectedSelectionContext
+    ? {
+        ...projectedSelectionContext,
+        origin: "pending-effect" as const,
+        requestId: pendingEffectId,
+        sourceCardId: params.sourceCardId,
+        chooserId: params.chooserId,
+      }
+    : undefined;
+
   return {
-    id: getPendingEffectId(ctx, params.sourceCardId, params.chooserId),
+    id: pendingEffectId,
     type: "action-effect",
     kind: params.kind,
     sourceId: params.sourceCardId,
@@ -111,8 +199,9 @@ export function createPendingActionEffect(
       singerIds: params.cardPlayed.singerIds ? [...params.cardPlayed.singerIds] : undefined,
     },
     effect: params.effect,
-    continuation: params.continuation,
+    continuation: clonePendingActionEffectContinuation(params.continuation),
     resolutionInput: cloneActionResolutionInput(params.resolutionInput),
+    selectionContext: cloneResolutionSelectionContext(selectionContext),
   };
 }
 
@@ -127,7 +216,7 @@ export function enqueuePendingActionEffect(
   }
   pendingEffects.push(pendingEffect as (typeof pendingEffects)[number]);
 
-  const priorityState = ctx.framework.state.ctx.priority as {
+  const priorityState = ctx.framework.state.priority as {
     pendingChoice?: {
       type: "action-effect";
       playerID: PlayerId;
@@ -157,7 +246,7 @@ export function enqueuePendingActionEffect(
 }
 
 export function clearPendingActionChoice(ctx: PlayCardExecutionContext): void {
-  const priorityState = ctx.framework.state.ctx.priority as {
+  const priorityState = ctx.framework.state.priority as {
     pendingChoice?: {
       type: "action-effect";
       playerID: PlayerId;
@@ -187,11 +276,9 @@ export function hasPendingActionEffectResolution(ctx: {
   };
   framework: {
     state: {
-      ctx: {
-        priority: {
-          pendingChoice?: {
-            type?: string;
-          };
+      priority: {
+        pendingChoice?: {
+          type?: string;
         };
       };
     };
@@ -199,7 +286,7 @@ export function hasPendingActionEffectResolution(ctx: {
 }): boolean {
   return (
     (ctx.G.pendingEffects?.length ?? 0) > 0 ||
-    ctx.framework.state.ctx.priority.pendingChoice?.type === "action-effect"
+    ctx.framework.state.priority.pendingChoice?.type === "action-effect"
   );
 }
 
@@ -207,7 +294,7 @@ function getCardZoneKey(
   ctx: Pick<PendingActionEffectReadableContext, "framework">,
   cardId: CardInstanceId,
 ): string | undefined {
-  return ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+  return ctx.framework.zones.getCardZone(cardId);
 }
 
 export function moveSuspendedActionCardToLimbo(

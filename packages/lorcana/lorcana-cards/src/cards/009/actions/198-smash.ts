@@ -1,29 +1,12 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { smashI18n } from "./198-smash.i18n";
 
-export const smash_set9: ActionCard = {
+export const smash: ActionCard = {
   id: "vCv",
   canonicalId: "ci_0iV",
   reprints: ["set1-200", "set9-198"],
   cardType: "action",
   name: "Smash",
-  i18n: {
-    en: {
-      name: "Smash",
-      text: "Deal 3 damage to chosen character.",
-    },
-    de: {
-      name: "Wuchtschlag",
-      text: "Füge einem Charakter deiner Wahl 3 Schaden zu.",
-    },
-    fr: {
-      name: "FRACASSER !",
-      text: "Choisissez un personnage et infligez-lui 3 dommages.",
-    },
-    it: {
-      name: "Sfasciare",
-      text: "Infliggi 3 danni a un personaggio a tua scelta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Frozen",
   set: "009",
@@ -46,4 +29,5 @@ export const smash_set9: ActionCard = {
       },
     },
   ],
+  i18n: smashI18n,
 };

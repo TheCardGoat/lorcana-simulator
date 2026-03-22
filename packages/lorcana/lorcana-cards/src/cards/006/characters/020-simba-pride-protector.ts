@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { simbaPrideProtectorI18n } from "./020-simba-pride-protector.i18n";
 
 export const simbaPrideProtector: CharacterCard = {
   id: "pBr",
@@ -7,55 +8,6 @@ export const simbaPrideProtector: CharacterCard = {
   cardType: "character",
   name: "Simba",
   version: "Pride Protector",
-  i18n: {
-    en: {
-      name: "Simba",
-      version: "Pride Protector",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "UNDERSTAND THE BALANCE",
-          description:
-            "At the end of your turn, if this character is exerted, you may ready your other characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Simba",
-      version: "Pride Protector",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Simba.) UNDERSTAND THE BALANCE At the end of your turn, if this character is exerted, you may ready your other characters.",
-        },
-      ],
-    },
-    fr: {
-      name: "Simba",
-      version: "Pride Protector",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Simba.) UNDERSTAND THE BALANCE At the end of your turn, if this character is exerted, you may ready your other characters.",
-        },
-      ],
-    },
-    it: {
-      name: "Simba",
-      version: "Pride Protector",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Simba.) UNDERSTAND THE BALANCE At the end of your turn, if this character is exerted, you may ready your other characters.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lion King",
   set: "006",
@@ -92,23 +44,50 @@ export const simbaPrideProtector: CharacterCard = {
       type: "keyword",
     },
     {
-      effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: {
-            selector: "all",
-            count: "all",
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "ready",
-        },
-        type: "optional",
-      },
       id: "1i7-2",
+      name: "UNDERSTAND THE BALANCE",
+      type: "triggered",
+      trigger: {
+        event: "end-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      effect: {
+        condition: {
+          type: "target-query",
+          query: {
+            selector: "all",
+            reference: "source",
+            filters: [
+              {
+                type: "exerted",
+              },
+            ],
+          },
+          comparison: {
+            operator: "gte",
+            value: 1,
+          },
+        },
+        then: {
+          chooser: "CONTROLLER",
+          effect: {
+            target: {
+              selector: "all",
+              count: "all",
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["character"],
+              excludeSelf: true,
+            },
+            type: "ready",
+          },
+          type: "optional",
+        },
+        type: "conditional",
+      },
       text: "UNDERSTAND THE BALANCE At the end of your turn, if this character is exerted, you may ready your other characters.",
-      type: "action",
     },
   ],
+  i18n: simbaPrideProtectorI18n,
 };

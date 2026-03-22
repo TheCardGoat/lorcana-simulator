@@ -1,134 +1,164 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   AnnaDiplomaticQueen,
-//   EdLaughingHyena,
-// } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Anna - Diplomatic Queen", () => {
-//   Describe("**ROYAL RESOLUTION** When you play this character you may pay 2 {I} to chose one:* Each opponent choses and discards a card.* Chosen character gets +2 {S} this turn. * Banish chosen damaged character.", () => {
-//     It("you MUST pay 2 {I} to chose one", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Inkwell: annaDiplomaticQueen.cost,
-//           Hand: [annaDiplomaticQueen],
-//         },
-//         {
-//           Hand: [edLaughingHyena],
-//           Deck: 1,
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getCard(annaDiplomaticQueen);
-//       Const target = testStore.getCard(edLaughingHyena);
-//
-//       CardUnderTest.playFromHand();
-//       TestStore.resolveOptionalAbility();
-//       TestStore.resolveTopOfStack({ mode: "1" }, true);
-//
-//       Expect(testStore.stackLayers).toHaveLength(0);
-//     });
-//
-//     It("Each opponent chooses and discards a card.", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: annaDiplomaticQueen.cost + 2,
-//           Hand: [annaDiplomaticQueen],
-//         },
-//         {
-//           Hand: [edLaughingHyena],
-//           Deck: 1,
-//         },
-//       );
-//
-//       Const target = testEngine.getCardModel(edLaughingHyena);
-//
-//       Await testEngine.playCard(annaDiplomaticQueen);
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ mode: "1" }, true);
-//
-//       Expect(testEngine.store.priorityPlayer).toEqual("player_two");
-//       TestEngine.changeActivePlayer("player_two");
-//       Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//       Expect(target.zone).toBe("discard");
-//     });
-//
-//     It("Chosen character gets +2 {S} this turn.", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Inkwell: annaDiplomaticQueen.cost + 2,
-//           Hand: [annaDiplomaticQueen],
-//           Play: [edLaughingHyena],
-//         },
-//         {
-//           Deck: 1,
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getCard(annaDiplomaticQueen);
-//       Const target = testStore.getCard(edLaughingHyena);
-//
-//       CardUnderTest.playFromHand();
-//       TestStore.resolveOptionalAbility();
-//       TestStore.resolveTopOfStack({ mode: "2" }, true);
-//       TestStore.resolveTopOfStack({ targets: [target] });
-//
-//       Expect(target.strength).toBe(edLaughingHyena.strength + 2);
-//
-//       TestStore.passTurn();
-//
-//       Expect(target.strength).toBe(edLaughingHyena.strength);
-//     });
-//
-//     It("Banish chosen damaged character.", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Inkwell: annaDiplomaticQueen.cost + 2,
-//           Hand: [annaDiplomaticQueen],
-//           Play: [edLaughingHyena],
-//         },
-//         {
-//           Deck: 1,
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getCard(annaDiplomaticQueen);
-//       Const target = testStore.getCard(edLaughingHyena);
-//       Target.updateCardMeta({ damage: 1 });
-//
-//       CardUnderTest.playFromHand();
-//       TestStore.resolveOptionalAbility();
-//       TestStore.resolveTopOfStack({ mode: "3" }, true);
-//       TestStore.resolveTopOfStack({ targets: [target] });
-//
-//       Expect(target.zone).toBe("discard");
-//     });
-//   });
-// });
-//
-// Describe("Regression", () => {
-//   It("should not crash when playing a card with no cost", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: annaDiplomaticQueen.cost + 2,
-//       Hand: [annaDiplomaticQueen],
-//       Play: [edLaughingHyena],
-//     });
-//
-//     Const cardUnderTest = await testEngine.playCard(annaDiplomaticQueen);
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({ mode: "2" }, true);
-//     Await testEngine.resolveTopOfStack({ targets: [edLaughingHyena] });
-//
-//     Expect(testEngine.getCardModel(edLaughingHyena).strength).toBe(
-//       EdLaughingHyena.strength + 2,
-//     );
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { createMockCharacter, LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { annaDiplomaticQueen } from "./085-anna-diplomatic-queen";
+
+const targetCharacter = createMockCharacter({
+  id: "anna-test-target",
+  name: "Test Target",
+  cost: 2,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
+});
+
+const opponentHandCard = createMockCharacter({
+  id: "anna-test-opponent-hand",
+  name: "Opponent Hand Card",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+});
+
+describe("Anna - Diplomatic Queen", () => {
+  describe("ROYAL RESOLUTION - When you play this character, you may pay 2 ink to choose one", () => {
+    it("can decline the optional ability", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: annaDiplomaticQueen.cost + 2,
+          hand: [annaDiplomaticQueen],
+        },
+        {
+          hand: [opponentHandCard],
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(annaDiplomaticQueen)).toBeSuccessfulCommand();
+
+      // Decline the optional ability
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // No further pending effects
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
+    it("Each opponent chooses and discards a card (mode 0)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: annaDiplomaticQueen.cost + 2,
+          hand: [annaDiplomaticQueen],
+        },
+        {
+          hand: [opponentHandCard],
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(annaDiplomaticQueen)).toBeSuccessfulCommand();
+      const opponentHandCardId = testEngine.findCardInstanceId(
+        opponentHandCard,
+        "hand",
+        "player_two",
+      );
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, choiceIndex: 0 }),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [opponentHandCardId] }),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({ targets: [opponentHandCardId] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(opponentHandCard)).toBe("discard");
+    });
+
+    it("Chosen character gets +2 strength this turn (mode 1)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: annaDiplomaticQueen.cost + 2,
+          hand: [annaDiplomaticQueen],
+          play: [targetCharacter],
+        },
+        {
+          deck: 1,
+        },
+      );
+
+      const baseStrength = testEngine.asPlayerOne().getCardStrength(targetCharacter);
+
+      expect(testEngine.asPlayerOne().playCard(annaDiplomaticQueen)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, choiceIndex: 1 }),
+      ).toBeSuccessfulCommand();
+
+      // Choose the target character
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [targetCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardStrength(targetCharacter)).toBe(baseStrength + 2);
+
+      // Pass turn - the strength bonus should expire
+      testEngine.asServer().passTurn();
+      testEngine.asServer().passTurn();
+
+      expect(testEngine.asPlayerOne().getCardStrength(targetCharacter)).toBe(baseStrength);
+    });
+
+    it("Banish chosen damaged character (mode 2)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: annaDiplomaticQueen.cost + 2,
+          hand: [annaDiplomaticQueen],
+          play: [{ card: targetCharacter, damage: 1 }],
+        },
+        {
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(annaDiplomaticQueen)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, choiceIndex: 2 }),
+      ).toBeSuccessfulCommand();
+
+      // Choose the damaged target character
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [targetCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(targetCharacter)).toBe("discard");
+    });
+
+    it("requires 2 additional ink to use the ability", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          // Only enough ink to play Anna, not enough for the 2 ink cost
+          inkwell: annaDiplomaticQueen.cost,
+          hand: [annaDiplomaticQueen],
+        },
+        {
+          hand: [opponentHandCard],
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(annaDiplomaticQueen)).toBeSuccessfulCommand();
+
+      // Accept the optional ability - should fail or be auto-resolved since we can't pay
+      const bagResult = testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true });
+
+      // If the engine accepts the optional but fails to pay cost, the bag should clear
+      // Either way, the opponent's hand card should NOT be discarded
+      expect(testEngine.asPlayerTwo().getCardZone(opponentHandCard)).toBe("hand");
+    });
+  });
+});

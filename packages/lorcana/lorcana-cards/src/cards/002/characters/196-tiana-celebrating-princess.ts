@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tianaCelebratingPrincessI18n } from "./196-tiana-celebrating-princess.i18n";
 
 export const tianaCelebratingPrincess: CharacterCard = {
   id: "ivr",
@@ -7,37 +8,6 @@ export const tianaCelebratingPrincess: CharacterCard = {
   cardType: "character",
   name: "Tiana",
   version: "Celebrating Princess",
-  i18n: {
-    en: {
-      name: "Tiana",
-      version: "Celebrating Princess",
-      text: [
-        {
-          title: "Resist +2",
-        },
-        {
-          title: "WHAT YOU GIVE IS WHAT YOU GET",
-          description:
-            "While this character is exerted and you have no cards in your hand, opponents can't play actions.",
-        },
-      ],
-    },
-    de: {
-      name: "Tiana",
-      version: "Festliche Prinzessin",
-      text: "Robust +2 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 2.) WAS DU GIBST IST WAS DU KRIEGST Solange dieser Charakter erschöpft ist und du keine Karten auf der Hand hast, können gegnerische Mitspielende keine Aktionen ausspielen.",
-    },
-    fr: {
-      name: "Tiana",
-      version: "Princesse en fête",
-      text: "Résistance +2 LE SUCCÈS DÉPEND DE TOI Tant que ce personnage est épuisé et que vous n'avez aucune carte en main, vos adversaires ne peuvent pas jouer de cartes Action.",
-    },
-    it: {
-      name: "Tiana",
-      version: "Celebrating Princess",
-      text: "Resist +2 (Damage dealt to this character is reduced by 2.) WHAT YOU GIVE IS WHAT YOU GET While this character is exerted and you have no cards in your hand, opponents can't play actions.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Princess and the Frog",
   set: "002",
@@ -63,7 +33,6 @@ export const tianaCelebratingPrincess: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Princess"],
-  missingTests: true,
   abilities: [
     {
       id: "14e-1",
@@ -73,13 +42,31 @@ export const tianaCelebratingPrincess: CharacterCard = {
       value: 2,
     },
     {
+      condition: {
+        type: "and",
+        conditions: [
+          {
+            type: "exerted",
+          },
+          {
+            type: "resource-count",
+            what: "cards-in-hand",
+            controller: "you",
+            comparison: "equal",
+            value: 0,
+          },
+        ],
+      },
       effect: {
-        from: "hand",
-        type: "play-card",
+        restriction: "cant-play-actions",
+        target: "OPPONENTS",
+        type: "restriction",
       },
       id: "14e-2",
+      name: "WHAT YOU GIVE IS WHAT YOU GET",
       text: "WHAT YOU GIVE IS WHAT YOU GET While this character is exerted and you have no cards in your hand, opponents can't play actions.",
       type: "static",
     },
   ],
+  i18n: tianaCelebratingPrincessI18n,
 };

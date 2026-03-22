@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jafarNewlyCrownedI18n } from "./051-jafar-newly-crowned.i18n";
 
 export const jafarNewlyCrowned: CharacterCard = {
   id: "ilP",
@@ -7,52 +8,6 @@ export const jafarNewlyCrowned: CharacterCard = {
   cardType: "character",
   name: "Jafar",
   version: "Newly Crowned",
-  i18n: {
-    en: {
-      name: "Jafar",
-      version: "Newly Crowned",
-      text: [
-        {
-          title: "THIS IS NOT DONE YET",
-          description:
-            "During an opponent's turn, whenever one of your Illusion characters is banished, you may return that card to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschafar",
-      version: "Neu gekrönt",
-      text: [
-        {
-          title: "MIT DIR BIN ICH NOCH NICHT FERTIG",
-          description:
-            "Jedes Mal, wenn eine deiner Illusionen im Zug einer gegnerischen Person verbannt wird, darfst du jene Karte zurück auf deine Hand nehmen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Jafar",
-      version: "Tout juste couronné",
-      text: [
-        {
-          title: "JE N'AI PAS DIT MON DERNIER MOT",
-          description:
-            "Durant le tour d'un adversaire, chaque fois que l'un de vos personnages Illusion est banni, vous pouvez le renvoyer dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Jafar",
-      version: "Appena Incoronato",
-      text: [
-        {
-          title: "NON HAI ANCORA VINTO",
-          description:
-            "Durante il turno di un avversario, ogni volta che uno dei tuoi personaggi Illusione viene esiliato, puoi riprendere in mano quella carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst", "steel"],
   franchise: "Aladdin",
   set: "007",
@@ -96,4 +51,5 @@ export const jafarNewlyCrowned: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: jafarNewlyCrownedI18n,
 };

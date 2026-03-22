@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { eudoraAccomplishedSeamstressI18n } from "./007-eudora-accomplished-seamstress.i18n";
 
 export const eudoraAccomplishedSeamstress: CharacterCard = {
   id: "3Gy",
@@ -7,24 +8,6 @@ export const eudoraAccomplishedSeamstress: CharacterCard = {
   cardType: "character",
   name: "Eudora",
   version: "Accomplished Seamstress",
-  i18n: {
-    en: {
-      name: "Eudora",
-      version: "Accomplished Seamstress",
-    },
-    de: {
-      name: "Eudora",
-      version: "Fähige Schneiderin",
-    },
-    fr: {
-      name: "Eudora",
-      version: "Couturière accomplie",
-    },
-    it: {
-      name: "Eudora",
-      version: "Accomplished Seamstress",
-    },
-  },
   inkType: ["amber"],
   franchise: "Princess and the Frog",
   set: "002",
@@ -41,4 +24,5 @@ export const eudoraAccomplishedSeamstress: CharacterCard = {
     tcgPlayer: 527710,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: eudoraAccomplishedSeamstressI18n,
 };

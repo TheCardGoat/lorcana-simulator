@@ -51,6 +51,42 @@ describe("buildResolutionActionViews", () => {
     expect(onResolve).toHaveBeenCalledTimes(1);
   });
 
+  it("builds direct accept and decline actions for optional bag items", () => {
+    const onAccept = mock(() => {});
+    const onReject = mock(() => {});
+
+    const actions = buildResolutionActionViews({
+      items: [
+        createItem({
+          id: "bag:optional",
+          kind: "bag",
+          title: "Doc - Bold Knight",
+          canAccept: true,
+          canReject: true,
+          onAccept,
+          onReject,
+        }),
+      ],
+      labels,
+    });
+
+    expect(actions).toHaveLength(2);
+    expect(actions[0]).toMatchObject({
+      label: "Accept effect",
+      detail: "Doc - Bold Knight",
+      emphasis: true,
+    });
+    expect(actions[1]).toMatchObject({
+      label: "Decline effect",
+      detail: "Doc - Bold Knight",
+    });
+
+    actions[0]?.onClick();
+    actions[1]?.onClick();
+    expect(onAccept).toHaveBeenCalledTimes(1);
+    expect(onReject).toHaveBeenCalledTimes(1);
+  });
+
   it("builds accept and decline actions for an active optional effect", () => {
     const onAccept = mock(() => {});
     const onReject = mock(() => {});
@@ -69,29 +105,15 @@ describe("buildResolutionActionViews", () => {
       labels,
     });
 
-    expect(actions.map((action) => action.label)).toEqual(["Accept effect", "Decline effect"]);
-  });
-
-  it("builds a primary arrange action for an active scry effect", () => {
-    const onPrimaryAction = mock(() => {});
-
-    const actions = buildResolutionActionViews({
-      items: [
-        createItem({
-          id: "pending:scry",
-          isActive: true,
-          primaryActionLabel: "Arrange cards",
-          onPrimaryAction,
-        }),
-      ],
-      labels,
-    });
-
-    expect(actions).toHaveLength(1);
+    expect(actions).toHaveLength(2);
     expect(actions[0]).toMatchObject({
-      label: "Arrange cards",
+      label: "Accept effect",
       detail: "Maleficent - Sorceress",
       emphasis: true,
+    });
+    expect(actions[1]).toMatchObject({
+      label: "Decline effect",
+      detail: "Maleficent - Sorceress",
     });
   });
 

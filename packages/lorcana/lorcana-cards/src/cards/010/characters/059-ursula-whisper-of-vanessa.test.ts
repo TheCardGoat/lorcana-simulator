@@ -1,29 +1,45 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { ursulaWhisperOfVanessa } from "@lorcanito/lorcana-engine/cards/010";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Ursula - Whisper of Vanessa", () => {
-//   It("SLIPPERY SPELL While there's a card under this character, she gets +1 {L} and gains Evasive.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: 1,
-//       Play: [ursulaWhisperOfVanessa],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(ursulaWhisperOfVanessa);
-//
-//     Expect(cardUnderTest.lore).toBe(ursulaWhisperOfVanessa.lore);
-//     Expect(cardUnderTest.hasEvasive).toBe(false);
-//
-//     Await testEngine.activateCard(ursulaWhisperOfVanessa);
-//     Expect(cardUnderTest.cardsUnder).toHaveLength(1);
-//
-//     Expect(cardUnderTest.lore).toBe(ursulaWhisperOfVanessa.lore + 1);
-//     Expect(cardUnderTest.hasEvasive).toBe(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  LorcanaTestEngine,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { ursulaWhisperOfVanessa } from "./059-ursula-whisper-of-vanessa";
+
+const deckCard = createMockCharacter({
+  id: "ursula-whisper-of-vanessa-deck-card",
+  name: "Deck Card",
+  cost: 1,
+});
+
+describe("Ursula - Whisper of Vanessa", () => {
+  it("has Boost 1 ability", () => {
+    const testEngine = new LorcanaTestEngine({
+      play: [ursulaWhisperOfVanessa],
+    });
+
+    expect(testEngine.getCardModel(ursulaWhisperOfVanessa).hasBoost()).toBe(true);
+  });
+
+  it("SLIPPERY SPELL - base stats when no card is under", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [ursulaWhisperOfVanessa],
+    });
+
+    expect(testEngine.asPlayerOne().getCardLore(ursulaWhisperOfVanessa)).toBe(
+      ursulaWhisperOfVanessa.lore,
+    );
+    expect(testEngine.asPlayerOne().hasKeyword(ursulaWhisperOfVanessa, "Evasive")).toBe(false);
+  });
+
+  it("SLIPPERY SPELL - gets +1 lore and gains Evasive while there is a card under this character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: ursulaWhisperOfVanessa, cardsUnder: [deckCard] }],
+    });
+
+    expect(testEngine.asPlayerOne().getCardLore(ursulaWhisperOfVanessa)).toBe(
+      ursulaWhisperOfVanessa.lore + 1,
+    );
+    expect(testEngine.asPlayerOne().hasKeyword(ursulaWhisperOfVanessa, "Evasive")).toBe(true);
+  });
+});

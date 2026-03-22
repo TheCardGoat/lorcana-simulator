@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { peterPanNeverLandHeroI18n } from "./119-peter-pan-never-land-hero.i18n";
 
 export const peterPanNeverLandHero: CharacterCard = {
   id: "kk3",
@@ -7,43 +8,6 @@ export const peterPanNeverLandHero: CharacterCard = {
   cardType: "character",
   name: "Peter Pan",
   version: "Never Land Hero",
-  i18n: {
-    en: {
-      name: "Peter Pan",
-      version: "Never Land Hero",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "OVER HERE, TINK",
-          description:
-            "While you have a character named Tinker Bell in play, this character gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Peter Pan",
-      version: "Held aus Nimmerland",
-      text: "Rasant HIER DRÜBEN, NASEWEIS Solange du mindestens einen Naseweis-Charakter im Spiel hast, erhält dieser Charakter +2.",
-    },
-    fr: {
-      name: "Peter Pan",
-      version: "Héros du Pays Imaginaire",
-      text: "Charge PAR ICI, FÉE CLOCHETTE Tant que vous avez un personnage La Fée Clochette en jeu, ce personnage gagne +2.",
-    },
-    it: {
-      name: "Peter Pan",
-      version: "Eroe dell'Isola Che Non C'è",
-      text: [
-        {
-          title: "Lesto",
-          description:
-            "(Questo personaggio può sfidare nel turno in cui è stato giocato.) DA QUESTA PARTE, TRILLI Mentre hai un personaggio chiamato Trilli in gioco, questo personaggio riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Peter Pan",
   set: "003",
@@ -69,8 +33,6 @@ export const peterPanNeverLandHero: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  missingImplementation: true,
-  missingTests: true,
   abilities: [
     {
       id: "h1y-1",
@@ -90,4 +52,5 @@ export const peterPanNeverLandHero: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: peterPanNeverLandHeroI18n,
 };

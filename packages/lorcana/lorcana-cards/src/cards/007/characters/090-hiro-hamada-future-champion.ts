@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hiroHamadaFutureChampionI18n } from "./090-hiro-hamada-future-champion.i18n";
 
 export const hiroHamadaFutureChampion: CharacterCard = {
   id: "K5C",
@@ -7,50 +8,6 @@ export const hiroHamadaFutureChampion: CharacterCard = {
   cardType: "character",
   name: "Hiro Hamada",
   version: "Future Champion",
-  i18n: {
-    en: {
-      name: "Hiro Hamada",
-      version: "Future Champion",
-      text: [
-        {
-          title: "ORIGIN STORY",
-          description: "When you play a Floodborn character on this card, draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Hiro Hamada",
-      version: "Zukünftiger Champion",
-      text: [
-        {
-          title: "UNSERE EIGENE SAGA",
-          description: "Wenn du eine Flutgestalt auf diesen Charakter ausspielst, ziehe 1 Karte.",
-        },
-      ],
-    },
-    fr: {
-      name: "Hiro Hamada",
-      version: "Futur champion",
-      text: [
-        {
-          title: "ÉPOPÉE",
-          description:
-            "Lorsque vous jouez un personnage Floodborn sur cette carte, piochez une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Hiro Hamada",
-      version: "Futuro Campione",
-      text: [
-        {
-          title: "STORIA DELLE ORIGINI",
-          description:
-            "Quando giochi un personaggio Imbevuto sopra a questa carta, pesca una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Big Hero 6",
   set: "007",
@@ -94,4 +51,5 @@ export const hiroHamadaFutureChampion: CharacterCard = {
       text: "ORIGIN STORY When you play a Floodborn character on this card, draw a card.",
     },
   ],
+  i18n: hiroHamadaFutureChampionI18n,
 };

@@ -1,6 +1,9 @@
-import type { CardInstanceId, PlayerId } from "#core";
+import type { CardInstanceId, PlayerId, RuntimeCardWithDefinition } from "#core";
 import { isClassification, type Classification } from "@tcg/lorcana-types";
+import type { LorcanaCardDerived } from "../../../types/projected-board";
 import { createLorcanaLogMessage, type LorcanaMoveDefinition } from "../../../types";
+
+type LorcanaRuntimeCard = RuntimeCardWithDefinition & LorcanaCardDerived;
 import {
   CHALLENGE_DEFENDER_TARGET_DSL,
   computeChallengeDamageResult,
@@ -9,7 +12,7 @@ import {
   getLegalChallengeDefendersForAttacker,
   validateChallengeAction,
 } from "../../rules/challenge-rules";
-import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
+import { moveCardOutOfPlayWithStack, getCharacterIdsAtLocation } from "../../state/shift-stack";
 import {
   EFFECT_PENDING_ERROR_CODE,
   hasPendingActionEffectResolution,
@@ -31,6 +34,9 @@ import {
   snapshotTriggeredCandidatesForCard,
 } from "../../effects/triggered-abilities";
 import { projectLorcanaCardDerived } from "../../../projection/card-derived";
+import { createProjectionState } from "../../../rules/derived-state";
+import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
+import { hasStaticCardRestriction } from "../../rules/static-ability-utils";
 
 type ChallengeExecutionContext = Parameters<LorcanaMoveDefinition<"challenge">["execute"]>[0];
 type ChallengeContinuationContext = Pick<ChallengeExecutionContext, "G" | "framework" | "cards">;
@@ -74,13 +80,13 @@ function shouldReturnToHandWhenBanishedInChallenge(
   ctx: ChallengeContinuationContext,
   cardId: CardInstanceId,
 ): boolean {
-  const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+  const currentTurn = ctx.framework.state.status.turn ?? 1;
   const cardMeta = ctx.cards.require(cardId).meta;
   return hasTempAbility(cardMeta, currentTurn, "return-to-hand-when-banished");
 }
 
 function isCardStillInPlay(ctx: ChallengeContinuationContext, cardId: CardInstanceId): boolean {
-  const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+  const zoneKey = ctx.framework.zones.getCardZone(cardId);
   return typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"));
 }
 
@@ -95,18 +101,15 @@ function getClassificationsBeforeBanish(
     return undefined;
   }
 
-  const cardIndexEntry = ctx.framework.state.ctx.zones.private.cardIndex[cardId];
   const projected = projectLorcanaCardDerived({
     definition,
     meta: ctx.cards.require(cardId).meta ?? {},
-    state: {
-      ...ctx.framework.state,
-      G: ctx.G,
-    },
+    state: createProjectionState(ctx.framework.state, ctx.G),
     cardInstanceId: cardId,
     ownerID,
-    controllerID: (cardIndexEntry?.controllerID as PlayerId | undefined) ?? ownerID,
-    zoneID: cardIndexEntry?.zoneKey,
+    controllerID:
+      (ctx.framework.zones.getCardController(cardId) as PlayerId | undefined) ?? ownerID,
+    zoneID: ctx.framework.zones.getCardZone(cardId),
     actorPlayerId,
     getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
   });
@@ -133,7 +136,7 @@ function resolveChallengeDamage(
 
   const defenderMeta = ctx.cards.require(defenderId).meta ?? {};
   const attackerMeta = ctx.cards.require(attackerId).meta ?? {};
-  const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+  const currentTurn = ctx.framework.state.status.turn ?? 1;
   const attackerHasGainTwoLoreOnBanish = hasTempAbility(
     attackerMeta,
     currentTurn,
@@ -184,6 +187,7 @@ function resolveChallengeDamage(
           finalDefenderTargetId,
           finalDefenderTargetDef,
           defenderEvent.amount,
+          attackerId,
         )
       : 0;
   const defenderToAttackerDamage =
@@ -196,32 +200,99 @@ function resolveChallengeDamage(
           finalAttackerTargetId,
           finalAttackerTargetDef,
           attackerEvent.amount,
+          defenderId,
         )
       : 0;
 
+  // Check for "cant-be-dealt-damage" static restriction on targets
+  const getDefinitionByInstanceId = (cardId: CardInstanceId) => ctx.cards.getDefinition(cardId);
+  const defenderHasDamageRestriction = hasStaticCardRestriction({
+    state: ctx.framework.state as Parameters<typeof hasStaticCardRestriction>[0]["state"],
+    cardId: finalDefenderTargetId,
+    restriction: "cant-be-dealt-damage",
+    getDefinitionByInstanceId,
+  });
+  const attackerHasDamageRestriction = hasStaticCardRestriction({
+    state: ctx.framework.state as Parameters<typeof hasStaticCardRestriction>[0]["state"],
+    cardId: finalAttackerTargetId,
+    restriction: "cant-be-dealt-damage",
+    getDefinitionByInstanceId,
+  });
+
+  const effectiveAttackerToDefenderDamage = defenderHasDamageRestriction
+    ? 0
+    : attackerToDefenderDamage;
+  const effectiveDefenderToAttackerDamage = attackerHasDamageRestriction
+    ? 0
+    : defenderToAttackerDamage;
+
   const defenderCurrentDamage = Number(ctx.cards.require(finalDefenderTargetId).meta?.damage ?? 0);
   const attackerCurrentDamage = Number(ctx.cards.require(finalAttackerTargetId).meta?.damage ?? 0);
-  const defenderNextDamage = defenderCurrentDamage + attackerToDefenderDamage;
-  const attackerNextDamage = attackerCurrentDamage + defenderToAttackerDamage;
+  const defenderNextDamage = defenderCurrentDamage + effectiveAttackerToDefenderDamage;
+  const attackerNextDamage = attackerCurrentDamage + effectiveDefenderToAttackerDamage;
 
-  if (attackerToDefenderDamage > 0) {
+  if (effectiveAttackerToDefenderDamage > 0) {
     ctx.cards.patchMeta(finalDefenderTargetId, { damage: defenderNextDamage });
     recordDamagedCharacterThisTurn(ctx, finalDefenderTargetId);
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "damageDealt",
+      {
+        targetId: finalDefenderTargetId,
+        amount: effectiveAttackerToDefenderDamage,
+        newDamage: defenderNextDamage,
+        sourceId: attackerId,
+        damageType: "combat",
+      },
+      {
+        event: "damage",
+        subjectCardId: finalDefenderTargetId,
+        triggerSourceCardId: attackerId,
+        playerId: defenderOwnerId,
+        attackerId,
+        defenderId,
+        happenedInChallenge: true,
+        eventSnapshot: {
+          triggerAmount: effectiveAttackerToDefenderDamage,
+          damageDealt: effectiveAttackerToDefenderDamage,
+        },
+      },
+    );
   }
 
-  if (defenderToAttackerDamage > 0) {
+  if (effectiveDefenderToAttackerDamage > 0) {
     ctx.cards.patchMeta(finalAttackerTargetId, { damage: attackerNextDamage });
     recordDamagedCharacterThisTurn(ctx, finalAttackerTargetId);
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "damageDealt",
+      {
+        targetId: finalAttackerTargetId,
+        amount: effectiveDefenderToAttackerDamage,
+        newDamage: attackerNextDamage,
+        sourceId: defenderId,
+        damageType: "combat",
+      },
+      {
+        event: "damage",
+        subjectCardId: finalAttackerTargetId,
+        triggerSourceCardId: defenderId,
+        playerId: attackerOwnerId,
+        attackerId,
+        defenderId,
+        happenedInChallenge: true,
+        eventSnapshot: {
+          triggerAmount: effectiveDefenderToAttackerDamage,
+          damageDealt: effectiveDefenderToAttackerDamage,
+        },
+      },
+    );
   }
 
-  const finalDefenderWillpower =
-    (
-      ctx.cards.require(finalDefenderTargetId) as { getWillpower?: () => number }
-    ).getWillpower?.() ?? 0;
-  const finalAttackerWillpower =
-    (
-      ctx.cards.require(finalAttackerTargetId) as { getWillpower?: () => number }
-    ).getWillpower?.() ?? 0;
+  const finalDefenderWillpower = (ctx.cards.require(finalDefenderTargetId) as LorcanaRuntimeCard)
+    .willpower;
+  const finalAttackerWillpower = (ctx.cards.require(finalAttackerTargetId) as LorcanaRuntimeCard)
+    .willpower;
   const defenderLethal = finalDefenderWillpower > 0 && defenderNextDamage >= finalDefenderWillpower;
   const attackerLethal = finalAttackerWillpower > 0 && attackerNextDamage >= finalAttackerWillpower;
 
@@ -235,10 +306,20 @@ function resolveChallengeDamage(
       finalDefenderTargetId,
       attackerOwnerId,
     );
-    const defenderStrengthBeforeBanish = ctx.cards.require(finalDefenderTargetId)?.getStrength?.();
+    const defenderKeywordsBeforeBanish = getKeywordsBeforeBanish(
+      ctx,
+      finalDefenderTargetId,
+      attackerOwnerId,
+    );
+    const defenderStrengthBeforeBanish = (
+      ctx.cards.require(finalDefenderTargetId) as LorcanaRuntimeCard
+    ).strength;
     const defenderCardsUnderCountBeforeBanish = Array.isArray(finalDefenderMeta.cardsUnder)
       ? finalDefenderMeta.cardsUnder.length
       : 0;
+    const defenderCardsUnderIdsBeforeBanish = Array.isArray(finalDefenderMeta.cardsUnder)
+      ? [...finalDefenderMeta.cardsUnder]
+      : [];
     const defenderDestinationZone = shouldReturnToHandWhenBanishedInChallenge(
       ctx,
       finalDefenderTargetId,
@@ -249,6 +330,10 @@ function resolveChallengeDamage(
       ctx,
       finalDefenderTargetId,
     );
+    const defenderCharsAtLocation =
+      finalDefenderTargetDef?.cardType === "location"
+        ? getCharacterIdsAtLocation(ctx, finalDefenderTargetId)
+        : undefined;
     moveCardOutOfPlayWithStack(ctx, finalDefenderTargetId, {
       zone: defenderDestinationZone,
       playerId: ctx.cards.require(finalDefenderTargetId).ownerID as PlayerId,
@@ -263,6 +348,7 @@ function resolveChallengeDamage(
           cardsUnderCountBeforeBanish: defenderCardsUnderCountBeforeBanish,
           classificationsBeforeBanish: defenderClassificationsBeforeBanish,
           damageDealt: attackerToDefenderDamage,
+          keywordsBeforeBanish: defenderKeywordsBeforeBanish,
           subjectAtLocationId: defenderSubjectAtLocationId,
           strengthBeforeBanish:
             typeof defenderStrengthBeforeBanish === "number" &&
@@ -286,7 +372,11 @@ function resolveChallengeDamage(
                 triggerCandidates: defenderTriggerCandidates,
                 eventSnapshot: {
                   classificationsBeforeBanish: defenderClassificationsBeforeBanish,
+                  cardsUnderCountBeforeBanish: defenderCardsUnderCountBeforeBanish,
+                  cardsUnderIdsBeforeBanish: defenderCardsUnderIdsBeforeBanish,
+                  keywordsBeforeBanish: defenderKeywordsBeforeBanish,
                   subjectAtLocationId: defenderSubjectAtLocationId,
+                  charactersAtSourceLocationBeforeBanish: defenderCharsAtLocation,
                 },
               },
             ]
@@ -302,7 +392,11 @@ function resolveChallengeDamage(
           triggerCandidates: defenderTriggerCandidates,
           eventSnapshot: {
             classificationsBeforeBanish: defenderClassificationsBeforeBanish,
+            cardsUnderCountBeforeBanish: defenderCardsUnderCountBeforeBanish,
+            cardsUnderIdsBeforeBanish: defenderCardsUnderIdsBeforeBanish,
+            keywordsBeforeBanish: defenderKeywordsBeforeBanish,
             subjectAtLocationId: defenderSubjectAtLocationId,
+            charactersAtSourceLocationBeforeBanish: defenderCharsAtLocation,
           },
         },
         ...(attackerToDefenderDamage > 0 && finalDefenderTargetDef?.cardType === "character"
@@ -342,6 +436,20 @@ function resolveChallengeDamage(
       finalAttackerTargetId,
       defenderOwnerId,
     );
+    const attackerKeywordsBeforeBanish = getKeywordsBeforeBanish(
+      ctx,
+      finalAttackerTargetId,
+      defenderOwnerId,
+    );
+    const attackerStrengthBeforeBanish = (
+      ctx.cards.require(finalAttackerTargetId) as LorcanaRuntimeCard
+    ).strength;
+    const attackerCardsUnderCountBeforeBanish = Array.isArray(finalAttackerMeta.cardsUnder)
+      ? finalAttackerMeta.cardsUnder.length
+      : 0;
+    const attackerCardsUnderIdsBeforeBanish = Array.isArray(finalAttackerMeta.cardsUnder)
+      ? [...finalAttackerMeta.cardsUnder]
+      : [];
     const attackerDestinationZone = shouldReturnToHandWhenBanishedInChallenge(
       ctx,
       finalAttackerTargetId,
@@ -352,6 +460,10 @@ function resolveChallengeDamage(
       ctx,
       finalAttackerTargetId,
     );
+    const attackerCharsAtLocation =
+      finalAttackerTargetDef?.cardType === "location"
+        ? getCharacterIdsAtLocation(ctx, finalAttackerTargetId)
+        : undefined;
     moveCardOutOfPlayWithStack(ctx, finalAttackerTargetId, {
       zone: attackerDestinationZone,
       playerId: ctx.cards.require(finalAttackerTargetId).ownerID as PlayerId,
@@ -363,9 +475,16 @@ function resolveChallengeDamage(
         cardId: finalAttackerTargetId,
         sourceId: defenderToAttackerDamage > 0 ? defenderId : null,
         snapshot: {
+          cardsUnderCountBeforeBanish: attackerCardsUnderCountBeforeBanish,
           classificationsBeforeBanish: attackerClassificationsBeforeBanish,
           damageDealt: defenderToAttackerDamage,
+          keywordsBeforeBanish: attackerKeywordsBeforeBanish,
           subjectAtLocationId: attackerSubjectAtLocationId,
+          strengthBeforeBanish:
+            typeof attackerStrengthBeforeBanish === "number" &&
+            Number.isFinite(attackerStrengthBeforeBanish)
+              ? attackerStrengthBeforeBanish
+              : undefined,
         },
         reason: "lethal damage from challenge",
       },
@@ -381,7 +500,16 @@ function resolveChallengeDamage(
           triggerCandidates: attackerTriggerCandidates,
           eventSnapshot: {
             classificationsBeforeBanish: attackerClassificationsBeforeBanish,
+            cardsUnderCountBeforeBanish: attackerCardsUnderCountBeforeBanish,
+            cardsUnderIdsBeforeBanish: attackerCardsUnderIdsBeforeBanish,
+            keywordsBeforeBanish: attackerKeywordsBeforeBanish,
+            strengthBeforeBanish:
+              typeof attackerStrengthBeforeBanish === "number" &&
+              Number.isFinite(attackerStrengthBeforeBanish)
+                ? attackerStrengthBeforeBanish
+                : undefined,
             subjectAtLocationId: attackerSubjectAtLocationId,
+            charactersAtSourceLocationBeforeBanish: attackerCharsAtLocation,
           },
         },
         ...(defenderToAttackerDamage > 0 && finalAttackerTargetDef?.cardType === "character"
@@ -437,7 +565,7 @@ export function continuePendingChallengeResolution(ctx: ChallengeContinuationCon
     };
     openWindow(ctx, { window: "after-challenge" });
     finalizeResolutionBoundary(ctx);
-    if (hasPendingBagItems(ctx) || ctx.framework.state.ctx.priority.pendingChoice) {
+    if (hasPendingBagItems(ctx) || ctx.framework.state.priority.pendingChoice) {
       return;
     }
   }
@@ -445,7 +573,7 @@ export function continuePendingChallengeResolution(ctx: ChallengeContinuationCon
   if (
     ctx.G.challengeState?.stage === "post-damage" &&
     !hasPendingBagItems(ctx) &&
-    !ctx.framework.state.ctx.priority.pendingChoice &&
+    !ctx.framework.state.priority.pendingChoice &&
     (ctx.G.pendingEffects?.length ?? 0) === 0
   ) {
     ctx.G.challengeState = undefined;
@@ -480,7 +608,7 @@ export const challenge: LorcanaMoveDefinition<"challenge"> = {
     const { attackerId, defenderId } = ctx.args;
     const attackerOwnerId = (ctx.framework.state.currentPlayer ??
       ctx.playerId ??
-      ctx.framework.state.ctx.priority.holder) as PlayerId | undefined;
+      ctx.framework.state.priority.holder) as PlayerId | undefined;
 
     if (!attackerOwnerId) {
       throw new Error("Challenge execution requires an active player");
@@ -493,7 +621,7 @@ export const challenge: LorcanaMoveDefinition<"challenge"> = {
     // CR 4.6.4.4 - exert the challenging character.
     ctx.cards.patchMeta(attackerId, { state: "exerted" });
 
-    const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+    const currentTurn = ctx.framework.state.status.turn ?? 1;
     const attackerMetaAfterExert = ctx.cards.require(attackerId).meta;
     const defenderDefinition = ctx.cards.getDefinition(defenderId) as
       | { cardType?: string }
@@ -523,9 +651,18 @@ export const challenge: LorcanaMoveDefinition<"challenge"> = {
       }),
     });
 
+    const attackerTriggerCandidatesDecl = snapshotTriggeredCandidatesForCard(ctx, attackerId);
+    const defenderTriggerCandidatesDecl = snapshotTriggeredCandidatesForCard(ctx, defenderId);
+
     openWindow(ctx, {
       window: "challenge-declaration",
       events: [
+        {
+          event: "exert",
+          playerId: attackerOwnerId,
+          subjectCardId: attackerId,
+          triggerCandidates: attackerTriggerCandidatesDecl,
+        },
         {
           event: "challenge",
           playerId: attackerOwnerId,
@@ -533,6 +670,7 @@ export const challenge: LorcanaMoveDefinition<"challenge"> = {
           attackerId,
           defenderId,
           happenedInChallenge: true,
+          triggerCandidates: attackerTriggerCandidatesDecl,
         },
         {
           event: "challenged",
@@ -541,11 +679,12 @@ export const challenge: LorcanaMoveDefinition<"challenge"> = {
           attackerId,
           defenderId,
           happenedInChallenge: true,
+          triggerCandidates: defenderTriggerCandidatesDecl,
         },
       ],
     });
     finalizeResolutionBoundary(ctx);
-    if (hasPendingBagItems(ctx) || ctx.framework.state.ctx.priority.pendingChoice) {
+    if (hasPendingBagItems(ctx) || ctx.framework.state.priority.pendingChoice) {
       return;
     }
 

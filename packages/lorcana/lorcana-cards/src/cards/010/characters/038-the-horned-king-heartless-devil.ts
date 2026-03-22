@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theHornedKingHeartlessDevilI18n } from "./038-the-horned-king-heartless-devil.i18n";
 
 export const theHornedKingHeartlessDevil: CharacterCard = {
   id: "ETS",
@@ -7,24 +8,6 @@ export const theHornedKingHeartlessDevil: CharacterCard = {
   cardType: "character",
   name: "The Horned King",
   version: "Heartless Devil",
-  i18n: {
-    en: {
-      name: "The Horned King",
-      version: "Heartless Devil",
-    },
-    de: {
-      name: "Der gehörnte König",
-      version: "Herzloser Dämon",
-    },
-    fr: {
-      name: "Le Seigneur des Ténèbres",
-      version: "Démon sans cœur",
-    },
-    it: {
-      name: "Re Cornelius",
-      version: "Demonio Spietato",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Black Cauldron",
   set: "010",
@@ -41,4 +24,5 @@ export const theHornedKingHeartlessDevil: CharacterCard = {
     tcgPlayer: 657896,
   },
   classifications: ["Storyborn", "Villain", "King", "Sorcerer"],
+  i18n: theHornedKingHeartlessDevilI18n,
 };

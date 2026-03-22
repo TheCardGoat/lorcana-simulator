@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arielSonicWarriorI18n } from "./175-ariel-sonic-warrior.i18n";
 
 export const arielSonicWarrior: CharacterCard = {
   id: "S0Z",
@@ -7,37 +8,6 @@ export const arielSonicWarrior: CharacterCard = {
   cardType: "character",
   name: "Ariel",
   version: "Sonic Warrior",
-  i18n: {
-    en: {
-      name: "Ariel",
-      version: "Sonic Warrior",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "AMPLIFIED VOICE",
-          description:
-            "Whenever you play a song, you may pay 2 {I} to deal 3 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Arielle",
-      version: "Schall-Kriegerin",
-      text: "Gestaltwandel 4 VERSTÄRKTE STIMME Jedes Mal, wenn du ein Lied ausspielst, darfst du 2 bezahlen, um einem Charakter deiner Wahl 3 Schaden zuzufügen.",
-    },
-    fr: {
-      name: "Ariel",
-      version: "Guerrière sonique",
-      text: "Alter 4 VOIX AMPLIFIÉE Chaque fois que vous jouez une chanson, vous pouvez payer 2 pour choisir un personnage et lui infliger 3 dommages.",
-    },
-    it: {
-      name: "Ariel",
-      version: "Guerriera Sonica",
-      text: "Trasformazione 4 VOCE AMPLIFICATA Ogni volta che giochi una canzone, puoi pagare 2 per infliggere 3 danni a un personaggio a tua scelta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Little Mermaid",
   set: "004",
@@ -77,15 +47,21 @@ export const arielSonicWarrior: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 3,
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
+          type: "pay-cost",
+          cost: {
+            ink: 2,
           },
-          type: "deal-damage",
+          effect: {
+            amount: 3,
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+            type: "deal-damage",
+          },
         },
         type: "optional",
       },
@@ -95,7 +71,7 @@ export const arielSonicWarrior: CharacterCard = {
       trigger: {
         event: "play",
         on: {
-          cardType: "action",
+          cardType: "song",
           controller: "you",
         },
         timing: "whenever",
@@ -103,4 +79,5 @@ export const arielSonicWarrior: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: arielSonicWarriorI18n,
 };

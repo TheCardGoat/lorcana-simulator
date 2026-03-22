@@ -1,33 +1,42 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { goofyExpertShipwright } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Goofy - Expert Shipwright", () => {
-//   It.skip("Ward (Opponents can't choose this character except to challenge.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [goofyExpertShipwright],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(goofyExpertShipwright);
-//     Expect(cardUnderTest.hasWard).toBe(true);
-//   });
-//
-//   It.skip("CLEVER DESIGN Whenever this character quests, chosen character gains Ward until the start of your next turn.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: goofyExpertShipwright.cost,
-//       Play: [goofyExpertShipwright],
-//       Hand: [goofyExpertShipwright],
-//     });
-//
-//     Await testEngine.playCard(goofyExpertShipwright);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { goofyExpertShipwright } from "./089-goofy-expert-shipwright";
+
+const protectedAlly = createMockCharacter({
+  id: "goofy-expert-shipwright-protected-ally",
+  name: "Protected Ally",
+  cost: 2,
+  lore: 1,
+});
+
+describe("Goofy - Expert Shipwright", () => {
+  it("CLEVER DESIGN gives the chosen character Ward until the start of your next turn after Goofy quests", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: goofyExpertShipwright, isDrying: false }, protectedAlly],
+        deck: 2,
+      },
+      {
+        deck: 2,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().hasKeyword(protectedAlly, "Ward")).toBe(false);
+
+    expect(testEngine.asPlayerOne().quest(goofyExpertShipwright)).toBeSuccessfulCommand();
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        targets: [protectedAlly],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().hasKeyword(protectedAlly, "Ward")).toBe(true);
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().hasKeyword(protectedAlly, "Ward")).toBe(true);
+
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().hasKeyword(protectedAlly, "Ward")).toBe(false);
+  });
+});

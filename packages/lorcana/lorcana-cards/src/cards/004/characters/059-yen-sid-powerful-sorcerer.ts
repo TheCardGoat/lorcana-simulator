@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yenSidPowerfulSorcererI18n } from "./059-yen-sid-powerful-sorcerer.i18n";
 
 export const yenSidPowerfulSorcerer: CharacterCard = {
   id: "cl6",
@@ -7,72 +8,6 @@ export const yenSidPowerfulSorcerer: CharacterCard = {
   cardType: "character",
   name: "Yen Sid",
   version: "Powerful Sorcerer",
-  i18n: {
-    en: {
-      name: "Yen Sid",
-      version: "Powerful Sorcerer",
-      text: [
-        {
-          title: "TIMELY INTERVENTION",
-          description:
-            "When you play this character, if you have a character named Magic Broom in play, you may draw a card.",
-        },
-        {
-          title: "ARCANE STUDY",
-          description:
-            "While you have 2 or more Broom characters in play, this character gets +2 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Yen Sid",
-      version: "Mächtiger Zauberer",
-      text: [
-        {
-          title: "RECHTZEITIGES EINGREIFEN",
-          description:
-            "Wenn du diesen Charakter ausspielst und einen Zauberbesen-Charakter im Spiel hast, darfst du 1 Karte ziehen.",
-        },
-        {
-          title: "ARKANES STUDIUM",
-          description:
-            "Solange du mindestens 2 Zauberbesen-Charaktere im Spiel hast, erhält dieser Charakter +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Yen Sid",
-      version: "Puissant sorcier",
-      text: [
-        {
-          title: "INTERVENTION OPPORTUNE",
-          description:
-            "Lorsque vous jouez ce personnage, si vous avez un personnage Balais magiques en jeu, vous pouvez piocher une carte.",
-        },
-        {
-          title: "ÉTUDE ARCANIQUE",
-          description:
-            "Tant que vous avez 2 personnages Balai ou plus en jeu, ce personnage gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Yen Sid",
-      version: "Potente Stregone",
-      text: [
-        {
-          title: "AIUTO TEMPESTIVO",
-          description:
-            "Quando giochi questo personaggio, se hai in gioco un personaggio chiamato Scopa Magica, puoi pescare una carta.",
-        },
-        {
-          title: "STUDIO ARCANO",
-          description:
-            "Mentre hai in gioco 2 o più personaggi Scopa, questo personaggio riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Fantasia",
   set: "004",
@@ -101,22 +36,23 @@ export const yenSidPowerfulSorcerer: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Sorcerer"],
   abilities: [
     {
+      condition: {
+        controller: "you",
+        name: "Magic Broom",
+        type: "has-named-character",
+      },
       effect: {
-        condition: {
-          controller: "you",
-          name: "Magic Broom in play",
-          type: "has-named-character",
-        },
-        then: {
+        chooser: "CONTROLLER",
+        effect: {
           amount: 1,
           target: "CONTROLLER",
           type: "draw",
         },
-        type: "conditional",
+        type: "optional",
       },
       id: "7ea-1",
       name: "TIMELY INTERVENTION",
-      text: "TIMELY INTERVENTION When you play this character, if you have a character named Magic Broom in play, you may draw a card. ARCANE STUDY While you have 2 or more Broom characters in play, this character gets +2.",
+      text: "TIMELY INTERVENTION When you play this character, if you have a character named Magic Broom in play, you may draw a card.",
       trigger: {
         event: "play",
         on: "SELF",
@@ -124,5 +60,25 @@ export const yenSidPowerfulSorcerer: CharacterCard = {
       },
       type: "triggered",
     },
+    {
+      condition: {
+        type: "has-character-count",
+        classification: "Broom",
+        controller: "you",
+        count: 2,
+        comparison: "greater-or-equal",
+      },
+      effect: {
+        modifier: 2,
+        stat: "lore",
+        target: "SELF",
+        type: "modify-stat",
+      },
+      id: "7ea-2",
+      name: "ARCANE STUDY",
+      text: "ARCANE STUDY While you have 2 or more Broom characters in play, this character gets +2 {L}.",
+      type: "static",
+    },
   ],
+  i18n: yenSidPowerfulSorcererI18n,
 };

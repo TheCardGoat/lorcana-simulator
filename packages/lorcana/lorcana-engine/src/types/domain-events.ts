@@ -22,11 +22,18 @@ export interface DynamicAmountEventSnapshot {
   playedCardUsedShift?: boolean;
   strengthBeforeBanish?: number;
   cardsUnderCountBeforeBanish?: number;
+  cardsUnderIdsBeforeBanish?: ReadonlyArray<CardInstanceId>;
   classificationsBeforeBanish?: ReadonlyArray<Classification>;
+  keywordsBeforeBanish?: ReadonlyArray<string>;
   damageDealt?: number;
   healedAmount?: number;
+  lastEffectTargetCount?: number;
   revealedCardIds?: ReadonlyArray<CardInstanceId>;
+  /** Card ID of the last card returned from discard in the current effect sequence */
+  lastReturnedFromDiscardCardId?: CardInstanceId;
   revealWindowIds?: ReadonlyArray<string>;
+  /** Card IDs discarded during the current effect sequence (accumulated across multiple discard steps) */
+  discardedCardIds?: ReadonlyArray<CardInstanceId>;
   namedCardName?: string;
   chosenCardId?: CardInstanceId;
   chosenCardCost?: number;
@@ -34,7 +41,10 @@ export interface DynamicAmountEventSnapshot {
   triggerSourceCardId?: CardInstanceId;
   attackerId?: CardInstanceId;
   defenderId?: CardInstanceId;
+  fromZone?: string;
+  toZone?: string;
   subjectAtLocationId?: CardInstanceId;
+  charactersAtSourceLocationBeforeBanish?: ReadonlyArray<CardInstanceId>;
   vanishChosenCards?: ReadonlyArray<{
     cardId: CardInstanceId;
     chooserId: PlayerId;
@@ -137,9 +147,9 @@ export interface CardPlayedPayload {
   playerId: PlayerId;
   cardId: CardInstanceId;
   cardType: "character" | "action" | "item" | "location";
-  costType: "standard" | "shift" | "sing" | "singTogether" | "free";
+  costType: "standard" | "shift" | "sing" | "singTogether" | "free" | "sacrifice";
   shiftTargetId?: CardInstanceId;
-  singerIds?: CardInstanceId[];
+  singerIds?: readonly CardInstanceId[];
   inkPaid?: number;
   usedShift?: boolean;
 }
@@ -194,6 +204,26 @@ export interface AbilityActivatedPayload {
   inkPaid?: number;
 }
 
+export interface CardReturnedToHandPayload {
+  cardId: CardInstanceId;
+  ownerId: PlayerId;
+  fromZone: string;
+}
+
+export interface PutCardUnderPayload {
+  playerId: PlayerId;
+  /** The card that was placed under the target */
+  cardId: CardInstanceId;
+  /** The card that the placed card was put under */
+  targetId: CardInstanceId;
+}
+
+export interface CardLeftDiscardPayload {
+  cardId: CardInstanceId;
+  ownerId: PlayerId;
+  toZone: string;
+}
+
 // =============================================================================
 // Event Map
 // =============================================================================
@@ -226,6 +256,9 @@ export interface LorcanaDomainEventMap {
   zoneBottomShuffled: ZoneBottomShuffledPayload;
   challengeCleared: Record<string, never>;
   abilityActivated: AbilityActivatedPayload;
+  cardReturnedToHand: CardReturnedToHandPayload;
+  putCardUnder: PutCardUnderPayload;
+  cardLeftDiscard: CardLeftDiscardPayload;
 }
 
 /**

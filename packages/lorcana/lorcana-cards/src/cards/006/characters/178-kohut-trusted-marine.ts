@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kohutTrustedMarineI18n } from "./178-kohut-trusted-marine.i18n";
 
 export const kohutTrustedMarine: CharacterCard = {
   id: "jgT",
@@ -7,24 +8,6 @@ export const kohutTrustedMarine: CharacterCard = {
   cardType: "character",
   name: "Kohut",
   version: "Trusted Marine",
-  i18n: {
-    en: {
-      name: "Kohut",
-      version: "Trusted Marine",
-    },
-    de: {
-      name: "Kohut",
-      version: "Vertrauter Marinesoldat",
-    },
-    fr: {
-      name: "Kohut",
-      version: "Soldat de confiance",
-    },
-    it: {
-      name: "Kohut",
-      version: "Marine Fidato",
-    },
-  },
   inkType: ["steel"],
   franchise: "Wreck It Ralph",
   set: "006",
@@ -41,4 +24,5 @@ export const kohutTrustedMarine: CharacterCard = {
     tcgPlayer: 592024,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: kohutTrustedMarineI18n,
 };

@@ -11,15 +11,16 @@ import type { CardQueryAPI, RuntimeCardDeriver } from "./card-runtime";
 import { createCardQueryAPI } from "./card-runtime";
 import type { MatchStaticResources } from "./static-resources";
 import type { BaseCardDefinition, BaseCardMeta } from "./card-contracts";
+import type { LorcanaG } from "../../types/runtime-state";
 
 // Re-export from sub-modules
 export { createTimeQueryAPI, createTimeOperationsForDraft } from "./match-runtime.time-apis";
 export { createRandomAPIForDraft } from "./match-runtime.random-apis";
 export { createZoneQueryAPI } from "./match-runtime.zone-apis";
 
-type ReadonlyMatchLike<G> = MatchState<G> | FilteredMatchView<G>;
+type ReadonlyMatchLike = MatchState | FilteredMatchView;
 
-export function canPlayerTakeActions<G>(state: ReadonlyMatchLike<G>, playerId: string): boolean {
+export function canPlayerTakeActions(state: ReadonlyMatchLike, playerId: string): boolean {
   return state.ctx.priority.windowOpen && state.ctx.priority.holder === playerId;
 }
 
@@ -27,9 +28,9 @@ export function canPlayerTakeActions<G>(state: ReadonlyMatchLike<G>, playerId: s
 // Event API
 // =============================================================================
 
-export function createEventAPI<G>(
+export function createEventAPI(
   emitGameEvent: (event: GameEvent) => void,
-  draft?: Draft<MatchState<G>>,
+  draft?: Draft<MatchState>,
   gameEndTracker?: { ended: boolean; result?: GameEndResult },
 ): EventAPI {
   return {
@@ -61,18 +62,14 @@ export function createEventAPI<G>(
 // Card Query API
 // =============================================================================
 
-export function createCardQueryAPIForState<
-  G,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object = {},
->(
-  state: ReadonlyMatchLike<G> | Draft<MatchState<G>>,
-  staticResources: MatchStaticResources<TCardDefinition>,
-  deriveRuntimeCard: RuntimeCardDeriver<G, TCardDefinition, BaseCardMeta, TCardDerived>,
+export function createCardQueryAPIForState(
+  state: ReadonlyMatchLike | Draft<MatchState>,
+  staticResources: MatchStaticResources,
+  deriveRuntimeCard: RuntimeCardDeriver,
   actorPlayerId?: string,
-): CardQueryAPI<TCardDefinition, BaseCardMeta, TCardDerived> {
-  return createCardQueryAPI(state as unknown as MatchState<G>, staticResources, {
+): CardQueryAPI {
+  return createCardQueryAPI(state as unknown as MatchState, staticResources, {
     actorPlayerId,
     deriveRuntimeCard,
-  }) as CardQueryAPI<TCardDefinition, BaseCardMeta, TCardDerived>;
+  }) as CardQueryAPI;
 }

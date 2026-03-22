@@ -3,6 +3,8 @@ import {
   buildPrintingIdsByCanonicalId,
   CARD_PROPERTY_ORDER,
   convertToLorcanaCard,
+  generateCardFileContent,
+  generateI18nFileContent,
 } from "./file-generator";
 import type { CanonicalCharacterCard, CanonicalCard, CardPrinting } from "../types";
 
@@ -53,12 +55,13 @@ describe("file-generator property order", () => {
     expect(keys[0]).toBe("id");
   });
 
-  it("generated object has abilities last when present", () => {
+  it("generated object keeps i18n last when abilities are present", () => {
     const card = createMinimalCanonicalCharacter();
     const abilities = [{ type: "triggered" as const, text: "When you play this character..." }];
     const result = convertToLorcanaCard(card, undefined, "001", abilities);
     const keys = Object.keys(result);
-    expect(keys[keys.length - 1]).toBe("abilities");
+    expect(keys[keys.length - 2]).toBe("abilities");
+    expect(keys[keys.length - 1]).toBe("i18n");
   });
 
   it("all keys of generated object appear in CARD_PROPERTY_ORDER in the same order", () => {
@@ -143,5 +146,67 @@ describe("buildPrintingIdsByCanonicalId", () => {
     expect(reprints).toBeDefined();
     expect(reprints!).toEqual(["set1-130", "set10-133"]);
     expect(reprints).not.toContain("set1-130-enchanted");
+  });
+});
+
+describe("generated i18n file output", () => {
+  it("emits a sibling i18n module with the expected export", () => {
+    const content = generateI18nFileContent(
+      "testCharacter",
+      createMinimalCanonicalCharacter().i18n,
+    );
+
+    expect(content).toContain(
+      'import type { I18nProperties, Languages } from "@tcg/lorcana-types";',
+    );
+    expect(content).toContain(
+      "export const testCharacterI18n: Record<Languages, I18nProperties> = {",
+    );
+  });
+});
+
+describe("generated card file output", () => {
+  it("references the imported i18n value instead of serializing it as a string", () => {
+    const content = generateCardFileContent(
+      createMinimalCanonicalCharacter(),
+      "testCharacter",
+      2,
+      "001-test-character",
+      createMinimalPrinting(),
+      "001",
+    );
+
+    expect(content).toContain('import { testCharacterI18n } from "./001-test-character.i18n";');
+    expect(content).toContain("i18n: testCharacterI18n");
+    expect(content).not.toContain('i18n: "testCharacterI18n"');
+  });
+});
+
+describe("card copy limit generation", () => {
+  it("derives a numeric card copy limit from rules text", () => {
+    const result = convertToLorcanaCard(
+      createMinimalCanonicalCharacter({
+        rulesText:
+          "WHERE DID THEY ALL COME FROM? You may have up to 99 copies of Dalmatian Puppy - Tail Wagger in your deck.",
+      }),
+      createMinimalPrinting(),
+      "001",
+    );
+
+    expect(result.cardCopyLimit).toBe(99);
+  });
+
+  it("derives no-limit from rules text", () => {
+    const result = convertToLorcanaCard(
+      createMinimalCanonicalCharacter({
+        cardType: "item",
+        rulesText:
+          "LIMITLESS APPLICATIONS You may have any number of cards named Microbots in your deck.",
+      }) as CanonicalCard,
+      createMinimalPrinting(),
+      "001",
+    );
+
+    expect(result.cardCopyLimit).toBe("no-limit");
   });
 });

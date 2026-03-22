@@ -1,24 +1,28 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { davidImpressiveSurfer } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("David - Impressive Surfer", () => {
-//   It.skip("SHOWING OFF While you have a character named Nani in play, this character gets +2 {L}.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: davidImpressiveSurfer.cost,
-//       Play: [davidImpressiveSurfer],
-//       Hand: [davidImpressiveSurfer],
-//     });
-//
-//     Await testEngine.playCard(davidImpressiveSurfer);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { naniCaringSister } from "./019-nani-caring-sister";
+import { davidImpressiveSurfer } from "./008-david-impressive-surfer";
+
+describe("David - Impressive Surfer", () => {
+  it("has his printed lore without Nani in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [davidImpressiveSurfer],
+      deck: 2,
+    });
+
+    expect(testEngine.asPlayerOne().getCardLore(davidImpressiveSurfer)).toBe(
+      davidImpressiveSurfer.lore,
+    );
+  });
+
+  it("SHOWING OFF - gets +2 lore while you have a character named Nani in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [davidImpressiveSurfer, naniCaringSister],
+      deck: 2,
+    });
+
+    expect(testEngine.asPlayerOne().getCardLore(davidImpressiveSurfer)).toBe(
+      davidImpressiveSurfer.lore + 2,
+    );
+  });
+});

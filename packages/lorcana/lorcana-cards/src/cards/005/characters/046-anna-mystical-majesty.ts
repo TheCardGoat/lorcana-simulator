@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { annaMysticalMajestyI18n } from "./046-anna-mystical-majesty.i18n";
 
 export const annaMysticalMajesty: CharacterCard = {
   id: "JaG",
@@ -7,36 +8,6 @@ export const annaMysticalMajesty: CharacterCard = {
   cardType: "character",
   name: "Anna",
   version: "Mystical Majesty",
-  i18n: {
-    en: {
-      name: "Anna",
-      version: "Mystical Majesty",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "EXCEPTIONAL POWER",
-          description: "When you play this character, exert all opposing characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Anna",
-      version: "Geheimnisvolle Majestät",
-      text: "Gestaltwandel 4 BESONDERE MACHT Wenn du diesen Charakter ausspielst, erschöpfe alle gegnerischen Charaktere.",
-    },
-    fr: {
-      name: "Anna",
-      version: "Majesté mystique",
-      text: "Alter 4 POUVOIR EXCEPTIONNEL Lorsque vous jouez ce personnage, épuisez tous les personnages adverses.",
-    },
-    it: {
-      name: "Anna",
-      version: "Maestà Mistica",
-      text: "Trasformazione 4 POTERE ECCEZIONALE Quando giochi questo personaggio, impegna tutti i personaggi avversari.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "005",
@@ -93,4 +64,5 @@ export const annaMysticalMajesty: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: annaMysticalMajestyI18n,
 };

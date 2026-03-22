@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gadgetHackwrenchPerceptiveMouseI18n } from "./151-gadget-hackwrench-perceptive-mouse.i18n";
 
 export const gadgetHackwrenchPerceptiveMouse: CharacterCard = {
   id: "j00",
@@ -7,24 +8,6 @@ export const gadgetHackwrenchPerceptiveMouse: CharacterCard = {
   cardType: "character",
   name: "Gadget Hackwrench",
   version: "Perceptive Mouse",
-  i18n: {
-    en: {
-      name: "Gadget Hackwrench",
-      version: "Perceptive Mouse",
-    },
-    de: {
-      name: "Trixi",
-      version: "Scharfsinnige Maus",
-    },
-    fr: {
-      name: "Gadget",
-      version: "Souris perspicace",
-    },
-    it: {
-      name: "Scheggia Hackwrench",
-      version: "Topolina Perspicace",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Rescue Rangers",
   set: "006",
@@ -41,4 +24,5 @@ export const gadgetHackwrenchPerceptiveMouse: CharacterCard = {
     tcgPlayer: 585034,
   },
   classifications: ["Storyborn", "Ally", "Inventor"],
+  i18n: gadgetHackwrenchPerceptiveMouseI18n,
 };

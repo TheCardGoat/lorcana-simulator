@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { heiheiBoatSnackI18n } from "./007-heihei-boat-snack.i18n";
 
 export const heiheiBoatSnack: CharacterCard = {
   id: "7AO",
@@ -7,46 +8,6 @@ export const heiheiBoatSnack: CharacterCard = {
   cardType: "character",
   name: "HeiHei",
   version: "Boat Snack",
-  i18n: {
-    en: {
-      name: "HeiHei",
-      version: "Boat Snack",
-      text: "Support",
-    },
-    de: {
-      name: "HeiHei",
-      version: "Boat Snack",
-      text: [
-        {
-          title: "Support",
-          description:
-            "(Whenever this character quests, you may add their to another chosen character's this turn.)",
-        },
-      ],
-    },
-    fr: {
-      name: "HeiHei",
-      version: "Boat Snack",
-      text: [
-        {
-          title: "Support",
-          description:
-            "(Whenever this character quests, you may add their to another chosen character's this turn.)",
-        },
-      ],
-    },
-    it: {
-      name: "HeiHei",
-      version: "Boat Snack",
-      text: [
-        {
-          title: "Support",
-          description:
-            "(Whenever this character quests, you may add their to another chosen character's this turn.)",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Moana",
   set: "001",
@@ -57,7 +18,6 @@ export const heiheiBoatSnack: CharacterCard = {
   willpower: 2,
   lore: 1,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_7b875417a470447eb4d998d9b634580b",
     tcgPlayer: 493479,
@@ -90,4 +50,5 @@ export const heiheiBoatSnack: CharacterCard = {
       },
     },
   ],
+  i18n: heiheiBoatSnackI18n,
 };

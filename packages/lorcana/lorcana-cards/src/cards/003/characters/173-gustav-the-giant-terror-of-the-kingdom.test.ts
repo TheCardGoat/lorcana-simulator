@@ -1,94 +1,144 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { dragonFire } from "@lorcanito/lorcana-engine/cards/001/actions/actions";
-// Import {
-//   GustavTheGiantTerrorOfTheKingdom,
-//   MiloThatchCleverCartographer,
-//   StarkeyDeviousPirate,
-// } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Gustav the Giant - Terror of the Kingdom", () => {
-//   It("**ALL TIED UP** This character enters play exerted and can't ready at the start of your turn.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: gustavTheGiantTerrorOfTheKingdom.cost,
-//         Hand: [gustavTheGiantTerrorOfTheKingdom],
-//         Deck: 1,
-//       },
-//       {
-//         Deck: 1,
-//       },
-//     );
-//
-//     Const cardUnderTest = await testEngine.playCard(
-//       GustavTheGiantTerrorOfTheKingdom,
-//     );
-//
-//     Expect(cardUnderTest.exerted).toBe(true);
-//
-//     Await testEngine.passTurn();
-//     Await testEngine.passTurn();
-//
-//     Expect(cardUnderTest.exerted).toBe(true);
-//   });
-//
-//   Describe("**BREAK FREE** During your turn, whenever one of your other characters banishes another character in a challenge, you may ready this character.", () => {
-//     It("Banished in a challenge", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [gustavTheGiantTerrorOfTheKingdom, starkeyDeviousPirate],
-//         },
-//         {
-//           Play: [miloThatchCleverCartographer],
-//         },
-//       );
-//
-//       Const cardUnderTest = await testEngine.tapCard(
-//         GustavTheGiantTerrorOfTheKingdom,
-//       );
-//       Const defender = await testEngine.tapCard(miloThatchCleverCartographer);
-//
-//       Await testEngine.challenge({
-//         Attacker: starkeyDeviousPirate,
-//         Defender: miloThatchCleverCartographer,
-//       });
-//       Await testEngine.resolveOptionalAbility();
-//
-//       Expect(defender.zone).toBe("discard");
-//       Expect(cardUnderTest.exerted).toBe(false);
-//     });
-//
-//     It("Banished by an action card", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: dragonFire.cost,
-//           Hand: [dragonFire],
-//           Play: [gustavTheGiantTerrorOfTheKingdom],
-//         },
-//         {
-//           Play: [miloThatchCleverCartographer],
-//         },
-//       );
-//
-//       Const cardUnderTest = await testEngine.tapCard(
-//         GustavTheGiantTerrorOfTheKingdom,
-//       );
-//
-//       Await testEngine.playCard(dragonFire, {
-//         Targets: [miloThatchCleverCartographer],
-//       });
-//
-//       Expect(testEngine.getCardModel(miloThatchCleverCartographer).zone).toBe(
-//         "discard",
-//       );
-//       Expect(testEngine.stackLayers).toHaveLength(0);
-//       Expect(cardUnderTest.exerted).toBe(true);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { dragonFire } from "../../001/actions/130-dragon-fire";
+import { gustavTheGiantTerrorOfTheKingdom } from "./173-gustav-the-giant-terror-of-the-kingdom";
+
+const friendlyAttacker = createMockCharacter({
+  id: "gustav-test-friendly-attacker",
+  name: "Friendly Attacker",
+  cost: 2,
+  strength: 3,
+  willpower: 4,
+  lore: 1,
+});
+
+const defendingAlly = createMockCharacter({
+  id: "gustav-test-defending-ally",
+  name: "Defending Ally",
+  cost: 2,
+  strength: 4,
+  willpower: 5,
+  lore: 1,
+});
+
+const weakOpponent = createMockCharacter({
+  id: "gustav-test-weak-opponent",
+  name: "Weak Opponent",
+  cost: 1,
+  strength: 1,
+  willpower: 2,
+  lore: 1,
+});
+
+const invadingOpponent = createMockCharacter({
+  id: "gustav-test-invading-opponent",
+  name: "Invading Opponent",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+describe("Gustav the Giant - Terror of the Kingdom", () => {
+  describe("ALL TIED UP - This character enters play exerted and can't ready at the start of your turn.", () => {
+    it("enters play exerted and stays exerted through its controller's ready step", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [gustavTheGiantTerrorOfTheKingdom],
+          inkwell: gustavTheGiantTerrorOfTheKingdom.cost,
+          deck: 1,
+        },
+        {
+          deck: 1,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(gustavTheGiantTerrorOfTheKingdom),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().isExerted(gustavTheGiantTerrorOfTheKingdom)).toBe(true);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().isExerted(gustavTheGiantTerrorOfTheKingdom)).toBe(true);
+    });
+  });
+
+  describe("BREAK FREE - During your turn, whenever one of your other characters banishes another character in a challenge, you may ready this character.", () => {
+    it("readies Gustav when another friendly character banishes in a challenge during your turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: gustavTheGiantTerrorOfTheKingdom, exerted: true, isDrying: false },
+            { card: friendlyAttacker, isDrying: false },
+          ],
+          deck: 1,
+        },
+        {
+          play: [{ card: weakOpponent, exerted: true, isDrying: false }],
+          deck: 1,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(friendlyAttacker, weakOpponent),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardZone(weakOpponent)).toBe("discard");
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().isExerted(gustavTheGiantTerrorOfTheKingdom)).toBe(false);
+    });
+
+    it("does not trigger when another friendly character banishes outside a challenge", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: gustavTheGiantTerrorOfTheKingdom, exerted: true, isDrying: false }],
+          hand: [dragonFire],
+          inkwell: dragonFire.cost,
+          deck: 1,
+        },
+        {
+          play: [weakOpponent],
+          deck: 1,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(dragonFire, { targets: [weakOpponent] }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardZone(weakOpponent)).toBe("discard");
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().isExerted(gustavTheGiantTerrorOfTheKingdom)).toBe(true);
+    });
+
+    it("does not trigger when another friendly character banishes in a challenge during the opponent's turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: gustavTheGiantTerrorOfTheKingdom, exerted: true, isDrying: false },
+            { card: defendingAlly, exerted: true, isDrying: false },
+          ],
+          deck: 1,
+        },
+        {
+          play: [{ card: invadingOpponent, isDrying: false }],
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().challenge(invadingOpponent, defendingAlly),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardZone(invadingOpponent)).toBe("discard");
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().isExerted(gustavTheGiantTerrorOfTheKingdom)).toBe(true);
+    });
+  });
+});

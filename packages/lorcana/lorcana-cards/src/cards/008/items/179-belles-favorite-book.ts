@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { bellesFavoriteBookI18n } from "./179-belles-favorite-book.i18n";
 
 export const bellesFavoriteBook: ItemCard = {
   id: "FEr",
@@ -6,48 +7,6 @@ export const bellesFavoriteBook: ItemCard = {
   reprints: ["set8-179"],
   cardType: "item",
   name: "Belle's Favorite Book",
-  i18n: {
-    en: {
-      name: "Belle's Favorite Book",
-      text: [
-        {
-          title: "CHAPTER THREE",
-          description:
-            "{E}, Banish one of your other items — Put the top card of your deck into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Belles Lieblingsbuch",
-      text: [
-        {
-          title: "KAPITEL DREI,",
-          description:
-            "Verbanne einen deiner anderen Gegenstände — Lege die oberste Karte deines Decks verdeckt und erschöpft in deinen Tintenvorrat.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le livre préféré de Belle",
-      text: [
-        {
-          title: "CHAPITRE TROIS,",
-          description:
-            "Bannissez un autre de vos objets — Placez la carte du dessus de votre pioche dans votre réserve d'encre, face cachée et épuisée.",
-        },
-      ],
-    },
-    it: {
-      name: "Libro Preferito di Belle",
-      text: [
-        {
-          title: "CAPITOLO TRE,",
-          description:
-            "esilia uno dei tuoi altri oggetti — Aggiungi la prima carta del tuo mazzo al tuo calamaio, a faccia in giù e impegnata.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "008",
@@ -85,4 +44,5 @@ export const bellesFavoriteBook: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: bellesFavoriteBookI18n,
 };

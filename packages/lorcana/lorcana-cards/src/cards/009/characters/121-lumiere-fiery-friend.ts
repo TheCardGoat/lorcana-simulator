@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lumiereFieryFriendI18n } from "./121-lumiere-fiery-friend.i18n";
 
 export const lumiereFieryFriend: CharacterCard = {
   id: "qzx",
@@ -7,48 +8,6 @@ export const lumiereFieryFriend: CharacterCard = {
   cardType: "character",
   name: "Lumiere",
   version: "Fiery Friend",
-  i18n: {
-    en: {
-      name: "Lumiere",
-      version: "Fiery Friend",
-      text: [
-        {
-          title: "FERVENT ADDRESS",
-          description: "Your other characters get +1 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Lumière",
-      version: "Hitzköpfiger Freund",
-      text: [
-        {
-          title: "GLÜHENDE ANSPRACHE",
-          description: "Deine anderen Charaktere erhalten +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Lumière",
-      version: "Ardent ami",
-      text: [
-        {
-          title: "FERVENT DISCOURS",
-          description: "Vos autres personnages gagnent +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Lumiere",
-      version: "Amico Focoso",
-      text: [
-        {
-          title: "DISCORSO FERVENTE I",
-          description: "tuoi altri personaggi ricevono +1.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Beauty and the Beast",
   set: "009",
@@ -84,4 +43,5 @@ export const lumiereFieryFriend: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: lumiereFieryFriendI18n,
 };

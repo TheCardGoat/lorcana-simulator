@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { belleHiddenArcherI18n } from "./072-belle-hidden-archer.i18n";
 
 export const belleHiddenArcher: CharacterCard = {
   id: "df2",
@@ -7,43 +8,6 @@ export const belleHiddenArcher: CharacterCard = {
   cardType: "character",
   name: "Belle",
   version: "Hidden Archer",
-  i18n: {
-    en: {
-      name: "Belle",
-      version: "Hidden Archer",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "THORNY ARROWS",
-          description:
-            "Whenever this character is challenged, the challenging character's player discards all cards in their hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Belle",
-      version: "Versteckte Bogenschützin",
-      text: "Gestaltwandel 3 DORNENPFEILE Jedes Mal, wenn dieser Charakter herausgefordert wird, wirft die herausfordernde Person alle Karten aus ihrer Hand ab.",
-    },
-    fr: {
-      name: "Belle",
-      version: "Archère dissimulée",
-      text: "Alter 3 FLÈCHES ÉPINEUSES Lorsque ce personne est défié, le propriétaire du personnage qui l'a défié défausse toute sa main.",
-    },
-    it: {
-      name: "Belle",
-      version: "Hidden Archer",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Belle.) THORNY ARROWS Whenever this character is challenged, the challenging character's player discards all cards in their hand.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -68,8 +32,6 @@ export const belleHiddenArcher: CharacterCard = {
         "Whenever this character is challenged, the challenging character's player discards all cards in their hand.",
     },
   ],
-  missingImplementation: true,
-  missingTests: true,
   classifications: ["Floodborn", "Hero", "Princess"],
   abilities: [
     {
@@ -92,14 +54,11 @@ export const belleHiddenArcher: CharacterCard = {
         timing: "whenever",
       },
       effect: {
-        amount: {
-          type: "cards-in-hand",
-          controller: "opponent",
-        },
-        chosen: true,
+        amount: "all",
         target: "CHALLENGING_PLAYER",
         type: "discard",
       },
     },
   ],
+  i18n: belleHiddenArcherI18n,
 };

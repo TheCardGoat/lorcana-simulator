@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cinderellaMelodyWeaverEnchantedI18n } from "./205-cinderella-melody-weaver-enchanted.i18n";
 
 export const cinderellaMelodyWeaverEnchanted: CharacterCard = {
   id: "V2A",
@@ -7,43 +8,6 @@ export const cinderellaMelodyWeaverEnchanted: CharacterCard = {
   cardType: "character",
   name: "Cinderella",
   version: "Melody Weaver",
-  i18n: {
-    en: {
-      name: "Cinderella",
-      version: "Melody Weaver",
-      text: [
-        {
-          title: "Singer 9",
-        },
-        {
-          title: "BEAUTIFUL VOICE",
-          description:
-            "Whenever this character sings a song, your other Princess characters get +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Cinderella",
-      version: "Melodien-Weberin",
-      text: [
-        {
-          title: "Singen 9",
-          description:
-            "(Die Kosten dieses Charakters gelten als 9 für das Singen von Liedern.) WUNDERSCHÖNE STIMME Jedes Mal, wenn dieser Charakter ein Lied singt, erhalten deine anderen Prinzessinnen in diesem Zug +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Cendrillon",
-      version: "Tisseuse de mélodies",
-      text: "Mélomane 9 (Ce personnage est considéré comme ayant un coût de 9 pour chanter des chansons.) VOIX MERVEILLEUSE Chaque fois que ce personnage chante une chanson, vos autres personnages Princesse gagnent +1 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Cenerentola",
-      version: "Tessitrice di Melodie",
-      text: "Melodioso 9 VOCE BELLISSIMA Ogni volta che questo personaggio canta una canzone, i tuoi altri personaggi Principessa ricevono +1 per questo turno.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Cinderella",
   set: "004",
@@ -97,4 +61,5 @@ export const cinderellaMelodyWeaverEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: cinderellaMelodyWeaverEnchantedI18n,
 };

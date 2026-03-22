@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { scarViciousCheaterI18n } from "./125-scar-vicious-cheater.i18n";
 
 export const scarViciousCheater: CharacterCard = {
   id: "U8O",
@@ -7,43 +8,6 @@ export const scarViciousCheater: CharacterCard = {
   cardType: "character",
   name: "Scar",
   version: "Vicious Cheater",
-  i18n: {
-    en: {
-      name: "Scar",
-      version: "Vicious Cheater",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "DADDY ISN'T HERE TO SAVE YOU",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, you may ready this character. He can't quest for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Scar",
-      version: "Übler Betrüger",
-      text: "Rasant PAPI KANN DICH DIESMAL NICHT RETTEN Jedes Mal, wenn dieser Charakter in deinem Zug durch eine Herausforderung einen anderen Charakter verbannt, darfst du ihn bereit machen. Er kann in diesem Zug nicht mehr erkunden.",
-    },
-    fr: {
-      name: "Scar",
-      version: "Tricheur vicieux",
-      text: "Charge PAPA N'EST PAS LÀ POUR TE SAUVER Lorsque ce personnage en bannit un autre via un défi durant votre tour, vous pouvez le redresser. Il ne peut pas être envoyé à l'aventure pour le reste de ce tour.",
-    },
-    it: {
-      name: "Scar",
-      version: "Vicious Cheater",
-      text: [
-        {
-          title: "Rush",
-          description:
-            "(This character can challenge the turn they're played.) DADDY ISN'T HERE TO SAVE YOU During your turn, whenever this character banishes another character in a challenge, you may ready this character. He can't quest for the rest of this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lion King",
   set: "002",
@@ -113,4 +77,5 @@ export const scarViciousCheater: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: scarViciousCheaterI18n,
 };

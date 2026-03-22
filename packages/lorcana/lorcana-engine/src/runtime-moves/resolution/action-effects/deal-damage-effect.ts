@@ -1,9 +1,10 @@
-import type { CardInstanceId } from "#core";
+import type { CardInstanceId, PlayerId } from "#core";
 import { type CardPlayedPayload } from "../../../types";
 import type { DealDamageEffect } from "@tcg/lorcana-types";
 import type { DynamicAmountEventSnapshot } from "../../../types/domain-events";
 import { projectLorcanaCardDerived } from "../../../projection/card-derived";
-import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
+import { createProjectionState } from "../../../rules/derived-state";
+import { moveCardOutOfPlayWithStack, getCharacterIdsAtLocation } from "../../state/shift-stack";
 import type { PlayCardExecutionContext } from "./types";
 import { effectLogger } from "./effect-logger";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
@@ -11,6 +12,8 @@ import {
   recordBanishedCharacterThisTurn,
   recordDamagedCharacterThisTurn,
 } from "../../state/turn-metrics";
+import { hasStaticCardRestriction } from "../../rules/static-ability-utils";
+import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
 import {
   emitTriggeredLorcanaEvent,
   snapshotTriggeredCandidatesForCard,
@@ -42,10 +45,7 @@ function getResistValue(ctx: PlayCardExecutionContext, targetId: CardInstanceId)
   const derived = projectLorcanaCardDerived({
     definition: runtimeCard.definition,
     meta: runtimeCard.meta,
-    state: {
-      ctx: ctx.framework.state.ctx,
-      G: ctx.G,
-    },
+    state: createProjectionState(ctx.framework.state, ctx.G),
     cardInstanceId: targetId,
     ownerID: runtimeCard.ownerID as import("#core").PlayerId | undefined,
     controllerID: runtimeCard.controllerID as import("#core").PlayerId | undefined,
@@ -58,6 +58,7 @@ function getResistValue(ctx: PlayCardExecutionContext, targetId: CardInstanceId)
 
 type ApplyDamageOptions = {
   applyResist: boolean;
+  checkDamageRestriction?: boolean;
 };
 
 function applyDamage(
@@ -80,6 +81,19 @@ function applyDamage(
       continue;
     }
 
+    // Check for "cant-be-dealt-damage" static restriction (only for dealt damage, not put damage)
+    if (options.checkDamageRestriction) {
+      const hasDamageRestriction = hasStaticCardRestriction({
+        state: ctx.framework.state as Parameters<typeof hasStaticCardRestriction>[0]["state"],
+        cardId: targetId,
+        restriction: "cant-be-dealt-damage",
+        getDefinitionByInstanceId: (cardId) => ctx.cards.getDefinition(cardId),
+      });
+      if (hasDamageRestriction) {
+        continue;
+      }
+    }
+
     const meta = ctx.cards.require(targetId).meta ?? {};
     const currentDamage = Number(meta.damage ?? 0);
     const appliedDamage = options.applyResist
@@ -99,13 +113,38 @@ function applyDamage(
     recordDamagedCharacterThisTurn(ctx, targetId);
     changed = true;
 
+    // Emit "damage" trigger event so "whenever this character takes damage" abilities fire.
+    // The eventSnapshot.triggerAmount carries the damage dealt for use with { type: "trigger-amount" }.
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "damageDealt",
+      {
+        targetId,
+        amount: appliedDamage,
+        newDamage: nextDamage,
+        sourceId: cardPlayed.cardId,
+        damageType: "effect",
+      },
+      {
+        event: "damage",
+        subjectCardId: targetId,
+        triggerSourceCardId: cardPlayed.cardId,
+        playerId: ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined,
+        eventSnapshot: {
+          triggerAmount: appliedDamage,
+          damageDealt: appliedDamage,
+        },
+      },
+    );
+
     const targetDefinition = ctx.cards.getDefinition(targetId) as
       | ({ willpower?: number } & Record<string, unknown>)
       | undefined;
     const willpower = targetDefinition?.willpower;
     if (typeof willpower === "number" && nextDamage >= willpower) {
       const subjectAtLocationId = meta.atLocationId as CardInstanceId | undefined;
-      const ownerId = ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.ownerID;
+      const ownerId = ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined;
+      const keywordsBeforeBanish = getKeywordsBeforeBanish(ctx, targetId, cardPlayed.playerId);
 
       if (!ownerId) {
         effectLogger.fatal(`Target card ${targetId} not found in card index`);
@@ -113,6 +152,10 @@ function applyDamage(
       }
 
       const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, targetId);
+      const charsAtLocation =
+        targetDefinition?.cardType === "location"
+          ? getCharacterIdsAtLocation(ctx, targetId)
+          : undefined;
       moveCardOutOfPlayWithStack(ctx, targetId, {
         zone: "discard",
         playerId: ownerId,
@@ -123,7 +166,11 @@ function applyDamage(
         {
           cardId: targetId,
           sourceId: cardPlayed.cardId,
-          snapshot: { damageDealt: appliedDamage, subjectAtLocationId },
+          snapshot: {
+            damageDealt: appliedDamage,
+            keywordsBeforeBanish,
+            subjectAtLocationId,
+          },
           reason: "lethal damage",
         },
         {
@@ -133,7 +180,9 @@ function applyDamage(
           triggerSourceCardId: targetId,
           triggerCandidates,
           eventSnapshot: {
+            keywordsBeforeBanish,
             subjectAtLocationId,
+            charactersAtSourceLocationBeforeBanish: charsAtLocation,
           },
         },
       );
@@ -150,7 +199,10 @@ export function resolveDealDamageEffect(
   _effect: DealDamageEffect,
   resolvedInput: ResolvedDealDamageEffectInput,
 ): void {
-  const dealtAnyDamage = applyDamage(ctx, cardPlayed, resolvedInput, { applyResist: true });
+  const dealtAnyDamage = applyDamage(ctx, cardPlayed, resolvedInput, {
+    applyResist: true,
+    checkDamageRestriction: true,
+  });
   markLastEffectPerformed(resolvedInput.eventSnapshot, dealtAnyDamage);
 }
 

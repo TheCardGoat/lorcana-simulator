@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tritonDiscerningKingI18n } from "./159-triton-discerning-king.i18n";
 
 export const tritonDiscerningKing: CharacterCard = {
   id: "nit",
@@ -7,48 +8,6 @@ export const tritonDiscerningKing: CharacterCard = {
   cardType: "character",
   name: "Triton",
   version: "Discerning King",
-  i18n: {
-    en: {
-      name: "Triton",
-      version: "Discerning King",
-      text: [
-        {
-          title: "CONSIGN TO THE DEPTHS",
-          description: "{E}, Banish one of your items — Gain 3 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Triton",
-      version: "Anspruchsvoller König",
-      text: [
-        {
-          title: "IN DIE TIEFE SCHICKEN,",
-          description: "Verbanne einen deiner Gegenstände — Sammle 3 Legenden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Triton",
-      version: "Roi clairvoyant",
-      text: [
-        {
-          title: "RELÉGUÉ DANS LES PROFONDEURS,",
-          description: "Bannissez l'un de vos objets — Gagnez 3 éclats de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Tritone",
-      version: "Re Accorto",
-      text: [
-        {
-          title: "CONSEGNARE ALL'ABISSO,",
-          description: "esilia uno dei tuoi oggetti — Ottieni 3 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Little Mermaid",
   set: "004",
@@ -74,14 +33,17 @@ export const tritonDiscerningKing: CharacterCard = {
     {
       cost: {
         exert: true,
+        banishItem: true,
       },
       effect: {
         amount: 3,
         type: "gain-lore",
       },
       id: "rj9-1",
+      name: "CONSIGN TO THE DEPTHS",
       text: "CONSIGN TO THE DEPTHS {E}, Banish one of your items — Gain 3 lore.",
       type: "activated",
     },
   ],
+  i18n: tritonDiscerningKingI18n,
 };

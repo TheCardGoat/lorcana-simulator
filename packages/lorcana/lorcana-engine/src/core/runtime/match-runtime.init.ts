@@ -10,49 +10,35 @@ import { createInitialTCGCtx, type InitialStatusConfig } from "./types";
 import type {
   MatchRuntimeConfig,
   Player,
-  MoveDefinition,
   ZoneDefinitions,
   RuntimeFlowDefinition,
 } from "./match-runtime.types";
 import type { MatchStaticResources } from "./static-resources";
-import type { BaseCardDefinition } from "./card-contracts";
 
 type PlayerId = string;
 
 import { createRandomAPIForDraft } from "./match-runtime.random-apis";
 import { generateMatchID, computeRulesetHash, generateGameID } from "./match-runtime.utils";
+import type { LorcanaG } from "../../types/runtime-state";
 
 // =============================================================================
 // State Initialization
 // =============================================================================
 
-export interface MatchInitContext<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object = {},
-> {
+export interface MatchInitContext {
   matchID?: string;
   gameID?: string;
-  config: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>;
+  config: MatchRuntimeConfig;
   players: Player[];
   seed?: string;
-  staticResources: MatchStaticResources<TCardDefinition>;
+  staticResources: MatchStaticResources;
   choosingFirstPlayer?: PlayerId;
 }
 
-export function initializeMatchState<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition,
-  TCardDerived extends object = {},
-  TBoardView = unknown,
->(
-  ctx: MatchInitContext<G, Moves, TCardDefinition, TCardDerived>,
-): {
-  state: MatchState<G>;
-  board: TBoardView;
-  staticResources: MatchStaticResources<TCardDefinition>;
+export function initializeMatchState(ctx: MatchInitContext): {
+  state: MatchState;
+  board: unknown;
+  staticResources: MatchStaticResources;
 } {
   const { players, seed, matchID, gameID, staticResources, choosingFirstPlayer } = ctx;
 
@@ -90,7 +76,7 @@ export function initializeMatchState<
   // Initialize game-specific state via setup
   const gameState = ctx.config.setup({ players, seed, staticResources });
 
-  let state: MatchState<G> = { G: gameState, ctx: tcgCtx };
+  let state: MatchState = { G: gameState, ctx: tcgCtx };
 
   if (ctx.config.boardSetup) {
     state = produce(state, (draft) => {
@@ -103,7 +89,7 @@ export function initializeMatchState<
   }
 
   // TODO: Properly initialize the board view
-  let board: TBoardView = {} as TBoardView;
+  let board: unknown = {};
 
   return {
     state,
@@ -171,11 +157,7 @@ function initializeTimeControlPlayers(
 /**
  * Extracts the initial game segment and phase from the flow definition.
  */
-function extractInitialFlowState<
-  G,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
->(flow: RuntimeFlowDefinition<G, TCardDefinition, TCardDerived>): InitialStatusConfig {
+function extractInitialFlowState(flow: RuntimeFlowDefinition): InitialStatusConfig {
   // Get the initial game segment
   const segmentId = flow.initialGameSegment ?? Object.keys(flow.gameSegments)[0];
   const segment = segmentId ? flow.gameSegments[segmentId] : undefined;

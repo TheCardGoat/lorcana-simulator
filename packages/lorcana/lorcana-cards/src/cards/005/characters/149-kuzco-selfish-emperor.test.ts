@@ -1,67 +1,130 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { pawpsicle } from "@lorcanito/lorcana-engine/cards/002/items/items";
-// Import {
-//   KuzcoSelfishEmperor,
-//   MonstroWhaleOfAWhale,
-// } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Kuzco - Selfish Emperor", () => {
-//   It("**OUTPLACEMENT** When you play this character, you may put chosen item or location into its player’s inkwell facedown and exerted.<br/>**BY INVITE ONLY** 4 {I} − Your other characters gain **Resist** +1 until the start of your next turn. _(Damage dealt to them is reduced by 1.)_", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Inkwell: kuzcoSelfishEmperor.cost,
-//         Hand: [kuzcoSelfishEmperor],
-//       },
-//       {
-//         Play: [pawpsicle],
-//       },
-//     );
-//
-//     Const cardUnderTest = testStore.getCard(kuzcoSelfishEmperor);
-//     Const target = testStore.getCard(pawpsicle);
-//
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({ targets: [target] });
-//     Expect(testStore.getZonesCardCount("player_two").inkwell).toEqual(1);
-//   });
-//   It("**OUTPLACEMENT** Opt out", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Inkwell: kuzcoSelfishEmperor.cost,
-//         Hand: [kuzcoSelfishEmperor],
-//       },
-//       {
-//         Play: [pawpsicle],
-//       },
-//     );
-//
-//     Const cardUnderTest = testStore.getCard(kuzcoSelfishEmperor);
-//
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveOptionalAbility();
-//     Expect(cardUnderTest.zone).toEqual("play");
-//     Expect(testStore.getZonesCardCount("player_two").inkwell).toEqual(0);
-//   });
-//   It("**BY INVITE ONLY** 4 {I} − Your other characters gain **Resist** +1 until the start of your next turn. _(Damage dealt to them is reduced by 1.)_", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: kuzcoSelfishEmperor.cost,
-//       Play: [kuzcoSelfishEmperor, monstroWhaleOfAWhale],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(kuzcoSelfishEmperor);
-//     Const monstro = testStore.getCard(monstroWhaleOfAWhale);
-//
-//     Expect(monstro.hasResist).toEqual(false);
-//     CardUnderTest.activate();
-//     Expect(monstro.hasResist).toEqual(true);
-//     Expect(cardUnderTest.hasResist).toEqual(false);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_TWO,
+  createMockCharacter,
+  createMockItem,
+} from "@tcg/lorcana-engine/testing";
+import { kuzcoSelfishEmperor } from "./149-kuzco-selfish-emperor";
+
+const opponentItem = createMockItem({
+  id: "kuzco-se-opponent-item",
+  name: "Opponent Item",
+  cost: 3,
+});
+
+const allyCharacter = createMockCharacter({
+  id: "kuzco-se-ally-character",
+  name: "Ally Character",
+  cost: 3,
+  strength: 2,
+  willpower: 4,
+  lore: 1,
+});
+
+describe("Kuzco - Selfish Emperor", () => {
+  describe("OUTPLACEMENT — When you play this character, you may put chosen item or location into its player's inkwell facedown and exerted.", () => {
+    it("moves a chosen item into its player's inkwell when Kuzco is played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [kuzcoSelfishEmperor],
+          inkwell: kuzcoSelfishEmperor.cost,
+          deck: 1,
+        },
+        {
+          play: [opponentItem],
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(kuzcoSelfishEmperor)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          resolveOptional: true,
+          targets: [opponentItem],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // The item should now be in player two's inkwell
+      expect(testEngine.asPlayerTwo().getZonesCardCount().inkwell).toBe(1);
+      expect(testEngine.asPlayerTwo().getCardZone(opponentItem)).toBe("inkwell");
+      // The item should be exerted
+      expect(testEngine.isExerted(opponentItem)).toBe(true);
+    });
+
+    it("allows declining the optional ability", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [kuzcoSelfishEmperor],
+          inkwell: kuzcoSelfishEmperor.cost,
+          deck: 1,
+        },
+        {
+          play: [opponentItem],
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(kuzcoSelfishEmperor)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // The item should remain in play
+      expect(testEngine.asPlayerTwo().getCardZone(opponentItem)).toBe("play");
+      expect(testEngine.asPlayerTwo().getZonesCardCount().inkwell).toBe(0);
+    });
+  });
+
+  describe("BY INVITE ONLY 4 {I} — Your other characters gain Resist +1 until the start of your next turn.", () => {
+    it("grants Resist to other own characters when activated", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: kuzcoSelfishEmperor, isDrying: false }, allyCharacter],
+        inkwell: 4,
+        deck: 1,
+      });
+
+      expect(testEngine.asPlayerOne().hasKeyword(allyCharacter, "Resist")).toBe(false);
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(kuzcoSelfishEmperor, "BY INVITE ONLY"),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().hasKeyword(allyCharacter, "Resist")).toBe(true);
+      // Kuzco himself should NOT gain Resist
+      expect(testEngine.asPlayerOne().hasKeyword(kuzcoSelfishEmperor, "Resist")).toBe(false);
+    });
+
+    it("Resist expires at the start of the next turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: kuzcoSelfishEmperor, isDrying: false }, allyCharacter],
+          inkwell: 4,
+          deck: 5,
+        },
+        {
+          deck: 5,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(kuzcoSelfishEmperor, "BY INVITE ONLY"),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().hasKeyword(allyCharacter, "Resist")).toBe(true);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      // After a full round, Resist should have expired at start of player one's turn
+      expect(testEngine.asPlayerOne().hasKeyword(allyCharacter, "Resist")).toBe(false);
+    });
+  });
+});

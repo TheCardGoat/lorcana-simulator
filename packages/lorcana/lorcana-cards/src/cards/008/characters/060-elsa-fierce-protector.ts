@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { elsaFierceProtectorI18n } from "./060-elsa-fierce-protector.i18n";
 
 export const elsaFierceProtector: CharacterCard = {
   id: "F8U",
@@ -7,50 +8,6 @@ export const elsaFierceProtector: CharacterCard = {
   cardType: "character",
   name: "Elsa",
   version: "Fierce Protector",
-  i18n: {
-    en: {
-      name: "Elsa",
-      version: "Fierce Protector",
-      text: [
-        {
-          title: "ICE OVER 1",
-          description: "{I}, Choose and discard a card — Exert chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Elsa",
-      version: "Stürmische Beschützerin",
-      text: [
-        {
-          title: "VEREISEN 1,",
-          description:
-            "Wähle eine Karte aus deiner Hand und wirf sie ab — Erschöpfe einen gegnerischen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Elsa",
-      version: "Protectrice farouche",
-      text: [
-        {
-          title: "GLACIATION 1,",
-          description: "défaussez une carte — Choisissez un personnage adverse et épuisez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Elsa",
-      version: "Protettrice Impetuosa",
-      text: [
-        {
-          title: "GHIACCIARE 1,",
-          description:
-            "scegli e scarta una carta — Impegna un personaggio avversario a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "008",
@@ -76,16 +33,25 @@ export const elsaFierceProtector: CharacterCard = {
     {
       cost: {
         exert: true,
+        ink: 1,
+        discardCards: 1,
+        discardChosen: true,
       },
       effect: {
-        amount: 1,
-        chosen: true,
-        target: "CONTROLLER",
-        type: "discard",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+        type: "exert",
       },
       id: "x49-1",
+      name: "ICE OVER",
       text: "ICE OVER 1 {I} , Choose and discard a card — Exert chosen opposing character.",
       type: "activated",
     },
   ],
+  i18n: elsaFierceProtectorI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { plutoFriendlyPoochI18n } from "./018-pluto-friendly-pooch.i18n";
 
 export const plutoFriendlyPooch: CharacterCard = {
   id: "Dl1",
@@ -7,50 +8,6 @@ export const plutoFriendlyPooch: CharacterCard = {
   cardType: "character",
   name: "Pluto",
   version: "Friendly Pooch",
-  i18n: {
-    en: {
-      name: "Pluto",
-      version: "Friendly Pooch",
-      text: [
-        {
-          title: "GOOD DOG",
-          description: "{E} — You pay 1 {I} less for the next character you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Pluto",
-      version: "Freundliches Hündchen",
-      text: [
-        {
-          title: "BRAVER JUNGE",
-          description:
-            "— Du zahlst 1 weniger für den nächsten Charakter, den du in diesem Zug ausspielst.",
-        },
-      ],
-    },
-    fr: {
-      name: "Pluto",
-      version: "Gentil cabot",
-      text: [
-        {
-          title: "BON CHIEN",
-          description:
-            "— Le prochain personnage que vous jouez durant ce tour vous coûte 1 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Pluto",
-      version: "Cane Amichevole",
-      text: [
-        {
-          title: "BRAVO CAGNOLINO",
-          description: "— Paga 1 in meno per giocare il tuo prossimo personaggio per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   set: "003",
   cardNumber: 18,
@@ -71,19 +28,23 @@ export const plutoFriendlyPooch: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingTests: true,
   abilities: [
     {
       cost: {
         exert: true,
       },
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 1,
+        cardType: "character",
+        duration: "next-play-this-turn",
+        target: "CONTROLLER",
+        type: "cost-reduction",
       },
       id: "16c-1",
+      name: "GOOD DOG",
       text: "GOOD DOG {E} — You pay 1 {I} less for the next character you play this turn.",
       type: "activated",
     },
   ],
+  i18n: plutoFriendlyPoochI18n,
 };

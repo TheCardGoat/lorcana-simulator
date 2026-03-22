@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { m } from "$lib/paraglide/messages.js";
+  import { m } from "$lib/i18n/messages.js";
   import type { ChallengePreviewResult } from "@tcg/lorcana-engine";
   import type {BoardLocalRect} from "@/features/simulator/animations/board-move-animations.js";
 

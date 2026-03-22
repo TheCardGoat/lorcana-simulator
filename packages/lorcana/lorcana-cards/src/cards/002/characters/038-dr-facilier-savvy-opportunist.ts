@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { drFacilierSavvyOpportunistI18n } from "./038-dr-facilier-savvy-opportunist.i18n";
 
 export const drFacilierSavvyOpportunist: CharacterCard = {
   id: "25Q",
@@ -7,33 +8,6 @@ export const drFacilierSavvyOpportunist: CharacterCard = {
   cardType: "character",
   name: "Dr. Facilier",
   version: "Savvy Opportunist",
-  i18n: {
-    en: {
-      name: "Dr. Facilier",
-      version: "Savvy Opportunist",
-      text: "Evasive",
-    },
-    de: {
-      name: "Dr. Facilier",
-      version: "Gerissener Opportunist",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Dr. Facilier",
-      version: "Opportuniste bien renseigné",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Dr. Facilier",
-      version: "Savvy Opportunist",
-      text: [
-        {
-          title: "Evasive",
-          description: "(Only characters with Evasive can challenge this character.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Princess and the Frog",
   set: "002",
@@ -58,4 +32,5 @@ export const drFacilierSavvyOpportunist: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: drFacilierSavvyOpportunistI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { robinHoodCapableFighterEpicI18n } from "./220-robin-hood-capable-fighter-epic.i18n";
 
 export const robinHoodCapableFighterEpic: CharacterCard = {
   id: "XQ4",
@@ -7,48 +8,6 @@ export const robinHoodCapableFighterEpic: CharacterCard = {
   cardType: "character",
   name: "Robin Hood",
   version: "Capable Fighter",
-  i18n: {
-    en: {
-      name: "Robin Hood",
-      version: "Capable Fighter",
-      text: [
-        {
-          title: "SKIRMISH",
-          description: "{E} — Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Robin Hood",
-      version: "Capable Fighter",
-      text: [
-        {
-          title: "SKIRMISH",
-          description: "— Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    fr: {
-      name: "Robin Hood",
-      version: "Capable Fighter",
-      text: [
-        {
-          title: "SKIRMISH",
-          description: "— Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    it: {
-      name: "Robin Hood",
-      version: "Capable Fighter",
-      text: [
-        {
-          title: "SKIRMISH",
-          description: "— Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Robin Hood",
   set: "009",
@@ -92,4 +51,5 @@ export const robinHoodCapableFighterEpic: CharacterCard = {
       type: "activated",
     },
   ],
+  i18n: robinHoodCapableFighterEpicI18n,
 };

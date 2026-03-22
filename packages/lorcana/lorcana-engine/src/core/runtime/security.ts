@@ -340,7 +340,7 @@ export class StateSanitizer {
   /**
    * Sanitize match state for logging (remove sensitive data).
    */
-  static forLogging<G>(state: MatchState<G>): Partial<MatchState<G>> {
+  static forLogging(state: MatchState): Partial<MatchState> {
     return {
       G: state.G,
       ctx: {
@@ -352,7 +352,7 @@ export class StateSanitizer {
           // Remove RNG state
           state: undefined,
         },
-      } as MatchState<G>["ctx"],
+      } as MatchState["ctx"],
     };
   }
 
@@ -372,7 +372,7 @@ export class StateSanitizer {
   /**
    * Validate state integrity.
    */
-  static validateIntegrity<G>(state: MatchState<G>): {
+  static validateIntegrity(state: MatchState): {
     valid: boolean;
     errors: string[];
   } {

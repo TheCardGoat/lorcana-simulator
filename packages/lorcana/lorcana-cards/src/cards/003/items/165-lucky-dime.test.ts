@@ -1,28 +1,39 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { nalaFierceFriend } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { luckyDime } from "@lorcanito/lorcana-engine/cards/003/items/items";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Lucky Dime", () => {
-//   It("**NUMBER ONE** {E}, 2 {I} − Choose a character of yours and gain lore equal to their {L}.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: 2,
-//       Play: [luckyDime, nalaFierceFriend],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId("play", luckyDime.id);
-//     Const target = testStore.getByZoneAndId("play", nalaFierceFriend.id);
-//
-//     CardUnderTest.activate();
-//     TestStore.resolveTopOfStack({ targets: [target] });
-//
-//     Expect(cardUnderTest.meta.exerted).toBe(true);
-//     Expect(testStore.getPlayerLore()).toBe(target.lore);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { simbaScrappyCub } from "../characters";
+import { luckyDime } from "./165-lucky-dime";
+
+describe("Lucky Dime", () => {
+  describe("NUMBER ONE — {E}, 2 {I} — Choose a character of yours and gain lore equal to their {L}.", () => {
+    it("gains lore equal to the chosen character's lore value", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [luckyDime, simbaScrappyCub],
+        inkwell: 2,
+      });
+
+      const result = testEngine.asPlayerOne().activateAbility(luckyDime, {
+        ability: "NUMBER ONE",
+        targets: [simbaScrappyCub],
+      });
+
+      expect(result).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().isExerted(luckyDime)).toBe(true);
+      // simbaScrappyCub has lore 3
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(simbaScrappyCub.lore);
+    });
+
+    it("requires 2 ink to activate", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [luckyDime, simbaScrappyCub],
+        inkwell: 1,
+      });
+
+      const result = testEngine.asPlayerOne().activateAbility(luckyDime, {
+        ability: "NUMBER ONE",
+        targets: [simbaScrappyCub],
+      });
+
+      expect(result).not.toBeSuccessfulCommand();
+    });
+  });
+});

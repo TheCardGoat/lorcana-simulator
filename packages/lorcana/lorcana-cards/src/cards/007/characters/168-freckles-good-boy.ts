@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { frecklesGoodBoyI18n } from "./168-freckles-good-boy.i18n";
 
 export const frecklesGoodBoy: CharacterCard = {
   id: "64q",
@@ -7,52 +8,6 @@ export const frecklesGoodBoy: CharacterCard = {
   cardType: "character",
   name: "Freckles",
   version: "Good Boy",
-  i18n: {
-    en: {
-      name: "Freckles",
-      version: "Good Boy",
-      text: [
-        {
-          title: "JUST SO CUTE!",
-          description:
-            "When you play this character, chosen opposing character gets -1 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Pünktchen",
-      version: "Guter Junge",
-      text: [
-        {
-          title: "EINFACH NIEDLICH!",
-          description:
-            "Wenn du diesen Charakter ausspielst, gib einem gegnerischen Charakter deiner Wahl in diesem Zug -1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Biscotte",
-      version: "Bon chien",
-      text: [
-        {
-          title: "TELLEMENT MIGNON!",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage adverse qui subit -1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Lentiggini",
-      version: "Bravo Ragazzo",
-      text: [
-        {
-          title: "COSÌ CARINO!",
-          description:
-            "Quando giochi questo personaggio, un personaggio avversario a tua scelta riceve -1 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "101 Dalmatians",
   set: "007",
@@ -80,7 +35,13 @@ export const frecklesGoodBoy: CharacterCard = {
         duration: "this-turn",
         modifier: -1,
         stat: "strength",
-        target: "SELF",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
         type: "modify-stat",
       },
       id: "1v6-1",
@@ -94,4 +55,5 @@ export const frecklesGoodBoy: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: frecklesGoodBoyI18n,
 };

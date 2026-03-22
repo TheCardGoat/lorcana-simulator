@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { dinnerBellI18n } from "./135-dinner-bell.i18n";
 
 export const dinnerBell: ItemCard = {
   id: "j0O",
@@ -6,48 +7,6 @@ export const dinnerBell: ItemCard = {
   reprints: ["set2-134", "set9-135"],
   cardType: "item",
   name: "Dinner Bell",
-  i18n: {
-    en: {
-      name: "Dinner Bell",
-      text: [
-        {
-          title: "YOU KNOW WHAT HAPPENS",
-          description:
-            "{E}, 2 {I} — Draw cards equal to the damage on chosen character of yours, then banish them.",
-        },
-      ],
-    },
-    de: {
-      name: "Tischglocke",
-      text: [
-        {
-          title: "DU WEISST, WAS PASSIERT, 2",
-          description:
-            "— Wähle einen deiner Charaktere und zähle den Schaden auf ihm. Ziehe diese Anzahl an Karten und verbanne den Charakter anschließend.",
-        },
-      ],
-    },
-    fr: {
-      name: "Clochette du dîner",
-      text: [
-        {
-          title: "TU SAIS CE QUI SE PASSE, 2",
-          description:
-            "— Choisissez l'un de vos personnages blessés et piochez une carte pour chaque jeton Dommage sur lui, puis bannissez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Dinner Bell",
-      text: [
-        {
-          title: "YOU KNOW WHAT HAPPENS, 2",
-          description:
-            "— Draw cards equal to the damage on chosen character of yours, then banish them.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Great Mouse Detective",
   set: "009",
@@ -94,4 +53,5 @@ export const dinnerBell: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: dinnerBellI18n,
 };

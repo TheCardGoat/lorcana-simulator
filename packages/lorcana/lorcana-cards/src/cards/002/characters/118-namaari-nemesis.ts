@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { namaariNemesisI18n } from "./118-namaari-nemesis.i18n";
 
 export const namaariNemesis: CharacterCard = {
   id: "SWw",
@@ -7,48 +8,6 @@ export const namaariNemesis: CharacterCard = {
   cardType: "character",
   name: "Namaari",
   version: "Nemesis",
-  i18n: {
-    en: {
-      name: "Namaari",
-      version: "Nemesis",
-      text: [
-        {
-          title: "THIS SHOULDN'T TAKE LONG",
-          description: "{E}, Banish this character — Banish chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Namaari",
-      version: "Erzfeindin",
-      text: [
-        {
-          title: "BRINGEN WIR'S ZU ENDE,",
-          description: "Verbanne diesen Charakter — Verbanne einen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Namaari",
-      version: "Némésis",
-      text: [
-        {
-          title: "ÇA NE DEVRAIT PAS ÊTRE LONG,",
-          description: "Bannissez ce personnage — Choisissez un personnage et bannissez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Namaari",
-      version: "Nemesis",
-      text: [
-        {
-          title: "THIS SHOULDN'T TAKE LONG,",
-          description: "Banish this character — Banish chosen character.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "002",
@@ -86,4 +45,5 @@ export const namaariNemesis: CharacterCard = {
       },
     },
   ],
+  i18n: namaariNemesisI18n,
 };

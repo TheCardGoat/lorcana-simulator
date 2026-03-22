@@ -7,6 +7,92 @@ import { theFamilyMadrigal } from "./040-the-family-madrigal";
 import { thisIsMyFamily } from "./081-this-is-my-family";
 
 describe("The Family Madrigal", () => {
+  it("rejects selecting a non-Madrigal character for the Madrigal destination via pending resolution", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [theFamilyMadrigal],
+      inkwell: theFamilyMadrigal.cost,
+      deck: [
+        arielOnHumanLegs,
+        thisIsMyFamily,
+        isabelaMadrigalInTheMoment,
+        simbaProtectiveCub,
+        restoringTheHeart,
+      ],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(theFamilyMadrigal).success).toBe(true);
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+    // Ariel is a character but NOT a Madrigal — selecting her for the Madrigal destination must fail
+    expect(
+      testEngine.asPlayerOne().resolvePendingEffect(theFamilyMadrigal, {
+        destinations: [
+          {
+            zone: "hand",
+            cards: [arielOnHumanLegs],
+          },
+          {
+            zone: "hand",
+            cards: [thisIsMyFamily],
+          },
+          {
+            zone: "deck-top",
+            cards: [isabelaMadrigalInTheMoment, simbaProtectiveCub, restoringTheHeart],
+          },
+        ],
+      }).success,
+    ).toBe(false);
+
+    // The pending effect should still be unresolved
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+  });
+
+  it("allows selecting only a song without a Madrigal character via pending resolution", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [theFamilyMadrigal],
+      inkwell: theFamilyMadrigal.cost,
+      deck: [
+        arielOnHumanLegs,
+        thisIsMyFamily,
+        isabelaMadrigalInTheMoment,
+        simbaProtectiveCub,
+        restoringTheHeart,
+      ],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(theFamilyMadrigal).success).toBe(true);
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+    // Provide an explicit empty selection for the Madrigal slot, then the song slot
+    expect(
+      testEngine.asPlayerOne().resolvePendingEffect(theFamilyMadrigal, {
+        destinations: [
+          {
+            zone: "hand",
+            cards: [],
+          },
+          {
+            zone: "hand",
+            cards: [thisIsMyFamily],
+          },
+          {
+            zone: "deck-top",
+            cards: [
+              isabelaMadrigalInTheMoment,
+              arielOnHumanLegs,
+              simbaProtectiveCub,
+              restoringTheHeart,
+            ],
+          },
+        ],
+      }).success,
+    ).toBe(true);
+
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+    expect(testEngine.asPlayerOne().getCardZone(thisIsMyFamily)).toBe("hand");
+    expect(testEngine.asPlayerOne().getCardZone(isabelaMadrigalInTheMoment)).toBe("deck");
+  });
+
   it("puts up to 1 Madrigal character and up to 1 song into your hand and keeps the rest on top in order", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [theFamilyMadrigal],

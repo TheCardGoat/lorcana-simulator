@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { thunderboltWonderDogI18n } from "./023-thunderbolt-wonder-dog.i18n";
 
 export const thunderboltWonderDog: CharacterCard = {
   id: "xjz",
@@ -7,42 +8,6 @@ export const thunderboltWonderDog: CharacterCard = {
   cardType: "character",
   name: "Thunderbolt",
   version: "Wonder Dog",
-  i18n: {
-    en: {
-      name: "Thunderbolt",
-      version: "Wonder Dog",
-      text: [
-        {
-          title: "Puppy Shift 3",
-          description: "(You may pay 3 {I} to play this on top of one of your Puppy characters.)",
-        },
-        {
-          title: "Bodyguard",
-        },
-      ],
-    },
-    de: {
-      name: "Thunderbolt",
-      version: "Wunderhund",
-      text: "Welpen-Gestaltwandel 3 Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "Ouragan",
-      version: "Chien prodigieux",
-      text: "Alter de Chiot 3 Rempart (Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.)",
-    },
-    it: {
-      name: "Fulmine",
-      version: "Cane Prodigio",
-      text: [
-        {
-          title: "Trasformazione Cucciolo 3",
-          description:
-            "(Puoi pagare 3 per giocare questa carta sopra a uno dei tuoi personaggi Cucciolo.) Guardiano",
-        },
-      ],
-    },
-  },
   inkType: ["amber", "sapphire"],
   franchise: "101 Dalmatians",
   set: "007",
@@ -84,4 +49,5 @@ export const thunderboltWonderDog: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: thunderboltWonderDogI18n,
 };

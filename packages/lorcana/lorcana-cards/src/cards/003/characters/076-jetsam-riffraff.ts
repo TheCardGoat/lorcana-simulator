@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jetsamRiffraffI18n } from "./076-jetsam-riffraff.i18n";
 
 export const jetsamRiffraff: CharacterCard = {
   id: "j0a",
@@ -7,36 +8,6 @@ export const jetsamRiffraff: CharacterCard = {
   cardType: "character",
   name: "Jetsam",
   version: "Riffraff",
-  i18n: {
-    en: {
-      name: "Jetsam",
-      version: "Riffraff",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "EERIE PAIR",
-          description: "Your characters named Flotsam gain Ward.",
-        },
-      ],
-    },
-    de: {
-      name: "Meerschaum",
-      version: "Fischabfall",
-      text: "Behütet UNHEIMLICHES PAAR Deine Abschaum-Charaktere erhalten Behütet.",
-    },
-    fr: {
-      name: "Jetsam",
-      version: "Boule puante",
-      text: "Hors d'atteinte SINISTRE DUO Vos personnages Flotsam gagnent Hors d'atteinte.",
-    },
-    it: {
-      name: "Jetsam",
-      version: "Marmaglia",
-      text: "Protetto COPPIA INQUIETANTE I tuoi personaggi chiamati Flotsam ottengono Protetto.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Little Mermaid",
   set: "003",
@@ -61,8 +32,6 @@ export const jetsamRiffraff: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally"],
-  missingImplementation: true,
-  missingTests: true,
   abilities: [
     {
       id: "1py-1",
@@ -73,12 +42,26 @@ export const jetsamRiffraff: CharacterCard = {
     {
       effect: {
         keyword: "Ward",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-name",
+              name: "Flotsam",
+            },
+          ],
+        },
         type: "gain-keyword",
       },
       id: "1py-2",
+      name: "EERIE PAIR",
       text: "EERIE PAIR Your characters named Flotsam gain Ward.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: jetsamRiffraffI18n,
 };

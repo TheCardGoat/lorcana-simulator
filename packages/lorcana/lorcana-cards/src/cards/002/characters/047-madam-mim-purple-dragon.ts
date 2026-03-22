@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madamMimPurpleDragonI18n } from "./047-madam-mim-purple-dragon.i18n";
 
 export const madamMimPurpleDragon: CharacterCard = {
   id: "EHY",
@@ -7,43 +8,6 @@ export const madamMimPurpleDragon: CharacterCard = {
   cardType: "character",
   name: "Madam Mim",
   version: "Purple Dragon",
-  i18n: {
-    en: {
-      name: "Madam Mim",
-      version: "Purple Dragon",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "I WIN, I WIN!",
-          description:
-            "When you play this character, banish her or return another 2 chosen characters of yours to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Madame Mim",
-      version: "Lila Drache",
-      text: "Wendig GEWONNEN, GEWONNEN! Wenn du diesen Charakter ausspielst, musst du ihn verbannen oder 2 deiner anderen Charaktere wählen und zurück auf deine Hand nehmen.",
-    },
-    fr: {
-      name: "Madame Mime",
-      version: "En dragon",
-      text: "Insaisissable JE L'AI EU, J'AI GAGNÉ! Lorsque vous jouez ce personnage, bannissez-le ou renvoyez 2 de vos autres personnages en jeu dans votre main.",
-    },
-    it: {
-      name: "Madam Mim",
-      version: "Purple Dragon",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) I WIN, I WIN! When you play this character, banish her or return another 2 chosen characters of yours to your hand.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -69,7 +33,6 @@ export const madamMimPurpleDragon: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer", "Dragon"],
-  missingTests: true,
   abilities: [
     {
       id: "12t-1",
@@ -110,4 +73,5 @@ export const madamMimPurpleDragon: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: madamMimPurpleDragonI18n,
 };

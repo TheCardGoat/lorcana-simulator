@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { simbaPlayfulPouncerI18n } from "./023-simba-playful-pouncer.i18n";
 
 export const simbaPlayfulPouncer: CharacterCard = {
   id: "ymd",
@@ -7,52 +8,6 @@ export const simbaPlayfulPouncer: CharacterCard = {
   cardType: "character",
   name: "Simba",
   version: "Playful Pouncer",
-  i18n: {
-    en: {
-      name: "Simba",
-      version: "Playful Pouncer",
-      text: [
-        {
-          title: "YOU DON'T STAND A CHANCE",
-          description:
-            "When you play this character, chosen opposing character gets -2 {S} until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Simba",
-      version: "Verspielter Fänger",
-      text: [
-        {
-          title: "DU HAST KEINE CHANCE",
-          description:
-            "Wenn du diesen Charakter ausspielst, erhält ein gegnerischer Charakter deiner Wahl bis zu Beginn deines nächsten Zuges -2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Simba",
-      version: "Bondisseur espiègle",
-      text: [
-        {
-          title: "TU N'AS AUCUNE CHANCE",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage adverse qui subit -2 jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Simba",
-      version: "Predatore Giocherellone",
-      text: [
-        {
-          title: "NON HAI SCAMPO",
-          description:
-            "Quando giochi questo personaggio, un personaggio avversario a tua scelta riceve -2 fino all'inizio del tuo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lion King",
   set: "011",
@@ -69,9 +24,9 @@ export const simbaPlayfulPouncer: CharacterCard = {
   },
   text: [
     {
-      title: "YOU DON'T STAND A CHANCE",
+      title: "YOU DON'T STAND",
       description:
-        "When you play this character, chosen opposing character gets -2 {S} until the start of your next turn.",
+        "A CHANCE When you play this character, chosen opposing character gets -2 {S} until the start of your next turn.",
     },
   ],
   classifications: ["Storyborn", "Hero", "Prince"],
@@ -79,11 +34,27 @@ export const simbaPlayfulPouncer: CharacterCard = {
     {
       id: "11n-1",
       effect: {
-        from: "hand",
-        type: "play-card",
+        modifier: -2,
+        stat: "strength",
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          owner: "opponent",
+          selector: "chosen",
+          zones: ["play"],
+        },
+        type: "modify-stat",
+        duration: "until-start-of-next-turn",
       },
-      type: "action",
-      text: "YOU DON’T STAND A CHANCE When you play this character, chosen opposing character gets -2 {} until the start of your next turn.",
+      name: "YOU DON’T STAND A CHANCE",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+      text: "YOU DON’T STAND A CHANCE When you play this character, chosen opposing character gets -2 {S} until the start of your next turn.",
     },
   ],
+  i18n: simbaPlayfulPouncerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theQueenRegalMonarchI18n } from "./027-the-queen-regal-monarch.i18n";
 
 export const theQueenRegalMonarch: CharacterCard = {
   id: "h77",
@@ -7,24 +8,6 @@ export const theQueenRegalMonarch: CharacterCard = {
   cardType: "character",
   name: "The Queen",
   version: "Regal Monarch",
-  i18n: {
-    en: {
-      name: "The Queen",
-      version: "Regal Monarch",
-    },
-    de: {
-      name: "Die Königin",
-      version: "Majestätische Herrscherin",
-    },
-    fr: {
-      name: "La Reine",
-      version: "Monarque absolue",
-    },
-    it: {
-      name: "The Queen",
-      version: "Regal Monarch",
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "002",
@@ -41,4 +24,5 @@ export const theQueenRegalMonarch: CharacterCard = {
     tcgPlayer: 649956,
   },
   classifications: ["Storyborn", "Villain", "Queen"],
+  i18n: theQueenRegalMonarchI18n,
 };

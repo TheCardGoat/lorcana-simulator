@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { aladdinFearlessNavigatorI18n } from "./112-aladdin-fearless-navigator.i18n";
 
 export const aladdinFearlessNavigator: CharacterCard = {
   id: "4X3",
@@ -7,24 +8,6 @@ export const aladdinFearlessNavigator: CharacterCard = {
   cardType: "character",
   name: "Aladdin",
   version: "Fearless Navigator",
-  i18n: {
-    en: {
-      name: "Aladdin",
-      version: "Fearless Navigator",
-    },
-    de: {
-      name: "Aladdin",
-      version: "Furchtloser Navigator",
-    },
-    fr: {
-      name: "Aladdin",
-      version: "Navigateur intrépide",
-    },
-    it: {
-      name: "Aladdin",
-      version: "Impavido Navigatore",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aladdin",
   set: "006",
@@ -41,4 +24,5 @@ export const aladdinFearlessNavigator: CharacterCard = {
     tcgPlayer: 592998,
   },
   classifications: ["Storyborn", "Hero", "Prince"],
+  i18n: aladdinFearlessNavigatorI18n,
 };

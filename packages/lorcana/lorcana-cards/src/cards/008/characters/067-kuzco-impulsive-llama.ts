@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kuzcoImpulsiveLlamaI18n } from "./067-kuzco-impulsive-llama.i18n";
 
 export const kuzcoImpulsiveLlama: CharacterCard = {
   id: "uQg",
@@ -7,37 +8,6 @@ export const kuzcoImpulsiveLlama: CharacterCard = {
   cardType: "character",
   name: "Kuzco",
   version: "Impulsive Llama",
-  i18n: {
-    en: {
-      name: "Kuzco",
-      version: "Impulsive Llama",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "WHAT DOES THIS DO?",
-          description:
-            "When you play this character, each opponent chooses one of their characters and puts that card on the bottom of their deck. Then, each opponent may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Kusco",
-      version: "Impulsives Lama",
-      text: "Gestaltwandel 4 WAS MACHT DER HIER? Wenn du diesen Charakter ausspielst, wählen alle gegnerischen Mitspielenden je einen ihrer Charaktere und legen ihn unter ihr Deck. Dann dürfen alle gegnerischen Mitspielenden je 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Kuzco",
-      version: "Lama impétueux",
-      text: "Alter 4 QU'EST-CE QUE ÇA FAIT? Lorsque vous jouez ce personnage, chaque adversaire choisit l'un de ses personnages et le place sous sa pioche. Ensuite, chaque adversaire peut piocher une carte.",
-    },
-    it: {
-      name: "Kuzco",
-      version: "Lama Impulsivo",
-      text: "Trasformazione 4 COSA FA QUESTA? Quando giochi questo personaggio, ogni avversario sceglie uno dei suoi personaggi e mette quella carta in fondo al suo mazzo. Poi, ogni avversario può pescare una carta.",
-    },
-  },
   inkType: ["amethyst", "emerald"],
   franchise: "Emperors New Groove",
   set: "008",
@@ -75,18 +45,29 @@ export const kuzcoImpulsiveLlama: CharacterCard = {
     },
     {
       effect: {
+        type: "sequence",
         steps: [
           {
-            from: "hand",
-            type: "play-card",
+            type: "put-on-bottom",
+            chosenBy: "opponent",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "opponent",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
           },
           {
-            amount: 1,
-            target: "EACH_OPPONENT",
-            type: "draw",
+            type: "optional",
+            chooser: "EACH_OPPONENT",
+            effect: {
+              type: "draw",
+              amount: 1,
+              target: "EACH_OPPONENT",
+            },
           },
         ],
-        type: "sequence",
       },
       id: "1p1-2",
       name: "WHAT DOES THIS DO?",
@@ -99,4 +80,5 @@ export const kuzcoImpulsiveLlama: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: kuzcoImpulsiveLlamaI18n,
 };

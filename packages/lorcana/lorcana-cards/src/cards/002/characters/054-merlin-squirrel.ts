@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { merlinSquirrelI18n } from "./054-merlin-squirrel.i18n";
 
 export const merlinSquirrel: CharacterCard = {
   id: "sGp",
@@ -7,52 +8,6 @@ export const merlinSquirrel: CharacterCard = {
   cardType: "character",
   name: "Merlin",
   version: "Squirrel",
-  i18n: {
-    en: {
-      name: "Merlin",
-      version: "Squirrel",
-      text: [
-        {
-          title: "LOOK BEFORE YOU LEAP",
-          description:
-            "When you play this character and when he leaves play, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Merlin",
-      version: "Eichhörnchen",
-      text: [
-        {
-          title: "GENAU HINSEHEN, BEVOR DU SPRINGST",
-          description:
-            "Wenn du diesen Charakter ausspielst und wenn er das Spiel verlässt, schaue dir die oberste Karte deines Decks an. Lege sie anschließend entweder auf dein Deck oder darunter.",
-        },
-      ],
-    },
-    fr: {
-      name: "Merlin",
-      version: "En écureuil",
-      text: [
-        {
-          title: "CALCULE TON COUP AVANT DE BONDIR",
-          description:
-            "Lorsque vous jouez ce personnage et lorsqu'il quitte la zone de jeu, regardez la première carte de votre pioche. Remettez-la soit sur le dessus de votre pioche, soit en dessous.",
-        },
-      ],
-    },
-    it: {
-      name: "Merlin",
-      version: "Squirrel",
-      text: [
-        {
-          title: "LOOK BEFORE YOU LEAP",
-          description:
-            "When you play this character and when he leaves play, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "002",
@@ -75,15 +30,25 @@ export const merlinSquirrel: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Mentor", "Sorcerer"],
-  missingTests: true,
   abilities: [
     {
       effect: {
-        target: "CHOSEN_CHARACTER",
-        type: "put-on-bottom",
+        type: "scry",
+        amount: 1,
+        destinations: [
+          {
+            zone: "deck-top",
+            min: 0,
+            max: 1,
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+          },
+        ],
       },
       id: "1qe-1",
-      name: "LOOK BEFORE YOU LEAP When you play this character and",
+      name: "LOOK BEFORE YOU LEAP",
       text: "LOOK BEFORE YOU LEAP When you play this character and when he leaves play, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
       trigger: {
         event: "play",
@@ -92,5 +57,32 @@ export const merlinSquirrel: CharacterCard = {
       },
       type: "triggered",
     },
+    {
+      effect: {
+        type: "scry",
+        amount: 1,
+        destinations: [
+          {
+            zone: "deck-top",
+            min: 0,
+            max: 1,
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+          },
+        ],
+      },
+      id: "1qe-2",
+      name: "LOOK BEFORE YOU LEAP",
+      text: "LOOK BEFORE YOU LEAP When you play this character and when he leaves play, look at the top card of your deck. Put it on either the top or the bottom of your deck.",
+      trigger: {
+        event: "leave-play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
   ],
+  i18n: merlinSquirrelI18n,
 };

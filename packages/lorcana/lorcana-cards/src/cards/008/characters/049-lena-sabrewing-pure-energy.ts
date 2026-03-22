@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lenaSabrewingPureEnergyI18n } from "./049-lena-sabrewing-pure-energy.i18n";
 
 export const lenaSabrewingPureEnergy: CharacterCard = {
   id: "q7a",
@@ -7,36 +8,6 @@ export const lenaSabrewingPureEnergy: CharacterCard = {
   cardType: "character",
   name: "Lena Sabrewing",
   version: "Pure Energy",
-  i18n: {
-    en: {
-      name: "Lena Sabrewing",
-      version: "Pure Energy",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "SUPERNATURAL VENGEANCE",
-          description: "{E} — Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Lena Degenflügel",
-      version: "Reine Energie",
-      text: "Wendig ÜBERNATÜRLICHE RACHE — Füge einem Charakter deiner Wahl 1 Schaden zu.",
-    },
-    fr: {
-      name: "Lena de Sortilège",
-      version: "Énergie pure",
-      text: "Insaisissable VENGEANCE DE L'AU-DELÀ — Choisissez un personnage et infligez-lui 1 dommage.",
-    },
-    it: {
-      name: "Lena Sabrewing",
-      version: "Pura Energia",
-      text: "Sfuggente VENDETTA SOPRANNATURALE — Infliggi 1 danno a un personaggio a tua scelta.",
-    },
-  },
   inkType: ["amethyst", "steel"],
   franchise: "Ducktales",
   set: "008",
@@ -85,4 +56,5 @@ export const lenaSabrewingPureEnergy: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: lenaSabrewingPureEnergyI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { bobbyPurplePigeonI18n } from "./182-bobby-purple-pigeon.i18n";
 
 export const bobbyPurplePigeon: CharacterCard = {
   id: "hjd",
@@ -7,34 +8,6 @@ export const bobbyPurplePigeon: CharacterCard = {
   cardType: "character",
   name: "Bobby",
   version: "Purple Pigeon",
-  i18n: {
-    en: {
-      name: "Bobby",
-      version: "Purple Pigeon",
-      text: "Bodyguard",
-    },
-    de: {
-      name: "Bobby",
-      version: "Lila Taube",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "Bobby le pigeon",
-      version: "Pigeon violet",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "Bobby",
-      version: "Piccione Viola",
-      text: "Guardiano",
-    },
-  },
   inkType: ["steel"],
   franchise: "Bolt",
   set: "008",
@@ -59,4 +32,5 @@ export const bobbyPurplePigeon: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: bobbyPurplePigeonI18n,
 };

@@ -1,31 +1,108 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   BanzaiTauntingHyena,
-//   MonstroWhaleOfAWhale,
-// } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Banzai - Taunting Hyena", () => {
-//   It("**HERE KITTY, KITTY, KITTY** When you play this character, you may exert chosen damaged character.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: banzaiTauntingHyena.cost,
-//       Hand: [banzaiTauntingHyena],
-//       Play: [monstroWhaleOfAWhale],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(banzaiTauntingHyena);
-//     Const target = testStore.getCard(monstroWhaleOfAWhale);
-//     Target.updateCardMeta({ damage: 2 });
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({ targets: [target] });
-//
-//     Expect(target.meta.exerted).toEqual(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { banzaiTauntingHyena } from "./087-banzai-taunting-hyena";
+
+const damagedCharacter = createMockCharacter({
+  id: "banzai-test-damaged",
+  name: "Damaged Character",
+  cost: 3,
+  strength: 3,
+  willpower: 5,
+  lore: 1,
+});
+
+const undamagedCharacter = createMockCharacter({
+  id: "banzai-test-undamaged",
+  name: "Undamaged Character",
+  cost: 3,
+  strength: 3,
+  willpower: 5,
+  lore: 1,
+});
+
+describe("Banzai - Taunting Hyena", () => {
+  describe("HERE KITTY, KITTY, KITTY - When you play this character, you may exert chosen damaged character.", () => {
+    it("exerts a chosen damaged character when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [banzaiTauntingHyena],
+          inkwell: banzaiTauntingHyena.cost,
+          play: [damagedCharacter],
+          deck: 5,
+        },
+        {
+          play: [],
+        },
+      );
+
+      testEngine.asServer().manualSetDamage(damagedCharacter, 2);
+
+      expect(testEngine.asPlayerOne().playCard(banzaiTauntingHyena)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          resolveOptional: true,
+          targets: [damagedCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.isExerted(damagedCharacter)).toBe(true);
+    });
+
+    it("allows declining the optional ability", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [banzaiTauntingHyena],
+          inkwell: banzaiTauntingHyena.cost,
+          play: [damagedCharacter],
+          deck: 5,
+        },
+        {},
+      );
+
+      testEngine.asServer().manualSetDamage(damagedCharacter, 2);
+
+      expect(testEngine.asPlayerOne().playCard(banzaiTauntingHyena)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.isExerted(damagedCharacter)).toBe(false);
+    });
+
+    it("can target an opposing damaged character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [banzaiTauntingHyena],
+          inkwell: banzaiTauntingHyena.cost,
+          deck: 5,
+        },
+        {
+          play: [damagedCharacter],
+        },
+      );
+
+      testEngine.asServer().manualSetDamage(damagedCharacter, 2);
+
+      expect(testEngine.asPlayerOne().playCard(banzaiTauntingHyena)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          resolveOptional: true,
+          targets: [damagedCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.isExerted(damagedCharacter)).toBe(true);
+    });
+  });
+});

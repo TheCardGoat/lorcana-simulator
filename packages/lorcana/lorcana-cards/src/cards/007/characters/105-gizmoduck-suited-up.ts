@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gizmoduckSuitedUpI18n } from "./105-gizmoduck-suited-up.i18n";
 
 export const gizmoduckSuitedUp: CharacterCard = {
   id: "4Oe",
@@ -7,36 +8,6 @@ export const gizmoduckSuitedUp: CharacterCard = {
   cardType: "character",
   name: "Gizmoduck",
   version: "Suited Up",
-  i18n: {
-    en: {
-      name: "Gizmoduck",
-      version: "Suited Up",
-      text: [
-        {
-          title: "Resist +1",
-        },
-        {
-          title: "BLATHERING BLATHERSKITE",
-          description: "This character can challenge ready damaged characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Krachbumm-Ente",
-      version: "Ausgerüstet",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.) AUSGETROCKNETER ENTENTÜMPEL Dieser Charakter kann bereite, beschädigte Charaktere herausfordern.",
-    },
-    fr: {
-      name: "Robotik",
-      version: "En costume",
-      text: "Résistance +1 NOM D'UN CIRCUIT INTÉGRÉ Ce personnage peut défier les personnages redressés s'ils ont au moins un dommage.",
-    },
-    it: {
-      name: "Robopap",
-      version: "Armaturato",
-      text: "Resistere +1 FANFALUCA CIARLANTE Questo personaggio può sfidare i personaggi preparati danneggiati.",
-    },
-  },
   inkType: ["emerald", "steel"],
   franchise: "Ducktales",
   set: "007",
@@ -61,5 +32,28 @@ export const gizmoduckSuitedUp: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Inventor"],
-  abilities: [],
+  abilities: [
+    {
+      id: "4Oe-1",
+      keyword: "Resist",
+      type: "keyword",
+      value: 1,
+      text: "Resist +1",
+    },
+    {
+      effect: {
+        ability: {
+          type: "can-challenge-ready",
+          onlyDamaged: true,
+        },
+        target: "SELF",
+        type: "grant-ability",
+      },
+      id: "4Oe-2",
+      name: "BLATHERING BLATHERSKITE",
+      text: "BLATHERING BLATHERSKITE This character can challenge ready damaged characters.",
+      type: "static",
+    },
+  ],
+  i18n: gizmoduckSuitedUpI18n,
 };

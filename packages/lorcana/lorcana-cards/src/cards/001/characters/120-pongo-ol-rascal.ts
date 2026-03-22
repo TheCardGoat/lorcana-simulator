@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pongoOlRascalI18n } from "./120-pongo-ol-rascal.i18n";
 
 export const pongoOlRascal: CharacterCard = {
   id: "Sa8",
@@ -7,33 +8,6 @@ export const pongoOlRascal: CharacterCard = {
   cardType: "character",
   name: "Pongo",
   version: "Ol’ Rascal",
-  i18n: {
-    en: {
-      name: "Pongo",
-      version: "Ol’ Rascal",
-      text: "Evasive",
-    },
-    de: {
-      name: "Pongo",
-      version: "Alter Gauner",
-      text: "Wendig",
-    },
-    fr: {
-      name: "PONGO",
-      version: "Sacripant",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Pongo",
-      version: "Ol’ Rascal",
-      text: [
-        {
-          title: "Evasive",
-          description: "(Only characters with Evasive can challenge this character.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "101 Dalmatians",
   set: "001",
@@ -44,7 +18,6 @@ export const pongoOlRascal: CharacterCard = {
   willpower: 3,
   lore: 2,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_e17a4efa1eaf47e2aefdcf3b98d4f03c",
     tcgPlayer: 503321,
@@ -59,4 +32,5 @@ export const pongoOlRascal: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: pongoOlRascalI18n,
 };

@@ -1,67 +1,49 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { dragonFire } from "@lorcanito/lorcana-engine/cards/001/actions/actions";
-// Import { letItGo } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import { goofyKnightForADay } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import { galeWindSpirit } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Gale - Wind Spirit", () => {
-//   Describe("**RECURRING GUST** When this character is banished, return this card to your hand.", () => {
-//     It("Does not trigger on spell removal", () => {
-//       Const testStore = new TestStore({
-//         Inkwell: dragonFire.cost,
-//         Hand: [dragonFire],
-//         Play: [galeWindSpirit],
-//       });
-//
-//       Const cardUnderTest = testStore.getCard(galeWindSpirit);
-//       Const banisher = testStore.getCard(dragonFire);
-//
-//       Banisher.playFromHand();
-//       TestStore.resolveTopOfStack({ targets: [cardUnderTest] });
-//
-//       Expect(cardUnderTest.zone).toEqual("hand");
-//     });
-//
-//     It("Does not trigger on inkwell removal", () => {
-//       Const testStore = new TestStore({
-//         Inkwell: dragonFire.cost,
-//         Hand: [letItGo],
-//         Play: [galeWindSpirit],
-//       });
-//
-//       Const cardUnderTest = testStore.getCard(galeWindSpirit);
-//       Const banisher = testStore.getCard(letItGo);
-//
-//       Banisher.playFromHand();
-//       TestStore.resolveTopOfStack({ targets: [cardUnderTest] });
-//
-//       Expect(cardUnderTest.zone).toEqual("inkwell");
-//     });
-//
-//     It("Does triggers on removal", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [goofyKnightForADay],
-//         },
-//         {
-//           Play: [galeWindSpirit],
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getCard(galeWindSpirit);
-//       CardUnderTest.updateCardMeta({ exerted: true });
-//       Const banisher = testStore.getCard(goofyKnightForADay);
-//
-//       Banisher.challenge(cardUnderTest);
-//
-//       Expect(cardUnderTest.zone).toEqual("hand");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { galeWindSpirit } from "./042-gale-wind-spirit";
+
+const attacker = createMockCharacter({
+  id: "gale-wind-spirit-attacker",
+  name: "Attacker",
+  cost: 3,
+  strength: 5,
+  willpower: 4,
+  lore: 1,
+});
+
+describe("Gale - Wind Spirit", () => {
+  it("RECURRING GUST returns to hand when banished in a challenge", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: attacker, isDrying: false }],
+        deck: 1,
+      },
+      {
+        play: [{ card: galeWindSpirit, exerted: true }],
+        deck: 1,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().challenge(attacker, galeWindSpirit)).toBeSuccessfulCommand();
+
+    // RECURRING GUST fires as player two's bag effect — resolve it
+    const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
+    expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getCardZone(galeWindSpirit)).toBe("hand");
+  });
+
+  it("does NOT trigger when banished by a non-challenge effect", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [galeWindSpirit],
+      deck: 1,
+    });
+
+    // Banish by setting damage to willpower (simulates action/removal)
+    expect(
+      testEngine.asServer().manualSetDamage(galeWindSpirit, galeWindSpirit.willpower),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(galeWindSpirit)).toBe("discard");
+  });
+});

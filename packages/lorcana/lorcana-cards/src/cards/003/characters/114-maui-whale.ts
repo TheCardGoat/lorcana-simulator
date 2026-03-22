@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mauiWhaleI18n } from "./114-maui-whale.i18n";
 
 export const mauiWhale: CharacterCard = {
   id: "hjF",
@@ -7,55 +8,6 @@ export const mauiWhale: CharacterCard = {
   cardType: "character",
   name: "Maui",
   version: "Whale",
-  i18n: {
-    en: {
-      name: "Maui",
-      version: "Whale",
-      text: [
-        {
-          title: "THIS MISSION IS CURSED",
-          description: "This character can't ready at the start of your turn.",
-        },
-        {
-          title: "I GOT YOUR BACK 2",
-          description: "{I} — Ready this character. He can't quest for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Maui",
-      version: "Wal",
-      text: [
-        {
-          title: "DIESE MISSION IST VERFLUCHT",
-          description:
-            "Dieser Charakter wird zu Beginn deines Zuges nicht bereit gemacht. ICH GEB DIR DECKUNG 2 — Mache diesen Charakter bereit. Er kann in diesem Zug nicht mehr erkunden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Maui",
-      version: "Baleine",
-      text: [
-        {
-          title: "CETTE MISSION EST FICHUE",
-          description:
-            "Ce personnage ne se redresse pas au début de votre tour. NE T'INQUIÈTE PAS, JE SUIS LÀ 2 — Redressez ce personnage, il ne peut pas être envoyé à l'aventure pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Maui",
-      version: "Balena",
-      text: [
-        {
-          title: "LA MISSIONE",
-          description:
-            "È MALEDETTA Questo personaggio non si può preparare all'inizio del tuo turno. TI GUARDO LE SPALLE 2 — Prepara questo personaggio. Non può andare all'avventura per il resto di questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "003",
@@ -81,8 +33,6 @@ export const mauiWhale: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Deity"],
-  missingImplementation: true,
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -107,4 +57,5 @@ export const mauiWhale: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: mauiWhaleI18n,
 };

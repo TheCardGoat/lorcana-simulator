@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { captainAmeliaFirstInCommandI18n } from "./138-captain-amelia-first-in-command.i18n";
 
 export const captainAmeliaFirstInCommand: CharacterCard = {
   id: "TRx",
@@ -7,52 +8,6 @@ export const captainAmeliaFirstInCommand: CharacterCard = {
   cardType: "character",
   name: "Captain Amelia",
   version: "First in Command",
-  i18n: {
-    en: {
-      name: "Captain Amelia",
-      version: "First in Command",
-      text: [
-        {
-          title: "DISCIPLINE",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Käpt'n Amelia",
-      version: "Erste Offizierin",
-      text: [
-        {
-          title: "DISZIPLIN",
-          description:
-            "In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Capitaine Amélia",
-      version: "Commande le vaisseau",
-      text: [
-        {
-          title: "DISCIPLINE",
-          description:
-            "Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier les personnages avec Insaisissable.)",
-        },
-      ],
-    },
-    it: {
-      name: "Capitano Amelia",
-      version: "Prima in Comando",
-      text: [
-        {
-          title: "DISCIPLINA",
-          description:
-            "Durante il tuo turno, questo personaggio ottiene Sfuggente. (Può sfidare altri personaggi con Sfuggente.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Treasure Planet",
   set: "003",
@@ -91,4 +46,5 @@ export const captainAmeliaFirstInCommand: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: captainAmeliaFirstInCommandI18n,
 };

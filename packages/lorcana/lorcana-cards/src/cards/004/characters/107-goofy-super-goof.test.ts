@@ -1,62 +1,94 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { hiramFlavershamToymaker } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import { goofySuperGoof } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { hiddenCoveTranquilHaven } from "@lorcanito/lorcana-engine/cards/004/locations/locations";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Goofy - Super Goof", () => {
-//   It("**Rush** _(This character can challenge the turn they're played)_", () => {
-//     Const testStore = new TestStore({
-//       Play: [goofySuperGoof],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId("play", goofySuperGoof.id);
-//     Expect(cardUnderTest.hasRush).toBe(true);
-//   });
-//
-//   Describe("**SUPER PEANUT POWERS** Whenever this character challenges another, gain 2 lore", () => {
-//     It("should gain lore when challenging another character", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [goofySuperGoof],
-//         },
-//         {
-//           Play: [hiramFlavershamToymaker],
-//         },
-//       );
-//
-//       Await testEngine.tapCard(hiramFlavershamToymaker);
-//       Await testEngine.challenge({
-//         Attacker: goofySuperGoof,
-//         Defender: hiramFlavershamToymaker,
-//       });
-//
-//       Expect(testEngine.getLoreForPlayer("player_one")).toBe(2);
-//     });
-//
-//     It("should NOT gain lore when challenging a location", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [goofySuperGoof],
-//         },
-//         {
-//           Play: [hiddenCoveTranquilHaven],
-//         },
-//       );
-//
-//       Await testEngine.challenge({
-//         Attacker: goofySuperGoof,
-//         Defender: hiddenCoveTranquilHaven,
-//       });
-//
-//       Expect(testEngine.getLoreForPlayer("player_one")).toBe(0);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+  createMockLocation,
+} from "@tcg/lorcana-engine/testing";
+import { goofySuperGoof } from "./107-goofy-super-goof";
+
+const exertedDefender = createMockCharacter({
+  id: "goofy-super-goof-defender",
+  name: "Defender",
+  cost: 2,
+  strength: 1,
+  willpower: 2,
+  lore: 1,
+});
+
+const targetLocation = createMockLocation({
+  id: "goofy-super-goof-location",
+  name: "Target Location",
+  cost: 2,
+  moveCost: 1,
+  willpower: 8,
+});
+
+describe("Goofy - Super Goof", () => {
+  it("can challenge the turn it is played because of Rush", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [goofySuperGoof],
+        inkwell: goofySuperGoof.cost,
+        deck: 5,
+      },
+      {
+        play: [{ card: exertedDefender, exerted: true, isDrying: false }],
+        deck: 5,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(goofySuperGoof)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().challenge(goofySuperGoof, exertedDefender),
+    ).toBeSuccessfulCommand();
+  });
+
+  it("gains 2 lore when it challenges another character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [goofySuperGoof],
+        inkwell: goofySuperGoof.cost,
+        deck: 5,
+      },
+      {
+        play: [{ card: exertedDefender, exerted: true, isDrying: false }],
+        deck: 5,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(goofySuperGoof)).toBeSuccessfulCommand();
+
+    const loreBefore = testEngine.getLore(PLAYER_ONE);
+
+    expect(
+      testEngine.asPlayerOne().challenge(goofySuperGoof, exertedDefender),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore + 2);
+  });
+
+  it("does not gain lore when it challenges a location", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [goofySuperGoof],
+        inkwell: goofySuperGoof.cost,
+        deck: 5,
+      },
+      {
+        play: [targetLocation],
+        deck: 5,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(goofySuperGoof)).toBeSuccessfulCommand();
+
+    const loreBefore = testEngine.getLore(PLAYER_ONE);
+
+    expect(
+      testEngine.asPlayerOne().challenge(goofySuperGoof, targetLocation),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore);
+  });
+});

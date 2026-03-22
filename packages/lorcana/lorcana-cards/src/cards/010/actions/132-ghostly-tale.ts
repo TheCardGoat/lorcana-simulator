@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { ghostlyTaleI18n } from "./132-ghostly-tale.i18n";
 
 export const ghostlyTale: ActionCard = {
   id: "nOf",
@@ -6,24 +7,6 @@ export const ghostlyTale: ActionCard = {
   reprints: ["set10-132"],
   cardType: "action",
   name: "Ghostly Tale",
-  i18n: {
-    en: {
-      name: "Ghostly Tale",
-      text: "Exert all opposing characters with 2 {S} or less.",
-    },
-    de: {
-      name: "Schaurige Geschichte",
-      text: "Erschöpfe alle gegnerischen Charaktere mit 2 oder weniger.",
-    },
-    fr: {
-      name: "Histoire de fantôme",
-      text: "Épuisez tous les personnages adverses ayant 2 ou moins.",
-    },
-    it: {
-      name: "Storie di Fantasmi",
-      text: "Impegna tutti i personaggi avversari con 2 o inferiore.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Sleepy Hollow",
   set: "010",
@@ -58,4 +41,5 @@ export const ghostlyTale: ActionCard = {
       type: "action",
     },
   ],
+  i18n: ghostlyTaleI18n,
 };

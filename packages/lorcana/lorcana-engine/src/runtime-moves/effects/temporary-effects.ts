@@ -2,6 +2,7 @@ import type { PlayerId } from "#core";
 import type {
   LorcanaCardMeta,
   TemporaryGrantedAbilityPayload,
+  TemporaryKeywordPayload,
   TemporaryRestrictionPayload,
   TemporaryPlayerRestrictionsState,
 } from "../../types";
@@ -78,6 +79,34 @@ function normalizePayloadMap(raw: unknown): Record<string, TemporaryGrantedAbili
   return normalized;
 }
 
+function normalizeKeywordPayloadMap(raw: unknown): Record<string, TemporaryKeywordPayload> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return {};
+  }
+
+  const normalized: Record<string, TemporaryKeywordPayload> = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (
+      typeof key !== "string" ||
+      key.length === 0 ||
+      !value ||
+      typeof value !== "object" ||
+      Array.isArray(value)
+    ) {
+      continue;
+    }
+
+    const payload = value as Record<string, unknown>;
+    if (typeof payload.type !== "string" || payload.type.trim().length === 0) {
+      continue;
+    }
+
+    normalized[key] = payload as unknown as TemporaryKeywordPayload;
+  }
+
+  return normalized;
+}
+
 function normalizeRestrictionPayloadMap(raw: unknown): Record<string, TemporaryRestrictionPayload> {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return {};
@@ -143,6 +172,7 @@ export function addTemporaryKeyword(
   expiresAtTurn: number,
   value?: number,
   startsAtTurn?: number,
+  payload?: TemporaryKeywordPayload,
 ): LorcanaCardMeta {
   const normalizedKeyword = normalizeTemporaryKey(keyword);
   if (!normalizedKeyword) {
@@ -180,11 +210,63 @@ export function addTemporaryKeyword(
     keywordValues[normalizedKeyword] = (keywordValues[normalizedKeyword] ?? 0) + value;
   }
 
+  const keywordPayloads = normalizeKeywordPayloadMap(meta.temporaryKeywordPayloads);
+  if (payload && typeof payload.type === "string" && payload.type.trim().length > 0) {
+    keywordPayloads[normalizedKeyword] = payload;
+  }
+
   return {
     ...meta,
     temporaryKeywords: keywordMap,
     temporaryKeywordStarts: Object.keys(keywordStarts).length > 0 ? keywordStarts : undefined,
     temporaryKeywordValues: Object.keys(keywordValues).length > 0 ? keywordValues : undefined,
+    temporaryKeywordPayloads: Object.keys(keywordPayloads).length > 0 ? keywordPayloads : undefined,
+  };
+}
+
+export function addTemporaryClassification(
+  meta: LorcanaCardMeta,
+  classification: string,
+  expiresAtTurn: number,
+  startsAtTurn?: number,
+): LorcanaCardMeta {
+  const normalizedClassification = classification.trim();
+  if (!normalizedClassification) {
+    return meta;
+  }
+
+  if (!Number.isFinite(expiresAtTurn) || expiresAtTurn < 1) {
+    return meta;
+  }
+
+  const normalizedStartsAtTurn =
+    typeof startsAtTurn === "number" && Number.isFinite(startsAtTurn) && startsAtTurn >= 1
+      ? Math.floor(startsAtTurn)
+      : 1;
+  const normalizedExpiresAtTurn = Math.floor(expiresAtTurn);
+  if (normalizedStartsAtTurn > normalizedExpiresAtTurn) {
+    return meta;
+  }
+
+  const classificationMap = normalizeEffectMap(meta.temporaryClassifications);
+  const classificationStarts = normalizeEffectMap(meta.temporaryClassificationStarts);
+  const currentExpiry = classificationMap[normalizedClassification] ?? 0;
+  if (normalizedExpiresAtTurn > currentExpiry) {
+    classificationMap[normalizedClassification] = normalizedExpiresAtTurn;
+    classificationStarts[normalizedClassification] = normalizedStartsAtTurn;
+  } else if (normalizedExpiresAtTurn === currentExpiry) {
+    classificationStarts[normalizedClassification] = Math.min(
+      classificationStarts[normalizedClassification] ?? normalizedStartsAtTurn,
+      normalizedStartsAtTurn,
+    );
+  }
+
+  return {
+    ...meta,
+    temporaryClassifications:
+      Object.keys(classificationMap).length > 0 ? classificationMap : undefined,
+    temporaryClassificationStarts:
+      Object.keys(classificationStarts).length > 0 ? classificationStarts : undefined,
   };
 }
 
@@ -192,6 +274,9 @@ export function hasTemporaryKeyword(
   meta: LorcanaCardMeta | undefined,
   currentTurn: number,
   keyword: string,
+  options?: {
+    isSourceInPlay?: (sourceId: string) => boolean;
+  },
 ): boolean {
   if (!meta) {
     return false;
@@ -206,7 +291,16 @@ export function hasTemporaryKeyword(
   const keywordStarts = normalizeEffectMap(meta.temporaryKeywordStarts);
   const expiryTurn = keywordMap[normalizedKeyword] ?? 0;
   const startTurn = keywordStarts[normalizedKeyword] ?? 1;
-  return currentTurn >= startTurn && currentTurn <= expiryTurn;
+  if (!(currentTurn >= startTurn && currentTurn <= expiryTurn)) {
+    return false;
+  }
+
+  const payload = normalizeKeywordPayloadMap(meta.temporaryKeywordPayloads)[normalizedKeyword];
+  if (payload?.activeWhileSourceInPlay && payload.sourceId && options?.isSourceInPlay) {
+    return options.isSourceInPlay(payload.sourceId);
+  }
+
+  return true;
 }
 
 export function getTemporaryKeywordValue(
@@ -424,6 +518,9 @@ export function pruneExpiredTemporaryEffects(
 
   const temporaryKeywords = normalizeEffectMap(meta.temporaryKeywords);
   const temporaryKeywordStarts = normalizeEffectMap(meta.temporaryKeywordStarts);
+  const temporaryKeywordPayloads = normalizeKeywordPayloadMap(meta.temporaryKeywordPayloads);
+  const temporaryClassifications = normalizeEffectMap(meta.temporaryClassifications);
+  const temporaryClassificationStarts = normalizeEffectMap(meta.temporaryClassificationStarts);
   const temporaryAbilities = normalizeEffectMap(meta.temporaryAbilities);
   const temporaryAbilityStarts = normalizeEffectMap(meta.temporaryAbilityStarts);
   const temporaryAbilityPayloads = normalizePayloadMap(meta.temporaryAbilityPayloads);
@@ -452,6 +549,25 @@ export function pruneExpiredTemporaryEffects(
   for (const keyword of Object.keys(temporaryKeywordStarts)) {
     if (!(keyword in temporaryKeywords)) {
       delete temporaryKeywordStarts[keyword];
+      changed = true;
+    }
+  }
+  for (const keyword of Object.keys(temporaryKeywordPayloads)) {
+    if (!(keyword in temporaryKeywords)) {
+      delete temporaryKeywordPayloads[keyword];
+      changed = true;
+    }
+  }
+
+  for (const [classification, expiryTurn] of Object.entries(temporaryClassifications)) {
+    if (isEffectExpired({ expiresAtTurn: expiryTurn }, currentTurn)) {
+      delete temporaryClassifications[classification];
+      changed = true;
+    }
+  }
+  for (const classification of Object.keys(temporaryClassificationStarts)) {
+    if (!(classification in temporaryClassifications)) {
+      delete temporaryClassificationStarts[classification];
       changed = true;
     }
   }
@@ -505,6 +621,14 @@ export function pruneExpiredTemporaryEffects(
       Object.keys(temporaryKeywordStarts).length > 0 ? temporaryKeywordStarts : undefined,
     temporaryKeywordValues:
       Object.keys(temporaryKeywordValues).length > 0 ? temporaryKeywordValues : undefined,
+    temporaryKeywordPayloads:
+      Object.keys(temporaryKeywordPayloads).length > 0 ? temporaryKeywordPayloads : undefined,
+    temporaryClassifications:
+      Object.keys(temporaryClassifications).length > 0 ? temporaryClassifications : undefined,
+    temporaryClassificationStarts:
+      Object.keys(temporaryClassificationStarts).length > 0
+        ? temporaryClassificationStarts
+        : undefined,
     temporaryAbilities: Object.keys(temporaryAbilities).length > 0 ? temporaryAbilities : undefined,
     temporaryAbilityStarts:
       Object.keys(temporaryAbilityStarts).length > 0 ? temporaryAbilityStarts : undefined,

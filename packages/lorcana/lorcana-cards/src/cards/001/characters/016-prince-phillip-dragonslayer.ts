@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princePhillipDragonslayerI18n } from "./016-prince-phillip-dragonslayer.i18n";
 
 export const princePhillipDragonslayer: CharacterCard = {
   id: "0Xn",
@@ -7,52 +8,6 @@ export const princePhillipDragonslayer: CharacterCard = {
   cardType: "character",
   name: "Prince Phillip",
   version: "Dragonslayer",
-  i18n: {
-    en: {
-      name: "Prince Phillip",
-      version: "Dragonslayer",
-      text: [
-        {
-          title: "HEROISM",
-          description:
-            "When this character challenges and is banished, you may banish the challenged character.",
-        },
-      ],
-    },
-    de: {
-      name: "Prinz Phillip",
-      version: "Drachenbändiger",
-      text: [
-        {
-          title: "HELDENTUM",
-          description:
-            "Wenn dieser Charakter einen anderen Charakter herausfordert und dadurch verbannt wird, darfst du den herausgeforderten Charakter verbannen.",
-        },
-      ],
-    },
-    fr: {
-      name: "PRINCE PHILIPPE",
-      version: "Tueur de dragon",
-      text: [
-        {
-          title: "HÉROÏSME",
-          description:
-            "Lorsque ce personnage en défie un autre et qu'il se fait bannir, vous pouvez bannir le personnage défié.",
-        },
-      ],
-    },
-    it: {
-      name: "Prince Phillip",
-      version: "Dragonslayer",
-      text: [
-        {
-          title: "HEROISM",
-          description:
-            "When this character challenges and is banished, you may banish the challenged character.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Sleeping Beauty",
   set: "001",
@@ -63,7 +18,6 @@ export const princePhillipDragonslayer: CharacterCard = {
   willpower: 3,
   lore: 2,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_f1e67c29942c408daaa683520972e1ea",
     tcgPlayer: 505946,
@@ -103,4 +57,5 @@ export const princePhillipDragonslayer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: princePhillipDragonslayerI18n,
 };

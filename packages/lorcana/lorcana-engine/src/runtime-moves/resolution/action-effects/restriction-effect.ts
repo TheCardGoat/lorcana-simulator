@@ -1,3 +1,4 @@
+import type { PlayerId } from "#core";
 import type { RestrictionEffect } from "@tcg/lorcana-types";
 import { normalizeLorcanaTarget } from "@tcg/lorcana-types/targeting";
 import type { CardPlayedPayload } from "../../../types";
@@ -10,6 +11,7 @@ import {
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { isPlayerTargetDescriptor, resolveEffectTargets } from "../../../targeting/runtime";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
+import { getEffectTargetSelectionInput } from "./selection-state";
 
 export function isRestrictionEffect(effect: unknown): effect is RestrictionEffect {
   return (
@@ -35,13 +37,13 @@ export function resolveRestrictionEffect(
   }
 
   if (effect.target && isPlayerTargetDescriptor(normalizeLorcanaTarget(effect.target))) {
-    const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+    const currentTurn = ctx.framework.state.status.turn ?? 1;
     const currentPlayerId = ctx.framework.state.currentPlayer;
     const targetPlayerIds = resolveTargetPlayerIds(
       ctx,
       cardPlayed,
       effect.target,
-      resolutionInput.targets,
+      getEffectTargetSelectionInput(effect.target, resolutionInput),
     );
     if (targetPlayerIds.length === 0) {
       return;
@@ -70,16 +72,21 @@ export function resolveRestrictionEffect(
   }
 
   const resolvedTargets =
-    resolveEffectTargets(ctx, cardPlayed, effect.target, resolutionInput.targets) ?? [];
+    resolveEffectTargets(
+      ctx,
+      cardPlayed,
+      effect.target,
+      getEffectTargetSelectionInput(effect.target, resolutionInput),
+    ) ?? [];
   if (resolvedTargets.length === 0) {
     return;
   }
 
-  const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+  const currentTurn = ctx.framework.state.status.turn ?? 1;
   const currentPlayerId = ctx.framework.state.currentPlayer;
 
   for (const targetId of resolvedTargets) {
-    const targetOwnerId = ctx.framework.state.ctx.zones.private.cardIndex[targetId]?.ownerID;
+    const targetOwnerId = ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined;
     const { startsAtTurn, expiresAtTurn } = resolveTemporaryEffectWindow(
       currentTurn,
       effect.duration,

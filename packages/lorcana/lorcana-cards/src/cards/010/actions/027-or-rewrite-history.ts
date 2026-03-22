@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { orRewriteHistoryI18n } from "./027-or-rewrite-history.i18n";
 
 export const orRewriteHistory: ActionCard = {
   id: "ZSz",
@@ -6,24 +7,6 @@ export const orRewriteHistory: ActionCard = {
   reprints: ["set10-027"],
   cardType: "action",
   name: "Or Rewrite History!",
-  i18n: {
-    en: {
-      name: "Or Rewrite History!",
-      text: "Return a character card from your discard to your hand.",
-    },
-    de: {
-      name: "An allen Plätzen",
-      text: "Nimm 1 Charakterkarte aus deinem Ablagestapel zurück auf deine Hand.",
-    },
-    fr: {
-      name: "Nous entrerons dans la bande",
-      text: "Renvoyez dans votre main une carte Personnage de votre défausse.",
-    },
-    it: {
-      name: "Ma Che Bei Paperi!",
-      text: "(Un personaggio con costo 3 o superiore può per cantare questa canzone gratis.) Riprendi in mano una carta personaggio dai tuoi scarti.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Ducktales",
   set: "010",
@@ -48,4 +31,5 @@ export const orRewriteHistory: ActionCard = {
       type: "action",
     },
   ],
+  i18n: orRewriteHistoryI18n,
 };

@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { spaghettiDinnerI18n } from "./042-spaghetti-dinner.i18n";
 
 export const spaghettiDinner: ItemCard = {
   id: "4Q1",
@@ -6,46 +7,6 @@ export const spaghettiDinner: ItemCard = {
   reprints: ["set7-042"],
   cardType: "item",
   name: "Spaghetti Dinner",
-  i18n: {
-    en: {
-      name: "Spaghetti Dinner",
-      text: [
-        {
-          title: "FINE DINING",
-          description: "{E}, 1 {I} — If you have 2 or more characters in play, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Spaghetti-Dinner",
-      text: [
-        {
-          title: "GEHOBENE",
-          description:
-            "KÜCHE, 1 — Wenn du mindestens 2 Charaktere im Spiel hast, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Plat de spaghetti",
-      text: [
-        {
-          title: "CUISINE",
-          description:
-            "RAFFINÉE, 1 — Si vous avez au moins 2 personnages en jeu, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Cena di Spaghetti",
-      text: [
-        {
-          title: "CUCINA RAFFINATA, 1",
-          description: "— Se hai in gioco 2 o più personaggi, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lady and the Tramp",
   set: "007",
@@ -88,4 +49,5 @@ export const spaghettiDinner: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: spaghettiDinnerI18n,
 };

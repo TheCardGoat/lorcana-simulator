@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { suzyMasterSeamstressI18n } from "./008-suzy-master-seamstress.i18n";
 
 export const suzyMasterSeamstress: CharacterCard = {
   id: "Jav",
@@ -7,24 +8,6 @@ export const suzyMasterSeamstress: CharacterCard = {
   cardType: "character",
   name: "Suzy",
   version: "Master Seamstress",
-  i18n: {
-    en: {
-      name: "Suzy",
-      version: "Master Seamstress",
-    },
-    de: {
-      name: "Susi, die Maus",
-      version: "Schneidermeisterin",
-    },
-    fr: {
-      name: "Suzy",
-      version: "Maîtresse-couturière",
-    },
-    it: {
-      name: "Suzy",
-      version: "Maestra Sarta",
-    },
-  },
   inkType: ["amber"],
   franchise: "Cinderella",
   set: "007",
@@ -41,4 +24,5 @@ export const suzyMasterSeamstress: CharacterCard = {
     tcgPlayer: 619411,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: suzyMasterSeamstressI18n,
 };

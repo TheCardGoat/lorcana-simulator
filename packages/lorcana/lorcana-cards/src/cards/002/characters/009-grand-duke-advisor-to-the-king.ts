@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { grandDukeAdvisorToTheKingI18n } from "./009-grand-duke-advisor-to-the-king.i18n";
 
 export const grandDukeAdvisorToTheKing: CharacterCard = {
   id: "4Ol",
@@ -7,48 +8,6 @@ export const grandDukeAdvisorToTheKing: CharacterCard = {
   cardType: "character",
   name: "Grand Duke",
   version: "Advisor to the King",
-  i18n: {
-    en: {
-      name: "Grand Duke",
-      version: "Advisor to the King",
-      text: [
-        {
-          title: "YES, YOUR MAJESTY",
-          description: "Your Prince, Princess, King, and Queen characters get +1 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Großherzog",
-      version: "Berater des Königs",
-      text: [
-        {
-          title: "JA, EUER MAJESTÄT",
-          description: "Deine Prinzessinnen, Prinzen, Königinnen und Könige erhalten +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Grand Duke",
-      version: "Conseiller du roi",
-      text: [
-        {
-          title: "OUI, VOTRE MAJESTÉ",
-          description: "Vos personnages Princesse, Prince, Reine et Roi gagnent +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Grand Duke",
-      version: "Advisor to the King",
-      text: [
-        {
-          title: "YES, YOUR MAJESTY",
-          description: "Your Prince, Princess, King, and Queen characters get +1.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Cinderella",
   set: "002",
@@ -83,85 +42,35 @@ export const grandDukeAdvisorToTheKing: CharacterCard = {
           cardTypes: ["character"],
           filter: [
             {
-              type: "has-classification",
-              classification: "Prince",
+              type: "or",
+              filters: [
+                {
+                  type: "has-classification",
+                  classification: "Prince",
+                },
+                {
+                  type: "has-classification",
+                  classification: "Princess",
+                },
+                {
+                  type: "has-classification",
+                  classification: "King",
+                },
+                {
+                  type: "has-classification",
+                  classification: "Queen",
+                },
+              ],
             },
           ],
         },
         type: "modify-stat",
       },
       id: "126-1",
-      text: "YES, YOUR MAJESTY Your Prince characters get +1 {S}.",
-      type: "static",
-    },
-    {
-      effect: {
-        modifier: 1,
-        stat: "strength",
-        target: {
-          selector: "all",
-          count: "all",
-          owner: "you",
-          zones: ["play"],
-          cardTypes: ["character"],
-          filter: [
-            {
-              type: "has-classification",
-              classification: "Princess",
-            },
-          ],
-        },
-        type: "modify-stat",
-      },
-      id: "126-2",
-      text: "YES, YOUR MAJESTY Your Princess characters get +1 {S}.",
-      type: "static",
-    },
-    {
-      effect: {
-        modifier: 1,
-        stat: "strength",
-        target: {
-          selector: "all",
-          count: "all",
-          owner: "you",
-          zones: ["play"],
-          cardTypes: ["character"],
-          filter: [
-            {
-              type: "has-classification",
-              classification: "King",
-            },
-          ],
-        },
-        type: "modify-stat",
-      },
-      id: "126-3",
-      text: "YES, YOUR MAJESTY Your King characters get +1 {S}.",
-      type: "static",
-    },
-    {
-      effect: {
-        modifier: 1,
-        stat: "strength",
-        target: {
-          selector: "all",
-          count: "all",
-          owner: "you",
-          zones: ["play"],
-          cardTypes: ["character"],
-          filter: [
-            {
-              type: "has-classification",
-              classification: "Queen",
-            },
-          ],
-        },
-        type: "modify-stat",
-      },
-      id: "126-4",
-      text: "YES, YOUR MAJESTY Your Queen characters get +1 {S}.",
+      name: "YES, YOUR MAJESTY",
+      text: "YES, YOUR MAJESTY Your Prince, Princess, King, and Queen characters get +1 {S}.",
       type: "static",
     },
   ],
+  i18n: grandDukeAdvisorToTheKingI18n,
 };

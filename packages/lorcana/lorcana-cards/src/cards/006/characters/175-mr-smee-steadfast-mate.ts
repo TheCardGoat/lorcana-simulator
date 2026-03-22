@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mrSmeeSteadfastMateI18n } from "./175-mr-smee-steadfast-mate.i18n";
 
 export const mrSmeeSteadfastMate: CharacterCard = {
   id: "iTQ",
@@ -7,52 +8,6 @@ export const mrSmeeSteadfastMate: CharacterCard = {
   cardType: "character",
   name: "Mr. Smee",
   version: "Steadfast Mate",
-  i18n: {
-    en: {
-      name: "Mr. Smee",
-      version: "Steadfast Mate",
-      text: [
-        {
-          title: "GOOD CATCH",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Herr Smee",
-      version: "Entschlossener Maat",
-      text: [
-        {
-          title: "GUTER FANG",
-          description:
-            "In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Monsieur Mouche",
-      version: "Matelot fidèle",
-      text: [
-        {
-          title: "BELLE PRISE",
-          description:
-            "Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier des personnages avec Insaisissable.)",
-        },
-      ],
-    },
-    it: {
-      name: "Spugna",
-      version: "Leale Nostromo",
-      text: [
-        {
-          title: "BEL COLPO",
-          description:
-            "Durante il tuo turno, questo personaggio ottiene Sfuggente. (Può sfidare altri personaggi con Sfuggente.)",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Peter Pan",
   set: "006",
@@ -91,4 +46,5 @@ export const mrSmeeSteadfastMate: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: mrSmeeSteadfastMateI18n,
 };

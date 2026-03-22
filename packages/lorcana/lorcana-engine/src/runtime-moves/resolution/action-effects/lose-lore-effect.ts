@@ -4,6 +4,8 @@ import type { CardPlayedPayload } from "../../../types/index";
 import type { DynamicAmountEventSnapshot } from "../../../types/domain-events";
 import type { PlayCardExecutionContext } from "./types";
 import { resolveCurrentTurnPlayerId } from "../../../targeting/runtime";
+import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
+import { applyReplacementEffects } from "../../effects/replacement-effects";
 
 type ResolvedLoseLoreEffectInput = {
   eventSnapshot?: DynamicAmountEventSnapshot;
@@ -78,10 +80,42 @@ export function resolveLoseLoreEffect(
   );
   let loreLost = 0;
   for (const playerId of targetPlayerIds) {
+    const replacedEvent = applyReplacementEffects(ctx, {
+      kind: "lose-lore",
+      eventId: `lose-lore:${cardPlayed.cardId}:${playerId}`,
+      sourceId: cardPlayed.cardId,
+      controllerId: cardPlayed.playerId,
+      playerId,
+      amount: loseAmount,
+    });
+    const effectiveLoseAmount = replacedEvent.amount;
     const currentLore = Number(ctx.G.lore[playerId] ?? 0);
-    const nextLore = Math.max(0, currentLore - loseAmount);
-    loreLost += currentLore - nextLore;
+    const nextLore = Math.max(0, currentLore - effectiveLoseAmount);
+    const actualLost = currentLore - nextLore;
+    loreLost += actualLost;
     ctx.G.lore[playerId] = nextLore;
+    if (actualLost > 0) {
+      emitTriggeredLorcanaEvent(
+        ctx,
+        "loreChanged",
+        {
+          playerId,
+          operation: "remove",
+          previousLore: currentLore,
+          source: "effect",
+          amount: actualLost,
+          newLore: nextLore,
+        },
+        {
+          event: "lose-lore",
+          playerId,
+          triggerSourceCardId: cardPlayed.cardId,
+          eventSnapshot: {
+            triggerAmount: actualLost,
+          },
+        },
+      );
+    }
   }
 
   if (resolvedInput.eventSnapshot) {

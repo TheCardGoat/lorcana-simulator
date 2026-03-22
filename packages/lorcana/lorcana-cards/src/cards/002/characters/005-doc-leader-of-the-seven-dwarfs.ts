@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { docLeaderOfTheSevenDwarfsI18n } from "./005-doc-leader-of-the-seven-dwarfs.i18n";
 
 export const docLeaderOfTheSevenDwarfs: CharacterCard = {
   id: "bgG",
@@ -7,52 +8,6 @@ export const docLeaderOfTheSevenDwarfs: CharacterCard = {
   cardType: "character",
   name: "Doc",
   version: "Leader of the Seven Dwarfs",
-  i18n: {
-    en: {
-      name: "Doc",
-      version: "Leader of the Seven Dwarfs",
-      text: [
-        {
-          title: "SHARE AND SHARE ALIKE",
-          description:
-            "Whenever this character quests, you pay 1 {I} less for the next character you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Chef",
-      version: "Anführer der Sieben Zwerge",
-      text: [
-        {
-          title: "MITEINANDER TEILEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, zahlst du 1 weniger für den nächsten Charakter, den du in diesem Zug ausspielst.",
-        },
-      ],
-    },
-    fr: {
-      name: "Prof",
-      version: "Chef des Sept Nains",
-      text: [
-        {
-          title: "À CHACUN SA PART",
-          description:
-            "Lorsque ce personnage est envoyé à l'aventure, le prochain personnage que vous jouez durant ce tour vous coûte 1 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Doc",
-      version: "Leader of the Seven Dwarfs",
-      text: [
-        {
-          title: "SHARE AND SHARE ALIKE",
-          description:
-            "Whenever this character quests, you pay 1 less for the next character you play this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "002",
@@ -75,7 +30,6 @@ export const docLeaderOfTheSevenDwarfs: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Seven Dwarfs"],
-  missingTests: false,
   abilities: [
     {
       effect: {
@@ -93,4 +47,5 @@ export const docLeaderOfTheSevenDwarfs: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: docLeaderOfTheSevenDwarfsI18n,
 };

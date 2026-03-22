@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { fanTheFlamesI18n } from "./131-fan-the-flames.i18n";
 
 export const fanTheFlames: ActionCard = {
   id: "iMK",
@@ -6,24 +7,6 @@ export const fanTheFlames: ActionCard = {
   reprints: ["set1-131"],
   cardType: "action",
   name: "Fan the Flames",
-  i18n: {
-    en: {
-      name: "Fan the Flames",
-      text: "Ready chosen character. They can't quest for the rest of this turn.",
-    },
-    de: {
-      name: "Entfacht das Feuer!",
-      text: "Mache einen Charakter deiner Wahl bereit. Er kann in diesem Zug nicht mehr erkunden.",
-    },
-    fr: {
-      name: "ATTISER LES FLAMMES",
-      text: "Choisissez un personnage et redressez-le. Il ne peut pas être envoyé à l'aventure pour le reste de ce tour.",
-    },
-    it: {
-      name: "Fan the Flames",
-      text: "Ready chosen character. They can't quest for the rest of this turn.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Beauty and the Beast",
   set: "001",
@@ -56,4 +39,5 @@ export const fanTheFlames: ActionCard = {
       },
     },
   ],
+  i18n: fanTheFlamesI18n,
 };

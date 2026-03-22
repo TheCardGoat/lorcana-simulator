@@ -1,3 +1,53 @@
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  LorcanaTestEngine,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { zeusMissingHisSpark } from "./193-zeus-missing-his-spark";
+
+const deckCard = createMockCharacter({
+  id: "zeus-missing-his-spark-deck-card",
+  name: "Deck Card",
+  cost: 1,
+});
+
+describe("Zeus - Missing His Spark", () => {
+  it("has Boost 2 ability", () => {
+    const testEngine = new LorcanaTestEngine({
+      play: [zeusMissingHisSpark],
+    });
+
+    expect(testEngine.getCardModel(zeusMissingHisSpark).hasBoost()).toBe(true);
+  });
+
+  it("I NEED MORE THUNDERBOLTS! - base stats when no card is under", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [zeusMissingHisSpark],
+    });
+
+    expect(testEngine.asPlayerOne().getCardStrength(zeusMissingHisSpark)).toBe(
+      zeusMissingHisSpark.strength,
+    );
+    expect(testEngine.asPlayerOne().getDerivedWillpowerForCard(zeusMissingHisSpark)).toBe(
+      zeusMissingHisSpark.willpower,
+    );
+  });
+
+  it("I NEED MORE THUNDERBOLTS! - gets +2 strength and +2 willpower while there is a card under this character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: zeusMissingHisSpark, cardsUnder: [deckCard] }],
+    });
+
+    expect(testEngine.asPlayerOne().getCardStrength(zeusMissingHisSpark)).toBe(
+      zeusMissingHisSpark.strength + 2,
+    );
+    expect(testEngine.asPlayerOne().getDerivedWillpowerForCard(zeusMissingHisSpark)).toBe(
+      zeusMissingHisSpark.willpower + 2,
+    );
+  });
+});
+
 // LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
 // /**
 //  * @jest-environment node

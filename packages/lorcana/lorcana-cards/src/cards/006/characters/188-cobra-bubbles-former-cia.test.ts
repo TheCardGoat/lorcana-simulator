@@ -1,33 +1,49 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { cobraBubblesFormerCia } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Cobra Bubbles - Former CIA", () => {
-//   It.skip("Bodyguard (This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [cobraBubblesFormerCia],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(cobraBubblesFormerCia);
-//     Expect(cardUnderTest.hasBodyguard).toBe(true);
-//   });
-//
-//   It.skip("THINK ABOUT WHAT'S BEST 2 {I} – Draw a card, then choose and discard a card.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: cobraBubblesFormerCia.cost,
-//       Play: [cobraBubblesFormerCia],
-//       Hand: [cobraBubblesFormerCia],
-//     });
-//
-//     Await testEngine.playCard(cobraBubblesFormerCia);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { cobraBubblesFormerCia } from "./188-cobra-bubbles-former-cia";
+
+const drawnCard = createMockCharacter({
+  id: "cobra-bubbles-former-cia-drawn-card",
+  name: "Drawn Card",
+  cost: 1,
+});
+
+const discardFodder = createMockCharacter({
+  id: "cobra-bubbles-former-cia-discard-fodder",
+  name: "Discard Fodder",
+  cost: 1,
+});
+
+describe("Cobra Bubbles - Former CIA", () => {
+  it("has Bodyguard", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [cobraBubblesFormerCia],
+    });
+
+    expect(testEngine.asPlayerOne().hasKeyword(cobraBubblesFormerCia, "Bodyguard")).toBe(true);
+  });
+
+  it("draws a card, then lets you choose and discard a card", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [drawnCard],
+      hand: [discardFodder],
+      play: [cobraBubblesFormerCia],
+    });
+
+    const cobraId = testEngine.findCardInstanceId(cobraBubblesFormerCia, "play", "player_one");
+    const discardId = testEngine.findCardInstanceId(discardFodder, "hand", "player_one");
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(cobraId, "THINK ABOUT WHAT'S BEST 2"),
+    ).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        targets: [discardId],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
+    expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("discard");
+  });
+});

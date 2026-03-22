@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ruttNorthernMooseI18n } from "./004-rutt-northern-moose.i18n";
 
 export const ruttNorthernMoose: CharacterCard = {
   id: "6Ic",
@@ -7,28 +8,6 @@ export const ruttNorthernMoose: CharacterCard = {
   cardType: "character",
   name: "Rutt",
   version: "Northern Moose",
-  i18n: {
-    en: {
-      name: "Rutt",
-      version: "Northern Moose",
-      text: "Support",
-    },
-    de: {
-      name: "Benny",
-      version: "Elch aus dem Norden",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Truc",
-      version: "Élan nordique",
-      text: "Soutien",
-    },
-    it: {
-      name: "Fiocco",
-      version: "Alce del Nord",
-      text: "Aiutante",
-    },
-  },
   inkType: ["amber"],
   franchise: "Brother Bear",
   set: "005",
@@ -53,4 +32,5 @@ export const ruttNorthernMoose: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: ruttNorthernMooseI18n,
 };

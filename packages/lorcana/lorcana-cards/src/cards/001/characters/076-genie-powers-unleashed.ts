@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { geniePowersUnleashedI18n } from "./076-genie-powers-unleashed.i18n";
 
 export const geniePowersUnleashed: CharacterCard = {
   id: "Mpt",
@@ -7,46 +8,6 @@ export const geniePowersUnleashed: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "Powers Unleashed",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "Powers Unleashed",
-      text: [
-        {
-          title: "Shift 6",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "PHENOMENAL COSMIC POWER!",
-          description:
-            "Whenever this character quests, you may play an action with cost 5 or less for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Dschinni",
-      version: "Entfesselte Energie",
-      text: "Gestaltwandel 6 Wendig KOSMISCHE KRÄFTE! Jedes Mal, wenn dieser Charakter erkundet, darfst du eine Aktion, die 5 oder weniger kostet, kostenlos ausspielen.",
-    },
-    fr: {
-      name: "Génie",
-      version: "Déchaîne ses pouvoirs",
-      text: "Alter 6 Insaisissable POUVOIR COSMIQUE PHÉNOMÉNAL! Lorsque ce personnage est envoyé à l'aventure, vous pouvez jouer gratuitement une carte action coûtant 5 ou moins.",
-    },
-    it: {
-      name: "Genie",
-      version: "Powers Unleashed",
-      text: [
-        {
-          title: "Shift 6",
-          description:
-            "(You may pay 6 to play this on top of one of your characters named Genie.) Evasive (Only characters with Evasive can challenge this character.) PHENOMENAL COSMIC POWER! Whenever this character quests, you may play an action with cost 5 or less for free.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aladdin",
   set: "001",
@@ -57,7 +18,6 @@ export const geniePowersUnleashed: CharacterCard = {
   willpower: 5,
   lore: 3,
   inkable: false,
-  missingImplementation: true,
   externalIds: {
     lorcast: "crd_976b70e13c194a6f8b955d7ea5307bbc",
     tcgPlayer: 508766,
@@ -78,22 +38,48 @@ export const geniePowersUnleashed: CharacterCard = {
   classifications: ["Floodborn", "Hero"],
   abilities: [
     {
+      id: "dgz-1",
+      keyword: "Shift",
+      type: "keyword",
+      cost: {
+        ink: 6,
+      },
+      shiftTarget: "Genie",
+      text: "Shift 6",
+    },
+    {
+      id: "dgz-2",
+      keyword: "Evasive",
+      type: "keyword",
+      text: "Evasive",
+    },
+    {
+      id: "dgz-3",
+      name: "PHENOMENAL COSMIC POWER!",
+      text: "PHENOMENAL COSMIC POWER! Whenever this character quests, you may play an action with cost 5 or less for free.",
+      type: "triggered",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
       effect: {
+        type: "optional",
         chooser: "CONTROLLER",
         effect: {
+          type: "play-card",
+          from: "hand",
           cost: "free",
           costRestriction: {
             comparison: "less-or-equal",
             value: 5,
           },
-          from: "hand",
-          type: "play-card",
+          filter: {
+            cardType: "action",
+          },
         },
-        type: "optional",
       },
-      id: "dgz-1",
-      text: "**Shift** 6 (_You may pay 6 {I} to play this on top of one of your characters named Genie._)\n\n**Evasive** _(Only characters with Evasive can challenge this character.)_\n\n**PHENOMENAL COSMIC POWER** Whenever this character quests, you may play an action with cost 5 or less for free.",
-      type: "action",
     },
   ],
+  i18n: geniePowersUnleashedI18n,
 };

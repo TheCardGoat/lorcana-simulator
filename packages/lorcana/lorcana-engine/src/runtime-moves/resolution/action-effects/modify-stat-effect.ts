@@ -13,8 +13,15 @@ type ResolvedModifyStatEffectInput = {
   modifierByTarget?: Record<CardInstanceId, number>;
 };
 
-function isSupportedStat(value: unknown): value is "strength" | "willpower" | "lore" {
-  return value === "strength" || value === "willpower" || value === "lore";
+function isSupportedStat(
+  value: unknown,
+): value is "strength" | "willpower" | "lore" | "singer-threshold" {
+  return (
+    value === "strength" ||
+    value === "willpower" ||
+    value === "lore" ||
+    value === "singer-threshold"
+  );
 }
 
 export function isModifyStatEffect(effect: unknown): effect is ModifyStatEffect {
@@ -47,7 +54,7 @@ export function resolveModifyStatEffect(
     return;
   }
 
-  const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+  const currentTurn = ctx.framework.state.status.turn ?? 1;
   cleanupExpiredEffects(ctx, currentTurn);
   cleanupDanglingTargetEffects(ctx);
 

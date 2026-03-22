@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { robinHoodEphemeralArcherI18n } from "./171-robin-hood-ephemeral-archer.i18n";
 
 export const robinHoodEphemeralArcher: CharacterCard = {
   id: "6Ji",
@@ -7,43 +8,6 @@ export const robinHoodEphemeralArcher: CharacterCard = {
   cardType: "character",
   name: "Robin Hood",
   version: "Ephemeral Archer",
-  i18n: {
-    en: {
-      name: "Robin Hood",
-      version: "Ephemeral Archer",
-      text: [
-        {
-          title: "Boost 1 {I}",
-        },
-        {
-          title: "EXPERT SHOT",
-          description:
-            "Whenever this character quests, if there's a card under him, deal 1 damage to up to 2 chosen characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Robin Hood",
-      version: "Flüchtiger Bogenschütze",
-      text: "Stärken 1 MEISTERHAFTER SCHUSS Jedes Mal, wenn dieser Charakter erkundet, falls er mindestens eine Karte unter sich hat, wähle bis zu 2 Charaktere und füge ihnen je 1 Schaden zu.",
-    },
-    fr: {
-      name: "Robin des Bois",
-      version: "Archer éphémère",
-      text: "Boost 1 TIREUR EXPERT Chaque fois que ce personnage est envoyé à l'aventure, s'il y a une carte sous lui, choisissez jusqu'à 2 personnages et infligez 1 dommage à chacun.",
-    },
-    it: {
-      name: "Robin Hood",
-      version: "Arciere Effimero",
-      text: [
-        {
-          title: "Potenziamento 1",
-          description:
-            "(Una volta durante il tuo turno, puoi pagare 1 per mettere la prima carta del tuo mazzo a faccia in giù sotto a questo personaggio.) TIRO ESPERTO Ogni volta che questo personaggio va all'avventura, se c'è una carta sotto di esso, infliggi 1 danno a fino a 2 personaggi a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Robin Hood",
   set: "010",
@@ -107,4 +71,5 @@ export const robinHoodEphemeralArcher: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: robinHoodEphemeralArcherI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { peterPanFearlessFighterI18n } from "./119-peter-pan-fearless-fighter.i18n";
 
 export const peterPanFearlessFighter: CharacterCard = {
   id: "1O4",
@@ -7,33 +8,6 @@ export const peterPanFearlessFighter: CharacterCard = {
   cardType: "character",
   name: "Peter Pan",
   version: "Fearless Fighter",
-  i18n: {
-    en: {
-      name: "Peter Pan",
-      version: "Fearless Fighter",
-      text: "Rush",
-    },
-    de: {
-      name: "Peter Pan",
-      version: "Furchtloser Kämpfer",
-      text: "Rasant",
-    },
-    fr: {
-      name: "PETER PAN",
-      version: "Combattant intrépide",
-      text: "Charge",
-    },
-    it: {
-      name: "Peter Pan",
-      version: "Fearless Fighter",
-      text: [
-        {
-          title: "Rush",
-          description: "(This character can challenge the turn they're played.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Peter Pan",
   set: "001",
@@ -44,7 +18,6 @@ export const peterPanFearlessFighter: CharacterCard = {
   willpower: 2,
   lore: 1,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_7f4cc9a32a834ebabaeaea3407d06dbc",
     tcgPlayer: 508787,
@@ -59,4 +32,5 @@ export const peterPanFearlessFighter: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: peterPanFearlessFighterI18n,
 };

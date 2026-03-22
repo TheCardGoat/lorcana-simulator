@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseEnthusiasticDancerI18n } from "./112-mickey-mouse-enthusiastic-dancer.i18n";
 
 export const mickeyMouseEnthusiasticDancer: CharacterCard = {
   id: "lzK",
@@ -7,51 +8,6 @@ export const mickeyMouseEnthusiasticDancer: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Enthusiastic Dancer",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Enthusiastic Dancer",
-      text: [
-        {
-          title: "PERFECT PARTNERS",
-          description:
-            "While you have a character named Minnie Mouse in play, this character gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Micky Maus",
-      version: "Enthusiastischer Tänzer",
-      text: [
-        {
-          title: "PERFEKTE PARTNER",
-          description:
-            "Solange du mindestens einen Minnie-Maus-Charakter im Spiel hast, erhält dieser Charakter +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Danseur enthousiaste",
-      text: [
-        {
-          title: "CAVALIERS PARFAITS",
-          description: "Tant que vous avez un personnage Minnie en jeu, ce personnage gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Topolino",
-      version: "Ballerino Entusiasta",
-      text: [
-        {
-          title: "PARTNER PERFETTI",
-          description:
-            "Mentre hai in gioco un personaggio chiamato Minni, questo personaggio riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "005",
   cardNumber: 112,
@@ -86,4 +42,5 @@ export const mickeyMouseEnthusiasticDancer: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: mickeyMouseEnthusiasticDancerI18n,
 };

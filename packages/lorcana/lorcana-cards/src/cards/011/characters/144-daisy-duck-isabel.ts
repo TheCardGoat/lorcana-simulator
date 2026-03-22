@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daisyDuckIsabelI18n } from "./144-daisy-duck-isabel.i18n";
 
 export const daisyDuckIsabel: CharacterCard = {
   id: "mVm",
@@ -7,24 +8,6 @@ export const daisyDuckIsabel: CharacterCard = {
   cardType: "character",
   name: "Daisy Duck",
   version: "Isabel",
-  i18n: {
-    en: {
-      name: "Daisy Duck",
-      version: "Isabel",
-    },
-    de: {
-      name: "Daisy Duck",
-      version: "Isabel",
-    },
-    fr: {
-      name: "Daisy",
-      version: "Isabelle",
-    },
-    it: {
-      name: "Paperina",
-      version: "Isabel",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Mickey's Christmas Carol",
   set: "011",
@@ -41,4 +24,5 @@ export const daisyDuckIsabel: CharacterCard = {
     tcgPlayer: 676222,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: daisyDuckIsabelI18n,
 };

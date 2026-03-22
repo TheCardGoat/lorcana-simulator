@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { teKElementalTerrorI18n } from "./054-te-k-elemental-terror.i18n";
 
 export const teKElementalTerror: CharacterCard = {
   id: "8UQ",
@@ -7,36 +8,6 @@ export const teKElementalTerror: CharacterCard = {
   cardType: "character",
   name: "Te Kā",
   version: "Elemental Terror",
-  i18n: {
-    en: {
-      name: "Te Kā",
-      version: "Elemental Terror",
-      text: [
-        {
-          title: "Shift 7",
-        },
-        {
-          title: "ANCIENT RAGE",
-          description: "During your turn, whenever an opposing character is exerted, banish them.",
-        },
-      ],
-    },
-    de: {
-      name: "Te Kā",
-      version: "Elementarer Terror",
-      text: "Gestaltwandel 7 ALTER ZORN Jedes Mal während deines Zuges, wenn ein gegnerischer Charakter erschöpft wird, verbanne ihn.",
-    },
-    fr: {
-      name: "TE KĀ",
-      version: "Terreur élémentaire",
-      text: "Alter 7 RAGE ANCESTRALE Durant votre tour, chaque fois qu'un personnage adverse devient épuisé, bannissez-le.",
-    },
-    it: {
-      name: "Te Kā",
-      version: "Terrore Elementale",
-      text: "Trasformazione 7 RABBIA ANTICA Durante il tuo turno, ogni volta che un personaggio avversario viene impegnato, esilialo.",
-    },
-  },
   inkType: ["amethyst", "ruby"],
   franchise: "Moana",
   set: "007",
@@ -61,5 +32,38 @@ export const teKElementalTerror: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain", "Deity"],
-  abilities: [],
+  abilities: [
+    {
+      type: "keyword",
+      keyword: "Shift",
+      cost: {
+        ink: 7,
+      },
+      shiftTarget: "Te Kā",
+    },
+    {
+      id: "8UQ-ancient-rage",
+      name: "ANCIENT RAGE",
+      text: "ANCIENT RAGE During your turn, whenever an opposing character is exerted, banish them.",
+      type: "triggered",
+      trigger: {
+        event: "exert",
+        on: "OPPONENT_CHARACTERS",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
+      },
+      effect: {
+        type: "banish",
+        target: {
+          ref: "trigger-subject",
+        },
+      },
+    },
+  ],
+  i18n: teKElementalTerrorI18n,
 };

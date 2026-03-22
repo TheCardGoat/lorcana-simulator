@@ -1,4 +1,10 @@
-import type { CommandEnvelope, MoveInput, PacketAnimation } from "../runtime/types";
+import type {
+  CommandEnvelope,
+  FilteredMatchView,
+  MatchState,
+  MoveInput,
+  PacketAnimation,
+} from "../runtime/types";
 import type { DeepReadonly, ZoneConfig } from "../runtime/match-runtime.types";
 
 export type EngineActorContext = {
@@ -21,6 +27,7 @@ export type EngineMoveExecutionResult = {
 export interface EnginePacketUpdate {
   processedCommand: CommandEnvelope;
   animations: PacketAnimation[];
+  canUndo?: boolean;
 }
 
 export type EngineMoveHistoryEntry = {
@@ -31,19 +38,24 @@ export type EngineMoveHistoryEntry = {
   timestamp: number;
   stateID?: number;
   turnNumber?: number;
+  transitionType?: "move" | "undo";
+  newStateID?: number;
+  undoneStateID?: number;
+  restoredCheckpointStateID?: number;
+  undoneMoveId?: string;
 };
 
 export type EngineMoveId<TMoveMap extends Record<string, MoveInput> = Record<string, MoveInput>> =
   keyof TMoveMap & string;
 
-export type EngineCardProjection<TCardMeta = Record<string, unknown>> = {
+export type EngineCardProjection = {
   instanceId: string;
   zoneId: string;
   definitionId: string;
   ownerId?: string;
   controllerId?: string;
   zoneIndex?: number;
-  meta?: TCardMeta;
+  meta?: Record<string, unknown>;
 };
 
 export type EngineZoneProjection = {
@@ -53,62 +65,45 @@ export type EngineZoneProjection = {
   count: number;
 };
 
-export type EngineBoardProjection<
-  TCardMeta = Record<string, unknown>,
-  TCard = EngineCardProjection<TCardMeta>,
-> = {
-  cards: Record<string, TCard>;
+export type EngineBoardProjection = {
+  cards: Record<string, EngineCardProjection>;
   zones: Record<string, EngineZoneProjection>;
 };
 
-export type EngineActiveEffectProjection<TPayload = unknown> = {
+export type EngineActiveEffectProjection = {
   id: string;
   type: string;
   sourceId?: string;
-  payload: TPayload;
+  payload: unknown;
 };
 
-export type EnginePendingEffectProjection<TPayload = unknown> = {
+export type EnginePendingEffectProjection = {
   id: string;
   type: string;
   source?: "stack" | "priority" | "game";
   sourceId?: string;
-  payload: TPayload;
+  payload: unknown;
 };
 
-export type EngineProjectionSnapshot<
-  TBoard = EngineBoardProjection,
-  TActiveEffect = EngineActiveEffectProjection,
-  TPendingEffect = EnginePendingEffectProjection,
-> = {
+export type EngineProjectionSnapshot = {
   stateID: number;
   actor: EngineActorContext;
-  board: TBoard;
-  activeEffects: TActiveEffect[];
-  pendingEffects: TPendingEffect[];
+  board: EngineBoardProjection;
+  activeEffects: EngineActiveEffectProjection[];
+  pendingEffects: EnginePendingEffectProjection[];
 };
 
-export interface GameEngine<
-  TState,
-  TBoard = unknown,
-  TMoveMap extends Record<string, MoveInput> = Record<string, MoveInput>,
-> {
-  // STATE AND BOARD MUST NOT be changed, all changes must be done via moves
-  getState(): DeepReadonly<TState>;
-  // STATE AND BOARD MUST NOT be changed, all changes must be done via moves
-  getBoard(): DeepReadonly<TBoard>;
+export interface GameEngine {
+  getState(): DeepReadonly<MatchState>;
+  getBoard(): DeepReadonly<FilteredMatchView>;
   getStateID(): number;
-  validateMove<K extends keyof TMoveMap & string>(
-    moveId: K,
-    input: TMoveMap[K],
-  ): EngineMoveValidationResult;
-  executeMove<K extends keyof TMoveMap & string>(
-    moveId: K,
-    input: TMoveMap[K],
-  ): EngineMoveExecutionResult;
-  enumerateMoves(): EngineMoveId<TMoveMap>[];
+  validateMove(moveId: string, input: MoveInput): EngineMoveValidationResult;
+  executeMove(moveId: string, input: MoveInput): EngineMoveExecutionResult;
+  enumerateMoves(): string[];
   getMoveHistory(limit?: number): EngineMoveHistoryEntry[];
   getActorContext(): EngineActorContext;
+  canUndo?(playerId: string): boolean;
+  undo?(playerId: string, prevStateID?: number): boolean;
   dispose(): void | Promise<void>;
 }
 
@@ -116,17 +111,13 @@ export interface GameEngine<
  * Transport-aware engine interface for networked game engines.
  * Extends GameEngine with connection management and state update notifications.
  */
-export interface TransportAwareEngine<
-  TState,
-  TBoard,
-  TMoveMap extends Record<string, MoveInput>,
-> extends GameEngine<TState, TBoard, TMoveMap> {
+export interface TransportAwareEngine extends GameEngine {
   connect(): Promise<void>;
   disconnect(): Promise<void>;
 
   onStateUpdate(
     handler: (
-      state: DeepReadonly<TState>,
+      state: DeepReadonly<MatchState>,
       stateID: number,
       packet: EnginePacketUpdate | null,
     ) => void,

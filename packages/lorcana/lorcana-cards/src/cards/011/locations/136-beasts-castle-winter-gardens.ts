@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { beastsCastleWinterGardensI18n } from "./136-beasts-castle-winter-gardens.i18n";
 
 export const beastsCastleWinterGardens: LocationCard = {
   id: "xnX",
@@ -7,51 +8,6 @@ export const beastsCastleWinterGardens: LocationCard = {
   cardType: "location",
   name: "Beast's Castle",
   version: "Winter Gardens",
-  i18n: {
-    en: {
-      name: "Beast's Castle",
-      version: "Winter Gardens",
-      text: [
-        {
-          title: "SNOWBALL STANDOFF",
-          description: "Whenever a character here challenges another character, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Das Schloss des Biests",
-      version: "Wintergärten",
-      text: [
-        {
-          title: "SCHNEEBALLSCHLACHT",
-          description:
-            "Jedes Mal, wenn einer deiner Charaktere an diesem Ort einen anderen Charakter herausfordert, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Château de la Bête",
-      version: "Jardins d'hiver",
-      text: [
-        {
-          title: "DUEL DE BOULES DE NEIGE",
-          description:
-            "Chaque fois qu'un personnage sur ce lieu défie un autre personnage, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Il Castello della Bestia",
-      version: "Giardini Invernali",
-      text: [
-        {
-          title: "STALLO DI PALLE DI NEVE",
-          description:
-            "Ogni volta che un personaggio in questo luogo sfida un altro personaggio, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Beauty and the Beast",
   set: "011",
@@ -89,4 +45,5 @@ export const beastsCastleWinterGardens: LocationCard = {
       text: "SNOWBALL STANDOFF Whenever a character here challenges another character, gain 1 lore.",
     },
   ],
+  i18n: beastsCastleWinterGardensI18n,
 };

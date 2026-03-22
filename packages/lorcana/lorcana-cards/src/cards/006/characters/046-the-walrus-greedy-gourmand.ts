@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theWalrusGreedyGourmandI18n } from "./046-the-walrus-greedy-gourmand.i18n";
 
 export const theWalrusGreedyGourmand: CharacterCard = {
   id: "2Yy",
@@ -7,24 +8,6 @@ export const theWalrusGreedyGourmand: CharacterCard = {
   cardType: "character",
   name: "The Walrus",
   version: "Greedy Gourmand",
-  i18n: {
-    en: {
-      name: "The Walrus",
-      version: "Greedy Gourmand",
-    },
-    de: {
-      name: "Das Walross",
-      version: "Gieriger Feinschmecker",
-    },
-    fr: {
-      name: "Le Morse",
-      version: "Gourmand avide",
-    },
-    it: {
-      name: "Il Tricheco",
-      version: "Avido Buongustaio",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Alice in Wonderland",
   set: "006",
@@ -41,4 +24,5 @@ export const theWalrusGreedyGourmand: CharacterCard = {
     tcgPlayer: 588074,
   },
   classifications: ["Storyborn"],
+  i18n: theWalrusGreedyGourmandI18n,
 };

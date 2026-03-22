@@ -1,9 +1,10 @@
 import { DECK_FIXTURES } from "../deck-fixtures/index.js";
-import { DEFAULT_AUTOMATED_MATCH_STRATEGY_ID } from "./strategy-registry.js";
+import { DEFAULT_AUTOMATED_ACTION_STRATEGY_ID } from "@tcg/lorcana-engine";
 import type { AutomatedMatchConfig } from "./types.js";
 
 const EMPTY_FIXTURE = {
   cards: "",
+  id: "custom-deck",
   name: "Custom deck",
 } as const;
 
@@ -22,27 +23,35 @@ export function createDefaultAutomatedMatchConfig(): AutomatedMatchConfig {
   return {
     playerOneDeckText: DEFAULT_PLAYER_ONE_FIXTURE?.cards ?? "",
     playerTwoDeckText: DEFAULT_PLAYER_TWO_FIXTURE?.cards ?? "",
-    playerOneFixtureName: DEFAULT_PLAYER_ONE_FIXTURE?.name,
-    playerTwoFixtureName: DEFAULT_PLAYER_TWO_FIXTURE?.name,
-    strategyId: DEFAULT_AUTOMATED_MATCH_STRATEGY_ID,
+    playerOneFixtureId: DEFAULT_PLAYER_ONE_FIXTURE?.id,
+    playerTwoFixtureId: DEFAULT_PLAYER_TWO_FIXTURE?.id,
+    playerOneStrategyId: DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+    playerTwoStrategyId: DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
     seed: createAutomatedMatchSeed(0),
   };
 }
 
-export function getDeckFixtureByName(name?: string) {
-  if (!name) {
+type DeckFixtureSelectionConfig = {
+  playerOneDeckText: string;
+  playerOneFixtureId?: string;
+  playerTwoDeckText: string;
+  playerTwoFixtureId?: string;
+};
+
+export function getDeckFixtureById(id?: string) {
+  if (!id) {
     return undefined;
   }
 
-  return DECK_FIXTURES.find((fixture) => fixture.name === name);
+  return DECK_FIXTURES.find((fixture) => fixture.id === id);
 }
 
-export function replaceDeckTextWithFixture(
-  config: AutomatedMatchConfig,
+export function replaceDeckTextWithFixture<TConfig extends DeckFixtureSelectionConfig>(
+  config: TConfig,
   side: "playerOne" | "playerTwo",
-  fixtureName: string,
-): AutomatedMatchConfig {
-  const fixture = getDeckFixtureByName(fixtureName);
+  fixtureId: string,
+): TConfig {
+  const fixture = getDeckFixtureById(fixtureId);
   if (!fixture) {
     return config;
   }
@@ -51,13 +60,13 @@ export function replaceDeckTextWithFixture(
     return {
       ...config,
       playerOneDeckText: fixture.cards,
-      playerOneFixtureName: fixture.name,
+      playerOneFixtureId: fixture.id,
     };
   }
 
   return {
     ...config,
     playerTwoDeckText: fixture.cards,
-    playerTwoFixtureName: fixture.name,
+    playerTwoFixtureId: fixture.id,
   };
 }

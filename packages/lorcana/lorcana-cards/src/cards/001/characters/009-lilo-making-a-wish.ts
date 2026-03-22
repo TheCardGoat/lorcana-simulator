@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liloMakingAWishI18n } from "./009-lilo-making-a-wish.i18n";
 
 export const liloMakingAWish: CharacterCard = {
   id: "Svq",
@@ -7,24 +8,6 @@ export const liloMakingAWish: CharacterCard = {
   cardType: "character",
   name: "Lilo",
   version: "Making a Wish",
-  i18n: {
-    en: {
-      name: "Lilo",
-      version: "Making a Wish",
-    },
-    de: {
-      name: "Lilo",
-      version: "Wünscht sich was",
-    },
-    fr: {
-      name: "LILO",
-      version: "Faisant un vœu",
-    },
-    it: {
-      name: "Lilo",
-      version: "Making a Wish",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "001",
@@ -41,4 +24,5 @@ export const liloMakingAWish: CharacterCard = {
     tcgPlayer: 503315,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: liloMakingAWishI18n,
 };

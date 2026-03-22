@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { miloThatchKingOfAtlantisI18n } from "./080-milo-thatch-king-of-atlantis.i18n";
 
 export const miloThatchKingOfAtlantis: CharacterCard = {
   id: "cXv",
@@ -7,37 +8,6 @@ export const miloThatchKingOfAtlantis: CharacterCard = {
   cardType: "character",
   name: "Milo Thatch",
   version: "King of Atlantis",
-  i18n: {
-    en: {
-      name: "Milo Thatch",
-      version: "King of Atlantis",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "TAKE THEM BY SURPRISE",
-          description:
-            "When this character is banished, return all opposing characters to their players' hands.",
-        },
-      ],
-    },
-    de: {
-      name: "Milo Thatch",
-      version: "König von Atlantis",
-      text: "Gestaltwandel 4 ÜBERRASCHUNGSANGRIFF Wenn dieser Charakter verbannt wird, schicke alle gegnerischen Charaktere auf die zugehörigen Hände zurück.",
-    },
-    fr: {
-      name: "Milo Thatch",
-      version: "Roi de l'Atlantide",
-      text: "Alter 4 ON PROFITE DE L'EFFET DE SURPRISE Lorsque ce personnage est banni, renvoyez tous les personnages adverses dans la main de leur propriétaire.",
-    },
-    it: {
-      name: "Milo Thatch",
-      version: "Re di Atlantide",
-      text: "Trasformazione 4 LI COGLIEREMO DI SORPRESA Quando questo personaggio viene esiliato, fai tornare tutti i personaggi avversari nelle mani dei loro giocatori.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Atlantis",
   set: "003",
@@ -63,7 +33,6 @@ export const miloThatchKingOfAtlantis: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "King"],
-  missingImplementation: true,
-  missingTests: true,
   abilities: [],
+  i18n: miloThatchKingOfAtlantisI18n,
 };

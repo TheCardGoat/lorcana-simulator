@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sisuEmpoweredSiblingEnchantedI18n } from "./215-sisu-empowered-sibling-enchanted.i18n";
 
 export const sisuEmpoweredSiblingEnchanted: CharacterCard = {
   id: "VLy",
@@ -7,37 +8,6 @@ export const sisuEmpoweredSiblingEnchanted: CharacterCard = {
   cardType: "character",
   name: "Sisu",
   version: "Empowered Sibling",
-  i18n: {
-    en: {
-      name: "Sisu",
-      version: "Empowered Sibling",
-      text: [
-        {
-          title: "Shift 6",
-        },
-        {
-          title: "I GOT THIS!",
-          description:
-            "When you play this character, banish all opposing characters with 2 {S} or less.",
-        },
-      ],
-    },
-    de: {
-      name: "Sisu",
-      version: "Starkes Familienmitglied",
-      text: "Gestaltwandel 6 ICH MACH DAS SCHON! Wenn du diesen Charakter ausspielst, verbanne alle gegnerischen Charaktere mit 2 oder weniger.",
-    },
-    fr: {
-      name: "Sisu",
-      version: "Sœur responsable",
-      text: "Alter 6 LAISSE-MOI GÉRER ÇA! Lorsque vous jouez ce personnage, bannissez tous les personnages adverses ayant 2 ou moins.",
-    },
-    it: {
-      name: "Sisu",
-      version: "Sorella Potenziata",
-      text: "Trasformazione 6 LASCIA FARE A ME Quando giochi questo personaggio, esilia tutti i personaggi avversari con 2 o inferiore.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "004",
@@ -90,4 +60,5 @@ export const sisuEmpoweredSiblingEnchanted: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: sisuEmpoweredSiblingEnchantedI18n,
 };

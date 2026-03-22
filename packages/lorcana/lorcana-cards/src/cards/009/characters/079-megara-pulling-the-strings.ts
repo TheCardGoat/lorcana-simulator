@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { megaraPullingTheStringsI18n } from "./079-megara-pulling-the-strings.i18n";
 
 export const megaraPullingTheStrings: CharacterCard = {
   id: "3Za",
@@ -7,50 +8,6 @@ export const megaraPullingTheStrings: CharacterCard = {
   cardType: "character",
   name: "Megara",
   version: "Pulling the Strings",
-  i18n: {
-    en: {
-      name: "Megara",
-      version: "Pulling the Strings",
-      text: [
-        {
-          title: "WONDER BOY",
-          description: "When you play this character, chosen character gets +2 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Meg",
-      version: "Hält die Fäden in der Hand",
-      text: [
-        {
-          title: "WUNDERKNABE",
-          description:
-            "Wenn du diesen Charakter ausspielst, gib einem Charakter deiner Wahl in diesem Zug +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "MÉGARA",
-      version: "Tireuse de ficelles",
-      text: [
-        {
-          title: "SUPER-MÂLE",
-          description:
-            "Lorsque vous jouez ce personnage, choisissez un personnage qui gagne +2 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Megara",
-      version: "Pulling the Strings",
-      text: [
-        {
-          title: "WONDER BOY",
-          description: "When you play this character, chosen character gets +2 this turn.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "009",
@@ -98,4 +55,5 @@ export const megaraPullingTheStrings: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: megaraPullingTheStringsI18n,
 };

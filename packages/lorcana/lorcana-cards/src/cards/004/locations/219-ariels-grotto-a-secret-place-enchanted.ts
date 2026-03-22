@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { arielsGrottoASecretPlaceEnchantedI18n } from "./219-ariels-grotto-a-secret-place-enchanted.i18n";
 
 export const arielsGrottoASecretPlaceEnchanted: LocationCard = {
   id: "riS",
@@ -7,48 +8,6 @@ export const arielsGrottoASecretPlaceEnchanted: LocationCard = {
   cardType: "location",
   name: "Ariel’s Grotto",
   version: "A Secret Place",
-  i18n: {
-    en: {
-      name: "Ariel’s Grotto",
-      version: "A Secret Place",
-      text: [
-        {
-          title: "TREASURE TROVE",
-          description: "While you have 3 or more items in play, this location gets +2 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Arielles Grotte",
-      version: "Geheimer Ort",
-      text: [
-        {
-          title: "SCHATZKAMMER",
-          description: "Solange du mindestens 3 Gegenstände im Spiel hast, erhält dieser Ort +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "La Grotte d'Ariel",
-      version: "Un endroit secret",
-      text: [
-        {
-          title: "EMPLIE DE TRÉSORS",
-          description: "Tant que vous avez 3 objets ou plus en jeu, ce lieu gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "La Grotta di Ariel",
-      version: "Un Luogo Segreto",
-      text: [
-        {
-          title: "UNA RACCOLTA PREZIOSA",
-          description: "Mentre hai in gioco 3 o più oggetti, questo luogo riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Little Mermaid",
   set: "004",
@@ -97,4 +56,5 @@ export const arielsGrottoASecretPlaceEnchanted: LocationCard = {
       type: "static",
     },
   ],
+  i18n: arielsGrottoASecretPlaceEnchantedI18n,
 };

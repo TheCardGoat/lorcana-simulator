@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { olafHappyPassengerI18n } from "./050-olaf-happy-passenger.i18n";
 
 export const olafHappyPassenger: CharacterCard = {
   id: "MEQ",
@@ -7,55 +8,6 @@ export const olafHappyPassenger: CharacterCard = {
   cardType: "character",
   name: "Olaf",
   version: "Happy Passenger",
-  i18n: {
-    en: {
-      name: "Olaf",
-      version: "Happy Passenger",
-      text: [
-        {
-          title: "CLEAR THE PATH",
-          description:
-            "For each exerted character opponents have in play, you pay 1 {I} less to play this character.",
-        },
-        {
-          title: "Evasive",
-        },
-      ],
-    },
-    de: {
-      name: "Olaf",
-      version: "Fröhlicher Passagier",
-      text: [
-        {
-          title: "DEN WEG FREI RÄUMEN",
-          description:
-            "Für jeden gegnerischen erschöpften Charakter im Spiel, zahlst du 1 weniger, um diesen Charakter auszuspielen. Wendig",
-        },
-      ],
-    },
-    fr: {
-      name: "Olaf",
-      version: "Passager heureux",
-      text: [
-        {
-          title: "DÉGAGER LE CHEMIN",
-          description:
-            "Jouer ce personnage vous coûte 1 de moins par personnage adverse épuisé. Insaisissable",
-        },
-      ],
-    },
-    it: {
-      name: "Olaf",
-      version: "Passeggero Felice",
-      text: [
-        {
-          title: "SPIANARE LA STRADA",
-          description:
-            "Per ogni personaggio impegnato che gli avversari hanno in gioco, paga 1 in meno per giocare questo personaggio. Sfuggente",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "005",
@@ -98,4 +50,5 @@ export const olafHappyPassenger: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: olafHappyPassengerI18n,
 };

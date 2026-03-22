@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { quickShotI18n } from "./203-quick-shot.i18n";
 
 export const quickShot: ActionCard = {
   id: "4ke",
@@ -6,24 +7,6 @@ export const quickShot: ActionCard = {
   reprints: ["set8-203"],
   cardType: "action",
   name: "Quick Shot",
-  i18n: {
-    en: {
-      name: "Quick Shot",
-      text: "Deal 1 damage to chosen character. Draw a card.",
-    },
-    de: {
-      name: "Schneller Schuss",
-      text: "Füge einem Charakter deiner Wahl 1 Schaden zu. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Tir rapide",
-      text: "Choisissez un personnage et infligez-lui 1 dommage. Piochez une carte.",
-    },
-    it: {
-      name: "Colpo Rapido",
-      text: "Infliggi 1 danno a un personaggio a tua scelta. Pesca una carta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "008",
@@ -64,4 +47,5 @@ export const quickShot: ActionCard = {
       type: "action",
     },
   ],
+  i18n: quickShotI18n,
 };

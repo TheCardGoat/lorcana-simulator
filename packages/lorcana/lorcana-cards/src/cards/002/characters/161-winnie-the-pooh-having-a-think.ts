@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { winnieThePoohHavingAThinkI18n } from "./161-winnie-the-pooh-having-a-think.i18n";
 
 export const winnieThePoohHavingAThink: CharacterCard = {
   id: "ZKc",
@@ -7,52 +8,6 @@ export const winnieThePoohHavingAThink: CharacterCard = {
   cardType: "character",
   name: "Winnie the Pooh",
   version: "Having a Think",
-  i18n: {
-    en: {
-      name: "Winnie the Pooh",
-      version: "Having a Think",
-      text: [
-        {
-          title: "HUNNY POT",
-          description:
-            "Whenever this character quests, you may put a card from your hand into your inkwell facedown.",
-        },
-      ],
-    },
-    de: {
-      name: "Winnie Puuh",
-      version: "Denkt und denkt",
-      text: [
-        {
-          title: "HONIGTOPF",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du 1 beliebige Karte aus deiner Hand verdeckt in deinen Tintenvorrat legen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Winnie l'ourson",
-      version: "Pense pense pense",
-      text: [
-        {
-          title: "POT DE MIEL",
-          description:
-            "Lorsque ce personnage est envoyé à l'aventure, vous pouvez placer une carte de votre main dans votre réserve d'encre, face cachée.",
-        },
-      ],
-    },
-    it: {
-      name: "Winnie the Pooh",
-      version: "Having a Think",
-      text: [
-        {
-          title: "HUNNY POT",
-          description:
-            "Whenever this character quests, you may put a card from your hand into your inkwell facedown.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Winnie the Pooh",
   set: "002",
@@ -75,7 +30,6 @@ export const winnieThePoohHavingAThink: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -99,4 +53,5 @@ export const winnieThePoohHavingAThink: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: winnieThePoohHavingAThinkI18n,
 };

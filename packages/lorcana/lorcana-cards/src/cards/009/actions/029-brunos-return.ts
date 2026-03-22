@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { brunosReturnI18n } from "./029-brunos-return.i18n";
 
 export const brunosReturn: ActionCard = {
   id: "c1X",
@@ -6,24 +7,6 @@ export const brunosReturn: ActionCard = {
   reprints: ["set4-026", "set9-029"],
   cardType: "action",
   name: "Bruno's Return",
-  i18n: {
-    en: {
-      name: "Bruno's Return",
-      text: "Return a character card from your discard to your hand. You may remove up to 2 damage from chosen character.",
-    },
-    de: {
-      name: "Brunos Rückkehr",
-      text: "Nimm 1 Charakterkarte aus deinem Ablagestapel zurück auf deine Hand. Entferne danach bis zu 2 Schaden von einem Charakter deiner Wahl.",
-    },
-    fr: {
-      name: "Retour de Bruno",
-      text: "Reprenez en main une carte Personnage de votre défausse. Puis choisissez un personnage et retirez-lui jusqu'à 2 jetons Dommage.",
-    },
-    it: {
-      name: "Il Ritorno di Bruno",
-      text: "Riprendi in mano una carta personaggio dai tuoi scarti. Poi rimuovi fino a 2 danni da un personaggio a tua scelta.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Encanto",
   set: "009",
@@ -67,4 +50,5 @@ export const brunosReturn: ActionCard = {
       },
     },
   ],
+  i18n: brunosReturnI18n,
 };

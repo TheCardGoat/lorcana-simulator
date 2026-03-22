@@ -1,7 +1,7 @@
 import { type MatchStaticResources } from "@tcg/lorcana-engine";
-import type { LorcanaCard } from "@tcg/lorcana-engine";
+import type { LorcanaCard, LorcanaCardDefinition } from "@tcg/lorcana-engine";
 import type { LorcanaProjectedBoardView } from "@tcg/lorcana-engine";
-import { m } from "$lib/paraglide/messages.js";
+import { m } from "$lib/i18n/messages.js";
 import type {
   LorcanaCardTextEntrySnapshot,
   LorcanaCardSnapshot,
@@ -53,6 +53,108 @@ function projectCardTextEntries(
   return entries.length > 0 ? entries : undefined;
 }
 
+function mergeTextEntries(
+  definitionEntries: LorcanaCardTextEntrySnapshot[] | undefined,
+  grantedEntries: Array<{ title: string; description?: string }> | undefined,
+): LorcanaCardTextEntrySnapshot[] | undefined {
+  if (!grantedEntries || grantedEntries.length === 0) {
+    return definitionEntries;
+  }
+
+  const merged = [...(definitionEntries ?? []), ...grantedEntries];
+  return merged.length > 0 ? merged : undefined;
+}
+
+function buildGrantSources(
+  projectedCard: {
+    grantedAbilityTextEntries?: Array<{
+      title: string;
+      sourceId?: string;
+      sourceDefinitionId?: string;
+    }>;
+    keywordGrantSources?: Array<{ keyword: string; sourceId: string; sourceDefinitionId?: string }>;
+    statModifierSources?: Array<{
+      stat: string;
+      amount: number;
+      sourceId: string;
+      sourceDefinitionId?: string;
+    }>;
+  },
+  staticResources: MatchStaticResources,
+): LorcanaCardSnapshot["grantSources"] {
+  const grantedEntries = projectedCard.grantedAbilityTextEntries ?? [];
+  const keywordSources = projectedCard.keywordGrantSources ?? [];
+  const statSources = projectedCard.statModifierSources ?? [];
+  if (grantedEntries.length === 0 && keywordSources.length === 0 && statSources.length === 0) {
+    return undefined;
+  }
+
+  const bySource = new Map<string, { definitionId?: string; grants: string[] }>();
+
+  for (const entry of grantedEntries) {
+    if (!entry.sourceId) continue;
+    const existing = bySource.get(entry.sourceId);
+    if (existing) {
+      existing.grants.push(entry.title);
+    } else {
+      bySource.set(entry.sourceId, {
+        definitionId: entry.sourceDefinitionId,
+        grants: [entry.title],
+      });
+    }
+  }
+
+  for (const entry of keywordSources) {
+    const existing = bySource.get(entry.sourceId);
+    if (existing) {
+      if (!existing.grants.includes(entry.keyword)) {
+        existing.grants.push(entry.keyword);
+      }
+    } else {
+      bySource.set(entry.sourceId, {
+        definitionId: entry.sourceDefinitionId,
+        grants: [entry.keyword],
+      });
+    }
+  }
+
+  for (const entry of statSources) {
+    const sign = entry.amount > 0 ? "+" : "";
+    const statLabel = `${sign}${entry.amount} ${entry.stat.charAt(0).toUpperCase()}${entry.stat.slice(1)}`;
+    const existing = bySource.get(entry.sourceId);
+    if (existing) {
+      existing.grants.push(statLabel);
+    } else {
+      bySource.set(entry.sourceId, {
+        definitionId: entry.sourceDefinitionId,
+        grants: [statLabel],
+      });
+    }
+  }
+
+  if (bySource.size === 0) return undefined;
+
+  const sources: NonNullable<LorcanaCardSnapshot["grantSources"]> = [];
+  for (const [sourceCardId, { definitionId, grants }] of bySource) {
+    const sourceDef = definitionId ? staticResources.cards.get(definitionId) : undefined;
+    const sourceLabel = sourceDef
+      ? sourceDef.version
+        ? `${sourceDef.name} - ${sourceDef.version}`
+        : sourceDef.name
+      : sourceCardId;
+    sources.push({
+      sourceCardId,
+      sourceLabel,
+      sourceSet: sourceDef?.set,
+      sourceCardNumber: sourceDef?.cardNumber,
+      sourceInkType: sourceDef?.inkType,
+      grants,
+    });
+  }
+
+  return sources;
+}
+
 function getHiddenCardLabel(zoneId: LorcanaZoneId): string {
   return zoneId === "deck" ? m["sim.card.hiddenDeck"]({}) : m["sim.card.hidden"]({});
 }
@@ -91,17 +193,17 @@ function normalizeRarity(
 }
 
 function getCardDefinition(
-  staticResources: MatchStaticResources<LorcanaCard>,
+  staticResources: MatchStaticResources,
   cardId: string,
   definitionId?: string,
-): LorcanaCard | undefined {
+): LorcanaCardDefinition | undefined {
   const resolvedDefinitionId = definitionId ?? staticResources.instances.get(cardId)?.definitionId;
   return resolvedDefinitionId ? staticResources.cards.get(resolvedDefinitionId) : undefined;
 }
 
 export function buildCardSnapshotMap(
   board: LorcanaProjectedBoardView,
-  staticResources: MatchStaticResources<LorcanaCard>,
+  staticResources: MatchStaticResources,
 ): CardSnapshotMap {
   const snapshots: CardSnapshotMap = {};
 
@@ -182,8 +284,12 @@ export function buildCardSnapshotMap(
       set: definition?.set,
       strength: definition?.cardType === "character" ? projectedCard.strength : undefined,
       temporaryRestrictions: projectedCard.temporaryRestrictions,
+      grantSources: buildGrantSources(projectedCard, staticResources),
       text: flattenCardText(cardText),
-      textEntries: projectCardTextEntries(cardText),
+      textEntries: mergeTextEntries(
+        projectCardTextEntries(cardText),
+        projectedCard.grantedAbilityTextEntries,
+      ),
       willpower:
         definition?.cardType === "character" || definition?.cardType === "location"
           ? projectedCard.willpower

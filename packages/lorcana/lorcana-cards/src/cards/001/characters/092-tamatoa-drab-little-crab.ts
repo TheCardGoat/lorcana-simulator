@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tamatoaDrabLittleCrabI18n } from "./092-tamatoa-drab-little-crab.i18n";
 
 export const tamatoaDrabLittleCrab: CharacterCard = {
   id: "q5S",
@@ -7,24 +8,6 @@ export const tamatoaDrabLittleCrab: CharacterCard = {
   cardType: "character",
   name: "Tamatoa",
   version: "Drab Little Crab",
-  i18n: {
-    en: {
-      name: "Tamatoa",
-      version: "Drab Little Crab",
-    },
-    de: {
-      name: "Tamatoa",
-      version: "Glanzlose kleine Krabbe",
-    },
-    fr: {
-      name: "TAMATOA",
-      version: "Petit crabe triste",
-    },
-    it: {
-      name: "Tamatoa",
-      version: "Drab Little Crab",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Moana",
   set: "001",
@@ -35,11 +18,11 @@ export const tamatoaDrabLittleCrab: CharacterCard = {
   willpower: 4,
   lore: 1,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_ce61d71725be41b7a5a766b690f56a1b",
     tcgPlayer: 508774,
   },
   classifications: ["Dreamborn"],
+  i18n: tamatoaDrabLittleCrabI18n,
 };

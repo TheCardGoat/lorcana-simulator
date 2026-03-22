@@ -1,22 +1,31 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { frecklesGoodBoy } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Freckles - Good Boy", () => {
-//   It.skip("JUST SO CUTE! When you play this character, chosen opposing character gets -1 {S} this turn.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: frecklesGoodBoy.cost,
-//       Hand: [frecklesGoodBoy],
-//     });
-//
-//     Await testEngine.playCard(frecklesGoodBoy);
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { simbaProtectiveCub } from "../../001";
+import { frecklesGoodBoy } from "./168-freckles-good-boy";
+
+describe("Freckles - Good Boy", () => {
+  it("JUST SO CUTE! When you play this character, chosen opposing character gets -1 strength this turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [frecklesGoodBoy],
+        inkwell: frecklesGoodBoy.cost,
+      },
+      {
+        play: [simbaProtectiveCub],
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(frecklesGoodBoy)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        targets: [simbaProtectiveCub],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getCardStrength(simbaProtectiveCub)).toBe(
+      simbaProtectiveCub.strength - 1,
+    );
+  });
+});

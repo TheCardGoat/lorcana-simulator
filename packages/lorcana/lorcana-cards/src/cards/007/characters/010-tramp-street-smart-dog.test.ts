@@ -103,6 +103,72 @@ describe("Tramp - Street-Smart Dog", () => {
     });
   });
 
+  it("draws and discards one card when only one other character is in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [drawnCardOne, drawnCardTwo],
+      hand: [trampStreetsmartDog, discardFodder],
+      inkwell: 6,
+      play: [partyGuestOne],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(trampStreetsmartDog)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    // Drew 1 card (for 1 other character); deck draws from the top (last element)
+    expect(testEngine.asPlayerOne().getCardZone(drawnCardTwo)).toBe("hand");
+    expect(testEngine.asPlayerOne().getCardZone(drawnCardOne)).toBe("deck");
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(2);
+
+    // Discard 1 card
+    const discardFodderId = testEngine.findCardInstanceId(discardFodder, "hand", "player_one");
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        targets: [discardFodderId],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("discard");
+    expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
+      deck: 1,
+      discard: 1,
+      hand: 1,
+      play: 2,
+    });
+  });
+
+  it("can decline the optional draw-and-discard ability", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [drawnCardOne, drawnCardTwo],
+      hand: [trampStreetsmartDog, discardFodder],
+      inkwell: 5,
+      play: [partyGuestOne, partyGuestTwo],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(trampStreetsmartDog)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: false,
+      }),
+    ).toBeSuccessfulCommand();
+
+    // Nothing was drawn or discarded
+    expect(testEngine.asPlayerOne().getCardZone(drawnCardOne)).toBe("deck");
+    expect(testEngine.asPlayerOne().getCardZone(drawnCardTwo)).toBe("deck");
+    expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("hand");
+    expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
+      deck: 2,
+      discard: 0,
+      hand: 1,
+      play: 3,
+    });
+  });
+
   it("still cannot be played without enough ink after the discount is applied", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       inkwell: 3,

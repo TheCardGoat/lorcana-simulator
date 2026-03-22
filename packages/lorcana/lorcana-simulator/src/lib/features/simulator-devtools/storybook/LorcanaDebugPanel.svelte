@@ -1,16 +1,18 @@
 <script lang="ts">
   import JSONTree from "svelte-json-tree";
+  import * as Sidebar from "$lib/design-system/primitives/sidebar";
   import {LORCANA_SIMULATOR_FIXTURES} from "@/features/simulator-devtools/fixtures";
   import {
       LORCANA_SIMULATOR_VIEWS,
+      type BoardMoveAnimationVariant,
       type LorcanaSimulatorView,
       type SimulatorDebugAnimationPlayer,
       type SimulatorDebugAnimationRequest,
   } from "$lib";
   import type {LorcanaSimulatorFixture} from "@/features/simulator/model/contracts.js";
+  import { useSidebar } from "$lib/design-system/primitives/sidebar";
 
   interface DebugPanelProps {
-    sidebarId: string;
     isOpen: boolean;
     fixtureId: string;
     view: LorcanaSimulatorView;
@@ -21,8 +23,11 @@
     onFixtureChange?: (fixtureId: string) => void;
     onReset: () => void;
     onRefresh: () => void;
-      onRunAnimation: (animation: SimulatorDebugAnimationRequest) => boolean;
+    onRunAnimation: (animation: SimulatorDebugAnimationRequest) => boolean;
+    onRunQuestAnimation?: (cardId: string, player: SimulatorDebugAnimationPlayer, loreGained: number) => boolean;
+    onRunChallengeAnimation?: (attackerId: string, defenderId: string, player: SimulatorDebugAnimationPlayer, preview: { attackerDamageDealt: number; defenderDamageDealt: number; defenderKind: "character" | "location"; attackerWouldBeBanished: boolean; defenderWouldBeBanished: boolean }) => boolean;
     onClose: () => void;
+    onOpenStateChange: (open: boolean) => void;
   }
 
   interface ProjectionSummary {
@@ -106,7 +111,6 @@
   const BASE_ZONE_ORDER = ["deck", "hand", "play", "inkwell", "discard", "limbo"];
 
   const {
-    sidebarId,
     isOpen,
     fixtureId,
     view,
@@ -117,9 +121,13 @@
     onFixtureChange,
     onReset,
     onRefresh,
-      onRunAnimation,
+    onRunAnimation,
+    onRunQuestAnimation,
+    onRunChallengeAnimation,
     onClose,
+    onOpenStateChange,
   }: DebugPanelProps = $props();
+  const sidebar = useSidebar();
 
   const VIEW_LABELS: Record<LorcanaSimulatorView, string> = {
     playerOne: "PlayerOne",
@@ -133,8 +141,18 @@
   let parsedBoardProjection = $state<unknown>(null);
   let boardProjectionParseError = $state<string | null>(null);
   let projectionSummary = $state<ProjectionSummary | null>(null);
-  let animationCardId = $state("GGr");
+  type AnimationType = "play.action" | "quest" | "challenge" | "lorcana.boardMove";
+  let animationType = $state<AnimationType>("quest");
+  let animationCardId = $state("");
   let animationPlayer = $state<SimulatorDebugAnimationPlayer>("player_one");
+  let questLoreGained = $state(2);
+  let boardMoveVariant = $state<BoardMoveAnimationVariant>("play-character");
+  let challengeDefenderCardId = $state("");
+  let challengeAttackerDamage = $state(3);
+  let challengeDefenderDamage = $state(2);
+  let challengeDefenderKind = $state<"character" | "location">("character");
+  let challengeAttackerBanished = $state(false);
+  let challengeDefenderBanished = $state(false);
   let animationStatus = $state<string | null>(null);
   let copyFeedback = $state<CopyFeedback | null>(null);
   const fixtureOptions = Object.values(LORCANA_SIMULATOR_FIXTURES).sort((left, right) =>
@@ -464,25 +482,102 @@
     onViewChange(nextView);
   }
 
+  function runSelectedAnimation(): void {
+    if (animationType === "quest") {
+      runQuestAnimationDebug();
+    } else if (animationType === "challenge") {
+      runChallengeAnimationDebug();
+    } else if (animationType === "lorcana.boardMove") {
+      runBoardMoveAnimation();
+    } else {
+      runPlayActionAnimation();
+    }
+  }
+
   function runPlayActionAnimation(): void {
-      const cardId = animationCardId.trim();
-      if (!cardId) {
-          animationStatus = "Card ID is required.";
-          return;
-      }
+    const cardId = animationCardId.trim();
+    if (!cardId) {
+      animationStatus = "Card ID is required.";
+      return;
+    }
 
-      const success = onRunAnimation({
-          id: `debug-play-action:${cardId}:${Date.now()}`,
-          kind: "play.action",
-          payload: {
-              cardId,
-              player: animationPlayer,
-          },
-      });
+    const success = onRunAnimation({
+      id: `debug-play-action:${cardId}:${Date.now()}`,
+      kind: "play.action",
+      payload: {
+        cardId,
+        player: animationPlayer,
+      },
+    });
 
-      animationStatus = success
-          ? `Queued play.action for ${cardId}.`
-          : `Unable to queue animation for ${cardId}.`;
+    animationStatus = success
+      ? `Queued play.action for ${cardId}.`
+      : `Unable to queue animation for ${cardId}. Check console for anchor debug info.`;
+  }
+
+  function runBoardMoveAnimation(): void {
+    const cardId = animationCardId.trim();
+    if (!cardId) {
+      animationStatus = "Card instance ID is required.";
+      return;
+    }
+
+    const success = onRunAnimation({
+      id: `debug-board-move:${cardId}:${Date.now()}`,
+      kind: "lorcana.boardMove",
+      payload: {
+        cardId,
+        player: animationPlayer,
+        variant: boardMoveVariant,
+      },
+    });
+
+    animationStatus = success
+      ? `Queued ${boardMoveVariant} for ${cardId}.`
+      : `Unable to queue animation for ${cardId}. Check console for anchor debug info.`;
+  }
+
+  function runQuestAnimationDebug(): void {
+    const cardId = animationCardId.trim();
+    if (!cardId) {
+      animationStatus = "Card instance ID is required. Use the instance ID of a card in play.";
+      return;
+    }
+
+    if (!onRunQuestAnimation) {
+      animationStatus = "Quest animation callback not wired. Check story wrapper.";
+      return;
+    }
+
+    const success = onRunQuestAnimation(cardId, animationPlayer, questLoreGained);
+    animationStatus = success
+      ? `Fired quest animation: ${cardId} gained ${questLoreGained} lore.`
+      : `Failed to fire quest animation for ${cardId}. Card may not be in play zone, or anchors not measured. Check console.`;
+  }
+
+  function runChallengeAnimationDebug(): void {
+    const attackerId = animationCardId.trim();
+    const defenderId = challengeDefenderCardId.trim();
+    if (!attackerId || !defenderId) {
+      animationStatus = "Both attacker and defender card instance IDs are required.";
+      return;
+    }
+
+    if (!onRunChallengeAnimation) {
+      animationStatus = "Challenge animation callback not wired. Check story wrapper.";
+      return;
+    }
+
+    const success = onRunChallengeAnimation(attackerId, defenderId, animationPlayer, {
+      attackerDamageDealt: challengeAttackerDamage,
+      defenderDamageDealt: challengeDefenderDamage,
+      defenderKind: challengeDefenderKind,
+      attackerWouldBeBanished: challengeAttackerBanished,
+      defenderWouldBeBanished: challengeDefenderBanished,
+    });
+    animationStatus = success
+      ? `Fired challenge animation: ${attackerId} -> ${defenderId}.`
+      : `Failed to fire challenge animation. Cards may not be in play zone, or anchors not measured. Check console.`;
   }
 
   async function copySerializedJson(target: CopyTarget, serializedJson: string, emptyMessage: string): Promise<void> {
@@ -550,9 +645,29 @@
       boardProjectionParseError = "Unable to parse serialized board projection JSON.";
     }
   });
+
+  $effect(() => {
+    if (!sidebar.isMobile) {
+      return;
+    }
+
+    if (sidebar.openMobile !== isOpen) {
+      sidebar.setOpenMobile(isOpen);
+    }
+  });
+
+  $effect(() => {
+    if (!sidebar.isMobile) {
+      return;
+    }
+
+    if (sidebar.openMobile !== isOpen) {
+      onOpenStateChange(sidebar.openMobile);
+    }
+  });
 </script>
 
-<aside id={sidebarId} class="debug-sidebar" class:open={isOpen} aria-hidden={!isOpen}>
+<Sidebar.Header class="debug-sidebar__shell">
   <header class="debug-sidebar__header">
     <div>
       <h2>Debug Projection</h2>
@@ -595,44 +710,117 @@
       Refresh
     </button>
   </div>
+</Sidebar.Header>
 
+<Sidebar.Content class="debug-sidebar__content">
     <section class="debug-section debug-section--animation">
         <div class="debug-section__header">
             <div>
                 <h3>Animation Lab</h3>
-                <p>Inject typed UI animations without waiting for engine packets.</p>
+                <p>Inject UI animations without waiting for engine packets.</p>
             </div>
-            <button type="button" class="debug-sidebar__refresh" onclick={runPlayActionAnimation}>
-                Run play.action
+            <button type="button" class="debug-sidebar__refresh" onclick={runSelectedAnimation}>
+                Run {animationType}
             </button>
         </div>
 
         <div class="debug-animation-form">
             <label>
-                <span>Card ID</span>
-                <input bind:value={animationCardId} placeholder="GGr"/>
+                <span>Type</span>
+                <select bind:value={animationType}>
+                    <option value="quest">Quest (lore fly)</option>
+                    <option value="challenge">Challenge (arrow + badges)</option>
+                    <option value="play.action">Play Action (preview)</option>
+                    <option value="lorcana.boardMove">Play Card (spotlight)</option>
+                </select>
             </label>
 
             <label>
-                <span>Player</span>
+                <span>Player Side</span>
                 <select bind:value={animationPlayer}>
                     <option value="player_one">player_one</option>
                     <option value="player_two">player_two</option>
                 </select>
             </label>
+
+            <label>
+                <span>{animationType === "quest" || animationType === "lorcana.boardMove" || animationType === "challenge" ? (animationType === "challenge" ? "Attacker Card Instance ID" : "Card Instance ID") : "Card Definition ID"}</span>
+                <input bind:value={animationCardId} placeholder={animationType === "quest" || animationType === "lorcana.boardMove" || animationType === "challenge" ? "instance ID from play zone" : "definition ID e.g. GGr"}/>
+            </label>
+
+            {#if animationType === "quest"}
+                <label>
+                    <span>Lore Gained</span>
+                    <input type="number" bind:value={questLoreGained} min="0" max="10" />
+                </label>
+            {/if}
+
+            {#if animationType === "lorcana.boardMove"}
+                <label>
+                    <span>Variant</span>
+                    <select bind:value={boardMoveVariant}>
+                        <option value="play-character">Character</option>
+                        <option value="play-item">Item</option>
+                        <option value="play-location">Location</option>
+                        <option value="play-action">Action</option>
+                    </select>
+                </label>
+            {/if}
+
+            {#if animationType === "challenge"}
+                <label>
+                    <span>Defender Card Instance ID</span>
+                    <input bind:value={challengeDefenderCardId} placeholder="instance ID from opponent play zone"/>
+                </label>
+                <label>
+                    <span>Attacker Damage Dealt</span>
+                    <input type="number" bind:value={challengeAttackerDamage} min="0" max="20" />
+                </label>
+                <label>
+                    <span>Defender Damage Dealt</span>
+                    <input type="number" bind:value={challengeDefenderDamage} min="0" max="20" />
+                </label>
+                <label>
+                    <span>Defender Kind</span>
+                    <select bind:value={challengeDefenderKind}>
+                        <option value="character">Character</option>
+                        <option value="location">Location</option>
+                    </select>
+                </label>
+                <label class="debug-animation-checkbox">
+                    <input type="checkbox" bind:checked={challengeAttackerBanished} />
+                    <span>Attacker Banished</span>
+                </label>
+                <label class="debug-animation-checkbox">
+                    <input type="checkbox" bind:checked={challengeDefenderBanished} />
+                    <span>Defender Banished</span>
+                </label>
+            {/if}
         </div>
 
-        <pre class="debug-sidebar__state debug-sidebar__state--raw">{JSON.stringify({
-            id: "ID",
-            kind: "play.action",
-            payload: {
-                cardId: animationCardId,
-                player: animationPlayer,
-            },
-        }, null, 2)}</pre>
+        {#if animationType === "quest"}
+            <p class="debug-animation-hint">
+                Use a card instance ID from the play zone (visible in the board projection JSON).
+                The quest animation renders a golden lore pill flying from the card to the lore badge.
+            </p>
+        {:else if animationType === "challenge"}
+            <p class="debug-animation-hint">
+                Use card instance IDs from the play zones. The attacker must be on the selected player's side,
+                the defender on the opponent's side. The animation renders a golden arrow with damage badges.
+            </p>
+        {:else if animationType === "lorcana.boardMove"}
+            <p class="debug-animation-hint">
+                Use a card instance ID. The card spotlights at board center then settles to its destination zone.
+                Actions fly to discard; characters/items/locations fly to the play zone.
+            </p>
+        {:else}
+            <p class="debug-animation-hint">
+                Use a card instance ID from the board projection. The play.action animation renders the card flying from hand to center.
+            </p>
+        {/if}
 
         {#if animationStatus}
-            <p class="debug-animation-status">{animationStatus}</p>
+            <p class="debug-animation-status" class:debug-animation-status--error={animationStatus.includes("Failed") || animationStatus.includes("Unable")}>{animationStatus}</p>
         {/if}
     </section>
 
@@ -883,28 +1071,17 @@
   {:else}
     <pre class="debug-sidebar__state debug-sidebar__state--raw">No parsed projection summary available.</pre>
   {/if}
-</aside>
+</Sidebar.Content>
 
 <style>
-  .debug-sidebar {
-    position: absolute;
-    inset: 0 0 0 auto;
-    width: min(920px, 74vw);
-    transform: translateX(100%);
-    transition: transform 200ms ease;
-    z-index: 2147483646;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    background: rgba(5, 13, 25, 0.97);
-    border-left: 1px solid rgba(137, 179, 235, 0.25);
+  :global(.debug-sidebar__shell) {
+    gap: 0;
+    padding: 0;
+    flex-shrink: 0;
+    background: rgba(8, 18, 35, 0.96);
+    border-bottom: 1px solid rgba(137, 179, 235, 0.2);
     color: #e3eeff;
     font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  }
-
-  .debug-sidebar.open {
-    transform: translateX(0);
-    pointer-events: auto;
   }
 
   .debug-sidebar__header {
@@ -1023,6 +1200,14 @@
     gap: 0.75rem;
   }
 
+  :global(.debug-sidebar__content) {
+    gap: 0;
+    overflow: hidden;
+    background: rgba(4, 10, 19, 0.9);
+    color: #e3eeff;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  }
+
   .debug-sidebar__state :global(ul) {
     margin: 0;
     padding-left: 0;
@@ -1094,10 +1279,32 @@
       font-size: 0.78rem;
   }
 
+  .debug-animation-checkbox {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .debug-animation-checkbox input[type="checkbox"] {
+    width: auto;
+  }
+
+  .debug-animation-hint {
+    margin: 0.45rem 0 0;
+    font-size: 0.68rem;
+    color: #8badc8;
+    line-height: 1.4;
+  }
+
   .debug-animation-status {
-      margin: 0.55rem 0 0;
-      font-size: 0.72rem;
-      color: #b8edff;
+    margin: 0.55rem 0 0;
+    font-size: 0.72rem;
+    color: #b8edff;
+  }
+
+  .debug-animation-status--error {
+    color: #ffd6d8;
   }
 
   .debug-section h3 {

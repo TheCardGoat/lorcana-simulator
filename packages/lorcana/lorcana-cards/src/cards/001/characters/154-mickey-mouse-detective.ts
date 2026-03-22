@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseDetectiveI18n } from "./154-mickey-mouse-detective.i18n";
 
 export const mickeyMouseDetective: CharacterCard = {
   id: "xKp",
@@ -7,52 +8,6 @@ export const mickeyMouseDetective: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Detective",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Detective",
-      text: [
-        {
-          title: "GET A CLUE",
-          description:
-            "When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Mickey Mouse",
-      version: "Detective",
-      text: [
-        {
-          title: "GET A CLUE",
-          description:
-            "When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Detective",
-      text: [
-        {
-          title: "GET A CLUE",
-          description:
-            "When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-    it: {
-      name: "Mickey Mouse",
-      version: "Detective",
-      text: [
-        {
-          title: "GET A CLUE",
-          description:
-            "When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   set: "001",
   cardNumber: 154,
@@ -62,16 +17,15 @@ export const mickeyMouseDetective: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_9b6f273381924929ba2d6f6d3e990f66",
     tcgPlayer: 659388,
   },
   text: [
     {
-      title: "GET A CLUE",
+      title: "GET",
       description:
-        "When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
+        "A CLUE When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
     },
   ],
   classifications: ["Dreamborn", "Hero", "Detective"],
@@ -99,4 +53,5 @@ export const mickeyMouseDetective: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mickeyMouseDetectiveI18n,
 };

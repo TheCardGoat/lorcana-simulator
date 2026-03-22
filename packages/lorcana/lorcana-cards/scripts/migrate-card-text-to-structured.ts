@@ -4,7 +4,7 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import ts from "typescript";
 import type { CardTextEntry, LorcanaCard } from "@tcg/lorcana-types";
-import { allCards } from "../src/cards/cards";
+import { allCards } from "../src/cards/catalog-data";
 import {
   normalizeCardTextContent,
   normalizeCardTextEntries,

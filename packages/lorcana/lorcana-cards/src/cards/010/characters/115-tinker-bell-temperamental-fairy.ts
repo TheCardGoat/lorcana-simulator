@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tinkerBellTemperamentalFairyI18n } from "./115-tinker-bell-temperamental-fairy.i18n";
 
 export const tinkerBellTemperamentalFairy: CharacterCard = {
   id: "OR6",
@@ -7,37 +8,6 @@ export const tinkerBellTemperamentalFairy: CharacterCard = {
   cardType: "character",
   name: "Tinker Bell",
   version: "Temperamental Fairy",
-  i18n: {
-    en: {
-      name: "Tinker Bell",
-      version: "Temperamental Fairy",
-      text: [
-        {
-          title: "Shift 3 {I}",
-        },
-        {
-          title: "HARMLESS DIVERSION",
-          description:
-            "When you play this character, exert chosen opposing character with 2 {S} or less.",
-        },
-      ],
-    },
-    de: {
-      name: "Naseweis",
-      version: "Temperamentvolle Fee",
-      text: "Gestaltwandel 3 HARMLOSE ABLENKUNG Wenn du diesen Charakter ausspielst, erschöpfe einen gegnerischen Charakter deiner Wahl mit 2 oder weniger.",
-    },
-    fr: {
-      name: "La Fée Clochette",
-      version: "Fée capricieuse",
-      text: "Alter 3 DIVERSION INOFFENSIVE Lorsque vous jouez ce personnage, choisissez un personnage adverse ayant 2 ou moins et épuisez-le.",
-    },
-    it: {
-      name: "Trilli",
-      version: "Fata Capricciosa",
-      text: "Trasformazione 3 INNOCUA DISTRAZIONE Quando giochi questo personaggio, impegna un personaggio avversario a tua scelta con 2 o inferiore.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Peter Pan",
   set: "010",
@@ -81,6 +51,13 @@ export const tinkerBellTemperamentalFairy: CharacterCard = {
           owner: "opponent",
           selector: "chosen",
           zones: ["play"],
+          filter: [
+            {
+              type: "strength-comparison",
+              comparison: "less-or-equal",
+              value: 2,
+            },
+          ],
         },
         type: "exert",
       },
@@ -95,4 +72,5 @@ export const tinkerBellTemperamentalFairy: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: tinkerBellTemperamentalFairyI18n,
 };

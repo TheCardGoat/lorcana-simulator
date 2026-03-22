@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { simbaReturnedKingI18n } from "./189-simba-returned-king.i18n";
 
 export const simbaReturnedKing: CharacterCard = {
   id: "mW3",
@@ -7,37 +8,6 @@ export const simbaReturnedKing: CharacterCard = {
   cardType: "character",
   name: "Simba",
   version: "Returned King",
-  i18n: {
-    en: {
-      name: "Simba",
-      version: "Returned King",
-      text: [
-        {
-          title: "Challenger +4",
-        },
-        {
-          title: "POUNCE",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Simba",
-      version: "Zurückgekehrter König",
-      text: "Herausfordern +4 KATZENSPRUNG In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-    },
-    fr: {
-      name: "SIMBA",
-      version: "Roi de retour",
-      text: "Offensif +4 BOND Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier les personnages avec Insaisissable.)",
-    },
-    it: {
-      name: "Simba",
-      version: "Returned King",
-      text: "Challenger +4 (While challenging, this character gets +4.) POUNCE During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-    },
-  },
   inkType: ["steel"],
   franchise: "Lion King",
   set: "001",
@@ -48,7 +18,6 @@ export const simbaReturnedKing: CharacterCard = {
   willpower: 6,
   lore: 2,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_80cf71e223cf491796609458b2866665",
     tcgPlayer: 510162,
@@ -73,8 +42,11 @@ export const simbaReturnedKing: CharacterCard = {
       value: 4,
     },
     {
+      condition: {
+        type: "turn",
+        whose: "your",
+      },
       effect: {
-        duration: "this-turn",
         keyword: "Evasive",
         target: "SELF",
         type: "gain-keyword",
@@ -85,4 +57,5 @@ export const simbaReturnedKing: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: simbaReturnedKingI18n,
 };

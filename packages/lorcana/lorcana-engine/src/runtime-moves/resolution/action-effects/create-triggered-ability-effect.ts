@@ -2,6 +2,7 @@ import type { Condition, Effect, Trigger } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
 import { resolveTemporaryEffectWindow } from "../../effects/temporary-effects";
 import { registerAbility } from "../../effects/triggered-abilities";
+import { getCombinedSelectionTargets } from "./selection-state";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 
 type CreateTriggeredAbilityEffectLike = {
@@ -58,7 +59,7 @@ function resolveLifecycle(
     };
   }
 
-  const currentTurn = ctx.framework.state.ctx.status.turn ?? 1;
+  const currentTurn = ctx.framework.state.status.turn ?? 1;
   const { startsAtTurn, expiresAtTurn } = resolveTemporaryEffectWindow(
     currentTurn,
     effect.lifecycle.duration,
@@ -71,12 +72,47 @@ function resolveLifecycle(
   } as const;
 }
 
+/**
+ * Checks whether the ability's inner effect depends on a previous-target
+ * reference. When it does, and the resolution context has no prior targets
+ * (e.g. because the preceding step had no valid targets), the triggered
+ * ability should not be registered — there is nothing for it to act on.
+ */
+function abilityEffectRequiresPreviousTarget(abilityEffect: Effect): boolean {
+  if (!abilityEffect || typeof abilityEffect !== "object") {
+    return false;
+  }
+
+  const target = (abilityEffect as { target?: unknown }).target;
+  if (typeof target === "string" && target === "previous-target") {
+    return true;
+  }
+  if (
+    typeof target === "object" &&
+    target !== null &&
+    "ref" in target &&
+    (target as { ref?: unknown }).ref === "previous-target"
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function resolveCreateTriggeredAbilityEffect(
   ctx: PlayCardExecutionContext,
   cardPlayed: CardPlayedPayload,
   effect: CreateTriggeredAbilityEffectLike,
   resolutionInput: ActionResolutionInput,
 ): void {
+  // Skip registration when the ability targets previous-target but no prior
+  // target exists (e.g. the preceding sequence step found no valid targets).
+  if (abilityEffectRequiresPreviousTarget(effect.ability.effect)) {
+    const priorTargets = getCombinedSelectionTargets(resolutionInput);
+    if (priorTargets.length === 0) {
+      return;
+    }
+  }
+
   registerAbility(ctx as unknown as Parameters<typeof registerAbility>[0], {
     controllerId: cardPlayed.playerId,
     sourceId: cardPlayed.cardId,

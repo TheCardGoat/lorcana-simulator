@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jiminyCricketPinocchiosConscienceI18n } from "./044-jiminy-cricket-pinocchios-conscience.i18n";
 
 export const jiminyCricketPinocchiosConscience: CharacterCard = {
   id: "C3x",
@@ -7,43 +8,6 @@ export const jiminyCricketPinocchiosConscience: CharacterCard = {
   cardType: "character",
   name: "Jiminy Cricket",
   version: "Pinocchio's Conscience",
-  i18n: {
-    en: {
-      name: "Jiminy Cricket",
-      version: "Pinocchio's Conscience",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "THAT STILL, SMALL VOICE",
-          description:
-            "When you play this character, if you have a character named Pinocchio in play, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Jiminy Grille",
-      version: "Pinocchios Gewissen",
-      text: "Wendig DIE KLEINE INNERE STIMME Wenn du diesen Charakter ausspielst, darfst du 1 Karte ziehen, falls du einen Pinocchio-Charakter im Spiel hast.",
-    },
-    fr: {
-      name: "Jiminy Cricket",
-      version: "Conscience de Pinocchio",
-      text: "Insaisissable CETTE TRANQUILLE PETITE VOIX Si vous avez un personnage Pinocchio en jeu lorsque vous jouez cette carte, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Jiminy Cricket",
-      version: "Pinocchio's Conscience",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) THAT STILL, SMALL VOICE When you play this character, if you have a character named Pinocchio in play, you may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Pinocchio",
   set: "002",
@@ -102,4 +66,5 @@ export const jiminyCricketPinocchiosConscience: CharacterCard = {
       },
     },
   ],
+  i18n: jiminyCricketPinocchiosConscienceI18n,
 };

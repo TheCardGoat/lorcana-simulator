@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicCarpetFlyingRugI18n } from "./047-magic-carpet-flying-rug.i18n";
 
 export const magicCarpetFlyingRug: CharacterCard = {
   id: "oLg",
@@ -7,36 +8,6 @@ export const magicCarpetFlyingRug: CharacterCard = {
   cardType: "character",
   name: "Magic Carpet",
   version: "Flying Rug",
-  i18n: {
-    en: {
-      name: "Magic Carpet",
-      version: "Flying Rug",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "FIND THE WAY",
-          description: "{E} — Move a character of yours to a location for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Fliegender Teppich",
-      version: "Überflieger",
-      text: "Wendig FINDE DEN WEG — Wähle einen deiner Charaktere und bewege ihn kostenlos zu einem Ort.",
-    },
-    fr: {
-      name: "Tapis volant",
-      version: "Carpette magique",
-      text: "Insaisissable TROUVE LE CHEMIN — Déplacez gratuitement l'un de vos personnages sur un lieu.",
-    },
-    it: {
-      name: "Tappeto Magico",
-      version: "Scendiletto Volante",
-      text: "Sfuggente TROVARE LA VIA — Sposta gratuitamente un tuo personaggio in un luogo a tua scelta.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "003",
@@ -61,7 +32,34 @@ export const magicCarpetFlyingRug: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingImplementation: true,
-  missingTests: true,
-  abilities: [],
+  abilities: [
+    {
+      id: "oLg-1",
+      keyword: "Evasive",
+      text: "Evasive",
+      type: "keyword",
+    },
+    {
+      id: "oLg-2",
+      name: "FIND THE WAY",
+      text: "FIND THE WAY {E} — Move a character of yours to a location for free.",
+      type: "activated",
+      cost: {
+        exert: true,
+      },
+      effect: {
+        type: "move-to-location",
+        character: "CHOSEN_CHARACTER_OF_YOURS",
+        location: {
+          selector: "chosen",
+          count: 1,
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["location"],
+        },
+        cost: "free",
+      },
+    },
+  ],
+  i18n: magicCarpetFlyingRugI18n,
 };

@@ -1,91 +1,67 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { dingleHopper } from "@lorcanito/lorcana-engine/cards/001/items/items";
-// Import { aWholeNewWorld } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import { pawpsicle } from "@lorcanito/lorcana-engine/cards/002/items/items";
-// Import { jafarStrikingIllusionist } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Jafar - Striking Illusionist", () => {
-//   It("**Shift** 5 _(You may pay 5 {I} to play this on top of one of your characters named Jafar.)_**Evasive** _(Only characters with Evasive can challenge this character.)_**POWER BEYOND MEASURE** During your turn, while this character is exerted, whenever you draw a card, gain 1 lore.", () => {
-//     Const testStore = new TestStore({
-//       Play: [jafarStrikingIllusionist],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       JafarStrikingIllusionist.id,
-//     );
-//
-//     Expect(cardUnderTest.hasShift).toBe(true);
-//   });
-//
-//   It("_**Evasive** _(Only characters with Evasive can challenge this character.)", () => {
-//     Const testStore = new TestStore({
-//       Play: [jafarStrikingIllusionist],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       JafarStrikingIllusionist.id,
-//     );
-//
-//     Expect(cardUnderTest.hasEvasive).toBe(true);
-//   });
-//
-//   Describe("_**POWER BEYOND MEASURE** During your turn, while this character is exerted, whenever you draw a card, gain 1 lore.", () => {
-//     It("draw a card", () => {
-//       Const testStore = new TestStore({
-//         Inkwell: pawpsicle.cost,
-//         Play: [jafarStrikingIllusionist],
-//         Hand: [pawpsicle],
-//         Deck: 7,
-//       });
-//
-//       Const cardUnderTest = testStore.getCard(jafarStrikingIllusionist);
-//       CardUnderTest.updateCardMeta({ exerted: true });
-//
-//       Const pawpsicleCard = testStore.getCard(pawpsicle);
-//       PawpsicleCard.playFromHand();
-//       TestStore.resolveOptionalAbility();
-//
-//       Expect(testStore.getPlayerLore("player_one")).toBe(1);
-//     });
-//
-//     It("draws many cards", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Inkwell: aWholeNewWorld.cost,
-//           Play: [jafarStrikingIllusionist],
-//           Hand: [aWholeNewWorld],
-//           Deck: 7,
-//         },
-//         {
-//           Hand: [dingleHopper],
-//           Deck: 7,
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getCard(jafarStrikingIllusionist);
-//       CardUnderTest.updateCardMeta({ exerted: true });
-//
-//       Const aWholeNewWorldCard = testStore.getCard(aWholeNewWorld);
-//       AWholeNewWorldCard.playFromHand();
-//
-//       TestStore.resolveTopOfStack({}, true);
-//       TestStore.resolveTopOfStack({}, true);
-//       TestStore.resolveTopOfStack({}, true);
-//       TestStore.resolveTopOfStack({}, true);
-//       TestStore.resolveTopOfStack({}, true);
-//       TestStore.resolveTopOfStack({}, true);
-//
-//       Expect(testStore.getPlayerLore("player_one")).toBe(7);
-//       Expect(testStore.getPlayerLore("player_two")).toBe(0);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { friendsOnTheOtherSide } from "../../001";
+import { jafarStrikingIllusionist } from "./042-jafar-striking-illusionist";
+
+describe("Jafar - Striking Illusionist", () => {
+  describe("POWER BEYOND MEASURE - During your turn, while this character is exerted, whenever you draw a card, gain 1 lore.", () => {
+    it("gains 1 lore per card drawn while exerted during your turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: jafarStrikingIllusionist, exerted: true, isDrying: false }],
+        hand: [friendsOnTheOtherSide],
+        inkwell: friendsOnTheOtherSide.cost,
+        deck: 5,
+      });
+
+      // Friends on the Other Side draws 2 cards, so Jafar should trigger twice (1 lore per draw)
+      expect(testEngine.asPlayerOne().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
+
+      // Two bag effects are queued (one per draw); manually resolve the first
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      // After resolving the first, the second auto-resolves (1 remaining = auto-resolved)
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(2);
+    });
+
+    it("does not gain lore when drawing a card while NOT exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: jafarStrikingIllusionist, exerted: false, isDrying: false }],
+        hand: [friendsOnTheOtherSide],
+        inkwell: friendsOnTheOtherSide.cost,
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+    });
+
+    it("does not gain lore when opponent draws a card during opponent's turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: jafarStrikingIllusionist, exerted: true, isDrying: false }],
+          deck: 5,
+        },
+        {
+          hand: [friendsOnTheOtherSide],
+          inkwell: friendsOnTheOtherSide.cost,
+          deck: 5,
+        },
+      );
+
+      // Pass to P2's turn
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // P2 plays Friends on the Other Side — draws 2 cards during their turn
+      expect(testEngine.asPlayerTwo().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
+
+      // Jafar should not trigger since it's not P1's turn
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+    });
+  });
+});

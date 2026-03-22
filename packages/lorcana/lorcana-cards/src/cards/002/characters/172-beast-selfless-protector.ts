@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { beastSelflessProtectorI18n } from "./172-beast-selfless-protector.i18n";
 
 export const beastSelflessProtector: CharacterCard = {
   id: "sLs",
@@ -7,52 +8,6 @@ export const beastSelflessProtector: CharacterCard = {
   cardType: "character",
   name: "Beast",
   version: "Selfless Protector",
-  i18n: {
-    en: {
-      name: "Beast",
-      version: "Selfless Protector",
-      text: [
-        {
-          title: "SHIELD ANOTHER",
-          description:
-            "Whenever one of your other characters would be dealt damage, put that many damage counters on this character instead.",
-        },
-      ],
-    },
-    de: {
-      name: "Biest",
-      version: "Selbstloser Beschützer",
-      text: [
-        {
-          title: "ANDERE SCHÜTZEN",
-          description:
-            "Jedes Mal, wenn einer deiner anderen Charaktere Schaden erhalten würde, lege die entsprechenden Schadensmarker stattdessen auf diesen Charakter.",
-        },
-      ],
-    },
-    fr: {
-      name: "La Bête",
-      version: "Prêt à se sacrifier",
-      text: [
-        {
-          title: "PROTÉGER LES AUTRES",
-          description:
-            "Si des dommages sont infligés à l'un de vos autres personnages, placez-les sur ce personnage à la place.",
-        },
-      ],
-    },
-    it: {
-      name: "Beast",
-      version: "Selfless Protector",
-      text: [
-        {
-          title: "SHIELD ANOTHER",
-          description:
-            "Whenever one of your other characters would be dealt damage, put that many damage counters on this character instead.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Beauty and the Beast",
   set: "002",
@@ -75,7 +30,6 @@ export const beastSelflessProtector: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Prince"],
-  missingTests: true,
   abilities: [
     {
       id: "sLs-1",
@@ -89,4 +43,5 @@ export const beastSelflessProtector: CharacterCard = {
       type: "replacement",
     },
   ],
+  i18n: beastSelflessProtectorI18n,
 };

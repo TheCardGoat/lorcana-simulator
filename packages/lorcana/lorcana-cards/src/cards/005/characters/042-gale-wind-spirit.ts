@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { galeWindSpiritI18n } from "./042-gale-wind-spirit.i18n";
 
 export const galeWindSpirit: CharacterCard = {
   id: "Ds5",
@@ -7,51 +8,6 @@ export const galeWindSpirit: CharacterCard = {
   cardType: "character",
   name: "Gale",
   version: "Wind Spirit",
-  i18n: {
-    en: {
-      name: "Gale",
-      version: "Wind Spirit",
-      text: [
-        {
-          title: "RECURRING GUST",
-          description:
-            "When this character is banished in a challenge, return this card to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Gale",
-      version: "Element des Windes",
-      text: [
-        {
-          title: "WIEDERKEHRENDE BÖE",
-          description:
-            "Wenn dieser Charakter durch eine Herausforderung verbannt wird, nimm ihn zurück auf deine Hand.",
-        },
-      ],
-    },
-    fr: {
-      name: "Courant d’Air",
-      version: "Esprit du vent",
-      text: [
-        {
-          title: "BOURRASQUES PERSISTANTES",
-          description: "Lorsque ce personnage est banni via un défi, renvoyez-le dans votre main.",
-        },
-      ],
-    },
-    it: {
-      name: "Zefiro",
-      version: "Spirito del Vento",
-      text: [
-        {
-          title: "BREZZA RICORRENTE",
-          description:
-            "Quando questo personaggio viene esiliato in una sfida, riprendi in mano questa carta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Frozen",
   set: "005",
@@ -76,18 +32,21 @@ export const galeWindSpirit: CharacterCard = {
   abilities: [
     {
       effect: {
-        target: "SELF",
+        target: {
+          ref: "self",
+        },
         type: "return-to-hand",
       },
       id: "1u4-1",
       name: "RECURRING GUST",
       text: "RECURRING GUST When this character is banished in a challenge, return this card to your hand.",
       trigger: {
-        event: "banish",
+        event: "challenged-and-banished",
         on: "SELF",
         timing: "when",
       },
       type: "triggered",
     },
   ],
+  i18n: galeWindSpiritI18n,
 };

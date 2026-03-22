@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kitCloudkickerSpunkyBearCubI18n } from "./148-kit-cloudkicker-spunky-bear-cub.i18n";
 
 export const kitCloudkickerSpunkyBearCub: CharacterCard = {
   id: "0ke",
@@ -7,28 +8,6 @@ export const kitCloudkickerSpunkyBearCub: CharacterCard = {
   cardType: "character",
   name: "Kit Cloudkicker",
   version: "Spunky Bear Cub",
-  i18n: {
-    en: {
-      name: "Kit Cloudkicker",
-      version: "Spunky Bear Cub",
-      text: "Ward",
-    },
-    de: {
-      name: "Kit Wolkenflitzer",
-      version: "Furchtloser Bärenjunge",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Kit",
-      version: "Ourson intrépide",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "Kit Nuvoletta",
-      version: "Intrepido Orsetto",
-      text: "Protetto",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Talespin",
   set: "003",
@@ -53,4 +32,5 @@ export const kitCloudkickerSpunkyBearCub: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: kitCloudkickerSpunkyBearCubI18n,
 };

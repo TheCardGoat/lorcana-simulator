@@ -75,6 +75,39 @@ export const CHARACTER_ENUM_EXPANSIONS: Record<CharacterTargetEnum, LorcanaCardT
     cardTypes: ["character"],
     excludeSelf: true,
   },
+  YOUR_EXERTED_CHARACTERS: {
+    selector: "all",
+    count: "all",
+    owner: "you",
+    zones: ["play"],
+    cardTypes: ["character"],
+    filters: [{ type: "exerted" }],
+  },
+  YOUR_EVASIVE_CHARACTERS: {
+    selector: "all",
+    count: "all",
+    owner: "you",
+    zones: ["play"],
+    cardTypes: ["character"],
+    filters: [{ type: "has-keyword", keyword: "Evasive" }],
+  },
+  YOUR_OTHER_EVASIVE_CHARACTERS: {
+    selector: "all",
+    count: "all",
+    owner: "you",
+    zones: ["play"],
+    cardTypes: ["character"],
+    excludeSelf: true,
+    filters: [{ type: "has-keyword", keyword: "Evasive" }],
+  },
+  OPPOSING_EVASIVE_CHARACTERS: {
+    selector: "all",
+    count: "all",
+    owner: "opponent",
+    zones: ["play"],
+    cardTypes: ["character"],
+    filters: [{ type: "has-keyword", keyword: "Evasive" }],
+  },
   SEVEN_DWARFS_CHARACTERS: {
     selector: "all",
     count: "all",
@@ -91,6 +124,39 @@ export const CHARACTER_ENUM_EXPANSIONS: Record<CharacterTargetEnum, LorcanaCardT
     cardTypes: ["character"],
     filters: [{ type: "has-classification", classification: "Seven Dwarfs" }],
     excludeSelf: true,
+  },
+  YOUR_HERO_CHARACTERS: {
+    selector: "all",
+    count: "all",
+    owner: "you",
+    zones: ["play"],
+    cardTypes: ["character"],
+    filters: [{ type: "has-classification", classification: "Hero" }],
+  },
+  YOUR_OTHER_HERO_CHARACTERS: {
+    selector: "all",
+    count: "all",
+    owner: "you",
+    zones: ["play"],
+    cardTypes: ["character"],
+    filters: [{ type: "has-classification", classification: "Hero" }],
+    excludeSelf: true,
+  },
+  YOUR_BODYGUARD_CHARACTERS: {
+    selector: "all",
+    count: "all",
+    owner: "you",
+    zones: ["play"],
+    cardTypes: ["character"],
+    filters: [{ type: "has-keyword", keyword: "Bodyguard" }],
+  },
+  YOUR_PIRATE_CHARACTERS: {
+    selector: "all",
+    count: "all",
+    owner: "you",
+    zones: ["play"],
+    cardTypes: ["character"],
+    filters: [{ type: "has-classification", classification: "Pirate" }],
   },
   EACH_CHARACTER: {
     selector: "each",
@@ -361,7 +427,7 @@ export const LOCATION_ENUM_EXPANSIONS: Record<LocationTargetEnum, LorcanaCardTar
     owner: "any",
     zones: ["play"],
     cardTypes: ["character"],
-    filters: [{ type: "at-location" }],
+    filters: [{ type: "same-location-as-source" }],
   },
 } as const;
 
@@ -374,6 +440,7 @@ export const PLAYER_TARGET_EXPANSIONS: Record<string, PlayerTargetDSL> = {
   EACH_PLAYER: { selector: "each-player" },
   ALL_PLAYERS: { selector: "each-player" },
   CHOSEN_PLAYER: { selector: "chosen" },
+  CHALLENGING_PLAYER: { selector: "challenging-player" },
 };
 
 export const CHARACTER_TARGET_ENUMS = new Set<string>(Object.keys(CHARACTER_ENUM_EXPANSIONS));

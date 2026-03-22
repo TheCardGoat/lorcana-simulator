@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Image } from "@unpic/svelte";
   import {AspectRatio} from "$lib/design-system/primitives/aspect-ratio/index.js";
+  import { buildLorcanaAssetUrl } from "$lib/config/public-url-config.js";
 
   const {
     set,
@@ -52,14 +53,14 @@
 
     switch (crop) {
       case "art_only": {
-        return `https://r2.tcg.online/public/lorcana/${paddedSet}/art_only/${paddedNumber}.webp`;
+        return buildLorcanaAssetUrl(`${paddedSet}/art_only/${paddedNumber}.webp`);
       }
       case "art_and_name": {
-        return `https://r2.tcg.online/public/lorcana/${safeLang}/${paddedSet}/art_and_name/${paddedNumber}.webp`;
+        return buildLorcanaAssetUrl(`${safeLang}/${paddedSet}/art_and_name/${paddedNumber}.webp`);
       }
       case "full":
       default: {
-        return `https://r2.tcg.online/public/lorcana/${safeLang}/${paddedSet}/${paddedNumber}.webp`;
+        return buildLorcanaAssetUrl(`${safeLang}/${paddedSet}/${paddedNumber}.webp`);
       }
     }
   });
@@ -90,6 +91,7 @@
 
 <style>
   :global(img) {
+    display: block;
     image-rendering: high-quality;
   }
 </style>

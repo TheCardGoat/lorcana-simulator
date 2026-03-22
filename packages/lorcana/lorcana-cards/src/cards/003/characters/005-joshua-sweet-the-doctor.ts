@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { joshuaSweetTheDoctorI18n } from "./005-joshua-sweet-the-doctor.i18n";
 
 export const joshuaSweetTheDoctor: CharacterCard = {
   id: "eZE",
@@ -7,34 +8,6 @@ export const joshuaSweetTheDoctor: CharacterCard = {
   cardType: "character",
   name: "Joshua Sweet",
   version: "The Doctor",
-  i18n: {
-    en: {
-      name: "Joshua Sweet",
-      version: "The Doctor",
-      text: "Bodyguard",
-    },
-    de: {
-      name: "Joshua Sweet",
-      version: "Der Arzt",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "Amadou Gentil",
-      version: "Le docteur",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il vous défie, un personnage adverse doit, si possible, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "Joshua Dolce",
-      version: "Il Dottore",
-      text: "Guardiano",
-    },
-  },
   inkType: ["amber"],
   franchise: "Atlantis",
   set: "003",
@@ -59,4 +32,5 @@ export const joshuaSweetTheDoctor: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: joshuaSweetTheDoctorI18n,
 };

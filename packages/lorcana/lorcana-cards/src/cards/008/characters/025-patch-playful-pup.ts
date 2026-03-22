@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { patchPlayfulPupI18n } from "./025-patch-playful-pup.i18n";
 
 export const patchPlayfulPup: CharacterCard = {
   id: "vSi",
@@ -7,37 +8,6 @@ export const patchPlayfulPup: CharacterCard = {
   cardType: "character",
   name: "Patch",
   version: "Playful Pup",
-  i18n: {
-    en: {
-      name: "Patch",
-      version: "Playful Pup",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "PUPPY BARKING",
-          description:
-            "While you have another Puppy character in play, this character gets +1 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Patch",
-      version: "Verspielter Welpe",
-      text: "Behütet WELPENBELLEN Solange du mindestens einen weiteren Welpen im Spiel hast, erhält dieser Charakter +1.",
-    },
-    fr: {
-      name: "Patch",
-      version: "Chiot joueur",
-      text: "Hors d'atteinte ABOIEMENTS DE CHIOT Tant que vous avez un autre personnage Chiot en jeu, ce personnage-ci gagne +1.",
-    },
-    it: {
-      name: "Macchia",
-      version: "Cucciolo Giocherellone",
-      text: "Protetto LATRATO DEI CUCCIOLI Mentre hai in gioco un altro personaggio Cucciolo, questo personaggio riceve +1.",
-    },
-  },
   inkType: ["amber", "sapphire"],
   franchise: "101 Dalmatians",
   set: "008",
@@ -81,4 +51,5 @@ export const patchPlayfulPup: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: patchPlayfulPupI18n,
 };

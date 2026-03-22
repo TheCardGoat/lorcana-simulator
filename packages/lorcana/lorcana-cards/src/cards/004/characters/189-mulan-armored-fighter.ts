@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mulanArmoredFighterI18n } from "./189-mulan-armored-fighter.i18n";
 
 export const mulanArmoredFighter: CharacterCard = {
   id: "104",
@@ -7,24 +8,6 @@ export const mulanArmoredFighter: CharacterCard = {
   cardType: "character",
   name: "Mulan",
   version: "Armored Fighter",
-  i18n: {
-    en: {
-      name: "Mulan",
-      version: "Armored Fighter",
-    },
-    de: {
-      name: "Mulan",
-      version: "Gepanzerte Kämpferin",
-    },
-    fr: {
-      name: "Mulan",
-      version: "Combattant en armure",
-    },
-    it: {
-      name: "Mulan",
-      version: "Combattente Corazzata",
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "004",
@@ -41,4 +24,5 @@ export const mulanArmoredFighter: CharacterCard = {
     tcgPlayer: 550619,
   },
   classifications: ["Storyborn", "Hero", "Princess"],
+  i18n: mulanArmoredFighterI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kakamoraBoardingPartyI18n } from "./104-kakamora-boarding-party.i18n";
 
 export const kakamoraBoardingParty: CharacterCard = {
   id: "w0G",
@@ -7,33 +8,6 @@ export const kakamoraBoardingParty: CharacterCard = {
   cardType: "character",
   name: "Kakamora",
   version: "Boarding Party",
-  i18n: {
-    en: {
-      name: "Kakamora",
-      version: "Boarding Party",
-      text: "Rush",
-    },
-    de: {
-      name: "Kokomora",
-      version: "Entermannschaft",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Kakamora",
-      version: "Groupe d'abordage",
-      text: "Charge",
-    },
-    it: {
-      name: "Kakamora",
-      version: "Banda d'Arrembaggio",
-      text: [
-        {
-          title: "Lesto",
-          description: "(Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "006",
@@ -58,4 +32,5 @@ export const kakamoraBoardingParty: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: kakamoraBoardingPartyI18n,
 };

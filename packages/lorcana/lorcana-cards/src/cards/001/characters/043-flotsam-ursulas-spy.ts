@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { flotsamUrsulasSpyI18n } from "./043-flotsam-ursulas-spy.i18n";
 
 export const flotsamUrsulasSpy: CharacterCard = {
   id: "BDi",
@@ -7,34 +8,6 @@ export const flotsamUrsulasSpy: CharacterCard = {
   cardType: "character",
   name: "Flotsam",
   version: "Ursula’s Spy",
-  i18n: {
-    en: {
-      name: "Flotsam",
-      version: "Ursula’s Spy",
-      text: "Rush DEXTEROUS LUNGE Your characters named Jetsam gain Rush.",
-    },
-    de: {
-      name: "Abschaum",
-      version: "Ursulas Spion",
-      text: "Rasant FLINK UND HINTERHÄLTIG Deine Meerschaum-Charaktere erhalten Rasant.",
-    },
-    fr: {
-      name: "FLOTSAM",
-      version: "Espion d'Ursula",
-      text: "Charge COUP BAS Vos personnages Jetsam gagnent Charge.",
-    },
-    it: {
-      name: "Flotsam",
-      version: "Ursula’s Spy",
-      text: [
-        {
-          title: "Rush",
-          description:
-            "(This character can challenge the turn they're played.) DEXTEROUS LUNGE Your characters named Jetsam gain Rush.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Little Mermaid",
   set: "001",
@@ -45,7 +18,6 @@ export const flotsamUrsulasSpy: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: false,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_e5912655e48f42a9ab863ac2337171cc",
     tcgPlayer: 503318,
@@ -61,9 +33,20 @@ export const flotsamUrsulasSpy: CharacterCard = {
     },
     {
       effect: {
-        duration: "this-turn",
         keyword: "Rush",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-name",
+              name: "Jetsam",
+            },
+          ],
+        },
         type: "gain-keyword",
       },
       id: "4d0-2",
@@ -72,4 +55,5 @@ export const flotsamUrsulasSpy: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: flotsamUrsulasSpyI18n,
 };

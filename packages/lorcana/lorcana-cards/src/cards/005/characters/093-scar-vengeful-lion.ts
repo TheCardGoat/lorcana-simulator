@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { scarVengefulLionI18n } from "./093-scar-vengeful-lion.i18n";
 
 export const scarVengefulLion: CharacterCard = {
   id: "BSP",
@@ -7,37 +8,6 @@ export const scarVengefulLion: CharacterCard = {
   cardType: "character",
   name: "Scar",
   version: "Vengeful Lion",
-  i18n: {
-    en: {
-      name: "Scar",
-      version: "Vengeful Lion",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "LIFE'S NOT FAIR, IS IT?",
-          description:
-            "Whenever one of your characters challenges a damaged character, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Scar",
-      version: "Rachsüchtiger Löwe",
-      text: "Behütet DIE WELT IST SO UNGERECHT, NICHT WAHR? Jedes Mal, wenn einer deiner Charaktere einen beschädigten Charakter herausfordert, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Scar",
-      version: "Lion revanchard",
-      text: "Hors d'atteinte LA VIE N'EST PAS JUSTE, TU VOIS? Chaque fois que l'un de vos personnages défie un personnage ayant au moins un dommage sur lui, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Scar",
-      version: "Leone Vendicativo",
-      text: "Protetto LA VITA A VOLTE È INGIUSTA, NON È VERO? Ogni volta che uno dei tuoi personaggi sfida un personaggio danneggiato, puoi pescare una carta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lion King",
   set: "005",
@@ -85,4 +55,5 @@ export const scarVengefulLion: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: scarVengefulLionI18n,
 };

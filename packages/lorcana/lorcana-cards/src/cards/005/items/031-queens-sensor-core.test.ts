@@ -10,11 +10,6 @@ const royalHeir = createMockCharacter({
 });
 
 describe("Queen's Sensor Core", () => {
-  it("is still marked blocked while SYMBOL OF NOBILITY lacks working runtime support", () => {
-    expect(queensSensorCore.missingImplementation).toBe(true);
-    expect(queensSensorCore.missingTests).toBe(true);
-  });
-
   it("reveals the top card and lets you put a Princess or Queen character card into your hand", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       deck: [royalHeir],

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sirEctorCastleLordI18n } from "./188-sir-ector-castle-lord.i18n";
 
 export const sirEctorCastleLord: CharacterCard = {
   id: "ykg",
@@ -7,24 +8,6 @@ export const sirEctorCastleLord: CharacterCard = {
   cardType: "character",
   name: "Sir Ector",
   version: "Castle Lord",
-  i18n: {
-    en: {
-      name: "Sir Ector",
-      version: "Castle Lord",
-    },
-    de: {
-      name: "Sir Ector",
-      version: "Schlossherr",
-    },
-    fr: {
-      name: "Seigneur Hector",
-      version: "Seigneur du château",
-    },
-    it: {
-      name: "Sir Ettore",
-      version: "Signore del Castello",
-    },
-  },
   inkType: ["steel"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -41,4 +24,5 @@ export const sirEctorCastleLord: CharacterCard = {
     tcgPlayer: 561973,
   },
   classifications: ["Storyborn", "Knight"],
+  i18n: sirEctorCastleLordI18n,
 };

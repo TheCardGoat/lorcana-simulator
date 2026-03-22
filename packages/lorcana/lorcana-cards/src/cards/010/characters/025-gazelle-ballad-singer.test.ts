@@ -1,85 +1,82 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   AWholeNewWorld,
-//   LetItGo,
-// } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import { gazelleBalladSinger } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Gazelle - Ballad Singer", () => {
-//   Describe("Singer 7", () => {
-//     It("should have Singer 7 ability", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [gazelleBalladSinger],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(gazelleBalladSinger);
-//       Expect(cardUnderTest.hasSinger).toBe(true);
-//     });
-//   });
-//
-//   Describe("CROWD FAVORITE", () => {
-//     It("should allow putting a song card from discard on top of deck", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: gazelleBalladSinger.cost,
-//         Hand: [gazelleBalladSinger],
-//         Discard: [letItGo],
-//       });
-//
-//       Const song = testEngine.getCardModel(letItGo);
-//       Expect(song.zone).toBe("discard");
-//
-//       Await testEngine.playCard(gazelleBalladSinger);
-//       Await testEngine.acceptOptionalLayer();
-//       Await testEngine.resolveTopOfStack({ targets: [letItGo] });
-//
-//       Expect(song.zone).toBe("deck");
-//     });
-//
-//     It("should work with different song cards", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: gazelleBalladSinger.cost,
-//         Hand: [gazelleBalladSinger],
-//         Discard: [aWholeNewWorld],
-//       });
-//
-//       Const song = testEngine.getCardModel(aWholeNewWorld);
-//       Expect(song.zone).toBe("discard");
-//
-//       Await testEngine.playCard(gazelleBalladSinger);
-//       Await testEngine.acceptOptionalLayer();
-//       Await testEngine.resolveTopOfStack({ targets: [aWholeNewWorld] });
-//
-//       Expect(song.zone).toBe("deck");
-//     });
-//
-//     // Note: The ability is optional as implemented, but we don't test declining
-//     // since TestEngine doesn't have a declineOptionalLayer method
-//
-//     It("should only target song cards in discard", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: gazelleBalladSinger.cost,
-//         Hand: [gazelleBalladSinger],
-//         Discard: [letItGo, aWholeNewWorld],
-//       });
-//
-//       Const song1 = testEngine.getCardModel(letItGo);
-//       Const song2 = testEngine.getCardModel(aWholeNewWorld);
-//
-//       Await testEngine.playCard(gazelleBalladSinger);
-//       Await testEngine.acceptOptionalLayer();
-//
-//       // Choose one song
-//       Await testEngine.resolveTopOfStack({ targets: [letItGo] });
-//
-//       Expect(song1.zone).toBe("deck");
-//       Expect(song2.zone).toBe("discard");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockSong,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { gazelleBalladSinger } from "./025-gazelle-ballad-singer";
+
+const songInDiscard = createMockSong({
+  id: "gazelle-bs-song",
+  name: "Test Song",
+  cost: 3,
+  text: "A test song",
+});
+
+const nonSongInDiscard = createMockCharacter({
+  id: "gazelle-bs-non-song",
+  name: "Non Song Character",
+  cost: 2,
+  strength: 1,
+  willpower: 1,
+  lore: 1,
+});
+
+describe("Gazelle - Ballad Singer", () => {
+  describe("Singer 7", () => {
+    it("has Singer 7 keyword", () => {
+      const singerAbility = (gazelleBalladSinger.abilities ?? []).find(
+        (a) => a.type === "keyword" && a.keyword === "Singer",
+      );
+      expect(singerAbility).toBeDefined();
+      const singerValue =
+        singerAbility?.type === "keyword" && "value" in singerAbility
+          ? singerAbility.value
+          : undefined;
+      expect(singerValue).toBe(7);
+    });
+  });
+
+  describe("CROWD FAVORITE", () => {
+    it("puts a song from discard on top of deck when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [gazelleBalladSinger],
+        inkwell: gazelleBalladSinger.cost,
+        discard: [{ card: songInDiscard }],
+        deck: 3,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(gazelleBalladSinger)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [songInDiscard] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(songInDiscard)).toBe("deck");
+    });
+
+    it("can decline the optional ability", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [gazelleBalladSinger],
+        inkwell: gazelleBalladSinger.cost,
+        discard: [{ card: songInDiscard }],
+        deck: 3,
+      });
+
+      testEngine.asPlayerOne().playCard(gazelleBalladSinger);
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // Song stays in discard
+      expect(testEngine.asPlayerOne().getCardZone(songInDiscard)).toBe("discard");
+    });
+  });
+});

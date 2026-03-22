@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { rafikisBakoraStaffI18n } from "./099-rafikis-bakora-staff.i18n";
 
 export const rafikisBakoraStaff: ItemCard = {
   id: "GU7",
@@ -6,51 +7,6 @@ export const rafikisBakoraStaff: ItemCard = {
   reprints: ["set11-099"],
   cardType: "item",
   name: "Rafiki's Bakora Staff",
-  i18n: {
-    en: {
-      name: "Rafiki's Bakora Staff",
-      text: [
-        {
-          title: "READ THE OMENS",
-          description: "{E}, 1 {I} — Draw a card, then choose and discard a card.",
-        },
-        {
-          title: "BONK! 1",
-          description: "{I}, Banish this item — Deal 1 damage to chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Rafikis Bakora-Stab",
-      text: [
-        {
-          title: "LIES DIE OMEN, 1",
-          description:
-            "— Ziehe 1 Karte. Wähle danach 1 Karte aus deiner Hand und wirf sie ab. BONK! 1, Verbanne diesen Gegenstand — Füge einem Charakter deiner Wahl 1 Schaden zu.",
-        },
-      ],
-    },
-    fr: {
-      name: "Bâton bakora de Rafiki",
-      text: [
-        {
-          title: "LIRE LES",
-          description:
-            "PRÉSAGES, 1 — Piochez une carte puis défaussez une carte. PAF! 1, Bannissez cet objet — Choisissez un personnage et infligez-lui 1 dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Bastone Bakora di Rafiki",
-      text: [
-        {
-          title: "LEGGERE I SEGNI, 1",
-          description:
-            "— Pesca una carta, poi scegli e scarta una carta. BONK! 1, esilia questo oggetto — Infliggi 1 danno a un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lion King",
   set: "011",
@@ -121,4 +77,5 @@ export const rafikisBakoraStaff: ItemCard = {
       text: "BONK! 1 {I}, Banish this item — Deal 1 damage to chosen character.",
     },
   ],
+  i18n: rafikisBakoraStaffI18n,
 };

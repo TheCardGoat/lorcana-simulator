@@ -130,7 +130,9 @@ function createContext(args?: {
     framework: {
       cards: cardsApi,
       state: {
-        ctx: runtimeCtx as never,
+        priority: runtimeCtx.priority as never,
+        status: runtimeCtx.status as never,
+        _zonesPrivate: runtimeCtx.zones?.private as never,
         playerIds: [PLAYER_ONE, PLAYER_TWO],
         turn: 1,
         currentPlayer,

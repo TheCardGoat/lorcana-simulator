@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daisyDuckSpotlessFoodfighterI18n } from "./111-daisy-duck-spotless-food-fighter.i18n";
 
 export const daisyDuckSpotlessFoodfighter: CharacterCard = {
   id: "wsY",
@@ -7,28 +8,6 @@ export const daisyDuckSpotlessFoodfighter: CharacterCard = {
   cardType: "character",
   name: "Daisy Duck",
   version: "Spotless Food-Fighter",
-  i18n: {
-    en: {
-      name: "Daisy Duck",
-      version: "Spotless Food-Fighter",
-      text: "Evasive",
-    },
-    de: {
-      name: "Daisy Duck",
-      version: "Makellos trotz Essensschlacht",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Daisy",
-      version: "Bagarreuse immaculée",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Paperina",
-      version: "Combattente Senza Macchia",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["ruby"],
   set: "005",
   cardNumber: 111,
@@ -52,4 +31,5 @@ export const daisyDuckSpotlessFoodfighter: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: daisyDuckSpotlessFoodfighterI18n,
 };

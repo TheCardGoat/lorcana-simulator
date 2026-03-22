@@ -12,13 +12,14 @@ import type { LorcanaCard, LocationCard } from "@tcg/lorcana-types";
 import { createCardI18n } from "../../card-i18n";
 import { createMockCharacter } from "../../testing";
 import { createInitialLorcanaG, type LorcanaCardMeta, type LorcanaG } from "../../types";
+import type { LorcanaCardDerived } from "../../types/projected-board";
 import { createLorcanaRuntimeCardDeriver } from "./runtime-card-derived";
 
 const PLAYER_ONE = createPlayerId("p1");
 const PLAYER_TWO = createPlayerId("p2");
 const CARD_ONE = createCardId("c1");
 
-function buildState(): MatchState<LorcanaG> {
+function buildState(): MatchState {
   const ctx = createInitialTCGCtx({
     matchID: "derived-runtime-card-test",
     gameID: "lorcana",
@@ -42,10 +43,7 @@ function buildState(): MatchState<LorcanaG> {
   };
 }
 
-function buildRuntimeCard(
-  card: LorcanaCard,
-  overrides?: Partial<RuntimeCardWithDefinition<LorcanaCard, LorcanaCardMeta>>,
-) {
+function buildRuntimeCard(card: LorcanaCard, overrides?: Partial<RuntimeCardWithDefinition>) {
   return {
     instanceId: CARD_ONE,
     definitionId: card.id,
@@ -56,12 +54,12 @@ function buildRuntimeCard(
     zoneIndex: 0,
     meta: {},
     ...overrides,
-  } satisfies RuntimeCardWithDefinition<LorcanaCard, LorcanaCardMeta>;
+  } satisfies RuntimeCardWithDefinition;
 }
 
 function buildStaticResources(card: LorcanaCard) {
   return {
-    cards: createRecordCardCatalog<LorcanaCard>("lorcana-cards:test", {
+    cards: createRecordCardCatalog("lorcana-cards:test", {
       [card.id]: card,
     }),
     instances: createRecordCardInstanceRegistry("lorcana-instances:test", {
@@ -73,6 +71,13 @@ function buildStaticResources(card: LorcanaCard) {
     }),
     zoneDefinitions: {},
   };
+}
+
+function deriveLorcana(
+  deriver: ReturnType<typeof createLorcanaRuntimeCardDeriver>,
+  args: Parameters<ReturnType<typeof createLorcanaRuntimeCardDeriver>>[0],
+): LorcanaCardDerived {
+  return deriver(args) as unknown as LorcanaCardDerived;
 }
 
 describe("runtime-card-derived", () => {
@@ -89,34 +94,34 @@ describe("runtime-card-derived", () => {
     const deriver = createLorcanaRuntimeCardDeriver();
 
     const legalCard = buildRuntimeCard(card);
-    const legal = deriver({
+    const legal = deriveLorcana(deriver, {
       cardId: legalCard.instanceId,
       card: legalCard,
       actorPlayerId: PLAYER_ONE,
       state,
       staticResources,
     });
-    expect(legal.canBePutInInkwell()).toBe(true);
+    expect(legal.canBePutInInkwell).toBe(true);
 
     const wrongOwnerCard = buildRuntimeCard(card, { ownerID: PLAYER_TWO });
-    const wrongOwner = deriver({
+    const wrongOwner = deriveLorcana(deriver, {
       cardId: wrongOwnerCard.instanceId,
       card: wrongOwnerCard,
       actorPlayerId: PLAYER_ONE,
       state,
       staticResources,
     });
-    expect(wrongOwner.canBePutInInkwell()).toBe(false);
+    expect(wrongOwner.canBePutInInkwell).toBe(false);
 
     const wrongZoneCard = buildRuntimeCard(card, { zoneID: "play:p1" });
-    const wrongZone = deriver({
+    const wrongZone = deriveLorcana(deriver, {
       cardId: wrongZoneCard.instanceId,
       card: wrongZoneCard,
       actorPlayerId: PLAYER_ONE,
       state,
       staticResources,
     });
-    expect(wrongZone.canBePutInInkwell()).toBe(false);
+    expect(wrongZone.canBePutInInkwell).toBe(false);
 
     const nonInkableCard: LorcanaCard = {
       ...createMockCharacter({
@@ -129,25 +134,25 @@ describe("runtime-card-derived", () => {
       inkable: false,
     };
     const nonInkableRuntime = buildRuntimeCard(nonInkableCard);
-    const nonInkable = deriver({
+    const nonInkable = deriveLorcana(deriver, {
       cardId: nonInkableRuntime.instanceId,
       card: nonInkableRuntime,
       actorPlayerId: PLAYER_ONE,
       state,
       staticResources: buildStaticResources(nonInkableCard),
     });
-    expect(nonInkable.canBePutInInkwell()).toBe(false);
+    expect(nonInkable.canBePutInInkwell).toBe(false);
 
     const stateAfterInk = buildState();
     stateAfterInk.G.turnMetadata.inkedThisTurn.push(createCardId("already-inked-card"));
-    const overLimit = deriver({
+    const overLimit = deriveLorcana(deriver, {
       cardId: legalCard.instanceId,
       card: legalCard,
       actorPlayerId: PLAYER_ONE,
       state: stateAfterInk,
       staticResources,
     });
-    expect(overLimit.canBePutInInkwell()).toBe(false);
+    expect(overLimit.canBePutInInkwell).toBe(false);
   });
 
   it("returns baseline strength and willpower for characters", () => {
@@ -160,7 +165,7 @@ describe("runtime-card-derived", () => {
     });
     const state = buildState();
     const runtimeCard = buildRuntimeCard(card);
-    const derived = createLorcanaRuntimeCardDeriver()({
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -168,10 +173,10 @@ describe("runtime-card-derived", () => {
       staticResources: buildStaticResources(card),
     });
 
-    expect(derived.getStrength()).toBe(4);
-    expect(derived.getWillpower()).toBe(6);
-    expect(derived.getFullName()).toBe("Stat Character");
-    expect(derived.getKeywords()).toEqual([]);
+    expect(derived.strength).toBe(4);
+    expect(derived.willpower).toBe(6);
+    expect(derived.fullName).toBe("Stat Character");
+    expect(derived.keywords).toEqual([]);
   });
 
   it("derives full name and keyword list from card definition", () => {
@@ -193,7 +198,7 @@ describe("runtime-card-derived", () => {
     };
     const state = buildState();
     const runtimeCard = buildRuntimeCard(card);
-    const derived = createLorcanaRuntimeCardDeriver()({
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -201,8 +206,8 @@ describe("runtime-card-derived", () => {
       staticResources: buildStaticResources(card),
     });
 
-    expect(derived.getFullName()).toBe("Keyword Character - Bold Striker");
-    expect(derived.getKeywords()).toEqual(["Rush"]);
+    expect(derived.fullName).toBe("Keyword Character - Bold Striker");
+    expect(derived.keywords).toEqual(["Rush"]);
   });
 
   it("applies active continuous modifiers to character strength and willpower", () => {
@@ -250,7 +255,7 @@ describe("runtime-card-derived", () => {
     );
 
     const runtimeCard = buildRuntimeCard(card, { zoneID: playZone });
-    const derived = createLorcanaRuntimeCardDeriver()({
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -258,8 +263,8 @@ describe("runtime-card-derived", () => {
       staticResources: buildStaticResources(card),
     });
 
-    expect(derived.getStrength()).toBe(6);
-    expect(derived.getWillpower()).toBe(3);
+    expect(derived.strength).toBe(6);
+    expect(derived.willpower).toBe(3);
   });
 
   it("returns willpower for locations with valid willpower", () => {
@@ -281,7 +286,7 @@ describe("runtime-card-derived", () => {
 
     const state = buildState();
     const runtimeCard = buildRuntimeCard(locationCard);
-    const derived = createLorcanaRuntimeCardDeriver()({
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -289,8 +294,8 @@ describe("runtime-card-derived", () => {
       staticResources: buildStaticResources(locationCard),
     });
 
-    expect(derived.getStrength()).toBe(0); // Locations have no strength
-    expect(derived.getWillpower()).toBe(8);
+    expect(derived.strength).toBe(0); // Locations have no strength
+    expect(derived.willpower).toBe(8);
   });
 
   it("applies location willpower modifiers and clamps at zero", () => {
@@ -334,7 +339,7 @@ describe("runtime-card-derived", () => {
     });
 
     const runtimeCard = buildRuntimeCard(locationCard, { zoneID: playZone });
-    const derived = createLorcanaRuntimeCardDeriver()({
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -342,8 +347,8 @@ describe("runtime-card-derived", () => {
       staticResources: buildStaticResources(locationCard),
     });
 
-    expect(derived.getStrength()).toBe(0);
-    expect(derived.getWillpower()).toBe(0);
+    expect(derived.strength).toBe(0);
+    expect(derived.willpower).toBe(0);
   });
 
   it("returns 0 willpower for locations with missing or invalid willpower", () => {
@@ -367,7 +372,7 @@ describe("runtime-card-derived", () => {
 
     const state = buildState();
     const runtimeCard = buildRuntimeCard(locationNoWillpower);
-    const derived = createLorcanaRuntimeCardDeriver()({
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -375,7 +380,7 @@ describe("runtime-card-derived", () => {
       staticResources: buildStaticResources(locationNoWillpower),
     });
 
-    expect(derived.getWillpower()).toBe(0);
+    expect(derived.willpower).toBe(0);
   });
 
   it("returns 0 strength and willpower for non-character, non-location cards", () => {
@@ -396,7 +401,7 @@ describe("runtime-card-derived", () => {
 
     const state = buildState();
     const runtimeCard = buildRuntimeCard(actionCard);
-    const derived = createLorcanaRuntimeCardDeriver()({
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -404,7 +409,7 @@ describe("runtime-card-derived", () => {
       staticResources: buildStaticResources(actionCard),
     });
 
-    expect(derived.getStrength()).toBe(0);
-    expect(derived.getWillpower()).toBe(0);
+    expect(derived.strength).toBe(0);
+    expect(derived.willpower).toBe(0);
   });
 });

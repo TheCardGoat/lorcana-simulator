@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { captainColonelsLieutenantI18n } from "./106-captain-colonels-lieutenant.i18n";
 
 export const captainColonelsLieutenant: CharacterCard = {
   id: "lk3",
@@ -7,24 +8,6 @@ export const captainColonelsLieutenant: CharacterCard = {
   cardType: "character",
   name: "Captain",
   version: "Colonel’s Lieutenant",
-  i18n: {
-    en: {
-      name: "Captain",
-      version: "Colonel’s Lieutenant",
-    },
-    de: {
-      name: "Kapitän",
-      version: "Colonels Leutnant",
-    },
-    fr: {
-      name: "CAPITAINE",
-      version: "Lieutenant du Colonel",
-    },
-    it: {
-      name: "Captain",
-      version: "Colonel’s Lieutenant",
-    },
-  },
   inkType: ["ruby"],
   franchise: "101 Dalmatians",
   set: "001",
@@ -35,11 +18,11 @@ export const captainColonelsLieutenant: CharacterCard = {
   willpower: 5,
   lore: 1,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_6b4e0c325cbb46698922c45438b4f1a7",
     tcgPlayer: 508779,
   },
   classifications: ["Storyborn", "Ally", "Captain"],
+  i18n: captainColonelsLieutenantI18n,
 };

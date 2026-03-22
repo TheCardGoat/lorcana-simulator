@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { honestJohnShamelessSchemerI18n } from "./122-honest-john-shameless-schemer.i18n";
 
 export const honestJohnShamelessSchemer: CharacterCard = {
   id: "P2P",
@@ -7,24 +8,6 @@ export const honestJohnShamelessSchemer: CharacterCard = {
   cardType: "character",
   name: "Honest John",
   version: "Shameless Schemer",
-  i18n: {
-    en: {
-      name: "Honest John",
-      version: "Shameless Schemer",
-    },
-    de: {
-      name: "Ehrenwerter John",
-      version: "Schamloser Betrüger",
-    },
-    fr: {
-      name: "Grand Coquin",
-      version: "Conspirateur éhonté",
-    },
-    it: {
-      name: "La Volpe",
-      version: "Cospiratore Spudorato",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Pinocchio",
   set: "008",
@@ -41,4 +24,5 @@ export const honestJohnShamelessSchemer: CharacterCard = {
     tcgPlayer: 632718,
   },
   classifications: ["Storyborn", "Villain"],
+  i18n: honestJohnShamelessSchemerI18n,
 };

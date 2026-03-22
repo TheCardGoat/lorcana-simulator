@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import type { ItemCard } from "@tcg/lorcana-types";
-import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  createMockItem,
+} from "@tcg/lorcana-engine/testing";
 import { bellesHouseMauricesWorkshop } from "./168-belles-house-maurices-workshop";
 
 const workshopHelper = createMockCharacter({
@@ -9,39 +12,57 @@ const workshopHelper = createMockCharacter({
   cost: 2,
 });
 
-const testItemI18n = {
-  en: { name: "Workshop Item" },
-  de: { name: "Workshop Item" },
-  fr: { name: "Workshop Item" },
-  it: { name: "Workshop Item" },
-};
-
-const testItem: ItemCard = {
-  id: "workshop-item",
-  canonicalId: "ci_workshop_item",
-  cardType: "item",
-  name: "Workshop Item",
-  i18n: testItemI18n,
+const cheapItem = createMockItem({
+  id: "cheap-item",
+  name: "Cheap Item",
   cost: 1,
-  inkType: ["sapphire"],
-  inkable: true,
-  set: "TST",
-  rarity: "common",
-  cardNumber: 1,
-  abilities: [],
-};
+});
+
+const expensiveItem = createMockItem({
+  id: "expensive-item",
+  name: "Expensive Item",
+  cost: 3,
+});
 
 describe("Belle's House - Maurice's Workshop", () => {
-  it("reduces item costs while you have a character here", () => {
+  it("reduces item costs by 1 while you have a character at this location", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      hand: [testItem],
+      hand: [expensiveItem],
       play: [
         bellesHouseMauricesWorkshop,
         { card: workshopHelper, atLocation: bellesHouseMauricesWorkshop },
       ],
+      inkwell: 2,
     });
 
-    expect(testEngine.asPlayerOne().canPlayCard(testItem)).toBe(true);
-    expect(testEngine.asPlayerOne().playCard(testItem)).toBeSuccessfulCommand();
+    // Item costs 3, but with reduction it costs 2
+    expect(testEngine.asPlayerOne().canPlayCard(expensiveItem)).toBe(true);
+    expect(testEngine.asPlayerOne().playCard(expensiveItem)).toBeSuccessfulCommand();
+  });
+
+  it("does NOT reduce item costs when no character is at the location", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [cheapItem],
+      play: [bellesHouseMauricesWorkshop, workshopHelper],
+      inkwell: 0,
+    });
+
+    // Item costs 1, no reduction because character is not at the location
+    expect(testEngine.asPlayerOne().canPlayCard(cheapItem)).toBe(false);
+  });
+
+  it("makes a 1-cost item free when a character is at the location", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [cheapItem],
+      play: [
+        bellesHouseMauricesWorkshop,
+        { card: workshopHelper, atLocation: bellesHouseMauricesWorkshop },
+      ],
+      inkwell: 0,
+    });
+
+    // Item costs 1, with reduction it costs 0 - playable with no ink
+    expect(testEngine.asPlayerOne().canPlayCard(cheapItem)).toBe(true);
+    expect(testEngine.asPlayerOne().playCard(cheapItem)).toBeSuccessfulCommand();
   });
 });

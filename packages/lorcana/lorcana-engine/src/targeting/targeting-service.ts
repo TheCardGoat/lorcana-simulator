@@ -5,7 +5,7 @@ import type { LorcanaG } from "../types";
 export * from "./runtime";
 
 export type ActionTargetResolutionContext = Pick<
-  MoveEnumerationContext<LorcanaG, LorcanaCard>,
+  MoveEnumerationContext,
   "G" | "framework" | "cards"
 >;
 
@@ -18,7 +18,7 @@ export function inferActionSelectionZonesFromCandidates(
   const zones = new Set<ActionSelectionZone>();
 
   for (const candidateId of candidateIds) {
-    const zoneKey = ctx.framework.state.ctx.zones.private.cardIndex[candidateId]?.zoneKey;
+    const zoneKey = ctx.framework.zones.getCardZone(candidateId);
     const zone = zoneKey?.split(":")[0];
     if (
       zone === "deck" ||
@@ -39,5 +39,5 @@ export function isCardInstanceCandidate(
   candidateId: CardInstanceId | PlayerId,
   ctx: ActionTargetResolutionContext,
 ): candidateId is CardInstanceId {
-  return candidateId in ctx.framework.state.ctx.zones.private.cardIndex;
+  return candidateId in ctx.framework.state._zonesPrivate.cardIndex;
 }

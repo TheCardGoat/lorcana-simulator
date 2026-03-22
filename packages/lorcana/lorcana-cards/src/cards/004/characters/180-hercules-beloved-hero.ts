@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { herculesBelovedHeroI18n } from "./180-hercules-beloved-hero.i18n";
 
 export const herculesBelovedHero: CharacterCard = {
   id: "FCJ",
@@ -7,41 +8,6 @@ export const herculesBelovedHero: CharacterCard = {
   cardType: "character",
   name: "Hercules",
   version: "Beloved Hero",
-  i18n: {
-    en: {
-      name: "Hercules",
-      version: "Beloved Hero",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "Resist +1",
-        },
-      ],
-    },
-    de: {
-      name: "Hercules",
-      version: "Geliebter Held",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "Hercule",
-      version: "Héros bien-aimé",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'un adversaire défie l'un de vos personnages, il doit, si possible, choisir l'un de vos personnages avec Rempart.) Résistance +1",
-        },
-      ],
-    },
-    it: {
-      name: "Ercole",
-      version: "Beneamato Eroe",
-      text: "Guardiano Resistere +1",
-    },
-  },
   inkType: ["steel"],
   franchise: "Hercules",
   set: "004",
@@ -80,4 +46,5 @@ export const herculesBelovedHero: CharacterCard = {
       value: 1,
     },
   ],
+  i18n: herculesBelovedHeroI18n,
 };

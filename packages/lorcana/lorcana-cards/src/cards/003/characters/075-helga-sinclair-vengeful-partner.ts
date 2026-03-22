@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { helgaSinclairVengefulPartnerI18n } from "./075-helga-sinclair-vengeful-partner.i18n";
 
 export const helgaSinclairVengefulPartner: CharacterCard = {
   id: "1i7",
@@ -7,52 +8,6 @@ export const helgaSinclairVengefulPartner: CharacterCard = {
   cardType: "character",
   name: "Helga Sinclair",
   version: "Vengeful Partner",
-  i18n: {
-    en: {
-      name: "Helga Sinclair",
-      version: "Vengeful Partner",
-      text: [
-        {
-          title: "NOTHING PERSONAL",
-          description:
-            "When this character is challenged and banished, banish the challenging character.",
-        },
-      ],
-    },
-    de: {
-      name: "Helga Sinclair",
-      version: "Rachsüchtige Partnerin",
-      text: [
-        {
-          title: "NIMM'S NICHT PERSÖNLICH",
-          description:
-            "Wenn dieser Charakter herausgefordert und verbannt wird, verbanne den herausfordernden Charakter.",
-        },
-      ],
-    },
-    fr: {
-      name: "Helga Sinclair",
-      version: "Partenaire vengeresse",
-      text: [
-        {
-          title: "JE VOUS AI JAMAIS AIMÉ",
-          description:
-            "Lorsque ce personnage est défié et banni, bannissez le personnage qui l'a défié.",
-        },
-      ],
-    },
-    it: {
-      name: "Helga Sinclair",
-      version: "Socia Vendicativa",
-      text: [
-        {
-          title: "NIENTE DI PERSONALE",
-          description:
-            "Quando questo personaggio viene sfidato ed esiliato, esilia il personaggio che lo ha sfidato.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Atlantis",
   set: "003",
@@ -75,7 +30,6 @@ export const helgaSinclairVengefulPartner: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -96,4 +50,5 @@ export const helgaSinclairVengefulPartner: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: helgaSinclairVengefulPartnerI18n,
 };

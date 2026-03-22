@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mrBigShrewdTycoonI18n } from "./174-mr-big-shrewd-tycoon.i18n";
 
 export const mrBigShrewdTycoon: CharacterCard = {
   id: "05m",
@@ -7,48 +8,6 @@ export const mrBigShrewdTycoon: CharacterCard = {
   cardType: "character",
   name: "Mr. Big",
   version: "Shrewd Tycoon",
-  i18n: {
-    en: {
-      name: "Mr. Big",
-      version: "Shrewd Tycoon",
-      text: [
-        {
-          title: "REPUTATION",
-          description: "This character can't be challenged by characters with 2 {S} or more.",
-        },
-      ],
-    },
-    de: {
-      name: "Mr. Big",
-      version: "Raffinierter Geschäftsmann",
-      text: [
-        {
-          title: "REPUTATION",
-          description: "Charaktere mit 2 oder mehr können diesen Charakter nicht herausfordern.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mister Big",
-      version: "Magnat avisé",
-      text: [
-        {
-          title: "RÉPUTATION",
-          description: "Ce personnage ne peut pas être défié par des personnages avec 2 ou plus.",
-        },
-      ],
-    },
-    it: {
-      name: "Mr. Big",
-      version: "Scaltro Magnate",
-      text: [
-        {
-          title: "REPUTAZIONE",
-          description: "Questo personaggio non può essere sfidato da personaggi con 2 o superiore.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Zootropolis",
   set: "006",
@@ -83,4 +42,5 @@ export const mrBigShrewdTycoon: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: mrBigShrewdTycoonI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { chiefBogoRespectedOfficerI18n } from "./175-chief-bogo-respected-officer.i18n";
 
 export const chiefBogoRespectedOfficer: CharacterCard = {
   id: "mU4",
@@ -7,52 +8,6 @@ export const chiefBogoRespectedOfficer: CharacterCard = {
   cardType: "character",
   name: "Chief Bogo",
   version: "Respected Officer",
-  i18n: {
-    en: {
-      name: "Chief Bogo",
-      version: "Respected Officer",
-      text: [
-        {
-          title: "INSUBORDINATION!",
-          description:
-            "Whenever you play a Floodborn character, deal 1 damage to each opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Chief Bogo",
-      version: "Respektierter Polizist",
-      text: [
-        {
-          title: "BEFEHLSVERWEIGERUNG",
-          description:
-            "Jedes Mal, wenn du eine Flutgestalt ausspielst, füge jedem gegnerischen Charakter 1 Schaden zu.",
-        },
-      ],
-    },
-    fr: {
-      name: "Chef Bogo",
-      version: "Officier respecté",
-      text: [
-        {
-          title: "INSUBORDINATION!",
-          description:
-            "Chaque fois que vous jouez un personnage Floodborn, infligez 1 dommage à chaque personnage adverse.",
-        },
-      ],
-    },
-    it: {
-      name: "Chief Bogo",
-      version: "Respected Officer",
-      text: [
-        {
-          title: "INSUBORDINATION!",
-          description:
-            "Whenever you play a Floodborn character, deal 1 damage to each opposing character.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Zootropolis",
   set: "002",
@@ -75,7 +30,6 @@ export const chiefBogoRespectedOfficer: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -104,4 +58,5 @@ export const chiefBogoRespectedOfficer: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: chiefBogoRespectedOfficerI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { motherGothelConceitedManipulatorI18n } from "./089-mother-gothel-conceited-manipulator.i18n";
 
 export const motherGothelConceitedManipulator: CharacterCard = {
   id: "GVH",
@@ -7,52 +8,6 @@ export const motherGothelConceitedManipulator: CharacterCard = {
   cardType: "character",
   name: "Mother Gothel",
   version: "Conceited Manipulator",
-  i18n: {
-    en: {
-      name: "Mother Gothel",
-      version: "Conceited Manipulator",
-      text: [
-        {
-          title: "MOTHER KNOWS BEST",
-          description:
-            "When you play this character, you may pay 3 {I} to return chosen character to their player's hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Mutter Gothel",
-      version: "Arglistige Manipulatorin",
-      text: [
-        {
-          title: "MUTTER WEISS MEHR",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du 3 bezahlen, um einen Charakter deiner Wahl auf die zugehörige Hand zurückzuschicken.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mère Gothel",
-      version: "Manipulatrice vaniteuse",
-      text: [
-        {
-          title: "ÉCOUTE TA MÈRE",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez payer 3 pour choisir un personnage et le renvoyer dans la main de son propriétaire.",
-        },
-      ],
-    },
-    it: {
-      name: "Madre Gothel",
-      version: "Manipolatrice Presuntuosa",
-      text: [
-        {
-          title: "RESTA CON ME",
-          description:
-            "Quando giochi questo personaggio, puoi pagare 3 per far riprendere in mano al suo giocatore un personaggio a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Tangled",
   set: "005",
@@ -102,4 +57,5 @@ export const motherGothelConceitedManipulator: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: motherGothelConceitedManipulatorI18n,
 };

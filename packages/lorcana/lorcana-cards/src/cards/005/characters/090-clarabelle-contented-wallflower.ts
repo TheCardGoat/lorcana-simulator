@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { clarabelleContentedWallflowerI18n } from "./090-clarabelle-contented-wallflower.i18n";
 
 export const clarabelleContentedWallflower: CharacterCard = {
   id: "gxZ",
@@ -7,52 +8,6 @@ export const clarabelleContentedWallflower: CharacterCard = {
   cardType: "character",
   name: "Clarabelle",
   version: "Contented Wallflower",
-  i18n: {
-    en: {
-      name: "Clarabelle",
-      version: "Contented Wallflower",
-      text: [
-        {
-          title: "ONE STEP BEHIND",
-          description:
-            "When you play this character, if an opponent has more cards in their hand than you, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Klarabella",
-      version: "Zufriedenes Mauerblümchen",
-      text: [
-        {
-          title: "EINEN SCHRITT HINTERHER",
-          description:
-            "Wenn du diesen Charakter ausspielst und mindestens eine gegnerische Person mehr Karten auf der Hand hat als du, darfst du 1 Karte ziehen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Clarabelle",
-      version: "Introvertie mais heureuse",
-      text: [
-        {
-          title: "JUSTE DERRIÈRE TOI",
-          description:
-            "Lorsque vous jouez ce personnage, si un adversaire a plus de cartes en main que vous, vous pouvez piocher une carte.",
-        },
-      ],
-    },
-    it: {
-      name: "Clarabella",
-      version: "Timidona Soddisfatta",
-      text: [
-        {
-          title: "UN PASSO INDIETRO",
-          description:
-            "Quando giochi questo personaggio, se un avversario ha in mano più carte di te, puoi pescare una carta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "005",
   cardNumber: 90,
@@ -76,17 +31,26 @@ export const clarabelleContentedWallflower: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
-      effect: {
-        condition: {
-          expression: "an opponent has more cards in their hand than you",
-          type: "if",
+      condition: {
+        type: "comparison",
+        left: {
+          type: "cards-in-hand",
+          controller: "opponent",
         },
-        then: {
+        comparison: "greater-than",
+        right: {
+          type: "cards-in-hand",
+          controller: "you",
+        },
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
           amount: 1,
           target: "CONTROLLER",
           type: "draw",
         },
-        type: "conditional",
+        type: "optional",
       },
       id: "1v9-1",
       name: "ONE STEP BEHIND",
@@ -99,4 +63,5 @@ export const clarabelleContentedWallflower: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: clarabelleContentedWallflowerI18n,
 };

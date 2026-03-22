@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { wendyDarlingCourageousCaptainI18n } from "./108-wendy-darling-courageous-captain.i18n";
 
 export const wendyDarlingCourageousCaptain: CharacterCard = {
   id: "AYJ",
@@ -7,37 +8,6 @@ export const wendyDarlingCourageousCaptain: CharacterCard = {
   cardType: "character",
   name: "Wendy Darling",
   version: "Courageous Captain",
-  i18n: {
-    en: {
-      name: "Wendy Darling",
-      version: "Courageous Captain",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "LOOK LIVELY, CREW!",
-          description:
-            "While you have another Pirate character in play, this character gets +1 {S} and +1 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Wendy Darling",
-      version: "Mutige Kapitänin",
-      text: "Wendig MACHT SCHNELL, LEUTE! Solange du mindestens einen weiteren Piraten im Spiel hast, erhält dieser Charakter +1 und +1.",
-    },
-    fr: {
-      name: "Wendy Darling",
-      version: "Capitaine courageuse",
-      text: "Insaisissable BOUGEZ-VOUS, MOUSSAILLONS! Tant que vous avez un autre personnage Pirate en jeu, ce personnage-ci gagne +1 et +1.",
-    },
-    it: {
-      name: "Wendy Darling",
-      version: "Capitana Coraggiosa",
-      text: "Sfuggente DATEVI UNA MOSSA, CIURMA! Mentre hai in gioco un altro personaggio Pirata, questo personaggio riceve +1 e +1.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Peter Pan",
   set: "006",
@@ -71,6 +41,13 @@ export const wendyDarlingCourageousCaptain: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        type: "has-character-count",
+        controller: "you",
+        comparison: "or-more",
+        count: 2,
+        classification: "Pirate",
+      },
       effect: {
         modifier: 1,
         stat: "strength",
@@ -78,8 +55,29 @@ export const wendyDarlingCourageousCaptain: CharacterCard = {
         type: "modify-stat",
       },
       id: "1dv-2",
+      name: "LOOK LIVELY, CREW!",
       text: "LOOK LIVELY, CREW! While you have another Pirate character in play, this character gets +1 {S} and +1 {L}.",
-      type: "action",
+      type: "static",
+    },
+    {
+      condition: {
+        type: "has-character-count",
+        controller: "you",
+        comparison: "or-more",
+        count: 2,
+        classification: "Pirate",
+      },
+      effect: {
+        modifier: 1,
+        stat: "lore",
+        target: "SELF",
+        type: "modify-stat",
+      },
+      id: "1dv-3",
+      name: "LOOK LIVELY, CREW!",
+      text: "LOOK LIVELY, CREW! While you have another Pirate character in play, this character gets +1 {S} and +1 {L}.",
+      type: "static",
     },
   ],
+  i18n: wendyDarlingCourageousCaptainI18n,
 };

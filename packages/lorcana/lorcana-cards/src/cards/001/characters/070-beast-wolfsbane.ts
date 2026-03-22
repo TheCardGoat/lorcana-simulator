@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { beastWolfsbaneI18n } from "./070-beast-wolfsbane.i18n";
 
 export const beastWolfsbane: CharacterCard = {
   id: "bXY",
@@ -7,42 +8,6 @@ export const beastWolfsbane: CharacterCard = {
   cardType: "character",
   name: "Beast",
   version: "Wolfsbane",
-  i18n: {
-    en: {
-      name: "Beast",
-      version: "Wolfsbane",
-      text: [
-        {
-          title: "Rush",
-        },
-        {
-          title: "ROAR",
-          description: "When you play this character, exert all opposing damaged characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Biest",
-      version: "Schrecken der Wölfe",
-      text: "Rasant BRÜLLEN Wenn du diesen Charakter ausspielst, erschöpfe alle gegnerischen beschädigten Charaktere.",
-    },
-    fr: {
-      name: "LA BÊTE",
-      version: "Fléau des loups",
-      text: "Charge RUGISSEMENT Lorsque vous jouez ce personnage, épuisez tous les personnages adverses ayant des jetons Dommage.",
-    },
-    it: {
-      name: "Beast",
-      version: "Wolfsbane",
-      text: [
-        {
-          title: "Rush",
-          description:
-            "(This character can challenge the turn they're played.) ROAR When you play this character, exert all opposing damaged characters.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Beauty and the Beast",
   set: "001",
@@ -101,4 +66,5 @@ export const beastWolfsbane: CharacterCard = {
       },
     },
   ],
+  i18n: beastWolfsbaneI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { taranPigKeeperI18n } from "./015-taran-pig-keeper.i18n";
 
 export const taranPigKeeper: CharacterCard = {
   id: "JL3",
@@ -7,37 +8,6 @@ export const taranPigKeeper: CharacterCard = {
   cardType: "character",
   name: "Taran",
   version: "Pig Keeper",
-  i18n: {
-    en: {
-      name: "Taran",
-      version: "Pig Keeper",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "FOLLOW THE PIG",
-          description:
-            "Whenever this character quests, you may return a character card named Hen Wen from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Taran",
-      version: "Schweinehirt",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) FOLGE DEM SCHWEIN Jedes Mal, wenn dieser Charakter erkundet, darfst du eine Hen-Wen-Charakterkarte aus deinem Ablagestapel zurück auf deine Hand nehmen.",
-    },
-    fr: {
-      name: "Taram",
-      version: "Gardien de cochon",
-      text: "Soutien SUIVRE LE COCHON Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez renvoyer dans votre main une carte Personnage nommée Tirelire de votre défausse.",
-    },
-    it: {
-      name: "Taron",
-      version: "Guardiano di Porci",
-      text: "Aiutante SEGUI IL MAIALE Ogni volta che questo personaggio va all'avventura, puoi riprendere in mano una carta personaggio chiamata Ewy dai tuoi scarti.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Black Cauldron",
   set: "010",
@@ -74,14 +44,12 @@ export const taranPigKeeper: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
+          filter: {
+            cardType: "character",
+            name: "Hen Wen",
           },
-          type: "return-to-hand",
+          target: "CONTROLLER",
+          type: "return-from-discard",
         },
         type: "optional",
       },
@@ -96,4 +64,5 @@ export const taranPigKeeper: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: taranPigKeeperI18n,
 };

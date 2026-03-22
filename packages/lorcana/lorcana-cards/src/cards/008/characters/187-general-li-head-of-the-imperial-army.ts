@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { generalLiHeadOfTheImperialArmyI18n } from "./187-general-li-head-of-the-imperial-army.i18n";
 
 export const generalLiHeadOfTheImperialArmy: CharacterCard = {
   id: "KF3",
@@ -7,28 +8,6 @@ export const generalLiHeadOfTheImperialArmy: CharacterCard = {
   cardType: "character",
   name: "General Li",
   version: "Head of the Imperial Army",
-  i18n: {
-    en: {
-      name: "General Li",
-      version: "Head of the Imperial Army",
-      text: "Resist +1",
-    },
-    de: {
-      name: "General Li",
-      version: "Oberhaupt der kaiserlichen Armee",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.)",
-    },
-    fr: {
-      name: "Général Li",
-      version: "À la tête de l'armée impériale",
-      text: "Résistance +1",
-    },
-    it: {
-      name: "Generale Li",
-      version: "Comandante dell'Esercito Imperiale",
-      text: "Resistere +1",
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "008",
@@ -54,4 +33,5 @@ export const generalLiHeadOfTheImperialArmy: CharacterCard = {
       text: "Resist +1",
     },
   ],
+  i18n: generalLiHeadOfTheImperialArmyI18n,
 };

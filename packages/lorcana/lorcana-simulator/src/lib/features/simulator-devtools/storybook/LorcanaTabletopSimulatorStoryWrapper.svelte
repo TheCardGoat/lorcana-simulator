@@ -4,11 +4,14 @@ import {
 	type LorcanaPlayerSettingsMap,
 	type LorcanaSimulatorReadModel,
 	type LorcanaSimulatorView,
+	type SimulatorDebugAnimationPlayer,
 	type SimulatorDebugAnimationRequest,
 } from "$lib";
+import type { LorcanaGameContext } from "@/features/simulator/context/game-context.svelte.js";
 import {getLorcanaFixture} from "@/features/simulator-devtools/fixtures";
 import {LorcanaMultiplayerSimulatorAdapter} from "@/features/simulator-devtools/harness";
-import { getLocale, setLocale } from "$lib/paraglide/runtime";
+import { getLocale, setLocale } from "$lib/paraglide/runtime.js";
+import { buildSimulatorAssetUrl } from "$lib/config/public-url-config.js";
 
 import LorcanaDebugControls from "./LorcanaDebugControls.svelte";
 
@@ -28,9 +31,9 @@ interface StoryWrapperProps {
 
 const PLAYER_LOCALE_STORAGE_KEY = "lorcana.simulator.playerLocale";
 const TEST_PLAYER_ONE_CARD_BACK_URL =
-	"https://r2.tcg.online/public/lorcana/simulator/card-back/back-cosmos.webp";
+	buildSimulatorAssetUrl("card-back/back-cosmos.webp");
 const TEST_PLAYER_TWO_CARD_BACK_URL =
-	"https://r2.tcg.online/public/lorcana/simulator/card-back/back-yellow.webp";
+	buildSimulatorAssetUrl("card-back/back-yellow.webp");
 // const TEST_PLAYER_ONE_PLAYMAT_URL =
 // 	"https://r2.tcg.online/public/lorcana/simulator/playmats/005.webp";
 // const TEST_PLAYER_TWO_PLAYMAT_URL =
@@ -162,8 +165,29 @@ function resetToInitialFixture(): void {
 	currentViewOverride = null;
 }
 
+let gameContextRef = $state<LorcanaGameContext | null>(null);
+
 function runAnimation(animation: SimulatorDebugAnimationRequest): boolean {
-	return false;
+	if (!gameContextRef) {
+		return false;
+	}
+	return gameContextRef.runAnimation(animation);
+}
+
+function runQuestAnimation(cardId: string, player: SimulatorDebugAnimationPlayer, loreGained: number): boolean {
+	if (!gameContextRef) {
+		return false;
+	}
+	const side = player === "player_one" ? "playerOne" as const : "playerTwo" as const;
+	return gameContextRef.runQuestAnimation(cardId, side, loreGained);
+}
+
+function runChallengeAnimation(attackerId: string, defenderId: string, player: SimulatorDebugAnimationPlayer, preview: { attackerDamageDealt: number; defenderDamageDealt: number; defenderKind: "character" | "location"; attackerWouldBeBanished: boolean; defenderWouldBeBanished: boolean }): boolean {
+	if (!gameContextRef) {
+		return false;
+	}
+	const side = player === "player_one" ? "playerOne" as const : "playerTwo" as const;
+	return gameContextRef.runChallengeAnimation(attackerId, defenderId, side, preview);
 }
 
 </script>
@@ -174,7 +198,7 @@ function runAnimation(animation: SimulatorDebugAnimationRequest): boolean {
 	bind:this={wrapperElement}
 >
 	{#if engine}
-		<LorcanaTabletopSimulator {engine} {readModel} {playerSettings}/>
+		<LorcanaTabletopSimulator {engine} {readModel} {playerSettings} bind:gameContext={gameContextRef}/>
 
 			<LorcanaDebugControls
 					{wrapperElement}
@@ -189,6 +213,8 @@ function runAnimation(animation: SimulatorDebugAnimationRequest): boolean {
 					onReset={resetToInitialFixture}
 				onRefresh={() => {}}
 				onRunAnimation={runAnimation}
+				onRunQuestAnimation={runQuestAnimation}
+				onRunChallengeAnimation={runChallengeAnimation}
 		/>
 	{:else}
 		<p class="loading">Loading...</p>

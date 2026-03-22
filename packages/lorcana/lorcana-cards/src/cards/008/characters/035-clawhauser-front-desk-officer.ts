@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { clawhauserFrontDeskOfficerI18n } from "./035-clawhauser-front-desk-officer.i18n";
 
 export const clawhauserFrontDeskOfficer: CharacterCard = {
   id: "q40",
@@ -7,41 +8,6 @@ export const clawhauserFrontDeskOfficer: CharacterCard = {
   cardType: "character",
   name: "Clawhauser",
   version: "Front Desk Officer",
-  i18n: {
-    en: {
-      name: "Clawhauser",
-      version: "Front Desk Officer",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "Singer 4",
-        },
-      ],
-    },
-    de: {
-      name: "Clawhauser",
-      version: "Empfangsoffizier",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) Singen 4 (Die Kosten dieses Charakters gelten als 4 für das Singen von Liedern.)",
-    },
-    fr: {
-      name: "Clawhauser",
-      version: "Agent d'accueil",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.) Mélomane 4 (Ce personnage est considéré comme ayant un coût de 4 pour chanter des chansons.)",
-        },
-      ],
-    },
-    it: {
-      name: "Clawhauser",
-      version: "Ufficiale dell'Accettazione",
-      text: "Guardiano Melodioso 4",
-    },
-  },
   inkType: ["amber"],
   franchise: "Zootropolis",
   set: "008",
@@ -80,4 +46,5 @@ export const clawhauserFrontDeskOfficer: CharacterCard = {
       value: 4,
     },
   ],
+  i18n: clawhauserFrontDeskOfficerI18n,
 };

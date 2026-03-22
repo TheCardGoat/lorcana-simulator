@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseMrsCratchitEpicI18n } from "./213-minnie-mouse-mrs-cratchit-epic.i18n";
 
 export const minnieMouseMrsCratchitEpic: CharacterCard = {
   id: "VHR",
@@ -7,37 +8,6 @@ export const minnieMouseMrsCratchitEpic: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Mrs. Cratchit",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Mrs. Cratchit",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "A MOTHER'S LOVE",
-          description:
-            "When you play this character, you may put the top card of your deck facedown under one of your characters or locations with Boost. If you do, draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Frau Cratchit",
-      text: "Behütet DIE LIEBE EINER MUTTER Wenn du diesen Charakter ausspielst, darfst du die oberste Karte deines Decks verdeckt unter einen deiner Charaktere oder Orte mit Stärken legen. Wenn du dies tust, ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Minnie",
-      version: "Mme Cratchit",
-      text: "Hors d'atteinte L'AMOUR D'UNE MÈRE Lorsque vous jouez ce personnage, vous pouvez placer la carte du dessus de votre pioche, face cachée, sous l'un de vos personnages ou de vos lieux avec Boost. Si vous le faites, piochez une carte.",
-    },
-    it: {
-      name: "Minni",
-      version: "Signora Cratchit",
-      text: "Protetto L'AMORE DI UNA MADRE Quando giochi questo personaggio, puoi mettere la prima carta del tuo mazzo a faccia in giù sotto a uno dei tuoi personaggi o luoghi con Potenziamento. Se lo fai, pesca una carta.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Mickey's Christmas Carol",
   set: "011",
@@ -95,4 +65,5 @@ export const minnieMouseMrsCratchitEpic: CharacterCard = {
       text: "A MOTHER’S LOVE When you play this character, you may put the top card of your deck facedown under one of your characters or locations with Boost. If you do, draw a card.",
     },
   ],
+  i18n: minnieMouseMrsCratchitEpicI18n,
 };

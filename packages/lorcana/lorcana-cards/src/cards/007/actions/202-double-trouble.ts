@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { doubleTroubleI18n } from "./202-double-trouble.i18n";
 
 export const doubleTrouble: ActionCard = {
   id: "Y2J",
@@ -6,24 +7,6 @@ export const doubleTrouble: ActionCard = {
   reprints: ["set7-202"],
   cardType: "action",
   name: "Double Trouble",
-  i18n: {
-    en: {
-      name: "Double Trouble",
-      text: "Deal 1 damage each to up to 2 chosen characters.",
-    },
-    de: {
-      name: "Doppelter Ärger",
-      text: "Wähle bis zu 2 Charaktere und füge ihnen je 1 Schaden zu.",
-    },
-    fr: {
-      name: "Les problèmes vont par paire",
-      text: "Choisissez jusqu'à 2 personnages et infligez 1 dommage à chacun.",
-    },
-    it: {
-      name: "Doppio Problema",
-      text: "Infliggi 1 danno ciascuno a fino a 2 personaggi a tua scelta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Sleeping Beauty",
   set: "007",
@@ -55,4 +38,5 @@ export const doubleTrouble: ActionCard = {
       },
     },
   ],
+  i18n: doubleTroubleI18n,
 };

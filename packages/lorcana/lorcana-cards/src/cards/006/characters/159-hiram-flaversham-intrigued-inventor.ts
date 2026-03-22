@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hiramFlavershamIntriguedInventorI18n } from "./159-hiram-flaversham-intrigued-inventor.i18n";
 
 export const hiramFlavershamIntriguedInventor: CharacterCard = {
   id: "3CQ",
@@ -7,24 +8,6 @@ export const hiramFlavershamIntriguedInventor: CharacterCard = {
   cardType: "character",
   name: "Hiram Flaversham",
   version: "Intrigued Inventor",
-  i18n: {
-    en: {
-      name: "Hiram Flaversham",
-      version: "Intrigued Inventor",
-    },
-    de: {
-      name: "Xaver Hampelmann",
-      version: "Neugieriger Erfinder",
-    },
-    fr: {
-      name: "Flaversham",
-      version: "Inventeur intrigué",
-    },
-    it: {
-      name: "Hiram Flaversham",
-      version: "Inventore Incuriosito",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Great Mouse Detective",
   set: "006",
@@ -41,4 +24,5 @@ export const hiramFlavershamIntriguedInventor: CharacterCard = {
     tcgPlayer: 593013,
   },
   classifications: ["Storyborn", "Ally", "Inventor"],
+  i18n: hiramFlavershamIntriguedInventorI18n,
 };

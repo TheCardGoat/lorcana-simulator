@@ -37,23 +37,36 @@ import {
   youHaveForgottenMe,
   controlYourTemper,
 } from "./fixture-cards";
-import {
+import * as cards001Module from "@tcg/lorcana-cards/cards/001";
+import * as cards003Module from "@tcg/lorcana-cards/cards/003";
+import * as cards004Module from "@tcg/lorcana-cards/cards/004";
+import * as cards005Module from "@tcg/lorcana-cards/cards/005";
+import * as cards007Module from "@tcg/lorcana-cards/cards/007";
+import * as cards008Module from "@tcg/lorcana-cards/cards/008";
+import * as cards010Module from "@tcg/lorcana-cards/cards/010";
+import { pawpsicle } from "@tcg/lorcana-cards/cards/002";
+
+const { coconutBasket, friendsOnTheOtherSide } =
+  cards001Module as typeof import("@tcg/lorcana-cards/cards/001");
+const {
   friendLikeMe,
   kuzcosPalaceHomeOfTheEmperor,
   prideLandsPrideRock,
   tianasPalaceJazzRestaurant,
-} from "@tcg/lorcana-cards/cards/003";
-import { amberChromicon, moanaDeterminedExplorer } from "@tcg/lorcana-cards/cards/005";
-import { mauricesMachine } from "@tcg/lorcana-cards/cards/007";
-import { coconutBasket, friendsOnTheOtherSide } from "@tcg/lorcana-cards/cards/001";
-import {
+} = cards003Module as typeof import("@tcg/lorcana-cards/cards/003");
+const {
   agustinMadrigalClumsyDad,
   brunoMadrigalOutOfTheShadows,
   hiddenCoveTranquilHaven,
   isabelaMadrigalGoldenChild,
-} from "@tcg/lorcana-cards/cards/004";
-import { demonaBetrayerOfTheClan, goliathClanLeader } from "@tcg/lorcana-cards/cards/010";
-import { almaMadrigalAcceptingGrandmother } from "@tcg/lorcana-cards/cards/008";
+} = cards004Module as typeof import("@tcg/lorcana-cards/cards/004");
+const { amberChromicon, moanaDeterminedExplorer } =
+  cards005Module as typeof import("@tcg/lorcana-cards/cards/005");
+const { mauricesMachine } = cards007Module as typeof import("@tcg/lorcana-cards/cards/007");
+const { almaMadrigalAcceptingGrandmother } =
+  cards008Module as typeof import("@tcg/lorcana-cards/cards/008");
+const { demonaBetrayerOfTheClan, goliathClanLeader } =
+  cards010Module as typeof import("@tcg/lorcana-cards/cards/010");
 
 export const fullBoardAllCardTypes: LorcanaSimulatorFixture = createFixture({
   id: "all-card-types-full-board",
@@ -94,12 +107,18 @@ export const fullBoardAllCardTypes: LorcanaSimulatorFixture = createFixture({
     lore: 3,
     play: [
       tianasPalaceJazzRestaurant,
-      { card: goofyMusketeer, atLocation: tianasPalaceJazzRestaurant, exerted: true },
+      {
+        card: goofyMusketeer,
+        atLocation: tianasPalaceJazzRestaurant,
+        exerted: true,
+      },
       { card: tinkerBellPeterPansAlly, exerted: true },
       moanaDeterminedExplorer,
       // Items
       amberChromicon,
       mauricesMachine,
+      pawpsicle,
+      cards004Module.fortisphere,
     ],
   },
   playerTwo: {
@@ -179,12 +198,19 @@ export const fullBoardAllCardTypes: LorcanaSimulatorFixture = createFixture({
       kuzcosPalaceHomeOfTheEmperor,
       prideLandsPrideRock,
       coconutBasket,
-      { card: demonaBetrayerOfTheClan, atLocation: kuzcosPalaceHomeOfTheEmperor },
+      {
+        card: demonaBetrayerOfTheClan,
+        atLocation: kuzcosPalaceHomeOfTheEmperor,
+      },
       { card: goliathClanLeader, atLocation: prideLandsPrideRock },
-      { card: agustinMadrigalClumsyDad, atLocation: hiddenCoveTranquilHaven },
+      {
+        card: agustinMadrigalClumsyDad,
+        atLocation: hiddenCoveTranquilHaven,
+        exerted: true,
+      },
       brunoMadrigalOutOfTheShadows,
       { card: almaMadrigalAcceptingGrandmother, exerted: true },
-      isabelaMadrigalGoldenChild,
+      { card: isabelaMadrigalGoldenChild, exerted: true },
     ],
   },
 });

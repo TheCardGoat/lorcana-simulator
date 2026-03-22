@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { joeyBluePigeonI18n } from "./036-joey-blue-pigeon.i18n";
 
 export const joeyBluePigeon: CharacterCard = {
   id: "Zwk",
@@ -7,52 +8,6 @@ export const joeyBluePigeon: CharacterCard = {
   cardType: "character",
   name: "Joey",
   version: "Blue Pigeon",
-  i18n: {
-    en: {
-      name: "Joey",
-      version: "Blue Pigeon",
-      text: [
-        {
-          title: "I'VE GOT JUST THE THING",
-          description:
-            "Whenever this character quests, you may remove up to 1 damage from each of your characters with Bodyguard.",
-        },
-      ],
-    },
-    de: {
-      name: "Joey",
-      version: "Blaue Taube",
-      text: [
-        {
-          title: "ICH HAB GENAU DAS RICHTIGE",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du bis zu 1 Schaden von jedem deiner Charaktere mit Beschützen entfernen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Joey le pigeon",
-      version: "Pigeon bleu",
-      text: [
-        {
-          title: "J'AI CE QU'IL TE FAUT",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez retirer jusqu'à 1 dommage de chacun de vos personnages avec Rempart.",
-        },
-      ],
-    },
-    it: {
-      name: "Joey",
-      version: "Piccione Blu",
-      text: [
-        {
-          title: "HO PROPRIO QUELLO CHE SERVE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi rimuovere fino a 1 danno da ogni tuo personaggio con Guardiano.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Bolt",
   set: "008",
@@ -87,6 +42,7 @@ export const joeyBluePigeon: CharacterCard = {
             owner: "you",
             zones: ["play"],
             cardTypes: ["character"],
+            filter: [{ type: "has-keyword", keyword: "Bodyguard" }],
           },
           type: "remove-damage",
           upTo: true,
@@ -104,4 +60,5 @@ export const joeyBluePigeon: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: joeyBluePigeonI18n,
 };

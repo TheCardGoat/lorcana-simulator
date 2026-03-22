@@ -21,7 +21,15 @@ import type {
   BoardAnchorSnapshot,
   ResolvedBoardMoveAnimation,
 } from "@/features/simulator/animations/board-move-animations.js";
-import type { LorcanaGameContextValue } from "@/features/simulator/context/game-context.svelte.js";
+import type { ResolvedQuestAnimation } from "@/features/simulator/animations/quest-animations.js";
+import type { ResolvedChallengeAnimation } from "@/features/simulator/animations/challenge-animations.js";
+import type { ResolvedOverlayAnnouncement } from "@/features/simulator/animations/overlay-announcement-animations.js";
+import type { ResolvedCardEffectAnimation } from "@/features/simulator/animations/card-effect-animations.js";
+import type {
+  AnimationSpeed,
+  LorcanaGameContextValue,
+} from "@/features/simulator/context/game-context.svelte.js";
+import { QUEST_ROTATION_DURATION_MS } from "@/features/simulator/context/game-context.svelte.js";
 
 export class LorcanaBoardPresenter {
   readonly #game: LorcanaGameContextValue;
@@ -34,9 +42,16 @@ export class LorcanaBoardPresenter {
   });
   discardDialogSide = $state<LorcanaPlayerSide | null>(null);
 
+  isInkwellDialogOpen = $state(false);
+  inkwellTarget = $state<LorcanaCardTarget>({
+    selector: "all",
+    owner: "any",
+    zones: ["inkwell"],
+  });
+  inkwellDialogSide = $state<LorcanaPlayerSide | null>(null);
+
   readonly topSeat: LorcanaTableSeat = "top";
   readonly bottomSeat: LorcanaTableSeat = "bottom";
-  readonly guidanceAnchor = "bottom" as const;
 
   constructor(game: LorcanaGameContextValue) {
     this.#game = game;
@@ -56,6 +71,30 @@ export class LorcanaBoardPresenter {
 
   get animations(): ResolvedBoardMoveAnimation[] {
     return this.#game.animations();
+  }
+
+  get questAnimations(): ResolvedQuestAnimation[] {
+    return this.#game.questAnimations();
+  }
+
+  get challengeAnimations(): ResolvedChallengeAnimation[] {
+    return this.#game.challengeAnimations();
+  }
+
+  get overlayAnnouncements(): ResolvedOverlayAnnouncement[] {
+    return this.#game.overlayAnnouncements();
+  }
+
+  get cardEffectAnimations(): ResolvedCardEffectAnimation[] {
+    return this.#game.cardEffectAnimations();
+  }
+
+  get animationSpeed(): AnimationSpeed {
+    return this.#game.animationSpeed();
+  }
+
+  get questRotationDurationMs(): number {
+    return QUEST_ROTATION_DURATION_MS[this.animationSpeed];
   }
 
   previewChallenge(attackerId: string, defenderId: string): ChallengePreviewResult | null {
@@ -124,6 +163,10 @@ export class LorcanaBoardPresenter {
 
   get discardCards(): LorcanaCardSnapshot[] {
     return this.discardDialogSide ? this.getZoneCards(this.discardDialogSide, "discard") : [];
+  }
+
+  get inkwellCards(): LorcanaCardSnapshot[] {
+    return this.inkwellDialogSide ? this.getZoneCards(this.inkwellDialogSide, "inkwell") : [];
   }
 
   get prioritySide(): LorcanaPlayerSide | null {
@@ -217,6 +260,23 @@ export class LorcanaBoardPresenter {
     this.isDiscardDialogOpen = open;
     if (!open) {
       this.discardDialogSide = null;
+    }
+  };
+
+  handleInkwellClick = (side: LorcanaPlayerSide): void => {
+    this.inkwellDialogSide = side;
+    this.inkwellTarget = {
+      selector: "all",
+      zones: ["inkwell"],
+      owner: this.ownerSide ? (side === this.ownerSide ? "you" : "opponent") : "any",
+    };
+    this.isInkwellDialogOpen = true;
+  };
+
+  setInkwellDialogOpen = (open: boolean): void => {
+    this.isInkwellDialogOpen = open;
+    if (!open) {
+      this.inkwellDialogSide = null;
     }
   };
 }

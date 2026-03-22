@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { befuddleI18n } from "./062-befuddle.i18n";
 
 export const befuddle: ActionCard = {
   id: "q0K",
@@ -6,24 +7,6 @@ export const befuddle: ActionCard = {
   reprints: ["set1-062"],
   cardType: "action",
   name: "Befuddle",
-  i18n: {
-    en: {
-      name: "Befuddle",
-      text: "Return a character or item with cost 2 or less to their player's hand.",
-    },
-    de: {
-      name: "Das meistbeirrende Spiel",
-      text: "Schicke einen Charakter oder Gegenstand, der 2 oder weniger kostet, auf die zugehörige Hand zurück.",
-    },
-    fr: {
-      name: "EMBERLIFICOTAGE",
-      text: "Renvoyez un personnage ou un objet coûtant 2 ou moins dans la main de son propriétaire.",
-    },
-    it: {
-      name: "Befuddle",
-      text: "Return chosen character or item with cost 2 or less to their player's hand.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "001",
@@ -58,4 +41,5 @@ export const befuddle: ActionCard = {
       },
     },
   ],
+  i18n: befuddleI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { almaMadrigalAcceptingGrandmotherI18n } from "./034-alma-madrigal-accepting-grandmother.i18n";
 
 export const almaMadrigalAcceptingGrandmother: CharacterCard = {
   id: "s3D",
@@ -7,52 +8,6 @@ export const almaMadrigalAcceptingGrandmother: CharacterCard = {
   cardType: "character",
   name: "Alma Madrigal",
   version: "Accepting Grandmother",
-  i18n: {
-    en: {
-      name: "Alma Madrigal",
-      version: "Accepting Grandmother",
-      text: [
-        {
-          title: "THE MIRACLE IS YOU",
-          description:
-            "Once during your turn, whenever one or more of your characters sings a song, you may ready those characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Alma Madrigal",
-      version: "Akzeptierende Großmutter",
-      text: [
-        {
-          title: "DAS WUNDER, DAS SEID IHR",
-          description:
-            "Einmal während deines Zuges, wenn einer oder mehrere deiner Charaktere ein Lied singen, darfst du jene Charaktere bereit machen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Alma Madrigal",
-      version: "Grand-mère en rédemption",
-      text: [
-        {
-          title: "MON MIRACLE, C'EST VOUS",
-          description:
-            "Une fois durant votre tour, lorsqu'un ou plusieurs de vos personnages chantent une chanson, vous pouvez redresser le ou les personnages qui viennent de chanter.",
-        },
-      ],
-    },
-    it: {
-      name: "Alma Madrigal",
-      version: "Nonna Accogliente",
-      text: [
-        {
-          title: "L'AMORE FRA DI NOI",
-          description:
-            "Una volta durante il tuo turno, ogni volta che uno o più dei tuoi personaggi canta una canzone, puoi preparare quei personaggi.",
-        },
-      ],
-    },
-  },
   inkType: ["amber", "amethyst"],
   franchise: "Encanto",
   set: "008",
@@ -81,11 +36,9 @@ export const almaMadrigalAcceptingGrandmother: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
+            selector: "all",
+            count: "all",
+            reference: "singers",
           },
           type: "ready",
         },
@@ -95,11 +48,17 @@ export const almaMadrigalAcceptingGrandmother: CharacterCard = {
       name: "THE MIRACLE IS YOU Once",
       text: "THE MIRACLE IS YOU Once during your turn, whenever one or more of your characters sings a song, you may ready those characters.",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "sing",
+        on: "YOUR_CHARACTERS",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "once-per-turn",
+          },
+        ],
       },
       type: "triggered",
     },
   ],
+  i18n: almaMadrigalAcceptingGrandmotherI18n,
 };

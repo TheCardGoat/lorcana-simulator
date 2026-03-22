@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { nakomaWaitingOutTheStormI18n } from "./006-nakoma-waiting-out-the-storm.i18n";
 
 export const nakomaWaitingOutTheStorm: CharacterCard = {
   id: "FhP",
@@ -7,24 +8,6 @@ export const nakomaWaitingOutTheStorm: CharacterCard = {
   cardType: "character",
   name: "Nakoma",
   version: "Waiting Out the Storm",
-  i18n: {
-    en: {
-      name: "Nakoma",
-      version: "Waiting Out the Storm",
-    },
-    de: {
-      name: "Nakoma",
-      version: "Den Sturm abwartend",
-    },
-    fr: {
-      name: "Nakoma",
-      version: "Attend que la tempête passe",
-    },
-    it: {
-      name: "Nakoma",
-      version: "Al Riparo dalla Bufera",
-    },
-  },
   inkType: ["amber"],
   franchise: "Pocahontas",
   set: "011",
@@ -41,4 +24,5 @@ export const nakomaWaitingOutTheStorm: CharacterCard = {
     tcgPlayer: 674319,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: nakomaWaitingOutTheStormI18n,
 };

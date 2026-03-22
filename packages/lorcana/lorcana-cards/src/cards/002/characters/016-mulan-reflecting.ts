@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mulanReflectingI18n } from "./016-mulan-reflecting.i18n";
 
 export const mulanReflecting: CharacterCard = {
   id: "1Ib",
@@ -7,43 +8,6 @@ export const mulanReflecting: CharacterCard = {
   cardType: "character",
   name: "Mulan",
   version: "Reflecting",
-  i18n: {
-    en: {
-      name: "Mulan",
-      version: "Reflecting",
-      text: [
-        {
-          title: "Shift 2",
-        },
-        {
-          title: "HONOR TO THE ANCESTORS",
-          description:
-            "Whenever this character quests, you may reveal the top card of your deck. If it's a song card, you may play it for free. Otherwise, put it on the top of your deck.",
-        },
-      ],
-    },
-    de: {
-      name: "Mulan",
-      version: "Reflektiert",
-      text: "Gestaltwandel 2 AHNEN HELFT, HÖRT IHR MICH Jedes Mal, wenn dieser Charakter erkundet, darfst du die oberste Karte deines Decks aufdecken. Falls sie eine Liedkarte ist, darfst du sie kostenlos ausspielen. Falls nicht, lege sie zurück auf dein Deck.",
-    },
-    fr: {
-      name: "Mulan",
-      version: "En pleine réflexion",
-      text: "Alter 2 CHERS ANCÊTRES, AIDEZ-MOI Lorsque ce personnage est envoyé à l'aventure, vous pouvez révéler la première carte de votre pioche. S'il s'agit d'une chanson, vous pouvez la jouer gratuitement. Sinon, remettez-la sur le dessus de votre pioche.",
-    },
-    it: {
-      name: "Mulan",
-      version: "Reflecting",
-      text: [
-        {
-          title: "Shift 2",
-          description:
-            "(You may pay 2 to play this on top of one of your characters named Mulan.) HONOR TO THE ANCESTORS Whenever this character quests, you may reveal the top card of your deck. If it's a song card, you may play it for free. Otherwise, put it on the top of your deck.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Mulan",
   set: "002",
@@ -105,7 +69,6 @@ export const mulanReflecting: CharacterCard = {
                 value: 1,
               },
             },
-            // eslint-disable-next-line unicorn/no-thenable
             then: {
               effect: {
                 cost: "free",
@@ -134,4 +97,5 @@ export const mulanReflecting: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mulanReflectingI18n,
 };

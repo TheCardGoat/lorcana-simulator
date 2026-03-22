@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { moanaChosenByTheOceanI18n } from "./117-moana-chosen-by-the-ocean.i18n";
 
 export const moanaChosenByTheOcean: CharacterCard = {
   id: "c4p",
@@ -7,50 +8,6 @@ export const moanaChosenByTheOcean: CharacterCard = {
   cardType: "character",
   name: "Moana",
   version: "Chosen by the Ocean",
-  i18n: {
-    en: {
-      name: "Moana",
-      version: "Chosen by the Ocean",
-      text: [
-        {
-          title: "THIS IS NOT WHO YOU ARE",
-          description: "When you play this character, you may banish chosen character named Te Kā.",
-        },
-      ],
-    },
-    de: {
-      name: "Vaiana",
-      version: "Vom Ozean auserwählt",
-      text: [
-        {
-          title: "DU BIST NICHT, WAS MAN SIEHT",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du einen Te-Kā-Charakter deiner Wahl verbannen.",
-        },
-      ],
-    },
-    fr: {
-      name: "VAIANA",
-      version: "Choisie par l'Océan",
-      text: [
-        {
-          title: "MOI, JE SAIS QUI TU ES",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage Te Kā et le bannir.",
-        },
-      ],
-    },
-    it: {
-      name: "Moana",
-      version: "Chosen by the Ocean",
-      text: [
-        {
-          title: "THIS IS NOT WHO YOU ARE",
-          description: "When you play this character, you may banish chosen character named Te Kā.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "001",
@@ -61,7 +18,6 @@ export const moanaChosenByTheOcean: CharacterCard = {
   willpower: 6,
   lore: 2,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_49b96ca319434f588d5d36b30597c832",
     tcgPlayer: 508786,
@@ -94,4 +50,5 @@ export const moanaChosenByTheOcean: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: moanaChosenByTheOceanI18n,
 };

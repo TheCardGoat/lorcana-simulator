@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { m } from "../paraglide/messages.js";
+import { m } from "$lib/i18n/messages.js";
 
 describe("paraglide messages proxy fallback", () => {
   it("returns translated strings for known generated keys", () => {

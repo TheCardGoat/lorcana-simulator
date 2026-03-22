@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { yokaiEnigmaticInventorI18n } from "./143-yokai-enigmatic-inventor.i18n";
 
 export const yokaiEnigmaticInventor: CharacterCard = {
   id: "zRb",
@@ -7,52 +8,6 @@ export const yokaiEnigmaticInventor: CharacterCard = {
   cardType: "character",
   name: "Yokai",
   version: "Enigmatic Inventor",
-  i18n: {
-    en: {
-      name: "Yokai",
-      version: "Enigmatic Inventor",
-      text: [
-        {
-          title: "TIME TO UPGRADE",
-          description:
-            "Whenever this character quests, you may return one of your items to your hand to pay 2 {I} less for the next item you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Yokai",
-      version: "Rätselhafter Erfinder",
-      text: [
-        {
-          title: "ZEIT FÜR EIN UPGRADE",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, darfst du 1 deiner Gegenstände zurück auf deine Hand nehmen. Wenn du dies tust, zahlst du 2 weniger für den nächsten Gegenstand, den du in diesem Zug ausspielst.",
-        },
-      ],
-    },
-    fr: {
-      name: "Yokai",
-      version: "Inventeur énigmatique",
-      text: [
-        {
-          title: "MISE À JOUR IMMÉDIATE",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, vous pouvez renvoyer l'un de vos objets dans votre main. Si vous le faites, le prochain objet que vous jouez ce tour-ci vous coûte 2 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Yokai",
-      version: "Inventore Enigmatico",
-      text: [
-        {
-          title: "È ORA DI UN UPGRADE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, puoi riprendere in mano uno dei tuoi oggetti per pagare 2 in meno per giocare il tuo prossimo oggetto per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Big Hero 6",
   set: "006",
@@ -80,14 +35,26 @@ export const yokaiEnigmaticInventor: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "all",
-            count: "all",
-            owner: "you",
-            zones: ["play"],
-            cardTypes: ["item"],
-          },
-          type: "return-to-hand",
+          type: "sequence",
+          steps: [
+            {
+              type: "return-to-hand",
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["item"],
+              },
+            },
+            {
+              type: "cost-reduction",
+              amount: 2,
+              cardType: "item",
+              duration: "next-play-this-turn",
+              target: "CONTROLLER",
+            },
+          ],
         },
         type: "optional",
       },
@@ -102,4 +69,5 @@ export const yokaiEnigmaticInventor: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: yokaiEnigmaticInventorI18n,
 };

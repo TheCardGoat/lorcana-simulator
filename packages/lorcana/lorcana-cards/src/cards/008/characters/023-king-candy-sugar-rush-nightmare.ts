@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { kingCandySugarRushNightmareI18n } from "./023-king-candy-sugar-rush-nightmare.i18n";
 
 export const kingCandySugarRushNightmare: CharacterCard = {
   id: "ABb",
@@ -7,52 +8,6 @@ export const kingCandySugarRushNightmare: CharacterCard = {
   cardType: "character",
   name: "King Candy",
   version: "Sugar Rush Nightmare",
-  i18n: {
-    en: {
-      name: "King Candy",
-      version: "Sugar Rush Nightmare",
-      text: [
-        {
-          title: "A NEW ROSTER",
-          description:
-            "When this character is banished, you may return another Racer character card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "King Candy",
-      version: "Sugar-Rush-Albtraum",
-      text: [
-        {
-          title: "EIN NEUER FAHRER",
-          description:
-            "Wenn dieser Charakter verbannt wird, darfst du eine andere Rennfahrer-Charakterkarte aus deinem Ablagestapel zurück auf deine Hand nehmen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Sa Sucrerie",
-      version: "Cauchemar de Sugar Rush",
-      text: [
-        {
-          title: "UNE NOUVELLE ÉQUIPE",
-          description:
-            "Lorsque ce personnage est banni, vous pouvez renvoyer dans votre main une autre carte Pilote de votre défausse.",
-        },
-      ],
-    },
-    it: {
-      name: "Re Candito",
-      version: "Incubo di Sugar Rush",
-      text: [
-        {
-          title: "NUOVI CONCORRENTI",
-          description:
-            "Quando questo personaggio viene esiliato, puoi riprendere in mano un'altra carta personaggio Pilota dai tuoi scarti.",
-        },
-      ],
-    },
-  },
   inkType: ["amber", "ruby"],
   franchise: "Wreck It Ralph",
   set: "008",
@@ -83,9 +38,16 @@ export const kingCandySugarRushNightmare: CharacterCard = {
           target: {
             selector: "chosen",
             count: 1,
-            owner: "any",
-            zones: ["play"],
+            owner: "you",
+            zones: ["discard"],
             cardTypes: ["character"],
+            excludeSelf: true,
+            filter: [
+              {
+                type: "has-classification",
+                classification: "Racer",
+              },
+            ],
           },
           type: "return-to-hand",
         },
@@ -102,4 +64,5 @@ export const kingCandySugarRushNightmare: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: kingCandySugarRushNightmareI18n,
 };

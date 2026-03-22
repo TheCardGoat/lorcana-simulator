@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gaetanMoliereTheMoleI18n } from "./158-gaetan-moliere-the-mole.i18n";
 
 export const gaetanMoliereTheMole: CharacterCard = {
   id: "ex2",
@@ -7,24 +8,6 @@ export const gaetanMoliereTheMole: CharacterCard = {
   cardType: "character",
   name: "Gaetan Moliere",
   version: "The Mole",
-  i18n: {
-    en: {
-      name: "Gaetan Moliere",
-      version: "The Mole",
-    },
-    de: {
-      name: "Gaetan Boudelaire",
-      version: "Der Maulwurf",
-    },
-    fr: {
-      name: "Gaëtan Molière",
-      version: "La Taupe",
-    },
-    it: {
-      name: "Gaetan Moliere",
-      version: "La Talpa",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Atlantis",
   set: "007",
@@ -41,4 +24,5 @@ export const gaetanMoliereTheMole: CharacterCard = {
     tcgPlayer: 619496,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: gaetanMoliereTheMoleI18n,
 };

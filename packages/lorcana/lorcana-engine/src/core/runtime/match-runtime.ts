@@ -2,7 +2,7 @@
  * MatchRuntime - Deterministic State Transition Engine
  */
 
-import { enablePatches, setAutoFreeze, type Draft } from "immer";
+import { enablePatches, setAutoFreeze } from "immer";
 import type {
   CommandEnvelope,
   GameEvent,
@@ -22,25 +22,21 @@ import type {
   MatchRuntimeConfig,
   MatchRuntimeInit,
   MoveDefinition,
+  MoveRecord,
   RuntimeLegalMove,
   RuntimeActorRole,
   MoveValidationContext,
   MoveEnumerationContext,
-  MoveExecutionContext,
   GameEndResult,
   CommandFailure,
   CommandResult,
   FilteredMatchView,
   ProjectedLogEntry,
   ViewRoleContext,
-  RuntimeLifecycleContext,
   RuntimeBoardProjectionContext,
+  RuntimeSnapshot,
 } from "./match-runtime.types";
-import {
-  buildValidationContext,
-  buildExecutionContext,
-  buildLifecycleContext,
-} from "./match-runtime.utils";
+import { buildValidationContext } from "./match-runtime.utils";
 import { executeCommand } from "./match-runtime.commands";
 import { executePriorityPass } from "./match-runtime.priority";
 import { initializeMatchState } from "./match-runtime.init";
@@ -51,6 +47,7 @@ import { canPlayerTakeActions } from "./match-runtime.apis";
 import { projectGameLog } from "./match-runtime.logs";
 import { getLogger } from "@logtape/logtape";
 import type { BaseCardDefinition } from "./card-contracts";
+import type { LorcanaG } from "../../types/runtime-state";
 
 const logger = getLogger(["core-engine", "match-runtime"]);
 
@@ -59,7 +56,6 @@ setAutoFreeze(true);
 
 export type {
   MatchRuntimeConfig,
-  MatchRuntimeConfigWithRuntimeCard,
   SetupArgs,
   BoardSetupContext,
   CommandFailure,
@@ -74,14 +70,8 @@ export type {
   FrameworkStateSnapshot,
   CardRuntimeReadAPI,
   CardRuntimeAPI,
-  CardRuntimeReadAPIWithRuntimeCard,
-  CardRuntimeAPIWithRuntimeCard,
-  FrameworkCardsReadAPI,
-  FrameworkCardsWriteAPI,
   FrameworkReadAPI,
   FrameworkWriteAPI,
-  FrameworkReadAPIWithRuntimeCard,
-  FrameworkWriteAPIWithRuntimeCard,
   GameEndResult,
   LogProjector,
   LogProjectionContext,
@@ -93,6 +83,7 @@ export type {
   MoveDefinition,
   MoveValidationContext,
   MoveContext,
+  MoveRecord,
   ProjectedLogEntry,
   RandomAPI,
   RuntimeBoardProjectionContext,
@@ -105,21 +96,16 @@ export type {
   RuntimeActorRole,
   RuntimeLifecycleContext,
   RuntimeLifecycleHook,
+  RuntimeSnapshot,
   ViewRoleContext,
   ZoneDefinitions,
   ZoneConfig,
   ZoneMutationAPI,
   ZoneQueryAPI,
 } from "./match-runtime.types";
-export class MatchRuntime<
-  G,
-  Moves extends Record<string, MoveDefinition<G, any, any, any, any>>,
-  TCardDefinition extends BaseCardDefinition = BaseCardDefinition,
-  TCardDerived extends object = {},
-  TBoardView = FilteredMatchView<G>,
-> {
-  private config: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived, TBoardView>;
-  private staticResources: MatchStaticResources<TCardDefinition>;
+export class MatchRuntime {
+  private config: MatchRuntimeConfig;
+  private staticResources: MatchStaticResources;
   private publishedGameEvents: PublishedGameEvent[] = [];
   private gameLog: GameLogEntry[] = [];
   private nextGameEventSeq = 0;
@@ -127,29 +113,20 @@ export class MatchRuntime<
   private gameEnded = false;
   private gameEndResult?: GameEndResult;
 
-  private state: MatchState<G>;
-  private board: TBoardView;
+  private state: MatchState;
+  private board: FilteredMatchView;
 
-  constructor(
-    config: MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived, TBoardView>,
-    init: MatchRuntimeInit<TCardDefinition>,
-  ) {
+  constructor(config: MatchRuntimeConfig, init: MatchRuntimeInit) {
     this.config = config;
     // this.cardsMaps = deepFreeze(init.cardsMaps);
-    this.staticResources = createMatchStaticResourcesFromCardsMaps<TCardDefinition>(
+    this.staticResources = createMatchStaticResourcesFromCardsMaps(
       init.cardsMaps,
       init.cardCatalog,
       config.zones,
     );
 
-    const { state, board } = initializeMatchState<
-      G,
-      Moves,
-      TCardDefinition,
-      TCardDerived,
-      TBoardView
-    >({
-      config: config as unknown as MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>,
+    const { state, board } = initializeMatchState({
+      config: config as unknown as MatchRuntimeConfig,
       players: init.players,
       seed: init.seed,
       matchID: init.matchID,
@@ -159,7 +136,7 @@ export class MatchRuntime<
     });
 
     this.state = state;
-    this.board = board;
+    this.board = board as FilteredMatchView;
   }
 
   /**
@@ -170,7 +147,7 @@ export class MatchRuntime<
    * Before loading the state, we instantiate a new Engine, e.g `new LorcanaEngine(playersInfo, init);`
    * This should be enough to ensure that config, and static resources, are set up correctly.
    */
-  loadState(state: MatchState<G>): void {
+  loadState(state: MatchState): void {
     this.state = state;
     this.gameEnded = state.ctx.status.gameEnded ?? false;
     this.gameEndResult = state.ctx.status.gameEnded
@@ -197,30 +174,11 @@ export class MatchRuntime<
 
     const execResult = executeCommand(command, playerId, prevStateID, timestamp, {
       state: this.state,
-      config: this.config as unknown as MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>,
+      config: this.config as unknown as MatchRuntimeConfig,
+      staticResources: this.staticResources,
       actorRole,
       gameEnded: this.gameEnded,
       currentStateID: this.state.ctx._stateID,
-      buildValidationContext: (pid, input, validationMode) =>
-        this.buildValidationContext(pid, input, validationMode),
-      buildExecutionContext: (draft, pid, input, tracker, emitGameEvent, moveLogSink) =>
-        this.buildExecutionContext(draft, pid, input, tracker, emitGameEvent, moveLogSink),
-      buildLifecycleContext: (
-        draft,
-        pid,
-        lifecycleGameEnded,
-        emitGameEvent,
-        tracker,
-        moveLogSink,
-      ) =>
-        this.buildLifecycleContext(
-          draft,
-          pid,
-          lifecycleGameEnded,
-          emitGameEvent,
-          tracker,
-          moveLogSink,
-        ),
     });
 
     this.state = execResult.newState;
@@ -265,6 +223,7 @@ export class MatchRuntime<
       logEntries,
       processedCommand: command,
       animations: [],
+      undoable: execResult.result.undoable,
     };
   }
 
@@ -307,15 +266,16 @@ export class MatchRuntime<
         move: "__priorityPass",
       },
       animations: [],
+      undoable: false,
     };
   }
 
   // Queries
-  getState(): MatchState<G> {
+  getState(): MatchState {
     return this.state;
   }
 
-  getBoard(): TBoardView {
+  getBoard(): FilteredMatchView {
     return this.board;
   }
 
@@ -335,21 +295,21 @@ export class MatchRuntime<
     return [...this.gameLog];
   }
 
-  getRuntimeConfig(): MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived, TBoardView> {
+  getRuntimeConfig(): MatchRuntimeConfig {
     return this.config;
   }
 
   getStaticResourceRefs(): StaticResourceRefs {
     return getStaticResourceRefs(this.staticResources);
   }
-  getFilteredView(roleCtx: ViewRoleContext): FilteredMatchView<G> {
+  getFilteredView(roleCtx: ViewRoleContext): FilteredMatchView {
     return getFilteredView(this.getQueryContext(), roleCtx);
   }
 
   getProjectedBoardView(
     roleCtx: ViewRoleContext,
     projectionCtx: RuntimeBoardProjectionContext,
-  ): TBoardView | undefined {
+  ): FilteredMatchView | undefined {
     if (typeof this.config.projectBoard === "function") {
       return this.config.projectBoard(
         this.getState(),
@@ -365,15 +325,13 @@ export class MatchRuntime<
   enumerateMovesForPlayer(
     playerId: string,
     actorRole: RuntimeActorRole = "player",
-  ): RuntimeLegalMove<Moves>[] {
+  ): RuntimeLegalMove<MoveRecord>[] {
     if (!playerId) {
       return [];
     }
 
-    const legalMoves: RuntimeLegalMove<Moves>[] = [];
-    const moveEntries = Object.entries(this.config.moves) as Array<
-      [string, MoveDefinition<G, TCardDefinition, MoveInput, unknown, TCardDerived>]
-    >;
+    const legalMoves: RuntimeLegalMove<MoveRecord>[] = [];
+    const moveEntries = Object.entries(this.config.moves) as Array<[string, MoveDefinition]>;
 
     if (this.gameEnded || this.state.ctx.status.gameEnded) {
       return [];
@@ -388,18 +346,14 @@ export class MatchRuntime<
     delete enumerationContextCandidate.args;
     delete enumerationContextCandidate.params;
     delete enumerationContextCandidate.validationMode;
-    const enumerationContext = enumerationContextCandidate as unknown as MoveEnumerationContext<
-      G,
-      TCardDefinition,
-      TCardDerived
-    >;
+    const enumerationContext = enumerationContextCandidate as unknown as MoveEnumerationContext;
 
     for (const [moveId, moveDef] of moveEntries) {
       if (!moveDef || (actorRole === "player" && moveDef.serverOnly)) {
         continue;
       }
       if (
-        !isMoveAllowedByFlow<G, TCardDefinition, TCardDerived>(
+        !isMoveAllowedByFlow(
           this.config.flow,
           this.state.ctx.status.phase,
           moveId,
@@ -421,13 +375,13 @@ export class MatchRuntime<
         continue;
       }
 
-      legalMoves.push(moveId as keyof Moves & string);
+      legalMoves.push(moveId as keyof MoveRecord & string);
     }
 
     return legalMoves;
   }
 
-  enumerateMoves(actorRole: RuntimeActorRole = "player"): RuntimeLegalMove<Moves>[] {
+  enumerateMoves(actorRole: RuntimeActorRole = "player"): RuntimeLegalMove<MoveRecord>[] {
     const playerId = this.state.ctx.priority.holder ?? this.state.ctx.playerIds[0];
     if (!playerId) {
       return [];
@@ -444,12 +398,11 @@ export class MatchRuntime<
   ): { valid: boolean; reason?: string; code?: string } {
     const result = validateRuntimeCommand(command, playerId, prevStateID, {
       state: this.state,
-      config: this.config as unknown as MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>,
+      config: this.config as unknown as MatchRuntimeConfig,
+      staticResources: this.staticResources,
       actorRole,
       gameEnded: this.gameEnded,
       currentStateID: this.state.ctx._stateID,
-      buildValidationContext: (pid, input, validationMode) =>
-        this.buildValidationContext(pid, input, validationMode),
     });
 
     if (!result.valid) {
@@ -465,11 +418,85 @@ export class MatchRuntime<
     };
   }
 
+  createRuntimeSnapshot(): RuntimeSnapshot {
+    return {
+      publishedGameEventsLength: this.publishedGameEvents.length,
+      gameLogLength: this.gameLog.length,
+      nextGameEventSeq: this.nextGameEventSeq,
+      nextGameLogSeq: this.nextGameLogSeq,
+      gameEnded: this.gameEnded,
+      gameEndResult: this.gameEndResult,
+    };
+  }
+
+  restoreState(
+    state: MatchState,
+    snapshot: RuntimeSnapshot,
+    options?: {
+      preserveHistory?: boolean;
+      newStateID?: number;
+    },
+  ): void {
+    const restoredState = structuredClone(state) as MatchState;
+    if (typeof options?.newStateID === "number") {
+      restoredState.ctx._stateID = options.newStateID;
+    }
+
+    this.state = restoredState;
+    if (!options?.preserveHistory) {
+      this.publishedGameEvents.length = snapshot.publishedGameEventsLength;
+      this.gameLog.length = snapshot.gameLogLength;
+      this.nextGameEventSeq = snapshot.nextGameEventSeq;
+      this.nextGameLogSeq = snapshot.nextGameLogSeq;
+    }
+    this.gameEnded = snapshot.gameEnded;
+    this.gameEndResult = snapshot.gameEndResult;
+  }
+
+  appendSyntheticCommand(
+    command: CommandEnvelope,
+    playerId: string,
+    timestamp: number,
+  ): {
+    gameEvents: PublishedGameEvent[];
+    logEntries: GameLogEntry[];
+  } {
+    const gameEvents = this.publishGameEvents(
+      [
+        {
+          kind: "MOVE_EXECUTED",
+          commandId: command.commandID ?? `cmd-${timestamp}`,
+          move: command.move,
+          playerId,
+          inputRedacted: Boolean(command.redactInput),
+          input: command.redactInput ? "[REDACTED]" : command.input,
+        },
+      ],
+      this.state.ctx._stateID,
+      timestamp,
+    );
+    const projectedLogResult = projectGameLog({
+      publishedGameEvents: gameEvents,
+      state: this.state,
+      nextGameLogSeq: this.nextGameLogSeq,
+      logProjector: this.config.logProjector,
+    });
+
+    this.nextGameLogSeq = projectedLogResult.nextGameLogSeq;
+    this.publishedGameEvents.push(...gameEvents);
+    this.gameLog.push(...projectedLogResult.logEntries);
+
+    return {
+      gameEvents,
+      logEntries: projectedLogResult.logEntries,
+    };
+  }
+
   // Private helpers
-  private getQueryContext(): QueryContext<G, Moves, TCardDefinition, TCardDerived> {
+  private getQueryContext(): QueryContext {
     return {
       state: this.state,
-      config: this.config as unknown as MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>,
+      config: this.config as unknown as MatchRuntimeConfig,
       staticResources: this.staticResources,
       gameEnded: this.gameEnded,
       gameEvents: this.publishedGameEvents,
@@ -480,54 +507,15 @@ export class MatchRuntime<
     playerId: string,
     input: MoveInput,
     validationMode: "preflight" | "final" = "final",
-  ): MoveValidationContext<G, TCardDefinition, MoveInput, TCardDerived> {
+  ): MoveValidationContext<MoveInput> {
     return buildValidationContext(
       this.state,
       playerId,
       input,
-      this.config as unknown as MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>,
+      this.config as unknown as MatchRuntimeConfig,
       this.staticResources,
       this.gameEnded,
       validationMode,
-    );
-  }
-  private buildExecutionContext(
-    draft: Draft<MatchState<G>>,
-    playerId: string,
-    input: MoveInput,
-    endGameTracker: { ended: boolean; result?: GameEndResult },
-    emitGameEvent: (event: GameEvent) => void,
-    moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
-  ): MoveExecutionContext<G, TCardDefinition, MoveInput, TCardDerived> {
-    return buildExecutionContext(
-      draft,
-      playerId,
-      input,
-      this.config as unknown as MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>,
-      this.staticResources,
-      this.gameEnded,
-      emitGameEvent,
-      endGameTracker,
-      moveLogSink,
-    );
-  }
-  private buildLifecycleContext(
-    draft: Draft<MatchState<G>>,
-    playerId: string | undefined,
-    gameEnded: boolean,
-    emitGameEvent: (event: GameEvent) => void,
-    endGameTracker: { ended: boolean; result?: GameEndResult },
-    moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
-  ): RuntimeLifecycleContext<G, TCardDefinition, TCardDerived> {
-    return buildLifecycleContext(
-      draft,
-      this.config as unknown as MatchRuntimeConfig<G, Moves, TCardDefinition, TCardDerived>,
-      this.staticResources,
-      gameEnded,
-      emitGameEvent,
-      endGameTracker,
-      playerId,
-      moveLogSink,
     );
   }
 

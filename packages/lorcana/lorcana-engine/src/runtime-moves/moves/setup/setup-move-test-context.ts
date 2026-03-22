@@ -1,4 +1,5 @@
 import type {
+  BaseCardDefinition,
   CardQueryAPI,
   DeepReadonly,
   MatchState,
@@ -31,7 +32,7 @@ type EnumerateContextShape = {
 };
 
 type ContextBuilderOptions = {
-  state: DeepReadonly<MatchState<unknown>>;
+  state: DeepReadonly<MatchState>;
   playerIds: readonly PlayerId[];
   playerId?: PlayerId;
 };
@@ -52,7 +53,7 @@ const TEST_TIME_QUERY_API: TimeQueryAPI = {
 };
 
 function createCardQueryAPI(
-  state: DeepReadonly<MatchState<unknown>>,
+  state: DeepReadonly<MatchState>,
   actorPlayerId?: PlayerId,
 ): CardQueryAPI {
   const getZoneIdsForQuery = (targetDsl: { zones?: readonly string[] }): string[] => {
@@ -94,7 +95,7 @@ function createCardQueryAPI(
     return selected;
   };
 
-  const getZoneCards = (zoneId: string): RuntimeCardWithDefinition<TestCardDefinition>[] => {
+  const getZoneCards = (zoneId: string): RuntimeCardWithDefinition[] => {
     const cardIds = state.ctx.zones.private.zoneCards[zoneId] ?? [];
     return cardIds.map((cardId) => createRuntimeCardView(state, cardId));
   };
@@ -119,18 +120,14 @@ function createCardQueryAPI(
     getDefinition: () => undefined,
     getDefinitionById: () => undefined,
     inZone: (zoneId: string) => getZoneCards(zoneId),
-    queryRuntime: <
-      TResult = RuntimeCardWithDefinition<TestCardDefinition, Record<string, unknown>>,
-    >(
+    queryRuntime: <TResult = RuntimeCardWithDefinition>(
       targetDsl: RuntimeCardTargetQuery,
-      projector?: (
-        card: RuntimeCardWithDefinition<TestCardDefinition, Record<string, unknown>>,
-      ) => TResult,
+      projector?: (card: RuntimeCardWithDefinition) => TResult,
     ): TResult[] => {
       const owner = targetDsl.owner ?? "any";
       const zoneIds = getZoneIdsForQuery(targetDsl);
       const seenCards = new Set<string>();
-      const cards: RuntimeCardWithDefinition<TestCardDefinition, Record<string, unknown>>[] = [];
+      const cards: RuntimeCardWithDefinition[] = [];
 
       for (const zoneId of zoneIds) {
         for (const card of getZoneCards(zoneId)) {
@@ -161,7 +158,7 @@ function createCardQueryAPI(
   return api as unknown as CardQueryAPI;
 }
 
-function resolveZoneId(state: DeepReadonly<MatchState<unknown>>, zoneRef: ZoneRef): string {
+function resolveZoneId(state: DeepReadonly<MatchState>, zoneRef: ZoneRef): string {
   if (zoneRef.zone.includes(":")) {
     return zoneRef.zone;
   }
@@ -180,9 +177,9 @@ function resolveZoneId(state: DeepReadonly<MatchState<unknown>>, zoneRef: ZoneRe
 }
 
 function createRuntimeCardView(
-  state: DeepReadonly<MatchState<unknown>>,
+  state: DeepReadonly<MatchState>,
   cardId: string,
-): RuntimeCardWithDefinition<TestCardDefinition, Record<string, unknown>> {
+): RuntimeCardWithDefinition {
   const cardIndex = state.ctx.zones.private.cardIndex[cardId];
   return {
     instanceId: cardId,
@@ -191,7 +188,7 @@ function createRuntimeCardView(
       id: cardId,
       canonicalId: cardId,
       name: cardId,
-    },
+    } as unknown as BaseCardDefinition,
     ownerID: cardIndex?.ownerID ?? "unknown",
     controllerID: cardIndex?.controllerID ?? cardIndex?.ownerID ?? "unknown",
     zoneID: cardIndex?.zoneKey,
@@ -200,7 +197,7 @@ function createRuntimeCardView(
   };
 }
 
-function createZoneQueryAPI(state: DeepReadonly<MatchState<unknown>>): ZoneQueryAPI {
+function createZoneQueryAPI(state: DeepReadonly<MatchState>): ZoneQueryAPI {
   const getCards = (zoneRef: ZoneRef): string[] => {
     const zoneId = resolveZoneId(state, zoneRef);
     return [...(state.ctx.zones.private.zoneCards[zoneId] ?? [])];
@@ -260,7 +257,9 @@ function createBaseMoveContext({ state, playerIds, playerId }: ContextBuilderOpt
   const zoneApi = createZoneQueryAPI(state);
   const cardsApi = createCardQueryAPI(state, resolvedPlayerId);
   const frameworkState = {
-    ctx: state.ctx,
+    priority: state.ctx.priority,
+    status: state.ctx.status,
+    _zonesPrivate: state.ctx.zones.private,
     playerIds: [...playerIds],
     turn: state.ctx.status.turn,
     phase: state.ctx.status.phase,

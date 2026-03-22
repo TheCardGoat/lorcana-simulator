@@ -1,65 +1,58 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   DonaldDuckMusketeer,
-//   MickeyMouseMusketeer,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { hiramFlavershamToymaker } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import { goofyMusketeerSwordsman } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Goofy Musketeer - Swordsman", () => {
-//   It("**EN GAWRSH!** Whenever you play a character with **Bodyguard**, ready this character. He can't quest for the rest of this turn.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: 10,
-//         Play: [goofyMusketeerSwordsman],
-//         Hand: [mickeyMouseMusketeer, donaldDuckMusketeer],
-//       },
-//       {
-//         Play: [hiramFlavershamToymaker],
-//       },
-//     );
-//
-//     Const cardUnderTest = testEngine.getCardModel(goofyMusketeerSwordsman);
-//     Const target = testEngine.getCardModel(hiramFlavershamToymaker);
-//
-//     Await testEngine.tapCard(target);
-//
-//     // Questing should work and exert goofy
-//     Await testEngine.questCard(goofyMusketeerSwordsman);
-//     Expect(cardUnderTest.exerted).toBe(true);
-//
-//     // Playing a musketeer should ready goofy and set quest restriction
-//     Await testEngine.playCard(mickeyMouseMusketeer, { bodyguard: true });
-//
-//     Expect(cardUnderTest.exerted).toBe(false);
-//     Expect(cardUnderTest.hasQuestRestriction).toBe(true);
-//
-//     // Challenging should work and banish target, goofy should be exerted
-//     Await testEngine.challenge({
-//       Attacker: cardUnderTest,
-//       Defender: target,
-//     });
-//     Expect(cardUnderTest.exerted).toBe(true);
-//
-//     // Playing a musketeer should ready goofy
-//     Await testEngine.playCard(donaldDuckMusketeer, { bodyguard: true });
-//
-//     Expect(cardUnderTest.exerted).toBe(false);
-//
-//     // Challenging again shoud work and banish target, goofy should be exerted
-//     Await testEngine.challenge({
-//       Attacker: cardUnderTest,
-//       Defender: target,
-//     });
-//     Expect(cardUnderTest.exerted).toBe(true);
-//     Expect(cardUnderTest.damage).toBe(2);
-//     Expect(target.zone).toEqual("discard");
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { goofyMusketeerSwordsman } from "./012-goofy-musketeer-swordsman";
+import { donaldDuckMusketeerSoldier } from "./008-donald-duck-musketeer-soldier";
+
+const nonBodyguardAlly = createMockCharacter({
+  id: "goofy-musketeer-swordsman-non-bodyguard-ally",
+  name: "Non-Bodyguard Ally",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+describe("Goofy - Musketeer Swordsman", () => {
+  describe("EN GAWRSH! - Whenever you play a character with Bodyguard, ready this character. He can't quest for the rest of this turn.", () => {
+    it("readies Goofy and stops him from questing for the rest of the turn when you play a Bodyguard character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: goofyMusketeerSwordsman, isDrying: false }],
+        hand: [donaldDuckMusketeerSoldier],
+        inkwell: donaldDuckMusketeerSoldier.cost,
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().quest(goofyMusketeerSwordsman)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().isExerted(goofyMusketeerSwordsman)).toBe(true);
+
+      expect(testEngine.asPlayerOne().playCard(donaldDuckMusketeerSoldier)).toBeSuccessfulCommand();
+      const goofyBagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
+      expect(testEngine.asPlayerOne().resolveBag(goofyBagId)).toBeSuccessfulCommand();
+      const donaldBagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
+      expect(
+        testEngine.asPlayerOne().resolveBag(donaldBagId, { targets: [goofyMusketeerSwordsman] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().isExerted(goofyMusketeerSwordsman)).toBe(false);
+      expect(testEngine.hasRestriction(goofyMusketeerSwordsman, "cant-quest")).toBe(true);
+    });
+
+    it("does not trigger when you play a character without Bodyguard", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: goofyMusketeerSwordsman, isDrying: false }],
+        hand: [nonBodyguardAlly],
+        inkwell: nonBodyguardAlly.cost,
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().quest(goofyMusketeerSwordsman)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().isExerted(goofyMusketeerSwordsman)).toBe(true);
+
+      expect(testEngine.asPlayerOne().playCard(nonBodyguardAlly)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().isExerted(goofyMusketeerSwordsman)).toBe(true);
+      expect(testEngine.hasRestriction(goofyMusketeerSwordsman, "cant-quest")).toBe(false);
+    });
+  });
+});

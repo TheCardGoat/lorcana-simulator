@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { penumbraMoonAlienI18n } from "./084-penumbra-moon-alien.i18n";
 
 export const penumbraMoonAlien: CharacterCard = {
   id: "tak",
@@ -7,24 +8,6 @@ export const penumbraMoonAlien: CharacterCard = {
   cardType: "character",
   name: "Penumbra",
   version: "Moon Alien",
-  i18n: {
-    en: {
-      name: "Penumbra",
-      version: "Moon Alien",
-    },
-    de: {
-      name: "Penumbra",
-      version: "Alien vom Mond",
-    },
-    fr: {
-      name: "Pénombre",
-      version: "Extraterrestre lunaire",
-    },
-    it: {
-      name: "Penumbra",
-      version: "Aliena Lunare",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Ducktales",
   set: "010",
@@ -41,4 +24,5 @@ export const penumbraMoonAlien: CharacterCard = {
     tcgPlayer: 660366,
   },
   classifications: ["Storyborn", "Alien"],
+  i18n: penumbraMoonAlienI18n,
 };

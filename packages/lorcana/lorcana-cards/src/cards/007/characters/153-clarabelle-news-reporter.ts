@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { clarabelleNewsReporterI18n } from "./153-clarabelle-news-reporter.i18n";
 
 export const clarabelleNewsReporter: CharacterCard = {
   id: "ykh",
@@ -7,36 +8,6 @@ export const clarabelleNewsReporter: CharacterCard = {
   cardType: "character",
   name: "Clarabelle",
   version: "News Reporter",
-  i18n: {
-    en: {
-      name: "Clarabelle",
-      version: "News Reporter",
-      text: [
-        {
-          title: "Support",
-        },
-        {
-          title: "BREAKING STORY",
-          description: "Your other characters with Support get +1 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Klarabella",
-      version: "Nachrichtenreporterin",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.) EILMELDUNG Deine anderen Charaktere mit Unterstützen erhalten +1.",
-    },
-    fr: {
-      name: "Clarabelle",
-      version: "Journaliste",
-      text: "Soutien SCOOP Vos autres personnages avec Soutien gagnent +1.",
-    },
-    it: {
-      name: "Clarabella",
-      version: "Giornalista",
-      text: "Aiutante NOTIZIA BOMBA I tuoi altri personaggi con Aiutante ricevono +1.",
-    },
-  },
   inkType: ["sapphire"],
   set: "007",
   cardNumber: 153,
@@ -79,4 +50,5 @@ export const clarabelleNewsReporter: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: clarabelleNewsReporterI18n,
 };

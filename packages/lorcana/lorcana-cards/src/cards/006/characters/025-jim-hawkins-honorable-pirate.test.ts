@@ -1,20 +1,58 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { jimHawkinsHonorablePirate } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Jim Hawkins - Honorable Pirate", () => {
-//   It.skip("**Bodyguard** _(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)_**HIRE A CREW** When you play this character, look at the top 4 cards of your deck. You may reveal any number of Pirate character cards and put them into your hand. Put the rest on the bottom of your deck in any order.", () => {
-//     Const testStore = new TestStore({
-//       Play: [jimHawkinsHonorablePirate],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(jimHawkinsHonorablePirate);
-//     Expect(cardUnderTest.hasBodyguard).toBe(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { jimHawkinsHonorablePirate } from "./025-jim-hawkins-honorable-pirate";
+
+const pirateA = createMockCharacter({
+  id: "pirate-a",
+  name: "Pirate A",
+  cost: 2,
+  classifications: ["Storyborn", "Pirate"],
+});
+
+const pirateB = createMockCharacter({
+  id: "pirate-b",
+  name: "Pirate B",
+  cost: 3,
+  classifications: ["Dreamborn", "Pirate"],
+});
+
+const nonMatchA = createMockCharacter({
+  id: "non-match-a",
+  name: "Non Match A",
+  cost: 1,
+  classifications: ["Storyborn", "Hero"],
+});
+
+const nonMatchB = createMockCharacter({
+  id: "non-match-b",
+  name: "Non Match B",
+  cost: 4,
+  classifications: ["Dreamborn", "Villain"],
+});
+
+describe("Jim Hawkins - Honorable Pirate", () => {
+  it("HIRE A CREW - reveals Pirate characters to hand, puts rest on bottom", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [jimHawkinsHonorablePirate],
+      inkwell: jimHawkinsHonorablePirate.cost,
+      deck: [nonMatchA, pirateA, pirateB, nonMatchB],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(jimHawkinsHonorablePirate)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [
+          { zone: "hand", cards: [pirateA, pirateB] },
+          { zone: "deck-bottom", cards: [nonMatchB, nonMatchA] },
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(pirateA)).toBe("hand");
+    expect(testEngine.asPlayerOne().getCardZone(pirateB)).toBe("hand");
+  });
+});

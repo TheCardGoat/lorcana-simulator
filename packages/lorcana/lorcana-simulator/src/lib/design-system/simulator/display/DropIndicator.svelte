@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cn } from "$lib/utils.js";
-  import { m } from "$lib/paraglide/messages.js";
+  import { m } from "$lib/i18n/messages.js";
 
   type DropState = "valid" | "invalid";
 

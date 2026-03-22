@@ -2,14 +2,14 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testMatch: "**/*.e2e.ts",
+  testDir: "e2e",
   webServer: {
-    command: "npm run dev -- --host 127.0.0.1 --port 4173",
-    url: "http://127.0.0.1:4173",
+    command: "bunx --bun vite dev --host 127.0.0.1 --port 5174",
+    url: "http://127.0.0.1:5174",
     reuseExistingServer: true,
     timeout: 120000,
   },
-  testDir: "e2e",
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: "http://127.0.0.1:5174",
   },
 });

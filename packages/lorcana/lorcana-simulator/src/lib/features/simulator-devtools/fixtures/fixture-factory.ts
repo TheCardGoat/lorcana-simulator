@@ -1,26 +1,38 @@
 import { getLogger } from "@logtape/logtape";
-import { all001Cards } from "@tcg/lorcana-cards/cards/001";
-import { all002Cards } from "@tcg/lorcana-cards/cards/002";
-import { all003Cards } from "@tcg/lorcana-cards/cards/003";
-import { all004Cards } from "@tcg/lorcana-cards/cards/004";
-import { all005Cards } from "@tcg/lorcana-cards/cards/005";
-import { all006Cards } from "@tcg/lorcana-cards/cards/006";
-import { all007Cards } from "@tcg/lorcana-cards/cards/007";
-import { all008Cards } from "@tcg/lorcana-cards/cards/008";
-import { all009Cards } from "@tcg/lorcana-cards/cards/009";
-import { all010Cards } from "@tcg/lorcana-cards/cards/010";
-import { all011Cards } from "@tcg/lorcana-cards/cards/011";
+import * as cards001Module from "@tcg/lorcana-cards/cards/001";
+import * as cards002Module from "@tcg/lorcana-cards/cards/002";
+import * as cards003Module from "@tcg/lorcana-cards/cards/003";
+import * as cards004Module from "@tcg/lorcana-cards/cards/004";
+import * as cards005Module from "@tcg/lorcana-cards/cards/005";
+import * as cards006Module from "@tcg/lorcana-cards/cards/006";
+import * as cards007Module from "@tcg/lorcana-cards/cards/007";
+import * as cards008Module from "@tcg/lorcana-cards/cards/008";
+import * as cards009Module from "@tcg/lorcana-cards/cards/009";
+import * as cards010Module from "@tcg/lorcana-cards/cards/010";
+import * as cards011Module from "@tcg/lorcana-cards/cards/011";
 import type { LorcanaCard } from "@tcg/lorcana-engine";
 import type { TestInitialState } from "@tcg/lorcana-engine/testing";
-import {
-  resolveLorcanaDeckListTextFromPool,
-  type LorcanaDeckListResolutionDiagnostics,
-} from "@tcg/lorcana-cards/deck-list-resolver";
+import * as deckListResolverModule from "@tcg/lorcana-cards/deck-list-resolver";
+import type { LorcanaDeckListResolutionDiagnostics } from "@tcg/lorcana-cards/deck-list-resolver";
 import type { LorcanaSimulatorFixture } from "@/features/simulator/model/contracts.js";
 
 type FixturePlayerInput = Omit<TestInitialState, "deck"> & {
   deck?: TestInitialState["deck"] | string;
 };
+
+const { all001Cards } = cards001Module as typeof import("@tcg/lorcana-cards/cards/001");
+const { all002Cards } = cards002Module as typeof import("@tcg/lorcana-cards/cards/002");
+const { all003Cards } = cards003Module as typeof import("@tcg/lorcana-cards/cards/003");
+const { all004Cards } = cards004Module as typeof import("@tcg/lorcana-cards/cards/004");
+const { all005Cards } = cards005Module as typeof import("@tcg/lorcana-cards/cards/005");
+const { all006Cards } = cards006Module as typeof import("@tcg/lorcana-cards/cards/006");
+const { all007Cards } = cards007Module as typeof import("@tcg/lorcana-cards/cards/007");
+const { all008Cards } = cards008Module as typeof import("@tcg/lorcana-cards/cards/008");
+const { all009Cards } = cards009Module as typeof import("@tcg/lorcana-cards/cards/009");
+const { all010Cards } = cards010Module as typeof import("@tcg/lorcana-cards/cards/010");
+const { all011Cards } = cards011Module as typeof import("@tcg/lorcana-cards/cards/011");
+const { resolveLorcanaDeckListTextFromPool } =
+  deckListResolverModule as typeof import("@tcg/lorcana-cards/deck-list-resolver");
 
 export type LorcanaSimulatorFixtureInput = Omit<
   LorcanaSimulatorFixture,

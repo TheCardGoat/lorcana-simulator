@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { minnieMouseSpinningSkaterI18n } from "./072-minnie-mouse-spinning-skater.i18n";
 
 export const minnieMouseSpinningSkater: CharacterCard = {
   id: "f22",
@@ -7,24 +8,6 @@ export const minnieMouseSpinningSkater: CharacterCard = {
   cardType: "character",
   name: "Minnie Mouse",
   version: "Spinning Skater",
-  i18n: {
-    en: {
-      name: "Minnie Mouse",
-      version: "Spinning Skater",
-    },
-    de: {
-      name: "Minnie Maus",
-      version: "Schraubende Skaterin",
-    },
-    fr: {
-      name: "Minnie",
-      version: "Patineuse virevoltante",
-    },
-    it: {
-      name: "Minni",
-      version: "Pattinatrice Piroettante",
-    },
-  },
   inkType: ["emerald"],
   set: "011",
   cardNumber: 72,
@@ -40,4 +23,5 @@ export const minnieMouseSpinningSkater: CharacterCard = {
     tcgPlayer: 673430,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: minnieMouseSpinningSkaterI18n,
 };

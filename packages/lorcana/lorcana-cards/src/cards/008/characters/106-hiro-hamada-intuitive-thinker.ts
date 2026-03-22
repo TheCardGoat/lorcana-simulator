@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hiroHamadaIntuitiveThinkerI18n } from "./106-hiro-hamada-intuitive-thinker.i18n";
 
 export const hiroHamadaIntuitiveThinker: CharacterCard = {
   id: "OeW",
@@ -7,48 +8,6 @@ export const hiroHamadaIntuitiveThinker: CharacterCard = {
   cardType: "character",
   name: "Hiro Hamada",
   version: "Intuitive Thinker",
-  i18n: {
-    en: {
-      name: "Hiro Hamada",
-      version: "Intuitive Thinker",
-      text: [
-        {
-          title: "LOOK FOR A NEW ANGLE",
-          description: "{E} — Ready chosen Floodborn character.",
-        },
-      ],
-    },
-    de: {
-      name: "Hiro Hamada",
-      version: "Intuitiver Denker",
-      text: [
-        {
-          title: "SUCHE EINEN NEUEN BLICKWINKEL",
-          description: "— Mache eine Flutgestalt deiner Wahl bereit.",
-        },
-      ],
-    },
-    fr: {
-      name: "Hiro Hamada",
-      version: "Penseur intuitif",
-      text: [
-        {
-          title: "VOYEZ LES CHOSES SOUS UN AUTRE ANGLE",
-          description: "— Choisissez un personnage Floodborn et redressez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Hiro Hamada",
-      version: "Pensatore Intuitivo",
-      text: [
-        {
-          title: "GUARDATE DA UN'ALTRA PROSPETTIVA",
-          description: "— Prepara un personaggio Imbevuto a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald", "sapphire"],
   franchise: "Big Hero 6",
   set: "008",
@@ -71,4 +30,5 @@ export const hiroHamadaIntuitiveThinker: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Inventor"],
   abilities: [],
+  i18n: hiroHamadaIntuitiveThinkerI18n,
 };

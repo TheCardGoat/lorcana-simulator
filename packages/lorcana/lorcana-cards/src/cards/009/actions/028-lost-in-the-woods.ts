@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { lostInTheWoodsI18n } from "./028-lost-in-the-woods.i18n";
 
 export const lostInTheWoods: ActionCard = {
   id: "5np",
@@ -6,24 +7,6 @@ export const lostInTheWoods: ActionCard = {
   reprints: ["set4-029", "set9-028"],
   cardType: "action",
   name: "Lost in the Woods",
-  i18n: {
-    en: {
-      name: "Lost in the Woods",
-      text: "All opposing characters get -2 {S} until the start of your next turn.",
-    },
-    de: {
-      name: "Verlassen im Wald",
-      text: "Gib allen gegnerischen Charakteren bis zu Beginn deines nächsten Zuges -2.",
-    },
-    fr: {
-      name: "J'ai perdu le Nord",
-      text: "Tous les personnages adverses subissent -2 jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Perso Quaggiù",
-      text: "(Un personaggio con costo 4 o superiore può per cantare questa canzone gratis.) Tutti i personaggi avversari ricevono -2 fino all'inizio del tuo prossimo turno.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Frozen",
   set: "009",
@@ -49,4 +32,5 @@ export const lostInTheWoods: ActionCard = {
       },
     },
   ],
+  i18n: lostInTheWoodsI18n,
 };

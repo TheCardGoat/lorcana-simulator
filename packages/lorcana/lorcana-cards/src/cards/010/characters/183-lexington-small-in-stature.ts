@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lexingtonSmallInStatureI18n } from "./183-lexington-small-in-stature.i18n";
 
 export const lexingtonSmallInStature: CharacterCard = {
   id: "1Mx",
@@ -7,49 +8,6 @@ export const lexingtonSmallInStature: CharacterCard = {
   cardType: "character",
   name: "Lexington",
   version: "Small in Stature",
-  i18n: {
-    en: {
-      name: "Lexington",
-      version: "Small in Stature",
-      text: [
-        {
-          title: "Alert",
-          description: "(This character can challenge as if they had Evasive.)",
-        },
-        {
-          title: "STONE BY DAY",
-          description: "If you have 3 or more cards in your hand, this character can't ready.",
-        },
-      ],
-    },
-    de: {
-      name: "Lexington",
-      version: "Von kleiner Statur",
-      text: [
-        {
-          title: "Alarmiert",
-          description:
-            "(Dieser Charakter kann herausfordern, als hätte er Wendig.) AM TAGE AUS STEIN Solange du 3 oder mehr Karten auf der Hand hast, kann dieser Charakter nicht bereit gemacht werden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Lexington",
-      version: "De petite stature",
-      text: "Agilité (Ce personnage peut défier comme s'il avait Insaisissable.) STATUE LE JOUR Ce personnage ne peut pas se redresser si vous avez 3 cartes ou plus en main.",
-    },
-    it: {
-      name: "Lexington",
-      version: "Piccoletto",
-      text: [
-        {
-          title: "Vigile",
-          description:
-            "(Questo personaggio può sfidare come se avesse Sfuggente.) STATUE DI GIORNO Se hai 3 o più carte in mano, questo personaggio non si può preparare.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Gargoyles",
   set: "010",
@@ -83,29 +41,23 @@ export const lexingtonSmallInStature: CharacterCard = {
       type: "keyword",
     },
     {
-      effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["hand"],
-          },
-          comparison: {
-            operator: "gte",
-            value: 3,
-          },
-        },
-        then: {
-          restriction: "cant-ready",
-          target: "SELF",
-          type: "restriction",
-        },
-        type: "conditional",
-      },
       id: "wbg-2",
+      name: "STONE BY DAY",
       text: "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
-      type: "action",
+      type: "static",
+      condition: {
+        type: "resource-count",
+        what: "cards-in-hand",
+        controller: "you",
+        comparison: "greater-or-equal",
+        value: 3,
+      },
+      effect: {
+        type: "restriction",
+        restriction: "cant-ready",
+        target: "SELF",
+      },
     },
   ],
+  i18n: lexingtonSmallInStatureI18n,
 };

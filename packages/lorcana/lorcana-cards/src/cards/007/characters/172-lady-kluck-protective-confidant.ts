@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ladyKluckProtectiveConfidantI18n } from "./172-lady-kluck-protective-confidant.i18n";
 
 export const ladyKluckProtectiveConfidant: CharacterCard = {
   id: "wEk",
@@ -7,41 +8,6 @@ export const ladyKluckProtectiveConfidant: CharacterCard = {
   cardType: "character",
   name: "Lady Kluck",
   version: "Protective Confidant",
-  i18n: {
-    en: {
-      name: "Lady Kluck",
-      version: "Protective Confidant",
-      text: [
-        {
-          title: "Bodyguard",
-        },
-        {
-          title: "Ward",
-        },
-      ],
-    },
-    de: {
-      name: "Lady Gluck",
-      version: "Beschützende Vertraute",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.) Behütet",
-    },
-    fr: {
-      name: "Dame Gertrude",
-      version: "Confidente protectrice",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'il défie l'un de vos personnages, un personnage adverse doit, s'il le peut, choisir l'un de vos personnages avec Rempart.) Hors d'atteinte",
-        },
-      ],
-    },
-    it: {
-      name: "Lady Cocca",
-      version: "Confidente Protettiva",
-      text: "Guardiano Protetto",
-    },
-  },
   inkType: ["sapphire", "steel"],
   franchise: "Robin Hood",
   set: "007",
@@ -79,4 +45,5 @@ export const ladyKluckProtectiveConfidant: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: ladyKluckProtectiveConfidantI18n,
 };

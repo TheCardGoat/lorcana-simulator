@@ -10,12 +10,14 @@ import type { DynamicAmountEventSnapshot } from "../../../types/domain-events";
 import type { TargetSelectionInput } from "../../../targeting/runtime";
 
 type PlayCardExecutionContext = Pick<
-  MoveExecutionContext<LorcanaG, LorcanaCard, MoveInput<unknown>>,
+  MoveExecutionContext<MoveInput<unknown>>,
   "G" | "playerId" | "query" | "framework" | "cards"
 >;
 
 type ActionResolutionInput = {
   targets?: TargetSelectionInput;
+  currentTargets?: TargetSelectionInput;
+  contextTargets?: TargetSelectionInput;
   amount?: Amount;
   namedCard?: string;
   resolveOptional?: boolean;
@@ -42,6 +44,7 @@ type SuspendedActionEffect = {
 type ActionResolutionResult = ResolvedActionEffect | SuspendedActionEffect;
 
 type ActionEffectResolutionOptions = {
+  allowPromptForExistingChosenTargets?: boolean;
   continuation?: PendingActionEffectContinuation;
 };
 

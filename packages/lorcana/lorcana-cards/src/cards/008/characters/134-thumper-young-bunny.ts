@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { thumperYoungBunnyI18n } from "./134-thumper-young-bunny.i18n";
 
 export const thumperYoungBunny: CharacterCard = {
   id: "tI0",
@@ -7,48 +8,6 @@ export const thumperYoungBunny: CharacterCard = {
   cardType: "character",
   name: "Thumper",
   version: "Young Bunny",
-  i18n: {
-    en: {
-      name: "Thumper",
-      version: "Young Bunny",
-      text: [
-        {
-          title: "YOU CAN DO IT!",
-          description: "{E} — Chosen character gets +3 this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Klopfer",
-      version: "Junges Häschen",
-      text: [
-        {
-          title: "DAS SCHAFFST DU DOCH!",
-          description: "— Gib einem Charakter deiner Wahl in diesem Zug +3.",
-        },
-      ],
-    },
-    fr: {
-      name: "Panpan",
-      version: "Lapereau",
-      text: [
-        {
-          title: "TU PEUX LE FAIRE!",
-          description: "— Choisissez un personnage qui gagne +3 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Tamburino",
-      version: "Giovane Coniglio",
-      text: [
-        {
-          title: "TU HAI LE GAMBE LUNGHE!",
-          description: "— Un personaggio a tua scelta riceve +3 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Bambi",
   set: "008",
@@ -70,5 +29,29 @@ export const thumperYoungBunny: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      cost: {
+        exert: true,
+      },
+      effect: {
+        duration: "this-turn",
+        modifier: 3,
+        stat: "strength",
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          owner: "any",
+          selector: "chosen",
+          zones: ["play"],
+        },
+        type: "modify-stat",
+      },
+      id: "tI0-1",
+      name: "YOU CAN DO IT!",
+      text: "YOU CAN DO IT! {E} — Chosen character gets +3 this turn.",
+      type: "activated",
+    },
+  ],
+  i18n: thumperYoungBunnyI18n,
 };

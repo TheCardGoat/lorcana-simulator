@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import type { CardInstanceId, PlayerId } from "#core";
-import { LorcanaMultiplayerTestEngine } from "../../testing";
-import { createMockCharacter } from "../../testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "../../testing";
 import { matchesStaticAbilityTarget } from "./static-ability-utils";
 
 describe("static ability utils", () => {
@@ -112,5 +111,83 @@ describe("static ability utils", () => {
 
     expect(testEngine.asPlayerOne().getCard(selfReducer).playCost).toBe(5);
     expect(testEngine.asPlayerOne().playCard(selfReducer)).toBeSuccessfulCommand();
+  });
+
+  it("grants activated abilities from static grant-ability effects to matching characters", () => {
+    const grantSource = createMockCharacter({
+      id: "static-utils-grant-source",
+      name: "Grant Source",
+      cost: 2,
+      abilities: [
+        {
+          id: "static-utils-grant-source-1",
+          name: "WAIT A MINUTE",
+          type: "static",
+          text: 'WAIT A MINUTE Your characters with Reckless gain "{E} - Gain 1 lore."',
+          effect: {
+            type: "grant-ability",
+            ability: {
+              id: "static-utils-grant-source-1-ability",
+              name: "WAIT A MINUTE",
+              type: "activated",
+              cost: { exert: true },
+              effect: {
+                type: "gain-lore",
+                amount: 1,
+                target: "CONTROLLER",
+              },
+              text: "{E} - Gain 1 lore.",
+            },
+            target: {
+              selector: "all",
+              count: "all",
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["character"],
+              filter: [{ type: "has-keyword", keyword: "Reckless" }],
+            },
+          },
+        },
+      ],
+    });
+    const recklessCharacter = createMockCharacter({
+      id: "static-utils-reckless",
+      name: "Reckless Character",
+      cost: 2,
+      abilities: [
+        {
+          id: "static-utils-reckless-1",
+          keyword: "Reckless",
+          text: "Reckless",
+          type: "keyword",
+        },
+      ],
+    });
+    const ordinaryCharacter = createMockCharacter({
+      id: "static-utils-ordinary",
+      name: "Ordinary Character",
+      cost: 2,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [
+        { card: grantSource, isDrying: false },
+        { card: recklessCharacter, isDrying: false },
+        { card: ordinaryCharacter, isDrying: false },
+      ],
+    });
+
+    const recklessId = testEngine.findCardInstanceId(recklessCharacter, "play", "player_one");
+    const ordinaryId = testEngine.findCardInstanceId(ordinaryCharacter, "play", "player_one");
+
+    expect(testEngine.asServer().getCard(recklessId).grantedAbilityTextEntries?.[0]?.title).toBe(
+      "WAIT A MINUTE",
+    );
+    expect(testEngine.asServer().getCard(ordinaryId).grantedAbilityTextEntries).toBeUndefined();
+
+    expect(testEngine.asPlayerOne().activateAbility(recklessId, { abilityIndex: 0 }).success).toBe(
+      true,
+    );
+    expect(testEngine.getLore("player_one")).toBe(1);
   });
 });

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princeJohnPhonyKingI18n } from "./083-prince-john-phony-king.i18n";
 
 export const princeJohnPhonyKing: CharacterCard = {
   id: "UGT",
@@ -7,52 +8,6 @@ export const princeJohnPhonyKing: CharacterCard = {
   cardType: "character",
   name: "Prince John",
   version: "Phony King",
-  i18n: {
-    en: {
-      name: "Prince John",
-      version: "Phony King",
-      text: [
-        {
-          title: "COLLECT TAXES",
-          description:
-            "Whenever this character quests, each opponent with more lore than you loses 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Prinz John",
-      version: "Königsclown",
-      text: [
-        {
-          title: "STEUERN EINTREIBEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, verlieren alle gegnerischen Mitspielenden, die mehr Legenden als du haben, je 2 Legenden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Prince Jean",
-      version: "Roi de mauvais aloi",
-      text: [
-        {
-          title: "COLLECTE DE TAXES",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, chaque adversaire ayant plus d'éclats de Lore que vous en perd 2.",
-        },
-      ],
-    },
-    it: {
-      name: "Principe Giovanni",
-      version: "Re Fasullo",
-      text: [
-        {
-          title: "RISCUOTERE LE TASSE",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, ogni avversario con più leggenda di te perde 2 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Robin Hood",
   set: "003",
@@ -75,7 +30,6 @@ export const princeJohnPhonyKing: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Prince"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -94,4 +48,5 @@ export const princeJohnPhonyKing: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: princeJohnPhonyKingI18n,
 };

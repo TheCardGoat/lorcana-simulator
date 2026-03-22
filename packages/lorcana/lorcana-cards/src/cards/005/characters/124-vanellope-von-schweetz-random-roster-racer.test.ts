@@ -1,34 +1,56 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { vanellopeVonSchweetzRandomRosterRacer } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Vanellope von Schweetz - Random Roster Racer", () => {
-//   It("**PIXLEXIA** When you play this character, she gains **Evasive** until the start of your next turn. _(Only characters with Evasive can challenge them.)_", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: vanellopeVonSchweetzRandomRosterRacer.cost,
-//       Hand: [vanellopeVonSchweetzRandomRosterRacer],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(
-//       VanellopeVonSchweetzRandomRosterRacer,
-//     );
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveTopOfStack({});
-//
-//     Expect(cardUnderTest.hasEvasive).toEqual(true);
-//
-//     TestStore.passTurn();
-//
-//     Expect(cardUnderTest.hasEvasive).toEqual(true);
-//
-//     TestStore.passTurn();
-//
-//     Expect(cardUnderTest.hasEvasive).toEqual(false);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { vanellopeVonSchweetzRandomRosterRacer } from "./124-vanellope-von-schweetz-random-roster-racer";
+
+describe("Vanellope von Schweetz - Random Roster Racer", () => {
+  describe("PIXLEXIA — When you play this character, she gains Evasive until the start of your next turn.", () => {
+    it("gains Evasive immediately when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: vanellopeVonSchweetzRandomRosterRacer.cost,
+          hand: [vanellopeVonSchweetzRandomRosterRacer],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.hasKeyword(vanellopeVonSchweetzRandomRosterRacer, "Evasive")).toBe(false);
+
+      expect(
+        testEngine.asPlayerOne().playCard(vanellopeVonSchweetzRandomRosterRacer),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.hasKeyword(vanellopeVonSchweetzRandomRosterRacer, "Evasive")).toBe(true);
+    });
+
+    it("Evasive persists during opponent's turn and expires at start of controller's next turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: vanellopeVonSchweetzRandomRosterRacer.cost,
+          hand: [vanellopeVonSchweetzRandomRosterRacer],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(vanellopeVonSchweetzRandomRosterRacer),
+      ).toBeSuccessfulCommand();
+
+      // Evasive is active during player one's turn
+      expect(testEngine.hasKeyword(vanellopeVonSchweetzRandomRosterRacer, "Evasive")).toBe(true);
+
+      // Pass player one's turn — still active during player two's turn
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.hasKeyword(vanellopeVonSchweetzRandomRosterRacer, "Evasive")).toBe(true);
+
+      // Pass player two's turn — Evasive expires at start of player one's next turn
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.hasKeyword(vanellopeVonSchweetzRandomRosterRacer, "Evasive")).toBe(false);
+    });
+  });
+});

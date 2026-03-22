@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { robinHoodBelovedOutlawI18n } from "./189-robin-hood-beloved-outlaw.i18n";
 
 export const robinHoodBelovedOutlaw: CharacterCard = {
   id: "1k5",
@@ -7,24 +8,6 @@ export const robinHoodBelovedOutlaw: CharacterCard = {
   cardType: "character",
   name: "Robin Hood",
   version: "Beloved Outlaw",
-  i18n: {
-    en: {
-      name: "Robin Hood",
-      version: "Beloved Outlaw",
-    },
-    de: {
-      name: "Robin Hood",
-      version: "Geliebter Gesetzloser",
-    },
-    fr: {
-      name: "Robin des Bois",
-      version: "Hors-la-loi adoré",
-    },
-    it: {
-      name: "Robin Hood",
-      version: "Amato Fuorilegge",
-    },
-  },
   inkType: ["steel"],
   franchise: "Robin Hood",
   set: "003",
@@ -41,4 +24,5 @@ export const robinHoodBelovedOutlaw: CharacterCard = {
     tcgPlayer: 537937,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: robinHoodBelovedOutlawI18n,
 };

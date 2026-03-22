@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tobyDoggedCompanionI18n } from "./131-toby-dogged-companion.i18n";
 
 export const tobyDoggedCompanion: CharacterCard = {
   id: "Mb2",
@@ -7,24 +8,6 @@ export const tobyDoggedCompanion: CharacterCard = {
   cardType: "character",
   name: "Toby",
   version: "Dogged Companion",
-  i18n: {
-    en: {
-      name: "Toby",
-      version: "Dogged Companion",
-    },
-    de: {
-      name: "Toby",
-      version: "Hartnäckiger Gefährte",
-    },
-    fr: {
-      name: "Toby",
-      version: "Se donne un mal de chien",
-    },
-    it: {
-      name: "Ugo",
-      version: "Compagno Accanito",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Great Mouse Detective",
   set: "007",
@@ -41,4 +24,5 @@ export const tobyDoggedCompanion: CharacterCard = {
     tcgPlayer: 618708,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: tobyDoggedCompanionI18n,
 };

@@ -129,7 +129,7 @@
 // Export { kronkUnlicensedInvestigator } from "./178-kronk-unlicensed-investigator";
 // Export { heiheiProtectiveRooster } from "./179-heihei-protective-rooster";
 // Export { sneezyNoisyKnight } from "./180-sneezy-noisy-knight";
-// Export { dopeyKnightApprentice } from "./181-dopey-knight-apprentice";
+export { dopeyKnightApprentice } from "./181-dopey-knight-apprentice";
 // Export { namaariResoluteDaughter } from "./182-namaari-resolute-daughter";
 // Export { snowWhiteFairhearted } from "./183-snow-white-fairhearted";
 // Export { yzmaUnjustlyTreated } from "./184-yzma-unjustly-treated";

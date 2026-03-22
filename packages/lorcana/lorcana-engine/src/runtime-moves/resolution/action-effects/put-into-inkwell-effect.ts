@@ -1,6 +1,10 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type { PutIntoInkwellEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
+import {
+  emitTriggeredLorcanaEvent,
+  snapshotTriggeredCandidatesForCard,
+} from "../../../triggered-abilities";
 import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
@@ -54,7 +58,7 @@ function resolveCardOwnerId(
   cardId: CardInstanceId,
   fallbackPlayerId: PlayerId,
 ): PlayerId {
-  const ownerId = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.ownerID;
+  const ownerId = ctx.framework.zones.getCardOwner(cardId);
   return typeof ownerId === "string" ? (ownerId as PlayerId) : fallbackPlayerId;
 }
 
@@ -64,7 +68,7 @@ function moveCardIntoInkwell(
   destinationPlayerId: PlayerId,
   effect: PutIntoInkwellEffect,
 ): void {
-  const sourceZoneKey = ctx.framework.state.ctx.zones.private.cardIndex[cardId]?.zoneKey;
+  const sourceZoneKey = ctx.framework.zones.getCardZone(cardId);
   const state = effect.exerted === false ? "ready" : "exerted";
   const publicFaceState = effect.facedown === false ? "faceUp" : "faceDown";
   const isFromPlay =
@@ -72,6 +76,10 @@ function moveCardIntoInkwell(
     (sourceZoneKey === "play" || sourceZoneKey.startsWith("play:"));
 
   if (isFromPlay) {
+    const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId);
+    const ownerId =
+      (ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined) ?? destinationPlayerId;
+
     const movedCardIds = moveCardOutOfPlayWithStack(ctx, cardId, {
       zone: "inkwell",
       playerId: destinationPlayerId,
@@ -80,6 +88,24 @@ function moveCardIntoInkwell(
     for (const movedCardId of movedCardIds) {
       ctx.cards.patchMeta(movedCardId, { state, publicFaceState });
     }
+
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "cardInked",
+      {
+        playerId: ownerId,
+        cardId,
+        from: sourceZoneKey,
+        to: "inkwell",
+      },
+      {
+        event: "ink",
+        playerId: ownerId,
+        subjectCardId: cardId,
+        fromZone: sourceZoneKey,
+        triggerCandidates,
+      },
+    );
     return;
   }
 
@@ -92,6 +118,23 @@ function moveCardIntoInkwell(
   if (isDiscardZoneKey(sourceZoneKey)) {
     recordDiscardExitThisTurn(ctx);
   }
+
+  emitTriggeredLorcanaEvent(
+    ctx,
+    "cardInked",
+    {
+      playerId: destinationPlayerId,
+      cardId,
+      from: sourceZoneKey ?? "unknown",
+      to: `inkwell:${destinationPlayerId}`,
+    },
+    {
+      event: "ink",
+      playerId: destinationPlayerId,
+      subjectCardId: cardId,
+      fromZone: sourceZoneKey,
+    },
+  );
 }
 
 function getSourceCards(
@@ -165,11 +208,7 @@ function getSourceCards(
       }
     }
 
-    if (source === "deck") {
-      return cardsInZone.slice(0, 1);
-    }
-
-    return cardsInZone.slice(0, 1);
+    return [];
   }
 
   if (typeof source === "string") {

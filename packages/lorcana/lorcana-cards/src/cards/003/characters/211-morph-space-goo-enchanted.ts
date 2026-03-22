@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { morphSpaceGooEnchantedI18n } from "./211-morph-space-goo-enchanted.i18n";
 
 export const morphSpaceGooEnchanted: CharacterCard = {
   id: "UdW",
@@ -7,52 +8,6 @@ export const morphSpaceGooEnchanted: CharacterCard = {
   cardType: "character",
   name: "Morph",
   version: "Space Goo",
-  i18n: {
-    en: {
-      name: "Morph",
-      version: "Space Goo",
-      text: [
-        {
-          title: "MIMICRY",
-          description:
-            "You may play any character with Shift on this character as if this character had any name.",
-        },
-      ],
-    },
-    de: {
-      name: "Morph",
-      version: "Weltraum-Schleim",
-      text: [
-        {
-          title: "MIMIKRY",
-          description:
-            "Du kannst jeden Charakter mit der Gestaltwandel-Fähigkeit auf diesen Charakter ausspielen, als würde dieser Charakter jeden Namen haben.",
-        },
-      ],
-    },
-    fr: {
-      name: "Morph",
-      version: "Gluant de l'espace",
-      text: [
-        {
-          title: "MIMÉTISME",
-          description:
-            "Vous pouvez jouer n'importe quel personnage avec Alter sur ce personnage, quel que soit son nom.",
-        },
-      ],
-    },
-    it: {
-      name: "Morph",
-      version: "Blob Spaziale",
-      text: [
-        {
-          title: "IMITAZIONE",
-          description:
-            "Puoi giocare qualsiasi personaggio con Trasformazione su questo personaggio, come se avesse qualsiasi nome.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Treasure Planet",
   set: "003",
@@ -91,4 +46,5 @@ export const morphSpaceGooEnchanted: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: morphSpaceGooEnchantedI18n,
 };

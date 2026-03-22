@@ -1,14 +1,17 @@
-import type { RuntimeValidationResult } from "#core";
+import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
 import { createLorcanaLogMessage, type LorcanaMoveDefinition } from "../../types";
-import type { LogTargetId } from "../../types/log-messages";
 import type { PendingActionEffect, PendingActionResolutionInput } from "../../types";
+import type { LogTargetId } from "../../types/log-messages";
 import { resolveActionEffect } from "./action-effects/composed-effect-resolver";
+import { isScryEffect, validateScrySelection } from "./action-effects/scry-effect";
 import { resolveRecordedVanishTargets } from "./action-effects/vanish";
 import {
   clearPendingActionChoice,
+  enqueuePendingActionEffect,
   finalizeResolvedActionCard,
   mergeActionResolutionInput,
   removePendingActionEffect,
+  createPendingActionEffect,
 } from "./action-effects/pending-action-effects";
 import { flushTriggeredEventsToBag, hasPendingBagItems } from "../effects/triggered-abilities";
 import { continuePendingChallengeResolution } from "../moves/core/challenge";
@@ -18,6 +21,18 @@ import {
   getLorcanaCardName,
   traceLorcanaRuntimeStep,
 } from "../../runtime-trace";
+import {
+  clearCurrentSelectionTargets,
+  getCurrentSelectionInput,
+  getCurrentSelectionTargets,
+  promoteCurrentSelectionTargetsToContext,
+  withCurrentSelectionTargets,
+} from "./action-effects/selection-state";
+import {
+  buildMissingTargetSelectionError,
+  countExplicitTargetSelections,
+  hasExplicitTargetSelectionInput,
+} from "../../targeting/runtime";
 
 type ResolveEffectValidationContext = Parameters<
   NonNullable<LorcanaMoveDefinition<"resolveEffect">["validate"]>
@@ -31,9 +46,16 @@ type ResolveEffectEnumerationContext = Parameters<
   NonNullable<LorcanaMoveDefinition<"resolveEffect">["available"]>
 >[0];
 
+function toLogTargetId(value: string): LogTargetId {
+  return value as LogTargetId;
+}
+
 function normalizeResolveEffectTargets(
-  targets: PendingActionResolutionInput["targets"],
-): LogTargetId[] | undefined {
+  targets:
+    | PendingActionResolutionInput["currentTargets"]
+    | PendingActionResolutionInput["targets"]
+    | undefined,
+): LogTargetId[] {
   if (typeof targets === "string") {
     return [toLogTargetId(targets)];
   }
@@ -44,7 +66,58 @@ function normalizeResolveEffectTargets(
       .map(toLogTargetId);
   }
 
-  return undefined;
+  return [];
+}
+
+function countResolvedTargets(
+  targets:
+    | PendingActionResolutionInput["currentTargets"]
+    | PendingActionResolutionInput["targets"]
+    | undefined,
+): number {
+  if (typeof targets === "string") {
+    return targets.length > 0 ? 1 : 0;
+  }
+
+  if (Array.isArray(targets)) {
+    return targets.filter(
+      (target): target is string => typeof target === "string" && target.length > 0,
+    ).length;
+  }
+
+  return 0;
+}
+
+function countContinuationContextTargets(
+  pendingEffect: PendingActionEffect,
+  resolutionInput: PendingActionResolutionInput,
+): number {
+  return pendingEffect.kind === "target-selection"
+    ? countResolvedTargets(getCurrentSelectionInput(resolutionInput))
+    : 0;
+}
+
+function buildContinuationResolutionInput(
+  pendingEffect: PendingActionEffect,
+  resolutionInput: PendingActionResolutionInput,
+): PendingActionResolutionInput {
+  // Clear resolveOptional from the continuation input so that an optional
+  // acceptance/decline from the current pending effect does not bleed into
+  // subsequent optional effects in the continuation sequence.
+  const inputWithoutOptional: PendingActionResolutionInput =
+    resolutionInput.resolveOptional !== undefined
+      ? { ...resolutionInput, resolveOptional: undefined }
+      : resolutionInput;
+
+  if (pendingEffect.kind === "target-selection") {
+    return promoteCurrentSelectionTargetsToContext(inputWithoutOptional);
+  }
+
+  if (countResolvedTargets(getCurrentSelectionInput(inputWithoutOptional)) > 0) {
+    return promoteCurrentSelectionTargetsToContext(inputWithoutOptional);
+  }
+
+  return clearCurrentSelectionTargets(inputWithoutOptional);
 }
 
 function logResolveEffectMessage(
@@ -56,19 +129,18 @@ function logResolveEffectMessage(
     playerId: pendingEffect.chooserId,
     sourceCardId: pendingEffect.sourceCardId,
   };
-  const targets = normalizeResolveEffectTargets(resolutionInput.targets);
 
   const defaultMessage = (() => {
     switch (pendingEffect.kind) {
       case "discard-choice":
         return createLorcanaLogMessage("lorcana.effect.resolve.discardChoice", {
           ...common,
-          targets: targets ?? [],
+          targets: normalizeResolveEffectTargets(getCurrentSelectionInput(resolutionInput)),
         });
       case "target-selection":
         return createLorcanaLogMessage("lorcana.effect.resolve.targetSelection", {
           ...common,
-          targets: targets ?? [],
+          targets: normalizeResolveEffectTargets(getCurrentSelectionInput(resolutionInput)),
         });
       case "choice-selection":
         return createLorcanaLogMessage("lorcana.effect.resolve.choiceSelection", {
@@ -76,12 +148,9 @@ function logResolveEffectMessage(
           choiceIndex: (resolutionInput.choiceIndex ?? 0) + 1,
         });
       case "optional-selection":
-        return createLorcanaLogMessage(
-          resolutionInput.resolveOptional === false
-            ? "lorcana.effect.resolve.optionalSelection.rejected"
-            : "lorcana.effect.resolve.optionalSelection.accepted",
-          common,
-        );
+        return resolutionInput.resolveOptional
+          ? createLorcanaLogMessage("lorcana.effect.resolve.optionalSelection.accepted", common)
+          : createLorcanaLogMessage("lorcana.effect.resolve.optionalSelection.rejected", common);
       case "name-card-selection":
         return createLorcanaLogMessage("lorcana.effect.resolve.nameCardSelection", {
           ...common,
@@ -149,9 +218,7 @@ function isValidDestinations(value: unknown): boolean {
     }
 
     return (
-      Array.isArray(record.cards) &&
-      record.cards.length > 0 &&
-      record.cards.every((cardId) => typeof cardId === "string")
+      Array.isArray(record.cards) && record.cards.every((cardId) => typeof cardId === "string")
     );
   });
 }
@@ -184,7 +251,20 @@ function normalizeResolveEffectParams(params: unknown): PendingActionResolutionI
   }
 
   if (record.targets !== undefined && isValidTargetInput(record.targets)) {
+    normalized.currentTargets = record.targets as PendingActionResolutionInput["currentTargets"];
     normalized.targets = record.targets as PendingActionResolutionInput["targets"];
+  }
+
+  if (
+    normalized.resolveOptional === undefined &&
+    (normalized.choiceIndex !== undefined ||
+      normalized.namedCard !== undefined ||
+      normalized.destinations !== undefined ||
+      normalized.targets !== undefined ||
+      normalized.currentTargets !== undefined ||
+      normalized.amount !== undefined)
+  ) {
+    normalized.resolveOptional = true;
   }
 
   return normalized;
@@ -202,6 +282,7 @@ function getPendingEffect(
 }
 
 function validatePendingEffectParams(
+  ctx: ResolveEffectValidationContext,
   pendingEffect: PendingActionEffect,
   params: unknown,
 ): RuntimeValidationResult {
@@ -255,23 +336,38 @@ function validatePendingEffectParams(
     };
   }
 
-  const normalizedTargets = normalizeResolveEffectParams(params).targets;
-  const hasTargets =
-    typeof normalizedTargets === "string" ||
-    (Array.isArray(normalizedTargets) && normalizedTargets.length > 0);
+  const normalizedParams = normalizeResolveEffectParams(params);
+  const normalizedTargets = normalizedParams.targets;
+  const hasExplicitTargets = hasExplicitTargetSelectionInput(normalizedTargets);
+  const explicitTargetCount = countExplicitTargetSelections(normalizedTargets);
+  const selectionContext =
+    pendingEffect.selectionContext?.kind === pendingEffect.kind
+      ? pendingEffect.selectionContext
+      : undefined;
+  const targetSelectionContext =
+    selectionContext?.kind === "discard-choice" || selectionContext?.kind === "target-selection"
+      ? selectionContext
+      : undefined;
 
-  if (
-    (pendingEffect.kind === "discard-choice" || pendingEffect.kind === "target-selection") &&
-    !hasTargets
-  ) {
-    return {
-      valid: false,
-      error: "resolveEffect requires at least one target for this pending effect",
-      errorCode: "RESOLVE_EFFECT_TARGETS_REQUIRED",
-    };
+  if (pendingEffect.kind === "discard-choice" || pendingEffect.kind === "target-selection") {
+    if (!hasExplicitTargets) {
+      return {
+        valid: false,
+        error: buildMissingTargetSelectionError("resolveEffect", pendingEffect.effect),
+        errorCode: "RESOLVE_EFFECT_TARGETS_REQUIRED",
+      };
+    }
+
+    if ((targetSelectionContext?.minSelections ?? 1) > 0 && explicitTargetCount === 0) {
+      return {
+        valid: false,
+        error: "resolveEffect requires at least 1 explicit target for this pending effect",
+        errorCode: "RESOLVE_EFFECT_TARGETS_REQUIRED",
+      };
+    }
   }
 
-  if (pendingEffect.kind === "choice-selection" && record.choiceIndex === undefined) {
+  if (pendingEffect.kind === "choice-selection" && normalizedParams.choiceIndex === undefined) {
     return {
       valid: false,
       error: "resolveEffect requires choiceIndex for this pending effect",
@@ -279,7 +375,10 @@ function validatePendingEffectParams(
     };
   }
 
-  if (pendingEffect.kind === "optional-selection" && record.resolveOptional === undefined) {
+  if (
+    pendingEffect.kind === "optional-selection" &&
+    normalizedParams.resolveOptional === undefined
+  ) {
     return {
       valid: false,
       error: "resolveEffect requires resolveOptional for this pending effect",
@@ -287,7 +386,7 @@ function validatePendingEffectParams(
     };
   }
 
-  if (pendingEffect.kind === "scry-selection" && !Array.isArray(record.destinations)) {
+  if (pendingEffect.kind === "scry-selection" && !Array.isArray(normalizedParams.destinations)) {
     return {
       valid: false,
       error: "resolveEffect requires destinations for this pending effect",
@@ -304,6 +403,25 @@ function validatePendingEffectParams(
       error: "resolveEffect requires namedCard for this pending effect",
       errorCode: "RESOLVE_EFFECT_NAMED_CARD_REQUIRED",
     };
+  }
+
+  if (pendingEffect.kind === "scry-selection" && isScryEffect(pendingEffect.effect)) {
+    const normalizedParams = normalizeResolveEffectParams(params);
+    const scryValidation = validateScrySelection(
+      ctx,
+      pendingEffect.cardPlayed,
+      pendingEffect.effect,
+      {
+        destinations: normalizedParams.destinations,
+        lookedAtCards: pendingEffect.resolutionInput.eventSnapshot?.revealedCardIds,
+        revealWindowIds: pendingEffect.resolutionInput.eventSnapshot?.revealWindowIds,
+        scryAmount: pendingEffect.resolutionInput.eventSnapshot?.revealedCardIds?.length,
+      },
+    );
+
+    if (!scryValidation.valid) {
+      return scryValidation;
+    }
   }
 
   return { valid: true };
@@ -333,7 +451,7 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
       };
     }
 
-    const pendingChoice = ctx.framework.state.ctx.priority.pendingChoice;
+    const pendingChoice = ctx.framework.state.priority.pendingChoice;
     if (!pendingChoice || pendingChoice.requestID !== effectId) {
       traceLorcanaRuntimeStep({
         kind: "move.validation.failed",
@@ -397,7 +515,7 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
       return { valid: true };
     }
 
-    const validationResult = validatePendingEffectParams(pendingEffect, ctx.args.params);
+    const validationResult = validatePendingEffectParams(ctx, pendingEffect, ctx.args.params);
     if (!validationResult.valid) {
       traceLorcanaRuntimeStep({
         kind: "move.validation.failed",
@@ -438,21 +556,96 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
 
     clearPendingActionChoice(ctx);
 
-    const resolutionInput = mergeActionResolutionInput(
-      pendingEffect.resolutionInput,
-      normalizeResolveEffectParams(ctx.args.params),
-    );
-    logResolveEffectMessage(ctx, pendingEffect, resolutionInput);
+    const normalizedParams = normalizeResolveEffectParams(ctx.args.params);
+    const resolutionInput =
+      normalizedParams.currentTargets !== undefined
+        ? withCurrentSelectionTargets(
+            mergeActionResolutionInput(pendingEffect.resolutionInput, normalizedParams),
+            getCurrentSelectionTargets(normalizedParams),
+          )
+        : mergeActionResolutionInput(pendingEffect.resolutionInput, normalizedParams);
+    let replayStagedSequence = pendingEffect.continuation?.stagedSequence;
+
+    if (pendingEffect.continuation?.stagedSequence) {
+      const collectedTargets = getCurrentSelectionTargets(resolutionInput);
+      const combinedTargets = [
+        ...pendingEffect.continuation.stagedSequence.collectedTargets,
+        ...collectedTargets,
+      ];
+      const combinedTargetCounts = [
+        ...pendingEffect.continuation.stagedSequence.collectedTargetCounts,
+        collectedTargets.length,
+      ];
+      const [nextStep, ...remainingSteps] =
+        pendingEffect.continuation.stagedSequence.remainingSteps;
+
+      if (nextStep) {
+        const stagedPendingEffect = createPendingActionEffect(ctx, {
+          kind: "target-selection",
+          sourceCardId: pendingEffect.sourceCardId,
+          controllerId: pendingEffect.controllerId,
+          chooserId: pendingEffect.chooserId,
+          cardPlayed: pendingEffect.cardPlayed,
+          effect: nextStep,
+          continuation: {
+            ...(pendingEffect.continuation.remainingEffects
+              ? { remainingEffects: [...pendingEffect.continuation.remainingEffects] }
+              : {}),
+            stagedSequence: {
+              sequenceEffect: pendingEffect.continuation.stagedSequence.sequenceEffect,
+              collectedTargets: combinedTargets,
+              collectedTargetCounts: combinedTargetCounts,
+              remainingSteps,
+            },
+          },
+          resolutionInput: {
+            ...clearCurrentSelectionTargets(pendingEffect.resolutionInput),
+          },
+        });
+        enqueuePendingActionEffect(ctx, stagedPendingEffect);
+        logResolveEffectMessage(ctx, pendingEffect, resolutionInput);
+
+        traceLorcanaRuntimeStep({
+          kind: "effect.resolution.suspended",
+          moveId: "resolveEffect",
+          playerId: pendingEffect.chooserId,
+          effectId,
+          cardId: pendingEffect.sourceCardId,
+          cardName: sourceCardName,
+          message: "Effect resolution is waiting for further input",
+        });
+        return;
+      }
+
+      resolutionInput.currentTargets = undefined;
+      resolutionInput.targets = undefined;
+      replayStagedSequence = {
+        sequenceEffect: pendingEffect.continuation.stagedSequence.sequenceEffect,
+        collectedTargets: combinedTargets,
+        collectedTargetCounts: combinedTargetCounts,
+        remainingSteps: [],
+      };
+    }
 
     const result = resolveActionEffect(
       ctx,
       pendingEffect.cardPlayed,
-      pendingEffect.effect,
+      replayStagedSequence?.sequenceEffect ?? pendingEffect.effect,
       resolutionInput,
       {
-        continuation: pendingEffect.continuation,
+        allowPromptForExistingChosenTargets: true,
+        continuation: replayStagedSequence
+          ? {
+              ...(pendingEffect.continuation?.remainingEffects
+                ? { remainingEffects: pendingEffect.continuation.remainingEffects }
+                : {}),
+              stagedSequence: replayStagedSequence,
+            }
+          : pendingEffect.continuation,
       },
     );
+    logResolveEffectMessage(ctx, pendingEffect, resolutionInput);
+
     if (result.status === "suspended") {
       traceLorcanaRuntimeStep({
         kind: "effect.resolution.suspended",
@@ -495,7 +688,10 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
         type: "sequence",
         steps: remainingEffects,
       },
-      resolutionInput,
+      buildContinuationResolutionInput(pendingEffect, resolutionInput),
+      {
+        allowPromptForExistingChosenTargets: true,
+      },
     );
     if (continuationResult.status === "suspended") {
       traceLorcanaRuntimeStep({
@@ -531,7 +727,7 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
   },
 
   available: (ctx) => {
-    const pendingChoice = ctx.framework.state.ctx.priority.pendingChoice;
+    const pendingChoice = ctx.framework.state.priority.pendingChoice;
     if (!pendingChoice || ctx.playerId !== pendingChoice.playerID) {
       return false;
     }
@@ -549,9 +745,5 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
 };
 
 function assertNever(value: never): never {
-  throw new Error(`Unhandled pending effect kind: ${String(value)}`);
-}
-
-function toLogTargetId(value: string): LogTargetId {
-  return value as LogTargetId;
+  throw new Error(`Unhandled pending action effect kind: ${String(value)}`);
 }

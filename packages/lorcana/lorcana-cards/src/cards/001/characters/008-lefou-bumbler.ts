@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { lefouBumblerI18n } from "./008-lefou-bumbler.i18n";
 
 export const lefouBumbler: CharacterCard = {
   id: "irS",
@@ -7,52 +8,6 @@ export const lefouBumbler: CharacterCard = {
   cardType: "character",
   name: "LeFou",
   version: "Bumbler",
-  i18n: {
-    en: {
-      name: "LeFou",
-      version: "Bumbler",
-      text: [
-        {
-          title: "LOYAL",
-          description:
-            "If you have a character named Gaston in play, you pay 1 {I} less to play this character.",
-        },
-      ],
-    },
-    de: {
-      name: "Le Fou",
-      version: "Tollpatsch",
-      text: [
-        {
-          title: "LOYAL",
-          description:
-            "Wenn du einen Gaston-Charakter im Spiel hast, zahlst du 1 weniger, um diesen Charakter auszuspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "LE FOU",
-      version: "Empoté",
-      text: [
-        {
-          title: "LOYAL",
-          description:
-            "Si vous avez un personnage Gaston en jeu, jouer ce personnage coûte 1 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "LeFou",
-      version: "Bumbler",
-      text: [
-        {
-          title: "LOYAL",
-          description:
-            "If you have a character named Gaston in play, you pay 1 less to play this character.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Beauty and the Beast",
   set: "001",
@@ -63,7 +18,6 @@ export const lefouBumbler: CharacterCard = {
   willpower: 2,
   lore: 2,
   inkable: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_5a1091c1a03c43d4854b66426d49aa10",
     tcgPlayer: 492738,
@@ -95,4 +49,5 @@ export const lefouBumbler: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: lefouBumblerI18n,
 };

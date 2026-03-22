@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { annaMakingSnowPlansI18n } from "./139-anna-making-snow-plans.i18n";
 
 export const annaMakingSnowPlans: CharacterCard = {
   id: "BGp",
@@ -7,28 +8,6 @@ export const annaMakingSnowPlans: CharacterCard = {
   cardType: "character",
   name: "Anna",
   version: "Making Snow Plans",
-  i18n: {
-    en: {
-      name: "Anna",
-      version: "Making Snow Plans",
-      text: "Support",
-    },
-    de: {
-      name: "Anna",
-      version: "Macht Pläne für den Schnee",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Anna",
-      version: "Planifie son hiver",
-      text: "Soutien",
-    },
-    it: {
-      name: "Anna",
-      version: "Organizzatrice di Attività Nevose",
-      text: "Aiutante",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Frozen",
   set: "010",
@@ -53,4 +32,5 @@ export const annaMakingSnowPlans: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: annaMakingSnowPlansI18n,
 };

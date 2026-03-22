@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jasmineRebelliousPrincessI18n } from "./106-jasmine-rebellious-princess.i18n";
 
 export const jasmineRebelliousPrincess: CharacterCard = {
   id: "5EC",
@@ -7,51 +8,6 @@ export const jasmineRebelliousPrincess: CharacterCard = {
   cardType: "character",
   name: "Jasmine",
   version: "Rebellious Princess",
-  i18n: {
-    en: {
-      name: "Jasmine",
-      version: "Rebellious Princess",
-      text: [
-        {
-          title: "YOU'LL NEVER MISS IT",
-          description: "Whenever this character quests, each opponent loses 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Jasmin",
-      version: "Rebellische Prinzessin",
-      text: [
-        {
-          title: "DU WIRST ES NIEMALS VERMISSEN",
-          description:
-            "Jedes Mal, wenn dieser Charakter erkundet, verlieren alle gegnerischen Mitspielenden je 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Jasmine",
-      version: "Princesse rebelle",
-      text: [
-        {
-          title: "IMMANQUABLE",
-          description:
-            "Chaque fois que ce personnage est envoyé à l'aventure, chaque adversaire perd 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Jasmine",
-      version: "Principessa Ribelle",
-      text: [
-        {
-          title: "NON TE NE ACCORGERAI NEMMENO",
-          description:
-            "Ogni volta che questo personaggio va all'avventura, ogni avversario perde 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Aladdin",
   set: "006",
@@ -91,4 +47,5 @@ export const jasmineRebelliousPrincess: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: jasmineRebelliousPrincessI18n,
 };

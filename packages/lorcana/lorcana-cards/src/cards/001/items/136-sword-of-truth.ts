@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { swordOfTruthI18n } from "./136-sword-of-truth.i18n";
 
 export const swordOfTruth: ItemCard = {
   id: "4Du",
@@ -6,45 +7,6 @@ export const swordOfTruth: ItemCard = {
   reprints: ["set1-136"],
   cardType: "item",
   name: "Sword of Truth",
-  i18n: {
-    en: {
-      name: "Sword of Truth",
-      text: [
-        {
-          title: "FINAL ENCHANTMENT",
-          description: "Banish this item — Banish chosen Villain character.",
-        },
-      ],
-    },
-    de: {
-      name: "Schwert der Wahrheit",
-      text: [
-        {
-          title: "LETZTER ZAUBER",
-          description:
-            "Verbanne diesen Gegenstand — verbanne eine Schurkin oder einen Schurken deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "ÉPÉE DE VÉRITÉ",
-      text: [
-        {
-          title: "ENCHANTEMENT FINAL",
-          description: "Bannissez cet objet — Choisissez un personnage Méchant et bannissez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Sword of Truth",
-      text: [
-        {
-          title: "FINAL ENCHANTMENT",
-          description: "Banish this item — Banish chosen Villain character.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Sleeping Beauty",
   set: "001",
@@ -89,4 +51,5 @@ export const swordOfTruth: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: swordOfTruthI18n,
 };

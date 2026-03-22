@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { madamMimTrulyMarvelousI18n } from "./055-madam-mim-truly-marvelous.i18n";
 
 export const madamMimTrulyMarvelous: CharacterCard = {
   id: "I6q",
@@ -7,48 +8,6 @@ export const madamMimTrulyMarvelous: CharacterCard = {
   cardType: "character",
   name: "Madam Mim",
   version: "Truly Marvelous",
-  i18n: {
-    en: {
-      name: "Madam Mim",
-      version: "Truly Marvelous",
-      text: [
-        {
-          title: "OH, BAT GIZZARDS 2",
-          description: "{I}, Choose and discard a card — Gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Madame Mim",
-      version: "Wahrlich wunderbar",
-      text: [
-        {
-          title: "BEIM BEELZEBUB 2,",
-          description: "Wähle eine Karte aus deiner Hand und wirf sie ab — Sammle 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Madame Mime",
-      version: "Vraiment merveilleuse",
-      text: [
-        {
-          title: "PAR LES CORNES DE SATAN 2,",
-          description: "défaussez une carte de votre main — Gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Maga Magò",
-      version: "La Più Formidabile",
-      text: [
-        {
-          title: "OH, PESTE E CORNA! 2,",
-          description: "scegli e scarta una carta — Ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sword in the Stone",
   set: "006",
@@ -72,13 +31,20 @@ export const madamMimTrulyMarvelous: CharacterCard = {
   classifications: ["Storyborn", "Villain", "Sorcerer"],
   abilities: [
     {
-      effect: {
-        amount: 1,
-        type: "gain-lore",
-      },
       id: "182-1",
+      name: "OH, BAT GIZZARDS 2",
+      type: "activated",
+      cost: {
+        ink: 2,
+        discardCards: 1,
+        discardChosen: true,
+      },
+      effect: {
+        type: "gain-lore",
+        amount: 1,
+      },
       text: "OH, BAT GIZZARDS 2 {I}, Choose and discard a card - Gain 1 lore.",
-      type: "action",
     },
   ],
+  i18n: madamMimTrulyMarvelousI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { neroFearsomeCrocodileI18n } from "./065-nero-fearsome-crocodile.i18n";
 
 export const neroFearsomeCrocodile: CharacterCard = {
   id: "hjp",
@@ -7,52 +8,6 @@ export const neroFearsomeCrocodile: CharacterCard = {
   cardType: "character",
   name: "Nero",
   version: "Fearsome Crocodile",
-  i18n: {
-    en: {
-      name: "Nero",
-      version: "Fearsome Crocodile",
-      text: [
-        {
-          title: "AND MEAN",
-          description:
-            "{E} — Move 1 damage counter from this character to chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Nero, das Krokodil",
-      version: "Furchteinflößendes Krokodil",
-      text: [
-        {
-          title: "UND GEMEIN",
-          description:
-            "— Verschiebe 1 Schadensmarker von diesem Charakter zu einem gegnerischen Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Néron",
-      version: "Redoutable crocodile",
-      text: [
-        {
-          title: "ET MESQUIN",
-          description:
-            "— Déplacez 1 dommage de ce personnage-ci sur un personnage adverse de votre choix.",
-        },
-      ],
-    },
-    it: {
-      name: "Nerone",
-      version: "Coccodrillo Spaventoso",
-      text: [
-        {
-          title: "E CATTIVO",
-          description:
-            "— Sposta 1 segnalino danno da questo personaggio a un personaggio avversario a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Rescuers",
   set: "008",
@@ -75,4 +30,5 @@ export const neroFearsomeCrocodile: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [],
+  i18n: neroFearsomeCrocodileI18n,
 };

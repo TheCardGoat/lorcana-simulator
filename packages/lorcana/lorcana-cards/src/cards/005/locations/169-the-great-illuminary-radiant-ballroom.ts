@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { theGreatIlluminaryRadiantBallroomI18n } from "./169-the-great-illuminary-radiant-ballroom.i18n";
 
 export const theGreatIlluminaryRadiantBallroom: LocationCard = {
   id: "FUQ",
@@ -7,49 +8,6 @@ export const theGreatIlluminaryRadiantBallroom: LocationCard = {
   cardType: "location",
   name: "The Great Illuminary",
   version: "Radiant Ballroom",
-  i18n: {
-    en: {
-      name: "The Great Illuminary",
-      version: "Radiant Ballroom",
-      text: [
-        {
-          title: "WARM WELCOME",
-          description: "Characters with Support get +1 {L} and +2 {W} while here.",
-        },
-      ],
-    },
-    de: {
-      name: "Das Große Illuminarium",
-      version: "Strahlender Ballsaal",
-      text: [
-        {
-          title: "HERZLICHER EMPFANG",
-          description: "Charaktere mit Unterstützen an diesem Ort erhalten +1 und +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le grand Illuminarium",
-      version: "Salle de bal resplendissante",
-      text: [
-        {
-          title: "ACCUEIL CHALEUREUX",
-          description: "Les personnages sur ce lieu avec Soutien gagnent +1 et +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Il Grande Illuminarium",
-      version: "Sfavillante Salone delle Feste",
-      text: [
-        {
-          title: "CALDO BENVENUTO I",
-          description:
-            "personaggi con Aiutante ricevono +1 e +2 mentre si trovano in questo luogo.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Lorcana",
   set: "005",
@@ -126,4 +84,5 @@ export const theGreatIlluminaryRadiantBallroom: LocationCard = {
       type: "static",
     },
   ],
+  i18n: theGreatIlluminaryRadiantBallroomI18n,
 };

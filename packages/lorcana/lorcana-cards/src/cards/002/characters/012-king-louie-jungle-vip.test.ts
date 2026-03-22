@@ -21,13 +21,6 @@ describe("King Louie - Jungle VIP", () => {
     // Resolve the trigger as Player 1 (Controller of King Louie)
     testEngine.asPlayerOne().resolveNextBag();
 
-    // Handle pending choices if any (Optional ability)
-    const pendingChoice = testEngine.asPlayerOne().getPendingChoice();
-    if (pendingChoice) {
-      // Respond "Yes" to optional ability
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true });
-    }
-
     // Verify damage is reduced
     const king = testEngine.asServer().getCard(kingId);
     expect(king.damage).toBeLessThan(3);

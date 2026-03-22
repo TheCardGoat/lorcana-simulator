@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theCoachmanGreedyDeceiverI18n } from "./140-the-coachman-greedy-deceiver.i18n";
 
 export const theCoachmanGreedyDeceiver: CharacterCard = {
   id: "4S2",
@@ -7,52 +8,6 @@ export const theCoachmanGreedyDeceiver: CharacterCard = {
   cardType: "character",
   name: "The Coachman",
   version: "Greedy Deceiver",
-  i18n: {
-    en: {
-      name: "The Coachman",
-      version: "Greedy Deceiver",
-      text: [
-        {
-          title: "WILD RIDE",
-          description:
-            "While 2 or more characters of yours are exerted, this character gets +2 {S} and gains Evasive.",
-        },
-      ],
-    },
-    de: {
-      name: "Der Kutscher",
-      version: "Gieriger Betrüger",
-      text: [
-        {
-          title: "WILDER RITT",
-          description:
-            "Solange 2 oder mehr deiner Charaktere erschöpft sind, erhält dieser Charakter +1 und Wendig.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le Cocher",
-      version: "Trompeur avide",
-      text: [
-        {
-          title: "COURSE EFFRÉNÉE",
-          description:
-            "Tant que vous avez 2 personnages ou plus épuisés, ce personnage-ci gagne +2 et Insaisissable.",
-        },
-      ],
-    },
-    it: {
-      name: "Il Cocchiere",
-      version: "Avido Ingannatore",
-      text: [
-        {
-          title: "CORSA SFRENATA",
-          description:
-            "Mentre 2 o più tuoi personaggi sono impegnati, questo personaggio riceve +2 e ottiene Sfuggente. (Solo altri personaggi con Sfuggente possono sfidarlo.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby", "steel"],
   franchise: "Pinocchio",
   set: "008",
@@ -77,25 +32,42 @@ export const theCoachmanGreedyDeceiver: CharacterCard = {
   classifications: ["Storyborn", "Villain"],
   abilities: [
     {
+      condition: {
+        type: "resource-count",
+        what: "exerted-characters",
+        controller: "you",
+        comparison: "greater-or-equal",
+        value: 2,
+      },
       effect: {
-        steps: [
-          {
-            modifier: 2,
-            stat: "strength",
-            target: "SELF",
-            type: "modify-stat",
-          },
-          {
-            keyword: "Evasive",
-            target: "SELF",
-            type: "gain-keyword",
-          },
-        ],
-        type: "sequence",
+        modifier: 2,
+        stat: "strength",
+        target: "SELF",
+        type: "modify-stat",
       },
       id: "1ym-1",
+      name: "WILD RIDE",
       text: "WILD RIDE While 2 or more characters of yours are exerted, this character gets +2 {S} and gains Evasive.",
-      type: "action",
+      type: "static",
+    },
+    {
+      condition: {
+        type: "resource-count",
+        what: "exerted-characters",
+        controller: "you",
+        comparison: "greater-or-equal",
+        value: 2,
+      },
+      effect: {
+        keyword: "Evasive",
+        target: "SELF",
+        type: "gain-keyword",
+      },
+      id: "1ym-2",
+      name: "WILD RIDE",
+      text: "WILD RIDE While 2 or more characters of yours are exerted, this character gets +2 {S} and gains Evasive.",
+      type: "static",
     },
   ],
+  i18n: theCoachmanGreedyDeceiverI18n,
 };

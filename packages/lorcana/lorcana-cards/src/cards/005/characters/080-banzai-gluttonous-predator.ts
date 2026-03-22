@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { banzaiGluttonousPredatorI18n } from "./080-banzai-gluttonous-predator.i18n";
 
 export const banzaiGluttonousPredator: CharacterCard = {
   id: "q1j",
@@ -7,24 +8,6 @@ export const banzaiGluttonousPredator: CharacterCard = {
   cardType: "character",
   name: "Banzai",
   version: "Gluttonous Predator",
-  i18n: {
-    en: {
-      name: "Banzai",
-      version: "Gluttonous Predator",
-    },
-    de: {
-      name: "Banzai",
-      version: "Gefräßiges Raubtier",
-    },
-    fr: {
-      name: "Banzaï",
-      version: "Prédateur vorace",
-    },
-    it: {
-      name: "Banzai",
-      version: "Predatore Vorace",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lion King",
   set: "005",
@@ -41,4 +24,5 @@ export const banzaiGluttonousPredator: CharacterCard = {
     tcgPlayer: 561957,
   },
   classifications: ["Storyborn", "Ally", "Hyena"],
+  i18n: banzaiGluttonousPredatorI18n,
 };

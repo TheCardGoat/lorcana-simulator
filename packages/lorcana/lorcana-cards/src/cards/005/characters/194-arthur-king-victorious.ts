@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { arthurKingVictoriousI18n } from "./194-arthur-king-victorious.i18n";
 
 export const arthurKingVictorious: CharacterCard = {
   id: "xkQ",
@@ -7,37 +8,6 @@ export const arthurKingVictorious: CharacterCard = {
   cardType: "character",
   name: "Arthur",
   version: "King Victorious",
-  i18n: {
-    en: {
-      name: "Arthur",
-      version: "King Victorious",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "KNIGHTED BY THE KING",
-          description:
-            "When you play this character, chosen character gains Challenger +2 and Resist +2 and can challenge ready characters this turn. (They get +2 {S} while challenging. Damage dealt to them is reduced by 2.)",
-        },
-      ],
-    },
-    de: {
-      name: "Arthur",
-      version: "Siegreicher König",
-      text: "Gestaltwandel 5 VOM KÖNIG ZUM RITTER GESCHLAGEN Wenn du diesen Charakter ausspielst, erhält ein Charakter deiner Wahl in diesem Zug Herausfordern +2, Robust +2 und kann in diesem Zug bereite Charaktere herausfordern. (Während der Charakter herausfordert, erhält er +2. Reduziere jeglichen Schaden, der ihm zugefügt wird, um 2.)",
-    },
-    fr: {
-      name: "Arthur",
-      version: "Roi victorieux",
-      text: "Alter 5 ADOUBÉ PAR LE ROI Lorsque vous jouez ce personnage, choisissez un personnage qui gagne, pour le reste de ce tour, Offensif +2, Résistance +2, et peut défier les personnages redressés. (Les dommages qui lui sont infligés sont réduits de 2 et lorsqu'il défie, ce personnage gagne +2.)",
-    },
-    it: {
-      name: "Artù",
-      version: "Re Vittorioso",
-      text: "Trasformazione 5 NOMINATO CAVALIERE DAL RE Quando giochi questo personaggio, un personaggio a tua scelta ottiene Sfidante +2 e Resistere +2 e può sfidare i personaggi preparati per questo turno. (Riceve +2 mentre sta sfidando. Il danno che gli viene inflitto è ridotto di 2.)",
-    },
-  },
   inkType: ["steel"],
   franchise: "Sword in the Stone",
   set: "005",
@@ -75,17 +45,39 @@ export const arthurKingVictorious: CharacterCard = {
     },
     {
       effect: {
-        duration: "this-turn",
-        keyword: "Challenger",
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
-        },
-        type: "gain-keyword",
-        value: 2,
+        type: "sequence",
+        steps: [
+          {
+            type: "gain-keyword",
+            keyword: "Challenger",
+            value: 2,
+            duration: "this-turn",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          },
+          {
+            type: "gain-keyword",
+            keyword: "Resist",
+            value: 2,
+            duration: "this-turn",
+            target: {
+              ref: "previous-target",
+            },
+          },
+          {
+            type: "grant-ability",
+            ability: "can-challenge-ready",
+            duration: "this-turn",
+            target: {
+              ref: "previous-target",
+            },
+          },
+        ],
       },
       id: "d3q-2",
       name: "KNIGHTED BY THE KING",
@@ -98,4 +90,5 @@ export const arthurKingVictorious: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: arthurKingVictoriousI18n,
 };

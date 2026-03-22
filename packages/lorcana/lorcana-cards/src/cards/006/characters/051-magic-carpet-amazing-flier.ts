@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { magicCarpetAmazingFlierI18n } from "./051-magic-carpet-amazing-flier.i18n";
 
 export const magicCarpetAmazingFlier: CharacterCard = {
   id: "2JV",
@@ -7,24 +8,6 @@ export const magicCarpetAmazingFlier: CharacterCard = {
   cardType: "character",
   name: "Magic Carpet",
   version: "Amazing Flier",
-  i18n: {
-    en: {
-      name: "Magic Carpet",
-      version: "Amazing Flier",
-    },
-    de: {
-      name: "Fliegender Teppich",
-      version: "Fantastischer Flieger",
-    },
-    fr: {
-      name: "Tapis Volant",
-      version: "Objet volant incroyable",
-    },
-    it: {
-      name: "Tappeto Magico",
-      version: "Asso del Volo",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "006",
@@ -41,4 +24,5 @@ export const magicCarpetAmazingFlier: CharacterCard = {
     tcgPlayer: 592026,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: magicCarpetAmazingFlierI18n,
 };

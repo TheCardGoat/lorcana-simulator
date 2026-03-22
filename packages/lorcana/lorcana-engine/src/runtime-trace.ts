@@ -1,6 +1,6 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import { getLogger } from "@logtape/logtape";
-import type { LorcanaCard } from "@tcg/lorcana-types";
+import type { LorcanaCardDefinition } from "@tcg/lorcana-types";
 
 const logger = getLogger(["lorcana-engine", "runtime-trace"]);
 
@@ -104,7 +104,7 @@ export function formatLorcanaPlayerLabel(playerId: string | PlayerId | undefined
 
 export function formatLorcanaCardName(
   card:
-    | (Pick<LorcanaCard, "name"> & {
+    | (Pick<LorcanaCardDefinition, "name"> & {
         fullName?: string | null;
         version?: string | null;
       })
@@ -127,7 +127,7 @@ export function formatLorcanaCardName(
 
 export function getLorcanaCardName(
   cardId: CardInstanceId | undefined,
-  getDefinitionById: (cardId: CardInstanceId) => LorcanaCard | undefined,
+  getDefinitionById: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
 ): string | undefined {
   if (!cardId) {
     return undefined;

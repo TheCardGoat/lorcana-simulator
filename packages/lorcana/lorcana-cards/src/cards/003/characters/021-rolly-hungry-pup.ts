@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rollyHungryPupI18n } from "./021-rolly-hungry-pup.i18n";
 
 export const rollyHungryPup: CharacterCard = {
   id: "5D2",
@@ -7,28 +8,6 @@ export const rollyHungryPup: CharacterCard = {
   cardType: "character",
   name: "Rolly",
   version: "Hungry Pup",
-  i18n: {
-    en: {
-      name: "Rolly",
-      version: "Hungry Pup",
-      text: "Support",
-    },
-    de: {
-      name: "Rolly",
-      version: "Hungriger Welpe",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "Rolly",
-      version: "Chiot affamé",
-      text: "Soutien",
-    },
-    it: {
-      name: "Rolly",
-      version: "Piccolo Affamato",
-      text: "Aiutante",
-    },
-  },
   inkType: ["amber"],
   franchise: "101 Dalmatians",
   set: "003",
@@ -53,4 +32,5 @@ export const rollyHungryPup: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: rollyHungryPupI18n,
 };

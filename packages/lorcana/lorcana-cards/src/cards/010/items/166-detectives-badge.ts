@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { detectivesBadgeI18n } from "./166-detectives-badge.i18n";
 
 export const detectivesBadge: ItemCard = {
   id: "os1",
@@ -6,48 +7,6 @@ export const detectivesBadge: ItemCard = {
   reprints: ["set10-166"],
   cardType: "item",
   name: "Detective's Badge",
-  i18n: {
-    en: {
-      name: "Detective's Badge",
-      text: [
-        {
-          title: "PROTECT AND SERVE",
-          description:
-            "{E}, 1 {I} — Chosen character gains Resist +1 and the Detective classification until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Dienstmarke",
-      text: [
-        {
-          title: "SCHÜTZEN UND DIENEN,",
-          description:
-            "1 — Ein Charakter deiner Wahl erhält bis zu Beginn deines nächsten Zuges Robust +1 und die Klassifizierung Detektiv. (Reduziere jeglichen Schaden, der dem Charakter zugefügt wird, um 1.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Badge de police",
-      text: [
-        {
-          title: "PROTÉGER ET SERVIR,",
-          description:
-            "1 — Choisissez un personnage qui gagne Résistance +1 et la classification Détective jusqu'au début de votre prochain tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Distintivo da Detective",
-      text: [
-        {
-          title: "PROTEGGERE E SERVIRE, 1",
-          description:
-            "— Un personaggio a tua scelta ottiene Resistere +1 e la classificazione Detective fino all'inizio del tuo prossimo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Zootropolis",
   set: "010",
@@ -66,5 +25,36 @@ export const detectivesBadge: ItemCard = {
         "{E}, 1 {I} — Chosen character gains Resist +1 and the Detective classification until the start of your next turn.",
     },
   ],
-  abilities: [],
+  abilities: [
+    {
+      id: "os1-1",
+      name: "PROTECT AND SERVE",
+      type: "activated",
+      cost: {
+        exert: true,
+        ink: 1,
+      },
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "gain-keyword",
+            keyword: "Resist",
+            value: 1,
+            duration: "until-start-of-next-turn",
+            target: "CHOSEN_CHARACTER",
+          },
+          {
+            type: "property-modification",
+            property: "classification",
+            operation: "add",
+            value: "Detective",
+            target: "CHOSEN_CHARACTER",
+          },
+        ],
+      },
+      text: "PROTECT AND SERVE {E}, 1 {I} — Chosen character gains Resist +1 and the Detective classification until the start of your next turn.",
+    },
+  ],
+  i18n: detectivesBadgeI18n,
 };

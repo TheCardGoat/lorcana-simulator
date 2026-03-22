@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theWardrobePerceptiveFriendI18n } from "./160-the-wardrobe-perceptive-friend.i18n";
 
 export const theWardrobePerceptiveFriend: CharacterCard = {
   id: "MRR",
@@ -7,52 +8,6 @@ export const theWardrobePerceptiveFriend: CharacterCard = {
   cardType: "character",
   name: "The Wardrobe",
   version: "Perceptive Friend",
-  i18n: {
-    en: {
-      name: "The Wardrobe",
-      version: "Perceptive Friend",
-      text: [
-        {
-          title: "I HAVE JUST THE THING!",
-        },
-        {
-          title: "{E},",
-          description: "Choose and discard an item card — Draw 2 cards.",
-        },
-      ],
-    },
-    de: {
-      name: "Mme. Kommode",
-      version: "Aufmerksame Freundin",
-      text: [
-        {
-          title: "DAS HIER PASST BESTIMMT!,",
-          description:
-            "Wähle eine Gegenstandskarte aus deiner Hand und wirf sie ab — Ziehe 2 Karten.",
-        },
-      ],
-    },
-    fr: {
-      name: "Madame De Garderobe",
-      version: "Amie perspicace",
-      text: [
-        {
-          title: "J'AI CE QU'IL VOUS FAUT!,",
-          description: "Défaussez un objet — Piochez 2 cartes.",
-        },
-      ],
-    },
-    it: {
-      name: "L'Armadio",
-      version: "Amica Perspicace",
-      text: [
-        {
-          title: "HO PROPRIO LA COSA GIUSTA!,",
-          description: "scegli e scarta una carta oggetto — Pesca 2 carte.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "008",
@@ -70,23 +25,28 @@ export const theWardrobePerceptiveFriend: CharacterCard = {
   text: [
     {
       title: "I HAVE JUST THE THING!",
-    },
-    {
-      title: "{E},",
-      description: "Choose and discard an item card — Draw 2 cards.",
+      description: "{E}, Choose and discard an item card — Draw 2 cards.",
     },
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      id: "s0r-1",
+      name: "I HAVE JUST THE THING!",
+      text: "I HAVE JUST THE THING! {E}, Choose and discard an item card — Draw 2 cards.",
+      type: "activated",
+      cost: {
+        exert: true,
+        discardCards: 1,
+        discardChosen: true,
+        discardCardType: "item",
+      },
       effect: {
         amount: 2,
         target: "CONTROLLER",
         type: "draw",
       },
-      id: "s0r-1",
-      text: "I HAVE JUST THE THING! , Choose and discard an item card — Draw 2 cards.",
-      type: "action",
     },
   ],
+  i18n: theWardrobePerceptiveFriendI18n,
 };

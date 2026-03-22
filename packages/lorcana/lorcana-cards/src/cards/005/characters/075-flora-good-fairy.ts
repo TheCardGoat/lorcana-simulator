@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { floraGoodFairyI18n } from "./075-flora-good-fairy.i18n";
 
 export const floraGoodFairy: CharacterCard = {
   id: "ZS7",
@@ -7,48 +8,6 @@ export const floraGoodFairy: CharacterCard = {
   cardType: "character",
   name: "Flora",
   version: "Good Fairy",
-  i18n: {
-    en: {
-      name: "Flora",
-      version: "Good Fairy",
-      text: [
-        {
-          title: "FIDDLE FADDLE",
-          description: "While being challenged, this character gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Flora",
-      version: "Gute Fee",
-      text: [
-        {
-          title: "HAB ICH EINE WUT!",
-          description: "Während dieser Charakter herausgefordert wird, erhält er +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Flora",
-      version: "Bonne fée",
-      text: [
-        {
-          title: "CELA NE RIME À RIEN",
-          description: "Lorsqu'il est défié, ce personnage gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Flora",
-      version: "Buona Fata",
-      text: [
-        {
-          title: "RIDICOLAGGINE",
-          description: "Mentre viene sfidato, questo personaggio riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Sleeping Beauty",
   set: "005",
@@ -72,6 +31,10 @@ export const floraGoodFairy: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Fairy"],
   abilities: [
     {
+      condition: {
+        role: "defender",
+        type: "in-challenge",
+      },
       effect: {
         modifier: 2,
         stat: "strength",
@@ -79,8 +42,10 @@ export const floraGoodFairy: CharacterCard = {
         type: "modify-stat",
       },
       id: "awe-1",
+      name: "FIDDLE FADDLE",
       text: "FIDDLE FADDLE While being challenged, this character gets +2 {S}.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: floraGoodFairyI18n,
 };

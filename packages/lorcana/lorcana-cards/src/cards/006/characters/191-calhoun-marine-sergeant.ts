@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { calhounMarineSergeantI18n } from "./191-calhoun-marine-sergeant.i18n";
 
 export const calhounMarineSergeant: CharacterCard = {
   id: "NLA",
@@ -7,37 +8,6 @@ export const calhounMarineSergeant: CharacterCard = {
   cardType: "character",
   name: "Calhoun",
   version: "Marine Sergeant",
-  i18n: {
-    en: {
-      name: "Calhoun",
-      version: "Marine Sergeant",
-      text: [
-        {
-          title: "Resist +1",
-        },
-        {
-          title: "LEVEL UP",
-          description:
-            "During your turn, whenever this character banishes another character in a challenge, gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Sergeant Calhoun",
-      version: "Marinefeldwebel",
-      text: "Robust +1 (Reduziere jeglichen Schaden, der diesem Charakter zugefügt wird, um 1.) AUFLEVELN Jedes Mal, wenn dieser Charakter in deinem Zug durch eine Herausforderung einen anderen Charakter verbannt, sammelst du 2 Legenden.",
-    },
-    fr: {
-      name: "Calhoun",
-      version: "Sergent",
-      text: "Résistance +1 (Les dommages qui sont infligés à ce personnage sont réduits de 1.) NIVEAU SUPÉRIEUR Pendant votre tour, chaque fois que ce personnage en bannit un autre via un défi, gagnez 2 éclats de Lore.",
-    },
-    it: {
-      name: "Calhoun",
-      version: "Sergente Marine",
-      text: "Resistere +1 SALIRE DI LIVELLO Durante il tuo turno, ogni volta che questo personaggio esilia un altro personaggio in una sfida, ottieni 2 leggenda.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Wreck It Ralph",
   set: "006",
@@ -87,4 +57,5 @@ export const calhounMarineSergeant: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: calhounMarineSergeantI18n,
 };

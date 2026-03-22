@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { grimorumArcanorumI18n } from "./067-grimorum-arcanorum.i18n";
 
 export const grimorumArcanorum: ItemCard = {
   id: "uwN",
@@ -6,68 +7,6 @@ export const grimorumArcanorum: ItemCard = {
   reprints: ["set10-067"],
   cardType: "item",
   name: "Grimorum Arcanorum",
-  i18n: {
-    en: {
-      name: "Grimorum Arcanorum",
-      text: [
-        {
-          title: "DOCTRINA ADDUCERE",
-          description:
-            "During your turn, whenever an opposing character becomes exerted, gain 1 lore.",
-        },
-        {
-          title: "CELERITAS",
-          description:
-            "Your characters named Demona gain Rush. (They can challenge the turn they're played.)",
-        },
-      ],
-    },
-    de: {
-      name: "Grimorum Arcanorum",
-      text: [
-        {
-          title: "DOCTRINA ADDUCERE",
-          description:
-            "Jedes Mal während deines Zuges, wenn ein gegnerischer Charakter erschöpft wird, sammelst du 1 Legende.",
-        },
-        {
-          title: "CELERITAS",
-          description:
-            "Deine Demona-Charaktere erhalten Rasant. (Die Charaktere können im selben Zug herausfordern, in dem sie ausgespielt werden.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Grimorum Arcanorum",
-      text: [
-        {
-          title: "DOCTRINA ADDUCERE",
-          description:
-            "Durant votre tour, chaque fois qu'un personnage adverse devient épuisé, gagnez 1 éclat de Lore.",
-        },
-        {
-          title: "CELERITAS",
-          description:
-            "Vos personnages nommés Démona gagnent Charge. (Ces personnages peuvent défier le tour où ils sont joués.)",
-        },
-      ],
-    },
-    it: {
-      name: "Grimorum Arcanorum",
-      text: [
-        {
-          title: "DOCTRINA ADDUCERE",
-          description:
-            "Durante il tuo turno, ogni volta che un personaggio avversario viene impegnato, ottieni 1 leggenda.",
-        },
-        {
-          title: "CELERITAS I",
-          description:
-            "tuoi personaggi chiamati Demona ottengono Lesto. (Possono sfidare nel turno in cui vengono giocati.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Gargoyles",
   set: "010",
@@ -93,6 +32,30 @@ export const grimorumArcanorum: ItemCard = {
   abilities: [
     {
       effect: {
+        amount: 1,
+        type: "gain-lore",
+      },
+      id: "177-1",
+      name: "DOCTRINA ADDUCERE",
+      text: "DOCTRINA ADDUCERE During your turn, whenever an opposing character becomes exerted, gain 1 lore.",
+      trigger: {
+        event: "exert",
+        on: {
+          cardType: "character",
+          controller: "opponent",
+        },
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+    {
+      effect: {
         keyword: "Rush",
         target: {
           selector: "all",
@@ -115,4 +78,5 @@ export const grimorumArcanorum: ItemCard = {
       type: "static",
     },
   ],
+  i18n: grimorumArcanorumI18n,
 };

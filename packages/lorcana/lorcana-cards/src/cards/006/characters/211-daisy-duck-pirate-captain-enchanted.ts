@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { daisyDuckPirateCaptainEnchantedI18n } from "./211-daisy-duck-pirate-captain-enchanted.i18n";
 
 export const daisyDuckPirateCaptainEnchanted: CharacterCard = {
   id: "JjK",
@@ -7,52 +8,6 @@ export const daisyDuckPirateCaptainEnchanted: CharacterCard = {
   cardType: "character",
   name: "Daisy Duck",
   version: "Pirate Captain",
-  i18n: {
-    en: {
-      name: "Daisy Duck",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "DISTANT SHORES",
-          description:
-            "Whenever one of your Pirate characters quests while at a location, draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Daisy Duck",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "DISTANT SHORES",
-          description:
-            "Whenever one of your Pirate characters quests while at a location, draw a card.",
-        },
-      ],
-    },
-    fr: {
-      name: "Daisy Duck",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "DISTANT SHORES",
-          description:
-            "Whenever one of your Pirate characters quests while at a location, draw a card.",
-        },
-      ],
-    },
-    it: {
-      name: "Daisy Duck",
-      version: "Pirate Captain",
-      text: [
-        {
-          title: "DISTANT SHORES",
-          description:
-            "Whenever one of your Pirate characters quests while at a location, draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "006",
   cardNumber: 211,
@@ -86,11 +41,21 @@ export const daisyDuckPirateCaptainEnchanted: CharacterCard = {
       name: "DISTANT SHORES",
       text: "DISTANT SHORES Whenever one of your Pirate characters quests while at a location, draw a card.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "quest",
+        on: {
+          cardType: "character",
+          classification: "Pirate",
+          controller: "you",
+          filters: [
+            {
+              type: "at-location",
+            },
+          ],
+        },
         timing: "whenever",
       },
       type: "triggered",
     },
   ],
+  i18n: daisyDuckPirateCaptainEnchantedI18n,
 };

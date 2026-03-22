@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { liShangGeneralsSonI18n } from "./111-li-shang-generals-son.i18n";
 
 export const liShangGeneralsSon: CharacterCard = {
   id: "Wbs",
@@ -7,24 +8,6 @@ export const liShangGeneralsSon: CharacterCard = {
   cardType: "character",
   name: "Li Shang",
   version: "General’s Son",
-  i18n: {
-    en: {
-      name: "Li Shang",
-      version: "General’s Son",
-    },
-    de: {
-      name: "Li Shang",
-      version: "Sohn des Generals",
-    },
-    fr: {
-      name: "Li Shang",
-      version: "Fils de Général",
-    },
-    it: {
-      name: "Li Shang",
-      version: "Figlio del Generale",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Mulan",
   set: "004",
@@ -41,4 +24,5 @@ export const liShangGeneralsSon: CharacterCard = {
     tcgPlayer: 550593,
   },
   classifications: ["Storyborn", "Hero"],
+  i18n: liShangGeneralsSonI18n,
 };

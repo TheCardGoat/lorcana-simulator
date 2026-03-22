@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { belleAccomplishedMysticEnchantedI18n } from "./226-belle-accomplished-mystic-enchanted.i18n";
 
 export const belleAccomplishedMysticEnchanted: CharacterCard = {
   id: "OJv",
@@ -7,55 +8,6 @@ export const belleAccomplishedMysticEnchanted: CharacterCard = {
   cardType: "character",
   name: "Belle",
   version: "Accomplished Mystic",
-  i18n: {
-    en: {
-      name: "Belle",
-      version: "Accomplished Mystic",
-      text: [
-        {
-          title: "Shift 3 {I}",
-        },
-        {
-          title: "ENHANCED HEALING",
-          description:
-            "When you play this character, move up to 3 damage counters from chosen character to chosen opposing character.",
-        },
-      ],
-    },
-    de: {
-      name: "Belle",
-      version: "Accomplished Mystic",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Belle.) ENHANCED HEALING When you play this character, move up to 3 damage counters from chosen character to chosen opposing character.",
-        },
-      ],
-    },
-    fr: {
-      name: "Belle",
-      version: "Accomplished Mystic",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Belle.) ENHANCED HEALING When you play this character, move up to 3 damage counters from chosen character to chosen opposing character.",
-        },
-      ],
-    },
-    it: {
-      name: "Belle",
-      version: "Accomplished Mystic",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Belle.) ENHANCED HEALING When you play this character, move up to 3 damage counters from chosen character to chosen opposing character.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Beauty and the Beast",
   set: "009",
@@ -82,5 +34,37 @@ export const belleAccomplishedMysticEnchanted: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "Princess", "Sorcerer"],
-  abilities: [],
+  abilities: [
+    {
+      id: "OJv-1",
+      cost: {
+        ink: 3,
+      },
+      keyword: "Shift",
+      type: "keyword",
+      text: "Shift 3",
+    },
+    {
+      id: "OJv-2",
+      name: "ENHANCED HEALING",
+      text: "ENHANCED HEALING When you play this character, move up to 3 damage counters from chosen character to chosen opposing character.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "move-damage",
+          amount: 3,
+          from: "CHOSEN_CHARACTER",
+          to: "CHOSEN_OPPOSING_CHARACTER",
+        },
+      },
+    },
+  ],
+  i18n: belleAccomplishedMysticEnchantedI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { jiminyCricketLevelheadedAndWiseI18n } from "./062-jiminy-cricket-level-headed-and-wise.i18n";
 
 export const jiminyCricketLevelheadedAndWise: CharacterCard = {
   id: "JE3",
@@ -7,37 +8,6 @@ export const jiminyCricketLevelheadedAndWise: CharacterCard = {
   cardType: "character",
   name: "Jiminy Cricket",
   version: "Level-Headed and Wise",
-  i18n: {
-    en: {
-      name: "Jiminy Cricket",
-      version: "Level-Headed and Wise",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "ENOUGH'S ENOUGH",
-          description:
-            "While this character is exerted, opposing characters with Rush enter play exerted.",
-        },
-      ],
-    },
-    de: {
-      name: "Jiminy Grille",
-      version: "Besonnen und weise",
-      text: "Wendig GENUG IST GENUG Solange dieser Charakter erschöpft ist, kommen gegnerische Charaktere mit Rasant erschöpft ins Spiel.",
-    },
-    fr: {
-      name: "Jiminy Cricket",
-      version: "Consciencieux et sage",
-      text: "Insaisissable TROP C'EST TROP Tant que ce personnage est épuisé, les personnages adverses avec Charge entrent en jeu épuisés.",
-    },
-    it: {
-      name: "Grillo Parlante",
-      version: "Equilibrato e Saggio",
-      text: "Sfuggente QUELLO CHE È TROPPO È TROPPO Mentre questo personaggio è impegnato, i personaggi avversari con Lesto entrano in gioco impegnati.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Pinocchio",
   set: "008",
@@ -71,14 +41,26 @@ export const jiminyCricketLevelheadedAndWise: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        type: "is-exerted",
+      },
       effect: {
         restriction: "enters-play-exerted",
-        target: "SELF",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [{ type: "has-keyword", keyword: "Rush" }],
+        },
         type: "restriction",
       },
       id: "1i2-2",
+      name: "ENOUGH'S ENOUGH",
       text: "ENOUGH'S ENOUGH While this character is exerted, opposing characters with Rush enter play exerted.",
       type: "static",
     },
   ],
+  i18n: jiminyCricketLevelheadedAndWiseI18n,
 };

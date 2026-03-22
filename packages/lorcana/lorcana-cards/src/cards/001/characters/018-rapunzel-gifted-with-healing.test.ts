@@ -19,12 +19,12 @@ describe("Rapunzel - Gifted with Healing", () => {
     });
     const woundedAllyId = testEngine.findCardInstanceId(woundedAlly, "play", "player_one");
 
+    // Playing Rapunzel triggers the ability immediately; the bag auto-resolves the
+    // sequence and suspends at the first step (remove-damage) as a pending effect.
     expect(testEngine.asPlayerOne().playCard(rapunzelGiftedWithHealing)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-        targets: [woundedAllyId],
-      }),
+      testEngine.asPlayerOne().resolveNextPending({ targets: [woundedAllyId] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getDamage(woundedAlly)).toBe(0);
@@ -46,11 +46,9 @@ describe("Rapunzel - Gifted with Healing", () => {
     const woundedAllyId = testEngine.findCardInstanceId(woundedAlly, "play", "player_one");
 
     expect(testEngine.asPlayerOne().playCard(rapunzelGiftedWithHealing)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-        targets: [woundedAllyId],
-      }),
+      testEngine.asPlayerOne().resolveNextPending({ targets: [woundedAllyId] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getDamage(woundedAlly)).toBe(0);

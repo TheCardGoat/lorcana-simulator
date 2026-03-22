@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tukTukWreckingBallI18n } from "./128-tuk-tuk-wrecking-ball.i18n";
 
 export const tukTukWreckingBall: CharacterCard = {
   id: "xpC",
@@ -7,33 +8,6 @@ export const tukTukWreckingBall: CharacterCard = {
   cardType: "character",
   name: "Tuk Tuk",
   version: "Wrecking Ball",
-  i18n: {
-    en: {
-      name: "Tuk Tuk",
-      version: "Wrecking Ball",
-      text: "Reckless",
-    },
-    de: {
-      name: "Tuktuk",
-      version: "Abrisskugel",
-      text: "Impulsiv",
-    },
-    fr: {
-      name: "Tuk Tuk",
-      version: "Boule de démolition",
-      text: "Combattant",
-    },
-    it: {
-      name: "Tuk Tuk",
-      version: "Wrecking Ball",
-      text: [
-        {
-          title: "Reckless",
-          description: "(This character can't quest and must challenge each turn if able.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "002",
@@ -58,4 +32,5 @@ export const tukTukWreckingBall: CharacterCard = {
       text: "Reckless",
     },
   ],
+  i18n: tukTukWreckingBallI18n,
 };

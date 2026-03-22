@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { scroogeMcduckResourcefulMiserI18n } from "./154-scrooge-mcduck-resourceful-miser.i18n";
 
 export const scroogeMcduckResourcefulMiser: CharacterCard = {
   id: "eru",
@@ -7,69 +8,6 @@ export const scroogeMcduckResourcefulMiser: CharacterCard = {
   cardType: "character",
   name: "Scrooge McDuck",
   version: "Resourceful Miser",
-  i18n: {
-    en: {
-      name: "Scrooge McDuck",
-      version: "Resourceful Miser",
-      text: [
-        {
-          title: "PUT IT TO GOOD USE",
-          description: "You may exert 4 items of yours to play this character for free.",
-        },
-        {
-          title: "FORTUNE HUNTER",
-          description:
-            "When you play this character, look at the top 4 cards of your deck. You may reveal an item card and put it into your hand. Put the rest on the bottom of your deck in any order.",
-        },
-      ],
-    },
-    de: {
-      name: "Dagobert Duck",
-      version: "Einfallsreicher Geizhals",
-      text: [
-        {
-          title: "SETZE ES SINNVOLL EIN",
-          description:
-            "Du darfst 4 deiner Gegenstände erschöpfen, um diesen Charakter kostenlos auszuspielen.",
-        },
-        {
-          title: "VERMÖGENSJÄGER",
-          description:
-            "Wenn du diesen Charakter ausspielst, schaue dir die obersten 4 Karten deines Decks an. Du darfst 1 Gegenstandskarte daraus aufdecken und auf deine Hand nehmen. Lege die restlichen Karten in beliebiger Reihenfolge unter dein Deck.",
-        },
-      ],
-    },
-    fr: {
-      name: "Balthazar Picsou",
-      version: "Avare plein de ressources",
-      text: [
-        {
-          title: "METTRE À PROFIT",
-          description: "Vous pouvez épuiser 4 de vos objets pour jouer ce personnage gratuitement.",
-        },
-        {
-          title: "CHASSEUR DE TRÉSOR",
-          description:
-            "Lorsque vous jouez ce personnage, regardez les 4 cartes du dessus de votre pioche. Vous pouvez révéler une carte Objet parmi elles et la mettre dans votre main. Placez les autres cartes sous votre pioche, dans l'ordre de votre choix.",
-        },
-      ],
-    },
-    it: {
-      name: "Paperon de' Paperoni",
-      version: "Taccagno Intraprendente",
-      text: [
-        {
-          title: "FARNE BUON USO",
-          description: "Puoi impegnare 4 tuoi oggetti per giocare questo personaggio gratis.",
-        },
-        {
-          title: "CACCIATORE DI TESORI",
-          description:
-            "Quando giochi questo personaggio, guarda le prime 4 carte del tuo mazzo. Puoi rivelare una carta oggetto e aggiungerla alla tua mano. Metti il resto in fondo al tuo mazzo in qualsiasi ordine.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Ducktales",
   set: "007",
@@ -118,12 +56,25 @@ export const scroogeMcduckResourcefulMiser: CharacterCard = {
     },
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: "CHOSEN_CHARACTER",
-          type: "put-on-bottom",
-        },
-        type: "optional",
+        type: "scry",
+        amount: 4,
+        destinations: [
+          {
+            zone: "hand",
+            min: 0,
+            max: 1,
+            reveal: true,
+            filter: {
+              type: "card-type",
+              cardType: "item",
+            },
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+            ordering: "player-choice",
+          },
+        ],
       },
       id: "18b-2",
       name: "FORTUNE HUNTER",
@@ -136,4 +87,5 @@ export const scroogeMcduckResourcefulMiser: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: scroogeMcduckResourcefulMiserI18n,
 };

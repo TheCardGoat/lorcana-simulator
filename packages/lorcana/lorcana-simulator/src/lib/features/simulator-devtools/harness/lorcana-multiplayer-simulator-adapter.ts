@@ -41,7 +41,7 @@ import {
   assertLorcanaSimulatorMoveId,
 } from "@/features/simulator/model/contracts.js";
 import { formatEventLogBody } from "@/features/simulator/model/event-log-formatting.js";
-import { m } from "$lib/paraglide/messages.js";
+import { m } from "$lib/i18n/messages.js";
 
 const OWNER_BY_SIDE = {
   playerOne: PLAYER_ONE,
@@ -380,7 +380,7 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
         }
       }
 
-      const cardReferences = this.#buildLogCardReferences(params ?? {}, relatedLogEntries);
+      const cardReferences = this.#buildLogCardReferences(params ?? {}, relatedLogEntries, view);
       const snapshotEntry: MoveLogEntrySnapshot = {
         actorSide,
         detail: undefined,
@@ -690,6 +690,7 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
   #buildLogCardReferences(
     params: SimulatorSerializedObject,
     relatedLogEntries: MoveLogRelatedEntrySnapshot[],
+    view: LorcanaSimulatorView = "authoritative",
   ): LorcanaCardSnapshot[] {
     const cardIds = new Set<string>();
 
@@ -699,9 +700,34 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
       }
     };
 
-    addCardId(params.cardId);
-    addCardId(params.attackerId);
-    addCardId(params.defenderId);
+    const addAllCardIds = (obj: SimulatorSerializedObject) => {
+      addCardId(obj.cardId);
+      addCardId(obj.attackerId);
+      addCardId(obj.characterId);
+      addCardId(obj.defenderId);
+      addCardId(obj.locationId);
+      addCardId(obj.shiftTargetId);
+      addCardId(obj.sourceCardId);
+      addCardId(obj.sourceId);
+
+      for (const listKey of [
+        "cardIds",
+        "drawn",
+        "lookedAt",
+        "mulliganed",
+        "singerIds",
+        "targets",
+      ]) {
+        const list = obj[listKey];
+        if (Array.isArray(list)) {
+          for (const item of list) {
+            addCardId(item);
+          }
+        }
+      }
+    };
+
+    addAllCardIds(params);
 
     for (const entry of relatedLogEntries) {
       const values = entry.defaultMessage?.values;
@@ -709,39 +735,54 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
         continue;
       }
 
-      addCardId(values.cardId);
-      addCardId(values.attackerId);
-      addCardId(values.defenderId);
-
-      if (Array.isArray(values.mulliganed)) {
-        for (const cardId of values.mulliganed) {
-          addCardId(cardId);
-        }
-      }
-
-      if (Array.isArray(values.drawn)) {
-        for (const cardId of values.drawn) {
-          addCardId(cardId);
-        }
-      }
+      addAllCardIds(values);
     }
 
     if (cardIds.size === 0) {
       return [];
     }
 
-    const board = this.#engine.getBoard("authoritative");
+    // Use the viewer's board so hand cards are fully visible for the owner.
+    const board = this.#engine.getBoard(view);
     const references: LorcanaCardSnapshot[] = [];
 
     for (const cardId of cardIds) {
       const card = board.cards[cardId];
-      if (!card) {
+      if (card) {
+        const ownerSide = this.#resolveSideFromOwner(card.ownerId) ?? "playerOne";
+        const zoneId = parseBaseZone(card.zone) ?? "deck";
+        references.push(this.#projectCard(board, cardId, ownerSide, zoneId));
         continue;
       }
 
-      const ownerSide = this.#resolveSideFromOwner(card.ownerId) ?? "playerOne";
-      const zoneId = parseBaseZone(card.zone) ?? "deck";
-      references.push(this.#projectCard(board, cardId, ownerSide, zoneId));
+      // Fallback for cards not in the projected board (e.g. deck cards after mulligan).
+      // Look up the definition directly from the instance registry.
+      const definition = this.#engine.getCardDefinition(cardId) as LorcanaCard | undefined;
+      if (!definition) {
+        continue;
+      }
+
+      const shortId = this.#resolveCardShortId(definition, undefined);
+      const localizedProjection = shortId
+        ? this.#resolveLocalizedCardProjection(shortId, definition)
+        : null;
+      const label =
+        localizedProjection?.label ?? getCardDisplayName(undefined, definition) ?? definition.name;
+
+      references.push({
+        cardId,
+        definitionId: definition.id,
+        isMasked: false,
+        label,
+        ownerId: "",
+        ownerSide: "playerOne",
+        zoneId: "deck",
+        facePresentation: "faceUp",
+        cardType: definition.cardType,
+        inkType: definition.inkType,
+        cost: definition.cost,
+        inkable: definition.inkable,
+      });
     }
 
     return references;

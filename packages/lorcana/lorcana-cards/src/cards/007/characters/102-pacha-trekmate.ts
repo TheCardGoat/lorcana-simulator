@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pachaTrekmateI18n } from "./102-pacha-trekmate.i18n";
 
 export const pachaTrekmate: CharacterCard = {
   id: "ooN",
@@ -7,52 +8,6 @@ export const pachaTrekmate: CharacterCard = {
   cardType: "character",
   name: "Pacha",
   version: "Trekmate",
-  i18n: {
-    en: {
-      name: "Pacha",
-      version: "Trekmate",
-      text: [
-        {
-          title: "FULL PACK",
-          description:
-            "While you have more cards in your hand than each opponent, this character gets +2 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "Patcha",
-      version: "Wanderkumpan",
-      text: [
-        {
-          title: "VOLLES GEPÄCK",
-          description:
-            "Solange du mehr Karten als jede gegnerische Person auf der Hand hast, erhält dieser Charakter +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Pacha",
-      version: "Compagnon de randonnée",
-      text: [
-        {
-          title: "SAC PLEIN À CRAQUER",
-          description:
-            "Tant que vous avez plus de cartes en main que chacun de vos adversaires, ce personnage gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Pacha",
-      version: "Compagno di Cammino",
-      text: [
-        {
-          title: "ZAINO PIENO",
-          description:
-            "Mentre hai in mano più carte di ogni avversario, questo personaggio riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Emperors New Groove",
   set: "007",
@@ -88,4 +43,5 @@ export const pachaTrekmate: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: pachaTrekmateI18n,
 };

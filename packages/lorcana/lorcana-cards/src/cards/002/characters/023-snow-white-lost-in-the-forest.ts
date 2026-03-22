@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { snowWhiteLostInTheForestI18n } from "./023-snow-white-lost-in-the-forest.i18n";
 
 export const snowWhiteLostInTheForest: CharacterCard = {
   id: "sl6",
@@ -7,52 +8,6 @@ export const snowWhiteLostInTheForest: CharacterCard = {
   cardType: "character",
   name: "Snow White",
   version: "Lost in the Forest",
-  i18n: {
-    en: {
-      name: "Snow White",
-      version: "Lost in the Forest",
-      text: [
-        {
-          title: "I WON'T HURT YOU",
-          description:
-            "When you play this character, you may remove up to 2 damage from chosen character.",
-        },
-      ],
-    },
-    de: {
-      name: "Schneewittchen",
-      version: "Im Wald verlaufen",
-      text: [
-        {
-          title: "ICH TUE EUCH JA NICHTS",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du bis zu 2 Schaden von einem Charakter deiner Wahl entfernen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Blanche-Neige",
-      version: "Perdue dans la forêt",
-      text: [
-        {
-          title: "JE NE VOUS FERAI PAS DE MAL",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez choisir un personnage et lui retirer jusqu'à 2 jetons Dommage.",
-        },
-      ],
-    },
-    it: {
-      name: "Snow White",
-      version: "Lost in the Forest",
-      text: [
-        {
-          title: "I WON'T HURT YOU",
-          description:
-            "When you play this character, you may remove up to 2 damage from chosen character.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "002",
@@ -75,7 +30,6 @@ export const snowWhiteLostInTheForest: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -105,4 +59,5 @@ export const snowWhiteLostInTheForest: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: snowWhiteLostInTheForestI18n,
 };

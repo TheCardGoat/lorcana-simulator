@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mickeyMouseTrumpeterI18n } from "./182-mickey-mouse-trumpeter.i18n";
 
 export const mickeyMouseTrumpeter: CharacterCard = {
   id: "hh8",
@@ -7,48 +8,6 @@ export const mickeyMouseTrumpeter: CharacterCard = {
   cardType: "character",
   name: "Mickey Mouse",
   version: "Trumpeter",
-  i18n: {
-    en: {
-      name: "Mickey Mouse",
-      version: "Trumpeter",
-      text: [
-        {
-          title: "SOUND THE CALL",
-          description: "{E}, 2 {I} — Play a character for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Micky Maus",
-      version: "Trompeter",
-      text: [
-        {
-          title: "DER RUF ERKLINGT, 2",
-          description: "— Spiele einen Charakter kostenlos aus.",
-        },
-      ],
-    },
-    fr: {
-      name: "Mickey Mouse",
-      version: "Trompettiste",
-      text: [
-        {
-          title: "SONNE L'APPEL, 2",
-          description: "— Jouez gratuitement un personnage.",
-        },
-      ],
-    },
-    it: {
-      name: "Topolino",
-      version: "Trombettiere",
-      text: [
-        {
-          title: "DARE IL SEGNALE, 2",
-          description: "— Gioca un personaggio gratis.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   set: "003",
   cardNumber: 182,
@@ -69,11 +28,11 @@ export const mickeyMouseTrumpeter: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       cost: {
         exert: true,
+        ink: 2,
       },
       effect: {
         cardType: "character",
@@ -86,4 +45,5 @@ export const mickeyMouseTrumpeter: CharacterCard = {
       type: "activated",
     },
   ],
+  i18n: mickeyMouseTrumpeterI18n,
 };

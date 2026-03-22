@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { higginsUndercoverOfficerI18n } from "./005-higgins-undercover-officer.i18n";
 
 export const higginsUndercoverOfficer: CharacterCard = {
   id: "6iI",
@@ -7,24 +8,6 @@ export const higginsUndercoverOfficer: CharacterCard = {
   cardType: "character",
   name: "Higgins",
   version: "Undercover Officer",
-  i18n: {
-    en: {
-      name: "Higgins",
-      version: "Undercover Officer",
-    },
-    de: {
-      name: "Higgins",
-      version: "Verdeckter Ermittler",
-    },
-    fr: {
-      name: "Higgins",
-      version: "Policier sous couverture",
-    },
-    it: {
-      name: "Higgins",
-      version: "Agente Sotto Copertura",
-    },
-  },
   inkType: ["amber"],
   franchise: "Zootropolis",
   set: "010",
@@ -41,4 +24,5 @@ export const higginsUndercoverOfficer: CharacterCard = {
     tcgPlayer: 660275,
   },
   classifications: ["Dreamborn", "Ally", "Detective"],
+  i18n: higginsUndercoverOfficerI18n,
 };

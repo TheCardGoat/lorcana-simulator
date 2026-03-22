@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { theNokkWaterSpiritI18n } from "./160-the-nokk-water-spirit.i18n";
 
 export const theNokkWaterSpirit: CharacterCard = {
   id: "2Pk",
@@ -7,33 +8,6 @@ export const theNokkWaterSpirit: CharacterCard = {
   cardType: "character",
   name: "The Nokk",
   version: "Water Spirit",
-  i18n: {
-    en: {
-      name: "The Nokk",
-      version: "Water Spirit",
-      text: "Ward",
-    },
-    de: {
-      name: "Der Nokk",
-      version: "Geist des Wassers",
-      text: "Behütet",
-    },
-    fr: {
-      name: "Nokk",
-      version: "Esprit de l'Eau",
-      text: "Hors d'atteinte",
-    },
-    it: {
-      name: "The Nokk",
-      version: "Water Spirit",
-      text: [
-        {
-          title: "Ward",
-          description: "(Opponents can't choose this character except to challenge.)",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Frozen",
   set: "002",
@@ -58,4 +32,5 @@ export const theNokkWaterSpirit: CharacterCard = {
       text: "Ward",
     },
   ],
+  i18n: theNokkWaterSpiritI18n,
 };

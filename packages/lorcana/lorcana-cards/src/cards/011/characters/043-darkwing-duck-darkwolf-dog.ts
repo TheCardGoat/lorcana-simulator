@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { darkwingDuckDarkwolfDogI18n } from "./043-darkwing-duck-darkwolf-dog.i18n";
 
 export const darkwingDuckDarkwolfDog: CharacterCard = {
   id: "l2V",
@@ -7,33 +8,6 @@ export const darkwingDuckDarkwolfDog: CharacterCard = {
   cardType: "character",
   name: "Darkwing Duck",
   version: "Darkwolf Dog",
-  i18n: {
-    en: {
-      name: "Darkwing Duck",
-      version: "Darkwolf Dog",
-      text: "Rush",
-    },
-    de: {
-      name: "Darkwing Duck",
-      version: "Darkwolf Schnapp",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Myster Mask",
-      version: "Clébard Mask",
-      text: "Charge",
-    },
-    it: {
-      name: "Darkwing Duck",
-      version: "Darkwolf Can",
-      text: [
-        {
-          title: "Lesto",
-          description: "(Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -58,4 +32,5 @@ export const darkwingDuckDarkwolfDog: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: darkwingDuckDarkwolfDogI18n,
 };

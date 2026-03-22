@@ -79,8 +79,8 @@ interface ZoneOperationsOptions {
 // Zone Operations Implementation
 // =============================================================================
 
-export function createZoneOperations<G>(
-  draft: MatchState<G>,
+export function createZoneOperations(
+  draft: MatchState,
   emitEvent?: (event: GameEvent) => void,
   options?: ZoneOperationsOptions,
 ): ZoneOperationsAPI {
@@ -629,7 +629,7 @@ export function createZoneOperations<G>(
 /**
  * Expire reveal windows that have passed their expiration stateID
  */
-export function expireReveals<G>(state: MatchState<G>): MatchState<G> {
+export function expireReveals(state: MatchState): MatchState {
   const currentStateID = state.ctx._stateID;
   state.ctx.zones.reveals.active = state.ctx.zones.reveals.active.filter(
     (reveal) => reveal.expiresAtStateID === undefined || reveal.expiresAtStateID > currentStateID,
@@ -648,8 +648,8 @@ export interface MulliganResult {
   remainingMulligans: number;
 }
 
-export function performMulligan<G>(
-  draft: MatchState<G>,
+export function performMulligan(
+  draft: MatchState,
   playerId: string,
   handZoneId: string,
   deckZoneId: string,

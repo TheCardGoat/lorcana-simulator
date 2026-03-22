@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princeNaveenBundledUpI18n } from "./173-prince-naveen-bundled-up.i18n";
 
 export const princeNaveenBundledUp: CharacterCard = {
   id: "zSE",
@@ -7,24 +8,6 @@ export const princeNaveenBundledUp: CharacterCard = {
   cardType: "character",
   name: "Prince Naveen",
   version: "Bundled Up",
-  i18n: {
-    en: {
-      name: "Prince Naveen",
-      version: "Bundled Up",
-    },
-    de: {
-      name: "Prinz Naveen",
-      version: "Eingepackt",
-    },
-    fr: {
-      name: "Prince Naveen",
-      version: "Emmitouflé",
-    },
-    it: {
-      name: "Principe Naveen",
-      version: "Infagottato",
-    },
-  },
   inkType: ["steel"],
   franchise: "Princess and the Frog",
   set: "011",
@@ -41,4 +24,5 @@ export const princeNaveenBundledUp: CharacterCard = {
     tcgPlayer: 676236,
   },
   classifications: ["Dreamborn", "Hero", "Prince"],
+  i18n: princeNaveenBundledUpI18n,
 };

@@ -143,10 +143,12 @@ describe("#### 4. TURN ACTIONS", () => {
       expect(testEngine.asPlayerOne().getCardZone(nonInkableCard)).toBe("hand");
 
       const fishboneQuillId = testEngine.findCardInstanceId(fishboneQuill, "play", PLAYER_ONE);
+      const nonInkableCardId = testEngine.findCardInstanceId(nonInkableCard, "hand", PLAYER_ONE);
       const result = testEngine.executeMoveForView("playerOne", "activateAbility", {
         args: {
           cardId: fishboneQuillId,
           abilityIndex: 0,
+          targets: [nonInkableCardId],
         },
       });
 

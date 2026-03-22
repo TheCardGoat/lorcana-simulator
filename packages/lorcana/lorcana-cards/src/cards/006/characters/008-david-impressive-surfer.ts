@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { davidImpressiveSurferI18n } from "./008-david-impressive-surfer.i18n";
 
 export const davidImpressiveSurfer: CharacterCard = {
   id: "Xi4",
@@ -7,50 +8,6 @@ export const davidImpressiveSurfer: CharacterCard = {
   cardType: "character",
   name: "David",
   version: "Impressive Surfer",
-  i18n: {
-    en: {
-      name: "David",
-      version: "Impressive Surfer",
-      text: [
-        {
-          title: "SHOWING OFF",
-          description: "While you have a character named Nani in play, this character gets +2 {L}.",
-        },
-      ],
-    },
-    de: {
-      name: "David",
-      version: "Eindrucksvoller Surfer",
-      text: [
-        {
-          title: "PROTZEREI",
-          description:
-            "Solange du mindestens einen Nani-Charakter im Spiel hast, erhält dieser Charakter +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "David",
-      version: "Surfeur impressionnant",
-      text: [
-        {
-          title: "FRIMEUR",
-          description: "Tant que vous avez un personnage Nani en jeu, ce personnage gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "David",
-      version: "Surfista Impressionante",
-      text: [
-        {
-          title: "METTERSI IN MOSTRA",
-          description:
-            "Mentre hai in gioco un personaggio chiamato Nani, questo personaggio riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "006",
@@ -74,6 +31,11 @@ export const davidImpressiveSurfer: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "has-named-character",
+        name: "Nani",
+        controller: "you",
+      },
       effect: {
         modifier: 2,
         stat: "lore",
@@ -81,8 +43,10 @@ export const davidImpressiveSurfer: CharacterCard = {
         type: "modify-stat",
       },
       id: "mrs-1",
+      name: "SHOWING OFF",
       text: "SHOWING OFF While you have a character named Nani in play, this character gets +2 {L}.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: davidImpressiveSurferI18n,
 };

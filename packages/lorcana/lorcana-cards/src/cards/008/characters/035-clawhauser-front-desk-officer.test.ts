@@ -19,5 +19,6 @@ describe("Clawhauser - Front Desk Officer", () => {
 
     const cardUnderTest = testEngine.getCardModel(clawhauserFrontDeskOfficer);
     expect(cardUnderTest.hasSinger()).toBe(true);
+    expect(cardUnderTest.singerCost).toBe(4);
   });
 });

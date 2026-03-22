@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tinkerBellQueenOfTheAzuriteFairiesI18n } from "./048-tinker-bell-queen-of-the-azurite-fairies.i18n";
 
 export const tinkerBellQueenOfTheAzuriteFairies: CharacterCard = {
   id: "yE4",
@@ -7,40 +8,6 @@ export const tinkerBellQueenOfTheAzuriteFairies: CharacterCard = {
   cardType: "character",
   name: "Tinker Bell",
   version: "Queen of the Azurite Fairies",
-  i18n: {
-    en: {
-      name: "Tinker Bell",
-      version: "Queen of the Azurite Fairies",
-      text: [
-        {
-          title: "Shift 5",
-        },
-        {
-          title: "Evasive",
-        },
-        {
-          title: "SHINING EXAMPLE",
-          description:
-            "Whenever this character quests, your other Fairy characters get +1 {L} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Naseweis",
-      version: "Königin der Azurblauen Feen",
-      text: "Gestaltwandel 5 Wendig GLÄNZENDES BEISPIEL Jedes Mal, wenn dieser Charakter erkundet, erhalten deine anderen Feen in diesem Zug +1.",
-    },
-    fr: {
-      name: "La Fée Clochette",
-      version: "Reine des fées d’Azurite",
-      text: "Alter 5 Insaisissable MODÈLE RAYONNANT Chaque fois que ce personnage est envoyé à l'aventure, vos autres personnages Fée gagnent +1 pour le reste de ce tour.",
-    },
-    it: {
-      name: "Trilli",
-      version: "Regina delle Fate di Azzurrite",
-      text: "Trasformazione 5 Sfuggente FULGIDO ESEMPIO Ogni volta che questo personaggio va all'avventura, i tuoi altri personaggi Fata ricevono +1 per questo turno.",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Peter Pan",
   set: "006",
@@ -90,7 +57,20 @@ export const tinkerBellQueenOfTheAzuriteFairies: CharacterCard = {
         duration: "this-turn",
         modifier: 1,
         stat: "lore",
-        target: "CHOSEN_CHARACTER",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Fairy",
+            },
+          ],
+        },
         type: "modify-stat",
       },
       id: "18r-3",
@@ -104,4 +84,5 @@ export const tinkerBellQueenOfTheAzuriteFairies: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: tinkerBellQueenOfTheAzuriteFairiesI18n,
 };

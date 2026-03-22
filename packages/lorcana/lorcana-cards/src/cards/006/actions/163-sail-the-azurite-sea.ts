@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { sailTheAzuriteSeaI18n } from "./163-sail-the-azurite-sea.i18n";
 
 export const sailTheAzuriteSea: ActionCard = {
   id: "EfC",
@@ -6,24 +7,6 @@ export const sailTheAzuriteSea: ActionCard = {
   reprints: ["set6-163"],
   cardType: "action",
   name: "Sail the Azurite Sea",
-  i18n: {
-    en: {
-      name: "Sail the Azurite Sea",
-      text: "This turn, you may put an additional card from your hand into your inkwell facedown. Draw a card.",
-    },
-    de: {
-      name: "Azurblaues Meer befahren",
-      text: "Du darfst in diesem Zug 1 weitere Karte tinten. Ziehe 1 Karte.",
-    },
-    fr: {
-      name: "Voguer sur la mer Azurite",
-      text: "Ce tour-ci, vous pouvez encrer une carte supplémentaire. Piochez une carte.",
-    },
-    it: {
-      name: "Navigare nel Mare di Azzurrite",
-      text: "Per questo turno, puoi aggiungere una carta aggiuntiva al tuo calamaio dalla tua mano, a faccia in giù. Pesca una carta.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Lorcana",
   set: "006",
@@ -55,4 +38,5 @@ export const sailTheAzuriteSea: ActionCard = {
       },
     },
   ],
+  i18n: sailTheAzuriteSeaI18n,
 };

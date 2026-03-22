@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { rlsLegacysCannonI18n } from "./202-rls-legacys-cannon.i18n";
 
 export const rlsLegacysCannon: ItemCard = {
   id: "gkg",
@@ -6,47 +7,6 @@ export const rlsLegacysCannon: ItemCard = {
   reprints: ["set4-202"],
   cardType: "item",
   name: "RLS Legacy's Cannon",
-  i18n: {
-    en: {
-      name: "RLS Legacy's Cannon",
-      text: [
-        {
-          title: "BA-BOOM!",
-          description:
-            "{E}, 2 {I}, Discard a card — Deal 2 damage to chosen character or location.",
-        },
-      ],
-    },
-    de: {
-      name: "Kanone der RLS Legacy",
-      text: [
-        {
-          title: "BAA-BUMM!, 2,",
-          description: "Wirf 1 Karte ab — Füge einem Charakter oder Ort deiner Wahl 2 Schaden zu.",
-        },
-      ],
-    },
-    fr: {
-      name: "Canon du RLS Héritage",
-      text: [
-        {
-          title: "BA-BOUM!, 2,",
-          description:
-            "Défaussez une carte — Choisissez un personnage ou un lieu et infligez-lui 2 dommages.",
-        },
-      ],
-    },
-    it: {
-      name: "Cannone della RLS Legacy",
-      text: [
-        {
-          title: "BA-BUM!, 2,",
-          description:
-            "scarta una carta — Infliggi 2 danni a un personaggio o a un luogo a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Treasure Planet",
   set: "004",
@@ -89,4 +49,5 @@ export const rlsLegacysCannon: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: rlsLegacysCannonI18n,
 };

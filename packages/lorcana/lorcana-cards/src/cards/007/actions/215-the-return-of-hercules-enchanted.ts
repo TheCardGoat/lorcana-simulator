@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { theReturnOfHerculesEnchantedI18n } from "./215-the-return-of-hercules-enchanted.i18n";
 
 export const theReturnOfHerculesEnchanted: ActionCard = {
   id: "44M",
@@ -6,30 +7,6 @@ export const theReturnOfHerculesEnchanted: ActionCard = {
   reprints: ["set7-118"],
   cardType: "action",
   name: "The Return of Hercules",
-  i18n: {
-    en: {
-      name: "The Return of Hercules",
-      text: "Each player may reveal a character card from their hand and play it for free.",
-    },
-    de: {
-      name: "Die Rückkehr von Hercules",
-      text: [
-        {
-          title: "Alle Mitspielenden",
-          description:
-            "(auch du) dürfen je 1 Charakterkarte aus ihrer Hand vorzeigen und kostenlos ausspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Le retour d’Hercule",
-      text: "Chaque joueur peut révéler une carte Personnage de sa main et la jouer gratuitement.",
-    },
-    it: {
-      name: "Il Ritorno di Ercole",
-      text: "Ogni giocatore può rivelare una carta personaggio dalla sua mano e giocarla gratis.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "007",
@@ -83,4 +60,5 @@ export const theReturnOfHerculesEnchanted: ActionCard = {
       type: "action",
     },
   ],
+  i18n: theReturnOfHerculesEnchantedI18n,
 };

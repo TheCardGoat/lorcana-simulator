@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { genieExcitedShipbuilderI18n } from "./038-genie-excited-shipbuilder.i18n";
 
 export const genieExcitedShipbuilder: CharacterCard = {
   id: "nk3",
@@ -7,24 +8,6 @@ export const genieExcitedShipbuilder: CharacterCard = {
   cardType: "character",
   name: "Genie",
   version: "Excited Shipbuilder",
-  i18n: {
-    en: {
-      name: "Genie",
-      version: "Excited Shipbuilder",
-    },
-    de: {
-      name: "Dschinni",
-      version: "Begeisterter Schiffsbauer",
-    },
-    fr: {
-      name: "Génie",
-      version: "Charpentier naval enthousiaste",
-    },
-    it: {
-      name: "Genio",
-      version: "Costruttore Navale Entusiasta",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "006",
@@ -41,4 +24,5 @@ export const genieExcitedShipbuilder: CharacterCard = {
     tcgPlayer: 593006,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: genieExcitedShipbuilderI18n,
 };

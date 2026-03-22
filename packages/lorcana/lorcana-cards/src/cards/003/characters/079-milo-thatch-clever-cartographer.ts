@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { miloThatchCleverCartographerI18n } from "./079-milo-thatch-clever-cartographer.i18n";
 
 export const miloThatchCleverCartographer: CharacterCard = {
   id: "NSM",
@@ -7,24 +8,6 @@ export const miloThatchCleverCartographer: CharacterCard = {
   cardType: "character",
   name: "Milo Thatch",
   version: "Clever Cartographer",
-  i18n: {
-    en: {
-      name: "Milo Thatch",
-      version: "Clever Cartographer",
-    },
-    de: {
-      name: "Milo Thatch",
-      version: "Kluger Kartograph",
-    },
-    fr: {
-      name: "Milo Thatch",
-      version: "Brillant cartographe",
-    },
-    it: {
-      name: "Milo Thatch",
-      version: "Cartografo Brillante",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Atlantis",
   set: "003",
@@ -41,4 +24,5 @@ export const miloThatchCleverCartographer: CharacterCard = {
     tcgPlayer: 536280,
   },
   classifications: ["Dreamborn", "Hero"],
+  i18n: miloThatchCleverCartographerI18n,
 };

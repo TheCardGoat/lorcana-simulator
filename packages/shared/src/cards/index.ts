@@ -8,3 +8,4 @@
 
 export * from "./images";
 export * from "./cdn-config";
+export * from "./catalog";

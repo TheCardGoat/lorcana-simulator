@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { annaDiplomaticQueenI18n } from "./085-anna-diplomatic-queen.i18n";
 
 export const annaDiplomaticQueen: CharacterCard = {
   id: "Tqp",
@@ -7,60 +8,6 @@ export const annaDiplomaticQueen: CharacterCard = {
   cardType: "character",
   name: "Anna",
   version: "Diplomatic Queen",
-  i18n: {
-    en: {
-      name: "Anna",
-      version: "Diplomatic Queen",
-      text: [
-        {
-          title: "ROYAL RESOLUTION",
-          description: "When you play this character, you may pay 2 {I} to choose one:",
-        },
-        {
-          title: "• Each opponent chooses and discards a card.",
-        },
-        {
-          title: "• Chosen character gets +2 {S} this turn.",
-        },
-        {
-          title: "• Banish chosen damaged character.",
-        },
-      ],
-    },
-    de: {
-      name: "Anna",
-      version: "Diplomatische Königin",
-      text: [
-        {
-          title: "KÖNIGLICHE ENTSCHEIDUNG",
-          description:
-            "Wenn du diesen Charakter ausspielst, darfst du 2 bezahlen, um eine der Möglichkeiten auszuwählen: • Alle gegnerischen Mitspielenden wählen je 1 Karte aus ihrer Hand und werfen sie ab. • Gib einem Charakter deiner Wahl in diesem Zug +2. • Verbanne einen beschädigten Charakter deiner Wahl.",
-        },
-      ],
-    },
-    fr: {
-      name: "Anna",
-      version: "Reine diplomate",
-      text: [
-        {
-          title: "DÉTERMINATION ROYALE",
-          description:
-            "Lorsque vous jouez ce personnage, vous pouvez payer 2, pour choisir entre: • Chaque adversaire choisit une carte de sa main et la défausse. • Choisissez un personnage qui gagne +2 pour le reste de ce tour. • Choisissez un personnage ayant au moins un dommage sur lui et bannissez-le.",
-        },
-      ],
-    },
-    it: {
-      name: "Anna",
-      version: "Regina Diplomatica",
-      text: [
-        {
-          title: "DECISIONE REALE",
-          description:
-            "Quando giochi questo personaggio, puoi pagare 2 per scegliere uno: • Ogni avversario sceglie e scarta una carta. • Un personaggio a tua scelta riceve +2 per questo turno. • Esilia un personaggio danneggiato a tua scelta.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Frozen",
   set: "005",
@@ -91,5 +38,86 @@ export const annaDiplomaticQueen: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Queen"],
-  abilities: [],
+  abilities: [
+    {
+      id: "Tqp-1",
+      name: "ROYAL RESOLUTION",
+      text: "ROYAL RESOLUTION When you play this character, you may pay 2 {I} to choose one: Each opponent chooses and discards a card. Chosen character gets +2 {S} this turn. Banish chosen damaged character.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "choice",
+          optionLabels: [
+            "Each opponent chooses and discards a card.",
+            "Chosen character gets +2 strength this turn.",
+            "Banish chosen damaged character.",
+          ],
+          options: [
+            {
+              type: "pay-cost",
+              cost: {
+                ink: 2,
+              },
+              effect: {
+                type: "discard",
+                from: "hand",
+                amount: 1,
+                chosen: true,
+                chosenBy: "opponent",
+                target: "OPPONENT",
+              },
+            },
+            {
+              type: "pay-cost",
+              cost: {
+                ink: 2,
+              },
+              effect: {
+                type: "modify-stat",
+                stat: "strength",
+                modifier: 2,
+                duration: "this-turn",
+                target: {
+                  selector: "chosen",
+                  count: 1,
+                  owner: "any",
+                  zones: ["play"],
+                  cardTypes: ["character"],
+                },
+              },
+            },
+            {
+              type: "pay-cost",
+              cost: {
+                ink: 2,
+              },
+              effect: {
+                type: "banish",
+                target: {
+                  selector: "chosen",
+                  count: 1,
+                  owner: "any",
+                  zones: ["play"],
+                  cardTypes: ["character"],
+                  filter: [
+                    {
+                      type: "damaged",
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+  ],
+  i18n: annaDiplomaticQueenI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sleepySluggishKnightI18n } from "./177-sleepy-sluggish-knight.i18n";
 
 export const sleepySluggishKnight: CharacterCard = {
   id: "72x",
@@ -7,34 +8,6 @@ export const sleepySluggishKnight: CharacterCard = {
   cardType: "character",
   name: "Sleepy",
   version: "Sluggish Knight",
-  i18n: {
-    en: {
-      name: "Sleepy",
-      version: "Sluggish Knight",
-      text: "Bodyguard",
-    },
-    de: {
-      name: "Schlafmütz",
-      version: "Ritter der Müdigkeit",
-      text: "Beschützen (Du darfst diesen Charakter erschöpft ausspielen. Gegnerische Charaktere müssen beim Herausfordern deiner Charaktere zuerst deine Charaktere mit Beschützen wählen, wenn möglich.)",
-    },
-    fr: {
-      name: "Dormeur",
-      version: "Chevalier amorphe",
-      text: [
-        {
-          title: "Rempart",
-          description:
-            "(Ce personnage peut entrer en jeu épuisé. Lorsqu'un adversaire défie l'un de vos personnages, il doit, si possible, choisir l'un de vos personnages avec Rempart.)",
-        },
-      ],
-    },
-    it: {
-      name: "Pisolo",
-      version: "Cavaliere Sonnolento",
-      text: "Guardiano",
-    },
-  },
   inkType: ["steel"],
   franchise: "Snow White",
   set: "005",
@@ -59,4 +32,5 @@ export const sleepySluggishKnight: CharacterCard = {
       type: "keyword",
     },
   ],
+  i18n: sleepySluggishKnightI18n,
 };

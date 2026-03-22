@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { pinocchioStringsAttachedEpicI18n } from "./224-pinocchio-strings-attached-epic.i18n";
 
 export const pinocchioStringsAttachedEpic: CharacterCard = {
   id: "QOp",
@@ -7,34 +8,6 @@ export const pinocchioStringsAttachedEpic: CharacterCard = {
   cardType: "character",
   name: "Pinocchio",
   version: "Strings Attached",
-  i18n: {
-    en: {
-      name: "Pinocchio",
-      version: "Strings Attached",
-      text: "Evasive GOT TO KEEP REAL QUIET Once during your turn, whenever you ready this character, you may draw a card.",
-    },
-    de: {
-      name: "Pinocchio",
-      version: "An Fäden geknüpft",
-      text: "Wendig ICH MUSS GANZ LEISE SEIN Einmal während deines Zuges, wenn du diesen Charakter bereit machst, darfst du 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Pinocchio",
-      version: "Avec des liens",
-      text: "Insaisissable NE FAISONS PAS UN BRUIT Une fois durant votre tour, lorsque vous redressez ce personnage, vous pouvez piocher une carte.",
-    },
-    it: {
-      name: "Pinocchio",
-      version: "Strings Attached",
-      text: [
-        {
-          title: "Evasive",
-          description:
-            "(Only characters with Evasive can challenge this character.) GOT TO KEEP REAL QUIET Once during your turn, whenever you ready this character, you may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Pinocchio",
   set: "008",
@@ -80,4 +53,5 @@ export const pinocchioStringsAttachedEpic: CharacterCard = {
       text: "GOT TO KEEP REAL QUIET Once during your turn, whenever you ready this character, you may draw a card.",
     },
   ],
+  i18n: pinocchioStringsAttachedEpicI18n,
 };

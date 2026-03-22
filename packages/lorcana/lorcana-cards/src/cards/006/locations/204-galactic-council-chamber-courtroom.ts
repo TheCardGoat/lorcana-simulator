@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { galacticCouncilChamberCourtroomI18n } from "./204-galactic-council-chamber-courtroom.i18n";
 
 export const galacticCouncilChamberCourtroom: LocationCard = {
   id: "WjQ",
@@ -7,52 +8,6 @@ export const galacticCouncilChamberCourtroom: LocationCard = {
   cardType: "location",
   name: "Galactic Council Chamber",
   version: "Courtroom",
-  i18n: {
-    en: {
-      name: "Galactic Council Chamber",
-      version: "Courtroom",
-      text: [
-        {
-          title: "FEDERATION DECREE",
-          description:
-            "While you have an Alien or Robot character here, this location can't be challenged.",
-        },
-      ],
-    },
-    de: {
-      name: "Saal des Hohen Rats",
-      version: "Gerichtssaal",
-      text: [
-        {
-          title: "FÖDERATIONSERLASS",
-          description:
-            "Solange du mindestens einen Alien oder Roboter an diesem Ort hast, kann dieser Ort nicht herausgefordert werden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Chambre du Conseil galactique",
-      version: "Salle d'audience",
-      text: [
-        {
-          title: "DÉCRET DE LA FÉDÉRATION",
-          description:
-            "Tant que vous avez au moins un personnage Alien ou Robot sur ce lieu, ce lieu ne peut pas être défié.",
-        },
-      ],
-    },
-    it: {
-      name: "Camera del Consiglio Galattico",
-      version: "Aula di Tribunale",
-      text: [
-        {
-          title: "DECRETO DELLA FEDERAZIONE",
-          description:
-            "Mentre hai un personaggio Alieno o Robot in questo luogo, questo luogo non può essere sfidato.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "006",
@@ -136,4 +91,5 @@ export const galacticCouncilChamberCourtroom: LocationCard = {
       type: "static",
     },
   ],
+  i18n: galacticCouncilChamberCourtroomI18n,
 };

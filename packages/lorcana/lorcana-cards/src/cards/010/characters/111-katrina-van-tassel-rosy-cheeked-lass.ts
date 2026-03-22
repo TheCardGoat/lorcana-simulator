@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { katrinaVanTasselRosycheekedLassI18n } from "./111-katrina-van-tassel-rosy-cheeked-lass.i18n";
 
 export const katrinaVanTasselRosycheekedLass: CharacterCard = {
   id: "lUe",
@@ -7,24 +8,6 @@ export const katrinaVanTasselRosycheekedLass: CharacterCard = {
   cardType: "character",
   name: "Katrina Van Tassel",
   version: "Rosy-Cheeked Lass",
-  i18n: {
-    en: {
-      name: "Katrina Van Tassel",
-      version: "Rosy-Cheeked Lass",
-    },
-    de: {
-      name: "Katrina van Tassel",
-      version: "Maid mit rosigen Wangen",
-    },
-    fr: {
-      name: "Katrina Van Tassel",
-      version: "Fraîche comme une rose",
-    },
-    it: {
-      name: "Katrina van Tassel",
-      version: "Ragazza dalle Guance Rosee",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Sleepy Hollow",
   set: "010",
@@ -41,4 +24,5 @@ export const katrinaVanTasselRosycheekedLass: CharacterCard = {
     tcgPlayer: 660022,
   },
   classifications: ["Storyborn"],
+  i18n: katrinaVanTasselRosycheekedLassI18n,
 };

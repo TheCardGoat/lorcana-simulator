@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cheshireCatAlwaysGrinningI18n } from "./074-cheshire-cat-always-grinning.i18n";
 
 export const cheshireCatAlwaysGrinning: CharacterCard = {
   id: "Eis",
@@ -7,24 +8,6 @@ export const cheshireCatAlwaysGrinning: CharacterCard = {
   cardType: "character",
   name: "Cheshire Cat",
   version: "Always Grinning",
-  i18n: {
-    en: {
-      name: "Cheshire Cat",
-      version: "Always Grinning",
-    },
-    de: {
-      name: "Grinsekatze",
-      version: "Grinst ständig",
-    },
-    fr: {
-      name: "Chat du Cheshire",
-      version: "Toujours ce sourire…",
-    },
-    it: {
-      name: "Cheshire Cat",
-      version: "Always Grinning",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Alice in Wonderland",
   set: "002",
@@ -41,4 +24,5 @@ export const cheshireCatAlwaysGrinning: CharacterCard = {
     tcgPlayer: 527271,
   },
   classifications: ["Storyborn"],
+  i18n: cheshireCatAlwaysGrinningI18n,
 };

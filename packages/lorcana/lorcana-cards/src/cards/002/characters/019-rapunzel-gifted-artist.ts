@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rapunzelGiftedArtistI18n } from "./019-rapunzel-gifted-artist.i18n";
 
 export const rapunzelGiftedArtist: CharacterCard = {
   id: "q6B",
@@ -7,55 +8,6 @@ export const rapunzelGiftedArtist: CharacterCard = {
   cardType: "character",
   name: "Rapunzel",
   version: "Gifted Artist",
-  i18n: {
-    en: {
-      name: "Rapunzel",
-      version: "Gifted Artist",
-      text: [
-        {
-          title: "Shift 3",
-        },
-        {
-          title: "LET YOUR POWER SHINE",
-          description:
-            "Whenever you remove 1 or more damage from one of your characters, you may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Rapunzel",
-      version: "Gifted Artist",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Rapunzel.) LET YOUR POWER SHINE Whenever you remove 1 or more damage from one of your characters, you may draw a card.",
-        },
-      ],
-    },
-    fr: {
-      name: "Rapunzel",
-      version: "Gifted Artist",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Rapunzel.) LET YOUR POWER SHINE Whenever you remove 1 or more damage from one of your characters, you may draw a card.",
-        },
-      ],
-    },
-    it: {
-      name: "Rapunzel",
-      version: "Gifted Artist",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Rapunzel.) LET YOUR POWER SHINE Whenever you remove 1 or more damage from one of your characters, you may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Tangled",
   set: "002",
@@ -81,7 +33,6 @@ export const rapunzelGiftedArtist: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -113,4 +64,5 @@ export const rapunzelGiftedArtist: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: rapunzelGiftedArtistI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ursulaDeceiverI18n } from "./090-ursula-deceiver.i18n";
 
 export const ursulaDeceiver: CharacterCard = {
   id: "JSz",
@@ -7,52 +8,6 @@ export const ursulaDeceiver: CharacterCard = {
   cardType: "character",
   name: "Ursula",
   version: "Deceiver",
-  i18n: {
-    en: {
-      name: "Ursula",
-      version: "Deceiver",
-      text: [
-        {
-          title: "YOU'LL NEVER EVEN MISS IT",
-          description:
-            "When you play this character, chosen opponent reveals their hand and discards a song card of your choice.",
-        },
-      ],
-    },
-    de: {
-      name: "Ursula",
-      version: "Deceiver",
-      text: [
-        {
-          title: "YOU'LL NEVER EVEN MISS IT",
-          description:
-            "When you play this character, chosen opponent reveals their hand and discards a song card of your choice.",
-        },
-      ],
-    },
-    fr: {
-      name: "Ursula",
-      version: "Deceiver",
-      text: [
-        {
-          title: "YOU'LL NEVER EVEN MISS IT",
-          description:
-            "When you play this character, chosen opponent reveals their hand and discards a song card of your choice.",
-        },
-      ],
-    },
-    it: {
-      name: "Ursula",
-      version: "Deceiver",
-      text: [
-        {
-          title: "YOU'LL NEVER EVEN MISS IT",
-          description:
-            "When you play this character, chosen opponent reveals their hand and discards a song card of your choice.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Little Mermaid",
   set: "003",
@@ -75,12 +30,27 @@ export const ursulaDeceiver: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer"],
-  missingTests: true,
   abilities: [
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        type: "sequence",
+        steps: [
+          {
+            type: "reveal-hand",
+            target: "EACH_OPPONENT",
+          },
+          {
+            type: "discard",
+            amount: 1,
+            target: "EACH_OPPONENT",
+            from: "hand",
+            chosen: true,
+            chosenBy: "you",
+            filter: {
+              cardType: "song",
+            },
+          },
+        ],
       },
       id: "d21-1",
       name: "YOU'LL NEVER EVEN MISS IT",
@@ -93,4 +63,5 @@ export const ursulaDeceiver: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: ursulaDeceiverI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { benEccentricRobotI18n } from "./137-ben-eccentric-robot.i18n";
 
 export const benEccentricRobot: CharacterCard = {
   id: "bXM",
@@ -7,28 +8,6 @@ export const benEccentricRobot: CharacterCard = {
   cardType: "character",
   name: "B.E.N.",
   version: "Eccentric Robot",
-  i18n: {
-    en: {
-      name: "B.E.N.",
-      version: "Eccentric Robot",
-      text: "Support",
-    },
-    de: {
-      name: "B.E.N.",
-      version: "Exzentrischer Roboter",
-      text: "Unterstützen (Jedes Mal, wenn dieser Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "B.E.N.",
-      version: "Robot excentrique",
-      text: "Soutien",
-    },
-    it: {
-      name: "B.E.N.",
-      version: "Robot Eccentrico",
-      text: "Aiutante",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Treasure Planet",
   set: "006",
@@ -53,4 +32,5 @@ export const benEccentricRobot: CharacterCard = {
       text: "Support",
     },
   ],
+  i18n: benEccentricRobotI18n,
 };

@@ -1,8 +1,21 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
 import { aladdinPrinceAli } from "../../001";
 import { megaraSecretKeeper } from "../characters/086-megara-secret-keeper";
 import { blessedBagpipes } from "./101-blessed-bagpipes";
+
+const opponentAttacker = createMockCharacter({
+  id: "bagpipes-opponent-attacker",
+  name: "Opponent Attacker",
+  cost: 5,
+  strength: 5,
+  willpower: 5,
+});
 
 describe("Blessed Bagpipes", () => {
   it("may put the top card of your deck under a chosen character with Boost when played", () => {
@@ -25,5 +38,48 @@ describe("Blessed Bagpipes", () => {
 
     expect(testEngine.asPlayerOne().getCardZone(blessedBagpipes)).toBe("play");
     expect(testEngine.getCardsUnder(megaraSecretKeeper)).toEqual([storedCardId]);
+  });
+
+  it("gains 1 lore when one of your characters with a card under it is challenged", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: [aladdinPrinceAli],
+        hand: [blessedBagpipes],
+        inkwell: blessedBagpipes.cost,
+        play: [megaraSecretKeeper],
+      },
+      {
+        deck: 1,
+        play: [opponentAttacker],
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(blessedBagpipes)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: true,
+        targets: [megaraSecretKeeper],
+      }),
+    ).toBeSuccessfulCommand();
+
+    const attacker = testEngine.findCardInstanceId(opponentAttacker, "play", PLAYER_TWO);
+    const defender = testEngine.findCardInstanceId(megaraSecretKeeper, "play", PLAYER_ONE);
+    testEngine.manualExertCard(defender);
+    expect(testEngine.asServer().manualPassTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().challenge(attacker, defender)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(testEngine.asPlayerOne().getBagEffects()[0]).toMatchObject({
+      payload: {
+        abilityId: "1s8-2",
+        effect: {
+          amount: 1,
+          target: "CONTROLLER",
+          type: "gain-lore",
+        },
+      },
+    });
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+    ).toBeSuccessfulCommand();
   });
 });

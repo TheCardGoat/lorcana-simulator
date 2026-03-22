@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { shereKhanFierceAndFuriousI18n } from "./128-shere-khan-fierce-and-furious.i18n";
 
 export const shereKhanFierceAndFurious: CharacterCard = {
   id: "vOh",
@@ -7,37 +8,6 @@ export const shereKhanFierceAndFurious: CharacterCard = {
   cardType: "character",
   name: "Shere Khan",
   version: "Fierce and Furious",
-  i18n: {
-    en: {
-      name: "Shere Khan",
-      version: "Fierce and Furious",
-      text: [
-        {
-          title: "Shift 5 {I}",
-        },
-        {
-          title: "WILD RAGE 1",
-          description:
-            "{I}, Deal 1 damage to this character — Ready this character. He can't quest for the rest of this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Shir Khan",
-      version: "Wild und Wütend",
-      text: "Gestaltwandel 5 WILDER ZORN 1, Füge diesem Charakter 1 Schaden zu — Mache diesen Charakter bereit. Er kann in diesem Zug nicht mehr erkunden.",
-    },
-    fr: {
-      name: "Shere Khan",
-      version: "Furieusement féroce",
-      text: "Alter 5 RAGE SAUVAGE 1, Infligez 1 dommage à ce personnage — Redressez ce personnage. Il ne peut pas être envoyé à l'aventure pour le reste de ce tour.",
-    },
-    it: {
-      name: "Shere Khan",
-      version: "Feroce e Furioso",
-      text: "Trasformazione 5 COLLERA SELVAGGIA 1, infliggi 1 danno a questo personaggio — Prepara questo personaggio. Non può andare all'avventura per il resto di questo turno.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Jungle Book",
   set: "010",
@@ -104,4 +74,5 @@ export const shereKhanFierceAndFurious: CharacterCard = {
       type: "activated",
     },
   ],
+  i18n: shereKhanFierceAndFuriousI18n,
 };

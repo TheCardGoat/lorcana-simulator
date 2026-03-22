@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tianaTruePrincessI18n } from "./094-tiana-true-princess.i18n";
 
 export const tianaTruePrincess: CharacterCard = {
   id: "dRI",
@@ -7,24 +8,6 @@ export const tianaTruePrincess: CharacterCard = {
   cardType: "character",
   name: "Tiana",
   version: "True Princess",
-  i18n: {
-    en: {
-      name: "Tiana",
-      version: "True Princess",
-    },
-    de: {
-      name: "Tiana",
-      version: "Wahre Prinzessin",
-    },
-    fr: {
-      name: "Tiana",
-      version: "Véritable princesse",
-    },
-    it: {
-      name: "Tiana",
-      version: "True Princess",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Princess and the Frog",
   set: "002",
@@ -41,4 +24,5 @@ export const tianaTruePrincess: CharacterCard = {
     tcgPlayer: 527751,
   },
   classifications: ["Storyborn", "Hero", "Princess"],
+  i18n: tianaTruePrincessI18n,
 };

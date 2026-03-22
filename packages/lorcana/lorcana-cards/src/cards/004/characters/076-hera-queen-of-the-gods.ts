@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { heraQueenOfTheGodsI18n } from "./076-hera-queen-of-the-gods.i18n";
 
 export const heraQueenOfTheGods: CharacterCard = {
   id: "vHX",
@@ -7,40 +8,6 @@ export const heraQueenOfTheGods: CharacterCard = {
   cardType: "character",
   name: "Hera",
   version: "Queen of the Gods",
-  i18n: {
-    en: {
-      name: "Hera",
-      version: "Queen of the Gods",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "PROTECTIVE GODDESS",
-          description: "Your characters named Zeus gain Ward.",
-        },
-        {
-          title: "YOU'RE A TRUE HERO",
-          description: "Your characters named Hercules gain Evasive.",
-        },
-      ],
-    },
-    de: {
-      name: "Hera",
-      version: "Königin der Götter",
-      text: "Behütet SCHÜTZENDE GÖTTIN Deine Zeus-Charaktere erhalten Behütet. DU BIST EIN WAHRER HELD Deine Hercules-Charaktere erhalten Wendig.",
-    },
-    fr: {
-      name: "Héra",
-      version: "Reine des Dieux",
-      text: "Hors d'atteinte DÉESSE PROTECTRICE Vos personnages Zeus gagnent Hors d'atteinte. TU ES UN VÉRITABLE HÉROS Vos personnages Hercule gagnent Insaisissable. (Seuls les personnages avec Insaisissable peuvent défier ces personnages.)",
-    },
-    it: {
-      name: "Era",
-      version: "Regina degli Dei",
-      text: "Protetto DEA PROTETTIVA I tuoi personaggi chiamati Zeus ottengono Protetto. SEI UN VERO EROE I tuoi personaggi chiamati Ercole ottengono Sfuggente. (Solo altri personaggi con Sfuggente possono sfidarli.)",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Hercules",
   set: "004",
@@ -64,8 +31,8 @@ export const heraQueenOfTheGods: CharacterCard = {
       description: "Your characters named Zeus gain Ward.",
     },
     {
-      title: "YOU'RE A TRUE HERO",
-      description: "Your characters named Hercules gain Evasive.",
+      title: "YOU'RE",
+      description: "A TRUE HERO Your characters named Hercules gain Evasive.",
     },
   ],
   classifications: ["Storyborn", "Queen", "Deity"],
@@ -97,4 +64,5 @@ export const heraQueenOfTheGods: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: heraQueenOfTheGodsI18n,
 };

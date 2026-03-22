@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { mapOfTreasurePlanetI18n } from "./201-map-of-treasure-planet.i18n";
 
 export const mapOfTreasurePlanet: ItemCard = {
   id: "Bf0",
@@ -6,51 +7,6 @@ export const mapOfTreasurePlanet: ItemCard = {
   reprints: ["set3-201"],
   cardType: "item",
   name: "Map of Treasure Planet",
-  i18n: {
-    en: {
-      name: "Map of Treasure Planet",
-      text: [
-        {
-          title: "KEY TO THE PORTAL",
-          description: "{E} — You pay 1 {I} less for the next location you play this turn.",
-        },
-        {
-          title: "SHOW THE WAY",
-          description: "You pay 1 {I} less to move your characters to a location.",
-        },
-      ],
-    },
-    de: {
-      name: "Karte des Schatzplaneten",
-      text: [
-        {
-          title: "SCHLÜSSEL FÜR DAS PORTAL",
-          description:
-            "— Du zahlst 1 weniger für den nächsten Ort, den du in diesem Zug ausspielst. ZEIGE DEN WEG HEREIN Du zahlst 1 weniger, um Charaktere zu einem Ort zu bewegen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Carte de la Planète au Trésor",
-      text: [
-        {
-          title: "CLÉ DU PORTAIL",
-          description:
-            "— Le prochain lieu que vous jouez durant ce tour vous coûte 1 de moins. MONTRE LE CHEMIN Déplacer vos personnages sur des lieux vous coûte 1 de moins.",
-        },
-      ],
-    },
-    it: {
-      name: "Mappa del Pianeta del Tesoro",
-      text: [
-        {
-          title: "CHIAVE DEL PORTALE",
-          description:
-            "— Paga 1 in meno per per giocare il tuo prossimo luogo per questo turno. MOSTRARE L'ENTRATA Paga 1 in meno per spostare i tuoi personaggi in un luogo.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Treasure Planet",
   set: "003",
@@ -78,22 +34,27 @@ export const mapOfTreasurePlanet: ItemCard = {
         exert: true,
       },
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 1,
+        cardType: "location",
+        duration: "next-play-this-turn",
+        target: "CONTROLLER",
+        type: "cost-reduction",
       },
       id: "7x0-1",
+      name: "KEY TO THE PORTAL",
       text: "KEY TO THE PORTAL {E} — You pay 1 {I} less for the next location you play this turn.",
       type: "activated",
     },
     {
       effect: {
-        character: "CHOSEN_CHARACTER_OF_YOURS",
-        cost: "normal",
-        type: "move-to-location",
+        reduction: 1,
+        type: "move-cost-reduction",
       },
       id: "7x0-2",
+      name: "SHOW THE WAY",
       text: "SHOW THE WAY You pay 1 {I} less to move your characters to a location.",
-      type: "action",
+      type: "static",
     },
   ],
+  i18n: mapOfTreasurePlanetI18n,
 };

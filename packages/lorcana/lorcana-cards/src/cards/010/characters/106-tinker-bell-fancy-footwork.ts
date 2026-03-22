@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { tinkerBellFancyFootworkI18n } from "./106-tinker-bell-fancy-footwork.i18n";
 
 export const tinkerBellFancyFootwork: CharacterCard = {
   id: "QUY",
@@ -7,24 +8,6 @@ export const tinkerBellFancyFootwork: CharacterCard = {
   cardType: "character",
   name: "Tinker Bell",
   version: "Fancy Footwork",
-  i18n: {
-    en: {
-      name: "Tinker Bell",
-      version: "Fancy Footwork",
-    },
-    de: {
-      name: "Naseweis",
-      version: "Außergewöhnliche Beinarbeit",
-    },
-    fr: {
-      name: "La Fée Clochette",
-      version: "Au pas distingué",
-    },
-    it: {
-      name: "Trilli",
-      version: "Ballerina Raffinata",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Peter Pan",
   set: "010",
@@ -41,4 +24,5 @@ export const tinkerBellFancyFootwork: CharacterCard = {
     tcgPlayer: 660268,
   },
   classifications: ["Storyborn", "Ally", "Fairy"],
+  i18n: tinkerBellFancyFootworkI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { sneezyVeryAllergicI18n } from "./022-sneezy-very-allergic.i18n";
 
 export const sneezyVeryAllergic: CharacterCard = {
   id: "hWr",
@@ -7,46 +8,6 @@ export const sneezyVeryAllergic: CharacterCard = {
   cardType: "character",
   name: "Sneezy",
   version: "Very Allergic",
-  i18n: {
-    en: {
-      name: "Sneezy",
-      version: "Very Allergic",
-      text: [
-        {
-          title: "AH-CHOO!",
-          description:
-            "Whenever you play this character or another Seven Dwarfs character, you may give chosen character -1 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Hatschi",
-      version: "Äußerst allergisch",
-      text: [
-        {
-          title: "HATSCHI!",
-          description:
-            "Wenn du diesen Charakter ausspielst und jedes Mal, wenn du einen anderen der Sieben Zwerge ausspielst, darfst du einem Charakter deiner Wahl in diesem Zug -1 geben.",
-        },
-      ],
-    },
-    fr: {
-      name: "Atchoum",
-      version: "Très allergique",
-      text: [
-        {
-          title: "AAA...TCHOUM!",
-          description:
-            "Lorsque vous jouez ce personnage ou un autre personnage Sept Nains, choisissez un personnage qui subit -1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Sneezy",
-      version: "Very Allergic",
-      text: "Ah-choo!\\ Whenever you play this character or another Seven Dwarfs character, you may give chosen character -1 this turn.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "002",
@@ -96,4 +57,5 @@ export const sneezyVeryAllergic: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: sneezyVeryAllergicI18n,
 };

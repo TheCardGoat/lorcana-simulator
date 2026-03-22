@@ -1,92 +1,123 @@
 <script lang="ts">
-    import type {LorcanaPlayerSide, LorcanaTableSeat} from "@/features/simulator/model/contracts.js";
-  import { m } from "$lib/paraglide/messages.js";
-    import {useLorcanaBoardPresenter} from "@/features/simulator/context/game-context.svelte.js";
-    import LoreBadge from "@/design-system/simulator/display/LoreBadge.svelte";
-  import { Settings, Trash2, Layers, Hand, PaintBucket } from "@lucide/svelte";
-  interface PlayerInfoProps {
-    name: string;
-    seat?: LorcanaTableSeat;
-    side: LorcanaPlayerSide;
-    lore: number;
-    deckCount: number;
-    handCount: number;
-    discardCount: number;
-    inkwellCount: number;
-    availableInk?: number | null;
-    isActive?: boolean;
-    isOpponent?: boolean;
-    showSettings?: boolean;
-    onSettingsClick?: () => void;
-  }
+import type {
+	LorcanaPlayerSide,
+	LorcanaTableSeat,
+} from "@/features/simulator/model/contracts.js";
+import { m } from "$lib/i18n/messages.js";
+import { useLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
+import LoreBadge from "@/design-system/simulator/display/LoreBadge.svelte";
+import {
+	Settings,
+	CircleHelp,
+	Trash2,
+	Layers,
+	Hand,
+	PaintBucket,
+} from "@lucide/svelte";
+import type { Snippet } from "svelte";
 
-  let {
-    name,
-    seat = "bottom",
-    side,
-    lore,
-    deckCount,
-    handCount,
-    discardCount,
-    inkwellCount,
-    availableInk = null,
-    isActive = false,
-    isOpponent = false,
-    showSettings = false,
-    onSettingsClick,
-  }: PlayerInfoProps = $props();
+interface PlayerInfoProps {
+	name: string;
+	seat?: LorcanaTableSeat;
+	side: LorcanaPlayerSide;
+	lore: number;
+	deckCount: number;
+	handCount: number;
+	discardCount: number;
+	inkwellCount: number;
+	availableInk?: number | null;
+	isActive?: boolean;
+	isOpponent?: boolean;
+	showSettings?: boolean;
+	onSettingsClick?: () => void;
+	showSupport?: boolean;
+	onSupportClick?: () => void;
+	children?: Snippet;
+}
 
-  const unknownInkLabel = $derived(m["sim.player.stats.inkUnknown"]({}));
-  const board = (() => {
-    try {
-      return useLorcanaBoardPresenter();
-    } catch {
-      return null;
-    }
-  })();
-  const boardSummary = $derived(board?.getPlayerSummary(side) ?? null);
-  const inkwellCards = $derived(board?.getZoneCards(side, "inkwell") ?? []);
-  const displayLore = $derived(boardSummary?.lore ?? lore);
-  const displayDeckCount = $derived(boardSummary?.deckCount ?? deckCount);
-  const displayHandCount = $derived(boardSummary?.handCount ?? handCount);
-  const displayDiscardCount = $derived(boardSummary?.discardCount ?? discardCount);
-  const summaryInkwellCount = $derived(boardSummary?.inkwellCount ?? inkwellCount);
-  const summaryAvailableInk = $derived(boardSummary?.availableInk ?? availableInk);
-  const hasRevealedInkwellCards = $derived(inkwellCards.length > 0);
-  const displayInkwellCount = $derived(Math.max(summaryInkwellCount, inkwellCards.length));
-  const displayTotalInk = $derived(hasRevealedInkwellCards ? inkwellCards.length : displayInkwellCount);
-  const displayAvailableInk = $derived.by<number | null>(() => {
-    if (!hasRevealedInkwellCards) {
-      return summaryAvailableInk;
-    }
+let {
+	name,
+	seat = "bottom",
+	side,
+	lore,
+	deckCount,
+	handCount,
+	discardCount,
+	inkwellCount,
+	availableInk = null,
+	isActive = false,
+	isOpponent = false,
+	showSettings = false,
+	onSettingsClick,
+	showSupport = false,
+	onSupportClick,
+	children,
+}: PlayerInfoProps = $props();
 
-    return inkwellCards.reduce(
-      (count, card) => count + (card.readyState === "exerted" ? 0 : 1),
-      0,
-    );
-  });
-  const inkSummary = $derived.by(() => {
-    if (displayAvailableInk === null && displayInkwellCount > 0) {
-      return `${unknownInkLabel}/${displayInkwellCount}`;
-    }
+const unknownInkLabel = $derived(m["sim.player.stats.inkUnknown"]({}));
+const board = (() => {
+	try {
+		return useLorcanaBoardPresenter();
+	} catch {
+		return null;
+	}
+})();
+const boardSummary = $derived(board?.getPlayerSummary(side) ?? null);
+const inkwellCards = $derived(board?.getZoneCards(side, "inkwell") ?? []);
+const displayLore = $derived(boardSummary?.lore ?? lore);
+const displayDeckCount = $derived(boardSummary?.deckCount ?? deckCount);
+const displayHandCount = $derived(boardSummary?.handCount ?? handCount);
+const displayDiscardCount = $derived(
+	boardSummary?.discardCount ?? discardCount,
+);
+const summaryInkwellCount = $derived(
+	boardSummary?.inkwellCount ?? inkwellCount,
+);
+const summaryAvailableInk = $derived(
+	boardSummary?.availableInk ?? availableInk,
+);
+const hasRevealedInkwellCards = $derived(inkwellCards.length > 0);
+const displayInkwellCount = $derived(
+	Math.max(summaryInkwellCount, inkwellCards.length),
+);
+const displayTotalInk = $derived(
+	hasRevealedInkwellCards ? inkwellCards.length : displayInkwellCount,
+);
+const displayAvailableInk = $derived.by<number | null>(() => {
+	if (!hasRevealedInkwellCards) {
+		return summaryAvailableInk;
+	}
 
-    return `${displayAvailableInk ?? 0}/${displayTotalInk}`;
-  });
+	return inkwellCards.reduce(
+		(count, card) => count + (card.readyState === "exerted" ? 0 : 1),
+		0,
+	);
+});
+const inkSummary = $derived.by(() => {
+	if (displayAvailableInk === null && displayInkwellCount > 0) {
+		return `${unknownInkLabel}/${displayInkwellCount}`;
+	}
 
-  const sideColors = {
-    playerOne: "#7cc4ff",
-    playerTwo: "#ea0000",
-  };
+	return `${displayAvailableInk ?? 0}/${displayTotalInk}`;
+});
+const sideColors = {
+	playerOne: "#7cc4ff",
+	playerTwo: "#ea0000",
+};
 
-  function getSideLabel(side: LorcanaPlayerSide): string {
-    return side === "playerOne"
-      ? m["sim.player.side.playerOne"]({})
-      : m["sim.player.side.playerTwo"]({});
-  }
+function getSideLabel(side: LorcanaPlayerSide): string {
+	return side === "playerOne"
+		? m["sim.player.side.playerOne"]({})
+		: m["sim.player.side.playerTwo"]({});
+}
 
-  function handleSettingsClick() {
-    onSettingsClick?.();
-  }
+function handleSettingsClick() {
+	onSettingsClick?.();
+}
+
+function handleSupportClick() {
+	onSupportClick?.();
+}
 </script>
 
 <div
@@ -114,15 +145,29 @@
       </div>
     </div>
 
-    {#if showSettings}
-      <button
-        type="button"
-        class="settings-trigger"
-        aria-label={m["sim.player.settings.openAria"]({})}
-        onclick={handleSettingsClick}
-      >
-        <Settings/>
-      </button>
+    {#if showSettings || showSupport}
+      <div class="player-quick-actions">
+        {#if showSupport}
+          <button
+            type="button"
+            class="settings-trigger"
+            aria-label={m["sim.player.support.openAria"]({})}
+            onclick={handleSupportClick}
+          >
+            <CircleHelp />
+          </button>
+        {/if}
+        {#if showSettings}
+          <button
+            type="button"
+            class="settings-trigger"
+            aria-label={m["sim.player.settings.openAria"]({})}
+            onclick={handleSettingsClick}
+          >
+            <Settings/>
+          </button>
+        {/if}
+      </div>
     {/if}
   </div>
 
@@ -146,6 +191,10 @@
       </div>
     </div>
   </div>
+
+  {#if children}
+    {@render children()}
+  {/if}
 </div>
 
 <style>
@@ -153,19 +202,14 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
-    gap: 0.28rem;
-    padding: 0.38rem 0.5rem;
-    background:
-      linear-gradient(180deg, rgba(16, 28, 44, 0.9), rgba(11, 20, 32, 0.92));
-    border: 1px solid rgba(109, 149, 195, 0.22);
-    border-radius: 9px;
+    gap: 0.18rem;
+    padding: 0.2rem 0.2rem;
     border-left: 2px solid transparent;
     transition: border-color 200ms ease;
   }
 
   .player-info--active {
     border-left-color: var(--side-color, #7cc4ff);
-    box-shadow: 0 0 15px rgba(124, 196, 255, 0.1);
   }
 
   .player-info--opponent {
@@ -324,19 +368,19 @@
   }
 
   .settings-trigger {
-    width: 1.05rem;
-    height: 1.05rem;
-    padding: 0.12rem;
-    border-radius: 0.25rem;
-    border: 1px solid rgba(124, 196, 255, 0.28);
-    background: rgba(18, 38, 61, 0.68);
+    width: 1.6rem;
+    height: 1.6rem;
+    padding: 0.25rem;
+    border-radius: 0.35rem;
+    border: 1px solid rgba(124, 196, 255, 0.35);
+    background: rgba(18, 38, 61, 0.75);
     color: #dbeafe;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     cursor: pointer;
-    transition: background 140ms ease, border-color 140ms ease;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
   }
 
   .settings-trigger :global(svg) {
@@ -346,9 +390,17 @@
 
   .settings-trigger:hover,
   .settings-trigger:focus-visible {
-    background: rgba(33, 63, 96, 0.9);
-    border-color: rgba(125, 211, 252, 0.75);
+    background: rgba(33, 63, 96, 0.95);
+    border-color: rgba(125, 211, 252, 0.85);
+    color: #f0f9ff;
     outline: none;
+  }
+
+  .player-quick-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
   }
 
 </style>

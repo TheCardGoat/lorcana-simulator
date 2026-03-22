@@ -1,245 +1,260 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   MrSmeeBumblingMate,
-//   PigletPoohPirateCaptain,
-// } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { tipoGrowingSon } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { finnickTinyTerror } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Finnick - Tiny Terror", () => {
-//   Describe("YOU BETTER RUN - Basic Functionality", () => {
-//     It("returns chosen opposing character with 2 strength or less to their player's hand when paying 2 ink", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: finnickTinyTerror.cost + 2,
-//           Hand: [finnickTinyTerror],
-//         },
-//         {
-//           Play: [tipoGrowingSon],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(finnickTinyTerror);
-//       Const target = testEngine.getCardModel(tipoGrowingSon);
-//
-//       Expect(target.zone).toBe("play");
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//       Expect(cardUnderTest.zone).toBe("play");
-//       Expect(target.zone).toBe("hand");
-//     });
-//
-//     It("can return character with exactly 2 strength", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: finnickTinyTerror.cost + 2,
-//           Hand: [finnickTinyTerror],
-//         },
-//         {
-//           Play: [pigletPoohPirateCaptain], // 2 strength
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(finnickTinyTerror);
-//       Const target = testEngine.getCardModel(pigletPoohPirateCaptain);
-//
-//       Expect(target.strength).toBe(2);
-//       Expect(target.zone).toBe("play");
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//       Expect(target.zone).toBe("hand");
-//     });
-//
-//     It("can return character with 1 strength", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: finnickTinyTerror.cost + 2,
-//           Hand: [finnickTinyTerror],
-//         },
-//         {
-//           Play: [tipoGrowingSon], // 1 strength
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(finnickTinyTerror);
-//       Const target = testEngine.getCardModel(tipoGrowingSon);
-//
-//       Expect(target.strength).toBe(1);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//       Expect(target.zone).toBe("hand");
-//     });
-//   });
-//
-//   Describe("YOU BETTER RUN - Targeting Restrictions", () => {
-//     It("cannot target characters with 3 strength or more", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: finnickTinyTerror.cost + 2,
-//           Hand: [finnickTinyTerror],
-//         },
-//         {
-//           Play: [mrSmeeBumblingMate], // 3 strength
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(finnickTinyTerror);
-//       Const target = testEngine.getCardModel(mrSmeeBumblingMate);
-//
-//       Expect(target.strength).toBe(3);
-//       Expect(target.zone).toBe("play");
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//
-//       // Should not have any targets available, ability resolves without effect
-//       Expect(cardUnderTest.zone).toBe("play");
-//       Expect(target.zone).toBe("play");
-//     });
-//   });
-//
-//   Describe("YOU BETTER RUN - Optional Ability", () => {
-//     It("ability is optional - can decline to activate", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: finnickTinyTerror.cost + 2,
-//           Hand: [finnickTinyTerror],
-//         },
-//         {
-//           Play: [tipoGrowingSon],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(finnickTinyTerror);
-//       Const target = testEngine.getCardModel(tipoGrowingSon);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//
-//       // Decline the optional ability
-//       Await testEngine.skipTopOfStack();
-//
-//       // Target should remain in play
-//       Expect(cardUnderTest.zone).toBe("play");
-//       Expect(target.zone).toBe("play");
-//     });
-//   });
-//
-//   Describe("YOU BETTER RUN - Ink Cost Requirements", () => {
-//     It("requires paying 2 ink to activate", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: finnickTinyTerror.cost + 2, // Enough ink to play and activate
-//           Hand: [finnickTinyTerror],
-//         },
-//         {
-//           Play: [tipoGrowingSon],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(finnickTinyTerror);
-//       Const target = testEngine.getCardModel(tipoGrowingSon);
-//
-//       Const inkBeforePlay =
-//         TestEngine.getAvailableInkwellCardCount("player_one");
-//
-//       Await testEngine.playCard(cardUnderTest);
-//
-//       Const inkAfterPlay =
-//         TestEngine.getAvailableInkwellCardCount("player_one");
-//
-//       // Should have spent 1 ink to play Finnick
-//       Expect(inkAfterPlay).toBe(inkBeforePlay - finnickTinyTerror.cost);
-//
-//       Await testEngine.resolveOptionalAbility();
-//       Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//       Const inkAfterAbility =
-//         TestEngine.getAvailableInkwellCardCount("player_one");
-//
-//       // Should have spent an additional 2 ink for the ability
-//       Expect(inkAfterAbility).toBe(inkAfterPlay - 2);
-//       Expect(target.zone).toBe("hand");
-//     });
-//
-//     It("cannot activate if insufficient ink available", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: finnickTinyTerror.cost + 1, // Only 1 extra ink, need 2
-//           Hand: [finnickTinyTerror],
-//         },
-//         {
-//           Play: [tipoGrowingSon],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(finnickTinyTerror);
-//       Const target = testEngine.getCardModel(tipoGrowingSon);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//
-//       // The ability is still offered (appears on stack), but when accepted it will fail due to insufficient ink
-//       Await testEngine.acceptOptionalLayer();
-//
-//       // Target should remain in play because the ability couldn't be paid for
-//       Expect(target.zone).toBe("play");
-//     });
-//   });
-//
-//   Describe("YOU BETTER RUN - Edge Cases", () => {
-//     It("works when opponent has no valid targets", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: finnickTinyTerror.cost + 2,
-//           Hand: [finnickTinyTerror],
-//         },
-//         {
-//           Play: [], // No opposing characters
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(finnickTinyTerror);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//
-//       // Should play successfully even with no valid targets
-//       Expect(cardUnderTest.zone).toBe("play");
-//     });
-//
-//     It("can only target opposing characters, not own characters", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: finnickTinyTerror.cost + 2,
-//           Hand: [finnickTinyTerror],
-//           Play: [tipoGrowingSon], // Own character
-//         },
-//         {},
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(finnickTinyTerror);
-//       Const ownCharacter = testEngine.getCardModel(tipoGrowingSon);
-//
-//       Await testEngine.playCard(cardUnderTest);
-//       Await testEngine.resolveOptionalAbility();
-//
-//       // Should not be able to target own characters
-//       Expect(ownCharacter.zone).toBe("play");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { finnickTinyTerror } from "./074-finnick-tiny-terror";
+
+const weakOpposingCharacter = createMockCharacter({
+  id: "finnick-test-weak-opponent",
+  name: "Weak Opponent",
+  cost: 2,
+  strength: 1,
+  willpower: 3,
+  lore: 1,
+});
+
+const exactlyTwoStrengthCharacter = createMockCharacter({
+  id: "finnick-test-two-strength-opponent",
+  name: "Two Strength Opponent",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+const strongOpposingCharacter = createMockCharacter({
+  id: "finnick-test-strong-opponent",
+  name: "Strong Opponent",
+  cost: 3,
+  strength: 3,
+  willpower: 4,
+  lore: 1,
+});
+
+describe("Finnick - Tiny Terror", () => {
+  describe("YOU BETTER RUN — When you play this character, you may pay 2 {I} to return chosen opposing character with 2 {S} or less to their player's hand.", () => {
+    it("triggers a bag effect when played and there are valid opposing targets", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [finnickTinyTerror],
+          inkwell: finnickTinyTerror.cost + 2,
+          deck: 2,
+        },
+        {
+          play: [weakOpposingCharacter],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(finnickTinyTerror)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    });
+
+    it("returns chosen opposing character with 1 strength to their player's hand when paying 2 ink", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [finnickTinyTerror],
+          inkwell: finnickTinyTerror.cost + 2,
+          deck: 2,
+        },
+        {
+          play: [weakOpposingCharacter],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerTwo().getCardZone(weakOpposingCharacter)).toBe("play");
+
+      expect(testEngine.asPlayerOne().playCard(finnickTinyTerror)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      const opponentId = testEngine.findCardInstanceId(weakOpposingCharacter, "play", "player_two");
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          targets: [opponentId],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(weakOpposingCharacter)).toBe("hand");
+    });
+
+    it("returns chosen opposing character with exactly 2 strength to their player's hand", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [finnickTinyTerror],
+          inkwell: finnickTinyTerror.cost + 2,
+          deck: 2,
+        },
+        {
+          play: [exactlyTwoStrengthCharacter],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(finnickTinyTerror)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      const opponentId = testEngine.findCardInstanceId(
+        exactlyTwoStrengthCharacter,
+        "play",
+        "player_two",
+      );
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          targets: [opponentId],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(exactlyTwoStrengthCharacter)).toBe("hand");
+    });
+
+    it("ability is optional — can be declined and opponent's character stays in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [finnickTinyTerror],
+          inkwell: finnickTinyTerror.cost + 2,
+          deck: 2,
+        },
+        {
+          play: [weakOpposingCharacter],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(finnickTinyTerror)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(weakOpposingCharacter)).toBe("play");
+    });
+
+    it("strength filter excludes characters with 3 or more strength — they cannot be returned", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [finnickTinyTerror],
+          inkwell: finnickTinyTerror.cost + 2,
+          deck: 2,
+        },
+        {
+          play: [strongOpposingCharacter],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(finnickTinyTerror)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      if (bagEffect) {
+        // Accept the optional — pay 2 ink
+        expect(
+          testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+            resolveOptional: true,
+          }),
+        ).toBeSuccessfulCommand();
+
+        const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
+        if (pendingEffects.length > 0) {
+          const opponentId = testEngine.findCardInstanceId(
+            strongOpposingCharacter,
+            "play",
+            "player_two",
+          );
+          // Even if the target is submitted, the strength filter means it has no effect
+          testEngine.asPlayerOne().resolveNextPending({
+            targets: [opponentId],
+          });
+        }
+      }
+
+      // Strong character should remain in play — strength filter prevents returning it
+      expect(testEngine.asPlayerTwo().getCardZone(strongOpposingCharacter)).toBe("play");
+    });
+
+    it("costs 2 ink — reduces available ink by 2 when accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [finnickTinyTerror],
+          inkwell: finnickTinyTerror.cost + 2,
+          deck: 2,
+        },
+        {
+          play: [weakOpposingCharacter],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(finnickTinyTerror)).toBeSuccessfulCommand();
+
+      // After playing Finnick (cost 1), available ink = 3 - 1 = 2
+      const inkAfterPlay = testEngine.asPlayerOne().getAvailableInk("player_one");
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      const opponentId = testEngine.findCardInstanceId(weakOpposingCharacter, "play", "player_two");
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          targets: [opponentId],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // After paying 2 ink for the ability, available ink = 2 - 2 = 0
+      const inkAfterAbility = testEngine.asPlayerOne().getAvailableInk("player_one");
+      expect(inkAfterAbility).toBe(inkAfterPlay - 2);
+    });
+
+    it("does not deal damage if controller cannot pay 2 ink", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [finnickTinyTerror],
+          // Only enough to play Finnick, not to pay the ability cost
+          inkwell: finnickTinyTerror.cost,
+          deck: 2,
+        },
+        {
+          play: [weakOpposingCharacter],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(finnickTinyTerror)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      if (bagEffect) {
+        expect(
+          testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+            resolveOptional: true,
+          }),
+        ).toBeSuccessfulCommand();
+      }
+
+      // Cannot pay 2 ink, so no character is returned
+      expect(testEngine.asPlayerTwo().getCardZone(weakOpposingCharacter)).toBe("play");
+    });
+  });
+});

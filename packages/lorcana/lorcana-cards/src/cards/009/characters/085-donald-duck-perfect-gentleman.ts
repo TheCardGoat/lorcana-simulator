@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { donaldDuckPerfectGentlemanI18n } from "./085-donald-duck-perfect-gentleman.i18n";
 
 export const donaldDuckPerfectGentleman: CharacterCard = {
   id: "op2",
@@ -7,42 +8,6 @@ export const donaldDuckPerfectGentleman: CharacterCard = {
   cardType: "character",
   name: "Donald Duck",
   version: "Perfect Gentleman",
-  i18n: {
-    en: {
-      name: "Donald Duck",
-      version: "Perfect Gentleman",
-      text: [
-        {
-          title: "Shift 3 {I}",
-        },
-        {
-          title: "ALLOW ME",
-          description: "At the start of your turn, each player may draw a card.",
-        },
-      ],
-    },
-    de: {
-      name: "Donald Duck",
-      version: "Perfekter Gentleman",
-      text: "Gestaltwandel 3 GESTATTEN? Jedes Mal zu Beginn deines Zuges dürfen alle Mitspielenden (auch du) je 1 Karte ziehen.",
-    },
-    fr: {
-      name: "Donald",
-      version: "Parfait gentleman",
-      text: "Alter 3 PERMETTEZ-MOI Au début de chacun de vos tours, chaque joueur peut piocher une carte.",
-    },
-    it: {
-      name: "Donald Duck",
-      version: "Perfect Gentleman",
-      text: [
-        {
-          title: "Shift 3",
-          description:
-            "(You may pay 3 to play this on top of one of your characters named Donald Duck.) ALLOW ME At the start of your turn, each player may draw a card.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   set: "009",
   cardNumber: 85,
@@ -78,13 +43,38 @@ export const donaldDuckPerfectGentleman: CharacterCard = {
     },
     {
       id: "wjj-2",
-      effect: {
-        amount: 1,
-        target: "EACH_PLAYER",
-        type: "draw",
-      },
-      type: "action",
+      name: "ALLOW ME",
       text: "ALLOW ME At the start of your turn, each player may draw a card.",
+      type: "triggered",
+      trigger: {
+        event: "start-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "optional",
+            chooser: "CONTROLLER",
+            effect: {
+              amount: 1,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+          },
+          {
+            type: "optional",
+            chooser: "OPPONENT",
+            effect: {
+              amount: 1,
+              target: "OPPONENT",
+              type: "draw",
+            },
+          },
+        ],
+      },
     },
   ],
+  i18n: donaldDuckPerfectGentlemanI18n,
 };

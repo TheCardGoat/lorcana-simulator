@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { darkwingDuckCoolUnderPressureEnchantedI18n } from "./239-darkwing-duck-cool-under-pressure-enchanted.i18n";
 
 export const darkwingDuckCoolUnderPressureEnchanted: CharacterCard = {
   id: "ihH",
@@ -7,41 +8,6 @@ export const darkwingDuckCoolUnderPressureEnchanted: CharacterCard = {
   cardType: "character",
   name: "Darkwing Duck",
   version: "Cool Under Pressure",
-  i18n: {
-    en: {
-      name: "Darkwing Duck",
-      version: "Cool Under Pressure",
-      text: [
-        {
-          title: "Shift 5 {I}",
-        },
-        {
-          title: "TAKE THAT!",
-          description:
-            "During your turn, whenever an item is banished, you may pay 1 {I} to deal 2 damage to chosen character.",
-        },
-        {
-          title: "EVILDOERS BEWARE!",
-          description: "This character can challenge ready Villain characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Darkwing Duck",
-      version: "Cool unter Druck",
-      text: "Gestaltwandel 5 NIMM DAS! Jedes Mal während deines Zuges, wenn ein Gegenstand verbannt wird, darfst du 1 bezahlen, um einem Charakter deiner Wahl 2 Schaden zuzufügen. BÖSEWICHTE AUFGEPASST! Dieser Charakter kann bereite Schurken herausfordern.",
-    },
-    fr: {
-      name: "Myster Mask",
-      version: "De glace face à la pression",
-      text: "Alter 5 PRENDS ÇA! Durant votre tour, chaque fois qu'un objet est banni, vous pouvez payer 1 pour choisir un personnage et lui infliger 2 dommages. MALFAITEURS, PRENEZ GARDE! Ce personnage peut défier des personnages Méchant redressés.",
-    },
-    it: {
-      name: "Darkwing Duck",
-      version: "Calmo Sotto Pressione",
-      text: "Trasformazione 5 PRENDI QUESTO! Durante il tuo turno, ogni volta che un oggetto viene esiliato, puoi pagare 1 per infliggere 2 danni a un personaggio a tua scelta. BADATE A VOI, MALVAGI! Questo personaggio può sfidare i personaggi Cattivo preparati.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -72,5 +38,65 @@ export const darkwingDuckCoolUnderPressureEnchanted: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Super", "Hero", "Detective"],
-  abilities: [],
+  abilities: [
+    {
+      cost: {
+        ink: 5,
+      },
+      id: "ihH-1",
+      keyword: "Shift",
+      text: "Shift 5 {I}",
+      type: "keyword",
+    },
+    {
+      id: "ihH-2",
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          type: "pay-cost",
+          cost: {
+            ink: 1,
+          },
+          effect: {
+            amount: 2,
+            target: {
+              cardTypes: ["character"],
+              count: 1,
+              owner: "any",
+              selector: "chosen",
+              zones: ["play"],
+            },
+            type: "deal-damage",
+          },
+        },
+        type: "optional",
+      },
+      name: "TAKE THAT!",
+      trigger: {
+        event: "banish",
+        on: "YOUR_ITEMS",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
+      },
+      type: "triggered",
+      text: "TAKE THAT! During your turn, whenever an item is banished, you may pay 1 {I} to deal 2 damage to chosen character.",
+    },
+    {
+      id: "ihH-3",
+      effect: {
+        ability: "can-challenge-ready",
+        target: "SELF",
+        type: "grant-ability",
+      },
+      name: "EVILDOERS BEWARE!",
+      type: "static",
+      text: "EVILDOERS BEWARE! This character can challenge ready Villain characters.",
+    },
+  ],
+  i18n: darkwingDuckCoolUnderPressureEnchantedI18n,
 };

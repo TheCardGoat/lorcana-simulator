@@ -3,6 +3,8 @@
   import type {LorcanaPlayerSettingsMap} from "@/features/simulator/model/player-visual-settings.js";
   import {setLorcanaGameContext} from "@/features/simulator/context/game-context.svelte.js";
   import {setLorcanaSimulatorDndContext} from "@/features/simulator/context/simulator-dnd-context.svelte.js";
+  import {setSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
+  import * as Tooltip from "$lib/design-system/primitives/tooltip/index.js";
   import HandZone from "@/features/simulator/board/HandZone.svelte";
   import DeckZone from "@/features/simulator/board/DeckZone.svelte";
   import InkwellZone from "@/features/simulator/board/InkwellZone.svelte";
@@ -24,8 +26,10 @@
     },
   });
   setLorcanaSimulatorDndContext();
+  setSimulatorCardContext();
 </script>
 
+<Tooltip.Provider>
 <section>
   <SeatLane
     playerSide="playerOne"
@@ -52,3 +56,4 @@
   <DeckZone playerSide="playerTwo" seat="bottom" isOpponent={false} />
   <InkwellZone playerSide="playerTwo" seat="bottom" isOpponent={false} />
 </section>
+</Tooltip.Provider>

@@ -161,6 +161,13 @@ describe("challenge trigger windows", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
     expect(testEngine.asPlayerOne().getCardZone(fragileDefender)).toBe("discard");
+    expect(
+      testEngine
+        .getServerEngine()
+        .getRuntime()
+        .getGameLog()
+        .some((entry) => entry.defaultMessage?.key === "lorcana.move.challenge"),
+    ).toBe(true);
   });
 
   it("queues banish-in-challenge triggers only after challenge damage is complete", () => {

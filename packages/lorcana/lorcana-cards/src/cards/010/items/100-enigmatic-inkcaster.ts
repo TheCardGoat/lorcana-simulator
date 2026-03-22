@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { enigmaticInkcasterI18n } from "./100-enigmatic-inkcaster.i18n";
 
 export const enigmaticInkcaster: ItemCard = {
   id: "Nmx",
@@ -6,46 +7,6 @@ export const enigmaticInkcaster: ItemCard = {
   reprints: ["set10-100"],
   cardType: "item",
   name: "Enigmatic Inkcaster",
-  i18n: {
-    en: {
-      name: "Enigmatic Inkcaster",
-      text: [
-        {
-          title: "ITS OWN REWARD",
-          description: "{E} — If you've played 2 or more cards this turn, gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Rätselhafter Tintenformer",
-      text: [
-        {
-          title: "SEINE EIGENE BELOHNUNG",
-          description:
-            "— Falls du in diesem Zug mindestens 2 Karten ausgespielt hast, sammelst du 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Invocateur d’encre mystérieux",
-      text: [
-        {
-          title: "UNE",
-          description:
-            "RÉCOMPENSE EN SOI — Si vous avez joué 2 cartes ou plus ce tour-ci, gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Inchiostratore Enigmatico",
-      text: [
-        {
-          title: "UNA RICOMPENSA DI PER",
-          description: "SÉ — Se hai giocato 2 o più carte in questo turno, ottieni 1 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lorcana",
   set: "010",
@@ -63,5 +24,28 @@ export const enigmaticInkcaster: ItemCard = {
       description: "{E} — If you've played 2 or more cards this turn, gain 1 lore.",
     },
   ],
-  abilities: [],
+  abilities: [
+    {
+      cost: {
+        exert: true,
+      },
+      condition: {
+        type: "turn-metric",
+        metric: "played-cards",
+        comparison: {
+          operator: "gte",
+          value: 2,
+        },
+      },
+      effect: {
+        amount: 1,
+        type: "gain-lore",
+      },
+      id: "Nmx-1",
+      name: "ITS OWN REWARD",
+      text: "ITS OWN REWARD {E} — If you've played 2 or more cards this turn, gain 1 lore.",
+      type: "activated",
+    },
+  ],
+  i18n: enigmaticInkcasterI18n,
 };

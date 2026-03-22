@@ -1,135 +1,119 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   MickeyMouseDetective,
-//   MoanaOfMotunui,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import {
-//   AWholeNewWorld,
-//   HakunaMatata,
-//   SuddenChill,
-// } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import { theBareNecessities } from "@lorcanito/lorcana-engine/cards/003/actions/actions";
-// Import {
-//   AnnaDiplomaticQueen,
-//   MagicaDeSpellCruelSorceress,
-// } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Magica De Spell - Cruel Sorceress", () => {
-//   It("**PLAYING WITH POWER** During opponents' turns, if an effect would cause you to discard one or more cards from your hand, you don't discard.", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Inkwell: suddenChill.cost,
-//         Hand: [suddenChill],
-//       },
-//       {
-//         Hand: [moanaOfMotunui],
-//         Play: [magicaDeSpellCruelSorceress],
-//       },
-//     );
-//
-//     Const cardUnderTest = testStore.getByZoneAndId("hand", suddenChill.id);
-//     Const target = testStore.getByZoneAndId(
-//       "hand",
-//       MoanaOfMotunui.id,
-//       "player_two",
-//     );
-//
-//     CardUnderTest.playFromHand();
-//     TestStore.changePlayer().resolveTopOfStack({
-//       Targets: [target],
-//     });
-//
-//     Expect(target.zone).toEqual("hand");
-//   });
-// });
-//
-// Describe("Regression", () => {
-//   It("'A whole new world' interaction.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: aWholeNewWorld.cost,
-//         Hand: [aWholeNewWorld],
-//         Deck: 10,
-//       },
-//       {
-//         Deck: 10,
-//         Hand: [moanaOfMotunui, mickeyMouseDetective],
-//         Play: [magicaDeSpellCruelSorceress],
-//       },
-//     );
-//
-//     Await testEngine.playCard(aWholeNewWorld);
-//
-//     Expect(testEngine.getCardModel(moanaOfMotunui).zone).toEqual("hand");
-//     Expect(testEngine.getCardModel(mickeyMouseDetective).zone).toEqual("hand");
-//     Expect(testEngine.getZonesCardCount("player_two")).toEqual(
-//       Expect.objectContaining({
-//         Hand: 9, // The card is still in hand
-//         Deck: 3,
-//       }),
-//     );
-//   });
-//
-//   It("'The Bare Necessities' interaction.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: theBareNecessities.cost,
-//         Hand: [theBareNecessities],
-//         Play: [magicaDeSpellCruelSorceress],
-//       },
-//       {
-//         Hand: [hakunaMatata],
-//       },
-//     );
-//
-//     Await testEngine.playCard(theBareNecessities, { targets: [hakunaMatata] });
-//
-//     Expect(testEngine.getCardModel(hakunaMatata).zone).toEqual("discard");
-//   });
-//
-//   It("Anna Diplomatic Queen Interaction", () => {
-//     Const testStore = new TestEngine(
-//       {
-//         Inkwell: annaDiplomaticQueen.cost + 2,
-//         Hand: [annaDiplomaticQueen],
-//       },
-//       {
-//         Hand: [moanaOfMotunui],
-//         Play: [magicaDeSpellCruelSorceress],
-//       },
-//     );
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "hand",
-//       AnnaDiplomaticQueen.id,
-//     );
-//     Const target = testStore.getByZoneAndId(
-//       "hand",
-//       MoanaOfMotunui.id,
-//       "player_two",
-//     );
-//
-//     CardUnderTest.playFromHand();
-//
-//     // testStore.stackLayers.map(x => console.log("------- " + x.description));
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({ mode: "1" }, true);
-//     Console.log("----------1---------");
-//     TestStore.changeActivePlayer();
-//
-//     TestStore.resolveTopOfStack({
-//       Targets: [target],
-//     });
-//     Console.log("----------2---------");
-//
-//     Expect(target.zone).toEqual("hand");
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { magicaDeSpellCruelSorceress } from "./053-magica-de-spell-cruel-sorceress";
+import { suddenChill } from "../../001/actions/098-sudden-chill";
+import { aWholeNewWorld } from "../../001/actions/195-a-whole-new-world";
+import { createMockCharacter } from "@tcg/lorcana-engine/testing";
+
+const mockCard1 = createMockCharacter({
+  id: "mock-card-1",
+  name: "Mock Card 1",
+  cost: 1,
+});
+
+const mockCard2 = createMockCharacter({
+  id: "mock-card-2",
+  name: "Mock Card 2",
+  cost: 1,
+});
+
+describe("Magica De Spell - Cruel Sorceress", () => {
+  describe("PLAYING WITH POWER - During opponents' turns, if an effect would cause you to discard one or more cards from your hand, you don't discard.", () => {
+    it("prevents the controller from discarding when an opponent plays Sudden Chill", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [suddenChill],
+          inkwell: suddenChill.cost,
+        },
+        {
+          play: [magicaDeSpellCruelSorceress],
+          hand: [mockCard1],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(suddenChill)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
+      expect(testEngine.asPlayerTwo()).toHaveZoneCounts({
+        hand: 1,
+        discard: 0,
+      });
+      expect(testEngine.asPlayerTwo().getCardZone(mockCard1)).toBe("hand");
+    });
+
+    it("does NOT prevent discard during your own turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [magicaDeSpellCruelSorceress],
+          hand: [suddenChill],
+          inkwell: suddenChill.cost,
+        },
+        {
+          hand: [mockCard1],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(suddenChill)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({
+          targets: [mockCard1],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo()).toHaveZoneCounts({
+        hand: 0,
+        discard: 1,
+      });
+    });
+
+    it("does not prevent the opponent from discarding (only protects its own controller)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [magicaDeSpellCruelSorceress],
+          hand: [suddenChill],
+          inkwell: suddenChill.cost,
+        },
+        {
+          hand: [mockCard1],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(suddenChill)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({
+          targets: [mockCard1],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo()).toHaveZoneCounts({
+        hand: 0,
+        discard: 1,
+      });
+    });
+
+    it("A Whole New World - prevents discard during opponent's turn but draw still happens", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [aWholeNewWorld],
+          inkwell: aWholeNewWorld.cost,
+          deck: 10,
+        },
+        {
+          play: [magicaDeSpellCruelSorceress],
+          hand: [mockCard1, mockCard2],
+          deck: 10,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(aWholeNewWorld)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo()).toHaveZoneCounts({
+        hand: 9,
+        discard: 0,
+        deck: 3,
+      });
+    });
+  });
+});

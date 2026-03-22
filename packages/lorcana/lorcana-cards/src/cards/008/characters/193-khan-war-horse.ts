@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { khanWarHorseI18n } from "./193-khan-war-horse.i18n";
 
 export const khanWarHorse: CharacterCard = {
   id: "9Tf",
@@ -7,24 +8,6 @@ export const khanWarHorse: CharacterCard = {
   cardType: "character",
   name: "Khan",
   version: "War Horse",
-  i18n: {
-    en: {
-      name: "Khan",
-      version: "War Horse",
-    },
-    de: {
-      name: "Khan",
-      version: "Kriegspferd",
-    },
-    fr: {
-      name: "Khan",
-      version: "Cheval de guerre",
-    },
-    it: {
-      name: "Khan",
-      version: "Cavallo da Guerra",
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "008",
@@ -41,4 +24,5 @@ export const khanWarHorse: CharacterCard = {
     tcgPlayer: 631477,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: khanWarHorseI18n,
 };

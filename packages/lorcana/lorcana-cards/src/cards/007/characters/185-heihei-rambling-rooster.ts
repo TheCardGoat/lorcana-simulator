@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { heiheiRamblingRoosterI18n } from "./185-heihei-rambling-rooster.i18n";
 
 export const heiheiRamblingRooster: CharacterCard = {
   id: "5e5",
@@ -7,24 +8,6 @@ export const heiheiRamblingRooster: CharacterCard = {
   cardType: "character",
   name: "Heihei",
   version: "Rambling Rooster",
-  i18n: {
-    en: {
-      name: "Heihei",
-      version: "Rambling Rooster",
-    },
-    de: {
-      name: "HeiHei",
-      version: "Wandernder Hahn",
-    },
-    fr: {
-      name: "Heihei",
-      version: "Coq qui radote",
-    },
-    it: {
-      name: "Heihei",
-      version: "Gallo Sconclusionato",
-    },
-  },
   inkType: ["steel"],
   franchise: "Moana",
   set: "007",
@@ -41,4 +24,5 @@ export const heiheiRamblingRooster: CharacterCard = {
     tcgPlayer: 619512,
   },
   classifications: ["Dreamborn", "Ally"],
+  i18n: heiheiRamblingRoosterI18n,
 };

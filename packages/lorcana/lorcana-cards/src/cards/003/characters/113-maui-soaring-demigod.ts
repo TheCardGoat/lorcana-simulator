@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { mauiSoaringDemigodI18n } from "./113-maui-soaring-demigod.i18n";
 
 export const mauiSoaringDemigod: CharacterCard = {
   id: "IYc",
@@ -7,37 +8,6 @@ export const mauiSoaringDemigod: CharacterCard = {
   cardType: "character",
   name: "Maui",
   version: "Soaring Demigod",
-  i18n: {
-    en: {
-      name: "Maui",
-      version: "Soaring Demigod",
-      text: [
-        {
-          title: "Reckless",
-        },
-        {
-          title: "IN MA BELLY",
-          description:
-            "Whenever a character of yours named HeiHei quests, this character gets +1 {L} and loses Reckless this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Maui",
-      version: "Aufstrebender Halbgott",
-      text: "Impulsiv IN MEINEM BAUCH Jedes Mal, wenn einer deiner HeiHei-Charaktere erkundet, verliert dieser Charakter Impulsiv und erhält +1 in diesem Zug.",
-    },
-    fr: {
-      name: "Maui",
-      version: "Demi-dieu planant",
-      text: "Combattant DANS MON VENTRE Chaque fois que l'un de vos personnages Heihei est envoyé à l'aventure, ce personnage gagne +1 et perd Combattant pour le reste de ce tour.",
-    },
-    it: {
-      name: "Maui",
-      version: "Semidio Alato",
-      text: "Attaccabrighe NEL MIO STOMACO Ogni volta che un tuo personaggio chiamato Heihei va all'avventura, questo personaggio ottiene +1 e perde Attaccabrighe per questo turno.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Moana",
   set: "003",
@@ -63,7 +33,6 @@ export const mauiSoaringDemigod: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Deity"],
-  missingTests: true,
   abilities: [
     {
       id: "q08-1",
@@ -90,4 +59,5 @@ export const mauiSoaringDemigod: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: mauiSoaringDemigodI18n,
 };

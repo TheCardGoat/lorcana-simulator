@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { beKingUndisputedEpicI18n } from "./216-be-king-undisputed-epic.i18n";
 
 export const beKingUndisputedEpic: ActionCard = {
   id: "3t5",
@@ -6,24 +7,6 @@ export const beKingUndisputedEpic: ActionCard = {
   reprints: ["set4-129", "set9-133"],
   cardType: "action",
   name: "Be King Undisputed",
-  i18n: {
-    en: {
-      name: "Be King Undisputed",
-      text: "Each opponent chooses and banishes one of their characters.",
-    },
-    de: {
-      name: "Als König geboren",
-      text: "Alle gegnerischen Mitspielenden wählen je einen ihrer Charaktere und verbannen ihn.",
-    },
-    fr: {
-      name: "Un roi incontesté",
-      text: "Chaque adversaire choisit un de ses personnages et le bannit.",
-    },
-    it: {
-      name: "Sarò un Re Stimato",
-      text: "(Un personaggio con costo 4 o superiore può per cantare questa canzone gratis.) Ogni avversario sceglie ed esilia uno dei suoi personaggi.",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lion King",
   set: "009",
@@ -54,4 +37,5 @@ export const beKingUndisputedEpic: ActionCard = {
       },
     },
   ],
+  i18n: beKingUndisputedEpicI18n,
 };

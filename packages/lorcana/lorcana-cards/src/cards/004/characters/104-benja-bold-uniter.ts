@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { benjaBoldUniterI18n } from "./104-benja-bold-uniter.i18n";
 
 export const benjaBoldUniter: CharacterCard = {
   id: "q79",
@@ -7,24 +8,6 @@ export const benjaBoldUniter: CharacterCard = {
   cardType: "character",
   name: "Benja",
   version: "Bold Uniter",
-  i18n: {
-    en: {
-      name: "Benja",
-      version: "Bold Uniter",
-    },
-    de: {
-      name: "Benja",
-      version: "Mutiger Vermittler",
-    },
-    fr: {
-      name: "Benja",
-      version: "Unificateur audacieux",
-    },
-    it: {
-      name: "Benja",
-      version: "Unificatore Audace",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Raya and the Last Dragon",
   set: "004",
@@ -41,4 +24,5 @@ export const benjaBoldUniter: CharacterCard = {
     tcgPlayer: 550589,
   },
   classifications: ["Storyborn", "Mentor", "King"],
+  i18n: benjaBoldUniterI18n,
 };

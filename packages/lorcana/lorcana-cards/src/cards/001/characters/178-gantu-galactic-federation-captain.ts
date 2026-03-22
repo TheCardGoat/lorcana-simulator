@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { gantuGalacticFederationCaptainI18n } from "./178-gantu-galactic-federation-captain.i18n";
 
 export const gantuGalacticFederationCaptain: CharacterCard = {
   id: "A1d",
@@ -7,49 +8,6 @@ export const gantuGalacticFederationCaptain: CharacterCard = {
   cardType: "character",
   name: "Gantu",
   version: "Galactic Federation Captain",
-  i18n: {
-    en: {
-      name: "Gantu",
-      version: "Galactic Federation Captain",
-      text: [
-        {
-          title: "UNDER ARREST",
-          description: "Characters with cost 2 or less can't challenge your characters.",
-        },
-      ],
-    },
-    de: {
-      name: "Gantu",
-      version: "Kapitän der Galaktischen Föderation",
-      text: [
-        {
-          title: "NEHMT IHN FEST!",
-          description:
-            "Charaktere, die 2 oder weniger kosten, können deine Charaktere nicht herausfordern.",
-        },
-      ],
-    },
-    fr: {
-      name: "GANTU",
-      version: "Capitaine de la Fédération Galactique",
-      text: [
-        {
-          title: "EN ÉTAT D'ARRESTATION",
-          description: "Les personnages coûtant 2 ou moins ne peuvent pas défier vos personnages.",
-        },
-      ],
-    },
-    it: {
-      name: "Gantu",
-      version: "Galactic Federation Captain",
-      text: [
-        {
-          title: "UNDER ARREST",
-          description: "Characters with cost 2 or less can't challenge your characters.",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Lilo and Stitch",
   set: "001",
@@ -73,15 +31,21 @@ export const gantuGalacticFederationCaptain: CharacterCard = {
   classifications: ["Storyborn", "Alien", "Captain"],
   abilities: [
     {
-      effect: {
-        restriction: "cant-challenge",
-        target: "SELF",
-        type: "restriction",
-      },
       id: "c3k-1",
       name: "UNDER ARREST",
       text: "UNDER ARREST Characters with cost 2 or less can't challenge your characters.",
       type: "static",
+      effect: {
+        type: "restriction",
+        restriction: "cant-be-challenged",
+        target: "YOUR_CHARACTERS",
+        challengerFilter: {
+          type: "cost-comparison",
+          operator: "lte",
+          value: 2,
+        },
+      },
     },
   ],
+  i18n: gantuGalacticFederationCaptainI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { auroraRegalPrincessI18n } from "./161-aurora-regal-princess.i18n";
 
 export const auroraRegalPrincess: CharacterCard = {
   id: "Pi7",
@@ -7,24 +8,6 @@ export const auroraRegalPrincess: CharacterCard = {
   cardType: "character",
   name: "Aurora",
   version: "Regal Princess",
-  i18n: {
-    en: {
-      name: "Aurora",
-      version: "Regal Princess",
-    },
-    de: {
-      name: "Aurora",
-      version: "Vornehme Prinzessin",
-    },
-    fr: {
-      name: "AURORE",
-      version: "Princesse Royale",
-    },
-    it: {
-      name: "Aurora",
-      version: "Principessa Regale",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Sleeping Beauty",
   set: "009",
@@ -41,4 +24,5 @@ export const auroraRegalPrincess: CharacterCard = {
     tcgPlayer: 650095,
   },
   classifications: ["Storyborn", "Hero", "Princess"],
+  i18n: auroraRegalPrincessI18n,
 };

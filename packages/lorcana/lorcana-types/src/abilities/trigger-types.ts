@@ -102,7 +102,10 @@ export type TriggerEvent =
   | "put-card-under" // A card is put under another card
   // Additional trigger events
   | "support" // Support ability triggers
-  | "inkwell"; // Card put into inkwell
+  | "inkwell" // Card put into inkwell
+  | "boost" // Boost ability activated on a character
+  // Zone-exit events
+  | "leave-discard"; // A card leaves the discard zone (for any reason)
 
 // ============================================================================
 // Trigger Subject (what triggers the event)
@@ -126,6 +129,7 @@ export type TriggerSubjectEnum =
   | "ANY_CHARACTER" // Any character
   | "YOUR_ITEMS" // Any of your items
   | "YOUR_OTHER_ITEMS" // Your items except this one
+  | "ANY_ITEM" // Any item (either player's)
   | "YOUR_LOCATIONS" // Any of your locations
   | "YOUR_ACTIONS" // Any of your actions
   | "YOUR_SONGS" // Any of your songs
@@ -182,6 +186,9 @@ export interface TriggerSubjectQuery {
 
   /** Has specific keyword */
   hasKeyword?: string;
+
+  /** Exclude songs (actions with actionSubtype "song") from matching */
+  excludeSong?: boolean;
 }
 
 /**
@@ -341,6 +348,17 @@ export interface BaseTrigger {
    * Used by parser for conditional triggers
    */
   condition?: Condition;
+
+  /**
+   * Filter on what type of card caused this trigger to fire.
+   * Used for triggers like "whenever this character is chosen for an action or an item's ability"
+   * where the trigger only fires from specific source card types.
+   */
+  sourceFilter?: {
+    cardType?: TriggerCardType[];
+    /** Filter by who controls the source card (the chooser). "opponent" means only opponent's actions/abilities trigger this. */
+    sourceController?: "you" | "opponent";
+  };
 }
 
 export type Trigger = BaseTrigger | ChallengeTrigger;
@@ -354,6 +372,7 @@ export type TriggerRestriction =
   // Usage tracking
   | { type: "once-per-turn" }
   | { type: "first-time-each-turn" }
+  | { type: "n-times-per-turn"; count: number }
 
   // Turn phase
   | { type: "during-turn"; whose: "your" | "opponent" }
@@ -361,7 +380,11 @@ export type TriggerRestriction =
 
   // Context
   // True only while the runtime is processing an active challenge window.
-  | { type: "in-challenge" };
+  | { type: "in-challenge" }
+
+  // Zone of origin
+  // True only when the subject card moved from the discard zone.
+  | { type: "from-discard" };
 
 // ============================================================================
 // Pre-built Trigger Patterns

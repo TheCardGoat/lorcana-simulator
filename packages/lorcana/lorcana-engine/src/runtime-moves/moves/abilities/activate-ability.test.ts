@@ -138,7 +138,7 @@ describe("activateAbility", () => {
     expect(
       runtime
         .getGameLog()
-        .some((entry) => entry.defaultMessage?.key === "lorcana.ability.activated"),
+        .some((entry) => entry.defaultMessage?.key === "lorcana.ability.activated.named"),
     ).toBe(true);
   });
 
@@ -257,6 +257,69 @@ describe("activateAbility", () => {
     const cardMeta = engine.getAuthoritativeState().ctx.zones.private.cardMeta[cardId];
     expect(cardMeta?.activatedAbilityUses).toBeUndefined();
     expect(cardMeta?.activatedAbilityUseTurns).toBeUndefined();
+  });
+
+  it("forwards banish-character cost selections through the player-scoped activateAbility helper", () => {
+    const sacrifice = createMockCharacter({
+      id: "banish-character-cost-sacrifice",
+      name: "Banish Character Cost Sacrifice",
+      cost: 1,
+    });
+
+    const victim = createMockCharacter({
+      id: "banish-character-cost-victim",
+      name: "Banish Character Cost Victim",
+      cost: 1,
+    });
+
+    const banishCharacterCostSource = createMockCharacter({
+      id: "banish-character-cost-source",
+      name: "Banish Character Cost Source",
+      cost: 4,
+      abilities: [
+        {
+          id: "banish-character-cost-ability",
+          name: "PAY THE PRICE",
+          type: "activated",
+          cost: {
+            banishCharacter: true,
+          },
+          effect: {
+            type: "banish",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "opponent",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          },
+          text: "PAY THE PRICE Banish one of your characters — Banish chosen opposing character.",
+        } satisfies ActivatedAbilityDefinition,
+      ],
+    });
+
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [banishCharacterCostSource, sacrifice],
+      },
+      {
+        play: [victim],
+      },
+    );
+
+    expect(
+      engine.asPlayerOne().activateAbility(banishCharacterCostSource, {
+        ability: "PAY THE PRICE",
+        costs: {
+          banishCharacters: [sacrifice],
+        },
+        targets: [victim],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(engine.asPlayerOne().getCardZone(sacrifice)).toBe("discard");
+    expect(engine.asPlayerTwo().getCardZone(victim)).toBe("discard");
   });
 
   it("captures the source location in the banish trigger snapshot for banish-self costs", () => {

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { wendyDarlingTalentedSailorI18n } from "./023-wendy-darling-talented-sailor.i18n";
 
 export const wendyDarlingTalentedSailor: CharacterCard = {
   id: "cDB",
@@ -7,24 +8,6 @@ export const wendyDarlingTalentedSailor: CharacterCard = {
   cardType: "character",
   name: "Wendy Darling",
   version: "Talented Sailor",
-  i18n: {
-    en: {
-      name: "Wendy Darling",
-      version: "Talented Sailor",
-    },
-    de: {
-      name: "Wendy Darling",
-      version: "Talentierte Seglerin",
-    },
-    fr: {
-      name: "Wendy Darling",
-      version: "Talentueuse navigatrice",
-    },
-    it: {
-      name: "Wendy Darling",
-      version: "Marinaia Talentuosa",
-    },
-  },
   inkType: ["amber"],
   franchise: "Peter Pan",
   set: "003",
@@ -41,4 +24,5 @@ export const wendyDarlingTalentedSailor: CharacterCard = {
     tcgPlayer: 538380,
   },
   classifications: ["Dreamborn", "Hero"],
+  i18n: wendyDarlingTalentedSailorI18n,
 };

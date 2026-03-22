@@ -19,12 +19,16 @@ import {
   deriveStrength,
   deriveWillpower,
   getActiveStaticKeywordGrants,
+  getActiveStaticKeywordLosses,
+  getActiveStaticKeywordGrantSources,
   getActiveStaticSelfKeywordGrants,
+  getStaticStatModifierSources,
   getActiveTemporaryKeywordNames,
   getActiveTemporaryMap,
   getDerivedHasQuestRestriction,
   type DerivedStateContext,
 } from "../rules/derived-state";
+import { getGrantedActivatedAbilities } from "../runtime-moves/rules/static-ability-utils";
 
 // Type alias for compatibility, they are structurally identical
 type ProjectionState = DerivedStateContext;
@@ -56,6 +60,7 @@ export function createDefaultProjectedLorcanaCardDerived(args?: {
   const { definition, projection, meta } = args;
 
   return {
+    cardType: projection?.cardType ?? definition?.cardType ?? "item",
     exerted: projection?.exerted || meta?.state === "exerted",
     drying: projection?.drying ?? meta?.isDrying ?? false,
     damage: projection?.damage ?? meta?.damage ?? 0,
@@ -95,6 +100,7 @@ export function projectLorcanaCardDerived(args: {
   const currentTurn = state.ctx.status?.turn ?? 1;
   const derived = createDefaultProjectedLorcanaCardDerived();
 
+  derived.cardType = definition?.cardType ?? "item";
   derived.exerted = meta?.state === "exerted";
   derived.drying = Boolean(meta?.isDrying);
   derived.damage = Math.max(0, normalizeNumber(meta?.damage));
@@ -143,7 +149,7 @@ export function projectLorcanaCardDerived(args: {
         .filter((ability) => ability.type === "keyword" && typeof ability.keyword === "string")
         .map((ability) => ability.keyword)
     : [];
-  const temporaryKeywords = getActiveTemporaryKeywordNames(meta, currentTurn);
+  const temporaryKeywords = getActiveTemporaryKeywordNames(meta, currentTurn, state);
   const staticSelfKeywords = getActiveStaticSelfKeywordGrants({
     definition,
     state,
@@ -160,6 +166,14 @@ export function projectLorcanaCardDerived(args: {
     cardInstanceId,
     getDefinitionByInstanceId,
   });
+  const staticKeywordLosses = getActiveStaticKeywordLosses({
+    definition,
+    state,
+    controllerId: controllerID ?? ownerID,
+    zoneID,
+    cardInstanceId,
+    getDefinitionByInstanceId,
+  });
   derived.keywords = [
     ...new Set([
       ...baseKeywords,
@@ -167,7 +181,9 @@ export function projectLorcanaCardDerived(args: {
       ...staticSelfKeywords.keywords,
       ...staticKeywords.keywords,
     ]),
-  ].sort((left, right) => left.localeCompare(right));
+  ]
+    .filter((keyword) => !staticKeywordLosses.includes(keyword))
+    .sort((left, right) => left.localeCompare(right));
   derived.hasSupport = derived.keywords.includes("Support");
   derived.hasReckless = derived.keywords.includes("Reckless");
   derived.hasRush = derived.keywords.includes("Rush");
@@ -204,11 +220,74 @@ export function projectLorcanaCardDerived(args: {
     ? meta?.temporaryRestrictionStarts
     : undefined;
 
+  if (cardInstanceId && getDefinitionByInstanceId && zoneID?.startsWith("play")) {
+    const grantedAbilities = getGrantedActivatedAbilities({
+      state: {
+        priority: state.ctx.priority,
+        status: state.ctx.status,
+        _zonesPrivate: state.ctx.zones?.private,
+      },
+      cardId: cardInstanceId,
+      getDefinitionByInstanceId,
+    });
+    if (grantedAbilities.length > 0) {
+      derived.grantedAbilityTextEntries = grantedAbilities.map(({ ability, sourceId }) => {
+        const title = ability.name ?? "Ability";
+        const description = ability.text?.trim();
+        const sourceDef = getDefinitionByInstanceId(sourceId);
+        return {
+          title,
+          ...(description ? { description } : {}),
+          sourceId: String(sourceId),
+          sourceDefinitionId: sourceDef?.id,
+        };
+      });
+    }
+
+    const keywordSources = getActiveStaticKeywordGrantSources({
+      definition,
+      state,
+      controllerId: controllerID ?? ownerID,
+      zoneID,
+      cardInstanceId,
+      getDefinitionByInstanceId,
+    });
+    if (keywordSources.length > 0) {
+      derived.keywordGrantSources = keywordSources;
+    }
+
+    const statSources: Array<{
+      stat: string;
+      amount: number;
+      sourceId: string;
+      sourceDefinitionId?: string;
+    }> = [];
+    for (const stat of ["strength", "willpower", "lore"] as const) {
+      const sources = getStaticStatModifierSources({
+        state,
+        cardInstanceId,
+        stat,
+        getDefinitionByInstanceId,
+      });
+      for (const source of sources) {
+        statSources.push({
+          stat: source.stat,
+          amount: source.amount,
+          sourceId: String(source.sourceId),
+          sourceDefinitionId: source.sourceDefinitionId,
+        });
+      }
+    }
+    if (statSources.length > 0) {
+      derived.statModifierSources = statSources;
+    }
+  }
+
   return derived;
 }
 
-// Method used to take a short version of LorcanaProjectedCard and turn it back to full form
-// We omit defaults while serialising to save space, we use this method to restore defaults when we need to use the full form of LorcanaProjectedCard (e.g. for card text generation)
+// Restores a short-form LorcanaProjectedCard (with undefined defaults) to full form
+// Used when we need all values present (e.g. for card text generation)
 export function restoreProjectedCard({
   definition,
   projected,
@@ -221,12 +300,5 @@ export function restoreProjectedCard({
   return {
     ...projected,
     ...restored,
-    // Add method accessors for test compatibility
-    getStrength: function (this: LorcanaProjectedCard): number {
-      return this.strength ?? 0;
-    },
-    getWillpower: function (this: LorcanaProjectedCard): number {
-      return this.willpower ?? 0;
-    },
   };
 }

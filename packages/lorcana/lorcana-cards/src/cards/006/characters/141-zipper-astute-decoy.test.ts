@@ -1,33 +1,138 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { zipperAstuteDecoy } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Zipper - Astute Decoy", () => {
-//   It.skip("Ward (Opponents can't choose this character except to challenge.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [zipperAstuteDecoy],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(zipperAstuteDecoy);
-//     Expect(cardUnderTest.hasWard).toBe(true);
-//   });
-//
-//   It.skip("RUN INTERFERENCE During your turn, whenever a card is put into your inkwell, another chosen character gains Resist +1 until the start of your next turn. (Damage dealt to them is reduced by 1.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: zipperAstuteDecoy.cost,
-//       Play: [zipperAstuteDecoy],
-//       Hand: [zipperAstuteDecoy],
-//     });
-//
-//     Await testEngine.playCard(zipperAstuteDecoy);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { simbaProtectiveCub } from "../../001";
+import { zipperAstuteDecoy } from "./141-zipper-astute-decoy";
+
+const inkableCard = createMockCharacter({
+  id: "zipper-astute-decoy-inkable-card",
+  name: "Inkable Card",
+  cost: 2,
+  strength: 1,
+  willpower: 1,
+});
+
+const anotherCharacter = createMockCharacter({
+  id: "zipper-astute-decoy-another-character",
+  name: "Another Character",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+});
+
+describe("Zipper - Astute Decoy", () => {
+  it("has Ward keyword", () => {
+    const wardAbility = (zipperAstuteDecoy.abilities ?? []).find(
+      (a) => a.type === "keyword" && a.keyword === "Ward",
+    );
+    expect(wardAbility).toBeDefined();
+  });
+
+  describe("RUN INTERFERENCE - During your turn, whenever a card is put into your inkwell, another chosen character gains Resist +1 until the start of your next turn.", () => {
+    it("triggers when a card is inked during your turn, granting Resist +1 to another chosen character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [zipperAstuteDecoy, anotherCharacter],
+          hand: [inkableCard],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.hasKeyword(anotherCharacter, "Resist")).toBe(false);
+
+      // Ink a card during your turn
+      expect(testEngine.asPlayerOne().ink(inkableCard)).toBeSuccessfulCommand();
+
+      // RUN INTERFERENCE triggers
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          resolveOptional: true,
+          targets: [anotherCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Another character now has Resist +1
+      expect(testEngine.hasKeyword(anotherCharacter, "Resist")).toBe(true);
+    });
+
+    it("does NOT trigger during opponent's turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [zipperAstuteDecoy, anotherCharacter],
+          deck: 2,
+        },
+        {
+          hand: [inkableCard],
+          deck: 2,
+        },
+      );
+
+      // Pass to opponent's turn
+      testEngine.asPlayerOne().passTurn();
+
+      // Opponent inks a card
+      expect(testEngine.asPlayerTwo().ink(inkableCard)).toBeSuccessfulCommand();
+
+      // RUN INTERFERENCE should NOT trigger on opponent's turn
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+    });
+
+    it("Resist expires at start of your next turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [zipperAstuteDecoy, anotherCharacter],
+          hand: [inkableCard],
+          deck: [simbaProtectiveCub, simbaProtectiveCub],
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().ink(inkableCard)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          resolveOptional: true,
+          targets: [anotherCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.hasKeyword(anotherCharacter, "Resist")).toBe(true);
+
+      // Pass turn to opponent and back
+      testEngine.asPlayerOne().passTurn();
+      testEngine.asPlayerTwo().passTurn();
+
+      // Resist should be gone at start of next turn
+      expect(testEngine.hasKeyword(anotherCharacter, "Resist")).toBe(false);
+    });
+
+    it("can decline the optional and no Resist is granted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [zipperAstuteDecoy, anotherCharacter],
+          hand: [inkableCard],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().ink(inkableCard)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Decline the optional
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.hasKeyword(anotherCharacter, "Resist")).toBe(false);
+    });
+  });
+});

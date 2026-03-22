@@ -1,4 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
+import { forbiddenMountainMaleficentsCastleI18n } from "./066-forbidden-mountain-maleficents-castle.i18n";
 
 export const forbiddenMountainMaleficentsCastle: LocationCard = {
   id: "189",
@@ -7,24 +8,6 @@ export const forbiddenMountainMaleficentsCastle: LocationCard = {
   cardType: "location",
   name: "Forbidden Mountain",
   version: "Maleficent's Castle",
-  i18n: {
-    en: {
-      name: "Forbidden Mountain",
-      version: "Maleficent's Castle",
-    },
-    de: {
-      name: "Verbotener Berg",
-      version: "Malefiz' Schloss",
-    },
-    fr: {
-      name: "Montagne Interdite",
-      version: "Château de Maléfique",
-    },
-    it: {
-      name: "Montagna Proibita",
-      version: "Castello di Malefica",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Sleeping Beauty",
   set: "003",
@@ -40,4 +23,5 @@ export const forbiddenMountainMaleficentsCastle: LocationCard = {
     lorcast: "crd_5ac4816ce7b240db942b5963a8db9909",
     tcgPlayer: 531821,
   },
+  i18n: forbiddenMountainMaleficentsCastleI18n,
 };

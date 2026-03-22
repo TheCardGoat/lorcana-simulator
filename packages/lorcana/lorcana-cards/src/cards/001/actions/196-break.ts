@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { breakCardI18n } from "./196-break.i18n";
 
 export const breakCard: ActionCard = {
   id: "PsS",
@@ -6,24 +7,6 @@ export const breakCard: ActionCard = {
   reprints: ["set1-196"],
   cardType: "action",
   name: "Break",
-  i18n: {
-    en: {
-      name: "Break",
-      text: "Banish chosen item.",
-    },
-    de: {
-      name: "Zerfetzen",
-      text: "Verbanne einen Gegenstand deiner Wahl.",
-    },
-    fr: {
-      name: "DÉCHIQUETÉ",
-      text: "Choisissez un objet et bannissez-le.",
-    },
-    it: {
-      name: "Break",
-      text: "Banish chosen item.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Beauty and the Beast",
   set: "001",
@@ -45,4 +28,5 @@ export const breakCard: ActionCard = {
       },
     },
   ],
+  i18n: breakCardI18n,
 };

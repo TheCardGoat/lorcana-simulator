@@ -1,97 +1,60 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { creeperLoyalLackey } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Creeper - Loyal Lackey", () => {
-//   It("should be a vanilla character with correct stats and no special abilities", () => {
-//     Const testEngine = new TestEngine({
-//       Play: [creeperLoyalLackey],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(creeperLoyalLackey);
-//
-//     // Verify card is in play
-//     Expect(cardUnderTest.zone).toBe("play");
-//
-//     // Verify base stats
-//     Expect(cardUnderTest.lorcanitoCard.cost).toBe(6);
-//     Expect(cardUnderTest.lorcanitoCard.strength).toBe(5);
-//     Expect(cardUnderTest.lorcanitoCard.willpower).toBe(4);
-//     Expect(cardUnderTest.lorcanitoCard.lore).toBe(4);
-//
-//     // Verify characteristics
-//     Expect(cardUnderTest.lorcanitoCard.characteristics).toContain("storyborn");
-//     Expect(cardUnderTest.lorcanitoCard.characteristics).toContain("ally");
-//
-//     // Verify color and inkwell
-//     Expect(cardUnderTest.lorcanitoCard.colors).toContain("amethyst");
-//     Expect(cardUnderTest.lorcanitoCard.inkwell).toBe(true);
-//
-//     // Verify no special abilities
-//     Expect(cardUnderTest.lorcanitoCard.abilities).toEqual([]);
-//   });
-//
-//   It("should be able to quest for lore", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [creeperLoyalLackey],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(creeperLoyalLackey);
-//
-//     Const initialLore = testEngine.store.tableStore.getTable("player_one").lore;
-//
-//     CardUnderTest.quest();
-//
-//     Expect(testEngine.store.tableStore.getTable("player_one").lore).toBe(
-//       InitialLore + 4,
-//     );
-//     Expect(cardUnderTest.meta.exerted).toBe(true);
-//   });
-//
-//   It("should be playable from hand with correct ink cost", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: creeperLoyalLackey.cost,
-//       Hand: [creeperLoyalLackey],
-//     });
-//
-//     Const cardModel = testEngine.getCardModel(creeperLoyalLackey);
-//
-//     Expect(cardModel.zone).toBe("hand");
-//
-//     Await testEngine.playCard(creeperLoyalLackey);
-//
-//     Expect(cardModel.zone).toBe("play");
-//     Expect(
-//       TestEngine.store.tableStore.getTable("player_one").inkAvailable(),
-//     ).toBe(0);
-//   });
-//
-//   It("should be able to be used as ink", async () => {
-//     Const testEngine = new TestEngine({
-//       Hand: [creeperLoyalLackey],
-//     });
-//
-//     Const cardModel = testEngine.getCardModel(creeperLoyalLackey);
-//
-//     Expect(cardModel.zone).toBe("hand");
-//     Expect(cardModel.lorcanitoCard.inkwell).toBe(true);
-//
-//     Const initialInkwellSize =
-//       TestEngine.store.tableStore.getTable("player_one").zones.inkwell.cards
-//         .length;
-//
-//     CardModel.addToInkwell();
-//
-//     Expect(cardModel.zone).toBe("inkwell");
-//     Expect(
-//       TestEngine.store.tableStore.getTable("player_one").zones.inkwell.cards
-//         .length,
-//     ).toBe(initialInkwellSize + 1);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { creeperLoyalLackey } from "./050-creeper-loyal-lackey";
+
+describe("Creeper - Loyal Lackey", () => {
+  it("should have the printed vanilla stats and characteristics", () => {
+    expect(creeperLoyalLackey.cost).toBe(6);
+    expect(creeperLoyalLackey.strength).toBe(5);
+    expect(creeperLoyalLackey.willpower).toBe(4);
+    expect(creeperLoyalLackey.lore).toBe(4);
+    expect(creeperLoyalLackey.inkable).toBe(true);
+    expect(creeperLoyalLackey.vanilla).toBe(true);
+    expect(creeperLoyalLackey.classifications).toEqual(["Storyborn", "Ally"]);
+  });
+
+  it("should be playable as a vanilla character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [creeperLoyalLackey],
+      inkwell: creeperLoyalLackey.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(creeperLoyalLackey)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardZone(creeperLoyalLackey)).toBe("play");
+  });
+
+  it("should be able to quest for lore", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [creeperLoyalLackey],
+      inkwell: creeperLoyalLackey.cost,
+      deck: 5,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(creeperLoyalLackey)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().quest(creeperLoyalLackey)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getLore("player_one")).toBe(4);
+  });
+
+  it("should be able to be used as ink", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [creeperLoyalLackey],
+    });
+
+    expect(testEngine.asPlayerOne().getCardZone(creeperLoyalLackey)).toBe("hand");
+    expect(creeperLoyalLackey.inkable).toBe(true);
+
+    const initialInkwellSize = testEngine.asPlayerOne().getBoard().players.player_one
+      .inkwell.length;
+
+    expect(testEngine.asPlayerOne().ink(creeperLoyalLackey)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(creeperLoyalLackey)).toBe("inkwell");
+    expect(testEngine.asPlayerOne().getBoard().players.player_one.inkwell.length).toBe(
+      initialInkwellSize + 1,
+    );
+  });
+});

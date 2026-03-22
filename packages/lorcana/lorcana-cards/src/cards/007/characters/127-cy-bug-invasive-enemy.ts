@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { cybugInvasiveEnemyI18n } from "./127-cy-bug-invasive-enemy.i18n";
 
 export const cybugInvasiveEnemy: CharacterCard = {
   id: "084",
@@ -7,48 +8,6 @@ export const cybugInvasiveEnemy: CharacterCard = {
   cardType: "character",
   name: "Cy-Bug",
   version: "Invasive Enemy",
-  i18n: {
-    en: {
-      name: "Cy-Bug",
-      version: "Invasive Enemy",
-      text: [
-        {
-          title: "HIVE MIND",
-          description: "This character gets +1 {S} for each other character you have in play.",
-        },
-      ],
-    },
-    de: {
-      name: "Cy-Bug",
-      version: "Invasiver Feind",
-      text: [
-        {
-          title: "SCHWARMINTELLIGENZ",
-          description: "Dieser Charakter erhält +1 für jeden deiner anderen Charaktere im Spiel.",
-        },
-      ],
-    },
-    fr: {
-      name: "Cybug",
-      version: "Ennemi invasif",
-      text: [
-        {
-          title: "ESPRIT DE RUCHE",
-          description: "Ce personnage gagne +1 pour chaque autre personnage que vous avez en jeu.",
-        },
-      ],
-    },
-    it: {
-      name: "Scarafoide",
-      version: "Nemico Infestante",
-      text: [
-        {
-          title: "MENTE ALVEARE",
-          description: "Questo personaggio riceve +1 per ogni altro personaggio che hai in gioco.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Wreck It Ralph",
   set: "007",
@@ -73,7 +32,14 @@ export const cybugInvasiveEnemy: CharacterCard = {
   abilities: [
     {
       effect: {
-        modifier: 1,
+        modifier: {
+          type: "filtered-count",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          filters: [],
+          excludeSelf: true,
+        },
         stat: "strength",
         target: "SELF",
         type: "modify-stat",
@@ -83,4 +49,5 @@ export const cybugInvasiveEnemy: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: cybugInvasiveEnemyI18n,
 };

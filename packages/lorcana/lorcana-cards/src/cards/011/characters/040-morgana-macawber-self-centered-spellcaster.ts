@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { morganaMacawberSelfcenteredSpellcasterI18n } from "./040-morgana-macawber-self-centered-spellcaster.i18n";
 
 export const morganaMacawberSelfcenteredSpellcaster: CharacterCard = {
   id: "r3V",
@@ -7,24 +8,6 @@ export const morganaMacawberSelfcenteredSpellcaster: CharacterCard = {
   cardType: "character",
   name: "Morgana Macawber",
   version: "Self-Centered Spellcaster",
-  i18n: {
-    en: {
-      name: "Morgana Macawber",
-      version: "Self-Centered Spellcaster",
-    },
-    de: {
-      name: "Morgana Makaber",
-      version: "Egozentrische Zauberkundige",
-    },
-    fr: {
-      name: "Morgana",
-      version: "Ensorceleuse égocentrique",
-    },
-    it: {
-      name: "Morgana Macawber",
-      version: "Incantatrice Egocentrica",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -41,4 +24,5 @@ export const morganaMacawberSelfcenteredSpellcaster: CharacterCard = {
     tcgPlayer: 673736,
   },
   classifications: ["Storyborn", "Super", "Villain", "Sorcerer"],
+  i18n: morganaMacawberSelfcenteredSpellcasterI18n,
 };

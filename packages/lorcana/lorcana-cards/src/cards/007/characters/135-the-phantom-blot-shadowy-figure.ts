@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { thePhantomBlotShadowyFigureI18n } from "./135-the-phantom-blot-shadowy-figure.i18n";
 
 export const thePhantomBlotShadowyFigure: CharacterCard = {
   id: "jqj",
@@ -7,33 +8,6 @@ export const thePhantomBlotShadowyFigure: CharacterCard = {
   cardType: "character",
   name: "The Phantom Blot",
   version: "Shadowy Figure",
-  i18n: {
-    en: {
-      name: "The Phantom Blot",
-      version: "Shadowy Figure",
-      text: "Rush",
-    },
-    de: {
-      name: "Das Phantom",
-      version: "Schattenhafte Gestalt",
-      text: "Rasant",
-    },
-    fr: {
-      name: "Le Fantôme Noir",
-      version: "Figure de l'ombre",
-      text: "Charge",
-    },
-    it: {
-      name: "Macchia Nera",
-      version: "Figura Misteriosa",
-      text: [
-        {
-          title: "Lesto",
-          description: "(Questo personaggio può sfidare nel turno in cui è stato giocato.)",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   set: "007",
   cardNumber: 135,
@@ -57,4 +31,5 @@ export const thePhantomBlotShadowyFigure: CharacterCard = {
       text: "Rush",
     },
   ],
+  i18n: thePhantomBlotShadowyFigureI18n,
 };

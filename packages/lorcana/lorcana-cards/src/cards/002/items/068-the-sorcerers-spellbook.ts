@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { theSorcerersSpellbookI18n } from "./068-the-sorcerers-spellbook.i18n";
 
 export const theSorcerersSpellbook: ItemCard = {
   id: "ES1",
@@ -6,44 +7,6 @@ export const theSorcerersSpellbook: ItemCard = {
   reprints: ["set2-068"],
   cardType: "item",
   name: "The Sorcerer's Spellbook",
-  i18n: {
-    en: {
-      name: "The Sorcerer's Spellbook",
-      text: [
-        {
-          title: "KNOWLEDGE",
-          description: "{E}, 1 {I} — Gain 1 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Das Buch der Zaubersprüche",
-      text: [
-        {
-          title: "WISSEN, 1",
-          description: "— Sammle 1 Legende.",
-        },
-      ],
-    },
-    fr: {
-      name: "Grimoire du sorcier",
-      text: [
-        {
-          title: "CONNAISSANCE, 1",
-          description: "— Gagnez 1 éclat de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "The Sorcerer's Spellbook",
-      text: [
-        {
-          title: "KNOWLEDGE, 1",
-          description: "— Gain 1 lore.",
-        },
-      ],
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Fantasia",
   set: "002",
@@ -78,4 +41,5 @@ export const theSorcerersSpellbook: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: theSorcerersSpellbookI18n,
 };

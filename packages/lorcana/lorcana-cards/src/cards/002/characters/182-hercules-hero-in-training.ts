@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { herculesHeroInTrainingI18n } from "./182-hercules-hero-in-training.i18n";
 
 export const herculesHeroInTraining: CharacterCard = {
   id: "GRk",
@@ -7,24 +8,6 @@ export const herculesHeroInTraining: CharacterCard = {
   cardType: "character",
   name: "Hercules",
   version: "Hero in Training",
-  i18n: {
-    en: {
-      name: "Hercules",
-      version: "Hero in Training",
-    },
-    de: {
-      name: "Hercules",
-      version: "Held in Ausbildung",
-    },
-    fr: {
-      name: "Hercule",
-      version: "Héros à l'entraînement",
-    },
-    it: {
-      name: "Hercules",
-      version: "Hero in Training",
-    },
-  },
   inkType: ["steel"],
   franchise: "Hercules",
   set: "002",
@@ -41,4 +24,5 @@ export const herculesHeroInTraining: CharacterCard = {
     tcgPlayer: 527774,
   },
   classifications: ["Storyborn", "Hero", "Prince"],
+  i18n: herculesHeroInTrainingI18n,
 };

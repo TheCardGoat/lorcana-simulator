@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { hansSchemingPrinceI18n } from "./078-hans-scheming-prince.i18n";
 
 export const hansSchemingPrince: CharacterCard = {
   id: "7lM",
@@ -7,24 +8,6 @@ export const hansSchemingPrince: CharacterCard = {
   cardType: "character",
   name: "Hans",
   version: "Scheming Prince",
-  i18n: {
-    en: {
-      name: "Hans",
-      version: "Scheming Prince",
-    },
-    de: {
-      name: "Hans",
-      version: "Hinterhältiger Prinz",
-    },
-    fr: {
-      name: "HANS",
-      version: "Prince malfaisant",
-    },
-    it: {
-      name: "Hans",
-      version: "Scheming Prince",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Frozen",
   set: "001",
@@ -35,11 +18,11 @@ export const hansSchemingPrince: CharacterCard = {
   willpower: 3,
   lore: 3,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_c0ca53eaf2d849e7b533d0628ea7585c",
     tcgPlayer: 505954,
   },
   classifications: ["Storyborn", "Villain", "Prince"],
+  i18n: hansSchemingPrinceI18n,
 };

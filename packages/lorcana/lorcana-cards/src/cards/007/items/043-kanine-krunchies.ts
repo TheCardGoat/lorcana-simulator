@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { kanineKrunchiesI18n } from "./043-kanine-krunchies.i18n";
 
 export const kanineKrunchies: ItemCard = {
   id: "3jC",
@@ -6,44 +7,6 @@ export const kanineKrunchies: ItemCard = {
   reprints: ["set7-043"],
   cardType: "item",
   name: "Kanine Krunchies",
-  i18n: {
-    en: {
-      name: "Kanine Krunchies",
-      text: [
-        {
-          title: "YOU CAN BE A CHAMPION, TOO",
-          description: "Your Puppy characters get +1 {W}.",
-        },
-      ],
-    },
-    de: {
-      name: "Kanine Krunchies",
-      text: [
-        {
-          title: "KRÄCKER FÜR DIE KLEINEN HUNDE",
-          description: "Deine Welpen erhalten +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Kanine Krunchies",
-      text: [
-        {
-          title: "À PLEINES DENTS",
-          description: "Vos personnages Chiot gagnent +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Kanine Krunchies",
-      text: [
-        {
-          title: "SE LO TRATTI CON AMORE I",
-          description: "tuoi personaggi Cucciolo ricevono +1.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "101 Dalmatians",
   set: "007",
@@ -57,8 +20,8 @@ export const kanineKrunchies: ItemCard = {
   },
   text: [
     {
-      title: "YOU CAN BE A CHAMPION, TOO",
-      description: "Your Puppy characters get +1 {W}.",
+      title: "YOU CAN BE",
+      description: "A CHAMPION, TOO Your Puppy characters get +1 {W}.",
     },
   ],
   abilities: [
@@ -86,4 +49,5 @@ export const kanineKrunchies: ItemCard = {
       type: "static",
     },
   ],
+  i18n: kanineKrunchiesI18n,
 };

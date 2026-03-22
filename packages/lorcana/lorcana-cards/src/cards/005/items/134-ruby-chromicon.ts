@@ -1,4 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
+import { rubyChromiconI18n } from "./134-ruby-chromicon.i18n";
 
 export const rubyChromicon: ItemCard = {
   id: "RCb",
@@ -6,44 +7,6 @@ export const rubyChromicon: ItemCard = {
   reprints: ["set5-134"],
   cardType: "item",
   name: "Ruby Chromicon",
-  i18n: {
-    en: {
-      name: "Ruby Chromicon",
-      text: [
-        {
-          title: "RUBY LIGHT",
-          description: "{E} — Chosen character gets +1 {S} this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Rubin Chromikon",
-      text: [
-        {
-          title: "RUBINFARBENES LICHT",
-          description: "— Gib einem Charakter deiner Wahl in diesem Zug +1.",
-        },
-      ],
-    },
-    fr: {
-      name: "Chromicône de Rubis",
-      text: [
-        {
-          title: "LUEUR DE RUBIS",
-          description: "— Choisissez un personnage qui gagne +1 pour le reste de ce tour.",
-        },
-      ],
-    },
-    it: {
-      name: "Cromicon di Rubino",
-      text: [
-        {
-          title: "LUCE DI RUBINO",
-          description: "— Un personaggio a tua scelta riceve +1 per questo turno.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lorcana",
   set: "005",
@@ -79,4 +42,5 @@ export const rubyChromicon: ItemCard = {
       type: "activated",
     },
   ],
+  i18n: rubyChromiconI18n,
 };

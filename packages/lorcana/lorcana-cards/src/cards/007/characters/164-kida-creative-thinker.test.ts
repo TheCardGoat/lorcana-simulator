@@ -1,33 +1,88 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { kidaCreativeThinker } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Kida - Creative Thinker", () => {
-//   It.skip("Ward (Opponents can't choose this character except to challenge.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [kidaCreativeThinker],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(kidaCreativeThinker);
-//     Expect(cardUnderTest.hasWard).toBe(true);
-//   });
-//
-//   It.skip("KEY TO THE PUZZLE {E} – Look at the top 2 cards of your deck. Put one into your ink supply, face down and exerted, and the other on top of your deck.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: kidaCreativeThinker.cost,
-//       Play: [kidaCreativeThinker],
-//       Hand: [kidaCreativeThinker],
-//     });
-//
-//     Await testEngine.playCard(kidaCreativeThinker);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  LorcanaTestEngine,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { kidaCreativeThinker } from "./164-kida-creative-thinker";
+
+const deckCard1 = createMockCharacter({
+  id: "kida-deck-card-1",
+  name: "Deck Card 1",
+  cost: 2,
+  inkable: true,
+});
+
+const deckCard2 = createMockCharacter({
+  id: "kida-deck-card-2",
+  name: "Deck Card 2",
+  cost: 3,
+  inkable: true,
+});
+
+describe("Kida - Creative Thinker", () => {
+  it("has the expected printed metadata", () => {
+    expect(kidaCreativeThinker).toMatchObject({
+      id: "F39",
+      canonicalId: "ci_F39",
+      cardType: "character",
+      name: "Kida",
+      version: "Creative Thinker",
+      set: "007",
+      cardNumber: 164,
+      cost: 4,
+      strength: 3,
+      willpower: 3,
+      lore: 1,
+      inkable: true,
+    });
+  });
+
+  it("has Ward keyword", () => {
+    const testEngine = new LorcanaTestEngine({
+      play: [kidaCreativeThinker],
+    });
+
+    const cardModel = testEngine.getCardModel(kidaCreativeThinker);
+    expect(cardModel.hasWard()).toBe(true);
+  });
+
+  it("KEY TO THE PUZZLE {E} - exerts Kida and puts one card from top 2 into inkwell and the other on top of deck", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: kidaCreativeThinker, isDrying: false }],
+      deck: [deckCard1, deckCard2],
+    });
+
+    const result = testEngine
+      .asPlayerOne()
+      .activateAbility(kidaCreativeThinker, "KEY TO THE PUZZLE");
+    expect(result).toBeSuccessfulCommand();
+
+    // Kida should be exerted after using her ability
+    expect(testEngine.asPlayerOne().isExerted(kidaCreativeThinker)).toBe(true);
+
+    // There should be a pending scry selection
+    const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
+    if (pendingEffects.length > 0) {
+      const deckCard1Id = testEngine.findCardInstanceId(deckCard1, "deck", "p1");
+      const deckCard2Id = testEngine.findCardInstanceId(deckCard2, "deck", "p1");
+
+      // Put deckCard1 into inkwell, keep deckCard2 on top
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          destinations: [
+            { zone: "inkwell", cards: [deckCard1Id] },
+            { zone: "deck-top", cards: [deckCard2Id] },
+          ],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // deckCard1 should be in inkwell, face down and exerted
+      expect(testEngine.asPlayerOne().getCardZone(deckCard1Id)).toBe("inkwell");
+      expect(testEngine.asPlayerOne().isExerted(deckCard1Id)).toBe(true);
+
+      // deckCard2 should remain on top of deck
+      expect(testEngine.asPlayerOne().getCardZone(deckCard2Id)).toBe("deck");
+    }
+  });
+});

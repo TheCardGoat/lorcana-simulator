@@ -6,13 +6,12 @@
 
 import type { Draft } from "immer";
 import type { BoardSetupContext, PacketAnimationContext, PlayerId } from "#core";
-import { filterMatchView, type MatchRuntimeConfigWithRuntimeCard, type MatchState } from "#core";
-import type {
-  LorcanaCardDefinition,
-  LorcanaG,
-  LorcanaProjectedBoardView,
-  LorcanaRuntimeCard,
-} from "../types";
+import {
+  filterMatchView,
+  type FilteredMatchView,
+  type MatchRuntimeConfig,
+  type MatchState,
+} from "#core";
 import { createInitialLorcanaG } from "../types";
 import { lorcanaRuntimeZones } from "../zones";
 import { lorcanaRuntimeMoves } from "../runtime-moves";
@@ -25,12 +24,7 @@ const DECK_ZONE_ID = "deck" as const;
 /**
  * Lorcana runtime game configuration
  */
-export const lorcanaRuntimeConfig: MatchRuntimeConfigWithRuntimeCard<
-  LorcanaG,
-  typeof lorcanaRuntimeMoves,
-  LorcanaRuntimeCard,
-  LorcanaProjectedBoardView
-> = {
+export const lorcanaRuntimeConfig: MatchRuntimeConfig = {
   name: "Disney Lorcana TCG",
 
   setup: ({ players }) => {
@@ -41,10 +35,7 @@ export const lorcanaRuntimeConfig: MatchRuntimeConfigWithRuntimeCard<
     return createInitialLorcanaG(players[0].id as PlayerId, players[1].id as PlayerId);
   },
 
-  boardSetup: (
-    draft: Draft<MatchState<LorcanaG>>,
-    ctx: BoardSetupContext<LorcanaRuntimeCard["definition"]>,
-  ) => {
+  boardSetup: (draft: Draft<MatchState>, ctx: BoardSetupContext) => {
     const { players, staticResources, random } = ctx;
     if (typeof staticResources.instances.entries !== "function") {
       return;
@@ -82,7 +73,7 @@ export const lorcanaRuntimeConfig: MatchRuntimeConfigWithRuntimeCard<
   flow: lorcanaRuntimeFlow,
   zones: lorcanaRuntimeZones,
 
-  // This filters MatchState<LorcanaG> removing private information from it
+  // This filters MatchState removing private information from it
   playerView: (state, roleCtx) => {
     // playerView only affects filtered/client-facing state snapshots.
     // Authoritative server projections are built from full state directly.
@@ -91,10 +82,15 @@ export const lorcanaRuntimeConfig: MatchRuntimeConfigWithRuntimeCard<
 
   // This return ALL the data the UI needs to render the board.
   projectBoard: (state, roleCtx, staticResources, projectionCtx) => {
-    return projectLorcanaBoardView(state, roleCtx, staticResources, projectionCtx);
+    return projectLorcanaBoardView(
+      state,
+      roleCtx,
+      staticResources,
+      projectionCtx,
+    ) as unknown as FilteredMatchView;
   },
 
-  derivePacketAnimations: (context: PacketAnimationContext<LorcanaG, LorcanaCardDefinition>) => {
+  derivePacketAnimations: (context: PacketAnimationContext) => {
     return deriveLorcanaPacketAnimations(context);
   },
 

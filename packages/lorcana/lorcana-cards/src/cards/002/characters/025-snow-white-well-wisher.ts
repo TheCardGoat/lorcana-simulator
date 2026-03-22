@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { snowWhiteWellWisherI18n } from "./025-snow-white-well-wisher.i18n";
 
 export const snowWhiteWellWisher: CharacterCard = {
   id: "iql",
@@ -7,43 +8,6 @@ export const snowWhiteWellWisher: CharacterCard = {
   cardType: "character",
   name: "Snow White",
   version: "Well Wisher",
-  i18n: {
-    en: {
-      name: "Snow White",
-      version: "Well Wisher",
-      text: [
-        {
-          title: "Shift 4",
-        },
-        {
-          title: "WISHES COME TRUE",
-          description:
-            "Whenever this character quests, you may return a character card from your discard to your hand.",
-        },
-      ],
-    },
-    de: {
-      name: "Schneewittchen",
-      version: "Am Wunschbrunnen",
-      text: "Gestaltwandel 4 EUER WUNSCH WIRD GEWÄHRT Jedes Mal, wenn dieser Charakter erkundet, darfst du eine Charakterkarte aus deinem Ablagestapel zurück auf deine Hand nehmen.",
-    },
-    fr: {
-      name: "Blanche-Neige",
-      version: "Fait un vœu",
-      text: "Alter 4 MES VŒUX SE RÉALISENT Lorsque ce personnage est envoyé à l'aventure, vous pouvez reprendre en main une carte personnage de votre défausse.",
-    },
-    it: {
-      name: "Snow White",
-      version: "Well Wisher",
-      text: [
-        {
-          title: "Shift 4",
-          description:
-            "(You may pay 4 to play this on top of one of your characters named Snow White.) WISHES COME TRUE Whenever this character quests, you may return a character card from your discard to your hand.",
-        },
-      ],
-    },
-  },
   inkType: ["amber"],
   franchise: "Snow White",
   set: "002",
@@ -69,7 +33,6 @@ export const snowWhiteWellWisher: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
-  missingTests: true,
   abilities: [
     {
       cost: {
@@ -101,4 +64,5 @@ export const snowWhiteWellWisher: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: snowWhiteWellWisherI18n,
 };

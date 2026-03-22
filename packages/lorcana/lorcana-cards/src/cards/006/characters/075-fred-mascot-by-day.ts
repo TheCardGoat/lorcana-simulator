@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { fredMascotByDayI18n } from "./075-fred-mascot-by-day.i18n";
 
 export const fredMascotByDay: CharacterCard = {
   id: "z1w",
@@ -7,49 +8,6 @@ export const fredMascotByDay: CharacterCard = {
   cardType: "character",
   name: "Fred",
   version: "Mascot by Day",
-  i18n: {
-    en: {
-      name: "Fred",
-      version: "Mascot by Day",
-      text: [
-        {
-          title: "HOW COOL IS THAT",
-          description: "Whenever this character is challenged, gain 2 lore.",
-        },
-      ],
-    },
-    de: {
-      name: "Fred",
-      version: "Maskottchen am Tag",
-      text: [
-        {
-          title: "WIE COOL IST DAS DENN?",
-          description:
-            "Jedes Mal, wenn dieser Charakter herausgefordert wird, sammelst du 2 Legenden.",
-        },
-      ],
-    },
-    fr: {
-      name: "Fred",
-      version: "Mascotte la journée",
-      text: [
-        {
-          title: "C'EST PAS GÉNIAL?",
-          description: "Chaque fois que ce personnage est défié, gagnez 2 éclats de Lore.",
-        },
-      ],
-    },
-    it: {
-      name: "Fred",
-      version: "Mascotte di Giorno",
-      text: [
-        {
-          title: "NON È FICO?",
-          description: "Ogni volta che questo personaggio viene sfidato, ottieni 2 leggenda.",
-        },
-      ],
-    },
-  },
   inkType: ["emerald"],
   franchise: "Big Hero 6",
   set: "006",
@@ -88,4 +46,5 @@ export const fredMascotByDay: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: fredMascotByDayI18n,
 };

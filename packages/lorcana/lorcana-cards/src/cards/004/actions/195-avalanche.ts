@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { avalancheI18n } from "./195-avalanche.i18n";
 
 export const avalanche: ActionCard = {
   id: "4mu",
@@ -6,24 +7,6 @@ export const avalanche: ActionCard = {
   reprints: ["set4-195"],
   cardType: "action",
   name: "Avalanche",
-  i18n: {
-    en: {
-      name: "Avalanche",
-      text: "Deal 1 damage to each opposing character. You may banish chosen location.",
-    },
-    de: {
-      name: "Lawine",
-      text: "Füge jedem gegnerischen Charakter 1 Schaden zu. Du darfst einen Ort deiner Wahl verbannen.",
-    },
-    fr: {
-      name: "Avalanche",
-      text: "Infligez 1 dommage à chaque personnage adverse. Vous pouvez choisir un lieu et le bannir.",
-    },
-    it: {
-      name: "Valanga",
-      text: "Infliggi 1 danno a ogni personaggio avversario. Puoi esiliare un luogo a tua scelta.",
-    },
-  },
   inkType: ["steel"],
   franchise: "Mulan",
   set: "004",
@@ -73,4 +56,5 @@ export const avalanche: ActionCard = {
       type: "action",
     },
   ],
+  i18n: avalancheI18n,
 };

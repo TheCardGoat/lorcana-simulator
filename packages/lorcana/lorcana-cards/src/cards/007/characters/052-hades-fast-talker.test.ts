@@ -1,72 +1,73 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   ArielOnHumanLegs,
-//   ArielSpectacularSinger,
-//   MickeyMouseTrueFriend,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { hadesFastTalker } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Hades - Fast Talker", () => {
-//   Describe("FOR JUST A LITTLE PAIN", () => {
-//     It("should banish a character with cost 3 or less when you deal damage to your own character", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: hadesFastTalker.cost,
-//           Hand: [hadesFastTalker],
-//           Play: [arielOnHumanLegs],
-//         },
-//         {
-//           Play: [mickeyMouseTrueFriend, arielSpectacularSinger],
-//         },
-//       );
-//
-//       Await testEngine.playCard(hadesFastTalker);
-//       Await testEngine.resolveOptionalAbility(true);
-//       Await testEngine.resolveTopOfStack({ targets: [arielOnHumanLegs] }, true);
-//       Await testEngine.resolveTopOfStack({ targets: [arielSpectacularSinger] });
-//
-//       Expect(testEngine.getCardsByZone("play", "player_one")).toHaveLength(2);
-//       Expect(testEngine.getCardsByZone("discard", "player_two")).toHaveLength(
-//         1,
-//       );
-//       Expect(testEngine.getCardModel(arielOnHumanLegs).damage).toBe(2);
-//     });
-//
-//     It("should banish own character with cost 3 or less if it's the only valid target", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: hadesFastTalker.cost,
-//           Hand: [hadesFastTalker],
-//           Play: [mickeyMouseTrueFriend],
-//         },
-//         {
-//           Play: [arielOnHumanLegs],
-//         },
-//       );
-//
-//       Await testEngine.playCard(hadesFastTalker);
-//       Await testEngine.resolveOptionalAbility(true);
-//       Await testEngine.resolveTopOfStack(
-//         { targets: [mickeyMouseTrueFriend] },
-//         True,
-//       );
-//       Await testEngine.resolveTopOfStack({ targets: [arielOnHumanLegs] }, true);
-//       Await testEngine.resolveTopOfStack({ targets: [mickeyMouseTrueFriend] });
-//
-//       Expect(testEngine.getCardsByZone("play", "player_one")).toHaveLength(1);
-//       Expect(testEngine.getCardsByZone("discard", "player_two")).toHaveLength(
-//         0,
-//       );
-//       Expect(testEngine.getCardsByZone("discard", "player_one")).toHaveLength(
-//         1,
-//       );
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { hadesFastTalker } from "./052-hades-fast-talker";
+
+const damagedAlly = createMockCharacter({
+  id: "hades-fast-talker-damaged-ally",
+  name: "Damaged Ally",
+  cost: 2,
+  strength: 3,
+  willpower: 4,
+});
+
+const banishableOpponent = createMockCharacter({
+  id: "hades-fast-talker-banishable-opponent",
+  name: "Banishable Opponent",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+});
+
+describe("Hades - Fast Talker", () => {
+  describe("FOR JUST A LITTLE PAIN - When you play this character, you may deal 2 damage to another chosen character of yours to banish chosen character with cost 3 or less.", () => {
+    it("deals 2 damage to another friendly character and banishes a chosen character with cost 3 or less", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [hadesFastTalker],
+          inkwell: hadesFastTalker.cost,
+          play: [damagedAlly],
+          deck: 2,
+        },
+        {
+          play: [banishableOpponent],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(hadesFastTalker)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolveNextBag({ resolveOptional: true, targets: [damagedAlly, banishableOpponent] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardByInstance(damagedAlly).damage).toBe(2);
+      expect(testEngine.asPlayerTwo().getCardZone(banishableOpponent)).toBe("discard");
+    });
+
+    it("does nothing when the optional ability is declined", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [hadesFastTalker],
+          inkwell: hadesFastTalker.cost,
+          play: [damagedAlly],
+          deck: 2,
+        },
+        {
+          play: [banishableOpponent],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(hadesFastTalker)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardByInstance(damagedAlly).damage).toBe(0);
+      expect(testEngine.asPlayerTwo().getCardZone(banishableOpponent)).toBe("play");
+    });
+  });
+});

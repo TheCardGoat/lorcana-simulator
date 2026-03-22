@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { iagoFakeFlamingoI18n } from "./079-iago-fake-flamingo.i18n";
 
 export const iagoFakeFlamingo: CharacterCard = {
   id: "Lbm",
@@ -7,37 +8,6 @@ export const iagoFakeFlamingo: CharacterCard = {
   cardType: "character",
   name: "Iago",
   version: "Fake Flamingo",
-  i18n: {
-    en: {
-      name: "Iago",
-      version: "Fake Flamingo",
-      text: [
-        {
-          title: "Evasive",
-        },
-        {
-          title: "IN DISGUISE",
-          description:
-            "Whenever this character quests, you pay 2 {I} less for the next action you play this turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Jago",
-      version: "Falscher Flamingo",
-      text: "Wendig GETARNT Jedes Mal, wenn dieser Charakter erkundet, zahlst du 2 weniger für die nächste Aktion, die du in diesem Zug ausspielst.",
-    },
-    fr: {
-      name: "Iago",
-      version: "Faux flamant rose",
-      text: "Insaisissable DÉGUISÉ Chaque fois que ce personnage est envoyé à l'aventure, la prochaine action que vous jouez ce tour-ci vous coûte 2 de moins.",
-    },
-    it: {
-      name: "Iago",
-      version: "Finto Fenicottero",
-      text: "Sfuggente IN INCOGNITO Ogni volta che questo personaggio va all'avventura, paga 2 in meno per giocare la tua prossima azione per questo turno.",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Aladdin",
   set: "005",
@@ -86,4 +56,5 @@ export const iagoFakeFlamingo: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: iagoFakeFlamingoI18n,
 };

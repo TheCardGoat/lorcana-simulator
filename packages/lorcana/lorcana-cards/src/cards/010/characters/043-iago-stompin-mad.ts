@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { iagoStompinMadI18n } from "./043-iago-stompin-mad.i18n";
 
 export const iagoStompinMad: CharacterCard = {
   id: "UTt",
@@ -7,28 +8,6 @@ export const iagoStompinMad: CharacterCard = {
   cardType: "character",
   name: "Iago",
   version: "Stompin' Mad",
-  i18n: {
-    en: {
-      name: "Iago",
-      version: "Stompin' Mad",
-      text: "Challenger +5",
-    },
-    de: {
-      name: "Jago",
-      version: "Rasend vor Wut",
-      text: "Herausfordern +5",
-    },
-    fr: {
-      name: "Iago",
-      version: "Piétine de rage",
-      text: "Offensif +5",
-    },
-    it: {
-      name: "Iago",
-      version: "Furioso",
-      text: "Sfidante +5",
-    },
-  },
   inkType: ["amethyst"],
   franchise: "Aladdin",
   set: "010",
@@ -54,4 +33,5 @@ export const iagoStompinMad: CharacterCard = {
       text: "Challenger +5",
     },
   ],
+  i18n: iagoStompinMadI18n,
 };

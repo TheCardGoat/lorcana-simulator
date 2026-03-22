@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { workTogetherI18n } from "./165-work-together.i18n";
 
 export const workTogether: ActionCard = {
   id: "6w7",
@@ -6,24 +7,6 @@ export const workTogether: ActionCard = {
   reprints: ["set1-165"],
   cardType: "action",
   name: "Work Together",
-  i18n: {
-    en: {
-      name: "Work Together",
-      text: "Chosen character gains Support this turn. (Whenever they quest, you may add their {S} to another chosen character's {S} this turn.)",
-    },
-    de: {
-      name: "Teamwork",
-      text: "Ein Charakter deiner Wahl erhält in diesem Zug Unterstützen. (Jedes Mal, wenn der Charakter erkundet, darfst du seine in diesem Zug zur eines anderen Charakters deiner Wahl addieren.)",
-    },
-    fr: {
-      name: "TRAVAIL D'ÉQUIPE",
-      text: "Choisissez un personnage, il gagne Soutien pour le reste de ce tour.",
-    },
-    it: {
-      name: "Work Together",
-      text: "Chosen character gains Support this turn. (Whenever they quest, you may add their to another chosen character's this turn.)",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Emperors New Groove",
   set: "001",
@@ -47,4 +30,5 @@ export const workTogether: ActionCard = {
       },
     },
   ],
+  i18n: workTogetherI18n,
 };

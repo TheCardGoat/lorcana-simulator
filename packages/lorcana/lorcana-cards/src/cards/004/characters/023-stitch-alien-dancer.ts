@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stitchAlienDancerI18n } from "./023-stitch-alien-dancer.i18n";
 
 export const stitchAlienDancer: CharacterCard = {
   id: "nA2",
@@ -7,24 +8,6 @@ export const stitchAlienDancer: CharacterCard = {
   cardType: "character",
   name: "Stitch",
   version: "Alien Dancer",
-  i18n: {
-    en: {
-      name: "Stitch",
-      version: "Alien Dancer",
-    },
-    de: {
-      name: "Stitch",
-      version: "Außerirdischer Tänzer",
-    },
-    fr: {
-      name: "Stitch",
-      version: "Danseur extraterrestre",
-    },
-    it: {
-      name: "Stitch",
-      version: "Ballerino Alieno",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lilo and Stitch",
   set: "004",
@@ -41,4 +24,5 @@ export const stitchAlienDancer: CharacterCard = {
     tcgPlayer: 650143,
   },
   classifications: ["Storyborn", "Hero", "Alien"],
+  i18n: stitchAlienDancerI18n,
 };

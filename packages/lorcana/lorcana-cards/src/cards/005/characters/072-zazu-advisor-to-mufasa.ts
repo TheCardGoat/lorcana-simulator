@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { zazuAdvisorToMufasaI18n } from "./072-zazu-advisor-to-mufasa.i18n";
 
 export const zazuAdvisorToMufasa: CharacterCard = {
   id: "M8t",
@@ -7,28 +8,6 @@ export const zazuAdvisorToMufasa: CharacterCard = {
   cardType: "character",
   name: "Zazu",
   version: "Advisor to Mufasa",
-  i18n: {
-    en: {
-      name: "Zazu",
-      version: "Advisor to Mufasa",
-      text: "Evasive",
-    },
-    de: {
-      name: "Zazu",
-      version: "Mufasas Berater",
-      text: "Wendig",
-    },
-    fr: {
-      name: "Zazu",
-      version: "Conseiller de Mufasa",
-      text: "Insaisissable",
-    },
-    it: {
-      name: "Zazu",
-      version: "Consigliere di Mufasa",
-      text: "Sfuggente",
-    },
-  },
   inkType: ["emerald"],
   franchise: "Lion King",
   set: "005",
@@ -53,4 +32,5 @@ export const zazuAdvisorToMufasa: CharacterCard = {
       text: "Evasive",
     },
   ],
+  i18n: zazuAdvisorToMufasaI18n,
 };

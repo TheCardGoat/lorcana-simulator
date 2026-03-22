@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { princeNaveenUkulelePlayerI18n } from "./003-prince-naveen-ukulele-player.i18n";
 
 export const princeNaveenUkulelePlayer: CharacterCard = {
   id: "4kO",
@@ -7,43 +8,6 @@ export const princeNaveenUkulelePlayer: CharacterCard = {
   cardType: "character",
   name: "Prince Naveen",
   version: "Ukulele Player",
-  i18n: {
-    en: {
-      name: "Prince Naveen",
-      version: "Ukulele Player",
-      text: [
-        {
-          title: "Singer 6",
-        },
-        {
-          title: "IT'S BEAUTIFUL, NO?",
-          description:
-            "When you play this character, you may play a song with cost 6 or less for free.",
-        },
-      ],
-    },
-    de: {
-      name: "Prinz Naveen",
-      version: "Ukulelespieler",
-      text: [
-        {
-          title: "Singen 6",
-          description:
-            "(Die Kosten dieses Charakters gelten als 6 für das Singen von Liedern.) SCHÖN, NICHT WAHR? Wenn du diesen Charakter ausspielst, darfst du ein Lied, das 6 oder weniger kostet, kostenlos ausspielen.",
-        },
-      ],
-    },
-    fr: {
-      name: "Prince Naveen",
-      version: "Joueur de ukulélé",
-      text: "Mélomane 6 (Ce personnage est considéré comme ayant un coût de 6 pour chanter des chansons.) C'EST MERVEILLEUX, NON? Lorsque vous jouez ce personnage, vous pouvez jouer gratuitement une carte Chanson coûtant 6 ou moins.",
-    },
-    it: {
-      name: "Principe Naveen",
-      version: "Suonatore di Ukulele",
-      text: "Melodioso 6 È BELLISSIMA, NO? Quando giochi questo personaggio, puoi giocare una canzone con costo 6 o inferiore gratis.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Princess and the Frog",
   set: "005",
@@ -96,4 +60,5 @@ export const princeNaveenUkulelePlayer: CharacterCard = {
       type: "action",
     },
   ],
+  i18n: princeNaveenUkulelePlayerI18n,
 };

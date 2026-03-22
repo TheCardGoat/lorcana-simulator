@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { stitchAbominationI18n } from "./125-stitch-abomination.i18n";
 
 export const stitchAbomination: CharacterCard = {
   id: "LKL",
@@ -7,24 +8,6 @@ export const stitchAbomination: CharacterCard = {
   cardType: "character",
   name: "Stitch",
   version: "Abomination",
-  i18n: {
-    en: {
-      name: "Stitch",
-      version: "Abomination",
-    },
-    de: {
-      name: "Stitch",
-      version: "Scheusal",
-    },
-    fr: {
-      name: "Stitch",
-      version: "Abominable créature",
-    },
-    it: {
-      name: "Stitch",
-      version: "Abomination",
-    },
-  },
   inkType: ["ruby"],
   franchise: "Lilo and Stitch",
   set: "001",
@@ -35,11 +18,11 @@ export const stitchAbomination: CharacterCard = {
   willpower: 6,
   lore: 3,
   inkable: true,
-  missingTests: true,
   vanilla: true,
   externalIds: {
     lorcast: "crd_19a7e851b7724bd58b285b76eb387c5a",
     tcgPlayer: 508790,
   },
   classifications: ["Storyborn", "Hero", "Alien"],
+  i18n: stitchAbominationI18n,
 };

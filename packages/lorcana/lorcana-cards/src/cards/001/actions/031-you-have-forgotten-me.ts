@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { youHaveForgottenMeI18n } from "./031-you-have-forgotten-me.i18n";
 
 export const youHaveForgottenMe: ActionCard = {
   id: "7me",
@@ -6,24 +7,6 @@ export const youHaveForgottenMe: ActionCard = {
   reprints: ["set1-031"],
   cardType: "action",
   name: "You Have Forgotten Me",
-  i18n: {
-    en: {
-      name: "You Have Forgotten Me",
-      text: "Each opponent chooses and discards 2 cards.",
-    },
-    de: {
-      name: "Du hast mich vergessen",
-      text: "Alle gegnerischen Mitspielenden wählen je 2 Karten aus ihrer Hand und werfen sie ab.",
-    },
-    fr: {
-      name: "TU M'AS OUBLIÉ",
-      text: "Chaque adversaire choisit 2 cartes de sa main et les défausse.",
-    },
-    it: {
-      name: "You Have Forgotten Me",
-      text: "Each opponent chooses and discards 2 cards.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lion King",
   set: "001",
@@ -48,4 +31,5 @@ export const youHaveForgottenMe: ActionCard = {
       },
     },
   ],
+  i18n: youHaveForgottenMeI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { honkerMuddlefootTimidGeniusI18n } from "./143-honker-muddlefoot-timid-genius.i18n";
 
 export const honkerMuddlefootTimidGenius: CharacterCard = {
   id: "3yH",
@@ -7,52 +8,6 @@ export const honkerMuddlefootTimidGenius: CharacterCard = {
   cardType: "character",
   name: "Honker Muddlefoot",
   version: "Timid Genius",
-  i18n: {
-    en: {
-      name: "Honker Muddlefoot",
-      version: "Timid Genius",
-      text: [
-        {
-          title: "BE CAREFUL!",
-          description: "Your characters named Darkwing Duck gain Resist +1.",
-        },
-      ],
-    },
-    de: {
-      name: "Alfred Wirrfuß",
-      version: "Schüchternes Genie",
-      text: [
-        {
-          title: "SEID VORSICHTIG!",
-          description:
-            "Deine Darkwing-Duck-Charaktere erhalten Robust +1. (Reduziere jeglichen Schaden, der ihnen zugefügt wird, um 1.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Cuicui Bourbifoot",
-      version: "Génie timide",
-      text: [
-        {
-          title: "FAIS ATTENTION!",
-          description: "Vos personnages Myster Mask gagnent Résistance +1.",
-        },
-      ],
-    },
-    it: {
-      name: "Tonnaso Parapiglia",
-      version: "Timido Genio",
-      text: [
-        {
-          title: "STAI ATTENTO!",
-        },
-        {
-          title: "I",
-          description: "tuoi personaggi chiamati Darkwing Duck ottengono Resistere +1.",
-        },
-      ],
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Darkwing Duck",
   set: "011",
@@ -87,4 +42,5 @@ export const honkerMuddlefootTimidGenius: CharacterCard = {
       text: "BE CAREFUL! Your characters named Darkwing Duck gain Resist +1.",
     },
   ],
+  i18n: honkerMuddlefootTimidGeniusI18n,
 };

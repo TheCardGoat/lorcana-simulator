@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { safeAndSoundI18n } from "./030-safe-and-sound.i18n";
 
 export const safeAndSound: ActionCard = {
   id: "JNT",
@@ -6,24 +7,6 @@ export const safeAndSound: ActionCard = {
   reprints: ["set6-030"],
   cardType: "action",
   name: "Safe and Sound",
-  i18n: {
-    en: {
-      name: "Safe and Sound",
-      text: "Chosen character of yours can't be challenged until the start of your next turn.",
-    },
-    de: {
-      name: "Gesund und munter",
-      text: "Wähle einen deiner Charaktere. Jener kann bis zu Beginn deines nächsten Zuges nicht herausgefordert werden.",
-    },
-    fr: {
-      name: "Sain et sauf",
-      text: "Choisissez l'un de vos personnages qui ne pourra pas être défié jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Al Sicuro",
-      text: "Un tuo personaggio a tua scelta non può essere sfidato fino all'inizio del tuo prossimo turno.",
-    },
-  },
   inkType: ["amber"],
   franchise: "Winnie the Pooh",
   set: "006",
@@ -48,4 +31,5 @@ export const safeAndSound: ActionCard = {
       },
     },
   ],
+  i18n: safeAndSoundI18n,
 };

@@ -48,6 +48,7 @@ export type ForEachCounterType =
   | "cards-in-inkwell-over-limit"
   | "damage-on-self"
   | "damage-on-target"
+  | "last-effect-target-count"
   | "cards-under-self"
   | "exerted-characters";
 
@@ -113,6 +114,7 @@ export type VariableAmount =
   | { type: "trigger-amount" }
   | { type: "damage-on-target" }
   | { type: "damage-on-self" }
+  | { type: "last-effect-target-count" }
   | {
       type: "cards-in-hand";
       controller: CountController;
@@ -132,6 +134,13 @@ export type VariableAmount =
       type: "classification-character-count";
       classification: string;
       controller: "you" | "opponent" | "opponents";
+      excludeSelf?: boolean;
+    }
+  | {
+      type: "name-character-count";
+      name: string;
+      controller: "you" | "opponent" | "opponents";
+      excludeSelf?: boolean;
     }
   | { type: "locations-in-play"; controller: "you" | "opponent" | "opponents" }
   // For-each based amounts

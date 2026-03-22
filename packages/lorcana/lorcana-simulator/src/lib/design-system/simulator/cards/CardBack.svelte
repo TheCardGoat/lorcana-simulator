@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { m } from "$lib/paraglide/messages.js";
+  import { m } from "$lib/i18n/messages.js";
   import {AspectRatio} from "$lib/design-system/primitives/aspect-ratio/index.js";
   import {maybeUseLorcanaBoardPresenter} from "@/features/simulator/context/game-context.svelte.js";
   import {resolveLorcanaCardBack} from "@/features/simulator/model/player-visual-settings.js";
@@ -60,6 +60,9 @@
   const backImageSrc = $derived(
     imageFormat === "art_only" ? resolvedCardBack.artOnlySrc : resolvedCardBack.src,
   );
+  const isArtOnlyFallback = $derived(
+    imageFormat === "art_only" && resolvedCardBack.artOnlySrc === resolvedCardBack.src,
+  );
 </script>
 
 <div
@@ -78,7 +81,8 @@
     <img
       src={backImageSrc}
       alt={m["sim.card.backAlt"]({})}
-      class="w-full h-full object-cover"
+      class="card-back__image w-full h-full object-cover"
+      class:card-back__image--art-only-fallback={isArtOnlyFallback}
       loading="lazy"
       data-card-back-src={backImageSrc}
     />
@@ -91,11 +95,19 @@
 
 <style>
   .card-back {
-    border-radius: 10px;
+    border-radius: 8px;
     border: 2px solid rgba(100, 150, 200, 0.3);
     background: radial-gradient(circle at 50% 50%, #1e4a6e 0%, #0f2847 60%, #061220 100%);
     transform-origin: center center;
     transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+  }
+
+  .card-back__image {
+    object-position: center;
+  }
+
+  .card-back__image--art-only-fallback {
+    object-position: center;
   }
 
   .card-back--playable {

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { nalaMischievousCubI18n } from "./002-nala-mischievous-cub.i18n";
 
 export const nalaMischievousCub: CharacterCard = {
   id: "HeX",
@@ -7,24 +8,6 @@ export const nalaMischievousCub: CharacterCard = {
   cardType: "character",
   name: "Nala",
   version: "Mischievous Cub",
-  i18n: {
-    en: {
-      name: "Nala",
-      version: "Mischievous Cub",
-    },
-    de: {
-      name: "Nala",
-      version: "Freches Jungtier",
-    },
-    fr: {
-      name: "Nala",
-      version: "Lionçonne malicieuse",
-    },
-    it: {
-      name: "Nala",
-      version: "Cucciola Monella",
-    },
-  },
   inkType: ["amber"],
   franchise: "Lion King",
   set: "005",
@@ -41,4 +24,5 @@ export const nalaMischievousCub: CharacterCard = {
     tcgPlayer: 561996,
   },
   classifications: ["Storyborn", "Ally"],
+  i18n: nalaMischievousCubI18n,
 };

@@ -1,76 +1,73 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { baBoom } from "@lorcanito/lorcana-engine/cards/003/actions/actions";
-// Import { scroogeMcduckUncleMoneybags } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { vaultDoor } from "@lorcanito/lorcana-engine/cards/003/items/items";
-// Import { mcduckManorScroogesMansion } from "@lorcanito/lorcana-engine/cards/003/locations/locations";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Vault Door", () => {
-//   It("Your locations gain **Resist** +1", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: baBoom.cost,
-//       Play: [
-//         VaultDoor,
-//         McduckManorScroogesMansion,
-//         ScroogeMcduckUncleMoneybags,
-//       ],
-//       Hand: [baBoom],
-//     });
-//
-//     Const location = testEngine.getCardModel(mcduckManorScroogesMansion);
-//     Const damageAction = testEngine.getCardModel(baBoom);
-//
-//     DamageAction.playFromHand();
-//     Await testEngine.resolveTopOfStack({ targets: [location] });
-//
-//     Expect(location.damage).toBe(1);
-//   });
-//   It("Your characters at locations gain **Resist** +1", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: baBoom.cost + mcduckManorScroogesMansion.moveCost,
-//       Play: [
-//         VaultDoor,
-//         McduckManorScroogesMansion,
-//         ScroogeMcduckUncleMoneybags,
-//       ],
-//       Hand: [baBoom],
-//     });
-//
-//     Const location = testEngine.getCardModel(mcduckManorScroogesMansion);
-//     Const character = testEngine.getCardModel(scroogeMcduckUncleMoneybags);
-//     Const damageAction = testEngine.getCardModel(baBoom);
-//
-//     Await testEngine.moveToLocation({ location, character });
-//
-//     DamageAction.playFromHand();
-//     Await testEngine.resolveTopOfStack({ targets: [character] });
-//
-//     Expect(character.damage).toBe(1);
-//   });
-//
-//   It("Your characters outside locations DONT gain **Resist** +1", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: baBoom.cost,
-//       Play: [
-//         VaultDoor,
-//         McduckManorScroogesMansion,
-//         ScroogeMcduckUncleMoneybags,
-//       ],
-//       Hand: [baBoom],
-//     });
-//
-//     Const character = testEngine.getCardModel(scroogeMcduckUncleMoneybags);
-//     Const damageAction = testEngine.getCardModel(baBoom);
-//
-//     DamageAction.playFromHand();
-//     Await testEngine.resolveTopOfStack({ targets: [character] });
-//
-//     Expect(character.damage).toBe(2);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { simbaScrappyCub } from "../characters";
+import { mcduckManorScroogesMansion } from "../locations/169-mcduck-manor-scrooges-mansion";
+import { vaultDoor } from "./167-vault-door";
+
+const notAtLocation = createMockCharacter({
+  id: "vault-door-not-at-location",
+  name: "Not At Location",
+  cost: 2,
+  willpower: 5,
+});
+
+describe("Vault Door", () => {
+  describe("SEALED AWAY — Your locations and characters at locations gain Resist +1.", () => {
+    it("gives locations Resist +1 while Vault Door is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [vaultDoor, mcduckManorScroogesMansion],
+      });
+
+      expect(testEngine.asPlayerOne().getKeywordValue(mcduckManorScroogesMansion, "Resist")).toBe(
+        1,
+      );
+    });
+
+    it("does not give locations Resist +1 when Vault Door is not in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mcduckManorScroogesMansion],
+      });
+
+      expect(
+        testEngine.asPlayerOne().getKeywordValue(mcduckManorScroogesMansion, "Resist"),
+      ).toBeNull();
+    });
+
+    it("gives characters at locations Resist +1 while Vault Door is in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [
+          vaultDoor,
+          mcduckManorScroogesMansion,
+          { card: simbaScrappyCub, atLocation: mcduckManorScroogesMansion },
+        ],
+      });
+
+      expect(testEngine.asPlayerOne().getKeywordValue(simbaScrappyCub, "Resist")).toBe(1);
+    });
+
+    it("does not give Resist +1 to characters NOT at a location", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [vaultDoor, mcduckManorScroogesMansion, notAtLocation],
+      });
+
+      expect(testEngine.asPlayerOne().getKeywordValue(notAtLocation, "Resist")).toBeNull();
+    });
+
+    it("gives Resist +1 to a character after they move to a location", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [vaultDoor, mcduckManorScroogesMansion, simbaScrappyCub],
+        inkwell: mcduckManorScroogesMansion.moveCost,
+      });
+
+      expect(testEngine.asPlayerOne().getKeywordValue(simbaScrappyCub, "Resist")).toBeNull();
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .moveCharacterToLocation(simbaScrappyCub, mcduckManorScroogesMansion),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getKeywordValue(simbaScrappyCub, "Resist")).toBe(1);
+    });
+  });
+});

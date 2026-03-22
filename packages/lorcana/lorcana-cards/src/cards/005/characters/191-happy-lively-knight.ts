@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { happyLivelyKnightI18n } from "./191-happy-lively-knight.i18n";
 
 export const happyLivelyKnight: CharacterCard = {
   id: "qmH",
@@ -7,52 +8,6 @@ export const happyLivelyKnight: CharacterCard = {
   cardType: "character",
   name: "Happy",
   version: "Lively Knight",
-  i18n: {
-    en: {
-      name: "Happy",
-      version: "Lively Knight",
-      text: [
-        {
-          title: "BURST OF SPEED",
-          description:
-            "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
-        },
-      ],
-    },
-    de: {
-      name: "Happy",
-      version: "Ritter der Lebensfreude",
-      text: [
-        {
-          title: "GESCHWINDIGKEITSSCHUB",
-          description:
-            "In deinem Zug erhält dieser Charakter Wendig. (Er kann Charaktere mit Wendig herausfordern.)",
-        },
-      ],
-    },
-    fr: {
-      name: "Joyeux",
-      version: "Chevalier guilleret",
-      text: [
-        {
-          title: "RAPIDE COMME L'ÉCLAIR",
-          description:
-            "Durant votre tour, ce personnage gagne Insaisissable. (Il peut défier des personnages avec Insaisissable.)",
-        },
-      ],
-    },
-    it: {
-      name: "Gongolo",
-      version: "Cavaliere Allegro",
-      text: [
-        {
-          title: "SCATTO VELOCE",
-          description:
-            "Durante il tuo turno, questo personaggio ottiene Sfuggente. (Può sfidare altri personaggi con Sfuggente.)",
-        },
-      ],
-    },
-  },
   inkType: ["steel"],
   franchise: "Snow White",
   set: "005",
@@ -91,4 +46,5 @@ export const happyLivelyKnight: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: happyLivelyKnightI18n,
 };

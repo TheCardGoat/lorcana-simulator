@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { belleOfTheBallI18n } from "./158-belle-of-the-ball.i18n";
 
 export const belleOfTheBall: CharacterCard = {
   id: "rlF",
@@ -7,37 +8,6 @@ export const belleOfTheBall: CharacterCard = {
   cardType: "character",
   name: "Belle",
   version: "Of the Ball",
-  i18n: {
-    en: {
-      name: "Belle",
-      version: "Of the Ball",
-      text: [
-        {
-          title: "Ward",
-        },
-        {
-          title: "USHERED INTO THE PARTY",
-          description:
-            "When you play this character, your other characters gain Ward until the start of your next turn.",
-        },
-      ],
-    },
-    de: {
-      name: "Belle",
-      version: "Vom Ball",
-      text: "Behütet IN DIE FEIER GELEITET Wenn du diesen Charakter ausspielst, erhalten deine anderen Charaktere bis zu Beginn deines nächsten Zuges Behütet.",
-    },
-    fr: {
-      name: "Belle",
-      version: "Du bal",
-      text: "Hors d'atteinte INVITÉE À LA FÊTE Lorsque vous jouez ce personnage, vos autres personnages gagnent Hors d'atteinte jusqu'au début de votre prochain tour.",
-    },
-    it: {
-      name: "Belle",
-      version: "Reginetta del Ballo",
-      text: "Protetto ACCOMPAGNATA ALLA FESTA Quando giochi questo personaggio, i tuoi altri personaggi ottengono Protetto fino all'inizio del tuo prossimo turno.",
-    },
-  },
   inkType: ["sapphire"],
   franchise: "Beauty and the Beast",
   set: "005",
@@ -73,7 +43,8 @@ export const belleOfTheBall: CharacterCard = {
     {
       effect: {
         keyword: "Ward",
-        target: "YOUR_CHARACTERS",
+        target: "YOUR_OTHER_CHARACTERS",
+        duration: "until-start-of-next-turn",
         type: "gain-keyword",
       },
       id: "1j3-2",
@@ -87,4 +58,5 @@ export const belleOfTheBall: CharacterCard = {
       type: "triggered",
     },
   ],
+  i18n: belleOfTheBallI18n,
 };

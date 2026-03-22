@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { miloThatchSpiritedScholarI18n } from "./115-milo-thatch-spirited-scholar.i18n";
 
 export const miloThatchSpiritedScholar: CharacterCard = {
   id: "tGe",
@@ -7,48 +8,6 @@ export const miloThatchSpiritedScholar: CharacterCard = {
   cardType: "character",
   name: "Milo Thatch",
   version: "Spirited Scholar",
-  i18n: {
-    en: {
-      name: "Milo Thatch",
-      version: "Spirited Scholar",
-      text: [
-        {
-          title: "I'M YOUR MAN!",
-          description: "While this character is at a location, he gets +2 {S}.",
-        },
-      ],
-    },
-    de: {
-      name: "Milo Thatch",
-      version: "Begabter Gelehrter",
-      text: [
-        {
-          title: "ICH BIN DABEI!",
-          description: "Solange dieser Charakter an einem Ort ist, erhält er +2.",
-        },
-      ],
-    },
-    fr: {
-      name: "Milo Thatch",
-      version: "Savant intrépide",
-      text: [
-        {
-          title: "JE SUIS VOTRE HOMME",
-          description: "Tant que ce personnage se trouve sur un lieu, il gagne +2.",
-        },
-      ],
-    },
-    it: {
-      name: "Milo Thatch",
-      version: "Studioso Vivace",
-      text: [
-        {
-          title: "SONO L'UOMO GIUSTO!",
-          description: "Mentre questo personaggio si trova in un luogo, riceve +2.",
-        },
-      ],
-    },
-  },
   inkType: ["ruby"],
   franchise: "Atlantis",
   set: "003",
@@ -70,7 +29,6 @@ export const miloThatchSpiritedScholar: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  missingTests: true,
   abilities: [
     {
       effect: {
@@ -84,4 +42,5 @@ export const miloThatchSpiritedScholar: CharacterCard = {
       type: "static",
     },
   ],
+  i18n: miloThatchSpiritedScholarI18n,
 };
