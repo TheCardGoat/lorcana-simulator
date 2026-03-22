@@ -23,4 +23,19 @@ describe("Megara - Captivating Cynic", () => {
     expect(testEngine.asPlayerOne().getCardZone(megaraCaptivatingCynic)).toBe("play");
     expect(testEngine.asPlayerOne().getCardZone(liloMakingAWish)).toBe("discard");
   });
+
+  it("banishes Megara when choosing the banish option", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [megaraCaptivatingCynic, liloMakingAWish],
+      inkwell: megaraCaptivatingCynic.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(megaraCaptivatingCynic)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1 }).success).toBe(true);
+
+    expect(testEngine.asPlayerOne().getCardZone(megaraCaptivatingCynic)).toBe("discard");
+  });
 });

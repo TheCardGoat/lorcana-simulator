@@ -230,8 +230,7 @@ const hasPendingEffects = $derived(sidebar.hasPendingEffects);
 const canConcede = $derived(sidebar.canConcede);
 const challengeSelectionSession = $derived(sidebar.actionSelectionSession);
 const isChallengeAimOverlayVisible = $derived(
-	layoutMode === "desktop" &&
-		challengeSelectionSession?.categoryId === "challenge" &&
+	challengeSelectionSession?.categoryId === "challenge" &&
 		(challengeSelectionSession.phase === "choose-target" ||
 			challengeSelectionSession.phase === "confirm"),
 );

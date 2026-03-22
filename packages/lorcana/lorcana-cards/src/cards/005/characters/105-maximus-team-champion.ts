@@ -32,31 +32,63 @@ export const maximusTeamChampion: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
-      effect: {
-        optionLabels: [
-          "if you have any characters in play with 5 {S}",
-          "more, gain 2 lore. If you have any in play with 10 {S}",
-          "more, gain 5 lore instead.",
-        ],
-        options: [
-          {
-            from: "hand",
-            type: "play-card",
-          },
-          {
-            amount: 2,
-            type: "gain-lore",
-          },
-          {
-            amount: 5,
-            type: "gain-lore",
-          },
-        ],
-        type: "choice",
-      },
       id: "p5e-1",
+      name: "ROYALLY BIG REWARDS",
+      type: "triggered",
+      trigger: {
+        event: "end-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      effect: {
+        type: "conditional",
+        condition: {
+          type: "target-query",
+          query: {
+            selector: "all",
+            zones: ["play"],
+            cardType: "character",
+            owner: "you",
+            filters: [
+              {
+                type: "strength-comparison",
+                comparison: "greater-or-equal",
+                value: 5,
+              },
+            ],
+          },
+          comparison: { operator: "gte", value: 1 },
+        },
+        then: {
+          type: "conditional",
+          condition: {
+            type: "target-query",
+            query: {
+              selector: "all",
+              zones: ["play"],
+              cardType: "character",
+              owner: "you",
+              filters: [
+                {
+                  type: "strength-comparison",
+                  comparison: "greater-or-equal",
+                  value: 10,
+                },
+              ],
+            },
+            comparison: { operator: "gte", value: 1 },
+          },
+          then: {
+            type: "gain-lore",
+            amount: 5,
+          },
+          else: {
+            type: "gain-lore",
+            amount: 2,
+          },
+        },
+      },
       text: "ROYALLY BIG REWARDS At the end of your turn, if you have any characters in play with 5 {S} or more, gain 2 lore. If you have any in play with 10 {S} or more, gain 5 lore instead.",
-      type: "action",
     },
   ],
   i18n: maximusTeamChampionI18n,

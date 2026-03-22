@@ -36,13 +36,7 @@ export const marchHareHarebrainedEccentric: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           amount: 2,
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
+          target: "CHOSEN_DAMAGED_CHARACTER",
           type: "deal-damage",
         },
         type: "optional",

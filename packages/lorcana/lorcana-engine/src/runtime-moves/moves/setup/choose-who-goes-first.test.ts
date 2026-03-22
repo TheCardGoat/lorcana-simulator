@@ -101,4 +101,14 @@ describe("chooseWhoGoesFirst", () => {
       },
     });
   });
+
+  it("starts pending mulligan with the chosen first player", () => {
+    const chooseResult = engine.asLorcanaPlayerOne().chooseFirstPlayer(PLAYER_TWO);
+    expect(chooseResult.success).toBe(true);
+
+    expect(engine.asLorcanaPlayerOne()).toHaveOpeningTurnPlayer(PLAYER_TWO);
+    expect(engine.asLorcanaPlayerOne()).toHavePendingMulligan([PLAYER_TWO, PLAYER_ONE]);
+    expect(engine.asLorcanaPlayerOne()).toHavePriorityPlayer(PLAYER_TWO);
+    expect(engine.asLorcanaPlayerOne()).toBeInPhase("mulligan");
+  });
 });

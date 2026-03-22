@@ -34,8 +34,7 @@ export const robinHoodArcheryContestant: CharacterCard = {
     {
       effect: {
         condition: {
-          expression: "an opponent has a damaged character in play",
-          type: "if",
+          type: "opponent-has-damaged-character",
         },
         then: {
           amount: 1,

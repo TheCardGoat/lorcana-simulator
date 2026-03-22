@@ -8,6 +8,8 @@ import { createLorcanaLogMessage, type LorcanaMoveDefinition } from "../../../ty
  * Concede the game
  */
 export const concede: LorcanaMoveDefinition<"concede"> = {
+  ignorePriority: true,
+
   validate: (ctx): RuntimeValidationResult => {
     const { playerId } = ctx.args;
 

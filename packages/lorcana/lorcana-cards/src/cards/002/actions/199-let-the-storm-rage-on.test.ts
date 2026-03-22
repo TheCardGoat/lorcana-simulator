@@ -51,7 +51,8 @@ describe("Let the Storm Rage On", () => {
     );
 
     expect(testEngine.asPlayerOne().playCard(letTheStormRageOn)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+    expect(testEngine.asPlayerOne().resolveNextPending({ targets: [] })).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo()).toHaveDamage({ card: wardedCharacter, value: 0 });
     expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toBe(1);
   });

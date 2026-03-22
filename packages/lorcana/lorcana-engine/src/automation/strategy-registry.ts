@@ -1,4 +1,5 @@
 import {
+  aggressiveBoardControlLoreRaceAutomatedActionStrategy,
   boardControlLoreRaceAutomatedActionStrategy,
   defaultLoreRaceAutomatedActionStrategy,
   legacyLoreRaceAutomatedActionStrategy,
@@ -34,6 +35,13 @@ export const AUTOMATED_ACTION_STRATEGIES: readonly AutomatedActionStrategyOption
     description:
       "Pressures lore while trading off tempo to remove opposing quest threats and develop stable permanents.",
     strategy: boardControlLoreRaceAutomatedActionStrategy,
+  },
+  {
+    id: "aggressive-board-control-lore-race",
+    label: "Aggressive board control lore race",
+    description:
+      "Reuses the stable opening plan but pushes harder into value trades and mutual-banish challenges to break opposing boards.",
+    strategy: aggressiveBoardControlLoreRaceAutomatedActionStrategy,
   },
 ];
 

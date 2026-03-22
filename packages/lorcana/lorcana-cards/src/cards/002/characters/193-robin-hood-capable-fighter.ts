@@ -50,6 +50,5 @@ export const robinHoodCapableFighter: CharacterCard = {
       type: "activated",
     },
   ],
-  missingTests: true,
   i18n: robinHoodCapableFighterI18n,
 };

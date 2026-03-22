@@ -302,12 +302,15 @@ export type CardActionCategoryId =
   | "shift-card"
   | "sing-card";
 
+export type CardActionInteraction = "execute-or-select" | "expand-on-click";
+
 export interface CardActionView {
   id: string;
   cardId: string;
   categoryId: CardActionCategoryId;
   label: string;
   detail?: string;
+  interaction: CardActionInteraction;
   enabled: boolean;
   reason?: string;
   moves: ExecutableMoveEntry[];

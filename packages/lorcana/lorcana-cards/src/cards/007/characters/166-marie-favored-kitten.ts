@@ -30,6 +30,35 @@ export const marieFavoredKitten: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "44g-1",
+      name: "I'LL SHOW YOU",
+      text: "I'LL SHOW YOU Whenever this character quests, you may give chosen character -2 {S} this turn.",
+      type: "triggered",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          type: "modify-stat",
+          modifier: -2,
+          stat: "strength",
+          duration: "this-turn",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["character"],
+          },
+        },
+        type: "optional",
+      },
+    },
+  ],
   i18n: marieFavoredKittenI18n,
 };

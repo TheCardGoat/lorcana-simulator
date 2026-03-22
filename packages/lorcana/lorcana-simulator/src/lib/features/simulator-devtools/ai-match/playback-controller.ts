@@ -41,6 +41,9 @@ import type {
 const DEFAULT_AUTOMATED_MATCH_SPEED_MS = 800;
 export interface AutomatedMatchPlaybackServer {
   concede(playerId: PlayerId): { error?: string; success: boolean };
+  enumerateAutomatedActionsForCurrentActor(args?: {
+    strategy?: AutomatedActionStrategyOption["strategy"];
+  }): { actorId?: PlayerId };
   getActivePlayer(): PlayerId | undefined;
   getCurrentPhase(): string | undefined;
   getCurrentStep(): string | null | undefined;

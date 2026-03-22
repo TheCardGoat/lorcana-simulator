@@ -1211,6 +1211,95 @@ export function resolveStaticVariableAmount(args: {
         const definition = getDefinitionByInstanceId?.(candidateId);
         return definition?.cardType === "character" ? total + 1 : total;
       }, 0);
+    case "reducer":
+      if (amount.reducer !== "damage") {
+        return 0;
+      }
+      return Object.keys(state._zonesPrivate?.cardIndex ?? {}).reduce((total, cardId) => {
+        const candidateId = cardId as CardInstanceId;
+        const zoneKey = getCardZoneKey(state, candidateId);
+        const zone = zoneKey?.split(":")[0];
+        const scopedZones: readonly string[] = amount.zones?.length ? amount.zones : ["play"];
+        if (!zone || !scopedZones.includes(zone)) {
+          return total;
+        }
+
+        const comparisonPlayerId =
+          zone === "play"
+            ? (state._zonesPrivate?.cardIndex?.[candidateId]?.controllerID as PlayerId | undefined)
+            : (state._zonesPrivate?.cardIndex?.[candidateId]?.ownerID as PlayerId | undefined);
+        if (amount.owner === "you" && comparisonPlayerId !== controllerId) {
+          return total;
+        }
+        if (amount.owner === "opponent" && comparisonPlayerId === controllerId) {
+          return total;
+        }
+
+        if (amount.excludeSelf && sourceId && candidateId === sourceId) {
+          return total;
+        }
+
+        const definition = getDefinitionByInstanceId?.(candidateId);
+        if (!definition) {
+          return total;
+        }
+
+        const allowedTypes = amount.cardTypes ?? (amount.cardType ? [amount.cardType] : []);
+        if (allowedTypes.length > 0 && !allowedTypes.includes(definition.cardType)) {
+          return total;
+        }
+
+        const matchesFilters = (amount.filters ?? []).every((filter) => {
+          switch (filter.type) {
+            case "same-location-as-source":
+              if (!sourceId) {
+                return false;
+              }
+              return (
+                (state._zonesPrivate?.cardMeta?.[candidateId]?.atLocationId as
+                  | CardInstanceId
+                  | undefined) === sourceId
+              );
+            case "classification":
+            case "has-classification":
+              return typeof filter.classification === "string"
+                ? (definition.classifications ?? []).includes(filter.classification as never)
+                : false;
+            case "has-name":
+              return typeof filter.name === "string" ? cardHasName(definition, filter.name) : false;
+            case "exerted":
+              return (
+                (state._zonesPrivate?.cardMeta?.[candidateId]?.state as string | undefined) ===
+                "exerted"
+              );
+            case "damaged":
+            case "status": {
+              const damage = Number(state._zonesPrivate?.cardMeta?.[candidateId]?.damage ?? 0);
+              if (filter.type === "damaged") {
+                return damage > 0;
+              }
+              if (filter.status === "damaged") {
+                return damage > 0;
+              }
+              if (filter.status === "undamaged") {
+                return damage === 0;
+              }
+              return false;
+            }
+            case "song":
+              return definition.cardType === "action" && definition.actionSubtype === "song";
+            default:
+              return false;
+          }
+        });
+
+        if (!matchesFilters) {
+          return total;
+        }
+
+        const damage = Number(state._zonesPrivate?.cardMeta?.[candidateId]?.damage ?? 0);
+        return total + damage;
+      }, 0);
     default:
       return 0;
   }

@@ -6,7 +6,10 @@ import type {
   PlayerId,
 } from "#core";
 import { analyzeEffectTargets, type TargetAnalysis } from "./target-analysis";
-import { allowsExplicitEmptyTargetSelection } from "./resolution-requirements";
+import {
+  allowsExplicitEmptyTargetSelection,
+  analyzeResolutionRequirements,
+} from "./resolution-requirements";
 
 type TargetSelectionAvailabilityContext = Pick<
   MoveValidationContext<MoveInput> | MoveEnumerationContext,
@@ -50,6 +53,8 @@ export function analyzeTargetSelectionAvailabilityFromAnalysis(
     minSelections <= 0 ||
     (candidateCount > 0 && (analysis.allowDuplicateTargets || candidateCount >= minSelections));
 
+  const resolutionReqs = analyzeResolutionRequirements(effectOrAbility);
+
   return {
     candidateCount,
     cardCandidateCount,
@@ -59,7 +64,9 @@ export function analyzeTargetSelectionAvailabilityFromAnalysis(
     allowsExplicitEmptyTargetSelection: allowsExplicitEmptyTargetSelection(effectOrAbility),
     canSatisfyRequiredSelection,
     shouldAutoRejectForNoValidTargets:
-      requiresExplicitTargetSelection && (candidateCount === 0 || !canSatisfyRequiredSelection),
+      !resolutionReqs.isOptional &&
+      requiresExplicitTargetSelection &&
+      (candidateCount === 0 || !canSatisfyRequiredSelection),
     requiresExplicitTargetSelection,
   };
 }

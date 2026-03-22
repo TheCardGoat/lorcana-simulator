@@ -30,6 +30,31 @@ export const mamaOdieSolitarySage: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Sorcerer"],
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          type: "move-damage",
+          amount: 2,
+          from: "CHOSEN_CHARACTER",
+          to: "CHOSEN_OPPOSING_CHARACTER",
+        },
+        type: "optional",
+      },
+      id: "Few-1",
+      name: "I HAVE TO DO EVERYTHING AROUND HERE",
+      text: "I HAVE TO DO EVERYTHING AROUND HERE Whenever you play a song, you may move up to 2 damage counters from chosen character to chosen opposing character.",
+      trigger: {
+        event: "play",
+        on: {
+          cardType: "song",
+          controller: "you",
+        },
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
   i18n: mamaOdieSolitarySageI18n,
 };

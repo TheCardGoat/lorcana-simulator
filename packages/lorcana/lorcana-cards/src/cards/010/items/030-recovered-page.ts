@@ -63,6 +63,33 @@ export const recoveredPage: ItemCard = {
       },
       type: "triggered",
     },
+    {
+      id: "1xi-2",
+      name: "WHISPERED POWER",
+      type: "activated",
+      cost: {
+        ink: 1,
+        banishSelf: true,
+      },
+      effect: {
+        type: "put-under",
+        source: "top-of-deck",
+        under: {
+          cardTypes: ["character", "location"],
+          count: 1,
+          owner: "you",
+          selector: "chosen",
+          zones: ["play"],
+          filter: [
+            {
+              keyword: "Boost",
+              type: "has-keyword",
+            },
+          ],
+        },
+      },
+      text: "WHISPERED POWER 1 {I}, Banish this item — Put the top card of your deck facedown under one of your characters or locations with Boost.",
+    },
   ],
   i18n: recoveredPageI18n,
 };

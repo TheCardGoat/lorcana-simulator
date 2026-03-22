@@ -30,6 +30,35 @@ export const roquefortLockExpert: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "P7n-1",
+      name: "SAFEKEEPING",
+      type: "triggered",
+      text: "SAFEKEEPING Whenever this character quests, you may put chosen item into its player's inkwell facedown and exerted.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "put-into-inkwell",
+          source: "chosen-card-in-play",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["item"],
+          },
+          facedown: true,
+          exerted: true,
+        },
+      },
+    },
+  ],
   i18n: roquefortLockExpertI18n,
 };

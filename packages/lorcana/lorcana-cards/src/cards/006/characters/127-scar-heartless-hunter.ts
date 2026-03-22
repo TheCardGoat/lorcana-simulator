@@ -12,7 +12,7 @@ export const scarHeartlessHunter: CharacterCard = {
   franchise: "Lion King",
   set: "006",
   cardNumber: 127,
-  rarity: "common",
+  rarity: "super_rare",
   cost: 5,
   strength: 4,
   willpower: 2,
@@ -33,15 +33,31 @@ export const scarHeartlessHunter: CharacterCard = {
   abilities: [
     {
       effect: {
-        amount: 2,
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
-        },
-        type: "deal-damage",
+        type: "sequence",
+        steps: [
+          {
+            amount: 2,
+            type: "deal-damage",
+            target: "CHOSEN_CHARACTER_OF_YOURS",
+          },
+          {
+            type: "conditional",
+            condition: {
+              type: "if-you-do",
+            },
+            then: {
+              amount: 2,
+              type: "deal-damage",
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "any",
+                zones: ["play"],
+                cardTypes: ["character"],
+              },
+            },
+          },
+        ],
       },
       id: "mp6-1",
       name: "BARED TEETH",

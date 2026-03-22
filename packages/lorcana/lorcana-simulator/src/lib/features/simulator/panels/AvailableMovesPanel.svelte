@@ -12,9 +12,9 @@
     ResolutionActionView,
   } from "@/features/simulator/model/contracts.js";
   import { getMoveCategoryIcon } from "@/features/simulator/model/action-icons.js";
-  import {sortMoveCategories} from "@/features/simulator/model/move-presentation.js";
+  import { sortMoveCategories } from "@/features/simulator/model/move-presentation.js";
   import { m } from "$lib/i18n/messages.js";
-  import type {ActivePlayerGuidanceController} from "@/features/simulator/model/active-player-guidance.js";
+  import type { ActivePlayerGuidanceController } from "@/features/simulator/model/active-player-guidance.js";
   import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
   import NamedCardSearchInput from "@/features/simulator/panels/NamedCardSearchInput.svelte";
   import CardTextToken from "@/features/simulator/panels/CardTextToken.svelte";

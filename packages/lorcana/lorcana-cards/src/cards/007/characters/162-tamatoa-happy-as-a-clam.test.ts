@@ -16,16 +16,12 @@ describe("Tamatoa - Happy as a Clam", () => {
 
       expect(testEngine.asPlayerOne().playCard(tamatoaHappyAsAClam)).toBeSuccessfulCommand();
 
-      // The trigger auto-resolves from the bag and creates a pending target selection.
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
-
-      // Provide both discard targets to resolve the pending selection.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const sapphireCoilId = testEngine.findCardInstanceId(sapphireCoil, "discard");
       const steelCoilId = testEngine.findCardInstanceId(steelCoil, "discard");
 
       expect(
-        testEngine.asPlayerOne().resolveNextPending({
+        testEngine.asPlayerOne().resolveNextBag({
           targets: [sapphireCoilId, steelCoilId],
         }),
       ).toBeSuccessfulCommand();
@@ -45,14 +41,11 @@ describe("Tamatoa - Happy as a Clam", () => {
 
       expect(testEngine.asPlayerOne().playCard(tamatoaHappyAsAClam)).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
-
-      // Only target one item
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const sapphireCoilId = testEngine.findCardInstanceId(sapphireCoil, "discard");
 
       expect(
-        testEngine.asPlayerOne().resolveNextPending({
+        testEngine.asPlayerOne().resolveNextBag({
           targets: [sapphireCoilId],
         }),
       ).toBeSuccessfulCommand();

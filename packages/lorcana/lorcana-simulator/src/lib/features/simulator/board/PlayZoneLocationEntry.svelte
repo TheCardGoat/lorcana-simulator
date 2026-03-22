@@ -8,6 +8,7 @@
   import { createCardAnchorId } from "@/features/simulator/animations/board-move-animations.js";
   import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
   import { useLorcanaSidebarPresenter } from "@/features/simulator/context/game-context.svelte.js";
+  import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
   import {
     createOptionalDroppable,
     useLorcanaSimulatorDndContext,
@@ -48,6 +49,7 @@
   }: PlayZoneLocationEntryProps = $props();
 
   const sidebar = useLorcanaSidebarPresenter();
+  const simulatorCardContext = useSimulatorCardContext();
   const dnd = useLorcanaSimulatorDndContext();
   const isDirectSelectionMode = $derived(
     isPlayZoneLocationEntryDirectSelectionMode(sidebar.actionSelectionSession),
@@ -106,7 +108,10 @@
           useContainerSize
           imageFormat="art_and_name"
           hoverShowActions
-          isSelected={sidebar.getActionSessionCardState(card.cardId).isSelected}
+          isSelected={
+            sidebar.getActionSessionCardState(card.cardId).isSelected ||
+            simulatorCardContext.previewCard?.cardId === card.cardId
+          }
           {isMasked}
           isPlayable={
             sidebar.getActionSessionCardState(card.cardId).isSelectable || isValidTarget(card.cardId)
@@ -150,7 +155,10 @@
       useContainerSize
       imageFormat="art_and_name"
       hoverShowActions
-      isSelected={sidebar.getActionSessionCardState(card.cardId).isSelected}
+      isSelected={
+        sidebar.getActionSessionCardState(card.cardId).isSelected ||
+        simulatorCardContext.previewCard?.cardId === card.cardId
+      }
       {isMasked}
       isPlayable={
         sidebar.getActionSessionCardState(card.cardId).isSelectable || isValidTarget(card.cardId)

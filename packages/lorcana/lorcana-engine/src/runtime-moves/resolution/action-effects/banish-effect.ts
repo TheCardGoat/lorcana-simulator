@@ -87,29 +87,27 @@ export function resolveBanishEffect(
           )
         : undefined;
 
-    if (resolvedInput.eventSnapshot) {
-      if (!resolvedInput.eventSnapshot.chosenCardId) {
-        resolvedInput.eventSnapshot.chosenCardId = targetId;
-      }
-      if (
-        resolvedInput.eventSnapshot.chosenCardCost === undefined &&
-        typeof targetCost === "number"
-      ) {
-        resolvedInput.eventSnapshot.chosenCardCost = targetCost;
-      }
-      resolvedInput.eventSnapshot.cardsUnderCountBeforeBanish =
-        (resolvedInput.eventSnapshot.cardsUnderCountBeforeBanish ?? 0) +
-        cardsUnderCountBeforeBanish;
-      if (typeof strengthBeforeBanish === "number" && Number.isFinite(strengthBeforeBanish)) {
-        resolvedInput.eventSnapshot.strengthBeforeBanish =
-          (resolvedInput.eventSnapshot.strengthBeforeBanish ?? 0) + strengthBeforeBanish;
-      }
-      if (Array.isArray(classificationsBeforeBanish) && classificationsBeforeBanish.length > 0) {
-        resolvedInput.eventSnapshot.classificationsBeforeBanish = [...classificationsBeforeBanish];
-      }
-      if (Array.isArray(keywordsBeforeBanish) && keywordsBeforeBanish.length > 0) {
-        resolvedInput.eventSnapshot.keywordsBeforeBanish = [...keywordsBeforeBanish];
-      }
+    resolvedInput.eventSnapshot ??= {};
+    if (!resolvedInput.eventSnapshot.chosenCardId) {
+      resolvedInput.eventSnapshot.chosenCardId = targetId;
+    }
+    if (
+      resolvedInput.eventSnapshot.chosenCardCost === undefined &&
+      typeof targetCost === "number"
+    ) {
+      resolvedInput.eventSnapshot.chosenCardCost = targetCost;
+    }
+    resolvedInput.eventSnapshot.cardsUnderCountBeforeBanish =
+      (resolvedInput.eventSnapshot.cardsUnderCountBeforeBanish ?? 0) + cardsUnderCountBeforeBanish;
+    if (typeof strengthBeforeBanish === "number" && Number.isFinite(strengthBeforeBanish)) {
+      resolvedInput.eventSnapshot.strengthBeforeBanish =
+        (resolvedInput.eventSnapshot.strengthBeforeBanish ?? 0) + strengthBeforeBanish;
+    }
+    if (Array.isArray(classificationsBeforeBanish) && classificationsBeforeBanish.length > 0) {
+      resolvedInput.eventSnapshot.classificationsBeforeBanish = [...classificationsBeforeBanish];
+    }
+    if (Array.isArray(keywordsBeforeBanish) && keywordsBeforeBanish.length > 0) {
+      resolvedInput.eventSnapshot.keywordsBeforeBanish = [...keywordsBeforeBanish];
     }
 
     const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, targetId);

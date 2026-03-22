@@ -11,6 +11,7 @@ describe("automated action strategy registry", () => {
       "default-lore-race",
       "legacy-lore-race",
       "board-control-lore-race",
+      "aggressive-board-control-lore-race",
     ]);
   });
 

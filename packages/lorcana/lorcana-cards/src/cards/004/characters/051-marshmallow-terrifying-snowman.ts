@@ -32,7 +32,10 @@ export const marshmallowTerrifyingSnowman: CharacterCard = {
   abilities: [
     {
       effect: {
-        modifier: 1,
+        modifier: {
+          type: "cards-in-hand",
+          controller: "you",
+        },
         stat: "strength",
         target: "SELF",
         type: "modify-stat",

@@ -39,6 +39,20 @@ export const STRATEGY_CANDIDATE_MANIFESTS: readonly StrategyCandidateManifest[] 
     parentStrategyId: DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
     status: "candidate",
   },
+  {
+    candidateId: "aggressive-board-control-lore-race",
+    changedHeuristics: [
+      "Reuse the current self-first and structural mulligan opening choices.",
+      "Challenge earlier when the opposing exerted character is worth a favorable or equal value trade.",
+      "Allow mutual-banish trades when they remove a higher-value opposing lore engine or board anchor.",
+    ],
+    hypothesis:
+      "An aggressive board-control variant should outperform the current board-control profile in threat-dense mirrors by cashing in more value trades before the opponent snowballs lore.",
+    notes:
+      "Compare it directly against board-control-lore-race and default-lore-race on the quick preset before widening to promotion coverage.",
+    parentStrategyId: "board-control-lore-race",
+    status: "draft",
+  },
 ] as const;
 
 export function resolveStrategyBenchmarkPreset(

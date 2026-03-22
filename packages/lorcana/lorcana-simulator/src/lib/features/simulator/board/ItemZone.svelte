@@ -11,6 +11,7 @@ import {
 	useLorcanaBoardPresenter,
 	useLorcanaSidebarPresenter,
 } from "@/features/simulator/context/game-context.svelte.js";
+import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
 import {
 	countHiddenScrollableItems,
 	getInitialHiddenItemsToRight,
@@ -28,6 +29,7 @@ let { layoutMode = "desktop", isOpponent, playerSide, seat }: ItemZoneProps = $p
 
 const board = useLorcanaBoardPresenter();
 const sidebar = useLorcanaSidebarPresenter();
+const simulatorCardContext = useSimulatorCardContext();
 const items = $derived.by(() =>
 	board
 		.getZoneCards(playerSide, "play")
@@ -138,7 +140,10 @@ $effect(() => {
             imageFormat="art_only"
             hoverShowActions
             isMasked={false}
-            isSelected={sidebar.getActionSessionCardState(card.cardId).isSelected}
+            isSelected={
+              sidebar.getActionSessionCardState(card.cardId).isSelected ||
+              simulatorCardContext.previewCard?.cardId === card.cardId
+            }
             isPlayable={sidebar.getActionSessionCardState(card.cardId).isSelectable}
             isInvalidTarget={sidebar.getActionSessionCardState(card.cardId).isInvalidTarget}
             isExerted={card.readyState === "exerted"}
@@ -246,7 +251,7 @@ $effect(() => {
 
   .item-zone-cards {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-end;
     width: 100%;
     flex: 1 1 auto;
@@ -264,14 +269,14 @@ $effect(() => {
     flex-wrap: wrap;
     flex: 1 1 auto;
     min-width: 100%;
-    min-height: 0;
+    min-height: var(--item-card-height);
     align-items: center;
     align-content: flex-end;
-    justify-content: center;
+    justify-content: flex-start;
     gap: var(--item-grid-gap);
     width: max-content;
-    height: 100%;
-    padding: 0;
+    height: auto;
+    padding: 6px 0 0;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: thin;
@@ -335,24 +340,26 @@ $effect(() => {
 
     .item-zone[data-layout-mode="mobile"] .item-zone-cards {
       overflow: visible;
-      align-items: center;
-      justify-content: stretch;
+      align-items: flex-start;
+      justify-content: flex-start;
     }
 
     .item-zone[data-layout-mode="mobile"] .item-cards {
       flex-direction: row;
       flex-wrap: nowrap;
-      align-items: stretch;
+      align-self: auto;
+      align-items: flex-start;
       align-content: stretch;
       justify-content: flex-start;
       gap: 0.28rem;
       min-width: 0;
-      width: 100%;
+      min-height: var(--item-card-height);
+      width: max-content;
       overflow-x: auto;
       overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-x: contain;
-      padding: 0 0.8rem;
+      padding: 6px 0.8rem 0;
       scrollbar-width: none;
       scroll-snap-type: x proximity;
     }

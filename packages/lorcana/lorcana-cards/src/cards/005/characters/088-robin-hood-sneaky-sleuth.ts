@@ -44,12 +44,18 @@ export const robinHoodSneakySleuth: CharacterCard = {
     },
     {
       effect: {
-        modifier: 1,
+        modifier: {
+          type: "filtered-count",
+          filters: [{ type: "status", status: "damaged" }],
+          owner: "opponent",
+          cardType: "character",
+        },
         stat: "lore",
         target: "SELF",
         type: "modify-stat",
       },
       id: "qao-2",
+      name: "CLEVER PLAN",
       text: "CLEVER PLAN This character gets +1 {L} for each opposing damaged character in play.",
       type: "static",
     },

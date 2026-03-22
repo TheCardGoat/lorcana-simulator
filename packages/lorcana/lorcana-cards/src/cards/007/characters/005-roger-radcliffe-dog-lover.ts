@@ -36,13 +36,7 @@ export const rogerRadcliffeDogLover: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           amount: 1,
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
+          target: "YOUR_PUPPY_CHARACTERS",
           type: "remove-damage",
           upTo: true,
         },

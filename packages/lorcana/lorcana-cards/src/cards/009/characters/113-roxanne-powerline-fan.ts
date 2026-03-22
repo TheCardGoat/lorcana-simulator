@@ -32,15 +32,38 @@ export const roxannePowerlineFan: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      id: "1w5-1",
+      name: "CONCERT LOVER",
+      type: "static",
+      condition: {
+        type: "has-character-with-keyword",
+        keyword: "Singer",
+        controller: "you",
+      },
       effect: {
         modifier: 1,
         stat: "strength",
         target: "SELF",
         type: "modify-stat",
       },
-      id: "1w5-1",
       text: "CONCERT LOVER While you have a character with Singer in play, this character gets +1 {S} and +1 {L}.",
-      type: "action",
+    },
+    {
+      id: "1w5-2",
+      name: "CONCERT LOVER",
+      type: "static",
+      condition: {
+        type: "has-character-with-keyword",
+        keyword: "Singer",
+        controller: "you",
+      },
+      effect: {
+        modifier: 1,
+        stat: "lore",
+        target: "SELF",
+        type: "modify-stat",
+      },
+      text: "CONCERT LOVER While you have a character with Singer in play, this character gets +1 {S} and +1 {L}.",
     },
   ],
   i18n: roxannePowerlineFanI18n,

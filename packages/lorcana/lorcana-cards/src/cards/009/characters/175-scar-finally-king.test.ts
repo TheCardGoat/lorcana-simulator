@@ -1,113 +1,244 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { tipoGrowingSon } from "@lorcanito/lorcana-engine/cards/005/characters/157-tipo-growing-son";
-// Import { heiheiProtectiveRooster } from "@lorcanito/lorcana-engine/cards/005/characters/179-heihei-protective-rooster";
-// Import {
-//   NalaUndauntedLioness,
-//   ScarFinallyKing,
-// } from "@lorcanito/lorcana-engine/cards/009";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Scar - Finally King", () => {
-//   It("BE GRATEFUL Your Ally characters get +1 {S}.", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [scarFinallyKing, nalaUndauntedLioness],
-//     });
-//
-//     Expect(testEngine.getCardModel(nalaUndauntedLioness).strength).toEqual(
-//       NalaUndauntedLioness.strength + 1,
-//     );
-//   });
-//
-//   It("STICK WITH ME At the end of your turn, if this character is exerted, you may draw cards equal to the {S} of a chosen Ally character of yours. If you do, choose and discard 2 cards and banish that character.", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [scarFinallyKing, heiheiProtectiveRooster],
-//       Deck: 15,
-//     });
-//
-//     // Scars gives +1 strength to all Ally characters
-//     Const target = testEngine.getCardModel(heiheiProtectiveRooster);
-//     // So the amount of cards to draw is equal to the strength of Heihei + 1
-//     Const cardsToDraw = target.strength;
-//     Expect(cardsToDraw).toEqual(5);
-//
-//     Await testEngine.tapCard(scarFinallyKing);
-//     Await testEngine.passTurn();
-//
-//     TestEngine.changeActivePlayer("player_one");
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({ targets: [target] }, true);
-//
-//     Expect(testEngine.getZonesCardCount()).toEqual(
-//       Expect.objectContaining({
-//         Deck: 15 - cardsToDraw,
-//         Hand: cardsToDraw,
-//         Discard: 1, // Hei Hei is banished
-//       }),
-//     );
-//
-//     Const twoCardsFromHand = testEngine
-//       .getCardsByZone("hand", "player_one")
-//       .slice(0, 2);
-//     Await testEngine.resolveTopOfStack({ targets: twoCardsFromHand });
-//
-//     Expect(testEngine.getZonesCardCount()).toEqual(
-//       Expect.objectContaining({
-//         Deck: 15 - cardsToDraw,
-//         Hand: cardsToDraw - 2,
-//         Discard: 2 + 1, // 1 for the banished character
-//       }),
-//     );
-//
-//     Expect(target.zone).toEqual("discard");
-//   });
-//
-//   Describe("Regression", () => {
-//     It("Draw 2 Discard 2", async () => {
-//       Const testEngine = new TestEngine({
-//         Play: [scarFinallyKing, tipoGrowingSon],
-//         Deck: 15,
-//       });
-//
-//       // Scars gives +1 strength to all Ally characters
-//       Const target = testEngine.getCardModel(tipoGrowingSon);
-//       // So the amount of cards to draw is equal to the strength of Heihei + 1
-//       Const cardsToDraw = target.strength;
-//       Expect(cardsToDraw).toEqual(2);
-//
-//       Await testEngine.tapCard(scarFinallyKing);
-//       Await testEngine.passTurn();
-//
-//       TestEngine.changeActivePlayer("player_one");
-//       Await testEngine.acceptOptionalLayer();
-//       Await testEngine.resolveTopOfStack({ targets: [target] }, true);
-//
-//       Expect(testEngine.getZonesCardCount()).toEqual(
-//         Expect.objectContaining({
-//           Deck: 13,
-//           Hand: 2,
-//           Discard: 1,
-//         }),
-//       );
-//
-//       Const twoCardsFromHand = testEngine
-//         .getCardsByZone("hand", "player_one")
-//         .slice(0, 2);
-//       Await testEngine.resolveTopOfStack({ targets: twoCardsFromHand });
-//
-//       Expect(testEngine.getZonesCardCount()).toEqual(
-//         Expect.objectContaining({
-//           Hand: 0,
-//           Discard: 3, // 1 for the banished character
-//         }),
-//       );
-//
-//       Expect(target.zone).toEqual("discard");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { scarFinallyKing } from "./175-scar-finally-king";
+
+const allyCharacter = createMockCharacter({
+  id: "scar-test-ally",
+  name: "Ally Character",
+  cost: 2,
+  strength: 3,
+  willpower: 3,
+  classifications: ["Storyborn", "Ally"],
+});
+
+const nonAllyCharacter = createMockCharacter({
+  id: "scar-test-non-ally",
+  name: "Non-Ally Character",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  classifications: ["Storyborn", "Hero"],
+});
+
+const lowStrengthAlly = createMockCharacter({
+  id: "scar-test-low-ally",
+  name: "Low Strength Ally",
+  cost: 1,
+  strength: 1,
+  willpower: 2,
+  classifications: ["Storyborn", "Ally"],
+});
+
+const discardFodder1 = createMockCharacter({
+  id: "scar-test-discard-1",
+  name: "Discard Fodder 1",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+});
+
+const discardFodder2 = createMockCharacter({
+  id: "scar-test-discard-2",
+  name: "Discard Fodder 2",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+});
+
+describe("Scar - Finally King", () => {
+  describe("BE GRATEFUL - Your Ally characters get +1 {S}.", () => {
+    it("gives +1 strength to Ally characters", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [scarFinallyKing, allyCharacter],
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(allyCharacter)).toBe(
+        allyCharacter.strength + 1,
+      );
+    });
+
+    it("does not give +1 strength to non-Ally characters", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [scarFinallyKing, nonAllyCharacter],
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(nonAllyCharacter)).toBe(
+        nonAllyCharacter.strength,
+      );
+    });
+
+    it("does not give +1 strength to itself (Scar is not an Ally)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [scarFinallyKing],
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(scarFinallyKing)).toBe(
+        scarFinallyKing.strength,
+      );
+    });
+  });
+
+  describe("STICK WITH ME - At the end of your turn, if this character is exerted, you may draw cards equal to the {S} of chosen Ally character of yours. If you do, choose and discard 2 cards and banish that character.", () => {
+    it("triggers at end of turn when Scar is exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scarFinallyKing, exerted: true }, allyCharacter],
+          deck: 10,
+        },
+        { deck: 5 },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    });
+
+    it("does not trigger when Scar is not exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [scarFinallyKing, allyCharacter],
+          deck: 10,
+        },
+        { deck: 5 },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      const bagCount = testEngine.asPlayerOne().getBagCount();
+      if (bagCount > 0) {
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          resolveOptional: true,
+          targets: [allyCharacter],
+        });
+      }
+
+      expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(10);
+      expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+      expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(0);
+    });
+
+    it("draws cards equal to ally strength (including +1 from BE GRATEFUL), discards 2, and banishes the ally", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scarFinallyKing, exerted: true }, allyCharacter],
+          hand: [discardFodder1, discardFodder2],
+          deck: 10,
+        },
+        { deck: 5 },
+      );
+
+      const allyBaseStrength = allyCharacter.strength;
+      const expectedDrawCount = allyBaseStrength + 1;
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          resolveOptional: true,
+          targets: [allyCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(10 - expectedDrawCount);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [discardFodder1, discardFodder2] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(3);
+
+      expect(testEngine.asPlayerOne().getCardZone(allyCharacter)).toBe("discard");
+    });
+
+    it("can be declined (optional ability)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scarFinallyKing, exerted: true }, allyCharacter],
+          deck: 10,
+        },
+        { deck: 5 },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(10);
+      expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+      expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(0);
+    });
+
+    it("works with low strength ally (draw 2 cards from 1 strength ally + 1 bonus)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scarFinallyKing, exerted: true }, lowStrengthAlly],
+          hand: [discardFodder1, discardFodder2],
+          deck: 10,
+        },
+        { deck: 5 },
+      );
+
+      const allyStrength = testEngine.asPlayerOne().getCardStrength(lowStrengthAlly);
+      console.log("DEBUG: Ally strength before trigger:", allyStrength);
+      console.log("DEBUG: Low strength ally base:", lowStrengthAlly.strength);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          resolveOptional: true,
+          targets: [lowStrengthAlly],
+        }),
+      ).toBeSuccessfulCommand();
+
+      const expectedDrawCount = lowStrengthAlly.strength + 1;
+      console.log("DEBUG: Expected draw count:", expectedDrawCount);
+      console.log("DEBUG: Actual deck count:", testEngine.asPlayerOne().getZonesCardCount().deck);
+      console.log("DEBUG: Cards drawn:", 10 - testEngine.asPlayerOne().getZonesCardCount().deck);
+      expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(10 - expectedDrawCount);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [discardFodder1, discardFodder2] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(3);
+    });
+
+    it("resolves with no effect if Scar is readied before resolution", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scarFinallyKing, exerted: true }, allyCharacter],
+          deck: 10,
+        },
+        { deck: 5 },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const scarId = testEngine.findCardInstanceId(scarFinallyKing, "play", PLAYER_ONE);
+      testEngine.asServer().manualReadyCard(scarId);
+
+      testEngine.asPlayerOne().resolveNextBag({
+        resolveOptional: true,
+        targets: [allyCharacter],
+      });
+
+      expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(10);
+      expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(0);
+    });
+  });
+});

@@ -1575,17 +1575,7 @@ export function validateAndNormalizeTargetSelection(
   analysis: TargetAnalysis,
   context?: TargetSelectionRestrictionContext,
 ): TargetValidationResult {
-  if (targets === undefined) {
-    return {
-      valid: true,
-      selection: {
-        cardIds: [],
-        playerIds: [],
-      },
-    };
-  }
-
-  const rawTargets = Array.isArray(targets) ? targets : [targets];
+  const rawTargets = Array.isArray(targets) ? targets : targets !== undefined ? [targets] : [];
   const cardCandidateSet = new Set(analysis.cardCandidates);
   const playerCandidateSet = new Set(analysis.playerCandidates);
   const cardIds: CardInstanceId[] = [];

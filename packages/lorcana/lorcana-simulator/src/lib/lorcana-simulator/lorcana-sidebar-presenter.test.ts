@@ -66,6 +66,11 @@ function createGameContextStub(
     moveCategoryCount: () => 0,
     expandCardMoves: (cardId: string) =>
       executableMovesFn().filter((move) => getStubSourceCardId(move) === cardId),
+    expandCardActionCategoryMoves: (cardId: string, categoryId: string) =>
+      executableMovesFn().filter(
+        (move) =>
+          getStubSourceCardId(move) === cardId && move.presentation.categoryId === categoryId,
+      ),
     expandCategoryMoves: (categoryId: string) =>
       executableMovesFn().filter((move) => move.presentation.categoryId === categoryId),
     challengeReadyCardIds: () => [],
@@ -2098,6 +2103,7 @@ describe("LorcanaSidebarPresenter", () => {
         cardId: card.cardId,
         categoryId: "quest",
         label: "Quest for 2 lore",
+        interaction: "execute-or-select",
         enabled: true,
         moves: [executableMoves[0]!],
       },
@@ -2106,6 +2112,7 @@ describe("LorcanaSidebarPresenter", () => {
         cardId: card.cardId,
         categoryId: "challenge",
         label: "Challenge",
+        interaction: "execute-or-select",
         enabled: false,
         reason: "No legal challenge targets right now.",
         moves: [],
@@ -2115,6 +2122,7 @@ describe("LorcanaSidebarPresenter", () => {
         cardId: card.cardId,
         categoryId: "move-to-location",
         label: "Move to Location",
+        interaction: "execute-or-select",
         enabled: false,
         reason: "No legal locations to move to right now.",
         moves: [],
@@ -2125,6 +2133,7 @@ describe("LorcanaSidebarPresenter", () => {
         categoryId: "activate-ability",
         label: "Activate Ability",
         detail: "1 ability",
+        interaction: "execute-or-select",
         enabled: true,
         moves: [executableMoves[1]!],
       },
@@ -2172,6 +2181,7 @@ describe("LorcanaSidebarPresenter", () => {
         cardId: card.cardId,
         categoryId: "quest",
         label: "Quest for 1 lore",
+        interaction: "execute-or-select",
         enabled: false,
         reason: "This character cannot quest right now.",
         moves: [],
@@ -2181,6 +2191,7 @@ describe("LorcanaSidebarPresenter", () => {
         cardId: card.cardId,
         categoryId: "challenge",
         label: "Challenge",
+        interaction: "execute-or-select",
         enabled: false,
         reason: "No legal challenge targets right now.",
         moves: [],
@@ -2190,6 +2201,7 @@ describe("LorcanaSidebarPresenter", () => {
         cardId: card.cardId,
         categoryId: "move-to-location",
         label: "Move to Location",
+        interaction: "execute-or-select",
         enabled: false,
         reason: "No legal locations to move to right now.",
         moves: [],
@@ -2200,6 +2212,7 @@ describe("LorcanaSidebarPresenter", () => {
         categoryId: "activate-ability",
         label: "Activate Ability",
         detail: "1 ability",
+        interaction: "execute-or-select",
         enabled: true,
         moves: [executableMoves[0]!],
       },
@@ -2321,6 +2334,8 @@ describe("LorcanaSidebarPresenter", () => {
       .find((candidate) => candidate.categoryId === "challenge");
 
     expect(action?.enabled).toBe(true);
+    expect(action?.interaction).toBe("expand-on-click");
+    expect(action?.moves).toEqual([]);
     expect(action && presenter.handleCardActionClick(action)).toBe(true);
     expect(presenter.actionSelectionSession?.phase).toBe("choose-target");
     expect(presenter.actionSelectionSession?.sourceCardId).toBe(attacker.cardId);
@@ -2328,6 +2343,78 @@ describe("LorcanaSidebarPresenter", () => {
     expect(statusMessages).toEqual([
       `Select the opposing character for ${attacker.label} to challenge.`,
     ]);
+  });
+
+  it("starts move-to-location selection from the hover-card action with the source card preselected", () => {
+    const character = createCardSnapshot("playerOne", "play", {
+      id: "moana",
+      name: "Moana - Determined Explorer",
+      type: "character",
+    });
+    const location = createCardSnapshot("playerOne", "play", {
+      id: "tians-place",
+      name: "Tiana's Place",
+      type: "location",
+    });
+    const selectedCardIds: Array<string | null> = [];
+    const statusMessages: string[] = [];
+    const moveToLocationMove = createExecutableMove({
+      id: "moveCharacterToLocation:moana:tians-place",
+      label: "Move to Location",
+      moveId: "moveCharacterToLocation",
+      params: {
+        characterId: character.cardId,
+        locationId: location.cardId,
+      },
+      presentation: {
+        kind: "targeted",
+        categoryId: "move-to-location",
+        categoryLabel: "Move to Location",
+        optionLabel: `${character.label} -> ${location.label}`,
+      },
+    });
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        ownerSide: () => "playerOne",
+        cardSnapshotsById: () => ({
+          [character.cardId]: character,
+          [location.cardId]: location,
+        }),
+        moveCategorySummaries: () => [
+          {
+            categoryId: "move-to-location",
+            categoryLabel: "Move to Location",
+            sourceCardIds: [character.cardId],
+            count: 1,
+            isDirect: false,
+          },
+        ],
+        executableMoves: () => [],
+        expandCardActionCategoryMoves: () => [moveToLocationMove],
+        setSelectedCardId: (nextSelectedCardId) => {
+          selectedCardIds.push(nextSelectedCardId);
+        },
+        setChallengeSourceCardId: () => {},
+        setPendingError: () => {},
+        setStatusMessage: (nextStatusMessage) => {
+          statusMessages.push(nextStatusMessage);
+        },
+      }),
+    );
+
+    const action = presenter
+      .getCardActionViews(character)
+      .find((candidate) => candidate.categoryId === "move-to-location");
+
+    expect(action?.enabled).toBe(true);
+    expect(action?.interaction).toBe("expand-on-click");
+    expect(action?.moves).toEqual([]);
+    expect(action && presenter.handleCardActionClick(action)).toBe(true);
+    expect(presenter.actionSelectionSession?.phase).toBe("choose-target");
+    expect(presenter.actionSelectionSession?.sourceCardId).toBe(character.cardId);
+    expect(selectedCardIds).toEqual([character.cardId]);
+    expect(statusMessages).toEqual([`Select where to move ${character.label}.`]);
   });
 
   it("starts activate-ability from the hover-card action with the source card preselected", () => {

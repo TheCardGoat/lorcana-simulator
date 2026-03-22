@@ -46,15 +46,28 @@ export const mauiWhale: CharacterCard = {
       type: "static",
     },
     {
+      cost: {
+        ink: 1,
+      },
       effect: {
-        duration: "this-turn",
-        restriction: "cant-quest",
-        target: "SELF",
-        type: "restriction",
+        steps: [
+          {
+            target: "SELF",
+            type: "ready",
+          },
+          {
+            duration: "this-turn",
+            restriction: "cant-quest",
+            target: "SELF",
+            type: "restriction",
+          },
+        ],
+        type: "sequence",
       },
       id: "4dw-2",
+      name: "I GOT YOUR BACK 2",
       text: "I GOT YOUR BACK 2 {I} – Ready this character. He can't quest for the rest of this turn.",
-      type: "action",
+      type: "activated",
     },
   ],
   i18n: mauiWhaleI18n,

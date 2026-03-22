@@ -40,6 +40,7 @@ export const scarBetrayer: CharacterCard = {
             owner: "any",
             zones: ["play"],
             cardTypes: ["character"],
+            filter: [{ type: "has-name", name: "Mufasa" }],
           },
           type: "banish",
         },

@@ -45,18 +45,49 @@ export const maleficentFormidableQueen: CharacterCard = {
     },
     {
       effect: {
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "opponent",
-          selector: "chosen",
-          zones: ["play"],
+        type: "for-each",
+        counter: {
+          type: "target-query",
+          query: {
+            selector: "all",
+            owner: "you",
+            zones: ["play"],
+            cardType: "character",
+            filters: [
+              {
+                type: "has-name",
+                name: "Maleficent",
+              },
+            ],
+          },
         },
-        type: "return-to-hand",
+        effect: {
+          type: "return-to-hand",
+          target: {
+            cardTypes: ["character", "item", "location"],
+            count: 1,
+            filter: [
+              {
+                type: "cost-comparison",
+                comparison: "less-or-equal",
+                value: 3,
+              },
+            ],
+            owner: "opponent",
+            selector: "chosen",
+            zones: ["play"],
+          },
+        },
       },
       id: "1a2-2",
+      name: "LISTEN WELL, ALL OF YOU",
       text: "LISTEN WELL, ALL OF YOU When you play this character, for each of your characters named Maleficent in play, return a chosen opposing character, item, or location with cost 3 or less to their player's hand.",
-      type: "action",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
     },
   ],
   i18n: maleficentFormidableQueenI18n,

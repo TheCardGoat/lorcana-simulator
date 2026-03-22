@@ -12,7 +12,7 @@ export const mauiStubbornTrickster: CharacterCard = {
   franchise: "Moana",
   set: "008",
   cardNumber: 110,
-  rarity: "common",
+  rarity: "super_rare",
   cost: 6,
   strength: 4,
   willpower: 4,
@@ -22,8 +22,49 @@ export const mauiStubbornTrickster: CharacterCard = {
     lorcast: "crd_e58f4c06ff8049e791b111019217c486",
     tcgPlayer: 630062,
   },
-  text: "I'M NOT FINISHED YET When this character is banished, choose one:\n- Put 2 damage counters on all opposing characters.\n- Banish all opposing items.\n- Banish all opposing locations.",
+  text: [
+    {
+      title: "I'M NOT FINISHED YET",
+      description:
+        "When this character is banished, choose one:\n- Put 2 damage counters on all opposing characters.\n- Banish all opposing items.\n- Banish all opposing locations.",
+    },
+  ],
   classifications: ["Storyborn", "Hero", "Deity"],
-  abilities: [],
+  abilities: [
+    {
+      id: "axI-1",
+      name: "I'M NOT FINISHED YET",
+      text: "I'M NOT FINISHED YET When this character is banished, choose one:\n- Put 2 damage counters on all opposing characters.\n- Banish all opposing items.\n- Banish all opposing locations.",
+      type: "triggered",
+      trigger: {
+        event: "banish",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "choice",
+        optionLabels: [
+          "Put 2 damage counters on all opposing characters.",
+          "Banish all opposing items.",
+          "Banish all opposing locations.",
+        ],
+        options: [
+          {
+            type: "put-damage",
+            amount: 2,
+            target: "ALL_OPPOSING_CHARACTERS",
+          },
+          {
+            type: "banish",
+            target: "ALL_OPPOSING_ITEMS",
+          },
+          {
+            type: "banish",
+            target: "ALL_OPPOSING_LOCATIONS",
+          },
+        ],
+      },
+    },
+  ],
   i18n: mauiStubbornTricksterI18n,
 };

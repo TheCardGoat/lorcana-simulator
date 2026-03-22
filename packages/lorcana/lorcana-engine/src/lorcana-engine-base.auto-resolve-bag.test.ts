@@ -199,6 +199,43 @@ const upToTargetedActionWatcher = createMockCharacter({
   ],
 });
 
+const constrainedBounceActionWatcher = createMockCharacter({
+  id: "constrained-bounce-action-watcher",
+  name: "Constrained Bounce Action Watcher",
+  cost: 2,
+  lore: 1,
+  abilities: [
+    {
+      id: "constrained-bounce-action-watcher-1",
+      name: "Constrained Bounce Action Watcher",
+      text: "Whenever you play an action, you may return chosen character, item, or location with cost 2 or less to their player's hand.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: {
+          cardType: "action",
+          controller: "you",
+        },
+        timing: "whenever",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "return-to-hand",
+          target: {
+            selector: "chosen",
+            count: 1,
+            zones: ["play"],
+            cardTypes: ["character", "item", "location"],
+            filter: [{ type: "cost", comparison: "lte", value: 2 }],
+          },
+        },
+      },
+    },
+  ],
+});
+
 const conditionalActionWatcher = createMockCharacter({
   id: "conditional-action-watcher",
   name: "Conditional Action Watcher",
@@ -670,6 +707,63 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
     expect(testEngine.asPlayerOne().resolveNextPending({ targets: [] })).toBeSuccessfulCommand();
     expect(testEngine.isExerted(target)).toBe(false);
+  });
+
+  it("auto-resolves up-to bag effects when there are no legal candidates", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [simpleAction],
+      inkwell: simpleAction.cost,
+      play: [upToTargetedActionWatcher],
+      deck: 2,
+    });
+
+    expect(
+      testEngine.asPlayerOne().playCard(simpleAction, {
+        preventAutoResolveTriggeredEffects: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+  });
+
+  it("rejects explicit invalid targets after a bag effect suspends into pending target selection", () => {
+    const invalidTarget = createMockCharacter({
+      id: "invalid-constrained-bounce-target",
+      name: "Invalid Constrained Bounce Target",
+      cost: 3,
+      strength: 3,
+      willpower: 3,
+      lore: 1,
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [simpleAction],
+        inkwell: simpleAction.cost,
+        play: [constrainedBounceActionWatcher],
+        deck: 2,
+      },
+      {
+        play: [invalidTarget],
+        deck: 2,
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(simpleAction, {
+        preventAutoResolveTriggeredEffects: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+    expect(testEngine.asPlayerOne().resolveNextPending({ targets: [invalidTarget] }).success).toBe(
+      false,
+    );
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
   });
 
   it("auto-resolves a remaining deterministic bag effect after a manual bag resolution", () => {

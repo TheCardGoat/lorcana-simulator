@@ -29,9 +29,11 @@ import {
   withCurrentSelectionTargets,
 } from "./action-effects/selection-state";
 import {
+  analyzeEffectTargets,
   buildMissingTargetSelectionError,
   countExplicitTargetSelections,
   hasExplicitTargetSelectionInput,
+  validateAndNormalizeTargetSelection,
 } from "../../targeting/runtime";
 
 type ResolveEffectValidationContext = Parameters<
@@ -108,16 +110,23 @@ function buildContinuationResolutionInput(
     resolutionInput.resolveOptional !== undefined
       ? { ...resolutionInput, resolveOptional: undefined }
       : resolutionInput;
+  const inputWithoutTransientSelectionState =
+    inputWithoutOptional.targetSelectionResolved !== undefined
+      ? {
+          ...inputWithoutOptional,
+          targetSelectionResolved: undefined,
+        }
+      : inputWithoutOptional;
 
   if (pendingEffect.kind === "target-selection") {
-    return promoteCurrentSelectionTargetsToContext(inputWithoutOptional);
+    return promoteCurrentSelectionTargetsToContext(inputWithoutTransientSelectionState);
   }
 
-  if (countResolvedTargets(getCurrentSelectionInput(inputWithoutOptional)) > 0) {
-    return promoteCurrentSelectionTargetsToContext(inputWithoutOptional);
+  if (countResolvedTargets(getCurrentSelectionInput(inputWithoutTransientSelectionState)) > 0) {
+    return promoteCurrentSelectionTargetsToContext(inputWithoutTransientSelectionState);
   }
 
-  return clearCurrentSelectionTargets(inputWithoutOptional);
+  return clearCurrentSelectionTargets(inputWithoutTransientSelectionState);
 }
 
 function logResolveEffectMessage(
@@ -348,9 +357,10 @@ function validatePendingEffectParams(
     selectionContext?.kind === "discard-choice" || selectionContext?.kind === "target-selection"
       ? selectionContext
       : undefined;
+  const allowsEmptyTargetResolution = (targetSelectionContext?.minSelections ?? 1) === 0;
 
   if (pendingEffect.kind === "discard-choice" || pendingEffect.kind === "target-selection") {
-    if (!hasExplicitTargets) {
+    if (!hasExplicitTargets && !allowsEmptyTargetResolution) {
       return {
         valid: false,
         error: buildMissingTargetSelectionError("resolveEffect", pendingEffect.effect),
@@ -364,6 +374,33 @@ function validatePendingEffectParams(
         error: "resolveEffect requires at least 1 explicit target for this pending effect",
         errorCode: "RESOLVE_EFFECT_TARGETS_REQUIRED",
       };
+    }
+
+    if (hasExplicitTargets) {
+      const analysis = analyzeEffectTargets(
+        pendingEffect.effect,
+        pendingEffect.controllerId,
+        ctx,
+        pendingEffect.sourceCardId,
+        {
+          includeDeferredChosenSelections: true,
+        },
+      );
+      const targetValidation = validateAndNormalizeTargetSelection(
+        normalizedTargets,
+        {
+          ...analysis,
+          minSelections: targetSelectionContext?.minSelections ?? analysis.minSelections,
+          maxSelections: targetSelectionContext?.maxSelections ?? analysis.maxSelections,
+        },
+        {
+          currentPlayer: pendingEffect.controllerId,
+          ctx,
+        },
+      );
+      if (!targetValidation.valid) {
+        return targetValidation;
+      }
     }
   }
 
@@ -557,6 +594,14 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
     clearPendingActionChoice(ctx);
 
     const normalizedParams = normalizeResolveEffectParams(ctx.args.params);
+    const allowsEmptyTargetResolution =
+      pendingEffect.kind === "target-selection" &&
+      (pendingEffect.selectionContext?.kind === "target-selection"
+        ? pendingEffect.selectionContext.minSelections
+        : 1) === 0;
+    const didResolveTargetSelectionWithoutTargets =
+      allowsEmptyTargetResolution &&
+      countResolvedTargets(getCurrentSelectionInput(normalizedParams)) === 0;
     const resolutionInput =
       normalizedParams.currentTargets !== undefined
         ? withCurrentSelectionTargets(
@@ -564,6 +609,9 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
             getCurrentSelectionTargets(normalizedParams),
           )
         : mergeActionResolutionInput(pendingEffect.resolutionInput, normalizedParams);
+    if (didResolveTargetSelectionWithoutTargets) {
+      resolutionInput.targetSelectionResolved = true;
+    }
     let replayStagedSequence = pendingEffect.continuation?.stagedSequence;
 
     if (pendingEffect.continuation?.stagedSequence) {

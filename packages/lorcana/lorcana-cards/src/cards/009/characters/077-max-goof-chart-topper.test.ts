@@ -1,54 +1,169 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { thisIsMyFamily } from "@lorcanito/lorcana-engine/cards/007";
-// Import {
-//   CharlotteLaBouffMardiGrasPrincess,
-//   DeweyLovableShowoff,
-// } from "@lorcanito/lorcana-engine/cards/008";
-// Import { maxGoofChartTopper } from "@lorcanito/lorcana-engine/cards/009";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Max Goof - Chart Topper", () => {
-//   It("Shift 4 {I} (You may pay 4 {I} to play this on top of one of your characters named Max Goof.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [maxGoofChartTopper],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(maxGoofChartTopper);
-//     Expect(cardUnderTest.hasShift).toBe(true);
-//   });
-//
-//   It("NUMBER ONE HIT Whenever this character quests, you may play a song card with cost 4 or less from your discard for free, then put it on the bottom of your deck instead of into your discard.", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [maxGoofChartTopper],
-//       Discard: [thisIsMyFamily],
-//       Deck: [deweyLovableShowoff, charlotteLaBouffMardiGrasPrincess],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(maxGoofChartTopper);
-//     Const targetCard = testEngine.getCardModel(thisIsMyFamily);
-//
-//     Expect(testEngine.getCardsByZone("deck").length).toBe(2);
-//     Expect(testEngine.getCardsByZone("discard").length).toBe(1);
-//
-//     Await testEngine.questCard(cardUnderTest);
-//     Expect(testEngine.getPlayerLore()).toBe(2);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({ targets: [targetCard] }, true);
-//     Await testEngine.resolveTopOfStack({});
-//
-//     // This is my Family draws you a card, and give one lore
-//     Expect(testEngine.getPlayerLore()).toBe(3);
-//     Expect(testEngine.getCardsByZone("hand").length).toBe(1);
-//
-//     // You initially had 2, you drew 1, and put the other on the bottom of your deck
-//     Expect(testEngine.getCardsByZone("deck").length).toBe(2);
-//     Expect(testEngine.getCardsByZone("discard").length).toBe(0);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  createMockSong,
+} from "@tcg/lorcana-engine/testing";
+import { maxGoofChartTopper } from "./077-max-goof-chart-topper";
+
+const songCard = createMockSong({
+  id: "max-goof-chart-topper-test-song",
+  name: "Test Song",
+  cost: 2,
+  text: "Gain 1 lore. Draw a card.",
+  abilities: [
+    {
+      type: "action" as const,
+      id: "test-song-1",
+      text: "Gain 1 lore. Draw a card.",
+      effect: {
+        type: "sequence" as const,
+        steps: [
+          { type: "gain-lore" as const, amount: 1 },
+          { type: "draw" as const, amount: 1, target: "CONTROLLER" as const },
+        ],
+      },
+    },
+  ],
+});
+
+const expensiveSongCard = createMockSong({
+  id: "max-goof-chart-topper-test-expensive-song",
+  name: "Expensive Song",
+  cost: 5,
+  text: "Gain 1 lore.",
+  abilities: [
+    {
+      type: "action" as const,
+      id: "expensive-song-1",
+      text: "Gain 1 lore.",
+      effect: {
+        type: "gain-lore" as const,
+        amount: 1,
+      },
+    },
+  ],
+});
+
+const deckCard = createMockCharacter({
+  id: "max-goof-chart-topper-test-deck-card",
+  name: "Deck Card",
+  cost: 1,
+});
+
+describe("Max Goof - Chart Topper", () => {
+  describe("Shift 4 {I}", () => {
+    it("has Shift keyword with cost 4", () => {
+      const shiftAbility = maxGoofChartTopper.abilities?.find(
+        (a) => "keyword" in a && a.keyword === "Shift",
+      );
+      expect(shiftAbility).toBeDefined();
+      expect(shiftAbility && "cost" in shiftAbility ? shiftAbility.cost : undefined).toEqual({
+        ink: 4,
+      });
+    });
+  });
+
+  describe("NUMBER ONE HIT", () => {
+    it("plays a song with cost 4 or less from discard for free when questing, then puts it on the bottom of the deck", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: maxGoofChartTopper, isDrying: false }],
+          discard: [songCard],
+          deck: [deckCard],
+          inkwell: maxGoofChartTopper.cost,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().quest(maxGoofChartTopper)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(songCard)).toBe("deck");
+
+      expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(0);
+    });
+
+    it("can decline the optional NUMBER ONE HIT ability", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: maxGoofChartTopper, isDrying: false }],
+          discard: [songCard],
+          deck: [deckCard],
+          inkwell: maxGoofChartTopper.cost,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().quest(maxGoofChartTopper)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(songCard)).toBe("discard");
+      expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(1);
+    });
+
+    it("does not play a song when no eligible song is in discard, even if the optional is accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: maxGoofChartTopper, isDrying: false }],
+          discard: [expensiveSongCard],
+          deck: [deckCard],
+          inkwell: maxGoofChartTopper.cost,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().quest(maxGoofChartTopper)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(expensiveSongCard)).toBe("discard");
+    });
+
+    it("resolves the song effects before putting it on the bottom of the deck", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: maxGoofChartTopper, isDrying: false }],
+          discard: [songCard],
+          deck: [deckCard],
+          inkwell: maxGoofChartTopper.cost,
+        },
+        { deck: 2 },
+      );
+
+      const loreBefore = testEngine.asPlayerOne().getLore("player_one");
+
+      expect(testEngine.asPlayerOne().quest(maxGoofChartTopper)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      const loreAfter = testEngine.asPlayerOne().getLore("player_one");
+
+      expect(loreAfter).toBe(loreBefore + maxGoofChartTopper.lore + 1);
+      expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
+      expect(testEngine.asPlayerOne().getCardZone(songCard)).toBe("deck");
+    });
+  });
+});

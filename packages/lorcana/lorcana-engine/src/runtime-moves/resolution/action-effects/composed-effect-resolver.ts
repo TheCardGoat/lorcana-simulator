@@ -25,6 +25,7 @@ import type {
   GainKeywordsEffect,
   GainLoreEffect,
   GrantAbilityEffect,
+  LoseKeywordEffect,
   LoseLoreEffect,
   ModifyStatEffect,
   NameACardEffect,
@@ -93,6 +94,7 @@ import { isExertEffect, resolveExertEffect } from "./exert-effect";
 import { isGainKeywordEffect, resolveGainKeywordEffect } from "./gain-keyword-effect";
 import { isGainLoreEffect, resolveGainLoreEffect } from "./gain-lore-effect";
 import { isGrantAbilityEffect, resolveGrantAbilityEffect } from "./grant-ability-effect";
+import { isLoseKeywordEffect, resolveLoseKeywordEffect } from "./lose-keyword-effect";
 import { isLoseLoreEffect, resolveLoseLoreEffect } from "./lose-lore-effect";
 import { isMillEffect, resolveMillEffect } from "./mill-effect";
 import { isModifyStatEffect, resolveModifyStatEffect } from "./modify-stat-effect";
@@ -1148,6 +1150,7 @@ export const ACTION_EFFECT_RESOLVER_TYPES = [
   "create-replacement-effect",
   "support",
   "property-modification",
+  "lose-keyword",
 ] as const;
 
 type SupportedActionEffectType = (typeof ACTION_EFFECT_RESOLVER_TYPES)[number];
@@ -1346,6 +1349,12 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         if (!reusedTargets) {
           consumedTargets += Math.max(stepSelection.consumedCount, fallbackStepTargets.length);
         }
+      } else if (
+        !stagedSequence &&
+        stepSelection.consumedCount > 0 &&
+        implicitlyConsumesCurrentSelection
+      ) {
+        consumedTargets += stepSelection.consumedCount;
       }
       if (!stagedSequence && chosenContextConsumptionCount > 0) {
         consumedTargets += chosenContextConsumptionCount;
@@ -1797,6 +1806,16 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     return RESOLVED_ACTION_EFFECT;
   },
 
+  "lose-keyword": (ctx, cardPlayed, effect, resolutionInput) => {
+    if (!isLoseKeywordEffect(effect)) {
+      handleUnsupportedActionEffect("lose-keyword", "Malformed lose-keyword effect payload");
+      return RESOLVED_ACTION_EFFECT;
+    }
+
+    resolveLoseKeywordEffect(ctx, cardPlayed, effect as LoseKeywordEffect, resolutionInput);
+    return RESOLVED_ACTION_EFFECT;
+  },
+
   scry: (ctx, cardPlayed, effect, resolutionInput) => {
     if (!isScryEffect(effect)) {
       handleUnsupportedActionEffect("scry", "Malformed scry effect payload");
@@ -2097,6 +2116,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     const resolved = resolveEffectExecutionContext(ctx, cardPlayed, effect, resolutionInput);
+    resolutionInput.eventSnapshot ??= {};
     resolveBanishEffect(ctx, cardPlayed, effect as BanishEffect, {
       eventSnapshot: resolutionInput.eventSnapshot,
       targets: resolved.resolvedTargets,

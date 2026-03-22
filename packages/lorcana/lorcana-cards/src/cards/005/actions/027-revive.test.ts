@@ -11,10 +11,11 @@ describe("Revive", () => {
       discard: [simbaProtectiveCub],
     });
 
-    expect(
-      testEngine.asPlayerOne().playCard(revive, { targets: [simbaProtectiveCub] }).success,
-    ).toBe(true);
+    const playResult = testEngine.asPlayerOne().playCard(revive, {
+      targets: [simbaProtectiveCub],
+    });
 
+    expect(playResult).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getCardZone(simbaProtectiveCub)).toBe("play");
     expect(testEngine.asPlayerOne()).toHaveZoneCounts({ discard: 1, play: 1 });
   });

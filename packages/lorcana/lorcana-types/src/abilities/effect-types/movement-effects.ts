@@ -114,7 +114,7 @@ export interface PutIntoInkwellEffect {
  */
 export interface PutUnderEffect {
   type: "put-under";
-  source: "top-of-deck" | "hand" | "discard";
+  source: "top-of-deck" | "hand" | "discard" | "this-card";
   under: CharacterTarget | LocationTarget | "self";
   cardType?: CardType;
 }

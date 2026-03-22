@@ -111,13 +111,13 @@ function buildEnabledCategoryAction(
       ? getPlayActionDetail(card, moves[0]!)
       : categoryId === "shift-card" || categoryId === "sing-card"
         ? undefined
-        : categoryId === "challenge"
-          ? `${moves.length} target${moves.length === 1 ? "" : "s"}`
-          : categoryId === "move-to-location"
-            ? `${moves.length} location${moves.length === 1 ? "" : "s"}`
-            : categoryId === "activate-ability"
-              ? `${moves.length} abilit${moves.length === 1 ? "y" : "ies"}`
-              : undefined;
+        : categoryId === "activate-ability"
+          ? `${moves.length} abilit${moves.length === 1 ? "y" : "ies"}`
+          : undefined;
+  const interaction =
+    categoryId === "challenge" || categoryId === "move-to-location"
+      ? "expand-on-click"
+      : "execute-or-select";
 
   return {
     id: `${categoryId}:${card.cardId}`,
@@ -125,6 +125,7 @@ function buildEnabledCategoryAction(
     categoryId,
     label,
     ...(detail ? { detail } : {}),
+    interaction,
     enabled: true,
     moves,
   };
@@ -153,8 +154,27 @@ function buildBlockedAction(
     cardId: card.cardId,
     categoryId,
     label,
+    interaction: "execute-or-select",
     enabled: false,
     reason,
+    moves: [],
+  };
+}
+
+function buildDeferredEnabledAction(
+  card: LorcanaCardSnapshot,
+  categoryId: Extract<CardActionCategoryId, "challenge" | "move-to-location">,
+): CardActionView {
+  return {
+    id: `${categoryId}:${card.cardId}`,
+    cardId: card.cardId,
+    categoryId,
+    label:
+      categoryId === "challenge"
+        ? m["sim.actions.label.challenge"]({})
+        : m["sim.actions.label.moveToLocation"]({}),
+    interaction: "expand-on-click",
+    enabled: true,
     moves: [],
   };
 }
@@ -202,8 +222,10 @@ export function buildCardActionViews(options: {
   executableMoves: ExecutableMoveEntry[];
   ownerSide: LorcanaPlayerSide | null;
   challengeReadyCardIds: string[];
+  movableToLocationCardIds: string[];
 }): CardActionView[] {
-  const { card, executableMoves, ownerSide, challengeReadyCardIds } = options;
+  const { card, executableMoves, ownerSide, challengeReadyCardIds, movableToLocationCardIds } =
+    options;
   if (!ownerSide || card.ownerSide !== ownerSide) {
     return [];
   }
@@ -265,19 +287,19 @@ export function buildCardActionViews(options: {
 
     if (categoryId === "challenge") {
       actions.push(
-        buildBlockedAction(
-          card,
-          categoryId,
-          challengeReadyCardIds.includes(card.cardId)
-            ? "Select this character to challenge."
-            : getChallengeBlockedReason(card),
-        ),
+        challengeReadyCardIds.includes(card.cardId)
+          ? buildDeferredEnabledAction(card, categoryId)
+          : buildBlockedAction(card, categoryId, getChallengeBlockedReason(card)),
       );
       continue;
     }
 
     if (categoryId === "move-to-location") {
-      actions.push(buildBlockedAction(card, categoryId, getMoveBlockedReason(card)));
+      actions.push(
+        movableToLocationCardIds.includes(card.cardId)
+          ? buildDeferredEnabledAction(card, categoryId)
+          : buildBlockedAction(card, categoryId, getMoveBlockedReason(card)),
+      );
     }
   }
 

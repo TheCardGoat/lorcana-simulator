@@ -32,15 +32,21 @@ export const marianoGuzmanHandsomeSuitor: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      id: "15v-1",
+      name: "I SEE YOU",
+      type: "static",
+      condition: {
+        type: "has-named-character",
+        controller: "you",
+        name: "Dolores Madrigal",
+      },
       effect: {
         modifier: 1,
         stat: "lore",
         target: "SELF",
         type: "modify-stat",
       },
-      id: "15v-1",
       text: "I SEE YOU While you have a character named Dolores Madrigal in play, this character gets +1 {L}.",
-      type: "action",
     },
   ],
   i18n: marianoGuzmanHandsomeSuitorI18n,

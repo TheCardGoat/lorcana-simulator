@@ -35,4 +35,37 @@ describe("RLS Legacy's Cannon", () => {
     expect(testEngine.asPlayerOne().getCardZone(cannonFodder)).toBe("discard");
     expect(testEngine.asPlayerOne().isExerted(rlsLegacysCannon)).toBe(true);
   });
+
+  it("discards a card to deal 2 damage to a chosen character", () => {
+    const targetCharacter = createMockCharacter({
+      id: "target-character",
+      name: "Target Character",
+      cost: 2,
+      willpower: 5,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [cannonFodder],
+        inkwell: 2,
+        play: [rlsLegacysCannon],
+      },
+      {
+        play: [targetCharacter],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(rlsLegacysCannon, {
+        targets: [targetCharacter],
+        costs: {
+          discardCards: [cannonFodder],
+        },
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(2);
+    expect(testEngine.asPlayerOne().getCardZone(cannonFodder)).toBe("discard");
+    expect(testEngine.asPlayerOne().isExerted(rlsLegacysCannon)).toBe(true);
+  });
 });

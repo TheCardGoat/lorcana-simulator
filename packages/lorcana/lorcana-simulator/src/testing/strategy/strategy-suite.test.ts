@@ -16,6 +16,7 @@ import {
   type StrategyMatchSummary,
   type StrategySuiteRunSummary,
 } from "./strategy-suite.js";
+import { getStrategyCandidateManifests } from "./strategy-iteration.js";
 
 function resolveWinnerId(player: "player_one" | "player_two"): PlayerId {
   return player as PlayerId;
@@ -315,6 +316,44 @@ describe("strategy lab match definitions", () => {
     expect(config.crossDeckGameCount).toBe(20);
     expect(matches.filter((match) => match.playerOne.id === match.playerTwo.id)).toHaveLength(200);
     expect(matches.filter((match) => match.playerOne.id !== match.playerTwo.id)).toHaveLength(80);
+  });
+
+  it("accepts the aggressive board-control strategy id in lab match generation", () => {
+    const deck = DECK_FIXTURES[0];
+    if (!deck) {
+      throw new Error("Expected at least one deck fixture.");
+    }
+
+    const matches = buildStrategyLabMatchDefinitions({
+      deckIds: [deck.id],
+      gameCount: 1,
+      matchMode: "mirror",
+      strategyIds: ["default-lore-race", "aggressive-board-control-lore-race"],
+    });
+
+    expect(matches).toHaveLength(2);
+    expect(
+      matches.some(
+        (match) =>
+          match.playerOne.strategyId === "aggressive-board-control-lore-race" ||
+          match.playerTwo.strategyId === "aggressive-board-control-lore-race",
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("strategy candidate manifests", () => {
+  it("exposes the aggressive board-control candidate manifest", () => {
+    const manifests = getStrategyCandidateManifests([
+      "board-control-lore-race",
+      "aggressive-board-control-lore-race",
+    ]);
+
+    expect(manifests.map((manifest) => manifest.candidateId)).toEqual([
+      "board-control-lore-race",
+      "aggressive-board-control-lore-race",
+    ]);
+    expect(manifests[1]?.parentStrategyId).toBe("board-control-lore-race");
   });
 });
 

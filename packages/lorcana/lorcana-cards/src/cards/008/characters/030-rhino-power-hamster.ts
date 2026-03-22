@@ -43,6 +43,9 @@ export const rhinoPowerHamster: CharacterCard = {
       type: "keyword",
     },
     {
+      condition: {
+        type: "no-damage",
+      },
       effect: {
         keyword: "Resist",
         target: "SELF",

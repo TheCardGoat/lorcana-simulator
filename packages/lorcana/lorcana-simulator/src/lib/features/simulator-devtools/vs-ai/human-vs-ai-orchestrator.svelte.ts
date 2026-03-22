@@ -30,6 +30,7 @@ import {
   type HumanVsAiMatchConfig,
   type HumanVsAiOrchestratorState,
 } from "./types.js";
+import { resolveHumanVsAiMode } from "./mode-resolution.js";
 
 export class HumanVsAiOrchestrator {
   #session: AutomatedMatchPlaybackSession<LorcanaServer, LorcanaSimulatorReadModel>;
@@ -240,41 +241,26 @@ export class HumanVsAiOrchestrator {
   }
 
   #syncMode(): void {
-    const winner = this.#session.server.getWinner();
-    if (winner) {
+    const turnNumber = this.#session.server.getTurnNumber();
+    const { actorId } = this.#session.server.enumerateAutomatedActionsForCurrentActor({
+      strategy: this.#strategyOption.strategy,
+    });
+
+    const resolution = resolveHumanVsAiMode({
+      state: this.state,
+      winner: this.#session.server.getWinner() ?? undefined,
+      turnNumber,
+      actorId,
+    });
+
+    if (resolution.shouldClearTimer) {
       this.#clearTimer();
-      this.state = {
-        ...this.state,
-        mode: "complete",
-        winner,
-        turnNumber: this.#session.server.getTurnNumber(),
-      };
-      return;
     }
 
-    this.state = { ...this.state, turnNumber: this.#session.server.getTurnNumber() };
+    this.state = resolution.nextState;
 
-    if (
-      this.state.mode === "takeover" ||
-      this.state.mode === "complete" ||
-      this.state.mode === "error"
-    ) {
-      return;
-    }
-
-    const activePlayer = this.#session.server.getActivePlayer();
-    const isAiTurn = activePlayer === "player_two";
-
-    if (isAiTurn && this.state.currentPerspective === "playerOne") {
-      if (this.state.aiPlayMode === "auto") {
-        this.state = { ...this.state, mode: "ai-thinking" };
-        this.#scheduleAiAction();
-      } else {
-        this.state = { ...this.state, mode: "ai-paused" };
-      }
-    } else if (!isAiTurn) {
-      this.#clearTimer();
-      this.state = { ...this.state, mode: "waiting-for-human" };
+    if (resolution.shouldScheduleAi) {
+      this.#scheduleAiAction();
     }
   }
 
@@ -352,44 +338,25 @@ export class HumanVsAiOrchestrator {
       }
     }
 
-    // Check for winner after action
-    const nextWinner = this.#session.server.getWinner();
-    if (nextWinner) {
+    // Check who the automation actor is after the action.
+    const { actorId: nextActorId } = this.#session.server.enumerateAutomatedActionsForCurrentActor({
+      strategy: this.#strategyOption.strategy,
+    });
+    const resolution = resolveHumanVsAiMode({
+      state: this.state,
+      winner: this.#session.server.getWinner() ?? undefined,
+      turnNumber: this.#session.server.getTurnNumber(),
+      actorId: nextActorId,
+    });
+
+    if (resolution.shouldClearTimer) {
       this.#clearTimer();
-      this.state = {
-        ...this.state,
-        mode: "complete",
-        winner: nextWinner,
-        turnNumber: this.#session.server.getTurnNumber(),
-      };
-      return;
     }
 
-    // Check if AI still has priority
-    const nextActive = this.#session.server.getActivePlayer();
-    const stillAiTurn = nextActive === "player_two";
+    this.state = resolution.nextState;
 
-    if (stillAiTurn && this.state.currentPerspective === "playerOne") {
-      if (this.state.aiPlayMode === "auto") {
-        this.state = {
-          ...this.state,
-          mode: "ai-thinking",
-          turnNumber: this.#session.server.getTurnNumber(),
-        };
-        this.#scheduleAiAction();
-      } else {
-        this.state = {
-          ...this.state,
-          mode: "ai-paused",
-          turnNumber: this.#session.server.getTurnNumber(),
-        };
-      }
-    } else {
-      this.state = {
-        ...this.state,
-        mode: "waiting-for-human",
-        turnNumber: this.#session.server.getTurnNumber(),
-      };
+    if (resolution.shouldScheduleAi) {
+      this.#scheduleAiAction();
     }
 
     this.#notify();

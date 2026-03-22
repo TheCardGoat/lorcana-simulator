@@ -35,7 +35,7 @@ export const littleJohnSirReginald: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingImplementation: true,
+  missingImplementation: false,
   missingTests: false,
   abilities: [
     {
@@ -72,7 +72,14 @@ export const littleJohnSirReginald: CharacterCard = {
           {
             type: "deal-damage",
             amount: 2,
-            target: "CHOSEN_VILLAIN_CHARACTER",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+              filter: [{ type: "has-classification", classification: "Villain" }],
+            },
           },
         ],
       },

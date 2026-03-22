@@ -203,6 +203,9 @@ describe("AutomatedMatchPlaybackController", () => {
       concede: () => ({
         success: true,
       }),
+      enumerateAutomatedActionsForCurrentActor: () => ({
+        actorId,
+      }),
       getActivePlayer: () => actorId,
       getCurrentPhase: () => "main",
       getCurrentStep: () => null,
@@ -263,6 +266,9 @@ describe("AutomatedMatchPlaybackController", () => {
     const fakeServer: AutomatedMatchPlaybackServer = {
       concede: () => ({
         success: true,
+      }),
+      enumerateAutomatedActionsForCurrentActor: () => ({
+        actorId: PLAYER_TWO,
       }),
       getActivePlayer: () => PLAYER_TWO,
       getCurrentPhase: () => "main",
@@ -335,6 +341,9 @@ describe("AutomatedMatchPlaybackController", () => {
       concede: () => ({
         success: true,
       }),
+      enumerateAutomatedActionsForCurrentActor: () => ({
+        actorId: PLAYER_TWO,
+      }),
       getActivePlayer: () => PLAYER_TWO,
       getCurrentPhase: () => "main",
       getCurrentStep: () => null,
@@ -402,6 +411,9 @@ describe("AutomatedMatchPlaybackController", () => {
           success: true,
         };
       },
+      enumerateAutomatedActionsForCurrentActor: () => ({
+        actorId,
+      }),
       getActivePlayer: () => actorId,
       getCurrentPhase: () => "main",
       getCurrentStep: () => null,

@@ -49,7 +49,7 @@ export const mamaOdieMysticalMaven: CharacterCard = {
       trigger: {
         event: "play",
         on: {
-          cardType: "action",
+          cardType: "song",
           controller: "you",
         },
         timing: "whenever",

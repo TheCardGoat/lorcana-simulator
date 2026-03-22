@@ -58,6 +58,7 @@ export { LorcanaServer, createLorcanaServerGame } from "./lorcana-server";
 export {
   AUTOMATED_ACTION_STRATEGIES,
   DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+  aggressiveBoardControlLoreRaceAutomatedActionStrategy,
   boardControlLoreRaceAutomatedActionStrategy,
   computeAutomatedActionStateFingerprint,
   createAutomatedActionBoardSnapshot,

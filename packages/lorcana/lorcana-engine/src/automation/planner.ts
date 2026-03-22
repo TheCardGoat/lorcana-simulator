@@ -7,7 +7,7 @@ import type {
   CardInstanceId,
   PlayerId,
 } from "#core";
-import type { Effect } from "@tcg/lorcana-types";
+import type { Effect, ScryDestination, ScryEffect } from "@tcg/lorcana-types";
 import { buildValidationContext } from "../core/runtime/match-runtime.utils";
 import type { ChallengePreviewResult, PlayCardCostInput } from "../lorcana-engine-base";
 import { lorcanaRuntimeConfig } from "../runtime-game";
@@ -28,12 +28,14 @@ import { analyzeEffectTargets } from "../targeting";
 import type {
   ActivatedAbilityDefinition,
   BagEffectEntry,
+  Classification,
   LorcanaCardDefinition,
   LorcanaMatchState,
   LorcanaProjectedBoardView,
   LorcanaProjectedCard,
   PendingActionEffect,
 } from "../types";
+import { isClassification } from "../types";
 
 import { createAutomatedActionBoardSnapshot } from "./decision-trace";
 import {
@@ -48,6 +50,7 @@ import {
   type AutomatedActionCandidateSummary,
   type AutomatedActionCostSelections,
   type AutomatedActionDecisionTrace,
+  type AutomatedActionDestinationSelection,
   type AutomatedActionDiagnostic,
   type AutomatedActionEnumerationOptions,
   type AutomatedActionEnumerationResult,
@@ -87,6 +90,8 @@ type AutomatedActionPlannerAdapter = {
 type BagOrPendingEntry = {
   baseResolutionInput: {
     choiceIndex?: number;
+    destinations?: AutomatedActionDestinationSelection[];
+    eventSnapshot?: PendingActionEffect["resolutionInput"]["eventSnapshot"];
     resolveOptional?: boolean;
     targets?: readonly AutomatedActionTargetId[];
   };
@@ -116,6 +121,7 @@ type ActionAbilityDefinition = Extract<
 >;
 type ResolutionVariantPart = {
   choiceIndex?: number;
+  destinations?: AutomatedActionDestinationSelection[];
   resolveOptional?: boolean;
   targets?: AutomatedActionTargetId[];
 };
@@ -210,6 +216,358 @@ function stableSortIds(
   return [...ids].sort((left, right) => compareCardIds(board, left, right));
 }
 
+function getAvailableInkForPlayer(board: LorcanaProjectedBoardView, playerId: PlayerId): number {
+  return (board.players[playerId]?.inkwell ?? []).reduce((total, cardId) => {
+    const card = getProjectedCard(board, String(cardId) as CardInstanceId);
+    return card?.exerted === true ? total : total + 1;
+  }, 0);
+}
+
+function isPermanentCard(card: LorcanaProjectedCard | undefined): boolean {
+  return (
+    card?.cardType === "character" || card?.cardType === "item" || card?.cardType === "location"
+  );
+}
+
+function getFutureDrawScore(
+  board: LorcanaProjectedBoardView,
+  actorId: PlayerId,
+  cardId: CardInstanceId,
+): number {
+  const card = getProjectedCard(board, cardId);
+  const cost = card?.playCost ?? 0;
+  const lore = card?.lore ?? 0;
+  const inkable = card?.canBePutInInkwell === true;
+  const availableNextTurn =
+    getAvailableInkForPlayer(board, actorId) +
+    (board.players[actorId]?.canAddCardToInkwell === true ? 1 : 0);
+
+  let score = 0;
+  score += inkable ? 3 : -2;
+  score += isPermanentCard(card) ? 1 : 0;
+  score += lore * 2;
+  score += cost <= 2 ? 3 : cost <= 4 ? 1 : -Math.min(3, cost - 4);
+  score += cost <= availableNextTurn ? 2 : 0;
+  return score;
+}
+
+function getAcquisitionScore(
+  board: LorcanaProjectedBoardView,
+  cardId: CardInstanceId,
+  zone: string,
+): number {
+  const card = getProjectedCard(board, cardId);
+  const cost = card?.playCost ?? 0;
+  const lore = card?.lore ?? 0;
+  const permanentBonus = isPermanentCard(card) ? 1 : 0;
+  const inkableBonus = card?.canBePutInInkwell === true ? 1 : 0;
+
+  if (zone === "play") {
+    return cost * 4 + lore * 2 + permanentBonus;
+  }
+
+  if (zone === "hand") {
+    return cost * 3 + lore * 2 + permanentBonus + inkableBonus;
+  }
+
+  return cost + lore + permanentBonus + inkableBonus;
+}
+
+function compareCardsByFutureDrawValue(
+  board: LorcanaProjectedBoardView,
+  actorId: PlayerId,
+  left: CardInstanceId,
+  right: CardInstanceId,
+): number {
+  const scoreDelta =
+    getFutureDrawScore(board, actorId, right) - getFutureDrawScore(board, actorId, left);
+  if (scoreDelta !== 0) {
+    return scoreDelta;
+  }
+
+  return compareCardIds(board, left, right);
+}
+
+function compareCardsByAcquisitionValue(
+  board: LorcanaProjectedBoardView,
+  zone: string,
+  left: CardInstanceId,
+  right: CardInstanceId,
+): number {
+  const scoreDelta =
+    getAcquisitionScore(board, right, zone) - getAcquisitionScore(board, left, zone);
+  if (scoreDelta !== 0) {
+    return scoreDelta;
+  }
+
+  return compareCardIds(board, left, right);
+}
+
+function normalizeScryFilters(filters: unknown): Record<string, unknown>[] {
+  if (Array.isArray(filters)) {
+    return filters.filter((entry): entry is Record<string, unknown> =>
+      Boolean(entry && typeof entry === "object"),
+    );
+  }
+
+  if (filters && typeof filters === "object") {
+    return [filters as Record<string, unknown>];
+  }
+
+  return [];
+}
+
+function evaluateNumericComparison(value: number, comparison: string, threshold: number): boolean {
+  switch (comparison) {
+    case "lte":
+    case "less-or-equal":
+    case "or-less":
+      return value <= threshold;
+    case "gte":
+    case "greater-or-equal":
+    case "or-more":
+      return value >= threshold;
+    case "lt":
+    case "less":
+    case "less-than":
+      return value < threshold;
+    case "gt":
+    case "greater":
+    case "greater-than":
+    case "more-than":
+      return value > threshold;
+    case "eq":
+    case "equal":
+      return value === threshold;
+    case "ne":
+    case "not-equal":
+      return value !== threshold;
+    default:
+      return true;
+  }
+}
+
+function matchesScryFilter(
+  adapter: AutomatedActionPlannerAdapter,
+  cardId: CardInstanceId,
+  filter: Record<string, unknown>,
+): boolean {
+  const definition = adapter.getDefinitionByInstanceId(cardId);
+  if (!definition) {
+    return false;
+  }
+
+  switch (String(filter.type ?? "")) {
+    case "and": {
+      const subFilters = Array.isArray(filter.filters)
+        ? filter.filters.filter((entry): entry is Record<string, unknown> =>
+            Boolean(entry && typeof entry === "object"),
+          )
+        : [];
+      return subFilters.every((entry) => matchesScryFilter(adapter, cardId, entry));
+    }
+    case "or": {
+      const subFilters = Array.isArray(filter.filters)
+        ? filter.filters.filter((entry): entry is Record<string, unknown> =>
+            Boolean(entry && typeof entry === "object"),
+          )
+        : [];
+      return (
+        subFilters.length === 0 ||
+        subFilters.some((entry) => matchesScryFilter(adapter, cardId, entry))
+      );
+    }
+    case "not": {
+      const inner = filter.filter;
+      return !(
+        inner &&
+        typeof inner === "object" &&
+        matchesScryFilter(adapter, cardId, inner as Record<string, unknown>)
+      );
+    }
+    case "card-type":
+      return typeof filter.cardType === "string" && definition.cardType === filter.cardType;
+    case "classification":
+      return (
+        isClassification(filter.classification) &&
+        "classifications" in definition &&
+        Array.isArray(definition.classifications) &&
+        definition.classifications.includes(filter.classification as Classification)
+      );
+    case "song":
+      return definition.cardType === "action" && definition.actionSubtype === "song";
+    case "cost":
+    case "cost-comparison": {
+      const cardCost = typeof definition.cost === "number" ? definition.cost : 0;
+      const threshold = typeof filter.value === "number" ? filter.value : Number(filter.value ?? 0);
+      return evaluateNumericComparison(cardCost, String(filter.comparison ?? "eq"), threshold);
+    }
+    default:
+      return true;
+  }
+}
+
+function cardMatchesScryDestination(
+  adapter: AutomatedActionPlannerAdapter,
+  cardId: CardInstanceId,
+  destination: ScryDestination,
+): boolean {
+  const filters = normalizeScryFilters(destination.filters ?? destination.filter);
+  return (
+    filters.length === 0 || filters.every((filter) => matchesScryFilter(adapter, cardId, filter))
+  );
+}
+
+function findAutomatableScryEffect(effect: Effect | undefined): ScryEffect | undefined {
+  if (!effect || typeof effect !== "object") {
+    return undefined;
+  }
+
+  const node = effect as EffectInspectionNode;
+  if (node.type === "scry" && Array.isArray(node.destinations) && node.destinations.length > 0) {
+    return node as ScryEffect;
+  }
+
+  const nestedEffects: Array<Effect | undefined> = [
+    node.effect,
+    node.then,
+    node.else,
+    node.ifTrue,
+    node.ifFalse,
+    node.trueEffect,
+    node.falseEffect,
+    ...(node.effects ?? []),
+    ...(node.steps ?? []),
+    ...(node.options ?? []),
+    ...(node.choices ?? []),
+  ];
+
+  for (const nestedEffect of nestedEffects) {
+    const nestedScry = findAutomatableScryEffect(nestedEffect);
+    if (nestedScry) {
+      return nestedScry;
+    }
+  }
+
+  return undefined;
+}
+
+function getScryLookedAtCardIds(args: {
+  adapter: AutomatedActionPlannerAdapter;
+  analysisPlayerId: PlayerId;
+  baseResolutionInput?: BagOrPendingEntry["baseResolutionInput"];
+  scryEffect: ScryEffect;
+}): CardInstanceId[] {
+  const { adapter, analysisPlayerId, baseResolutionInput, scryEffect } = args;
+  const revealedCardIds = baseResolutionInput?.eventSnapshot?.revealedCardIds;
+  if (Array.isArray(revealedCardIds) && revealedCardIds.length > 0) {
+    return revealedCardIds.map((cardId) => String(cardId) as CardInstanceId);
+  }
+
+  const amount =
+    typeof scryEffect.amount === "number" ? Math.max(0, Math.floor(scryEffect.amount)) : 0;
+  if (amount === 0) {
+    return [];
+  }
+
+  const context = buildReadContext(adapter, analysisPlayerId);
+  const deckCards = context.framework.zones.getCards({
+    zone: "deck",
+    playerId: analysisPlayerId,
+  }) as CardInstanceId[];
+
+  return deckCards.slice(0, amount);
+}
+
+function buildScryDestinations(args: {
+  adapter: AutomatedActionPlannerAdapter;
+  analysisPlayerId: PlayerId;
+  baseResolutionInput?: BagOrPendingEntry["baseResolutionInput"];
+  scryEffect: ScryEffect;
+}): AutomatedActionDestinationSelection[] | null {
+  const { adapter, analysisPlayerId, baseResolutionInput, scryEffect } = args;
+  if (baseResolutionInput?.destinations) {
+    return baseResolutionInput.destinations.map((destination) => ({
+      zone: destination.zone,
+      cards: [...destination.cards],
+    }));
+  }
+
+  const lookedAtCards = getScryLookedAtCardIds({
+    adapter,
+    analysisPlayerId,
+    baseResolutionInput,
+    scryEffect,
+  });
+  if (lookedAtCards.length === 0) {
+    return [];
+  }
+
+  const destinationRules = Array.isArray(scryEffect.destinations) ? scryEffect.destinations : [];
+  let remaining = [...lookedAtCards];
+  const selections: AutomatedActionDestinationSelection[] = [];
+
+  for (const destination of destinationRules) {
+    const min = typeof destination.min === "number" ? Math.max(0, Math.floor(destination.min)) : 0;
+    const max =
+      typeof destination.max === "number" && Number.isFinite(destination.max)
+        ? Math.max(0, Math.floor(destination.max))
+        : destination.remainder === true
+          ? remaining.length
+          : remaining.length;
+    const matchingCards = remaining.filter((cardId) =>
+      cardMatchesScryDestination(adapter, cardId, destination),
+    );
+    const sortCards =
+      destination.zone === "deck-top"
+        ? (left: CardInstanceId, right: CardInstanceId) =>
+            compareCardsByFutureDrawValue(adapter.board, analysisPlayerId, left, right)
+        : destination.zone === "deck-bottom"
+          ? (left: CardInstanceId, right: CardInstanceId) =>
+              compareCardsByFutureDrawValue(adapter.board, analysisPlayerId, right, left)
+          : (left: CardInstanceId, right: CardInstanceId) =>
+              compareCardsByAcquisitionValue(adapter.board, destination.zone, left, right);
+
+    let cards =
+      destination.remainder === true
+        ? [...remaining].sort(sortCards)
+        : [...matchingCards].sort(sortCards).slice(0, max);
+
+    if (
+      destination.zone === "deck-top" &&
+      destination.remainder !== true &&
+      min === 0 &&
+      cards.length === 1 &&
+      (() => {
+        const card = getProjectedCard(adapter.board, cards[0]!);
+        const obviouslyWeakTopDeck =
+          card?.canBePutInInkwell !== true && (card?.playCost ?? 0) >= 5 && (card?.lore ?? 0) <= 1;
+        return (
+          obviouslyWeakTopDeck || getFutureDrawScore(adapter.board, analysisPlayerId, cards[0]!) < 0
+        );
+      })()
+    ) {
+      cards = [];
+    }
+
+    if (cards.length < min) {
+      return null;
+    }
+
+    selections.push({
+      zone: destination.zone,
+      cards,
+    });
+
+    if (cards.length > 0) {
+      const selected = new Set(cards);
+      remaining = remaining.filter((cardId) => !selected.has(cardId));
+    }
+  }
+
+  return selections;
+}
+
 function getCandidateKey(candidate: AutomatedActionCandidate): string {
   switch (candidate.family) {
     case "chooseWhoGoesFirst":
@@ -217,9 +575,9 @@ function getCandidateKey(candidate: AutomatedActionCandidate): string {
     case "alterHand":
       return `alterHand:${candidate.plan}:${candidate.cardsToMulligan.join(",")}`;
     case "resolveBag":
-      return `resolveBag:${candidate.bagId}:${candidate.choiceIndex ?? ""}:${candidate.resolveOptional ?? ""}:${candidate.targets?.join(",") ?? ""}`;
+      return `resolveBag:${candidate.bagId}:${candidate.choiceIndex ?? ""}:${candidate.resolveOptional ?? ""}:${candidate.targets?.join(",") ?? ""}:${candidate.destinations?.map((destination) => `${destination.zone}:${destination.cards.join(",")}`).join("|") ?? ""}`;
     case "resolveEffect":
-      return `resolveEffect:${candidate.effectId}:${candidate.choiceIndex ?? ""}:${candidate.resolveOptional ?? ""}:${candidate.targets?.join(",") ?? ""}`;
+      return `resolveEffect:${candidate.effectId}:${candidate.choiceIndex ?? ""}:${candidate.resolveOptional ?? ""}:${candidate.targets?.join(",") ?? ""}:${candidate.destinations?.map((destination) => `${destination.zone}:${destination.cards.join(",")}`).join("|") ?? ""}`;
     case "putCardIntoInkwell":
       return `putCardIntoInkwell:${candidate.cardId}`;
     case "playCard":
@@ -763,11 +1121,23 @@ function buildResolutionVariants(args: {
     });
     return null;
   }
-  if (shape.requiresDestinations || shape.requiresOrderedTargets) {
+  const scryEffect = findAutomatableScryEffect(effect);
+  if (shape.requiresDestinations && !scryEffect) {
     diagnostics.push({
       kind: "unsupported-shape",
       family,
       reason: "Ordered destination selection is outside the v1 automation support matrix",
+      sourceCardId,
+      bagId,
+      effectId,
+    });
+    return null;
+  }
+  if (shape.requiresOrderedTargets) {
+    diagnostics.push({
+      kind: "unsupported-shape",
+      family,
+      reason: "Ordered target selection is outside the v1 automation support matrix",
       sourceCardId,
       bagId,
       effectId,
@@ -879,25 +1249,66 @@ function buildResolutionVariants(args: {
     return null;
   }
 
-  return groups.values.map((group) =>
-    group.reduce<AutomatedActionResolutionVariant>(
-      (current, next) => ({
-        ...current,
-        ...(next.choiceIndex !== undefined ? { choiceIndex: next.choiceIndex } : {}),
-        ...(typeof next.resolveOptional === "boolean"
-          ? { resolveOptional: next.resolveOptional }
-          : {}),
-        ...(next.targets && next.targets.length > 0 ? { targets: next.targets } : {}),
-      }),
-      {},
-    ),
-  );
+  const plannedScryDestinations =
+    scryEffect &&
+    buildScryDestinations({
+      adapter,
+      analysisPlayerId,
+      baseResolutionInput,
+      scryEffect,
+    });
+  if (scryEffect && !plannedScryDestinations) {
+    diagnostics.push({
+      kind: "unsupported-shape",
+      family,
+      reason: "Scry destinations could not be resolved within the automation support matrix",
+      sourceCardId,
+      bagId,
+      effectId,
+    });
+    return null;
+  }
+
+  return groups.values
+    .map((group) =>
+      group.reduce<AutomatedActionResolutionVariant>(
+        (current, next) => ({
+          ...current,
+          ...(next.choiceIndex !== undefined ? { choiceIndex: next.choiceIndex } : {}),
+          ...(typeof next.resolveOptional === "boolean"
+            ? { resolveOptional: next.resolveOptional }
+            : {}),
+          ...(next.targets && next.targets.length > 0 ? { targets: next.targets } : {}),
+        }),
+        {},
+      ),
+    )
+    .map((variant) =>
+      plannedScryDestinations && variant.resolveOptional !== false
+        ? {
+            ...variant,
+            destinations: plannedScryDestinations.map((destination) => ({
+              zone: destination.zone,
+              cards: [...destination.cards],
+            })),
+          }
+        : variant,
+    );
 }
 
 function extractBagEntry(entry: DeepReadonly<BagEffectEntry>): BagOrPendingEntry {
   return {
     baseResolutionInput: {
       choiceIndex: entry.resolutionInput.choiceIndex,
+      destinations: Array.isArray(entry.resolutionInput.destinations)
+        ? entry.resolutionInput.destinations.map((destination) => ({
+            zone: destination.zone,
+            cards: Array.isArray(destination.cards)
+              ? destination.cards.map((cardId: CardInstanceId) => String(cardId) as CardInstanceId)
+              : [String(destination.cards) as CardInstanceId],
+          }))
+        : undefined,
+      eventSnapshot: entry.resolutionInput.eventSnapshot,
       resolveOptional: entry.resolutionInput.resolveOptional,
       targets: Array.isArray(entry.resolutionInput.targets)
         ? [...entry.resolutionInput.targets]
@@ -914,6 +1325,15 @@ function extractPendingEntry(entry: DeepReadonly<PendingActionEffect>): BagOrPen
   return {
     baseResolutionInput: {
       choiceIndex: entry.resolutionInput.choiceIndex,
+      destinations: Array.isArray(entry.resolutionInput.destinations)
+        ? entry.resolutionInput.destinations.map((destination) => ({
+            zone: destination.zone,
+            cards: Array.isArray(destination.cards)
+              ? destination.cards.map((cardId: CardInstanceId) => String(cardId) as CardInstanceId)
+              : [String(destination.cards) as CardInstanceId],
+          }))
+        : undefined,
+      eventSnapshot: entry.resolutionInput.eventSnapshot,
       resolveOptional: entry.resolutionInput.resolveOptional,
       targets: Array.isArray(entry.resolutionInput.targets)
         ? [...entry.resolutionInput.targets]
@@ -1114,6 +1534,7 @@ function enumerateResolveBagCandidates(args: {
         family: "resolveBag",
         bagId: bagEntry.id,
         ...(typeof variant.choiceIndex === "number" ? { choiceIndex: variant.choiceIndex } : {}),
+        ...(variant.destinations ? { destinations: variant.destinations } : {}),
         ...(typeof variant.resolveOptional === "boolean"
           ? { resolveOptional: variant.resolveOptional }
           : {}),
@@ -1183,16 +1604,6 @@ function enumerateResolveEffectCandidates(args: {
       });
       continue;
     }
-    if (pendingEffect.kind === "scry-selection") {
-      diagnostics.push({
-        kind: "unsupported-shape",
-        family: "resolveEffect",
-        reason: "Ordered destination selection is outside the v1 automation support matrix",
-        sourceCardId: pendingEffect.sourceCardId,
-        effectId: pendingEffect.id,
-      });
-      continue;
-    }
 
     const extracted = extractPendingEntry(pendingEffect);
     const variants = buildResolutionVariants({
@@ -1216,6 +1627,7 @@ function enumerateResolveEffectCandidates(args: {
         family: "resolveEffect",
         effectId: pendingEffect.id,
         ...(typeof variant.choiceIndex === "number" ? { choiceIndex: variant.choiceIndex } : {}),
+        ...(variant.destinations ? { destinations: variant.destinations } : {}),
         ...(typeof variant.resolveOptional === "boolean"
           ? { resolveOptional: variant.resolveOptional }
           : {}),

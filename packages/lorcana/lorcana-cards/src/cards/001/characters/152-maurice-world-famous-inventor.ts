@@ -37,8 +37,11 @@ export const mauriceWorldfamousInventor: CharacterCard = {
   abilities: [
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 2,
+        cardType: "item",
+        duration: "next-play-this-turn",
+        target: "CONTROLLER",
+        type: "cost-reduction",
       },
       id: "x5f-1",
       name: "GIVE IT A TRY",

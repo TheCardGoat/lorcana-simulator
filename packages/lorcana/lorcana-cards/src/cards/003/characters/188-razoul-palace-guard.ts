@@ -31,6 +31,9 @@ export const razoulPalaceGuard: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Captain"],
   abilities: [
     {
+      condition: {
+        type: "no-damage",
+      },
       effect: {
         modifier: 2,
         stat: "strength",

@@ -32,13 +32,17 @@ export const sarabiProtectingThePride: CharacterCard = {
   abilities: [
     {
       id: "m08-1",
+      type: "activated",
+      cost: {
+        exert: true,
+      },
       effect: {
         modifier: -4,
         stat: "strength",
-        target: "CHOSEN_CHARACTER",
+        target: "CHOSEN_OPPOSING_CHARACTER",
         type: "modify-stat",
+        duration: "until-start-of-next-turn",
       },
-      type: "action",
       text: "FEARSOME SNARL {E} - Chosen opposing character gets -4 {S} until the start of your next turn.",
     },
   ],

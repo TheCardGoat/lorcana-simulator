@@ -30,6 +30,33 @@ export const rooLittleHelper: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Whisper"],
-  abilities: [],
+  abilities: [
+    {
+      id: "0Bd-1",
+      name: "HOPPING IN",
+      type: "activated",
+      cost: {
+        exert: true,
+      },
+      effect: {
+        type: "put-under",
+        source: "this-card",
+        under: {
+          cardTypes: ["character", "location"],
+          count: 1,
+          owner: "you",
+          selector: "chosen",
+          zones: ["play"],
+          filter: [
+            {
+              keyword: "Boost",
+              type: "has-keyword",
+            },
+          ],
+        },
+      },
+      text: "HOPPING IN {E} — Put this character facedown under one of your characters or locations with Boost.",
+    },
+  ],
   i18n: rooLittleHelperI18n,
 };

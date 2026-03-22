@@ -213,6 +213,7 @@ export interface CardModel {
   canBeChallenged(): boolean;
   canChallenge(): boolean;
   canQuest(): boolean;
+  canMoveToLocation: boolean;
   isAtLocation(locationId?: string): boolean;
   containsCharacter(card?: LorcanaCard): boolean;
 
@@ -422,6 +423,7 @@ export class LorcanaTestEngine {
       canChallenge: () =>
         isCharacterCard(cardDef) && !hasSelfRestriction(cardDef, "cant-challenge"),
       canQuest: () => isCharacterCard(cardDef) || isLocationCard(cardDef),
+      canMoveToLocation: !hasSelfRestriction(cardDef, "cant-move"),
       isAtLocation: (locationId?: string) => {
         const modelZone = cardModel.zone;
         if (locationId) {

@@ -1,97 +1,138 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   MauriceWorldFamousInventor,
-//   TinkerBellTinyTactician,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { ursulaShellNecklace } from "@lorcanito/lorcana-engine/cards/001/items/items";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Maurice - World-Famous Inventor", () => {
-//   It("Give it a try: Whenever this character quests, you pay 2 {I} less for the next item you play this turn.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: ursulaShellNecklace.cost - 2,
-//       Hand: [ursulaShellNecklace],
-//       Play: [mauriceWorldFamousInventor],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       MauriceWorldFamousInventor.id,
-//     );
-//
-//     Const target = testStore.getByZoneAndId("hand", ursulaShellNecklace.id);
-//
-//     CardUnderTest.quest();
-//     Target.playFromHand();
-//
-//     Expect(target.zone).toEqual("play");
-//     Expect(
-//       TestStore.store.tableStore.getTable("player_one").inkAvailable(),
-//     ).toEqual(0);
-//   });
-//
-//   Describe("It works!: Whenever you play an item, you may draw a card.", () => {
-//     It("It works! - player plays an item", () => {
-//       Const testStore = new TestStore({
-//         Inkwell: ursulaShellNecklace.cost,
-//         Deck: [tinkerBellTinyTactician],
-//         Hand: [ursulaShellNecklace],
-//         Play: [mauriceWorldFamousInventor],
-//       });
-//
-//       Const target = testStore.getByZoneAndId("hand", ursulaShellNecklace.id);
-//
-//       Target.playFromHand();
-//       TestStore.resolveTopOfStack();
-//
-//       Expect(target.zone).toEqual("play");
-//       Expect(testStore.getZonesCardCount().hand).toEqual(1);
-//     });
-//
-//     It("It works! - Opponent play an item", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Inkwell: ursulaShellNecklace.cost,
-//           Deck: [tinkerBellTinyTactician],
-//           Hand: [ursulaShellNecklace],
-//         },
-//         {
-//           Play: [mauriceWorldFamousInventor],
-//         },
-//       );
-//
-//       Const target = testStore.getByZoneAndId("hand", ursulaShellNecklace.id);
-//
-//       Target.playFromHand();
-//
-//       Expect(target.zone).toEqual("play");
-//       Expect(testStore.getZonesCardCount().hand).toEqual(0);
-//       Expect(testStore.getZonesCardCount("player_two").hand).toEqual(0);
-//       Expect(testStore.store.stackLayerStore.layers).toHaveLength(0);
-//     });
-//
-//     It("It works! - Skip Effect", () => {
-//       Const testStore = new TestStore({
-//         Inkwell: ursulaShellNecklace.cost,
-//         Deck: [tinkerBellTinyTactician],
-//         Hand: [ursulaShellNecklace],
-//         Play: [mauriceWorldFamousInventor],
-//       });
-//
-//       Const target = testStore.getByZoneAndId("hand", ursulaShellNecklace.id);
-//
-//       Target.playFromHand();
-//       TestStore.resolveTopOfStack({ skip: true });
-//
-//       Expect(target.zone).toEqual("play");
-//       Expect(testStore.getZonesCardCount().hand).toEqual(0);
-//       Expect(testStore.store.stackLayerStore.layers).toHaveLength(0);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockItem,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { mauriceWorldfamousInventor } from "./152-maurice-world-famous-inventor";
+
+const testItem = createMockItem({
+  id: "maurice-test-item",
+  name: "Test Item",
+  cost: 4,
+});
+
+const testCharacter = createMockCharacter({
+  id: "maurice-test-character",
+  name: "Test Character",
+  cost: 4,
+});
+
+const drawnCard = createMockCharacter({
+  id: "maurice-drawn-card",
+  name: "Drawn Card",
+  cost: 1,
+});
+
+describe("Maurice - World-Famous Inventor", () => {
+  describe("GIVE IT A TRY - Whenever this character quests, you pay 2 less for the next item you play this turn", () => {
+    it("reduces cost by 2 for the next item after questing", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: testItem.cost - 2,
+        play: [{ card: mauriceWorldfamousInventor }],
+        hand: [testItem],
+        deck: 1,
+      });
+
+      expect(testEngine.asPlayerOne().canPlayCard(testItem)).toBe(false);
+
+      expect(testEngine.asPlayerOne().quest(mauriceWorldfamousInventor)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().canPlayCard(testItem)).toBe(true);
+      expect(testEngine.asPlayerOne().playCard(testItem)).toBeSuccessfulCommand();
+    });
+
+    it("only reduces cost for items, not characters", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: testCharacter.cost - 2,
+        play: [{ card: mauriceWorldfamousInventor }],
+        hand: [testCharacter],
+        deck: 1,
+      });
+
+      expect(testEngine.asPlayerOne().quest(mauriceWorldfamousInventor)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().canPlayCard(testCharacter)).toBe(false);
+    });
+
+    it("only reduces cost for the NEXT item, not subsequent ones", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: testItem.cost * 2 - 2,
+        play: [{ card: mauriceWorldfamousInventor }],
+        hand: [testItem, testItem],
+        deck: 1,
+      });
+
+      expect(testEngine.asPlayerOne().quest(mauriceWorldfamousInventor)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().playCard(testItem)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().canPlayCard(testItem)).toBe(false);
+    });
+  });
+
+  describe("IT WORKS! - Whenever you play an item, you may draw a card", () => {
+    it("puts a draw-card effect in the bag when you play an item", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: testItem.cost,
+        play: [{ card: mauriceWorldfamousInventor }],
+        hand: [testItem],
+        deck: [drawnCard],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(testItem)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    });
+
+    it("draws a card when the optional is accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: testItem.cost,
+        play: [{ card: mauriceWorldfamousInventor }],
+        hand: [testItem],
+        deck: [drawnCard],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(testItem)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, deck: 0, play: 2 });
+    });
+
+    it("does not draw a card when the optional is declined", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: testItem.cost,
+        play: [{ card: mauriceWorldfamousInventor }],
+        hand: [testItem],
+        deck: [drawnCard],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(testItem)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 1, play: 2 });
+    });
+
+    it("does not trigger when opponent plays an item", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: testItem.cost,
+          hand: [testItem],
+          deck: [drawnCard],
+        },
+        {
+          play: [{ card: mauriceWorldfamousInventor }],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(testItem)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 1, play: 1 });
+    });
+  });
+});

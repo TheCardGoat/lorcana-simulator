@@ -7,6 +7,7 @@ import { resolveEffectTargets } from "../../../targeting/runtime";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
 import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
 import { recordCardPutUnderThisTurn } from "../../state/turn-metrics";
+import { getEffectTargetSelectionInput } from "./selection-state";
 
 export function isPutUnderEffect(effect: unknown): effect is PutUnderEffect {
   return (
@@ -124,12 +125,45 @@ function moveDiscardCardUnderTarget(
   return true;
 }
 
+function moveThisCardUnderTarget(
+  ctx: PlayCardExecutionContext,
+  cardId: CardInstanceId,
+  targetId: CardInstanceId,
+): boolean {
+  const currentZone = ctx.framework.zones.getCardZone(cardId);
+  if (!currentZone?.startsWith("play")) {
+    return false;
+  }
+
+  removeUnderCardFromPreviousParent(ctx, cardId);
+  ctx.framework.zones.moveCard(cardId, {
+    zone: "limbo",
+    playerId: ctx.framework.zones.getCardOwner(cardId) as PlayerId,
+  });
+  appendCardUnderParent(ctx, targetId, cardId);
+  ctx.cards.patchMeta(cardId, {
+    stackParentId: targetId,
+    cardsUnder: undefined,
+    state: undefined,
+    damage: undefined,
+    isDrying: undefined,
+    publicFaceState: undefined,
+    atLocationId: undefined,
+    playedViaShift: undefined,
+    playedCostType: undefined,
+  });
+
+  return true;
+}
+
 export function resolvePutUnderEffect(
   ctx: PlayCardExecutionContext,
   cardPlayed: CardPlayedPayload,
   effect: PutUnderEffect,
   resolutionInput: ActionResolutionInput,
 ): void {
+  const selectionInput = getEffectTargetSelectionInput(effect.under, resolutionInput);
+
   const underTarget =
     effect.under === "self"
       ? [cardPlayed.cardId]
@@ -137,7 +171,7 @@ export function resolvePutUnderEffect(
           ctx,
           cardPlayed,
           effect.under,
-          resolutionInput.targets,
+          selectionInput,
           resolutionInput.eventSnapshot,
         ) ?? []);
 
@@ -156,7 +190,12 @@ export function resolvePutUnderEffect(
 
   let movedCardId: CardInstanceId | undefined;
 
-  if (effect.source === "top-of-deck") {
+  if (effect.source === "this-card") {
+    const moved = moveThisCardUnderTarget(ctx, cardPlayed.cardId, targetId);
+    if (moved) {
+      movedCardId = cardPlayed.cardId;
+    }
+  } else if (effect.source === "top-of-deck") {
     const deckCards = ctx.framework.zones.getCards({
       zone: "deck",
       playerId: ownerId,
@@ -164,8 +203,6 @@ export function resolvePutUnderEffect(
     movedCardId = deckCards.at(-1);
     moveTopDeckCardUnderTarget(ctx, ownerId, targetId);
   } else if (effect.source === "discard") {
-    // resolutionInput.targets[0] holds the selected discard card ID
-    // (under: "self" frees the targets slot for this selection)
     const selectedTargets = resolutionInput.targets;
     const selectedCardId = Array.isArray(selectedTargets)
       ? (selectedTargets[0] as CardInstanceId | undefined)
@@ -189,11 +226,8 @@ export function resolvePutUnderEffect(
   }
 
   if (movedCardId) {
-    // Track for turn-metric conditions (e.g. "if you've put a card under her this turn")
     recordCardPutUnderThisTurn(ctx, targetId, movedCardId);
 
-    // subjectCardId = the destination (the character/location the card was placed under)
-    // triggerSourceCardId = the card that was placed (for reference)
     emitTriggeredLorcanaEvent(
       ctx,
       "putCardUnder",

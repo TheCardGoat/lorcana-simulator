@@ -6,17 +6,27 @@ import {
   type MoveOption,
 } from "@tcg/lorcana-engine";
 
-import { buildExecutableMoves } from "./derived-state.js";
+import {
+  buildExecutableMoves,
+  expandCardActionCategoryMoves,
+  expandCardMoves,
+  expandCategoryMoves,
+} from "./derived-state.js";
 import type { CardSnapshotMap } from "./board-utils.js";
 
 function createStubEngine(options: {
   moveOptions?: Record<string, MoveOption[]>;
+  callLog?: string[];
 }): LorcanaEngineBase {
   const moveOptions = options.moveOptions ?? {};
+  const callLog = options.callLog;
 
   return {
-    getMoveOptions: (moveId: string, cardId: string | number) =>
-      moveId === "playCard" ? (moveOptions[String(cardId)] ?? []) : [],
+    getMoveOptions: (moveId: string, cardId: string | number) => {
+      const key = `${moveId}:${String(cardId)}`;
+      callLog?.push(key);
+      return moveOptions[key] ?? moveOptions[String(cardId)] ?? [];
+    },
     getBoard: () =>
       ({
         playerOrder: [],
@@ -125,5 +135,89 @@ describe("buildExecutableMoves", () => {
       },
       label: "Smash",
     });
+  });
+
+  it("expands only the selected category instead of rebuilding unrelated categories", () => {
+    const callLog: string[] = [];
+    const engine = createStubEngine({
+      callLog,
+      moveOptions: {
+        "playCard:smash": [{ kind: "card", cardId: toCardInstanceId("targetA") }],
+        "challenge:attacker": [{ kind: "card", cardId: toCardInstanceId("targetB") }],
+      },
+    });
+
+    const entries = expandCategoryMoves(
+      engine,
+      cards,
+      [
+        createAvailableMove("playCard", ["smash"]),
+        createAvailableMove("putCardIntoInkwell", ["smash"]),
+        createAvailableMove("challenge", ["attacker"]),
+      ],
+      [],
+      "ink-card",
+    );
+
+    expect(entries).toEqual([
+      expect.objectContaining({
+        moveId: "putCardIntoInkwell",
+        params: { cardId: "smash" },
+      }),
+    ]);
+    expect(callLog).toEqual([]);
+  });
+
+  it("expands only the requested source card for card action views", () => {
+    const callLog: string[] = [];
+    const engine = createStubEngine({
+      callLog,
+      moveOptions: {
+        "playCard:smash": [{ kind: "card", cardId: toCardInstanceId("targetA") }],
+        "playCard:targetB": [{ kind: "card", cardId: toCardInstanceId("targetB") }],
+      },
+    });
+
+    const entries = expandCardMoves(
+      engine,
+      cards,
+      [createAvailableMove("playCard", ["smash", "targetB"])],
+      [],
+      "smash",
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      moveId: "playCard",
+      params: { cardId: "smash", targets: ["targetA"] },
+    });
+    expect(callLog).toEqual(["playCard:smash"]);
+  });
+
+  it("expands only the requested source card within the requested category", () => {
+    const callLog: string[] = [];
+    const engine = createStubEngine({
+      callLog,
+      moveOptions: {
+        "challenge:smash": [{ kind: "card", cardId: toCardInstanceId("targetA") }],
+        "challenge:targetB": [{ kind: "card", cardId: toCardInstanceId("targetB") }],
+      },
+    });
+
+    const entries = expandCardActionCategoryMoves(
+      engine,
+      cards,
+      [createAvailableMove("challenge", ["smash", "targetB"])],
+      [],
+      "smash",
+      "challenge",
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      moveId: "challenge",
+      params: { attackerId: "smash", defenderId: "targetA" },
+    });
+    expect(callLog).toEqual(["challenge:smash"]);
   });
 });

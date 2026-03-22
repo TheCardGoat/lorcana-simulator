@@ -37,6 +37,7 @@ export const rhinoOnesixteenthWolf: CharacterCard = {
         stat: "strength",
         target: "CHOSEN_CHARACTER",
         type: "modify-stat",
+        duration: "until-start-of-next-turn",
       },
       id: "1bm-1",
       name: "TINY HOWL",

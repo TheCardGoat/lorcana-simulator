@@ -43,9 +43,9 @@ export const royalGuardOctopusSoldier: CharacterCard = {
       name: "HEAVILY ARMED",
       text: "HEAVILY ARMED Whenever you draw a card, this character gains Challenger +1 this turn.",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "draw",
+        on: "YOU",
+        timing: "whenever",
       },
       type: "triggered",
     },

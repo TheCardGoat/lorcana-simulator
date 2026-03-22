@@ -42,6 +42,7 @@ function createAction(
 ): CardActionView {
   return {
     detail: undefined,
+    interaction: "execute-or-select",
     moves: [],
     ...overrides,
   };
@@ -91,5 +92,46 @@ describe("CardHoverCardContent", () => {
     expect(body).toContain("This character is exerted.");
     expect(body).not.toContain('class="ability-title">Challenge</span>');
     expect(body).not.toContain('class="ability-title">Move to location</span>');
+  });
+
+  it("renders occupants for location cards when provided", () => {
+    const { body } = render(CardHoverCardContentTestHost, {
+      props: {
+        card: createCardSnapshot({
+          cardId: "hidden-cove",
+          label: "Hidden Cove - Tranquil Haven",
+          cardType: "location",
+          moveCost: 1,
+          strength: undefined,
+          willpower: 7,
+          loreValue: undefined,
+          textEntries: [
+            {
+              title: "REVITALIZING WATERS",
+              description: "Characters get +1 lore and +1 willpower while here.",
+            },
+          ],
+        }),
+        locationOccupants: [
+          createCardSnapshot({
+            cardId: "character-1",
+            label: "Agustin Madrigal",
+            atLocationId: "hidden-cove",
+            readyState: "exerted",
+            damage: 1,
+            strength: 2,
+            willpower: 3,
+            loreValue: 1,
+          }),
+        ],
+      },
+    });
+
+    expect(body).toContain("At this location");
+    expect(body).toContain("1 character here");
+    expect(body).toContain('data-testid="location-occupants-list"');
+    expect(body).toContain("Agustin Madrigal");
+    expect(body).toContain("Exerted");
+    expect(body).toContain("1 damage");
   });
 });
