@@ -37,27 +37,29 @@ export const robinHoodUnrivaledArcher: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      id: "v3n-1",
+      name: "FEED THE POOR",
+      text: "FEED THE POOR When you play this character, if an opponent has more cards in their hand than you, draw a card.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
       effect: {
+        type: "conditional",
         condition: {
-          expression: "an opponent has more cards in their hand than you",
-          type: "if",
+          type: "comparison",
+          left: { type: "cards-in-hand", controller: "opponent" },
+          comparison: "greater",
+          right: { type: "cards-in-hand", controller: "you" },
         },
         then: {
           amount: 1,
           target: "CONTROLLER",
           type: "draw",
         },
-        type: "conditional",
       },
-      id: "v3n-1",
-      name: "FEED THE POOR",
-      text: "FEED THE POOR When you play this character, if an opponent has more cards in their hand than you, you may draw a card.",
-      trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
-      },
-      type: "triggered",
     },
     {
       condition: {

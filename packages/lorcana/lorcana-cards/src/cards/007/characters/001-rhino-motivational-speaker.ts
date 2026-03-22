@@ -34,11 +34,11 @@ export const rhinoMotivationalSpeaker: CharacterCard = {
       effect: {
         modifier: 2,
         stat: "willpower",
-        target: "YOUR_CHARACTERS",
+        target: "YOUR_OTHER_CHARACTERS",
         type: "modify-stat",
       },
       id: "15i-1",
-      name: "DESTINY CALLING Your other",
+      name: "DESTINY CALLING",
       text: "DESTINY CALLING Your other characters get +2 {W}.",
       type: "static",
     },

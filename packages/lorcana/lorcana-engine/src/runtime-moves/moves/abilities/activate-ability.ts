@@ -8,7 +8,6 @@ import type {
 import { createLorcanaLogMessage } from "../../../types";
 import {
   analyzeEffectTargets,
-  analyzeTargetSelectionAvailabilityFromAnalysis,
   flattenNormalizedTargetSelection,
   validateAndNormalizeTargetSelection,
 } from "../../../targeting/runtime";
@@ -792,18 +791,22 @@ function validateAbilityTargeting(
     ctx,
   });
   if (!selectionValidation.valid && selectionValidation.errorCode === "TOO_FEW_TARGETS") {
-    analyzeTargetSelectionAvailabilityFromAnalysis(ability.effect, analysis);
-    return validateAndNormalizeTargetSelection(
-      ctx.args.targets,
-      {
-        ...analysis,
-        minSelections: 0,
-      },
-      {
-        currentPlayer,
-        ctx,
-      },
-    );
+    if (
+      analysis.requiresExplicitSelection ||
+      analysis.allowsDeferredResolutionWithoutInitialSelection
+    ) {
+      return validateAndNormalizeTargetSelection(
+        ctx.args.targets,
+        {
+          ...analysis,
+          minSelections: 0,
+        },
+        {
+          currentPlayer,
+          ctx,
+        },
+      );
+    }
   }
   if (!selectionValidation.valid) {
     return selectionValidation;
@@ -1217,7 +1220,12 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
     const finalSelection =
       !normalizedSelection.valid && normalizedSelection.errorCode === "TOO_FEW_TARGETS"
         ? (() => {
-            analyzeTargetSelectionAvailabilityFromAnalysis(ability.effect, analysis);
+            if (
+              !analysis.requiresExplicitSelection &&
+              !analysis.allowsDeferredResolutionWithoutInitialSelection
+            ) {
+              return normalizedSelection;
+            }
             return validateAndNormalizeTargetSelection(
               targets,
               {

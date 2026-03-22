@@ -17,6 +17,7 @@ function createGameContextStub(
     moveCategorySummaries: () => [],
     moveCategoryCount: () => 0,
     expandCardMoves: () => [],
+    expandCardActionCategoryMoves: () => [],
     expandCategoryMoves: (categoryId: string) =>
       executableMovesFn().filter((move) => move.presentation.categoryId === categoryId),
     challengeReadyCardIds: () => [],

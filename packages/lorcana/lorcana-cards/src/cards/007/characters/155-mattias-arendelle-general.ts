@@ -33,11 +33,11 @@ export const mattiasArendelleGeneral: CharacterCard = {
     {
       effect: {
         keyword: "Ward",
-        target: "YOUR_CHARACTERS",
+        target: "YOUR_QUEEN_CHARACTERS",
         type: "gain-keyword",
       },
       id: "f9s-1",
-      name: "PROUD TO SERVE Your Queen",
+      name: "PROUD TO SERVE",
       text: "PROUD TO SERVE Your Queen characters gain Ward.",
       type: "static",
     },

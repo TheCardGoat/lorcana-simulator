@@ -40,10 +40,12 @@ export const tamatoaHappyAsAClamEnchanted: CharacterCard = {
       effect: {
         target: {
           cardTypes: ["item"],
-          count: 1,
-          owner: "any",
+          count: {
+            upTo: 2,
+          },
+          owner: "you",
           selector: "chosen",
-          zones: ["play"],
+          zones: ["discard"],
         },
         type: "return-to-hand",
       },

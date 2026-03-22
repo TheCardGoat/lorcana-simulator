@@ -1,31 +1,38 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   PowerlineWorldsGreatestRockStar,
-//   RoxannePowerlineFan,
-// } from "@lorcanito/lorcana-engine/cards/009";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Roxanne - Powerline Fan", () => {
-//   It("CONCERT LOVER While you have a character with Singer in play, this character gets +1 {S} and +1 {L}.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: powerlineWorldsGreatestRockStar.cost,
-//       Play: [roxannePowerlineFan],
-//       Hand: [powerlineWorldsGreatestRockStar],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(roxannePowerlineFan);
-//     Expect(cardUnderTest.strength).toBe(roxannePowerlineFan.strength);
-//     Expect(cardUnderTest.lore).toBe(roxannePowerlineFan.lore);
-//
-//     Await testEngine.playCard(powerlineWorldsGreatestRockStar);
-//
-//     Expect(cardUnderTest.strength).toBe(roxannePowerlineFan.strength + 1);
-//     Expect(cardUnderTest.lore).toBe(roxannePowerlineFan.lore + 1);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { roxannePowerlineFan } from "./113-roxanne-powerline-fan";
+import { powerlineWorldsGreatestRockStar } from "./110-powerline-worlds-greatest-rock-star";
+
+const nonSingerCharacter = createMockCharacter({
+  id: "roxanne-009-test-non-singer",
+  name: "Non-Singer Character",
+  cost: 1,
+});
+
+describe("Roxanne - Powerline Fan", () => {
+  it("CONCERT LOVER - base stats when no character with Singer in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [roxannePowerlineFan, nonSingerCharacter],
+    });
+
+    expect(testEngine.asPlayerOne().getCardStrength(roxannePowerlineFan)).toBe(
+      roxannePowerlineFan.strength,
+    );
+    expect(testEngine.asPlayerOne().getCardLore(roxannePowerlineFan)).toBe(
+      roxannePowerlineFan.lore,
+    );
+  });
+
+  it("CONCERT LOVER - gets +1 {S} and +1 {L} while you have a character with Singer in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [roxannePowerlineFan, powerlineWorldsGreatestRockStar],
+    });
+
+    expect(testEngine.asPlayerOne().getCardStrength(roxannePowerlineFan)).toBe(
+      roxannePowerlineFan.strength + 1,
+    );
+    expect(testEngine.asPlayerOne().getCardLore(roxannePowerlineFan)).toBe(
+      roxannePowerlineFan.lore + 1,
+    );
+  });
+});

@@ -26,4 +26,15 @@ describe("Marching Off to Battle", () => {
     expect(testEngine.asPlayerOne().playCard(marchingOffToBattle)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(2);
   });
+
+  it("does not draw cards if no character was banished this turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [marchingOffToBattle],
+      inkwell: marchingOffToBattle.cost,
+      deck: [heiheiBoatSnack, mickeyMouseTrueFriend],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(marchingOffToBattle)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+  });
 });

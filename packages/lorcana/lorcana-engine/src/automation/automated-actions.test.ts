@@ -25,7 +25,10 @@ import {
 } from "../testing";
 
 import { resolveServerCurrentActor } from "./actor-resolution";
-import { boardControlLoreRaceAutomatedActionStrategy } from "./default-strategy";
+import {
+  aggressiveBoardControlLoreRaceAutomatedActionStrategy,
+  boardControlLoreRaceAutomatedActionStrategy,
+} from "./default-strategy";
 import { takeAutomatedActionWithAdapter } from "./planner";
 
 function createMockActionCard(params: {
@@ -244,6 +247,63 @@ describe("automated actions", () => {
     });
   });
 
+  it("ranks choose-first-player candidates to choose self first for the current actor", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 1,
+      },
+      {
+        deck: 1,
+      },
+      { skipPreGame: false },
+    );
+
+    loadMutatedState(engine, (state) => {
+      state.ctx.status.choosingFirstPlayer = PLAYER_TWO;
+      state.ctx.priority.holder = PLAYER_TWO;
+      state.ctx.status.phase = "chooseFirstPlayer";
+      state.ctx.status.step = "";
+    });
+
+    const result = engine.asServer().enumerateAutomatedActionsForCurrentActor();
+
+    expect(result.actorId).toBe(PLAYER_TWO);
+    expect(result.candidates[0]).toMatchObject({
+      family: "chooseWhoGoesFirst",
+      firstPlayerId: PLAYER_TWO,
+    });
+  });
+
+  it("aggressive board-control still chooses itself to go first", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 1,
+      },
+      {
+        deck: 1,
+      },
+      { skipPreGame: false },
+    );
+
+    loadMutatedState(engine, (state) => {
+      state.ctx.status.choosingFirstPlayer = PLAYER_TWO;
+      state.ctx.priority.holder = PLAYER_TWO;
+      state.ctx.status.phase = "chooseFirstPlayer";
+      state.ctx.status.step = "";
+    });
+
+    const result = engine.asServer().takeAutomatedActionForCurrentActor({
+      strategy: aggressiveBoardControlLoreRaceAutomatedActionStrategy,
+    });
+
+    expect(result.actorId).toBe(PLAYER_TWO);
+    expect(result.selectedCandidate).toMatchObject({
+      family: "chooseWhoGoesFirst",
+      firstPlayerId: PLAYER_TWO,
+    });
+    expect(result.finalResult.success).toBe(true);
+  });
+
   it("builds keep-all, structural, and full mulligan candidates in deterministic order", () => {
     const keeperOne = createMockCharacter({ id: "keeper-one", name: "Keeper One", cost: 1 });
     const keeperTwo = createMockCharacter({ id: "keeper-two", name: "Keeper Two", cost: 2 });
@@ -295,6 +355,62 @@ describe("automated actions", () => {
         engine.asPlayerOne().getCard(expensiveNonInkable).id,
       ]),
     });
+  });
+
+  it("aggressive board-control keeps the shared mulligan ordering", () => {
+    const keeperOne = createMockCharacter({
+      id: "agg-keeper-one",
+      name: "Agg Keeper One",
+      cost: 1,
+    });
+    const keeperTwo = createMockCharacter({
+      id: "agg-keeper-two",
+      name: "Agg Keeper Two",
+      cost: 2,
+    });
+    const expensiveInkable = createMockCharacter({
+      id: "agg-expensive-inkable",
+      name: "Agg Expensive Inkable",
+      cost: 7,
+    });
+    const expensiveNonInkable = {
+      ...createMockCharacter({
+        id: "agg-expensive-non-inkable",
+        name: "Agg Expensive Non-Inkable",
+        cost: 6,
+      }),
+      inkable: false,
+    };
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [keeperOne, keeperTwo, expensiveInkable, expensiveNonInkable],
+        deck: 1,
+      },
+      {
+        deck: 1,
+      },
+      { skipPreGame: false },
+    );
+
+    loadMutatedState(engine, (state) => {
+      state.ctx.status.choosingFirstPlayer = undefined;
+      state.ctx.status.pendingMulligan = [PLAYER_ONE, PLAYER_TWO];
+      state.ctx.status.phase = "alterHand";
+      state.ctx.status.step = "";
+    });
+
+    const mulliganCandidates = engine
+      .asPlayerOne()
+      .enumerateAutomatedActions({
+        strategy: aggressiveBoardControlLoreRaceAutomatedActionStrategy,
+      })
+      .candidates.filter((candidate) => candidate.family === "alterHand");
+
+    expect(mulliganCandidates.map((candidate) => candidate.plan)).toEqual([
+      "keep-all",
+      "structural-mulligan",
+      "full-mulligan",
+    ]);
   });
 
   it("enumerates resolveBag candidates from the active bag", () => {
@@ -453,26 +569,116 @@ describe("automated actions", () => {
     ]);
   });
 
-  it("reports unsupported scry-selection pending effects without resolveEffect candidates", () => {
-    const source = createMockCharacter({ id: "scry-source", name: "Scry Source", cost: 2 });
-    const revealedOne = createMockCharacter({
-      id: "revealed-one",
-      name: "Revealed One",
-      cost: 1,
-    });
-    const revealedTwo = createMockCharacter({
-      id: "revealed-two",
-      name: "Revealed Two",
+  it("enumerates resolveBag candidates for optional look-at-the-top effects", () => {
+    const source = createMockCharacter({ id: "scry-bag-source", name: "Scry Bag Source", cost: 2 });
+    const badTopCard = {
+      ...createMockCharacter({
+        id: "bad-top-card",
+        name: "Bad Top Card",
+        cost: 7,
+        lore: 0,
+      }),
+      inkable: false,
+    };
+    const nextCard = createMockCharacter({
+      id: "next-top-card",
+      name: "Next Top Card",
       cost: 2,
+      lore: 2,
     });
     const engine = LorcanaMultiplayerTestEngine.createWithFixture({
       play: [{ card: source, isDrying: false }],
-      deck: [revealedOne, revealedTwo],
+      deck: [badTopCard, nextCard],
     });
     const sourceId = engine.asPlayerOne().getCard(source).id as CardInstanceId;
-    const revealedCardIds = [revealedOne, revealedTwo].map(
-      (card) => engine.asPlayerOne().getCard(card).id as CardInstanceId,
+
+    loadMutatedState(engine, (state) => {
+      state.G.triggeredAbilities.bag.items = [
+        {
+          id: "bag:scry:1",
+          type: "bag-effect",
+          kind: "triggered-ability",
+          abilityId: "scry-bag-ability",
+          abilityKey: "scry-bag-ability",
+          sourceId,
+          controllerId: PLAYER_ONE,
+          chooserId: PLAYER_ONE,
+          cardPlayed: getCardPlayedPayload({
+            playerId: PLAYER_ONE,
+            cardId: sourceId,
+            cardType: "character",
+          }),
+          effect: {
+            type: "optional",
+            effect: {
+              type: "scry",
+              amount: 1,
+              destinations: [
+                {
+                  zone: "deck-top",
+                  min: 0,
+                  max: 1,
+                },
+                {
+                  zone: "deck-bottom",
+                  remainder: true,
+                },
+              ],
+            },
+          } satisfies Effect,
+          resolutionInput: {},
+          occurrenceIndex: 0,
+        } satisfies BagEffectEntry,
+      ];
+    });
+
+    const result = engine.asPlayerOne().enumerateAutomatedActions();
+    const bagCandidates = result.candidates.filter(
+      (candidate) => candidate.family === "resolveBag",
     );
+
+    expect(bagCandidates).toContainEqual({
+      family: "resolveBag",
+      bagId: "bag:scry:1",
+      resolveOptional: false,
+    });
+    expect(bagCandidates).toContainEqual(
+      expect.objectContaining({
+        family: "resolveBag",
+        bagId: "bag:scry:1",
+        resolveOptional: true,
+        destinations: expect.arrayContaining([
+          expect.objectContaining({ zone: "deck-top" }),
+          expect.objectContaining({ zone: "deck-bottom" }),
+        ]),
+      }),
+    );
+  });
+
+  it("enumerates resolveEffect destinations for look-at-the-top pending effects", () => {
+    const source = createMockCharacter({ id: "scry-source", name: "Scry Source", cost: 2 });
+    const usefulTopCard = createMockCharacter({
+      id: "useful-top-card",
+      name: "Useful Top Card",
+      cost: 2,
+      lore: 2,
+    });
+    const badBottomCard = {
+      ...createMockCharacter({
+        id: "bad-bottom-card",
+        name: "Bad Bottom Card",
+        cost: 7,
+        lore: 0,
+      }),
+      inkable: false,
+    };
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: source, isDrying: false }],
+      deck: [usefulTopCard, badBottomCard],
+    });
+    const sourceId = engine.asPlayerOne().getCard(source).id as CardInstanceId;
+    const usefulTopCardId = engine.findCardInstanceId(usefulTopCard, "deck", PLAYER_ONE);
+    const badBottomCardId = engine.findCardInstanceId(badBottomCard, "deck", PLAYER_ONE);
 
     loadMutatedState(engine, (state) => {
       state.G.pendingEffects = [
@@ -492,32 +698,28 @@ describe("automated actions", () => {
           effect: {
             type: "scry",
             amount: 2,
+            destinations: [
+              { zone: "deck-top", min: 0, max: 1 },
+              { zone: "deck-bottom", remainder: true },
+            ],
           } satisfies Effect,
-          resolutionInput: {},
+          resolutionInput: {
+            eventSnapshot: {
+              revealedCardIds: [usefulTopCardId, badBottomCardId],
+            },
+          },
           selectionContext: {
             amount: 2,
             chooserId: PLAYER_ONE,
             currentSelection: {},
             destinationRules: [
-              {
-                id: "hand",
-                max: 1,
-                min: 0,
-                remainder: false,
-                zone: "hand",
-              },
-              {
-                id: "deck-bottom",
-                max: null,
-                min: 0,
-                remainder: true,
-                zone: "deck-bottom",
-              },
+              { id: "deck-top", max: 1, min: 0, remainder: false, zone: "deck-top" },
+              { id: "deck-bottom", max: null, min: 0, remainder: true, zone: "deck-bottom" },
             ],
             kind: "scry-selection",
             origin: "pending-effect",
             requestId: "pending:scry:1",
-            revealedCardIds,
+            revealedCardIds: [usefulTopCardId, badBottomCardId],
             sourceCardId: sourceId,
             submitField: "destinations",
           },
@@ -528,14 +730,14 @@ describe("automated actions", () => {
 
     const result = engine.asPlayerOne().enumerateAutomatedActions();
 
-    expect(result.candidates.some((candidate) => candidate.family === "resolveEffect")).toBe(false);
-    expect(result.unsupportedSkips).toContainEqual(
-      expect.objectContaining({
-        effectId: "pending:scry:1",
-        family: "resolveEffect",
-        kind: "unsupported-shape",
-      }),
-    );
+    expect(result.candidates).toContainEqual({
+      family: "resolveEffect",
+      effectId: "pending:scry:1",
+      destinations: [
+        { zone: "deck-top", cards: [usefulTopCardId] },
+        { zone: "deck-bottom", cards: [badBottomCardId] },
+      ],
+    });
   });
 
   it("emits overflow diagnostics when target pools exceed the search cap", () => {
@@ -961,6 +1163,29 @@ describe("automated actions", () => {
     });
   });
 
+  it("lets the chosen first-player AI take its mulligan action next", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 1,
+      },
+      {
+        deck: 1,
+      },
+      { skipPreGame: false },
+    );
+
+    expect(engine.asPlayerOne().chooseFirstPlayer(PLAYER_TWO).success).toBe(true);
+
+    const result = engine.asServer().takeAutomatedActionForCurrentActor();
+
+    expect(result.actorId).toBe(PLAYER_TWO);
+    expect(result.selectedCandidate).toMatchObject({
+      family: "alterHand",
+    });
+    expect(result.finalResult.success).toBe(true);
+    expect(engine.asServer().getPendingMulliganPlayers()).toEqual([PLAYER_ONE]);
+  });
+
   it("takes automated actions through the player-one surface", () => {
     const quester = createMockCharacter({
       id: "player-one-quester",
@@ -1203,6 +1428,167 @@ describe("automated actions", () => {
     expect(result.finalResult.success).toBe(true);
   });
 
+  it("lets aggressive board-control challenge for a clear value trade before questing", () => {
+    const quester = createMockCharacter({
+      id: "agg-value-trade-quester",
+      name: "Agg Value Trade Quester",
+      cost: 2,
+      strength: 2,
+      willpower: 2,
+      lore: 2,
+    });
+    const attacker = createMockCharacter({
+      id: "agg-value-trade-attacker",
+      name: "Agg Value Trade Attacker",
+      cost: 2,
+      strength: 3,
+      willpower: 4,
+      lore: 0,
+    });
+    const defender = createMockCharacter({
+      id: "agg-value-trade-defender",
+      name: "Agg Value Trade Defender",
+      cost: 5,
+      strength: 2,
+      willpower: 3,
+      lore: 2,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [
+          { card: quester, isDrying: false },
+          { card: attacker, isDrying: false },
+        ],
+        deck: 1,
+        lore: 8,
+      },
+      {
+        play: [{ card: defender, exerted: true, isDrying: false }],
+        deck: 1,
+        lore: 9,
+      },
+    );
+
+    const result = engine.asPlayerOne().takeAutomatedAction({
+      strategy: aggressiveBoardControlLoreRaceAutomatedActionStrategy,
+    });
+
+    expect(result.selectedCandidate).toMatchObject({
+      family: "challenge",
+      attackerId: engine.asPlayerOne().getCard(attacker).id,
+      defenderId: engine.asPlayerTwo().getCard(defender).id,
+    });
+    expect(result.finalResult.success).toBe(true);
+  });
+
+  it("lets aggressive board-control take a mutual-banish trade into a higher-value threat", () => {
+    const quester = createMockCharacter({
+      id: "agg-mutual-trade-quester",
+      name: "Agg Mutual Trade Quester",
+      cost: 2,
+      strength: 2,
+      willpower: 2,
+      lore: 2,
+    });
+    const attacker = createMockCharacter({
+      id: "agg-mutual-trade-attacker",
+      name: "Agg Mutual Trade Attacker",
+      cost: 2,
+      strength: 3,
+      willpower: 3,
+      lore: 0,
+    });
+    const defender = createMockCharacter({
+      id: "agg-mutual-trade-defender",
+      name: "Agg Mutual Trade Defender",
+      cost: 6,
+      strength: 3,
+      willpower: 3,
+      lore: 2,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [
+          { card: quester, isDrying: false },
+          { card: attacker, isDrying: false },
+        ],
+        deck: 1,
+        lore: 10,
+      },
+      {
+        play: [{ card: defender, exerted: true, isDrying: false }],
+        deck: 1,
+        lore: 10,
+      },
+    );
+
+    const result = engine.asPlayerOne().takeAutomatedAction({
+      strategy: aggressiveBoardControlLoreRaceAutomatedActionStrategy,
+    });
+
+    expect(result.selectedCandidate).toMatchObject({
+      family: "challenge",
+      attackerId: engine.asPlayerOne().getCard(attacker).id,
+      defenderId: engine.asPlayerTwo().getCard(defender).id,
+    });
+    expect(result.finalResult.success).toBe(true);
+    expect(engine.asPlayerOne().getCardZone(attacker)).toBe("discard");
+    expect(engine.asPlayerTwo().getCardZone(defender)).toBe("discard");
+  });
+
+  it("does not let aggressive board-control challenge away an immediate lore win", () => {
+    const winningQuester = createMockCharacter({
+      id: "agg-winning-quester",
+      name: "Agg Winning Quester",
+      cost: 2,
+      strength: 2,
+      willpower: 2,
+      lore: 1,
+    });
+    const attacker = createMockCharacter({
+      id: "agg-winning-attacker",
+      name: "Agg Winning Attacker",
+      cost: 2,
+      strength: 3,
+      willpower: 3,
+      lore: 0,
+    });
+    const defender = createMockCharacter({
+      id: "agg-winning-defender",
+      name: "Agg Winning Defender",
+      cost: 6,
+      strength: 3,
+      willpower: 3,
+      lore: 2,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [
+          { card: winningQuester, isDrying: false },
+          { card: attacker, isDrying: false },
+        ],
+        deck: 1,
+        lore: 19,
+      },
+      {
+        play: [{ card: defender, exerted: true, isDrying: false }],
+        deck: 1,
+        lore: 12,
+      },
+    );
+
+    const result = engine.asPlayerOne().takeAutomatedAction({
+      strategy: aggressiveBoardControlLoreRaceAutomatedActionStrategy,
+    });
+
+    expect(result.selectedCandidate).toMatchObject({
+      family: "quest",
+      cardId: engine.asPlayerOne().getCard(winningQuester).id,
+    });
+    expect(result.finalResult.success).toBe(true);
+    expect(engine.asServer().getWinner()).toBe(PLAYER_ONE);
+  });
+
   it("takes automated actions through the server current-actor surface", () => {
     const engine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
@@ -1221,6 +1607,180 @@ describe("automated actions", () => {
       firstPlayerId: PLAYER_ONE,
     });
     expect(result.finalResult.success).toBe(true);
+  });
+
+  it("resolves look-at-the-top prompts instead of conceding", () => {
+    const source = createMockCharacter({
+      id: "stuck-scry-source",
+      name: "Stuck Scry Source",
+      cost: 2,
+    });
+    const princessMatch = createMockCharacter({
+      id: "stuck-princess-match",
+      name: "Stuck Princess Match",
+      cost: 5,
+      lore: 2,
+      classifications: ["Storyborn", "Princess"],
+    });
+    const fillerA = createMockCharacter({ id: "stuck-filler-a", name: "Stuck Filler A", cost: 1 });
+    const fillerB = createMockCharacter({ id: "stuck-filler-b", name: "Stuck Filler B", cost: 2 });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 1,
+      },
+      {
+        play: [{ card: source, isDrying: false }],
+        deck: [fillerA, princessMatch, fillerB],
+      },
+    );
+    const sourceId = engine.asPlayerTwo().getCard(source).id as CardInstanceId;
+    const revealedCardIds = [fillerA, princessMatch, fillerB].map((card) =>
+      engine.findCardInstanceId(card, "deck", PLAYER_TWO),
+    );
+    const princessMatchId = engine.findCardInstanceId(princessMatch, "deck", PLAYER_TWO);
+    const fillerAId = engine.findCardInstanceId(fillerA, "deck", PLAYER_TWO);
+    const fillerBId = engine.findCardInstanceId(fillerB, "deck", PLAYER_TWO);
+
+    loadMutatedState(engine, (state) => {
+      state.ctx.priority.holder = PLAYER_ONE;
+      state.G.pendingEffects = [
+        {
+          id: "pending:stuck-scry:1",
+          type: "action-effect",
+          kind: "scry-selection",
+          sourceId,
+          sourceCardId: sourceId,
+          controllerId: PLAYER_ONE,
+          chooserId: PLAYER_TWO,
+          cardPlayed: getCardPlayedPayload({
+            playerId: PLAYER_TWO,
+            cardId: sourceId,
+            cardType: "character",
+          }),
+          effect: {
+            type: "scry",
+            amount: 3,
+            destinations: [
+              {
+                zone: "hand",
+                min: 0,
+                max: 1,
+                filters: [
+                  { type: "card-type", cardType: "character" },
+                  { type: "classification", classification: "Princess" },
+                ],
+              },
+              {
+                zone: "deck-bottom",
+                remainder: true,
+                ordering: "player-choice",
+              },
+            ],
+          } satisfies Effect,
+          resolutionInput: {
+            eventSnapshot: {
+              revealedCardIds,
+            },
+          },
+          selectionContext: {
+            amount: 3,
+            chooserId: PLAYER_TWO,
+            currentSelection: {},
+            destinationRules: [
+              {
+                id: "hand",
+                max: 1,
+                min: 0,
+                remainder: false,
+                zone: "hand",
+              },
+              {
+                id: "deck-bottom",
+                max: null,
+                min: 0,
+                remainder: true,
+                zone: "deck-bottom",
+              },
+            ],
+            kind: "scry-selection",
+            origin: "pending-effect",
+            requestId: "pending:stuck-scry:1",
+            revealedCardIds,
+            sourceCardId: sourceId,
+            submitField: "destinations",
+          },
+        } satisfies PendingActionEffect,
+      ];
+      setPendingActionChoice(state, "pending:stuck-scry:1", PLAYER_TWO);
+    });
+
+    const result = engine.asServer().takeAutomatedActionForCurrentActor();
+
+    expect(result.actorId).toBe(PLAYER_TWO);
+    expect(result.selectedCandidate).toEqual({
+      family: "resolveEffect",
+      effectId: "pending:stuck-scry:1",
+      destinations: [
+        { zone: "hand", cards: [princessMatchId] },
+        { zone: "deck-bottom", cards: [fillerBId, fillerAId] },
+      ],
+    });
+    expect(result.fallbackTaken).toBeUndefined();
+    expect(result.finalResult.success).toBe(true);
+    expect(engine.asServer().isGameOver()).toBe(false);
+    expect(engine.asPlayerTwo().getCardZone(princessMatch)).toBe("hand");
+  });
+
+  it("concedes when automation reaches an unsupported name-card prompt", () => {
+    const source = createMockCharacter({
+      id: "stuck-name-source",
+      name: "Stuck Name Source",
+      cost: 2,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 1,
+      },
+      {
+        play: [{ card: source, isDrying: false }],
+        deck: 1,
+      },
+    );
+    const sourceId = engine.asPlayerTwo().getCard(source).id as CardInstanceId;
+
+    loadMutatedState(engine, (state) => {
+      state.ctx.priority.holder = PLAYER_ONE;
+      state.G.pendingEffects = [
+        {
+          id: "pending:stuck-name:1",
+          type: "action-effect",
+          kind: "name-card-selection",
+          sourceId,
+          sourceCardId: sourceId,
+          controllerId: PLAYER_ONE,
+          chooserId: PLAYER_TWO,
+          cardPlayed: getCardPlayedPayload({
+            playerId: PLAYER_TWO,
+            cardId: sourceId,
+            cardType: "character",
+          }),
+          effect: {
+            type: "name-a-card",
+          } satisfies Effect,
+          resolutionInput: {},
+        } satisfies PendingActionEffect,
+      ];
+      setPendingActionChoice(state, "pending:stuck-name:1", PLAYER_TWO);
+    });
+
+    const result = engine.asServer().takeAutomatedActionForCurrentActor();
+
+    expect(result.actorId).toBe(PLAYER_TWO);
+    expect(result.selectedCandidate).toBeUndefined();
+    expect(result.fallbackTaken).toBe("concede");
+    expect(result.finalResult.success).toBe(true);
+    expect(engine.asServer().isGameOver()).toBe(true);
+    expect(engine.asServer().getWinner()).toBe(PLAYER_ONE);
   });
 
   it("emits ordered candidate heuristics, selection, and execution attempts to the trace sink", () => {

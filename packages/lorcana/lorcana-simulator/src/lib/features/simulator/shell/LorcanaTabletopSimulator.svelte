@@ -21,7 +21,7 @@
   import LorcanaCompactPanels from "./LorcanaCompactPanels.svelte";
   import { setSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
   import { setLorcanaSimulatorDndContext } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
-  import { CardInspectSheet, GlobalCardPreview, TabletopBoard } from "@/features/simulator/index.js";
+  import { GlobalCardPreview, TabletopBoard } from "@/features/simulator/index.js";
   import {
     type LorcanaGameContext,
     setLorcanaGameContext,
@@ -317,7 +317,6 @@
       </Dialog.Root>
     {/if}
 
-      <CardInspectSheet/>
       <GlobalCardPreview/>
       {#if isCompactLayout}
         <LorcanaCompactPanels

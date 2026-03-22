@@ -230,7 +230,7 @@ describe("chooseFirstPlayer", () => {
     expect(engine.asLorcanaPlayerOne().getTurnNumber()).toBe(0);
     expect(engine.asLorcanaPlayerOne()).toHaveOpeningTurnPlayer(PLAYER_TWO);
     expect(engine.asLorcanaPlayerOne()).toHaveChoosingFirstPlayer(PLAYER_ONE);
-    expect(engine.asLorcanaPlayerOne()).toHavePendingMulligan([PLAYER_ONE, PLAYER_TWO]);
+    expect(engine.asLorcanaPlayerOne()).toHavePendingMulligan([PLAYER_TWO, PLAYER_ONE]);
     expect(engine.asLorcanaPlayerOne()).toHavePriorityPlayer(PLAYER_TWO);
   });
 

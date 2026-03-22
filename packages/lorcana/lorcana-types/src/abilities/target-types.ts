@@ -260,6 +260,7 @@ export type CharacterTargetEnum =
   | "CHARACTER_HERE" // Character at this location (singular)
   | "YOUR_PIRATE_CHARACTERS" // Your Pirate characters
   | "YOUR_HERO_CHARACTERS" // Your Hero characters
+  | "YOUR_QUEEN_CHARACTERS" // Your Queen characters
   | "YOUR_GARGOYLE_CHARACTERS" // Your Gargoyle characters
   | "YOUR_DEMONA_CHARACTERS" // Your Demona characters
   | "YOUR_OTHER_DETECTIVE_CHARACTERS" // Your other Detective characters

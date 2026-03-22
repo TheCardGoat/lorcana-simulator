@@ -55,6 +55,38 @@ export const maleficentMistressOfAllEvil: CharacterCard = {
       },
       type: "triggered",
     },
+    {
+      effect: {
+        steps: [
+          {
+            chooser: "CONTROLLER",
+            effect: {
+              type: "move-damage",
+              amount: 1,
+              from: "CHOSEN_CHARACTER",
+              to: "CHOSEN_OPPOSING_CHARACTER",
+            },
+            type: "optional",
+          },
+        ],
+        type: "sequence",
+      },
+      id: "277-2",
+      name: "DIVINATION",
+      text: "DIVINATION During your turn, whenever you draw a card, you may move 1 damage counter from chosen character to chosen opposing character.",
+      trigger: {
+        event: "draw",
+        on: "YOU",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
   ],
   i18n: maleficentMistressOfAllEvilI18n,
 };

@@ -18,6 +18,7 @@ type ActionResolutionInput = {
   targets?: TargetSelectionInput;
   currentTargets?: TargetSelectionInput;
   contextTargets?: TargetSelectionInput;
+  targetSelectionResolved?: boolean;
   amount?: Amount;
   namedCard?: string;
   resolveOptional?: boolean;

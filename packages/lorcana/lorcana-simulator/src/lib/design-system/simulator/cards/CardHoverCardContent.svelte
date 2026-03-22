@@ -21,11 +21,14 @@ import {
 import { buildSimulatorAssetUrl } from "$lib/config/public-url-config.js";
 import type { LorcanaInkName } from "@/features/simulator/model/lorcana-colors.js";
 import { getCardActionCategoryIcon } from "@/features/simulator/model/action-icons.js";
+import { maybeUseLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
+import { maybeUseSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
 
 interface CardHoverCardContentProps {
 	card: LorcanaCardSnapshot;
 	actions?: CardActionView[];
 	contextMessage?: string | null;
+	locationOccupants?: LorcanaCardSnapshot[];
 	onAction?: (action: CardActionView) => void;
 	headerActions?: Snippet;
 }
@@ -34,6 +37,7 @@ let {
 	card,
 	actions = [],
 	contextMessage = null,
+	locationOccupants,
 	onAction,
 	headerActions,
 }: CardHoverCardContentProps = $props();
@@ -48,6 +52,12 @@ interface RenderableRulesEntry extends LorcanaCardTextEntrySnapshot {
 interface TextToken {
 	type: "text" | "symbol";
 	value: string;
+}
+
+interface LocationOccupantStatusChip {
+	id: string;
+	label: string;
+	tone: "neutral" | "warning" | "danger";
 }
 
 const TEXT_SYMBOL_BASE_URL = buildSimulatorAssetUrl("symbols");
@@ -149,6 +159,32 @@ function tokenizeTextWithSymbols(text: string | undefined): TextToken[] {
 	return tokens;
 }
 
+function getLocationOccupantStatusChips(
+	occupant: LorcanaCardSnapshot,
+): LocationOccupantStatusChip[] {
+	const chips: LocationOccupantStatusChip[] = [];
+
+	if (occupant.readyState === "exerted") {
+		chips.push({ id: "exerted", label: "Exerted", tone: "warning" });
+	} else {
+		chips.push({ id: "ready", label: "Ready", tone: "neutral" });
+	}
+
+	if (occupant.isDrying) {
+		chips.push({ id: "drying", label: "Drying", tone: "warning" });
+	}
+
+	if ((occupant.damage ?? 0) > 0) {
+		chips.push({
+			id: "damage",
+			label: `${occupant.damage} damage`,
+			tone: "danger",
+		});
+	}
+
+	return chips;
+}
+
 function isActivateAbilityMove(
 	move: CardActionView["moves"][number] | undefined,
 ): move is CardActionView["moves"][number] & {
@@ -244,6 +280,8 @@ const grantSourceByTitle = $derived(
 	),
 );
 const cardText = $derived(card.text?.trim() ?? "");
+const board = maybeUseLorcanaBoardPresenter();
+const simulatorCardContext = maybeUseSimulatorCardContext();
 const cardTextLines = $derived(
 	cardText
 		? cardText
@@ -256,10 +294,41 @@ const cardTextLines = $derived(
 		: [],
 );
 const hasActions = $derived(nonAbilityActions.length > 0);
+const resolvedLocationOccupants = $derived.by(() => {
+	if (card.cardType !== "location") {
+		return [];
+	}
+
+	if (locationOccupants) {
+		return locationOccupants;
+	}
+
+	const playZoneCards = board?.getZoneCards(card.ownerSide, "play") ?? [];
+	return playZoneCards.filter(
+		(playCard) =>
+			playCard.cardType === "character" && playCard.atLocationId === card.cardId,
+	);
+});
+const locationOccupantCountLabel = $derived(
+	resolvedLocationOccupants.length === 1
+		? "1 character here"
+		: `${resolvedLocationOccupants.length} characters here`,
+);
+const showLocationOccupants = $derived(card.cardType === "location");
 const hasTextBoxContent = $derived(
 	hasStructuredText || Boolean(cardText),
 );
 const cardTags = $derived(getLorcanaCardTags(card));
+
+function handleLocationOccupantEnter(occupant: LorcanaCardSnapshot): void {
+	simulatorCardContext?.setExternalPreviewCard(occupant);
+}
+
+function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
+	if (simulatorCardContext?.previewCard?.cardId === occupant.cardId) {
+		simulatorCardContext.setExternalPreviewCard(null);
+	}
+}
 </script>
 
 <div
@@ -338,6 +407,54 @@ const cardTags = $derived(getLorcanaCardTags(card));
       <span class="context-banner__label">Unavailable</span>
       <span class="context-banner__message">{contextMessage}</span>
     </div>
+  {/if}
+
+  {#if showLocationOccupants}
+    <section class="location-occupants-section" aria-label={locationOccupantCountLabel}>
+      <div class="location-occupants-header">
+        <div class="location-occupants-copy">
+          <span class="location-occupants-eyebrow">At this location</span>
+          <span class="location-occupants-title">{locationOccupantCountLabel}</span>
+        </div>
+        <span class="location-occupants-count">{resolvedLocationOccupants.length}</span>
+      </div>
+
+      {#if resolvedLocationOccupants.length > 0}
+        <div class="location-occupants-list" data-testid="location-occupants-list">
+          {#each resolvedLocationOccupants as occupant (occupant.cardId)}
+            <article class="location-occupant-card">
+              <div class="location-occupant-main">
+                <button
+                  type="button"
+                  class="location-occupant-name-button"
+                  onpointerenter={() => handleLocationOccupantEnter(occupant)}
+                  onpointerleave={() => handleLocationOccupantLeave(occupant)}
+                  onfocus={() => handleLocationOccupantEnter(occupant)}
+                  onblur={() => handleLocationOccupantLeave(occupant)}
+                  aria-label={`Highlight ${occupant.label} on the board`}
+                >
+                  <span
+                    class="location-occupant-dot"
+                    style="--occupant-ink-rgb: {getInkRgb(normalizeInk(occupant.inkType?.[0] ?? 'amber')).replace('rgb(', '').replace(')', '')};"
+                  ></span>
+                  <span class="location-occupant-name">{occupant.label}</span>
+                </button>
+
+                <div class="location-occupant-chips">
+                  {#each getLocationOccupantStatusChips(occupant) as chip (chip.id)}
+                    <span class={`location-occupant-chip location-occupant-chip--${chip.tone}`}>
+                      {chip.label}
+                    </span>
+                  {/each}
+                </div>
+              </div>
+            </article>
+          {/each}
+        </div>
+      {:else}
+        <p class="location-occupants-empty">No characters are here right now.</p>
+      {/if}
+    </section>
   {/if}
 
   <!-- Text Box -->
@@ -548,15 +665,23 @@ const cardTags = $derived(getLorcanaCardTags(card));
     gap: 10px;
   }
 
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
   .card-utility-actions {
     position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    z-index: 3;
+    top: -0.6rem;
+    right: -0.6rem;
+    z-index: 4;
   }
 
   .card-skeleton--with-utility-actions .name-banner {
-    padding-right: 3.25rem;
+    padding-right: 4.25rem;
   }
 
   .tag-section {
@@ -600,6 +725,186 @@ const cardTags = $derived(getLorcanaCardTags(card));
     font-size: 0.82rem;
     line-height: 1.35;
     color: rgba(254, 242, 242, 0.95);
+  }
+
+  .location-occupants-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.75rem;
+    border-radius: 0.95rem;
+    border: 1px solid rgba(var(--ink-rgb), 0.28);
+    background:
+      linear-gradient(180deg, rgba(var(--ink-rgb), 0.16) 0%, rgba(15, 23, 42, 0.22) 100%),
+      rgba(12, 18, 29, 0.5);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 10px 28px rgba(2, 6, 23, 0.18);
+  }
+
+  .location-occupants-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .location-occupants-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    min-width: 0;
+  }
+
+  .location-occupants-eyebrow {
+    font-size: 0.63rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(226, 232, 240, 0.6);
+  }
+
+  .location-occupants-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: rgba(248, 250, 252, 0.96);
+  }
+
+  .location-occupants-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--ink-rgb), 0.38);
+    background: rgba(2, 6, 23, 0.42);
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: rgba(248, 250, 252, 0.98);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .location-occupants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .location-occupant-card {
+    display: flex;
+    align-items: center;
+    padding: 0.45rem 0.55rem;
+    border-radius: 0.9rem;
+    background:
+      linear-gradient(135deg, rgba(15, 23, 42, 0.84) 0%, rgba(30, 41, 59, 0.72) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 8px 20px rgba(2, 6, 23, 0.18);
+  }
+
+  .location-occupant-main {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    width: 100%;
+  }
+
+  .location-occupant-name-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 120ms ease, opacity 120ms ease;
+  }
+
+  .location-occupant-name-button:hover,
+  .location-occupant-name-button:focus-visible {
+    transform: translateX(2px);
+  }
+
+  .location-occupant-name-button:focus-visible {
+    outline: 2px solid rgba(var(--ink-rgb), 0.55);
+    outline-offset: 4px;
+    border-radius: 0.4rem;
+  }
+
+  .location-occupant-dot {
+    width: 0.58rem;
+    height: 0.58rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: rgba(var(--occupant-ink-rgb), 0.95);
+    box-shadow:
+      0 0 0 2px rgba(var(--occupant-ink-rgb), 0.18),
+      0 0 12px rgba(var(--occupant-ink-rgb), 0.34);
+  }
+
+  .location-occupant-name {
+    min-width: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: rgba(248, 250, 252, 0.98);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .location-occupant-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    justify-content: flex-end;
+  }
+
+  .location-occupant-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.25rem;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .location-occupant-chip--neutral {
+    background: rgba(51, 65, 85, 0.84);
+    border-color: rgba(148, 163, 184, 0.34);
+    color: rgba(226, 232, 240, 0.92);
+  }
+
+  .location-occupant-chip--warning {
+    background: rgba(120, 53, 15, 0.8);
+    border-color: rgba(251, 191, 36, 0.34);
+    color: rgba(254, 243, 199, 0.96);
+  }
+
+  .location-occupant-chip--danger {
+    background: rgba(127, 29, 29, 0.82);
+    border-color: rgba(248, 113, 113, 0.36);
+    color: rgba(254, 226, 226, 0.97);
+  }
+
+  .location-occupants-empty {
+    margin: 0;
+    padding: 0.2rem 0.1rem 0;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: rgba(226, 232, 240, 0.72);
   }
 
   /* Top Row: Cost + Rarity */

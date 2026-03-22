@@ -1,29 +1,77 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { herculesHeroInTraining } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import { megaraLiberatedOne } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Megara - Liberated One", () => {
-//   It("**PEOPLE ALWAYS DO CRAZY THINGS** Whenever you play a character named Hercules, you may ready this character.", () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: herculesHeroInTraining.cost,
-//       Hand: [herculesHeroInTraining],
-//       Play: [megaraLiberatedOne],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(megaraLiberatedOne);
-//     Const trigger = testEngine.getCardModel(herculesHeroInTraining);
-//     CardUnderTest.updateCardMeta({ exerted: true });
-//
-//     Trigger.playFromHand();
-//
-//     TestEngine.resolveOptionalAbility();
-//     Expect(cardUnderTest.exerted).toEqual(false);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { megaraLiberatedOne } from "./080-megara-liberated-one";
+import { herculesHeroInTraining } from "../../002/characters/182-hercules-hero-in-training";
+
+const nonHerculesCharacter = createMockCharacter({
+  id: "megara-test-non-hercules",
+  name: "Some Other Character",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+});
+
+describe("Megara - Liberated One", () => {
+  it("has Ward keyword", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [megaraLiberatedOne],
+    });
+
+    expect(testEngine.hasKeyword(megaraLiberatedOne, "Ward")).toBe(true);
+  });
+
+  describe("PEOPLE ALWAYS DO CRAZY THINGS", () => {
+    it("readies Megara when you play a character named Hercules", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [herculesHeroInTraining],
+        inkwell: herculesHeroInTraining.cost,
+        play: [{ card: megaraLiberatedOne, exerted: true }],
+      });
+
+      expect(testEngine.asPlayerOne().getCard(megaraLiberatedOne).exerted).toBe(true);
+
+      expect(testEngine.asPlayerOne().playCard(herculesHeroInTraining)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCard(megaraLiberatedOne).exerted).toBe(false);
+    });
+
+    it("does not trigger when you play a character not named Hercules", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [nonHerculesCharacter],
+        inkwell: nonHerculesCharacter.cost,
+        play: [{ card: megaraLiberatedOne, exerted: true }],
+      });
+
+      expect(testEngine.asPlayerOne().getCard(megaraLiberatedOne).exerted).toBe(true);
+
+      expect(testEngine.asPlayerOne().playCard(nonHerculesCharacter)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getCard(megaraLiberatedOne).exerted).toBe(true);
+    });
+
+    it("can decline the optional ready", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [herculesHeroInTraining],
+        inkwell: herculesHeroInTraining.cost,
+        play: [{ card: megaraLiberatedOne, exerted: true }],
+      });
+
+      expect(testEngine.asPlayerOne().getCard(megaraLiberatedOne).exerted).toBe(true);
+
+      expect(testEngine.asPlayerOne().playCard(herculesHeroInTraining)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCard(megaraLiberatedOne).exerted).toBe(true);
+    });
+  });
+});

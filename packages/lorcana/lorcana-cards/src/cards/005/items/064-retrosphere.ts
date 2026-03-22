@@ -28,7 +28,7 @@ export const retrosphere: ItemCard = {
   abilities: [
     {
       cost: {
-        ink: 1,
+        ink: 2,
         banishSelf: true,
       },
       effect: {

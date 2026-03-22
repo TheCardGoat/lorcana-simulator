@@ -133,6 +133,14 @@ export const CHARACTER_ENUM_EXPANSIONS: Record<CharacterTargetEnum, LorcanaCardT
     cardTypes: ["character"],
     filters: [{ type: "has-classification", classification: "Hero" }],
   },
+  YOUR_QUEEN_CHARACTERS: {
+    selector: "all",
+    count: "all",
+    owner: "you",
+    zones: ["play"],
+    cardTypes: ["character"],
+    filters: [{ type: "has-classification", classification: "Queen" }],
+  },
   YOUR_OTHER_HERO_CHARACTERS: {
     selector: "all",
     count: "all",
@@ -157,6 +165,14 @@ export const CHARACTER_ENUM_EXPANSIONS: Record<CharacterTargetEnum, LorcanaCardT
     zones: ["play"],
     cardTypes: ["character"],
     filters: [{ type: "has-classification", classification: "Pirate" }],
+  },
+  YOUR_PUPPY_CHARACTERS: {
+    selector: "all",
+    count: "all",
+    owner: "you",
+    zones: ["play"],
+    cardTypes: ["character"],
+    filters: [{ type: "has-classification", classification: "Puppy" }],
   },
   EACH_CHARACTER: {
     selector: "each",

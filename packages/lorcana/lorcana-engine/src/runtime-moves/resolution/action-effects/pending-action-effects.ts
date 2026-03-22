@@ -70,6 +70,7 @@ export function cloneActionResolutionInput(
     targets: cloneSelectionInput(resolutionInput.targets),
     currentTargets: cloneSelectionInput(resolutionInput.currentTargets),
     contextTargets: cloneSelectionInput(resolutionInput.contextTargets),
+    targetSelectionResolved: resolutionInput.targetSelectionResolved,
     destinations: Array.isArray(resolutionInput.destinations)
       ? resolutionInput.destinations.map((destination) => ({
           zone: destination.zone,

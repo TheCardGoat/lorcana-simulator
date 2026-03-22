@@ -8,7 +8,7 @@ describe("Retrosphere", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         deck: [],
-        inkwell: 1,
+        inkwell: 2,
         play: [retrosphere],
       },
       {

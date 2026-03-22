@@ -318,12 +318,6 @@
     <div class="playable-glow absolute -inset-0.5 pointer-events-none animate-playable-pulse"></div>
   {/if}
 
-  <!-- Drying Indicator -->
-  {#if isDrying}
-    <div class="drying-indicator pointer-events-none absolute bottom-[5px] left-[5px] px-1.5 py-[0.1rem] rounded-full bg-slate-400/85 text-slate-900 text-[0.55rem] font-bold tracking-wide uppercase z-10">
-      {m["sim.card.drying"]({})}
-    </div>
-  {/if}
 </div>
 
 <style>

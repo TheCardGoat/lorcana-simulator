@@ -42,19 +42,34 @@ export const mauiSoaringDemigod: CharacterCard = {
     },
     {
       effect: {
-        duration: "this-turn",
-        modifier: 1,
-        stat: "lore",
-        target: "SELF",
-        type: "modify-stat",
+        steps: [
+          {
+            duration: "this-turn",
+            modifier: 1,
+            stat: "lore",
+            target: "SELF",
+            type: "modify-stat",
+          },
+          {
+            duration: "this-turn",
+            keyword: "Reckless",
+            target: "SELF",
+            type: "lose-keyword",
+          },
+        ],
+        type: "sequence",
       },
       id: "q08-2",
       name: "IN MA BELLY",
       text: "IN MA BELLY Whenever a character of yours named HeiHei quests, this character gets +1 {L} and loses Reckless this turn.",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "quest",
+        on: {
+          controller: "you",
+          cardType: "character",
+          name: "HeiHei",
+        },
+        timing: "whenever",
       },
       type: "triggered",
     },

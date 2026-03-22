@@ -48,6 +48,11 @@ export type AutomatedActionCostSelections = {
   exertCharacters?: CardInstanceId[];
 };
 
+export type AutomatedActionDestinationSelection = {
+  zone: string;
+  cards: CardInstanceId[];
+};
+
 export type AutomatedActionCandidate =
   | {
       family: "chooseWhoGoesFirst";
@@ -62,6 +67,7 @@ export type AutomatedActionCandidate =
       family: "resolveBag";
       bagId: string;
       choiceIndex?: number;
+      destinations?: AutomatedActionDestinationSelection[];
       resolveOptional?: boolean;
       targets?: AutomatedActionTargetId[];
     }
@@ -69,6 +75,7 @@ export type AutomatedActionCandidate =
       family: "resolveEffect";
       effectId: string;
       choiceIndex?: number;
+      destinations?: AutomatedActionDestinationSelection[];
       resolveOptional?: boolean;
       targets?: AutomatedActionTargetId[];
     }
@@ -298,6 +305,7 @@ export type AutomatedActionResolutionShape = {
 
 export type AutomatedActionResolutionVariant = {
   choiceIndex?: number;
+  destinations?: AutomatedActionDestinationSelection[];
   resolveOptional?: boolean;
   targets?: AutomatedActionTargetId[];
 };

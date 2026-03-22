@@ -74,6 +74,7 @@ import {
   buildPendingResolutionMoves,
   buildPlayableHandCardIds,
   canValidateInk,
+  expandCardActionCategoryMoves,
   expandCardMoves,
   expandCategoryMoves,
   getPlayerSummary as getDerivedPlayerSummary,
@@ -222,6 +223,10 @@ export interface LorcanaGameContextValue {
   moveCategorySummaries: () => MoveCategorySummary[];
   moveCategoryCount: () => number;
   expandCardMoves: (cardId: string) => ExecutableMoveEntry[];
+  expandCardActionCategoryMoves: (
+    cardId: string,
+    categoryId: ExecutableMovePresentationCategoryId,
+  ) => ExecutableMoveEntry[];
   expandCategoryMoves: (categoryId: ExecutableMovePresentationCategoryId) => ExecutableMoveEntry[];
   challengeReadyCardIds: () => string[];
   moveLogEntries: () => MoveLogEntrySnapshot[];
@@ -434,6 +439,15 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
   #currentLegalMoveIds: readonly string[] = [];
   #cachedExecutableMoves: ExecutableMoveEntry[] = [];
   #cachedExecutableMovesVersion: number = -1;
+  #cachedExpandedCategoryMovesStateId: number = -1;
+  #cachedExpandedCategoryMoves = new Map<
+    ExecutableMovePresentationCategoryId,
+    ExecutableMoveEntry[]
+  >();
+  #cachedExpandedCardMovesStateId: number = -1;
+  #cachedExpandedCardMoves = new Map<string, ExecutableMoveEntry[]>();
+  #cachedExpandedCardActionCategoryMovesStateId: number = -1;
+  #cachedExpandedCardActionCategoryMoves = new Map<string, ExecutableMoveEntry[]>();
   #moveLogEntries = $state<MoveLogEntrySnapshot[]>([]);
   #challengeReadyCardIds = $state<string[]>([]);
   #playableHandCardIds = $state<string[]>([]);
@@ -531,26 +545,81 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
   readonly expandCardMoves = (cardId: string): ExecutableMoveEntry[] => {
     const engine = this.#engine;
     if (!engine) return [];
-    return expandCardMoves(
+    const stateId = this.#boardSnapshot?.stateID ?? -1;
+    if (this.#cachedExpandedCardMovesStateId !== stateId) {
+      this.#cachedExpandedCardMovesStateId = stateId;
+      this.#cachedExpandedCardMoves.clear();
+    }
+
+    const cachedMoves = this.#cachedExpandedCardMoves.get(cardId);
+    if (cachedMoves) {
+      return cachedMoves;
+    }
+
+    const moves = expandCardMoves(
       engine,
       this.#cardSnapshotsById,
       this.#currentAvailableMoves,
       this.#currentLegalMoveIds,
       cardId,
     );
+    this.#cachedExpandedCardMoves.set(cardId, moves);
+    return moves;
+  };
+  readonly expandCardActionCategoryMoves = (
+    cardId: string,
+    categoryId: ExecutableMovePresentationCategoryId,
+  ): ExecutableMoveEntry[] => {
+    const engine = this.#engine;
+    if (!engine) return [];
+    const stateId = this.#boardSnapshot?.stateID ?? -1;
+    if (this.#cachedExpandedCardActionCategoryMovesStateId !== stateId) {
+      this.#cachedExpandedCardActionCategoryMovesStateId = stateId;
+      this.#cachedExpandedCardActionCategoryMoves.clear();
+    }
+
+    const cacheKey = `${cardId}:${categoryId}`;
+    const cachedMoves = this.#cachedExpandedCardActionCategoryMoves.get(cacheKey);
+    if (cachedMoves) {
+      return cachedMoves;
+    }
+
+    const moves = expandCardActionCategoryMoves(
+      engine,
+      this.#cardSnapshotsById,
+      this.#currentAvailableMoves,
+      this.#currentLegalMoveIds,
+      cardId,
+      categoryId,
+    );
+    this.#cachedExpandedCardActionCategoryMoves.set(cacheKey, moves);
+    return moves;
   };
   readonly expandCategoryMoves = (
     categoryId: ExecutableMovePresentationCategoryId,
   ): ExecutableMoveEntry[] => {
     const engine = this.#engine;
     if (!engine) return [];
-    return expandCategoryMoves(
+    const stateId = this.#boardSnapshot?.stateID ?? -1;
+    if (this.#cachedExpandedCategoryMovesStateId !== stateId) {
+      this.#cachedExpandedCategoryMovesStateId = stateId;
+      this.#cachedExpandedCategoryMoves.clear();
+    }
+
+    const cachedMoves = this.#cachedExpandedCategoryMoves.get(categoryId);
+    if (cachedMoves) {
+      return cachedMoves;
+    }
+
+    const moves = expandCategoryMoves(
       engine,
       this.#cardSnapshotsById,
       this.#currentAvailableMoves,
       this.#currentLegalMoveIds,
       categoryId,
     );
+    this.#cachedExpandedCategoryMoves.set(categoryId, moves);
+    return moves;
   };
   readonly moveLogEntries = (): MoveLogEntrySnapshot[] => this.#moveLogEntries;
   readonly challengeReadyCardIds = (): string[] => this.#challengeReadyCardIds;
@@ -1496,6 +1565,12 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       this.#currentLegalMoveIds = [];
       this.#cachedExecutableMoves = [];
       this.#cachedExecutableMovesVersion = -1;
+      this.#cachedExpandedCategoryMovesStateId = -1;
+      this.#cachedExpandedCategoryMoves.clear();
+      this.#cachedExpandedCardMovesStateId = -1;
+      this.#cachedExpandedCardMoves.clear();
+      this.#cachedExpandedCardActionCategoryMovesStateId = -1;
+      this.#cachedExpandedCardActionCategoryMoves.clear();
       this.#derivedStateVersion++;
       this.#challengeReadyCardIds = [];
       this.#pendingResolutionMoves = [];
@@ -2397,6 +2472,13 @@ export class LorcanaSidebarPresenter {
     categoryId: ExecutableMovePresentationCategoryId,
   ): ExecutableMoveEntry[] => {
     return this.#game.expandCategoryMoves(categoryId);
+  };
+
+  expandCardActionCategoryMoves = (
+    cardId: string,
+    categoryId: ExecutableMovePresentationCategoryId,
+  ): ExecutableMoveEntry[] => {
+    return this.#game.expandCardActionCategoryMoves(cardId, categoryId);
   };
 
   get resolutionActions(): ResolutionActionView[] {
@@ -3567,9 +3649,19 @@ export class LorcanaSidebarPresenter {
   getCardActionViews = (card: LorcanaCardSnapshot): CardActionView[] =>
     buildCardActionViews({
       card,
-      executableMoves: this.#game.expandCardMoves(card.cardId),
+      executableMoves: this.#game
+        .expandCardMoves(card.cardId)
+        .filter(
+          (move) =>
+            move.presentation.categoryId !== "challenge" &&
+            move.presentation.categoryId !== "move-to-location",
+        ),
       ownerSide: this.ownerSide,
       challengeReadyCardIds: this.#game.challengeReadyCardIds(),
+      movableToLocationCardIds:
+        this.moveCategorySummaries
+          .find((summary) => summary.categoryId === "move-to-location")
+          ?.sourceCardIds.slice() ?? [],
     });
 
   handleCardAbilityByIndex = (cardId: string, abilityIndex: number): boolean => {
@@ -3597,16 +3689,24 @@ export class LorcanaSidebarPresenter {
     action: CardActionView,
     options?: { skipConfirmation?: boolean; preselectedTargetCardId?: string },
   ): boolean => {
-    if (!action.enabled || action.moves.length === 0) {
+    if (!action.enabled) {
       return false;
     }
 
     const requireConfirmation = !this.skipActionConfirmation && !options?.skipConfirmation;
+    const actionMoves =
+      action.interaction === "expand-on-click"
+        ? this.#game.expandCardActionCategoryMoves(action.cardId, action.categoryId)
+        : action.moves;
+
+    if (actionMoves.length === 0) {
+      return false;
+    }
 
     if (action.categoryId === "challenge") {
       const session = buildActionSelectionSession(
         action.categoryId,
-        action.moves,
+        actionMoves,
         requireConfirmation,
       );
       if (!session) {
@@ -3629,10 +3729,10 @@ export class LorcanaSidebarPresenter {
       return true;
     }
 
-    if (action.categoryId === "move-to-location" && action.moves.length > 1) {
+    if (action.categoryId === "move-to-location") {
       const session = buildActionSelectionSession(
         action.categoryId,
-        action.moves,
+        actionMoves,
         requireConfirmation,
       );
       if (!session) {
@@ -3658,7 +3758,7 @@ export class LorcanaSidebarPresenter {
     if (action.categoryId === "activate-ability") {
       const session = buildActionSelectionSession(
         action.categoryId,
-        action.moves,
+        actionMoves,
         requireConfirmation,
       );
       if (!session) {
@@ -3711,11 +3811,11 @@ export class LorcanaSidebarPresenter {
 
     if (
       action.categoryId === "play-card" &&
-      usesTargetSelectionForActionSelectionMoves(action.categoryId, action.moves)
+      usesTargetSelectionForActionSelectionMoves(action.categoryId, actionMoves)
     ) {
       const session = buildActionSelectionSession(
         action.categoryId,
-        action.moves,
+        actionMoves,
         requireConfirmation,
       );
       if (!session) {
@@ -3723,7 +3823,7 @@ export class LorcanaSidebarPresenter {
       }
 
       const preselectedMove = options?.preselectedTargetCardId
-        ? (action.moves.find(
+        ? (actionMoves.find(
             (move) =>
               getTargetCardIdForActionSelectionMove(action.categoryId, move) ===
               options.preselectedTargetCardId,
@@ -3774,11 +3874,11 @@ export class LorcanaSidebarPresenter {
       (action.categoryId === "play-card" ||
         action.categoryId === "shift-card" ||
         action.categoryId === "sing-card") &&
-      action.moves.length > 1
+      actionMoves.length > 1
     ) {
       const session = buildActionSelectionSession(
         action.categoryId,
-        action.moves,
+        actionMoves,
         requireConfirmation,
       );
       if (!session) {
@@ -3801,7 +3901,7 @@ export class LorcanaSidebarPresenter {
       return true;
     }
 
-    this.handleAvailableMoveClick(action.moves[0]);
+    this.handleAvailableMoveClick(actionMoves[0]);
     return true;
   };
 

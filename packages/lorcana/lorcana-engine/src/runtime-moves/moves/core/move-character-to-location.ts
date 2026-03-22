@@ -19,7 +19,11 @@ import {
   flushTriggeredEventsToBag,
   hasPendingBagItems,
 } from "../../effects/triggered-abilities";
-import { evaluateStaticCondition } from "../../rules/static-ability-utils";
+import {
+  evaluateStaticCondition,
+  hasStaticCardRestriction,
+  hasStaticSelfRestriction,
+} from "../../rules/static-ability-utils";
 
 type MoveExecutionContext = Parameters<
   LorcanaMoveDefinition<"moveCharacterToLocation">["execute"]
@@ -207,6 +211,36 @@ function validateMoveCharacterToLocation(
       valid: false,
       error: "A character at a location must move to another location",
       errorCode: "SAME_LOCATION",
+    };
+  }
+
+  if (
+    hasStaticSelfRestriction({
+      state: ctx.framework.state,
+      cardId: characterId,
+      restriction: "cant-move",
+      getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+    })
+  ) {
+    return {
+      valid: false,
+      error: "Character cannot move to locations due to a static restriction",
+      errorCode: "CANT_MOVE_RESTRICTED",
+    };
+  }
+
+  if (
+    hasStaticCardRestriction({
+      state: ctx.framework.state,
+      cardId: characterId,
+      restriction: "cant-move",
+      getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+    })
+  ) {
+    return {
+      valid: false,
+      error: "Character cannot move to locations due to a static restriction from another card",
+      errorCode: "CANT_MOVE_RESTRICTED",
     };
   }
 

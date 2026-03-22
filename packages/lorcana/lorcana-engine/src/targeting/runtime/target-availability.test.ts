@@ -11,6 +11,7 @@ type TestCardDefinition = {
   cardType: "character" | "item" | "location" | "action";
   actionSubtype?: string;
   classifications?: string[];
+  abilities?: unknown[];
   cost?: number;
   strength?: number;
   willpower?: number;
@@ -192,6 +193,124 @@ describe("target-availability", () => {
       candidateCount: 0,
       minSelections: 0,
       allowsExplicitEmptyTargetSelection: true,
+      shouldAutoRejectForNoValidTargets: true,
+    });
+  });
+
+  it("auto-rejects owner-restricted targets when candidates exist only on the wrong side", () => {
+    const source = "source" as CardInstanceId;
+    const opponentBoost = "opponent-boost" as CardInstanceId;
+    const ctx = createTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "character" },
+        [opponentBoost]: {
+          id: "opponent-boost",
+          cardType: "character",
+          abilities: [{ type: "keyword", keyword: "Boost", value: 1 }],
+        },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [source],
+        [`play:${PLAYER_TWO}`]: [opponentBoost],
+      },
+    });
+
+    expect(
+      analyzeTargetSelectionAvailability(
+        {
+          type: "put-under",
+          source: "this-card",
+          under: {
+            selector: "chosen",
+            count: 1,
+            owner: "you",
+            zones: ["play"],
+            cardTypes: ["character", "location"],
+            filter: [{ type: "has-keyword", keyword: "Boost" }],
+          },
+        },
+        PLAYER_ONE,
+        ctx,
+        source,
+      ),
+    ).toMatchObject({
+      candidateCount: 0,
+      shouldAutoRejectForNoValidTargets: true,
+    });
+  });
+
+  it("auto-rejects keyword-filtered targets when no candidate matches the keyword", () => {
+    const source = "source" as CardInstanceId;
+    const vanillaCharacter = "vanilla-character" as CardInstanceId;
+    const ctx = createTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "character" },
+        [vanillaCharacter]: { id: "vanilla-character", cardType: "character" },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [source, vanillaCharacter],
+      },
+    });
+
+    expect(
+      analyzeTargetSelectionAvailability(
+        {
+          type: "put-under",
+          source: "this-card",
+          under: {
+            selector: "chosen",
+            count: 1,
+            owner: "you",
+            zones: ["play"],
+            cardTypes: ["character", "location"],
+            filter: [{ type: "has-keyword", keyword: "Boost" }],
+          },
+        },
+        PLAYER_ONE,
+        ctx,
+        source,
+      ),
+    ).toMatchObject({
+      candidateCount: 0,
+      shouldAutoRejectForNoValidTargets: true,
+    });
+  });
+
+  it("auto-rejects mixed card-type targets when neither subtype has a legal candidate", () => {
+    const source = "source" as CardInstanceId;
+    const plainLocation = "plain-location" as CardInstanceId;
+    const plainCharacter = "plain-character" as CardInstanceId;
+    const ctx = createTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "character" },
+        [plainLocation]: { id: "plain-location", cardType: "location" },
+        [plainCharacter]: { id: "plain-character", cardType: "character" },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [source, plainLocation, plainCharacter],
+      },
+    });
+
+    expect(
+      analyzeTargetSelectionAvailability(
+        {
+          type: "put-under",
+          source: "this-card",
+          under: {
+            selector: "chosen",
+            count: 1,
+            owner: "you",
+            zones: ["play"],
+            cardTypes: ["character", "location"],
+            filter: [{ type: "has-keyword", keyword: "Boost" }],
+          },
+        },
+        PLAYER_ONE,
+        ctx,
+        source,
+      ),
+    ).toMatchObject({
+      cardCandidateCount: 0,
       shouldAutoRejectForNoValidTargets: true,
     });
   });

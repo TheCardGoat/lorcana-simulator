@@ -520,9 +520,11 @@ export function resolvePlayCardEffect(
       playerId as PlayerId,
       currentSelectedTargets,
     );
+
     const playableCards = sourceCards.filter((cardId) =>
       matchesPlayableCardCriteria(ctx, cardPlayed, cardId, effect, resolutionInput),
     );
+
     if (playableCards.length === 0) {
       continue;
     }

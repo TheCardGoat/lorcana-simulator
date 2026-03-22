@@ -224,6 +224,72 @@ export function addTemporaryKeyword(
   };
 }
 
+export function addTemporaryLostKeyword(
+  meta: LorcanaCardMeta,
+  keyword: string,
+  expiresAtTurn: number,
+  startsAtTurn?: number,
+): LorcanaCardMeta {
+  const normalizedKeyword = normalizeTemporaryKey(keyword);
+  if (!normalizedKeyword) {
+    return meta;
+  }
+
+  if (!Number.isFinite(expiresAtTurn) || expiresAtTurn < 1) {
+    return meta;
+  }
+
+  const normalizedStartsAtTurn =
+    typeof startsAtTurn === "number" && Number.isFinite(startsAtTurn) && startsAtTurn >= 1
+      ? Math.floor(startsAtTurn)
+      : 1;
+  const normalizedExpiresAtTurn = Math.floor(expiresAtTurn);
+  if (normalizedStartsAtTurn > normalizedExpiresAtTurn) {
+    return meta;
+  }
+
+  const lostKeywordMap = normalizeEffectMap(meta.temporaryLostKeywords);
+  const lostKeywordStarts = normalizeEffectMap(meta.temporaryLostKeywordStarts);
+  const currentExpiry = lostKeywordMap[normalizedKeyword] ?? 0;
+  if (normalizedExpiresAtTurn > currentExpiry) {
+    lostKeywordMap[normalizedKeyword] = normalizedExpiresAtTurn;
+    lostKeywordStarts[normalizedKeyword] = normalizedStartsAtTurn;
+  } else if (normalizedExpiresAtTurn === currentExpiry) {
+    lostKeywordStarts[normalizedKeyword] = Math.min(
+      lostKeywordStarts[normalizedKeyword] ?? normalizedStartsAtTurn,
+      normalizedStartsAtTurn,
+    );
+  }
+
+  return {
+    ...meta,
+    temporaryLostKeywords: Object.keys(lostKeywordMap).length > 0 ? lostKeywordMap : undefined,
+    temporaryLostKeywordStarts:
+      Object.keys(lostKeywordStarts).length > 0 ? lostKeywordStarts : undefined,
+  };
+}
+
+export function hasTemporaryLostKeyword(
+  meta: LorcanaCardMeta | undefined,
+  currentTurn: number,
+  keyword: string,
+): boolean {
+  if (!meta) {
+    return false;
+  }
+
+  const normalizedKeyword = normalizeTemporaryKey(keyword);
+  if (!normalizedKeyword) {
+    return false;
+  }
+
+  const lostKeywordMap = normalizeEffectMap(meta.temporaryLostKeywords);
+  const lostKeywordStarts = normalizeEffectMap(meta.temporaryLostKeywordStarts);
+  const expiryTurn = lostKeywordMap[normalizedKeyword] ?? 0;
+  const startTurn = lostKeywordStarts[normalizedKeyword] ?? 1;
+  return currentTurn >= startTurn && currentTurn <= expiryTurn;
+}
+
 export function addTemporaryClassification(
   meta: LorcanaCardMeta,
   classification: string,

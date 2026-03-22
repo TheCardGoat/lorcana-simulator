@@ -39,7 +39,13 @@ export const chooseWhoGoesFirst: LorcanaMoveDefinition<"chooseWhoGoesFirst"> = {
     });
     // Historical save-games may omit `playerIds` from move context; fallback to the chosen
     // player so mulligan flow still has a valid starting player list.
-    const pendingMulligan = resolvedPlayerIds.length > 0 ? resolvedPlayerIds : [chosenPlayer];
+    const pendingMulligan =
+      resolvedPlayerIds.length > 0
+        ? [
+            chosenPlayer,
+            ...resolvedPlayerIds.filter((runtimePlayerId) => runtimePlayerId !== chosenPlayer),
+          ]
+        : [chosenPlayer];
 
     framework.status.patch({
       otp: chosenPlayer,

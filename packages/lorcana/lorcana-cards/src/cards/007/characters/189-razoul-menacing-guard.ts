@@ -32,6 +32,11 @@ export const razoulMenacingGuard: CharacterCard = {
   classifications: ["Dreamborn", "Ally", "Captain"],
   abilities: [
     {
+      condition: {
+        controller: "you",
+        name: "Jafar",
+        type: "has-named-character",
+      },
       effect: {
         chooser: "CONTROLLER",
         effect: {

@@ -37,11 +37,16 @@ export const tamatoaHappyAsAClam: CharacterCard = {
   abilities: [
     {
       effect: {
-        type: "return-from-discard",
-        cardType: "item",
-        count: 2,
-        target: "CONTROLLER",
-        destination: "hand",
+        type: "return-to-hand",
+        target: {
+          selector: "chosen",
+          count: {
+            upTo: 2,
+          },
+          owner: "you",
+          zones: ["discard"],
+          cardTypes: ["item"],
+        },
       },
       id: "1i4-1",
       name: "COOLEST COLLECTION",

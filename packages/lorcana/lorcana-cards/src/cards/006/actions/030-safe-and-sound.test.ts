@@ -1,44 +1,73 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { safeAndSound } from "@lorcanito/lorcana-engine/cards/006/actions/actions";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-// Import { goonsMaleficent } from "../../001/characters/characters";
-// Import { thePhantomBlotShadowyFigure } from "../../007";
-//
-// Describe("Safe And Sound", () => {
-//   It("Chosen character of yours can’t be challenged until the start of your next turn.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: safeAndSound.cost,
-//         Play: [goonsMaleficent],
-//         Hand: [safeAndSound],
-//       },
-//       {
-//         Inkwell: safeAndSound.cost,
-//         Play: [thePhantomBlotShadowyFigure],
-//       },
-//     );
-//
-//     Await testEngine.playCard(safeAndSound, { targets: [goonsMaleficent] });
-//     Await testEngine.exertCard(goonsMaleficent);
-//
-//     Await testEngine.passTurn();
-//
-//     Const cardUnderTest = testEngine.getCardModel(goonsMaleficent);
-//     Const challenger = testEngine.getCardModel(thePhantomBlotShadowyFigure);
-//
-//     Expect(cardUnderTest.canBeChallenged(challenger)).toBe(false);
-//
-//     Await testEngine.passTurn();
-//     Await testEngine.exertCard(goonsMaleficent);
-//
-//     Await testEngine.passTurn();
-//
-//     Expect(cardUnderTest.canBeChallenged(challenger)).toBe(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { owlPirateLookout } from "../characters/001-owl-pirate-lookout";
+import { thePhantomBlotShadowyFigure } from "../../007";
+import { safeAndSound } from "./030-safe-and-sound";
+
+describe("Safe and Sound", () => {
+  it("prevents the chosen character from being challenged until your next turn starts", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [safeAndSound],
+        inkwell: safeAndSound.cost,
+        deck: [owlPirateLookout, owlPirateLookout],
+        play: [owlPirateLookout],
+      },
+      {
+        deck: [thePhantomBlotShadowyFigure, thePhantomBlotShadowyFigure],
+        play: [thePhantomBlotShadowyFigure],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(safeAndSound, {
+        targets: [owlPirateLookout],
+      }).success,
+    ).toBe(true);
+    expect(testEngine.asServer().manualExertCard(owlPirateLookout)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerTwo().canChallenge(thePhantomBlotShadowyFigure, owlPirateLookout),
+    ).toBe(false);
+
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asServer().manualExertCard(owlPirateLookout)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerTwo().canChallenge(thePhantomBlotShadowyFigure, owlPirateLookout),
+    ).toBe(true);
+  });
+
+  it("only protects the chosen character, not other characters you control", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [safeAndSound],
+        inkwell: safeAndSound.cost,
+        deck: [owlPirateLookout, owlPirateLookout],
+        play: [owlPirateLookout, { card: thePhantomBlotShadowyFigure }],
+      },
+      {
+        deck: [thePhantomBlotShadowyFigure, thePhantomBlotShadowyFigure],
+        play: [{ card: owlPirateLookout, exerted: true }],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(safeAndSound, {
+        targets: [owlPirateLookout],
+      }).success,
+    ).toBe(true);
+    expect(
+      testEngine.asServer().manualExertCard(thePhantomBlotShadowyFigure),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerTwo().canChallenge(owlPirateLookout, thePhantomBlotShadowyFigure),
+    ).toBe(false);
+  });
+});

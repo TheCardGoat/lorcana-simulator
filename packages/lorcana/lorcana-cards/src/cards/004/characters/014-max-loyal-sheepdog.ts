@@ -32,35 +32,21 @@ export const maxLoyalSheepdog: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        controller: "you",
+        name: "Prince Eric",
+        type: "has-named-character",
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            filters: [
-              {
-                type: "name",
-                equals: "Prince Eric",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+        amount: 1,
+        cardType: "character",
+        type: "cost-reduction",
       },
       id: "1d6-1",
+      name: "HERE BOY",
+      sourceZones: ["hand"],
       text: "HERE BOY If you have a character named Prince Eric in play, you pay 1 {I} less to play this character.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: maxLoyalSheepdogI18n,

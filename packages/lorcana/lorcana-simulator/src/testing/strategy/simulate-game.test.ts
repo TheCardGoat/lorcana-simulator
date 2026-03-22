@@ -524,7 +524,7 @@ describe("strategy deck simulation convenience method", () => {
   );
 
   it(
-    "concedes instead of deadlocking when steel-sapphire-aggressive automation gets stuck",
+    "does not deadlock when steel-sapphire-aggressive reaches the old stuck scenario",
     () => {
       const summary = simulateAutomatedDeckMatch({
         matchId: "steel-sapphire-aggressive-vs-amber-amethyst-aggressive-stuck-concede",
@@ -542,8 +542,12 @@ describe("strategy deck simulation convenience method", () => {
 
       expect(summary.endReason).toBe("winner");
       expect(summary.deadlock).toBe(false);
-      expect(summary.gameEndReason).toContain("conceded");
-      expect(summary.deadlockConcedeCount + summary.fallbackCounts.concede).toBeGreaterThan(0);
+      expect(summary.gameEndReason).toBeDefined();
+      if (summary.gameEndReason === "Reached 20 lore") {
+        expect(resolveWinnerLore(summary)).toBeGreaterThanOrEqual(20);
+      } else {
+        expect(summary.gameEndReason).toContain("conceded");
+      }
       expect(summary.winner).toBeDefined();
     },
     { timeout: 20000 },

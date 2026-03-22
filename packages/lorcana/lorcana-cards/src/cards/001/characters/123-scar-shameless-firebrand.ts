@@ -35,17 +35,65 @@ export const scarShamelessFirebrand: CharacterCard = {
   classifications: ["Floodborn", "Villain", "King"],
   abilities: [
     {
-      effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "optional",
+      cost: {
+        ink: 6,
       },
-      id: "mm7-1",
-      text: "**Shift** 6 _(You may pay 6 {I} to play this on top of one of your characters named Scar.)_\n**ROUSING SPEECH** When you play this character, ready your characters with cost 3 or less. They can",
-      type: "action",
+      id: "pVG-1",
+      keyword: "Shift",
+      text: "Shift 6",
+      type: "keyword",
+    },
+    {
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "ready",
+            target: {
+              selector: "all",
+              count: "all",
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["character"],
+              filter: [
+                {
+                  type: "cost-comparison",
+                  comparison: "less-or-equal",
+                  value: 3,
+                },
+              ],
+            },
+          },
+          {
+            type: "restriction",
+            restriction: "cant-quest",
+            duration: "this-turn",
+            target: {
+              selector: "all",
+              count: "all",
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["character"],
+              filter: [
+                {
+                  type: "cost-comparison",
+                  comparison: "less-or-equal",
+                  value: 3,
+                },
+              ],
+            },
+          },
+        ],
+      },
+      id: "pVG-2",
+      name: "ROUSING SPEECH",
+      text: "When you play this character, ready your characters with cost 3 or less. They can't quest for the rest of this turn.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
     },
   ],
   i18n: scarShamelessFirebrandI18n,

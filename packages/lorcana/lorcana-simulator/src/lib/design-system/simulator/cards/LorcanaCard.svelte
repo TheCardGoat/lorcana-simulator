@@ -5,6 +5,8 @@
   import CardBack from "@/design-system/simulator/cards/CardBack.svelte";
   import CardFace from "@/design-system/simulator/cards/CardFace.svelte";
   import CardHoverCardContent from "@/design-system/simulator/cards/CardHoverCardContent.svelte";
+  import { cardHoverCardRegistry } from "@/design-system/simulator/cards/card-hover-card-registry.svelte.js";
+  import {useSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
   import {SimulatorLayoutModeObserver} from "@/features/simulator/model/layout-mode.svelte.js";
   import {useLorcanaSidebarPresenter} from "@/features/simulator/context/game-context.svelte.js";
   import {
@@ -114,8 +116,10 @@
   const isDryingState = $derived(isDrying || card?.isDrying || false);
   const isExertedState = $derived(isExerted || card?.readyState === "exerted" || false);
   const cardInteraction = useCardInteractionContext();
+  const simulatorCardContext = useSimulatorCardContext();
   const layout = new SimulatorLayoutModeObserver();
   const sidebar = useLorcanaSidebarPresenter();
+  let hoverCardOpen = $state(false);
   const resolvedInteractionMeta = $derived<CardInteractionMeta | undefined>(
     card
       ? {
@@ -127,18 +131,28 @@
       : interactionMeta,
   );
   const shouldUseTouchInspect = $derived(layout.current === "mobile");
-  const hoverActions = $derived(card ? sidebar.getCardActionViews(card) : []);
-  const hoverContextMessage = $derived(
-    card ? sidebar.getActionSessionCardReason(card.cardId) : null,
+  const isTouchInspectCard = $derived.by(() =>
+    shouldUseTouchInspect &&
+    Boolean(card) &&
+    simulatorCardContext.inspectedCard?.cardId === card?.cardId,
   );
   const isChallengeTargetSelectionActive = $derived(
     sidebar.actionSelectionSession?.categoryId === "challenge" &&
       sidebar.actionSelectionSession.phase === "choose-target",
   );
   const shouldRenderHoverCard = $derived(
-    showHoverCard && !shouldUseTouchInspect && !isChallengeTargetSelectionActive,
+    showHoverCard && !isChallengeTargetSelectionActive && (!shouldUseTouchInspect || isTouchInspectCard),
   );
-  let hoverCardOpen = $state(false);
+  const hoverContextMessage = $derived(
+    shouldRenderHoverCard && hoverCardOpen && card
+      ? sidebar.getActionSessionCardReason(card.cardId)
+      : null,
+  );
+  const hoverActions = $derived(
+    shouldRenderHoverCard && hoverCardOpen && hoverShowActions && card
+      ? sidebar.getCardActionViews(card)
+      : [],
+  );
 
 
   // Calculate actual display dimensions based on image format and size
@@ -200,6 +214,11 @@
   }
 
   function handleHoverCardClose(): void {
+    if (shouldUseTouchInspect) {
+      simulatorCardContext.closeCardInspect();
+      return;
+    }
+
     hoverCardOpen = false;
   }
 
@@ -207,6 +226,40 @@
     if (!shouldRenderHoverCard || !card) {
       hoverCardOpen = false;
     }
+  });
+
+  $effect(() => {
+    if (!shouldUseTouchInspect) {
+      return;
+    }
+
+    hoverCardOpen = isTouchInspectCard;
+  });
+
+  $effect(() => {
+    if (!card || !hoverCardOpen) {
+      return;
+    }
+
+    cardHoverCardRegistry.open(card.cardId);
+  });
+
+  $effect(() => {
+    if (!card || !hoverCardOpen) {
+      return;
+    }
+
+    if (cardHoverCardRegistry.activeCardId !== card.cardId) {
+      hoverCardOpen = false;
+    }
+  });
+
+  $effect(() => {
+    if (!card || hoverCardOpen) {
+      return;
+    }
+
+    cardHoverCardRegistry.close(card.cardId);
   });
 </script>
 
@@ -251,7 +304,13 @@
     </HoverCard.Trigger>
     {#if shouldRenderHoverCard}
       <HoverCard.Content
-        class="w-fit p-0 border-0 bg-transparent"
+        align="start"
+        sideOffset={8}
+        collisionPadding={12}
+        sticky="always"
+        updatePositionStrategy="always"
+        class="overflow-y-auto p-0 border-0 bg-transparent"
+        style="width: min(22rem, calc(var(--bits-link-preview-content-available-width) - 1rem)); max-width: calc(var(--bits-link-preview-content-available-width) - 1rem); max-height: calc(var(--bits-link-preview-content-available-height) - 1rem);"
         onEscapeKeydown={handleHoverCardClose}
         onInteractOutside={handleHoverCardClose}
       >
@@ -260,7 +319,10 @@
           actions={hoverShowActions ? hoverActions : []}
           contextMessage={hoverContextMessage}
           onAction={(action) => {
-            sidebar.handleCardActionClick(action, { skipConfirmation: true });
+            const wasHandled = sidebar.handleCardActionClick(action, { skipConfirmation: true });
+            if (shouldUseTouchInspect && wasHandled) {
+              simulatorCardContext.closeCardInspect();
+            }
           }}
         >
           {#snippet headerActions()}

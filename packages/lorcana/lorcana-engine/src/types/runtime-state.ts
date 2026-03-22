@@ -394,6 +394,7 @@ export interface PendingActionResolutionInput {
   targets?: CardInstanceId | PlayerId | readonly (CardInstanceId | PlayerId)[];
   currentTargets?: CardInstanceId | PlayerId | readonly (CardInstanceId | PlayerId)[];
   contextTargets?: CardInstanceId | PlayerId | readonly (CardInstanceId | PlayerId)[];
+  targetSelectionResolved?: boolean;
   amount?: Amount;
   namedCard?: string;
   resolveOptional?: boolean;
@@ -455,6 +456,10 @@ export interface LorcanaCardMeta extends Record<string, unknown> {
   temporaryKeywordValues?: Record<string, number>;
   /** Structured payloads for temporary keywords keyed by keyword name */
   temporaryKeywordPayloads?: Record<string, TemporaryKeywordPayload>;
+  /** Temporary lost keywords and their inclusive expiration turn */
+  temporaryLostKeywords?: Record<string, number>;
+  /** Inclusive start turns for temporary lost keywords */
+  temporaryLostKeywordStarts?: Record<string, number>;
   /** Temporary classifications granted by action effects and their inclusive expiration turn */
   temporaryClassifications?: Record<string, number>;
   /** Inclusive start turns for temporary classifications */

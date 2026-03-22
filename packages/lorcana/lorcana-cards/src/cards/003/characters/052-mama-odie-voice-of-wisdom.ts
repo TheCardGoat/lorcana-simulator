@@ -30,6 +30,28 @@ export const mamaOdieVoiceOfWisdom: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally", "Sorcerer"],
-  abilities: [],
+  abilities: [
+    {
+      type: "triggered",
+      id: "052-1",
+      name: "LISTEN TO YOUR MAMA NOW",
+      text: "Whenever this character quests, you may move up to 2 damage counters from chosen character to chosen opposing character.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "move-damage",
+          amount: 2,
+          from: "CHOSEN_CHARACTER",
+          to: "CHOSEN_OPPOSING_CHARACTER",
+        },
+      },
+    },
+  ],
   i18n: mamaOdieVoiceOfWisdomI18n,
 };

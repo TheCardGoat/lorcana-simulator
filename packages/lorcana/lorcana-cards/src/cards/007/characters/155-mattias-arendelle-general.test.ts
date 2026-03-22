@@ -1,41 +1,47 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   ElsaIceMaker,
-//   MattiasArendelleGeneral,
-//   MickeyMouseInspirationalWarrior,
-// } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Mattias - Arendelle General", () => {
-//   It("PROUD TO SERVE Your Queen characters gain Ward. (Opponents can't choose them except to challenge.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: 10,
-//       Play: [
-//         MattiasArendelleGeneral,
-//         ElsaIceMaker,
-//         MickeyMouseInspirationalWarrior,
-//       ],
-//     });
-//
-//     Const queenCharacter = testEngine.getCardModel(elsaIceMaker);
-//     Const nonQueenCharacter = testEngine.getCardModel(
-//       MickeyMouseInspirationalWarrior,
-//     );
-//     Const mattias = testEngine.getCardModel(mattiasArendelleGeneral);
-//
-//     // Queen character should have Ward
-//     Expect(queenCharacter.hasWard).toBe(true);
-//
-//     // Non-Queen character should not have Ward
-//     Expect(nonQueenCharacter.hasWard).toBe(false);
-//
-//     // Mattias himself should not have Ward (ability targets "Your Queen characters", not self)
-//     Expect(mattias.hasWard).toBe(false);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { elsaIceMaker } from "./069-elsa-ice-maker";
+import { mattiasArendelleGeneral } from "./155-mattias-arendelle-general";
+
+const nonQueenCharacter = createMockCharacter({
+  id: "mattias-test-non-queen",
+  name: "Non Queen Character",
+  cost: 2,
+  classifications: ["Storyborn", "Ally"],
+});
+
+describe("Mattias - Arendelle General", () => {
+  it("PROUD TO SERVE - grants Ward to Queen characters", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [
+        { card: mattiasArendelleGeneral, isDrying: false },
+        { card: elsaIceMaker, isDrying: false },
+        { card: nonQueenCharacter, isDrying: false },
+      ],
+    });
+
+    expect(testEngine.asPlayerOne()).toHaveKeyword({
+      card: elsaIceMaker,
+      keyword: "Ward",
+    });
+  });
+
+  it("PROUD TO SERVE - does not grant Ward to non-Queen characters", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [
+        { card: mattiasArendelleGeneral, isDrying: false },
+        { card: nonQueenCharacter, isDrying: false },
+      ],
+    });
+
+    expect(testEngine.hasKeyword(nonQueenCharacter, "Ward")).toBe(false);
+  });
+
+  it("PROUD TO SERVE - Mattias himself does not gain Ward", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: mattiasArendelleGeneral, isDrying: false }],
+    });
+
+    expect(testEngine.hasKeyword(mattiasArendelleGeneral, "Ward")).toBe(false);
+  });
+});

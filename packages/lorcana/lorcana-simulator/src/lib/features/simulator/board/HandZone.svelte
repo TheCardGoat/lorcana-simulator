@@ -15,6 +15,7 @@
         useLorcanaBoardPresenter,
         useLorcanaSidebarPresenter
     } from "@/features/simulator/context/game-context.svelte.js";
+    import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
     import {
         useLorcanaSimulatorDndContext,
         createOptionalDraggable,
@@ -42,6 +43,7 @@
 
   const board = useLorcanaBoardPresenter();
   const sidebar = useLorcanaSidebarPresenter();
+  const simulatorCardContext = useSimulatorCardContext();
   const dnd = useLorcanaSimulatorDndContext();
   const cards = $derived(board.getZoneCards(playerSide, "hand"));
   const totalCards = $derived(board.getZoneTotalCards(playerSide, "hand"));
@@ -261,7 +263,10 @@
         {@const rotation = getFanRotation(index, cards.length)}
         {@const playable = isPlayable(card)}
         {@const actionState = sidebar.getActionSessionCardState(card.cardId)}
-        {@const isSelected = actionState.isSelected || selectedCardIds.includes(card.cardId)}
+        {@const isSelected =
+          actionState.isSelected ||
+          selectedCardIds.includes(card.cardId) ||
+          simulatorCardContext.previewCard?.cardId === card.cardId}
         {@const draggable = createOptionalDraggable({
           card,
           disabled: isOpponent || isMasked || !playable,

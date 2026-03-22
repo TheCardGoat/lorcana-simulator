@@ -1,15 +1,16 @@
 import type { Component } from "svelte";
 import {
   Droplets,
-  Flag,
+  Footprints,
   Hand,
-  Layers,
   MapPinned,
   Music4,
   OctagonX,
-  Repeat2,
+  SkipForward,
   Sparkles,
   Swords,
+  Undo,
+  Users,
   Zap,
 } from "@lucide/svelte";
 import type {
@@ -21,20 +22,20 @@ export type SimulatorActionIconComponent = Component<{ class?: string }>;
 
 const moveCategoryIconById = {
   "activate-ability": Zap,
-  "alter-hand": Repeat2,
+  "alter-hand": Undo,
   "choose-first-player": Hand,
   challenge: Swords,
   concede: OctagonX,
   "ink-card": Droplets,
   "keep-hand": Hand,
   "move-to-location": MapPinned,
-  "pass-turn": Flag,
+  "pass-turn": SkipForward,
   "play-card": Sparkles,
-  quest: Flag,
-  "quest-all": Layers,
+  quest: Footprints,
+  "quest-all": Users,
   "shift-card": Sparkles,
   "sing-card": Music4,
-  undo: Repeat2,
+  undo: Undo,
   unknown: Sparkles,
 } satisfies Record<ExecutableMovePresentationCategoryId, SimulatorActionIconComponent>;
 

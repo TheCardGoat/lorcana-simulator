@@ -1,8 +1,8 @@
 <script lang="ts">
   import { m } from "$lib/i18n/messages.js";
-  import {AspectRatio} from "$lib/design-system/primitives/aspect-ratio/index.js";
-  import {maybeUseLorcanaBoardPresenter} from "@/features/simulator/context/game-context.svelte.js";
-  import {resolveLorcanaCardBack} from "@/features/simulator/model/player-visual-settings.js";
+  import { AspectRatio } from "$lib/design-system/primitives/aspect-ratio/index.js";
+  import { maybeUseLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
+  import { resolveLorcanaCardBack } from "@/features/simulator/model/player-visual-settings.js";
 
   type ImageFormat = "full" | "art_only" | "art_and_name";
 
@@ -103,10 +103,6 @@
   }
 
   .card-back__image {
-    object-position: center;
-  }
-
-  .card-back__image--art-only-fallback {
     object-position: center;
   }
 

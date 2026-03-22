@@ -1,7 +1,11 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type { LorcanaRuntimeMoveInputs, PendingActionResolutionInput } from "../types";
 
-import type { AutomatedActionCandidate, AutomatedActionTargetId } from "./types";
+import type {
+  AutomatedActionCandidate,
+  AutomatedActionDestinationSelection,
+  AutomatedActionTargetId,
+} from "./types";
 
 export type AutomatedActionMoveRequest = {
   moveId: keyof LorcanaRuntimeMoveInputs & string;
@@ -46,13 +50,22 @@ function buildActionResolutionParams(
   targets: readonly AutomatedActionTargetId[] | undefined,
   choiceIndex: number | undefined,
   resolveOptional: boolean | undefined,
-): Omit<PendingActionResolutionInput, "amount" | "namedCard" | "destinations"> {
+  destinations: readonly AutomatedActionDestinationSelection[] | undefined,
+): Omit<PendingActionResolutionInput, "amount" | "namedCard"> {
   return {
     ...(targets && targets.length > 0
       ? { targets: [...targets] as PendingActionResolutionInput["targets"] }
       : {}),
     ...(typeof choiceIndex === "number" ? { choiceIndex } : {}),
     ...(typeof resolveOptional === "boolean" ? { resolveOptional } : {}),
+    ...(destinations
+      ? {
+          destinations: destinations.map((destination) => ({
+            zone: destination.zone,
+            cards: [...destination.cards],
+          })),
+        }
+      : {}),
   };
 }
 
@@ -91,6 +104,7 @@ export function buildAutomatedActionMoveRequest(
               candidate.targets,
               candidate.choiceIndex,
               candidate.resolveOptional,
+              candidate.destinations,
             ),
           },
         },
@@ -105,6 +119,7 @@ export function buildAutomatedActionMoveRequest(
               candidate.targets,
               candidate.choiceIndex,
               candidate.resolveOptional,
+              candidate.destinations,
             ),
           },
         },

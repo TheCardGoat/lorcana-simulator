@@ -156,324 +156,19 @@ function getMoveOptionLabel(
   return getMoveCategoryLabel(moveId);
 }
 
-/**
- * Builds the flat list of executable moves by delegating to the engine's
- * getAvailableMoves() and getMoveOptions() APIs instead of enumerating
- * card combinations and calling validateMove() locally.
- */
-export function buildExecutableMoves(
+function sortExecutableMoves(entries: ExecutableMoveEntry[]): ExecutableMoveEntry[] {
+  return entries.sort((left, right) => left.label.localeCompare(right.label));
+}
+
+function pushSupplementalExecutableMoves(
   engine: LorcanaEngineBase,
-  cards: CardSnapshotMap,
-  availableMoves: AvailableMove[],
   legalMoveIds: readonly string[],
-): ExecutableMoveEntry[] {
-  const entries: ExecutableMoveEntry[] = [];
-
-  for (const move of availableMoves) {
-    switch (move.moveId) {
-      case "playCard": {
-        for (const cardId of move.selectableCardIds) {
-          const id = String(cardId);
-          const targetOptions = engine.getMoveOptions("playCard", cardId);
-
-          if (targetOptions.length > 0) {
-            for (const option of targetOptions) {
-              if (option.kind !== "card") {
-                continue;
-              }
-
-              const targetId = String(option.cardId);
-              const params = {
-                cardId: id,
-                targets: [targetId],
-              } as LorcanaSimulatorMoveParams["playCard"];
-              const label = getMoveOptionLabel("playCard", params, cards);
-              entries.push({
-                id: `playCard:${id}:${targetId}`,
-                label,
-                moveId: "playCard",
-                params,
-                presentation: {
-                  kind: "targeted",
-                  categoryId: "play-card",
-                  categoryLabel: getMoveCategoryLabel("playCard"),
-                  optionLabel: label,
-                },
-              });
-            }
-            continue;
-          }
-
-          const params = { cardId: id } as LorcanaSimulatorMoveParams["playCard"];
-          const label = getMoveOptionLabel("playCard", params, cards);
-          entries.push({
-            id: `playCard:${id}`,
-            label,
-            moveId: "playCard",
-            params,
-            presentation: {
-              kind: "targeted",
-              categoryId: "play-card",
-              categoryLabel: getMoveCategoryLabel("playCard"),
-              optionLabel: label,
-            },
-          });
-        }
-        break;
-      }
-      case "shiftCard": {
-        for (const cardId of move.selectableCardIds) {
-          const id = String(cardId);
-          const params = { cardId: id } as LorcanaSimulatorMoveParams["playCard"];
-          const label = getMoveOptionLabel("playCard", params, cards);
-          entries.push({
-            id: `shiftCard:${id}`,
-            label,
-            moveId: "playCard",
-            params,
-            presentation: {
-              kind: "targeted",
-              categoryId: "shift-card",
-              categoryLabel: getMoveCategoryLabel("shiftCard"),
-              optionLabel: label,
-            },
-          });
-        }
-        break;
-      }
-      case "singCard": {
-        for (const cardId of move.selectableCardIds) {
-          const id = String(cardId);
-          const params = { cardId: id } as LorcanaSimulatorMoveParams["playCard"];
-          const label = getMoveOptionLabel("playCard", params, cards);
-          entries.push({
-            id: `singCard:${id}`,
-            label,
-            moveId: "playCard",
-            params,
-            presentation: {
-              kind: "targeted",
-              categoryId: "sing-card",
-              categoryLabel: getMoveCategoryLabel("singCard"),
-              optionLabel: label,
-            },
-          });
-        }
-        break;
-      }
-
-      case "putCardIntoInkwell": {
-        for (const cardId of move.selectableCardIds) {
-          const id = String(cardId);
-          const params = { cardId: id } as LorcanaSimulatorMoveParams["putCardIntoInkwell"];
-          const label = getMoveOptionLabel("putCardIntoInkwell", params, cards);
-          entries.push({
-            id: `putCardIntoInkwell:${id}`,
-            label,
-            moveId: "putCardIntoInkwell",
-            params,
-            presentation: {
-              kind: "targeted",
-              categoryId: "ink-card",
-              categoryLabel: getMoveCategoryLabel("putCardIntoInkwell"),
-              optionLabel: label,
-            },
-          });
-        }
-        break;
-      }
-
-      case "quest": {
-        for (const cardId of move.selectableCardIds) {
-          const id = String(cardId);
-          const params = { cardId: id } as LorcanaSimulatorMoveParams["quest"];
-          const label = getMoveOptionLabel("quest", params, cards);
-          entries.push({
-            id: `quest:${id}`,
-            label,
-            moveId: "quest",
-            params,
-            presentation: {
-              kind: "targeted",
-              categoryId: "quest",
-              categoryLabel: getMoveCategoryLabel("quest"),
-              optionLabel: label,
-            },
-          });
-        }
-        break;
-      }
-
-      case "challenge": {
-        // Expand each attacker with their valid defenders via getMoveOptions
-        for (const attackerId of move.selectableCardIds) {
-          const defenderOptions = engine.getMoveOptions("challenge", attackerId);
-          for (const option of defenderOptions) {
-            if (option.kind !== "card") continue;
-            const aId = String(attackerId);
-            const dId = String(option.cardId);
-            const params = {
-              attackerId: aId,
-              defenderId: dId,
-            } as LorcanaSimulatorMoveParams["challenge"];
-            const label = getMoveOptionLabel("challenge", params, cards);
-            entries.push({
-              id: `challenge:${aId}:${dId}`,
-              label,
-              moveId: "challenge",
-              params,
-              presentation: {
-                kind: "targeted",
-                categoryId: "challenge",
-                categoryLabel: getMoveCategoryLabel("challenge"),
-                optionLabel: label,
-              },
-            });
-          }
-        }
-        break;
-      }
-
-      case "moveCharacterToLocation": {
-        for (const characterId of move.selectableCardIds) {
-          const locationOptions = engine.getMoveOptions("moveCharacterToLocation", characterId);
-          for (const option of locationOptions) {
-            if (option.kind !== "card") continue;
-            const cId = String(characterId);
-            const lId = String(option.cardId);
-            const params = {
-              characterId: cId,
-              locationId: lId,
-            } as LorcanaSimulatorMoveParams["moveCharacterToLocation"];
-            const label = getMoveOptionLabel("moveCharacterToLocation", params, cards);
-            entries.push({
-              id: `moveCharacterToLocation:${cId}:${lId}`,
-              label,
-              moveId: "moveCharacterToLocation",
-              params,
-              presentation: {
-                kind: "targeted",
-                categoryId: "move-to-location",
-                categoryLabel: getMoveCategoryLabel("moveCharacterToLocation"),
-                optionLabel: label,
-              },
-            });
-          }
-        }
-        break;
-      }
-
-      case "activateAbility": {
-        for (const cardId of move.selectableCardIds) {
-          const abilityOptions = engine.getMoveOptions("activateAbility", cardId);
-          for (const option of abilityOptions) {
-            if (option.kind !== "ability") continue;
-            const id = String(cardId);
-            const params = {
-              cardId: id,
-              abilityIndex: option.abilityIndex,
-            } as LorcanaSimulatorMoveParams["activateAbility"];
-            const label = getMoveOptionLabel("activateAbility", params, cards);
-            entries.push({
-              id: `activateAbility:${id}:${option.abilityIndex}`,
-              label,
-              moveId: "activateAbility",
-              params,
-              presentation: {
-                kind: "targeted",
-                categoryId: "activate-ability",
-                categoryLabel: getMoveCategoryLabel("activateAbility"),
-                optionLabel: label,
-              },
-            });
-          }
-        }
-        break;
-      }
-
-      case "chooseWhoGoesFirst": {
-        const board = engine.getBoard();
-        const sides = ["playerOne", "playerTwo"] as const;
-        board.playerOrder.forEach((playerId, index) => {
-          const id = String(playerId);
-          const side = sides[index];
-          const params = { playerId: id, side } as LorcanaSimulatorMoveParams["chooseWhoGoesFirst"];
-          const label = side === "playerOne" ? "Player 1 goes first" : "Player 2 goes first";
-          entries.push({
-            id: `chooseWhoGoesFirst:${id}`,
-            label,
-            moveId: "chooseWhoGoesFirst",
-            params,
-            presentation: {
-              kind: "targeted",
-              categoryId: "choose-first-player",
-              categoryLabel: getMoveCategoryLabel("chooseWhoGoesFirst"),
-              optionLabel: label,
-            },
-          });
-        });
-        break;
-      }
-
-      case "concede": {
-        entries.push({
-          id: "concede",
-          label: getMoveCategoryLabel("concede"),
-          moveId: "concede",
-          params: {} as LorcanaSimulatorMoveParams["concede"],
-          presentation: {
-            kind: "direct",
-            categoryId: "concede",
-            categoryLabel: getMoveCategoryLabel("concede"),
-          },
-        });
-        break;
-      }
-
-      case "passTurn": {
-        entries.push({
-          id: "passTurn",
-          label: getMoveCategoryLabel("passTurn"),
-          moveId: "passTurn",
-          params: {} as LorcanaSimulatorMoveParams["passTurn"],
-          presentation: {
-            kind: "direct",
-            categoryId: "pass-turn",
-            categoryLabel: getMoveCategoryLabel("passTurn"),
-          },
-        });
-        break;
-      }
-
-      case "questWithAll": {
-        const questMove = availableMoves.find((m) => m.moveId === "quest");
-        const questCardIds = questMove?.selectableCardIds ?? [];
-        if (questCardIds.length > 1) {
-          let totalLore = 0;
-          for (const cardId of questCardIds) {
-            totalLore += cards[String(cardId)]?.loreValue ?? 0;
-          }
-          const label = m["sim.actions.label.questWithAll"]({ lore: totalLore });
-          entries.push({
-            id: "questWithAll",
-            label,
-            moveId: "questWithAll",
-            params: {} as LorcanaSimulatorMoveParams["questWithAll"],
-            presentation: {
-              kind: "direct",
-              categoryId: "quest-all",
-              categoryLabel: label,
-            },
-          });
-        }
-        break;
-      }
-    }
-  }
-
-  // Handle moves not exposed via getAvailableMoves() but present in enumerateMoves()
-
-  if (legalMoveIds.includes("alterHand") && !entries.some((e) => e.moveId === "alterHand")) {
+  entries: ExecutableMoveEntry[],
+): void {
+  if (
+    legalMoveIds.includes("alterHand") &&
+    !entries.some((entry) => entry.moveId === "alterHand")
+  ) {
     const playerId = engine.getClientPlayerId() ?? "";
     const label = getMoveCategoryLabel("alterHand");
     entries.push({
@@ -489,7 +184,7 @@ export function buildExecutableMoves(
     });
   }
 
-  if (legalMoveIds.includes("concede") && !entries.some((e) => e.moveId === "concede")) {
+  if (legalMoveIds.includes("concede") && !entries.some((entry) => entry.moveId === "concede")) {
     entries.push({
       id: "concede",
       label: getMoveCategoryLabel("concede"),
@@ -503,7 +198,7 @@ export function buildExecutableMoves(
     });
   }
 
-  if (engine.canUndo?.() && !entries.some((e) => e.moveId === "undo")) {
+  if (engine.canUndo?.() && !entries.some((entry) => entry.moveId === "undo")) {
     entries.push({
       id: "undo",
       label: getMoveCategoryLabel("undo"),
@@ -516,8 +211,323 @@ export function buildExecutableMoves(
       },
     });
   }
+}
 
-  return entries.sort((left, right) => left.label.localeCompare(right.label));
+function buildEntriesForAvailableMove(
+  engine: LorcanaEngineBase,
+  cards: CardSnapshotMap,
+  move: AvailableMove,
+  availableMoves: AvailableMove[],
+  sourceCardId?: string,
+): ExecutableMoveEntry[] {
+  const entries: ExecutableMoveEntry[] = [];
+
+  for (const cardId of move.selectableCardIds) {
+    if (sourceCardId && String(cardId) !== sourceCardId) {
+      continue;
+    }
+
+    switch (move.moveId) {
+      case "playCard": {
+        const id = String(cardId);
+        const targetOptions = engine.getMoveOptions("playCard", cardId);
+
+        if (targetOptions.length > 0) {
+          for (const option of targetOptions) {
+            if (option.kind !== "card") {
+              continue;
+            }
+
+            const targetId = String(option.cardId);
+            const params = {
+              cardId: id,
+              targets: [targetId],
+            } as LorcanaSimulatorMoveParams["playCard"];
+            const label = getMoveOptionLabel("playCard", params, cards);
+            entries.push({
+              id: `playCard:${id}:${targetId}`,
+              label,
+              moveId: "playCard",
+              params,
+              presentation: {
+                kind: "targeted",
+                categoryId: "play-card",
+                categoryLabel: getMoveCategoryLabel("playCard"),
+                optionLabel: label,
+              },
+            });
+          }
+          continue;
+        }
+
+        const params = { cardId: id } as LorcanaSimulatorMoveParams["playCard"];
+        const label = getMoveOptionLabel("playCard", params, cards);
+        entries.push({
+          id: `playCard:${id}`,
+          label,
+          moveId: "playCard",
+          params,
+          presentation: {
+            kind: "targeted",
+            categoryId: "play-card",
+            categoryLabel: getMoveCategoryLabel("playCard"),
+            optionLabel: label,
+          },
+        });
+        continue;
+      }
+      case "shiftCard": {
+        const id = String(cardId);
+        const params = { cardId: id } as LorcanaSimulatorMoveParams["playCard"];
+        const label = getMoveOptionLabel("playCard", params, cards);
+        entries.push({
+          id: `shiftCard:${id}`,
+          label,
+          moveId: "playCard",
+          params,
+          presentation: {
+            kind: "targeted",
+            categoryId: "shift-card",
+            categoryLabel: getMoveCategoryLabel("shiftCard"),
+            optionLabel: label,
+          },
+        });
+        continue;
+      }
+      case "singCard": {
+        const id = String(cardId);
+        const params = { cardId: id } as LorcanaSimulatorMoveParams["playCard"];
+        const label = getMoveOptionLabel("playCard", params, cards);
+        entries.push({
+          id: `singCard:${id}`,
+          label,
+          moveId: "playCard",
+          params,
+          presentation: {
+            kind: "targeted",
+            categoryId: "sing-card",
+            categoryLabel: getMoveCategoryLabel("singCard"),
+            optionLabel: label,
+          },
+        });
+        continue;
+      }
+      case "putCardIntoInkwell": {
+        const id = String(cardId);
+        const params = { cardId: id } as LorcanaSimulatorMoveParams["putCardIntoInkwell"];
+        const label = getMoveOptionLabel("putCardIntoInkwell", params, cards);
+        entries.push({
+          id: `putCardIntoInkwell:${id}`,
+          label,
+          moveId: "putCardIntoInkwell",
+          params,
+          presentation: {
+            kind: "targeted",
+            categoryId: "ink-card",
+            categoryLabel: getMoveCategoryLabel("putCardIntoInkwell"),
+            optionLabel: label,
+          },
+        });
+        continue;
+      }
+      case "quest": {
+        const id = String(cardId);
+        const params = { cardId: id } as LorcanaSimulatorMoveParams["quest"];
+        const label = getMoveOptionLabel("quest", params, cards);
+        entries.push({
+          id: `quest:${id}`,
+          label,
+          moveId: "quest",
+          params,
+          presentation: {
+            kind: "targeted",
+            categoryId: "quest",
+            categoryLabel: getMoveCategoryLabel("quest"),
+            optionLabel: label,
+          },
+        });
+        continue;
+      }
+      case "challenge": {
+        const defenderOptions = engine.getMoveOptions("challenge", cardId);
+        for (const option of defenderOptions) {
+          if (option.kind !== "card") continue;
+          const attackerId = String(cardId);
+          const defenderId = String(option.cardId);
+          const params = {
+            attackerId,
+            defenderId,
+          } as LorcanaSimulatorMoveParams["challenge"];
+          const label = getMoveOptionLabel("challenge", params, cards);
+          entries.push({
+            id: `challenge:${attackerId}:${defenderId}`,
+            label,
+            moveId: "challenge",
+            params,
+            presentation: {
+              kind: "targeted",
+              categoryId: "challenge",
+              categoryLabel: getMoveCategoryLabel("challenge"),
+              optionLabel: label,
+            },
+          });
+        }
+        continue;
+      }
+      case "moveCharacterToLocation": {
+        const locationOptions = engine.getMoveOptions("moveCharacterToLocation", cardId);
+        for (const option of locationOptions) {
+          if (option.kind !== "card") continue;
+          const characterId = String(cardId);
+          const locationId = String(option.cardId);
+          const params = {
+            characterId,
+            locationId,
+          } as LorcanaSimulatorMoveParams["moveCharacterToLocation"];
+          const label = getMoveOptionLabel("moveCharacterToLocation", params, cards);
+          entries.push({
+            id: `moveCharacterToLocation:${characterId}:${locationId}`,
+            label,
+            moveId: "moveCharacterToLocation",
+            params,
+            presentation: {
+              kind: "targeted",
+              categoryId: "move-to-location",
+              categoryLabel: getMoveCategoryLabel("moveCharacterToLocation"),
+              optionLabel: label,
+            },
+          });
+        }
+        continue;
+      }
+      case "activateAbility": {
+        const abilityOptions = engine.getMoveOptions("activateAbility", cardId);
+        for (const option of abilityOptions) {
+          if (option.kind !== "ability") continue;
+          const id = String(cardId);
+          const params = {
+            cardId: id,
+            abilityIndex: option.abilityIndex,
+          } as LorcanaSimulatorMoveParams["activateAbility"];
+          const label = getMoveOptionLabel("activateAbility", params, cards);
+          entries.push({
+            id: `activateAbility:${id}:${option.abilityIndex}`,
+            label,
+            moveId: "activateAbility",
+            params,
+            presentation: {
+              kind: "targeted",
+              categoryId: "activate-ability",
+              categoryLabel: getMoveCategoryLabel("activateAbility"),
+              optionLabel: label,
+            },
+          });
+        }
+        continue;
+      }
+    }
+  }
+
+  switch (move.moveId) {
+    case "chooseWhoGoesFirst": {
+      const board = engine.getBoard();
+      const sides = ["playerOne", "playerTwo"] as const;
+      board.playerOrder.forEach((playerId, index) => {
+        const id = String(playerId);
+        const side = sides[index];
+        const params = { playerId: id, side } as LorcanaSimulatorMoveParams["chooseWhoGoesFirst"];
+        const label = side === "playerOne" ? "Player 1 goes first" : "Player 2 goes first";
+        entries.push({
+          id: `chooseWhoGoesFirst:${id}`,
+          label,
+          moveId: "chooseWhoGoesFirst",
+          params,
+          presentation: {
+            kind: "targeted",
+            categoryId: "choose-first-player",
+            categoryLabel: getMoveCategoryLabel("chooseWhoGoesFirst"),
+            optionLabel: label,
+          },
+        });
+      });
+      break;
+    }
+    case "concede": {
+      entries.push({
+        id: "concede",
+        label: getMoveCategoryLabel("concede"),
+        moveId: "concede",
+        params: {} as LorcanaSimulatorMoveParams["concede"],
+        presentation: {
+          kind: "direct",
+          categoryId: "concede",
+          categoryLabel: getMoveCategoryLabel("concede"),
+        },
+      });
+      break;
+    }
+    case "passTurn": {
+      entries.push({
+        id: "passTurn",
+        label: getMoveCategoryLabel("passTurn"),
+        moveId: "passTurn",
+        params: {} as LorcanaSimulatorMoveParams["passTurn"],
+        presentation: {
+          kind: "direct",
+          categoryId: "pass-turn",
+          categoryLabel: getMoveCategoryLabel("passTurn"),
+        },
+      });
+      break;
+    }
+    case "questWithAll": {
+      const questMove = availableMoves.find((availableMove) => availableMove.moveId === "quest");
+      const questCardIds = questMove?.selectableCardIds ?? [];
+      if (questCardIds.length > 1) {
+        let totalLore = 0;
+        for (const cardId of questCardIds) {
+          totalLore += cards[String(cardId)]?.loreValue ?? 0;
+        }
+        const label = m["sim.actions.label.questWithAll"]({ lore: totalLore });
+        entries.push({
+          id: "questWithAll",
+          label,
+          moveId: "questWithAll",
+          params: {} as LorcanaSimulatorMoveParams["questWithAll"],
+          presentation: {
+            kind: "direct",
+            categoryId: "quest-all",
+            categoryLabel: label,
+          },
+        });
+      }
+      break;
+    }
+  }
+
+  return entries;
+}
+
+/**
+ * Builds the flat list of executable moves by delegating to the engine's
+ * getAvailableMoves() and getMoveOptions() APIs instead of enumerating
+ * card combinations and calling validateMove() locally.
+ */
+export function buildExecutableMoves(
+  engine: LorcanaEngineBase,
+  cards: CardSnapshotMap,
+  availableMoves: AvailableMove[],
+  legalMoveIds: readonly string[],
+): ExecutableMoveEntry[] {
+  const entries: ExecutableMoveEntry[] = [];
+
+  for (const move of availableMoves) {
+    entries.push(...buildEntriesForAvailableMove(engine, cards, move, availableMoves));
+  }
+
+  pushSupplementalExecutableMoves(engine, legalMoveIds, entries);
+
+  return sortExecutableMoves(entries);
 }
 
 /**
@@ -697,8 +707,7 @@ export function buildMoveCategorySummaries(
  * Expands a single move category into full ExecutableMoveEntry[].
  * Called lazily on user interaction (category click in AvailableMovesPanel),
  * NOT on every state change. This defers getMoveOptions() calls until needed.
- * Note: currently computes all categories and filters — a future optimization
- * could expand only the requested category's AvailableMove entries.
+ * Only the requested category's AvailableMove entries are expanded.
  */
 export function expandCategoryMoves(
   engine: LorcanaEngineBase,
@@ -707,8 +716,47 @@ export function expandCategoryMoves(
   legalMoveIds: readonly string[],
   categoryId: ExecutableMovePresentationCategoryId,
 ): ExecutableMoveEntry[] {
-  const allMoves = buildExecutableMoves(engine, cards, availableMoves, legalMoveIds);
-  return allMoves.filter((move) => move.presentation.categoryId === categoryId);
+  const entries: ExecutableMoveEntry[] = [];
+  const relevantMoves = availableMoves.filter((move) => {
+    switch (categoryId) {
+      case "play-card":
+        return move.moveId === "playCard";
+      case "shift-card":
+        return move.moveId === "shiftCard";
+      case "sing-card":
+        return move.moveId === "singCard";
+      case "ink-card":
+        return move.moveId === "putCardIntoInkwell";
+      case "quest":
+        return move.moveId === "quest";
+      case "challenge":
+        return move.moveId === "challenge";
+      case "move-to-location":
+        return move.moveId === "moveCharacterToLocation";
+      case "activate-ability":
+        return move.moveId === "activateAbility";
+      case "choose-first-player":
+        return move.moveId === "chooseWhoGoesFirst";
+      case "pass-turn":
+        return move.moveId === "passTurn";
+      case "concede":
+        return move.moveId === "concede";
+      case "quest-all":
+        return move.moveId === "questWithAll";
+      default:
+        return false;
+    }
+  });
+
+  for (const move of relevantMoves) {
+    entries.push(...buildEntriesForAvailableMove(engine, cards, move, availableMoves));
+  }
+
+  if (categoryId === "alter-hand" || categoryId === "concede" || categoryId === "undo") {
+    pushSupplementalExecutableMoves(engine, legalMoveIds, entries);
+  }
+
+  return sortExecutableMoves(entries.filter((move) => move.presentation.categoryId === categoryId));
 }
 
 /**
@@ -719,11 +767,76 @@ export function expandCardMoves(
   engine: LorcanaEngineBase,
   cards: CardSnapshotMap,
   availableMoves: AvailableMove[],
-  legalMoveIds: readonly string[],
+  _legalMoveIds: readonly string[],
   cardId: string,
 ): ExecutableMoveEntry[] {
-  const allMoves = buildExecutableMoves(engine, cards, availableMoves, legalMoveIds);
-  return allMoves.filter((move) => getSourceCardId(move) === cardId);
+  const entries: ExecutableMoveEntry[] = [];
+
+  for (const move of availableMoves) {
+    if (
+      move.moveId !== "playCard" &&
+      move.moveId !== "shiftCard" &&
+      move.moveId !== "singCard" &&
+      move.moveId !== "putCardIntoInkwell" &&
+      move.moveId !== "quest" &&
+      move.moveId !== "challenge" &&
+      move.moveId !== "moveCharacterToLocation" &&
+      move.moveId !== "activateAbility"
+    ) {
+      continue;
+    }
+
+    entries.push(...buildEntriesForAvailableMove(engine, cards, move, availableMoves, cardId));
+  }
+
+  return sortExecutableMoves(entries).filter((move) => getSourceCardId(move) === cardId);
+}
+
+export function expandCardActionCategoryMoves(
+  engine: LorcanaEngineBase,
+  cards: CardSnapshotMap,
+  availableMoves: AvailableMove[],
+  legalMoveIds: readonly string[],
+  cardId: string,
+  categoryId: ExecutableMovePresentationCategoryId,
+): ExecutableMoveEntry[] {
+  const entries: ExecutableMoveEntry[] = [];
+  const relevantMoves = availableMoves.filter((move) => {
+    switch (categoryId) {
+      case "play-card":
+        return move.moveId === "playCard";
+      case "shift-card":
+        return move.moveId === "shiftCard";
+      case "sing-card":
+        return move.moveId === "singCard";
+      case "ink-card":
+        return move.moveId === "putCardIntoInkwell";
+      case "quest":
+        return move.moveId === "quest";
+      case "challenge":
+        return move.moveId === "challenge";
+      case "move-to-location":
+        return move.moveId === "moveCharacterToLocation";
+      case "activate-ability":
+        return move.moveId === "activateAbility";
+      default:
+        return false;
+    }
+  });
+
+  for (const move of relevantMoves) {
+    entries.push(...buildEntriesForAvailableMove(engine, cards, move, availableMoves, cardId));
+  }
+
+  if (categoryId === "alter-hand" || categoryId === "concede" || categoryId === "undo") {
+    pushSupplementalExecutableMoves(engine, legalMoveIds, entries);
+  }
+
+  return sortExecutableMoves(
+    entries.filter(
+      (move) => move.presentation.categoryId === categoryId && getSourceCardId(move) === cardId,
+    ),
+  );
 }
 
 function getSourceCardId(move: ExecutableMoveEntry): string | null {

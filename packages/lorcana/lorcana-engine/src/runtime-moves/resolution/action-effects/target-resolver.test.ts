@@ -674,6 +674,28 @@ describe("target-resolver", () => {
     });
   });
 
+  it("still rejects explicit invalid targets even when zero selections would be allowed", () => {
+    const legalTarget = "legal-target" as CardInstanceId;
+    const illegalTarget = "illegal-target" as CardInstanceId;
+
+    const selection = validateAndNormalizeTargetSelection([illegalTarget], {
+      targetDsl: [],
+      cardCandidates: [legalTarget],
+      playerCandidates: [],
+      allowedZones: ["play"],
+      minSelections: 0,
+      maxSelections: 1,
+      requiresExplicitSelection: true,
+      allowsDeferredResolutionWithoutInitialSelection: false,
+      allowDuplicateTargets: false,
+    });
+
+    expect(selection).toMatchObject({
+      valid: false,
+      errorCode: "INVALID_ACTION_TARGET",
+    });
+  });
+
   it("fails closed for unknown strict player filters", () => {
     const source = "source" as CardInstanceId;
     const ctx = createTestContext({

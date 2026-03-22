@@ -32,6 +32,24 @@ export const maxGoofRockinTeen: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      keyword: "Singer",
+      type: "keyword",
+      value: 5,
+      text: "Singer 5",
+    },
+    {
+      id: "X6A-1",
+      name: "I JUST WANNA STAY HOME",
+      text: "I JUST WANNA STAY HOME This character can't move to locations.",
+      type: "static",
+      effect: {
+        type: "restriction",
+        restriction: "cant-move",
+        target: "SELF",
+      },
+    },
+  ],
   i18n: maxGoofRockinTeenI18n,
 };

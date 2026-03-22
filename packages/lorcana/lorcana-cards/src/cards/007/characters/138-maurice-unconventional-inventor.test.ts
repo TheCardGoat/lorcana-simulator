@@ -1,74 +1,124 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { pawpsicle } from "@lorcanito/lorcana-engine/cards/002/items/items";
-// Import {
-//   DiabloSpitefulRaven,
-//   MauricesMachine,
-//   MauriceUnconventionalInventor,
-// } from "@lorcanito/lorcana-engine/cards/007";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Maurice - Unconventional Inventor", () => {
-//   Describe("HOW ON EARTH DID THAT HAPPEN? When you play this character, you may banish chosen item of yours to draw a card. If the banished item is named Maurice's Machine, you may also banish chosen character with 2 {S} or less.", () => {
-//     It("Choosing Maurice's Machine", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: mauriceUnconventionalInventor.cost,
-//           Play: [mauricesMachine],
-//           Hand: [mauriceUnconventionalInventor],
-//           Deck: 5,
-//         },
-//         { play: [diabloSpitefulRaven] },
-//       );
-//
-//       Await testEngine.playCard(
-//         MauriceUnconventionalInventor,
-//         {
-//           Targets: [mauricesMachine],
-//           AcceptOptionalLayer: true,
-//         },
-//         True,
-//       );
-//
-//       Expect(testEngine.getCardModel(mauricesMachine).zone).toEqual("discard");
-//       Expect(testEngine.getZonesCardCount().hand).toEqual(1);
-//
-//       Await testEngine.resolveTopOfStack({ targets: [diabloSpitefulRaven] });
-//       Expect(testEngine.getCardModel(diabloSpitefulRaven).zone).toEqual(
-//         "discard",
-//       );
-//     });
-//
-//     It("NOT choosing Maurice's Machine", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: mauriceUnconventionalInventor.cost,
-//           Play: [pawpsicle],
-//           Hand: [mauriceUnconventionalInventor],
-//           Deck: 5,
-//         },
-//         { play: [diabloSpitefulRaven] },
-//       );
-//
-//       Await testEngine.playCard(
-//         MauriceUnconventionalInventor,
-//         {
-//           Targets: [pawpsicle],
-//           AcceptOptionalLayer: true,
-//         },
-//         True,
-//       );
-//
-//       Expect(testEngine.getCardModel(pawpsicle).zone).toEqual("discard");
-//       Expect(testEngine.getZonesCardCount().hand).toEqual(1);
-//
-//       Console.log(JSON.stringify(testEngine.stackLayers));
-//       Expect(testEngine.stackLayers).toHaveLength(0);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockItem,
+} from "@tcg/lorcana-engine/testing";
+import { mauriceUnconventionalInventor } from "./138-maurice-unconventional-inventor";
+import { mauricesMachine } from "../items/151-maurices-machine";
+
+const otherItem = createMockItem({
+  id: "maurice-other-item",
+  name: "Other Item",
+  cost: 1,
+});
+
+describe("Maurice - Unconventional Inventor", () => {
+  describe("HOW ON EARTH DID THAT HAPPEN? - When you play this character, you may banish chosen item of yours to draw a card. If the banished item is named Maurice's Machine, you may also banish chosen character with 2 {S} or less.", () => {
+    it("triggers when played and creates a bag effect", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [mauriceUnconventionalInventor],
+          inkwell: mauriceUnconventionalInventor.cost,
+          play: [mauricesMachine],
+        },
+        {},
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(mauriceUnconventionalInventor),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+    });
+
+    it("banishes an item and draws a card when optional is accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [mauriceUnconventionalInventor],
+          inkwell: mauriceUnconventionalInventor.cost,
+          play: [mauricesMachine],
+          deck: 5,
+        },
+        {},
+      );
+
+      const handCountBefore = testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length;
+
+      expect(
+        testEngine.asPlayerOne().playCard(mauriceUnconventionalInventor),
+      ).toBeSuccessfulCommand();
+
+      const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagId, {
+          resolveOptional: true,
+          targets: [mauricesMachine],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(mauricesMachine)).toBe("discard");
+      expect(testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length).toBe(handCountBefore);
+    });
+
+    it("banishes a non-Maurice's Machine item and draws a card", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [mauriceUnconventionalInventor],
+          inkwell: mauriceUnconventionalInventor.cost,
+          play: [otherItem],
+          deck: 5,
+        },
+        {},
+      );
+
+      const handCountBefore = testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length;
+
+      expect(
+        testEngine.asPlayerOne().playCard(mauriceUnconventionalInventor),
+      ).toBeSuccessfulCommand();
+
+      const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagId, {
+          resolveOptional: true,
+          targets: [otherItem],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(otherItem)).toBe("discard");
+      expect(testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length).toBe(handCountBefore);
+    });
+
+    it("declining the optional banish does not banish item or draw a card", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [mauriceUnconventionalInventor],
+          inkwell: mauriceUnconventionalInventor.cost,
+          play: [mauricesMachine],
+          deck: 5,
+        },
+        {},
+      );
+
+      const handCountBefore = testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length;
+
+      expect(
+        testEngine.asPlayerOne().playCard(mauriceUnconventionalInventor),
+      ).toBeSuccessfulCommand();
+
+      const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagId, {
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(mauricesMachine)).toBe("play");
+      expect(testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length).toBe(
+        handCountBefore - 1,
+      );
+    });
+
+    it.todo("if the banished item is named Maurice's Machine, may also banish chosen character with 2 strength or less - needs engine support for checking banished card name", () => {});
+  });
+});

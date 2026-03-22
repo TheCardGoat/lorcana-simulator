@@ -46,6 +46,83 @@ const namedActivatedAbilityCharacter = createMockCharacter({
   ],
 });
 
+const autoSkipTargetAbilitySource = createMockCharacter({
+  id: "auto-skip-target-ability-source",
+  name: "Auto Skip Target Ability Source",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+  abilities: [
+    {
+      id: "auto-skip-target-ability",
+      name: "HOP IN",
+      type: "activated",
+      text: "HOP IN {E} - Put this character under one of your characters or locations with Boost.",
+      cost: { exert: true },
+      effect: {
+        type: "put-under",
+        source: "this-card",
+        under: {
+          selector: "chosen",
+          count: 1,
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character", "location"],
+          filter: [{ type: "has-keyword", keyword: "Boost" }],
+        },
+      },
+    } satisfies ActivatedAbilityDefinition,
+  ],
+});
+
+const boostTarget = createMockCharacter({
+  id: "boost-target",
+  name: "Boost Target",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+  abilities: [{ type: "keyword", keyword: "Boost", value: 1, text: "Boost +1" }],
+});
+
+const nonBoostTarget = createMockCharacter({
+  id: "non-boost-target",
+  name: "Non Boost Target",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+const upToTargetAbilitySource = createMockCharacter({
+  id: "up-to-target-ability-source",
+  name: "Up To Target Ability Source",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+  abilities: [
+    {
+      id: "up-to-target-ability",
+      name: "MAYBE EXERT",
+      type: "activated",
+      text: "MAYBE EXERT {E} - Exert up to one chosen opposing character.",
+      cost: { exert: true },
+      effect: {
+        type: "exert",
+        target: {
+          selector: "chosen",
+          count: { upTo: 1 },
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+    } satisfies ActivatedAbilityDefinition,
+  ],
+});
+
 function createMockActionCard(params: {
   id: string;
   name: string;
@@ -792,5 +869,152 @@ describe("activateAbility", () => {
 
     expect(engine.asPlayerOne().isExerted(source)).toBe(true);
     expect(engine.asPlayerTwo()).toHaveDamage({ card: target, value: 1 });
+  });
+
+  it("creates a pending activated target selection and skips on resolution when no legal candidates exist", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [autoSkipTargetAbilitySource],
+    });
+
+    expect(
+      engine.asPlayerOne().activateAbility(autoSkipTargetAbilitySource, "HOP IN"),
+    ).toBeSuccessfulCommand();
+    expect(engine.asPlayerOne().isExerted(autoSkipTargetAbilitySource)).toBe(true);
+    expect(engine.asPlayerOne().getCardZone(autoSkipTargetAbilitySource)).toBe("play");
+    expect(engine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+    expect(engine.asPlayerOne().resolveNextPending()).toBeSuccessfulCommand();
+    expect(engine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+    expect(engine.asPlayerOne().getCardZone(autoSkipTargetAbilitySource)).toBe("play");
+  });
+
+  it("creates a pending target selection when legal activated targets exist", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [autoSkipTargetAbilitySource, boostTarget],
+    });
+
+    expect(
+      engine.asPlayerOne().activateAbility(autoSkipTargetAbilitySource, "HOP IN"),
+    ).toBeSuccessfulCommand();
+    expect(engine.asPlayerOne().isExerted(autoSkipTargetAbilitySource)).toBe(true);
+    expect(engine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+    expect(
+      engine.asPlayerOne().resolveNextPending({ targets: [boostTarget] }),
+    ).toBeSuccessfulCommand();
+    expect(engine.asPlayerOne().getCardZone(autoSkipTargetAbilitySource)).toBe("limbo");
+    expect(engine.getCardsUnder(boostTarget)).toHaveLength(1);
+  });
+
+  it("still rejects explicit illegal targets after creating a zero-candidate pending selection", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [autoSkipTargetAbilitySource],
+      },
+      {
+        play: [nonBoostTarget],
+      },
+    );
+
+    expect(
+      engine.asPlayerOne().activateAbility(autoSkipTargetAbilitySource, "HOP IN"),
+    ).toBeSuccessfulCommand();
+    expect(engine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+    const result = engine.asPlayerOne().resolveNextPending({
+      targets: [nonBoostTarget],
+    }) as CommandFailure;
+
+    expect(result.success).toBe(false);
+    expect(result.errorCode).toBe("INVALID_ACTION_TARGET");
+    expect(engine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+    expect(engine.asPlayerOne().getCardZone(autoSkipTargetAbilitySource)).toBe("play");
+  });
+
+  it("rejects explicit illegal targets for activated abilities even when legal targets exist", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [autoSkipTargetAbilitySource, boostTarget],
+      },
+      {
+        play: [nonBoostTarget],
+      },
+    );
+
+    const result = engine.asPlayerOne().activateAbility(autoSkipTargetAbilitySource, {
+      ability: "HOP IN",
+      targets: [nonBoostTarget],
+    }) as CommandFailure;
+
+    expect(result.success).toBe(false);
+    expect(result.errorCode).toBe("INVALID_ACTION_TARGET");
+    expect(engine.asPlayerOne().getCardZone(autoSkipTargetAbilitySource)).toBe("play");
+    expect(engine.asPlayerOne().isExerted(autoSkipTargetAbilitySource)).toBe(false);
+  });
+
+  it("does not create a pending target selection for up-to effects with zero legal candidates", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [upToTargetAbilitySource],
+    });
+
+    expect(
+      engine.asPlayerOne().activateAbility(upToTargetAbilitySource, "MAYBE EXERT"),
+    ).toBeSuccessfulCommand();
+    expect(engine.asPlayerOne().isExerted(upToTargetAbilitySource)).toBe(true);
+    expect(engine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+  });
+
+  it("keeps optional activated effects pending until resolved, then skips when no legal targets exist", () => {
+    const optionalAutoSkipSource = createMockCharacter({
+      id: "optional-auto-skip-source",
+      name: "Optional Auto Skip Source",
+      cost: 2,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+      abilities: [
+        {
+          id: "optional-auto-skip",
+          name: "OPTIONAL HOP",
+          type: "activated",
+          text: "OPTIONAL HOP {E} - You may put this character under one of your characters or locations with Boost.",
+          cost: { exert: true },
+          effect: {
+            type: "optional",
+            effect: {
+              type: "put-under",
+              source: "this-card",
+              under: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["character", "location"],
+                filter: [{ type: "has-keyword", keyword: "Boost" }],
+              },
+            },
+          },
+        } satisfies ActivatedAbilityDefinition,
+      ],
+    });
+
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [optionalAutoSkipSource],
+    });
+
+    expect(
+      engine.asPlayerOne().activateAbility(optionalAutoSkipSource, "OPTIONAL HOP"),
+    ).toBeSuccessfulCommand();
+    expect(engine.asPlayerOne().isExerted(optionalAutoSkipSource)).toBe(true);
+    expect(engine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+    expect(
+      engine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+    expect(engine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+    expect(engine.asPlayerOne().resolveNextPending()).toBeSuccessfulCommand();
+    expect(engine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+    expect(engine.asPlayerOne().getCardZone(optionalAutoSkipSource)).toBe("play");
   });
 });

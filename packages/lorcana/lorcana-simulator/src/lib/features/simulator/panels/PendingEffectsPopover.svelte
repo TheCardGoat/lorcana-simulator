@@ -1,357 +1,285 @@
 <script lang="ts">
-  import { ChevronDown, ChevronUp, Grip, Crosshair, Expand, Shrink } from "@lucide/svelte";
-  
-  import CardImage from "@/design-system/simulator/cards/CardImage.svelte";
-  import NamedCardSearchInput from "@/features/simulator/panels/NamedCardSearchInput.svelte";
-  import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
-  import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
-  import {
-    DEFAULT_PENDING_EFFECTS_VIEW_MODE,
-    persistPendingEffectsViewModePreference,
-    readPendingEffectsViewModePreference,
-    type PendingEffectsViewMode,
-  } from "@/features/simulator/panels/pending-effects-view-preference.js";
-  import type {
-    GuidanceAction,
-    NamedCardSearchState,
-  } from "@/features/simulator/model/active-player-guidance.js";
+import {
+	ChevronDown,
+	ChevronUp,
+	Crosshair,
+	Expand,
+	Shrink,
+} from "@lucide/svelte";
 
-  export interface PendingEffectsPopoverItem {
-    id: string;
-    kind: "bag" | "pending";
-    title: string;
-    subtitle: string;
-    detail: string;
-    badge: string;
-    card: LorcanaCardSnapshot | null;
-    isActive?: boolean;
-    canResolve?: boolean;
-    canAccept?: boolean;
-    canReject?: boolean;
-    disabledReason?: string;
-    primaryActionLabel?: string;
-    onResolve?: () => void;
-    onPrimaryAction?: () => void;
-    onAccept?: () => void;
-    onReject?: () => void;
-    statusMessage?: string;
-    onConfirm?: () => void;
-    onCancel?: () => void;
-    inlineActions?: GuidanceAction[];
-    namedCardSearch?: NamedCardSearchState;
-  }
+import CardImage from "@/design-system/simulator/cards/CardImage.svelte";
+import NamedCardSearchInput from "@/features/simulator/panels/NamedCardSearchInput.svelte";
+import { maybeUseSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
+import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
+import {
+	DEFAULT_PENDING_EFFECTS_VIEW_MODE,
+	persistPendingEffectsViewModePreference,
+	readPendingEffectsViewModePreference,
+	type PendingEffectsViewMode,
+} from "@/features/simulator/panels/pending-effects-view-preference.js";
+import type {
+	GuidanceAction,
+	NamedCardSearchState,
+} from "@/features/simulator/model/active-player-guidance.js";
 
-  interface PendingEffectsPopoverProps {
-    items: PendingEffectsPopoverItem[];
-    open?: boolean;
-    canOpenTargetModal?: boolean;
-    onOpenTargetModal?: () => void;
-  }
+export interface PendingEffectsPopoverItem {
+	id: string;
+	kind: "bag" | "pending";
+	title: string;
+	subtitle: string;
+	detail: string;
+	badge: string;
+	card: LorcanaCardSnapshot | null;
+	isActive?: boolean;
+	canResolve?: boolean;
+	canAccept?: boolean;
+	canReject?: boolean;
+	disabledReason?: string;
+	primaryActionLabel?: string;
+	onResolve?: () => void;
+	onPrimaryAction?: () => void;
+	onAccept?: () => void;
+	onReject?: () => void;
+	statusMessage?: string;
+	onConfirm?: () => void;
+	onCancel?: () => void;
+	inlineActions?: GuidanceAction[];
+	namedCardSearch?: NamedCardSearchState;
+}
 
-  type DragTarget = "panel" | "reminder";
-  type ViewMode = PendingEffectsViewMode;
-  const SCREEN_MARGIN = 16;
-  const DRAG_THRESHOLD = 4;
-  const REMINDER_FALLBACK_WIDTH = 208;
-  const REMINDER_FALLBACK_HEIGHT = 88;
-  const PANEL_FALLBACK_WIDTH = 420;
-  const PANEL_FALLBACK_HEIGHT = 360;
+interface PendingEffectsPopoverProps {
+	items: PendingEffectsPopoverItem[];
+	open?: boolean;
+	canOpenTargetModal?: boolean;
+	onOpenTargetModal?: () => void;
+	initialDockPosition?: PendingEffectsDockPosition;
+}
 
-  let {
-    items,
-    open = $bindable(false),
-    canOpenTargetModal = false,
-    onOpenTargetModal,
-  }: PendingEffectsPopoverProps = $props();
-  const simulatorCardContext = useSimulatorCardContext();
+type ViewMode = PendingEffectsViewMode;
+type PendingEffectsDockPosition = "middle" | "top" | "bottom";
 
-  let viewMode = $state<ViewMode>(DEFAULT_PENDING_EFFECTS_VIEW_MODE);
-  let reminderOffset = $state({ x: 0, y: 0 });
-  let panelOffset = $state({ x: 0, y: 0 });
-  let reminderRef = $state<HTMLButtonElement | null>(null);
-  let panelRef = $state<HTMLElement | null>(null);
-  let hasHydratedViewModePreference = $state(false);
-  let dragState = $state<{
-    origin: { x: number; y: number };
-    pointerId: number;
-    start: { x: number; y: number };
-    target: DragTarget;
-  } | null>(null);
-  let suppressReminderToggle = $state(false);
-  let previousItemCount = $state(0);
-  let previousActionableSignature = $state("");
+let {
+	items,
+	open = $bindable(false),
+	canOpenTargetModal = false,
+	onOpenTargetModal,
+	initialDockPosition = "middle",
+}: PendingEffectsPopoverProps = $props();
+const simulatorCardContext = maybeUseSimulatorCardContext();
+const initialDockPositionValue = initialDockPosition;
 
-  const itemCount = $derived(items.length);
-  const bagCount = $derived(items.filter((item) => item.kind === "bag").length);
-  const pendingCount = $derived(items.filter((item) => item.kind === "pending").length);
-  const activeItem = $derived(items.find((item) => item.isActive) ?? items[0] ?? null);
-  const actionableSignature = $derived(
-    items
-      .filter((item) => isActionable(item))
-      .map((item) => `${item.id}:${getActionSignature(item)}`)
-      .join("|"),
-  );
+let viewMode = $state<ViewMode>(DEFAULT_PENDING_EFFECTS_VIEW_MODE);
+let dockPosition = $state<PendingEffectsDockPosition>(initialDockPositionValue);
+let hasHydratedViewModePreference = $state(false);
+let previousItemCount = $state(0);
+let previousActionableSignature = $state("");
 
-  $effect(() => {
-    if (itemCount === 0) {
-      open = false;
-      previousItemCount = 0;
-      previousActionableSignature = "";
-      return;
-    }
+const itemCount = $derived(items.length);
+const bagCount = $derived(items.filter((item) => item.kind === "bag").length);
+const pendingCount = $derived(
+	items.filter((item) => item.kind === "pending").length,
+);
+const activeItem = $derived(
+	items.find((item) => item.isActive) ?? items[0] ?? null,
+);
+const actionableSignature = $derived(
+	items
+		.filter((item) => isActionable(item))
+		.map((item) => `${item.id}:${getActionSignature(item)}`)
+		.join("|"),
+);
 
-    if (
-      previousItemCount === 0 ||
-      (actionableSignature.length > 0 && actionableSignature !== previousActionableSignature)
-    ) {
-      open = true;
-    }
+$effect(() => {
+	if (itemCount === 0) {
+		open = false;
+		previousItemCount = 0;
+		previousActionableSignature = "";
+		return;
+	}
 
-    previousItemCount = itemCount;
-    previousActionableSignature = actionableSignature;
-  });
+	if (
+		previousItemCount === 0 ||
+		(actionableSignature.length > 0 &&
+			actionableSignature !== previousActionableSignature)
+	) {
+		open = true;
+	}
 
-  $effect(() => {
-    if (!dragState) {
-      return;
-    }
+	previousItemCount = itemCount;
+	previousActionableSignature = actionableSignature;
+});
 
-    const currentDrag = dragState;
+$effect(() => {
+	if (hasHydratedViewModePreference || typeof localStorage === "undefined") {
+		return;
+	}
 
-    const handlePointerMove = (event: PointerEvent): void => {
-      if (event.pointerId !== currentDrag.pointerId) {
-        return;
-      }
+	viewMode = readPendingEffectsViewModePreference(localStorage);
+	hasHydratedViewModePreference = true;
+});
 
-      const nextOffset = clampOffset(currentDrag.target, {
-        x: currentDrag.origin.x + (event.clientX - currentDrag.start.x),
-        y: currentDrag.origin.y + (event.clientY - currentDrag.start.y),
-      });
+$effect(() => {
+	if (!hasHydratedViewModePreference || typeof localStorage === "undefined") {
+		return;
+	}
 
-      if (currentDrag.target === "reminder") {
-        reminderOffset = nextOffset;
-        suppressReminderToggle =
-          suppressReminderToggle ||
-          Math.abs(event.clientX - currentDrag.start.x) > DRAG_THRESHOLD ||
-          Math.abs(event.clientY - currentDrag.start.y) > DRAG_THRESHOLD;
-      } else {
-        panelOffset = nextOffset;
-      }
-    };
+	persistPendingEffectsViewModePreference(localStorage, viewMode);
+});
 
-    const handlePointerUp = (event: PointerEvent): void => {
-      if (event.pointerId !== currentDrag.pointerId) {
-        return;
-      }
+function isActionable(item: PendingEffectsPopoverItem): boolean {
+	return Boolean(
+		item.statusMessage ||
+			item.onPrimaryAction ||
+			(item.canResolve && item.onResolve) ||
+			(item.canAccept && item.onAccept) ||
+			(item.canReject && item.onReject),
+	);
+}
 
-      dragState = null;
-    };
+function getActionSignature(item: PendingEffectsPopoverItem): string {
+	return [
+		item.statusMessage ? `status:${item.statusMessage}` : null,
+		item.onPrimaryAction ? "primary" : null,
+		item.canResolve && item.onResolve ? "resolve" : null,
+		item.canAccept && item.onAccept ? "accept" : null,
+		item.canReject && item.onReject ? "reject" : null,
+	]
+		.filter((value): value is string => Boolean(value))
+		.join(":");
+}
 
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerUp);
+function getActionButtonCount(item: PendingEffectsPopoverItem): number {
+	if (item.statusMessage) {
+		return (
+			(item.inlineActions?.length ?? 0) +
+			Number(Boolean(item.onConfirm)) +
+			Number(Boolean(item.onCancel))
+		);
+	}
 
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-      window.removeEventListener("pointercancel", handlePointerUp);
-    };
-  });
+	return (
+		Number(Boolean(item.onPrimaryAction)) +
+		Number(Boolean(item.canResolve && item.onResolve)) +
+		Number(Boolean(item.canAccept && item.onAccept)) +
+		Number(Boolean(item.canReject && item.onReject))
+	);
+}
 
-  $effect(() => {
-    if (itemCount === 0 || typeof window === "undefined") {
-      return;
-    }
+function shouldShowCompactStatusMessage(
+	item: PendingEffectsPopoverItem,
+): boolean {
+	return Boolean(item.statusMessage) && getActionButtonCount(item) === 0;
+}
 
-    const handleResize = (): void => {
-      reminderOffset = clampOffset("reminder", reminderOffset);
-      if (open) {
-        panelOffset = clampOffset("panel", panelOffset);
-      }
-    };
+function shouldShowCompactDisabledReason(
+	item: PendingEffectsPopoverItem,
+): boolean {
+	return Boolean(item.disabledReason) && getActionButtonCount(item) === 0;
+}
 
-    window.addEventListener("resize", handleResize);
+function showCompactMeta(): boolean {
+	return viewMode === "normal";
+}
 
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  });
+function handleReminderClick(): void {
+	open = !open;
+}
 
-  $effect(() => {
-    if (hasHydratedViewModePreference || typeof localStorage === "undefined") {
-      return;
-    }
+function minimizePanel(): void {
+	open = false;
+}
 
-    viewMode = readPendingEffectsViewModePreference(localStorage);
-    hasHydratedViewModePreference = true;
-  });
+function toggleViewMode(): void {
+	viewMode = viewMode === "normal" ? "compact" : "normal";
+}
 
-  $effect(() => {
-    if (!hasHydratedViewModePreference || typeof localStorage === "undefined") {
-      return;
-    }
+function toggleDockEdge(): void {
+	dockPosition = dockPosition === "top" ? "bottom" : "top";
+}
 
-    persistPendingEffectsViewModePreference(localStorage, viewMode);
-  });
+function centerPanel(): void {
+	dockPosition = "middle";
+}
 
-  function isActionable(item: PendingEffectsPopoverItem): boolean {
-    return Boolean(
-      item.statusMessage ||
-        item.onPrimaryAction ||
-        (item.canResolve && item.onResolve) ||
-        (item.canAccept && item.onAccept) ||
-        (item.canReject && item.onReject),
-    );
-  }
+function movePanelTo(
+	position: Exclude<PendingEffectsDockPosition, "middle">,
+): void {
+	dockPosition = position;
+}
 
-  function getActionSignature(item: PendingEffectsPopoverItem): string {
-    return [
-      item.statusMessage ? `status:${item.statusMessage}` : null,
-      item.onPrimaryAction ? "primary" : null,
-      item.canResolve && item.onResolve ? "resolve" : null,
-      item.canAccept && item.onAccept ? "accept" : null,
-      item.canReject && item.onReject ? "reject" : null,
-    ]
-      .filter((value): value is string => Boolean(value))
-      .join(":");
-  }
+function getDockToggleLabel(): string {
+	return dockPosition === "top" ? "Bottom" : "Top";
+}
 
-  function getTargetRect(target: DragTarget): DOMRect | null {
-    return (target === "reminder" ? reminderRef : panelRef)?.getBoundingClientRect() ?? null;
-  }
+function getDockToggleTitle(): string {
+	return dockPosition === "top" ? "Move to bottom" : "Move to top";
+}
 
-  function getBasePosition(target: DragTarget, width: number, height: number): { left: number; top: number } {
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+function handleSecondaryDockAction(): void {
+	if (dockPosition === "middle") {
+		movePanelTo("bottom");
+		return;
+	}
 
-    if (target === "reminder") {
-      return {
-        left: viewportWidth - SCREEN_MARGIN - width,
-        top: SCREEN_MARGIN,
-      };
-    }
+	centerPanel();
+}
 
-    return {
-      left: viewportWidth - SCREEN_MARGIN - width,
-      top: Math.max(SCREEN_MARGIN, (viewportHeight - height) / 2),
-    };
-  }
+function getSecondaryDockLabel(): string {
+	return dockPosition === "middle" ? "Bottom" : "Center";
+}
 
-  function clampOffset(target: DragTarget, desiredOffset: { x: number; y: number }): { x: number; y: number } {
-    if (typeof window === "undefined") {
-      return desiredOffset;
-    }
+function getSecondaryDockTitle(): string {
+	return dockPosition === "middle" ? "Move to bottom" : "Center panel";
+}
 
-    const rect = getTargetRect(target);
-    const width =
-      rect?.width ?? (target === "reminder" ? REMINDER_FALLBACK_WIDTH : PANEL_FALLBACK_WIDTH);
-    const height =
-      rect?.height ?? (target === "reminder" ? REMINDER_FALLBACK_HEIGHT : PANEL_FALLBACK_HEIGHT);
-    const base = getBasePosition(target, width, height);
-    const maxLeft = Math.max(SCREEN_MARGIN, window.innerWidth - SCREEN_MARGIN - width);
-    const maxTop = Math.max(SCREEN_MARGIN, window.innerHeight - SCREEN_MARGIN - height);
-    const nextLeft = clamp(base.left + desiredOffset.x, SCREEN_MARGIN, maxLeft);
-    const nextTop = clamp(base.top + desiredOffset.y, SCREEN_MARGIN, maxTop);
+function handleResolve(item: PendingEffectsPopoverItem): void {
+	item.onResolve?.();
+}
 
-    return {
-      x: Math.round(nextLeft - base.left),
-      y: Math.round(nextTop - base.top),
-    };
-  }
+function handlePrimaryAction(item: PendingEffectsPopoverItem): void {
+	item.onPrimaryAction?.();
+}
 
-  function clamp(value: number, min: number, max: number): number {
-    return Math.min(Math.max(value, min), max);
-  }
+function handleAccept(item: PendingEffectsPopoverItem): void {
+	item.onAccept?.();
+}
 
-  function startDrag(target: DragTarget, event: PointerEvent): void {
-    if (event.button !== 0) {
-      return;
-    }
+function handleReject(item: PendingEffectsPopoverItem): void {
+	item.onReject?.();
+}
 
-    event.preventDefault();
-    dragState = {
-      target,
-      pointerId: event.pointerId,
-      start: { x: event.clientX, y: event.clientY },
-      origin: target === "reminder" ? { ...reminderOffset } : { ...panelOffset },
-    };
+function handleCardPreviewEnter(card: LorcanaCardSnapshot | null): void {
+	if (!card?.isMasked) {
+		simulatorCardContext?.setExternalPreviewCard(card);
+	}
+}
 
-    if (target === "reminder") {
-      suppressReminderToggle = false;
-    }
-  }
+function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
+	if (
+		!card?.isMasked &&
+		simulatorCardContext?.previewCard?.cardId === card?.cardId
+	) {
+		simulatorCardContext?.setExternalPreviewCard(null);
+	}
+}
 
-  function handleReminderClick(): void {
-    if (suppressReminderToggle) {
-      suppressReminderToggle = false;
-      return;
-    }
-
-    open = !open;
-  }
-
-  function minimizePanel(): void {
-    open = false;
-  }
-
-  function toggleViewMode(): void {
-    viewMode = viewMode === "normal" ? "compact" : "normal";
-  }
-
-  function handleResolve(item: PendingEffectsPopoverItem): void {
-    item.onResolve?.();
-  }
-
-  function handlePrimaryAction(item: PendingEffectsPopoverItem): void {
-    item.onPrimaryAction?.();
-  }
-
-  function handleAccept(item: PendingEffectsPopoverItem): void {
-    item.onAccept?.();
-  }
-
-  function handleReject(item: PendingEffectsPopoverItem): void {
-    item.onReject?.();
-  }
-
-  function handleCardPreviewEnter(card: LorcanaCardSnapshot | null): void {
-    if (!card?.isMasked) {
-      simulatorCardContext.setExternalPreviewCard(card);
-    }
-  }
-
-  function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
-    if (!card?.isMasked && simulatorCardContext.previewCard?.cardId === card?.cardId) {
-      simulatorCardContext.setExternalPreviewCard(null);
-    }
-  }
-
-  function getPanelOffsetStyle(): string {
-    return `transform: translate3d(${panelOffset.x}px, ${panelOffset.y}px, 0);`;
-  }
-
-  function getReminderOffsetStyle(): string {
-    return `transform: translate3d(${reminderOffset.x}px, ${reminderOffset.y}px, 0);`;
-  }
+function handleOpenGlobalPreview(card: LorcanaCardSnapshot | null): void {
+	if (!card?.isMasked) {
+		simulatorCardContext?.openGlobalPreview(card);
+	}
+}
 </script>
 
 {#if itemCount > 0}
   <button
-    bind:this={reminderRef}
     type="button"
     class="pending-effects-reminder"
-    class:pending-effects-reminder--dragging={dragState?.target === "reminder"}
     data-queue-anchor="reminder"
     data-state={open ? "open" : "closed"}
     onclick={handleReminderClick}
-    onpointerdown={(event) => startDrag("reminder", event)}
-    style={getReminderOffsetStyle()}
     aria-expanded={open}
     aria-controls="pending-effects-panel"
   >
-    <span class="drag-indicator drag-indicator--reminder" aria-hidden="true">
-      <Grip size={15} strokeWidth={2.2} />
-    </span>
     <span class="trigger-label">Stack</span>
     <span class="trigger-count">{itemCount}</span>
     <span class="trigger-toggle-indicator" aria-hidden="true">
@@ -371,31 +299,42 @@
     <div
       class="pending-effects-panel-anchor"
       data-queue-anchor="panel"
-      style={getPanelOffsetStyle()}
+      data-dock-position={dockPosition}
     >
       <section
-        bind:this={panelRef}
         id="pending-effects-panel"
         class="pending-effects-panel"
         class:pending-effects-panel--compact={viewMode === "compact"}
-        class:pending-effects-panel--dragging={dragState?.target === "panel"}
         data-view-mode={viewMode}
+        data-dock-position={dockPosition}
         aria-label="Pending effects and bag"
       >
         <div
           class="panel-header"
           role="group"
           aria-label="Pending effects header"
-          onpointerdown={(event) => startDrag("panel", event)}
         >
-          <div class="panel-title-block">
-            <span class="drag-indicator drag-indicator--panel" aria-hidden="true">
-              <Grip size={15} strokeWidth={2.2} />
-            </span>
-            <h2>Pending effects</h2>
-            <span class="panel-count">{itemCount}</span>
-          </div>
           <div class="panel-controls">
+            <button
+              type="button"
+              class="header-chip-button"
+              onclick={() =>
+                dockPosition === "middle" ? movePanelTo("top") : toggleDockEdge()}
+              aria-label={getDockToggleTitle()}
+              title={getDockToggleTitle()}
+              data-dock-toggle={dockPosition}
+            >
+              {getDockToggleLabel()}
+            </button>
+            <button
+              type="button"
+              class="header-chip-button"
+              onclick={handleSecondaryDockAction}
+              aria-label={getSecondaryDockTitle()}
+              title={getSecondaryDockTitle()}
+            >
+              {getSecondaryDockLabel()}
+            </button>
             {#if canOpenTargetModal && onOpenTargetModal}
               <button
                 type="button"
@@ -444,14 +383,23 @@
             >
               <div class="effect-card__media">
                 {#if item.card?.set && item.card.cardNumber}
-                  <div class="card-frame">
+                  <button
+                    type="button"
+                    class="card-frame card-frame-button"
+                    onclick={() => handleOpenGlobalPreview(item.card)}
+                    aria-label={`Open full card preview for ${item.title}`}
+                    title="Open full card preview"
+                  >
                     <CardImage
                       set={item.card.set}
                       number={item.card.cardNumber}
                       crop="art_only"
                       alt={item.title}
                     />
-                  </div>
+                    <span class="card-preview-handle" aria-hidden="true">
+                      <Expand size={12} strokeWidth={2.1} />
+                    </span>
+                  </button>
                 {:else}
                   <div class="card-frame card-frame--placeholder">
                     <span>{item.kind === "bag" ? "Bag" : "Action"}</span>
@@ -460,23 +408,34 @@
               </div>
 
               <div class="effect-card__body">
-                <div class="effect-card__header">
-                  <span class="effect-badge">{item.badge}</span>
-                  {#if item.isActive}
-                    <span class="effect-state">Active</span>
-                  {/if}
-                </div>
-
-                <h3>{item.title}</h3>
-                <p class="effect-subtitle">{item.subtitle}</p>
-                <p class="effect-detail">{item.detail}</p>
-
-                {#if item.card?.text}
-                  <p class="effect-rules">{item.card.text}</p>
+                {#if showCompactMeta()}
+                  <div class="effect-card__header">
+                    <span class="effect-badge">{item.badge}</span>
+                    {#if item.isActive}
+                      <span class="effect-state">Active</span>
+                    {/if}
+                  </div>
                 {/if}
 
-                {#if item.disabledReason}
-                  <p class="effect-disabled-reason">{item.disabledReason}</p>
+                <h3>{item.title}</h3>
+                {#if showCompactMeta()}
+                  <p class="effect-subtitle">{item.subtitle}</p>
+                  <p class="effect-detail">{item.detail}</p>
+
+                  {#if item.card?.text}
+                    <p class="effect-rules">{item.card.text}</p>
+                  {/if}
+
+                  {#if item.disabledReason}
+                    <p class="effect-disabled-reason">{item.disabledReason}</p>
+                  {/if}
+                {:else}
+                  {#if shouldShowCompactStatusMessage(item)}
+                    <p class="effect-status-message effect-status-message--compact">{item.statusMessage}</p>
+                  {/if}
+                  {#if shouldShowCompactDisabledReason(item)}
+                    <p class="effect-disabled-reason effect-disabled-reason--compact">{item.disabledReason}</p>
+                  {/if}
                 {/if}
 
                 {#if item.namedCardSearch}
@@ -491,7 +450,10 @@
                 {/if}
               </div>
 
-              <div class="effect-actions">
+              <div
+                class="effect-actions"
+                data-action-count={getActionButtonCount(item)}
+              >
                 {#if item.statusMessage}
                   {#if item.inlineActions && item.inlineActions.length > 0}
                     {#each item.inlineActions as action (action.id)}
@@ -505,7 +467,7 @@
                       </button>
                     {/each}
                   {/if}
-                  {#if !item.onConfirm}
+                  {#if !item.onConfirm && (viewMode === "normal" || shouldShowCompactStatusMessage(item))}
                     <span class="effect-status-message">{item.statusMessage}</span>
                   {/if}
                   {#if item.onConfirm}
@@ -576,7 +538,7 @@
 <style>
   .pending-effects-reminder {
     position: absolute;
-    top: 1rem;
+    top: calc(1rem + env(safe-area-inset-top));
     right: 1rem;
     z-index: 210;
     min-width: 11.5rem;
@@ -595,27 +557,6 @@
       inset 0 1px 0 rgba(255, 237, 195, 0.18);
     color: #fff3d6;
     text-align: left;
-    cursor: grab;
-    touch-action: none;
-  }
-
-  .drag-indicator {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(255, 233, 187, 0.72);
-    opacity: 0.9;
-  }
-
-  .drag-indicator--reminder {
-    grid-row: 1 / span 2;
-    align-self: stretch;
-    padding-right: 0.18rem;
-  }
-
-  .pending-effects-reminder--dragging,
-  .pending-effects-panel--dragging .panel-header {
-    cursor: grabbing;
   }
 
   .trigger-label {
@@ -659,10 +600,21 @@
 
   .pending-effects-panel-anchor {
     position: absolute;
-    top: 50%;
     right: 1rem;
     z-index: 209;
     pointer-events: none;
+  }
+
+  .pending-effects-panel-anchor[data-dock-position="middle"] {
+    top: 50%;
+  }
+
+  .pending-effects-panel-anchor[data-dock-position="top"] {
+    top: calc(6.4rem + env(safe-area-inset-top));
+  }
+
+  .pending-effects-panel-anchor[data-dock-position="bottom"] {
+    bottom: calc(1rem + env(safe-area-inset-bottom));
   }
 
   .pending-effects-panel {
@@ -680,12 +632,15 @@
       0 28px 65px rgba(0, 0, 0, 0.48),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(14px);
+  }
+
+  .pending-effects-panel[data-dock-position="middle"] {
     transform: translateY(-50%);
   }
 
   .pending-effects-panel--compact {
-    width: min(22rem, calc(100vw - 1.75rem));
-    padding: 0.82rem;
+    width: min(19rem, calc(100vw - 1.5rem));
+    padding: 0.72rem;
   }
 
   .panel-header {
@@ -694,22 +649,13 @@
     gap: 0.65rem;
     align-items: center;
     margin-bottom: 0.7rem;
-    cursor: grab;
-    touch-action: none;
   }
 
   .panel-title-block {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    column-gap: 0.45rem;
+    display: flex;
+    gap: 0.45rem;
     align-items: center;
     min-width: 0;
-  }
-
-  .drag-indicator--panel {
-    grid-row: 1 / span 2;
-    margin-top: 0.02rem;
-    color: rgba(169, 208, 246, 0.66);
   }
 
   .panel-header h2 {
@@ -740,6 +686,30 @@
     display: flex;
     gap: 0.35rem;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .header-chip-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    border-radius: 999px;
+    border: 1px solid rgba(125, 163, 205, 0.24);
+    background: rgba(16, 29, 47, 0.76);
+    color: #dce9f8;
+    padding: 0.34rem 0.72rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition:
+      border-color 150ms ease,
+      background 150ms ease,
+      transform 150ms ease,
+      opacity 150ms ease;
   }
 
   .header-icon-button {
@@ -759,12 +729,19 @@
       transform 150ms ease;
   }
 
+  .header-chip-button:hover,
+  .header-chip-button:focus-visible,
   .header-icon-button:hover,
   .header-icon-button:focus-visible {
     border-color: rgba(153, 191, 232, 0.44);
     background: rgba(22, 39, 62, 0.92);
     transform: translateY(-1px);
     outline: none;
+  }
+
+  .header-chip-button:disabled {
+    opacity: 0.5;
+    transform: none;
   }
 
   .item-list {
@@ -806,6 +783,27 @@
     border: 1px solid rgba(132, 170, 214, 0.18);
   }
 
+  .card-frame-button {
+    position: relative;
+    display: block;
+    padding: 0;
+    cursor: pointer;
+    transition:
+      border-color 140ms ease,
+      transform 140ms ease,
+      box-shadow 140ms ease;
+  }
+
+  .card-frame-button:hover,
+  .card-frame-button:focus-visible {
+    border-color: rgba(190, 218, 247, 0.44);
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(190, 218, 247, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    outline: none;
+  }
+
   .card-frame--placeholder {
     display: grid;
     place-items: center;
@@ -819,6 +817,22 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  .card-preview-handle {
+    position: absolute;
+    right: 0.28rem;
+    bottom: 0.28rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.3rem;
+    height: 1.3rem;
+    border-radius: 999px;
+    border: 1px solid rgba(188, 216, 245, 0.38);
+    background: rgba(9, 19, 31, 0.82);
+    color: #eef6ff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
   }
 
   .effect-card__body {
@@ -915,9 +929,24 @@
     line-height: 1.3;
   }
 
+  .effect-status-message--compact {
+    margin-top: 0.35rem;
+    text-align: left;
+    font-size: 0.71rem;
+    line-height: 1.25;
+  }
+
+  .effect-disabled-reason--compact {
+    margin-top: 0.3rem;
+    font-size: 0.68rem;
+    line-height: 1.25;
+  }
+
   .action-button {
     display: inline-flex;
     justify-content: center;
+    align-items: center;
+    min-height: 2.35rem;
     border-radius: 999px;
     padding: 0.52rem 0.88rem;
     font-size: 0.8rem;
@@ -960,54 +989,76 @@
   }
 
   .pending-effects-panel--compact .item-list {
-    gap: 0.55rem;
+    gap: 0.45rem;
   }
 
   .pending-effects-panel--compact .effect-card {
-    grid-template-columns: 3.55rem minmax(0, 1fr);
-    gap: 0.7rem;
-    padding: 0.68rem;
+    grid-template-columns: 3.05rem minmax(0, 1fr);
+    gap: 0.55rem;
+    padding: 0.56rem;
+    border-radius: 0.82rem;
   }
 
   .pending-effects-panel--compact .effect-card__media {
-    inline-size: 3.55rem;
-    block-size: 2.912rem;
+    inline-size: 3.05rem;
+    block-size: 2.5rem;
+  }
+
+  .pending-effects-panel--compact .card-frame {
+    border-radius: 0.68rem;
+  }
+
+  .pending-effects-panel--compact .card-preview-handle {
+    right: 0.22rem;
+    bottom: 0.22rem;
+    width: 1.05rem;
+    height: 1.05rem;
   }
 
   .pending-effects-panel--compact .effect-actions {
     grid-column: 1 / -1;
-    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     min-width: 0;
+    gap: 0.45rem;
+    margin-top: 0.18rem;
   }
 
-  .pending-effects-panel--compact .effect-detail,
-  .pending-effects-panel--compact .effect-rules,
-  .pending-effects-panel--compact .effect-disabled-reason {
+  .pending-effects-panel--compact .effect-actions[data-action-count="1"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pending-effects-panel--compact .effect-card h3 {
+    font-size: 0.88rem;
+    line-height: 1.15;
     display: -webkit-box;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     overflow: hidden;
   }
 
-  .pending-effects-panel--compact .effect-subtitle,
-  .pending-effects-panel--compact .effect-detail {
-    display: none;
+  .pending-effects-panel--compact .effect-card__body {
+    align-self: center;
   }
 
-  .pending-effects-panel--compact .effect-detail {
-    line-clamp: 2;
-    -webkit-line-clamp: 2;
-  }
-
-  .pending-effects-panel--compact .effect-rules,
-  .pending-effects-panel--compact .effect-disabled-reason {
-    line-clamp: 1;
-    -webkit-line-clamp: 1;
+  .pending-effects-panel--compact .action-button {
+    min-height: 2.2rem;
+    padding: 0.46rem 0.7rem;
+    font-size: 0.76rem;
   }
 
   @media (max-width: 767px) {
     .pending-effects-reminder {
       min-width: 10.5rem;
       padding: 0.72rem 0.82rem;
+    }
+
+    .pending-effects-panel-anchor[data-dock-position="top"] {
+      top: calc(5.9rem + env(safe-area-inset-top));
+    }
+
+    .pending-effects-panel-anchor[data-dock-position="bottom"] {
+      bottom: calc(6.25rem + env(safe-area-inset-bottom));
     }
 
     .pending-effects-panel {
@@ -1017,7 +1068,8 @@
     }
 
     .pending-effects-panel--compact {
-      width: min(20rem, calc(100vw - 0.75rem));
+      width: min(17.5rem, calc(100vw - 0.75rem));
+      padding: 0.62rem;
     }
 
     .effect-card {
@@ -1033,9 +1085,17 @@
       font-size: 0.92rem;
     }
 
+    .header-chip-button,
     .header-icon-button {
       width: 1.85rem;
       height: 1.85rem;
+    }
+
+    .header-chip-button {
+      min-height: 1.85rem;
+      width: auto;
+      padding: 0.3rem 0.58rem;
+      font-size: 0.62rem;
     }
 
     .effect-card__media {
@@ -1047,6 +1107,17 @@
       grid-column: 1 / -1;
       grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
       min-width: 0;
+    }
+
+    .pending-effects-panel--compact .effect-card {
+      grid-template-columns: 2.85rem minmax(0, 1fr);
+      gap: 0.48rem;
+      padding: 0.5rem;
+    }
+
+    .pending-effects-panel--compact .effect-card__media {
+      inline-size: 2.85rem;
+      block-size: 2.34rem;
     }
   }
 </style>

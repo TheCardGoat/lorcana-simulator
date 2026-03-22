@@ -17,6 +17,7 @@
     useLorcanaBoardPresenter,
     useLorcanaSidebarPresenter,
   } from "@/features/simulator/context/game-context.svelte.js";
+  import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
   import {
     createOptionalDroppable,
     useLorcanaSimulatorDndContext,
@@ -55,6 +56,7 @@
 
   const board = useLorcanaBoardPresenter();
   const sidebar = useLorcanaSidebarPresenter();
+  const simulatorCardContext = useSimulatorCardContext();
   const dnd = useLorcanaSimulatorDndContext();
   const cards = $derived.by(() =>
     board
@@ -234,7 +236,10 @@
                   useContainerSize
                   imageFormat="art_and_name"
                   hoverShowActions
-                  isSelected={sidebar.getActionSessionCardState(entry.card.cardId).isSelected}
+                  isSelected={
+                    sidebar.getActionSessionCardState(entry.card.cardId).isSelected ||
+                    simulatorCardContext.previewCard?.cardId === entry.card.cardId
+                  }
                   isMasked={isMasked}
                   isPlayable={isValidTarget(entry.card.cardId)}
                   isInvalidTarget={isInvalidTarget(entry.card.cardId)}

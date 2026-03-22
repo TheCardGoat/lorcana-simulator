@@ -17,4 +17,24 @@ describe("Ring the Bell", () => {
 
     expect(testEngine.getCard(moanaOfMotunui)).toBeInZone("discard");
   });
+
+  it("does not banish an undamaged character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [ringTheBell],
+      inkwell: ringTheBell.cost,
+      play: [moanaOfMotunui],
+    });
+
+    expect(
+      testEngine.asPlayerOne().playCard(ringTheBell, {
+        targets: [moanaOfMotunui],
+      }),
+    ).toMatchObject({
+      success: false,
+      errorCode: "INVALID_ACTION_TARGET",
+    });
+
+    expect(testEngine.getCard(moanaOfMotunui)).toBeInZone("play");
+    expect(testEngine.getCard(ringTheBell)).toBeInZone("hand");
+  });
 });

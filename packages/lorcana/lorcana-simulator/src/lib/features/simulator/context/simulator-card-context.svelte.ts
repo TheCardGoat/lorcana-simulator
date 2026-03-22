@@ -343,3 +343,11 @@ export function useSimulatorCardContext(): SimulatorCardContextValue {
 
   return getContext<SimulatorCardContextValue>(SIMULATOR_CARD_CONTEXT_KEY);
 }
+
+export function maybeUseSimulatorCardContext(): SimulatorCardContextValue | null {
+  if (!hasContext(SIMULATOR_CARD_CONTEXT_KEY)) {
+    return null;
+  }
+
+  return getContext<SimulatorCardContextValue>(SIMULATOR_CARD_CONTEXT_KEY);
+}

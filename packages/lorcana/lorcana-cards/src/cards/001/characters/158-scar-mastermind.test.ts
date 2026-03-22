@@ -1,51 +1,89 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { scarMastermind } from "./158-scar-mastermind";
 
-describe("Scar - Mastermind", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [scarMastermind] });
-  //   Expect(testEngine.getCardModel(scarMastermind).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const opposingCharacter = createMockCharacter({
+  id: "scar-mastermind-target",
+  name: "Tamatoa",
+  cost: 3,
+  strength: 8,
+  willpower: 4,
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   ScarMastermind,
-//   TamatoaSoShiny,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Scar Mastermind", () => {
-//   It("DISARMING Beauty effect - Chosen characters gets -2 {S} this turn.", () => {
-//     Const testStore = new TestStore(
-//       {
-//         Inkwell: scarMastermind.cost,
-//         Hand: [scarMastermind],
-//       },
-//       {
-//         Play: [tamatoaSoShiny],
-//       },
-//     );
-//
-//     Const cardUnderTest = testStore.getByZoneAndId("hand", scarMastermind.id);
-//     Const target = testStore.getByZoneAndId(
-//       "play",
-//       TamatoaSoShiny.id,
-//       "player_two",
-//     );
-//
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveTopOfStack({ targetId: target.instanceId });
-//
-//     Expect(target.strength).toEqual((target.lorcanitoCard.strength || 0) - 5);
-//   });
-// });
-//
+const ownCharacter = createMockCharacter({
+  id: "scar-mastermind-own",
+  name: "Own Character",
+  cost: 2,
+  strength: 3,
+  willpower: 3,
+});
+
+describe("Scar - Mastermind", () => {
+  describe("INSIDIOUS PLOT - When you play this character, chosen opposing character gets -5 {S} this turn.", () => {
+    it("triggers when Scar is played and prompts for an opposing target", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: scarMastermind.cost,
+          hand: [scarMastermind],
+          deck: 2,
+        },
+        {
+          play: [opposingCharacter],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(scarMastermind)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+    });
+
+    it("reduces chosen opposing character's strength by 5 this turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: scarMastermind.cost,
+          hand: [scarMastermind],
+          deck: 2,
+        },
+        {
+          play: [opposingCharacter],
+          deck: 2,
+        },
+      );
+
+      const strengthBefore = testEngine.asPlayerTwo().getCardStrength(opposingCharacter);
+
+      expect(testEngine.asPlayerOne().playCard(scarMastermind)).toBeSuccessfulCommand();
+
+      const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagId, { targets: [opposingCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(strengthBefore - 5);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(strengthBefore);
+    });
+
+    it("cannot target own characters — ability only allows opposing characters", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: scarMastermind.cost,
+          hand: [scarMastermind],
+          play: [ownCharacter],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      const strengthBefore = testEngine.asPlayerOne().getCardStrength(ownCharacter);
+
+      expect(testEngine.asPlayerOne().playCard(scarMastermind)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getCardStrength(ownCharacter)).toBe(strengthBefore);
+    });
+  });
+});

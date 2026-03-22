@@ -38,24 +38,104 @@ export const scarFinallyKing: CharacterCard = {
     {
       id: "1vp-1",
       effect: {
+        type: "modify-stat",
         modifier: 1,
         stat: "strength",
-        target: "YOUR_CHARACTERS",
-        type: "modify-stat",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Ally",
+            },
+          ],
+        },
       },
       type: "static",
-      name: "BE GRATEFUL Your Ally",
+      name: "BE GRATEFUL",
       text: "BE GRATEFUL Your Ally characters get +1 {S}.",
     },
     {
       id: "1vp-2",
-      effect: {
-        amount: 2,
-        chosen: false,
-        target: "CONTROLLER",
-        type: "discard",
+      name: "STICK WITH ME",
+      type: "triggered",
+      trigger: {
+        event: "end-turn",
+        on: "YOU",
+        timing: "at",
       },
-      type: "action",
+      effect: {
+        type: "conditional",
+        condition: {
+          type: "target-query",
+          query: {
+            selector: "all",
+            reference: "source",
+            filters: [{ type: "exerted" }],
+          },
+          comparison: {
+            operator: "gte",
+            value: 1,
+          },
+        },
+        then: {
+          type: "optional",
+          chooser: "CONTROLLER",
+          effect: {
+            type: "sequence",
+            steps: [
+              {
+                type: "select-target",
+                target: {
+                  selector: "chosen",
+                  count: 1,
+                  owner: "you",
+                  zones: ["play"],
+                  cardTypes: ["character"],
+                  filter: [{ type: "has-classification", classification: "Ally" }],
+                },
+              },
+              {
+                type: "draw",
+                amount: {
+                  type: "strength-of",
+                  target: {
+                    ref: "previous-target",
+                  },
+                },
+                target: "CONTROLLER",
+              },
+              {
+                type: "conditional",
+                condition: {
+                  type: "if-you-do",
+                },
+                then: {
+                  type: "sequence",
+                  steps: [
+                    {
+                      type: "discard",
+                      amount: 2,
+                      target: "CONTROLLER",
+                      chosen: true,
+                    },
+                    {
+                      type: "banish",
+                      target: {
+                        reference: "selected-first",
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      },
       text: "STICK WITH ME At the end of your turn, if this character is exerted, you may draw cards equal to the {S} of chosen Ally character of yours. If you do, choose and discard 2 cards and banish that character.",
     },
   ],

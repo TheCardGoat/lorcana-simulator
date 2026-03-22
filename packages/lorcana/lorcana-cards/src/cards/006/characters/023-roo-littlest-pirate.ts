@@ -32,19 +32,31 @@ export const rooLittlestPirate: CharacterCard = {
   classifications: ["Dreamborn", "Ally", "Pirate"],
   abilities: [
     {
-      effect: {
-        from: "hand",
-        type: "play-card",
-      },
       id: "q64-1",
       name: "I'M A PIRATE TOO!",
       text: "I'M A PIRATE TOO! When you play this character, you may give chosen character -2 {S} until the start of your next turn.",
+      type: "triggered",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
       },
-      type: "triggered",
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "modify-stat",
+          stat: "strength",
+          modifier: -2,
+          duration: "until-start-of-next-turn",
+          target: {
+            cardTypes: ["character"],
+            count: 1,
+            selector: "chosen",
+            zones: ["play"],
+          },
+        },
+      },
     },
   ],
   i18n: rooLittlestPirateI18n,

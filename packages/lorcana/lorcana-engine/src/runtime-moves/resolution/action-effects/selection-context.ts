@@ -505,6 +505,13 @@ function buildGenericTargetSelectionContext(
   const cardCandidates = [...new Set(runtimeCardCandidates)];
   const playerCandidates = [...new Set(runtimePlayerCandidates)];
   const availability = analyzeTargetSelectionAvailabilityFromAnalysis(args.effect, analysis);
+  const allowEmptyResolution =
+    availability.shouldAutoRejectForNoValidTargets &&
+    !availability.allowsExplicitEmptyTargetSelection &&
+    !availability.canSatisfyRequiredSelection;
+  if (allowEmptyResolution && args.resolutionInput.targetSelectionResolved) {
+    return undefined;
+  }
   const hasCandidates = cardCandidates.length > 0 || playerCandidates.length > 0;
   if (
     currentTargetCount === 0 &&
@@ -513,19 +520,24 @@ function buildGenericTargetSelectionContext(
   ) {
     return undefined;
   }
-  if (!analysis.requiresExplicitSelection || availability.shouldAutoRejectForNoValidTargets) {
+  if (!analysis.requiresExplicitSelection) {
     return undefined;
   }
-  if (!hasCandidates) {
+  if (!hasCandidates && !allowEmptyResolution) {
     return undefined;
   }
-  const requiredSelectionCount = Math.max(1, analysis.minSelections);
+  const minSelections = allowEmptyResolution ? 0 : analysis.minSelections;
+  const requiredSelectionCount = Math.max(1, minSelections);
   const hasEnoughSelections = currentTargetCount >= requiredSelectionCount;
   const hasCompleteOrderedSelection =
     args.ordered === true &&
     analysis.maxSelections > 0 &&
     currentTargetCount >= analysis.maxSelections;
-  if (hasEnoughSelections && (args.ordered !== true || hasCompleteOrderedSelection)) {
+  if (
+    !allowEmptyResolution &&
+    hasEnoughSelections &&
+    (args.ordered !== true || hasCompleteOrderedSelection)
+  ) {
     return undefined;
   }
 
@@ -541,7 +553,7 @@ function buildGenericTargetSelectionContext(
     cardCandidateIds: cardCandidates,
     playerCandidateIds: playerCandidates,
     allowedZones: [...analysis.allowedZones],
-    minSelections: analysis.minSelections,
+    minSelections,
     maxSelections: analysis.maxSelections,
     ordered: args.ordered === true,
   };

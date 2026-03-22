@@ -42,23 +42,19 @@ export const robinHoodEphemeralArcher: CharacterCard = {
       value: 1,
     },
     {
+      condition: {
+        type: "has-card-under",
+      },
       effect: {
-        condition: {
-          expression: "there's a card under him",
-          type: "if",
+        amount: 1,
+        target: {
+          selector: "chosen",
+          count: { upTo: 2 },
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
         },
-        then: {
-          amount: 1,
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "deal-damage",
-        },
-        type: "conditional",
+        type: "deal-damage",
       },
       id: "1pw-2",
       name: "EXPERT SHOT",

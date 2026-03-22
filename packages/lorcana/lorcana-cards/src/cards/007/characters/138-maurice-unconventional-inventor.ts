@@ -33,18 +33,61 @@ export const mauriceUnconventionalInventor: CharacterCard = {
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["item"],
+        type: "sequence",
+        steps: [
+          {
+            type: "optional",
+            chooser: "CONTROLLER",
+            effect: {
+              type: "banish",
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["item"],
+              },
+            },
           },
-          type: "banish",
-        },
-        type: "optional",
+          {
+            type: "conditional",
+            condition: { type: "if-you-do" },
+            ifTrue: {
+              type: "draw",
+              amount: 1,
+              target: "CONTROLLER",
+            },
+          },
+          {
+            type: "conditional",
+            condition: {
+              type: "is-named",
+              name: "Maurice's Machine",
+              target: "previous-target",
+            },
+            ifTrue: {
+              type: "optional",
+              chooser: "CONTROLLER",
+              effect: {
+                type: "banish",
+                target: {
+                  selector: "chosen",
+                  count: 1,
+                  owner: "any",
+                  zones: ["play"],
+                  cardTypes: ["character"],
+                  filter: [
+                    {
+                      type: "strength-comparison",
+                      comparison: "less-or-equal",
+                      value: 2,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ],
       },
       id: "sgs-1",
       name: "HOW ON EARTH DID THAT HAPPEN?",

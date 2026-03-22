@@ -62,6 +62,7 @@ export const megaraLiberatedOne: CharacterCard = {
         on: {
           cardType: "character",
           controller: "you",
+          name: "Hercules",
         },
         timing: "whenever",
       },

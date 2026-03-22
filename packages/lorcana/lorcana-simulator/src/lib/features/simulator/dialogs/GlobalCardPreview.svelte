@@ -1,10 +1,11 @@
 <script lang="ts">
+  import ExpandIcon from "@lucide/svelte/icons/expand";
   import XIcon from "@lucide/svelte/icons/x";
   import * as Dialog from "$lib/design-system/primitives/dialog/index.js";
   import { IsTouchInteraction } from "$lib/hooks/is-touch-interaction.svelte.js";
   import { m } from "$lib/i18n/messages.js";
   import CardImage from "$lib/design-system/simulator/cards/CardImage.svelte";
-  import {useSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
+  import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
 
   const PREVIEW_WIDTH = 280;
   const PREVIEW_HEIGHT = 390;
@@ -19,6 +20,7 @@
   let dragStartOffset = $state({ x: 0, y: 0 });
   let previewRef: HTMLElement | null = $state(null);
   let dismissedPreviewCardId = $state<string | null>(null);
+  let mobileExpanded = $state(false);
 
   function handlePreviewPointerDown(event: PointerEvent) {
     if (isTouchInteraction.current) return;
@@ -90,23 +92,33 @@
   );
   const previewCard = $derived(simulatorCardContext.previewCard);
   const shouldRotatePreview = $derived(previewCard?.cardType === "location");
-  const isMobilePreview = $derived(isTouchInteraction.current && simulatorCardContext.isGlobalPreviewOpen);
+  const isTouchPreview = $derived(isTouchInteraction.current);
+  const isMobilePreviewDialog = $derived(isTouchPreview && mobileExpanded);
 
-  function handleMobilePreviewOpenChange(open: boolean): void {
+  function handleMobilePreviewDialogOpenChange(open: boolean): void {
     if (!open) {
-      simulatorCardContext.closeGlobalPreview();
+      mobileExpanded = false;
     }
   }
 
   function handleClosePreview(): void {
     dismissedPreviewCardId = simulatorCardContext.previewCard?.cardId ?? null;
+    mobileExpanded = false;
     simulatorCardContext.closeGlobalPreview();
+  }
+
+  function handleExpandPreview(): void {
+    mobileExpanded = true;
   }
 
   $effect(() => {
     const previewCardId = simulatorCardContext.previewCard?.cardId ?? null;
     if (previewCardId === null || previewCardId !== dismissedPreviewCardId) {
       dismissedPreviewCardId = null;
+    }
+
+    if (previewCardId === null) {
+      mobileExpanded = false;
     }
   });
 
@@ -119,7 +131,7 @@
   });
 
   $effect(() => {
-    if (!isVisible || isMobilePreview) {
+    if (!isVisible || isMobilePreviewDialog) {
       return;
     }
 
@@ -150,10 +162,10 @@
 </script>
 
 {#if isVisible}
-  {#if isMobilePreview}
+  {#if isMobilePreviewDialog}
     <Dialog.Root
-      open={simulatorCardContext.isGlobalPreviewOpen}
-      onOpenChange={handleMobilePreviewOpenChange}
+      open={mobileExpanded}
+      onOpenChange={handleMobilePreviewDialogOpenChange}
     >
       <Dialog.Portal>
         <Dialog.Overlay class="global-card-preview-mobile-overlay" />
@@ -186,9 +198,10 @@
     <div
       bind:this={previewRef}
       class="global-card-preview"
+      class:global-card-preview--touch={isTouchPreview}
       class:dragging={isDragging}
-      style:left={`${position.x}px`}
-      style:top={`${position.y}px`}
+      style:left={isTouchPreview ? undefined : `${position.x}px`}
+      style:top={isTouchPreview ? undefined : `${position.y}px`}
       onpointermove={handlePointerMove}
       onpointerup={handlePointerUp}
       onpointercancel={handlePointerUp}
@@ -196,20 +209,33 @@
       aria-label="Card preview panel"
       tabindex="-1"
     >
-      <button
-        type="button"
-        class="drag-handle"
-        onpointerdown={handlePreviewPointerDown}
-        aria-label="Drag card preview"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-          <circle cx="3" cy="3" r="1" />
-          <circle cx="9" cy="3" r="1" />
-          <circle cx="3" cy="9" r="1" />
-          <circle cx="9" cy="9" r="1" />
-          <circle cx="6" cy="6" r="1" />
-        </svg>
-      </button>
+      {#if !isTouchPreview}
+        <button
+          type="button"
+          class="drag-handle"
+          onpointerdown={handlePreviewPointerDown}
+          aria-label="Drag card preview"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+            <circle cx="3" cy="3" r="1" />
+            <circle cx="9" cy="3" r="1" />
+            <circle cx="3" cy="9" r="1" />
+            <circle cx="9" cy="9" r="1" />
+            <circle cx="6" cy="6" r="1" />
+          </svg>
+        </button>
+      {/if}
+
+      {#if isTouchPreview}
+        <button
+          type="button"
+          class="preview-expand"
+          onclick={handleExpandPreview}
+          aria-label="Expand card preview"
+        >
+          <ExpandIcon class="size-4" />
+        </button>
+      {/if}
 
       <button
         type="button"
@@ -252,6 +278,14 @@
     touch-action: none;
   }
 
+  .global-card-preview--touch {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    cursor: default;
+    touch-action: auto;
+  }
+
   .global-card-preview.dragging {
     cursor: grabbing;
   }
@@ -281,6 +315,27 @@
     color: rgba(226, 232, 240, 0.9);
     cursor: grab;
     z-index: 1;
+  }
+
+  .preview-expand {
+    position: absolute;
+    top: 0.375rem;
+    right: 2.625rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: rgba(15, 23, 42, 0.94);
+    color: rgba(241, 245, 249, 0.98);
+    box-shadow: 0 18px 45px rgba(2, 6, 23, 0.45);
+    z-index: 1;
+  }
+
+  .preview-expand:hover {
+    background: rgba(30, 41, 59, 0.98);
   }
 
   .drag-handle:hover {
@@ -327,7 +382,7 @@
 
   .preview-close--desktop {
     top: 0.375rem;
-    right: 2.625rem;
+    right: 0.375rem;
     z-index: 1;
   }
 
