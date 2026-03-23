@@ -91,6 +91,8 @@
   "sim.matchmaking.center.footerNote.eyebrow": "Calidad del match",
   "sim.matchmaking.center.footerNote.title": "Emparejamiento limpio, menos distracciones",
   "sim.matchmaking.center.footerNote.body": "Este lobby centra la accion competitiva y mueve detalles de apoyo a rieles laterales mas ligeros. El objetivo es escanear mas rapido y sentir mejor el espacio.",
+  "sim.matchmaking.archetype.userMatches.title": "Partidas creadas por jugadores",
+  "sim.matchmaking.archetype.intro": "Crea una partida indicando qué arquetipo buscas. El objetivo de esta función es permitirte probar a fondo un enfrentamiento específico.",
   "sim.matchmaking.right.live.eyebrow": "Senal en vivo",
   "sim.matchmaking.right.live.title": "Pulso de la cola",
   "sim.matchmaking.right.bulletin.eyebrow": "Boletin",

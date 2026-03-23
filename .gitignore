@@ -1,0 +1,77 @@
+# Dependencies
+node_modules/
+
+# Bun (optional local install artifacts; lockfile bun.lock is kept tracked)
+.bun/
+
+# Package manager caches (if mixed tooling)
+.pnpm-store/
+.yarn/cache
+.yarn/install-state.gz
+
+# Monorepo / build caches
+.turbo/
+*.tsbuildinfo
+
+# SvelteKit
+.svelte-kit/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Bundler / framework outputs
+dist/
+build/
+out/
+.output/
+
+# Next.js (if used under apps/)
+.next/
+.vercel/
+
+# Cloudflare / Wrangler
+.wrangler/
+.dev.vars
+.mf/
+
+# Environment & secrets (keep .env.example committed if you use one)
+.env
+.env.*
+!.env.example
+
+# Logs & debug
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test & coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# Storybook
+storybook-static/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# Misc
+*.local
+.cache/
+tmp/
+temp/

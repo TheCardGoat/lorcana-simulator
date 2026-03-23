@@ -91,6 +91,8 @@
   "sim.matchmaking.center.footerNote.eyebrow": "Match-Qualitaet",
   "sim.matchmaking.center.footerNote.title": "Sauberes Pairing, weniger Ablenkung",
   "sim.matchmaking.center.footerNote.body": "Diese Lobby haelt den Wettkampf im Zentrum und schiebt Hilfsinfos in leichtere Seitenleisten. Ziel: schnelleres Scannen und klareres Gefuehl fuer den Ort.",
+  "sim.matchmaking.archetype.userMatches.title": "Von Spielern erstellte Matches",
+  "sim.matchmaking.archetype.intro": "Erstelle ein Match, indem du angibst, welchen Archetyp du suchst. Ziel dieser Funktion ist es, dir zu helfen, ein bestimmtes Matchup gründlich zu testen.",
   "sim.matchmaking.right.live.eyebrow": "Live-Signal",
   "sim.matchmaking.right.live.title": "Warteschlangen-Puls",
   "sim.matchmaking.right.bulletin.eyebrow": "Bulletin",
