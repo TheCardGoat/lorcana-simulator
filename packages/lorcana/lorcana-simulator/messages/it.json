@@ -91,6 +91,8 @@
   "sim.matchmaking.center.footerNote.eyebrow": "Qualita match",
   "sim.matchmaking.center.footerNote.title": "Abbinamenti puliti, meno distrazioni",
   "sim.matchmaking.center.footerNote.body": "Questa lobby tiene l'azione competitiva al centro e sposta i dettagli di supporto su binari laterali piu leggeri. Obiettivo: scansione piu rapida e senso del luogo piu chiaro.",
+  "sim.matchmaking.archetype.userMatches.title": "Partite create dai giocatori",
+  "sim.matchmaking.archetype.intro": "Crea un match indicando quale archetipo vuoi trovare. Lo scopo di questa funzionalità è permetterti di testare al meglio un matchup specifico.",
   "sim.matchmaking.right.live.eyebrow": "Segnale live",
   "sim.matchmaking.right.live.title": "Battito code",
   "sim.matchmaking.right.bulletin.eyebrow": "Bacheca",
