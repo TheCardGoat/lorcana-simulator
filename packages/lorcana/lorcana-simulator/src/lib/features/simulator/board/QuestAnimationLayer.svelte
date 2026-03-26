@@ -1,9 +1,14 @@
 <script lang="ts">
   import { useLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import type { ResolvedQuestAnimation } from "@/features/simulator/animations/quest-animations.js";
+  import { watchCssAnimation } from "@/features/simulator/animations/animation-shared.js";
 
   const board = useLorcanaBoardPresenter();
   const questAnimations = $derived(board.questAnimations);
+
+  function onQuestAnimationFinished(id: string): void {
+    board.onQuestAnimationFinished(id);
+  }
 
   function getAnimationStyle(animation: ResolvedQuestAnimation): string {
     const dx = animation.destinationRect.centerX - animation.sourceRect.centerX;
@@ -26,6 +31,7 @@
     <div
       class="quest-lore-pill"
       style={getAnimationStyle(animation)}
+      use:watchCssAnimation={{ id: animation.id, onFinished: onQuestAnimationFinished }}
     >
       <span class="quest-lore-pill__icon">&#9670;</span>
       <span class="quest-lore-pill__value">{animation.loreGained}</span>
@@ -108,6 +114,12 @@
   @media (prefers-reduced-motion: reduce) {
     .quest-lore-pill {
       animation: none;
+    }
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .quest-lore-pill {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
   }
 </style>

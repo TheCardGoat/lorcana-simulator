@@ -165,6 +165,24 @@ function parseDeckFromText(
   return cards;
 }
 
+export function sanitizeDeckText(deckText: string): {
+  sanitizedText: string;
+  unknownCards: string[];
+} {
+  const { diagnostics, entries } = resolveLorcanaDeckListTextFromPool(deckText, ALL_LORCANA_CARDS);
+  const unknownSet = new Set(diagnostics.unresolvedNames);
+
+  const sanitizedText = entries
+    .filter((entry) => !unknownSet.has(entry.cardName))
+    .map((entry) => `${entry.quantity} ${entry.cardName}`)
+    .join("\n");
+
+  return {
+    sanitizedText,
+    unknownCards: diagnostics.unresolvedNames,
+  };
+}
+
 function normalizePlayerState(
   fixtureId: string,
   side: "playerOne" | "playerTwo",

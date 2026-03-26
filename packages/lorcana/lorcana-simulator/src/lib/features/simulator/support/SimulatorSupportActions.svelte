@@ -13,9 +13,11 @@
   interface SimulatorSupportActionsProps {
     surface?: "dialog" | "sheet";
     gameContext?: BugReportContext;
+    onReportBug?: () => void;
+    onShareFeedback?: () => void;
   }
 
-  let { surface = "dialog", gameContext }: SimulatorSupportActionsProps = $props();
+  let { surface = "dialog", gameContext, onReportBug, onShareFeedback }: SimulatorSupportActionsProps = $props();
 
   let feedbackOpen = $state(false);
   let bugReportOpen = $state(false);
@@ -27,9 +29,17 @@
 
   function handleActionClick(actionId: SimulatorSupportActionId): void {
     if (actionId === "reportBug") {
-      bugReportOpen = true;
+      if (onReportBug) {
+        onReportBug();
+      } else {
+        bugReportOpen = true;
+      }
     } else {
-      feedbackOpen = true;
+      if (onShareFeedback) {
+        onShareFeedback();
+      } else {
+        feedbackOpen = true;
+      }
     }
   }
 </script>
@@ -51,8 +61,10 @@
   {/each}
 </div>
 
-<SimulatorFeedbackDialog bind:open={feedbackOpen} />
-<SimulatorBugReportDialog bind:open={bugReportOpen} {gameContext} />
+{#if !onReportBug && !onShareFeedback}
+  <SimulatorFeedbackDialog bind:open={feedbackOpen} />
+  <SimulatorBugReportDialog bind:open={bugReportOpen} {gameContext} />
+{/if}
 
 <style>
   .support-actions {

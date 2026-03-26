@@ -115,7 +115,6 @@ import type {
   BoardAnchorSnapshot,
   BoardAnchorRect,
   BoardLocalRect,
-  QueuedBoardMoveAnimation,
   ResolvedBoardMoveAnimation,
   SimulatorDebugAnimationPlayer,
   SimulatorDebugAnimationRequest,
@@ -128,36 +127,32 @@ import {
   createZoneAnchorId,
   deriveQueuedBoardMoveAnimationsFromPacket,
   getAnimationSpeedMultiplier,
-  resolveQueuedBoardMoveAnimation,
 } from "@/features/simulator/animations/board-move-animations.js";
 import {
   createLoreBadgeAnchorId,
   deriveQueuedQuestAnimationsFromPacket,
-  resolveQueuedQuestAnimation,
-  type QueuedQuestAnimation,
   type ResolvedQuestAnimation,
 } from "@/features/simulator/animations/quest-animations.js";
 import {
   deriveQueuedChallengeAnimationsFromPacket,
-  resolveQueuedChallengeAnimation,
-  type QueuedChallengeAnimation,
   type ResolvedChallengeAnimation,
 } from "@/features/simulator/animations/challenge-animations.js";
 import {
   deriveQueuedOverlayAnnouncementsFromPacket,
-  type QueuedOverlayAnnouncement,
   type ResolvedOverlayAnnouncement,
 } from "@/features/simulator/animations/overlay-announcement-animations.js";
 import {
   deriveQueuedCardEffectAnimationsFromPacket,
-  resolveQueuedCardEffectAnimation,
-  type QueuedCardEffectAnimation,
   type ResolvedCardEffectAnimation,
 } from "@/features/simulator/animations/card-effect-animations.js";
 import {
   deriveQueuedPlayerEffectAnimationsFromPacket,
   type QueuedPlayerEffectAnimation,
 } from "@/features/simulator/animations/player-effect-animations.js";
+import {
+  AnimationOrchestrator,
+  type BoardAnimationPlaceholder,
+} from "@/features/simulator/animations/animation-orchestrator.svelte.js";
 import {
   getMoveCategoryId,
   getMoveCategoryLabel,
@@ -193,6 +188,14 @@ export const ANIMATION_SPEED_MS: Record<AnimationSpeed, number> = {
   fast: 500,
   normal: 1000,
   slow: 1500,
+};
+
+// Challenge animations include a result panel that requires more time to read.
+// These durations are longer than the base ANIMATION_SPEED_MS values.
+export const CHALLENGE_ANIMATION_DURATION_MS: Record<AnimationSpeed, number> = {
+  fast: 1500,
+  normal: 2000,
+  slow: 2500,
 };
 
 export const QUEST_ROTATION_DURATION_MS: Record<AnimationSpeed, number> = {
@@ -274,6 +277,8 @@ export interface LorcanaGameContextValue {
   overlayAnnouncements: () => ResolvedOverlayAnnouncement[];
   cardEffectAnimations: () => ResolvedCardEffectAnimation[];
   activePlayerEffectTargets: () => ReadonlySet<LorcanaPlayerSide>;
+  boardAnimationPlaceholders: () => BoardAnimationPlaceholder[];
+  inFlightCardIds: () => ReadonlySet<string>;
   animationSpeed: () => AnimationSpeed;
   setAnimationSpeed: (speed: AnimationSpeed) => void;
   soundVolume: () => number;
@@ -293,7 +298,13 @@ export interface LorcanaGameContextValue {
     zoneId: Extract<LorcanaZoneId, "play" | "inkwell">,
   ) => boolean;
   usesTargetedPlayCardDrag: (cardId: string) => boolean;
+  shouldOpenPlayCardSelectionOnDrop: (cardId: string) => boolean;
   handleBoardAnchorsChange: (anchors: BoardAnchorSnapshot) => void;
+  onBoardAnimationFinished: (animationId: string) => void;
+  onQuestAnimationFinished: (animationId: string) => void;
+  onChallengeAnimationFinished: (animationId: string) => void;
+  onCardEffectAnimationFinished: (animationId: string) => void;
+  onOverlayAnnouncementFinished: (animationId: string) => void;
   getOwnerIdForSide: (side: LorcanaPlayerSide) => string | null;
   getPlayerVisualSettings: (side: LorcanaPlayerSide) => LorcanaResolvedPlayerVisualSettings;
   getPlayerVisualSettingsByOwnerId: (
@@ -341,7 +352,11 @@ type SimulatorShellReadModel = Pick<LorcanaSimulatorReadModel, "getMoveLog"> &
   Partial<Pick<LorcanaSimulatorReadModel, "subscribeStateUpdates">>;
 
 const LORCANA_PREGAME_SEGMENT_ID = "startingAGame";
-const BOARD_ANIMATION_END_BUFFER_MS = 96;
+// Safety buffer for the fallback timeout. Primary completion is now detected
+// via WAAPI (.finished promise) in the animation layer. This timeout only fires
+// if the WAAPI callback doesn't (e.g., prefers-reduced-motion disables the
+// CSS animation, or the element is removed before the animation starts).
+const BOARD_ANIMATION_SAFETY_BUFFER_MS = 500;
 const DEBUG_ACTION_PREVIEW_DURATION_MS = 2000;
 const DEBUG_REACTIVITY_LOGS = false;
 const DEBUG_PERFORMANCE_LOGS = false;
@@ -442,6 +457,14 @@ function areMoveLogEntriesEqual(
 }
 
 export class LorcanaGameContext implements LorcanaGameContextValue {
+  #orchestrator = new AnimationOrchestrator({
+    queueBoardAnimations: (animations) => this.#queueResolvedBoardAnimations(animations),
+    fireQuestAnimations: (animations) => this.#fireQuestAnimations(animations),
+    fireChallengeAnimations: (animations) => this.#fireChallengeAnimations(animations),
+    fireCardEffectAnimations: (animations) => this.#fireCardEffectAnimations(animations),
+    fireOverlayAnnouncements: (animations) => this.#fireOverlayAnnouncements(animations),
+    firePlayerEffectAnimations: (animations) => this.#firePlayerEffectAnimations(animations),
+  });
   #engine: LorcanaEngineBase | null = null;
   #readModel: SimulatorShellReadModel | undefined = undefined;
   #playerSettings: LorcanaPlayerSettingsMap = {};
@@ -486,21 +509,15 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
   #invalidChallengeTargetReasons = $state<Record<string, string>>({});
   #pendingResolutionMoves = $state<PendingResolutionMoveEntry[]>([]);
   #boardAnchors = $state<BoardAnchorSnapshot | null>(null);
-  #pendingQueuedAnimations = $state<QueuedBoardMoveAnimation[]>([]);
-  #pendingAnimationSourceAnchors = $state<BoardAnchorSnapshot | null>(null);
   #queuedBoardAnimations = $state<ResolvedBoardMoveAnimation[]>([]);
   #activeBoardAnimations = $state<ResolvedBoardMoveAnimation[]>([]);
   #playedPacketAnimationIds = $state<string[]>([]);
-  #pendingQueuedQuestAnimations = $state<QueuedQuestAnimation[]>([]);
   #activeQuestAnimations = $state<ResolvedQuestAnimation[]>([]);
   #questAnimationTimeouts: ReturnType<typeof setTimeout>[] = [];
-  #pendingQueuedChallengeAnimations = $state<QueuedChallengeAnimation[]>([]);
   #activeChallengeAnimations = $state<ResolvedChallengeAnimation[]>([]);
   #challengeAnimationTimeouts: ReturnType<typeof setTimeout>[] = [];
-  #pendingQueuedOverlayAnnouncements = $state<QueuedOverlayAnnouncement[]>([]);
   #activeOverlayAnnouncements = $state<ResolvedOverlayAnnouncement[]>([]);
   #overlayAnnouncementTimeouts: ReturnType<typeof setTimeout>[] = [];
-  #pendingQueuedCardEffectAnimations = $state<QueuedCardEffectAnimation[]>([]);
   #activeCardEffectAnimations = $state<ResolvedCardEffectAnimation[]>([]);
   #cardEffectAnimationTimeouts: ReturnType<typeof setTimeout>[] = [];
   #activePlayerEffectTargets = $state<Set<LorcanaPlayerSide>>(new Set());
@@ -697,6 +714,9 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     this.#activeCardEffectAnimations;
   readonly activePlayerEffectTargets = (): ReadonlySet<LorcanaPlayerSide> =>
     this.#activePlayerEffectTargets;
+  readonly boardAnimationPlaceholders = (): BoardAnimationPlaceholder[] =>
+    this.#orchestrator.placeholders;
+  readonly inFlightCardIds = (): ReadonlySet<string> => this.#orchestrator.inFlightCardIds;
   readonly animationSpeed = (): AnimationSpeed => this.#animationSpeed;
   readonly setAnimationSpeed = (speed: AnimationSpeed): void => {
     this.#animationSpeed = speed;
@@ -743,7 +763,13 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
 
   destroy(): void {
     this.#unsubscribeFromReadModelStateUpdates();
+    this.#orchestrator.cancel();
     this.#clearBoardAnimationTimer();
+    this.#clearQuestAnimationTimers();
+    this.#clearChallengeAnimationTimers();
+    this.#clearOverlayAnnouncementTimers();
+    this.#clearCardEffectAnimationTimers();
+    this.#clearPlayerEffectAnimationTimers();
     disposeSoundService();
   }
 
@@ -980,78 +1006,66 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     return engine.hasTargetedPlayCardPreview(cardId as CardInput);
   };
 
+  readonly shouldOpenPlayCardSelectionOnDrop = (cardId: string): boolean => {
+    const card = this.#cardSnapshotsById[cardId];
+    if (!card || card.zoneId !== "hand") {
+      return false;
+    }
+
+    return this.expandCardActionCategoryMoves(card.cardId, "play-card").length > 1;
+  };
+
   readonly handleBoardAnchorsChange = (nextAnchors: BoardAnchorSnapshot): void => {
     this.#boardAnchors = nextAnchors;
+    this.#orchestrator.resolveAnchors(nextAnchors);
+  };
 
-    if (this.#pendingQueuedAnimations.length > 0) {
-      const resolvedAnimations = this.#pendingQueuedAnimations
-        .map((animation) =>
-          resolveQueuedBoardMoveAnimation(
-            animation,
-            this.#pendingAnimationSourceAnchors,
-            nextAnchors,
-          ),
-        )
-        .filter((animation): animation is ResolvedBoardMoveAnimation => animation !== null);
+  // ── WAAPI completion callbacks ────────────────────────────────────────
+  // Called by animation layer components when a CSS animation's .finished
+  // promise resolves. The safety timeout in the fire methods acts as a
+  // fallback if the callback never fires (e.g., prefers-reduced-motion).
 
-      this.#pendingQueuedAnimations = [];
-      this.#pendingAnimationSourceAnchors = null;
-      this.#queueResolvedBoardAnimations(resolvedAnimations);
+  readonly onBoardAnimationFinished = (animationId: string): void => {
+    if (
+      this.#activeBoardAnimations.length === 0 ||
+      this.#activeBoardAnimations[0].id !== animationId
+    ) {
+      return;
     }
 
-    if (this.#pendingQueuedQuestAnimations.length > 0) {
-      debugLog("quest-animations", "Resolving pending quest animations", {
-        count: this.#pendingQueuedQuestAnimations.length,
-        anchorIds: Object.keys(nextAnchors.anchors),
-      });
+    this.#clearBoardAnimationTimer();
+    const completedCardId = this.#activeBoardAnimations[0].card.cardId;
+    this.#activeBoardAnimations = [];
 
-      const resolvedQuest = this.#pendingQueuedQuestAnimations
-        .map((animation) => resolveQueuedQuestAnimation(animation, null, nextAnchors))
-        .filter((a): a is ResolvedQuestAnimation => a !== null);
+    this.#orchestrator.notifyBoardAnimationCompleted(
+      completedCardId,
+      [],
+      this.#queuedBoardAnimations.map((a) => a.card.cardId),
+    );
 
-      debugLog("quest-animations", "Resolved quest animations", {
-        resolved: resolvedQuest.length,
-        total: this.#pendingQueuedQuestAnimations.length,
-        animations: resolvedQuest.map((a) => ({
-          id: a.id,
-          source: a.sourceRect,
-          dest: a.destinationRect,
-        })),
-      });
+    this.#playNextBoardAnimation();
+  };
 
-      this.#pendingQueuedQuestAnimations = [];
-      this.#fireQuestAnimations(resolvedQuest);
-    }
+  readonly onQuestAnimationFinished = (animationId: string): void => {
+    this.#activeQuestAnimations = this.#activeQuestAnimations.filter((a) => a.id !== animationId);
+  };
 
-    if (this.#pendingQueuedChallengeAnimations.length > 0) {
-      const resolvedChallenge = this.#pendingQueuedChallengeAnimations
-        .map((animation) =>
-          resolveQueuedChallengeAnimation(
-            animation,
-            this.#pendingAnimationSourceAnchors,
-            nextAnchors,
-          ),
-        )
-        .filter((a): a is ResolvedChallengeAnimation => a !== null);
+  readonly onChallengeAnimationFinished = (animationId: string): void => {
+    this.#activeChallengeAnimations = this.#activeChallengeAnimations.filter(
+      (a) => a.id !== animationId,
+    );
+  };
 
-      this.#pendingQueuedChallengeAnimations = [];
-      this.#fireChallengeAnimations(resolvedChallenge);
-    }
+  readonly onCardEffectAnimationFinished = (animationId: string): void => {
+    this.#activeCardEffectAnimations = this.#activeCardEffectAnimations.filter(
+      (a) => a.id !== animationId,
+    );
+  };
 
-    if (this.#pendingQueuedCardEffectAnimations.length > 0) {
-      const resolvedCardEffects = this.#pendingQueuedCardEffectAnimations
-        .map((animation) =>
-          resolveQueuedCardEffectAnimation(
-            animation,
-            this.#pendingAnimationSourceAnchors,
-            nextAnchors,
-          ),
-        )
-        .filter((a): a is ResolvedCardEffectAnimation => a !== null);
-
-      this.#pendingQueuedCardEffectAnimations = [];
-      this.#fireCardEffectAnimations(resolvedCardEffects);
-    }
+  readonly onOverlayAnnouncementFinished = (animationId: string): void => {
+    this.#activeOverlayAnnouncements = this.#activeOverlayAnnouncements.filter(
+      (a) => a.id !== animationId,
+    );
   };
 
   readonly getOwnerIdForSide = (side: LorcanaPlayerSide): string | null => {
@@ -1184,12 +1198,13 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     this.#fireChallengeAnimations([
       {
         id: `debug-challenge:${attackerId}:${defenderId}:${Date.now()}`,
+        actorSide: side,
         attackerId,
         defenderId,
         sourceRect,
         destinationRect: destRect,
         preview,
-        durationMs: ANIMATION_SPEED_MS[this.#animationSpeed],
+        durationMs: CHALLENGE_ANIMATION_DURATION_MS[this.#animationSpeed],
       },
     ]);
     return true;
@@ -1350,26 +1365,29 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
   }
 
   #resetBoardAnimations(): void {
+    this.#orchestrator.cancel();
     this.#clearBoardAnimationTimer();
     this.#clearQuestAnimationTimers();
     this.#clearChallengeAnimationTimers();
     this.#clearOverlayAnnouncementTimers();
     this.#clearCardEffectAnimationTimers();
+    this.#clearPlayerEffectAnimationTimers();
     this.#boardAnchors = null;
-    this.#pendingQueuedAnimations = [];
-    this.#pendingAnimationSourceAnchors = null;
     this.#queuedBoardAnimations = [];
     this.#activeBoardAnimations = [];
     this.#playedPacketAnimationIds = [];
-    this.#pendingQueuedQuestAnimations = [];
     this.#activeQuestAnimations = [];
-    this.#pendingQueuedChallengeAnimations = [];
     this.#activeChallengeAnimations = [];
-    this.#pendingQueuedOverlayAnnouncements = [];
     this.#activeOverlayAnnouncements = [];
-    this.#pendingQueuedCardEffectAnimations = [];
     this.#activeCardEffectAnimations = [];
     this.#activePlayerEffectTargets = new Set();
+  }
+
+  #clearPlayerEffectAnimationTimers(): void {
+    for (const timeout of this.#playerEffectAnimationTimeouts) {
+      clearTimeout(timeout);
+    }
+    this.#playerEffectAnimationTimeouts = [];
   }
 
   #clearQuestAnimationTimers(): void {
@@ -1715,11 +1733,15 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     this.#activeBoardAnimations = [nextAnimation];
     playSound(boardMoveVariantToSoundId(nextAnimation.variant));
     this.#clearBoardAnimationTimer();
+
+    // Safety timeout: fallback if the WAAPI completion callback from the
+    // animation layer doesn't fire (e.g., prefers-reduced-motion, element
+    // removed before animation starts). The primary path is
+    // onBoardAnimationFinished() called by the animation layer.
     this.#boardAnimationTimeout = setTimeout(() => {
-      this.#activeBoardAnimations = [];
       this.#boardAnimationTimeout = null;
-      this.#playNextBoardAnimation();
-    }, nextAnimation.durationMs + BOARD_ANIMATION_END_BUFFER_MS);
+      this.onBoardAnimationFinished(nextAnimation.id);
+    }, nextAnimation.durationMs + BOARD_ANIMATION_SAFETY_BUFFER_MS);
   }
 
   #getCurrentDerivedStateSnapshot(): DerivedStateSnapshot {
@@ -1948,7 +1970,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     );
     const nextQueuedChallengeAnimations = deriveQueuedChallengeAnimationsFromPacket(
       packetUpdate,
-      ANIMATION_SPEED_MS[this.#animationSpeed],
+      CHALLENGE_ANIMATION_DURATION_MS[this.#animationSpeed],
     );
     const nextQueuedOverlayAnnouncements = deriveQueuedOverlayAnnouncementsFromPacket(
       packetUpdate,
@@ -1981,34 +2003,31 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     this.#lastVisibleRevision =
       typeof visibleRevision === "number" ? visibleRevision : this.#lastVisibleRevision;
 
-    // Only update the pending animation queues when the engine state actually changed.
+    // Only ingest animations when the engine state actually changed.
     // When only the visible revision changed (e.g. read-model fires for playerTwo/spectator
     // client updates in vs-ai mode while the playerOne engine stateID hasn't changed), the
     // packet animations were already consumed on the first call and the derived arrays are
-    // empty. Overwriting the queues here would wipe out animations that were queued on the
-    // first call before handleBoardAnchorsChange has had a chance to resolve them.
+    // empty. Ingesting would cancel in-progress orchestrated animations.
     if (stateChanged) {
-      this.#pendingQueuedAnimations = nextQueuedAnimations;
-      this.#pendingQueuedQuestAnimations = nextQueuedQuestAnimations;
-      this.#pendingQueuedChallengeAnimations = nextQueuedChallengeAnimations;
-      this.#pendingQueuedCardEffectAnimations = nextQueuedCardEffectAnimations;
-      this.#pendingAnimationSourceAnchors =
+      const hasAnyAnimations =
         nextQueuedAnimations.length > 0 ||
         nextQueuedQuestAnimations.length > 0 ||
         nextQueuedChallengeAnimations.length > 0 ||
-        nextQueuedCardEffectAnimations.length > 0
-          ? previousAnchorSnapshot
-          : null;
-    }
+        nextQueuedCardEffectAnimations.length > 0 ||
+        nextQueuedOverlayAnnouncements.length > 0 ||
+        nextQueuedPlayerEffectAnimations.length > 0;
 
-    // Player effect animations don't need anchor resolution — fire immediately
-    if (nextQueuedPlayerEffectAnimations.length > 0) {
-      this.#firePlayerEffectAnimations(nextQueuedPlayerEffectAnimations);
-    }
-
-    // Overlay announcements don't need anchor resolution — fire immediately
-    if (nextQueuedOverlayAnnouncements.length > 0) {
-      this.#fireOverlayAnnouncements(nextQueuedOverlayAnnouncements);
+      if (hasAnyAnimations) {
+        this.#orchestrator.ingest({
+          boardMoves: nextQueuedAnimations,
+          quests: nextQueuedQuestAnimations,
+          challenges: nextQueuedChallengeAnimations,
+          cardEffects: nextQueuedCardEffectAnimations,
+          overlays: nextQueuedOverlayAnnouncements,
+          playerEffects: nextQueuedPlayerEffectAnimations,
+          sourceAnchors: previousAnchorSnapshot,
+        });
+      }
     }
 
     const allNewAnimationIds = [
@@ -2464,6 +2483,83 @@ function buildResolutionSelectionSession(
   };
 }
 
+function isCardTargetDsl(target: unknown): target is LorcanaCardTarget {
+  if (!target || typeof target !== "object" || Array.isArray(target)) {
+    return false;
+  }
+
+  const selector = (target as { selector?: unknown }).selector;
+  return (
+    selector !== "you" &&
+    selector !== "opponent" &&
+    selector !== "each-opponent" &&
+    selector !== "each-player" &&
+    selector !== "chosen"
+  );
+}
+
+function getTargetOwnerForViewer(params: {
+  candidateCards: readonly LorcanaCardSnapshot[];
+  viewerSide: LorcanaPlayerSide | null;
+}): LorcanaCardTarget["owner"] | undefined {
+  const { candidateCards, viewerSide } = params;
+  if (candidateCards.length === 0) {
+    return undefined;
+  }
+
+  const ownerSides = new Set(candidateCards.map((card) => card.ownerSide));
+  if (ownerSides.size !== 1) {
+    return undefined;
+  }
+
+  const [ownerSide] = [...ownerSides];
+  if (!ownerSide || !viewerSide) {
+    return "any";
+  }
+
+  return ownerSide === viewerSide ? "you" : "opponent";
+}
+
+function buildResolutionSelectionTargetQuery(params: {
+  context: TargetResolutionSelectionContext;
+  cardSnapshotsById: CardSnapshotMap;
+  viewerSide: LorcanaPlayerSide | null;
+}): LorcanaCardTarget | null {
+  const { context, cardSnapshotsById, viewerSide } = params;
+  const candidateCards = context.cardCandidateIds
+    .map((cardId) => cardSnapshotsById[cardId] ?? null)
+    .filter((card): card is LorcanaCardSnapshot => card !== null);
+  const fallbackOwner = getTargetOwnerForViewer({ candidateCards, viewerSide });
+  const cardTargetDsl = context.targetDsl.find(isCardTargetDsl) ?? null;
+
+  if (cardTargetDsl) {
+    return {
+      ...cardTargetDsl,
+      owner: cardTargetDsl.owner ?? fallbackOwner ?? "any",
+      zones:
+        Array.isArray(cardTargetDsl.zones) && cardTargetDsl.zones.length > 0
+          ? [...cardTargetDsl.zones]
+          : context.allowedZones.length > 0
+            ? [...context.allowedZones]
+            : undefined,
+    };
+  }
+
+  if (context.cardCandidateIds.length === 0) {
+    return null;
+  }
+
+  const cardTypes = new Set(candidateCards.map((card) => card.cardType).filter(Boolean));
+
+  return {
+    selector: "all",
+    owner: fallbackOwner ?? "any",
+    zones: context.allowedZones.length > 0 ? [...context.allowedZones] : undefined,
+    cardType:
+      cardTypes.size === 1 ? ([...cardTypes][0] as LorcanaCardTarget["cardType"]) : undefined,
+  };
+}
+
 function getSourceMovesForActionSelectionSession(
   session: ActionSelectionSession,
   sourceCardId: string,
@@ -2532,6 +2628,17 @@ function getChooseOptionStatusMessage(
   session: ActionSelectionSession,
   sourceCardLabel: string,
 ): string {
+  if (
+    session.categoryId === "play-card" &&
+    session.candidateMoves.some(
+      (move) =>
+        move.moveId === "playCard" &&
+        typeof (move.params as { resolveOptional?: unknown }).resolveOptional === "boolean",
+    )
+  ) {
+    return `Choose how ${sourceCardLabel} enters play. Bodyguard may enter exerted.`;
+  }
+
   return session.categoryId === "play-card" ||
     session.categoryId === "shift-card" ||
     session.categoryId === "sing-card"
@@ -3607,6 +3714,7 @@ export class LorcanaSidebarPresenter {
 
       return {
         mode: "resolution-target",
+        sessionKey: "mulligan-selection",
         sourceCardId: null,
         categoryId: "alter-hand",
         categoryLabel,
@@ -3614,6 +3722,15 @@ export class LorcanaSidebarPresenter {
         message: m["sim.guidance.pregame.mulligan"]({}),
         entries,
         effectType: null,
+        target: {
+          selector: "all",
+          owner: "you",
+          zones: ["hand"],
+        },
+        allowedZones: ["hand"],
+        candidateCardIds: handCards.map((card) => card.cardId),
+        candidatePlayerIds: [],
+        viewerSide: this.ownerSide,
         candidateEntries: entries,
         activeSlotIndex: null,
         slots: [],
@@ -3642,6 +3759,14 @@ export class LorcanaSidebarPresenter {
         const effectType = this.#getResolutionSelectionEffectType(resolutionSession);
         const prompt = this.#getResolutionTargetPromptState(resolutionSession);
         const cardCandidateIds = this.#getResolutionSelectionCardCandidateIds(context);
+        const selectionTarget = buildResolutionSelectionTargetQuery({
+          context,
+          cardSnapshotsById: this.cardSnapshotsById,
+          viewerSide: this.ownerSide,
+        });
+        const sessionKey =
+          this.#buildAutoOpenResolutionKey(resolutionSession.move, context) ??
+          `${resolutionSession.move.id}:${context.requestId}`;
         const playerEntries =
           this.boardSnapshot?.playerOrder.flatMap((playerId) => {
             if (!includesSelectionId(context.playerCandidateIds, playerId)) {
@@ -3707,6 +3832,7 @@ export class LorcanaSidebarPresenter {
 
         return {
           mode: "resolution-target",
+          sessionKey,
           sourceCardId: context.sourceCardId,
           categoryId: "unknown",
           categoryLabel,
@@ -3716,6 +3842,11 @@ export class LorcanaSidebarPresenter {
             getPendingEffectDetail(context.kind),
           entries: prompt?.candidateEntries ?? [...playerEntries, ...cardEntries],
           effectType,
+          target: selectionTarget,
+          allowedZones: [...context.allowedZones],
+          candidateCardIds: [...cardCandidateIds],
+          candidatePlayerIds: [...context.playerCandidateIds],
+          viewerSide: this.ownerSide,
           candidateEntries: prompt?.candidateEntries ?? [...playerEntries, ...cardEntries],
           activeSlotIndex: prompt?.activeSlotIndex ?? null,
           slots: prompt?.slots ?? [],
@@ -4249,31 +4380,47 @@ export class LorcanaSidebarPresenter {
         return false;
       }
 
-      const preselectedMove = options?.preselectedTargetCardId
-        ? (actionMoves.find(
+      const preselectedTargetMoves = options?.preselectedTargetCardId
+        ? actionMoves.filter(
             (move) =>
               getTargetCardIdForActionSelectionMove(action.categoryId, move) ===
               options.preselectedTargetCardId,
-          ) ?? null)
-        : null;
+          )
+        : [];
+      const preselectedMove =
+        preselectedTargetMoves.length === 1 ? (preselectedTargetMoves[0] ?? null) : null;
       const nextSession = {
         ...session,
         sourceCardId: action.cardId,
         targetCardId:
-          preselectedMove && options?.preselectedTargetCardId
+          preselectedTargetMoves.length > 0 && options?.preselectedTargetCardId
             ? options.preselectedTargetCardId
             : null,
         selectedMoveId: preselectedMove?.id ?? null,
-        phase: preselectedMove
-          ? session.confirmationRequired
-            ? "confirm"
-            : "executing"
-          : "choose-target",
+        phase:
+          preselectedTargetMoves.length > 1
+            ? "choose-option"
+            : preselectedMove
+              ? session.confirmationRequired
+                ? "confirm"
+                : "executing"
+              : "choose-target",
       } satisfies ActionSelectionSession;
 
       this.pendingMulliganDangerConfirm = null;
       this.#secondLayerCategoryLabel = null;
       this.#game.setPendingError(null);
+
+      if (preselectedTargetMoves.length > 1) {
+        this.#setActionSelectionSession(nextSession);
+        this.#game.setStatusMessage(
+          getChooseOptionStatusMessage(
+            session,
+            this.cardSnapshotsById[action.cardId]?.label ?? m["sim.card.unknown"]({}),
+          ),
+        );
+        return true;
+      }
 
       if (preselectedMove) {
         if (session.confirmationRequired) {
@@ -4321,9 +4468,10 @@ export class LorcanaSidebarPresenter {
       this.#secondLayerCategoryLabel = null;
       this.#game.setPendingError(null);
       this.#game.setStatusMessage(
-        m["sim.guidance.session.choosePlayOption"]({
-          cardLabel: this.cardSnapshotsById[action.cardId]?.label ?? m["sim.card.unknown"]({}),
-        }),
+        getChooseOptionStatusMessage(
+          session,
+          this.cardSnapshotsById[action.cardId]?.label ?? m["sim.card.unknown"]({}),
+        ),
       );
       return true;
     }
@@ -4674,9 +4822,7 @@ export class LorcanaSidebarPresenter {
       return [
         {
           id: "action-selection-option",
-          message: m["sim.guidance.session.choosePlayOption"]({
-            cardLabel: sourceCard.label,
-          }),
+          message: getChooseOptionStatusMessage(session, sourceCard.label),
           actions: [
             {
               id: "action-selection-option-back",
@@ -5648,9 +5794,7 @@ export class LorcanaSidebarPresenter {
           phase: "choose-option",
         });
         this.#game.setPendingError(null);
-        this.#game.setStatusMessage(
-          m["sim.guidance.session.choosePlayOption"]({ cardLabel: card.label }),
-        );
+        this.#game.setStatusMessage(getChooseOptionStatusMessage(session, card.label));
         return true;
       }
 
@@ -5674,18 +5818,38 @@ export class LorcanaSidebarPresenter {
     }
 
     if (session.phase === "choose-target" && session.sourceCardId) {
-      const move = session.candidateMoves.find(
+      const targetMoves = session.candidateMoves.filter(
         (candidateMove) =>
           getSourceCardIdForActionSelectionMove(session.categoryId, candidateMove) ===
             session.sourceCardId &&
           getTargetCardIdForActionSelectionMove(session.categoryId, candidateMove) === card.cardId,
       );
+      const move = targetMoves[0];
 
       if (!move) {
         this.#game.setPendingError(
           this.getActionSessionCardReason(card.cardId) ?? "This card is not a valid target.",
         );
         return false;
+      }
+
+      if (targetMoves.length > 1) {
+        const nextSession = {
+          ...session,
+          targetCardId: card.cardId,
+          selectedMoveId: null,
+          phase: "choose-option",
+        } satisfies ActionSelectionSession;
+
+        this.#setActionSelectionSession(nextSession);
+        this.#game.setPendingError(null);
+        this.#game.setStatusMessage(
+          getChooseOptionStatusMessage(
+            session,
+            this.cardSnapshotsById[session.sourceCardId]?.label ?? m["sim.card.unknown"]({}),
+          ),
+        );
+        return true;
       }
 
       const nextSession = {
@@ -5887,10 +6051,10 @@ export class LorcanaSidebarPresenter {
           selectedMoveId: null,
         });
         this.#game.setStatusMessage(
-          m["sim.guidance.session.choosePlayOption"]({
-            cardLabel:
-              this.cardSnapshotsById[session.sourceCardId]?.label ?? m["sim.card.unknown"]({}),
-          }),
+          getChooseOptionStatusMessage(
+            session,
+            this.cardSnapshotsById[session.sourceCardId]?.label ?? m["sim.card.unknown"]({}),
+          ),
         );
         return;
       }

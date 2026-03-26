@@ -436,6 +436,7 @@ export class ServerEngine implements GameEngine {
       playerId,
       this.runtime.getCurrentStateID(),
       actorRole,
+      { logInvalid: false },
     );
   }
 

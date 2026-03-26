@@ -7,6 +7,14 @@ import {
   useLorcanaSidebarPresenter,
 } from "@/features/simulator/context/game-context.svelte.js";
 import {
+  type CardDropIntent,
+  dispatchDropIntent,
+  type DropIntent,
+  type LocationDropIntent,
+  type SupportedDropZone,
+  type ZoneDropIntent,
+} from "@/features/simulator/context/simulator-dnd-dispatch.js";
+import {
   getTurnSide,
   type ExecutableMoveEntry,
   type LorcanaCardSnapshot,
@@ -17,34 +25,11 @@ import {
 const SIMULATOR_DND_CONTEXT_KEY = Symbol.for("lorcana.simulator-dnd");
 const MISSING_PROVIDER_ERROR = "getDragDropManager was called outside of a DragDropProvider";
 
-export type SupportedDropZone = Extract<LorcanaZoneId, "play" | "inkwell" | "hand">;
 export type DragDropState = "none" | "preview" | "valid" | "invalid";
 type DraggedCardKind = "hand" | "hand-targeted-action" | "play-character";
 
 type AttachHandler = (node: HTMLElement) => void | (() => void);
 type DragProviderProps = ComponentProps<typeof DragDropProvider>;
-
-interface ZoneDropIntent {
-  kind: "zone";
-  playerSide: LorcanaPlayerSide;
-  zoneId: SupportedDropZone;
-}
-
-interface LocationDropIntent {
-  kind: "location";
-  playerSide: LorcanaPlayerSide;
-  zoneId: "play";
-  locationId: string;
-}
-
-interface CardDropIntent {
-  kind: "card";
-  playerSide: LorcanaPlayerSide;
-  zoneId: "play";
-  targetCardId: string;
-}
-
-export type DropIntent = ZoneDropIntent | LocationDropIntent | CardDropIntent;
 
 interface OptionalDraggableInput {
   card?: LorcanaCardSnapshot | null;
@@ -91,29 +76,6 @@ function getProbeDataset(
   }
 
   return element.dataset;
-}
-
-interface DropActionGame {
-  openPlayCardSelection: (cardId: string, options?: { targetCardId?: string }) => boolean;
-  playCard: (cardId: string) => boolean;
-  ink: (cardId: string) => boolean;
-  canDropHandCardIntoZone: (
-    cardId: string,
-    zoneId: Extract<SupportedDropZone, "play" | "inkwell">,
-  ) => boolean;
-  canPlayCardOnTarget: (cardId: string, targetCardId: string) => boolean;
-  canMoveCharacterToLocation: (characterId: string, locationId: string) => boolean;
-  executeMove: (
-    moveId: "moveCharacterToLocation",
-    params: {
-      characterId: string;
-      locationId: string;
-    },
-    options: {
-      clearChallengeMode: boolean;
-      clearSelection: boolean;
-    },
-  ) => boolean;
 }
 
 export interface LorcanaSimulatorDndContextValue {
@@ -468,64 +430,6 @@ export function resolveDropIntentFromElements(args: {
   return zoneFallback;
 }
 
-export function dispatchDropIntent(args: {
-  cardId: string;
-  dropIntent: DropIntent | null;
-  draggedCardKind: DraggedCardKind | null;
-  ownerSide: LorcanaPlayerSide | null;
-  game: DropActionGame;
-}): boolean {
-  const { cardId, dropIntent, draggedCardKind, ownerSide, game } = args;
-  if (!dropIntent || (dropIntent.kind !== "card" && dropIntent.playerSide !== ownerSide)) {
-    return false;
-  }
-
-  if (dropIntent.kind === "zone") {
-    const { zoneId } = dropIntent;
-    if (zoneId === "hand") {
-      return false;
-    }
-
-    if (draggedCardKind === "hand-targeted-action" && zoneId === "play") {
-      return game.openPlayCardSelection(cardId);
-    }
-
-    if (game.canDropHandCardIntoZone(cardId, zoneId)) {
-      if (zoneId === "play") {
-        return game.playCard(cardId);
-      }
-
-      return game.ink(cardId);
-    }
-  }
-
-  if (dropIntent.kind === "card" && draggedCardKind === "hand-targeted-action") {
-    return game.canPlayCardOnTarget(cardId, dropIntent.targetCardId)
-      ? game.openPlayCardSelection(cardId, { targetCardId: dropIntent.targetCardId })
-      : game.openPlayCardSelection(cardId);
-  }
-
-  if (
-    dropIntent.kind === "location" &&
-    draggedCardKind === "play-character" &&
-    game.canMoveCharacterToLocation(cardId, dropIntent.locationId)
-  ) {
-    return game.executeMove(
-      "moveCharacterToLocation",
-      {
-        characterId: cardId,
-        locationId: dropIntent.locationId,
-      },
-      {
-        clearChallengeMode: true,
-        clearSelection: true,
-      },
-    );
-  }
-
-  return false;
-}
-
 class LorcanaSimulatorDndController implements LorcanaSimulatorDndContextValue {
   draggedCardId = $state<string | null>(null);
   hoveredDropIntent = $state<DropIntent | null>(null);
@@ -792,6 +696,7 @@ class LorcanaSimulatorDndController implements LorcanaSimulatorDndContextValue {
         openPlayCardSelection: this.#sidebar.openPlayCardSelection,
         playCard: this.#game.playCard,
         ink: this.#game.ink,
+        shouldOpenPlayCardSelectionOnDrop: this.#game.shouldOpenPlayCardSelectionOnDrop,
         canDropHandCardIntoZone: this.#game.canDropHandCardIntoZone,
         canPlayCardOnTarget: (handCardId: string, targetCardId: string) =>
           getPlayCardTargetIds(handCardId, this.executableMoves).includes(targetCardId),

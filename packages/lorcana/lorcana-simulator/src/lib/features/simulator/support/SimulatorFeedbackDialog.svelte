@@ -16,14 +16,19 @@
   const MAX_LENGTH = 2000;
 
   let dialogEpoch = $state(0);
+  let nextDialogEpoch = 0;
+  let wasOpen = open;
 
   $effect(() => {
-    if (!open) {
-      dialogEpoch += 1;
+    if (wasOpen && !open) {
+      nextDialogEpoch += 1;
+      dialogEpoch = nextDialogEpoch;
       message = "";
       status = "idle";
       errorText = "";
     }
+
+    wasOpen = open;
   });
 
   async function handleSubmit() {

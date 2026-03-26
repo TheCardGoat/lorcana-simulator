@@ -422,6 +422,9 @@ export class MatchRuntime {
     playerId: string,
     prevStateID: number = this.state.ctx._stateID,
     actorRole: RuntimeActorRole = "player",
+    options?: {
+      logInvalid?: boolean;
+    },
   ): { valid: boolean; reason?: string; code?: string } {
     const result = validateRuntimeCommand(command, playerId, prevStateID, {
       state: this.state,
@@ -432,7 +435,7 @@ export class MatchRuntime {
       currentStateID: this.state.ctx._stateID,
     });
 
-    if (!result.valid) {
+    if (!result.valid && options?.logInvalid !== false) {
       logger.warning(
         `Command ${command.commandID} from player ${playerId} is invalid: ${result.reason} (code: ${result.code})`,
       );

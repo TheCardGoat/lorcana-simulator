@@ -42,11 +42,14 @@ export type EventLogBody = {
 };
 
 /**
- * Optional resolver used to populate `fallbackLabel` on card segments at format time.
+ * Optional resolver used to populate `fallbackLabel` on card segments at format time and
+ * to inject the inkable icon for `lorcana.card.inked` entries.
  * Needed for non-interactive contexts (spectator, devtools) where CardLogToken is not rendered.
  * In the interactive simulator, CardLogToken does live lookup instead.
  */
-export type CardReferenceResolver = (cardId: string) => { label?: string } | null;
+export type CardReferenceResolver = (
+  cardId: string,
+) => { label?: string; inkable?: boolean } | null;
 
 const ENGINE_LOG_LOCALE_BY_SIMULATOR_LOCALE: Record<LorcanaSimulatorLocale, LorcanaLogLocale> = {
   en: "en",
@@ -141,7 +144,7 @@ export function formatEventLogBody(
     key: typed.type,
     values: typed.values,
   } as LorcanaLogMessage;
-  let segments = renderTypedLogMessage(entry, message, viewerSide, locale);
+  let segments = renderTypedLogMessage(entry, message, viewerSide, locale, resolveCard);
 
   if (resolveCard) {
     segments = segments.map((s) =>
@@ -192,6 +195,7 @@ function renderTypedLogMessage(
   message: LorcanaLogMessage,
   viewerSide?: LorcanaPlayerSide | null,
   locale?: LorcanaSimulatorLocale,
+  resolveCard?: CardReferenceResolver,
 ): EventLogSegment[] {
   if (message.key === "lorcana.effect.resolve.scrySelection.detail") {
     return renderScrySelectionDetailSegments(message, locale);
@@ -199,6 +203,10 @@ function renderTypedLogMessage(
   const template = getLorcanaLogTemplate(message.key, resolveEngineLogLocale(locale));
   const placeholderSegments = buildTemplatePlaceholderSegments(entry, message, viewerSide, locale);
   const renderedSegments = interpolateTemplateSegments(template, placeholderSegments);
+
+  if (message.key === "lorcana.card.inked" && resolveCard) {
+    return injectInkableIcon(renderedSegments, resolveCard, message.values.cardId);
+  }
 
   if (BAG_RESOLVE_COMPLETED_KEYS.has(message.key)) {
     const detailSegments = renderBagResolveDestinationDetail(entry);

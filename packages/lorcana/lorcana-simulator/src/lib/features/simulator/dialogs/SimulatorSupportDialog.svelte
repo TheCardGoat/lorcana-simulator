@@ -2,6 +2,8 @@
   import { m } from "$lib/i18n/messages.js";
   import * as Dialog from "$lib/design-system/primitives/dialog";
   import SimulatorSupportActions from "@/features/simulator/support/SimulatorSupportActions.svelte";
+  import SimulatorFeedbackDialog from "@/features/simulator/support/SimulatorFeedbackDialog.svelte";
+  import SimulatorBugReportDialog from "@/features/simulator/support/SimulatorBugReportDialog.svelte";
   import type { BugReportContext } from "@/features/simulator/support/feedback-api.js";
 
   interface SimulatorSupportDialogProps {
@@ -10,6 +12,9 @@
   }
 
   let { open = $bindable(false), gameContext }: SimulatorSupportDialogProps = $props();
+
+  let feedbackOpen = $state(false);
+  let bugReportOpen = $state(false);
 </script>
 
 <Dialog.Root bind:open>
@@ -25,7 +30,11 @@
         </Dialog.Description>
       </Dialog.Header>
 
-      <SimulatorSupportActions {gameContext} />
+      <SimulatorSupportActions
+        {gameContext}
+        onReportBug={() => (bugReportOpen = true)}
+        onShareFeedback={() => (feedbackOpen = true)}
+      />
 
       <Dialog.Footer>
         <Dialog.Close class="player-settings-close" aria-label={m["sim.settings.closeAria"]({})}>
@@ -35,6 +44,9 @@
     </Dialog.Content>
   </Dialog.Portal>
 </Dialog.Root>
+
+<SimulatorFeedbackDialog bind:open={feedbackOpen} />
+<SimulatorBugReportDialog bind:open={bugReportOpen} {gameContext} />
 
 <style>
   :global(.player-settings-overlay) {

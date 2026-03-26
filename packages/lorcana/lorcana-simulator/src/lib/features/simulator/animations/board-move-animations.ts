@@ -8,6 +8,11 @@ import type {
   MoveLogEntrySnapshot,
 } from "@/features/simulator/model/contracts.js";
 import { getSideForOwnerId, getZoneCardIds } from "@/features/simulator/model/contracts.js";
+import {
+  type AnchorReference,
+  resolveAnchorRect,
+  toLocalRect,
+} from "@/features/simulator/animations/animation-shared.js";
 
 export const BOARD_CENTER_ANCHOR_ID = "board:center";
 const DEBUG_BOARD_ANIMATIONS = false;
@@ -59,10 +64,7 @@ export interface BoardAnchorSnapshot {
   anchors: Record<string, BoardAnchorRect>;
 }
 
-type AnchorReference = {
-  primaryId: string;
-  fallbackId?: string;
-};
+export type { AnchorReference } from "@/features/simulator/animations/animation-shared.js";
 
 export interface QueuedBoardMoveAnimation {
   actorSide: LorcanaPlayerSide;
@@ -101,8 +103,8 @@ type CardLocation = {
 
 export const VARIANT_DURATION_MS: Record<BoardMoveAnimationVariant, number> = {
   banish: 700,
-  "ink-faceDown": 560,
-  "ink-faceUp": 620,
+  "ink-faceDown": 1600,
+  "ink-faceUp": 1600,
   "move-to-location": 800,
   "play-action": 2200,
   "play-action-preview": 2000,
@@ -340,7 +342,11 @@ export function deriveQueuedBoardMoveAnimationsFromPacket(
       renderFace: payload.renderFace,
       source: buildSourceAnchor(previousLocation, payload.actorSide),
       variant: payload.variant,
-      via: payload.viaAnchorId ? { primaryId: payload.viaAnchorId } : undefined,
+      via: payload.viaAnchorId
+        ? { primaryId: payload.viaAnchorId }
+        : payload.variant === "ink-faceDown" || payload.variant === "ink-faceUp"
+          ? { primaryId: BOARD_CENTER_ANCHOR_ID }
+          : undefined,
     });
   }
 
@@ -581,35 +587,4 @@ function findCardLocation(
   }
 
   return null;
-}
-
-function resolveAnchorRect(
-  snapshot: BoardAnchorSnapshot | null,
-  reference: AnchorReference,
-): BoardAnchorRect | null {
-  if (!snapshot) {
-    return null;
-  }
-
-  const primary = snapshot.anchors[reference.primaryId];
-  if (primary) {
-    return primary;
-  }
-
-  if (reference.fallbackId) {
-    return snapshot.anchors[reference.fallbackId] ?? null;
-  }
-
-  return null;
-}
-
-function toLocalRect(rect: BoardAnchorRect, boardRect: BoardAnchorRect): BoardLocalRect {
-  return {
-    x: rect.left - boardRect.left,
-    y: rect.top - boardRect.top,
-    width: rect.width,
-    height: rect.height,
-    centerX: rect.centerX - boardRect.left,
-    centerY: rect.centerY - boardRect.top,
-  };
 }

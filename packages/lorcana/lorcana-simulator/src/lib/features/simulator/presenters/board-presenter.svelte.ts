@@ -21,6 +21,7 @@ import type {
   BoardAnchorSnapshot,
   ResolvedBoardMoveAnimation,
 } from "@/features/simulator/animations/board-move-animations.js";
+import type { BoardAnimationPlaceholder } from "@/features/simulator/animations/animation-orchestrator.svelte.js";
 import type { ResolvedQuestAnimation } from "@/features/simulator/animations/quest-animations.js";
 import type { ResolvedChallengeAnimation } from "@/features/simulator/animations/challenge-animations.js";
 import type { ResolvedOverlayAnnouncement } from "@/features/simulator/animations/overlay-announcement-animations.js";
@@ -61,6 +62,26 @@ export class LorcanaBoardPresenter {
     this.#game.handleBoardAnchorsChange(anchors);
   }
 
+  onBoardAnimationFinished(animationId: string): void {
+    this.#game.onBoardAnimationFinished(animationId);
+  }
+
+  onQuestAnimationFinished(animationId: string): void {
+    this.#game.onQuestAnimationFinished(animationId);
+  }
+
+  onChallengeAnimationFinished(animationId: string): void {
+    this.#game.onChallengeAnimationFinished(animationId);
+  }
+
+  onCardEffectAnimationFinished(animationId: string): void {
+    this.#game.onCardEffectAnimationFinished(animationId);
+  }
+
+  onOverlayAnnouncementFinished(animationId: string): void {
+    this.#game.onOverlayAnnouncementFinished(animationId);
+  }
+
   activePlayerEffectTargets(): ReadonlySet<LorcanaPlayerSide> {
     return this.#game.activePlayerEffectTargets();
   }
@@ -91,6 +112,14 @@ export class LorcanaBoardPresenter {
 
   get cardEffectAnimations(): ResolvedCardEffectAnimation[] {
     return this.#game.cardEffectAnimations();
+  }
+
+  get boardAnimationPlaceholders(): BoardAnimationPlaceholder[] {
+    return this.#game.boardAnimationPlaceholders();
+  }
+
+  get inFlightCardIds(): ReadonlySet<string> {
+    return this.#game.inFlightCardIds();
   }
 
   get animationSpeed(): AnimationSpeed {

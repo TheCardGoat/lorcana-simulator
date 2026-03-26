@@ -79,7 +79,7 @@ export function buildLorcanaHarnessPath(options?: LorcanaHarnessGotoOptions): st
     }
   }
 
-  return `/test?${params.toString()}`;
+  return `/tests/test?${params.toString()}`;
 }
 
 export class LorcanaSimulatorPom {

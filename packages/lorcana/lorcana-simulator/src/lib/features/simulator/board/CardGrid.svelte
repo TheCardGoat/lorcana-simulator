@@ -2,7 +2,6 @@
     import type {LorcanaCardSnapshot} from "@/features/simulator/model/contracts.js";
     import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
     import EmptyState from "@/design-system/simulator/display/EmptyState.svelte";
-  import autoAnimate from '@formkit/auto-animate';
 
   interface CardGridProps {
     cards: LorcanaCardSnapshot[];

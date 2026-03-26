@@ -35,6 +35,7 @@ import {
   analyzeResolutionRequirements,
   countExplicitTargetSelections,
   hasExplicitTargetSelectionInput,
+  resolveTargetPlayerIds,
   validateAndNormalizeTargetSelection,
 } from "../../targeting/runtime";
 
@@ -43,6 +44,10 @@ type ResolveBagValidationContext = Parameters<
 >[0];
 
 type ResolveBagExecutionContext = Parameters<LorcanaMoveDefinition<"resolveBag">["execute"]>[0];
+type ResolveBagChooserContext = Pick<
+  ResolveBagValidationContext,
+  "cards" | "framework" | "playerId"
+>;
 
 type ResolveBagStatus = "completed" | "pending" | "skipped";
 
@@ -209,6 +214,50 @@ function resolveConditionalEffectBranch(
   return conditionMet ? thenBranch : elseBranch;
 }
 
+function getDirectBagChooserId(
+  ctx: ResolveBagChooserContext,
+  bagEffect: NonNullable<ReturnType<typeof getBagEffect>>,
+  effect: unknown,
+): PlayerId | undefined {
+  if (!effect || typeof effect !== "object" || Array.isArray(effect)) {
+    return undefined;
+  }
+
+  const effectRecord = effect as {
+    type?: unknown;
+    from?: unknown;
+    amount?: unknown;
+    chosen?: unknown;
+    random?: unknown;
+    target?: unknown;
+  };
+
+  if (effectRecord.type !== "discard") {
+    return undefined;
+  }
+
+  const fromZone = typeof effectRecord.from === "string" ? effectRecord.from : "hand";
+  if (fromZone !== "hand") {
+    return undefined;
+  }
+
+  if (effectRecord.amount === "all") {
+    return undefined;
+  }
+
+  const requiresChoice = effectRecord.random !== true || effectRecord.chosen === true;
+  if (!requiresChoice) {
+    return undefined;
+  }
+
+  const targetedPlayerIds = resolveTargetPlayerIds(ctx, effectRecord.target, {
+    controllerId: bagEffect.controllerId as PlayerId,
+    sourceCardId: bagEffect.sourceId as CardInstanceId,
+  });
+
+  return targetedPlayerIds.length === 1 ? targetedPlayerIds[0] : undefined;
+}
+
 export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
   ignorePriority: true,
 
@@ -253,8 +302,28 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
       };
     }
 
+    const validationResolutionInput: ActionResolutionInput = {
+      ...cloneActionResolutionInput(bagEffect.resolutionInput as ActionResolutionInput),
+      ...ctx.args.params,
+    } as ActionResolutionInput;
+    const validationEffect = resolveConditionalEffectBranch(
+      bagEffect.effect,
+      ctx as unknown as Parameters<typeof evaluateActionCondition>[1],
+      {
+        ...bagEffect.cardPlayed,
+        singerIds: bagEffect.cardPlayed.singerIds ? [...bagEffect.cardPlayed.singerIds] : undefined,
+      },
+      cloneActionResolutionInput(validationResolutionInput),
+    );
+    const directBagChooserId = getDirectBagChooserId(ctx, bagEffect, validationEffect);
+
     const resolver = getNextBagResolver(ctx);
-    if (!resolver || resolver !== ctx.playerId || bagEffect.controllerId !== resolver) {
+    const isDirectBagChooser =
+      directBagChooserId === ctx.playerId && bagEffect.controllerId !== directBagChooserId;
+    if (
+      !isDirectBagChooser &&
+      (!resolver || resolver !== ctx.playerId || bagEffect.controllerId !== resolver)
+    ) {
       traceLorcanaRuntimeStep({
         kind: "move.validation.failed",
         moveId: "resolveBag",
@@ -278,15 +347,7 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
     // resolution requirements. The branches of a conditional are only reachable
     // when the condition passes; requiring targets for the then-branch when the
     // condition will fail is incorrect and blocks auto-resolution.
-    const effectForRequirements = resolveConditionalEffectBranch(
-      bagEffect.effect,
-      ctx as unknown as Parameters<typeof evaluateActionCondition>[1],
-      {
-        ...bagEffect.cardPlayed,
-        singerIds: bagEffect.cardPlayed.singerIds ? [...bagEffect.cardPlayed.singerIds] : undefined,
-      },
-      cloneActionResolutionInput(bagEffect.resolutionInput as ActionResolutionInput),
-    );
+    const effectForRequirements = validationEffect;
     const requirements = analyzeResolutionRequirements(effectForRequirements);
     const explicitTargets = params?.targets;
     const hasExplicitTargets = hasExplicitTargetSelectionInput(explicitTargets);
@@ -743,7 +804,22 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
     }
 
     if (ctx.playerId !== getNextBagResolver(ctx)) {
-      return false;
+      const bagItems = ctx.G.triggeredAbilities?.bag.items ?? [];
+      return bagItems.some((bagEffect) => {
+        const effectForAvailability = resolveConditionalEffectBranch(
+          bagEffect.effect,
+          ctx as unknown as Parameters<typeof evaluateActionCondition>[1],
+          {
+            ...bagEffect.cardPlayed,
+            singerIds: bagEffect.cardPlayed.singerIds
+              ? [...bagEffect.cardPlayed.singerIds]
+              : undefined,
+          },
+          cloneActionResolutionInput(bagEffect.resolutionInput as ActionResolutionInput),
+        );
+
+        return getDirectBagChooserId(ctx, bagEffect, effectForAvailability) === ctx.playerId;
+      });
     }
 
     return getBagItemsForCurrentResolver(ctx).length > 0;

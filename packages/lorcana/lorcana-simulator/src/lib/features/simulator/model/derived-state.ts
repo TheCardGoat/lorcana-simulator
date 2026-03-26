@@ -83,6 +83,63 @@ function getPlayCostLabel(params: Record<string, unknown>): string | null {
   return null;
 }
 
+function hasBodyguardKeyword(cardId: string, cards: CardSnapshotMap): boolean {
+  return cards[cardId]?.keywords?.includes("Bodyguard") ?? false;
+}
+
+function hasSelfEnterExertedRestriction(cardId: string, cards: CardSnapshotMap): boolean {
+  const card = cards[cardId];
+  if (!card || card.cardType !== "character") {
+    return false;
+  }
+
+  const searchableText = [
+    card.text ?? "",
+    ...(card.textEntries ?? []).map((entry) => entry.description),
+  ]
+    .join("\n")
+    .toLowerCase();
+
+  if (!searchableText.includes("this character enters play exerted")) {
+    return false;
+  }
+
+  return !searchableText.includes("unless") && !searchableText.includes("if ");
+}
+
+function supportsBodyguardPlayChoice(cardId: string, cards: CardSnapshotMap): boolean {
+  const card = cards[cardId];
+  if (!card || card.zoneId !== "hand" || card.cardType !== "character") {
+    return false;
+  }
+
+  return hasBodyguardKeyword(cardId, cards) && !hasSelfEnterExertedRestriction(cardId, cards);
+}
+
+function getPlayModeOptionLabel(
+  params: Record<string, unknown>,
+  cards: CardSnapshotMap,
+): string | null {
+  const cardId = typeof params.cardId === "string" ? params.cardId : null;
+  if (!cardId) {
+    return null;
+  }
+
+  if (params.resolveOptional === true) {
+    return "Play Exerted";
+  }
+
+  if (supportsBodyguardPlayChoice(cardId, cards) && !params.cost && !params.targets) {
+    return "Play Ready";
+  }
+
+  if (supportsBodyguardPlayChoice(cardId, cards) && !params.cost && Array.isArray(params.targets)) {
+    return "Play Ready";
+  }
+
+  return null;
+}
+
 const KEYWORD_PATTERN =
   /^(Rush|Ward|Evasive|Bodyguard|Support|Reckless|Vanish|Alert|Challenger \+\d+|Resist \+\d+|Singer \d+|Sing Together \d+|Boost \d+|(?:Puppy |Universal )?Shift \d+)$/i;
 
@@ -105,6 +162,13 @@ function getMoveOptionLabel(
     const playLabel = costLabel
       ? `${getCardLabel(cardId, cards)} (${costLabel})`
       : getCardLabel(cardId, cards);
+    const playModeLabel = getPlayModeOptionLabel(params, cards);
+
+    if (playModeLabel) {
+      return targetCardId
+        ? `${playModeLabel} -> ${getCardLabel(targetCardId, cards)}`
+        : `${playModeLabel} (${getCardLabel(cardId, cards)})`;
+    }
 
     return targetCardId ? `${playLabel} -> ${getCardLabel(targetCardId, cards)}` : playLabel;
   }
@@ -150,7 +214,25 @@ function getMoveOptionLabel(
 }
 
 function sortExecutableMoves(entries: ExecutableMoveEntry[]): ExecutableMoveEntry[] {
-  return entries.sort((left, right) => left.label.localeCompare(right.label));
+  return entries.sort((left, right) => {
+    if (left.moveId === "playCard" && right.moveId === "playCard") {
+      const leftParams = left.params as { cardId?: string; resolveOptional?: boolean };
+      const rightParams = right.params as { cardId?: string; resolveOptional?: boolean };
+      const leftCardId = typeof leftParams.cardId === "string" ? leftParams.cardId : null;
+      const rightCardId = typeof rightParams.cardId === "string" ? rightParams.cardId : null;
+      if (leftCardId && leftCardId === rightCardId) {
+        const leftResolveOptional =
+          typeof leftParams.resolveOptional === "boolean" ? leftParams.resolveOptional : false;
+        const rightResolveOptional =
+          typeof rightParams.resolveOptional === "boolean" ? rightParams.resolveOptional : false;
+        if (leftResolveOptional !== rightResolveOptional) {
+          return leftResolveOptional ? 1 : -1;
+        }
+      }
+    }
+
+    return left.label.localeCompare(right.label);
+  });
 }
 
 function pushSupplementalExecutableMoves(
@@ -224,6 +306,7 @@ function buildEntriesForAvailableMove(
       case "playCard": {
         const id = String(cardId);
         const targetOptions = engine.getMoveOptions("playCard", cardId);
+        const supportsBodyguardChoice = supportsBodyguardPlayChoice(id, cards);
 
         if (targetOptions.length > 0) {
           for (const option of targetOptions) {
@@ -232,41 +315,94 @@ function buildEntriesForAvailableMove(
             }
 
             const targetId = String(option.cardId);
-            const params = {
-              cardId: id,
-              targets: [targetId],
-            } as LorcanaSimulatorMoveParams["playCard"];
-            const label = getMoveOptionLabel("playCard", params, cards);
-            entries.push({
-              id: `playCard:${id}:${targetId}`,
-              label,
-              moveId: "playCard",
-              params,
-              presentation: {
-                kind: "targeted",
-                categoryId: "play-card",
-                categoryLabel: getMoveCategoryLabel("playCard"),
-                optionLabel: label,
-              },
-            });
+            const playVariants = supportsBodyguardChoice
+              ? [
+                  {
+                    idSuffix: "ready",
+                    params: {
+                      cardId: id,
+                      targets: [targetId],
+                    } as LorcanaSimulatorMoveParams["playCard"],
+                  },
+                  {
+                    idSuffix: "exerted",
+                    params: {
+                      cardId: id,
+                      targets: [targetId],
+                      resolveOptional: true,
+                    } as LorcanaSimulatorMoveParams["playCard"],
+                  },
+                ]
+              : [
+                  {
+                    idSuffix: null,
+                    params: {
+                      cardId: id,
+                      targets: [targetId],
+                    } as LorcanaSimulatorMoveParams["playCard"],
+                  },
+                ];
+
+            for (const variant of playVariants) {
+              const label = getMoveOptionLabel("playCard", variant.params, cards);
+              const optionLabel = getPlayModeOptionLabel(variant.params, cards) ?? label;
+              entries.push({
+                id:
+                  variant.idSuffix === null
+                    ? `playCard:${id}:${targetId}`
+                    : `playCard:${id}:${targetId}:${variant.idSuffix}`,
+                label,
+                moveId: "playCard",
+                params: variant.params,
+                presentation: {
+                  kind: "targeted",
+                  categoryId: "play-card",
+                  categoryLabel: getMoveCategoryLabel("playCard"),
+                  optionLabel,
+                },
+              });
+            }
           }
           continue;
         }
 
-        const params = { cardId: id } as LorcanaSimulatorMoveParams["playCard"];
-        const label = getMoveOptionLabel("playCard", params, cards);
-        entries.push({
-          id: `playCard:${id}`,
-          label,
-          moveId: "playCard",
-          params,
-          presentation: {
-            kind: "targeted",
-            categoryId: "play-card",
-            categoryLabel: getMoveCategoryLabel("playCard"),
-            optionLabel: label,
-          },
-        });
+        const playVariants = supportsBodyguardChoice
+          ? [
+              {
+                idSuffix: "ready",
+                params: { cardId: id } as LorcanaSimulatorMoveParams["playCard"],
+              },
+              {
+                idSuffix: "exerted",
+                params: {
+                  cardId: id,
+                  resolveOptional: true,
+                } as LorcanaSimulatorMoveParams["playCard"],
+              },
+            ]
+          : [
+              {
+                idSuffix: null,
+                params: { cardId: id } as LorcanaSimulatorMoveParams["playCard"],
+              },
+            ];
+
+        for (const variant of playVariants) {
+          const label = getMoveOptionLabel("playCard", variant.params, cards);
+          const optionLabel = getPlayModeOptionLabel(variant.params, cards) ?? label;
+          entries.push({
+            id: variant.idSuffix === null ? `playCard:${id}` : `playCard:${id}:${variant.idSuffix}`,
+            label,
+            moveId: "playCard",
+            params: variant.params,
+            presentation: {
+              kind: "targeted",
+              categoryId: "play-card",
+              categoryLabel: getMoveCategoryLabel("playCard"),
+              optionLabel,
+            },
+          });
+        }
         continue;
       }
       case "shiftCard": {

@@ -24,14 +24,19 @@ import {
 	type BoardLocalRect,
 } from "@/features/simulator/animations/board-move-animations.js";
 import HandZone from "@/features/simulator/board/HandZone.svelte";
+import CardTargetDialog from "@/features/simulator/dialogs/CardTargetDialog.svelte";
 import DiscardPileDialog from "@/features/simulator/dialogs/DiscardPileDialog.svelte";
 import InkwellDialog from "@/features/simulator/dialogs/InkwellDialog.svelte";
 import SimulatorSupportDialog from "@/features/simulator/dialogs/SimulatorSupportDialog.svelte";
-import TargetSelectionDialog from "@/features/simulator/dialogs/TargetSelectionDialog.svelte";
 import ScryResolutionOverlay from "@/features/simulator/board/ScryResolutionOverlay.svelte";
 import ChoiceResolutionOverlay from "@/features/simulator/board/ChoiceResolutionOverlay.svelte";
 import ResolutionTargetOverlay from "@/features/simulator/board/ResolutionTargetOverlay.svelte";
 import { shouldUseResolutionTargetOverlay } from "@/features/simulator/board/resolution-target-overlay.js";
+import {
+	getTargetSelectionModalTitle,
+	shouldAutoOpenTargetSelectionModal,
+	shouldUseTargetSelectionModal,
+} from "@/features/simulator/board/target-selection-modal.js";
 import ActivePlayerGuidance from "@/features/simulator/panels/ActivePlayerGuidance.svelte";
 import PendingEffectsPopover from "@/features/simulator/panels/PendingEffectsPopover.svelte";
 import BoardAnimationLayer from "./BoardAnimationLayer.svelte";
@@ -127,6 +132,7 @@ let inlineMoveChoices = $state<{
 let anchorRevision = 0;
 let measurementRequestId = 0;
 let targetSelectionDialogOpen = $state(false);
+let dismissedTargetDialogSessionKey = $state<string | null>(null);
 let handTuckState = $state<Record<LorcanaPlayerSide, boolean>>({
 	playerOne: false,
 	playerTwo: false,
@@ -212,6 +218,14 @@ const resolutionTargetOverlayState = $derived.by(
   return null;
 },
 );
+const genericTargetModalState = $derived.by(
+	(): ResolutionTargetAvailableMovesSelectionState | null =>
+		targetSelectionState?.mode === "resolution-target" &&
+		shouldUseTargetSelectionModal(targetSelectionState) &&
+		!resolutionTargetOverlayState
+			? targetSelectionState
+			: null,
+);
 const scrySelectionState = $derived.by(() => {
   if (availableMovesSelectionState?.mode === "resolution-scry") {
     return availableMovesSelectionState;
@@ -228,17 +242,13 @@ const choiceSelectionState = $derived.by((): ResolutionChoiceAvailableMovesSelec
 });
 const targetSelectionDialogCards = $derived.by(
 	() =>
-		targetSelectionState?.entries
-			.filter(
-				(entry): entry is AvailableMovesSelectionEntry & { cardId: string } =>
-					entry.kind === "card" && typeof entry.cardId === "string",
-			)
-			.map((entry) => board.cardSnapshotsById[entry.cardId] ?? null)
+		genericTargetModalState?.candidateCardIds
+			.map((cardId) => board.cardSnapshotsById[cardId] ?? null)
 			.filter((card): card is LorcanaCardSnapshot => card !== null) ?? [],
 );
 const targetSelectionDialogPlayers = $derived.by(
 	() =>
-		targetSelectionState?.entries
+		genericTargetModalState?.entries
 			.filter(
 				(entry): entry is AvailableMovesSelectionEntry & { playerId: string } =>
 					entry.kind === "player" && typeof entry.playerId === "string",
@@ -252,7 +262,7 @@ const targetSelectionDialogPlayers = $derived.by(
 );
 const selectedTargetCardIds = $derived.by(
 	() =>
-		targetSelectionState?.entries
+		genericTargetModalState?.entries
 			.filter(
 				(entry): entry is AvailableMovesSelectionEntry & { cardId: string } =>
 					entry.kind === "card" &&
@@ -260,6 +270,35 @@ const selectedTargetCardIds = $derived.by(
 					entry.selected,
 			)
 			.map((entry) => entry.cardId) ?? [],
+);
+const selectedTargetCount = $derived.by(
+	() =>
+		selectedTargetCardIds.length +
+		(targetSelectionDialogPlayers.filter((player) => player.selected).length ?? 0),
+);
+const targetSelectionDialogTitle = $derived.by(() => {
+	if (!genericTargetModalState) {
+		return "";
+	}
+
+	return getTargetSelectionModalTitle(genericTargetModalState);
+});
+const targetSelectionDialogDescription = $derived.by(() => {
+	if (!genericTargetModalState) {
+		return "";
+	}
+
+	if (
+		genericTargetModalState.allowedZones.length === 1 &&
+		genericTargetModalState.allowedZones[0] !== "play"
+	) {
+		return genericTargetModalState.message;
+	}
+
+	return genericTargetModalState.message;
+});
+const activeTargetDialogSessionKey = $derived(
+	genericTargetModalState?.sessionKey ?? null,
 );
 const hasPendingEffects = $derived(sidebar.hasPendingEffects);
 const opponentPlayHotkeys = $derived.by(
@@ -469,10 +508,11 @@ function handleAdvancePendingEffects(): void {
 }
 
 function openTargetSelectionDialog(): void {
-	if (!targetSelectionState) {
+	if (!genericTargetModalState) {
 		return;
 	}
 
+	dismissedTargetDialogSessionKey = null;
 	targetSelectionDialogOpen = true;
 }
 
@@ -709,11 +749,17 @@ $effect(() => {
 });
 
 $effect(() => {
-	if (targetSelectionState) {
+	const sessionKey = activeTargetDialogSessionKey;
+	if (!sessionKey) {
+		targetSelectionDialogOpen = false;
+		dismissedTargetDialogSessionKey = null;
 		return;
 	}
 
-	targetSelectionDialogOpen = false;
+	targetSelectionDialogOpen = shouldAutoOpenTargetSelectionModal(
+		sessionKey,
+		dismissedTargetDialogSessionKey,
+	);
 });
 
 $effect(() => {
@@ -801,24 +847,30 @@ $effect(() => {
     <PendingEffectsPopover
       items={pendingEffectsPopoverItems}
       bind:open={pendingEffectsOpen}
-      canOpenTargetModal={Boolean(targetSelectionState && !resolutionTargetOverlayState)}
+      canOpenTargetModal={Boolean(genericTargetModalState)}
       onOpenTargetModal={openTargetSelectionDialog}
     />
   {/if}
 
-  {#if targetSelectionState && !resolutionTargetOverlayState}
-    <TargetSelectionDialog
+  {#if genericTargetModalState}
+    <CardTargetDialog
       bind:open={targetSelectionDialogOpen}
-      title={targetSelectionState.title}
-      message={targetSelectionState.message}
+      playerSide={ownerSide ?? "playerOne"}
+      viewerSide={ownerSide}
+      target={genericTargetModalState.target}
       cards={targetSelectionDialogCards}
+      selectable={true}
       players={targetSelectionDialogPlayers}
       selectedCardIds={selectedTargetCardIds}
-      canConfirm={targetSelectionState.canConfirm}
+      canConfirm={genericTargetModalState.canConfirm}
+      titleText={targetSelectionDialogTitle}
+      descriptionText={targetSelectionDialogDescription}
+      selectionSummaryText={`${selectedTargetCount} selected`}
       onSelectCard={sidebar.handleAvailableMovesSelectionCard}
       onSelectPlayer={sidebar.handleAvailableMovesSelectionPlayer}
       onConfirm={sidebar.confirmActionSelection}
       onCancel={() => {
+        dismissedTargetDialogSessionKey = activeTargetDialogSessionKey;
         targetSelectionDialogOpen = false;
       }}
     />
