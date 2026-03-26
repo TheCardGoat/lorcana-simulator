@@ -123,6 +123,7 @@ export type {
   ResolutionSelectionKind,
   ResolutionSelectionOption,
   ResolutionSelectionOrigin,
+  ResolutionSelectionRevealedCard,
   ResolutionSelectionSubmitField,
   ResolutionSelectionZone,
   ScryResolutionSelectionContext,
@@ -206,10 +207,15 @@ export type {
   LorcanaLogMessageKey,
   LorcanaLogMessage,
   LorcanaParaglideMessageKey,
+  LorcanaGameLogEntry,
+  LorcanaGameLogEntryCategory,
+  LorcanaLogProjection,
 } from "./log-messages";
 
 export {
   createLorcanaLogMessage,
+  createLorcanaGameLogEntry,
+  createLorcanaLogProjection,
   LORCANA_LOG_TRANSLATION_KEYS,
   LORCANA_LOG_TRANSLATION_VALUE_KEYS,
 } from "./log-messages";

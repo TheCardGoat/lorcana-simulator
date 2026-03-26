@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { kristoffMiningTheRuinsI18n } from "./159-kristoff-mining-the-ruins.i18n";
 
 export const kristoffMiningTheRuins: CharacterCard = {
@@ -34,13 +35,7 @@ export const kristoffMiningTheRuins: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Whisper"],
   abilities: [
-    {
-      id: "abh-1",
-      keyword: "Boost",
-      text: "Boost 1 {I}",
-      type: "keyword",
-      value: 1,
-    },
+    boost(1),
     {
       effect: {
         condition: {

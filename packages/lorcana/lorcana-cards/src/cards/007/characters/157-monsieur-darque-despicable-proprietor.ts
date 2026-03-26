@@ -33,18 +33,32 @@ export const monsieurDarqueDespicableProprietor: CharacterCard = {
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["item"],
+        type: "sequence",
+        steps: [
+          {
+            type: "optional",
+            chooser: "CONTROLLER",
+            effect: {
+              type: "banish",
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["item"],
+              },
+            },
           },
-          type: "banish",
-        },
-        type: "optional",
+          {
+            type: "conditional",
+            condition: { type: "if-you-do" },
+            then: {
+              type: "draw",
+              amount: 1,
+              target: "CONTROLLER",
+            },
+          },
+        ],
       },
       id: "116-1",
       name: "I'VE COME TO COLLECT",

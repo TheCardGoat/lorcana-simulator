@@ -2,45 +2,64 @@
   import { locales } from "$lib/paraglide/runtime.js";
   import { m } from "$lib/i18n/messages.js";
   import * as Dialog from "$lib/design-system/primitives/dialog";
-  import type { AnimationSpeed, CardPreviewMode, PrimaryClickAction } from "@/features/simulator/context/game-context.svelte.js";
+  import HotkeyDisplay from "@/features/simulator/hotkeys/HotkeyDisplay.svelte";
+  import type {
+    AnimationSpeed,
+    CardPreviewMode,
+    HotkeyMode,
+    PrimaryClickAction,
+  } from "@/features/simulator/context/game-context.svelte.js";
   import SimulatorSupportActions from "@/features/simulator/support/SimulatorSupportActions.svelte";
+  import type { BugReportContext } from "@/features/simulator/support/feedback-api.js";
 
   type SupportedLocale = (typeof locales)[number];
 
   interface PlayerSettingsDialogProps {
     open?: boolean;
+    bugReportContext?: BugReportContext;
     selectedLocale: SupportedLocale;
     showRawLogRegistryJson?: boolean;
     skipActionConfirmation?: boolean;
+    hotkeyMode?: HotkeyMode;
     cardPreviewMode?: CardPreviewMode;
     primaryClickAction?: PrimaryClickAction;
     animationSpeed?: AnimationSpeed;
     soundVolume?: number;
+    onOpenHotkeys?: () => void;
     onLocaleSelection: (nextLocale: SupportedLocale) => void;
     onToggleRawLogRegistryJson?: (enabled: boolean) => void;
     onToggleSkipActionConfirmation?: (enabled: boolean) => void;
+    onHotkeyModeChange?: (mode: HotkeyMode) => void;
     onCardPreviewModeChange?: (mode: CardPreviewMode) => void;
     onPrimaryClickActionChange?: (action: PrimaryClickAction) => void;
     onAnimationSpeedChange?: (speed: AnimationSpeed) => void;
     onSoundVolumeChange?: (volume: number) => void;
+    accessibleMobileControls?: boolean;
+    onToggleAccessibleMobileControls?: (enabled: boolean) => void;
   }
 
   let {
     open = $bindable(false),
+    bugReportContext,
     selectedLocale,
     showRawLogRegistryJson = false,
     skipActionConfirmation = false,
+    hotkeyMode = "confirm-only",
     cardPreviewMode = "delayed",
     primaryClickAction = "challenge",
     animationSpeed = "normal",
     soundVolume = 50,
+    onOpenHotkeys,
     onLocaleSelection,
     onToggleRawLogRegistryJson,
     onToggleSkipActionConfirmation,
+    onHotkeyModeChange,
     onCardPreviewModeChange,
     onPrimaryClickActionChange,
     onAnimationSpeedChange,
     onSoundVolumeChange,
+    accessibleMobileControls = false,
+    onToggleAccessibleMobileControls,
   }: PlayerSettingsDialogProps = $props();
 
   function getLocaleLabel(locale: SupportedLocale): string {
@@ -85,6 +104,18 @@
     onToggleSkipActionConfirmation?.(input.checked);
   }
 
+  function handleHotkeyModeSelection(event: Event): void {
+    const selectElement = event.currentTarget;
+    if (!(selectElement instanceof HTMLSelectElement)) {
+      return;
+    }
+
+    const nextMode = selectElement.value as HotkeyMode;
+    if (nextMode === "off" || nextMode === "confirm-only" || nextMode === "on") {
+      onHotkeyModeChange?.(nextMode);
+    }
+  }
+
   function handleCardPreviewModeSelection(event: Event): void {
     const selectElement = event.currentTarget;
     if (!(selectElement instanceof HTMLSelectElement)) {
@@ -121,13 +152,26 @@
     onSoundVolumeChange?.(Number(input.value));
   }
 
+  function handleAccessibleMobileControlsToggle(event: Event): void {
+    const input = event.currentTarget;
+    if (!(input instanceof HTMLInputElement)) {
+      return;
+    }
+
+    onToggleAccessibleMobileControls?.(input.checked);
+  }
+
+  function handleOpenHotkeysClick(): void {
+    onOpenHotkeys?.();
+  }
+
 </script>
 
 <Dialog.Root bind:open>
   <Dialog.Portal>
     <Dialog.Overlay class="player-settings-overlay" />
     <Dialog.Content class="player-settings-dialog" showCloseButton={false}>
-      <Dialog.Header class="gap-1">
+      <Dialog.Header class="shrink-0 gap-1">
         <Dialog.Title class="text-base font-semibold tracking-tight text-slate-100">
           {m["sim.settings.title"]({})}
         </Dialog.Title>
@@ -136,6 +180,7 @@
         </Dialog.Description>
       </Dialog.Header>
 
+      <div class="player-settings-scroll">
       <div class="grid gap-4">
         <div class="grid gap-1.5">
           <label class="text-xs font-medium uppercase tracking-widest text-slate-400" for="player-language-select">
@@ -167,6 +212,23 @@
             <span>{m["sim.settings.skipActionConfirmationLabel"]({})}</span>
           </label>
           <p class="player-settings-help">{m["sim.settings.skipActionConfirmationDescription"]({})}</p>
+        </div>
+
+        <div class="grid gap-1.5">
+          <label class="text-xs font-medium uppercase tracking-widest text-slate-400" for="player-hotkey-mode-select">
+            {m["sim.settings.hotkeyModeLabel"]({})}
+          </label>
+          <select
+            id="player-hotkey-mode-select"
+            class="player-settings-select"
+            value={hotkeyMode}
+            onchange={handleHotkeyModeSelection}
+          >
+            <option value="off">{m["sim.settings.hotkeyMode.off"]({})}</option>
+            <option value="confirm-only">{m["sim.settings.hotkeyMode.confirmOnly"]({})}</option>
+            <option value="on">{m["sim.settings.hotkeyMode.on"]({})}</option>
+          </select>
+          <p class="player-settings-help">{m["sim.settings.hotkeyModeDescription"]({})}</p>
         </div>
 
         <div class="grid gap-1.5">
@@ -241,16 +303,49 @@
         </div>
 
         <div class="grid gap-1.5">
-          <label class="player-settings-checkbox-row" for="player-raw-log-registry-toggle">
+          <label
+            class="player-settings-checkbox-row"
+            for="player-accessible-mobile-controls-toggle"
+          >
             <input
-              id="player-raw-log-registry-toggle"
+              id="player-accessible-mobile-controls-toggle"
               type="checkbox"
-              checked={showRawLogRegistryJson}
-              onchange={handleRawLogRegistryToggle}
+              checked={accessibleMobileControls}
+              onchange={handleAccessibleMobileControlsToggle}
             />
-            <span>{m["sim.settings.logRegistryRawLabel"]({})}</span>
+            <span>{m["sim.settings.accessibleMobileControlsLabel"]({})}</span>
           </label>
-          <p class="player-settings-help">{m["sim.settings.logRegistryRawDescription"]({})}</p>
+          <p class="player-settings-help">{m["sim.settings.accessibleMobileControlsDescription"]({})}</p>
+        </div>
+
+        {#if import.meta.env.DEV}
+          <div class="grid gap-1.5">
+            <label class="player-settings-checkbox-row" for="player-raw-log-registry-toggle">
+              <input
+                id="player-raw-log-registry-toggle"
+                type="checkbox"
+                checked={showRawLogRegistryJson}
+                onchange={handleRawLogRegistryToggle}
+              />
+              <span>{m["sim.settings.logRegistryRawLabel"]({})}</span>
+            </label>
+            <p class="player-settings-help">{m["sim.settings.logRegistryRawDescription"]({})}</p>
+          </div>
+        {/if}
+
+        <div class="grid gap-1.5">
+          <div class="player-settings-support-copy">
+            <p class="player-settings-support-title">{m["sim.hotkeys.title"]({})}</p>
+            <p class="player-settings-help">{m["sim.hotkeys.description"]({})}</p>
+          </div>
+          <button
+            type="button"
+            class="player-settings-hotkeys-button"
+            onclick={handleOpenHotkeysClick}
+          >
+            <span>{m["sim.hotkeys.open"]({})}</span>
+            <HotkeyDisplay hotkey="Mod+K" />
+          </button>
         </div>
 
         <div class="grid gap-1.5">
@@ -258,11 +353,12 @@
             <p class="player-settings-support-title">{m["sim.support.title"]({})}</p>
             <p class="player-settings-help">{m["sim.support.description"]({})}</p>
           </div>
-          <SimulatorSupportActions />
+          <SimulatorSupportActions gameContext={bugReportContext} />
         </div>
       </div>
+      </div>
 
-      <Dialog.Footer>
+      <Dialog.Footer class="shrink-0">
         <Dialog.Close class="player-settings-close" aria-label={m["sim.settings.closeAria"]({})}>
           {m["sim.settings.close"]({})}
         </Dialog.Close>
@@ -281,13 +377,54 @@
   }
 
   :global(.player-settings-dialog) {
+    display: flex !important;
+    flex-direction: column;
+    gap: 1rem;
     max-width: min(92vw, 420px) !important;
+    max-height: min(92dvh, calc(100vh - 1.5rem));
+    overflow: hidden;
     border-radius: 0.95rem;
     border: 1px solid rgba(108, 145, 192, 0.35) !important;
     background: rgba(9, 16, 28, 0.96) !important;
     box-shadow: 0 18px 48px rgba(2, 8, 18, 0.5);
     padding: 1.25rem;
     color: #e5edf7 !important;
+  }
+
+  :global(.player-settings-dialog .player-settings-scroll) {
+    min-height: 0;
+    flex: 1 1 0%;
+    overflow-x: hidden;
+    /* scroll: keep vertical scrollbar lane visible (where the engine supports it) */
+    overflow-y: scroll;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding-inline-end: 0.25rem;
+    scrollbar-width: auto;
+    scrollbar-color: rgba(147, 197, 253, 0.85) rgba(30, 41, 59, 0.95);
+  }
+
+  :global(.player-settings-dialog .player-settings-scroll)::-webkit-scrollbar {
+    width: 14px;
+  }
+
+  :global(.player-settings-dialog .player-settings-scroll)::-webkit-scrollbar-track {
+    border-radius: 0.5rem;
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(108, 145, 192, 0.45);
+  }
+
+  :global(.player-settings-dialog .player-settings-scroll)::-webkit-scrollbar-thumb {
+    border-radius: 0.45rem;
+    background: rgba(125, 211, 252, 0.65);
+    border: 3px solid rgba(30, 41, 59, 0.95);
+    background-clip: padding-box;
+  }
+
+  :global(.player-settings-dialog .player-settings-scroll)::-webkit-scrollbar-thumb:hover {
+    background: rgba(147, 197, 253, 0.85);
+    border: 3px solid rgba(30, 41, 59, 0.95);
+    background-clip: padding-box;
   }
 
   :global(.player-settings-select) {
@@ -347,6 +484,28 @@
     display: flex;
     align-items: center;
     gap: 0.6rem;
+  }
+
+  .player-settings-hotkeys-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    border-radius: 0.7rem;
+    border: 1px solid rgba(108, 145, 192, 0.35);
+    background: rgba(14, 25, 40, 0.92);
+    color: #e5edf7;
+    padding: 0.7rem 0.8rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .player-settings-hotkeys-button:hover,
+  .player-settings-hotkeys-button:focus-visible {
+    background: rgba(18, 33, 53, 0.98);
+    border-color: rgba(147, 197, 253, 0.62);
+    outline: none;
   }
 
   .player-settings-support-copy {

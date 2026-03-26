@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { wendyDarlingAuthorityOnPeterPanI18n } from "./158-wendy-darling-authority-on-peter-pan.i18n";
+import { support } from "../../../helpers/abilities/support";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const wendyDarlingAuthorityOnPeterPan: CharacterCard = {
   id: "DdB",
@@ -31,19 +33,6 @@ export const wendyDarlingAuthorityOnPeterPan: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "st9-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-    {
-      id: "st9-2",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [ward, support],
   i18n: wendyDarlingAuthorityOnPeterPanI18n,
 };

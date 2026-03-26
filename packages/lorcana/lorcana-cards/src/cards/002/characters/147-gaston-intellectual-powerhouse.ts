@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { gastonIntellectualPowerhouseI18n } from "./147-gaston-intellectual-powerhouse.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const gastonIntellectualPowerhouse: CharacterCard = {
   id: "E5w",
@@ -34,15 +35,7 @@ export const gastonIntellectualPowerhouse: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "14c-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         type: "scry",

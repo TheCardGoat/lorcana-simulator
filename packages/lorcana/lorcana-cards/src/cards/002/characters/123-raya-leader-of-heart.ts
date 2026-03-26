@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rayaLeaderOfHeartI18n } from "./123-raya-leader-of-heart.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const rayaLeaderOfHeart: CharacterCard = {
   id: "rSb",
@@ -34,15 +35,7 @@ export const rayaLeaderOfHeart: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "7bt-1",
-      keyword: "Shift",
-      type: "keyword",
-      cost: {
-        ink: 4,
-      },
-      text: "Shift 4",
-    },
+    shift(4),
     {
       id: "7bt-2",
       name: "CHAMPION OF KUMANDRA",

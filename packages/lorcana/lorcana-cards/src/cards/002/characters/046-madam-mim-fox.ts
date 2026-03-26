@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { madamMimFoxI18n } from "./046-madam-mim-fox.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const madamMimFox: CharacterCard = {
   id: "XBE",
@@ -66,12 +67,7 @@ export const madamMimFox: CharacterCard = {
       },
       type: "triggered",
     },
-    {
-      id: "1ej-2",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
   ],
   i18n: madamMimFoxI18n,
 };

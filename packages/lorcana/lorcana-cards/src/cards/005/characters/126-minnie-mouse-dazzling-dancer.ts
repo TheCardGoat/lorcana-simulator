@@ -39,8 +39,27 @@ export const minnieMouseDazzlingDancer: CharacterCard = {
       name: "DANCE-OFF",
       text: "DANCE-OFF Whenever this character or one of your characters named Mickey Mouse challenges another character, gain 1 lore.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "challenge",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+    {
+      effect: {
+        amount: 1,
+        type: "gain-lore",
+      },
+      id: "git-2",
+      name: "DANCE-OFF",
+      text: "DANCE-OFF Whenever this character or one of your characters named Mickey Mouse challenges another character, gain 1 lore.",
+      trigger: {
+        event: "challenge",
+        on: {
+          controller: "you",
+          cardType: "character",
+          name: "Mickey Mouse",
+        },
         timing: "whenever",
       },
       type: "triggered",

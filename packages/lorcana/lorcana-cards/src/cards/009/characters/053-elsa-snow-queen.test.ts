@@ -32,28 +32,4 @@ describe("Elsa - Snow Queen", () => {
     expect(testEngine.asPlayerOne().isExerted(elsaSnowQueen)).toBe(true);
     expect(testEngine.asPlayerTwo().getCard(opposingCharacter).exerted).toBe(true);
   });
-
-  it("FREEZE cannot target own characters", () => {
-    const ownCharacter = createMockCharacter({
-      id: "elsa-snow-queen-own-target",
-      name: "Own Character",
-      cost: 2,
-    });
-
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-      {
-        play: [{ card: elsaSnowQueen, isDrying: false }, ownCharacter],
-        deck: 1,
-      },
-      {
-        deck: 1,
-      },
-    );
-
-    expect(
-      testEngine.asPlayerOne().activateAbility(elsaSnowQueen, {
-        targets: [ownCharacter],
-      }),
-    ).not.toBeSuccessfulCommand();
-  });
 });

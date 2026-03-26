@@ -137,5 +137,45 @@ describe("King Candy - Sugar Rush Nightmare", () => {
       // Ability should not trigger when there are no valid targets (King Candy is in discard but excluded via excludeSelf)
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
+
+    it("regression: triggers when banished via challenge (not just action)", () => {
+      const strongAttacker = createMockCharacter({
+        id: "king-candy-srn-strong-attacker",
+        name: "Strong Attacker",
+        cost: 5,
+        strength: 5,
+        willpower: 5,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [strongAttacker],
+          deck: 2,
+        },
+        {
+          play: [{ card: kingCandySugarRushNightmare, exerted: true }],
+          discard: [candleheadDedicatedRacer],
+          deck: 2,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(strongAttacker, kingCandySugarRushNightmare),
+      ).toBeSuccessfulCommand();
+
+      // King Candy should be banished (willpower 2 < strength 5)
+      expect(testEngine.asPlayerTwo().getCardZone(kingCandySugarRushNightmare)).toBe("discard");
+
+      // A NEW ROSTER should trigger
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerTwo().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({ targets: [candleheadDedicatedRacer] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(candleheadDedicatedRacer)).toBe("hand");
+    });
   });
 });

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jetsamUrsulasBabyI18n } from "./046-jetsam-ursulas-baby.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const jetsamUrsulasBaby: CharacterCard = {
   id: "jZW",
@@ -33,13 +34,7 @@ export const jetsamUrsulasBaby: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Ally"],
   abilities: [
-    {
-      id: "du5-1",
-      keyword: "Challenger",
-      text: "Challenger +2",
-      type: "keyword",
-      value: 2,
-    },
+    challenger(2),
     {
       effect: {
         keyword: "Challenger",

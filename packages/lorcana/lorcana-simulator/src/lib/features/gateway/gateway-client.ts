@@ -40,6 +40,8 @@ export interface GatewayClientOptions {
   onStateChange?: (state: Readonly<GatewayClientState>) => void;
   /** Callback fired for game messages not handled internally (game_joined, state_update, etc.). */
   onGameMessage?: (msg: { type: string; [key: string]: unknown }) => void;
+  /** Called when the WebSocket reaches OPEN (each connect / reconnect). */
+  onOpen?: () => void;
 }
 
 const INITIAL_RECONNECT_DELAY_MS = 1_000;
@@ -51,8 +53,10 @@ export class GatewayClient {
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private intentionalClose = false;
-  private readonly options: Required<Omit<GatewayClientOptions, "ticket" | "onGameMessage">> &
-    Pick<GatewayClientOptions, "ticket" | "onGameMessage">;
+  private readonly options: Required<
+    Omit<GatewayClientOptions, "ticket" | "onGameMessage" | "onOpen">
+  > &
+    Pick<GatewayClientOptions, "ticket" | "onGameMessage" | "onOpen">;
 
   private _state: GatewayClientState = {
     status: "idle",
@@ -72,6 +76,7 @@ export class GatewayClient {
       maxReconnectAttempts: Number.POSITIVE_INFINITY,
       onStateChange: () => {},
       onGameMessage: undefined,
+      onOpen: undefined,
       ...options,
     };
   }
@@ -142,6 +147,7 @@ export class GatewayClient {
     ws.addEventListener("open", () => {
       this.updateState({ status: "connected", reconnectAttempts: 0, error: null });
       this.startPingLoop();
+      this.options.onOpen?.();
     });
 
     ws.addEventListener("message", (event) => {

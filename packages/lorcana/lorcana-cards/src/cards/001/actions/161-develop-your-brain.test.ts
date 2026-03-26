@@ -74,8 +74,8 @@ describe("Develop Your Brain", () => {
     });
 
     const [firstRevealedId, secondRevealedId] = revealedCardIds!;
-    expect(testEngine.getCardDefinitionId(firstRevealedId)).toEqual(aladdinPrinceAli.id);
-    expect(testEngine.getCardDefinitionId(secondRevealedId)).toEqual(tinkerBellPeterPansAlly.id);
+    expect(testEngine.getCardDefinitionId(firstRevealedId)).toEqual(tinkerBellPeterPansAlly.id);
+    expect(testEngine.getCardDefinitionId(secondRevealedId)).toEqual(healingGlow.id);
 
     expect(
       testEngine.asPlayerOne().resolvePendingEffect(developYourBrain, {
@@ -93,10 +93,60 @@ describe("Develop Your Brain", () => {
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
-    expect(testEngine.asPlayerOne().getCardZone(tinkerBellPeterPansAlly)).toEqual("hand");
+    expect(testEngine.asPlayerOne().getCardZone(healingGlow)).toEqual("hand");
     const lastDeckCardId = testEngine.getCardInstanceIdsInZone("deck", PLAYER_ONE).at(-1);
 
     expect(lastDeckCardId).toBeDefined();
     expect(testEngine.getCardDefinitionId(lastDeckCardId!)).toEqual(aladdinPrinceAli.id);
+
+    const resolveScryLogEntry = [...testEngine.getServerEngine().getRuntime().getGameLog()]
+      .reverse()
+      .find((entry) => entry.defaultMessage?.key === "lorcana.effect.resolve.scrySelection");
+
+    expect(resolveScryLogEntry).toBeDefined();
+    expect(resolveScryLogEntry?.visibility.mode).toBe("PUBLIC_WITH_OVERRIDES");
+    if (!resolveScryLogEntry || resolveScryLogEntry.visibility.mode !== "PUBLIC_WITH_OVERRIDES") {
+      return;
+    }
+
+    expect(resolveScryLogEntry.visibility.overrides[PLAYER_ONE]).toMatchObject({
+      key: "lorcana.effect.resolve.scrySelection.detail",
+      values: {
+        playerId: PLAYER_ONE,
+        selection: ["Hand: Healing Glow", "Bottom of deck: Tinker Bell - Peter Pan’s Ally"],
+        handCards: [secondRevealedId],
+        deckBottomCards: [firstRevealedId],
+      },
+    });
+  });
+
+  it("projects enriched scry destination metadata for the pending selection", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [developYourBrain],
+      inkwell: developYourBrain.cost,
+      deck: [aladdinPrinceAli, tinkerBellPeterPansAlly],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(developYourBrain)).toBeSuccessfulCommand();
+
+    const pendingEffect = testEngine.asServer().getState().G.pendingEffects[0];
+    expect(pendingEffect?.selectionContext).toMatchObject({
+      kind: "scry-selection",
+      destinationRules: [
+        {
+          zone: "hand",
+          min: 1,
+          max: 1,
+          filters: [],
+          playFilters: [],
+        },
+        {
+          zone: "deck-bottom",
+          remainder: true,
+          filters: [],
+          playFilters: [],
+        },
+      ],
+    });
   });
 });

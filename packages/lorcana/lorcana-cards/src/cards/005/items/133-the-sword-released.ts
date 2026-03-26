@@ -35,53 +35,50 @@ export const theSwordReleased: ItemCard = {
         on: "YOU",
         timing: "at",
       },
+      condition: {
+        type: "target-aggregate-comparison",
+        left: {
+          query: {
+            selector: "all",
+            owner: "you",
+            zones: ["play"],
+            cardType: "character",
+            filters: [],
+          },
+          attribute: "strength",
+          aggregate: "max",
+        },
+        right: {
+          query: {
+            selector: "all",
+            owner: "opponent",
+            zones: ["play"],
+            cardType: "character",
+            filters: [],
+          },
+          attribute: "strength",
+          aggregate: "max",
+        },
+        comparison: "gt",
+        requireLeftNonEmpty: true,
+        ifRightEmpty: "pass",
+      },
       effect: {
-        type: "conditional",
-        condition: {
-          type: "target-aggregate-comparison",
-          left: {
-            query: {
-              selector: "all",
-              owner: "you",
-              zones: ["play"],
-              cardType: "character",
-              filters: [],
-            },
-            attribute: "strength",
-            aggregate: "max",
+        type: "sequence",
+        steps: [
+          {
+            amount: 1,
+            target: "EACH_OPPONENT",
+            type: "lose-lore",
           },
-          right: {
-            query: {
-              selector: "all",
-              owner: "opponent",
-              zones: ["play"],
-              cardType: "character",
-              filters: [],
+          {
+            amount: {
+              type: "lore-lost",
             },
-            attribute: "strength",
-            aggregate: "max",
+            target: "CONTROLLER",
+            type: "gain-lore",
           },
-          comparison: "gt",
-          requireLeftNonEmpty: true,
-          ifRightEmpty: "pass",
-        },
-        then: {
-          type: "sequence",
-          steps: [
-            {
-              amount: 1,
-              target: "EACH_OPPONENT",
-              type: "lose-lore",
-            },
-            {
-              amount: {
-                type: "lore-lost",
-              },
-              target: "CONTROLLER",
-              type: "gain-lore",
-            },
-          ],
-        },
+        ],
       },
       text: "POWER APPOINTED At the start of your turn, if you have a character in play with more {S} than each opposing character in play, each opponent loses 1 lore and you gain lore equal to the lore lost.",
     },

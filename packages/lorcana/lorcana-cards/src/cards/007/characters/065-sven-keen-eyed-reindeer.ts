@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { svenKeeneyedReindeerI18n } from "./065-sven-keen-eyed-reindeer.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const svenKeeneyedReindeer: CharacterCard = {
   id: "snv",
@@ -33,12 +34,7 @@ export const svenKeeneyedReindeer: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "dna-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       effect: {
         duration: "this-turn",

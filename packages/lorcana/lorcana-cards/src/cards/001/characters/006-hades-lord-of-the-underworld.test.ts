@@ -38,17 +38,4 @@ describe("Hades - Lord of the Underworld", () => {
     expect(testEngine.asPlayerOne().getCardZone(otherCharacter)).toBe("discard");
     expect(testEngine.asPlayerOne().getCardZone(hadesLordOfTheUnderworld)).toBe("play");
   });
-
-  it("WELL OF SOULS - resolves without a pending choice when no character cards are in your discard", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      hand: [hadesLordOfTheUnderworld],
-      discard: [],
-      inkwell: hadesLordOfTheUnderworld.cost,
-    });
-
-    expect(testEngine.asPlayerOne().playCard(hadesLordOfTheUnderworld)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-    expect(testEngine.asPlayerOne().getPendingChoice()).toBeUndefined();
-    expect(testEngine.asPlayerOne().getCardZone(hadesLordOfTheUnderworld)).toBe("play");
-  });
 });

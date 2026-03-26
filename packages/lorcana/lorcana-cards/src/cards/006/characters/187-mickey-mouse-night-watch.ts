@@ -32,12 +32,19 @@ export const mickeyMouseNightWatch: CharacterCard = {
     {
       effect: {
         keyword: "Resist",
-        target: "YOUR_CHARACTERS",
+        target: {
+          cardTypes: ["character"],
+          count: "all",
+          filter: [{ type: "has-name", name: "Pluto" }],
+          owner: "you",
+          selector: "all",
+          zones: ["play"],
+        },
         type: "gain-keyword",
         value: 1,
       },
       id: "byr-1",
-      name: "SUPPORT Your Pluto",
+      name: "SUPPORT",
       text: "SUPPORT Your Pluto characters get Resist +1.",
       type: "static",
     },

@@ -40,55 +40,52 @@ export const queensSensorCore: ItemCard = {
         on: "YOU",
         timing: "at",
       },
+      condition: {
+        type: "or",
+        conditions: [
+          {
+            type: "target-query",
+            query: {
+              selector: "all",
+              owner: "you",
+              zones: ["play"],
+              cardType: "character",
+              filters: [
+                {
+                  type: "has-classification",
+                  classification: "Princess",
+                },
+              ],
+            },
+            comparison: {
+              operator: "gte",
+              value: 1,
+            },
+          },
+          {
+            type: "target-query",
+            query: {
+              selector: "all",
+              owner: "you",
+              zones: ["play"],
+              cardType: "character",
+              filters: [
+                {
+                  type: "has-classification",
+                  classification: "Queen",
+                },
+              ],
+            },
+            comparison: {
+              operator: "gte",
+              value: 1,
+            },
+          },
+        ],
+      },
       effect: {
-        type: "conditional",
-        condition: {
-          type: "or",
-          conditions: [
-            {
-              type: "target-query",
-              query: {
-                selector: "all",
-                owner: "you",
-                zones: ["play"],
-                cardType: "character",
-                filters: [
-                  {
-                    type: "has-classification",
-                    classification: "Princess",
-                  },
-                ],
-              },
-              comparison: {
-                operator: "gte",
-                value: 1,
-              },
-            },
-            {
-              type: "target-query",
-              query: {
-                selector: "all",
-                owner: "you",
-                zones: ["play"],
-                cardType: "character",
-                filters: [
-                  {
-                    type: "has-classification",
-                    classification: "Queen",
-                  },
-                ],
-              },
-              comparison: {
-                operator: "gte",
-                value: 1,
-              },
-            },
-          ],
-        },
-        then: {
-          amount: 1,
-          type: "gain-lore",
-        },
+        amount: 1,
+        type: "gain-lore",
       },
       text: "SYMBOL OF NOBILITY At the start of your turn, if you have a Princess or Queen character in play, gain 1 lore.",
     },

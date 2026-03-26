@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { simbaSonOfMufasaI18n } from "./192-simba-son-of-mufasa.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const simbaSonOfMufasa: CharacterCard = {
   id: "746",
@@ -33,15 +34,7 @@ export const simbaSonOfMufasa: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "King"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "xnq-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         chooser: "CONTROLLER",

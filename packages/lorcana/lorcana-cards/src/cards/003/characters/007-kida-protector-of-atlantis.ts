@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kidaProtectorOfAtlantisI18n } from "./007-kida-protector-of-atlantis.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const kidaProtectorOfAtlantis: CharacterCard = {
   id: "lw9",
@@ -34,15 +35,7 @@ export const kidaProtectorOfAtlantis: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "194-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         duration: "until-start-of-next-turn",

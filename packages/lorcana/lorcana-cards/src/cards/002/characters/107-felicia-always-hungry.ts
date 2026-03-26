@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { feliciaAlwaysHungryI18n } from "./107-felicia-always-hungry.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
 
 export const feliciaAlwaysHungry: CharacterCard = {
   id: "Wz0",
@@ -24,13 +25,6 @@ export const feliciaAlwaysHungry: CharacterCard = {
   },
   text: "Reckless",
   classifications: ["Dreamborn", "Ally"],
-  abilities: [
-    {
-      id: "7iz-1",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-  ],
+  abilities: [reckless],
   i18n: feliciaAlwaysHungryI18n,
 };

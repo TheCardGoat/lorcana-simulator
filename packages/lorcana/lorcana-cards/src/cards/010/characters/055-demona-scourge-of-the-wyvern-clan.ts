@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { demonaScourgeOfTheWyvernClanI18n } from "./055-demona-scourge-of-the-wyvern-clan.i18n";
+import { stoneByDay } from "../../../helpers/abilities/stoneByDay";
 
 export const demonaScourgeOfTheWyvernClan: CharacterCard = {
   id: "e6l",
@@ -71,24 +72,7 @@ export const demonaScourgeOfTheWyvernClan: CharacterCard = {
       },
       type: "triggered",
     },
-    {
-      id: "4nl-2",
-      text: "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
-      name: "STONE BY DAY",
-      condition: {
-        comparison: "greater-or-equal",
-        controller: "you",
-        type: "resource-count",
-        value: 3,
-        what: "cards-in-hand",
-      },
-      effect: {
-        restriction: "cant-ready",
-        target: "SELF",
-        type: "restriction",
-      },
-      type: "static",
-    },
+    stoneByDay,
   ],
   i18n: demonaScourgeOfTheWyvernClanI18n,
 };

@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { iagoGiantSpectralParrotI18n } from "./049-iago-giant-spectral-parrot.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { vanish } from "../../../helpers/abilities/vanish";
 
 export const iagoGiantSpectralParrot: CharacterCard = {
   id: "vao",
@@ -32,19 +34,6 @@ export const iagoGiantSpectralParrot: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally", "Illusion"],
-  abilities: [
-    {
-      id: "145-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-    {
-      id: "145-2",
-      keyword: "Vanish",
-      type: "keyword",
-      text: "Vanish",
-    },
-  ],
+  abilities: [evasive, vanish],
   i18n: iagoGiantSpectralParrotI18n,
 };

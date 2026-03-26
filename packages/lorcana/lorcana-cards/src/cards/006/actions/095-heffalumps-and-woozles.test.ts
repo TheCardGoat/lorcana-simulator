@@ -79,4 +79,46 @@ describe("Heffalumps and Woozles", () => {
       restriction: "cant-quest",
     });
   });
+
+  it("regression: restriction lasts through opponent's next turn and then expires", () => {
+    // Bug: Heffalumps and Woozles was not preventing quest until next turn.
+    // The first test already covers the core behavior - this verifies the same
+    // with explicit pass/check pattern.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [heffalumpsAndWoozles],
+        inkwell: heffalumpsAndWoozles.cost,
+        deck: [simbaProtectiveCub, simbaProtectiveCub],
+      },
+      {
+        deck: [tipoGrowingSon, tipoGrowingSon],
+        play: [tipoGrowingSon],
+      },
+    );
+    const tipoId = testEngine.findCardInstanceId(tipoGrowingSon, "play", PLAYER_TWO);
+
+    expect(
+      testEngine.asPlayerOne().playCard(heffalumpsAndWoozles, {
+        targets: [tipoId],
+      }).success,
+    ).toBe(true);
+
+    // Pass to player two's turn using asPlayerOne - same pattern as first test
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    // Tipo should have the restriction during opponent's turn
+    expect(testEngine.asPlayerTwo()).toHaveRestriction({
+      card: tipoGrowingSon,
+      restriction: "cant-quest",
+    });
+
+    // Pass back to player one's turn
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    // Restriction should now be expired
+    expect(testEngine.asPlayerTwo()).not.toHaveRestriction({
+      card: tipoGrowingSon,
+      restriction: "cant-quest",
+    });
+  });
 });

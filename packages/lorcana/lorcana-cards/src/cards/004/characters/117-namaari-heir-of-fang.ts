@@ -30,6 +30,45 @@ export const namaariHeirOfFang: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Princess"],
-  abilities: [],
+  abilities: [
+    {
+      id: "BYL-1",
+      name: "TWO-WEAPON FIGHTING",
+      text: "TWO-WEAPON FIGHTING During your turn, whenever this character deals damage to another character in a challenge, you may deal the same amount of damage to another chosen character.",
+      type: "triggered",
+      trigger: {
+        event: "deal-damage",
+        on: "SELF",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+          {
+            type: "in-challenge",
+          },
+        ],
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "deal-damage",
+          amount: {
+            type: "trigger-amount",
+          },
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["character"],
+            excludeChallenger: true,
+          },
+        },
+      },
+    },
+  ],
   i18n: namaariHeirOfFangI18n,
 };

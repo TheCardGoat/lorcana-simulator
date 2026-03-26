@@ -9,6 +9,8 @@ import { openingSkirmishFixture } from "./opening-skirmish.js";
 import { preGameFixture } from "./pre-game.js";
 import { winStateFixture } from "./win-state.js";
 import { fullBoardAllCardTypes } from "./full-board-all-card-types.js";
+import { lookAtTheTopFixture } from "./look-at-the-top.js";
+import { shiftFixture } from "./shift.js";
 
 export const DEFAULT_LORCANA_FIXTURE_ID = "empty-board";
 
@@ -28,6 +30,8 @@ export const LORCANA_SIMULATOR_FIXTURES: Record<string, LorcanaSimulatorFixture>
   [winStateFixture.id]: winStateFixture,
   [cardStatesFixture.id]: cardStatesFixture,
   [fullBoardAllCardTypes.id]: fullBoardAllCardTypes,
+  [lookAtTheTopFixture.id]: lookAtTheTopFixture,
+  [shiftFixture.id]: shiftFixture,
 };
 
 export const getLorcanaFixture = (fixtureId: string): LorcanaSimulatorFixture => {

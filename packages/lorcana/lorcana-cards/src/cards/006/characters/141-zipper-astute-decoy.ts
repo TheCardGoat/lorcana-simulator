@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { zipperAstuteDecoyI18n } from "./141-zipper-astute-decoy.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const zipperAstuteDecoy: CharacterCard = {
   id: "aVD",
@@ -34,12 +35,7 @@ export const zipperAstuteDecoy: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "n08-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         chooser: "CONTROLLER",

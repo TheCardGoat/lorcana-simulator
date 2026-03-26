@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { amosSladeTenaciousTrackerI18n } from "./180-amos-slade-tenacious-tracker.i18n";
+import { alert } from "../../../helpers/abilities/alert";
 
 export const amosSladeTenaciousTracker: CharacterCard = {
   id: "1j8",
@@ -29,13 +30,6 @@ export const amosSladeTenaciousTracker: CharacterCard = {
     },
   ],
   classifications: ["Storyborn"],
-  abilities: [
-    {
-      id: "18o-1",
-      keyword: "Alert",
-      type: "keyword",
-      text: "Alert",
-    },
-  ],
+  abilities: [alert],
   i18n: amosSladeTenaciousTrackerI18n,
 };

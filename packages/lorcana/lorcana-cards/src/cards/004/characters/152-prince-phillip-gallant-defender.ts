@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { princePhillipGallantDefenderI18n } from "./152-prince-phillip-gallant-defender.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const princePhillipGallantDefender: CharacterCard = {
   id: "kbT",
@@ -34,17 +35,12 @@ export const princePhillipGallantDefender: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Prince"],
   abilities: [
-    {
-      id: "1f7-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         duration: "this-turn",
         keyword: "Resist",
-        target: "CHOSEN_CHARACTER",
+        target: { ref: "trigger-subject" },
         type: "gain-keyword",
         value: 1,
       },
@@ -52,8 +48,8 @@ export const princePhillipGallantDefender: CharacterCard = {
       name: "BEST DEFENSE",
       text: "BEST DEFENSE Whenever one of your characters is chosen for Support, they gain Resist +1 this turn.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "support",
+        on: "YOUR_CHARACTERS",
         timing: "whenever",
       },
       type: "triggered",

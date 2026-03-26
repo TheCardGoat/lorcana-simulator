@@ -59,4 +59,31 @@ describe("Piglet - Cocoa Maker", () => {
     expect(testEngine.asPlayerOne().getDamage(damagedAlly)).toBe(1);
     expect(testEngine.asPlayerOne().getDamage(heavilyDamagedAlly)).toBe(2);
   });
+
+  it("SPECIAL RECIPE - does not remove more damage than character has", () => {
+    const slightlyDamagedAlly = createMockCharacter({
+      id: "piglet-slightly-damaged",
+      name: "Slightly Damaged Ally",
+      cost: 2,
+      willpower: 4,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [pigletCocoaMaker, { card: slightlyDamagedAlly, damage: 1 }],
+      deck: 2,
+    });
+
+    expect(testEngine.asPlayerOne().getDamage(slightlyDamagedAlly)).toBe(1);
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    if (testEngine.asPlayerOne().getBagCount() > 0) {
+      expect(
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      ).toBeSuccessfulCommand();
+    }
+
+    // Character only had 1 damage, so all of it should be removed (not go negative)
+    expect(testEngine.asPlayerOne().getDamage(slightlyDamagedAlly)).toBe(0);
+  });
 });

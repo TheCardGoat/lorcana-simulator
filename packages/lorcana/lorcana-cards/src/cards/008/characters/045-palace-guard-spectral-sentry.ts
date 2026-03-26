@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { palaceGuardSpectralSentryI18n } from "./045-palace-guard-spectral-sentry.i18n";
+import { vanish } from "../../../helpers/abilities/vanish";
 
 export const palaceGuardSpectralSentry: CharacterCard = {
   id: "APE",
@@ -29,13 +30,6 @@ export const palaceGuardSpectralSentry: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally", "Illusion"],
-  abilities: [
-    {
-      id: "1v0-1",
-      keyword: "Vanish",
-      type: "keyword",
-      text: "Vanish",
-    },
-  ],
+  abilities: [vanish],
   i18n: palaceGuardSpectralSentryI18n,
 };

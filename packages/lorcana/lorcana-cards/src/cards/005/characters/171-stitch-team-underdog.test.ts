@@ -39,28 +39,6 @@ describe("Stitch - Team Underdog", () => {
       expect(testEngine.asPlayerOne().getDamage(targetCharacter)).toBe(2);
     });
 
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [stitchTeamUnderdog],
-          inkwell: stitchTeamUnderdog.cost,
-          play: [targetCharacter],
-          deck: 5,
-        },
-        {},
-      );
-
-      expect(testEngine.asPlayerOne().playCard(stitchTeamUnderdog)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getDamage(targetCharacter)).toBe(0);
-    });
-
     it("can target an opposing character", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mulanReflectingI18n } from "./016-mulan-reflecting.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const mulanReflecting: CharacterCard = {
   id: "1Ib",
@@ -34,57 +35,26 @@ export const mulanReflecting: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
   abilities: [
-    {
-      cost: {
-        ink: 2,
-      },
-      id: "1ox-1",
-      keyword: "Shift",
-      text: "Shift 2",
-      type: "keyword",
-    },
+    shift(2),
     {
       effect: {
-        steps: [
+        type: "scry",
+        amount: 1,
+        target: "CONTROLLER",
+        revealAll: true,
+        destinations: [
           {
-            target: "CONTROLLER",
-            type: "reveal-top-card",
+            zone: "play",
+            min: 0,
+            max: 1,
+            cost: "free",
+            filter: { type: "song" },
           },
           {
-            type: "conditional",
-            condition: {
-              type: "target-query",
-              query: {
-                selector: "all",
-                reference: "revealed-first",
-                filters: [
-                  {
-                    type: "card-type",
-                    value: "song",
-                  },
-                ],
-              },
-              comparison: {
-                operator: "gte",
-                value: 1,
-              },
-            },
-            then: {
-              effect: {
-                cost: "free",
-                from: "revealed",
-                target: "CONTROLLER",
-                type: "play-card",
-              },
-              type: "optional",
-            },
-            else: {
-              source: "revealed",
-              type: "put-on-top",
-            },
+            zone: "deck-top",
+            remainder: true,
           },
         ],
-        type: "sequence",
       },
       id: "1ox-2",
       name: "HONOR TO THE ANCESTORS",

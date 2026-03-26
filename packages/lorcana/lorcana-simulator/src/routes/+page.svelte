@@ -5,22 +5,21 @@
 </script>
 
 <svelte:head>
-  <title>Simulator Routes</title>
+  <title>Dev Routes</title>
 </svelte:head>
 
 <div class="min-h-screen bg-slate-950 text-slate-100">
   <div class="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
     <header class="space-y-3">
       <p class="text-sm font-medium uppercase tracking-[0.24em] text-cyan-300">
-        Development Only
+        Development
       </p>
       <div class="space-y-2">
         <h1 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-          Lorcana Simulator Routes
+          Dev Routes
         </h1>
         <p class="max-w-3xl text-sm leading-6 text-slate-300 sm:text-base">
-          This route is a local entry point for simulator pages during development. In production,
-          the page loader returns a 404.
+          Quick navigation to development and testing routes in the simulator.
         </p>
       </div>
     </header>

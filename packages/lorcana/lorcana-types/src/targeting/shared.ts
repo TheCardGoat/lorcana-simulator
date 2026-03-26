@@ -166,6 +166,7 @@ export function normalizeCardTargetRecord(record: LegacyTargetRecord): LorcanaCa
     context: isRecord(record.context) ? (record.context as LorcanaContext) : undefined,
     excludeSelf:
       record.excludeSelf === true || record.selector === "another" || record.selector === "other",
+    excludeTriggerSubject: record.excludeTriggerSubject === true ? true : undefined,
     requireDifferentTargets:
       typeof record.requireDifferentTargets === "boolean"
         ? record.requireDifferentTargets

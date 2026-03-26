@@ -1,47 +1,48 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { peterPanFearless } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { peteBadGuy } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import { peteWrestlingChamp } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Pete - Wrestling Champ", () => {
-//   Describe("**RE-PETE** {E} - Reveal the top card of your deck. If it’s a character card named Pete, you may play it for free.", () => {
-//     It("Pete on top", () => {
-//       Const testStore = new TestStore({
-//         Play: [peteWrestlingChamp],
-//         Deck: [peteBadGuy],
-//       });
-//
-//       Const cardUnderTest = testStore.getCard(peteWrestlingChamp);
-//
-//       Const target = testStore.getCard(peteBadGuy);
-//
-//       CardUnderTest.activate();
-//       TestStore.resolveOptionalAbility();
-//
-//       Expect(target.zone).toEqual("play");
-//     });
-//
-//     It("Peter Pan on top", () => {
-//       Const testStore = new TestStore({
-//         Play: [peteWrestlingChamp],
-//         Deck: [peterPanFearless],
-//       });
-//
-//       Const cardUnderTest = testStore.getCard(peteWrestlingChamp);
-//
-//       Const target = testStore.getCard(peterPanFearless);
-//
-//       CardUnderTest.activate();
-//
-//       Expect(target.zone).toEqual("deck");
-//       Expect(target.meta.revealed).toEqual(true);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { peteBadGuy } from "../../002/characters/088-pete-bad-guy";
+import { peterPanFearlessFighter } from "../../001/characters/119-peter-pan-fearless-fighter";
+import { peteWrestlingChamp } from "./187-pete-wrestling-champ";
+
+describe("Pete - Wrestling Champ", () => {
+  describe("RE-PETE {E} - Reveal the top card of your deck. If it's a character card named Pete, you may play it for free.", () => {
+    it("plays Pete for free when Pete is on top of the deck", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [peteWrestlingChamp],
+        deck: [peteBadGuy],
+      });
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(peteWrestlingChamp, {
+          ability: "RE-PETE",
+        }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().isExerted(peteWrestlingChamp)).toBe(true);
+      expect(testEngine.asPlayerOne().getCardZone(peteBadGuy)).toBe("play");
+    });
+
+    it("does not play when a non-Pete character is on top", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [peteWrestlingChamp],
+        deck: [peterPanFearlessFighter],
+      });
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(peteWrestlingChamp, {
+          ability: "RE-PETE",
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().isExerted(peteWrestlingChamp)).toBe(true);
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+      expect(testEngine.asPlayerOne().getCardZone(peterPanFearlessFighter)).toBe("deck");
+    });
+  });
+});

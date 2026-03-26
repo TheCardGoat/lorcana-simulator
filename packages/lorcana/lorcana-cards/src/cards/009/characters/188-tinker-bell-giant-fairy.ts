@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tinkerBellGiantFairyI18n } from "./188-tinker-bell-giant-fairy.i18n";
+import { shift } from "../../../helpers/abilities";
 
 export const tinkerBellGiantFairy: CharacterCard = {
   id: "49g",
@@ -38,15 +39,7 @@ export const tinkerBellGiantFairy: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally", "Fairy"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "pf8-1",
-      keyword: "Shift",
-      text: "Shift 4 {I}",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         amount: 1,
@@ -89,9 +82,10 @@ export const tinkerBellGiantFairy: CharacterCard = {
       name: "PUNY PIRATE!",
       text: "PUNY PIRATE! During your turn, whenever this character banishes another character in a challenge, you may deal 2 damage to chosen opposing character.",
       trigger: {
-        event: "banish",
-        on: "OPPONENT_CHARACTERS",
+        event: "banish-in-challenge",
+        on: "SELF",
         timing: "whenever",
+        restrictions: [{ type: "during-turn", whose: "your" }],
       },
       type: "triggered",
     },

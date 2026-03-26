@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { arielEtherealVoiceI18n } from "./017-ariel-ethereal-voice.i18n";
 
 export const arielEtherealVoice: CharacterCard = {
@@ -34,13 +35,7 @@ export const arielEtherealVoice: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess", "Whisper"],
   abilities: [
-    {
-      id: "1l1-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 1,
-      text: "Boost 1 {I}",
-    },
+    boost(1),
     {
       id: "1l1-2",
       condition: {

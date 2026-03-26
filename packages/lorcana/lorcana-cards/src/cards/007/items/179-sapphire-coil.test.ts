@@ -35,4 +35,31 @@ describe("Sapphire Coil", () => {
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getCardStrength(weakenedTarget)).toBe(4);
   });
+
+  it("regression: strength reduction does not persist into opponent's turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [inkCard],
+        play: [sapphireCoil, weakenedTarget],
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: true,
+        targets: [weakenedTarget],
+      }),
+    ).toBeSuccessfulCommand();
+
+    // During player one's turn, strength is reduced
+    expect(testEngine.asPlayerOne().getCardStrength(weakenedTarget)).toBe(2);
+
+    // Pass to opponent's turn - strength should return to normal
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardStrength(weakenedTarget)).toBe(4);
+  });
 });

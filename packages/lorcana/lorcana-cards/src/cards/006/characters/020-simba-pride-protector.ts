@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { simbaPrideProtectorI18n } from "./020-simba-pride-protector.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const simbaPrideProtector: CharacterCard = {
   id: "pBr",
@@ -34,15 +35,7 @@ export const simbaPrideProtector: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Prince"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "1i7-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       id: "1i7-2",
       name: "UNDERSTAND THE BALANCE",
@@ -52,39 +45,36 @@ export const simbaPrideProtector: CharacterCard = {
         on: "YOU",
         timing: "at",
       },
-      effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            reference: "source",
-            filters: [
-              {
-                type: "exerted",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          chooser: "CONTROLLER",
-          effect: {
-            target: {
-              selector: "all",
-              count: "all",
-              owner: "you",
-              zones: ["play"],
-              cardTypes: ["character"],
-              excludeSelf: true,
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          reference: "source",
+          filters: [
+            {
+              type: "exerted",
             },
-            type: "ready",
-          },
-          type: "optional",
+          ],
         },
-        type: "conditional",
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          target: {
+            selector: "all",
+            count: "all",
+            owner: "you",
+            zones: ["play"],
+            cardTypes: ["character"],
+            excludeSelf: true,
+          },
+          type: "ready",
+        },
+        type: "optional",
       },
       text: "UNDERSTAND THE BALANCE At the end of your turn, if this character is exerted, you may ready your other characters.",
     },

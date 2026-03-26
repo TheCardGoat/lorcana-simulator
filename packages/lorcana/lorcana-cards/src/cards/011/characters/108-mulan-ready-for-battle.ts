@@ -38,55 +38,40 @@ export const mulanReadyForBattle: CharacterCard = {
   abilities: [
     {
       id: "zz5-1",
-      effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            filters: [
-              {
-                type: "damaged",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+      name: "NOBLE SPIRIT",
+      condition: {
+        type: "resource-count",
+        what: "damaged-characters",
+        controller: "you",
+        comparison: "greater-or-equal",
+        value: 1,
       },
-      type: "action",
+      effect: {
+        type: "cost-reduction",
+        amount: 1,
+        cardType: "character",
+      },
+      sourceZones: ["hand"],
       text: "NOBLE SPIRIT If you have a character in play with damage, you pay 1 {I} less to play this character.",
+      type: "static",
     },
     {
       id: "zz5-2",
-      effect: {
-        optionLabels: [
-          "FIGHTING SPIRIT If you have a character in play with 5 {S}",
-          "more, you pay 1 {I} less to play this character.",
-        ],
-        options: [
-          {
-            from: "hand",
-            type: "play-card",
-          },
-          {
-            from: "hand",
-            type: "play-card",
-          },
-        ],
-        type: "choice",
+      name: "FIGHTING SPIRIT",
+      condition: {
+        type: "has-character-with-strength",
+        comparison: "greater-or-equal",
+        value: 5,
+        controller: "you",
       },
-      type: "action",
+      effect: {
+        type: "cost-reduction",
+        amount: 1,
+        cardType: "character",
+      },
+      sourceZones: ["hand"],
       text: "FIGHTING SPIRIT If you have a character in play with 5 {S} or more, you pay 1 {I} less to play this character.",
+      type: "static",
     },
   ],
   i18n: mulanReadyForBattleI18n,

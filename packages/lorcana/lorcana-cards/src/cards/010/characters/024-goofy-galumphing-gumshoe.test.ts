@@ -97,4 +97,39 @@ describe("Goofy - Galumphing Gumshoe", () => {
       );
     });
   });
+
+  it("regression: strength reduction is temporary, not permanent - stacks correctly across turns", () => {
+    // Bug: Goofy's HOT PURSUIT was reducing strength permanently instead of until next turn.
+    // After the effect expires, strength should return to base value.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [goofyGalumphingGumshoe],
+        deck: 5,
+      },
+      {
+        play: [opposingCharacterOne],
+        deck: 5,
+      },
+    );
+
+    // Quest Goofy - reduces opposing strength by 1 until start of next turn
+    expect(testEngine.asPlayerOne().quest(goofyGalumphingGumshoe)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacterOne)).toBe(
+      opposingCharacterOne.strength - 1,
+    );
+
+    // Pass both turns - effect should expire
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    // Strength should be back to normal
+    expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacterOne)).toBe(
+      opposingCharacterOne.strength,
+    );
+
+    // The strength should NOT be permanently reduced (bug was double-counting)
+    expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacterOne)).not.toBe(
+      opposingCharacterOne.strength - 2,
+    );
+  });
 });

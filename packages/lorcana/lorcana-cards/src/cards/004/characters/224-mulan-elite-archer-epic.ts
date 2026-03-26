@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mulanEliteArcherEpicI18n } from "./224-mulan-elite-archer-epic.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const mulanEliteArcherEpic: CharacterCard = {
   id: "v22",
@@ -38,6 +39,66 @@ export const mulanEliteArcherEpic: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
-  abilities: [],
+  abilities: [
+    shift(5),
+    {
+      id: "v22-2",
+      name: "STRAIGHT SHOOTER",
+      text: "STRAIGHT SHOOTER When you play this character, if you used Shift to play her, she gets +3 {S} this turn.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      condition: {
+        type: "used-shift",
+      },
+      effect: {
+        type: "modify-stat",
+        stat: "strength",
+        modifier: 3,
+        target: "SELF",
+        duration: "this-turn",
+      },
+    },
+    {
+      id: "v22-3",
+      name: "TRIPLE SHOT",
+      text: "TRIPLE SHOT During your turn, whenever this character deals damage to another character in a challenge, deal the same amount of damage to up to 2 other chosen characters.",
+      type: "triggered",
+      trigger: {
+        event: "deal-damage",
+        on: "SELF",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+          {
+            type: "in-challenge",
+          },
+          {
+            type: "defender-is-character",
+          },
+        ],
+      },
+      effect: {
+        type: "deal-damage",
+        amount: {
+          type: "trigger-amount",
+        },
+        target: {
+          selector: "chosen",
+          count: { upTo: 2 },
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeTriggerSubject: true,
+        },
+      },
+    },
+  ],
   i18n: mulanEliteArcherEpicI18n,
 };

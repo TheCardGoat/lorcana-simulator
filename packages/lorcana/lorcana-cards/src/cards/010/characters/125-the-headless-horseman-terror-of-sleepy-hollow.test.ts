@@ -20,6 +20,24 @@ const strongTarget = createMockCharacter({
   lore: 1,
 });
 
+const alliedCharacter = createMockCharacter({
+  id: "hh-allied-character",
+  name: "Allied Character",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+const secondOpponentCharacter = createMockCharacter({
+  id: "hh-second-opponent-character",
+  name: "Second Opponent Character",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+  lore: 1,
+});
+
 describe("The Headless Horseman - Terror of Sleepy Hollow", () => {
   describe("LEAVES NO TRACE — When you play this character, banish chosen opposing character with 2 {S} or less.", () => {
     it("banishes chosen opposing character with strength 2 or less when played", () => {
@@ -71,10 +89,76 @@ describe("The Headless Horseman - Terror of Sleepy Hollow", () => {
   });
 
   describe("GATHERING STRENGTH — During your turn, whenever an opposing character is banished, each of your characters gets +1 {S} this turn.", () => {
-    it.todo("gives all your characters +1 strength when opposing character is banished", () => {});
+    it("regression: ability should trigger when opposing character is banished during your turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [theHeadlessHorsemanTerrorOfSleepyHollow, alliedCharacter],
+        },
+        {
+          play: [weakTarget],
+        },
+      );
 
-    it.todo("does not trigger during opponent's turn", () => {});
+      expect(
+        testEngine.asServer().manualSetDamage(weakTarget, weakTarget.willpower),
+      ).toBeSuccessfulCommand();
 
-    it.todo("stacks +1 when multiple opposing characters are banished same turn", () => {});
+      expect(
+        testEngine.asPlayerOne().getCardStrength(theHeadlessHorsemanTerrorOfSleepyHollow),
+      ).toBe(theHeadlessHorsemanTerrorOfSleepyHollow.strength + 1);
+      expect(testEngine.asPlayerOne().getCardStrength(alliedCharacter)).toBe(
+        alliedCharacter.strength + 1,
+      );
+    });
+
+    it("regression: does not trigger during opponent's turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [theHeadlessHorsemanTerrorOfSleepyHollow, alliedCharacter],
+        },
+        {
+          play: [weakTarget],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asServer().manualSetDamage(weakTarget, weakTarget.willpower),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().getCardStrength(theHeadlessHorsemanTerrorOfSleepyHollow),
+      ).toBe(theHeadlessHorsemanTerrorOfSleepyHollow.strength);
+      expect(testEngine.asPlayerOne().getCardStrength(alliedCharacter)).toBe(
+        alliedCharacter.strength,
+      );
+    });
+
+    it("regression: stacks +1 when multiple opposing characters are banished same turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [theHeadlessHorsemanTerrorOfSleepyHollow, alliedCharacter],
+        },
+        {
+          play: [weakTarget, secondOpponentCharacter],
+        },
+      );
+
+      expect(
+        testEngine.asServer().manualSetDamage(weakTarget, weakTarget.willpower),
+      ).toBeSuccessfulCommand();
+      expect(
+        testEngine
+          .asServer()
+          .manualSetDamage(secondOpponentCharacter, secondOpponentCharacter.willpower),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().getCardStrength(theHeadlessHorsemanTerrorOfSleepyHollow),
+      ).toBe(theHeadlessHorsemanTerrorOfSleepyHollow.strength + 2);
+      expect(testEngine.asPlayerOne().getCardStrength(alliedCharacter)).toBe(
+        alliedCharacter.strength + 2,
+      );
+    });
   });
 });

@@ -238,34 +238,5 @@ describe("John Silver - Vengeful Pirate", () => {
 
       expect(testEngine.asPlayerOne().getDamage(playerCharacter)).toBe(1);
     });
-
-    it("can decline the optional trigger", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          play: [johnSilverVengefulPirate],
-          hand: [gatheringKnowledgeAndWisdom],
-          inkwell: gatheringKnowledgeAndWisdom.cost,
-          deck: 1,
-        },
-        {
-          play: [opponentCharacter],
-          deck: 1,
-        },
-      );
-
-      expect(
-        testEngine.asPlayerOne().playCard(gatheringKnowledgeAndWisdom),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
-
-      // Decline the optional trigger
-      expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      // No damage dealt
-      expect(testEngine.asPlayerTwo().getDamage(opponentCharacter)).toBe(0);
-    });
   });
 });

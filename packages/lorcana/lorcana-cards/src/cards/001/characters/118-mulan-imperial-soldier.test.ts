@@ -1,132 +1,150 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { mulanImperialSoldier } from "./118-mulan-imperial-soldier";
 
-describe("Mulan - Imperial Soldier", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [mulanImperialSoldier] });
-  //   Expect(testEngine.getCardModel(mulanImperialSoldier).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const allyA = createMockCharacter({
+  id: "mulan-test-ally-a",
+  name: "Ally A",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   HeiheiBoatSnack,
-//   MauiHeroToAll,
-//   MoanaOfMotunui,
-//   MulanImperialSoldier,
-//   TeKaHeartless,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Mulan - Imperial Soldier", () => {
-//   Describe("**Lead by example** During your turn, whenever this character banishes another character in a challenge, your other characters get +1 {L} this turn.", () => {
-//     It("should deal two damage", () => {
-//       Const otherCharacters = [moanaOfMotunui, mauiHeroToAll];
-//       Const testStore = new TestStore(
-//         {
-//           Play: [mulanImperialSoldier, ...otherCharacters],
-//         },
-//         {
-//           Play: [heiheiBoatSnack, teKaHeartless],
-//         },
-//       );
-//
-//       Const attacker = testStore.getByZoneAndId(
-//         "play",
-//         MulanImperialSoldier.id,
-//       );
-//       Const defender = testStore.getByZoneAndId(
-//         "play",
-//         HeiheiBoatSnack.id,
-//         "player_two",
-//       );
-//
-//       Defender.updateCardMeta({ exerted: true });
-//
-//       Attacker.challenge(defender);
-//
-//       TestStore.resolveTopOfStack();
-//
-//       For (const character of otherCharacters) {
-//         Const card = testStore.getByZoneAndId(
-//           "play",
-//           Character.id,
-//           "player_one",
-//         );
-//
-//         Expect(card.lore).toEqual((card.lorcanitoCard?.lore || 0) + 1);
-//       }
-//     });
-//
-//     It("opponent's don't get the bonus", () => {
-//       Const otherCharacters = [moanaOfMotunui, mauiHeroToAll];
-//       Const testStore = new TestStore(
-//         {
-//           Play: [mulanImperialSoldier, ...otherCharacters],
-//         },
-//         {
-//           Play: [heiheiBoatSnack, teKaHeartless],
-//         },
-//       );
-//
-//       Const attacker = testStore.getByZoneAndId(
-//         "play",
-//         MulanImperialSoldier.id,
-//       );
-//       Const defender = testStore.getByZoneAndId(
-//         "play",
-//         HeiheiBoatSnack.id,
-//         "player_two",
-//       );
-//
-//       Defender.updateCardMeta({ exerted: true });
-//
-//       Attacker.challenge(defender);
-//
-//       Const card = testStore.getByZoneAndId(
-//         "play",
-//         TeKaHeartless.id,
-//         "player_two",
-//       );
-//
-//       Expect(card.lore).not.toEqual((card.lorcanitoCard?.lore || 0) + 1);
-//     });
-//
-//     It("Mulan itself doesn't get the bonus", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [mulanImperialSoldier],
-//         },
-//         {
-//           Play: [heiheiBoatSnack, teKaHeartless],
-//         },
-//       );
-//
-//       Const attacker = testStore.getByZoneAndId(
-//         "play",
-//         MulanImperialSoldier.id,
-//       );
-//       Const defender = testStore.getByZoneAndId(
-//         "play",
-//         HeiheiBoatSnack.id,
-//         "player_two",
-//       );
-//
-//       Defender.updateCardMeta({ exerted: true });
-//
-//       Attacker.challenge(defender);
-//
-//       Expect(attacker.lore).toEqual(attacker.lorcanitoCard?.lore);
-//     });
-//   });
-// });
-//
+const allyB = createMockCharacter({
+  id: "mulan-test-ally-b",
+  name: "Ally B",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+  lore: 2,
+});
+
+const weakDefender = createMockCharacter({
+  id: "mulan-test-weak-defender",
+  name: "Weak Defender",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+  lore: 1,
+});
+
+const toughDefender = createMockCharacter({
+  id: "mulan-test-tough-defender",
+  name: "Tough Defender",
+  cost: 3,
+  strength: 1,
+  willpower: 10,
+  lore: 1,
+});
+
+const opponentCharacter = createMockCharacter({
+  id: "mulan-test-opponent-char",
+  name: "Opponent Character",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+  lore: 2,
+});
+
+describe("Mulan - Imperial Soldier", () => {
+  describe("LEAD BY EXAMPLE - During your turn, whenever this character banishes another character in a challenge, your other characters get +1 lore this turn.", () => {
+    it("your other characters get +1 lore when Mulan banishes in challenge", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [mulanImperialSoldier, allyA, allyB],
+        },
+        {
+          play: [{ card: weakDefender, exerted: true }],
+        },
+      );
+
+      // Verify base lore values before challenge
+      expect(testEngine.asPlayerOne()).toHaveLore({ card: allyA, value: 1 });
+      expect(testEngine.asPlayerOne()).toHaveLore({ card: allyB, value: 2 });
+
+      // Mulan (4 strength) challenges weak defender (1 willpower) — banishes it
+      expect(
+        testEngine.asPlayerOne().challenge(mulanImperialSoldier, weakDefender),
+      ).toBeSuccessfulCommand();
+
+      // LEAD BY EXAMPLE triggers: other characters get +1 lore this turn
+      expect(testEngine.asPlayerOne()).toHaveLore({ card: allyA, value: 2 });
+      expect(testEngine.asPlayerOne()).toHaveLore({ card: allyB, value: 3 });
+    });
+
+    it("opponent's characters don't get the bonus", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [mulanImperialSoldier],
+        },
+        {
+          play: [{ card: weakDefender, exerted: true }, opponentCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerTwo()).toHaveLore({
+        card: opponentCharacter,
+        value: 2,
+      });
+
+      expect(
+        testEngine.asPlayerOne().challenge(mulanImperialSoldier, weakDefender),
+      ).toBeSuccessfulCommand();
+
+      // Opponent's character should NOT get the lore bonus
+      expect(testEngine.asPlayerTwo()).toHaveLore({
+        card: opponentCharacter,
+        value: 2,
+      });
+    });
+
+    it("Mulan herself doesn't get the bonus", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [mulanImperialSoldier],
+        },
+        {
+          play: [{ card: weakDefender, exerted: true }],
+        },
+      );
+
+      // Mulan's base lore is 1
+      expect(testEngine.asPlayerOne()).toHaveLore({
+        card: mulanImperialSoldier,
+        value: 1,
+      });
+
+      expect(
+        testEngine.asPlayerOne().challenge(mulanImperialSoldier, weakDefender),
+      ).toBeSuccessfulCommand();
+
+      // Mulan should NOT get the lore bonus (excludeSelf via YOUR_OTHER_CHARACTERS)
+      expect(testEngine.asPlayerOne()).toHaveLore({
+        card: mulanImperialSoldier,
+        value: 1,
+      });
+    });
+
+    it("does not trigger when Mulan does not banish the defender", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [mulanImperialSoldier, allyA],
+        },
+        {
+          play: [{ card: toughDefender, exerted: true }],
+        },
+      );
+
+      expect(testEngine.asPlayerOne()).toHaveLore({ card: allyA, value: 1 });
+
+      // Mulan (4 strength) challenges tough defender (10 willpower) — does NOT banish it
+      expect(
+        testEngine.asPlayerOne().challenge(mulanImperialSoldier, toughDefender),
+      ).toBeSuccessfulCommand();
+
+      // LEAD BY EXAMPLE should NOT trigger — no banish happened
+      expect(testEngine.asPlayerOne()).toHaveLore({ card: allyA, value: 1 });
+    });
+  });
+});

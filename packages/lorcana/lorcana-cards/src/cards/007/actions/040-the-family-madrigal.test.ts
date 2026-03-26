@@ -182,4 +182,44 @@ describe("The Family Madrigal", () => {
       arielOnHumanLegs.id,
     ]);
   });
+
+  it("includes filter metadata for the Family Madrigal scry destinations", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [theFamilyMadrigal],
+      inkwell: theFamilyMadrigal.cost,
+      deck: [
+        arielOnHumanLegs,
+        thisIsMyFamily,
+        isabelaMadrigalInTheMoment,
+        simbaProtectiveCub,
+        restoringTheHeart,
+      ],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(theFamilyMadrigal).success).toBe(true);
+
+    const pendingEffect = testEngine.asServer().getState().G.pendingEffects[0];
+    expect(pendingEffect?.selectionContext).toMatchObject({
+      kind: "scry-selection",
+      destinationRules: [
+        {
+          zone: "hand",
+          max: 1,
+          reveal: true,
+          filters: [{ type: "and" }],
+        },
+        {
+          zone: "hand",
+          max: 1,
+          reveal: true,
+          filters: [{ type: "song" }],
+        },
+        {
+          zone: "deck-top",
+          remainder: true,
+          ordering: "player-choice",
+        },
+      ],
+    });
+  });
 });

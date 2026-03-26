@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { belleMechanicExtraordinaireEnchantedI18n } from "./217-belle-mechanic-extraordinaire-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const belleMechanicExtraordinaireEnchanted: CharacterCard = {
   id: "rX6",
@@ -40,15 +41,7 @@ export const belleMechanicExtraordinaireEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess", "Inventor"],
   abilities: [
-    {
-      cost: {
-        ink: 7,
-      },
-      id: "lej-1",
-      keyword: "Shift",
-      text: "Shift 7",
-      type: "keyword",
-    },
+    shift(7),
     {
       id: "lej-2",
       name: "SALVAGE",

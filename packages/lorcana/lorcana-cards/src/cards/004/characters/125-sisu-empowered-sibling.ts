@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { sisuEmpoweredSiblingI18n } from "./125-sisu-empowered-sibling.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const sisuEmpoweredSibling: CharacterCard = {
   id: "A15",
@@ -34,15 +35,7 @@ export const sisuEmpoweredSibling: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Deity", "Dragon"],
   abilities: [
-    {
-      cost: {
-        ink: 6,
-      },
-      id: "1q9-1",
-      keyword: "Shift",
-      text: "Shift 6",
-      type: "keyword",
-    },
+    shift(6),
     {
       effect: {
         type: "banish",

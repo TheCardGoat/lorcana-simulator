@@ -222,6 +222,49 @@ export interface RevealAndConditionalEffect {
 }
 
 /**
+ * Reveal-and-route effect - reveal top card and route to a destination
+ * based on conditions.
+ *
+ * Replaces the pattern: reveal-top-card → conditional(revealed-matches-X) → put-in-hand/put-on-top/etc.
+ *
+ * Routes are checked in order; the first matching route wins.
+ * - Non-optional routes auto-resolve (card is moved immediately).
+ * - Optional routes suspend for player choice (e.g., "you may play for free").
+ * - If no route matches, the card goes to the fallback destination (default: deck-top, i.e., stays).
+ *
+ * @example "Name a card, then reveal the top card. If it's the named card, put it into your hand."
+ * @example "Reveal the top card. If it's a character named Pete, you may play it for free."
+ */
+export interface RevealAndRouteEffect {
+  type: "reveal-and-route";
+  /** Whose deck to reveal from (default: CONTROLLER) */
+  target?: PlayerTarget;
+  /** Routes checked in order. First matching route wins. */
+  routes: RevealRoute[];
+  /** Where unmatched cards go. If omitted, card stays on deck-top. */
+  fallback?: RevealRouteDestination;
+}
+
+export interface RevealRoute {
+  /** Condition the revealed card must satisfy */
+  condition: Condition;
+  /** Where to put the card if condition matches */
+  destination: RevealRouteDestination;
+  /** If true, player can decline (e.g., "you may play for free"). On decline, card goes to fallback. */
+  optional?: boolean;
+  /** Additional effects to execute after routing (e.g., gain 3 lore) */
+  sideEffects?: Effect[];
+}
+
+export type RevealRouteDestination =
+  | { zone: "hand" }
+  | { zone: "deck-top" }
+  | { zone: "deck-bottom" }
+  | { zone: "inkwell"; exerted?: boolean }
+  | { zone: "play"; cost?: "free" }
+  | { zone: "discard" };
+
+/**
  * Grant keyword effect (for triggered/action effects, not static)
  *
  * @example "Your characters gain Evasive this turn"

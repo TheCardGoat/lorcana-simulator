@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { drFacilierSavvyOpportunistI18n } from "./038-dr-facilier-savvy-opportunist.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const drFacilierSavvyOpportunist: CharacterCard = {
   id: "25Q",
@@ -24,13 +25,6 @@ export const drFacilierSavvyOpportunist: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Villain", "Sorcerer"],
-  abilities: [
-    {
-      id: "z5l-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: drFacilierSavvyOpportunistI18n,
 };

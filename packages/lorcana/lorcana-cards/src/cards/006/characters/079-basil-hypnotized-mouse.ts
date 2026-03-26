@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { basilHypnotizedMouseI18n } from "./079-basil-hypnotized-mouse.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const basilHypnotizedMouse: CharacterCard = {
   id: "Fyz",
@@ -24,13 +25,6 @@ export const basilHypnotizedMouse: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Dreamborn", "Hero", "Detective"],
-  abilities: [
-    {
-      id: "1v5-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: basilHypnotizedMouseI18n,
 };

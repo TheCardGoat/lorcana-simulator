@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { theSultanRoyalApparitionI18n } from "./073-the-sultan-royal-apparition.i18n";
+import { vanish } from "../../../helpers/abilities/vanish";
 
 export const theSultanRoyalApparition: CharacterCard = {
   id: "m6L",
@@ -35,12 +36,7 @@ export const theSultanRoyalApparition: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Ally", "King", "Illusion"],
   abilities: [
-    {
-      id: "nun-1",
-      keyword: "Vanish",
-      text: "Vanish",
-      type: "keyword",
-    },
+    vanish,
     {
       effect: {
         target: {

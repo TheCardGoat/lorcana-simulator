@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { thomasOmalleyFelineCharmerI18n } from "./088-thomas-omalley-feline-charmer.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const thomasOmalleyFelineCharmer: CharacterCard = {
   id: "Gg5",
@@ -24,13 +25,6 @@ export const thomasOmalleyFelineCharmer: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "14m-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: thomasOmalleyFelineCharmerI18n,
 };

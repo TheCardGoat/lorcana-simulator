@@ -1,6 +1,11 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, createMockItem } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockItem,
+  PLAYER_TWO,
+} from "@tcg/lorcana-engine/testing";
 import { benjaGuardianOfTheDragonGem } from "./180-benja-guardian-of-the-dragon-gem";
+import { fortisphere } from "../../004/items/200-fortisphere";
 
 const targetItem = createMockItem({
   id: "benja-target-item",
@@ -59,6 +64,32 @@ describe("Benja - Guardian of the Dragon Gem (set 9)", () => {
         testEngine.asPlayerOne().playCard(benjaGuardianOfTheDragonGem),
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getCardZone(benjaGuardianOfTheDragonGem)).toBe("play");
+    });
+
+    it("regression: can banish Fortisphere specifically", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [benjaGuardianOfTheDragonGem],
+          inkwell: benjaGuardianOfTheDragonGem.cost,
+          deck: 1,
+        },
+        {
+          play: [fortisphere],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(benjaGuardianOfTheDragonGem),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [fortisphere] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(fortisphere)).toBe("discard");
     });
   });
 });

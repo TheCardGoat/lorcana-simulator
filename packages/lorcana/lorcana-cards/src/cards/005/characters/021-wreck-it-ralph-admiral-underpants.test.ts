@@ -75,4 +75,31 @@ describe("Wreck-It Ralph - Admiral Underpants", () => {
       expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
     });
   });
+
+  it("regression: should gain 2 lore when returning a Princess character from discard", () => {
+    // Bug: Wreck-It Ralph was not gaining lore on princess recovery from discard.
+    // When a Princess character is returned, the conditional should fire and gain 2 lore.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [wreckitRalphAdmiralUnderpants],
+      inkwell: wreckitRalphAdmiralUnderpants.cost,
+      discard: [vanellopeVonSchweetzSugarRushChamp],
+    });
+
+    expect(
+      testEngine.asPlayerOne().playCard(wreckitRalphAdmiralUnderpants),
+    ).toBeSuccessfulCommand();
+
+    const princessId = testEngine.findCardInstanceId(
+      vanellopeVonSchweetzSugarRushChamp,
+      "discard",
+      "p1",
+    );
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [princessId] }),
+    ).toBeSuccessfulCommand();
+
+    // Should gain 2 lore because Vanellope is a Princess
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(2);
+    expect(testEngine.asPlayerOne().getCardZone(vanellopeVonSchweetzSugarRushChamp)).toBe("hand");
+  });
 });

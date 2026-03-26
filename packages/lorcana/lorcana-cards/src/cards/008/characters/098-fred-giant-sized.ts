@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { fredGiantsizedI18n } from "./098-fred-giant-sized.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const fredGiantsized: CharacterCard = {
   id: "Hxd",
@@ -34,15 +35,7 @@ export const fredGiantsized: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "1d3-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       effect: {
         type: "reveal-until-match",

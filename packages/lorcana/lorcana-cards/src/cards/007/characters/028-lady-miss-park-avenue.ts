@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ladyMissParkAvenueI18n } from "./028-lady-miss-park-avenue.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const ladyMissParkAvenue: CharacterCard = {
   id: "Yv7",
@@ -34,15 +35,7 @@ export const ladyMissParkAvenue: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "188-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         chooser: "CONTROLLER",

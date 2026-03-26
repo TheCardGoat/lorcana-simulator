@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { vanellopeVonSchweetzRandomRosterRacerI18n } from "./124-vanellope-von-schweetz-random-roster-racer.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const vanellopeVonSchweetzRandomRosterRacer: CharacterCard = {
   id: "yeD",
@@ -34,12 +35,7 @@ export const vanellopeVonSchweetzRandomRosterRacer: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess", "Racer"],
   abilities: [
-    {
-      id: "a4q-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       effect: {
         duration: "until-start-of-next-turn",

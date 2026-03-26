@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
 import { queensSensorCore } from "./031-queens-sensor-core";
 
 const royalHeir = createMockCharacter({
@@ -7,6 +11,13 @@ const royalHeir = createMockCharacter({
   name: "Royal Heir",
   cost: 2,
   classifications: ["Storyborn", "Princess"],
+});
+
+const queenCharacter = createMockCharacter({
+  id: "queens-sensor-core-queen",
+  name: "Queen Character",
+  cost: 3,
+  classifications: ["Storyborn", "Queen"],
 });
 
 describe("Queen's Sensor Core", () => {
@@ -35,5 +46,81 @@ describe("Queen's Sensor Core", () => {
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(royalHeir)).toBe("hand");
+  });
+
+  describe("SYMBOL OF NOBILITY — At the start of your turn, if you have a Princess or Queen character in play, gain 1 lore.", () => {
+    it("gains 1 lore at the start of your turn when you have a Princess character in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [queensSensorCore, royalHeir],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
+    });
+
+    it("gains 1 lore at the start of your turn when you have a Queen character in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [queensSensorCore, queenCharacter],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
+    });
+
+    it("does not gain lore at the start of your turn when you have no Princess or Queen character in play", () => {
+      const nonRoyalCharacter = createMockCharacter({
+        id: "queens-sensor-core-non-royal",
+        name: "Non Royal Character",
+        cost: 2,
+        classifications: ["Storyborn", "Hero"],
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [queensSensorCore, nonRoyalCharacter],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+    });
   });
 });

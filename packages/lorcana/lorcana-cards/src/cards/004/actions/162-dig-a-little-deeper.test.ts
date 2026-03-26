@@ -50,11 +50,11 @@ describe("Dig a Little Deeper", () => {
     expect(testEngine.asPlayerOne().getCardZone(aladdinPrinceAli)).toBe("hand");
     expect(testEngine.asPlayerOne().getCardZone(arielOnHumanLegs)).toBe("hand");
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE).slice(0, 5)).toEqual([
-      fireTheCannons.id,
-      tinkerBellPeterPansAlly.id,
-      simbaProtectiveCub.id,
-      healingGlow.id,
       goofyKnightForADay.id,
+      healingGlow.id,
+      simbaProtectiveCub.id,
+      tinkerBellPeterPansAlly.id,
+      fireTheCannons.id,
     ]);
   });
 });

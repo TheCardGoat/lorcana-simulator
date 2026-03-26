@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { perlaNimbleSeamstressI18n } from "./032-perla-nimble-seamstress.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { support } from "../../../helpers/abilities/support";
 
 export const perlaNimbleSeamstress: CharacterCard = {
   id: "D8H",
@@ -31,19 +33,6 @@ export const perlaNimbleSeamstress: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "wjh-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-    {
-      id: "wjh-2",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [evasive, support],
   i18n: perlaNimbleSeamstressI18n,
 };

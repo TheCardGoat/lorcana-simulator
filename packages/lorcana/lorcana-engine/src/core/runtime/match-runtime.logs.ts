@@ -63,6 +63,7 @@ function createCommittedLogEntry(
     category: entry.category,
     visibility: entry.visibility,
     defaultMessage: entry.defaultMessage,
+    typedEntry: entry.typedEntry,
   };
 
   return {
@@ -88,76 +89,11 @@ function createBuiltInLogEntries(event: PublishedGameEvent): ProjectedLogEntry[]
           phase: event.event.phase ?? null,
         }),
       ];
-    case "PRIORITY_PASSED":
-      return [
-        createPublicLogEntry("rules", "priority.passed", {
-          playerId: event.event.playerId,
-        }),
-      ];
     case "GAME_ENDED":
       return [
         createPublicLogEntry("system", "game.ended", {
           winner: event.event.winner ?? null,
           reason: event.event.reason,
-        }),
-      ];
-    case "CARD_MOVED":
-      return [
-        createPublicLogEntry("rules", "card.moved", {
-          cardId: event.event.cardId,
-          fromZone: event.event.fromZone ?? null,
-          toZone: event.event.toZone,
-        }),
-      ];
-    case "CARDS_DRAWN":
-      return [
-        createPublicLogEntry("rules", "cards.drawn", {
-          playerId: event.event.playerId ?? null,
-          count: event.event.cardIds.length,
-        }),
-      ];
-    case "CARDS_MILLED":
-      return [
-        createPublicLogEntry("rules", "cards.milled", {
-          playerId: event.event.playerId ?? null,
-          count: event.event.cardIds.length,
-        }),
-      ];
-    case "DAMAGE_DEALT":
-      return [
-        createPublicLogEntry("rules", "damage.dealt", {
-          amount: event.event.amount,
-          sourceCardId: event.event.sourceCardId ?? null,
-          targetCardId: event.event.targetCardId ?? null,
-          targetPlayerId: event.event.targetPlayerId ?? null,
-        }),
-      ];
-    case "CARD_DEFEATED":
-      return [
-        createPublicLogEntry("rules", "card.defeated", {
-          cardId: event.event.cardId,
-          reason: event.event.reason,
-        }),
-      ];
-    case "TRIGGER_QUEUED":
-      return [
-        createPublicLogEntry("rules", "trigger.queued", {
-          triggerId: event.event.triggerId,
-          sourceId: event.event.sourceId,
-        }),
-      ];
-    case "STACK_ITEM_RESOLVED":
-      return [
-        createPublicLogEntry("rules", "stack.itemResolved", {
-          itemId: event.event.itemId,
-          itemType: event.event.itemType,
-          playerId: event.event.playerId,
-        }),
-      ];
-    case "STATE_BASED_ACTION_APPLIED":
-      return [
-        createPublicLogEntry("rules", "stateBasedAction.applied", {
-          action: event.event.action,
         }),
       ];
     default:

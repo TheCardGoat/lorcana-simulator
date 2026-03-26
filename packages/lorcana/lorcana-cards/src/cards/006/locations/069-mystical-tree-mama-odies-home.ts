@@ -81,34 +81,31 @@ export const mysticalTreeMamaOdiesHome: LocationCard = {
         on: "YOU",
         timing: "at",
       },
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          filters: [
+            {
+              type: "same-location-as-source",
+            },
+            {
+              type: "has-name",
+              name: "Mama Odie",
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            filters: [
-              {
-                type: "same-location-as-source",
-              },
-              {
-                type: "has-name",
-                name: "Mama Odie",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          amount: 1,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 1,
+        type: "gain-lore",
       },
       text: "HARD-EARNED WISDOM At the start of your turn, if you have a character named Mama Odie here, gain 1 lore.",
       type: "triggered",

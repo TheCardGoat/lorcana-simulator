@@ -33,11 +33,19 @@ export const pepaMadrigalSensitiveSister: CharacterCard = {
     {
       effect: {
         amount: 1,
+        target: "CONTROLLER",
         type: "gain-lore",
       },
       id: "1km-1",
+      name: "CLEAR SKIES, CLEAR SKIES",
       text: "CLEAR SKIES, CLEAR SKIES Whenever one or more of your characters sings a song, gain 1 lore.",
-      type: "action",
+      trigger: {
+        event: "sing",
+        on: "YOUR_CHARACTERS",
+        restrictions: [{ type: "once-per-song" }],
+        timing: "whenever",
+      },
+      type: "triggered",
     },
   ],
   i18n: pepaMadrigalSensitiveSisterI18n,

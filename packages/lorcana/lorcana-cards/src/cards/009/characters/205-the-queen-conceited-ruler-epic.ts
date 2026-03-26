@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { theQueenConceitedRulerEpicI18n } from "./205-the-queen-conceited-ruler-epic.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const theQueenConceitedRulerEpic: CharacterCard = {
   id: "4Tp",
@@ -35,12 +36,7 @@ export const theQueenConceitedRulerEpic: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Queen", "Sorcerer"],
   abilities: [
-    {
-      id: "3l5-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         chooser: "CONTROLLER",

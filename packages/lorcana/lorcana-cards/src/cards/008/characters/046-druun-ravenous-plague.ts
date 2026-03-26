@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { druunRavenousPlagueI18n } from "./046-druun-ravenous-plague.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const druunRavenousPlague: CharacterCard = {
   id: "puQ",
@@ -24,14 +25,6 @@ export const druunRavenousPlague: CharacterCard = {
   },
   text: "Challenger +4",
   classifications: ["Storyborn", "Villain"],
-  abilities: [
-    {
-      id: "c4i-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 4,
-      text: "Challenger +4",
-    },
-  ],
+  abilities: [challenger(4)],
   i18n: druunRavenousPlagueI18n,
 };

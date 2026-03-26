@@ -31,43 +31,40 @@ export const flotillaCoconutArmada: LocationCard = {
   ],
   abilities: [
     {
-      effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            filters: [
-              {
-                type: "same-location-as-source",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          steps: [
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          filters: [
             {
-              amount: 1,
-              target: "EACH_OPPONENT",
-              type: "lose-lore",
-            },
-            {
-              amount: {
-                type: "lore-lost",
-              },
-              target: "CONTROLLER",
-              type: "gain-lore",
+              type: "same-location-as-source",
             },
           ],
-          type: "sequence",
         },
-        type: "conditional",
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
+      effect: {
+        steps: [
+          {
+            amount: 1,
+            target: "EACH_OPPONENT",
+            type: "lose-lore",
+          },
+          {
+            amount: {
+              type: "lore-lost",
+            },
+            target: "CONTROLLER",
+            type: "gain-lore",
+          },
+        ],
+        type: "sequence",
       },
       id: "1vh-1",
       name: "TINY THIEVES",

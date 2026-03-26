@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { goGoTomagoCuttingEdgeI18n } from "./107-go-go-tomago-cutting-edge.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const goGoTomagoCuttingEdge: CharacterCard = {
   id: "Di2",
@@ -37,23 +39,11 @@ export const goGoTomagoCuttingEdge: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Inventor"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "1l3-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
-    {
-      id: "1l3-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    shift(4),
+    evasive,
     {
       effect: {
+        type: "conditional",
         condition: {
           type: "used-shift",
         },
@@ -68,7 +58,6 @@ export const goGoTomagoCuttingEdge: CharacterCard = {
           },
           type: "optional",
         },
-        type: "conditional",
       },
       id: "1l3-3",
       name: "ZERO RESISTANCE",

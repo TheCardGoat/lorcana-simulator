@@ -65,6 +65,5 @@ export const noiOrphanedThief: CharacterCard = {
       type: "static",
     },
   ],
-  missingTests: true,
   i18n: noiOrphanedThiefI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { ursulaWhisperOfVanessaI18n } from "./059-ursula-whisper-of-vanessa.i18n";
 
 export const ursulaWhisperOfVanessa: CharacterCard = {
@@ -33,13 +34,7 @@ export const ursulaWhisperOfVanessa: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer", "Whisper"],
   abilities: [
-    {
-      id: "86p-1",
-      keyword: "Boost",
-      text: "Boost 1 {I}",
-      type: "keyword",
-      value: 1,
-    },
+    boost(1),
     {
       id: "86p-2",
       name: "SLIPPERY SPELL",

@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { bronxFerociousBeastI18n } from "./114-bronx-ferocious-beast.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
+import { stoneByDay } from "../../../helpers/abilities/stoneByDay";
 
 export const bronxFerociousBeast: CharacterCard = {
   id: "bvy",
@@ -32,31 +34,6 @@ export const bronxFerociousBeast: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Gargoyle"],
-  abilities: [
-    {
-      id: "ews-1",
-      keyword: "Reckless",
-      text: "Reckless",
-      type: "keyword",
-    },
-    {
-      id: "ews-2",
-      name: "STONE BY DAY",
-      text: "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
-      type: "static",
-      condition: {
-        type: "resource-count",
-        what: "cards-in-hand",
-        controller: "you",
-        comparison: "greater-or-equal",
-        value: 3,
-      },
-      effect: {
-        type: "restriction",
-        restriction: "cant-ready",
-        target: "SELF",
-      },
-    },
-  ],
+  abilities: [reckless, stoneByDay],
   i18n: bronxFerociousBeastI18n,
 };

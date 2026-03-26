@@ -40,9 +40,9 @@ describe("Look at This Family", () => {
     expect(testEngine.asPlayerOne().getCardZone(aladdinPrinceAli)).toBe("hand");
     expect(testEngine.asPlayerOne().getCardZone(simbaProtectiveCub)).toBe("hand");
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE).slice(0, 3)).toEqual([
-      tinkerBellPeterPansAlly.id,
-      arielOnHumanLegs.id,
       healingGlow.id,
+      arielOnHumanLegs.id,
+      tinkerBellPeterPansAlly.id,
     ]);
   });
 });

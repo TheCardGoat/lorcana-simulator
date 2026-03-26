@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { arielSingingMermaidI18n } from "./003-ariel-singing-mermaid.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const arielSingingMermaid: CharacterCard = {
   id: "nfQ",
@@ -24,14 +25,6 @@ export const arielSingingMermaid: CharacterCard = {
   },
   text: "Singer 7",
   classifications: ["Storyborn", "Hero", "Princess"],
-  abilities: [
-    {
-      id: "17w-1",
-      keyword: "Singer",
-      type: "keyword",
-      value: 7,
-      text: "Singer 7",
-    },
-  ],
+  abilities: [singer(7)],
   i18n: arielSingingMermaidI18n,
 };

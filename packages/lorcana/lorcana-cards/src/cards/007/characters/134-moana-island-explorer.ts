@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { moanaIslandExplorerI18n } from "./134-moana-island-explorer.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const moanaIslandExplorer: CharacterCard = {
   id: "Roi",
@@ -34,12 +35,7 @@ export const moanaIslandExplorer: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "1rb-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         duration: "this-turn",
@@ -48,7 +44,8 @@ export const moanaIslandExplorer: CharacterCard = {
         target: {
           cardTypes: ["character"],
           count: 1,
-          owner: "any",
+          excludeSelf: true,
+          owner: "you",
           selector: "chosen",
           zones: ["play"],
         },

@@ -31,6 +31,7 @@ export const miracleCandle: ItemCard = {
         banishSelf: true,
       },
       effect: {
+        type: "conditional",
         condition: {
           type: "has-character-count",
           controller: "you",
@@ -59,7 +60,6 @@ export const miracleCandle: ItemCard = {
             },
           ],
         },
-        type: "conditional",
       },
       id: "1cb-1",
       name: "ABUELA'S GIFT",

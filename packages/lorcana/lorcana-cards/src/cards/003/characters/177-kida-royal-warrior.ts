@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kidaRoyalWarriorI18n } from "./177-kida-royal-warrior.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const kidaRoyalWarrior: CharacterCard = {
   id: "wgF",
@@ -24,13 +25,6 @@ export const kidaRoyalWarrior: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Hero", "Princess"],
-  abilities: [
-    {
-      id: "1be-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: kidaRoyalWarriorI18n,
 };

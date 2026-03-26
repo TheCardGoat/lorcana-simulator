@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { belleOfTheBallI18n } from "./158-belle-of-the-ball.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const belleOfTheBall: CharacterCard = {
   id: "rlF",
@@ -34,12 +35,7 @@ export const belleOfTheBall: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "1j3-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         keyword: "Ward",

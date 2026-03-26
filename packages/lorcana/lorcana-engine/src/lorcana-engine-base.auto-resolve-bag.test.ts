@@ -228,7 +228,7 @@ const constrainedBounceActionWatcher = createMockCharacter({
             count: 1,
             zones: ["play"],
             cardTypes: ["character", "item", "location"],
-            filter: [{ type: "cost", comparison: "lte", value: 2 }],
+            filter: [{ type: "cost-comparison", comparison: "less-or-equal", value: 2 }],
           },
         },
       },

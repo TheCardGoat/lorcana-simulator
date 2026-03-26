@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { theQueenCommandingPresenceI18n } from "./026-the-queen-commanding-presence.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const theQueenCommandingPresence: CharacterCard = {
   id: "A9v",
@@ -34,15 +35,7 @@ export const theQueenCommandingPresence: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Queen"],
   abilities: [
-    {
-      cost: {
-        ink: 2,
-      },
-      id: "5hw-1",
-      keyword: "Shift",
-      text: "Shift 2",
-      type: "keyword",
-    },
+    shift(2),
     {
       effect: {
         steps: [

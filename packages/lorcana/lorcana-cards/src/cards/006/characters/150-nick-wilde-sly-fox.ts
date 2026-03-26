@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { nickWildeSlyFoxI18n } from "./150-nick-wilde-sly-fox.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const nickWildeSlyFox: CharacterCard = {
   id: "2oi",
@@ -33,24 +34,23 @@ export const nickWildeSlyFox: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally"],
   abilities: [
+    shift(1),
     {
-      cost: {
-        ink: 1,
+      condition: {
+        comparison: "greater-or-equal",
+        controller: "you",
+        count: 1,
+        type: "has-item-count",
       },
-      id: "jsd-1",
-      keyword: "Shift",
-      text: "Shift 1",
-      type: "keyword",
-    },
-    {
       effect: {
         restriction: "cant-be-challenged",
         target: "SELF",
         type: "restriction",
       },
       id: "jsd-2",
+      name: "CAN'T TOUCH ME",
       text: "CAN'T TOUCH ME While you have an item in play, this character can't be challenged.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: nickWildeSlyFoxI18n,

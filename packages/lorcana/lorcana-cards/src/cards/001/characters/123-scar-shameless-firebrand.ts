@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { scarShamelessFirebrandI18n } from "./123-scar-shameless-firebrand.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const scarShamelessFirebrand: CharacterCard = {
   id: "pVG",
@@ -34,15 +35,7 @@ export const scarShamelessFirebrand: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "King"],
   abilities: [
-    {
-      cost: {
-        ink: 6,
-      },
-      id: "pVG-1",
-      keyword: "Shift",
-      text: "Shift 6",
-      type: "keyword",
-    },
+    shift(6),
     {
       effect: {
         type: "sequence",

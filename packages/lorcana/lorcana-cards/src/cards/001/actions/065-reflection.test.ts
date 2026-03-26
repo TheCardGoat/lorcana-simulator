@@ -18,15 +18,15 @@ describe("Reflection", () => {
 
     const playResult = testEngine.asPlayerOne().playCardWithDestinations(reflection, {
       zone: "deck-top",
-      cards: [chiefTuiRespectedLeader, liloMakingAWish, moanaOfMotunui],
+      cards: [chiefTuiRespectedLeader, heiheiBoatSnack, moanaOfMotunui],
     });
 
     expect(playResult).toBeSuccessfulCommand();
 
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
-      heiheiBoatSnack.id,
-      chiefTuiRespectedLeader.id,
       liloMakingAWish.id,
+      chiefTuiRespectedLeader.id,
+      heiheiBoatSnack.id,
       moanaOfMotunui.id,
     ]);
   });

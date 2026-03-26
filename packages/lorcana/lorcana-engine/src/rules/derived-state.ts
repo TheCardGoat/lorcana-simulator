@@ -8,6 +8,7 @@ import { resolveVariableAmount } from "../runtime-moves/shared/amount/resolve-va
 import {
   evaluateStaticCondition as _evaluateStaticCondition,
   getSelfStaticCostReductionAmount as _getSelfStaticCostReductionAmount,
+  hasStaticCardRestriction as _hasStaticCardRestriction,
   hasStaticSelfRestriction as _hasStaticSelfRestriction,
   isCardInPlay as _isCardInPlay,
   matchesStaticAbilityTarget as _matchesStaticAbilityTarget,
@@ -1911,8 +1912,19 @@ export function getDerivedHasQuestRestriction(
   }
 
   if (cardInstanceId && getDefinitionByInstanceId) {
-    return hasStaticSelfRestriction({
-      state,
+    if (
+      hasStaticSelfRestriction({
+        state,
+        cardId: cardInstanceId,
+        restriction: "cant-quest",
+        getDefinitionByInstanceId,
+      })
+    ) {
+      return true;
+    }
+
+    return _hasStaticCardRestriction({
+      state: flattenDerivedState(state),
       cardId: cardInstanceId,
       restriction: "cant-quest",
       getDefinitionByInstanceId,

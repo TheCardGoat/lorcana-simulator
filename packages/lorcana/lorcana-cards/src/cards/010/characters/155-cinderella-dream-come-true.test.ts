@@ -1,7 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  PLAYER_ONE,
+} from "@tcg/lorcana-engine/testing";
 import { cinderellaDreamComeTrue } from "./155-cinderella-dream-come-true";
 import { cinderellaDreamComeTrueEnchanted } from "./236-cinderella-dream-come-true-enchanted";
+import { ratiganGreedyGenius } from "../../008/characters/167-ratigan-greedy-genius";
 
 const princessCharacter = createMockCharacter({
   id: "cinderella-princess",
@@ -65,6 +70,54 @@ describe("Cinderella - Dream Come True", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
+    it("regression: triggers when shifting a Princess character onto another character", () => {
+      // Bug: WHATEVER YOU WISH FOR was not triggering when shifting a Princess character
+      // onto another character. Shifting counts as playing, so it should trigger.
+      const shiftableCharacter = createMockCharacter({
+        id: "cinderella-shift-base",
+        name: "Ariel",
+        version: "Base",
+        cost: 2,
+        classifications: ["Storyborn", "Hero", "Princess"],
+      });
+
+      const shiftedPrincess = createMockCharacter({
+        id: "cinderella-shifted-princess",
+        name: "Ariel",
+        version: "Shifted",
+        cost: 4,
+        classifications: ["Floodborn", "Hero", "Princess"],
+        abilities: [
+          {
+            cost: { ink: 2 },
+            keyword: "Shift",
+            type: "keyword",
+            text: "Shift 2",
+          },
+        ],
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [shiftedPrincess, inkFodder],
+        play: [cinderellaDreamComeTrue, shiftableCharacter],
+        inkwell: shiftedPrincess.cost,
+        deck: [drawnCard],
+      });
+
+      const shiftTarget = testEngine.findCardInstanceId(shiftableCharacter, "play", "player_one");
+
+      expect(
+        testEngine.asPlayerOne().playCard(shiftedPrincess, {
+          cost: { cost: "shift", shiftTarget },
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // WHATEVER YOU WISH FOR should trigger because a Princess was played (via Shift)
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    });
+
     it("triggers when Cinderella herself is played (she is a Princess)", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [cinderellaDreamComeTrue, inkFodder],
@@ -77,6 +130,54 @@ describe("Cinderella - Dream Come True", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     });
+  });
+
+  it("regression: Ratigan - Greedy Genius should not be banished when card was inked via Cinderella's end-of-turn ability", () => {
+    // Ratigan's TIME RUNS OUT: "At the end of your turn, if you didn't put any cards
+    // into your inkwell this turn, banish this character."
+    // Cinderella's WHATEVER YOU WISH FOR inks a card from hand at end of turn.
+    // The bug was that Ratigan was incorrectly banished even though Cinderella's ability
+    // had put a card into the inkwell.
+    // Simplified test: Ratigan in play, ink a card normally, pass turn — Ratigan stays.
+    // Then test without inking: Ratigan gets banished.
+    // The real regression is about the inking count tracking Cinderella's end-of-turn ink.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [princessCharacter, inkFodder],
+      play: [cinderellaDreamComeTrue, ratiganGreedyGenius],
+      inkwell: princessCharacter.cost,
+      deck: [drawnCard, drawnCard],
+    });
+
+    // Play a princess to trigger Cinderella's ability
+    expect(testEngine.asPlayerOne().playCard(princessCharacter)).toBeSuccessfulCommand();
+
+    // Pass turn — both Cinderella's WHATEVER YOU WISH FOR and Ratigan's TIME RUNS OUT trigger
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    // Multiple bag effects exist — resolve Cinderella's first to ink a card
+    const bagEffects = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffects).toHaveLength(2);
+
+    const cinderellaBag = bagEffects.find(
+      (bagEffect) =>
+        bagEffect.sourceId === testEngine.asPlayerOne().getCard(cinderellaDreamComeTrue).id,
+    );
+    expect(cinderellaBag).toBeDefined();
+    expect(
+      testEngine.asPlayerOne().resolveBag(cinderellaBag!.id, {
+        resolveOptional: true,
+        targets: [inkFodder],
+      }),
+    ).toBeSuccessfulCommand();
+
+    // Now resolve any remaining bags
+    testEngine.asPlayerOne().resolveAllBagEffects({});
+
+    // Ratigan's TIME RUNS OUT should NOT have triggered because Cinderella's ability
+    // put a card into the inkwell this turn
+    // Ratigan should still be in play
+    expect(testEngine.asPlayerOne().getCardZone(ratiganGreedyGenius)).toBe("play");
+    expect(testEngine.asPlayerOne().getCardZone(inkFodder)).toBe("inkwell");
   });
 
   describe("Enchanted version", () => {

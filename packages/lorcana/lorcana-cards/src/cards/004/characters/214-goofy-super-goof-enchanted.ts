@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { goofySuperGoofEnchantedI18n } from "./214-goofy-super-goof-enchanted.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const goofySuperGoofEnchanted: CharacterCard = {
   id: "8aU",
@@ -33,12 +34,7 @@ export const goofySuperGoofEnchanted: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "1n2-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       effect: {
         amount: 2,

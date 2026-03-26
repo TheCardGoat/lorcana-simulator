@@ -32,25 +32,51 @@ export const pepaMadrigalWeatherMaker: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Madrigal"],
   abilities: [
     {
-      effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          duration: "until-start-of-next-turn",
-          restriction: "cant-ready",
-          target: "SELF",
-          type: "restriction",
-        },
-        type: "optional",
-      },
       id: "7gu-1",
       name: "IT LOOKS LIKE RAIN",
-      text: "IT LOOKS LIKE RAIN When you play this character, you may exert chosen opposing character. That character can't ready at the start of their next turn unless they're at a location.",
+      type: "triggered",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
       },
-      type: "triggered",
+      effect: {
+        type: "optional",
+        effect: {
+          type: "sequence",
+          effects: [
+            {
+              type: "exert",
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "opponent",
+                cardTypes: ["character"],
+                zones: ["play"],
+              },
+            },
+            {
+              type: "restriction",
+              restriction: "cant-ready",
+              duration: "until-start-of-next-turn",
+              condition: {
+                type: "not",
+                condition: {
+                  type: "at-location",
+                },
+              },
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "opponent",
+                cardTypes: ["character"],
+                zones: ["play"],
+              },
+            },
+          ],
+        },
+      },
+      text: "IT LOOKS LIKE RAIN When you play this character, you may exert chosen opposing character. That character can't ready at the start of their next turn unless they're at a location.",
     },
   ],
   i18n: pepaMadrigalWeatherMakerI18n,

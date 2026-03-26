@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { littleJohnRobinsPalI18n } from "./179-little-john-robins-pal.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const littleJohnRobinsPal: CharacterCard = {
   id: "9Mk",
@@ -34,12 +35,7 @@ export const littleJohnRobinsPal: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "1ta-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       condition: {
         type: "turn",

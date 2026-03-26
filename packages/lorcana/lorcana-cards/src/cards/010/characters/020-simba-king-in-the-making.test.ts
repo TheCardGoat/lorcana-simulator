@@ -58,7 +58,7 @@ describe("Simba - King in the Making", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [simbaKingInTheMaking],
         inkwell: 3,
-        deck: [topDeckCharacter, deckFiller, deckFiller],
+        deck: [deckFiller, topDeckCharacter, deckFiller],
       });
 
       const playerOne = testEngine.asPlayerOne();
@@ -137,6 +137,24 @@ describe("Simba - King in the Making", () => {
       // Character should still be in deck
       expect(playerOne.getCardZone(topDeckCharacter)).toBe("deck");
     });
+  });
+
+  it("regression: Boost is activable on the same turn Simba is played", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [simbaKingInTheMaking],
+      inkwell: simbaKingInTheMaking.cost + 3, // Enough to play Simba + activate Boost 3
+      deck: [topDeckCharacter, deckFiller, deckFiller, deckFiller, deckFiller],
+    });
+
+    // Play Simba
+    expect(testEngine.asPlayerOne().playCard(simbaKingInTheMaking)).toBeSuccessfulCommand();
+
+    // Boost should be activable immediately on the same turn
+    const boostResult = testEngine.asPlayerOne().activateAbility(simbaKingInTheMaking, "Boost 3");
+    expect(boostResult).toBeSuccessfulCommand();
+
+    // Card should be under Simba
+    expect(testEngine.getCardsUnder(simbaKingInTheMaking)).toHaveLength(1);
   });
 });
 

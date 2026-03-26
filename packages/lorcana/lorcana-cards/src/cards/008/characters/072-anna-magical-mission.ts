@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { annaMagicalMissionI18n } from "./072-anna-magical-mission.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { support } from "../../../helpers/abilities/support";
 
 export const annaMagicalMission: CharacterCard = {
   id: "7E5",
@@ -37,39 +39,23 @@ export const annaMagicalMission: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Queen", "Sorcerer"],
   abilities: [
-    {
-      id: "1w2-1",
-      cost: {
-        ink: 4,
-      },
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 4",
-    },
-    {
-      id: "1w2-2",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
+    shift(4),
+    support,
     {
       id: "1w2-3",
+      condition: {
+        type: "has-named-character",
+        name: "Elsa",
+        controller: "you",
+      },
       effect: {
-        condition: {
-          type: "has-named-character",
-          name: "Elsa",
-          controller: "you",
+        chooser: "CONTROLLER",
+        effect: {
+          amount: 1,
+          target: "CONTROLLER",
+          type: "draw",
         },
-        then: {
-          chooser: "CONTROLLER",
-          effect: {
-            amount: 1,
-            target: "CONTROLLER",
-            type: "draw",
-          },
-          type: "optional",
-        },
-        type: "conditional",
+        type: "optional",
       },
       name: "COORDINATED PLAN",
       trigger: {

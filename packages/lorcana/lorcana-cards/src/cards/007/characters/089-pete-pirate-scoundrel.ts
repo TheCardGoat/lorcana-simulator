@@ -52,6 +52,7 @@ export const petePirateScoundrel: CharacterCard = {
         on: {
           cardType: "action",
           controller: "you",
+          excludeSong: true,
         },
         timing: "whenever",
       },

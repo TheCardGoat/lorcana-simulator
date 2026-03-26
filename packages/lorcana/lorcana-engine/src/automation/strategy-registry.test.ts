@@ -1,17 +1,20 @@
 import { describe, expect, it } from "bun:test";
 import {
+  AGGRESSIVE_BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
   AUTOMATED_ACTION_STRATEGIES,
+  BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
   DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+  LEGACY_LORE_RACE_STRATEGY_ID,
   getAutomatedActionStrategyOption,
 } from "./strategy-registry";
 
 describe("automated action strategy registry", () => {
   it("exports the current selectable engine strategies", () => {
     expect(AUTOMATED_ACTION_STRATEGIES.map((option) => option.id)).toEqual([
-      "default-lore-race",
-      "legacy-lore-race",
-      "board-control-lore-race",
-      "aggressive-board-control-lore-race",
+      DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+      LEGACY_LORE_RACE_STRATEGY_ID,
+      BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+      AGGRESSIVE_BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
     ]);
   });
 

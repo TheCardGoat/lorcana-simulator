@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { theMusesProclaimersOfHeroesI18n } from "./090-the-muses-proclaimers-of-heroes.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const theMusesProclaimersOfHeroes: CharacterCard = {
   id: "BQW",
@@ -34,12 +35,7 @@ export const theMusesProclaimersOfHeroes: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "1x8-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         chooser: "CONTROLLER",

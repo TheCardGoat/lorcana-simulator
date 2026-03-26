@@ -58,7 +58,9 @@
     --text-muted: #9db2ca;
 
     height: 100vh;
+    height: 100dvh;
     max-height: 100vh;
+    max-height: 100dvh;
     display: grid;
     grid-template-columns: 320px minmax(0, 1fr) 320px;
     background:
@@ -199,12 +201,13 @@
       grid-template-columns: 1fr;
       grid-template-rows: auto minmax(0, 1fr) auto;
       height: 100vh;
+      height: 100dvh;
     }
 
     .panel--left {
       border-right: none;
       border-bottom: 1px solid var(--panel-border);
-      max-height: 34vh;
+      max-height: 34dvh;
       overflow: auto;
     }
 

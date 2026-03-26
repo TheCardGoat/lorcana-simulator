@@ -41,9 +41,14 @@ export const heiheiAccidentalExplorer: CharacterCard = {
       name: "MINDLESS WANDERING",
       text: "MINDLESS WANDERING Once per turn, when this character moves to a location, each opponent loses 1 lore.",
       trigger: {
-        event: "play",
+        event: "move",
         on: "SELF",
         timing: "when",
+        restrictions: [
+          {
+            type: "once-per-turn",
+          },
+        ],
       },
       type: "triggered",
     },

@@ -64,6 +64,5 @@ export const queenOfHeartsSensingWeakness: CharacterCard = {
       text: "LET THE GAME BEGIN Whenever one of your characters challenges another character, you may draw a card.",
     },
   ],
-  missingTests: true,
   i18n: queenOfHeartsSensingWeaknessI18n,
 };

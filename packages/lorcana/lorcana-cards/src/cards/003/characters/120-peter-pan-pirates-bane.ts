@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { peterPanPiratesBaneI18n } from "./120-peter-pan-pirates-bane.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const peterPanPiratesBane: CharacterCard = {
   id: "3nS",
@@ -36,6 +38,38 @@ export const peterPanPiratesBane: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero"],
-  abilities: [],
+  abilities: [
+    shift(4),
+    evasive,
+    {
+      effect: {
+        duration: "this-turn",
+        replacement: {
+          consumeOnApply: true,
+          eventKinds: ["challenge-damage"],
+          targetRef: "source",
+          type: "prevent-damage",
+        },
+        type: "create-replacement-effect",
+      },
+      id: "3nS-3",
+      name: "YOU'RE NEXT!",
+      text: "YOU'RE NEXT! Whenever he challenges a Pirate character, this character takes no damage from the challenge.",
+      trigger: {
+        defender: {
+          filters: [
+            {
+              type: "has-classification",
+              classification: "Pirate",
+            },
+          ],
+        },
+        event: "challenge",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
   i18n: peterPanPiratesBaneI18n,
 };

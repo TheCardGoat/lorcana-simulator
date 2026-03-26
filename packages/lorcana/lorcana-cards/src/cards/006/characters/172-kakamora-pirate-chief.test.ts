@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
   createMockCharacter,
   createMockLocation,
 } from "@tcg/lorcana-engine/testing";
@@ -245,6 +246,58 @@ describe("Kakamora - Pirate Chief", () => {
           .resolveEffect(selectTargetEffect.id, { targets: [locationInstanceId] }),
       ).toBeSuccessfulCommand();
 
+      expect(testEngine.asPlayerOne().getDamage(mockLocation)).toBe(3);
+    });
+
+    // Regression: was only dealing 1 damage even when a Pirate character was discarded (fixed March 8)
+    it("regression: deals 3 damage (not 1) to a location when a pirate character card is discarded", () => {
+      const pirateCharacter = createMockCharacter({
+        id: "kakamora-chief-test-pirate",
+        name: "Pirate Test Character",
+        cost: 2,
+        strength: 2,
+        willpower: 3,
+        classifications: ["Storyborn", "Pirate"],
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: kakamoraPirateChief, isDrying: false }, mockLocation],
+          hand: [pirateCharacter],
+          deck: 2,
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().quest(kakamoraPirateChief)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+      const discardEffect = testEngine.asPlayerOne().getPendingEffects()[0]!;
+
+      const pirateInstanceId = testEngine.findCardInstanceId(pirateCharacter, "hand", "player_one");
+      expect(
+        testEngine.asPlayerOne().resolveEffect(discardEffect.id, {
+          targets: [pirateInstanceId],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+      const selectTargetEffect = testEngine.asPlayerOne().getPendingEffects()[0]!;
+
+      const locationInstanceId = testEngine.findCardInstanceId(mockLocation, "play", "player_one");
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolveEffect(selectTargetEffect.id, { targets: [locationInstanceId] }),
+      ).toBeSuccessfulCommand();
+
+      // Pirate discard must deal 3 damage, not 1
       expect(testEngine.asPlayerOne().getDamage(mockLocation)).toBe(3);
     });
 

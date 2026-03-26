@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { herculesSpectralDemigodEpicI18n } from "./214-hercules-spectral-demigod-epic.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const herculesSpectralDemigodEpic: CharacterCard = {
   id: "MXG",
@@ -34,13 +35,7 @@ export const herculesSpectralDemigodEpic: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Prince", "Deity", "Whisper"],
   abilities: [
-    {
-      id: "16g-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 2,
-      text: "Boost 2 {I}",
-    },
+    boost(2),
     {
       id: "16g-2",
       effect: {

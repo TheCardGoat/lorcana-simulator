@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { megaraLiberatedOneI18n } from "./080-megara-liberated-one.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const megaraLiberatedOne: CharacterCard = {
   id: "q5j",
@@ -33,12 +34,7 @@ export const megaraLiberatedOne: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "1qr-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         chooser: "CONTROLLER",

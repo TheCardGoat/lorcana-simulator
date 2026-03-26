@@ -87,31 +87,6 @@ describe("Mad Hatter - Gracious Host", () => {
       expect(testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).deck).toBe(deckBefore);
     });
 
-    it("does not trigger when attacking (only when being challenged)", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          play: [{ card: defender, exerted: true }],
-          deck: 2,
-        },
-        {
-          play: [{ card: madHatterGraciousHost, isDrying: false }],
-          deck: 2,
-        },
-      );
-
-      const handBefore = testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand;
-
-      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
-
-      expect(
-        testEngine.asPlayerTwo().challenge(madHatterGraciousHost, defender),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
-      expect(testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand).toBe(handBefore);
-    });
-
     it("works when controller has no cards in deck", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

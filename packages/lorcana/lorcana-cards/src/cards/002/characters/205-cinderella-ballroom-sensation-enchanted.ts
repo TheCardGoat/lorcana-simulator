@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { cinderellaBallroomSensationEnchantedI18n } from "./205-cinderella-ballroom-sensation-enchanted.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const cinderellaBallroomSensationEnchanted: CharacterCard = {
   id: "hzv",
@@ -25,14 +26,6 @@ export const cinderellaBallroomSensationEnchanted: CharacterCard = {
   },
   text: "Singer 3",
   classifications: ["Storyborn", "Hero", "Princess"],
-  abilities: [
-    {
-      id: "4j3-1",
-      keyword: "Singer",
-      type: "keyword",
-      value: 3,
-      text: "Singer 3",
-    },
-  ],
+  abilities: [singer(3)],
   i18n: cinderellaBallroomSensationEnchantedI18n,
 };

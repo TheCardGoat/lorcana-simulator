@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { chipNDaleRecoveryRangersI18n } from "./014-chip-n-dale-recovery-rangers.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const chipNDaleRecoveryRangers: CharacterCard = {
   id: "FOd",
@@ -37,16 +38,7 @@ export const chipNDaleRecoveryRangers: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      id: "1sm-1",
-      keyword: "Shift",
-      cost: {
-        ink: 5,
-      },
-      shiftTarget: "Chip or Dale",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift("Chip or Dale", 5),
     {
       id: "1sm-2",
       name: "SEARCH AND RESCUE",

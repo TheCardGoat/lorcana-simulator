@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { thePhantomBlotShadowyFigureI18n } from "./135-the-phantom-blot-shadowy-figure.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const thePhantomBlotShadowyFigure: CharacterCard = {
   id: "jqj",
@@ -23,13 +24,6 @@ export const thePhantomBlotShadowyFigure: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Villain"],
-  abilities: [
-    {
-      id: "1wy-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: thePhantomBlotShadowyFigureI18n,
 };

@@ -32,18 +32,20 @@ export const mrsPottsEnchantedTeapot: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "or",
+        conditions: [
+          { type: "has-named-character", controller: "you", name: "Lumiere" },
+          { type: "has-named-character", controller: "you", name: "Cogsworth" },
+        ],
+      },
       effect: {
-        condition: {
-          controller: "you",
-          name: "Lumiere or Cogsworth in play",
-          type: "has-named-character",
-        },
-        then: {
+        effect: {
           amount: 1,
           target: "CONTROLLER",
           type: "draw",
         },
-        type: "conditional",
+        type: "optional",
       },
       id: "1mj-1",
       name: "IT'LL TURN OUT ALL RIGHT",

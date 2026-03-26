@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { gadgetHackwrenchBrilliantBosunEnchantedI18n } from "./217-gadget-hackwrench-brilliant-bosun-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const gadgetHackwrenchBrilliantBosunEnchanted: CharacterCard = {
   id: "WXx",
@@ -35,15 +36,7 @@ export const gadgetHackwrenchBrilliantBosunEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally", "Inventor"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "35v-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       condition: {
         comparison: "greater-or-equal",

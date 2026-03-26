@@ -31,24 +31,30 @@ export const nalaUndauntedLioness: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "no-damage",
+      },
       effect: {
-        steps: [
-          {
-            modifier: 1,
-            stat: "lore",
-            target: "SELF",
-            type: "modify-stat",
-          },
-          {
-            keyword: "Resist",
-            target: "SELF",
-            type: "gain-keyword",
-            value: 1,
-          },
-        ],
-        type: "sequence",
+        modifier: 1,
+        stat: "lore",
+        target: "SELF",
+        type: "modify-stat",
       },
       id: "1xs-1",
+      text: "DETERMINED DIVERSION While this character has no damage, she gets +1 {L} and gains Resist +1.",
+      type: "static",
+    },
+    {
+      condition: {
+        type: "no-damage",
+      },
+      effect: {
+        keyword: "Resist",
+        target: "SELF",
+        type: "gain-keyword",
+        value: 1,
+      },
+      id: "1xs-2",
       text: "DETERMINED DIVERSION While this character has no damage, she gets +1 {L} and gains Resist +1.",
       type: "static",
     },

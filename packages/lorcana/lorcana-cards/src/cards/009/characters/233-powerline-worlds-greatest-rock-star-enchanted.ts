@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { powerlineWorldsGreatestRockStarEnchantedI18n } from "./233-powerline-worlds-greatest-rock-star-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const powerlineWorldsGreatestRockStarEnchanted: CharacterCard = {
   id: "3wE",
@@ -38,22 +40,8 @@ export const powerlineWorldsGreatestRockStarEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "k9i-1",
-      keyword: "Shift",
-      text: "Shift 4 {I}",
-      type: "keyword",
-    },
-    {
-      id: "k9i-2",
-      keyword: "Singer",
-      text: "Singer 9",
-      type: "keyword",
-      value: 9,
-    },
+    shift(4),
+    singer(9),
     {
       effect: {
         type: "scry",

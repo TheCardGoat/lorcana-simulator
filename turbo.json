@@ -86,12 +86,30 @@
       "outputLogs": "errors-only",
       "inputs": ["**/*.ts", "**/*.tsx", "**/*.svelte", "tsconfig.json", "tsconfig.*.json"]
     },
+    "@tcg/lorcana-simulator#i18n:compile": {
+      "cache": true,
+      "outputLogs": "errors-only",
+      "inputs": ["project.inlang/**", "messages/**", "package.json"],
+      "outputs": ["src/lib/paraglide/**"]
+    },
+    "@tcg/lorcana-simulator#check-types": {
+      "dependsOn": ["@tcg/lorcana-simulator#i18n:compile"],
+      "cache": true,
+      "outputLogs": "errors-only",
+      "inputs": ["**/*.ts", "**/*.tsx", "**/*.svelte", "tsconfig.json", "tsconfig.*.json"]
+    },
     "i18n:verify": {
       "cache": false,
       "outputs": [],
       "outputLogs": "errors-only"
     },
     "test": {
+      "outputs": [],
+      "outputLogs": "errors-only",
+      "env": ["AGENT"]
+    },
+    "@tcg/lorcana-simulator#test": {
+      "dependsOn": ["@tcg/lorcana-simulator#i18n:compile"],
       "outputs": [],
       "outputLogs": "errors-only",
       "env": ["AGENT"]

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { minnieMouseMrsCratchitI18n } from "./088-minnie-mouse-mrs-cratchit.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const minnieMouseMrsCratchit: CharacterCard = {
   id: "g4Z",
@@ -34,12 +35,7 @@ export const minnieMouseMrsCratchit: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "18q-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
+    ward,
     {
       id: "18q-2",
       name: "A MOTHER’S LOVE",

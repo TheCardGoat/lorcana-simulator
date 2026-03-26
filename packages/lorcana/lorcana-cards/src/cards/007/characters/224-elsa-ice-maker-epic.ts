@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { elsaIceMakerEpicI18n } from "./224-elsa-ice-maker-epic.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const elsaIceMakerEpic: CharacterCard = {
   id: "2hI",
@@ -36,15 +37,7 @@ export const elsaIceMakerEpic: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Queen", "Sorcerer"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "1v2-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         type: "sequence",

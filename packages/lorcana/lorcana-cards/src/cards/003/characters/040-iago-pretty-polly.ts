@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { iagoPrettyPollyI18n } from "./040-iago-pretty-polly.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const iagoPrettyPolly: CharacterCard = {
   id: "lhS",
@@ -24,13 +25,6 @@ export const iagoPrettyPolly: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "d7s-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: iagoPrettyPollyI18n,
 };

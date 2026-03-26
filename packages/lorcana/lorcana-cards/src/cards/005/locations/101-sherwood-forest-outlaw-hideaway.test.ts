@@ -65,4 +65,33 @@ describe("Sherwood Forest - Outlaw Hideaway", () => {
     ).toBe(true);
     expect(testEngine.asPlayerTwo().getCard(damagedTarget)?.damage).toBe(3);
   });
+
+  it("regression: FAMILIAR TERRAIN actually deals 2 damage to the chosen damaged character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [
+          sherwoodForestOutlawHideaway,
+          { card: outlaw, atLocation: sherwoodForestOutlawHideaway },
+        ],
+        inkwell: 1,
+        deck: 1,
+      },
+      {
+        play: [{ card: damagedTarget, damage: 1 }],
+        deck: 1,
+      },
+    );
+
+    // damagedTarget starts with 1 damage from fixture
+    expect(testEngine.asPlayerTwo().getCard(damagedTarget)?.damage).toBe(1);
+
+    expect(
+      testEngine
+        .asPlayerOne()
+        .activateAbility(outlaw, { ability: "FAMILIAR TERRAIN", targets: [damagedTarget] }).success,
+    ).toBe(true);
+
+    // Damage should have increased by 2 (from 1 to 3)
+    expect(testEngine.asPlayerTwo().getCard(damagedTarget)?.damage).toBe(3);
+  });
 });

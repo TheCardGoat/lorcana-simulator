@@ -23,10 +23,10 @@ function getConfiguredLogLevel(): LogLevel {
   const value = processEnv.process?.env?.LOG_LEVEL?.toLowerCase();
 
   if (!value) {
-    return "trace";
+    return "fatal";
   }
 
-  return validLogLevels[value] ?? "trace";
+  return validLogLevels[value] ?? "fatal";
 }
 
 const resolvedLogLevel = getConfiguredLogLevel();

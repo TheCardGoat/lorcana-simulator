@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ursulaSeaWitchQueenEnchantedI18n } from "./208-ursula-sea-witch-queen-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const ursulaSeaWitchQueenEnchanted: CharacterCard = {
   id: "NEx",
@@ -38,15 +39,7 @@ export const ursulaSeaWitchQueenEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Queen", "Sorcerer"],
   abilities: [
-    {
-      id: "KAb-1",
-      keyword: "Shift",
-      cost: {
-        ink: 5,
-      },
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       id: "KAb-2",
       name: "NOW I AM THE RULER!",

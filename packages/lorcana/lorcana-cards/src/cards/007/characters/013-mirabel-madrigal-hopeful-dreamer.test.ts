@@ -1,22 +1,21 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { mirabelMadrigalHopefulDreamer } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Mirabel Madrigal - Hopeful Dreamer", () => {
-//   It.skip("Evasive Singer 5 (This character counts as cost 5 to sing songs.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [mirabelMadrigalHopefulDreamer],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(
-//       MirabelMadrigalHopefulDreamer,
-//     );
-//     Expect(cardUnderTest.hasEvasive).toBe(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { mirabelMadrigalHopefulDreamer } from "./013-mirabel-madrigal-hopeful-dreamer";
+
+describe("Mirabel Madrigal - Hopeful Dreamer", () => {
+  it("has Evasive keyword", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [mirabelMadrigalHopefulDreamer],
+    });
+
+    expect(testEngine.hasKeyword(mirabelMadrigalHopefulDreamer, "Evasive")).toBe(true);
+  });
+
+  it("has Singer 5 keyword", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [mirabelMadrigalHopefulDreamer],
+    });
+
+    expect(testEngine.hasKeyword(mirabelMadrigalHopefulDreamer, "Singer")).toBe(true);
+  });
+});

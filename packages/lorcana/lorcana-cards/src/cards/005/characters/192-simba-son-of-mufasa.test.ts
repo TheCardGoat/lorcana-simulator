@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   LorcanaMultiplayerTestEngine,
   PLAYER_ONE,
+  createMockCharacter,
   createMockItem,
   createMockLocation,
 } from "@tcg/lorcana-engine/testing";
@@ -121,6 +122,34 @@ describe("Simba - Son of Mufasa", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(mockItem)).toBe("discard");
+    });
+
+    it("regression: can target items and locations (not just characters)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: simbaSonOfMufasa.cost,
+          hand: [simbaSonOfMufasa],
+          deck: 1,
+        },
+        {
+          play: [mockItem, mockLocation],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(simbaSonOfMufasa)).toBeSuccessfulCommand();
+
+      const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
+      // Should be able to target the location
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          resolveOptional: true,
+          targets: [mockLocation],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(mockLocation)).toBe("discard");
+      // Item should still be in play
+      expect(testEngine.asPlayerTwo().getCardZone(mockItem)).toBe("play");
     });
   });
 });

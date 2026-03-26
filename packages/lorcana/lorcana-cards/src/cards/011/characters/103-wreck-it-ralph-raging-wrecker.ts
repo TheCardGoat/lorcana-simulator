@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { wreckitRalphRagingWreckerI18n } from "./103-wreck-it-ralph-raging-wrecker.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const wreckitRalphRagingWrecker: CharacterCard = {
   id: "C0z",
@@ -38,13 +39,7 @@ export const wreckitRalphRagingWrecker: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Whisper"],
   abilities: [
-    {
-      id: "2cc-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 1,
-      text: "Boost 1 {I}",
-    },
+    boost(1),
     {
       id: "2cc-2",
       name: "POWERED UP",

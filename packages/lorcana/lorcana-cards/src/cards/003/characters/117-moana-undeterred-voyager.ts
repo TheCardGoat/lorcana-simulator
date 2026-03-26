@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { moanaUndeterredVoyagerI18n } from "./117-moana-undeterred-voyager.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const moanaUndeterredVoyager: CharacterCard = {
   id: "XuG",
@@ -24,13 +25,6 @@ export const moanaUndeterredVoyager: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Hero", "Princess"],
-  abilities: [
-    {
-      id: "d5c-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: moanaUndeterredVoyagerI18n,
 };

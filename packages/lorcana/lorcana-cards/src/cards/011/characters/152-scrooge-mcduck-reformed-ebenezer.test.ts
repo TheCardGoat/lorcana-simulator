@@ -56,6 +56,8 @@ describe("Scrooge McDuck - Reformed Ebenezer", () => {
     // Both allies should now have Ward
     expect(testEngine.hasKeyword(allyOne, "Ward")).toBe(true);
     expect(testEngine.hasKeyword(allyTwo, "Ward")).toBe(true);
+    // Scrooge himself should NOT have Ward (only OTHER characters)
+    expect(testEngine.hasKeyword(scroogeMcduckReformedEbenezer, "Ward")).toBe(false);
   });
 
   it("SPREADING JOY - does not grant Ward to opponent characters", () => {

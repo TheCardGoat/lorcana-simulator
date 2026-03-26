@@ -49,6 +49,7 @@ import type {
   RedirectDamageEffect,
   RepeatEffect,
   RevealAndConditionalEffect,
+  RevealAndRouteEffect,
   SequenceEffect,
 } from "./control-flow";
 import type {
@@ -70,6 +71,7 @@ import type {
   RevealHandEffect,
   RevealTopCardEffect,
   SearchDeckEffect,
+  SelfPlayConditionEffect,
   StatFloorEffect,
   SetStatEffect,
   WinConditionEffect,
@@ -171,6 +173,7 @@ export type Effect =
   // Additional effects for parser support
   | CostEffectEffect
   | RevealAndConditionalEffect
+  | RevealAndRouteEffect
   | GrantKeywordEffect
   | GrantKeywordsEffect
   | CreateTriggeredAbilityEffect
@@ -265,6 +268,8 @@ export type StaticEffect =
   | PropertyModificationEffect
   | GrantHandInkabilityEffect
   | GrantDiscardInkabilityEffect
+  // Self play conditions
+  | SelfPlayConditionEffect
   // Ability suppression
   | SuppressAbilityEffect;
 

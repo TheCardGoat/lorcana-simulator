@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { princeEricDashingAndBraveI18n } from "./187-prince-eric-dashing-and-brave.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const princeEricDashingAndBrave: CharacterCard = {
   id: "yeQ",
@@ -24,14 +25,6 @@ export const princeEricDashingAndBrave: CharacterCard = {
   },
   text: "Challenger +2",
   classifications: ["Storyborn", "Hero", "Prince"],
-  abilities: [
-    {
-      id: "1cu-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2.",
-    },
-  ],
+  abilities: [challenger(2)],
   i18n: princeEricDashingAndBraveI18n,
 };

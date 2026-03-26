@@ -33,9 +33,18 @@ export const princeJohnPhonyKing: CharacterCard = {
   abilities: [
     {
       effect: {
-        amount: 2,
-        target: "EACH_OPPONENT",
-        type: "lose-lore",
+        type: "for-each-opponent",
+        condition: {
+          type: "comparison",
+          left: { type: "lore", controller: "opponent" },
+          comparison: "greater",
+          right: { type: "lore", controller: "you" },
+        },
+        effect: {
+          type: "lose-lore",
+          amount: 2,
+          target: "OPPONENT",
+        },
       },
       id: "m61-1",
       name: "COLLECT TAXES",

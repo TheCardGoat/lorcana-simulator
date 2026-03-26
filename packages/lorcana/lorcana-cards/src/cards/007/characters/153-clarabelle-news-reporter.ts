@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { clarabelleNewsReporterI18n } from "./153-clarabelle-news-reporter.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const clarabelleNewsReporter: CharacterCard = {
   id: "ykh",
@@ -32,22 +33,41 @@ export const clarabelleNewsReporter: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
+    support,
     {
-      id: "1r6-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
-    {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+          filters: [{ type: "has-keyword", keyword: "Support" }],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
         modifier: 1,
         stat: "strength",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+          filter: [{ type: "has-keyword", keyword: "Support" }],
+        },
         type: "modify-stat",
       },
       id: "1r6-2",
       text: "BREAKING STORY Your other characters with Support get +1 {S}.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: clarabelleNewsReporterI18n,

@@ -7,10 +7,8 @@
         deserializeInlineFixture,
     } from "@/features/simulator-devtools/harness/browser-fixture";
     import {LORCANA_SIMULATOR_VIEWS, type LorcanaSimulatorView} from "$lib";
-    import {
-        LORCANA_HARNESS_DEFAULT_FIXTURE_ID,
-        LORCANA_HARNESS_DEFAULT_VIEW,
-    } from "@/features/simulator-devtools/harness/browser-harness";
+    import {LORCANA_HARNESS_DEFAULT_FIXTURE_ID, LORCANA_HARNESS_DEFAULT_VIEW} from "@/features/simulator-devtools/harness/browser-harness";
+    import {resolveBrowserTransportConfig} from "@/features/simulator-devtools/harness/browser-route";
     import LorcanaTabletopSimulatorStoryWrapper
         from "@/features/simulator-devtools/storybook/LorcanaTabletopSimulatorStoryWrapper.svelte";
 
@@ -33,6 +31,7 @@
 
     const fixtureId = $derived(normalizeFixtureId(page.url.searchParams.get("fixtureId")));
     const initialView = $derived(normalizeView(page.url.searchParams.get("view")));
+    const browserTransport = $derived.by(() => resolveBrowserTransportConfig(page.url));
     const fixture = $derived.by(() => {
         const encodedFixture = page.url.searchParams.get("fixture");
         const parsedFixture = decodeInlineFixtureParam(encodedFixture);
@@ -58,6 +57,7 @@
 </script>
 
 <LorcanaTabletopSimulatorStoryWrapper
+        {browserTransport}
         {fixture}
         {fixtureId}
         {initialView}

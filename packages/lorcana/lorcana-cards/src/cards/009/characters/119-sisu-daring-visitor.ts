@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { sisuDaringVisitorI18n } from "./119-sisu-daring-visitor.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const sisuDaringVisitor: CharacterCard = {
   id: "dPe",
@@ -34,16 +35,24 @@ export const sisuDaringVisitor: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Deity", "Dragon"],
   abilities: [
-    {
-      id: "1y1-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        type: "banish",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "strength-comparison",
+              comparison: "less-or-equal",
+              value: 1,
+            },
+          ],
+        },
       },
       id: "1y1-2",
       name: "BRING ON THE HEAT!",

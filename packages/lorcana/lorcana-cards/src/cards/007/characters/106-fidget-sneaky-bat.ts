@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { fidgetSneakyBatI18n } from "./106-fidget-sneaky-bat.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const fidgetSneakyBat: CharacterCard = {
   id: "xmE",
@@ -34,12 +35,7 @@ export const fidgetSneakyBat: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "1lo-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         keyword: "Evasive",

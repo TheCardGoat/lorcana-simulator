@@ -1,5 +1,6 @@
-import type { CharacterCard } from "@tcg/lorcana-types";
+import type { AllMatchingCharacterQuery, CharacterCard } from "@tcg/lorcana-types";
 import { perditaDeterminedMotherI18n } from "./027-perdita-determined-mother.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const perditaDeterminedMother: CharacterCard = {
   id: "5tQ",
@@ -34,30 +35,40 @@ export const perditaDeterminedMother: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "169-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         chooser: "CONTROLLER",
         effect: {
           exerted: true,
           facedown: true,
-          source: "discard",
+          source: {
+            selector: "all",
+            count: "all",
+            owner: "you",
+            zones: ["discard"],
+            cardTypes: ["character"],
+            filter: [
+              {
+                type: "has-classification",
+                classification: "Puppy",
+              },
+            ],
+          } satisfies AllMatchingCharacterQuery,
           target: "CONTROLLER",
           type: "put-into-inkwell",
         },
         type: "optional",
       },
       id: "169-2",
+      name: "QUICK, EVERYONE HIDE",
       text: "QUICK, EVERYONE HIDE When you play this character, you may put all Puppy character cards from your discard into your inkwell facedown and exerted.",
-      type: "action",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
     },
   ],
   i18n: perditaDeterminedMotherI18n,

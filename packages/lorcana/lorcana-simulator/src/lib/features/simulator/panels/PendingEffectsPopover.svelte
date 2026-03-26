@@ -66,10 +66,17 @@ let {
 	initialDockPosition = "middle",
 }: PendingEffectsPopoverProps = $props();
 const simulatorCardContext = maybeUseSimulatorCardContext();
-const initialDockPositionValue = initialDockPosition;
 
 let viewMode = $state<ViewMode>(DEFAULT_PENDING_EFFECTS_VIEW_MODE);
-let dockPosition = $state<PendingEffectsDockPosition>(initialDockPositionValue);
+let dockPosition = $state<PendingEffectsDockPosition>("middle");
+let hasHydratedDockPosition = $state(false);
+
+$effect(() => {
+	if (!hasHydratedDockPosition) {
+		dockPosition = initialDockPosition;
+		hasHydratedDockPosition = true;
+	}
+});
 let hasHydratedViewModePreference = $state(false);
 let previousItemCount = $state(0);
 let previousActionableSignature = $state("");
@@ -658,14 +665,6 @@ function handleOpenGlobalPreview(card: LorcanaCardSnapshot | null): void {
     min-width: 0;
   }
 
-  .panel-header h2 {
-    margin: 0;
-    font-size: 0.98rem;
-    font-weight: 700;
-    color: #ebf4ff;
-    line-height: 1.1;
-  }
-
   .panel-count {
     display: inline-flex;
     align-items: center;
@@ -1079,10 +1078,6 @@ function handleOpenGlobalPreview(card: LorcanaCardSnapshot | null): void {
 
     .panel-header {
       margin-bottom: 0.58rem;
-    }
-
-    .panel-header h2 {
-      font-size: 0.92rem;
     }
 
     .header-chip-button,

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { captainHookThePirateKingEnchantedI18n } from "./215-captain-hook-the-pirate-king-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const captainHookThePirateKingEnchanted: CharacterCard = {
   id: "mT7",
@@ -35,15 +36,7 @@ export const captainHookThePirateKingEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "King", "Pirate", "Captain"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "1na-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         steps: [

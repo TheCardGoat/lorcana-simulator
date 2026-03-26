@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ursulaVanessaI18n } from "./022-ursula-vanessa.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const ursulaVanessa: CharacterCard = {
   id: "0pB",
@@ -24,14 +25,6 @@ export const ursulaVanessa: CharacterCard = {
   },
   text: "Singer 4",
   classifications: ["Storyborn", "Villain", "Sorcerer"],
-  abilities: [
-    {
-      id: "lsj-1",
-      keyword: "Singer",
-      type: "keyword",
-      value: 4,
-      text: "Singer 4",
-    },
-  ],
+  abilities: [singer(4)],
   i18n: ursulaVanessaI18n,
 };

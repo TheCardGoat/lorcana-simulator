@@ -132,6 +132,8 @@ function initializeTimeControlPlayers(
         totalConsumedMs: 0,
         movesMade: 0,
         lastUpdatedAtMs: Date.now(),
+        timeoutCount: 0,
+        isInNegativeTime: false,
       };
     }
   } else if (timeContext.mode === "priority") {
@@ -145,6 +147,20 @@ function initializeTimeControlPlayers(
         moveBonusMsGranted: 0,
         windowTimeouts: 0,
         lastUpdatedAtMs: Date.now(),
+      };
+    }
+  } else if (timeContext.mode === "dynamic") {
+    const dynamicConfig = config as { initialReserveMs: number };
+    for (const player of players) {
+      timeContext.players[player.id] = {
+        reserveMsRemaining: dynamicConfig.initialReserveMs,
+        totalConsumedMs: 0,
+        movesMade: 0,
+        lastUpdatedAtMs: Date.now(),
+        timeoutCount: 0,
+        isInNegativeTime: false,
+        actionBonusMsGranted: 0,
+        turnPassBonusMsGranted: 0,
       };
     }
   }

@@ -33,6 +33,37 @@ export const morganaMacawberReformedSpellcaster: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Super", "Hero", "Sorcerer"],
-  abilities: [],
+  abilities: [
+    {
+      id: "5kx-1",
+      keyword: "Shift",
+      type: "keyword",
+      text: "Shift 4 {I}",
+      cost: {
+        ink: 4,
+      },
+    },
+    {
+      id: "5kx-2",
+      name: "JUST FOR YOU",
+      text: "JUST FOR YOU When you play this character, you may choose an opposing character and move 1 damage from each other character to them.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "move-damage",
+          amount: 1,
+          from: "ALL_CHARACTERS",
+          to: "CHOSEN_OPPOSING_CHARACTER",
+        },
+      },
+    },
+  ],
   i18n: morganaMacawberReformedSpellcasterI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { sirHissAggravatingAspI18n } from "./086-sir-hiss-aggravating-asp.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const sirHissAggravatingAsp: CharacterCard = {
   id: "O7w",
@@ -24,13 +25,6 @@ export const sirHissAggravatingAsp: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Dreamborn", "Ally"],
-  abilities: [
-    {
-      id: "1vd-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: sirHissAggravatingAspI18n,
 };

@@ -1,4 +1,5 @@
 import type {
+  LogCardReference,
   LorcanaCardSnapshot,
   LorcanaPlayerSide,
   ActionCandidate,
@@ -86,6 +87,22 @@ export function createActionCard(
   options: Omit<CardFactoryOptions, "type"> = {},
 ): LorcanaCardSnapshot {
   return createCardSnapshot(ownerSide, zoneId, { ...options, type: "action" });
+}
+
+export function createLogCardReference(
+  ownerSide: LorcanaPlayerSide,
+  options: CardFactoryOptions = {},
+): LogCardReference {
+  const id = options.id ?? `card-${++cardIdCounter}`;
+  return {
+    cardId: id,
+    definitionId: `test-${nameToId(options.name ?? "Card")}-${options.cost ?? 1}`,
+    label: options.name ?? `Test Card ${cardIdCounter}`,
+    inkType: options.inkType ?? ["amber"],
+    inkable: options.inkable ?? true,
+    isMasked: false,
+    ownerSide,
+  };
 }
 
 // ============================================================================
@@ -189,7 +206,6 @@ export function createLogEntry(
     moveId: options.moveId ?? "passTurn",
     actorSide: options.actorSide ?? "playerOne",
     title,
-    detail: options.detail,
     ...options,
     turnNumber: options.turnNumber ?? 1,
   };
@@ -205,17 +221,16 @@ export function createSampleLog(count: number = 5): MoveLogEntrySnapshot[] {
     "passTurn",
   ] as const satisfies readonly MoveLogEntrySnapshot["moveId"][];
   const actions = [
-    { title: "Drew a card", detail: "Drew Captain Hook - Forceful Duelist" },
-    { title: "Played a card", detail: "Played Mickey Mouse - Brave Little Tailor for 3 ink" },
-    { title: "Quested", detail: "Ariel - On Human Legs quested for 2 lore" },
-    { title: "Challenged", detail: "Mulan - Imperial Soldier challenged Beast - Tragic Hero" },
-    { title: "Put into inkwell", detail: "Added card to inkwell" },
-    { title: "Passed turn", detail: "Turn passed to Player Two" },
+    { title: "Drew a card" },
+    { title: "Played a card" },
+    { title: "Quested" },
+    { title: "Challenged" },
+    { title: "Put into inkwell" },
+    { title: "Passed turn" },
   ];
 
   return actions.slice(0, count).map((action, i) =>
     createLogEntry(action.title, {
-      detail: action.detail,
       actorSide: i % 2 === 0 ? "playerOne" : "playerTwo",
       moveId: moveIds[i] ?? "passTurn",
     }),

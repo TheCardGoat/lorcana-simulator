@@ -142,6 +142,22 @@ export function getEffectTargetSelectionInput(
   resolutionInput: SelectionStateCarrier,
 ): TargetSelectionInput {
   if (effectTargetUsesSelectionContext(target)) {
+    // Pure reference descriptors (e.g. { ref: "previous-target" }) should
+    // prefer context targets (prior step selections) when inside a sequence.
+    // The combined selection includes current targets for future steps, and
+    // "previous-target" (which takes the last element) would resolve to a
+    // wrong card.  Fall back to combined when no context is available.
+    if (
+      target &&
+      typeof target === "object" &&
+      !Array.isArray(target) &&
+      typeof (target as Record<string, unknown>).ref === "string"
+    ) {
+      const contextInput = getContextSelectionInput(resolutionInput);
+      if (contextInput != null) {
+        return contextInput;
+      }
+    }
     return getCombinedSelectionInput(resolutionInput);
   }
 

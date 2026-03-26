@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { herculesDivineHeroI18n } from "./181-hercules-divine-hero.i18n";
+import { resist } from "../../../helpers/abilities/resist";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const herculesDivineHero: CharacterCard = {
   id: "D18",
@@ -31,23 +33,6 @@ export const herculesDivineHero: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "Prince", "Deity"],
-  abilities: [
-    {
-      id: "5e9-1",
-      cost: {
-        ink: 4,
-      },
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 4",
-    },
-    {
-      id: "5e9-2",
-      keyword: "Resist",
-      type: "keyword",
-      value: 2,
-      text: "Resist +2",
-    },
-  ],
+  abilities: [shift(4), resist(2)],
   i18n: herculesDivineHeroI18n,
 };

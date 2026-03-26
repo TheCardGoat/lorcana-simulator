@@ -1,6 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { snowFort } from "./098-snow-fort";
+import { liloBundledUp } from "../characters/195-lilo-bundled-up";
+import { tipoGrowingSon } from "../../005/characters/157-tipo-growing-son";
 
 const fortifiedAlly = createMockCharacter({
   id: "snow-fort-fortified-ally",
@@ -95,6 +97,45 @@ describe("Snow Fort", () => {
       expect(testEngine.asPlayerOne().getDamage(fortifiedAlly)).toBe(2);
       // Attacker should take 4 damage (3 base + 1 from Snow Fort's THE HIGH GROUND)
       expect(testEngine.asPlayerTwo().getDamage(opponentAttacker)).toBe(4);
+    });
+
+    it("regression: Resist reducing damage to 0 should not consume Lilo - Bundled Up damage prevention shield", () => {
+      // Bug: Tipo - Growing Son (1 STR) challenging Lilo - Bundled Up with Snow Fort's Resist +1
+      // would incorrectly consume Lilo's EXTRA LAYERS shield even though Resist already reduced
+      // damage to 0. A follow-up challenge from Hades - Infernal Schemer would then banish her.
+      // Expected: Resist +1 reduces 1 damage to 0, shield is NOT consumed (no damage to prevent).
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          // Player 1 has Snow Fort and Lilo - Bundled Up (exerted so she can be challenged)
+          play: [snowFort, { card: liloBundledUp, exerted: true }],
+          deck: 2,
+        },
+        {
+          // Player 2 has Tipo (1 STR) and a second stronger attacker
+          play: [
+            { card: tipoGrowingSon, isDrying: false },
+            { card: opponentAttacker, isDrying: false },
+          ],
+          deck: 2,
+        },
+      );
+
+      // Pass to opponent's turn — Snow Fort grants Resist +1 and Lilo's shield is active
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Tipo (1 STR) challenges Lilo — Resist +1 reduces damage to 0
+      expect(
+        testEngine.asPlayerTwo().challenge(tipoGrowingSon, liloBundledUp),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getDamage(liloBundledUp)).toBe(0);
+
+      // Second attacker (3 STR) challenges Lilo — shield should STILL be active since it
+      // was not consumed by the first 0-damage hit. Resist +1 reduces 3 to 2, shield prevents that 2.
+      expect(
+        testEngine.asPlayerTwo().challenge(opponentAttacker, liloBundledUp),
+      ).toBeSuccessfulCommand();
+      // Shield prevents the damage, so Lilo should still have 0 damage
+      expect(testEngine.asPlayerOne().getDamage(liloBundledUp)).toBe(0);
     });
 
     it("does not reduce challenge damage during your own turn", () => {

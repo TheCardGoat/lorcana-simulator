@@ -143,4 +143,37 @@ describe("Royal Guard - Octopus Soldier", () => {
       );
     });
   });
+
+  it("regression: HEAVILY ARMED should trigger on draws from abilities, not just from card effects", () => {
+    // Bug: Royal Guard was not gaining Challenger +1 on ability-added draw triggers.
+    // Any draw event should trigger HEAVILY ARMED, including draws from abilities.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: royalGuardOctopusSoldier, exerted: false, isDrying: false }],
+        hand: [friendsOnTheOtherSide],
+        inkwell: friendsOnTheOtherSide.cost,
+        deck: 5,
+      },
+      {
+        play: [{ card: opposingCharacter, exerted: true }],
+      },
+    );
+
+    // Friends on the Other Side draws 2 cards - should trigger HEAVILY ARMED twice
+    expect(testEngine.asPlayerOne().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
+
+    const bagEffects = testEngine.asPlayerOne().getBagEffects();
+    // Should have 2 bag effects (one for each card drawn)
+    expect(bagEffects.length).toBe(2);
+
+    for (const effect of bagEffects) {
+      testEngine.asPlayerOne().resolveBag(effect!.id);
+    }
+
+    // Should now have Challenger +2 (two draws = two triggers)
+    expect(testEngine.asPlayerOne().hasKeyword(royalGuardOctopusSoldier, "Challenger")).toBe(true);
+    expect(testEngine.asPlayerOne().getKeywordValue(royalGuardOctopusSoldier, "Challenger")).toBe(
+      2,
+    );
+  });
 });

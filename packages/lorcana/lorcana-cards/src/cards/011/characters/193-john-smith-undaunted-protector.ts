@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { johnSmithUndauntedProtectorI18n } from "./193-john-smith-undaunted-protector.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const johnSmithUndauntedProtector: CharacterCard = {
   id: "h1O",
@@ -33,12 +34,7 @@ export const johnSmithUndauntedProtector: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero"],
   abilities: [
-    {
-      id: "h1O-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       id: "h1O-2",
       type: "static",

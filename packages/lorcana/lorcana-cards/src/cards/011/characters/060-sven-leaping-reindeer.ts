@@ -1,5 +1,8 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { svenLeapingReindeerI18n } from "./060-sven-leaping-reindeer.i18n";
+import { rush } from "../../../helpers/abilities/rush";
+import { challenger } from "../../../helpers/abilities/challenger";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const svenLeapingReindeer: CharacterCard = {
   id: "JOj",
@@ -34,26 +37,6 @@ export const svenLeapingReindeer: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally"],
-  abilities: [
-    {
-      id: "1kr-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-    {
-      id: "1kr-2",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 3,
-      text: "Challenger +3",
-    },
-    {
-      id: "1kr-3",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [rush, challenger(3), evasive],
   i18n: svenLeapingReindeerI18n,
 };

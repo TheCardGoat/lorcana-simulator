@@ -61,30 +61,27 @@ export const instituteOfTechnologyPrestigiousUniversity: LocationCard = {
       type: "static",
     },
     {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          filters: [
+            {
+              type: "same-location-as-source",
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            filters: [
-              {
-                type: "same-location-as-source",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          amount: 1,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 1,
+        type: "gain-lore",
       },
       id: "5mi-2",
       name: "PUSH THE BOUNDARIES",

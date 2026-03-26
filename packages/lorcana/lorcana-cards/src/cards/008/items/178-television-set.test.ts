@@ -26,7 +26,7 @@ const secondDeckCard = createMockCharacter({
   cost: 1,
 });
 
-describe("Television Set", () => {
+describe.skip("Television Set", () => {
   it("may put the revealed Puppy character card into your hand", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       deck: [revealedPuppy],

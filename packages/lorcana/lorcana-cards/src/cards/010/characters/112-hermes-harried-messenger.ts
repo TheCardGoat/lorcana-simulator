@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rush } from "../../../helpers/abilities/rush";
 import { hermesHarriedMessengerI18n } from "./112-hermes-harried-messenger.i18n";
 
 export const hermesHarriedMessenger: CharacterCard = {
@@ -24,13 +25,6 @@ export const hermesHarriedMessenger: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Deity"],
-  abilities: [
-    {
-      id: "17j-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: hermesHarriedMessengerI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { flotsamUrsulasSpyI18n } from "./043-flotsam-ursulas-spy.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const flotsamUrsulasSpy: CharacterCard = {
   id: "BDi",
@@ -25,12 +26,7 @@ export const flotsamUrsulasSpy: CharacterCard = {
   text: "Rush DEXTEROUS LUNGE Your characters named Jetsam gain Rush.",
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "4d0-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       effect: {
         keyword: "Rush",

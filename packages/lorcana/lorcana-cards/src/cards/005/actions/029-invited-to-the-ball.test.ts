@@ -49,8 +49,8 @@ describe("Invited to the Ball", () => {
     ).toBe(true);
 
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
-      tinkerBellPeterPansAlly.id,
       healingGlow.id,
+      tinkerBellPeterPansAlly.id,
     ]);
   });
 });

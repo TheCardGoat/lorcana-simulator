@@ -58,6 +58,5 @@ export const mrsJudsonHousekeeper: CharacterCard = {
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: mrsJudsonHousekeeperI18n,
 };

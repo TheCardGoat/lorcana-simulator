@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { squeaksCozyCaterpillarI18n } from "./080-squeaks-cozy-caterpillar.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const squeaksCozyCaterpillar: CharacterCard = {
   id: "5ok",
@@ -24,13 +25,6 @@ export const squeaksCozyCaterpillar: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn"],
-  abilities: [
-    {
-      id: "18n-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: squeaksCozyCaterpillarI18n,
 };

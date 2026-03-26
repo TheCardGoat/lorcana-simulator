@@ -1,77 +1,106 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   AkelaForestRunner,
-//   DiabloWatchfulRaven,
-//   ShereKhanFearsomeTiger,
-// } from "@lorcanito/lorcana-engine/cards/010";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Shere Khan - Fearsome Tiger", () => {
-//   It("Evasive (Only characters with Evasive can challenge this character.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [shereKhanFearsomeTiger],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(shereKhanFearsomeTiger);
-//     Expect(cardUnderTest.hasEvasive).toBe(true);
-//   });
-//
-//   It("ON THE HUNT Whenever this character quests, banish chosen opposing damaged character. Then, you may put 1 damage counter on another chosen character.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [shereKhanFearsomeTiger],
-//       },
-//       {
-//         Play: [akelaForestRunner, diabloWatchfulRaven],
-//       },
-//     );
-//
-//     Await testEngine.setCardDamage(akelaForestRunner, 1);
-//     Await testEngine.questCard(shereKhanFearsomeTiger);
-//
-//     Expect(testEngine.stackLayers.length).toBe(1);
-//
-//     // First resolve banish effect
-//     Await testEngine.resolveTopOfStack({ targets: [akelaForestRunner] }, true);
-//     Expect(testEngine.getCardModel(akelaForestRunner).zone).toBe("discard");
-//
-//     Expect(testEngine.stackLayers.length).toBe(1);
-//
-//     // Then resolve put damage effect (optional layer needs to be accepted first)
-//     Await testEngine.acceptOptionalAbility();
-//     Await testEngine.resolveTopOfStack({ targets: [diabloWatchfulRaven] });
-//     Expect(testEngine.getCardModel(diabloWatchfulRaven).damage).toBe(1);
-//
-//     Expect(testEngine.stackLayers.length).toBe(0);
-//   });
-//
-//   It("ON THE HUNT - Second effect should activate even if no opposing damaged characters to banish", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [shereKhanFearsomeTiger],
-//       },
-//       {
-//         Play: [akelaForestRunner, diabloWatchfulRaven],
-//       },
-//     );
-//
-//     Await testEngine.questCard(shereKhanFearsomeTiger);
-//
-//     Expect(testEngine.stackLayers.length).toBe(1);
-//
-//     // This is the case where we DO active the ability even when there's not damaged character
-//     // First effect (banish) auto-resolves since it's mandatory but has no valid targets
-//     // Second effect (put damage) should still be available
-//     Await testEngine.acceptOptionalAbility(); // Accept the put damage layer
-//     Await testEngine.resolveTopOfStack({ targets: [diabloWatchfulRaven] });
-//     Expect(testEngine.getCardModel(diabloWatchfulRaven).damage).toBe(1);
-//
-//     Expect(testEngine.stackLayers.length).toBe(0);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { shereKhanFearsomeTiger } from "./088-shere-khan-fearsome-tiger";
+
+const akelaForestRunner = createMockCharacter({
+  id: "sk-akela",
+  name: "Akela, Forest Runner",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+const diabloWatchfulRaven = createMockCharacter({
+  id: "sk-diablo",
+  name: "Diablo, Watchful Raven",
+  cost: 2,
+  strength: 1,
+  willpower: 2,
+  lore: 1,
+});
+
+describe("Shere Khan - Fearsome Tiger", () => {
+  describe("Evasive", () => {
+    it("has Evasive keyword", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [shereKhanFearsomeTiger],
+      });
+
+      expect(testEngine.asPlayerOne().hasKeyword(shereKhanFearsomeTiger, "Evasive")).toBe(true);
+    });
+  });
+
+  describe("ON THE HUNT - Whenever this character quests, banish chosen opposing damaged character. Then, you may put 1 damage counter on another chosen character.", () => {
+    it("banishes a chosen opposing damaged character and optionally puts 1 damage counter on another chosen character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: shereKhanFearsomeTiger, isDrying: false }],
+          deck: 2,
+        },
+        {
+          play: [{ card: akelaForestRunner, damage: 1 }, diabloWatchfulRaven],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().quest(shereKhanFearsomeTiger)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          targets: [akelaForestRunner],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(akelaForestRunner)).toBe("discard");
+
+      const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
+      if (pendingEffects.length > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveNextPending({
+            targets: [diabloWatchfulRaven],
+          }),
+        ).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.asPlayerOne().getDamage(diabloWatchfulRaven)).toBe(1);
+    });
+
+    it("second effect should activate even if no opposing damaged characters to banish", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: shereKhanFearsomeTiger, isDrying: false }],
+          deck: 2,
+        },
+        {
+          play: [akelaForestRunner, diabloWatchfulRaven],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().quest(shereKhanFearsomeTiger)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
+      if (pendingEffects.length > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveNextPending({
+            targets: [diabloWatchfulRaven],
+          }),
+        ).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.asPlayerOne().getDamage(diabloWatchfulRaven)).toBe(1);
+    });
+  });
+});

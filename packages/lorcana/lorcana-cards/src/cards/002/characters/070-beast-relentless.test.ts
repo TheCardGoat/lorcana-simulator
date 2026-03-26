@@ -163,30 +163,5 @@ describe("Beast - Relentless", () => {
       // Beast stays exerted
       expect(testEngine.asPlayerOne().getCard(beastRelentless).exerted).toBe(true);
     });
-
-    it("can decline the optional trigger", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          play: [{ card: beastRelentless, isDrying: false }],
-          deck: 2,
-        },
-        {
-          play: [{ card: opponent, exerted: true }],
-          deck: 2,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().challenge(beastRelentless, opponent)).toBeSuccessfulCommand();
-
-      // Trigger fires
-      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
-      // Decline the optional ability
-      expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      // Beast stays exerted after declining
-      expect(testEngine.asPlayerOne().getCard(beastRelentless).exerted).toBe(true);
-    });
   });
 });

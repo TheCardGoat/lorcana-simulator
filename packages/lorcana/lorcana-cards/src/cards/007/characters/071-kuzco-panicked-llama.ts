@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kuzcoPanickedLlamaI18n } from "./071-kuzco-panicked-llama.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const kuzcoPanickedLlama: CharacterCard = {
   id: "Zdf",
@@ -39,12 +40,7 @@ export const kuzcoPanickedLlama: CharacterCard = {
   ],
   classifications: ["Storyborn", "King"],
   abilities: [
-    {
-      id: "Zdf-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    evasive,
     {
       id: "Zdf-2",
       name: "WE CAN FIGURE THIS OUT",

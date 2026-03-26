@@ -43,9 +43,9 @@ describe("Ariel - Spectacular Singer", () => {
 
       expect(testEngine.asPlayerOne().getCardZone(testSong)).toBe("hand");
       expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
-        fillerB.id,
-        fillerA.id,
         fillerC.id,
+        fillerA.id,
+        fillerB.id,
       ]);
     });
   });

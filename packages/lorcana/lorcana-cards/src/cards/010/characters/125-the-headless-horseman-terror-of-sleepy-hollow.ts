@@ -18,8 +18,6 @@ export const theHeadlessHorsemanTerrorOfSleepyHollow: CharacterCard = {
   willpower: 2,
   lore: 2,
   inkable: false,
-  missingImplementation: true,
-  missingTests: true,
   externalIds: {
     lorcast: "crd_c2a0cc56159841db921d13a52589d13a",
     tcgPlayer: 660012,
@@ -65,6 +63,34 @@ export const theHeadlessHorsemanTerrorOfSleepyHollow: CharacterCard = {
         },
       },
       text: "LEAVES NO TRACE When you play this character, banish chosen opposing character with 2 {S} or less.",
+    },
+    {
+      id: "1xw-2",
+      name: "GATHERING STRENGTH",
+      type: "triggered",
+      trigger: {
+        event: "banish",
+        events: ["banish-in-challenge"],
+        on: {
+          controller: "opponent",
+          cardType: "character",
+        },
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
+      },
+      effect: {
+        type: "modify-stat",
+        stat: "strength",
+        modifier: 1,
+        duration: "this-turn",
+        target: "YOUR_CHARACTERS",
+      },
+      text: "GATHERING STRENGTH During your turn, whenever an opposing character is banished, each of your characters gets +1 {S} this turn.",
     },
   ],
   i18n: theHeadlessHorsemanTerrorOfSleepyHollowI18n,

@@ -81,4 +81,28 @@ describe("Powerline - World's Greatest Rock Star", () => {
       qualifyingSong.id,
     );
   });
+
+  it("regression: free song from MASH-UP resolves correctly (does not get stuck)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [singableSong],
+      inkwell: singableSong.cost,
+      deck: [qualifyingSong, deckFillerA, deckFillerB, deckFillerC],
+      play: [{ card: powerlineWorldsGreatestRockStar, isDrying: false }],
+    });
+
+    expect(
+      testEngine.asPlayerOne().singSong(singableSong, powerlineWorldsGreatestRockStar),
+    ).toBeSuccessfulCommand();
+
+    const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
+
+    const resolveResult = testEngine.asPlayerOne().resolveBag(bagId, {
+      destinations: [
+        { zone: "play", cards: [qualifyingSong] },
+        { zone: "deck-bottom", cards: [deckFillerA, deckFillerB, deckFillerC] },
+      ],
+    });
+
+    expect(resolveResult).toBeSuccessfulCommand();
+  });
 });

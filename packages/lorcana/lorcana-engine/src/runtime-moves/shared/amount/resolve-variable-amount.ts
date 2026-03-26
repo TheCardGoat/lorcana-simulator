@@ -307,7 +307,13 @@ function resolveTargetAttribute(
 
 function resolveSourceAttribute(
   context: VariableAmountResolutionContext,
-  attribute: "strength" | "lore" | "damage" | "chars-at-location" | "cards-under-them",
+  attribute:
+    | "strength"
+    | "lore"
+    | "damage"
+    | "chars-at-location"
+    | "cards-under-them"
+    | "location-lore",
 ): number {
   const sourceId = context.sourceId;
   if (!sourceId) {
@@ -323,6 +329,12 @@ function resolveSourceAttribute(
       return getCardDamage(context, sourceId);
     case "cards-under-them":
       return getCardsUnderCount(context, sourceId);
+    case "location-lore": {
+      const locationId = context.ctx.cards.require(sourceId).meta?.atLocationId as
+        | CardInstanceId
+        | undefined;
+      return locationId ? getCardLoreValue(context, locationId) : 0;
+    }
     case "chars-at-location": {
       const sourceDef = context.ctx.cards.getDefinition(sourceId) as
         | { cardType?: string }

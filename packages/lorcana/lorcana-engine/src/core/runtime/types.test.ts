@@ -106,6 +106,7 @@ describe("Runtime Types", () => {
           incrementMs: 0,
           delayMs: 0,
           graceMs: 0,
+          resetTimeOnSkipMs: 60_000,
           lossPolicy: "lose-on-time",
         },
       };
@@ -181,6 +182,7 @@ describe("Runtime Types", () => {
             incrementMs: 0,
             delayMs: 0,
             graceMs: 0,
+            resetTimeOnSkipMs: 60_000,
             lossPolicy: "lose-on-time",
           },
         },
@@ -225,6 +227,7 @@ describe("Runtime Types", () => {
             incrementMs: 0,
             delayMs: 0,
             graceMs: 0,
+            resetTimeOnSkipMs: 60_000,
             lossPolicy: "lose-on-time",
           },
         },

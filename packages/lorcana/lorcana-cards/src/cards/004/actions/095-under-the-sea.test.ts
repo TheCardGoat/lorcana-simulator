@@ -10,6 +10,18 @@ import {
 import { underTheSea } from "./095-under-the-sea";
 
 describe("Under the Sea", () => {
+  it("has the Sing Together keyword ability authored explicitly", () => {
+    expect(underTheSea.abilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          keyword: "SingTogether",
+          type: "keyword",
+          value: 8,
+        }),
+      ]),
+    );
+  });
+
   it("puts opposing characters with 2 strength or less on the bottom of their deck in the chosen order", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {

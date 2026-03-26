@@ -65,6 +65,7 @@ export type LorcanaEngineInit = {
   cardCatalog: CardCatalog;
   players: Player[];
   cardsMaps: LorcanaCardsMaps;
+  timeControl?: import("#core").TimeControlConfig;
 };
 
 export class LorcanaServer extends LorcanaEngineBase {
@@ -75,7 +76,10 @@ export class LorcanaServer extends LorcanaEngineBase {
     const staticResources = this.getResolvedStaticResources();
 
     const serverEngineConfig: ServerEngineConfig = {
-      runtimeConfig: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      runtimeConfig: {
+        ...(lorcanaRuntimeConfig as unknown as MatchRuntimeConfig),
+        timeControl: init.timeControl,
+      },
       players: init.players,
       seed: init.seed,
       staticResources: staticResources,
@@ -95,6 +99,10 @@ export class LorcanaServer extends LorcanaEngineBase {
 
   getConnectedPlayerIds(): string[] {
     return this.engine.getConnectedPlayerIds();
+  }
+
+  onStateUpdate(handler: (stateID: number) => void): () => void {
+    return this.engine.onStateUpdate(handler);
   }
 
   getRuntime() {

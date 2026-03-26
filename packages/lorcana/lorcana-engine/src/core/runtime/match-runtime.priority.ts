@@ -3,7 +3,12 @@
  */
 
 import { produce } from "immer";
-import type { GameEvent, MatchState } from "./types";
+import type {
+  ChessClockPlayerState,
+  DynamicClockPlayerState,
+  GameEvent,
+  MatchState,
+} from "./types";
 import { expireReveals } from "./zone-operations";
 
 export interface PriorityPassContext {
@@ -38,16 +43,23 @@ export function executePriorityPass(
           playerState.lastUpdatedAtMs = timestamp;
 
           if (time.mode === "chess") {
-            playerState.reserveMsRemaining = Math.max(
-              0,
-              playerState.reserveMsRemaining - elapsedMs,
-            );
+            // Allow going negative for two-strike timeout
+            playerState.reserveMsRemaining -= elapsedMs;
+            if (playerState.reserveMsRemaining <= 0) {
+              (playerState as ChessClockPlayerState).isInNegativeTime = true;
+            }
           } else if (time.mode === "priority" && time.activeWindow) {
             const overageMs = Math.max(0, timestamp - time.activeWindow.deadlineMs);
             playerState.reserveMsRemaining = Math.max(
               0,
               playerState.reserveMsRemaining - overageMs,
             );
+          } else if (time.mode === "dynamic") {
+            // Allow going negative for two-strike timeout
+            playerState.reserveMsRemaining -= elapsedMs;
+            if (playerState.reserveMsRemaining <= 0) {
+              (playerState as DynamicClockPlayerState).isInNegativeTime = true;
+            }
           }
         }
       }
@@ -66,6 +78,17 @@ export function executePriorityPass(
       if (playerState) {
         playerState.moveBonusMsGranted += draft.ctx.time.config.perMoveBonusMs;
         playerState.reserveMsRemaining += draft.ctx.time.config.perMoveBonusMs;
+      }
+    }
+
+    // Award per-action bonus in dynamic clock mode (priority pass counts as an action)
+    if (draft.ctx.time.mode === "dynamic") {
+      const playerState = draft.ctx.time.players[playerId];
+      if (playerState) {
+        const bonusMs = draft.ctx.time.config.perActionBonusMs;
+        const cap = draft.ctx.time.config.reserveCapMs;
+        playerState.actionBonusMsGranted += bonusMs;
+        playerState.reserveMsRemaining = Math.min(cap, playerState.reserveMsRemaining + bonusMs);
       }
     }
 

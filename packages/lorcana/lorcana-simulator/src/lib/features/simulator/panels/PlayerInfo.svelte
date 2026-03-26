@@ -1,6 +1,7 @@
 <script lang="ts">
 import type {
 	LorcanaPlayerSide,
+	LorcanaPlayerTimerSummary,
 	LorcanaTableSeat,
 } from "@/features/simulator/model/contracts.js";
 import { m } from "$lib/i18n/messages.js";
@@ -15,6 +16,7 @@ import {
 	PaintBucket,
 } from "@lucide/svelte";
 import type { Snippet } from "svelte";
+import PlayerTimer from "./PlayerTimer.svelte";
 
 interface PlayerInfoProps {
 	name: string;
@@ -32,6 +34,8 @@ interface PlayerInfoProps {
 	onSettingsClick?: () => void;
 	showSupport?: boolean;
 	onSupportClick?: () => void;
+	/** Timer state for this player. Omit if untimed. */
+	timer?: LorcanaPlayerTimerSummary;
 	children?: Snippet;
 }
 
@@ -51,6 +55,7 @@ let {
 	onSettingsClick,
 	showSupport = false,
 	onSupportClick,
+	timer,
 	children,
 }: PlayerInfoProps = $props();
 
@@ -138,6 +143,16 @@ function handleSupportClick() {
               aria-hidden="true"
       ></span>
     </div>
+    {#if timer}
+      <PlayerTimer
+        reserveMsRemaining={timer.reserveMsRemaining}
+        isActive={timer.isActive}
+        isRunning={timer.isRunning}
+        startedAtMs={timer.startedAtMs}
+        timeoutCount={timer.timeoutCount}
+        isInNegativeTime={timer.isInNegativeTime}
+      />
+    {/if}
     <div class="player-identity">
       <div class="player-details">
         <span class="player-name">{name}</span>

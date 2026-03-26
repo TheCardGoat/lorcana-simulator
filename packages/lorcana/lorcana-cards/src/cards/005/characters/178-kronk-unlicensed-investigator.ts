@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kronkUnlicensedInvestigatorI18n } from "./178-kronk-unlicensed-investigator.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const kronkUnlicensedInvestigator: CharacterCard = {
   id: "D2Y",
@@ -24,14 +25,6 @@ export const kronkUnlicensedInvestigator: CharacterCard = {
   },
   text: "Challenger +1",
   classifications: ["Dreamborn", "Ally"],
-  abilities: [
-    {
-      id: "kit-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 1,
-      text: "Challenger +1",
-    },
-  ],
+  abilities: [challenger(1)],
   i18n: kronkUnlicensedInvestigatorI18n,
 };

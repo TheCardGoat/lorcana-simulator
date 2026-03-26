@@ -1,4 +1,9 @@
 import type { LorcanaProjectedBoardView } from "@tcg/lorcana-engine";
+import type {
+  BrowserTransportConfig,
+  BrowserTransportLatencyModel,
+  BrowserTransportMode,
+} from "@tcg/lorcana-engine/testing";
 import type { SimulatorDebugAnimationRequest } from "@/features/simulator/animations/board-move-animations";
 import type { LorcanaSimulatorView, LorcanaZoneId } from "@/features/simulator/model/contracts.js";
 import { LORCANA_SIMULATOR_FIXTURES } from "@/features/simulator-devtools/fixtures";
@@ -12,6 +17,11 @@ export type CanonicalPlayerId = typeof PLAYER_ONE | typeof PLAYER_TWO;
 export const LORCANA_HARNESS_DEFAULT_FIXTURE = LORCANA_SIMULATOR_FIXTURES[fullBoardAllCardTypes.id];
 export const LORCANA_HARNESS_DEFAULT_FIXTURE_ID = LORCANA_HARNESS_DEFAULT_FIXTURE.id;
 export const LORCANA_HARNESS_DEFAULT_VIEW: LorcanaSimulatorView = "playerOne";
+export const LORCANA_HARNESS_DEFAULT_BROWSER_TRANSPORT: BrowserTransportConfig = {
+  mode: "async",
+  latencyMs: 0,
+  latencyModel: "one-way",
+};
 
 export interface LorcanaBrowserStatus {
   stateID: number;
@@ -33,6 +43,9 @@ export interface LorcanaBrowserHarnessExecuteResult {
 
 export interface LorcanaBrowserHarnessConfig {
   fixtureId: string;
+  latencyModel?: BrowserTransportLatencyModel;
+  latencyMs?: number;
+  transport: BrowserTransportMode;
   view: LorcanaSimulatorView;
 }
 

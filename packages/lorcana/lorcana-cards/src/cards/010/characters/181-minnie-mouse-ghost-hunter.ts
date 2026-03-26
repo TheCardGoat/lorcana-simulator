@@ -34,7 +34,19 @@ export const minnieMouseGhostHunter: CharacterCard = {
       effect: {
         duration: "this-turn",
         keyword: "Alert",
-        target: "CHOSEN_CHARACTER",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Detective",
+            },
+          ],
+        },
         type: "gain-keyword",
       },
       id: "oy7-1",

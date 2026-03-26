@@ -18,6 +18,18 @@ const action2 = createMockAction({
   cost: 1,
 });
 
+const action3 = createMockAction({
+  id: "lilo-uproar-action-3",
+  name: "Action 3",
+  cost: 1,
+});
+
+const action4 = createMockAction({
+  id: "lilo-uproar-action-4",
+  name: "Action 4",
+  cost: 1,
+});
+
 const exertedCharacter = createMockCharacter({
   id: "lilo-uproar-exerted-char",
   name: "Exerted Character",
@@ -29,9 +41,36 @@ const exertedCharacter = createMockCharacter({
 
 describe("Lilo - Causing an Uproar", () => {
   describe("STOMPIN' TIME! - During your turn, if you've played 3 or more actions this turn, you may play this character for free.", () => {
-    it.todo("can be played for free after playing 3 actions this turn - requires static cost-reduction ability with turn-metric condition", () => {});
+    it("can be played for free after playing 3 actions this turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [liloCausingAnUproar, action1, action2, action3],
+        inkwell: 3,
+        deck: 2,
+      });
 
-    it.todo("can be played for free after playing 4 or more actions this turn - requires static cost-reduction ability with turn-metric condition", () => {});
+      expect(testEngine.asPlayerOne().playCard(action1)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().playCard(action2)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().playCard(action3)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().canPlayCard(liloCausingAnUproar)).toBe(true);
+      expect(testEngine.asPlayerOne().playCard(liloCausingAnUproar)).toBeSuccessfulCommand();
+    });
+
+    it("can be played for free after playing 4 or more actions this turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [liloCausingAnUproar, action1, action2, action3, action4],
+        inkwell: 4,
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(action1)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().playCard(action2)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().playCard(action3)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().playCard(action4)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().canPlayCard(liloCausingAnUproar)).toBe(true);
+      expect(testEngine.asPlayerOne().playCard(liloCausingAnUproar)).toBeSuccessfulCommand();
+    });
 
     it("cannot be played for free with only 2 actions played this turn (no ink)", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
@@ -60,10 +99,73 @@ describe("Lilo - Causing an Uproar", () => {
   });
 
   describe("RAAAWR! - When you play this character, ready chosen character. They can't quest for the rest of this turn.", () => {
-    it.todo("readies chosen exerted character and applies cant-quest restriction - requires triggered ability with optional ready + restriction sequence targeting chosen character", () => {});
+    it("readies chosen exerted character and applies cant-quest restriction", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [liloCausingAnUproar],
+        inkwell: liloCausingAnUproar.cost,
+        play: [{ card: exertedCharacter, exerted: true, isDrying: false }],
+        deck: 2,
+      });
 
-    it.todo("cant-quest restriction expires after the turn ends - requires triggered ability with optional ready + restriction sequence targeting chosen character", () => {});
+      expect(testEngine.asPlayerOne().playCard(liloCausingAnUproar)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          targets: [exertedCharacter],
+        }),
+      ).toBeSuccessfulCommand();
 
-    it.todo("can target a ready character (ready effect is redundant but restriction still applies) - requires triggered ability with optional ready + restriction sequence targeting chosen character", () => {});
+      expect(testEngine.asPlayerOne().isExerted(exertedCharacter)).toBe(false);
+      expect(testEngine.hasRestriction(exertedCharacter, "cant-quest")).toBe(true);
+    });
+
+    it("cant-quest restriction expires after the turn ends", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [liloCausingAnUproar],
+        inkwell: liloCausingAnUproar.cost,
+        play: [{ card: exertedCharacter, exerted: true, isDrying: false }],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(liloCausingAnUproar)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          targets: [exertedCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.hasRestriction(exertedCharacter, "cant-quest")).toBe(true);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.hasRestriction(exertedCharacter, "cant-quest")).toBe(false);
+    });
+
+    it("can target a ready character and still applies cant-quest", () => {
+      const readyCharacter = createMockCharacter({
+        id: "lilo-uproar-ready-char",
+        name: "Ready Character",
+        cost: 2,
+        strength: 3,
+        willpower: 3,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [liloCausingAnUproar],
+        inkwell: liloCausingAnUproar.cost,
+        play: [{ card: readyCharacter, isDrying: false }],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(liloCausingAnUproar)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          targets: [readyCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().isExerted(readyCharacter)).toBe(false);
+      expect(testEngine.hasRestriction(readyCharacter, "cant-quest")).toBe(true);
+    });
   });
 });

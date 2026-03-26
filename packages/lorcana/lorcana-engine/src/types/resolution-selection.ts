@@ -1,5 +1,10 @@
 import type { CardInstanceId, PlayerId } from "#core";
-import type { LorcanaTargetDSL } from "@tcg/lorcana-types";
+import type {
+  AmountExpr,
+  CardFilter,
+  LorcanaTargetDSL,
+  ScryCardOrdering,
+} from "@tcg/lorcana-types";
 
 export type ResolutionSelectionZone = "deck" | "hand" | "play" | "discard" | "inkwell" | "limbo";
 
@@ -23,6 +28,15 @@ export type ResolutionSelectionSubmitField =
 export type ResolutionSelectionDestination = {
   zone: string;
   cards: CardInstanceId[];
+};
+
+export type ResolutionSelectionRevealedCard = {
+  cardId: CardInstanceId;
+  label: string;
+  cardType?: "character" | "action" | "item" | "location";
+  actionSubtype?: string;
+  cost?: number;
+  classifications?: string[];
 };
 
 export type ResolutionSelectionCurrentSelection = Partial<{
@@ -55,6 +69,19 @@ export type ResolutionSelectionDestinationRule = {
   min: number;
   max: number | null;
   remainder: boolean;
+  label?: string;
+  filters?: readonly CardFilter[];
+  playFilters?: readonly CardFilter[];
+  ordering?: ScryCardOrdering;
+  reveal?: boolean;
+  exclusiveGroup?: string;
+  cost?: "free" | "reduced";
+  reducedBy?: AmountExpr;
+  entersExerted?: boolean;
+  grantsRush?: boolean;
+  banishAtEndOfTurn?: boolean;
+  exerted?: boolean;
+  facedown?: boolean;
 };
 
 export type TargetResolutionSelectionContext = ResolutionSelectionContextBase & {
@@ -67,6 +94,7 @@ export type TargetResolutionSelectionContext = ResolutionSelectionContextBase & 
   minSelections: number;
   maxSelections: number;
   ordered: boolean;
+  autoRejected: boolean;
 };
 
 export type ChoiceResolutionSelectionContext = ResolutionSelectionContextBase & {
@@ -93,6 +121,7 @@ export type ScryResolutionSelectionContext = ResolutionSelectionContextBase & {
   submitField: "destinations";
   amount: number;
   revealedCardIds: CardInstanceId[];
+  revealedCards: ResolutionSelectionRevealedCard[];
   destinationRules: ResolutionSelectionDestinationRule[];
 };
 

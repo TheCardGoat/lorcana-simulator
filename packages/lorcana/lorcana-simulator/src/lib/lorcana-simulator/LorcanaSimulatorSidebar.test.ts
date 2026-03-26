@@ -25,47 +25,33 @@ describe("EventLogPanel", () => {
       inkType: ["sapphire"],
     });
 
-    const entry = createLogEntry("legacy fallback", {
+    const entry = createLogEntry("inked card", {
       actorSide: "playerOne",
       moveId: "putCardIntoInkwell",
-      rawLogRegistry: {
-        move: {
-          moveId: "putCardIntoInkwell",
-          params: { cardId: inkedCard.cardId },
+      typedLogEntry: {
+        type: "lorcana.card.inked",
+        values: {
           playerId: "player_one",
-          timestamp: 123,
+          cardId: inkedCard.cardId,
         },
-        matchingMoveLogEntry: {
-          sourceEventSeqs: [1],
-          defaultMessage: {
-            key: "move.executed",
-            values: {
-              move: "putCardIntoInkwell",
-              playerId: "player_one",
-            },
-          },
-        },
-        relatedLogEntries: [
-          {
-            sourceEventSeqs: [1],
-            defaultMessage: {
-              key: "lorcana.card.inked",
-              values: {
-                playerId: "player_one",
-                cardId: inkedCard.cardId,
-              },
-            },
-          },
-        ],
-        cardReferences: [inkedCard],
-      },
+        visibility: { mode: "PUBLIC" },
+        category: "action",
+      } as import("@tcg/lorcana-engine").LorcanaGameLogEntry,
+      playerId: "player_one",
+      params: { cardId: inkedCard.cardId },
       turnNumber: 2,
     });
+
+    const resolveCard = (cardId: string) => {
+      if (cardId === inkedCard.cardId) return inkedCard;
+      return null;
+    };
 
     const { body } = render(EventLogPanel, {
       props: {
         entries: [entry],
         viewerSide: "playerOne",
+        resolveCard,
       },
     });
 
@@ -79,16 +65,8 @@ describe("EventLogPanel", () => {
   it("renders raw log payloads when debug mode is enabled", () => {
     const entry = createLogEntry("Played Stitch", {
       moveId: "playCard",
-      detail: "Used 3 ink.",
-      rawLogRegistry: {
-        move: {
-          moveId: "playCard",
-          params: { cardId: "card-1" },
-          playerId: "player_one",
-          timestamp: 123,
-        },
-        relatedLogEntries: [],
-      },
+      playerId: "player_one",
+      params: { cardId: "card-1" },
       turnNumber: 3,
     });
 

@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { judyHoppsSnowballPatrolI18n } from "./194-judy-hopps-snowball-patrol.i18n";
+import { underdog } from "../../../helpers/abilities/underdog";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const judyHoppsSnowballPatrol: CharacterCard = {
   id: "1pX",
@@ -33,29 +35,6 @@ export const judyHoppsSnowballPatrol: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Detective"],
-  abilities: [
-    {
-      id: "fpk-1",
-      name: "UNDERDOG",
-      type: "static",
-      condition: {
-        type: "first-turn-non-otp",
-      },
-      effect: {
-        type: "cost-reduction",
-        amount: 1,
-        cardType: "character",
-      },
-      sourceZones: ["hand"],
-      text: "UNDERDOG If this is your first turn and you’re not the first player, you pay 1 {I} less to play this character.",
-    },
-    {
-      id: "fpk-2",
-      keyword: "Resist",
-      type: "keyword",
-      value: 1,
-      text: "Resist +1",
-    },
-  ],
+  abilities: [underdog, resist(1)],
   i18n: judyHoppsSnowballPatrolI18n,
 };

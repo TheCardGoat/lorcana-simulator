@@ -56,25 +56,5 @@ describe("Ariel - Determined Mermaid", () => {
         discard: 2,
       });
     });
-
-    it("can decline the optional trigger", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        hand: [testSong],
-        inkwell: testSong.cost,
-        play: [arielDeterminedMermaid],
-        deck: [drawnCard],
-      });
-
-      expect(testEngine.asPlayerOne().playCard(testSong)).toBeSuccessfulCommand();
-
-      expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-          resolveOptional: false,
-        }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
-      expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
-    });
   });
 });

@@ -31,26 +31,23 @@ export const motherGothelUnderhandedSchemer: CharacterCard = {
   classifications: ["Storyborn", "Villain", "Sorcerer"],
   abilities: [
     {
+      condition: {
+        type: "turn-metric",
+        metric: "banished-characters",
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
-        condition: {
-          type: "turn-metric",
-          metric: "banished-characters",
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          modifier: 2,
-          stat: "strength",
-          target: "SELF",
-          type: "modify-stat",
-        },
-        type: "conditional",
+        modifier: 2,
+        stat: "strength",
+        target: "SELF",
+        type: "modify-stat",
       },
       id: "1au-1",
       text: "SOMEBODY'S GOT TO USE IT If a character was banished this turn, this character gets +2 {S}.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: motherGothelUnderhandedSchemerI18n,

@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tamatoaSeekerOfShineI18n } from "./156-tamatoa-seeker-of-shine.i18n";
+import { boost } from "../../../helpers/abilities/boost";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const tamatoaSeekerOfShine: CharacterCard = {
   id: "lED",
@@ -37,19 +39,8 @@ export const tamatoaSeekerOfShine: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Whisper"],
   abilities: [
-    {
-      id: "v4g-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 2,
-      text: "Boost 2 {I}",
-    },
-    {
-      id: "v4g-2",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
+    boost(2),
+    ward,
     {
       id: "v4g-3",
       effect: {

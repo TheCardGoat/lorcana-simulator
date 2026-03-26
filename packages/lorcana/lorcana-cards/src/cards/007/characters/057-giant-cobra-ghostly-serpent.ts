@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { giantCobraGhostlySerpentI18n } from "./057-giant-cobra-ghostly-serpent.i18n";
+import { vanish } from "../../../helpers/abilities/vanish";
 
 export const giantCobraGhostlySerpent: CharacterCard = {
   id: "FdJ",
@@ -35,12 +36,7 @@ export const giantCobraGhostlySerpent: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Ally", "Illusion"],
   abilities: [
-    {
-      id: "1bh-1",
-      keyword: "Vanish",
-      text: "Vanish",
-      type: "keyword",
-    },
+    vanish,
     {
       effect: {
         chooser: "CONTROLLER",

@@ -12,6 +12,24 @@ import { getSideForOwnerId, getZoneCardIds } from "@/features/simulator/model/co
 
 export type CardSnapshotMap = Record<string, LorcanaCardSnapshot>;
 
+interface AuthoritativeCardStateView {
+  ctx: {
+    zones: {
+      private: {
+        cardIndex: Record<
+          string,
+          {
+            zoneKey: string;
+            ownerID: string;
+            controllerID: string;
+          }
+        >;
+        cardMeta: Record<string, Record<string, unknown>>;
+      };
+    };
+  };
+}
+
 type LocalizedCardTextSource = string | Array<{ title: string; description?: string }>;
 
 function flattenCardText(text?: LocalizedCardTextSource): string | undefined {
@@ -66,6 +84,7 @@ function mergeTextEntries(
 }
 
 function buildGrantSources(
+  cardId: string,
   projectedCard: {
     grantedAbilityTextEntries?: Array<{
       title: string;
@@ -84,7 +103,10 @@ function buildGrantSources(
 ): LorcanaCardSnapshot["grantSources"] {
   const grantedEntries = projectedCard.grantedAbilityTextEntries ?? [];
   const keywordSources = projectedCard.keywordGrantSources ?? [];
-  const statSources = projectedCard.statModifierSources ?? [];
+  // Filter out self-referential stat modifiers (e.g. Boost is self-applied, not a grant from another card)
+  const statSources = (projectedCard.statModifierSources ?? []).filter(
+    (s) => s.sourceId !== cardId,
+  );
   if (grantedEntries.length === 0 && keywordSources.length === 0 && statSources.length === 0) {
     return undefined;
   }
@@ -93,6 +115,7 @@ function buildGrantSources(
 
   for (const entry of grantedEntries) {
     if (!entry.sourceId) continue;
+    if (entry.sourceId === cardId) continue; // filter self-grants (e.g. Boost keyword)
     const existing = bySource.get(entry.sourceId);
     if (existing) {
       existing.grants.push(entry.title);
@@ -192,6 +215,137 @@ function normalizeRarity(
   }
 }
 
+function normalizeZoneId(zoneKey: string | undefined): LorcanaZoneId {
+  const baseZone = zoneKey?.split(":", 1)[0];
+  switch (baseZone) {
+    case "deck":
+    case "hand":
+    case "play":
+    case "inkwell":
+    case "discard":
+    case "limbo":
+      return baseZone;
+    default:
+      return "deck";
+  }
+}
+
+function getReadyState(
+  meta: Record<string, unknown> | undefined,
+): LorcanaCardSnapshot["readyState"] {
+  const state = meta?.state;
+  return state === "ready" || state === "exerted" ? state : "unknown";
+}
+
+function buildSupplementalCardSnapshot(args: {
+  board: LorcanaProjectedBoardView;
+  staticResources: MatchStaticResources;
+  authoritativeState: AuthoritativeCardStateView;
+  cardId: string;
+}): LorcanaCardSnapshot | null {
+  const { board, staticResources, authoritativeState, cardId } = args;
+  const definition = getCardDefinition(staticResources, cardId);
+  const indexEntry = authoritativeState.ctx.zones.private.cardIndex[cardId];
+  const meta = authoritativeState.ctx.zones.private.cardMeta[cardId];
+  if (!definition || !indexEntry) {
+    return null;
+  }
+
+  const ownerId = indexEntry.ownerID;
+  const ownerSide = getSideForOwnerId(board, ownerId) ?? "playerOne";
+  const zoneId = normalizeZoneId(indexEntry.zoneKey);
+  const cardText = definition.text as LocalizedCardTextSource | undefined;
+
+  return {
+    cardId,
+    definitionId: definition.id ?? staticResources.instances.get(cardId)?.definitionId ?? cardId,
+    isMasked: false,
+    label: getCardDisplayName(undefined, definition) ?? cardId,
+    ownerId,
+    ownerSide,
+    zoneId,
+    cardType: definition.cardType,
+    actionSubtype:
+      definition.cardType === "action" ? (definition.actionSubtype ?? undefined) : undefined,
+    cost: definition.cost,
+    inkType: definition.inkType,
+    inkable: definition.inkable,
+    text: flattenCardText(cardText),
+    textEntries: projectCardTextEntries(cardText),
+    strength: definition.cardType === "character" ? definition.strength : undefined,
+    baseStrength: definition.cardType === "character" ? definition.strength : undefined,
+    willpower:
+      definition.cardType === "character" || definition.cardType === "location"
+        ? definition.willpower
+        : undefined,
+    baseWillpower:
+      definition.cardType === "character" || definition.cardType === "location"
+        ? definition.willpower
+        : undefined,
+    loreValue:
+      definition.cardType === "character" || definition.cardType === "location"
+        ? "lore" in definition
+          ? definition.lore
+          : undefined
+        : undefined,
+    baseLoreValue:
+      definition.cardType === "character" || definition.cardType === "location"
+        ? "lore" in definition
+          ? definition.lore
+          : undefined
+        : undefined,
+    moveCost: definition.cardType === "location" ? definition.moveCost : undefined,
+    classifications: definition.cardType === "character" ? definition.classifications : undefined,
+    keywords: [],
+    damage: typeof meta?.damage === "number" ? meta.damage : 0,
+    readyState: getReadyState(meta),
+    isDrying: meta?.isDrying === true,
+    facePresentation: "faceUp",
+    set: definition.set,
+    cardNumber: definition.cardNumber,
+    rarity: normalizeRarity(definition.rarity),
+  };
+}
+
+export function mergeSupplementalScryCardSnapshots(args: {
+  board: LorcanaProjectedBoardView;
+  staticResources: MatchStaticResources;
+  authoritativeState: AuthoritativeCardStateView;
+  snapshots: CardSnapshotMap;
+}): CardSnapshotMap {
+  const { board, staticResources, authoritativeState, snapshots } = args;
+  const nextSnapshots: CardSnapshotMap = { ...snapshots };
+  const revealedCardIds = new Set<string>();
+
+  for (const effect of [...board.pendingEffects, ...board.bagEffects]) {
+    if (effect.selectionContext?.kind !== "scry-selection") {
+      continue;
+    }
+
+    for (const cardId of effect.selectionContext.revealedCardIds) {
+      revealedCardIds.add(cardId);
+    }
+  }
+
+  for (const cardId of revealedCardIds) {
+    if (nextSnapshots[cardId]) {
+      continue;
+    }
+
+    const snapshot = buildSupplementalCardSnapshot({
+      board,
+      staticResources,
+      authoritativeState,
+      cardId,
+    });
+    if (snapshot) {
+      nextSnapshots[cardId] = snapshot;
+    }
+  }
+
+  return nextSnapshots;
+}
+
 function getCardDefinition(
   staticResources: MatchStaticResources,
   cardId: string,
@@ -250,7 +404,10 @@ export function buildCardSnapshotMap(
           : undefined,
       cardNumber: definition?.cardNumber,
       cardType: definition?.cardType,
+      actionSubtype:
+        definition?.cardType === "action" ? (definition.actionSubtype ?? undefined) : undefined,
       cardsUnderCount: projectedCard.cardsUnder?.length ?? 0,
+      playedViaShift: projectedCard.playedViaShift === true ? true : undefined,
       classifications:
         definition?.cardType === "character" ? definition.classifications : undefined,
       cost: definition?.cost,
@@ -284,7 +441,7 @@ export function buildCardSnapshotMap(
       set: definition?.set,
       strength: definition?.cardType === "character" ? projectedCard.strength : undefined,
       temporaryRestrictions: projectedCard.temporaryRestrictions,
-      grantSources: buildGrantSources(projectedCard, staticResources),
+      grantSources: buildGrantSources(cardId, projectedCard, staticResources),
       text: flattenCardText(cardText),
       textEntries: mergeTextEntries(
         projectCardTextEntries(cardText),

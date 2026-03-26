@@ -2,9 +2,11 @@ import type { DrawEffect } from "@tcg/lorcana-types";
 import type { CardInstanceId, PlayerId } from "#core";
 import type { CardPlayedPayload } from "../../../types/index";
 import type { PlayCardExecutionContext } from "./types";
+import type { ActionResolutionInput } from "./types";
 import { resolveCurrentTurnPlayerId } from "../../../targeting/runtime";
 import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
 import { recordCardDrawnThisTurn } from "../../state/turn-metrics";
+import { markLastEffectPerformed } from "./event-snapshot-utils";
 
 type ResolvedDrawEffectInput = {
   drawAmount?: number;
@@ -71,6 +73,7 @@ export function resolveDrawEffect(
   cardPlayed: CardPlayedPayload,
   effect: DrawEffect,
   resolvedInput: ResolvedDrawEffectInput,
+  eventSnapshot?: { lastEffectPerformed?: boolean },
 ): void {
   const drawAmount =
     typeof resolvedInput.drawAmount === "number" &&
@@ -79,6 +82,7 @@ export function resolveDrawEffect(
       ? resolvedInput.drawAmount
       : undefined;
   if (!drawAmount) {
+    markLastEffectPerformed(eventSnapshot, false);
     return;
   }
 
@@ -89,6 +93,7 @@ export function resolveDrawEffect(
     resolvedInput.selectedPlayerIds,
     resolvedInput.selectedTargets,
   );
+  let totalDrawn = 0;
   for (const playerId of targetPlayerIds) {
     const drawnCards = ctx.framework.zones.drawCards({
       from: { zone: "deck", playerId },
@@ -96,6 +101,7 @@ export function resolveDrawEffect(
       count: drawAmount,
     });
     const drawnCardIds = Array.isArray(drawnCards) ? (drawnCards as CardInstanceId[]) : [];
+    totalDrawn += drawnCardIds.length;
 
     emitTriggeredLorcanaEvent(ctx, "cardsDrawn", {
       playerId,
@@ -117,9 +123,10 @@ export function resolveDrawEffect(
           event: "draw",
           playerId,
           subjectCardId: cardId,
-          triggerSourceCardId: cardId,
+          triggerSourceCardId: cardPlayed.cardId,
         },
       );
     });
   }
+  markLastEffectPerformed(eventSnapshot, totalDrawn > 0);
 }

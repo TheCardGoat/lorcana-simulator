@@ -10,15 +10,21 @@
   interface ActivePlayerGuidanceProps {
     items?: ActivePlayerGuidanceItem[];
     anchor?: GuidanceAnchor;
+    isBottomHandExpanded?: boolean;
+    isTopHandExpanded?: boolean;
     onToggleAnchor?: () => void;
   }
 
-  let { items = [], anchor = "bottom", onToggleAnchor }: ActivePlayerGuidanceProps = $props();
+  let { items = [], anchor = "bottom", isBottomHandExpanded = false, isTopHandExpanded = false, onToggleAnchor }: ActivePlayerGuidanceProps = $props();
 
   const handTargetable = $derived(items.some((item) => item.mode === "pregame"));
   const isTopAnchor = $derived(anchor === "top");
   const toggleLabel = $derived(isTopAnchor ? "Bottom" : "Top");
   const toggleTitle = $derived(isTopAnchor ? "Move guidance to bottom" : "Move guidance to top");
+  const needsHandClearance = $derived(
+    (anchor === "bottom" && isBottomHandExpanded) ||
+    (anchor === "top" && isTopHandExpanded),
+  );
 </script>
 
 {#if items.length > 0}
@@ -26,8 +32,8 @@
     class="guidance-anchor"
     class:guidance-anchor--top={anchor === "top"}
     class:guidance-anchor--bottom={anchor === "bottom"}
-    class:guidance-anchor--hand-target-bottom={handTargetable && anchor === "bottom"}
-    class:guidance-anchor--hand-target-top={handTargetable && anchor === "top"}
+    class:guidance-anchor--hand-target-bottom={(handTargetable || needsHandClearance) && anchor === "bottom"}
+    class:guidance-anchor--hand-target-top={(handTargetable || needsHandClearance) && anchor === "top"}
   >
     <div class="guidance-stack" role="region" aria-label={m["sim.guidance.aria"]({})}>
 
@@ -37,7 +43,7 @@
           {#if index === 0}
             <button
               type="button"
-              class="guidance-toggle absolute top-0 right-0 -translate-y-1/2"
+              class="guidance-toggle absolute top-0 left-0 -translate-y-1/2"
               class:guidance-toggle--top={isTopAnchor}
               onclick={onToggleAnchor}
               aria-label={toggleTitle}

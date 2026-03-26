@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { lumiereFiredUpI18n } from "./139-lumiere-fired-up.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const lumiereFiredUp: CharacterCard = {
   id: "Q3Y",
@@ -36,21 +38,8 @@ export const lumiereFiredUp: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally"],
   abilities: [
-    {
-      id: "139-1",
-      cost: {
-        ink: 3,
-      },
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 3",
-    },
-    {
-      id: "139-2",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    shift(3),
+    evasive,
     {
       id: "139-3",
       name: "SACREBLEU!",

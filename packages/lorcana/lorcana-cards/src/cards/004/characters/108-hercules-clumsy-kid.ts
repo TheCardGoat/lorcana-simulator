@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { herculesClumsyKidI18n } from "./108-hercules-clumsy-kid.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const herculesClumsyKid: CharacterCard = {
   id: "6ct",
@@ -24,13 +25,6 @@ export const herculesClumsyKid: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Hero", "Prince"],
-  abilities: [
-    {
-      id: "1l5-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: herculesClumsyKidI18n,
 };

@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { thePrinceNeverGivesUpI18n } from "./195-the-prince-never-gives-up.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const thePrinceNeverGivesUp: CharacterCard = {
   id: "jp9",
@@ -31,20 +33,6 @@ export const thePrinceNeverGivesUp: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Prince"],
-  abilities: [
-    {
-      id: "14d-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-    {
-      id: "14d-2",
-      keyword: "Resist",
-      text: "Resist +1",
-      type: "keyword",
-      value: 1,
-    },
-  ],
+  abilities: [bodyguard, resist(1)],
   i18n: thePrinceNeverGivesUpI18n,
 };

@@ -11,7 +11,7 @@ import type { LorcanaCardDerived } from "../../../types/projected-board";
 
 type LorcanaRuntimeCard = RuntimeCardWithDefinition & LorcanaCardDerived;
 import { type LorcanaMoveDefinition } from "../../../types";
-import { createLorcanaLogMessage } from "../../../types";
+import { createLorcanaLogProjection } from "../../../types";
 import { INKWELL_CANDIDATE_QUERY_DSL, canInkThisTurn } from "../../state/runtime-card-derived";
 import {
   EFFECT_PENDING_ERROR_CODE,
@@ -22,6 +22,7 @@ import {
   flushTriggeredEventsToBag,
   hasPendingBagItems,
 } from "../../effects/triggered-abilities";
+import { recordCardPutIntoInkwellThisTurn } from "../../state/turn-metrics";
 
 function buildTurnActionInkState(ctx: {
   G: {
@@ -120,16 +121,20 @@ export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
     ctx.framework.zones.moveCard(cardId, inkwellZoneRef);
     ctx.cards.patchMeta(cardId, { state: "ready", publicFaceState: "faceDown" });
     ctx.framework.zones.reveal([cardId], "all", { stateID: revealUntilStateID });
-    ctx.framework.log({
-      category: "action",
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: createLorcanaLogMessage("lorcana.card.inked", {
-        playerId: ownerId,
-        cardId: cardId as CardInstanceId,
-      }),
-    });
+    ctx.framework.log(
+      createLorcanaLogProjection(
+        "lorcana.card.inked",
+        {
+          playerId: ownerId,
+          cardId: cardId as CardInstanceId,
+        },
+        { mode: "PUBLIC" },
+        "action",
+      ),
+    );
 
     G.turnMetadata.inkedThisTurn.push(cardId as CardInstanceId);
+    recordCardPutIntoInkwellThisTurn(ctx, cardId as CardInstanceId);
 
     emitTriggeredLorcanaEvent(
       ctx,

@@ -32,19 +32,16 @@ export const chacaJuniorChipmunk: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "has-named-character",
+        name: "Tipo",
+        controller: "you",
+      },
       effect: {
-        condition: {
-          type: "has-named-character",
-          name: "Tipo",
-          controller: "you",
-        },
-        then: {
-          keyword: "Reckless",
-          duration: "their-next-turn",
-          target: "CHOSEN_OPPOSING_CHARACTER",
-          type: "gain-keyword",
-        },
-        type: "conditional",
+        keyword: "Reckless",
+        duration: "their-next-turn",
+        target: "CHOSEN_OPPOSING_CHARACTER",
+        type: "gain-keyword",
       },
       id: "mhv-1",
       name: "IN CAHOOTS",

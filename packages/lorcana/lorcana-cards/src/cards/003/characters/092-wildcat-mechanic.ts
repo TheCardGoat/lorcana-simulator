@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { wildcatMechanicI18n } from "./092-wildcat-mechanic.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const wildcatMechanic: CharacterCard = {
   id: "m0B",
@@ -33,12 +34,7 @@ export const wildcatMechanic: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "m0B-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    evasive,
     {
       id: "m0B-2",
       name: "DISASSEMBLE",

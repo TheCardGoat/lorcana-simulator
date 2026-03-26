@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { aladdinVigilantGuardI18n } from "./170-aladdin-vigilant-guard.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const aladdinVigilantGuard: CharacterCard = {
   id: "728",
@@ -34,12 +35,7 @@ export const aladdinVigilantGuard: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Prince"],
   abilities: [
-    {
-      id: "fh8-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         chooser: "CONTROLLER",

@@ -41,13 +41,13 @@ describe("Jafar - Lamp Thief", () => {
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
-          destinations: [{ zone: "deck-bottom", cards: [secondDeckCard, topDeckCard] }],
+          destinations: [{ zone: "deck-bottom", cards: [bottomDeckCard, secondDeckCard] }],
         }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
-        bottomDeckCard.id,
         secondDeckCard.id,
+        bottomDeckCard.id,
         topDeckCard.id,
       ]);
     });

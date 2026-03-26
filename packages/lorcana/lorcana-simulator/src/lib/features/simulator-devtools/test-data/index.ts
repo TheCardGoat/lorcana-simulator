@@ -6,6 +6,7 @@ export {
   createCardSnapshot,
   createCharacterCard,
   createActionCard,
+  createLogCardReference,
   createHand,
   createBoardCharacters,
   createInkwell,

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mickeyMouseLeaderOfTheBandI18n } from "./015-mickey-mouse-leader-of-the-band.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const mickeyMouseLeaderOfTheBand: CharacterCard = {
   id: "HGH",
@@ -32,12 +33,7 @@ export const mickeyMouseLeaderOfTheBand: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "1ow-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         duration: "this-turn",

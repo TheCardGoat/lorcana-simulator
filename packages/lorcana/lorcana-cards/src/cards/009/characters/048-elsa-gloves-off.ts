@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { elsaGlovesOffI18n } from "./048-elsa-gloves-off.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const elsaGlovesOff: CharacterCard = {
   id: "Cbk",
@@ -24,14 +25,6 @@ export const elsaGlovesOff: CharacterCard = {
   },
   text: "Challenger +3 (While challenging, this character gets +3 {S})",
   classifications: ["Storyborn", "Hero", "Queen", "Sorcerer"],
-  abilities: [
-    {
-      id: "77o-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 3,
-      text: "Challenger +3",
-    },
-  ],
+  abilities: [challenger(3)],
   i18n: elsaGlovesOffI18n,
 };

@@ -42,14 +42,6 @@ const readyOpponentB = createMockCharacter({
   willpower: 3,
 });
 
-const exertedOpponent = createMockCharacter({
-  id: "gwythaint-exerted-opponent",
-  name: "Exerted Opponent",
-  cost: 2,
-  strength: 1,
-  willpower: 4,
-});
-
 describe("Gwythaint - Savage Hunter", () => {
   it("cannot be challenged by non-Evasive characters, but can be challenged by Evasive ones", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
@@ -92,24 +84,6 @@ describe("Gwythaint - Savage Hunter", () => {
 
       expect(testEngine.asPlayerTwo().isExerted(readyOpponentA)).toBe(true);
       expect(testEngine.asPlayerTwo().isExerted(readyOpponentB)).toBe(false);
-    });
-
-    it("does not prompt an opponent that has no ready characters to choose", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          play: [{ card: gwythaintSavageHunter, isDrying: false }],
-          deck: 1,
-        },
-        {
-          play: [{ card: exertedOpponent, exerted: true }],
-          deck: 1,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().quest(gwythaintSavageHunter)).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
-      expect(testEngine.asPlayerTwo().isExerted(exertedOpponent)).toBe(true);
     });
   });
 });

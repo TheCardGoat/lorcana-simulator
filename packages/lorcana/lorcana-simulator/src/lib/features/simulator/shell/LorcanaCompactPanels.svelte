@@ -35,6 +35,26 @@
   const showRawLogRegistryJson = $derived(sidebar.showRawLogRegistryJson);
   const hoveredLogCard = $derived(sidebar.hoveredLogCard);
   const availableMovesSelectionState = $derived(sidebar.availableMovesSelectionState);
+
+  const resolveCard = $derived((cardId: string) => {
+    const snapshot = sidebar.cardSnapshotsById[cardId];
+    if (!snapshot) return null;
+    return {
+      cardId: snapshot.cardId,
+      definitionId: snapshot.definitionId,
+      label: snapshot.label,
+      inkType: snapshot.inkType,
+      inkable: snapshot.inkable,
+      isMasked: snapshot.isMasked,
+      ownerSide: snapshot.ownerSide,
+      cardType: snapshot.cardType,
+      set: snapshot.set,
+      cardNumber: snapshot.cardNumber,
+    };
+  });
+  const compactSelectionState = $derived(
+    availableMovesSelectionState?.mode === "resolution-scry" ? null : availableMovesSelectionState,
+  );
   const canConcede = $derived(!readOnly && sidebar.canConcede);
 
   const availableMovesTitle = $derived(m["sim.actions.panel.title"]({}));
@@ -43,7 +63,29 @@
   let concedeDialogOpen = $state(false);
 
   $effect(() => {
-    simulatorCardContext.setExternalPreviewCard(hoveredLogCard);
+    if (!hoveredLogCard) {
+      simulatorCardContext.setExternalPreviewCard(null);
+      return;
+    }
+    const boardCard = sidebar.cardSnapshotsById[hoveredLogCard.cardId] ?? null;
+    if (boardCard) {
+      simulatorCardContext.setExternalPreviewCard(boardCard);
+      return;
+    }
+    simulatorCardContext.setExternalPreviewCard({
+      cardId: hoveredLogCard.cardId,
+      definitionId: hoveredLogCard.definitionId,
+      label: hoveredLogCard.label,
+      ownerId: "",
+      ownerSide: hoveredLogCard.ownerSide,
+      zoneId: "play",
+      isMasked: hoveredLogCard.isMasked,
+      facePresentation: hoveredLogCard.isMasked ? "faceDown" : "faceUp",
+      inkType: hoveredLogCard.inkType,
+      cardType: hoveredLogCard.cardType,
+      set: hoveredLogCard.set,
+      cardNumber: hoveredLogCard.cardNumber,
+    });
   });
 
   async function openConcedeDialog(): Promise<void> {
@@ -144,7 +186,7 @@
             summaries={moveCategorySummaries}
             onExpandCategory={sidebar.expandCategoryMoves}
             supplementalActions={sidebar.resolutionActions}
-            selectionState={availableMovesSelectionState}
+            selectionState={compactSelectionState}
             interactiveSide={ownerSide}
             activeSide={activeSide ?? undefined}
             {showRawLogRegistryJson}
@@ -166,6 +208,7 @@
             onConfirmSelection={sidebar.confirmActionSelection}
             onResetManualMoveSelection={sidebar.cancelManualCardActionSelection}
             onExecuteMove={sidebar.handleAvailableMoveClick}
+            hotkeyMode={sidebar.hotkeyMode}
           />
         {/if}
       {:else}
@@ -173,6 +216,7 @@
           compact
           entries={moveLogEntries}
           viewerSide={ownerSide}
+          {resolveCard}
           {showRawLogRegistryJson}
           onCardHover={sidebar.handleLogCardHover}
           onCardLeave={sidebar.handleLogCardLeave}
@@ -215,7 +259,7 @@
 
 <style>
   :global(.compact-panels-sheet) {
-    max-height: min(62vh, 32rem);
+    max-height: min(62dvh, 32rem);
     border-top-left-radius: 1rem;
     border-top-right-radius: 1rem;
     padding: 0;
@@ -306,7 +350,7 @@
 
   .compact-panels-body {
     min-height: 0;
-    max-height: calc(min(62vh, 32rem) - 5.6rem);
+    max-height: calc(min(62dvh, 32rem) - 5.6rem);
     padding: 0 0.9rem calc(0.8rem + env(safe-area-inset-bottom));
     overflow-y: auto;
   }
@@ -359,11 +403,11 @@
 
   @media (max-width: 767px) {
     :global(.compact-panels-sheet) {
-      max-height: min(64vh, 34rem);
+      max-height: min(64dvh, 34rem);
     }
 
     .compact-panels-body {
-      max-height: calc(min(64vh, 34rem) - 5.6rem);
+      max-height: calc(min(64dvh, 34rem) - 5.6rem);
     }
   }
 </style>

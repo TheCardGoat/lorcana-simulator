@@ -16,6 +16,7 @@ import { normalizeLorcanaTarget } from "@tcg/lorcana-types/targeting";
 import type { CardPlayedPayload, LorcanaG } from "../../types";
 import type { DynamicAmountEventSnapshot } from "../../types/domain-events";
 import { cardHasName, hasKeyword } from "../../card-utils";
+import { compareOperator } from "../../rules/operator-utils";
 import {
   createProjectionState,
   getEffectiveLore,
@@ -49,6 +50,7 @@ export type TargetDescriptor = FilterCarrier & {
   cardType?: string;
   reference?: string;
   excludeSelf?: boolean;
+  excludeTriggerSubject?: boolean;
   requireDifferentTargets?: boolean;
 };
 
@@ -90,36 +92,6 @@ type EffectTargetRuntimeContext =
   | EffectTargetValidationContext
   | EffectTargetEnumerationContext
   | EffectTargetExecutionContext;
-
-function compareNumbers(left: number, operator: string, right: number): boolean {
-  switch (operator) {
-    case "equal":
-    case "eq":
-      return left === right;
-    case "not-equal":
-    case "ne":
-      return left !== right;
-    case "greater":
-    case "greater-than":
-    case "gt":
-    case "more-than":
-      return left > right;
-    case "greater-or-equal":
-    case "gte":
-    case "or-more":
-      return left >= right;
-    case "less":
-    case "less-than":
-    case "lt":
-      return left < right;
-    case "less-or-equal":
-    case "lte":
-    case "or-less":
-      return left <= right;
-    default:
-      return false;
-  }
-}
 
 function normalizeFilterOperator(filter: FilterRecord, fallback = "equal"): string {
   return String(filter.comparison ?? filter.operator ?? filter.op ?? fallback);
@@ -425,7 +397,9 @@ function resolveReferenceCandidates(
   cardPlayed: CardPlayedPayload | undefined,
   descriptor: TargetDescriptor,
   queryContext: QueryResolutionContext | undefined,
-  G?: { challengeState?: { attacker?: CardInstanceId; defender?: CardInstanceId } },
+  G?: {
+    challengeState?: { attacker?: CardInstanceId; defender?: CardInstanceId };
+  },
 ): CardInstanceId[] {
   const reference = descriptor.reference;
   if (!reference) {
@@ -474,6 +448,7 @@ function resolveReferenceCandidates(
           ? [G.challengeState.defender]
           : [];
     case "previous-target":
+      return selectedTargets.length > 0 ? [selectedTargets[selectedTargets.length - 1]!] : [];
     case "selected-first":
       return selectedTargets.length > 0 ? [selectedTargets[0]!] : [];
     case "selected-all":
@@ -634,7 +609,12 @@ export function passesFilter(
       }
       if (typeof filter.contains === "string") {
         const cardName = typeof cardDefinition?.name === "string" ? cardDefinition.name : "";
-        return cardName.includes(filter.contains);
+        const normalizedCardName = cardName.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+        const normalizedContains = filter.contains
+          .normalize("NFD")
+          .replace(/\p{M}/gu, "")
+          .toLowerCase();
+        return normalizedCardName.includes(normalizedContains);
       }
       return true;
     }
@@ -670,7 +650,7 @@ export function passesFilter(
         return false;
       }
       const cost = Number(cardDefinition?.cost ?? 0);
-      return compareNumbers(cost, operator, value);
+      return compareOperator(cost, operator, value);
     }
 
     case "strength":
@@ -713,7 +693,7 @@ export function passesFilter(
         cardId,
         (id) => ctx.cards.getDefinition(id) as any,
       );
-      return compareNumbers(strength, operator, value);
+      return compareOperator(strength, operator, value);
     }
 
     case "willpower":
@@ -732,7 +712,7 @@ export function passesFilter(
       const runtimeCard = ctx.cards.require(cardId) as { getWillpower?: () => number } | undefined;
       const runtimeWillpower = runtimeCard?.getWillpower?.();
       const willpower = Number(runtimeWillpower ?? cardDefinition?.willpower ?? 0);
-      return compareNumbers(willpower, operator, value);
+      return compareOperator(willpower, operator, value);
     }
 
     case "lore":
@@ -755,7 +735,7 @@ export function passesFilter(
         cardId,
         (id) => ctx.cards.getDefinition(id) as any,
       );
-      return compareNumbers(loreValue, operator, value);
+      return compareOperator(loreValue, operator, value);
     }
 
     case "zone": {
@@ -819,7 +799,7 @@ export function passesFilter(
       const value = normalizeFilterValue(filter, 1);
       const cardsUnder = ctx.cards.require(cardId).meta?.cardsUnder;
       const count = Array.isArray(cardsUnder) ? cardsUnder.length : 0;
-      return compareNumbers(count, operator, value);
+      return compareOperator(count, operator, value);
     }
 
     case "under-parent": {
@@ -885,7 +865,7 @@ export function passesFilter(
         const attrValue = Number(
           (cardDefinition as Record<string, unknown> | undefined)?.[attribute] ?? 0,
         );
-        return compareNumbers(attrValue, operator, value);
+        return compareOperator(attrValue, operator, value);
       }
       // String attributes
       if (attribute === "name" || attribute === "title") {
@@ -901,6 +881,23 @@ export function passesFilter(
           return attrValue.includes(expectedStr);
         }
         return false;
+      }
+      return !strictUnknownFilters;
+    }
+
+    case "source": {
+      const ref = String(filter.ref ?? "");
+      if (ref === "other") {
+        return !sourceCardId || cardId !== sourceCardId;
+      }
+      if (ref === "self") {
+        return !!sourceCardId && cardId === sourceCardId;
+      }
+      if (ref === "trigger-source") {
+        const triggerSource = options?.eventSnapshot?.triggerSourceCardId as
+          | CardInstanceId
+          | undefined;
+        return !!triggerSource && cardId === triggerSource;
       }
       return !strictUnknownFilters;
     }
@@ -984,7 +981,7 @@ function passesPlayerFilter(
       const operator = normalizeFilterOperator(filter);
       const value = normalizeFilterValue(filter);
       const lore = Number(ctx.G?.lore?.[playerId] ?? 0);
-      return compareNumbers(lore, operator, value);
+      return compareOperator(lore, operator, value);
     }
 
     case "current-turn-player": {
@@ -1065,6 +1062,13 @@ function resolveCandidateTargetsInternal(
         candidates.add(cardId);
       }
     }
+  } else if (descriptor.selector === "self" && !descriptor.zones?.length) {
+    // When targeting SELF without explicit zone constraints, the source card may be in any zone
+    // (e.g., already in discard after being banished). Add it directly, bypassing zone filtering.
+    const selfCardId = queryContext?.sourceCardId ?? cardPlayed?.cardId;
+    if (selfCardId && ctx.framework.zones.getCardZone(selfCardId) !== undefined) {
+      candidates.add(selfCardId);
+    }
   } else {
     for (const zone of zones) {
       for (const playerId of ownerPlayerIds) {
@@ -1092,9 +1096,23 @@ function resolveCandidateTargetsInternal(
   if (cardTypeFilters.length > 0 && !hasWildcardCardType) {
     resolvedCandidates = resolvedCandidates.filter((cardId) => {
       const definition = getCardDefinition(ctx, cardId);
-      return Boolean(
-        typeof definition?.cardType === "string" && cardTypeFilters.includes(definition.cardType),
-      );
+      if (typeof definition?.cardType !== "string") {
+        return false;
+      }
+      for (const expectedType of cardTypeFilters) {
+        // "song" is an action subtype, not a standalone card type
+        if (
+          expectedType === "song" &&
+          definition.cardType === "action" &&
+          (definition as { actionSubtype?: string }).actionSubtype === "song"
+        ) {
+          return true;
+        }
+        if (definition.cardType === expectedType) {
+          return true;
+        }
+      }
+      return false;
     });
   }
 
@@ -1148,6 +1166,18 @@ function resolveCandidateTargetsInternal(
     resolvedCandidates = resolvedCandidates.filter(
       (cardId) => cardId !== queryContext.sourceCardId,
     );
+  }
+
+  if (descriptor.excludeTriggerSubject) {
+    const eventSnapshot = queryContext?.eventSnapshot;
+    // For deal-damage events in a challenge, exclude the defender (the card that was damaged).
+    // For other events, exclude the subjectCardId.
+    const subjectId = (eventSnapshot?.defenderId ?? eventSnapshot?.subjectCardId) as
+      | CardInstanceId
+      | undefined;
+    if (subjectId) {
+      resolvedCandidates = resolvedCandidates.filter((cardId) => cardId !== subjectId);
+    }
   }
 
   if (queryContext?.extraPredicate) {

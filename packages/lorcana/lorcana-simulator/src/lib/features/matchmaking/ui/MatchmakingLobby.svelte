@@ -40,6 +40,11 @@
   import { createAutomatedMatchSeed } from '@/features/simulator-devtools/ai-match/config.js';
   import { LiveMatchesStore } from '@/features/matchmaking/state/live-matches.svelte.js';
   import LiveMatchesTable from './LiveMatchesTable.svelte';
+  import { MatchmakingQueueStore } from '@/features/matchmaking/state/matchmaking-queue.svelte.js';
+  import Timer from '@lucide/svelte/icons/timer';
+  import CheckCircle from '@lucide/svelte/icons/check-circle-2';
+  import AlertCircle from '@lucide/svelte/icons/alert-circle';
+  import X from '@lucide/svelte/icons/x';
 
   const MATCHMAKING_QUEUES = [
     // {
@@ -211,18 +216,48 @@
 
   const GATEWAY_WS_URL = getGatewayWsUrl();
 
-  let gateway = $state(new GatewayClientStore(GATEWAY_WS_URL));
+  const queueStore = new MatchmakingQueueStore();
+
+  function handleGatewayMessage(msg: { type: string; [key: string]: unknown }): void {
+    if (msg.type === 'match_found') {
+      const m = msg as unknown as { matchId: string; gameId: string; opponentDisplayName?: string; format: string; mode: string };
+      queueStore.handleMatchFound(m);
+    } else if (msg.type === 'matchmaking_status') {
+      const m = msg as unknown as { queued: boolean; queuedAt?: number; expiresAt?: number; position?: number };
+      queueStore.handleStatusUpdate(m);
+    } else if (msg.type === 'matchmaking_cancelled') {
+      queueStore.handleCancelled((msg.reason as 'timeout' | 'manual') ?? 'manual');
+    }
+  }
+
+  /** After the socket is OPEN, sync queue UI from the server (reconnect-safe). */
+  function requestMatchmakingPollIfQueued(): void {
+    if (queueStore.status === 'queued') {
+      gateway.send({ type: 'matchmaking_poll' });
+    }
+  }
+
+  let gateway = $state(
+    new GatewayClientStore(GATEWAY_WS_URL, undefined, handleGatewayMessage, requestMatchmakingPollIfQueued),
+  );
 
   onMount(async () => {
     // Check for existing session first
     await authSession.fetchSession();
 
-    // If authenticated, fetch a ticket before connecting
+    // If authenticated, fetch a ticket before connecting and check queue status
     if (authSession.isAuthenticated) {
       const ticket = await fetchGatewayTicket();
       if (ticket) {
-        gateway = new GatewayClientStore(GATEWAY_WS_URL, ticket);
+        gateway = new GatewayClientStore(
+          GATEWAY_WS_URL,
+          ticket,
+          handleGatewayMessage,
+          requestMatchmakingPollIfQueued,
+        );
       }
+      // Check if already in queue (rejoin detection)
+      await queueStore.checkStatus();
     }
 
     gateway.connect();
@@ -232,11 +267,17 @@
   onDestroy(() => {
     gateway.destroy();
     liveMatchesStore.destroy();
+    queueStore.destroy();
   });
 
   function reconnectGatewayAnonymous(): void {
     gateway.destroy();
-    gateway = new GatewayClientStore(GATEWAY_WS_URL);
+    gateway = new GatewayClientStore(
+      GATEWAY_WS_URL,
+      undefined,
+      handleGatewayMessage,
+      requestMatchmakingPollIfQueued,
+    );
     gateway.connect();
   }
 
@@ -262,6 +303,51 @@
 
   let practiceLoading = $state(false);
   let practiceError = $state<string | null>(null);
+
+  // Matchmaking queue state
+  let selectedQueueFormat = $state<'infinity' | 'cc-ROF'>('infinity');
+  let selectedQueueMode = $state<'1' | '3'>('3');
+
+  function formatQueueTimeElapsed(): string {
+    if (!queueStore.queuedAt) return '0:00';
+    const elapsedMs = Date.now() - queueStore.queuedAt;
+    const totalSecs = Math.floor(elapsedMs / 1000);
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
+    return `${mins}:${String(secs).padStart(2, '0')}`;
+  }
+
+  function formatQueueTimeRemaining(): string {
+    const totalSecs = Math.floor(queueStore.timeRemainingMs / 1000);
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
+    return `${mins}:${String(secs).padStart(2, '0')}`;
+  }
+
+  async function handleJoinQueue(): Promise<void> {
+    if (!authSession.isAuthenticated) {
+      openSignInDialog();
+      return;
+    }
+    if (!selectedDeck) {
+      return;
+    }
+    // Use gameProfileId from session user id as a placeholder until profiles are wired
+    const gameProfileId = authSession.user?.id ?? '';
+    await queueStore.join({
+      gameProfileId,
+      deckListId: selectedDeckId,
+      format: selectedQueueFormat,
+      mode: selectedQueueMode,
+    });
+    if (queueStore.status === 'queued') {
+      gateway.send({ type: 'matchmaking_poll' });
+    }
+  }
+
+  async function handleLeaveQueue(): Promise<void> {
+    await queueStore.leave();
+  }
 
   async function startPracticeMatch(): Promise<void> {
     if (!authSession.isAuthenticated) {
@@ -672,30 +758,130 @@
         <div class={LANE_SCROLL_CLASS}>
           <Card class={SURFACE_CARD_CLASS}>
             <CardHeader>
-              <p class={EYEBROW_CLASS}>
-                {m['sim.matchmaking.right.live.eyebrow']({})}
-              </p>
+              <p class={EYEBROW_CLASS}>{m['sim.matchmaking.queue.eyebrow']({})}</p>
               <CardTitle class="scroll-m-20 text-2xl tracking-tight">
-                {m['sim.matchmaking.right.live.title']({})}
+                {m['sim.matchmaking.queue.title']({})}
               </CardTitle>
             </CardHeader>
-            <CardContent class="space-y-3">
-              {#each MATCHMAKING_QUEUES as queue, index}
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between gap-3">
-                    <div class="space-y-1">
-                      <p class="font-medium">{getQueueLabel(queue.id)}</p>
-                      <p class="text-muted-foreground text-xs">
-                        {getQueueMode(queue.id)}
+            <CardContent class="space-y-4">
+
+              {#if queueStore.status === 'blocked'}
+                <!-- Active match guard -->
+                <div
+                  class="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-6 text-amber-200"
+                  role="alert"
+                >
+                  <div class="flex items-start gap-2">
+                    <AlertCircle class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                    <div>
+                      <p class="font-semibold text-amber-100">{m['sim.matchmaking.queue.blocked.activeMatch']({})}</p>
+                      <p class="mt-1 text-amber-200/80">{queueStore.blockReason}</p>
+                    </div>
+                  </div>
+                </div>
+
+              {:else if queueStore.status === 'match_found'}
+                <!-- Match found overlay -->
+                <div class="flex flex-col items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center">
+                  <CheckCircle class="size-10 text-emerald-400" aria-hidden="true" />
+                  <p class="text-lg font-semibold text-emerald-100">{m['sim.matchmaking.queue.matchFound.title']({})}</p>
+                  <p class="text-sm text-emerald-200/80">{m['sim.matchmaking.queue.matchFound.subtitle']({})}</p>
+                </div>
+
+              {:else if queueStore.status === 'queued'}
+                <!-- Waiting in queue -->
+                <div class="rounded-xl border border-sky-400/20 bg-sky-400/8 p-4">
+                  <div class="flex items-center gap-3">
+                    <Loader class="size-5 shrink-0 animate-spin text-sky-300" aria-hidden="true" />
+                    <div class="min-w-0 flex-1">
+                      <p class="text-sm font-semibold text-sky-100">{m['sim.matchmaking.queue.searching']({})}</p>
+                      <p class="text-muted-foreground mt-0.5 text-xs">
+                        {selectedQueueFormat} · Best of {selectedQueueMode}
+                        {#if queueStore.position}
+                          · #{queueStore.position} in queue
+                        {/if}
                       </p>
                     </div>
-                    <Badge variant="secondary">{queue.livePlayers}</Badge>
                   </div>
-                  {#if index < MATCHMAKING_QUEUES.length - 1}
-                    <Separator />
-                  {/if}
+                  <div class="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
+                    <div class="flex items-center gap-1.5">
+                      <Timer class="size-3.5" aria-hidden="true" />
+                      <span aria-live="polite">{formatQueueTimeElapsed()} elapsed</span>
+                    </div>
+                    <span aria-live="polite">expires in {formatQueueTimeRemaining()}</span>
+                  </div>
+                  <!-- Progress bar showing time remaining -->
+                  <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      class="h-full rounded-full bg-sky-400/60 transition-all duration-1000"
+                      style="width: {Math.max(0, Math.min(100, Math.round((queueStore.timeRemainingMs / 300_000) * 100)))}%"
+                    ></div>
+                  </div>
                 </div>
-              {/each}
+                <Button
+                  variant="outline"
+                  class="h-10 w-full border-white/10 bg-transparent text-slate-200 hover:bg-white/5 hover:text-white"
+                  onclick={handleLeaveQueue}
+                >
+                  <X class="mr-2 size-4" />
+                  {m['sim.matchmaking.queue.cancel']({})}
+                </Button>
+
+              {:else}
+                <!-- Idle — show join form -->
+                <div class="space-y-3">
+                  <div class="space-y-1.5">
+                    <label class={cn(EYEBROW_CLASS, 'block')} for="queue-format-select">{m['sim.matchmaking.queue.format.label']({})}</label>
+                    <Select
+                      id="queue-format-select"
+                      bind:value={selectedQueueFormat}
+                      class="border-white/10 bg-white/5"
+                    >
+                      <option value="infinity">{m['sim.matchmaking.queue.format.infinity']({})}</option>
+                      <option value="cc-ROF">{m['sim.matchmaking.queue.format.ccROF']({})}</option>
+                    </Select>
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class={cn(EYEBROW_CLASS, 'block')} for="queue-mode-select">{m['sim.matchmaking.queue.mode.label']({})}</label>
+                    <Select
+                      id="queue-mode-select"
+                      bind:value={selectedQueueMode}
+                      class="border-white/10 bg-white/5"
+                    >
+                      <option value="3">{m['sim.matchmaking.queue.mode.bo3']({})}</option>
+                      <option value="1">{m['sim.matchmaking.queue.mode.bo1']({})}</option>
+                    </Select>
+                  </div>
+                </div>
+
+                {#if queueStore.error}
+                  <div
+                    class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
+                    role="alert"
+                  >
+                    {queueStore.error}
+                  </div>
+                {/if}
+
+                <Button
+                  class="h-11 w-full text-base"
+                  disabled={!selectedDeck || queueStore.status === 'checking'}
+                  onclick={handleJoinQueue}
+                >
+                  {#if queueStore.status === 'checking'}
+                    <Loader class="mr-2 size-4 animate-spin" />
+                    Checking status…
+                  {:else if !authSession.isAuthenticated}
+                    <LogIn class="mr-2 size-4" />
+                    Sign in to join queue
+                  {:else if !selectedDeck}
+                    Select a deck first
+                  {:else}
+                    Find a Match
+                  {/if}
+                </Button>
+              {/if}
+
             </CardContent>
           </Card>
 

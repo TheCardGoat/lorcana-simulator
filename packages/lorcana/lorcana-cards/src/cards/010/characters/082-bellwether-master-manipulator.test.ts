@@ -152,6 +152,40 @@ describe("Bellwether - Master Manipulator", () => {
       expect(testEngine.asPlayerOne().getDamage(bystander)).toBe(1);
     });
 
+    it("regression: does NOT trigger when another character (not Bellwether) is challenged and banished", () => {
+      const allyChar = createMockCharacter({
+        id: "bellwether-ally-char",
+        name: "Bellwether Ally",
+        cost: 2,
+        strength: 2,
+        willpower: 2,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [attacker],
+          deck: 1,
+        },
+        {
+          play: [bellwetherMasterManipulator, { card: allyChar, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      // Player 1 challenges the ally, NOT Bellwether
+      expect(testEngine.asPlayerOne().challenge(attacker, allyChar)).toBeSuccessfulCommand();
+
+      // The ally is banished (2 wp, 3 str attacker)
+      expect(testEngine.asPlayerTwo().getCardZone(allyChar)).toBe("discard");
+
+      // Bellwether's VENDETTA should NOT trigger because she wasn't the one challenged and banished
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+
+      // No damage should be on any opposing characters from VENDETTA
+      expect(testEngine.asPlayerOne().getDamage(attacker)).toBe(2); // only combat damage from allyChar
+    });
+
     it("can banish opposing characters if damage exceeds their willpower", () => {
       const weakBystander = createMockCharacter({
         id: "bellwether-weak-bystander",

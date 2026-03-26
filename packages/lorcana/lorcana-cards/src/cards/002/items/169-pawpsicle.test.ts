@@ -89,5 +89,44 @@ describe("Pawpsicle", () => {
       expect(result).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getDamage(damagedCharacter)).toBe(2);
     });
+
+    it("regression: allows targeting undamaged characters (up to 2 means 0 is valid)", () => {
+      const undamagedCharacter = createMockCharacter({
+        id: "pawpsicle-undamaged-char",
+        name: "Undamaged Character",
+        cost: 2,
+        willpower: 5,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [pawpsicle, undamagedCharacter],
+      });
+
+      // Character has 0 damage - should still be a valid target for "up to 2"
+      const result = testEngine.asPlayerOne().activateAbility(pawpsicle, {
+        ability: "THAT'S REDWOOD",
+        targets: [undamagedCharacter],
+      });
+
+      expect(result).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(pawpsicle)).toBe("discard");
+      expect(testEngine.asPlayerOne().getDamage(undamagedCharacter)).toBe(0);
+    });
+
+    it("regression: removes only 1 damage when character has exactly 1 damage (not requiring exactly 2)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [pawpsicle, damagedCharacter],
+      });
+
+      testEngine.asServer().manualSetDamage(damagedCharacter, 1);
+
+      const result = testEngine.asPlayerOne().activateAbility(pawpsicle, {
+        ability: "THAT'S REDWOOD",
+        targets: [damagedCharacter],
+      });
+
+      expect(result).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getDamage(damagedCharacter)).toBe(0);
+    });
   });
 });

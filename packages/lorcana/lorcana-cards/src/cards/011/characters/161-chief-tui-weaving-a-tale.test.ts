@@ -38,7 +38,7 @@ describe("Chief Tui - Weaving a Tale", () => {
           resolveOptional: true,
           destinations: [
             { zone: "deck-top", cards: [] },
-            { zone: "deck-bottom", cards: [topCard] },
+            { zone: "deck-bottom", cards: [secondCard] },
           ],
         }),
       ).toBeSuccessfulCommand();

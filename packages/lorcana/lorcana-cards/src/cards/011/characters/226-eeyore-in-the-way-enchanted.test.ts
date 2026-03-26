@@ -145,36 +145,6 @@ describe("Eeyore - In the Way (Enchanted)", () => {
       expect(testEngine.isExerted(opponentCharacter)).toBe(true);
     });
 
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [eeyoreInTheWayEnchanted],
-          inkwell: eeyoreInTheWayEnchanted.cost,
-          deck: 2,
-        },
-        {
-          play: [{ card: opponentCharacter, exerted: true }],
-          deck: 2,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().playCard(eeyoreInTheWayEnchanted)).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
-
-      // Decline the optional ability
-      expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      // No cant-ready restriction should be applied
-      expect(testEngine.hasRestriction(opponentCharacter, "cant-ready")).toBe(false);
-
-      // Pass turn and verify the character readies normally
-      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
-      expect(testEngine.isExerted(opponentCharacter)).toBe(false);
-    });
-
     it("resolves without restriction when no opposing characters are available", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

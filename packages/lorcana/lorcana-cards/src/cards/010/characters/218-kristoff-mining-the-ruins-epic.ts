@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { kristoffMiningTheRuinsEpicI18n } from "./218-kristoff-mining-the-ruins-epic.i18n";
 
 export const kristoffMiningTheRuinsEpic: CharacterCard = {
@@ -26,13 +27,7 @@ export const kristoffMiningTheRuinsEpic: CharacterCard = {
   text: "Boost 1 {I} WORTH MINING Whenever this character quests, if there's a card under him, put the top card of your deck into your inkwell facedown and exerted.",
   classifications: ["Storyborn", "Ally", "Whisper"],
   abilities: [
-    {
-      id: "abh-1",
-      keyword: "Boost",
-      text: "Boost 1 {I}",
-      type: "keyword",
-      value: 1,
-    },
+    boost(1),
     {
       effect: {
         condition: {

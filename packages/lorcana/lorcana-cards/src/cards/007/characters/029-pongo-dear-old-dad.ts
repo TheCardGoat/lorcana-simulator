@@ -32,18 +32,28 @@ export const pongoDearOldDad: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      id: "lmd-1",
+      name: "FOUND YOU, YOU LITTLE RASCAL",
+      text: "FOUND YOU, YOU LITTLE RASCAL At the start of your turn, look at the cards in your inkwell. You may play a Puppy character from there for free.",
+      type: "triggered",
+      trigger: {
+        event: "start-turn",
+        on: "YOU",
+        timing: "at",
+      },
       effect: {
         chooser: "CONTROLLER",
-        effect: {
-          cost: "free",
-          from: "hand",
-          type: "play-card",
-        },
         type: "optional",
+        effect: {
+          type: "play-card",
+          from: "inkwell",
+          cost: "free",
+          cardType: "character",
+          filter: {
+            classification: "Puppy",
+          },
+        },
       },
-      id: "lmd-1",
-      text: "FOUND YOU, YOU LITTLE RASCAL At the start of your turn, look at the cards in your inkwell. You may play a Puppy character from there for free.",
-      type: "action",
     },
   ],
   i18n: pongoDearOldDadI18n,

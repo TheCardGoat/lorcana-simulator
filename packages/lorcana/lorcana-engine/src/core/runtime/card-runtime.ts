@@ -3,6 +3,7 @@ import type { MatchStaticResources } from "./static-resources";
 import type { TargetDSL } from "@tcg/lorcana-types";
 import { getLogger } from "@logtape/logtape";
 import type { BaseCardDefinition, BaseCardMeta } from "./card-contracts";
+import type { StateScopedValueCache } from "./state-scoped-value-cache";
 
 const logger = getLogger(["core-engine", "card-runtime"]);
 
@@ -40,6 +41,7 @@ export interface RuntimeCardDeriveContext {
   actorPlayerId?: string;
   state: MatchState;
   staticResources: MatchStaticResources;
+  runtimeCardCache?: StateScopedValueCache<unknown>;
 }
 
 export type RuntimeCardDeriver = (context: RuntimeCardDeriveContext) => Record<string, unknown>;
@@ -75,6 +77,30 @@ export interface CardQueryAPI {
 interface CardQueryOptions {
   actorPlayerId?: string;
   deriveRuntimeCard: RuntimeCardDeriver;
+  runtimeCardCache?: StateScopedValueCache<unknown>;
+  cacheViews?: boolean;
+}
+
+export const cardQueryRuntimeInternalsSymbol = Symbol("cardQueryRuntimeInternals");
+
+export interface CardQueryRuntimeInternals {
+  actorPlayerId?: string;
+  state: MatchState;
+  staticResources: MatchStaticResources;
+  runtimeCardCache?: StateScopedValueCache<unknown>;
+  cacheViews: boolean;
+}
+
+export function getCardQueryRuntimeInternals(
+  api: CardQueryAPI | undefined,
+): CardQueryRuntimeInternals | undefined {
+  if (!api) {
+    return undefined;
+  }
+
+  return (api as CardQueryAPI & { [cardQueryRuntimeInternalsSymbol]?: CardQueryRuntimeInternals })[
+    cardQueryRuntimeInternalsSymbol
+  ];
 }
 
 export function createCardQueryAPI(
@@ -88,8 +114,17 @@ export function createCardQueryAPI(
   const zones = state.ctx.zones;
   const actorPlayerId = options?.actorPlayerId;
   const deriveRuntimeCard = options.deriveRuntimeCard;
+  const cacheViews = options.cacheViews ?? true;
+  const cardViewCache = new Map<CardInstanceId, RuntimeView>();
 
   const buildCardView = (cardId: CardInstanceId): RuntimeView => {
+    if (cacheViews) {
+      const cached = cardViewCache.get(cardId);
+      if (cached) {
+        return cached;
+      }
+    }
+
     const instance = staticResources.instances.get(cardId);
     if (!instance) {
       logger.fatal(`CARD_INSTANCE_NOT_REGISTERED: ${cardId}`);
@@ -124,14 +159,20 @@ export function createCardQueryAPI(
       actorPlayerId,
       state,
       staticResources,
+      runtimeCardCache: options.runtimeCardCache,
     });
 
     // Spread derived first, then baseCard so base fields always win
     // This prevents derivers from accidentally overriding core fields
-    return {
+    const runtimeView = {
       ...derived,
       ...baseCard,
     };
+
+    if (cacheViews) {
+      cardViewCache.set(cardId, runtimeView);
+    }
+    return runtimeView;
   };
 
   const normalizeOwner = (value: unknown): "you" | "opponent" | "any" => {
@@ -272,7 +313,7 @@ export function createCardQueryAPI(
     return cards.map((card) => projector(card));
   };
 
-  return {
+  const api = {
     get(cardId: CardInstanceId): RuntimeView | undefined {
       return buildCardView(cardId);
     },
@@ -338,4 +379,18 @@ export function createCardQueryAPI(
       return queryTargetDsl(targetDsl, projector);
     },
   };
+
+  (
+    api as CardQueryAPI & {
+      [cardQueryRuntimeInternalsSymbol]?: CardQueryRuntimeInternals;
+    }
+  )[cardQueryRuntimeInternalsSymbol] = {
+    actorPlayerId,
+    state,
+    staticResources,
+    runtimeCardCache: options.runtimeCardCache,
+    cacheViews,
+  };
+
+  return api;
 }

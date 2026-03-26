@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { chiefPowhatanProtectiveLeaderI18n } from "./011-chief-powhatan-protective-leader.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const chiefPowhatanProtectiveLeader: CharacterCard = {
   id: "9DJ",
@@ -33,12 +34,7 @@ export const chiefPowhatanProtectiveLeader: CharacterCard = {
   ],
   classifications: ["Storyborn", "Mentor", "King"],
   abilities: [
-    {
-      id: "cpl-1",
-      keyword: "Bodyguard",
-      type: "keyword",
-      text: "Bodyguard",
-    },
+    bodyguard,
     {
       id: "cpl-2",
       effect: {

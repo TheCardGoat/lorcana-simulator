@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { sheriffOfNottinghamBushelBritchesI18n } from "./145-sheriff-of-nottingham-bushel-britches.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const sheriffOfNottinghamBushelBritches: CharacterCard = {
   id: "ROz",
@@ -35,19 +36,19 @@ export const sheriffOfNottinghamBushelBritches: CharacterCard = {
   abilities: [
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: {
+          controller: "you",
+          type: "items-in-play",
+        },
+        type: "cost-reduction",
       },
-      id: "133-1",
+      id: "ROz-1",
       text: "EVERY LITTLE BIT HELPS For each item you have in play, you pay 1 {I} less to play this character.",
-      type: "action",
+      name: "EVERY LITTLE BIT HELPS",
+      sourceZones: ["hand"],
+      type: "static",
     },
-    {
-      id: "133-2",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
   ],
   i18n: sheriffOfNottinghamBushelBritchesI18n,
 };

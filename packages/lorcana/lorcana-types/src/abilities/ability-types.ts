@@ -394,6 +394,9 @@ export type StaticAffects =
 export interface ActionAbility {
   type: "action";
 
+  /** Optional condition that must be true for the effect to execute */
+  condition?: Condition;
+
   /** What happens when the action resolves */
   effect: Effect;
 }

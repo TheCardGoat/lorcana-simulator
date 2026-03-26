@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ratiganGreedyGeniusI18n } from "./167-ratigan-greedy-genius.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const ratiganGreedyGenius: CharacterCard = {
   id: "Ca0",
@@ -34,37 +35,35 @@ export const ratiganGreedyGenius: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain"],
   abilities: [
+    ward,
     {
-      id: "e9z-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
-    {
-      effect: {
-        condition: {
-          type: "turn-metric",
-          metric: "cards-inked",
-          comparison: {
-            operator: "eq",
-            value: 0,
-          },
-        },
-        then: {
-          target: {
-            selector: "self",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "banish",
-        },
-        type: "conditional",
-      },
       id: "e9z-2",
+      name: "TIME RUNS OUT",
+      type: "triggered",
+      trigger: {
+        event: "end-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      condition: {
+        type: "turn-metric",
+        metric: "cards-inked",
+        comparison: {
+          operator: "eq",
+          value: 0,
+        },
+      },
+      effect: {
+        target: {
+          selector: "self",
+          count: 1,
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+        type: "banish",
+      },
       text: "TIME RUNS OUT At the end of your turn, if you didn't put any cards into your inkwell this turn, banish this character.",
-      type: "action",
     },
   ],
   i18n: ratiganGreedyGeniusI18n,

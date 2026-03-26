@@ -55,4 +55,44 @@ describe("Grimorum Arcanorum", () => {
 
     expect(testEngine.asPlayerOne().canChallenge(demona, challengeDummy)).toBe(true);
   });
+
+  it("regression: gains lore when opponent's character is exerted by card effects (not just manual exert)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [grimorumArcanorum],
+        hand: [freeze],
+        inkwell: freeze.cost,
+      },
+      {
+        play: [challengeDummy],
+      },
+    );
+
+    const loreBefore = testEngine.getLore("player_one");
+
+    // Freeze exerts an opponent character via card effect
+    expect(
+      testEngine.asPlayerOne().playCard(freeze, {
+        targets: [challengeDummy],
+      }),
+    ).toBeSuccessfulCommand();
+
+    // DOCTRINA ADDUCERE should trigger from the card-effect exert
+    expect(testEngine.getLore("player_one")).toBe(loreBefore + 1);
+  });
+
+  it("regression: grants Rush to Demona characters, allowing them to challenge when played", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [grimorumArcanorum, { card: demona, isDrying: true }],
+      },
+      {
+        play: [{ card: challengeDummy, exerted: true, isDrying: false }],
+      },
+    );
+
+    // Demona should have Rush from Grimorum
+    expect(testEngine.hasKeyword(demona, "Rush")).toBe(true);
+    expect(testEngine.asPlayerOne().canChallenge(demona, challengeDummy)).toBe(true);
+  });
 });

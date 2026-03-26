@@ -19,8 +19,13 @@ describe("Mulan - Reflecting", () => {
     // Quest with Mulan
     testEngine.asPlayerOne().quest(mulanId);
 
-    // Resolve triggers
+    // Resolve the triggered ability bag
     testEngine.asPlayerOne().resolveNextBag();
+
+    // Resolve the scry — choose to play the song for free
+    testEngine.asPlayerOne().resolveNextPending({
+      destinations: [{ zone: "play", cards: [songId] }],
+    });
 
     // Bibbidi Bobbidi Boo needs a target to bounce to hand
     let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
@@ -54,6 +59,9 @@ describe("Mulan - Reflecting", () => {
 
     // Resolve triggers
     testEngine.asPlayerOne().resolveNextBag();
+
+    // Non-song doesn't match the play filter — resolve scry with no selection
+    testEngine.asPlayerOne().resolveNextPending({ destinations: [] });
 
     const gastonZone = testEngine.asServer().getState().ctx.zones.private.cardIndex[
       gastonId

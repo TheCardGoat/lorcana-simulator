@@ -35,8 +35,26 @@ export const mirabelMadrigalCuriousChild: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 1,
-          type: "gain-lore",
+          type: "sequence",
+          steps: [
+            {
+              type: "select-target",
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["hand"],
+                cardTypes: ["song"],
+              },
+            },
+            {
+              type: "reveal",
+            },
+            {
+              type: "gain-lore",
+              amount: 1,
+            },
+          ],
         },
         type: "optional",
       },

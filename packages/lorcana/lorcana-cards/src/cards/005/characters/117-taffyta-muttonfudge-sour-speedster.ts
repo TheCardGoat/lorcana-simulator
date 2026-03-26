@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { taffytaMuttonfudgeSourSpeedsterI18n } from "./117-taffyta-muttonfudge-sour-speedster.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const taffytaMuttonfudgeSourSpeedster: CharacterCard = {
   id: "5D9",
@@ -33,15 +34,7 @@ export const taffytaMuttonfudgeSourSpeedster: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally", "Racer"],
   abilities: [
-    {
-      cost: {
-        ink: 2,
-      },
-      id: "1a5-1",
-      keyword: "Shift",
-      text: "Shift 2",
-      type: "keyword",
-    },
+    shift(2),
     {
       effect: {
         amount: 2,

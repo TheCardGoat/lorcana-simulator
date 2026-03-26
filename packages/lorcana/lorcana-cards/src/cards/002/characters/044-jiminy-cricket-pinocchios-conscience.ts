@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jiminyCricketPinocchiosConscienceI18n } from "./044-jiminy-cricket-pinocchios-conscience.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const jiminyCricketPinocchiosConscience: CharacterCard = {
   id: "C3x",
@@ -34,12 +35,7 @@ export const jiminyCricketPinocchiosConscience: CharacterCard = {
   ],
   classifications: ["Storyborn", "Mentor"],
   abilities: [
-    {
-      id: "tfc-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    evasive,
     {
       id: "tfc-2",
       name: "THAT STILL, SMALL VOICE",

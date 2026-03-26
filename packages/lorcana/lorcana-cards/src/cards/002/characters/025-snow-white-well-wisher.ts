@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { snowWhiteWellWisherI18n } from "./025-snow-white-well-wisher.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const snowWhiteWellWisher: CharacterCard = {
   id: "iql",
@@ -34,15 +35,7 @@ export const snowWhiteWellWisher: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "1fh-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         chooser: "CONTROLLER",

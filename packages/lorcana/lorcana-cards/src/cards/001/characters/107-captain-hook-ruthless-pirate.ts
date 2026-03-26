@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { captainHookRuthlessPirateI18n } from "./107-captain-hook-ruthless-pirate.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const captainHookRuthlessPirate: CharacterCard = {
   id: "eM3",
@@ -34,12 +35,7 @@ export const captainHookRuthlessPirate: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Pirate", "Captain"],
   abilities: [
-    {
-      id: "1k7-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       condition: {
         type: "exerted",

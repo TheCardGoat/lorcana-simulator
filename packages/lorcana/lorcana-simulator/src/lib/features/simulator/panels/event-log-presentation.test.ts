@@ -6,16 +6,10 @@ import type {
   SimulatorSerializedObject,
 } from "@/features/simulator/model/contracts.js";
 import {
-  createCardSnapshot,
-  createCharacterCard,
+  createLogCardReference,
   createLogEntry,
 } from "@/features/simulator-devtools/test-data/factories.js";
-import {
-  buildEventLogRows,
-  collectTypedLorcanaMessages,
-  filterEntriesToLastTurns,
-  toTypedLorcanaLogMessage,
-} from "./event-log-presentation.js";
+import { buildEventLogRows, filterEntriesToLastTurns } from "./event-log-presentation.js";
 
 type FormatCase = {
   moveId: MoveLogEntrySnapshot["moveId"];
@@ -227,6 +221,46 @@ const FORMAT_CASES = {
     values: { playerId: "player_one", sourceCardId: "card-primary" },
     expected: "Finished ordering cards for Ariel - On Human Legs.",
   },
+  "lorcana.effect.resolve.scrySelection.detail": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      sourceCardId: "card-primary",
+      selection: ["Hand: Ariel - On Human Legs", "Bottom of deck: Mickey Mouse - Detective"],
+      handCards: ["card-primary"],
+      deckBottomCards: ["card-secondary"],
+    },
+    expected:
+      "Finished ordering cards for Ariel - On Human Legs: Hand: Ariel - On Human Legs, Bottom of deck: Mickey Mouse - Detective.",
+  },
+  "lorcana.effect.resolve.revealTopCard": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      targetPlayerId: "player_two",
+      revealedCardId: "card-primary",
+    },
+    expected: "You revealed Ariel - On Human Legs from Opponent's deck.",
+  },
+  "lorcana.effect.resolve.revealTopCard.autoBottom": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      targetPlayerId: "player_two",
+      revealedCardId: "card-primary",
+    },
+    expected: "Revealed Ariel - On Human Legs — put on the bottom of Opponent's deck.",
+  },
+  "lorcana.effect.resolve.choiceSelection.withReveal": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      sourceCardId: "card-primary",
+      revealedCardId: "card-secondary",
+      choiceIndex: 2,
+    },
+    expected: "You chose option 2 for Mickey Mouse - Detective.",
+  },
 } satisfies Record<LorcanaLogMessageKey, FormatCase>;
 
 const FALLBACK_CASES = {
@@ -257,66 +291,65 @@ const FALLBACK_CASES = {
 } satisfies Record<MoveLogEntrySnapshot["moveId"], string>;
 
 function createTypedEntry(key: LorcanaLogMessageKey, formatCase: FormatCase): MoveLogEntrySnapshot {
-  const primaryCard = createCharacterCard("playerOne", "play", {
+  const primaryCard = createLogCardReference("playerOne", {
     id: "card-primary",
     name: "Ariel - On Human Legs",
-    strength: 2,
-    willpower: 3,
     inkType: ["sapphire"],
-    loreValue: 2,
-    text: "Singer 5",
   });
-  const secondaryCard = createCharacterCard("playerTwo", "play", {
+  const secondaryCard = createLogCardReference("playerTwo", {
     id: "card-secondary",
     name: "Mickey Mouse - Detective",
-    strength: 1,
-    willpower: 2,
     inkType: ["amber"],
-    loreValue: 1,
   });
-  const locationCard = createCardSnapshot("playerOne", "play", {
+  const locationCard = createLogCardReference("playerOne", {
     id: "card-location",
     name: "Motunui - Island Paradise",
-    type: "location",
-    cost: 3,
-    loreValue: 1,
   });
 
-  return createLogEntry(`legacy ${key}`, {
+  return createLogEntry(`typed ${key}`, {
     actorSide: "playerOne",
     id: key,
     moveId: formatCase.moveId,
-    rawLogRegistry: {
-      move: {
-        moveId: formatCase.moveId,
-        params: { cardId: primaryCard.cardId },
-        playerId: "player_one",
-        timestamp: 123,
-      },
-      matchingMoveLogEntry: {
-        sourceEventSeqs: [1],
-        defaultMessage: {
-          key: "move.executed",
-          values: {
-            move: formatCase.moveId,
-            playerId: "player_one",
-          },
-        },
-      },
-      relatedLogEntries: [
-        {
-          sourceEventSeqs: [1],
-          defaultMessage: { key, values: formatCase.values },
-        },
-      ],
-      cardReferences: [primaryCard, secondaryCard, locationCard],
-    },
+    typedLogEntry: {
+      type: key,
+      values: formatCase.values,
+      visibility: { mode: "PUBLIC" },
+      category: "action",
+    } as import("@tcg/lorcana-engine").LorcanaGameLogEntry,
+    playerId: "player_one",
+    params: { cardId: primaryCard.cardId },
     turnNumber: 7,
   });
 }
 
+function createTestResolver() {
+  const primaryCard = createLogCardReference("playerOne", {
+    id: "card-primary",
+    name: "Ariel - On Human Legs",
+    inkType: ["sapphire"],
+  });
+  const secondaryCard = createLogCardReference("playerTwo", {
+    id: "card-secondary",
+    name: "Mickey Mouse - Detective",
+    inkType: ["amber"],
+  });
+  const locationCard = createLogCardReference("playerOne", {
+    id: "card-location",
+    name: "Motunui - Island Paradise",
+  });
+
+  const cardMap = new Map([
+    [primaryCard.cardId, primaryCard],
+    [secondaryCard.cardId, secondaryCard],
+    [locationCard.cardId, locationCard],
+  ]);
+
+  return (cardId: string) => cardMap.get(cardId) ?? null;
+}
+
 function flattenRowText(entry: MoveLogEntrySnapshot): string {
-  const eventRow = buildEventLogRows([entry], "playerOne").find(
+  const resolveCard = createTestResolver();
+  const eventRow = buildEventLogRows([entry], "playerOne", resolveCard).find(
     (row): row is Extract<ReturnType<typeof buildEventLogRows>[number], { kind: "event-row" }> =>
       row.kind === "event-row",
   );
@@ -346,13 +379,7 @@ describe("event log presentation", () => {
   for (const [key, formatCase] of typedCases) {
     it(`formats ${key} through the typed formatter`, () => {
       const entry = createTypedEntry(key, formatCase);
-      const typedMessage = toTypedLorcanaLogMessage(
-        entry.rawLogRegistry?.relatedLogEntries[0]?.defaultMessage,
-      );
-
-      expect(typedMessage?.key).toBe(key);
-      expect(typedMessage?.values).toEqual(formatCase.values);
-      expect(collectTypedLorcanaMessages(entry)).toHaveLength(1);
+      expect(entry.typedLogEntry?.type).toBe(key);
       expect(flattenRowText(entry)).toBe(formatCase.expected);
     });
   }
@@ -377,8 +404,6 @@ describe("event log presentation", () => {
         actorSide: "playerTwo",
         id: `fallback-${moveId}`,
         moveId,
-        detail: undefined,
-        rawLogRegistry: undefined,
         turnNumber: 2,
       });
 

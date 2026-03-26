@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { shenziScarsAccompliceI18n } from "./070-shenzi-scars-accomplice.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const shenziScarsAccomplice: CharacterCard = {
   id: "NoM",
@@ -33,22 +34,25 @@ export const shenziScarsAccomplice: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Hyena"],
   abilities: [
+    evasive,
     {
-      id: "1nr-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
-    {
+      condition: {
+        role: "attacker",
+        type: "in-challenge",
+        againstDamaged: true,
+      },
       effect: {
         modifier: 2,
         stat: "strength",
-        target: "SELF",
+        target: {
+          ref: "self",
+        },
         type: "modify-stat",
       },
       id: "1nr-2",
+      name: "EASY PICKINGS",
       text: "EASY PICKINGS While challenging a damaged character, this character gets +2 {S}.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: shenziScarsAccompliceI18n,

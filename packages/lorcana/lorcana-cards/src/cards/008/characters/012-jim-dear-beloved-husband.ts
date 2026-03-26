@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jimDearBelovedHusbandI18n } from "./012-jim-dear-beloved-husband.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const jimDearBelovedHusband: CharacterCard = {
   id: "3Cr",
@@ -24,13 +25,6 @@ export const jimDearBelovedHusband: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "cft-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: jimDearBelovedHusbandI18n,
 };

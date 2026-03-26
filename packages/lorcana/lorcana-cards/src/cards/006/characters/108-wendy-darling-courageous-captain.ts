@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { wendyDarlingCourageousCaptainI18n } from "./108-wendy-darling-courageous-captain.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const wendyDarlingCourageousCaptain: CharacterCard = {
   id: "AYJ",
@@ -34,12 +35,7 @@ export const wendyDarlingCourageousCaptain: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Pirate", "Captain"],
   abilities: [
-    {
-      id: "1dv-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       condition: {
         type: "has-character-count",

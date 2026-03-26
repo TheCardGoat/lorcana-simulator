@@ -33,20 +33,17 @@ export const pleakleyArcticNaturalist: CharacterCard = {
   abilities: [
     {
       id: "6qd-1",
+      condition: {
+        type: "has-character-count",
+        controller: "you",
+        classification: "Alien",
+        count: 2,
+        comparison: "greater-or-equal",
+      },
       effect: {
-        condition: {
-          type: "has-character-count",
-          controller: "you",
-          classification: "Alien",
-          count: 2,
-          comparison: "greater-or-equal",
-        },
-        then: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
-        },
-        type: "conditional",
+        amount: 1,
+        target: "CONTROLLER",
+        type: "draw",
       },
       name: "SIGNS OF LIFE",
       trigger: {

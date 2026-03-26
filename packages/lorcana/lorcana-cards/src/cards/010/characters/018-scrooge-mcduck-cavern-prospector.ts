@@ -33,6 +33,43 @@ export const scroogeMcduckCavernProspector: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      id: "rwm-1",
+      keyword: "Shift",
+      text: "Shift 4 {I}",
+      type: "keyword",
+      cost: {
+        ink: 4,
+      },
+      shiftTarget: "Scrooge McDuck",
+    },
+    {
+      id: "rwm-2",
+      type: "triggered",
+      name: "SPECULATION",
+      text: "SPECULATION Whenever you play a character or location with Boost, you may put the top card of your deck facedown under them.",
+      trigger: {
+        event: "play",
+        on: {
+          cardType: ["character", "location"],
+          controller: "you",
+          hasKeyword: "Boost",
+        },
+        timing: "whenever",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "put-under",
+          source: "top-of-deck",
+          under: {
+            ref: "trigger-subject",
+          },
+        },
+      },
+    },
+  ],
   i18n: scroogeMcduckCavernProspectorI18n,
 };

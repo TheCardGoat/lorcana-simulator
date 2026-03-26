@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { arielTreasureCollectorI18n } from "./139-ariel-treasure-collector.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const arielTreasureCollector: CharacterCard = {
   id: "Sxx",
@@ -34,12 +35,7 @@ export const arielTreasureCollector: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "hyy-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       condition: {
         type: "comparison",

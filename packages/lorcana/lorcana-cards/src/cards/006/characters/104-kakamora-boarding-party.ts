@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kakamoraBoardingPartyI18n } from "./104-kakamora-boarding-party.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const kakamoraBoardingParty: CharacterCard = {
   id: "w0G",
@@ -24,13 +25,6 @@ export const kakamoraBoardingParty: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Pirate"],
-  abilities: [
-    {
-      id: "7k1-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: kakamoraBoardingPartyI18n,
 };

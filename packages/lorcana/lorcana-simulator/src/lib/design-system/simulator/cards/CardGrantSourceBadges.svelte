@@ -91,8 +91,11 @@
 <style>
   .grant-source-badges {
     display: flex;
-    gap: 4px;
     pointer-events: auto;
+  }
+
+  .grant-source-badges :global(> * + *) {
+    margin-left: -8px;
   }
 
   .grant-source-badge {
@@ -113,6 +116,7 @@
 
   .grant-source-badge:hover {
     transform: scale(1.15);
+    z-index: 1;
     box-shadow:
       0 3px 10px rgba(0, 0, 0, 0.6),
       0 0 0 2px rgba(255, 255, 255, 0.9);

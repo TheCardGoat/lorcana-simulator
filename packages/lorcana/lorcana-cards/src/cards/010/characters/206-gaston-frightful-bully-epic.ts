@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { gastonFrightfulBullyEpicI18n } from "./206-gaston-frightful-bully-epic.i18n";
 
 export const gastonFrightfulBullyEpic: CharacterCard = {
@@ -35,13 +36,7 @@ export const gastonFrightfulBullyEpic: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Whisper"],
   abilities: [
-    {
-      id: "14y-1",
-      keyword: "Boost",
-      text: "Boost 2 {I}",
-      type: "keyword",
-      value: 2,
-    },
+    boost(2),
     {
       condition: {
         type: "has-card-under",

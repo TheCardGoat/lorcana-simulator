@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { genieWonderfulTricksterI18n } from "./061-genie-wonderful-trickster.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const genieWonderfulTrickster: CharacterCard = {
   id: "o38",
@@ -38,15 +39,7 @@ export const genieWonderfulTrickster: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "1yx-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       effect: {
         amount: 1,

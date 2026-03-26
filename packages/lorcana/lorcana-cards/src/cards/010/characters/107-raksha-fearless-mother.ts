@@ -30,6 +30,18 @@ export const rakshaFearlessMother: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "Gk5-1",
+      name: "ON PATROL",
+      text: "ON PATROL Once during your turn, you may pay 1 {I} less to move this character to a location.",
+      type: "static",
+      effect: {
+        type: "move-cost-reduction",
+        reduction: 1,
+        target: "SELF",
+      },
+    },
+  ],
   i18n: rakshaFearlessMotherI18n,
 };

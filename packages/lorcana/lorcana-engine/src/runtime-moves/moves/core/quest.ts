@@ -10,15 +10,25 @@ import type {
   RuntimeValidationResult,
 } from "#core";
 import type { LorcanaCard } from "@tcg/lorcana-types";
-import { createLorcanaLogMessage, type LorcanaG, type LorcanaMoveDefinition } from "../../../types";
+import {
+  createLorcanaLogProjection,
+  type LorcanaG,
+  type LorcanaMoveDefinition,
+} from "../../../types";
 import { normalizeTargetDescriptor, resolveCandidateTargets } from "../../../targeting/runtime";
 import { hasKeyword } from "../../../card-utils";
 import { createProjectionState, getEffectiveLore } from "../../../rules/derived-state";
 import {
   hasStaticSelfRestriction,
   hasStaticCardRestriction,
+  hasOpponentStaticPlayRestriction,
 } from "../../rules/static-ability-utils";
-import { hasTemporaryKeyword, hasTemporaryRestriction } from "../../effects/temporary-effects";
+import {
+  hasTemporaryKeyword,
+  hasTemporaryLostKeyword,
+  hasTemporaryPlayerRestriction,
+  hasTemporaryRestriction,
+} from "../../effects/temporary-effects";
 import {
   EFFECT_PENDING_ERROR_CODE,
   hasPendingActionEffectResolution,
@@ -110,8 +120,9 @@ function validateQuestCard(
   }
 
   const currentTurn = ctx.framework.state.status.turn ?? 1;
+  const hasTemporaryRecklessLoss = hasTemporaryLostKeyword(questMeta, currentTurn, "Reckless");
   const hasReckless =
-    (cardDef ? hasKeyword(cardDef, "Reckless") : false) ||
+    ((cardDef ? hasKeyword(cardDef, "Reckless") : false) && !hasTemporaryRecklessLoss) ||
     hasTemporaryKeyword(questMeta, currentTurn, "Reckless");
   if (hasReckless) {
     return {
@@ -170,6 +181,39 @@ function validateQuestCard(
   return { valid: true };
 }
 
+function isPlayerBlockedFromGainingLore(
+  ctx: PlayCardExecutionContext,
+  playerId: PlayerId,
+): boolean {
+  const staticAbilityState = {
+    priority: ctx.framework.state.priority,
+    status: ctx.framework.state.status,
+    _zonesPrivate: ctx.framework.state._zonesPrivate,
+    _zonesPublic: ctx.framework.state._zonesPublic,
+    G: ctx.G,
+  };
+  const getDefinitionByInstanceId = (instanceId: string) =>
+    ctx.cards.getDefinition(instanceId) as LorcanaCard | undefined;
+
+  if (
+    hasTemporaryPlayerRestriction(
+      ctx.G.temporaryPlayerRestrictions,
+      playerId,
+      ctx.framework.state.status.turn ?? 1,
+      "cant-gain-lore",
+    )
+  ) {
+    return true;
+  }
+
+  return hasOpponentStaticPlayRestriction({
+    state: staticAbilityState,
+    playerId,
+    restriction: "cant-gain-lore",
+    getDefinitionByInstanceId,
+  });
+}
+
 function executeQuestCard(ctx: PlayCardExecutionContext, cardId: CardInstanceId): number {
   const currentPlayer = ctx.framework.state.currentPlayer!;
 
@@ -182,8 +226,11 @@ function executeQuestCard(ctx: PlayCardExecutionContext, cardId: CardInstanceId)
     (id) => ctx.cards.getDefinition(id) as any,
   );
 
+  const blocked = isPlayerBlockedFromGainingLore(ctx, currentPlayer as PlayerId);
+  const effectiveLoreGain = blocked ? 0 : loreValue;
+
   const previousLore = Number(ctx.G.lore[currentPlayer as PlayerId] ?? 0);
-  ctx.G.lore[currentPlayer as PlayerId] = previousLore + loreValue;
+  ctx.G.lore[currentPlayer as PlayerId] = previousLore + effectiveLoreGain;
   ctx.G.turnMetadata.charactersQuesting.push(cardId);
 
   emitTriggeredLorcanaEvent(
@@ -249,15 +296,18 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
   execute: (ctx) => {
     const cardId = ctx.args.cardId as CardInstanceId;
     const loreGained = executeQuestCard(ctx, cardId);
-    ctx.framework.log({
-      category: "action",
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: createLorcanaLogMessage("lorcana.move.quest", {
-        playerId: ctx.framework.state.currentPlayer!,
-        cardId,
-        loreGained,
-      }),
-    });
+    ctx.framework.log(
+      createLorcanaLogProjection(
+        "lorcana.move.quest",
+        {
+          playerId: ctx.framework.state.currentPlayer!,
+          cardId,
+          loreGained,
+        },
+        { mode: "PUBLIC" },
+        "action",
+      ),
+    );
   },
 
   available: (ctx) => {
@@ -289,8 +339,9 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
           return false;
         }
         const currentTurn = ctx.framework.state.status.turn ?? 1;
+        const hasTemporaryRecklessLoss = hasTemporaryLostKeyword(meta, currentTurn, "Reckless");
         if (
-          (cardDef ? hasKeyword(cardDef, "Reckless") : false) ||
+          ((cardDef ? hasKeyword(cardDef, "Reckless") : false) && !hasTemporaryRecklessLoss) ||
           hasTemporaryKeyword(meta, currentTurn, "Reckless")
         ) {
           return false;
@@ -309,6 +360,18 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
         }
         if (
           hasStaticSelfRestriction({
+            state: ctx.framework.state,
+            cardId: cardId as CardInstanceId,
+            restriction: "cant-quest",
+            getDefinitionByInstanceId: (instanceId) =>
+              getCardDefinitionFromContext(ctx, instanceId) as LorcanaCard | undefined,
+          })
+        ) {
+          return false;
+        }
+
+        if (
+          hasStaticCardRestriction({
             state: ctx.framework.state,
             cardId: cardId as CardInstanceId,
             restriction: "cant-quest",
@@ -364,16 +427,19 @@ export const questWithAll: LorcanaMoveDefinition<"questWithAll"> = {
       loreGained += executeQuestCard(ctx, cardId);
     }
 
-    ctx.framework.log({
-      category: "action",
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: createLorcanaLogMessage("lorcana.move.questWithAll", {
-        playerId: ctx.framework.state.currentPlayer!,
-        cardIds,
-        loreGained,
-        count: cardIds.length,
-      }),
-    });
+    ctx.framework.log(
+      createLorcanaLogProjection(
+        "lorcana.move.questWithAll",
+        {
+          playerId: ctx.framework.state.currentPlayer!,
+          cardIds,
+          loreGained,
+          count: cardIds.length,
+        },
+        { mode: "PUBLIC" },
+        "action",
+      ),
+    );
   },
 
   available: (ctx) => {

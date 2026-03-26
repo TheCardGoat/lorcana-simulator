@@ -20,7 +20,7 @@ import {
 describe("Protocol Types", () => {
   describe("Protocol Version", () => {
     it("should have correct protocol version", () => {
-      expect(PROTOCOL_VERSION).toBe(4);
+      expect(PROTOCOL_VERSION).toBe(5);
     });
   });
 

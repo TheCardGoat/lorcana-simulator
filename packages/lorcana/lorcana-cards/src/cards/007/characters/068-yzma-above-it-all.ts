@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { yzmaAboveItAllI18n } from "./068-yzma-above-it-all.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const yzmaAboveItAll: CharacterCard = {
   id: "JoL",
@@ -37,21 +39,8 @@ export const yzmaAboveItAll: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Queen"],
   abilities: [
-    {
-      id: "JoL-1",
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 5",
-      cost: {
-        ink: 5,
-      },
-    },
-    {
-      id: "JoL-2",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    shift(5),
+    evasive,
     {
       id: "JoL-3",
       name: "BACK TO WORK",

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tianaCelebratingPrincessI18n } from "./196-tiana-celebrating-princess.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const tianaCelebratingPrincess: CharacterCard = {
   id: "ivr",
@@ -34,13 +35,7 @@ export const tianaCelebratingPrincess: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "14e-1",
-      keyword: "Resist",
-      text: "Resist +2",
-      type: "keyword",
-      value: 2,
-    },
+    resist(2),
     {
       condition: {
         type: "and",

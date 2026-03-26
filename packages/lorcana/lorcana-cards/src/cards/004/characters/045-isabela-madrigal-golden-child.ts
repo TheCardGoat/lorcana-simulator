@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { isabelaMadrigalGoldenChildI18n } from "./045-isabela-madrigal-golden-child.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const isabelaMadrigalGoldenChild: CharacterCard = {
   id: "Kq0",
@@ -39,12 +40,7 @@ export const isabelaMadrigalGoldenChild: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Madrigal"],
   abilities: [
-    {
-      id: "qop-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         condition: {

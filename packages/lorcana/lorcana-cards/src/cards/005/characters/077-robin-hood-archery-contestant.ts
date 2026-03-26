@@ -32,15 +32,12 @@ export const robinHoodArcheryContestant: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      condition: {
+        type: "opponent-has-damaged-character",
+      },
       effect: {
-        condition: {
-          type: "opponent-has-damaged-character",
-        },
-        then: {
-          amount: 1,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 1,
+        type: "gain-lore",
       },
       id: "t9f-1",
       name: "TRICK SHOT",

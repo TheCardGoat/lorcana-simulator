@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { zazuAdvisorToMufasaI18n } from "./072-zazu-advisor-to-mufasa.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const zazuAdvisorToMufasa: CharacterCard = {
   id: "M8t",
@@ -24,13 +25,6 @@ export const zazuAdvisorToMufasa: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "7uk-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: zazuAdvisorToMufasaI18n,
 };

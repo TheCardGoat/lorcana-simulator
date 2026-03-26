@@ -34,6 +34,42 @@ export const mortyFieldmouseTinyTim: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "KXg-1",
+      name: "HOLIDAY SPIRIT",
+      type: "triggered",
+      trigger: {
+        event: "put-card-under",
+        timing: "whenever",
+        on: {
+          controller: "you",
+          cardType: ["character"],
+          excludeSelf: true,
+        },
+        restrictions: [{ type: "once-per-turn" }, { type: "during-turn", whose: "your" }],
+      },
+      effect: {
+        type: "put-under",
+        source: "top-of-deck",
+        under: "self",
+      },
+      text: "HOLIDAY SPIRIT Once during your turn, whenever you put a card under one of your other characters, put the top card of your deck facedown under this character.",
+    },
+    {
+      id: "KXg-2",
+      name: "HOLIDAY CHEER",
+      type: "static",
+      effect: {
+        type: "modify-stat",
+        stat: "lore",
+        modifier: {
+          type: "cards-under-self",
+        },
+        target: "SELF",
+      },
+      text: "HOLIDAY CHEER This character gets +1 {L} for each card under him.",
+    },
+  ],
   i18n: mortyFieldmouseTinyTimI18n,
 };

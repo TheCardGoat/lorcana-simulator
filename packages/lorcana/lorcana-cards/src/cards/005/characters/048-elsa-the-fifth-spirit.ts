@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { elsaTheFifthSpiritI18n } from "./048-elsa-the-fifth-spirit.i18n";
+import { rush } from "../../../helpers/abilities/rush";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const elsaTheFifthSpirit: CharacterCard = {
   id: "PX4",
@@ -36,18 +38,8 @@ export const elsaTheFifthSpirit: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Queen", "Sorcerer"],
   abilities: [
-    {
-      id: "dwf-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
-    {
-      id: "dwf-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    rush,
+    evasive,
     {
       effect: {
         target: {

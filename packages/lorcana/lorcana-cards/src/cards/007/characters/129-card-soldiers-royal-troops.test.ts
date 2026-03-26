@@ -62,4 +62,23 @@ describe("Card Soldiers - Royal Troops", () => {
       cardSoldiersRoyalTroops.strength + 2,
     );
   });
+
+  it("regression: gains +2 strength when any damaged character is in play", () => {
+    // Bug: Card Soldiers was not gaining +2 strength when a damaged character was in play.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: cardSoldiersRoyalTroops }],
+      },
+      {
+        play: [{ card: opponentCharacter, damage: 2 }],
+      },
+    );
+
+    const cardSoldiersId = testEngine.findCardInstanceId(cardSoldiersRoyalTroops, "play");
+
+    // With a damaged opponent character in play, strength should be base + 2
+    expect(testEngine.asServer().getCard(cardSoldiersId).strength).toBe(
+      cardSoldiersRoyalTroops.strength + 2,
+    );
+  });
 });

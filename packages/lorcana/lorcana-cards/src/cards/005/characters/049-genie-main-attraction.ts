@@ -41,7 +41,7 @@ export const genieMainAttraction: CharacterCard = {
       },
       effect: {
         type: "restriction",
-        restriction: "cant-ready",
+        restriction: "cant-ready-at-start-of-turn",
         target: {
           cardTypes: ["character"],
           count: "all",

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { donKarnagePrinceOfPiratesI18n } from "./071-don-karnage-prince-of-pirates.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const donKarnagePrinceOfPirates: CharacterCard = {
   id: "0La",
@@ -24,13 +25,6 @@ export const donKarnagePrinceOfPirates: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Dreamborn", "Villain", "Prince", "Pirate"],
-  abilities: [
-    {
-      id: "a8q-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: donKarnagePrinceOfPiratesI18n,
 };

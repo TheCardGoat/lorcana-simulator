@@ -32,19 +32,27 @@ export const panicImmortalSidekick: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "and",
+        conditions: [
+          { type: "is-exerted" },
+          { type: "has-named-character", name: "Pain", controller: "you" },
+        ],
+      },
       effect: {
-        condition: {
-          expression: "you have a character named Pain in play",
-          type: "if",
+        restriction: "cant-be-challenged",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [{ type: "has-classification", classification: "Villain" }],
         },
-        then: {
-          restriction: "cant-be-challenged",
-          target: "SELF",
-          type: "restriction",
-        },
-        type: "conditional",
+        type: "restriction",
       },
       id: "1bf-1",
+      name: "REPORTING FOR DUTY",
       text: "REPORTING FOR DUTY While this character is exerted, if you have a character named Pain in play, your Villain characters can't be challenged.",
       type: "static",
     },

@@ -34,7 +34,15 @@ export const moanaChosenByTheOcean: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: "CHOSEN_CHARACTER",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["character"],
+            // We must clear diacritics
+            filter: [{ type: "has-name", name: "Te Ka" }],
+          },
           type: "banish",
         },
         type: "optional",

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { abuBoldHelmsmanI18n } from "./114-abu-bold-helmsman.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const abuBoldHelmsman: CharacterCard = {
   id: "t59",
@@ -24,13 +25,6 @@ export const abuBoldHelmsman: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1f2-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: abuBoldHelmsmanI18n,
 };

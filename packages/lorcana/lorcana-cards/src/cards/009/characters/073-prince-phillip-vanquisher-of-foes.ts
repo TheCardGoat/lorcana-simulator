@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { princePhillipVanquisherOfFoesI18n } from "./073-prince-phillip-vanquisher-of-foes.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const princePhillipVanquisherOfFoes: CharacterCard = {
   id: "5fm",
@@ -36,29 +38,22 @@ export const princePhillipVanquisherOfFoes: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Prince"],
   abilities: [
-    {
-      cost: {
-        ink: 6,
-      },
-      id: "1db-1",
-      keyword: "Shift",
-      text: "Shift 6 {I}",
-      type: "keyword",
-    },
-    {
-      id: "1db-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    shift(6),
+    evasive,
     {
       effect: {
         target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
+          selector: "all",
+          count: "all",
+          owner: "opponent",
           zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "status",
+              status: "damaged",
+            },
+          ],
         },
         type: "banish",
       },

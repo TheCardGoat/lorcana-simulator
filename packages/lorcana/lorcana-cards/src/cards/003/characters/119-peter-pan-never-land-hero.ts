@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { peterPanNeverLandHeroI18n } from "./119-peter-pan-never-land-hero.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const peterPanNeverLandHero: CharacterCard = {
   id: "kk3",
@@ -34,13 +35,13 @@ export const peterPanNeverLandHero: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
+    rush,
     {
-      id: "h1y-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
-    {
+      condition: {
+        controller: "you",
+        name: "Tinker Bell",
+        type: "has-named-character",
+      },
       effect: {
         modifier: 2,
         stat: "strength",
@@ -48,8 +49,9 @@ export const peterPanNeverLandHero: CharacterCard = {
         type: "modify-stat",
       },
       id: "h1y-2",
+      name: "OVER HERE, TINK",
       text: "OVER HERE, TINK While you have a character named Tinker Bell in play, this character gets +2 {S}.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: peterPanNeverLandHeroI18n,

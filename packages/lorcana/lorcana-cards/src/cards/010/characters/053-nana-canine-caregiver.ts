@@ -33,18 +33,43 @@ export const nanaCanineCaregiver: CharacterCard = {
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
+        steps: [
+          {
+            chooser: "CONTROLLER",
+            effect: {
+              type: "discard",
+              amount: 1,
+              chosen: true,
+              from: "hand",
+              target: "CONTROLLER",
+            },
+            type: "optional",
           },
-          type: "return-to-hand",
-        },
-        type: "optional",
+          {
+            condition: {
+              type: "if-you-do",
+            },
+            then: {
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "any",
+                zones: ["play"],
+                cardTypes: ["character"],
+                filter: [
+                  {
+                    type: "cost-comparison",
+                    comparison: "less-or-equal",
+                    value: 2,
+                  },
+                ],
+              },
+              type: "return-to-hand",
+            },
+            type: "conditional",
+          },
+        ],
+        type: "sequence",
       },
       id: "1lc-1",
       name: "HELPFUL INSTINCTS",

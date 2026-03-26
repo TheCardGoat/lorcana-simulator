@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { aladdinPrinceAliI18n } from "./092-aladdin-prince-ali.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const aladdinPrinceAli: CharacterCard = {
   id: "iTM",
@@ -24,13 +25,6 @@ export const aladdinPrinceAli: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Storyborn", "Hero", "Prince"],
-  abilities: [
-    {
-      id: "820-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: aladdinPrinceAliI18n,
 };

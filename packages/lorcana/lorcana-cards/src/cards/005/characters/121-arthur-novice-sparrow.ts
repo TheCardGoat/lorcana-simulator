@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { arthurNoviceSparrowI18n } from "./121-arthur-novice-sparrow.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
 
 export const arthurNoviceSparrow: CharacterCard = {
   id: "WQv",
@@ -24,13 +25,6 @@ export const arthurNoviceSparrow: CharacterCard = {
   },
   text: "Reckless",
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "bn1-1",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-  ],
+  abilities: [reckless],
   i18n: arthurNoviceSparrowI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { minnieMouseMusketeerChampionI18n } from "./017-minnie-mouse-musketeer-champion.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const minnieMouseMusketeerChampion: CharacterCard = {
   id: "Wtk",
@@ -33,12 +34,7 @@ export const minnieMouseMusketeerChampion: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Musketeer"],
   abilities: [
-    {
-      id: "1kb-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         target: {
@@ -47,6 +43,13 @@ export const minnieMouseMusketeerChampion: CharacterCard = {
           owner: "opponent",
           selector: "chosen",
           zones: ["play"],
+          filter: [
+            {
+              type: "strength-comparison",
+              comparison: "greater-or-equal",
+              value: 5,
+            },
+          ],
         },
         type: "banish",
       },

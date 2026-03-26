@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { auroraWakingBeautyI18n } from "./014-aurora-waking-beauty.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const auroraWakingBeauty: CharacterCard = {
   id: "t37",
@@ -34,13 +35,7 @@ export const auroraWakingBeauty: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "cy2-1",
-      keyword: "Singer",
-      text: "Singer 5",
-      type: "keyword",
-      value: 5,
-    },
+    singer(5),
     {
       effect: {
         steps: [

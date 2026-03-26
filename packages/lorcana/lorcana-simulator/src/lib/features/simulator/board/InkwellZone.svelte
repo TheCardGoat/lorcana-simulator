@@ -53,7 +53,7 @@ const droppable = createOptionalDroppable({
 	},
 });
 
-const MAX_VISIBLE_HIDDEN_CARDS = hasItemsInPlay ? 6 : 12;
+const MAX_VISIBLE_HIDDEN_CARDS = $derived(hasItemsInPlay ? 6 : 12);
 const effectiveTotal = $derived(Math.max(totalCards, cards.length));
 const hasRevealedCards = $derived(cards.length > 0);
 const visibleRevealedCards = $derived.by(() =>
@@ -65,6 +65,8 @@ const hiddenPlaceholderCount = $derived(
 const hiddenOverflowCount = $derived(
 	Math.max(0, effectiveTotal - hiddenPlaceholderCount),
 );
+const hasVisibleOverflow = $derived(hiddenOverflowCount > 0);
+const hasRevealedOverflow = $derived(cards.length > MAX_VISIBLE_HIDDEN_CARDS);
 const totalInk = $derived(hasRevealedCards ? cards.length : effectiveTotal);
 const readyInk = $derived.by<number | null>(() => {
 	if (!hasRevealedCards) {
@@ -186,7 +188,7 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
             {/if}
           </div>
         {/each}
-        {#if cards.length > MAX_VISIBLE_HIDDEN_CARDS}
+        {#if hasRevealedOverflow}
           <div class="more-ink">+{cards.length - MAX_VISIBLE_HIDDEN_CARDS}</div>
         {/if}
       </div>
@@ -226,7 +228,7 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
             />
           </div>
         {/each}
-        {#if hiddenOverflowCount > 0}
+        {#if hasVisibleOverflow}
           <div class="ink-count-more">+{hiddenOverflowCount}</div>
         {/if}
       </div>

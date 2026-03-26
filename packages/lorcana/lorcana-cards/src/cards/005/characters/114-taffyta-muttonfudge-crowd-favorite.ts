@@ -32,17 +32,14 @@ export const taffytaMuttonfudgeCrowdFavorite: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Racer"],
   abilities: [
     {
+      condition: {
+        type: "has-location-in-play",
+        controller: "you",
+      },
       effect: {
-        condition: {
-          type: "has-location-in-play",
-          controller: "you",
-        },
-        then: {
-          amount: 1,
-          target: "EACH_OPPONENT",
-          type: "lose-lore",
-        },
-        type: "conditional",
+        amount: 1,
+        target: "EACH_OPPONENT",
+        type: "lose-lore",
       },
       id: "1a4-1",
       name: "SHOWSTOPPER",

@@ -79,6 +79,11 @@ export const robinHoodChampionOfSherwood: CharacterCard = {
         event: "banish",
         on: "SELF",
         timing: "when",
+        restrictions: [
+          {
+            type: "in-challenge",
+          },
+        ],
       },
       type: "triggered",
     },

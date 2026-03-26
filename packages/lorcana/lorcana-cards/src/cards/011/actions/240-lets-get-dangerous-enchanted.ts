@@ -32,94 +32,44 @@ export const letsGetDangerousEnchanted: ActionCard = {
             target: "EACH_PLAYER",
           },
           {
-            type: "reveal-top-card",
+            type: "scry",
+            amount: 1,
             target: "CONTROLLER",
+            chooser: "CONTROLLER",
+            revealAll: true,
+            destinations: [
+              {
+                zone: "play",
+                min: 0,
+                max: 1,
+                cost: "free",
+                filter: { type: "card-type", cardType: "character" },
+              },
+              {
+                zone: "deck-bottom",
+                remainder: true,
+              },
+            ],
           },
           {
-            type: "conditional",
-            condition: {
-              type: "target-query",
-              query: {
-                selector: "chosen",
-                count: 1,
-                reference: "revealed-first",
-                cardTypes: ["character"],
-              },
-            },
-            then: {
-              type: "choice",
-              chooser: "CONTROLLER",
-              options: [
-                {
-                  type: "play-card",
-                  from: "revealed",
-                  cardType: "character",
-                  cost: "free",
-                  target: "CONTROLLER",
-                },
-                {
-                  type: "put-on-bottom",
-                  target: {
-                    selector: "chosen",
-                    count: 1,
-                    reference: "revealed-first",
-                  },
-                },
-              ],
-            },
-            else: {
-              type: "put-on-bottom",
-              target: {
-                selector: "chosen",
-                count: 1,
-                reference: "revealed-first",
-              },
-            },
-          },
-          {
-            type: "reveal-top-card",
+            type: "scry",
+            amount: 1,
             target: "OPPONENT",
-          },
-          {
-            type: "conditional",
-            condition: {
-              type: "target-query",
-              query: {
-                selector: "chosen",
-                count: 1,
-                reference: "revealed-first",
-                cardTypes: ["character"],
+            chooser: "OPPONENT",
+            revealAll: true,
+            destinations: [
+              {
+                zone: "play",
+                min: 0,
+                max: 1,
+                cost: "free",
+                filter: { type: "card-type", cardType: "character" },
               },
-            },
-            then: {
-              type: "choice",
-              chooser: "OPPONENT",
-              options: [
-                {
-                  type: "play-card",
-                  from: "revealed",
-                  cardType: "character",
-                  cost: "free",
-                  target: "OPPONENT",
-                },
-                {
-                  type: "put-on-bottom",
-                  target: {
-                    selector: "chosen",
-                    count: 1,
-                    reference: "revealed-first",
-                  },
-                },
-              ],
-            },
-            else: {
-              type: "put-on-bottom",
-              target: {
-                selector: "chosen",
-                count: 1,
-                reference: "revealed-first",
+              {
+                zone: "deck-bottom",
+                remainder: true,
               },
-            },
+            ],
           },
         ],
       },

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mittensSassyStreetCatI18n } from "./009-mittens-sassy-street-cat.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const mittensSassyStreetCat: CharacterCard = {
   id: "msV",
@@ -34,27 +35,31 @@ export const mittensSassyStreetCat: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "et6-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         duration: "this-turn",
         modifier: 1,
         stat: "lore",
-        target: "YOUR_CHARACTERS",
+        target: {
+          count: "all",
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [{ type: "has-keyword", keyword: "Bodyguard" }],
+          excludeSelf: true,
+        },
         type: "modify-stat",
       },
       id: "et6-2",
-      name: "NO THANKS NECESSARY Once",
+      name: "NO THANKS NECESSARY",
       text: "NO THANKS NECESSARY Once during your turn, whenever a card is put into your inkwell, your other characters with Bodyguard get +1 {L} this turn.",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "ink",
+        on: "CONTROLLER",
+        timing: "whenever",
+        restrictions: [{ type: "during-turn", whose: "your" }, { type: "once-per-turn" }],
       },
       type: "triggered",
     },

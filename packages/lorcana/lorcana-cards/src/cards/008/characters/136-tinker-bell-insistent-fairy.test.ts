@@ -5,6 +5,7 @@ import {
   createMockCharacter,
 } from "@tcg/lorcana-engine/testing";
 import { tinkerBellInsistentFairy } from "./136-tinker-bell-insistent-fairy";
+import { lumiereFieryFriend } from "../../009/characters/121-lumiere-fiery-friend";
 
 const strongCharacter = createMockCharacter({
   id: "tinker-bell-strong-char",
@@ -150,6 +151,49 @@ describe("Tinker Bell - Insistent Fairy", () => {
 
       // Each Tinker Bell triggers independently for 2 lore each = 4 total
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(loreBefore + 4);
+    });
+  });
+
+  describe("regression: static abilities stacking for play-cost reduction", () => {
+    it("Lumiere + Tinker Bell: Lumiere's +1 strength stacks correctly and PAY ATTENTION triggers for characters reaching 5+ strength", () => {
+      // A character with base 4 strength should reach 5 with Lumiere's +1 buff
+      const fourStrengthCharacter = createMockCharacter({
+        id: "tinker-bell-four-str",
+        name: "Four Strength Character",
+        cost: 4,
+        strength: 4,
+        willpower: 4,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [fourStrengthCharacter],
+          inkwell: fourStrengthCharacter.cost,
+          play: [tinkerBellInsistentFairy, lumiereFieryFriend],
+          deck: 2,
+        },
+        { deck: 2 },
+      );
+
+      // Lumiere gives +1 strength to other characters
+      // So fourStrengthCharacter (base 4) should get +1 = 5 when played
+      // This should trigger Tinker Bell's PAY ATTENTION (5+ strength)
+
+      const loreBefore = testEngine.asPlayerOne().getLore(PLAYER_ONE);
+
+      expect(testEngine.asPlayerOne().playCard(fourStrengthCharacter)).toBeSuccessfulCommand();
+
+      // After Lumiere's static buff, the character has 5 strength
+      expect(testEngine.asPlayerOne().getCardStrength(fourStrengthCharacter)).toBe(5);
+
+      // PAY ATTENTION should have triggered
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Accept the optional effect
+      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+
+      // Should gain 2 lore
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(loreBefore + 2);
     });
   });
 });

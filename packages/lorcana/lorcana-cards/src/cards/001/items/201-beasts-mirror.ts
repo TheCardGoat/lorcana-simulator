@@ -20,8 +20,8 @@ export const beastsMirror: ItemCard = {
   },
   text: [
     {
-      title: "SHOW ME, 3",
-      description: "— If you have no cards in your hand, draw a card.",
+      title: "SHOW ME",
+      description: "3, 3 {I} — If you have no cards in your hand, draw a card.",
     },
   ],
   abilities: [
@@ -31,20 +31,17 @@ export const beastsMirror: ItemCard = {
         exert: true,
         ink: 3,
       },
+      condition: {
+        type: "resource-count",
+        controller: "you",
+        what: "cards-in-hand",
+        comparison: "equal",
+        value: 0,
+      },
       effect: {
-        condition: {
-          type: "resource-count",
-          controller: "you",
-          what: "cards-in-hand",
-          comparison: "equal",
-          value: 0,
-        },
-        then: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
-        },
-        type: "conditional",
+        amount: 1,
+        target: "CONTROLLER",
+        type: "draw",
       },
       name: "SHOW ME",
       type: "activated",

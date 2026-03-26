@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { heathcliffStoicButlerI18n } from "./078-heathcliff-stoic-butler.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const heathcliffStoicButler: CharacterCard = {
   id: "tMg",
@@ -24,13 +25,6 @@ export const heathcliffStoicButler: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "fob-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: heathcliffStoicButlerI18n,
 };

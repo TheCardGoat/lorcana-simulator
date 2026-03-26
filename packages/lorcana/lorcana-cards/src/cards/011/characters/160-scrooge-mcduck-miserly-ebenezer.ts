@@ -33,21 +33,33 @@ export const scroogeMcduckMiserlyEbenezer: CharacterCard = {
   abilities: [
     {
       id: "wi2-1",
+      name: "BAH, HUMBUG",
+      type: "triggered",
+      text: "BAH, HUMBUG During your turn, whenever a card is put into your inkwell, chosen character gets -1 {S} this turn.",
+      trigger: {
+        event: "ink",
+        on: "CONTROLLER",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
+      },
       effect: {
-        modifier: -1,
+        type: "modify-stat",
         stat: "strength",
+        modifier: -1,
+        duration: "this-turn",
         target: {
-          cardTypes: ["character"],
+          selector: "chosen",
           count: 1,
           owner: "any",
-          selector: "chosen",
           zones: ["play"],
+          cardTypes: ["character"],
         },
-        type: "modify-stat",
-        duration: "this-turn",
       },
-      type: "action",
-      text: "BAH, HUMBUG During your turn, whenever a card is put into your inkwell, chosen character gets -1 {S} this turn.",
     },
   ],
   i18n: scroogeMcduckMiserlyEbenezerI18n,

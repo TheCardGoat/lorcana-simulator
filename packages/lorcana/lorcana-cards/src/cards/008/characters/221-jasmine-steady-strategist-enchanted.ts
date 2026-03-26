@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jasmineSteadyStrategistEnchantedI18n } from "./221-jasmine-steady-strategist-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const jasmineSteadyStrategistEnchanted: CharacterCard = {
   id: "zb3",
@@ -35,15 +36,7 @@ export const jasmineSteadyStrategistEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
   abilities: [
-    {
-      cost: {
-        ink: 2,
-      },
-      id: "13i-1",
-      keyword: "Shift",
-      text: "Shift 2",
-      type: "keyword",
-    },
+    shift(2),
     {
       effect: {
         type: "scry",

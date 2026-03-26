@@ -38,6 +38,9 @@ export const ratiganNefariousCriminal: CharacterCard = {
       id: "8q4-1",
       name: "A MARVELOUS PERFORMANCE",
       text: "A MARVELOUS PERFORMANCE Whenever you play an action while this character is exerted, gain 1 lore.",
+      condition: {
+        type: "is-exerted",
+      },
       trigger: {
         event: "play",
         on: {

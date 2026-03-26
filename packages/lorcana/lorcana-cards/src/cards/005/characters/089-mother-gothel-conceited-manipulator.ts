@@ -35,14 +35,20 @@ export const motherGothelConceitedManipulator: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
+          type: "pay-cost",
+          cost: {
+            ink: 3,
           },
-          type: "return-to-hand",
+          effect: {
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+            type: "return-to-hand",
+          },
         },
         type: "optional",
       },

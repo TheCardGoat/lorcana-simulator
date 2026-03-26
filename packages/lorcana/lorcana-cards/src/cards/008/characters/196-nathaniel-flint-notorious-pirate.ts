@@ -33,8 +33,13 @@ export const nathanielFlintNotoriousPirate: CharacterCard = {
   abilities: [
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        type: "self-play-condition",
+      },
+      condition: {
+        type: "turn-metric",
+        metric: "damaged-characters-by-owner",
+        ownerScope: "opponent",
+        comparison: { operator: "gte", value: 1 },
       },
       id: "1ub-1",
       text: "PREDATORY INSTINCT You can't play this character unless an opposing character was damaged this turn.",

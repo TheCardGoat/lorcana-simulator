@@ -32,9 +32,21 @@ export const miloThatchUndauntedScholar: CharacterCard = {
   abilities: [
     {
       effect: {
-        cardType: "action",
-        from: "hand",
-        type: "play-card",
+        chooser: "CONTROLLER",
+        effect: {
+          duration: "this-turn",
+          modifier: 2,
+          stat: "strength",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["character"],
+          },
+          type: "modify-stat",
+        },
+        type: "optional",
       },
       id: "1ah-1",
       name: "I'M YOUR GUY",

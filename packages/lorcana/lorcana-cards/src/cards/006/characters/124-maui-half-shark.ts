@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mauiHalfsharkI18n } from "./124-maui-half-shark.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const mauiHalfshark: CharacterCard = {
   id: "HTB",
@@ -38,12 +39,7 @@ export const mauiHalfshark: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Deity"],
   abilities: [
-    {
-      id: "rcf-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         chooser: "CONTROLLER",

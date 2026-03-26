@@ -47,7 +47,7 @@ export const lefouInstigator: CharacterCard = {
           {
             duration: "this-turn",
             restriction: "cant-quest",
-            target: "SELF",
+            target: { ref: "previous-target" },
             type: "restriction",
           },
         ],

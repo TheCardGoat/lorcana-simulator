@@ -146,4 +146,31 @@ describe("Tinker Bell - Temperamental Fairy", () => {
       expect(testEngine.asPlayerTwo().isExerted(strongOpponent)).toBe(false);
     });
   });
+
+  it("regression: cannot exert opposing character with more than 2 strength", () => {
+    const threeStrengthOpponent = createMockCharacter({
+      id: "tbtf-three-strength",
+      name: "Three Strength Opponent",
+      cost: 3,
+      strength: 3,
+      willpower: 3,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [tinkerBellTemperamentalFairy],
+        inkwell: tinkerBellTemperamentalFairy.cost,
+        deck: 2,
+      },
+      {
+        play: [threeStrengthOpponent],
+        deck: 2,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(tinkerBellTemperamentalFairy)).toBeSuccessfulCommand();
+
+    // No valid targets (3 strength > 2), trigger auto-resolves
+    expect(testEngine.asPlayerTwo().isExerted(threeStrengthOpponent)).toBe(false);
+  });
 });

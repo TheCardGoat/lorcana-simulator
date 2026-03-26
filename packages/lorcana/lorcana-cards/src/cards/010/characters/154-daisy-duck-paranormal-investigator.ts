@@ -1,4 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { shift } from "../../../helpers/abilities/shift";
+import { support } from "../../../helpers/abilities/support";
 import { daisyDuckParanormalInvestigatorI18n } from "./154-daisy-duck-paranormal-investigator.i18n";
 
 export const daisyDuckParanormalInvestigator: CharacterCard = {
@@ -35,21 +37,8 @@ export const daisyDuckParanormalInvestigator: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Detective"],
   abilities: [
-    {
-      id: "yOS-1",
-      keyword: "Shift",
-      cost: {
-        ink: 4,
-      },
-      text: "Shift 4 {I}",
-      type: "keyword",
-    },
-    {
-      id: "yOS-2",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    shift(4),
+    support,
     {
       id: "yOS-3",
       condition: {

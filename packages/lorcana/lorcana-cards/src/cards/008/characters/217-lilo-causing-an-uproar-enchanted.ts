@@ -38,37 +38,43 @@ export const liloCausingAnUproarEnchanted: CharacterCard = {
   classifications: ["Dreamborn", "Hero"],
   abilities: [
     {
-      effect: {
-        condition: {
-          type: "turn-metric",
-          metric: "played-actions",
-          comparison: {
-            operator: "gte",
-            value: 3,
-          },
-        },
-        then: {
-          cost: "free",
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
-      },
       id: "1to-1",
+      name: "STOMPIN' TIME!",
+      sourceZones: ["hand"],
       text: "STOMPIN' TIME! During your turn, if you've played 3 or more actions this turn, you may play this character for free.",
-      type: "action",
+      type: "static",
+      condition: {
+        type: "turn-metric",
+        metric: "played-actions",
+        comparison: {
+          operator: "gte",
+          value: 3,
+        },
+      },
+      effect: {
+        amount: "full",
+        type: "cost-reduction",
+      },
     },
     {
       effect: {
         steps: [
           {
-            from: "hand",
-            type: "play-card",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+            type: "ready",
           },
           {
             duration: "this-turn",
             restriction: "cant-quest",
-            target: "SELF",
+            target: {
+              ref: "previous-target",
+            },
             type: "restriction",
           },
         ],

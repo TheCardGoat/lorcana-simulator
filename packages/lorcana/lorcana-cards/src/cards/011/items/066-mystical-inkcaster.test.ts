@@ -41,6 +41,32 @@ describe("Mystical Inkcaster", () => {
     expect(testEngine.asPlayerOne().getCardZone(summonedChampion)).toBe("discard");
   });
 
+  it("does not banish the item itself at end of turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [summonedChampion],
+        inkwell: 3,
+        play: [mysticalInkcaster],
+        deck: 2,
+      },
+      {
+        deck: 2,
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(mysticalInkcaster, {
+        targets: [testEngine.findCardInstanceId(summonedChampion, "hand", "p1")],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    // The summoned character should be banished, but the item should remain
+    expect(testEngine.asPlayerOne().getCardZone(summonedChampion)).toBe("discard");
+    expect(testEngine.asPlayerOne().getCardZone(mysticalInkcaster)).toBe("play");
+  });
+
   it("does not let you choose a character with cost 6 or more", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [oversizedChampion],

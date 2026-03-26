@@ -10,9 +10,10 @@ import type {
 import { getSideForOwnerId, getZoneCardIds } from "@/features/simulator/model/contracts.js";
 
 export const BOARD_CENTER_ANCHOR_ID = "board:center";
-const DEBUG_BOARD_ANIMATIONS = true;
+const DEBUG_BOARD_ANIMATIONS = false;
 
 export type BoardMoveAnimationVariant =
+  | "banish"
   | "ink-faceDown"
   | "ink-faceUp"
   | "move-to-location"
@@ -99,6 +100,7 @@ type CardLocation = {
 };
 
 export const VARIANT_DURATION_MS: Record<BoardMoveAnimationVariant, number> = {
+  banish: 700,
   "ink-faceDown": 560,
   "ink-faceUp": 620,
   "move-to-location": 800,
@@ -201,9 +203,8 @@ export function deriveQueuedBoardMoveAnimations(
   const queued: QueuedBoardMoveAnimation[] = [];
 
   for (const entry of newEntries) {
-    const move = entry.rawLogRegistry?.move;
-    const moveId = move?.moveId ?? entry.moveId;
-    const params = move?.params ?? {};
+    const moveId = entry.moveId;
+    const params = entry.params ?? {};
     const cardId = getMoveCardId(entry);
 
     if (DEBUG_BOARD_ANIMATIONS) {
@@ -213,7 +214,6 @@ export function deriveQueuedBoardMoveAnimations(
         actorSide: entry.actorSide ?? null,
         params,
         cardId: cardId ?? null,
-        cardReferenceIds: entry.rawLogRegistry?.cardReferences?.map((card) => card.cardId) ?? [],
       });
     }
 
@@ -348,14 +348,9 @@ export function deriveQueuedBoardMoveAnimationsFromPacket(
 }
 
 function getMoveCardId(entry: MoveLogEntrySnapshot): string | null {
-  const paramsCardId = entry.rawLogRegistry?.move.params?.cardId;
+  const paramsCardId = entry.params?.cardId;
   if (typeof paramsCardId === "string" && paramsCardId.trim().length > 0) {
     return paramsCardId;
-  }
-
-  const referencedCardId = entry.rawLogRegistry?.cardReferences?.[0]?.cardId;
-  if (typeof referencedCardId === "string" && referencedCardId.trim().length > 0) {
-    return referencedCardId;
   }
 
   return null;
@@ -451,7 +446,10 @@ function deriveInkAnimation(
 
   const previousLocation = findCardLocation(previousSnapshot, cardId, resolveCard);
   const actorSide = entry.actorSide ?? nextLocation.side;
-  const renderFace = nextLocation.card.facePresentation;
+  // Determine face from the SOURCE position, not the inkwell destination.
+  // Cards in hand that belong to the actor are visible (face-up); opponent/masked cards are face-down.
+  const sourceWasMasked = previousLocation?.card.isMasked ?? previousLocation?.side !== actorSide;
+  const renderFace: CardFacePresentation = sourceWasMasked ? "faceDown" : "faceUp";
   const variant = renderFace === "faceUp" ? "ink-faceUp" : "ink-faceDown";
 
   return {
@@ -543,7 +541,13 @@ function buildSourceAnchor(
   if (!location.card.isMasked) {
     return {
       primaryId: createCardAnchorId(location.side, location.zoneId, location.card.cardId),
-      fallbackId: createZoneAnchorId(location.side, location.zoneId),
+      // For hand cards, fall back to the seat-hand anchor (a single-card-sized invisible anchor)
+      // rather than the zone anchor (which spans the full-width hand container and would produce
+      // an oversized sprite).
+      fallbackId:
+        location.zoneId === "hand"
+          ? createSeatHandAnchorId(actorSide)
+          : createZoneAnchorId(location.side, location.zoneId),
     };
   }
 

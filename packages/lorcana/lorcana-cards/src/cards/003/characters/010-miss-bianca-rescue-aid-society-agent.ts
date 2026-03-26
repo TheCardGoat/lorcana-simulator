@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { missBiancaRescueAidSocietyAgentI18n } from "./010-miss-bianca-rescue-aid-society-agent.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const missBiancaRescueAidSocietyAgent: CharacterCard = {
   id: "psy",
@@ -24,14 +25,6 @@ export const missBiancaRescueAidSocietyAgent: CharacterCard = {
   },
   text: "Singer 4",
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "113-1",
-      keyword: "Singer",
-      type: "keyword",
-      value: 4,
-      text: "Singer 4",
-    },
-  ],
+  abilities: [singer(4)],
   i18n: missBiancaRescueAidSocietyAgentI18n,
 };

@@ -30,6 +30,16 @@ export interface EnginePacketUpdate {
   canUndo?: boolean;
 }
 
+export type EngineViewUpdateSourceAuthority = "client" | "server";
+
+export type EngineViewUpdatePhase = "optimistic" | "confirmed" | "rejected";
+
+export interface EngineViewUpdateMetadata {
+  sourceAuthority: EngineViewUpdateSourceAuthority;
+  commandID?: string;
+  phase: EngineViewUpdatePhase;
+}
+
 export type EngineMoveHistoryEntry = {
   moveId: string;
   input?: MoveInput;
@@ -117,7 +127,7 @@ export interface TransportAwareEngine extends GameEngine {
 
   onStateUpdate(
     handler: (
-      state: DeepReadonly<MatchState>,
+      state: DeepReadonly<FilteredMatchView>,
       stateID: number,
       packet: EnginePacketUpdate | null,
     ) => void,

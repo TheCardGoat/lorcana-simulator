@@ -230,8 +230,15 @@ export function projectLorcanaCardDerived(args: {
       cardId: cardInstanceId,
       getDefinitionByInstanceId,
     });
-    if (grantedAbilities.length > 0) {
-      derived.grantedAbilityTextEntries = grantedAbilities.map(({ ability, sourceId }) => {
+    // Filter out self-grants: keyword-derived abilities (e.g. Boost) have sourceId === cardId
+    // because the card grants the activated ability to itself. Those entries are already
+    // represented by the card's own printed text entries, so they should not appear in
+    // grantedAbilityTextEntries (which would cause duplication and a "Granted by self" annotation).
+    const externalGrants = grantedAbilities.filter(
+      ({ sourceId }) => String(sourceId) !== String(cardInstanceId),
+    );
+    if (externalGrants.length > 0) {
+      derived.grantedAbilityTextEntries = externalGrants.map(({ ability, sourceId }) => {
         const title = ability.name ?? "Ability";
         const description = ability.text?.trim();
         const sourceDef = getDefinitionByInstanceId(sourceId);

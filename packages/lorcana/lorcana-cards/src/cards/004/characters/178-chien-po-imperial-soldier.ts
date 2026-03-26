@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { chienpoImperialSoldierI18n } from "./178-chien-po-imperial-soldier.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const chienpoImperialSoldier: CharacterCard = {
   id: "Z6w",
@@ -24,13 +25,6 @@ export const chienpoImperialSoldier: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1m9-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: chienpoImperialSoldierI18n,
 };

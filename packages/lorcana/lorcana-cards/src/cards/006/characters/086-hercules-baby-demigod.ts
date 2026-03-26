@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { herculesBabyDemigodI18n } from "./086-hercules-baby-demigod.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const herculesBabyDemigod: CharacterCard = {
   id: "7Td",
@@ -33,12 +34,7 @@ export const herculesBabyDemigod: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Prince"],
   abilities: [
-    {
-      id: "844-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         amount: 1,

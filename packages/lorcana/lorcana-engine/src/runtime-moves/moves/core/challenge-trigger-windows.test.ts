@@ -142,6 +142,31 @@ const redirectingGuardian = createMockCharacter({
   ],
 });
 
+const discardChallengeWatcher = createMockCharacter({
+  id: "discard-challenge-watcher",
+  name: "Discard Challenge Watcher",
+  cost: 2,
+  lore: 1,
+  abilities: [
+    {
+      id: "discard-challenge-watcher-1",
+      text: "While this is in your discard, whenever one of your characters banishes another character in a challenge, gain 3 lore.",
+      type: "triggered",
+      sourceZones: ["discard"],
+      trigger: {
+        event: "banish-in-challenge",
+        on: "YOUR_CHARACTERS",
+        timing: "whenever",
+      },
+      effect: {
+        amount: 3,
+        target: "CONTROLLER",
+        type: "gain-lore",
+      },
+    },
+  ],
+});
+
 describe("challenge trigger windows", () => {
   it("holds challenge damage until declaration-window bag effects auto-resolve", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
@@ -196,6 +221,33 @@ describe("challenge trigger windows", () => {
     expect(testEngine.asPlayerOne().getCardZone(fragileDefender)).toBe("discard");
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(2);
+  });
+
+  it("does not scan unrelated discard triggers during the after-challenge window", () => {
+    const attacker = createMockCharacter({
+      id: "after-challenge-window-attacker",
+      name: "After Challenge Window Attacker",
+      cost: 2,
+      strength: 3,
+      willpower: 3,
+      lore: 1,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [attacker],
+        discard: [discardChallengeWatcher],
+        deck: 1,
+      },
+      {
+        play: [{ card: fragileDefender, exerted: true }],
+        deck: 1,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().challenge(attacker, fragileDefender).success).toBe(true);
+    expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
   });
 
   it("keeps the challenge open while post-damage bag effects create more post-damage bag effects", () => {

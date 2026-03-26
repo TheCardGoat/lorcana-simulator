@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { scarEerilyPreparedI18n } from "./153-scar-eerily-prepared.i18n";
 
 export const scarEerilyPrepared: CharacterCard = {
@@ -34,13 +35,7 @@ export const scarEerilyPrepared: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Whisper"],
   abilities: [
-    {
-      id: "1rg-1",
-      keyword: "Boost",
-      text: "Boost 2 {I}",
-      type: "keyword",
-      value: 2,
-    },
+    boost(2),
     {
       effect: {
         duration: "this-turn",

@@ -1,163 +1,191 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { deweyLovableShowoff } from "@lorcanito/lorcana-engine/cards/008/index";
-// Import {
-//   DuckworthGhostButler,
-//   MinnieMouseAmethystChampion,
-//   NibsLostBoy,
-// } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Minnie Mouse - Amethyst Champion", () => {
-//   Describe("MYSTICAL BALANCE - Whenever one of your other Amethyst characters is banished in a challenge, you may draw a card.", () => {
-//     It("should trigger and draw a card when another Amethyst character is banished in a challenge", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: 10,
-//           Deck: 5,
-//           Play: [minnieMouseAmethystChampion, duckworthGhostButler],
-//         },
-//         {
-//           Play: [deweyLovableShowoff],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         MinnieMouseAmethystChampion,
-//       );
-//       Const amethystAlly = testEngine.getCardModel(duckworthGhostButler);
-//       Const attacker = testEngine.getCardModel(deweyLovableShowoff);
-//
-//       // Exert ally to make it available for challenge
-//       Await testEngine.exertCard(amethystAlly);
-//       Expect(amethystAlly.meta.exerted).toBe(true);
-//
-//       Const initialHandSize = testEngine.getZonesCardCount("player_one").hand;
-//
-//       // Opponent challenges our Amethyst character
-//       Await testEngine.passTurn();
-//       Await testEngine.challenge({ attacker, defender: amethystAlly });
-//
-//       // Verify the Amethyst character was banished
-//       Expect(amethystAlly.zone).toBe("discard");
-//
-//       // Change back to player_one to resolve the ability
-//       Await testEngine.changeActivePlayer("player_one");
-//
-//       // Accept the optional draw trigger
-//       Await testEngine.acceptOptionalLayer();
-//
-//       // Verify we drew a card
-//       Const finalHandSize = testEngine.getZonesCardCount("player_one").hand;
-//       Expect(finalHandSize).toBe(initialHandSize + 1);
-//     });
-//
-//     It("should NOT trigger when Minnie Mouse herself is banished", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: 10,
-//           Deck: 5,
-//           Play: [minnieMouseAmethystChampion],
-//         },
-//         {
-//           Play: [deweyLovableShowoff],
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         MinnieMouseAmethystChampion,
-//       );
-//       Const attacker = testEngine.getCardModel(deweyLovableShowoff);
-//
-//       Await testEngine.exertCard(cardUnderTest);
-//
-//       Const initialHandSize = testEngine.getZonesCardCount("player_one").hand;
-//
-//       // Opponent challenges Minnie Mouse herself
-//       Await testEngine.passTurn();
-//       Await testEngine.challenge({ attacker, defender: cardUnderTest });
-//
-//       // Verify Minnie was banished
-//       Expect(cardUnderTest.zone).toBe("discard");
-//
-//       // No trigger should fire
-//       Expect(testEngine.stackLayers.length).toBe(0);
-//
-//       // Hand size should not change
-//       Const finalHandSize = testEngine.getZonesCardCount("player_one").hand;
-//       Expect(finalHandSize).toBe(initialHandSize);
-//     });
-//
-//     It("should NOT trigger when a non-Amethyst character is banished", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: 10,
-//           Deck: 5,
-//           Play: [minnieMouseAmethystChampion, deweyLovableShowoff], // Dewey is not Amethyst
-//         },
-//         {
-//           Play: [duckworthGhostButler], // Duckworth has 3 strength, will banish Dewey with 2 willpower (if Dewey gets damaged)
-//         },
-//       );
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         MinnieMouseAmethystChampion,
-//       );
-//       Const nonAmethystAlly = testEngine.getCardModel(deweyLovableShowoff);
-//       Const attacker = testEngine.getCardModel(duckworthGhostButler);
-//
-//       // Damage Dewey so he can be banished by Duckworth (3 strength)
-//       NonAmethystAlly.updateCardDamage(1);
-//       Await testEngine.exertCard(nonAmethystAlly);
-//
-//       Const initialHandSize = testEngine.getZonesCardCount("player_one").hand;
-//
-//       // Opponent challenges our non-Amethyst character
-//       Await testEngine.passTurn();
-//       Await testEngine.challenge({ attacker, defender: nonAmethystAlly });
-//
-//       // Verify the non-Amethyst character was banished
-//       Expect(nonAmethystAlly.zone).toBe("discard");
-//
-//       // No trigger should fire (Minnie doesn't care about non-Amethyst characters)
-//       Expect(testEngine.stackLayers.length).toBe(0);
-//
-//       // Hand size should not change
-//       Const finalHandSize = testEngine.getZonesCardCount("player_one").hand;
-//       Expect(finalHandSize).toBe(initialHandSize);
-//     });
-//
-//     It("should NOT trigger when an Amethyst character is banished outside of a challenge", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: 10,
-//         Deck: 5,
-//         Play: [minnieMouseAmethystChampion, duckworthGhostButler],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         MinnieMouseAmethystChampion,
-//       );
-//       Const amethystAlly = testEngine.getCardModel(duckworthGhostButler);
-//
-//       Const initialHandSize = testEngine.getZonesCardCount("player_one").hand;
-//
-//       // Banish the Amethyst character directly (not in a challenge)
-//       AmethystAlly.banish();
-//
-//       // Verify the Amethyst character was banished
-//       Expect(amethystAlly.zone).toBe("discard");
-//
-//       // No trigger should fire
-//       Expect(testEngine.stackLayers.length).toBe(0);
-//
-//       // Hand size should not change
-//       Const finalHandSize = testEngine.getZonesCardCount("player_one").hand;
-//       Expect(finalHandSize).toBe(initialHandSize);
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { minnieMouseAmethystChampion } from "./035-minnie-mouse-amethyst-champion";
+
+// Amethyst character to be banished in a challenge
+const amethystAlly = createMockCharacter({
+  id: "minnie-amethyst-ally",
+  name: "Amethyst Ally",
+  cost: 2,
+  strength: 1,
+  willpower: 1,
+  lore: 1,
+  inkType: ["amethyst"],
+});
+
+// Non-Amethyst character
+const nonAmethystAlly = createMockCharacter({
+  id: "minnie-non-amethyst-ally",
+  name: "Non-Amethyst Ally",
+  cost: 2,
+  strength: 1,
+  willpower: 1,
+  lore: 1,
+  inkType: ["amber"],
+});
+
+// Strong opponent that can banish allies
+const strongAttacker = createMockCharacter({
+  id: "minnie-strong-attacker",
+  name: "Strong Attacker",
+  cost: 3,
+  strength: 5,
+  willpower: 5,
+  lore: 1,
+});
+
+describe("Minnie Mouse - Amethyst Champion", () => {
+  describe("MYSTICAL BALANCE - Whenever one of your other Amethyst characters is banished in a challenge, you may draw a card.", () => {
+    it("should trigger when another Amethyst character is banished in a challenge", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [minnieMouseAmethystChampion, { card: amethystAlly, exerted: true }],
+          deck: 3,
+        },
+        {
+          play: [strongAttacker],
+        },
+      );
+
+      // Pass turn so opponent can challenge
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Opponent challenges our Amethyst ally
+      expect(
+        testEngine.asPlayerTwo().challenge(strongAttacker, amethystAlly),
+      ).toBeSuccessfulCommand();
+
+      // Verify the Amethyst character was banished
+      expect(testEngine.asPlayerOne().getCardZone(amethystAlly)).toBe("discard");
+
+      // The trigger should be in the bag for player one
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    });
+
+    it("should draw a card when the optional trigger is accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [minnieMouseAmethystChampion, { card: amethystAlly, exerted: true }],
+          deck: 3,
+        },
+        {
+          play: [strongAttacker],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().challenge(strongAttacker, amethystAlly),
+      ).toBeSuccessfulCommand();
+
+      // Accept the optional draw trigger
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // Verify we drew a card
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, deck: 2 });
+    });
+
+    it("should NOT draw a card when the optional trigger is declined", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [minnieMouseAmethystChampion, { card: amethystAlly, exerted: true }],
+          deck: 3,
+        },
+        {
+          play: [strongAttacker],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().challenge(strongAttacker, amethystAlly),
+      ).toBeSuccessfulCommand();
+
+      // Decline the optional draw trigger
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // No card drawn
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 3 });
+    });
+
+    it("should NOT trigger when Minnie Mouse herself is banished", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: minnieMouseAmethystChampion, exerted: true }],
+          deck: 3,
+        },
+        {
+          play: [strongAttacker],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Opponent challenges Minnie Mouse herself
+      expect(
+        testEngine.asPlayerTwo().challenge(strongAttacker, minnieMouseAmethystChampion),
+      ).toBeSuccessfulCommand();
+
+      // Verify Minnie was banished
+      expect(testEngine.asPlayerOne().getCardZone(minnieMouseAmethystChampion)).toBe("discard");
+
+      // No trigger should fire
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
+    it("should NOT trigger when a non-Amethyst character is banished in a challenge", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [minnieMouseAmethystChampion, { card: nonAmethystAlly, exerted: true }],
+          deck: 3,
+        },
+        {
+          play: [strongAttacker],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Opponent challenges our non-Amethyst character
+      expect(
+        testEngine.asPlayerTwo().challenge(strongAttacker, nonAmethystAlly),
+      ).toBeSuccessfulCommand();
+
+      // Verify the non-Amethyst character was banished
+      expect(testEngine.asPlayerOne().getCardZone(nonAmethystAlly)).toBe("discard");
+
+      // No trigger should fire (Minnie only cares about Amethyst characters)
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
+    it("should NOT trigger when an Amethyst character is banished outside of a challenge", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [minnieMouseAmethystChampion, amethystAlly],
+          deck: 3,
+        },
+        {},
+      );
+
+      // Banish the Amethyst character directly (not in a challenge)
+      expect(testEngine.asServer().manualSetDamage(amethystAlly, 10)).toBeSuccessfulCommand();
+
+      // Verify the Amethyst character was banished
+      expect(testEngine.asPlayerOne().getCardZone(amethystAlly)).toBe("discard");
+
+      // No trigger should fire
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+  });
+});

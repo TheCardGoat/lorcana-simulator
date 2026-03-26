@@ -523,6 +523,12 @@ export interface UnderParentFilter {
   cardTypes?: ("character" | "item" | "location" | "action")[];
 }
 
+export interface CardsUnderFilter {
+  type: "cards-under";
+  comparison: ComparisonOperator;
+  value: number;
+}
+
 // ============================================================================
 // Generic Attribute Filter
 // ============================================================================
@@ -695,6 +701,7 @@ export type CharacterFilter =
   | ChallengedThisTurnFilter
   | NamedCardFilter
   | UnderParentFilter
+  | CardsUnderFilter
   | AtLocationFilter
   | SameLocationAsSourceFilter
   // Generic Attribute
@@ -714,6 +721,8 @@ export type CharacterFilter =
  */
 export type CharacterQueryBase = TargetDSL<CharacterFilter[], LorcanaContext> & {
   reference?: TargetReference;
+  /** Multiple filter criteria (plural alias for filter) */
+  filters?: CharacterFilter[];
 };
 
 /**
@@ -833,6 +842,8 @@ export type LocationFilter =
  */
 export type LocationQueryBase = TargetDSL<LocationFilter[], LorcanaContext> & {
   reference?: TargetReference;
+  /** Multiple filter criteria (plural alias for filter) */
+  filters?: LocationFilter[];
 };
 
 /** Target exactly N locations */
@@ -911,6 +922,8 @@ export type ItemFilter =
  */
 export type ItemQueryBase = TargetDSL<ItemFilter[], LorcanaContext> & {
   reference?: TargetReference;
+  /** Multiple filter criteria (plural alias for filter) */
+  filters?: ItemFilter[];
 };
 
 /** Target exactly N items */

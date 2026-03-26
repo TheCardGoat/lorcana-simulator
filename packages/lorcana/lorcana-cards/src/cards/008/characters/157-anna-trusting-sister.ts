@@ -32,20 +32,17 @@ export const annaTrustingSister: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Queen"],
   abilities: [
     {
+      condition: {
+        type: "has-named-character",
+        name: "Elsa",
+        controller: "you",
+      },
       effect: {
-        condition: {
-          type: "has-named-character",
-          name: "Elsa",
-          controller: "you",
-        },
-        then: {
-          exerted: true,
-          facedown: true,
-          source: "top-of-deck",
-          target: "CONTROLLER",
-          type: "put-into-inkwell",
-        },
-        type: "conditional",
+        exerted: true,
+        facedown: true,
+        source: "top-of-deck",
+        target: "CONTROLLER",
+        type: "put-into-inkwell",
       },
       id: "8vk-1",
       name: "WE CAN DO THIS TOGETHER",

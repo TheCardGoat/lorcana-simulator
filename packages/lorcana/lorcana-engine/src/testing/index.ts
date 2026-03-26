@@ -20,6 +20,13 @@ if ("Bun" in globalThis) {
 import { createPlayerId } from "#core";
 export { cardRef } from "../types";
 export type { CardInput, LorcanaStaticCard } from "../types";
+export type {
+  BrowserTransportConfig,
+  BrowserTransportLatencyModel,
+  BrowserTransportMode,
+  TimeControlConfig,
+} from "#core";
+export { normalizeBrowserTransportConfig, DEFAULT_DYNAMIC_CLOCK_CONFIG } from "#core";
 
 export {
   createMockAction,

@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { whiteRabbitLateAgainI18n } from "./089-white-rabbit-late-again.i18n";
+import { underdog } from "../../../helpers/abilities/underdog";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const whiteRabbitLateAgain: CharacterCard = {
   id: "k8j",
@@ -33,28 +35,6 @@ export const whiteRabbitLateAgain: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1go-1",
-      name: "UNDERDOG",
-      condition: {
-        type: "first-turn-non-otp",
-      },
-      effect: {
-        amount: 1,
-        cardType: "character",
-        type: "cost-reduction",
-      },
-      sourceZones: ["hand"],
-      type: "static",
-      text: "UNDERDOG If this is your first turn and you're not the first player, you pay 1 {I} less to play this character.",
-    },
-    {
-      id: "1go-2",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [underdog, evasive],
   i18n: whiteRabbitLateAgainI18n,
 };

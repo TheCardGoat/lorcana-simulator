@@ -55,7 +55,23 @@ describe("Devil's Eye Diamond", () => {
         ability: "THE PRICE OF POWER",
       }),
     ).toBeSuccessfulCommand();
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+  });
 
+  it("regression: does not gain lore when a character has pre-existing damage but was not damaged THIS TURN", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [devilsEyeDiamond, damagedAlly],
+    });
+
+    // Manually set damage (this simulates pre-existing damage, not damage taken this turn)
+    testEngine.asServer().manualSetDamage(damagedAlly, 2);
+
+    // Activate the ability - the condition checks if a character was damaged THIS TURN
+    expect(
+      testEngine.asPlayerOne().activateAbility(devilsEyeDiamond, {
+        ability: "THE PRICE OF POWER",
+      }),
+    ).toBeSuccessfulCommand();
     expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
   });
 });

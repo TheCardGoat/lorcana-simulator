@@ -10,6 +10,7 @@
     } from "@/features/simulator/model/contracts.js";
   import { m } from "$lib/i18n/messages.js";
     import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+    import HotkeyCardBadge from "@/features/simulator/hotkeys/HotkeyCardBadge.svelte";
     import {createCardAnchorId, createZoneAnchorId} from "@/features/simulator/animations/board-move-animations.js";
     import {
         useLorcanaBoardPresenter,
@@ -30,6 +31,7 @@
     isOpponent: boolean;
     isTucked?: boolean;
     onToggleTucked?: (() => void) | undefined;
+    hotkeyBindings?: Map<string, string>;
   }
 
   let {
@@ -39,6 +41,7 @@
     isOpponent,
     isTucked = false,
     onToggleTucked,
+    hotkeyBindings = new Map(),
   }: HandZoneProps = $props();
 
   const board = useLorcanaBoardPresenter();
@@ -286,12 +289,16 @@
           style:--rotation="{rotation}deg"
           {@attach draggable.attach}
         >
+          {#if hotkeyBindings.has(card.cardId)}
+            <HotkeyCardBadge hotkey={hotkeyBindings.get(card.cardId)!} />
+          {/if}
           <LorcanaCard
             {card}
             size="small"
             useContainerSize
             imageFormat="art_and_name"
             hoverShowActions
+            clickOpensHover
             isSelected={isSelected}
             isMasked={isMasked}
             isPlayable={actionState.isSelectable || playable}

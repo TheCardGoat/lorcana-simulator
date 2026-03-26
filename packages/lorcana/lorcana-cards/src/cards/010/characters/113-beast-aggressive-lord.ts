@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { beastAggressiveLordI18n } from "./113-beast-aggressive-lord.i18n";
 
 export const beastAggressiveLord: CharacterCard = {
@@ -34,13 +35,7 @@ export const beastAggressiveLord: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Prince", "Whisper"],
   abilities: [
-    {
-      id: "6u1-1",
-      keyword: "Boost",
-      text: "Boost 2 {I}",
-      type: "keyword",
-      value: 2,
-    },
+    boost(2),
     {
       effect: {
         type: "conditional",

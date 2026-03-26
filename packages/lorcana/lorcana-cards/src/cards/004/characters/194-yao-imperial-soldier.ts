@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { yaoImperialSoldierI18n } from "./194-yao-imperial-soldier.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const yaoImperialSoldier: CharacterCard = {
   id: "0wR",
@@ -24,14 +25,6 @@ export const yaoImperialSoldier: CharacterCard = {
   },
   text: "Challenger +2",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "ayj-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2",
-    },
-  ],
+  abilities: [challenger(2)],
   i18n: yaoImperialSoldierI18n,
 };

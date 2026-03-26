@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { bagheeraGuardianJaguarI18n } from "./198-bagheera-guardian-jaguar.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const bagheeraGuardianJaguar: CharacterCard = {
   id: "n5M",
@@ -34,12 +35,7 @@ export const bagheeraGuardianJaguar: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "132-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         amount: 2,

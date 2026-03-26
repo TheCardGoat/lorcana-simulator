@@ -37,18 +37,19 @@ export const philoctetesNononsenseInstructor: CharacterCard = {
     {
       effect: {
         keyword: "Challenger",
-        target: "YOUR_CHARACTERS",
+        target: "YOUR_HERO_CHARACTERS",
         type: "gain-keyword",
         value: 1,
       },
       id: "1r4-1",
-      name: "YOU GOTTA STAY FOCUSED Your Hero",
+      name: "YOU GOTTA STAY FOCUSED",
       text: "YOU GOTTA STAY FOCUSED Your Hero characters gain Challenger +1.",
       type: "static",
     },
     {
       effect: {
         amount: 1,
+        target: "CONTROLLER",
         type: "gain-lore",
       },
       id: "1r4-2",

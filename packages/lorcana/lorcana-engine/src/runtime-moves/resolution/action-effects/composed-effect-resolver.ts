@@ -50,6 +50,7 @@ import type {
   ReturnRandomFromInkwellEffect,
   ReturnFromDiscardEffect,
   ReturnToHandEffect,
+  RevealAndRouteEffect,
   RevealTopCardEffect,
   ScryEffect,
   SearchDeckEffect,
@@ -60,7 +61,11 @@ import type {
 } from "@tcg/lorcana-types";
 import { isCardType, isClassification } from "@tcg/lorcana-types";
 import type { MillEffect } from "@tcg/lorcana-types/abilities";
-import { createLorcanaLogMessage, type CardPlayedPayload } from "../../../types/index";
+import {
+  createLorcanaGameLogEntry,
+  createLorcanaLogMessage,
+  type CardPlayedPayload,
+} from "../../../types/index";
 import {
   resolveAggregateFieldAmount,
   resolveEffectDynamicFields,
@@ -146,6 +151,7 @@ import {
 } from "./return-from-discard-effect";
 import { isReturnToHandEffect, resolveReturnToHandEffect } from "./return-to-hand-effect";
 import { isRevealTopCardEffect, resolveRevealTopCardEffect } from "./reveal-top-card-effect";
+import { isRevealAndRouteEffect, resolveRevealAndRouteEffect } from "./reveal-and-route-effect";
 import {
   getScryLookedAtCards,
   isScryEffect,
@@ -159,7 +165,12 @@ import { isSupportEffect, resolveSupportEffect } from "./support-effect";
 import { isForEachOpponentEffect, resolveForEachOpponentEffect } from "./for-each-opponent-effect";
 import { markLastEffectPerformed, resetLastEffectPerformed } from "./event-snapshot-utils";
 import { handleUnsupportedActionEffect } from "./unsupported-action-effect";
-import { createPendingActionEffect, enqueuePendingActionEffect } from "./pending-action-effects";
+import {
+  clearPendingActionChoice,
+  createPendingActionEffect,
+  enqueuePendingActionEffect,
+  removePendingActionEffect,
+} from "./pending-action-effects";
 import { buildResolutionSelectionContext } from "./selection-context";
 import { recordVanishChosenTargets } from "./vanish";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
@@ -860,6 +871,14 @@ function maybeSuspendForChosenTargets(
     return undefined;
   }
 
+  const hasNoCandidates =
+    selectionContext.kind === "target-selection" &&
+    selectionContext.cardCandidateIds.length === 0 &&
+    selectionContext.playerCandidateIds.length === 0;
+  if (hasNoCandidates && cardPlayed.cardType === "action") {
+    return undefined;
+  }
+
   const pendingEffect = createPendingActionEffect(ctx, {
     kind: selectionContext.kind,
     sourceCardId: cardPlayed.cardId,
@@ -1001,6 +1020,37 @@ function maybeSuspendForTargetOrdering(
           .map((targetId) => ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined)
           .find(Boolean) ?? cardPlayed.playerId) as PlayerId)
       : cardPlayed.playerId;
+  const allowedZones =
+    effectRecord.target &&
+    typeof effectRecord.target === "object" &&
+    !Array.isArray(effectRecord.target) &&
+    Array.isArray((effectRecord.target as { zones?: unknown }).zones)
+      ? ((effectRecord.target as { zones: string[] }).zones as Array<
+          "deck" | "hand" | "play" | "discard" | "inkwell" | "limbo"
+        >)
+      : [];
+  const selectionContext = {
+    origin: "pending-effect" as const,
+    requestId: "pending-effect:preview",
+    kind: "target-selection" as const,
+    sourceCardId: cardPlayed.cardId,
+    chooserId,
+    currentSelection: {},
+    submitField: "targets" as const,
+    targetDsl:
+      effectRecord.target &&
+      typeof effectRecord.target === "object" &&
+      !Array.isArray(effectRecord.target)
+        ? [effectRecord.target as never]
+        : [],
+    cardCandidateIds: [...candidateTargets],
+    playerCandidateIds: [],
+    allowedZones,
+    minSelections: candidateTargets.length,
+    maxSelections: candidateTargets.length,
+    ordered: true,
+    autoRejected: false,
+  };
 
   const pendingEffect = createPendingActionEffect(ctx, {
     kind: "target-selection",
@@ -1011,6 +1061,7 @@ function maybeSuspendForTargetOrdering(
     effect,
     continuation: options?.continuation,
     resolutionInput,
+    selectionContext,
   });
   return suspendActionEffect(ctx, pendingEffect);
 }
@@ -1131,6 +1182,7 @@ export const ACTION_EFFECT_RESOLVER_TYPES = [
   "or",
   "lose-lore",
   "shuffle-into-deck",
+  "reveal",
   "reveal-top-card",
   "reveal-until-match",
   "name-a-card",
@@ -1151,6 +1203,7 @@ export const ACTION_EFFECT_RESOLVER_TYPES = [
   "support",
   "property-modification",
   "lose-keyword",
+  "reveal-and-route",
 ] as const;
 
 type SupportedActionEffectType = (typeof ACTION_EFFECT_RESOLVER_TYPES)[number];
@@ -1381,6 +1434,19 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         continuation,
       });
       if (result.status === "suspended") {
+        const selectionContext = result.pendingEffect.selectionContext;
+        const isTargetSelection =
+          selectionContext?.kind === "target-selection" ||
+          selectionContext?.kind === "discard-choice";
+        const hasNoCandidates =
+          isTargetSelection &&
+          selectionContext.cardCandidateIds.length === 0 &&
+          selectionContext.playerCandidateIds.length === 0;
+        if (hasNoCandidates) {
+          removePendingActionEffect(ctx, result.pendingEffect.id);
+          clearPendingActionChoice(ctx);
+          continue;
+        }
         if (
           index === 0 &&
           !stagedSequence &&
@@ -1704,11 +1770,22 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       resolved.resolvedDynamic.amount === undefined
         ? 1
         : resolveAggregateFieldAmount(resolved.resolvedDynamic.amount);
-    resolveDrawEffect(ctx, cardPlayed, effect as DrawEffect, {
-      drawAmount,
-      selectedPlayerIds: resolveTargetPlayerIdsForEffect(ctx, cardPlayed, effect, resolutionInput),
-      selectedTargets: resolveSelectedCardTargetsForEffect(effect, resolutionInput),
-    });
+    resolveDrawEffect(
+      ctx,
+      cardPlayed,
+      effect as DrawEffect,
+      {
+        drawAmount,
+        selectedPlayerIds: resolveTargetPlayerIdsForEffect(
+          ctx,
+          cardPlayed,
+          effect,
+          resolutionInput,
+        ),
+        selectedTargets: resolveSelectedCardTargetsForEffect(effect, resolutionInput),
+      },
+      resolutionInput.eventSnapshot,
+    );
     return RESOLVED_ACTION_EFFECT;
   },
 
@@ -1816,7 +1893,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     return RESOLVED_ACTION_EFFECT;
   },
 
-  scry: (ctx, cardPlayed, effect, resolutionInput) => {
+  scry: (ctx, cardPlayed, effect, resolutionInput, options) => {
     if (!isScryEffect(effect)) {
       handleUnsupportedActionEffect("scry", "Malformed scry effect payload");
       return RESOLVED_ACTION_EFFECT;
@@ -1830,31 +1907,40 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       effect,
       resolutionInput,
     );
-    const hasExplicitDestinations =
-      Array.isArray(resolutionInput.destinations) && resolutionInput.destinations.length > 0;
+    const hasExplicitDestinations = Array.isArray(resolutionInput.destinations);
 
-    if (
-      !hasExplicitDestinations &&
-      Array.isArray(effect.destinations) &&
-      effect.destinations.length > 0
-    ) {
+    // Resolve the chooser early: this determines who should make the scry
+    // destination decision. When the chooser is not the current actor, the
+    // effect MUST suspend — even if destinations were provided — because
+    // the wrong player cannot make this choice.
+    const defaultChooser = getCurrentActionActorId(ctx, cardPlayed);
+    const effectChooser = (effect as { chooser?: unknown }).chooser;
+    const chooserId =
+      effectChooser != null
+        ? (resolveTargetPlayerIds(ctx, cardPlayed, effectChooser as never)[0] ?? defaultChooser)
+        : defaultChooser;
+    const actorId = getCurrentActionActorId(ctx, cardPlayed);
+    const chooserIsNotCurrentActor = chooserId !== actorId;
+
+    // Suspend when:
+    // - destinations were not provided (normal first-entry path), OR
+    // - destinations were provided but by the wrong player (safety guard)
+    const shouldSuspend = !hasExplicitDestinations || chooserIsNotCurrentActor;
+
+    if (shouldSuspend && Array.isArray(effect.destinations) && effect.destinations.length > 0) {
       const deckPlayerId = resolveScryDeckPlayerId(cardPlayed, selectedPlayerIds);
-      const lookedAtCards = getScryLookedAtCards(ctx, deckPlayerId, scryAmount);
+      // Top-of-deck cards to inspect. Prefer pre-resolved cards (from a preceding
+      // reveal-top-card step in a sequence) over re-reading from the deck zone.
+      const existingRevealedCards = resolutionInput.eventSnapshot?.revealedCardIds;
+      const lookedAtCards =
+        existingRevealedCards && existingRevealedCards.length > 0
+          ? ([...existingRevealedCards] as CardInstanceId[])
+          : getScryLookedAtCards(ctx, deckPlayerId, scryAmount);
 
       if (lookedAtCards.length > 0) {
-        const defaultChooser = getCurrentActionActorId(ctx, cardPlayed);
-        const effectChooser = (effect as { chooser?: unknown }).chooser;
-        const chooserId =
-          effectChooser != null
-            ? (resolveTargetPlayerIds(ctx, cardPlayed, effectChooser as never)[0] ?? defaultChooser)
-            : defaultChooser;
         const revealWindowIds = [ctx.framework.zones.reveal(lookedAtCards, [chooserId])];
-        ctx.framework.logPublicWithOverrides({
-          category: "action",
-          defaultMessage: createLorcanaLogMessage("lorcana.scry.count", {
-            playerId: chooserId,
-            count: lookedAtCards.length,
-          }),
+        const scryVisibility = {
+          mode: "PUBLIC_WITH_OVERRIDES" as const,
           overrides: {
             [chooserId]: createLorcanaLogMessage("lorcana.scry.detail", {
               playerId: chooserId,
@@ -1862,6 +1948,23 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
               lookedAt: lookedAtCards,
             }),
           },
+        };
+        ctx.framework.log({
+          category: "action",
+          visibility: scryVisibility,
+          defaultMessage: createLorcanaLogMessage("lorcana.scry.count", {
+            playerId: chooserId,
+            count: lookedAtCards.length,
+          }),
+          typedEntry: createLorcanaGameLogEntry(
+            "lorcana.scry.count",
+            {
+              playerId: chooserId,
+              count: lookedAtCards.length,
+            },
+            scryVisibility,
+            "action",
+          ),
         });
         const pendingEffect = createPendingActionEffect(ctx, {
           kind: "scry-selection",
@@ -1870,8 +1973,11 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
           chooserId,
           cardPlayed,
           effect,
+          continuation: options?.continuation,
           resolutionInput: {
             ...resolutionInput,
+            // Clear any injected destinations — they came from the wrong player.
+            destinations: undefined,
             eventSnapshot: {
               ...resolutionInput.eventSnapshot,
               revealedCardIds: lookedAtCards,
@@ -2182,15 +2288,16 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     const resolved = resolveEffectExecutionContext(ctx, cardPlayed, effect, resolutionInput);
-    resolveReturnRandomFromInkwellEffect(
-      ctx,
-      cardPlayed,
-      effect as ReturnRandomFromInkwellEffect,
-      resolutionInput,
-      {
-        returnCount: resolveAggregateFieldAmount(resolved.resolvedDynamic.amount),
-      },
-    );
+    const typedEffect = effect as ReturnRandomFromInkwellEffect;
+    // Resolve returnCount from either the dynamic `amount` field or the typed `count` field
+    const dynamicAmount = resolveAggregateFieldAmount(resolved.resolvedDynamic.amount);
+    const staticCount =
+      dynamicAmount === undefined && typeof typedEffect.count === "number"
+        ? typedEffect.count
+        : undefined;
+    resolveReturnRandomFromInkwellEffect(ctx, cardPlayed, typedEffect, resolutionInput, {
+      returnCount: dynamicAmount ?? staticCount,
+    });
     return RESOLVED_ACTION_EFFECT;
   },
 
@@ -2333,6 +2440,20 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     resolveShuffleIntoDeckEffect(ctx, cardPlayed, effect as ShuffleIntoDeckEffect, resolutionInput);
+    return RESOLVED_ACTION_EFFECT;
+  },
+
+  reveal: (_ctx, _cardPlayed, _effect, resolutionInput) => {
+    // Reveal the currently selected card(s) to all players.
+    // Used when a card ability requires revealing a card from hand (e.g. "reveal a song card").
+    const targets = getCurrentSelectionTargets(resolutionInput) as CardInstanceId[];
+    if (targets.length > 0) {
+      _ctx.framework.zones.reveal(targets, "all");
+      if (!resolutionInput.eventSnapshot) {
+        resolutionInput.eventSnapshot = {};
+      }
+      resolutionInput.eventSnapshot.revealedCardIds = targets;
+    }
     return RESOLVED_ACTION_EFFECT;
   },
 
@@ -2633,6 +2754,25 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
 
     resolveSupportEffect(ctx, cardPlayed, effect as SupportEffect, resolutionInput);
     return RESOLVED_ACTION_EFFECT;
+  },
+
+  "reveal-and-route": (ctx, cardPlayed, effect, resolutionInput, options) => {
+    if (!isRevealAndRouteEffect(effect)) {
+      handleUnsupportedActionEffect(
+        "reveal-and-route",
+        "Malformed reveal-and-route effect payload",
+      );
+      return RESOLVED_ACTION_EFFECT;
+    }
+
+    return resolveRevealAndRouteEffect(
+      ctx,
+      cardPlayed,
+      effect as RevealAndRouteEffect,
+      resolutionInput,
+      resolveActionEffect,
+      options,
+    );
   },
 };
 

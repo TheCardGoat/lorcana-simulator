@@ -52,7 +52,7 @@ export const mauriceUnconventionalInventor: CharacterCard = {
           {
             type: "conditional",
             condition: { type: "if-you-do" },
-            ifTrue: {
+            then: {
               type: "draw",
               amount: 1,
               target: "CONTROLLER",
@@ -65,7 +65,7 @@ export const mauriceUnconventionalInventor: CharacterCard = {
               name: "Maurice's Machine",
               target: "previous-target",
             },
-            ifTrue: {
+            then: {
               type: "optional",
               chooser: "CONTROLLER",
               effect: {

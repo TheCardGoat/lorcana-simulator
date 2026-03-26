@@ -47,7 +47,7 @@ export const gustavTheGiantTerrorOfTheKingdom: CharacterCard = {
     },
     {
       effect: {
-        restriction: "cant-ready",
+        restriction: "cant-ready-at-start-of-turn",
         target: "SELF",
         type: "restriction",
       },

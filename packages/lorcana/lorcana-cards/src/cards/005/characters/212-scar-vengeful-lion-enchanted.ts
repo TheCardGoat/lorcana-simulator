@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { scarVengefulLionEnchantedI18n } from "./212-scar-vengeful-lion-enchanted.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const scarVengefulLionEnchanted: CharacterCard = {
   id: "gpM",
@@ -35,13 +36,20 @@ export const scarVengefulLionEnchanted: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain"],
   abilities: [
+    ward,
     {
-      id: "15b-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
-    {
+      id: "15b-2",
+      name: "LIFE'S NOT FAIR, IS IT?",
+      text: "LIFE'S NOT FAIR, IS IT? Whenever one of your characters challenges a damaged character, you may draw a card.",
+      type: "triggered",
+      trigger: {
+        event: "challenge",
+        timing: "whenever",
+        on: "YOUR_CHARACTERS",
+        defender: {
+          filters: [{ type: "damaged" }],
+        },
+      },
       effect: {
         chooser: "CONTROLLER",
         effect: {
@@ -51,9 +59,6 @@ export const scarVengefulLionEnchanted: CharacterCard = {
         },
         type: "optional",
       },
-      id: "15b-2",
-      text: "LIFE'S NOT FAIR, IS IT? Whenever one of your characters challenges a damaged character, you may draw a card.",
-      type: "action",
     },
   ],
   i18n: scarVengefulLionEnchantedI18n,

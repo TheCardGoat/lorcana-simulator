@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { simbaReturnedKingEnchantedI18n } from "./215-simba-returned-king-enchanted.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const simbaReturnedKingEnchanted: CharacterCard = {
   id: "vpZ",
@@ -35,13 +36,7 @@ export const simbaReturnedKingEnchanted: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "King"],
   abilities: [
-    {
-      id: "nj8-1",
-      keyword: "Challenger",
-      text: "Challenger +4",
-      type: "keyword",
-      value: 4,
-    },
+    challenger(4),
     {
       effect: {
         duration: "this-turn",

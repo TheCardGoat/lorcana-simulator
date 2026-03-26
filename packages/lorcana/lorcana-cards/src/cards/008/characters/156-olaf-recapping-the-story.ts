@@ -35,7 +35,7 @@ export const olafRecappingTheStory: CharacterCard = {
         duration: "this-turn",
         modifier: -1,
         stat: "strength",
-        target: "CHOSEN_CHARACTER",
+        target: "CHOSEN_OPPOSING_CHARACTER",
         type: "modify-stat",
       },
       id: "fgl-1",

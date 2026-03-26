@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tritonChampionOfAtlanticaI18n } from "./158-triton-champion-of-atlantica.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const tritonChampionOfAtlantica: CharacterCard = {
   id: "0J0",
@@ -33,15 +34,7 @@ export const tritonChampionOfAtlantica: CharacterCard = {
   ],
   classifications: ["Floodborn", "King"],
   abilities: [
-    {
-      cost: {
-        ink: 6,
-      },
-      id: "1vc-1",
-      keyword: "Shift",
-      text: "Shift 6",
-      type: "keyword",
-    },
+    shift(6),
     {
       effect: {
         modifier: {

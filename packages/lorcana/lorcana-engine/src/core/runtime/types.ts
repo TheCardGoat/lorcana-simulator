@@ -7,6 +7,7 @@
  */
 
 import type { LorcanaDomainEvent } from "../../types/domain-events";
+import type { LorcanaGameLogEntry } from "../../types/log-messages";
 import type { LorcanaG } from "../../types/runtime-state";
 import type { PlayerId } from "../types";
 import type { Player } from "./match-runtime.types";
@@ -146,7 +147,11 @@ export type ZoneRevealWindow = {
 // Time Control (Passive Clock Management)
 // =============================================================================
 
-export type TimeContext = { mode: "none" } | ChessClockContext | PriorityClockContext;
+export type TimeContext =
+  | { mode: "none" }
+  | ChessClockContext
+  | PriorityClockContext
+  | DynamicClockContext;
 
 export type ClockPauseReason =
   | "ENGINE_RESOLVING"
@@ -163,7 +168,7 @@ export type ChessClockContext = {
   activePlayerID?: string;
   startedAtMs?: number;
   pausedReason?: ClockPauseReason;
-  players: Record<string, ClockPlayerState>;
+  players: Record<string, ChessClockPlayerState>;
   config: ChessClockConfig;
 };
 
@@ -191,10 +196,22 @@ export type ClockPlayerState = {
   lastUpdatedAtMs: number;
 };
 
+export type ChessClockPlayerState = ClockPlayerState & {
+  timeoutCount: number;
+  isInNegativeTime: boolean;
+};
+
 export type PriorityClockPlayerState = ClockPlayerState & {
   totalWindowOverageMs: number;
   moveBonusMsGranted: number;
   windowTimeouts: number;
+};
+
+export type DynamicClockPlayerState = ClockPlayerState & {
+  timeoutCount: number;
+  isInNegativeTime: boolean;
+  actionBonusMsGranted: number;
+  turnPassBonusMsGranted: number;
 };
 
 export type ChessClockConfig = {
@@ -202,6 +219,7 @@ export type ChessClockConfig = {
   incrementMs: number;
   delayMs: number;
   graceMs: number;
+  resetTimeOnSkipMs: number;
   lossPolicy: "lose-on-time";
 };
 
@@ -215,10 +233,30 @@ export type PriorityClockConfig = {
   onReserveExpiry: "lose-on-time";
 };
 
+export type DynamicClockConfig = {
+  initialReserveMs: number;
+  reserveCapMs: number;
+  perActionBonusMs: number;
+  perTurnPassBonusMs: number;
+  resetTimeOnSkipMs: number;
+  graceMs: number;
+};
+
+export type DynamicClockContext = {
+  mode: "dynamic";
+  running: boolean;
+  activePlayerID?: string;
+  startedAtMs?: number;
+  pausedReason?: ClockPauseReason;
+  players: Record<string, DynamicClockPlayerState>;
+  config: DynamicClockConfig;
+};
+
 export type TimeControlConfig =
   | { mode: "none" }
   | { mode: "chess"; config: ChessClockConfig }
-  | { mode: "priority"; config: PriorityClockConfig };
+  | { mode: "priority"; config: PriorityClockConfig }
+  | { mode: "dynamic"; config: DynamicClockConfig };
 
 // =============================================================================
 // Random, Log, Authz
@@ -514,6 +552,7 @@ export type GameLogEntry = {
   category: "action" | "rules" | "system";
   visibility: LogVisibility;
   defaultMessage?: LogMessage;
+  typedEntry?: LorcanaGameLogEntry;
 };
 
 // =============================================================================
@@ -658,10 +697,20 @@ function createInitialTimeContext(config: TimeControlConfig): TimeContext {
     };
   }
 
+  if (config.mode === "priority") {
+    return {
+      mode: "priority",
+      running: false,
+      prioritySeq: 0,
+      pausedReason: "MATCH_NOT_STARTED",
+      players: {},
+      config: config.config,
+    };
+  }
+
   return {
-    mode: "priority",
+    mode: "dynamic",
     running: false,
-    prioritySeq: 0,
     pausedReason: "MATCH_NOT_STARTED",
     players: {},
     config: config.config,
@@ -678,6 +727,10 @@ export function isChessClockContext(ctx: TimeContext): ctx is ChessClockContext 
 
 export function isPriorityClockContext(ctx: TimeContext): ctx is PriorityClockContext {
   return ctx.mode === "priority";
+}
+
+export function isDynamicClockContext(ctx: TimeContext): ctx is DynamicClockContext {
+  return ctx.mode === "dynamic";
 }
 
 export function isClockRunning(ctx: TimeContext): boolean {

@@ -32,26 +32,23 @@ export const jockAttentiveUncle: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          excludeSelf: true,
+        },
+        comparison: {
+          operator: "gte",
+          value: 3,
+        },
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            excludeSelf: true,
-          },
-          comparison: {
-            operator: "gte",
-            value: 3,
-          },
-        },
-        then: {
-          amount: 2,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 2,
+        type: "gain-lore",
       },
       id: "17d-1",
       name: "VOICE OF EXPERIENCE",

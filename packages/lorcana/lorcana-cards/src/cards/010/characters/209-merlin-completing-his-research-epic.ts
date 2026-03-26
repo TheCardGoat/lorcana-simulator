@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { merlinCompletingHisResearchEpicI18n } from "./209-merlin-completing-his-research-epic.i18n";
 
 export const merlinCompletingHisResearchEpic: CharacterCard = {
@@ -35,13 +36,7 @@ export const merlinCompletingHisResearchEpic: CharacterCard = {
   ],
   classifications: ["Storyborn", "Mentor", "Sorcerer", "Whisper"],
   abilities: [
-    {
-      id: "mr7-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 2,
-      text: "Boost 2 {I}",
-    },
+    boost(2),
     {
       id: "mr7-2",
       effect: {

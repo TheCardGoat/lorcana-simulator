@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { flynnRiderHisOwnBiggestFanI18n } from "./082-flynn-rider-his-own-biggest-fan.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const flynnRiderHisOwnBiggestFan: CharacterCard = {
   id: "Q7q",
@@ -36,21 +38,8 @@ export const flynnRiderHisOwnBiggestFan: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Prince"],
   abilities: [
-    {
-      cost: {
-        ink: 2,
-      },
-      id: "11r-1",
-      keyword: "Shift",
-      text: "Shift 2",
-      type: "keyword",
-    },
-    {
-      id: "11r-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    shift(2),
+    evasive,
     {
       effect: {
         modifier: {

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { idunaAlarmedQueenI18n } from "./113-iduna-alarmed-queen.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const idunaAlarmedQueen: CharacterCard = {
   id: "whR",
@@ -24,13 +25,6 @@ export const idunaAlarmedQueen: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Mentor", "Queen"],
-  abilities: [
-    {
-      id: "mvk-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: idunaAlarmedQueenI18n,
 };

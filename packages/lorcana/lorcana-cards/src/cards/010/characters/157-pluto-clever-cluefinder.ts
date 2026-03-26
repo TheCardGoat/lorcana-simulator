@@ -36,17 +36,26 @@ export const plutoCleverCluefinder: CharacterCard = {
       },
       effect: {
         condition: {
-          expression: "you have a Detective character in play",
-          type: "if",
+          type: "has-character-with-classification",
+          classification: "Detective",
+          controller: "you",
         },
         then: {
           cardType: "item",
+          destination: "hand",
+          target: "CONTROLLER",
+          type: "return-from-discard",
+        },
+        else: {
+          cardType: "item",
+          destination: "top-of-deck",
           target: "CONTROLLER",
           type: "return-from-discard",
         },
         type: "conditional",
       },
       id: "cpr-1",
+      name: "ON THE TRAIL",
       text: "ON THE TRAIL {E} — If you have a Detective character in play, return an item card from your discard to your hand. Otherwise, put it on the top of your deck.",
       type: "activated",
     },

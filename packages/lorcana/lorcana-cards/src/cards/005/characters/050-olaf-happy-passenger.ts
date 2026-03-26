@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { olafHappyPassengerI18n } from "./050-olaf-happy-passenger.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const olafHappyPassenger: CharacterCard = {
   id: "MEQ",
@@ -35,20 +36,23 @@ export const olafHappyPassenger: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
-      effect: {
-        from: "hand",
-        type: "play-card",
-      },
       id: "trf-1",
+      name: "CLEAR THE PATH",
+      effect: {
+        type: "cost-reduction",
+        amount: {
+          type: "filtered-count",
+          owner: "opponent",
+          zones: ["play"],
+          cardType: "character",
+          filters: [{ type: "exerted" }],
+        },
+      },
+      sourceZones: ["hand"],
+      type: "static",
       text: "CLEAR THE PATH For each exerted character opponents have in play, you pay 1 {I} less to play this character.",
-      type: "action",
     },
-    {
-      id: "trf-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
   ],
   i18n: olafHappyPassengerI18n,
 };

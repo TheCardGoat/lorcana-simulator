@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { fidgetRatigansHenchmanI18n } from "./108-fidget-ratigans-henchman.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const fidgetRatigansHenchman: CharacterCard = {
   id: "HKW",
@@ -24,13 +25,6 @@ export const fidgetRatigansHenchman: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Dreamborn", "Ally"],
-  abilities: [
-    {
-      id: "168-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: fidgetRatigansHenchmanI18n,
 };

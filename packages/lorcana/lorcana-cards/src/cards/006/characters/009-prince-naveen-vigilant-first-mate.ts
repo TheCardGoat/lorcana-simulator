@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { princeNaveenVigilantFirstMateI18n } from "./009-prince-naveen-vigilant-first-mate.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const princeNaveenVigilantFirstMate: CharacterCard = {
   id: "rPA",
@@ -31,22 +33,6 @@ export const princeNaveenVigilantFirstMate: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "Prince"],
-  abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "1hg-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
-    {
-      id: "1hg-2",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [shift(3), bodyguard],
   i18n: princeNaveenVigilantFirstMateI18n,
 };

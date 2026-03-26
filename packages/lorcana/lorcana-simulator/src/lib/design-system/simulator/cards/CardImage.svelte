@@ -2,6 +2,10 @@
   import { Image } from "@unpic/svelte";
   import {AspectRatio} from "$lib/design-system/primitives/aspect-ratio/index.js";
   import { buildLorcanaAssetUrl } from "$lib/config/public-url-config.js";
+  import {
+    CARD_IMAGE_DIMENSIONS,
+    type ImageFormat,
+  } from "$lib/design-system/simulator/cards/card-image-format.js";
 
   const {
     set,
@@ -16,7 +20,7 @@
     set: string | number;
     number: number;
     lang?: string;
-    crop?: "full" | "art_only" | "art_and_name";
+    crop?: ImageFormat;
     alt: string;
     class?: string;
     onLoad?: () => void;
@@ -65,13 +69,7 @@
     }
   });
 
-  const dimensions = $derived(
-    crop === "art_only"
-      ? { width: 734, height: 602 }
-      : crop === "art_and_name"
-        ? { width: 734, height: 766 }
-        : { width: 734, height: 1024 },
-  );
+  const dimensions = $derived(CARD_IMAGE_DIMENSIONS[crop]);
 
   const aspectRatio = $derived(dimensions.width / dimensions.height);
 </script>

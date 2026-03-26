@@ -31,7 +31,12 @@ export const mickeyMouseStalwartExplorer: CharacterCard = {
   abilities: [
     {
       effect: {
-        modifier: 1,
+        modifier: {
+          cardType: "location",
+          filters: [],
+          owner: "you",
+          type: "filtered-count",
+        },
         stat: "strength",
         target: "SELF",
         type: "modify-stat",

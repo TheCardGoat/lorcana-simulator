@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { turboRoyalHackI18n } from "./106-turbo-royal-hack.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const turboRoyalHack: CharacterCard = {
   id: "42e",
@@ -33,12 +34,7 @@ export const turboRoyalHack: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Racer"],
   abilities: [
-    {
-      id: "42e-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       id: "42e-2",
       name: "GAME JUMP",

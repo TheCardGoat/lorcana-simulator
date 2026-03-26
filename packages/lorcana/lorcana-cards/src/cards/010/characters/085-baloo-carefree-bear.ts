@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { shift } from "../../../helpers/abilities/shift";
 import { balooCarefreeBearI18n } from "./085-baloo-carefree-bear.i18n";
 
 export const balooCarefreeBear: CharacterCard = {
@@ -33,15 +34,7 @@ export const balooCarefreeBear: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally"],
   abilities: [
-    {
-      id: "VNz-1",
-      keyword: "Shift",
-      type: "keyword",
-      cost: {
-        ink: 3,
-      },
-      text: "Shift 3",
-    },
+    shift(3),
     {
       id: "VNz-2",
       name: "ROLL WITH IT",

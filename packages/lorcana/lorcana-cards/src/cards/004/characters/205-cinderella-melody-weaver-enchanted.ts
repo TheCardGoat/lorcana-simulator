@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { cinderellaMelodyWeaverEnchantedI18n } from "./205-cinderella-melody-weaver-enchanted.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const cinderellaMelodyWeaverEnchanted: CharacterCard = {
   id: "V2A",
@@ -35,13 +36,7 @@ export const cinderellaMelodyWeaverEnchanted: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "juj-1",
-      keyword: "Singer",
-      text: "Singer 9",
-      type: "keyword",
-      value: 9,
-    },
+    singer(9),
     {
       effect: {
         duration: "this-turn",

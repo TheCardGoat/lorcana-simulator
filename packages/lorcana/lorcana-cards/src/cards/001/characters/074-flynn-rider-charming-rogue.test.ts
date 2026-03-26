@@ -99,6 +99,46 @@ describe("Flynn Rider - Charming Rogue", () => {
       expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_ONE).hand).toBe(1);
     });
 
+    it("regression: discard does NOT trigger when Flynn challenges (only when Flynn is challenged)", () => {
+      const p2HandCard = createMockCharacter({
+        id: "flynn-p2-hand-card",
+        name: "P2 Hand Card",
+        cost: 1,
+        strength: 1,
+        willpower: 1,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: defender, exerted: true }],
+          hand: [handCard],
+          deck: 2,
+        },
+        {
+          play: [{ card: flynnRiderCharmingRogue, isDrying: false }],
+          hand: [p2HandCard],
+          deck: 2,
+        },
+      );
+
+      // Pass to P2's turn
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Flynn (P2) challenges defender (P1) — Flynn is the ATTACKER, not being challenged
+      expect(
+        testEngine.asPlayerTwo().challenge(flynnRiderCharmingRogue, defender),
+      ).toBeSuccessfulCommand();
+
+      // No bag effects should fire — trigger is "when this character IS CHALLENGED"
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+
+      // Neither player should have had to discard
+      expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_ONE).hand).toBe(1);
+      expect(testEngine.asPlayerTwo().getCardZone(p2HandCard)).toBe("hand");
+    });
+
     it("works when the challenging player has no cards in hand", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

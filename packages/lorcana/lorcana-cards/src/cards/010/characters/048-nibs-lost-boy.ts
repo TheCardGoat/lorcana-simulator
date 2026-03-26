@@ -31,19 +31,27 @@ export const nibsLostBoy: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
-      effect: {
-        target: "SELF",
-        type: "return-to-hand",
-      },
       id: "1ar-1",
       name: "LOOK WHO'S BACK",
       text: "LOOK WHO'S BACK When this character is banished in a challenge, return this card to your hand.",
+      type: "triggered",
+      sourceZones: ["play", "discard"],
       trigger: {
         event: "banish",
         on: "SELF",
+        restrictions: [
+          {
+            type: "in-challenge",
+          },
+        ],
         timing: "when",
       },
-      type: "triggered",
+      effect: {
+        target: {
+          ref: "self",
+        },
+        type: "return-to-hand",
+      },
     },
   ],
   i18n: nibsLostBoyI18n,

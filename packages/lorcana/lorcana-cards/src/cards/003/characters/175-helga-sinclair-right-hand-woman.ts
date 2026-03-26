@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { helgaSinclairRighthandWomanI18n } from "./175-helga-sinclair-right-hand-woman.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const helgaSinclairRighthandWoman: CharacterCard = {
   id: "Sz8",
@@ -24,14 +25,6 @@ export const helgaSinclairRighthandWoman: CharacterCard = {
   },
   text: "Challenger +2",
   classifications: ["Storyborn", "Villain"],
-  abilities: [
-    {
-      id: "1fd-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2",
-    },
-  ],
+  abilities: [challenger(2)],
   i18n: helgaSinclairRighthandWomanI18n,
 };

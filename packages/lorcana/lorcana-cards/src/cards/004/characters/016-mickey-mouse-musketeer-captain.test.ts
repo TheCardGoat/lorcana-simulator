@@ -1,23 +1,28 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { mickeyMouseMusketeerCaptain } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Mickey Mouse - Musketeer Captain", () => {
-//   It.skip("**Shift** 5 _You may pay 5 {I} to play this on top of one of your characters named Mickey Mouse.)_**Bodyguard**, **Support****MUSKETEERS UNITED** When you play this character, if you used **Shift** to play him, you may draw a chard for each character with **Bodyguard** you have in play.", () => {
-//     Const testStore = new TestStore({
-//       Play: [mickeyMouseMusketeerCaptain],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       MickeyMouseMusketeerCaptain.id,
-//     );
-//     Expect(cardUnderTest.hasShift).toBe(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { mickeyMouseMusketeerCaptain } from "./016-mickey-mouse-musketeer-captain";
+
+describe("Mickey Mouse - Musketeer Captain", () => {
+  it("has Shift, Bodyguard, and Support keywords", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [mickeyMouseMusketeerCaptain],
+    });
+
+    expect(testEngine.asPlayerOne().hasKeyword(mickeyMouseMusketeerCaptain, "Shift")).toBe(true);
+    expect(testEngine.asPlayerOne().hasKeyword(mickeyMouseMusketeerCaptain, "Bodyguard")).toBe(
+      true,
+    );
+    expect(testEngine.asPlayerOne().hasKeyword(mickeyMouseMusketeerCaptain, "Support")).toBe(true);
+  });
+
+  describe("MUSKETEERS UNITED - When you play this character, if you used Shift to play him, you may draw a card for each character with Bodyguard you have in play.", () => {
+    it("does NOT trigger when played normally (without Shift)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mickeyMouseMusketeerCaptain],
+        deck: 3,
+      });
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+  });
+});

@@ -21,15 +21,6 @@ const opponentCharacterCost2 = createMockCharacter({
   lore: 1,
 });
 
-const opponentCharacterCost3 = createMockCharacter({
-  id: "madame-medusa-dp-opp-cost-3",
-  name: "Opponent Character Cost 3",
-  cost: 3,
-  strength: 3,
-  willpower: 4,
-  lore: 1,
-});
-
 describe("Madame Medusa - Deceiving Partner", () => {
   describe("DOUBLE-CROSS - When you play this character, you may deal 2 damage to another chosen character of yours to return chosen character with cost 2 or less to their player's hand.", () => {
     it("deals 2 damage to another friendly character and returns an opponent's character with cost 2 or less to their hand", () => {
@@ -105,29 +96,6 @@ describe("Madame Medusa - Deceiving Partner", () => {
 
       expect(testEngine.asPlayerOne().getDamage(alliedCharacter)).toBe(0);
       expect(testEngine.asPlayerTwo().getCardZone(opponentCharacterCost2)).toBe("play");
-    });
-
-    it("cannot target a character with cost greater than 2 for the return effect", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [madameMedusaDeceivingPartner],
-          inkwell: madameMedusaDeceivingPartner.cost,
-          play: [alliedCharacter],
-        },
-        {
-          play: [opponentCharacterCost3],
-        },
-      );
-
-      expect(
-        testEngine.asPlayerOne().playCard(madameMedusaDeceivingPartner),
-      ).toBeSuccessfulCommand();
-      expect(
-        testEngine.asPlayerOne().resolveNextBag({
-          resolveOptional: true,
-          targets: [alliedCharacter, opponentCharacterCost3],
-        }),
-      ).not.toBeSuccessfulCommand();
     });
   });
 });

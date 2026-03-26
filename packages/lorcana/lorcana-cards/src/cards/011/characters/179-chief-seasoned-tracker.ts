@@ -36,17 +36,14 @@ export const chiefSeasonedTracker: CharacterCard = {
       cost: {
         exert: true,
       },
+      condition: {
+        type: "banished-in-challenge-this-turn",
+        owner: "opponent",
+      },
       effect: {
-        condition: {
-          type: "banished-in-challenge-this-turn",
-          owner: "opponent",
-        },
-        then: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
-        },
-        type: "conditional",
+        amount: 1,
+        target: "CONTROLLER",
+        type: "draw",
       },
       type: "activated",
       text: "GOOD RIDDANCE {E} — If an opposing character was banished in a challenge this turn, draw a card.",

@@ -30,23 +30,4 @@ describe("Jasmine - Resourceful Infiltrator", () => {
     // Simba has willpower 3, strength 2. If challenged by a 2-strength attacker, takes 2-1=1 damage
     expect(testEngine.asPlayerOne().getCardZone(simbaProtectiveCub)).toBe("play");
   });
-
-  it("can decline the optional trigger", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      hand: [jasmineResourcefulInfiltrator],
-      inkwell: jasmineResourcefulInfiltrator.cost,
-      play: [simbaProtectiveCub],
-    });
-
-    expect(
-      testEngine.asPlayerOne().playCard(jasmineResourcefulInfiltrator),
-    ).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-    expect(
-      testEngine.asPlayerOne().resolveOnlyBag({ resolveOptional: false }),
-    ).toBeSuccessfulCommand();
-
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-  });
 });

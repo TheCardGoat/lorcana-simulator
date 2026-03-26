@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mickeyMousePirateCaptainI18n } from "./103-mickey-mouse-pirate-captain.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const mickeyMousePirateCaptain: CharacterCard = {
   id: "xEw",
@@ -33,26 +34,31 @@ export const mickeyMousePirateCaptain: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Pirate", "Captain"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "adf-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         duration: "this-turn",
         modifier: 2,
         stat: "strength",
-        target: "SELF",
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          filter: [{ type: "has-classification", classification: "Pirate" }],
+          owner: "any",
+          selector: "chosen",
+          zones: ["play"],
+        },
         type: "modify-stat",
       },
       id: "adf-2",
-      text: 'MARINER’S MIGHT Whenever this character quests, chosen Pirate character gets +2 {S} and gains "This character takes no damage from challenges" this turn.',
-      type: "action",
+      name: "MARINER'S MIGHT",
+      text: 'MARINER\'S MIGHT Whenever this character quests, chosen Pirate character gets +2 {S} and gains "This character takes no damage from challenges" this turn.',
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
     },
   ],
   i18n: mickeyMousePirateCaptainI18n,

@@ -71,5 +71,27 @@ describe("Giant Cobra - Ghostly Serpent", () => {
       // Player one should have no lore
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
     });
+
+    it("regression: does not grant 2 lore with empty hand (no card to discard)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [giantCobraGhostlySerpent],
+        inkwell: giantCobraGhostlySerpent.cost,
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(giantCobraGhostlySerpent)).toBeSuccessfulCommand();
+
+      // With no cards in hand to discard, accepting the optional should have no effect
+      // or the optional should not be available (since you can't pay the discard cost)
+      const bagCount = testEngine.asPlayerOne().getBagCount();
+      if (bagCount > 0) {
+        // If the bag fires, accepting it should still not grant lore without a discard target
+        expect(
+          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        ).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+    });
   });
 });

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { rush } from "../../../helpers/abilities/rush";
 import { duckworthGhostButlerI18n } from "./047-duckworth-ghost-butler.i18n";
 
 export const duckworthGhostButler: CharacterCard = {
@@ -34,12 +35,7 @@ export const duckworthGhostButler: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Ghost"],
   abilities: [
-    {
-      id: "8zy-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
+    rush,
     {
       id: "8zy-2",
       name: "FINAL ACT",

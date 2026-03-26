@@ -30,6 +30,28 @@ export const panicHighstrungImp: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "0bl-1",
+      name: "STARTLED SHRIEK",
+      text: "STARTLED SHRIEK When you play this character, you may move up to 2 damage counters from chosen character to chosen opposing character.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "move-damage",
+          amount: 2,
+          from: "CHOSEN_CHARACTER",
+          to: "CHOSEN_OPPOSING_CHARACTER",
+        },
+      },
+    },
+  ],
   i18n: panicHighstrungImpI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mickeyMouseMusketeerI18n } from "./186-mickey-mouse-musketeer.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const mickeyMouseMusketeer: CharacterCard = {
   id: "sdI",
@@ -32,12 +33,7 @@ export const mickeyMouseMusketeer: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Musketeer"],
   abilities: [
-    {
-      id: "9h9-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         modifier: 1,

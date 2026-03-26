@@ -77,6 +77,8 @@ export interface HasCharacterCountCondition {
   classification?: string;
   /** Optional keyword filter */
   keyword?: string;
+  /** Exclude the source card from the count (e.g., "3 or more OTHER characters") */
+  excludeSelf?: boolean;
 }
 
 /**
@@ -420,6 +422,14 @@ export interface TriggerSubjectHadCardUnderCondition {
  */
 export interface PutCardUnderSelfThisTurnCondition {
   type: "put-card-under-self-this-turn";
+}
+
+/**
+ * Check if a card was put under any of the controller's characters or locations this turn.
+ * Used for "if you've put a card under one of your characters or locations this turn".
+ */
+export interface PutCardUnderAnyThisTurnCondition {
+  type: "put-card-under-any-this-turn";
 }
 
 // ============================================================================
@@ -772,6 +782,7 @@ export interface InChallengeCondition {
   type: "in-challenge";
   role?: "attacker" | "defender";
   againstCardType?: CardType;
+  againstDamaged?: boolean;
 }
 
 // ============================================================================
@@ -1059,6 +1070,7 @@ export type Condition =
   | HasCardUnderCondition
   | TriggerSubjectHadCardUnderCondition
   | PutCardUnderSelfThisTurnCondition
+  | PutCardUnderAnyThisTurnCondition
   | InInkwellCondition
   | InPlayCondition
   // Count Conditions (strict variants)

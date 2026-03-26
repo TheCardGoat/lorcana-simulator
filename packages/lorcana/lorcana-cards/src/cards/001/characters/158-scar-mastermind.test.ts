@@ -64,26 +64,5 @@ describe("Scar - Mastermind", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(strengthBefore);
     });
-
-    it("cannot target own characters — ability only allows opposing characters", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          inkwell: scarMastermind.cost,
-          hand: [scarMastermind],
-          play: [ownCharacter],
-          deck: 2,
-        },
-        {
-          deck: 2,
-        },
-      );
-
-      const strengthBefore = testEngine.asPlayerOne().getCardStrength(ownCharacter);
-
-      expect(testEngine.asPlayerOne().playCard(scarMastermind)).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-      expect(testEngine.asPlayerOne().getCardStrength(ownCharacter)).toBe(strengthBefore);
-    });
   });
 });

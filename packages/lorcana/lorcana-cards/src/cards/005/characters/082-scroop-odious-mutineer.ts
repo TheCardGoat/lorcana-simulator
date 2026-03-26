@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { scroopOdiousMutineerI18n } from "./082-scroop-odious-mutineer.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const scroopOdiousMutineer: CharacterCard = {
   id: "6v8",
@@ -37,20 +38,31 @@ export const scroopOdiousMutineer: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Alien", "Pirate"],
   abilities: [
+    evasive,
     {
-      id: "br6-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
-    {
-      effect: {
-        from: "hand",
-        type: "play-card",
-      },
-      id: "br6-2",
+      id: "6v8-2",
+      name: "DO SAY HELLO TO MR. ARROW",
       text: "DO SAY HELLO TO MR. ARROW When you play this character, you may pay 3 {I} to banish chosen damaged character.",
-      type: "action",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        type: "optional",
+        effect: {
+          type: "pay-cost",
+          cost: {
+            ink: 3,
+          },
+          effect: {
+            type: "banish",
+            target: "CHOSEN_DAMAGED_CHARACTER",
+          },
+        },
+      },
     },
   ],
   i18n: scroopOdiousMutineerI18n,

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { minnieMouseMusicalArtistI18n } from "./009-minnie-mouse-musical-artist.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const minnieMouseMusicalArtist: CharacterCard = {
   id: "8V8",
@@ -33,13 +34,7 @@ export const minnieMouseMusicalArtist: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero"],
   abilities: [
-    {
-      id: "egy-1",
-      keyword: "Singer",
-      text: "Singer 3",
-      type: "keyword",
-      value: 3,
-    },
+    singer(3),
     {
       effect: {
         chooser: "CONTROLLER",
@@ -65,6 +60,7 @@ export const minnieMouseMusicalArtist: CharacterCard = {
         on: {
           cardType: "character",
           controller: "you",
+          hasKeyword: "Bodyguard",
         },
         timing: "whenever",
       },

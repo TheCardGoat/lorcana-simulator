@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mirabelMadrigalHopefulDreamerI18n } from "./013-mirabel-madrigal-hopeful-dreamer.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const mirabelMadrigalHopefulDreamer: CharacterCard = {
   id: "sOB",
@@ -22,8 +24,15 @@ export const mirabelMadrigalHopefulDreamer: CharacterCard = {
     lorcast: "crd_039fcd98eaf7444ea45cea5da181f1c8",
     tcgPlayer: 618323,
   },
-  text: "Evasive Singer 5",
+  text: [
+    {
+      title: "Evasive",
+    },
+    {
+      title: "Singer 5",
+    },
+  ],
   classifications: ["Storyborn", "Hero", "Madrigal"],
-  abilities: [],
+  abilities: [evasive, singer(5)],
   i18n: mirabelMadrigalHopefulDreamerI18n,
 };

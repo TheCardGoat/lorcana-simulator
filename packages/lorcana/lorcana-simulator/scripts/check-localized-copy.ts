@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 
 const GUARDED_FILES = [
-  "src/routes/+page.svelte",
   "src/lib/features/simulator/shell/LorcanaTabletopSimulator.svelte",
   "src/lib/features/simulator/shell/LorcanaSimulatorSidebar.svelte",
   "src/lib/features/matchmaking/ui/MatchmakingLobby.svelte",

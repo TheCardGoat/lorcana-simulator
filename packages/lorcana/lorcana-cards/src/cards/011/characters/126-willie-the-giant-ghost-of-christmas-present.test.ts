@@ -17,4 +17,6 @@ describe("Willie the Giant - Ghost of Christmas Present", () => {
       "play",
     );
   });
+
+  it.todo("regression: should use cards put under via external effects like Lonely Grave for THE FOOD OF GENEROSITY check", () => {});
 });

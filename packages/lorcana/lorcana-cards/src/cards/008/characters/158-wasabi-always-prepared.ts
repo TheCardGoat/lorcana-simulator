@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { wasabiAlwaysPreparedI18n } from "./158-wasabi-always-prepared.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const wasabiAlwaysPrepared: CharacterCard = {
   id: "PYV",
@@ -24,13 +25,6 @@ export const wasabiAlwaysPrepared: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Hero", "Inventor"],
-  abilities: [
-    {
-      id: "aik-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: wasabiAlwaysPreparedI18n,
 };

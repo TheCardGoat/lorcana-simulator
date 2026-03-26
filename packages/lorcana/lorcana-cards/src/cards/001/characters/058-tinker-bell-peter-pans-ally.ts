@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tinkerBellPeterPansAllyI18n } from "./058-tinker-bell-peter-pans-ally.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const tinkerBellPeterPansAlly: CharacterCard = {
   id: "52N",
@@ -25,12 +26,7 @@ export const tinkerBellPeterPansAlly: CharacterCard = {
   text: "Evasive LOYAL AND DEVOTED Your characters named Peter Pan gain Challenger +1. (They get +1 while challenging.)",
   classifications: ["Storyborn", "Ally", "Fairy"],
   abilities: [
-    {
-      id: "52N-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    evasive,
     {
       id: "52N-2",
       name: "LOYAL AND DEVOTED",

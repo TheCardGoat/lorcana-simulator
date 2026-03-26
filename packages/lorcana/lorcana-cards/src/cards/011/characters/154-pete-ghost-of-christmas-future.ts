@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { peteGhostOfChristmasFutureI18n } from "./154-pete-ghost-of-christmas-future.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const peteGhostOfChristmasFuture: CharacterCard = {
   id: "0RS",
@@ -34,24 +35,28 @@ export const peteGhostOfChristmasFuture: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Ghost"],
   abilities: [
-    {
-      id: "12x-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 1,
-      text: "Boost 1 {I}",
-    },
+    boost(1),
     {
       id: "12x-2",
       effect: {
-        target: "CHOSEN_CHARACTER",
-        type: "put-on-bottom",
+        type: "scry",
+        amount: {
+          type: "source-attribute",
+          attribute: "cards-under-them",
+        },
+        destinations: [
+          { zone: "hand", max: 1 },
+          { zone: "deck-bottom", remainder: true },
+        ],
       },
       name: "FOREBODING GLANCE",
       trigger: {
         event: "quest",
         on: "SELF",
         timing: "whenever",
+      },
+      condition: {
+        type: "has-card-under",
       },
       type: "triggered",
       text: "FOREBODING GLANCE Whenever this character quests, look at a number of cards from the top of your deck equal to the number of cards under him. Put one into your hand and put the rest on the bottom of your deck in any order.",

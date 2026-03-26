@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mirabelMadrigalMusicallyTalentedI18n } from "./035-mirabel-madrigal-musically-talented.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const mirabelMadrigalMusicallyTalented: CharacterCard = {
   id: "R2x",
@@ -12,7 +13,7 @@ export const mirabelMadrigalMusicallyTalented: CharacterCard = {
   franchise: "Encanto",
   set: "007",
   cardNumber: 35,
-  rarity: "common",
+  rarity: "super_rare",
   cost: 6,
   strength: 2,
   willpower: 6,
@@ -34,27 +35,18 @@ export const mirabelMadrigalMusicallyTalented: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Madrigal"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "1ri-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["card"],
+          cardType: "song",
+          filter: {
+            cardType: "song",
+            maxCost: 3,
           },
-          type: "return-to-hand",
+          target: "CONTROLLER",
+          type: "return-from-discard",
         },
         type: "optional",
       },

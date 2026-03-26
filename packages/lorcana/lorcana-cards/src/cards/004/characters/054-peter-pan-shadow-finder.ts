@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { peterPanShadowFinderI18n } from "./054-peter-pan-shadow-finder.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const peterPanShadowFinder: CharacterCard = {
   id: "mNf",
@@ -36,27 +38,18 @@ export const peterPanShadowFinder: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "g3g-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
-    {
-      id: "g3g-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    rush,
+    evasive,
     {
       effect: {
         keyword: "Rush",
-        target: "YOUR_CHARACTERS",
+        target: "YOUR_OTHER_EVASIVE_CHARACTERS",
         type: "gain-keyword",
       },
       id: "g3g-3",
+      name: "FLY, OF COURSE!",
       text: "FLY, OF COURSE! Your other characters with Evasive gain Rush.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: peterPanShadowFinderI18n,

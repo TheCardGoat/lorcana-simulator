@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { audreyRamirezTheEngineerI18n } from "./137-audrey-ramirez-the-engineer.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const audreyRamirezTheEngineer: CharacterCard = {
   id: "2j6",
@@ -33,12 +34,7 @@ export const audreyRamirezTheEngineer: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "csd-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         target: {

@@ -1,10 +1,9 @@
 <script lang="ts">
   import { m } from "$lib/i18n/messages.js";
   import { AspectRatio } from "$lib/design-system/primitives/aspect-ratio/index.js";
+  import type { ImageFormat } from "$lib/design-system/simulator/cards/card-image-format.js";
   import { maybeUseLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import { resolveLorcanaCardBack } from "@/features/simulator/model/player-visual-settings.js";
-
-  type ImageFormat = "full" | "art_only" | "art_and_name";
 
   interface CardBackProps {
     // Sizing
@@ -70,8 +69,8 @@
   class:card-back--playable={isPlayable}
   class:card-back--exerted={isExerted}
   class:opacity-50={isGhost}
-  style:width={useContainerSize ? "var(--zone-card-width, 90px)" : `${displayWidth}px`}
-  style:height={useContainerSize ? "var(--zone-card-height, 128px)" : `${displayHeight}px`}
+  style:width={useContainerSize ? `var(--zone-card-width, ${displayWidth}px)` : `${displayWidth}px`}
+  style:height={useContainerSize ? `var(--zone-card-height, ${displayHeight}px)` : `${displayHeight}px`}
   role="img"
   aria-label={m["sim.card.faceDownAria"]({})}
   data-card-back-id={resolvedCardBack.id}

@@ -30,6 +30,7 @@ export const sleepysFlute: ItemCard = {
         exert: true,
       },
       effect: {
+        type: "conditional",
         condition: {
           comparison: {
             operator: "gte",
@@ -43,7 +44,6 @@ export const sleepysFlute: ItemCard = {
           target: "CONTROLLER",
           type: "gain-lore",
         },
-        type: "conditional",
       },
       id: "1aa-1",
       name: "A SILLY SONG",

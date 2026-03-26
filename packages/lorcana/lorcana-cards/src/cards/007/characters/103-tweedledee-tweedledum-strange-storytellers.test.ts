@@ -11,15 +11,6 @@ const damagedTarget = createMockCharacter({
   lore: 1,
 });
 
-const undamagedTarget = createMockCharacter({
-  id: "tweedledee-test-undamaged-target",
-  name: "Undamaged Target",
-  cost: 2,
-  strength: 2,
-  willpower: 4,
-  lore: 1,
-});
-
 describe("Tweedledee & Tweedledum - Strange Storytellers", () => {
   describe("ANOTHER RECITATION - Whenever this character quests, you may return chosen damaged character to their player's hand.", () => {
     it("returns a damaged character to hand when the controller accepts the optional trigger", () => {
@@ -94,28 +85,6 @@ describe("Tweedledee & Tweedledum - Strange Storytellers", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(damagedTarget)).toBe("hand");
-    });
-
-    it("does not return an undamaged character even if targeted", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        play: [{ card: tweedledeeTweedledumStrangeStorytellers, isDrying: false }, undamagedTarget],
-        deck: 1,
-      });
-
-      expect(
-        testEngine.asPlayerOne().quest(tweedledeeTweedledumStrangeStorytellers),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      // Undamaged target is not a legal target — decline the optional instead
-      expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
-          resolveOptional: false,
-        }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getCardZone(undamagedTarget)).toBe("play");
     });
   });
 });

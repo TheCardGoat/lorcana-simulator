@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { gastonBaritoneBullyI18n } from "./008-gaston-baritone-bully.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const gastonBaritoneBully: CharacterCard = {
   id: "Rc3",
@@ -24,14 +25,6 @@ export const gastonBaritoneBully: CharacterCard = {
   },
   text: "Singer 5",
   classifications: ["Dreamborn", "Villain"],
-  abilities: [
-    {
-      id: "6hk-1",
-      keyword: "Singer",
-      type: "keyword",
-      value: 5,
-      text: "Singer 5",
-    },
-  ],
+  abilities: [singer(5)],
   i18n: gastonBaritoneBullyI18n,
 };

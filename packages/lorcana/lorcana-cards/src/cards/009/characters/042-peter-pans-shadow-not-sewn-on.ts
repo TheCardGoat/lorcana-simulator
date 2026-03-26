@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { peterPansShadowNotSewnOnI18n } from "./042-peter-pans-shadow-not-sewn-on.i18n";
+import { rush } from "../../../helpers/abilities/rush";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const peterPansShadowNotSewnOn: CharacterCard = {
   id: "o8t",
@@ -36,18 +38,8 @@ export const peterPansShadowNotSewnOn: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "1n6-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
-    {
-      id: "1n6-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    rush,
+    evasive,
     {
       effect: {
         keyword: "Evasive",

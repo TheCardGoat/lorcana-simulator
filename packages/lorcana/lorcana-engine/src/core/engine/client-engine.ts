@@ -16,13 +16,11 @@ import {
   type MatchRuntimeConfig,
   type MatchStaticResources,
   type MoveInput,
-  type NetworkMatchData,
   type Player,
   type MatchState,
   MatchRuntime,
   createCardsMapsFromStaticResources,
 } from "../runtime";
-import { normalizeNetworkView } from "../runtime";
 import type {
   InMemoryTransport,
   ServerMessage,
@@ -42,6 +40,7 @@ import type {
   GameEngine,
   EngineActorContext,
   EnginePacketUpdate,
+  EngineViewUpdateMetadata,
   EngineMoveValidationResult,
   EngineMoveExecutionResult,
   EngineMoveHistoryEntry,
@@ -86,15 +85,24 @@ export interface ClientEngineConfig {
   identifier?: string;
   players: Player[];
   seed?: string;
+  /**
+   * Skip optimistic state computation. Set to true for sync transports where the server
+   * responds synchronously within the same `transport.send()` call — the optimistic state
+   * would be built and immediately overwritten by the confirmed state, wasting ~29% CPU.
+   */
+  skipOptimisticState?: boolean;
 }
 
 type InferMoveInputMap<TMoves extends MoveRecord> = RuntimeMoveInputMap<TMoves>;
+type ProjectionMode = "eager" | "lazy";
 
 export class ClientEngine implements GameEngine {
   private transport?: InMemoryTransport;
-  // Cached client-facing view only. When `projectBoard` is enabled this is a projected snapshot,
-  // not authoritative match state, so `ctx`/`G` reads must go through `runtime.getState()`.
+  // Cached client-facing visible view. This is always a projected/filtered snapshot and is
+  // never treated as authoritative state.
   private localView: FilteredMatchView | null = null;
+  private confirmedState: MatchState | null = null;
+  private undoCheckpointState: MatchState | null = null;
   private stateID: number = 0;
   private stateUpdateHandlers: Array<
     (state: FilteredMatchView, stateID: number, packet: EnginePacketUpdate | null) => void
@@ -105,12 +113,23 @@ export class ClientEngine implements GameEngine {
   private readonly runtimeConfig: MatchRuntimeConfig;
   private connected: boolean = false;
   private commandCounter: number = 0;
-  private matchData?: NetworkMatchData;
   private lastPacketUpdate: EnginePacketUpdate | null = null;
   private debug: boolean;
   private identifier?: string;
   private runtime: MatchRuntime;
   private canUndoState: boolean = false;
+  private projectionMode: ProjectionMode = "eager";
+  private projectionDirty: boolean = false;
+  private viewRevision: number = 0;
+  private viewUpdateMetadata: EngineViewUpdateMetadata = {
+    sourceAuthority: "server",
+    phase: "confirmed",
+  };
+  private optimisticState: {
+    command: CommandEnvelope;
+    state: MatchState;
+    view: FilteredMatchView;
+  } | null = null;
 
   constructor(config: ClientEngineConfig) {
     this.debug = config.debugMode ?? false;
@@ -170,24 +189,29 @@ export class ClientEngine implements GameEngine {
       return;
     }
 
-    if (typeof this.runtimeConfig.projectBoard === "function") {
-      this.handleFatalSyncError("Projected board clients require full sync updates");
+    if (this.config.role === "player" || typeof this.runtimeConfig.projectBoard === "function") {
+      this.handleFatalSyncError("Player clients require full authoritative state sync updates");
       return;
     }
 
     try {
       this.localView = applyPatches(this.localView, message.patchOps as Patch[]);
       this.runtime.loadState(this.localView as unknown as MatchState);
+      this.confirmedState = this.localView as unknown as MatchState;
       this.stateID = message.stateID;
       this.canUndoState = message.canUndo;
+      this.undoCheckpointState = null;
       this.lastPacketUpdate = {
         processedCommand: message.processedCommand,
         animations: [...message.animations],
         canUndo: message.canUndo,
       };
-      this.stateUpdateHandlers.forEach((h) =>
-        h(this.localView!, this.stateID, this.lastPacketUpdate),
-      );
+      this.optimisticState = null;
+      this.emitVisibleStateUpdate(this.lastPacketUpdate, {
+        sourceAuthority: "server",
+        commandID: message.processedCommand.commandID,
+        phase: "confirmed",
+      });
     } catch (error) {
       this.handleFatalSyncError("Failed to apply patch; requesting full sync", {
         error: error instanceof Error ? error.message : String(error),
@@ -196,33 +220,30 @@ export class ClientEngine implements GameEngine {
   }
 
   private applyFullState(message: UpdateFullMessage | SyncFullMessage): void {
-    if ("matchData" in message && message.matchData) {
-      this.matchData = message.matchData;
+    const previousConfirmedState = this.confirmedState
+      ? (structuredClone(this.confirmedState) as MatchState)
+      : null;
+    const pendingOptimisticCommandID = this.optimisticState?.command.commandID;
+    const authoritativeState = structuredClone(message.state) as MatchState;
+
+    this.confirmedState = authoritativeState;
+    this.runtime.loadState(authoritativeState);
+    if (this.projectionMode === "eager") {
+      this.localView = this.buildVisibleViewFromRuntime(
+        this.runtime,
+        authoritativeState,
+        Date.now(),
+      );
+      this.projectionDirty = false;
+    } else {
+      this.projectionDirty = true;
     }
-    const normalizedState = normalizeNetworkView(
-      message.state as never,
-      {
-        stateID: message.stateID,
-        matchID: message.matchID,
-        protocolVersion: message.protocolVersion,
-      },
-      this.runtimeConfig as unknown as MatchRuntimeConfig,
-      this.config.staticResources,
-      this.config.role === "player"
-        ? { role: "player", playerID: this.config.playerId }
-        : { role: "spectator" },
-      this.matchData,
-    );
-    this.runtime.loadState(normalizedState as MatchState);
-    this.localView =
-      typeof this.runtimeConfig.projectBoard === "function"
-        ? guardProjectedViewInDevelopment(
-            (message.board ?? this.runtime.getBoard()) as FilteredMatchView,
-            this.identifier,
-          )
-        : (normalizedState as FilteredMatchView);
     this.stateID = message.stateID;
     this.canUndoState = message.canUndo;
+    this.undoCheckpointState =
+      this.config.role === "player" && message.canUndo && previousConfirmedState
+        ? previousConfirmedState
+        : null;
     this.lastPacketUpdate =
       "processedCommand" in message
         ? {
@@ -231,9 +252,19 @@ export class ClientEngine implements GameEngine {
             canUndo: message.canUndo,
           }
         : null;
-    this.stateUpdateHandlers.forEach((h) =>
-      h(this.localView!, this.stateID, this.lastPacketUpdate),
-    );
+    const processedCommandID = this.lastPacketUpdate?.processedCommand.commandID;
+    const phase =
+      pendingOptimisticCommandID && pendingOptimisticCommandID !== processedCommandID
+        ? "rejected"
+        : "confirmed";
+    this.optimisticState = null;
+    if (this.projectionMode === "eager") {
+      this.emitVisibleStateUpdate(this.lastPacketUpdate, {
+        sourceAuthority: "server",
+        commandID: pendingOptimisticCommandID ?? processedCommandID,
+        phase,
+      });
+    }
   }
 
   private requestSync(): void {
@@ -251,6 +282,20 @@ export class ClientEngine implements GameEngine {
 
   private handleFatalSyncError(message: string, details?: Record<string, unknown>): void {
     logger.fatal(`${message}; forcing resync`, details);
+    if (this.optimisticState) {
+      const rejectedCommandID = this.optimisticState.command.commandID;
+      this.optimisticState = null;
+      // Restore the main runtime to the confirmed state since we loaded
+      // the optimistic state into it during executeMove/undo.
+      if (this.confirmedState) {
+        this.runtime.loadState(structuredClone(this.confirmedState) as MatchState);
+      }
+      this.emitVisibleStateUpdate(this.lastPacketUpdate, {
+        sourceAuthority: "server",
+        commandID: rejectedCommandID,
+        phase: "rejected",
+      });
+    }
     this.requestSync();
   }
 
@@ -318,17 +363,53 @@ export class ClientEngine implements GameEngine {
     return this.runtime.getState() as DeepReadonly<MatchState>;
   }
 
+  setProjectionMode(mode: ProjectionMode): void {
+    this.projectionMode = mode;
+  }
+
   loadState(state: MatchState): void {
     this.runtime.loadState(state);
+    this.confirmedState = structuredClone(state) as MatchState;
+    if (this.projectionMode === "eager") {
+      this.localView = this.buildVisibleViewFromRuntime(this.runtime, state, Date.now());
+      this.projectionDirty = false;
+    } else {
+      this.projectionDirty = true;
+    }
     this.stateID = state.ctx._stateID;
+    this.undoCheckpointState = null;
   }
 
   getBoard(): DeepReadonly<FilteredMatchView> {
-    return this.runtime.getBoard() as DeepReadonly<FilteredMatchView>;
+    if (!this.optimisticState && (this.localView === null || this.projectionDirty)) {
+      this.localView = this.buildVisibleViewFromRuntime(
+        this.runtime,
+        this.runtime.getState(),
+        Date.now(),
+      );
+      this.projectionDirty = false;
+    }
+
+    const visibleView =
+      this.optimisticState?.view ??
+      this.localView ??
+      this.buildVisibleViewFromRuntime(this.runtime, this.runtime.getState(), Date.now());
+    return visibleView as DeepReadonly<FilteredMatchView>;
   }
 
   getStateID(): number {
+    if (this.optimisticState) {
+      return this.runtime.getCurrentStateID();
+    }
     return this.stateID;
+  }
+
+  getViewRevision(): number {
+    return this.viewRevision;
+  }
+
+  getViewUpdateMetadata(): EngineViewUpdateMetadata {
+    return { ...this.viewUpdateMetadata };
   }
 
   getProjection(): EngineProjectionSnapshot {
@@ -340,7 +421,7 @@ export class ClientEngine implements GameEngine {
 
   validateMove(moveId: string, input: MoveInput): EngineMoveValidationResult {
     if (!this.connected) return { valid: false, reason: "Not connected", code: "NOT_CONNECTED" };
-    if (!this.localView || this.config.role !== "player") {
+    if (!this.confirmedState || this.config.role !== "player") {
       return { valid: true, reason: "Validation deferred to server" };
     }
 
@@ -349,7 +430,17 @@ export class ClientEngine implements GameEngine {
       move: moveId,
       input,
     };
-    return this.runtime.validateCommand(command, this.config.playerId, this.stateID, "player");
+    // Use runtime.getCurrentStateID() rather than this.stateID so validation reflects
+    // the actual loaded state (optimistic or confirmed) without a false STALE_STATE
+    // rejection. The executeMove guard keeps execution blocked while an optimistic
+    // command is pending; validation here answers "is this move game-valid?"
+    // independently of whether execution is currently allowed.
+    return this.runtime.validateCommand(
+      command,
+      this.config.playerId,
+      this.runtime.getCurrentStateID(),
+      "player",
+    );
   }
 
   executeMove(moveId: string, input: MoveInput): EngineMoveExecutionResult {
@@ -362,7 +453,15 @@ export class ClientEngine implements GameEngine {
       return { success: false, reason: "Not connected", code: "NOT_CONNECTED" };
     }
 
-    if (this.localView && this.config.role === "player") {
+    if (this.optimisticState) {
+      return {
+        success: false,
+        reason: "A previous optimistic command is still awaiting authoritative reconciliation",
+        code: "OPTIMISTIC_MOVE_PENDING",
+      };
+    }
+
+    if (this.confirmedState && this.config.role === "player") {
       const validation = this.validateMove(moveId, input);
       if (!validation.valid) {
         return {
@@ -380,6 +479,31 @@ export class ClientEngine implements GameEngine {
       input,
     };
 
+    // Capture turn number before loading optimistic state into the runtime
+    const currentTurn = this.runtime.getState().ctx.status.turn;
+
+    if (this.config.role === "player" && !this.config.skipOptimisticState) {
+      const optimisticResult = this.buildOptimisticState(command);
+      if (optimisticResult.kind === "error") {
+        return optimisticResult.result;
+      }
+
+      this.optimisticState = {
+        command,
+        state: optimisticResult.state,
+        view: optimisticResult.view,
+      };
+      // Load optimistic state into the main runtime so that enumerateMoves()
+      // and getAvailableMoves() return post-move legal moves during the
+      // optimistic phase, keeping them consistent with the optimistic board view.
+      this.runtime.loadState(optimisticResult.state);
+      this.emitVisibleStateUpdate(this.lastPacketUpdate, {
+        sourceAuthority: "client",
+        commandID: command.commandID,
+        phase: "optimistic",
+      });
+    }
+
     this.transport.send({
       type: "UPDATE_ACTION",
       command,
@@ -387,8 +511,6 @@ export class ClientEngine implements GameEngine {
       protocolVersion: PROTOCOL_VERSION,
       matchID: this.getMatchID(),
     });
-
-    const currentTurn = this.runtime.getState().ctx.status.turn;
 
     this.moveHistory.push({
       moveId,
@@ -429,7 +551,12 @@ export class ClientEngine implements GameEngine {
   }
 
   canUndo(playerId: string): boolean {
-    return this.config.role === "player" && playerId === this.config.playerId && this.canUndoState;
+    return (
+      !this.optimisticState &&
+      this.config.role === "player" &&
+      playerId === this.config.playerId &&
+      this.canUndoState
+    );
   }
 
   undo(playerId: string, prevStateID?: number): boolean {
@@ -438,14 +565,44 @@ export class ClientEngine implements GameEngine {
       !this.transport ||
       this.config.role !== "player" ||
       playerId !== this.config.playerId ||
-      !this.canUndoState
+      !this.canUndoState ||
+      this.optimisticState ||
+      !this.undoCheckpointState
     ) {
       return false;
+    }
+
+    this.commandCounter++;
+    const command: CommandEnvelope = {
+      commandID: `undo-${this.config.playerId}-${Date.now()}-${this.commandCounter}`,
+      move: "undo",
+    };
+    if (!this.config.skipOptimisticState) {
+      const optimisticUndoState = structuredClone(this.undoCheckpointState) as MatchState;
+      const undoRuntime = new MatchRuntime(this.runtimeConfig, {
+        players: this.config.players,
+        seed: this.config.seed,
+        cardsMaps: createCardsMapsFromStaticResources(this.config.staticResources),
+        cardCatalog: this.config.staticResources.cards,
+      });
+      undoRuntime.loadState(optimisticUndoState);
+      this.optimisticState = {
+        command,
+        state: optimisticUndoState,
+        view: this.buildVisibleViewFromRuntime(undoRuntime, optimisticUndoState, Date.now()),
+      };
+      this.runtime.loadState(optimisticUndoState);
+      this.emitVisibleStateUpdate(this.lastPacketUpdate, {
+        sourceAuthority: "client",
+        commandID: command.commandID,
+        phase: "optimistic",
+      });
     }
 
     this.transport.send({
       type: "UNDO_REQUEST",
       prevStateID: prevStateID ?? this.stateID,
+      commandID: command.commandID,
       protocolVersion: PROTOCOL_VERSION,
       matchID: this.getMatchID(),
       playerID: this.config.playerId,
@@ -462,7 +619,10 @@ export class ClientEngine implements GameEngine {
     await this.disconnect(skipLogs);
     this.stateUpdateHandlers = [];
     this.localView = null;
+    this.confirmedState = null;
     this.canUndoState = false;
+    this.undoCheckpointState = null;
+    this.optimisticState = null;
   }
 
   isSynced(): boolean {
@@ -489,5 +649,97 @@ export class ClientEngine implements GameEngine {
 
   private getMatchID(): string {
     return this.runtime.getState().ctx.matchID;
+  }
+
+  private emitVisibleStateUpdate(
+    packet: EnginePacketUpdate | null,
+    metadata: EngineViewUpdateMetadata,
+  ): void {
+    const visibleView = this.getBoard() as FilteredMatchView;
+    this.viewRevision += 1;
+    this.viewUpdateMetadata = metadata;
+    this.stateUpdateHandlers.forEach((handler) => handler(visibleView, this.stateID, packet));
+  }
+
+  private buildOptimisticState(
+    command: CommandEnvelope,
+  ):
+    | { kind: "success"; state: MatchState; view: FilteredMatchView }
+    | { kind: "error"; result: EngineMoveExecutionResult } {
+    if (!this.confirmedState) {
+      return {
+        kind: "error",
+        result: {
+          success: false,
+          reason: "No confirmed state is available for local execution",
+          code: "STATE_NOT_SYNCED",
+        },
+      };
+    }
+
+    try {
+      const sandboxRuntime = new MatchRuntime(this.runtimeConfig, {
+        players: this.config.players,
+        seed: this.config.seed,
+        cardsMaps: createCardsMapsFromStaticResources(this.config.staticResources),
+        cardCatalog: this.config.staticResources.cards,
+      });
+      const confirmedState = structuredClone(this.confirmedState) as MatchState;
+      sandboxRuntime.loadState(confirmedState);
+      const result = sandboxRuntime.processCommand(
+        command,
+        this.config.playerId,
+        this.stateID,
+        Date.now(),
+        "player",
+      );
+
+      if (!result.success) {
+        return {
+          kind: "error",
+          result: {
+            success: false,
+            reason: result.error || "Local command execution failed",
+            code: "INVALID_MOVE",
+          },
+        };
+      }
+
+      return {
+        kind: "success",
+        state: structuredClone(result.state) as MatchState,
+        view: this.buildVisibleViewFromRuntime(sandboxRuntime, result.state, Date.now()),
+      };
+    } catch (error) {
+      logger.warning("Failed to build optimistic state", {
+        error: error instanceof Error ? error.message : String(error),
+        move: command.move,
+      });
+      return {
+        kind: "error",
+        result: {
+          success: false,
+          reason: "Local command execution failed",
+          code: "LOCAL_EXECUTION_FAILED",
+        },
+      };
+    }
+  }
+
+  private buildVisibleViewFromRuntime(
+    runtime: MatchRuntime,
+    state: MatchState,
+    timestamp: number,
+  ): FilteredMatchView {
+    const roleContext =
+      this.config.role === "player"
+        ? { role: "player" as const, playerID: this.config.playerId }
+        : { role: "spectator" as const };
+
+    const projectedView = runtime.getProjectedBoardView(roleContext, {
+      serverTimestamp: timestamp,
+    });
+    const visibleView = projectedView ?? runtime.getFilteredView(roleContext);
+    return guardProjectedViewInDevelopment(visibleView as FilteredMatchView, this.identifier);
   }
 }

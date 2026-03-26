@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { helgaSinclairToughAsNailsI18n } from "./183-helga-sinclair-tough-as-nails.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const helgaSinclairToughAsNails: CharacterCard = {
   id: "lpp",
@@ -34,13 +35,7 @@ export const helgaSinclairToughAsNails: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain"],
   abilities: [
-    {
-      id: "1ld-1",
-      keyword: "Challenger",
-      text: "Challenger +3.",
-      type: "keyword",
-      value: 3,
-    },
+    challenger(3),
     {
       condition: {
         type: "turn",

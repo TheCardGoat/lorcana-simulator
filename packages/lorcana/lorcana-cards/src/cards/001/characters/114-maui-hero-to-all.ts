@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mauiHeroToAllI18n } from "./114-maui-hero-to-all.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const mauiHeroToAll: CharacterCard = {
   id: "bes",
@@ -31,19 +33,6 @@ export const mauiHeroToAll: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Deity"],
-  abilities: [
-    {
-      id: "1s6-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-    {
-      id: "1s6-2",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-  ],
+  abilities: [rush, reckless],
   i18n: mauiHeroToAllI18n,
 };

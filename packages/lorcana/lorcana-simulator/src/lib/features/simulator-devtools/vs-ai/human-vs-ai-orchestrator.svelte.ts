@@ -10,10 +10,12 @@ import {
   type LorcanaServerAuthoritativeSnapshot,
 } from "@tcg/lorcana-engine";
 import { getLorcanaCardCatalogSync } from "@tcg/lorcana-cards/cards/sync";
-import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import {
+  DEFAULT_DYNAMIC_CLOCK_CONFIG,
+  LorcanaMultiplayerTestEngine,
+} from "@tcg/lorcana-engine/testing";
 import {
   AutomatedMatchPlaybackReadModel,
-  createAutomatedMoveLogEntry,
   type AutomatedMatchPlaybackServer,
   type AutomatedMatchPlaybackSession,
 } from "../ai-match/playback-controller.js";
@@ -37,12 +39,12 @@ export class HumanVsAiOrchestrator {
   #testEngine: LorcanaMultiplayerTestEngine;
   #cardsMaps: CardsMaps;
   #strategyOption: AutomatedActionStrategyOption;
-  #actionCount = 0;
   #deadlockTracker = createRepeatedStateDeadlockTracker();
   #timer: ReturnType<typeof setTimeout> | null = null;
   #timerRevision = 0;
   #listeners = new Set<() => void>();
   #stateUnsubscribe: (() => void) | null = null;
+  #gameId: string;
 
   sessionRevision = $state(0);
   state = $state<HumanVsAiOrchestratorState>({
@@ -62,6 +64,7 @@ export class HumanVsAiOrchestrator {
     }
 
     this.#strategyOption = strategyOption;
+    this.#gameId = config.seed;
 
     const fixture = createAutomatedMatchFixture({
       playerOneDeckText: config.playerOneDeckText,
@@ -76,7 +79,12 @@ export class HumanVsAiOrchestrator {
     this.#testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       fixture.playerOne,
       fixture.playerTwo,
-      { seed: fixture.seed, skipPreGame: false, validateSync: false },
+      {
+        seed: fixture.seed,
+        skipPreGame: false,
+        validateSync: false,
+        timeControl: { mode: "dynamic", config: DEFAULT_DYNAMIC_CLOCK_CONFIG },
+      },
     );
     this.#cardsMaps = this.#testEngine.getCardsMaps();
 
@@ -101,6 +109,10 @@ export class HumanVsAiOrchestrator {
 
     this.#subscribeToStateUpdates();
     this.#syncMode();
+  }
+
+  get gameId(): string {
+    return this.#gameId;
   }
 
   get cardsMaps(): CardsMaps {
@@ -313,28 +325,22 @@ export class HumanVsAiOrchestrator {
       observation,
     });
 
-    if (deadlockResolution.attempted && !deadlockResolution.conceded) {
-      this.#clearTimer();
-      this.state = {
-        ...this.state,
-        mode: "error",
-        error: deadlockResolution.error ?? "Repeated state detected - AI appears stuck.",
-      };
-      return;
-    }
-
-    // Log the AI action for the event log panel
-    this.#actionCount += 1;
-    const logEntry = createAutomatedMoveLogEntry(
-      result,
-      { mode: "running", speedMs: 0 },
-      this.#session.server.getTurnNumber(),
-      this.#actionCount,
-    );
-    if (logEntry) {
-      const readModel = this.#session.readModel;
-      if (readModel instanceof AutomatedMatchPlaybackReadModel) {
-        readModel.pushSyntheticMoveEntry(logEntry);
+    if (deadlockResolution.attempted) {
+      if (deadlockResolution.conceded) {
+        console.warn(
+          `[HumanVsAI] AI conceded due to repeated-state deadlock.\n` +
+            `  Actor: ${result.actorId}\n` +
+            `  State fingerprint (seen ${observation.count}×): ${observation.key ?? fingerprint}\n` +
+            `  Strategy: ${this.#strategyOption.label}`,
+        );
+      } else {
+        this.#clearTimer();
+        this.state = {
+          ...this.state,
+          mode: "error",
+          error: deadlockResolution.error ?? "Repeated state detected - AI appears stuck.",
+        };
+        return;
       }
     }
 

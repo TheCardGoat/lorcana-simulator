@@ -1,115 +1,144 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   CaterpillarCalmAndCollected,
-//   HiramFlavershamToymaker,
-// } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import { hiddenCoveTranquilHaven } from "@lorcanito/lorcana-engine/cards/004/locations/locations";
-// Import { scarVengefulLion } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Scar - Vengeful Lion", () => {
-//   Describe("**LIFE'S NOT FAIR, IS IT?** Whenever one of your characters challenges a damaged character, you may draw a card.", () => {
-//     It("DOES trigger when challenging a damaged character", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Deck: 5,
-//           Play: [scarVengefulLion, caterpillarCalmAndCollected],
-//         },
-//         {
-//           Play: [hiramFlavershamToymaker],
-//         },
-//       );
-//
-//       Const defender = testEngine.getCardModel(hiramFlavershamToymaker);
-//       Await testEngine.tapCard(defender);
-//       // Damage the defender
-//       Await testEngine.setCardDamage(hiramFlavershamToymaker, 1);
-//
-//       Const attacker = testEngine.getCardModel(caterpillarCalmAndCollected);
-//       Const initialHandCount = testEngine.getZonesCardCount().hand;
-//
-//       Await testEngine.challenge({ attacker, defender });
-//       Await testEngine.resolveOptionalAbility();
-//
-//       Expect(testEngine.getZonesCardCount()).toEqual(
-//         Expect.objectContaining({
-//           Hand: initialHandCount + 1,
-//           Deck: 4,
-//         }),
-//       );
-//     });
-//
-//     It("DOES NOT trigger when challenging an undamaged character", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Deck: 5,
-//           Play: [scarVengefulLion, caterpillarCalmAndCollected],
-//         },
-//         {
-//           Play: [hiramFlavershamToymaker],
-//         },
-//       );
-//
-//       Const defender = testEngine.getCardModel(hiramFlavershamToymaker);
-//       Await testEngine.tapCard(defender);
-//       // Defender has no damage
-//
-//       Const attacker = testEngine.getCardModel(caterpillarCalmAndCollected);
-//       Const initialHandCount = testEngine.getZonesCardCount().hand;
-//
-//       Await testEngine.challenge({ attacker, defender });
-//
-//       Expect(testEngine.stackLayers).toHaveLength(0);
-//       Expect(testEngine.getZonesCardCount()).toEqual(
-//         Expect.objectContaining({
-//           Hand: initialHandCount,
-//           Deck: 5,
-//         }),
-//       );
-//     });
-//
-//     It("DOES NOT trigger when challenging a location (even if damaged)", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Deck: 5,
-//           Play: [scarVengefulLion, caterpillarCalmAndCollected],
-//         },
-//         {
-//           Play: [hiddenCoveTranquilHaven],
-//         },
-//       );
-//
-//       Const defender = testEngine.getCardModel(hiddenCoveTranquilHaven);
-//       // Damage the location
-//       Await testEngine.setCardDamage(hiddenCoveTranquilHaven, 1);
-//
-//       Const attacker = testEngine.getCardModel(caterpillarCalmAndCollected);
-//       Const initialHandCount = testEngine.getZonesCardCount().hand;
-//
-//       Await testEngine.challenge({ attacker, defender });
-//
-//       // Verify no ability was added to the stack
-//       Expect(testEngine.stackLayers).toHaveLength(0);
-//
-//       // Verify the ability name is NOT in the stack layers
-//       Const hasScarAbility = testEngine.stackLayers.some(
-//         (layer) => layer.ability?.name === "**LIFE'S NOT FAIR, IS IT?**",
-//       );
-//       Expect(hasScarAbility).toBe(false);
-//
-//       // Verify no card was drawn
-//       Expect(testEngine.getZonesCardCount()).toEqual(
-//         Expect.objectContaining({
-//           Hand: initialHandCount,
-//           Deck: 5,
-//         }),
-//       );
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { scarVengefulLion } from "./093-scar-vengeful-lion";
+
+const damagedDefender = createMockCharacter({
+  id: "scar-damaged-defender",
+  name: "Damaged Defender",
+  cost: 2,
+  strength: 1,
+  willpower: 5,
+});
+
+const undamagedDefender = createMockCharacter({
+  id: "scar-undamaged-defender",
+  name: "Undamaged Defender",
+  cost: 2,
+  strength: 1,
+  willpower: 5,
+});
+
+const attackerChar = createMockCharacter({
+  id: "scar-attacker-char",
+  name: "Attacker Character",
+  cost: 3,
+  strength: 2,
+  willpower: 4,
+});
+
+describe("Scar - Vengeful Lion", () => {
+  describe("LIFE'S NOT FAIR, IS IT? - Whenever one of your characters challenges a damaged character, you may draw a card.", () => {
+    it("triggers when your character challenges a damaged character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: scarVengefulLion, isDrying: false },
+            { card: attackerChar, isDrying: false },
+          ],
+          deck: 3,
+        },
+        {
+          play: [{ card: damagedDefender, exerted: true, damage: 1 }],
+          deck: 3,
+        },
+      );
+
+      const handBefore = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+
+      expect(
+        testEngine.asPlayerOne().challenge(attackerChar, damagedDefender),
+      ).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffects.length).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+      expect(handAfter).toBe(handBefore + 1);
+    });
+
+    it("does NOT trigger when challenging an undamaged character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: scarVengefulLion, isDrying: false },
+            { card: attackerChar, isDrying: false },
+          ],
+          deck: 3,
+        },
+        {
+          play: [{ card: undamagedDefender, exerted: true }],
+          deck: 3,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(attackerChar, undamagedDefender),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
+    it("does NOT trigger when opponent's character challenges a damaged character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: scarVengefulLion, isDrying: false },
+            { card: damagedDefender, exerted: true, damage: 1 },
+          ],
+          deck: 3,
+        },
+        {
+          play: [{ card: attackerChar, isDrying: false }],
+          deck: 3,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      const handBefore = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+
+      expect(
+        testEngine.asPlayerTwo().challenge(attackerChar, damagedDefender),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+      expect(handAfter).toBe(handBefore);
+    });
+
+    it("triggers when Scar himself challenges a damaged character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scarVengefulLion, isDrying: false }],
+          deck: 3,
+        },
+        {
+          play: [{ card: damagedDefender, exerted: true, damage: 1 }],
+          deck: 3,
+        },
+      );
+
+      const handBefore = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+
+      expect(
+        testEngine.asPlayerOne().challenge(scarVengefulLion, damagedDefender),
+      ).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffects.length).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+      expect(handAfter).toBe(handBefore + 1);
+    });
+  });
+});

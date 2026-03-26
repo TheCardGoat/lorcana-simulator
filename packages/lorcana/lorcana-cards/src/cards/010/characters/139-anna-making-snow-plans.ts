@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { support } from "../../../helpers/abilities/support";
 import { annaMakingSnowPlansI18n } from "./139-anna-making-snow-plans.i18n";
 
 export const annaMakingSnowPlans: CharacterCard = {
@@ -24,13 +25,6 @@ export const annaMakingSnowPlans: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Hero", "Queen"],
-  abilities: [
-    {
-      id: "9zf-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: annaMakingSnowPlansI18n,
 };

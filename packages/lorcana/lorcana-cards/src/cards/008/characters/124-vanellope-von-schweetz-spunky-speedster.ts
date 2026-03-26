@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { vanellopeVonSchweetzSpunkySpeedsterI18n } from "./124-vanellope-von-schweetz-spunky-speedster.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const vanellopeVonSchweetzSpunkySpeedster: CharacterCard = {
   id: "SCj",
@@ -24,13 +25,6 @@ export const vanellopeVonSchweetzSpunkySpeedster: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Hero", "Princess", "Racer"],
-  abilities: [
-    {
-      id: "1we-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: vanellopeVonSchweetzSpunkySpeedsterI18n,
 };

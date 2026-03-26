@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { maxGoofRockinTeenI18n } from "./112-max-goof-rockin-teen.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const maxGoofRockinTeen: CharacterCard = {
   id: "X6A",
@@ -33,12 +34,7 @@ export const maxGoofRockinTeen: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      keyword: "Singer",
-      type: "keyword",
-      value: 5,
-      text: "Singer 5",
-    },
+    singer(5),
     {
       id: "X6A-1",
       name: "I JUST WANNA STAY HOME",

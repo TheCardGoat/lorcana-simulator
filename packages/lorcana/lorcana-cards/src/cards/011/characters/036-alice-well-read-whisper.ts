@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { aliceWellreadWhisperI18n } from "./036-alice-well-read-whisper.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const aliceWellreadWhisper: CharacterCard = {
   id: "Sgs",
@@ -33,13 +34,7 @@ export const aliceWellreadWhisper: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Whisper"],
   abilities: [
-    {
-      id: "1k8-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 2,
-      text: "Boost 2 {I}",
-    },
+    boost(2),
     {
       id: "1k8-2",
       name: "MYSTICAL INSIGHT",

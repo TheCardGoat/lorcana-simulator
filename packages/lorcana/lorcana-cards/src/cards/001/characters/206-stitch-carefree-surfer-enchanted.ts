@@ -42,30 +42,27 @@ export const stitchCarefreeSurferEnchanted: CharacterCard = {
         on: "SELF",
         timing: "when",
       },
-      effect: {
-        type: "conditional",
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            excludeSelf: true,
-          },
-          comparison: {
-            operator: "gte",
-            value: 2,
-          },
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          excludeSelf: true,
         },
-        then: {
-          type: "optional",
-          chooser: "CONTROLLER",
-          effect: {
-            amount: 2,
-            target: "CONTROLLER",
-            type: "draw",
-          },
+        comparison: {
+          operator: "gte",
+          value: 2,
+        },
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          amount: 2,
+          target: "CONTROLLER",
+          type: "draw",
         },
       },
     },

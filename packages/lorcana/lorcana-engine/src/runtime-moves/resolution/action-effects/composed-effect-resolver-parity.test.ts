@@ -194,6 +194,7 @@ function createResolverContext(args?: {
       events: {
         emit: () => {},
       },
+      log: () => {},
       zones: zonesApi as never,
     },
     events: {

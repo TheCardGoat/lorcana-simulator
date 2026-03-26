@@ -23,7 +23,10 @@ describe("Airfoil", () => {
       ability: "I GOT TO BE GOING",
     });
 
-    expect(result).toBeSuccessfulCommand();
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errorCode).toBe("ABILITY_CONDITION_NOT_MET");
+    }
     expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 1 });
   });
 

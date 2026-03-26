@@ -34,11 +34,19 @@ export const panicUnderworldImp: CharacterCard = {
     {
       effect: {
         condition: {
-          expression: "the chosen character is named Pain",
-          type: "if",
+          type: "is-named",
+          name: "Pain",
         },
         then: {
+          duration: "this-turn",
           modifier: 4,
+          stat: "strength",
+          target: "CHOSEN_CHARACTER",
+          type: "modify-stat",
+        },
+        else: {
+          duration: "this-turn",
+          modifier: 2,
           stat: "strength",
           target: "CHOSEN_CHARACTER",
           type: "modify-stat",
@@ -56,6 +64,5 @@ export const panicUnderworldImp: CharacterCard = {
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: panicUnderworldImpI18n,
 };

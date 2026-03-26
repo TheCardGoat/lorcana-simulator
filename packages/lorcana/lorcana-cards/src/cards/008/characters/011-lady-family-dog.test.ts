@@ -45,7 +45,7 @@ describe("Lady - Family Dog", () => {
       expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("play");
     });
 
-    it("should be optional - can decline the ability", () => {
+    it("should advance bag state to target-selection when optional is accepted without targets", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [ladyFamilyDog, cheapCharacter],
         inkwell: ladyFamilyDog.cost,
@@ -56,13 +56,23 @@ describe("Lady - Family Dog", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
-
       const bagId = bagEffects[0]!.id;
+
+      // Step 1: Accept the optional without providing targets — should advance (not execute)
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("hand");
+      // Bag should still be active (advanced, not resolved)
+      const stillInBag = testEngine.asPlayerOne().getBagEffects();
+      expect(stillInBag.length).toBeGreaterThan(0);
+
+      // Step 2: Now provide the target — should execute and play the card
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagId, { targets: [cheapCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("play");
     });
 
     it("should not allow playing a character with cost greater than 2", () => {

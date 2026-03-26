@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { goofyFlyingGoofI18n } from "./123-goofy-flying-goof.i18n";
+import { rush } from "../../../helpers/abilities/rush";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const goofyFlyingGoof: CharacterCard = {
   id: "GQo",
@@ -30,19 +32,6 @@ export const goofyFlyingGoof: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "1i6-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-    {
-      id: "1i6-2",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [rush, evasive],
   i18n: goofyFlyingGoofI18n,
 };

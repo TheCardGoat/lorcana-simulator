@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { evasive } from "../../../helpers/abilities/evasive";
 import { flotsamSlipperyAsAnEelI18n } from "./071-flotsam-slippery-as-an-eel.i18n";
 
 export const flotsamSlipperyAsAnEel: CharacterCard = {
@@ -24,13 +25,6 @@ export const flotsamSlipperyAsAnEel: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "3ma-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: flotsamSlipperyAsAnEelI18n,
 };

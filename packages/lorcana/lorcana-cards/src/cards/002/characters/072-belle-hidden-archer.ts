@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { belleHiddenArcherI18n } from "./072-belle-hidden-archer.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const belleHiddenArcher: CharacterCard = {
   id: "df2",
@@ -34,15 +35,7 @@ export const belleHiddenArcher: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "cyn-1",
-      keyword: "Shift",
-      type: "keyword",
-      cost: {
-        ink: 3,
-      },
-      text: "Shift 3",
-    },
+    shift(3),
     {
       id: "cyn-2",
       name: "THORNY ARROWS",

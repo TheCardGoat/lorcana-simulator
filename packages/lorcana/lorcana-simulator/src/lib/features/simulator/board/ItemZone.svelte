@@ -25,7 +25,12 @@ interface ItemZoneProps {
 	seat: LorcanaTableSeat;
 }
 
-let { layoutMode = "desktop", isOpponent, playerSide, seat }: ItemZoneProps = $props();
+let {
+	layoutMode = "desktop",
+	isOpponent,
+	playerSide,
+	seat,
+}: ItemZoneProps = $props();
 
 const board = useLorcanaBoardPresenter();
 const sidebar = useLorcanaSidebarPresenter();
@@ -39,14 +44,18 @@ const items = $derived.by(() =>
 let itemContainerEl = $state<HTMLDivElement | null>(null);
 let hiddenItemsToLeft = $state(0);
 let hiddenItemsToRight = $state(0);
-const showMobileItemControls = $derived(layoutMode === "mobile" && items.length > 0);
+const showMobileItemControls = $derived(
+	layoutMode === "mobile" && items.length > 0,
+);
 
 function getScrollableItemCards(): HTMLElement[] {
 	if (!itemContainerEl) {
 		return [];
 	}
 
-	return Array.from(itemContainerEl.querySelectorAll<HTMLElement>(".item-card"));
+	return Array.from(
+		itemContainerEl.querySelectorAll<HTMLElement>(".item-card"),
+	);
 }
 
 function updateHiddenItems(): void {
@@ -101,8 +110,12 @@ $effect(() => {
 
 	const container = itemContainerEl;
 	const resizeObserver =
-		typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateHiddenItems);
-	const cardElements = Array.from(container.querySelectorAll<HTMLElement>(".item-card"));
+		typeof ResizeObserver === "undefined"
+			? null
+			: new ResizeObserver(updateHiddenItems);
+	const cardElements = Array.from(
+		container.querySelectorAll<HTMLElement>(".item-card"),
+	);
 
 	updateHiddenItems();
 	container.addEventListener("scroll", updateHiddenItems, { passive: true });
@@ -204,7 +217,6 @@ $effect(() => {
 
     position: relative;
     display: flex;
-    flex-direction: column;
     align-items: stretch;
     padding: var(--item-container-padding);
     width: 100%;
@@ -251,7 +263,6 @@ $effect(() => {
 
   .item-zone-cards {
     display: flex;
-    align-items: flex-start;
     justify-content: flex-end;
     width: 100%;
     flex: 1 1 auto;
@@ -265,14 +276,13 @@ $effect(() => {
 
   .item-cards {
     display: flex;
-    flex-direction: column;
     flex-wrap: wrap;
+    flex-direction: row;
     flex: 1 1 auto;
     min-width: 100%;
     min-height: var(--item-card-height);
     align-items: center;
-    align-content: flex-end;
-    justify-content: flex-start;
+    justify-content: flex-end;
     gap: var(--item-grid-gap);
     width: max-content;
     height: auto;
@@ -340,7 +350,6 @@ $effect(() => {
 
     .item-zone[data-layout-mode="mobile"] .item-zone-cards {
       overflow: visible;
-      align-items: flex-start;
       justify-content: flex-start;
     }
 

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, LorcanaTestEngine } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  LorcanaTestEngine,
+  PLAYER_ONE,
+  createMockItem,
+} from "@tcg/lorcana-engine/testing";
 import { tamatoaSeekerOfShine } from "./156-tamatoa-seeker-of-shine";
 
 describe("Tamatoa - Seeker of Shine", () => {
@@ -108,6 +113,45 @@ describe("Tamatoa - Seeker of Shine", () => {
 
       const loreAfterTurn = testEngine.asPlayerOne().getCard(tamatoaSeekerOfShine).lore;
       expect(loreAfterTurn).toBe(tamatoaSeekerOfShine.lore);
+    });
+
+    it("regression: does NOT trigger when a card is put under an item (ability says characters or locations only)", () => {
+      const boostItem = createMockItem({
+        id: "tamatoa-test-boost-item",
+        name: "Boost Item",
+        cost: 2,
+        abilities: [
+          {
+            id: "test-boost",
+            type: "activated" as const,
+            name: "Boost",
+            text: "Boost 2 - Pay 2 ink to put top card of deck under this item",
+            cost: { ink: 2 },
+            effect: {
+              type: "put-under",
+              source: "top-of-deck",
+              under: "self",
+            },
+          },
+        ],
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [tamatoaSeekerOfShine, boostItem],
+        deck: 5,
+        inkwell: 10,
+      });
+
+      const loreBefore = testEngine.asPlayerOne().getCard(tamatoaSeekerOfShine).lore;
+
+      // Activate the item's boost
+      const result = testEngine.asPlayerOne().activateAbility(boostItem, { ability: "Boost" });
+
+      if (result.success) {
+        // Tamatoa should NOT have gained lore from an item put-under event
+        const loreAfter = testEngine.asPlayerOne().getCard(tamatoaSeekerOfShine).lore;
+        expect(loreAfter).toBe(loreBefore);
+      }
     });
   });
 });

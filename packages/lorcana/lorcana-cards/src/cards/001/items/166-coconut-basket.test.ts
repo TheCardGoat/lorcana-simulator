@@ -48,4 +48,43 @@ describe("Coconut Basket", () => {
     expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
     expect(testEngine.asPlayerTwo().getDamage(mauiHeroToAll)).toBe(0);
   });
+
+  it("regression: allows removing only 1 damage when character has exactly 1 damage (up to 2)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [peterPanNeverLanding],
+      inkwell: peterPanNeverLanding.cost,
+      play: [coconutBasket, { card: mauiHeroToAll, damage: 1 }],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(peterPanNeverLanding)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        targets: [mauiHeroToAll],
+      }),
+    ).toBeSuccessfulCommand();
+    // Should remove only 1 damage (up to 2, but only 1 present)
+    expect(testEngine.asPlayerOne().getDamage(mauiHeroToAll)).toBe(0);
+  });
+
+  it("regression: allows targeting an undamaged character (up to 2 includes 0)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [peterPanNeverLanding],
+      inkwell: peterPanNeverLanding.cost,
+      play: [coconutBasket, mauiHeroToAll],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(peterPanNeverLanding)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    // Targeting an undamaged character should be valid with "up to 2"
+    const result = testEngine
+      .asPlayerOne()
+      .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        resolveOptional: true,
+        targets: [mauiHeroToAll],
+      });
+    expect(result).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getDamage(mauiHeroToAll)).toBe(0);
+  });
 });

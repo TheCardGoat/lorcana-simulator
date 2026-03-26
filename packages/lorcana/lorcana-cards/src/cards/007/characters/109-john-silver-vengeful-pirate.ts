@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { johnSilverVengefulPirateI18n } from "./109-john-silver-vengeful-pirate.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const johnSilverVengefulPirate: CharacterCard = {
   id: "haz",
@@ -59,13 +60,7 @@ export const johnSilverVengefulPirate: CharacterCard = {
       text: "DRAWN TO A FIGHT If an opposing character was damaged this turn, you pay 2 {I} less to play this character.",
       type: "static",
     },
-    {
-      id: "1p4-2",
-      keyword: "Resist",
-      text: "Resist +1",
-      type: "keyword",
-      value: 1,
-    },
+    resist(1),
     {
       effect: {
         chooser: "CONTROLLER",

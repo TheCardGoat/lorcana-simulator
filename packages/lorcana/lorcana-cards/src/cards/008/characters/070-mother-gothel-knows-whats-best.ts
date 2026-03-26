@@ -35,15 +35,38 @@ export const motherGothelKnowsWhatsBest: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 2,
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "deal-damage",
+          type: "sequence",
+          steps: [
+            {
+              amount: 2,
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["character"],
+                excludeSelf: true,
+              },
+              type: "deal-damage",
+            },
+            {
+              keyword: "Challenger",
+              target: {
+                ref: "previous-target",
+              },
+              type: "gain-keyword",
+              value: 1,
+              duration: "this-turn",
+            },
+            {
+              type: "grant-ability",
+              ability: "return-to-hand-when-banished",
+              duration: "this-turn",
+              target: {
+                ref: "previous-target",
+              },
+            },
+          ],
         },
         type: "optional",
       },

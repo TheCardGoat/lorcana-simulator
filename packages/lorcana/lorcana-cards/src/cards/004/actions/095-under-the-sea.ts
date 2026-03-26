@@ -1,4 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
+import { singTogether } from "../../../helpers/abilities/singTogether";
 import { underTheSeaI18n } from "./095-under-the-sea.i18n";
 
 export const underTheSea: ActionCard = {
@@ -31,6 +32,7 @@ export const underTheSea: ActionCard = {
   ],
   actionSubtype: "song",
   abilities: [
+    singTogether(8),
     {
       type: "action",
       effect: {

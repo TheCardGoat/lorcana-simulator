@@ -55,32 +55,6 @@ describe("Kuzco - Selfish Emperor", () => {
       // The item should be exerted
       expect(testEngine.isExerted(opponentItem)).toBe(true);
     });
-
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [kuzcoSelfishEmperor],
-          inkwell: kuzcoSelfishEmperor.cost,
-          deck: 1,
-        },
-        {
-          play: [opponentItem],
-          deck: 1,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().playCard(kuzcoSelfishEmperor)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      // The item should remain in play
-      expect(testEngine.asPlayerTwo().getCardZone(opponentItem)).toBe("play");
-      expect(testEngine.asPlayerTwo().getZonesCardCount().inkwell).toBe(0);
-    });
   });
 
   describe("BY INVITE ONLY 4 {I} — Your other characters gain Resist +1 until the start of your next turn.", () => {

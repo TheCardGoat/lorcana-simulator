@@ -42,21 +42,14 @@ export const mufasaRulerOfPrideRock: CharacterCard = {
             target: {
               selector: "all",
               count: "all",
-              owner: "any",
-              zones: ["play"],
-              cardTypes: ["card"],
+              owner: "you",
+              zones: ["inkwell"],
             },
             type: "exert",
           },
           {
-            target: {
-              selector: "chosen",
-              count: 1,
-              owner: "any",
-              zones: ["play"],
-              cardTypes: ["card"],
-            },
-            type: "return-to-hand",
+            type: "return-random-from-inkwell",
+            count: 2,
           },
         ],
         type: "sequence",
@@ -74,11 +67,10 @@ export const mufasaRulerOfPrideRock: CharacterCard = {
     {
       effect: {
         target: {
-          cardTypes: ["card"],
           count: "all",
-          owner: "any",
+          owner: "you",
           selector: "all",
-          zones: ["play"],
+          zones: ["inkwell"],
         },
         type: "ready",
       },

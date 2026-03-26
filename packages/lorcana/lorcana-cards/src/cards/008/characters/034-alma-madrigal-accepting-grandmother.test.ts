@@ -160,4 +160,39 @@ describe("Alma Madrigal - Accepting Grandmother", () => {
     // Singer should remain exerted since we declined
     expect(testEngine.asPlayerOne().isExerted(singerA)).toBe(true);
   });
+
+  it("regression: only readies the singing characters, not ALL characters", () => {
+    const nonSinger = createMockCharacter({
+      id: "alma-non-singer",
+      name: "Non-Singer",
+      cost: 4,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [songToSing],
+      inkwell: songToSing.cost,
+      play: [
+        { card: almaMadrigalAcceptingGrandmother, isDrying: false },
+        { card: singerA, isDrying: false },
+        { card: nonSinger, isDrying: false },
+      ],
+    });
+
+    // Manually exert the non-singer so we can verify it does NOT get readied
+    const nonSingerId = testEngine.findCardInstanceId(nonSinger, "play", "player_one");
+    testEngine.asServer().manualExertCard(nonSingerId);
+    expect(testEngine.asPlayerOne().isExerted(nonSinger)).toBe(true);
+
+    expect(testEngine.asPlayerOne().singSong(songToSing, singerA)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+    ).toBeSuccessfulCommand();
+
+    // Singer should be readied
+    expect(testEngine.asPlayerOne().isExerted(singerA)).toBe(false);
+    // Non-singer should remain exerted - Alma only readies the singers, not ALL characters
+    expect(testEngine.asPlayerOne().isExerted(nonSinger)).toBe(true);
+  });
 });

@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { cheshireCatFromTheShadowsI18n } from "./075-cheshire-cat-from-the-shadows.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const cheshireCatFromTheShadows: CharacterCard = {
   id: "zI1",
@@ -36,21 +38,8 @@ export const cheshireCatFromTheShadows: CharacterCard = {
   ],
   classifications: ["Floodborn"],
   abilities: [
-    {
-      id: "wxg-1",
-      keyword: "Shift",
-      type: "keyword",
-      cost: {
-        ink: 5,
-      },
-      text: "Shift 5",
-    },
-    {
-      id: "wxg-2",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    shift(5),
+    evasive,
     {
       id: "wxg-3",
       name: "WICKED SMILE",

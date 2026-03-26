@@ -61,6 +61,10 @@ export class LorcanaBoardPresenter {
     this.#game.handleBoardAnchorsChange(anchors);
   }
 
+  activePlayerEffectTargets(): ReadonlySet<LorcanaPlayerSide> {
+    return this.#game.activePlayerEffectTargets();
+  }
+
   get boardSnapshot(): LorcanaProjectedBoardView | null {
     return this.#game.boardSnapshot();
   }
@@ -219,6 +223,18 @@ export class LorcanaBoardPresenter {
       return 0;
     }
     return getZoneCardCount(this.boardSnapshot, playerSide, "deck");
+  }
+
+  getRevealedDeckTopCard(playerSide: LorcanaPlayerSide): LorcanaCardSnapshot | null {
+    const ownerId = this.getOwnerIdForSide(playerSide);
+    if (!ownerId || !this.boardSnapshot) {
+      return null;
+    }
+    const deckTopId = this.boardSnapshot.players[ownerId]?.deckTop;
+    if (!deckTopId) {
+      return null;
+    }
+    return this.cardSnapshotsById[deckTopId] ?? null;
   }
 
   getOwnerIdForSide(playerSide: LorcanaPlayerSide): string | null {

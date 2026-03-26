@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { lythosRockTitanI18n } from "./180-lythos-rock-titan.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const lythosRockTitan: CharacterCard = {
   id: "Hi2",
@@ -33,13 +34,7 @@ export const lythosRockTitan: CharacterCard = {
   ],
   classifications: ["Storyborn", "Titan"],
   abilities: [
-    {
-      id: "ae9-1",
-      keyword: "Resist",
-      text: "Resist +2",
-      type: "keyword",
-      value: 2,
-    },
+    resist(2),
     {
       cost: {
         exert: true,

@@ -101,6 +101,19 @@ export function resolveSearchDeckEffect(
   }
 
   const destination = effect.putOnTop ? "top-of-deck" : (effect.putInto ?? "hand");
+
+  // When putting a card on top of the deck AND shuffling, shuffle first then
+  // place the card on top. The card text reads "Shuffle your deck and put that
+  // card on top of it." If we shuffle after, the top-of-deck placement is lost.
+  const shuffleBeforeMove = effect.shuffle && destination === "top-of-deck";
+
+  if (shuffleBeforeMove) {
+    ctx.framework.zones.shuffle({
+      zone: "deck",
+      playerId: cardPlayed.playerId,
+    });
+  }
+
   switch (destination) {
     case "play":
       ctx.framework.zones.moveCard(chosenCardId, {
@@ -123,7 +136,7 @@ export function resolveSearchDeckEffect(
       break;
   }
 
-  if (effect.shuffle) {
+  if (effect.shuffle && !shuffleBeforeMove) {
     ctx.framework.zones.shuffle({
       zone: "deck",
       playerId: cardPlayed.playerId,

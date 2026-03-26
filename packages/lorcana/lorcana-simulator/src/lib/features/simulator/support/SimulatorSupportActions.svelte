@@ -3,36 +3,34 @@
   import MessageSquarePlus from "@lucide/svelte/icons/message-square-plus";
   import { m } from "$lib/i18n/messages.js";
   import {
-    openSimulatorSupportAction,
     SIMULATOR_SUPPORT_ACTIONS,
     type SimulatorSupportActionId,
   } from "@/features/simulator/support/support-links.js";
+  import SimulatorFeedbackDialog from "@/features/simulator/support/SimulatorFeedbackDialog.svelte";
+  import SimulatorBugReportDialog from "@/features/simulator/support/SimulatorBugReportDialog.svelte";
+  import type { BugReportContext } from "@/features/simulator/support/feedback-api.js";
 
   interface SimulatorSupportActionsProps {
     surface?: "dialog" | "sheet";
+    gameContext?: BugReportContext;
   }
 
-  let { surface = "dialog" }: SimulatorSupportActionsProps = $props();
+  let { surface = "dialog", gameContext }: SimulatorSupportActionsProps = $props();
+
+  let feedbackOpen = $state(false);
+  let bugReportOpen = $state(false);
 
   const actionIcons = {
     reportBug: BugIcon,
     shareFeedback: MessageSquarePlus,
   } satisfies Record<SimulatorSupportActionId, typeof BugIcon>;
 
-  function getActionLabel(actionId: SimulatorSupportActionId): string {
-    return actionId === "reportBug"
-      ? m["sim.support.reportBugLabel"]({})
-      : m["sim.support.shareFeedbackLabel"]({});
-  }
-
-  function getActionDescription(actionId: SimulatorSupportActionId): string {
-    return actionId === "reportBug"
-      ? m["sim.support.reportBugDescription"]({})
-      : m["sim.support.shareFeedbackDescription"]({});
-  }
-
   function handleActionClick(actionId: SimulatorSupportActionId): void {
-    openSimulatorSupportAction(actionId);
+    if (actionId === "reportBug") {
+      bugReportOpen = true;
+    } else {
+      feedbackOpen = true;
+    }
   }
 </script>
 
@@ -45,13 +43,16 @@
       onclick={() => handleActionClick(action.id)}
     >
       <div class="support-action-button__copy">
-        <span class="support-action-button__label">{getActionLabel(action.id)}</span>
-        <span class="support-action-button__meta">{getActionDescription(action.id)}</span>
+        <span class="support-action-button__label">{m[action.labelKey]({})}</span>
+        <span class="support-action-button__meta">{m[action.descriptionKey]({})}</span>
       </div>
       <Icon class="size-4 shrink-0" />
     </button>
   {/each}
 </div>
+
+<SimulatorFeedbackDialog bind:open={feedbackOpen} />
+<SimulatorBugReportDialog bind:open={bugReportOpen} {gameContext} />
 
 <style>
   .support-actions {

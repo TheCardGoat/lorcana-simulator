@@ -22,6 +22,7 @@ import {
   getEffectiveWillpower,
   type DerivedStateContext,
 } from "./derived-state";
+import { compareOperator } from "./operator-utils";
 import type { ZoneRuntimeState } from "../core/runtime/types";
 import { normalizeSelectedTargets, resolveTargetQuery } from "../targeting/runtime";
 import { didLastEffectPerform } from "../runtime-moves/resolution/action-effects/event-snapshot-utils";
@@ -72,40 +73,6 @@ const DEFAULT_EXISTS_COMPARISON: ConditionComparison = {
   operator: "gte",
   value: 1,
 };
-
-function compareNumbers(
-  left: number,
-  operator: ConditionComparisonOperator | string,
-  right: number,
-): boolean {
-  switch (operator) {
-    case "eq":
-    case "equal":
-      return left === right;
-    case "ne":
-    case "not-equal":
-      return left !== right;
-    case "gt":
-    case "greater":
-    case "greater-than":
-    case "more-than":
-      return left > right;
-    case "gte":
-    case "greater-or-equal":
-    case "or-more":
-      return left >= right;
-    case "lt":
-    case "less":
-    case "less-than":
-      return left < right;
-    case "lte":
-    case "less-or-equal":
-    case "or-less":
-      return left <= right;
-    default:
-      return false;
-  }
-}
 
 function resolveComparisonValue(value: ComparisonValue, ctx: ConditionEvaluationContext): number {
   switch (value.type) {
@@ -219,7 +186,7 @@ function evaluateTargetQueryCondition(
 
   const count = result.kind === "card" ? result.cardIds.length : result.playerIds.length;
   const comparison = condition.comparison ?? DEFAULT_EXISTS_COMPARISON;
-  return compareNumbers(count, comparison.operator, comparison.value);
+  return compareOperator(count, comparison.operator, comparison.value);
 }
 
 function getCardNumericAttribute(
@@ -331,7 +298,7 @@ function evaluateTargetAggregateComparisonCondition(
     return false;
   }
 
-  return compareNumbers(leftAggregate, condition.comparison, rightAggregate);
+  return compareOperator(leftAggregate, condition.comparison, rightAggregate);
 }
 
 function countCardsPlayedThisTurnMatching(
@@ -400,7 +367,10 @@ function evaluateTurnMetricCondition(
       break;
 
     case "cards-inked":
-      value = ctx.G.turnMetadata?.inkedThisTurn?.length ?? 0;
+      value =
+        ctx.G.turnMetadata?.cardsPutIntoInkwellThisTurn?.length ??
+        ctx.G.turnMetadata?.inkedThisTurn?.length ??
+        0;
       break;
 
     case "challenges-by-player":
@@ -455,7 +425,7 @@ function evaluateTurnMetricCondition(
       break;
   }
 
-  return compareNumbers(value, comparison.operator, comparison.value);
+  return compareOperator(value, comparison.operator, comparison.value);
 }
 
 function evaluatePlayContextCondition(
@@ -469,7 +439,7 @@ function evaluatePlayContextCondition(
       if (!condition.comparison) {
         return usedShift === true;
       }
-      return compareNumbers(
+      return compareOperator(
         usedShift === true ? 1 : 0,
         condition.comparison.operator,
         condition.comparison.value,
@@ -482,7 +452,7 @@ function evaluatePlayContextCondition(
         eventSnapshot?.playedCardSingerCount ??
         0;
       const comparison = condition.comparison ?? DEFAULT_EXISTS_COMPARISON;
-      return compareNumbers(singerCount, comparison.operator, comparison.value);
+      return compareOperator(singerCount, comparison.operator, comparison.value);
     }
 
     default:
@@ -553,7 +523,7 @@ function evaluateLegacyCardTypeCountCondition(
     0,
   );
 
-  return compareNumbers(value, condition.comparison, condition.count ?? 0);
+  return compareOperator(value, condition.comparison, condition.count ?? 0);
 }
 
 function evaluateResourceCountCondition(
@@ -619,7 +589,7 @@ function evaluateResourceCountCondition(
     }
   })();
 
-  return compareNumbers(value, condition.comparison, condition.value);
+  return compareOperator(value, condition.comparison, condition.value);
 }
 
 function evaluateInChallengeCondition(
@@ -637,6 +607,12 @@ function evaluateInChallengeCondition(
   if (condition.role === "attacker" && !isAttacker) return false;
   if (condition.role === "defender" && !isDefender) return false;
   if (!condition.role && !isAttacker && !isDefender) return false;
+
+  if (condition.againstDamaged) {
+    const opposingCardId = isAttacker ? challenge.defender : challenge.attacker;
+    const opposingDamage = Number(ctx.cards.require(opposingCardId).meta?.damage ?? 0);
+    if (opposingDamage <= 0) return false;
+  }
 
   if (!condition.againstCardType) return true;
 
@@ -725,7 +701,7 @@ export function evaluateCondition(
       );
 
     case "comparison":
-      return compareNumbers(
+      return compareOperator(
         resolveComparisonValue(condition.left, ctx),
         condition.comparison,
         resolveComparisonValue(condition.right, ctx),
@@ -758,6 +734,7 @@ export function evaluateCondition(
           zones: ["play"],
           cardType: "character",
           owner: condition.controller,
+          excludeSelf: condition.excludeSelf,
           filters: [
             condition.classification
               ? {
@@ -831,7 +808,10 @@ export function evaluateCondition(
     case "has-another-character": {
       // Check if the controller has another character in play besides self (sourceCardId),
       // optionally filtered by classification or name.
-      const playCards = ctx.framework.zones.getCards({ zone: "play", playerId: ctx.playerId });
+      const playCards = ctx.framework.zones.getCards({
+        zone: "play",
+        playerId: ctx.playerId,
+      });
       return playCards.some((cardId) => {
         // Exclude self
         if (cardId === ctx.sourceCardId) {
@@ -909,6 +889,24 @@ export function evaluateCondition(
       );
     }
 
+    case "revealed-is-character-named": {
+      const revealedCardId = ctx.resolutionInput?.eventSnapshot?.revealedCardIds?.[0] as
+        | CardInstanceId
+        | undefined;
+      if (!revealedCardId) {
+        return false;
+      }
+      const revealedDef = ctx.cards.getDefinition(revealedCardId);
+      if (!revealedDef || revealedDef.cardType !== "character") {
+        return false;
+      }
+      const expectedName = "name" in condition ? (condition as { name?: string }).name : undefined;
+      if (typeof expectedName !== "string") {
+        return false;
+      }
+      return cardHasName(revealedDef, expectedName);
+    }
+
     case "is-exerted":
     case "exerted": {
       const selectedTargets = normalizeSelectedTargets(ctx.resolutionInput?.targets) ?? [];
@@ -957,6 +955,9 @@ export function evaluateCondition(
       return damage === 0;
     }
 
+    // NOTE: "has-any-damage" is intentionally treated as an alias of "self-has-damage".
+    // Both conditions evaluate only against ctx.sourceCardId (the source card).
+    case "has-any-damage":
     case "self-has-damage": {
       const targetId = ctx.sourceCardId;
       if (!targetId) {
@@ -1001,6 +1002,39 @@ export function evaluateCondition(
       return Array.isArray(underCards) && underCards.length > 0;
     }
 
+    case "put-card-under-any-this-turn": {
+      const cardsUnderThisTurn = ctx.G?.turnMetadata?.cardsUnderThisTurn;
+      if (!cardsUnderThisTurn) {
+        return false;
+      }
+      const cardIndex = ctx.framework.state._zonesPrivate?.cardIndex;
+      if (!cardIndex) {
+        return false;
+      }
+      // Check if any card owned/controlled by the source card's controller had a card put under it
+      const controllerId = ctx.playerId;
+      for (const parentId of Object.keys(cardsUnderThisTurn)) {
+        const underCards = cardsUnderThisTurn[parentId as CardInstanceId];
+        if (!Array.isArray(underCards) || underCards.length === 0) {
+          continue;
+        }
+        const parentEntry = cardIndex[parentId];
+        if (!parentEntry) {
+          continue;
+        }
+        const parentOwner = parentEntry.controllerID ?? parentEntry.ownerID;
+        if (parentOwner !== controllerId) {
+          continue;
+        }
+        // Only characters and locations qualify per the card text
+        const parentDef = ctx.cards.getDefinition(parentId as CardInstanceId);
+        if (parentDef?.cardType === "character" || parentDef?.cardType === "location") {
+          return true;
+        }
+      }
+      return false;
+    }
+
     case "stat-threshold": {
       const targetId =
         condition.target === "SELF" || !condition.target ? ctx.sourceCardId : undefined;
@@ -1033,7 +1067,7 @@ export function evaluateCondition(
         default:
           return false;
       }
-      return compareNumbers(statValue, condition.comparison, condition.value);
+      return compareOperator(statValue, condition.comparison, condition.value);
     }
 
     case "at-location": {
@@ -1063,7 +1097,7 @@ export function evaluateCondition(
       const inkwellCount = countCardsInZoneForScope("inkwell", condition.controller ?? "you", ctx);
       const threshold = condition.count ?? condition.minimum ?? 0;
       const comparison = condition.comparison ?? "greater-or-equal";
-      return compareNumbers(inkwellCount, comparison, threshold);
+      return compareOperator(inkwellCount, comparison, threshold);
     }
 
     case "discarded-card-has-classification": {
@@ -1091,6 +1125,38 @@ export function evaluateCondition(
         return (classifications as readonly string[]).some(
           (c) => c.toLowerCase() === expectedClassification,
         );
+      });
+    }
+
+    case "has-character-with-strength": {
+      const strengthController = condition.controller ?? "you";
+      const strengthPlayerIds = resolveScopedPlayerIds(
+        strengthController,
+        ctx.playerId,
+        ctx.framework.state.playerIds,
+        ctx.framework.state.currentPlayer,
+      );
+      return strengthPlayerIds.some((playerId) => {
+        const playCards = ctx.framework.zones.getCards({
+          zone: "play",
+          playerId,
+        });
+        return playCards.some((cardId) => {
+          const definition = ctx.cards.getDefinition(cardId as CardInstanceId);
+          if (!definition || definition.cardType !== "character") {
+            return false;
+          }
+          const strength = Number((definition as { strength?: unknown }).strength ?? 0);
+          return compareOperator(strength, condition.comparison, condition.value);
+        });
+      });
+    }
+
+    case "is-named": {
+      const selectedTargets = getSelectedTargets(ctx);
+      return selectedTargets.some((cardId) => {
+        const definition = ctx.cards.getDefinition(cardId as CardInstanceId);
+        return definition ? cardHasName(definition, condition.name) : false;
       });
     }
 

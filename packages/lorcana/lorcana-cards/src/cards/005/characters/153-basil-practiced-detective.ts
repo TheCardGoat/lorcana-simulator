@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { basilPracticedDetectiveI18n } from "./153-basil-practiced-detective.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const basilPracticedDetective: CharacterCard = {
   id: "F8I",
@@ -24,13 +25,6 @@ export const basilPracticedDetective: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Hero", "Detective"],
-  abilities: [
-    {
-      id: "jeb-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: basilPracticedDetectiveI18n,
 };

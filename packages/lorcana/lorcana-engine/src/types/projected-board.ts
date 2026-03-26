@@ -72,6 +72,7 @@ export type LorcanaProjectedCard = {
   atLocationId?: CardInstanceId;
   cardsUnder?: CardInstanceId[];
   stackParentId?: CardInstanceId;
+  playedViaShift?: boolean;
 } & ProjectedLorcanaCardDerived;
 
 export type LorcanaProjectedCardId = CardInstanceId | string;
@@ -95,6 +96,9 @@ export type LorcanaProjectedTimerPlayer = {
   canClaimAfkVictory: boolean;
   canClaimPreGameVictory: boolean;
   lastGameActionAt: number;
+  startedAtMs?: number;
+  isInNegativeTime?: boolean;
+  timeoutCount?: number;
 };
 
 export type LorcanaProjectedTimerView = {

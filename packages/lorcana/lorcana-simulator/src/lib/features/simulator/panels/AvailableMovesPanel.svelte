@@ -1,440 +1,517 @@
 <script lang="ts">
-  import { onDestroy, untrack } from "svelte";
-  import { X } from "@lucide/svelte";
-  import type {
-    AvailableMovesSelectionEntry,
-    AvailableMovesSelectionState,
-    ExecutableMoveEntry,
-    ExecutableMovePresentationCategoryId,
-    LorcanaCardSnapshot,
-    LorcanaPlayerSide,
-    MoveCategorySummary,
-    ResolutionActionView,
-  } from "@/features/simulator/model/contracts.js";
-  import { getMoveCategoryIcon } from "@/features/simulator/model/action-icons.js";
-  import { sortMoveCategories } from "@/features/simulator/model/move-presentation.js";
-  import { m } from "$lib/i18n/messages.js";
-  import type { ActivePlayerGuidanceController } from "@/features/simulator/model/active-player-guidance.js";
-  import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
-  import NamedCardSearchInput from "@/features/simulator/panels/NamedCardSearchInput.svelte";
-  import CardTextToken from "@/features/simulator/panels/CardTextToken.svelte";
+import { onDestroy, untrack } from "svelte";
+import { X } from "@lucide/svelte";
+import type {
+	AvailableMovesSelectionEntry,
+	AvailableMovesSelectionState,
+	ExecutableMoveEntry,
+	ExecutableMovePresentationCategoryId,
+	LorcanaCardSnapshot,
+	LorcanaPlayerSide,
+	MoveCategorySummary,
+	ResolutionActionView,
+} from "@/features/simulator/model/contracts.js";
+import type { HotkeyMode } from "@/features/simulator/context/game-context.svelte.js";
+import { getMoveCategoryIcon } from "@/features/simulator/model/action-icons.js";
+import { sortMoveCategories } from "@/features/simulator/model/move-presentation.js";
+import { m } from "$lib/i18n/messages.js";
+import type { ActivePlayerGuidanceController } from "@/features/simulator/model/active-player-guidance.js";
+import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+import NamedCardSearchInput from "@/features/simulator/panels/NamedCardSearchInput.svelte";
+import CardTextToken from "@/features/simulator/panels/CardTextToken.svelte";
+import HotkeyDisplay from "@/features/simulator/hotkeys/HotkeyDisplay.svelte";
+import { getFixedMoveCategoryHotkey } from "@/features/simulator/hotkeys/hotkey-bindings.js";
 
-  const PANEL_TITLE_ID = "available-moves-panel-title";
+const PANEL_TITLE_ID = "available-moves-panel-title";
 
-  interface AvailableMovesPanelProps {
-    /** Lightweight category summaries for the category list view (cheap to derive). */
-    summaries: MoveCategorySummary[];
-    /**
-     * Lazy expansion callback — called only when the user clicks a category
-     * or the panel needs full moves for drill-down. This avoids eagerly computing
-     * all getMoveOptions() on every state change.
-     */
-    onExpandCategory: (categoryId: ExecutableMovePresentationCategoryId) => ExecutableMoveEntry[];
-    interactiveSide?: LorcanaPlayerSide | null;
-    activeSide?: LorcanaPlayerSide;
-    showRawLogRegistryJson?: boolean;
-    supplementalActions?: ResolutionActionView[];
-    selectionState?: AvailableMovesSelectionState | null;
-    activePlayerGuidance?: ActivePlayerGuidanceController;
-    cardSnapshots?: Record<string, LorcanaCardSnapshot>;
-    onCardHover?: (card: LorcanaCardSnapshot) => void;
-    onCardLeave?: () => void;
-    onStartManualMoveSelection?: (payload: {
-      id: ExecutableMovePresentationCategoryId;
-      label: string;
-      moves: ExecutableMoveEntry[];
-    }) => boolean;
-    onSelectCard?: (cardId: string) => boolean;
-    onSelectPlayer?: (playerId: string) => boolean;
-    onSelectOption?: (moveId: string) => boolean;
-    onResolutionNamedCardQueryInput?: (query: string) => void;
-    onSelectNamedCard?: (cardName: string) => boolean;
-    onAssignScryCard?: (cardId: string, zone: string) => boolean;
-    onReorderScryCard?: (zone: string, cardId: string, direction: "up" | "down") => boolean;
-    onBackSelection?: () => void;
-    onCancelSelection?: () => void;
-    onConfirmSelection?: () => boolean;
-    onResetManualMoveSelection?: () => void;
-    onExecuteMove?: (move: ExecutableMoveEntry) => void;
-    compact?: boolean;
-  }
+interface AvailableMovesPanelProps {
+	/** Lightweight category summaries for the category list view (cheap to derive). */
+	summaries: MoveCategorySummary[];
+	/**
+	 * Lazy expansion callback — called only when the user clicks a category
+	 * or the panel needs full moves for drill-down. This avoids eagerly computing
+	 * all getMoveOptions() on every state change.
+	 */
+	onExpandCategory: (
+		categoryId: ExecutableMovePresentationCategoryId,
+	) => ExecutableMoveEntry[];
+	interactiveSide?: LorcanaPlayerSide | null;
+	activeSide?: LorcanaPlayerSide;
+	showRawLogRegistryJson?: boolean;
+	supplementalActions?: ResolutionActionView[];
+	selectionState?: AvailableMovesSelectionState | null;
+	activePlayerGuidance?: ActivePlayerGuidanceController;
+	cardSnapshots?: Record<string, LorcanaCardSnapshot>;
+	onCardHover?: (card: LorcanaCardSnapshot) => void;
+	onCardLeave?: () => void;
+	onStartManualMoveSelection?: (payload: {
+		id: ExecutableMovePresentationCategoryId;
+		label: string;
+		moves: ExecutableMoveEntry[];
+	}) => boolean;
+	onSelectCard?: (cardId: string) => boolean;
+	onSelectPlayer?: (playerId: string) => boolean;
+	onSelectOption?: (moveId: string) => boolean;
+	onResolutionNamedCardQueryInput?: (query: string) => void;
+	onSelectNamedCard?: (cardName: string) => boolean;
+	onAssignScryCard?: (cardId: string, destinationId: string) => boolean;
+	onReorderScryCard?: (
+		destinationId: string,
+		cardId: string,
+		direction: "up" | "down",
+	) => boolean;
+	onBackSelection?: () => void;
+	onCancelSelection?: () => void;
+	onConfirmSelection?: () => boolean;
+	onResetManualMoveSelection?: () => void;
+	onExecuteMove?: (move: ExecutableMoveEntry) => void;
+	hotkeyMode?: HotkeyMode;
+	compact?: boolean;
+}
 
-  let {
-    summaries,
-    onExpandCategory,
-    interactiveSide = null,
-    activeSide,
-    showRawLogRegistryJson = false,
-    supplementalActions = [],
-    selectionState = null,
-    activePlayerGuidance,
-    cardSnapshots = {},
-    onCardHover = () => {},
-    onCardLeave = () => {},
-    onStartManualMoveSelection,
-    onSelectCard,
-    onSelectPlayer,
-    onSelectOption,
-    onResolutionNamedCardQueryInput,
-    onSelectNamedCard,
-    onAssignScryCard,
-    onReorderScryCard,
-    onBackSelection,
-    onCancelSelection,
-    onConfirmSelection,
-    onResetManualMoveSelection,
-    onExecuteMove,
-    compact = false,
-  }: AvailableMovesPanelProps = $props();
+let {
+	summaries,
+	onExpandCategory,
+	interactiveSide = null,
+	activeSide,
+	showRawLogRegistryJson = false,
+	supplementalActions = [],
+	selectionState = null,
+	activePlayerGuidance,
+	cardSnapshots = {},
+	onCardHover = () => {},
+	onCardLeave = () => {},
+	onStartManualMoveSelection,
+	onSelectCard,
+	onSelectPlayer,
+	onSelectOption,
+	onResolutionNamedCardQueryInput,
+	onSelectNamedCard,
+	onAssignScryCard,
+	onReorderScryCard,
+	onBackSelection,
+	onCancelSelection,
+	onConfirmSelection,
+	onResetManualMoveSelection,
+	onExecuteMove,
+	hotkeyMode = "on",
+	compact = false,
+}: AvailableMovesPanelProps = $props();
 
-  function hasParams(params: Record<string, unknown> | undefined): boolean {
-    return Boolean(params && Object.keys(params).length > 0);
-  }
+function hasParams(params: Record<string, unknown> | undefined): boolean {
+	return Boolean(params && Object.keys(params).length > 0);
+}
 
-  function isConfirmationCategory(categoryId: ExecutableMovePresentationCategoryId): boolean {
-    return categoryId === "undo" || categoryId === "pass-turn" || categoryId === "concede";
-  }
+function isConfirmationCategory(
+	categoryId: ExecutableMovePresentationCategoryId,
+): boolean {
+	return (
+		categoryId === "undo" ||
+		categoryId === "pass-turn" ||
+		categoryId === "concede"
+	);
+}
 
-  function isConfirmationMove(move: ExecutableMoveEntry): boolean {
-    return isConfirmationCategory(move.presentation.categoryId);
-  }
+function isConfirmationMove(move: ExecutableMoveEntry): boolean {
+	return isConfirmationCategory(move.presentation.categoryId);
+}
 
-  function buildConfirmationKey(move: ExecutableMoveEntry): string {
-    return `${move.presentation.categoryId}:${move.id}`;
-  }
+function buildConfirmationKey(move: ExecutableMoveEntry): string {
+	return `${move.presentation.categoryId}:${move.id}`;
+}
 
-  function getMoveButtonLabel(move: ExecutableMoveEntry): string {
-    if (!isAwaitingConfirmation(move)) {
-      return move.presentation.kind === "targeted" ? move.presentation.optionLabel : move.label;
-    }
+function getMoveButtonLabel(move: ExecutableMoveEntry): string {
+	if (!isAwaitingConfirmation(move)) {
+		return move.presentation.kind === "targeted"
+			? move.presentation.optionLabel
+			: move.label;
+	}
 
-    return m["sim.actions.confirmMoveLabel"]({ label: move.label });
-  }
+	return m["sim.actions.confirmMoveLabel"]({ label: move.label });
+}
 
-  function isAwaitingConfirmation(move: ExecutableMoveEntry): boolean {
-    return pendingConfirmationKey === buildConfirmationKey(move);
-  }
+function isAwaitingConfirmation(move: ExecutableMoveEntry): boolean {
+	return pendingConfirmationKey === buildConfirmationKey(move);
+}
 
-  function isCategoryAwaitingConfirmation(categoryId: ExecutableMovePresentationCategoryId): boolean {
-    return pendingConfirmationKey !== null && pendingConfirmationKey.startsWith(`${categoryId}:`);
-  }
+function isCategoryAwaitingConfirmation(
+	categoryId: ExecutableMovePresentationCategoryId,
+): boolean {
+	return (
+		pendingConfirmationKey !== null &&
+		pendingConfirmationKey.startsWith(`${categoryId}:`)
+	);
+}
 
-  function handleMoveClick(move: ExecutableMoveEntry): void {
-    if (isConfirmationMove(move)) {
-      const confirmationKey = buildConfirmationKey(move);
-      if (pendingConfirmationKey !== confirmationKey) {
-        pendingConfirmationKey = confirmationKey;
-        return;
-      }
-    }
+function handleMoveClick(move: ExecutableMoveEntry): void {
+	if (isConfirmationMove(move)) {
+		const confirmationKey = buildConfirmationKey(move);
+		if (pendingConfirmationKey !== confirmationKey) {
+			pendingConfirmationKey = confirmationKey;
+			return;
+		}
+	}
 
-    pendingConfirmationKey = null;
-    onResetManualMoveSelection?.();
-    onExecuteMove?.(move);
-  }
+	pendingConfirmationKey = null;
+	onResetManualMoveSelection?.();
+	onExecuteMove?.(move);
+}
 
-  interface MoveCategoryGroup {
-    id: ExecutableMovePresentationCategoryId;
-    label: string;
-    count: number;
-    isDirect: boolean;
-  }
+interface MoveCategoryGroup {
+	id: ExecutableMovePresentationCategoryId;
+	label: string;
+	isDirect: boolean;
+}
 
-  let selectedCategoryId = $state<ExecutableMovePresentationCategoryId | null>(null);
-  let pendingConfirmationKey = $state<string | null>(null);
-  // Lazily expanded moves for the currently selected category drill-down.
-  // Only populated when the user clicks a non-direct category.
-  let expandedCategoryMoves = $state<ExecutableMoveEntry[]>([]);
+let selectedCategoryId = $state<ExecutableMovePresentationCategoryId | null>(
+	null,
+);
+let pendingConfirmationKey = $state<string | null>(null);
+// Lazily expanded moves for the currently selected category drill-down.
+// Only populated when the user clicks a non-direct category.
+let expandedCategoryMoves = $state<ExecutableMoveEntry[]>([]);
 
-  /**
-   * Category list derived from lightweight summaries — no getMoveOptions() calls.
-   * This is the key perf optimization: the category buttons render from summaries
-   * which are O(1) to derive from AvailableMove[], while full move expansion
-   * (which calls getMoveOptions() for challenge/ability/location) only happens
-   * on user interaction.
-   */
-  const moveCategoryGroups = $derived.by<MoveCategoryGroup[]>(() => {
-    return sortMoveCategories(
-      summaries.map((s) => ({
-        id: s.categoryId,
-        label: s.categoryLabel,
-        count: s.count,
-        isDirect: s.isDirect,
-      })),
-    );
-  });
+/**
+ * Category list derived from lightweight summaries — no getMoveOptions() calls.
+ * This is the key perf optimization: the category buttons render from summaries
+ * which are O(1) to derive from AvailableMove[], while full move expansion
+ * (which calls getMoveOptions() for challenge/ability/location) only happens
+ * on user interaction.
+ */
+const moveCategoryGroups = $derived.by<MoveCategoryGroup[]>(() => {
+	return sortMoveCategories(
+		summaries.map((s) => ({
+			id: s.categoryId,
+			label: s.categoryLabel,
+			isDirect: s.isDirect,
+		})),
+	);
+});
 
-  const selectedCategory = $derived(
-    selectedCategoryId
-      ? moveCategoryGroups.find((group) => group.id === selectedCategoryId) ?? null
-      : null,
-  );
+const selectedCategory = $derived(
+	selectedCategoryId
+		? (moveCategoryGroups.find((group) => group.id === selectedCategoryId) ??
+				null)
+		: null,
+);
 
-  const visibleMoves = $derived(
-    selectedCategory
-      ? expandedCategoryMoves.map((move) => ({
-          ...move,
-          optionLabel: move.presentation.kind === "targeted" ? move.presentation.optionLabel : move.label,
-        }))
-      : [],
-  );
+const visibleMoves = $derived(
+	selectedCategory
+		? expandedCategoryMoves.map((move) => ({
+				...move,
+				optionLabel:
+					move.presentation.kind === "targeted"
+						? move.presentation.optionLabel
+						: move.label,
+			}))
+		: [],
+);
 
-  const selectionVisibleCount = $derived(
-    selectionState ? Math.max(selectionState.entries.length, selectionState.canConfirm ? 1 : 0) : 0,
-  );
-  const displayCount = $derived(
-    supplementalActions.length +
-      (selectionState
-        ? selectionVisibleCount
-        : selectedCategory
-          ? visibleMoves.length
-          : moveCategoryGroups.length),
-  );
-  const hasSupplementalActions = $derived(supplementalActions.length > 0);
-  const hasMoves = $derived(summaries.length > 0);
+const hasSupplementalActions = $derived(supplementalActions.length > 0);
+const hasMoves = $derived(summaries.length > 0);
 
-  // When summaries change (new state), close any open drill-down to prevent
-  // showing stale or now-illegal expanded moves from the previous state.
-  // Reading selectedCategoryId inside untrack avoids re-triggering
-  // when the user opens a drill-down.
-  $effect(() => {
-    summaries;
-    untrack(() => {
-      selectedCategoryId = null;
-      expandedCategoryMoves = [];
-    });
-  });
+// When summaries change (new state), close any open drill-down to prevent
+// showing stale or now-illegal expanded moves from the previous state.
+// Reading selectedCategoryId inside untrack avoids re-triggering
+// when the user opens a drill-down.
+$effect(() => {
+	summaries;
+	untrack(() => {
+		selectedCategoryId = null;
+		expandedCategoryMoves = [];
+	});
+});
 
-  $effect(() => {
-    if (!pendingConfirmationKey) {
-      return;
-    }
+$effect(() => {
+	if (!pendingConfirmationKey) {
+		return;
+	}
 
-    // Extract the pending category from the key (format: "categoryId:moveId")
-    const pendingCategoryId = pendingConfirmationKey.split(":")[0];
-    const stillAvailable = summaries.some((s) => s.categoryId === pendingCategoryId);
+	// Extract the pending category from the key (format: "categoryId:moveId")
+	const pendingCategoryId = pendingConfirmationKey.split(":")[0];
+	const stillAvailable = summaries.some(
+		(s) => s.categoryId === pendingCategoryId,
+	);
 
-    if (!stillAvailable) {
-      pendingConfirmationKey = null;
-    }
-  });
+	if (!stillAvailable) {
+		pendingConfirmationKey = null;
+	}
+});
 
-  $effect(() => {
-    activePlayerGuidance?.setSecondLayerCategory(
-      selectionState ? null : selectedCategory ? selectedCategory.label : null,
-    );
-  });
+$effect(() => {
+	activePlayerGuidance?.setSecondLayerCategory(
+		selectionState ? null : selectedCategory ? selectedCategory.label : null,
+	);
+});
 
-  function handleCategoryClick(group: MoveCategoryGroup): void {
-    // Lazily expand moves only when a category is clicked.
-    // Direct moves (pass-turn, concede, etc.) are expanded inline to get
-    // the single ExecutableMoveEntry needed for execution.
-    const expanded = onExpandCategory(group.id);
+function handleCategoryClick(group: MoveCategoryGroup): void {
+	// Lazily expand moves only when a category is clicked.
+	// Direct moves (pass-turn, concede, etc.) are expanded inline to get
+	// the single ExecutableMoveEntry needed for execution.
+	const expanded = onExpandCategory(group.id);
 
-    if (group.isDirect) {
-      if (expanded.length > 0) {
-        handleMoveClick(expanded[0]);
-      }
-      return;
-    }
+	if (group.isDirect) {
+		if (expanded.length > 0) {
+			handleMoveClick(expanded[0]);
+		}
+		return;
+	}
 
-    if (
-      onStartManualMoveSelection?.({
-        id: group.id,
-        label: group.label,
-        moves: expanded,
-      })
-    ) {
-      pendingConfirmationKey = null;
-      selectedCategoryId = null;
-      expandedCategoryMoves = [];
-      return;
-    }
+	if (
+		onStartManualMoveSelection?.({
+			id: group.id,
+			label: group.label,
+			moves: expanded,
+		})
+	) {
+		pendingConfirmationKey = null;
+		selectedCategoryId = null;
+		expandedCategoryMoves = [];
+		return;
+	}
 
-    pendingConfirmationKey = null;
-    onResetManualMoveSelection?.();
-    expandedCategoryMoves = expanded;
-    selectedCategoryId = group.id;
-  }
+	pendingConfirmationKey = null;
+	onResetManualMoveSelection?.();
+	expandedCategoryMoves = expanded;
+	selectedCategoryId = group.id;
+}
 
-  function handleBackClick(): void {
-    selectedCategoryId = null;
-    expandedCategoryMoves = [];
-    pendingConfirmationKey = null;
-    onResetManualMoveSelection?.();
-  }
+function handleBackClick(): void {
+	selectedCategoryId = null;
+	expandedCategoryMoves = [];
+	pendingConfirmationKey = null;
+	onResetManualMoveSelection?.();
+}
 
-  function handleSupplementalActionClick(action: ResolutionActionView): void {
-    pendingConfirmationKey = null;
-    onResetManualMoveSelection?.();
-    action.onClick();
-  }
+function handleSupplementalActionClick(action: ResolutionActionView): void {
+	pendingConfirmationKey = null;
+	onResetManualMoveSelection?.();
+	action.onClick();
+}
 
-  function handleNamedCardQueryInput(event: Event): void {
-    onResolutionNamedCardQueryInput?.((event.currentTarget as HTMLInputElement).value);
-  }
+function handleNamedCardQueryInput(event: Event): void {
+	onResolutionNamedCardQueryInput?.(
+		(event.currentTarget as HTMLInputElement).value,
+	);
+}
 
-  function handleSelectionEntryClick(): void;
-  function handleSelectionEntryClick(selectionId: string): void;
-  function handleSelectionEntryClick(selectionId: string | undefined = undefined): void {
-    if (!selectionState) {
-      return;
-    }
+function handleSelectionEntryClick(): void;
+function handleSelectionEntryClick(selectionId: string): void;
+function handleSelectionEntryClick(
+	selectionId: string | undefined = undefined,
+): void {
+	if (!selectionState) {
+		return;
+	}
 
-    if (selectionState.mode === "action" && selectionState.phase === "choose-option") {
-      if (selectionId) {
-        onSelectOption?.(selectionId);
-      }
-      return;
-    }
+	if (
+		selectionState.mode === "action" &&
+		selectionState.phase === "choose-option"
+	) {
+		if (selectionId) {
+			onSelectOption?.(selectionId);
+		}
+		return;
+	}
 
-    if (
-      selectionState.mode === "resolution-choice" ||
-      selectionState.mode === "resolution-optional"
-    ) {
-      if (selectionId) {
-        onSelectOption?.(selectionId);
-      }
-      return;
-    }
+	if (
+		selectionState.mode === "resolution-choice" ||
+		selectionState.mode === "resolution-optional"
+	) {
+		if (selectionId) {
+			onSelectOption?.(selectionId);
+		}
+		return;
+	}
 
-    if (selectionId) {
-      onSelectCard?.(selectionId);
-    }
-  }
+	if (selectionId) {
+		onSelectCard?.(selectionId);
+	}
+}
 
-  function getEntryCard(entry: AvailableMovesSelectionEntry): LorcanaCardSnapshot | null {
-    if ((entry.kind === "card" || entry.kind === "scry-card") && entry.cardId) {
-      return cardSnapshots[entry.cardId] ?? null;
-    }
-    return null;
-  }
+function getEntryCard(
+	entry: AvailableMovesSelectionEntry,
+): LorcanaCardSnapshot | null {
+	if ((entry.kind === "card" || entry.kind === "scry-card") && entry.cardId) {
+		return cardSnapshots[entry.cardId] ?? null;
+	}
+	return null;
+}
 
-  function getStringParam(
-    params: Record<string, unknown>,
-    key: string,
-  ): string | null {
-    return typeof params[key] === "string" ? params[key] : null;
-  }
+function getStringParam(
+	params: Record<string, unknown>,
+	key: string,
+): string | null {
+	return typeof params[key] === "string" ? params[key] : null;
+}
 
-  function getStringArrayParam(
-    params: Record<string, unknown>,
-    key: string,
-  ): string[] | null {
-    return Array.isArray(params[key]) && params[key].every((value) => typeof value === "string")
-      ? params[key]
-      : null;
-  }
+function getStringArrayParam(
+	params: Record<string, unknown>,
+	key: string,
+): string[] | null {
+	return Array.isArray(params[key]) &&
+		params[key].every((value) => typeof value === "string")
+		? params[key]
+		: null;
+}
 
-  type MoveLabelSegment =
-    | { kind: "text"; text: string }
-    | { kind: "card"; card: LorcanaCardSnapshot; text?: string };
+type MoveLabelSegment =
+	| { kind: "text"; text: string }
+	| { kind: "card"; card: LorcanaCardSnapshot; text?: string };
 
-  function buildMoveLabelSegments(move: ExecutableMoveEntry): MoveLabelSegment[] {
-    if (isAwaitingConfirmation(move)) {
-      return [{ kind: "text", text: getMoveButtonLabel(move) }];
-    }
+function buildMoveLabelSegments(move: ExecutableMoveEntry): MoveLabelSegment[] {
+	if (isAwaitingConfirmation(move)) {
+		return [{ kind: "text", text: getMoveButtonLabel(move) }];
+	}
 
-    switch (move.moveId) {
-      case "playCard": {
-        const params = move.params as Record<string, unknown>;
-        const cardId = getStringParam(params, "cardId");
-        const card = cardId ? cardSnapshots[cardId] ?? null : null;
-        if (!card) {
-          return [{ kind: "text", text: getMoveButtonLabel(move) }];
-        }
+	switch (move.moveId) {
+		case "playCard": {
+			const params = move.params as Record<string, unknown>;
+			const cardId = getStringParam(params, "cardId");
+			const card = cardId ? (cardSnapshots[cardId] ?? null) : null;
+			if (!card) {
+				return [{ kind: "text", text: getMoveButtonLabel(move) }];
+			}
 
-        const targets = getStringArrayParam(params, "targets");
-        const targetCardId = targets?.[0] ?? null;
-        const targetCard = targetCardId ? cardSnapshots[targetCardId] ?? null : null;
-        const cost = getStringParam(params, "cost");
-        const costLabel =
-          cost === "shift"
-            ? "Shift"
-            : cost === "sing"
-              ? "Sing"
-              : cost === "singTogether"
-                ? "Sing Together"
-                : cost === "free"
-                  ? "Free"
-                  : null;
+			const targets = getStringArrayParam(params, "targets");
+			const targetCardId = targets?.[0] ?? null;
+			const targetCard = targetCardId
+				? (cardSnapshots[targetCardId] ?? null)
+				: null;
+			const cost = getStringParam(params, "cost");
+			const costLabel =
+				cost === "shift"
+					? "Shift"
+					: cost === "sing"
+						? "Sing"
+						: cost === "singTogether"
+							? "Sing Together"
+							: cost === "free"
+								? "Free"
+								: null;
 
-        return [
-          { kind: "card", card },
-          ...(costLabel ? [{ kind: "text", text: ` (${costLabel})` } satisfies MoveLabelSegment] : []),
-          ...(targetCard
-            ? [
-                { kind: "text", text: " -> " } satisfies MoveLabelSegment,
-                { kind: "card", card: targetCard } satisfies MoveLabelSegment,
-              ]
-            : []),
-        ];
-      }
-      case "putCardIntoInkwell":
-      case "quest":
-      case "activateAbility": {
-        const params = move.params as Record<string, unknown>;
-        const cardId = getStringParam(params, "cardId");
-        const card = cardId ? cardSnapshots[cardId] ?? null : null;
-        if (!card) {
-          return [{ kind: "text", text: getMoveButtonLabel(move) }];
-        }
+			return [
+				{ kind: "card", card },
+				...(costLabel
+					? [
+							{
+								kind: "text",
+								text: ` (${costLabel})`,
+							} satisfies MoveLabelSegment,
+						]
+					: []),
+				...(targetCard
+					? [
+							{ kind: "text", text: " -> " } satisfies MoveLabelSegment,
+							{ kind: "card", card: targetCard } satisfies MoveLabelSegment,
+						]
+					: []),
+			];
+		}
+		case "putCardIntoInkwell":
+		case "quest":
+		case "activateAbility": {
+			const params = move.params as Record<string, unknown>;
+			const cardId = getStringParam(params, "cardId");
+			const card = cardId ? (cardSnapshots[cardId] ?? null) : null;
+			if (!card) {
+				return [{ kind: "text", text: getMoveButtonLabel(move) }];
+			}
 
-        const label = getMoveButtonLabel(move);
-        const suffix = label.startsWith(card.label) ? label.slice(card.label.length) : "";
-        return [
-          { kind: "card", card },
-          ...(suffix ? ([{ kind: "text", text: suffix }] as MoveLabelSegment[]) : []),
-        ];
-      }
-      case "challenge": {
-        const params = move.params as Record<string, unknown>;
-        const attackerId = getStringParam(params, "attackerId");
-        const defenderId = getStringParam(params, "defenderId");
-        const attacker = attackerId ? cardSnapshots[attackerId] ?? null : null;
-        const defender = defenderId ? cardSnapshots[defenderId] ?? null : null;
-        if (attacker && defender) {
-          return [
-            { kind: "card", card: attacker },
-            { kind: "text", text: " -> " },
-            { kind: "card", card: defender },
-          ];
-        }
-        return [{ kind: "text", text: getMoveButtonLabel(move) }];
-      }
-      case "moveCharacterToLocation": {
-        const params = move.params as Record<string, unknown>;
-        const characterId = getStringParam(params, "characterId");
-        const locationId = getStringParam(params, "locationId");
-        const character = characterId ? cardSnapshots[characterId] ?? null : null;
-        const location = locationId ? cardSnapshots[locationId] ?? null : null;
-        if (character && location) {
-          return [
-            { kind: "card", card: character },
-            { kind: "text", text: " -> " },
-            { kind: "card", card: location },
-          ];
-        }
-        return [{ kind: "text", text: getMoveButtonLabel(move) }];
-      }
-      default:
-        return [{ kind: "text", text: getMoveButtonLabel(move) }];
-    }
-  }
+			const label = getMoveButtonLabel(move);
+			const suffix = label.startsWith(card.label)
+				? label.slice(card.label.length)
+				: "";
+			return [
+				{ kind: "card", card },
+				...(suffix
+					? ([{ kind: "text", text: suffix }] as MoveLabelSegment[])
+					: []),
+			];
+		}
+		case "challenge": {
+			const params = move.params as Record<string, unknown>;
+			const attackerId = getStringParam(params, "attackerId");
+			const defenderId = getStringParam(params, "defenderId");
+			const attacker = attackerId ? (cardSnapshots[attackerId] ?? null) : null;
+			const defender = defenderId ? (cardSnapshots[defenderId] ?? null) : null;
+			if (attacker && defender) {
+				return [
+					{ kind: "card", card: attacker },
+					{ kind: "text", text: " -> " },
+					{ kind: "card", card: defender },
+				];
+			}
+			return [{ kind: "text", text: getMoveButtonLabel(move) }];
+		}
+		case "moveCharacterToLocation": {
+			const params = move.params as Record<string, unknown>;
+			const characterId = getStringParam(params, "characterId");
+			const locationId = getStringParam(params, "locationId");
+			const character = characterId
+				? (cardSnapshots[characterId] ?? null)
+				: null;
+			const location = locationId ? (cardSnapshots[locationId] ?? null) : null;
+			if (character && location) {
+				return [
+					{ kind: "card", card: character },
+					{ kind: "text", text: " -> " },
+					{ kind: "card", card: location },
+				];
+			}
+			return [{ kind: "text", text: getMoveButtonLabel(move) }];
+		}
+		default:
+			return [{ kind: "text", text: getMoveButtonLabel(move) }];
+	}
+}
 
-  function shouldRenderCompactCardSelection(
-    state: AvailableMovesSelectionState | null,
-  ): state is AvailableMovesSelectionState {
-    if (!compact || !state || state.entries.length === 0) {
-      return false;
-    }
+function shouldRenderCompactCardSelection(
+	state: AvailableMovesSelectionState | null,
+): state is AvailableMovesSelectionState {
+	if (!compact || !state || state.entries.length === 0) {
+		return false;
+	}
 
-    return state.entries.every((entry) => entry.kind === "card" || entry.kind === "scry-card");
-  }
+	return state.entries.every(
+		(entry) => entry.kind === "card" || entry.kind === "scry-card",
+	);
+}
 
-  onDestroy(() => {
-    activePlayerGuidance?.setSecondLayerCategory(null);
-  });
+function getSelectionActionHotkey(
+	action: "back" | "cancel" | "confirm",
+): string {
+	switch (action) {
+		case "back":
+			return "Backspace";
+		case "cancel":
+			return "Escape";
+		case "confirm":
+			return "Enter";
+	}
+}
+
+function getMoveCategoryHotkey(
+	categoryId: ExecutableMovePresentationCategoryId,
+): string | null {
+	if (hotkeyMode === "off") {
+		return null;
+	}
+
+	if (categoryId === "pass-turn") {
+		return "Space";
+	}
+
+	if (hotkeyMode === "confirm-only") {
+		return null;
+	}
+
+	return getFixedMoveCategoryHotkey(categoryId);
+}
+
+onDestroy(() => {
+	activePlayerGuidance?.setSecondLayerCategory(null);
+});
 </script>
 
 <section
@@ -445,7 +522,6 @@
   {#if !compact}
     <header class="panel-header">
       <h2 id={PANEL_TITLE_ID}>{m["sim.actions.panel.title"]({})}</h2>
-      <span class="move-count">{displayCount}</span>
     </header>
   {/if}
 
@@ -486,6 +562,9 @@
             aria-label={m["sim.actions.backToCategories"]({})}
           >
             {m["sim.actions.back"]({})}
+            {#if hotkeyMode !== "off"}
+              <HotkeyDisplay hotkey={getSelectionActionHotkey("back")} />
+            {/if}
           </button>
         {/if}
 
@@ -522,7 +601,11 @@
           {/if}
           {#if selectionState.targetLabel}
             <div class="selection-summary__row">
-              <span class="selection-summary__label">{m["sim.actions.selectionSummary.target"]({})}</span>
+              <span class="selection-summary__label">
+                {selectionState.categoryId === "sing-card"
+                  ? m["sim.actions.selectionSummary.singer"]({})
+                  : m["sim.actions.selectionSummary.target"]({})}
+              </span>
               <span class="selection-summary__value">{selectionState.targetLabel}</span>
             </div>
           {/if}
@@ -547,33 +630,7 @@
         <div class="scry-layout">
           <div class="scry-card-pool">
             <p class="scry-section-title">{m["sim.actions.scry.revealedCards"]({})}</p>
-            <ol class="move-list">
-              {#each selectionState.entries as entry (entry.id)}
-                <li class="move-item">
-                  <div class="move-button move-button--static">
-                    <div class="move-content">
-                      <p class="move-label">{entry.label}</p>
-                      {#if entry.detail}
-                        <p class="move-detail">{entry.detail}</p>
-                      {/if}
-                    </div>
-
-                    <div class="scry-card-actions">
-                      {#each selectionState.destinations as destination (destination.id)}
-                        <button
-                          type="button"
-                          class="selection-action-button"
-                          onclick={() =>
-                            entry.cardId && onAssignScryCard?.(entry.cardId, destination.zone)}
-                        >
-                          {destination.label}
-                        </button>
-                      {/each}
-                    </div>
-                  </div>
-                </li>
-              {/each}
-            </ol>
+            <p class="move-detail">{m["sim.actions.scry.dragHint"]({})}</p>
           </div>
 
           <div class="scry-destinations">
@@ -594,28 +651,11 @@
                             <p class="move-detail">{card.detail}</p>
                           {/if}
                         </div>
-                        <div class="scry-order-actions">
-                          <button
-                            type="button"
-                            class="selection-action-button"
-                            disabled={index === 0}
-                          onclick={() =>
-                              card.cardId &&
-                              onReorderScryCard?.(destination.zone, card.cardId, "up")}
-                          >
-                            {m["sim.actions.scry.moveUp"]({})}
-                          </button>
-                          <button
-                            type="button"
-                            class="selection-action-button"
-                            disabled={index === destination.cards.length - 1}
-                          onclick={() =>
-                              card.cardId &&
-                              onReorderScryCard?.(destination.zone, card.cardId, "down")}
-                          >
-                            {m["sim.actions.scry.moveDown"]({})}
-                          </button>
-                        </div>
+                        {#if destination.orderingEnabled}
+                          <p class="move-detail">
+                            Position {index + 1} of {destination.cards.length}
+                          </p>
+                        {/if}
                       </div>
                     </li>
                   {/each}
@@ -667,7 +707,7 @@
                       card={entryCard}
                       text={entry.label}
                       interactive={false}
-                      onHover={onCardHover}
+                      onHover={() => onCardHover(entryCard)}
                       onLeave={onCardLeave}
                     />
                   </span>
@@ -723,7 +763,7 @@
                         card={entryCard}
                         text={entry.label}
                         interactive={false}
-                        onHover={onCardHover}
+                        onHover={() => onCardHover(entryCard)}
                         onLeave={onCardLeave}
                       />
                     </p>
@@ -746,6 +786,9 @@
       <div class="selection-actions">
         <button type="button" class="selection-action-button" onclick={() => onCancelSelection?.()}>
           {m["sim.actions.cancel"]({})}
+          {#if hotkeyMode !== "off"}
+            <HotkeyDisplay hotkey={getSelectionActionHotkey("cancel")} />
+          {/if}
         </button>
         {#if selectionState.canConfirm}
           <button
@@ -754,6 +797,9 @@
             onclick={() => onConfirmSelection?.()}
           >
             {m["sim.actions.confirmMoveLabel"]({ label: selectionState.categoryLabel })}
+            {#if hotkeyMode !== "off"}
+              <HotkeyDisplay hotkey={getSelectionActionHotkey("confirm")} />
+            {/if}
           </button>
         {/if}
       </div>
@@ -767,6 +813,9 @@
           aria-label={m["sim.actions.backToCategories"]({})}
         >
           {m["sim.actions.back"]({})}
+          {#if hotkeyMode !== "off"}
+            <HotkeyDisplay hotkey={getSelectionActionHotkey("back")} />
+          {/if}
         </button>
         <div class="detail-title detail-title--with-icon">
           <span class="move-category-icon-shell move-category-icon-shell--detail" aria-hidden="true">
@@ -811,7 +860,7 @@
                       card={segment.card}
                       text={segment.text}
                       interactive={false}
-                      onHover={onCardHover}
+                      onHover={() => onCardHover(segment.card)}
                       onLeave={onCardLeave}
                     />
                   {:else}
@@ -836,6 +885,7 @@
       <ol class="move-list">
         {#each moveCategoryGroups as group (group.id)}
           {@const MoveCategoryIcon = getMoveCategoryIcon(group.id)}
+          {@const categoryHotkey = getMoveCategoryHotkey(group.id)}
           <li class="move-item">
             <button
               type="button"
@@ -847,7 +897,7 @@
                   ? m["sim.actions.executeAria"]({ label: m["sim.actions.confirmMoveLabel"]({ label: group.label }) })
                   : group.isDirect
                     ? m["sim.actions.executeAria"]({ label: group.label })
-                    : m["sim.actions.openCategoryAria"]({ label: group.label, count: group.count })
+                    : m["sim.actions.openCategoryAria"]({ label: group.label })
               }
             >
               <div class="move-content">
@@ -866,14 +916,16 @@
                       {group.label}
                     {/if}
                   </p>
+                  {#if categoryHotkey}
+                    <div class="move-hotkey">
+                      <HotkeyDisplay hotkey={categoryHotkey} />
+                    </div>
+                  {/if}
                 </div>
                 {#if group.isDirect && isCategoryAwaitingConfirmation(group.id)}
                   <p class="move-confirmation-hint">{m["sim.actions.confirmMoveHint"]({})}</p>
                 {/if}
               </div>
-              {#if !group.isDirect}
-                <span class="move-meta">{group.count}</span>
-              {/if}
             </button>
           </li>
         {/each}
@@ -906,20 +958,6 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: #95a8c1;
-  }
-
-  .move-count {
-    min-width: 1.5rem;
-    height: 1.15rem;
-    padding: 0 0.35rem;
-    border-radius: 999px;
-    border: 1px solid rgba(125, 187, 242, 0.32);
-    background: rgba(20, 40, 64, 0.9);
-    color: #d4e6fb;
-    font-size: 0.68rem;
-    font-weight: 700;
-    display: grid;
-    place-items: center;
   }
 
   .empty-state {
@@ -1029,6 +1067,9 @@
   }
 
   .back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     border: 1px solid rgba(109, 149, 195, 0.22);
     background: rgba(15, 30, 49, 0.62);
     color: #d4e6fb;
@@ -1071,11 +1112,6 @@
 
   .icon-action-button:focus-visible {
     box-shadow: 0 0 0 2px rgba(125, 187, 242, 0.5);
-  }
-
-  .icon-action-button__icon {
-    width: 0.9rem;
-    height: 0.9rem;
   }
 
   .detail-title {
@@ -1308,6 +1344,7 @@
     align-items: center;
     gap: 0.5rem;
     min-width: 0;
+    width: 100%;
   }
 
   .card-label {
@@ -1319,6 +1356,12 @@
 
   .move-content {
     min-width: 0;
+    display: contents;
+  }
+
+  .move-hotkey {
+    margin-left: auto;
+    flex-shrink: 0;
   }
 
   .move-category-icon-shell {
@@ -1339,11 +1382,6 @@
     height: 1.5rem;
   }
 
-  .move-category-icon {
-    width: 0.9rem;
-    height: 0.9rem;
-  }
-
   .move-confirmation-hint {
     margin: 0.16rem 0 0;
     color: #f7c5c5;
@@ -1358,14 +1396,6 @@
     line-height: 1.24;
   }
 
-  .scry-card-actions,
-  .scry-order-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0.45rem;
-  }
-
   .selection-actions {
     display: flex;
     gap: 0.45rem;
@@ -1376,6 +1406,10 @@
   .selection-action-button {
     flex: 1;
     min-height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
     border-radius: 0.8rem;
     border: 1px solid rgba(109, 149, 195, 0.24);
     background: rgba(15, 30, 49, 0.72);
@@ -1408,19 +1442,6 @@
     background:
       linear-gradient(180deg, rgba(89, 52, 15, 0.98), rgba(50, 31, 12, 0.94)),
       radial-gradient(circle at top left, rgba(245, 184, 73, 0.28), transparent 52%);
-  }
-
-  .move-meta {
-    min-width: 1.2rem;
-    height: 1.2rem;
-    border-radius: 999px;
-    background: rgba(28, 58, 90, 0.9);
-    color: #cfe1f7;
-    font-size: 0.64rem;
-    font-weight: 700;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
   }
 
   .move-id {

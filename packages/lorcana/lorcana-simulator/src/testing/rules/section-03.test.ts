@@ -100,7 +100,12 @@ describe("#### 3. TURN STRUCTURE", () => {
 
     it("3.2.1.4. Triggered abilities that happen “at the start of your turn” or that occur at any time during the Ready step are added to the bag but don’t yet resolve.", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        play: [pachaEmperorsGuide, casaMadrigalCasita, dinglehopper],
+        play: [
+          { card: minnieMouseAlwaysClassy, atLocation: casaMadrigalCasita },
+          pachaEmperorsGuide,
+          casaMadrigalCasita,
+          dinglehopper,
+        ],
       });
 
       testEngine.asPlayerOne().passTurn();
@@ -143,7 +148,12 @@ describe("#### 3. TURN STRUCTURE", () => {
 
     it("3.2.2.3. The active player resolves any triggered abilities in the bag that were added during the Set step or the Ready step.", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        play: [pachaEmperorsGuide, casaMadrigalCasita, dinglehopper],
+        play: [
+          { card: minnieMouseAlwaysClassy, atLocation: casaMadrigalCasita },
+          pachaEmperorsGuide,
+          casaMadrigalCasita,
+          dinglehopper,
+        ],
       });
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
@@ -164,7 +174,8 @@ describe("#### 3. TURN STRUCTURE", () => {
       expect(testEngine.asServer().getCurrentPhase()).toBe("beginning");
 
       expect(testEngine.asPlayerOne().resolveBag(bagEffects[1]!.id)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(2);
+      // After resolving 2nd effect, the last mandatory no-target effect auto-resolves
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(3);
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asServer().getCurrentPhase()).toBe("main");
     });

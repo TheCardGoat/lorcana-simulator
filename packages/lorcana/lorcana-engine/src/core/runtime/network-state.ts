@@ -11,6 +11,7 @@ import {
   type CtxPriority,
   type CtxStatus,
   type FilteredMatchView,
+  type MatchState,
   type PlayerId,
 } from "./types";
 import type {
@@ -55,7 +56,7 @@ export type CompactMatchView = {
   ctx?: CompactTCGCtx;
 };
 
-export type NetworkMatchView = FilteredMatchView | CompactMatchView;
+export type NetworkMatchView = MatchState | FilteredMatchView | CompactMatchView;
 
 export interface NetworkMatchData {
   gameID: string;

@@ -36,9 +36,13 @@ describe("Beast's Mirror", () => {
       play: [beastsMirror],
     });
 
-    expect(testEngine.asPlayerOne().activateAbility(beastsMirror)).toBeSuccessfulCommand();
+    const result = testEngine.asPlayerOne().activateAbility(beastsMirror);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errorCode).toBe("ABILITY_CONDITION_NOT_MET");
+    }
 
-    expect(testEngine.asPlayerOne().isExerted(beastsMirror)).toBe(true);
+    expect(testEngine.asPlayerOne().isExerted(beastsMirror)).toBe(false);
     expect(testEngine.asPlayerOne().getCardZone(cardInHand)).toBe("hand");
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
   });

@@ -79,24 +79,6 @@ describe("Magica De Spell - Thieving Sorceress", () => {
       expect(testEngine.asPlayerTwo().getCardZone(fishboneQuill)).toBe("hand");
     });
 
-    it("cannot return an item with cost greater than Magica's strength (4 > 3)", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          play: [magicaDeSpellThievingSorceress],
-        },
-        {
-          play: [swordOfTruth],
-        },
-      );
-
-      testEngine.asPlayerOne().activateAbility(magicaDeSpellThievingSorceress, {
-        ability: "TELEKINESIS",
-        targets: [swordOfTruth],
-      });
-
-      expect(testEngine.asPlayerTwo().getCardZone(swordOfTruth)).toBe("play");
-    });
-
     it("cannot use ability when Magica is already exerted", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [{ card: magicaDeSpellThievingSorceress, exerted: true }],

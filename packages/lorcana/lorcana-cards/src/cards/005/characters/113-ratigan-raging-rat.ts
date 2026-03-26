@@ -31,6 +31,9 @@ export const ratiganRagingRat: CharacterCard = {
   classifications: ["Dreamborn", "Villain"],
   abilities: [
     {
+      condition: {
+        type: "self-has-damage",
+      },
       effect: {
         modifier: 2,
         stat: "strength",

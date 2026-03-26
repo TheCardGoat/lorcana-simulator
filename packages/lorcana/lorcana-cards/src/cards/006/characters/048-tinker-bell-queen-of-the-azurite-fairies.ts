@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tinkerBellQueenOfTheAzuriteFairiesI18n } from "./048-tinker-bell-queen-of-the-azurite-fairies.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const tinkerBellQueenOfTheAzuriteFairies: CharacterCard = {
   id: "yE4",
@@ -37,21 +39,8 @@ export const tinkerBellQueenOfTheAzuriteFairies: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally", "Queen", "Fairy", "Captain"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "18r-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
-    {
-      id: "18r-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    shift(5),
+    evasive,
     {
       effect: {
         duration: "this-turn",

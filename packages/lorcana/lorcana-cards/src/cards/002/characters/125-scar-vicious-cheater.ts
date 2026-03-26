@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { scarViciousCheaterI18n } from "./125-scar-vicious-cheater.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const scarViciousCheater: CharacterCard = {
   id: "U8O",
@@ -34,12 +35,7 @@ export const scarViciousCheater: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain"],
   abilities: [
-    {
-      id: "1re-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       effect: {
         type: "sequence",

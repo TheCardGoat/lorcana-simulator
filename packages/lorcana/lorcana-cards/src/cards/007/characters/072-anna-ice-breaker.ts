@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { annaIceBreakerI18n } from "./072-anna-ice-breaker.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const annaIceBreaker: CharacterCard = {
   id: "5hH",
@@ -34,12 +35,7 @@ export const annaIceBreaker: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Queen", "Sorcerer"],
   abilities: [
-    {
-      id: "pj2-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         duration: "until-start-of-next-turn",

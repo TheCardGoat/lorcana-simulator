@@ -35,16 +35,28 @@ export const pennyBoltsPerson: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          keyword: "Resist",
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "gain-keyword",
-          value: 1,
+          type: "sequence",
+          steps: [
+            {
+              type: "remove-damage",
+              amount: 2,
+              upTo: true,
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "any",
+                zones: ["play"],
+                cardTypes: ["character"],
+              },
+            },
+            {
+              type: "gain-keyword",
+              keyword: "Resist",
+              value: 1,
+              duration: "until-start-of-next-turn",
+              target: { ref: "previous-target" },
+            },
+          ],
         },
         type: "optional",
       },

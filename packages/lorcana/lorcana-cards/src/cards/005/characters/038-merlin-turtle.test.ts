@@ -43,15 +43,15 @@ describe("Merlin - Turtle", () => {
         testEngine.asPlayerOne().resolveNextPending({
           destinations: [
             { zone: "deck-top", cards: [secondDeckCard] },
-            { zone: "deck-bottom", cards: [topDeckCard] },
+            { zone: "deck-bottom", cards: [bottomDeckCard] },
           ],
         }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
         bottomDeckCard.id,
-        secondDeckCard.id,
         topDeckCard.id,
+        secondDeckCard.id,
       ]);
     });
   });

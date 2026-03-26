@@ -35,7 +35,7 @@ export const rapunzelCreativeCaptor: CharacterCard = {
         duration: "this-turn",
         modifier: -3,
         stat: "strength",
-        target: "CHOSEN_CHARACTER",
+        target: "CHOSEN_OPPOSING_CHARACTER",
         type: "modify-stat",
       },
       id: "1gl-1",

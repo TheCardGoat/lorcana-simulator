@@ -27,21 +27,18 @@ export const baymaxsChargingStation: ItemCard = {
   ],
   abilities: [
     {
+      condition: {
+        type: "play-context",
+        context: "used-shift",
+      },
       effect: {
-        condition: {
-          type: "play-context",
-          context: "used-shift",
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          amount: 1,
+          target: "CONTROLLER",
+          type: "draw",
         },
-        then: {
-          type: "optional",
-          chooser: "CONTROLLER",
-          effect: {
-            amount: 1,
-            target: "CONTROLLER",
-            type: "draw",
-          },
-        },
-        type: "conditional",
       },
       id: "zom-1",
       name: "ENERGY CONVERTER",

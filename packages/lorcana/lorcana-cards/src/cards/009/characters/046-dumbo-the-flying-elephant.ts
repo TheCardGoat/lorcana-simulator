@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { dumboTheFlyingElephantI18n } from "./046-dumbo-the-flying-elephant.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const dumboTheFlyingElephant: CharacterCard = {
   id: "nnC",
@@ -34,12 +35,7 @@ export const dumboTheFlyingElephant: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "ab9-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         keyword: "Evasive",

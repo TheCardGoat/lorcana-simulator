@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { dukeWeaseltonSmalltimeCrookI18n } from "./146-duke-weaselton-small-time-crook.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const dukeWeaseltonSmalltimeCrook: CharacterCard = {
   id: "MRG",
@@ -24,13 +25,6 @@ export const dukeWeaseltonSmalltimeCrook: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Storyborn"],
-  abilities: [
-    {
-      id: "1e8-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: dukeWeaseltonSmalltimeCrookI18n,
 };

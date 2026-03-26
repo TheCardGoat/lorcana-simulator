@@ -137,6 +137,32 @@ describe("Max Goof - Chart Topper", () => {
       expect(testEngine.asPlayerOne().getCardZone(expensiveSongCard)).toBe("discard");
     });
 
+    it("regression: once the optional is accepted, playing the song is mandatory (not a second optional choice)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: maxGoofChartTopper, isDrying: false }],
+          discard: [songCard],
+          deck: [deckCard],
+          inkwell: maxGoofChartTopper.cost,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().quest(maxGoofChartTopper)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Accept the optional - the song should be played automatically
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // The song should have been played (moved from discard to deck via replacement effect)
+      expect(testEngine.asPlayerOne().getCardZone(songCard)).toBe("deck");
+      expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(0);
+    });
+
     it("resolves the song effects before putting it on the bottom of the deck", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

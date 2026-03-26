@@ -35,14 +35,10 @@ export const nickWildeWilyFox: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["item"],
-          },
-          type: "return-to-hand",
+          cardType: "item",
+          cardName: "Pawpsicle",
+          target: "CONTROLLER",
+          type: "return-from-discard",
         },
         type: "optional",
       },
@@ -57,6 +53,5 @@ export const nickWildeWilyFox: CharacterCard = {
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: nickWildeWilyFoxI18n,
 };

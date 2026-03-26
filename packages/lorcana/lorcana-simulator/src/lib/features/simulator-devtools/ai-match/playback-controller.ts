@@ -23,7 +23,6 @@ import { createAutomatedMatchFixture } from "./fixture.js";
 import type {
   LorcanaPlayerSide,
   LorcanaSimulatorView,
-  MoveLogDefaultMessageSnapshot,
   MoveLogEntrySnapshot,
   SimulatorSerializedObject,
 } from "@/features/simulator/model/contracts.js";
@@ -142,17 +141,9 @@ export function createAutomatedMoveLogEntry(
   const normalizedMoveId = assertLorcanaSimulatorMoveId(moveId);
   const entry: MoveLogEntrySnapshot = {
     actorSide: toPlayerSide(result.actorId),
-    detail: undefined,
     id: `automated-${actionCount}-${timestamp}-${moveId}`,
     moveId: normalizedMoveId,
-    rawLogRegistry: {
-      move: {
-        moveId: normalizedMoveId,
-        playerId: result.actorId ?? "unknown",
-        timestamp,
-      },
-      relatedLogEntries: [],
-    },
+    playerId: result.actorId ?? "unknown",
     timestamp,
     title: "",
     turnNumber,
@@ -178,28 +169,6 @@ function normalizePersistedMoveParams(
   }
 
   return args as SimulatorSerializedObject;
-}
-
-function snapshotPersistedDefaultMessage(
-  defaultMessage?: EngineLogRecord["defaultMessage"],
-): MoveLogDefaultMessageSnapshot | undefined {
-  if (
-    !defaultMessage ||
-    typeof defaultMessage !== "object" ||
-    !("key" in defaultMessage) ||
-    typeof defaultMessage.key !== "string" ||
-    !("values" in defaultMessage) ||
-    !defaultMessage.values ||
-    typeof defaultMessage.values !== "object" ||
-    Array.isArray(defaultMessage.values)
-  ) {
-    return undefined;
-  }
-
-  return {
-    key: defaultMessage.key,
-    values: defaultMessage.values as SimulatorSerializedObject,
-  };
 }
 
 function getDefaultMessageKey(
@@ -261,37 +230,12 @@ export function createPersistedMoveLogEntries(args: {
       moveExecutedCursor = matchingIndex >= 0 ? matchingIndex + 1 : moveExecutedCursor + 1;
     }
 
-    const matchingSourceSeqs = new Set<number>(matchingMoveLog?.sourceEventSeqs ?? []);
-    const relatedLogEntries =
-      matchingSourceSeqs.size === 0
-        ? []
-        : engineLogs
-            .filter((record) => record.sourceEventSeqs.some((seq) => matchingSourceSeqs.has(seq)))
-            .map((record) => ({
-              sourceEventSeqs: [...record.sourceEventSeqs],
-              defaultMessage: snapshotPersistedDefaultMessage(record.defaultMessage),
-            }));
-
     const entry: MoveLogEntrySnapshot = {
       actorSide: resolveActorSide?.(acceptedMove.actorId),
-      detail: undefined,
       id: `persisted-${acceptedMove.stateVersion}-${index}-${acceptedMove.moveId}`,
       moveId: acceptedMove.moveId,
-      rawLogRegistry: {
-        move: {
-          moveId: acceptedMove.moveId,
-          params: normalizePersistedMoveParams(acceptedMove.input),
-          playerId: acceptedMove.actorId,
-          timestamp: acceptedMove.timestamp,
-        },
-        matchingMoveLogEntry: matchingMoveLog
-          ? {
-              sourceEventSeqs: [...matchingMoveLog.sourceEventSeqs],
-              defaultMessage: snapshotPersistedDefaultMessage(matchingMoveLog.defaultMessage),
-            }
-          : undefined,
-        relatedLogEntries,
-      },
+      playerId: acceptedMove.actorId,
+      params: normalizePersistedMoveParams(acceptedMove.input),
       timestamp: acceptedMove.timestamp,
       title: "",
       turnNumber: acceptedMove.turnNumber,
@@ -646,15 +590,6 @@ export class AutomatedMatchPlaybackController<
       mode: nextWinner ? "complete" : this.#playbackState.mode,
       speedMs: this.#playbackState.speedMs,
     });
-    const logEntry = createAutomatedMoveLogEntry(
-      result,
-      this.#playbackState,
-      this.#session.server.getTurnNumber(),
-      this.#actionCount,
-    );
-    if (logEntry && this.#session.readModel instanceof AutomatedMatchPlaybackReadModel) {
-      this.#session.readModel.pushSyntheticMoveEntry(logEntry);
-    }
     this.#syncTerminalState();
 
     return result;

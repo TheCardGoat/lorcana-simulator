@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tinkerBellMostHelpfulI18n } from "./088-tinker-bell-most-helpful.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const tinkerBellMostHelpful: CharacterCard = {
   id: "hsu",
@@ -33,12 +34,7 @@ export const tinkerBellMostHelpful: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Fairy"],
   abilities: [
-    {
-      id: "ysx-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         duration: "this-turn",

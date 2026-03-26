@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { inspectorTezukaResoluteOfficerI18n } from "./177-inspector-tezuka-resolute-officer.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const inspectorTezukaResoluteOfficer: CharacterCard = {
   id: "CfV",
@@ -24,13 +25,6 @@ export const inspectorTezukaResoluteOfficer: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Ally", "Detective"],
-  abilities: [
-    {
-      id: "15o-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: inspectorTezukaResoluteOfficerI18n,
 };

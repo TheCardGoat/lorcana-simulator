@@ -56,7 +56,6 @@ describe("Miracle Candle", () => {
         targets: [winterCampMedicalTent],
       }),
     ).toBeSuccessfulCommand();
-
     expect(testEngine.asPlayerOne().getCardZone(miracleCandle)).toBe("discard");
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
     expect(testEngine.asPlayerOne().getDamage(winterCampMedicalTent)).toBe(3);

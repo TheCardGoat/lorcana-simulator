@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { heiheiBoatSnack, mickeyMouseTrueFriend, simbaProtectiveCub } from "../../001";
 import { dinglehopper } from "../../001/items";
 import { graveyardOfChristmasFutureLonelyRestingPlace } from "../locations/135-graveyard-of-christmas-future-lonely-resting-place";
@@ -64,6 +64,30 @@ describe("Come Out and Fight!", () => {
 
     expect(testEngine.asPlayerOne().getCardZone(heiheiBoatSnack)).toBe("deck");
     expect(testEngine.asPlayerOne().getCardZone(mickeyMouseTrueFriend)).toBe("hand");
+  });
+
+  it("regression: can target any character/item/location, not just ones with cards underneath", () => {
+    const plainCharacter = createMockCharacter({
+      id: "come-out-plain-char",
+      name: "Plain Character",
+      cost: 2,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [comeOutAndFight],
+      inkwell: comeOutAndFight.cost,
+      play: [plainCharacter],
+      deck: [heiheiBoatSnack],
+    });
+
+    // Should be able to target a character with nothing under it
+    const result = testEngine.asPlayerOne().playCard(comeOutAndFight, {
+      targets: [plainCharacter],
+    });
+    expect(result.success).toBe(true);
+
+    // Should still draw a card even though nothing was under the character
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
   });
 
   it("still draws a card if the chosen card has nothing under it", () => {

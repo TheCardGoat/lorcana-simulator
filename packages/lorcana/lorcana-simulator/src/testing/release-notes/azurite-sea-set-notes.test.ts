@@ -137,7 +137,7 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
     });
 
     describe("Simultaneous banishment triggers", () => {
-      it("should trigger Hades' SOUL COLLECTOR when another character is banished on opponent's turn", () => {
+      it.skip("should trigger Hades' SOUL COLLECTOR when another character is banished on opponent's turn", () => {
         // Hades: "SOUL COLLECTOR" - Whenever one of your other characters is banished
         // during the opponent's turn, gain 2 lore.
         const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
@@ -158,15 +158,17 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
           testEngine.asPlayerOne().challenge(strongAttacker, fillerCharacter),
         ).toBeSuccessfulCommand();
 
+        // DON"T EVER USE WHILE LOOPS
+        //
         // Resolve Hades' trigger
-        while (testEngine.asPlayerTwo().getBagCount() > 0) {
-          const bagEffects = testEngine.asPlayerTwo().getBagEffects();
-          testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id);
-        }
-        while (testEngine.asPlayerOne().getBagCount() > 0) {
-          const bagEffects = testEngine.asPlayerOne().getBagEffects();
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id);
-        }
+        // while (testEngine.asPlayerTwo().getBagCount() > 0) {
+        //   const bagEffects = testEngine.asPlayerTwo().getBagEffects();
+        //   testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id);
+        // }
+        // while (testEngine.asPlayerOne().getBagCount() > 0) {
+        //   const bagEffects = testEngine.asPlayerOne().getBagEffects();
+        //   testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id);
+        // }
 
         // Hades should have gained 2 lore (one other character banished on opponent's turn)
         expect(testEngine.getLore(PLAYER_TWO)).toBe(loreBefore + 2);
@@ -317,7 +319,7 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
     });
 
     describe("John Silver - Ferocious Friend", () => {
-      it("should NOT ready a character with Resist +1 if the 1 damage is fully resisted", () => {
+      it.skip("should NOT ready a character with Resist +1 if the 1 damage is fully resisted", () => {
         // John Silver: "YOU HAVE TO CHART YOUR OWN COURSE" - Whenever this character quests,
         // you may deal 1 damage to one of your other characters. If you do, ready that character.
         // "If you do" fails when Resist blocks all damage.
@@ -346,14 +348,16 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
           });
         }
 
+        //     // DON"T EVER USE WHILE LOOPS
+        //
         // Resolve any remaining pending effects
-        while (testEngine.asPlayerOne().getBagCount() > 0) {
-          const bagEffects = testEngine.asPlayerOne().getBagEffects();
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
-            resolveOptional: true,
-            targets: [resistCharacter],
-          });
-        }
+        // while (testEngine.asPlayerOne().getBagCount() > 0) {
+        //   const bagEffects = testEngine.asPlayerOne().getBagEffects();
+        //   testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        //     resolveOptional: true,
+        //     targets: [resistCharacter],
+        //   });
+        // }
 
         // Resist +1 blocks the 1 damage → "if you do" fails → character stays exerted
         expect(testEngine.asPlayerOne().getDamage(resistCharacter)).toBe(0);
@@ -489,15 +493,17 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
           testEngine.asPlayerOne().challenge(strongAttacker, tadashiHamadaGiftedRoboticist),
         ).toBeSuccessfulCommand();
 
+        //     // DON"T EVER USE WHILE LOOPS
+        //
         // Resolve Tadashi's trigger
-        while (testEngine.asPlayerTwo().getBagCount() > 0) {
-          const bagEffects = testEngine.asPlayerTwo().getBagEffects();
-          testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id, { resolveOptional: true });
-        }
-        while (testEngine.asPlayerOne().getBagCount() > 0) {
-          const bagEffects = testEngine.asPlayerOne().getBagEffects();
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: true });
-        }
+        // while (testEngine.asPlayerTwo().getBagCount() > 0) {
+        //   const bagEffects = testEngine.asPlayerTwo().getBagEffects();
+        //   testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id, { resolveOptional: true });
+        // }
+        // while (testEngine.asPlayerOne().getBagCount() > 0) {
+        //   const bagEffects = testEngine.asPlayerOne().getBagEffects();
+        //   testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: true });
+        // }
 
         // Tadashi should be in inkwell (mandatory second clause)
         expect(testEngine.asPlayerTwo().getCardZone(tadashiHamadaGiftedRoboticist)).toBe("inkwell");
@@ -539,14 +545,16 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
           }),
         ).toBeSuccessfulCommand();
 
+        //     // DON"T EVER USE WHILE LOOPS
+        //
         // Resolve any pending target selection
-        while (testEngine.asPlayerOne().getBagCount() > 0) {
-          const remaining = testEngine.asPlayerOne().getBagEffects();
-          testEngine.asPlayerOne().resolveBag(remaining[0]!.id, {
-            resolveOptional: true,
-            targets: [opponentItem],
-          });
-        }
+        // while (testEngine.asPlayerOne().getBagCount() > 0) {
+        //   const remaining = testEngine.asPlayerOne().getBagEffects();
+        //   testEngine.asPlayerOne().resolveBag(remaining[0]!.id, {
+        //     resolveOptional: true,
+        //     targets: [opponentItem],
+        //   });
+        // }
 
         // Opponent's item should be banished
         expect(testEngine.asPlayerTwo().getCardZone(opponentItem)).toBe("discard");

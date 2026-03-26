@@ -56,7 +56,8 @@ export type PlayCardCost =
   | { cost: "sing"; singer: CardInstanceId }
   | { cost: "singTogether"; singers: CardInstanceId[] }
   | { cost: "free" }
-  | { cost: "sacrifice"; sacrificeTarget: CardInstanceId };
+  | { cost: "sacrifice"; sacrificeTarget: CardInstanceId }
+  | { cost: "exert-items"; exertTargets: CardInstanceId[] };
 
 /**
  * Lorcana Move Parameters

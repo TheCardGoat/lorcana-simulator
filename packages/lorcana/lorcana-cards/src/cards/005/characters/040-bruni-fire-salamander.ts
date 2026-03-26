@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { bruniFireSalamanderI18n } from "./040-bruni-fire-salamander.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const bruniFireSalamander: CharacterCard = {
   id: "K4I",
@@ -33,12 +34,7 @@ export const bruniFireSalamander: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "29y-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    evasive,
     {
       id: "29y-2",
       effect: {

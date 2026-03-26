@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { merlinCompletingHisResearchI18n } from "./058-merlin-completing-his-research.i18n";
 
 export const merlinCompletingHisResearch: CharacterCard = {
@@ -34,35 +35,31 @@ export const merlinCompletingHisResearch: CharacterCard = {
   ],
   classifications: ["Storyborn", "Mentor", "Sorcerer", "Whisper"],
   abilities: [
-    {
-      id: "mr7-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 2,
-      text: "Boost 2 {I}",
-    },
+    boost(2),
     {
       id: "mr7-2",
-      effect: {
-        condition: {
-          expression: "he had a card under him",
-          type: "if",
-        },
-        then: {
-          amount: 2,
-          target: "CONTROLLER",
-          type: "draw",
-        },
-        type: "conditional",
-      },
       name: "LEGACY OF LEARNING",
+      text: "LEGACY OF LEARNING When this character is banished in a challenge, if he had a card under him, draw 2 cards.",
+      type: "triggered",
+      sourceZones: ["play", "discard"],
       trigger: {
         event: "banish",
         on: "SELF",
+        restrictions: [
+          {
+            type: "in-challenge",
+          },
+        ],
         timing: "when",
       },
-      type: "triggered",
-      text: "LEGACY OF LEARNING When this character is banished in a challenge, if he had a card under him, draw 2 cards.",
+      condition: {
+        type: "trigger-subject-had-card-under",
+      },
+      effect: {
+        type: "draw",
+        amount: 2,
+        target: "CONTROLLER",
+      },
     },
   ],
   i18n: merlinCompletingHisResearchI18n,

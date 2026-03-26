@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { christopherRobinJoiningTheFunI18n } from "./055-christopher-robin-joining-the-fun.i18n";
+import { underdog } from "../../../helpers/abilities/underdog";
 
 export const christopherRobinJoiningTheFun: CharacterCard = {
   id: "OZm",
@@ -30,22 +31,6 @@ export const christopherRobinJoiningTheFun: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "4b3-1",
-      name: "UNDERDOG",
-      condition: {
-        type: "first-turn-non-otp",
-      },
-      effect: {
-        amount: 1,
-        cardType: "character",
-        type: "cost-reduction",
-      },
-      sourceZones: ["hand"],
-      type: "static",
-      text: "UNDERDOG If this is your first turn and you're not the first player, you pay 1 {I} less to play this character.",
-    },
-  ],
+  abilities: [underdog],
   i18n: christopherRobinJoiningTheFunI18n,
 };

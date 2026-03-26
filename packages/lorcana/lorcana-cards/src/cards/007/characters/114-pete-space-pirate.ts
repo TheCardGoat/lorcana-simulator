@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { peteSpacePirateI18n } from "./114-pete-space-pirate.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const peteSpacePirate: CharacterCard = {
   id: "Ewo",
@@ -33,24 +34,45 @@ export const peteSpacePirate: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Pirate"],
   abilities: [
+    shift(4),
     {
-      cost: {
-        ink: 4,
+      condition: {
+        type: "exerted",
       },
-      id: "hmq-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
+      effect: {
+        restriction: "cant-sing",
+        target: "OPPOSING_CHARACTERS",
+        type: "restriction",
+      },
+      id: "hmq-2",
+      name: "FRIGHTFUL SCHEME",
+      text: "FRIGHTFUL SCHEME While this character is exerted, opposing characters can't exert to sing songs and your Pirate characters gain Resist +1.",
+      type: "static",
     },
     {
+      condition: {
+        type: "exerted",
+      },
       effect: {
         keyword: "Resist",
-        target: "SELF",
+        target: {
+          selector: "all",
+          zones: ["play"],
+          owner: "you",
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Pirate",
+            },
+          ],
+          count: "all",
+        },
         type: "gain-keyword",
         value: 1,
       },
-      id: "hmq-2",
-      text: "FRIGHTFUL SCHEME While this character is exerted, opposing characters can't exert to sing songs and your Pirate characters gain Resist +1.",
+      id: "hmq-3",
+      name: "FRIGHTFUL SCHEME",
+      text: "FRIGHTFUL SCHEME While this character is exerted, your Pirate characters gain Resist +1.",
       type: "static",
     },
   ],

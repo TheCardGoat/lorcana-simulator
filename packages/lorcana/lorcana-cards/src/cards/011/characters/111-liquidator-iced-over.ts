@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { liquidatorIcedOverI18n } from "./111-liquidator-iced-over.i18n";
+import { underdog } from "../../../helpers/abilities/underdog";
+import { reckless } from "../../../helpers/abilities/reckless";
 
 export const liquidatorIcedOver: CharacterCard = {
   id: "UCV",
@@ -33,28 +35,6 @@ export const liquidatorIcedOver: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Super", "Villain"],
-  abilities: [
-    {
-      id: "12q-1",
-      name: "UNDERDOG",
-      type: "static",
-      condition: {
-        type: "first-turn-non-otp",
-      },
-      effect: {
-        type: "cost-reduction",
-        amount: 1,
-        cardType: "character",
-      },
-      sourceZones: ["hand"],
-      text: "UNDERDOG If this is your first turn and you’re not the first player, you pay 1 {I} less to play this character.",
-    },
-    {
-      id: "12q-2",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-  ],
+  abilities: [underdog, reckless],
   i18n: liquidatorIcedOverI18n,
 };

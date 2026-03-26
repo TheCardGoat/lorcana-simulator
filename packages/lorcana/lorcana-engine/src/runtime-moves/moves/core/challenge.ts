@@ -1,7 +1,7 @@
 import type { CardInstanceId, PlayerId, RuntimeCardWithDefinition } from "#core";
 import { isClassification, type Classification } from "@tcg/lorcana-types";
 import type { LorcanaCardDerived } from "../../../types/projected-board";
-import { createLorcanaLogMessage, type LorcanaMoveDefinition } from "../../../types";
+import { createLorcanaLogProjection, type LorcanaMoveDefinition } from "../../../types";
 
 type LorcanaRuntimeCard = RuntimeCardWithDefinition & LorcanaCardDerived;
 import {
@@ -244,19 +244,34 @@ function resolveChallengeDamage(
         sourceId: attackerId,
         damageType: "combat",
       },
-      {
-        event: "damage",
-        subjectCardId: finalDefenderTargetId,
-        triggerSourceCardId: attackerId,
-        playerId: defenderOwnerId,
-        attackerId,
-        defenderId,
-        happenedInChallenge: true,
-        eventSnapshot: {
-          triggerAmount: effectiveAttackerToDefenderDamage,
-          damageDealt: effectiveAttackerToDefenderDamage,
+      [
+        {
+          event: "damage",
+          subjectCardId: finalDefenderTargetId,
+          triggerSourceCardId: attackerId,
+          playerId: defenderOwnerId,
+          attackerId,
+          defenderId,
+          happenedInChallenge: true,
+          eventSnapshot: {
+            triggerAmount: effectiveAttackerToDefenderDamage,
+            damageDealt: effectiveAttackerToDefenderDamage,
+          },
         },
-      },
+        {
+          event: "deal-damage",
+          subjectCardId: attackerId,
+          triggerSourceCardId: attackerId,
+          playerId: attackerOwnerId,
+          attackerId,
+          defenderId,
+          happenedInChallenge: true,
+          eventSnapshot: {
+            triggerAmount: effectiveAttackerToDefenderDamage,
+            damageDealt: effectiveAttackerToDefenderDamage,
+          },
+        },
+      ],
     );
   }
 
@@ -273,19 +288,34 @@ function resolveChallengeDamage(
         sourceId: defenderId,
         damageType: "combat",
       },
-      {
-        event: "damage",
-        subjectCardId: finalAttackerTargetId,
-        triggerSourceCardId: defenderId,
-        playerId: attackerOwnerId,
-        attackerId,
-        defenderId,
-        happenedInChallenge: true,
-        eventSnapshot: {
-          triggerAmount: effectiveDefenderToAttackerDamage,
-          damageDealt: effectiveDefenderToAttackerDamage,
+      [
+        {
+          event: "damage",
+          subjectCardId: finalAttackerTargetId,
+          triggerSourceCardId: defenderId,
+          playerId: attackerOwnerId,
+          attackerId,
+          defenderId,
+          happenedInChallenge: true,
+          eventSnapshot: {
+            triggerAmount: effectiveDefenderToAttackerDamage,
+            damageDealt: effectiveDefenderToAttackerDamage,
+          },
         },
-      },
+        {
+          event: "deal-damage",
+          subjectCardId: defenderId,
+          triggerSourceCardId: defenderId,
+          playerId: defenderOwnerId,
+          attackerId,
+          defenderId,
+          happenedInChallenge: true,
+          eventSnapshot: {
+            triggerAmount: effectiveDefenderToAttackerDamage,
+            damageDealt: effectiveDefenderToAttackerDamage,
+          },
+        },
+      ],
     );
   }
 
@@ -295,6 +325,16 @@ function resolveChallengeDamage(
     .willpower;
   const defenderLethal = finalDefenderWillpower > 0 && defenderNextDamage >= finalDefenderWillpower;
   const attackerLethal = finalAttackerWillpower > 0 && attackerNextDamage >= finalAttackerWillpower;
+
+  // Snapshot trigger candidates for banish-in-challenge events before any cards leave play.
+  // In mutual kills, both cards are moved to discard before buffered events are processed,
+  // so the snapshot preserves trigger candidates that would otherwise be lost.
+  const attackerBanishInChallengeCandidates = defenderLethal
+    ? snapshotTriggeredCandidatesForCard(ctx, attackerId)
+    : undefined;
+  const defenderBanishInChallengeCandidates = attackerLethal
+    ? snapshotTriggeredCandidatesForCard(ctx, defenderId)
+    : undefined;
 
   if (defenderLethal) {
     const finalDefenderMeta = ctx.cards.require(finalDefenderTargetId).meta ?? {};
@@ -389,7 +429,10 @@ function resolveChallengeDamage(
           attackerId,
           defenderId,
           happenedInChallenge: true,
-          triggerCandidates: defenderTriggerCandidates,
+          triggerCandidates: [
+            ...(defenderTriggerCandidates ?? []),
+            ...(attackerBanishInChallengeCandidates ?? []),
+          ],
           eventSnapshot: {
             classificationsBeforeBanish: defenderClassificationsBeforeBanish,
             cardsUnderCountBeforeBanish: defenderCardsUnderCountBeforeBanish,
@@ -409,6 +452,7 @@ function resolveChallengeDamage(
                 attackerId,
                 defenderId,
                 happenedInChallenge: true,
+                triggerCandidates: attackerBanishInChallengeCandidates,
               },
             ]
           : []),
@@ -522,6 +566,7 @@ function resolveChallengeDamage(
                 attackerId,
                 defenderId,
                 happenedInChallenge: true,
+                triggerCandidates: defenderBanishInChallengeCandidates,
               },
             ]
           : []),
@@ -564,7 +609,7 @@ export function continuePendingChallengeResolution(ctx: ChallengeContinuationCon
       stage: "post-damage",
     };
     openWindow(ctx, { window: "after-challenge" });
-    finalizeResolutionBoundary(ctx);
+    finalizeResolutionBoundary(ctx, { window: "after-challenge" });
     if (hasPendingBagItems(ctx) || ctx.framework.state.priority.pendingChoice) {
       return;
     }
@@ -641,15 +686,18 @@ export const challenge: LorcanaMoveDefinition<"challenge"> = {
       defenderOwnerId,
       stage: "declaration",
     };
-    ctx.framework.log({
-      category: "action",
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: createLorcanaLogMessage("lorcana.move.challenge", {
-        playerId: attackerOwnerId,
-        attackerId,
-        defenderId,
-      }),
-    });
+    ctx.framework.log(
+      createLorcanaLogProjection(
+        "lorcana.move.challenge",
+        {
+          playerId: attackerOwnerId,
+          attackerId,
+          defenderId,
+        },
+        { mode: "PUBLIC" },
+        "action",
+      ),
+    );
 
     const attackerTriggerCandidatesDecl = snapshotTriggeredCandidatesForCard(ctx, attackerId);
     const defenderTriggerCandidatesDecl = snapshotTriggeredCandidatesForCard(ctx, defenderId);

@@ -35,10 +35,11 @@ export const nalaRompingInTheSnow: CharacterCard = {
       id: "leo-1",
       effect: {
         keyword: "Evasive",
+        duration: "until-start-of-next-turn",
         target: {
           cardTypes: ["character"],
           count: 1,
-          owner: "any",
+          owner: "you",
           selector: "chosen",
           zones: ["play"],
         },

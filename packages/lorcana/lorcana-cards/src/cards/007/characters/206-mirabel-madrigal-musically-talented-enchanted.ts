@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mirabelMadrigalMusicallyTalentedEnchantedI18n } from "./206-mirabel-madrigal-musically-talented-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const mirabelMadrigalMusicallyTalentedEnchanted: CharacterCard = {
   id: "m94",
@@ -35,15 +36,7 @@ export const mirabelMadrigalMusicallyTalentedEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Madrigal"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "1ri-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         chooser: "CONTROLLER",

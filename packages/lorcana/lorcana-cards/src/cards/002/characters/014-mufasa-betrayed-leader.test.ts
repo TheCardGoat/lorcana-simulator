@@ -5,57 +5,142 @@ import { gastonBaritoneBully } from "./008-gaston-baritone-bully";
 import { bibbidiBobbidiBoo } from "../../002/actions/096-bibbidi-bobbidi-boo";
 
 describe("Mufasa - Betrayed Leader", () => {
-  it("THE SUN WILL SET - When banished, reveals top card. If character, play for free exerted.", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      play: [{ card: mufasaBetrayedLeader }],
-      deck: [
-        { card: gastonBaritoneBully }, // Top card is character
-      ],
+  describe("THE SUN WILL SET - When this character is banished, you may reveal the top card of your deck. If it's a character card, you may play that character for free and they enter play exerted. Otherwise, put it on the top of your deck.", () => {
+    it("triggers when banished, reveals character, and plays it for free exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: mufasaBetrayedLeader }],
+        deck: [{ card: gastonBaritoneBully }],
+      });
+
+      // Banish Mufasa with enough damage
+      expect(
+        testEngine.asServer().manualSetDamage(mufasaBetrayedLeader, 10),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(mufasaBetrayedLeader)).toBe("discard");
+
+      // Triggered ability should be in the bag
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      // Resolve the scry — choose to play Gaston for free
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          destinations: [{ zone: "play", cards: [gastonBaritoneBully] }],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Gaston should be in play and exerted
+      expect(testEngine.asPlayerOne().getCardZone(gastonBaritoneBully)).toBe("play");
+      expect(testEngine.asPlayerOne().isExerted(gastonBaritoneBully)).toBe(true);
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({
+        deck: 0,
+        play: 1,
+        discard: 1,
+      });
     });
 
-    const mufasaId = testEngine.findCardInstanceId(mufasaBetrayedLeader, "play");
-    const gastonId = testEngine.findCardInstanceId(gastonBaritoneBully, "deck");
+    it("triggers when banished, reveals non-character, and puts it on top of deck", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: mufasaBetrayedLeader }],
+        deck: [{ card: bibbidiBobbidiBoo }],
+      });
 
-    // Banish Mufasa via damage
-    testEngine.asServer().manualSetDamage(mufasaId, 10);
-    testEngine.asServer().passTurn();
+      // Banish Mufasa with enough damage
+      expect(
+        testEngine.asServer().manualSetDamage(mufasaBetrayedLeader, 10),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(mufasaBetrayedLeader)).toBe("discard");
 
-    // Resolve triggers
-    testEngine.asPlayerOne().resolveNextBag();
+      // Triggered ability should be in the bag
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
-    // Gaston should be in play and exerted
-    const gastonZone = testEngine.asServer().getState().ctx.zones.private.cardIndex[
-      gastonId
-    ]?.zoneKey;
-    expect(gastonZone?.startsWith("play")).toBe(true);
-    const gaston = testEngine.asServer().getCard(gastonId);
-    expect(gaston.exerted).toBe(true);
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      // Non-character doesn't match the play filter — resolve scry with no hand selection
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ destinations: [] }),
+      ).toBeSuccessfulCommand();
+
+      // Action card should remain on top of deck
+      expect(testEngine.asPlayerOne().getCardZone(bibbidiBobbidiBoo)).toBe("deck");
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({
+        deck: 1,
+        play: 0,
+        discard: 1,
+      });
+    });
+
+    it("player may decline the optional play when the top card is a character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: mufasaBetrayedLeader }],
+        deck: [{ card: gastonBaritoneBully }],
+      });
+
+      // Banish Mufasa with enough damage
+      expect(
+        testEngine.asServer().manualSetDamage(mufasaBetrayedLeader, 10),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      // Decline playing — resolve scry with empty destinations, Gaston goes to deck-top (remainder)
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ destinations: [] }),
+      ).toBeSuccessfulCommand();
+
+      // Gaston should remain in deck (not played)
+      expect(testEngine.asPlayerOne().getCardZone(gastonBaritoneBully)).toBe("deck");
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({
+        deck: 1,
+        play: 0,
+        discard: 1,
+      });
+    });
   });
 
-  it("THE SUN WILL SET - When banished, reveals top card. If NOT character, put on top.", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      play: [{ card: mufasaBetrayedLeader }],
-      deck: [
-        { card: bibbidiBobbidiBoo }, // Top card is action
-      ],
+  describe("Regression: Removed on opponent's turn", () => {
+    it("triggers correctly when banished during opponent's turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          deck: 5,
+        },
+        {
+          play: [{ card: mufasaBetrayedLeader }],
+          // bibbidiBobbidiBoo is on top (last entry = top), drawn at turn start, leaving Gaston in deck
+          deck: [{ card: gastonBaritoneBully }, { card: bibbidiBobbidiBoo }],
+        },
+      );
+
+      // Pass turn to player two (player two will draw a placeholder card, not Gaston)
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Banish Mufasa during player two's turn
+      expect(
+        testEngine.asServer().manualSetDamage(mufasaBetrayedLeader, 10),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardZone(mufasaBetrayedLeader)).toBe("discard");
+
+      // Triggered ability should be in the bag for player two (the controller)
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
+
+      const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
+      expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      // Resolve the scry — choose to play Gaston for free
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({
+          destinations: [{ zone: "play", cards: [gastonBaritoneBully] }],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Gaston should be in play for player two and exerted
+      expect(testEngine.asPlayerTwo().getCardZone(gastonBaritoneBully)).toBe("play");
+      expect(testEngine.asPlayerTwo().isExerted(gastonBaritoneBully)).toBe(true);
     });
-
-    const mufasaId = testEngine.findCardInstanceId(mufasaBetrayedLeader, "play");
-    const actionId = testEngine.findCardInstanceId(bibbidiBobbidiBoo, "deck");
-
-    // Banish Mufasa via damage
-    testEngine.asServer().manualSetDamage(mufasaId, 10);
-    testEngine.asServer().passTurn();
-
-    // Resolve triggers
-    testEngine.asPlayerOne().resolveNextBag();
-
-    // Should not be prompted to play, just puts it back on top.
-    // Wait, the "reveal-top-card" actually moves it to "limbo" or keeps in deck?
-    // Usually it stays in deck or limbo, then "put-on-top" moves it back to deck.
-    const actionZone = testEngine.asServer().getState().ctx.zones.private.cardIndex[
-      actionId
-    ]?.zoneKey;
-    expect(actionZone?.startsWith("deck")).toBe(true);
   });
 });

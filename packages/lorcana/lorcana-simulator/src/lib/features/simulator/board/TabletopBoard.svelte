@@ -9,6 +9,8 @@ import type {
 	AvailableMovesSelectionEntry,
 	LorcanaCardSnapshot,
 	LorcanaPlayerSide,
+	ResolutionChoiceAvailableMovesSelectionState,
+	ResolutionTargetAvailableMovesSelectionState,
 } from "@/features/simulator/model/contracts.js";
 import type { GuidanceAction } from "@/features/simulator/model/active-player-guidance.js";
 import type { ActivePlayerGuidanceItem } from "@/features/simulator/model/active-player-guidance.js";
@@ -26,6 +28,10 @@ import DiscardPileDialog from "@/features/simulator/dialogs/DiscardPileDialog.sv
 import InkwellDialog from "@/features/simulator/dialogs/InkwellDialog.svelte";
 import SimulatorSupportDialog from "@/features/simulator/dialogs/SimulatorSupportDialog.svelte";
 import TargetSelectionDialog from "@/features/simulator/dialogs/TargetSelectionDialog.svelte";
+import ScryResolutionOverlay from "@/features/simulator/board/ScryResolutionOverlay.svelte";
+import ChoiceResolutionOverlay from "@/features/simulator/board/ChoiceResolutionOverlay.svelte";
+import ResolutionTargetOverlay from "@/features/simulator/board/ResolutionTargetOverlay.svelte";
+import { shouldUseResolutionTargetOverlay } from "@/features/simulator/board/resolution-target-overlay.js";
 import ActivePlayerGuidance from "@/features/simulator/panels/ActivePlayerGuidance.svelte";
 import PendingEffectsPopover from "@/features/simulator/panels/PendingEffectsPopover.svelte";
 import BoardAnimationLayer from "./BoardAnimationLayer.svelte";
@@ -38,11 +44,13 @@ import MobilePlayerMenubar from "@/features/simulator/panels/MobilePlayerMenubar
 import SeatLane from "@/features/simulator/board/SeatLane.svelte";
 import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import { toggleHandTuckState } from "@/features/simulator/board/hand-tuck-state.js";
+import type { SimulatorHotkeyDescriptor } from "@/features/simulator/hotkeys/hotkey-bindings.js";
 import {
 	useLorcanaBoardPresenter,
 	useLorcanaSidebarPresenter,
 } from "@/features/simulator/context/game-context.svelte.js";
 import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
+import { bugReportContextFromBoard } from "@/features/simulator/support/feedback-api.js";
 import type { SimulatorLayoutMode } from "@/features/simulator/model/layout-mode.svelte.js";
 
 interface PendingEffectsPopoverItem {
@@ -74,6 +82,7 @@ interface TabletopBoardProps {
 	compactActionCount?: number;
 	pendingEffectsPopoverItems?: PendingEffectsPopoverItem[];
 	activePlayerGuidance?: ActivePlayerGuidanceItem[];
+	hotkeyDescriptors?: SimulatorHotkeyDescriptor[];
 	onOpenCompactPanels?: (tab?: "moves" | "log") => void;
 }
 
@@ -89,6 +98,7 @@ let {
 	compactActionCount = 0,
 	pendingEffectsPopoverItems = [],
 	activePlayerGuidance = [],
+	hotkeyDescriptors = [],
 	onOpenCompactPanels,
 }: TabletopBoardProps = $props();
 
@@ -96,6 +106,7 @@ const board = useLorcanaBoardPresenter();
 const sidebar = useLorcanaSidebarPresenter();
 const simulatorCardContext = useSimulatorCardContext();
 const boardSnapshot = $derived(board.boardSnapshot);
+const bugReportContext = $derived(bugReportContextFromBoard(boardSnapshot));
 const ownerSide = $derived(board.ownerSide);
 const questRotationDurationMs = $derived(board.questRotationDurationMs);
 const topSeat = board.topSeat;
@@ -137,6 +148,7 @@ const topSummary = $derived(board.getPlayerSummary(topSide));
 const bottomSummary = $derived(board.getPlayerSummary(bottomSide));
 const isCompactLayout = $derived(layoutMode !== "desktop");
 const isMobileLayout = $derived(layoutMode === "mobile");
+const accessibleMobileControls = $derived(sidebar.accessibleMobileControls);
 const isTopHandTucked = $derived(!isMobileLayout && handTuckState[topSide]);
 const isBottomHandTucked = $derived(
 	!isMobileLayout && handTuckState[bottomSide],
@@ -191,6 +203,29 @@ const targetSelectionState = $derived.by(() => {
 
 	return null;
 });
+const resolutionTargetOverlayState = $derived.by(
+	(): ResolutionTargetAvailableMovesSelectionState | null => {
+  if (shouldUseResolutionTargetOverlay(targetSelectionState)) {
+    return targetSelectionState as ResolutionTargetAvailableMovesSelectionState;
+  }
+
+  return null;
+},
+);
+const scrySelectionState = $derived.by(() => {
+  if (availableMovesSelectionState?.mode === "resolution-scry") {
+    return availableMovesSelectionState;
+  }
+
+  return null;
+});
+const choiceSelectionState = $derived.by((): ResolutionChoiceAvailableMovesSelectionState | null => {
+  if (availableMovesSelectionState?.mode === "resolution-choice") {
+    return availableMovesSelectionState;
+  }
+
+  return null;
+});
 const targetSelectionDialogCards = $derived.by(
 	() =>
 		targetSelectionState?.entries
@@ -227,6 +262,45 @@ const selectedTargetCardIds = $derived.by(
 			.map((entry) => entry.cardId) ?? [],
 );
 const hasPendingEffects = $derived(sidebar.hasPendingEffects);
+const opponentPlayHotkeys = $derived.by(
+  () =>
+    new Map(
+      hotkeyDescriptors
+        .filter(
+          (descriptor) =>
+            descriptor.kind === "card" &&
+            descriptor.cardZone === "opponent-play" &&
+            typeof descriptor.cardId === "string",
+        )
+        .map((descriptor) => [descriptor.cardId!, descriptor.hotkey]),
+    ),
+);
+const ownedPlayHotkeys = $derived.by(
+  () =>
+    new Map(
+      hotkeyDescriptors
+        .filter(
+          (descriptor) =>
+            descriptor.kind === "card" &&
+            descriptor.cardZone === "your-play" &&
+            typeof descriptor.cardId === "string",
+        )
+        .map((descriptor) => [descriptor.cardId!, descriptor.hotkey]),
+    ),
+);
+const ownedHandHotkeys = $derived.by(
+  () =>
+    new Map(
+      hotkeyDescriptors
+        .filter(
+          (descriptor) =>
+            descriptor.kind === "card" &&
+            descriptor.cardZone === "your-hand" &&
+            typeof descriptor.cardId === "string",
+        )
+        .map((descriptor) => [descriptor.cardId!, descriptor.hotkey]),
+    ),
+);
 const canConcede = $derived(sidebar.canConcede);
 const challengeSelectionSession = $derived(sidebar.actionSelectionSession);
 const isChallengeAimOverlayVisible = $derived(
@@ -717,19 +791,22 @@ $effect(() => {
 <div
   class="tabletop-container w-full h-full overflow-hidden relative"
   data-layout-mode={layoutMode}
+  data-accessible-controls={accessibleMobileControls ? "true" : undefined}
   role="presentation"
   bind:this={tabletopRef}
   onpointerdown={handleTabletopPointerDown}
   style:--quest-rotation-duration="{questRotationDurationMs}ms"
 >
-  <PendingEffectsPopover
-    items={pendingEffectsPopoverItems}
-    bind:open={pendingEffectsOpen}
-    canOpenTargetModal={Boolean(targetSelectionState)}
-    onOpenTargetModal={openTargetSelectionDialog}
-  />
+  {#if !scrySelectionState && !choiceSelectionState && !resolutionTargetOverlayState}
+    <PendingEffectsPopover
+      items={pendingEffectsPopoverItems}
+      bind:open={pendingEffectsOpen}
+      canOpenTargetModal={Boolean(targetSelectionState && !resolutionTargetOverlayState)}
+      onOpenTargetModal={openTargetSelectionDialog}
+    />
+  {/if}
 
-  {#if targetSelectionState}
+  {#if targetSelectionState && !resolutionTargetOverlayState}
     <TargetSelectionDialog
       bind:open={targetSelectionDialogOpen}
       title={targetSelectionState.title}
@@ -744,6 +821,37 @@ $effect(() => {
       onCancel={() => {
         targetSelectionDialogOpen = false;
       }}
+    />
+  {/if}
+
+  {#if resolutionTargetOverlayState}
+    <ResolutionTargetOverlay
+      selectionState={resolutionTargetOverlayState}
+      cardSnapshots={board.cardSnapshotsById}
+      onSelectCard={sidebar.handleAvailableMovesSelectionCard}
+      onSelectSlot={sidebar.selectResolutionTargetSlot}
+      onConfirm={sidebar.confirmActionSelection}
+      onDismiss={sidebar.cancelActionSelectionSession}
+    />
+  {/if}
+
+  {#if scrySelectionState}
+    <ScryResolutionOverlay
+      selectionState={scrySelectionState}
+      cardSnapshots={board.cardSnapshotsById}
+      onAssignCard={sidebar.handleAvailableMovesScryAssignment}
+      onReorderCard={sidebar.handleAvailableMovesScryReorder}
+      onConfirm={sidebar.confirmActionSelection}
+      onDismiss={sidebar.cancelActionSelectionSession}
+    />
+  {/if}
+
+  {#if choiceSelectionState}
+    <ChoiceResolutionOverlay
+      selectionState={choiceSelectionState}
+      onSelectOption={(moveId) => sidebar.selectResolutionChoice(Number(moveId))}
+      onConfirm={sidebar.confirmActionSelection}
+      onDismiss={sidebar.cancelActionSelectionSession}
     />
   {/if}
 
@@ -770,6 +878,7 @@ $effect(() => {
           onOpenLog={() => onOpenCompactPanels?.("log")}
           onOpenCardPreview={openCompactPreview}
           onReportPlayer={handleMobileReportPlayer}
+          bugReportContext={bugReportContext}
         />
       </div>
     {/if}
@@ -829,6 +938,7 @@ $effect(() => {
         role="presentation"
         onpointermove={handleBoardPointerMove}
         onpointerleave={handleBoardPointerLeave}
+        onclick={() => { if (simulatorCardContext.isInspectOpen) simulatorCardContext.closeCardInspect(); }}
       >
         <div class="board-center-anchor-region" aria-hidden="true">
           <div
@@ -847,6 +957,8 @@ $effect(() => {
             hasPriority={topHasPriority}
             lore={topSummary?.lore ?? 0}
             seatPosition="top"
+            playHotkeyBindings={opponentPlayHotkeys}
+            isPlayerEffectTarget={board.activePlayerEffectTargets().has(topSide)}
             onDiscardClick={() => board.handleDiscardClick(topSide)}
             onInkwellClick={() => board.handleInkwellClick(topSide)}
           />
@@ -860,6 +972,8 @@ $effect(() => {
             hasPriority={bottomHasPriority}
             lore={bottomSummary?.lore ?? 0}
             seatPosition="bottom"
+            playHotkeyBindings={ownedPlayHotkeys}
+            isPlayerEffectTarget={board.activePlayerEffectTargets().has(bottomSide)}
             onDiscardClick={() => board.handleDiscardClick(bottomSide)}
             onInkwellClick={() => board.handleInkwellClick(bottomSide)}
           />
@@ -901,6 +1015,7 @@ $effect(() => {
         playerSide={bottomSide}
         seat={bottomSeat}
         isOpponent={false}
+        hotkeyBindings={ownedHandHotkeys}
       />
     </div>
 
@@ -954,6 +1069,7 @@ $effect(() => {
           }}
           onConcede={handleMobileConcede}
           onOpenPendingEffects={handleAdvancePendingEffects}
+          bugReportContext={bugReportContext}
         />
       </div>
     {/if}
@@ -962,6 +1078,8 @@ $effect(() => {
   <ActivePlayerGuidance
     items={activePlayerGuidance}
     anchor={guidanceAnchor}
+    isBottomHandExpanded={!isBottomHandTucked && !isMobileLayout}
+    isTopHandExpanded={!isTopHandTucked && !isMobileLayout}
     onToggleAnchor={toggleGuidancePosition}
   />
 
@@ -981,7 +1099,7 @@ $effect(() => {
     target={board.inkwellTarget}
   />
 
-  <SimulatorSupportDialog bind:open={supportDialogOpen} />
+  <SimulatorSupportDialog bind:open={supportDialogOpen} gameContext={bugReportContext} />
 </div>
 
 <style>
@@ -1001,7 +1119,8 @@ $effect(() => {
     --sim-play-card-width: 180px;
     --sim-hand-card-width: 122px;
     --sim-side-zone-card-width: 50px;
-    --mobile-menubar-height: 4.6rem;
+    --mobile-menubar-height: 3.6rem;
+    --mobile-hand-height: 4.6rem;
 
           margin: 0;
       padding: 0;
@@ -1026,15 +1145,17 @@ $effect(() => {
   }
 
   .chrome-slot--topbar {
-    position: sticky;
-    top: 0;
-    margin-bottom: 0.35rem;
+    height: var(--mobile-menubar-height);
+    flex: 0 0 var(--mobile-menubar-height);
+    overflow: hidden;
+    margin-bottom: 0;
   }
 
   .chrome-slot--bottombar {
-    position: sticky;
-    bottom: 0;
-    margin-top: 0.35rem;
+    height: var(--mobile-menubar-height);
+    flex: 0 0 var(--mobile-menubar-height);
+    overflow: hidden;
+    margin-top: 0;
   }
 
   .chrome-slot--hand {
@@ -1045,24 +1166,15 @@ $effect(() => {
   }
 
   .chrome-slot--mobile.chrome-slot--hand {
-    border-radius: 1rem;
+    height: var(--mobile-hand-height);
+    flex: 0 0 var(--mobile-hand-height);
+    overflow: hidden;
+    border-radius: 0;
     border: 1px solid rgba(125, 211, 252, 0.14);
+    border-left: none;
+    border-right: none;
     background: linear-gradient(180deg, rgba(3, 12, 26, 0.92), rgba(7, 22, 41, 0.88));
     box-shadow: 0 14px 32px rgba(2, 6, 23, 0.26);
-  }
-
-  .chrome-slot--mobile.chrome-slot--top {
-    position: sticky;
-    top: 0;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-  }
-
-  .chrome-slot--mobile.chrome-slot--bottom {
-    position: sticky;
-    bottom: 0;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
   }
 
   .chrome-slot--desktop.chrome-slot--hand {
@@ -1168,13 +1280,12 @@ $effect(() => {
     margin-top: -1px;
     margin-bottom: -1px;
     border: 1px solid rgba(125, 211, 252, 0.14);
+    border-left: none;
+    border-right: none;
     box-shadow:
       0 22px 60px rgba(0, 0, 0, 0.45),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+    border-radius: 0;
   }
 
   .board-scroll-area--mobile > .tabletop-board {
@@ -1186,6 +1297,10 @@ $effect(() => {
     min-height: 0;
     height: 100%;
     padding: 0;
+  }
+
+  .tabletop-container[data-layout-mode="mobile"] .board-lanes {
+    gap: 0;
   }
 
   .board-lanes :global(.seat-lane) {
@@ -1264,25 +1379,66 @@ $effect(() => {
     }
 
     .tabletop-layout {
-      --mobile-menubar-height: 4.35rem;
-    }
-
-    .chrome-slot--mobile.chrome-slot--hand {
-      border-radius: 0.9rem;
-    }
-
-    .chrome-slot--mobile.chrome-slot--top {
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
-    }
-
-    .chrome-slot--mobile.chrome-slot--bottom {
-      border-top-left-radius: 0;
-      border-top-right-radius: 0;
+      --mobile-menubar-height: 3.4rem;
+      --mobile-hand-height: 4.2rem;
     }
 
     .board-lanes {
       padding: 0;
+    }
+  }
+
+  /* Accessible controls: restore larger touch targets on mobile */
+  .tabletop-container[data-accessible-controls="true"] .tabletop-layout {
+    --mobile-menubar-height: 4.6rem;
+    --mobile-hand-height: 5.5rem;
+  }
+
+  .tabletop-container[data-accessible-controls="true"] .chrome-slot--topbar {
+    margin-bottom: 0.2rem;
+  }
+
+  .tabletop-container[data-accessible-controls="true"] .chrome-slot--bottombar {
+    margin-top: 0.2rem;
+  }
+
+  .tabletop-container[data-accessible-controls="true"] .chrome-slot--mobile.chrome-slot--hand {
+    border-radius: 1rem;
+    border: 1px solid rgba(125, 211, 252, 0.14);
+  }
+
+  .tabletop-container[data-accessible-controls="true"] .chrome-slot--mobile.chrome-slot--top {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .tabletop-container[data-accessible-controls="true"] .chrome-slot--mobile.chrome-slot--bottom {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  .tabletop-container[data-accessible-controls="true"][data-layout-mode="mobile"] :global(.seat-lane) {
+    gap: 0.38rem;
+    padding: 0.5rem 0.4rem 0.42rem;
+  }
+
+  .tabletop-container[data-accessible-controls="true"][data-layout-mode="mobile"] :global(.bar-zones) {
+    --bar-row-card-height: 44px;
+    height: 74px;
+    min-height: 74px;
+    max-height: 74px;
+    padding: 0.25rem;
+    gap: 0.25rem;
+  }
+
+  .tabletop-container[data-accessible-controls="true"][data-layout-mode="mobile"] .board-lanes {
+    gap: 0.25rem;
+  }
+
+  @media (max-width: 767px) {
+    .tabletop-container[data-accessible-controls="true"] .tabletop-layout {
+      --mobile-menubar-height: 4.35rem;
+      --mobile-hand-height: 5rem;
     }
   }
 

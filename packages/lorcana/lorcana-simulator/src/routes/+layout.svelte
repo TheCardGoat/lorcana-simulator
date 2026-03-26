@@ -24,3 +24,5 @@
 
 	{@render children?.()}
 </Tooltip.Provider>
+
+export const ssr = false;

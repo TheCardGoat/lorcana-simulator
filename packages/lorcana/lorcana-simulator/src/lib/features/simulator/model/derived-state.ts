@@ -7,6 +7,7 @@ import type {
   ExecutableMovePresentationCategoryId,
   LorcanaCardTextEntrySnapshot,
   LorcanaPlayerSide,
+  LorcanaPlayerTimerSummary,
   LorcanaSimulatorMoveParams,
   MoveCategorySummary,
   MoveValidationResult,
@@ -85,14 +86,6 @@ function getPlayCostLabel(params: Record<string, unknown>): string | null {
 const KEYWORD_PATTERN =
   /^(Rush|Ward|Evasive|Bodyguard|Support|Reckless|Vanish|Alert|Challenger \+\d+|Resist \+\d+|Singer \d+|Sing Together \d+|Boost \d+|(?:Puppy |Universal )?Shift \d+)$/i;
 
-function getNonKeywordTextEntryTitles(
-  entries: LorcanaCardTextEntrySnapshot[] | undefined,
-): string[] {
-  return (entries ?? [])
-    .map((entry) => entry.title.trim())
-    .filter((title) => title.length > 0 && !KEYWORD_PATTERN.test(title));
-}
-
 function getMoveOptionLabel(
   moveId: string,
   params: Record<string, unknown>,
@@ -129,8 +122,8 @@ function getMoveOptionLabel(
     }
 
     const card = cards[cardId];
-    const abilityTitle =
-      abilityIndex !== null ? getNonKeywordTextEntryTitles(card?.textEntries)[abilityIndex] : null;
+    const abilityTitles = card?.textEntries?.map((e) => e.title) ?? [];
+    const abilityTitle = abilityIndex !== null ? abilityTitles[abilityIndex] : null;
 
     return abilityTitle && abilityTitle.length > 0
       ? `${getCardLabel(cardId, cards)}: ${abilityTitle}`
@@ -278,36 +271,105 @@ function buildEntriesForAvailableMove(
       }
       case "shiftCard": {
         const id = String(cardId);
-        const params = { cardId: id } as LorcanaSimulatorMoveParams["playCard"];
-        const label = getMoveOptionLabel("playCard", params, cards);
+        const shiftTargetOptions = engine.getMoveOptions("shiftCard", cardId);
+
+        if (shiftTargetOptions.length > 0) {
+          for (const option of shiftTargetOptions) {
+            if (option.kind !== "card") {
+              continue;
+            }
+
+            const targetId = String(option.cardId);
+            const params = {
+              cardId: id,
+              cost: "shift",
+              shiftTarget: targetId,
+              targets: [targetId],
+            } as LorcanaSimulatorMoveParams["playCard"];
+            const label = getMoveOptionLabel("playCard", params, cards);
+            entries.push({
+              id: `shiftCard:${id}:${targetId}`,
+              label,
+              moveId: "playCard",
+              params,
+              presentation: {
+                kind: "targeted",
+                categoryId: "shift-card",
+                categoryLabel: getMoveCategoryLabel("shiftCard"),
+                optionLabel: label,
+              },
+            });
+          }
+          continue;
+        }
+
+        const shiftParams = {
+          cardId: id,
+          cost: "shift",
+        } as LorcanaSimulatorMoveParams["playCard"];
+        const shiftLabel = getMoveOptionLabel("playCard", shiftParams, cards);
         entries.push({
           id: `shiftCard:${id}`,
-          label,
+          label: shiftLabel,
           moveId: "playCard",
-          params,
+          params: shiftParams,
           presentation: {
             kind: "targeted",
             categoryId: "shift-card",
             categoryLabel: getMoveCategoryLabel("shiftCard"),
-            optionLabel: label,
+            optionLabel: shiftLabel,
           },
         });
         continue;
       }
       case "singCard": {
         const id = String(cardId);
-        const params = { cardId: id } as LorcanaSimulatorMoveParams["playCard"];
-        const label = getMoveOptionLabel("playCard", params, cards);
+        const singerOptions = engine.getMoveOptions("singCard", cardId);
+
+        if (singerOptions.length > 0) {
+          for (const option of singerOptions) {
+            if (option.kind !== "card") {
+              continue;
+            }
+
+            const singerId = String(option.cardId);
+            const params = {
+              cardId: id,
+              cost: "sing",
+              singer: singerId,
+            } as LorcanaSimulatorMoveParams["playCard"];
+            const label = getMoveOptionLabel("playCard", params, cards);
+            entries.push({
+              id: `singCard:${id}:${singerId}`,
+              label,
+              moveId: "playCard",
+              params,
+              presentation: {
+                kind: "targeted",
+                categoryId: "sing-card",
+                categoryLabel: getMoveCategoryLabel("singCard"),
+                optionLabel: label,
+              },
+            });
+          }
+          continue;
+        }
+
+        const singParams = {
+          cardId: id,
+          cost: "sing",
+        } as LorcanaSimulatorMoveParams["playCard"];
+        const singLabel = getMoveOptionLabel("playCard", singParams, cards);
         entries.push({
           id: `singCard:${id}`,
-          label,
+          label: singLabel,
           moveId: "playCard",
-          params,
+          params: singParams,
           presentation: {
             kind: "targeted",
             categoryId: "sing-card",
             categoryLabel: getMoveCategoryLabel("singCard"),
-            optionLabel: label,
+            optionLabel: singLabel,
           },
         });
         continue;
@@ -409,7 +471,9 @@ function buildEntriesForAvailableMove(
             cardId: id,
             abilityIndex: option.abilityIndex,
           } as LorcanaSimulatorMoveParams["activateAbility"];
-          const label = getMoveOptionLabel("activateAbility", params, cards);
+          const label = option.abilityLabel?.trim().length
+            ? `${getCardLabel(id, cards)}: ${option.abilityLabel.trim()}`
+            : getMoveOptionLabel("activateAbility", params, cards);
           entries.push({
             id: `activateAbility:${id}:${option.abilityIndex}`,
             label,
@@ -548,7 +612,6 @@ export function buildMoveCategorySummaries(
           categoryId: "play-card",
           categoryLabel: getMoveCategoryLabel("playCard"),
           sourceCardIds: move.selectableCardIds.map(String),
-          count: move.selectableCardIds.length,
           isDirect: false,
         });
         break;
@@ -558,7 +621,6 @@ export function buildMoveCategorySummaries(
           categoryId: "shift-card",
           categoryLabel: getMoveCategoryLabel("shiftCard"),
           sourceCardIds: move.selectableCardIds.map(String),
-          count: move.selectableCardIds.length,
           isDirect: false,
         });
         break;
@@ -568,7 +630,6 @@ export function buildMoveCategorySummaries(
           categoryId: "sing-card",
           categoryLabel: getMoveCategoryLabel("singCard"),
           sourceCardIds: move.selectableCardIds.map(String),
-          count: move.selectableCardIds.length,
           isDirect: false,
         });
         break;
@@ -578,7 +639,6 @@ export function buildMoveCategorySummaries(
           categoryId: "ink-card",
           categoryLabel: getMoveCategoryLabel("putCardIntoInkwell"),
           sourceCardIds: move.selectableCardIds.map(String),
-          count: move.selectableCardIds.length,
           isDirect: false,
         });
         break;
@@ -588,7 +648,6 @@ export function buildMoveCategorySummaries(
           categoryId: "quest",
           categoryLabel: getMoveCategoryLabel("quest"),
           sourceCardIds: move.selectableCardIds.map(String),
-          count: move.selectableCardIds.length,
           isDirect: false,
         });
         break;
@@ -598,7 +657,6 @@ export function buildMoveCategorySummaries(
           categoryId: "challenge",
           categoryLabel: getMoveCategoryLabel("challenge"),
           sourceCardIds: move.selectableCardIds.map(String),
-          count: move.selectableCardIds.length,
           isDirect: false,
         });
         break;
@@ -608,7 +666,6 @@ export function buildMoveCategorySummaries(
           categoryId: "activate-ability",
           categoryLabel: getMoveCategoryLabel("activateAbility"),
           sourceCardIds: move.selectableCardIds.map(String),
-          count: move.selectableCardIds.length,
           isDirect: false,
         });
         break;
@@ -618,7 +675,6 @@ export function buildMoveCategorySummaries(
           categoryId: "move-to-location",
           categoryLabel: getMoveCategoryLabel("moveCharacterToLocation"),
           sourceCardIds: move.selectableCardIds.map(String),
-          count: move.selectableCardIds.length,
           isDirect: false,
         });
         break;
@@ -628,7 +684,6 @@ export function buildMoveCategorySummaries(
           categoryId: "pass-turn",
           categoryLabel: getMoveCategoryLabel("passTurn"),
           sourceCardIds: [],
-          count: 1,
           isDirect: true,
         });
         break;
@@ -638,7 +693,6 @@ export function buildMoveCategorySummaries(
           categoryId: "concede",
           categoryLabel: getMoveCategoryLabel("concede"),
           sourceCardIds: [],
-          count: 1,
           isDirect: true,
         });
         break;
@@ -650,7 +704,6 @@ export function buildMoveCategorySummaries(
             categoryId: "quest-all",
             categoryLabel: getMoveCategoryLabel("questWithAll"),
             sourceCardIds: [],
-            count: 1,
             isDirect: true,
           });
         }
@@ -661,7 +714,6 @@ export function buildMoveCategorySummaries(
           categoryId: "choose-first-player",
           categoryLabel: getMoveCategoryLabel("chooseWhoGoesFirst"),
           sourceCardIds: [],
-          count: 2,
           isDirect: false,
         });
         break;
@@ -675,7 +727,6 @@ export function buildMoveCategorySummaries(
       categoryId: "alter-hand",
       categoryLabel: getMoveCategoryLabel("alterHand"),
       sourceCardIds: [],
-      count: 1,
       isDirect: true,
     });
   }
@@ -685,7 +736,6 @@ export function buildMoveCategorySummaries(
       categoryId: "concede",
       categoryLabel: getMoveCategoryLabel("concede"),
       sourceCardIds: [],
-      count: 1,
       isDirect: true,
     });
   }
@@ -695,7 +745,6 @@ export function buildMoveCategorySummaries(
       categoryId: "undo",
       categoryLabel: getMoveCategoryLabel("undo"),
       sourceCardIds: [],
-      count: 1,
       isDirect: true,
     });
   }
@@ -858,7 +907,6 @@ export function areMoveCategorySummariesEqual(
     if (
       l.categoryId !== r.categoryId ||
       l.categoryLabel !== r.categoryLabel ||
-      l.count !== r.count ||
       l.isDirect !== r.isDirect ||
       l.sourceCardIds.length !== r.sourceCardIds.length
     ) {
@@ -1107,6 +1155,7 @@ export function getPlayerSummary(
   discardCount: number;
   inkwellCount: number;
   availableInk: number | null;
+  timer?: LorcanaPlayerTimerSummary;
 } | null {
   if (!side || !snapshot) {
     return null;
@@ -1117,6 +1166,18 @@ export function getPlayerSummary(
     return null;
   }
 
+  const timerEntry = snapshot.timerView.players?.[ownerId];
+  const timer: LorcanaPlayerTimerSummary | undefined = timerEntry
+    ? {
+        reserveMsRemaining: timerEntry.timeRemaining,
+        isActive: timerEntry.timerTicking,
+        isRunning: timerEntry.timerTicking,
+        startedAtMs: timerEntry.startedAtMs,
+        isInNegativeTime: timerEntry.isInNegativeTime,
+        timeoutCount: timerEntry.timeoutCount,
+      }
+    : undefined;
+
   return {
     lore: snapshot.players[ownerId]?.lore ?? 0,
     deckCount: getZoneCardCount(snapshot, side, "deck"),
@@ -1124,5 +1185,6 @@ export function getPlayerSummary(
     discardCount: getZoneCardCount(snapshot, side, "discard"),
     inkwellCount: getZoneCardCount(snapshot, side, "inkwell"),
     availableInk: getAvailableInkForSide(snapshot, side),
+    timer,
   };
 }

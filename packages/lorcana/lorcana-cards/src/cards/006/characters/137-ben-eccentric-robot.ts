@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { benEccentricRobotI18n } from "./137-ben-eccentric-robot.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const benEccentricRobot: CharacterCard = {
   id: "bXM",
@@ -24,13 +25,6 @@ export const benEccentricRobot: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Ally", "Robot", "Pirate"],
-  abilities: [
-    {
-      id: "1b2-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: benEccentricRobotI18n,
 };

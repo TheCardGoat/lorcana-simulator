@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jiminyCricketGhostOfChristmasPastI18n } from "./146-jiminy-cricket-ghost-of-christmas-past.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const jiminyCricketGhostOfChristmasPast: CharacterCard = {
   id: "tRd",
@@ -34,13 +35,7 @@ export const jiminyCricketGhostOfChristmasPast: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Ghost"],
   abilities: [
-    {
-      id: "5um-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 2,
-      text: "Boost 2 {I}",
-    },
+    boost(2),
     {
       id: "5um-2",
       effect: {

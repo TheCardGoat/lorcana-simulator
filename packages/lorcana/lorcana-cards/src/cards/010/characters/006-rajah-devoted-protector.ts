@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rajahDevotedProtectorI18n } from "./006-rajah-devoted-protector.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const rajahDevotedProtector: CharacterCard = {
   id: "hab",
@@ -24,13 +25,6 @@ export const rajahDevotedProtector: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1gk-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: rajahDevotedProtectorI18n,
 };

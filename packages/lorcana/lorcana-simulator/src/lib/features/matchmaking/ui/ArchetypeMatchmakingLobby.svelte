@@ -271,9 +271,6 @@
             <CardTitle class="scroll-m-20 text-2xl tracking-tight">
               Create New Match
             </CardTitle>
-            <!--<CardDescription class="leading-7">
-              Choose your deck, archetype pairing, and format, then publish the match to the live list.
-            </CardDescription>-->
           </CardHeader>
           <CardContent class="space-y-5">
             <div class="space-y-2">

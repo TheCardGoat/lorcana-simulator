@@ -56,7 +56,9 @@ describe("King's Sensor Core", () => {
 
     expect(testEngine.asPlayerOne().activateAbility(kingsSensorCore)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [{ zone: "hand", cards: [revealedPrince] }],
+      }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(revealedPrince)).toBe("hand");

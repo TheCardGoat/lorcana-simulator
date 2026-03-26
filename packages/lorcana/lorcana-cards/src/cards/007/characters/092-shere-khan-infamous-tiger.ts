@@ -32,7 +32,7 @@ export const shereKhanInfamousTiger: CharacterCard = {
   abilities: [
     {
       effect: {
-        amount: -1,
+        amount: "all",
         target: "CONTROLLER",
         type: "discard",
       },

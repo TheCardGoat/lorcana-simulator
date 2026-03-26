@@ -15,9 +15,22 @@ import type {
   MatchState,
   ChessClockContext,
   PriorityClockContext,
+  DynamicClockContext,
+  DynamicClockConfig,
   ClockPauseReason,
   PriorityClockPlayerState,
+  DynamicClockPlayerState,
+  ChessClockPlayerState,
 } from "./types";
+
+export const DEFAULT_DYNAMIC_CLOCK_CONFIG: DynamicClockConfig = {
+  initialReserveMs: 150_000,
+  reserveCapMs: 150_000,
+  perActionBonusMs: 5_000,
+  perTurnPassBonusMs: 60_000,
+  resetTimeOnSkipMs: 60_000,
+  graceMs: 0,
+};
 
 // =============================================================================
 // Passive Clock Settlement
@@ -48,9 +61,15 @@ export function settleClocks(state: MatchState, now: number): MatchState {
         now,
         elapsedMs,
       );
-    } else {
+    } else if (time.mode === "priority") {
       settlePriorityClockDraft(
         draft as MatchState & { ctx: { time: PriorityClockContext } },
+        now,
+        elapsedMs,
+      );
+    } else if (time.mode === "dynamic") {
+      settleDynamicClockDraft(
+        draft as MatchState & { ctx: { time: DynamicClockContext } },
         now,
         elapsedMs,
       );
@@ -62,7 +81,8 @@ export function settleClocks(state: MatchState, now: number): MatchState {
  * Settle chess clock time (draft version - mutates draft)
  *
  * In chess mode, only the active player's clock runs.
- * This function mutates the draft directly within an Immer produce() callback.
+ * Allows going negative for the two-strike timeout system -
+ * the opponent decides when to skip/drop, not the engine automatically.
  */
 function settleChessClockDraft(
   draft: MatchState & { ctx: { time: ChessClockContext } },
@@ -75,16 +95,14 @@ function settleChessClockDraft(
   const playerState = draft.ctx.time.players[activePlayerID];
   if (!playerState) return;
 
-  // Update consumed time
+  // Update consumed time (allow going negative)
   playerState.totalConsumedMs += elapsedMs;
-  playerState.reserveMsRemaining = Math.max(0, playerState.reserveMsRemaining - elapsedMs);
+  playerState.reserveMsRemaining -= elapsedMs;
   playerState.lastUpdatedAtMs = now;
 
-  // Check for timeout
-  if (playerState.reserveMsRemaining === 0) {
-    draft.ctx.time.running = false;
-    draft.ctx.time.pausedReason = "GAME_ENDED";
-    // Game end will be handled by caller
+  // Mark negative time (but don't stop the clock - opponent decides what to do)
+  if (playerState.reserveMsRemaining <= 0) {
+    playerState.isInNegativeTime = true;
   }
 }
 
@@ -131,6 +149,34 @@ function settlePriorityClockDraft(
   }
 }
 
+/**
+ * Settle dynamic clock time (draft version - mutates draft)
+ *
+ * In dynamic mode, the active player's clock burns continuously.
+ * Allows going negative for the two-strike timeout system.
+ */
+function settleDynamicClockDraft(
+  draft: MatchState & { ctx: { time: DynamicClockContext } },
+  now: number,
+  elapsedMs: number,
+): void {
+  const { activePlayerID } = draft.ctx.time;
+  if (!activePlayerID) return;
+
+  const playerState = draft.ctx.time.players[activePlayerID];
+  if (!playerState) return;
+
+  // Update consumed time (allow going negative)
+  playerState.totalConsumedMs += elapsedMs;
+  playerState.reserveMsRemaining -= elapsedMs;
+  playerState.lastUpdatedAtMs = now;
+
+  // Mark negative time (opponent decides what to do)
+  if (playerState.reserveMsRemaining <= 0) {
+    playerState.isInNegativeTime = true;
+  }
+}
+
 // =============================================================================
 // Priority Management
 // =============================================================================
@@ -164,6 +210,7 @@ export function grantPriority(state: MatchState, playerId: string, now: number):
           deadlineMs: now + windowMs,
         };
       }
+      // Dynamic mode: clock starts for the priority holder, no window concept
     }
   });
 }
@@ -203,7 +250,10 @@ export function pauseClock(state: MatchState, reason: ClockPauseReason, now: num
   const settledState = settleClocks(state, now);
 
   return produce(settledState, (draft) => {
-    const draftTime = draft.ctx.time as ChessClockContext | PriorityClockContext;
+    const draftTime = draft.ctx.time as
+      | ChessClockContext
+      | PriorityClockContext
+      | DynamicClockContext;
     draftTime.running = false;
     draftTime.pausedReason = reason;
   });
@@ -218,8 +268,10 @@ export function resumeClock(state: MatchState, activePlayerId: string, now: numb
   if (time.mode === "none") return state;
 
   return produce(state, (draft) => {
-    // Type assertion needed because Immer's draft doesn't preserve mode narrowing
-    const draftTime = draft.ctx.time as ChessClockContext | PriorityClockContext;
+    const draftTime = draft.ctx.time as
+      | ChessClockContext
+      | PriorityClockContext
+      | DynamicClockContext;
     draftTime.activePlayerID = activePlayerId;
     draftTime.startedAtMs = now;
     draftTime.running = true;
@@ -252,6 +304,62 @@ export function awardMoveBonus(
     if (draftPlayerState) {
       draftPlayerState.moveBonusMsGranted += bonusMs;
       draftPlayerState.reserveMsRemaining += bonusMs;
+    }
+  });
+}
+
+// =============================================================================
+// Dynamic Clock Bonuses
+// =============================================================================
+
+/**
+ * Award per-action bonus in dynamic clock mode.
+ * Called after any successful action by a player.
+ * Reserve is capped at reserveCapMs.
+ */
+export function awardDynamicActionBonus(
+  state: MatchState & { ctx: { time: DynamicClockContext } },
+  playerId: string,
+): MatchState {
+  const playerState = state.ctx.time.players[playerId];
+  if (!playerState) return state;
+
+  const bonusMs = state.ctx.time.config.perActionBonusMs;
+  const cap = state.ctx.time.config.reserveCapMs;
+  return produce(state, (draft) => {
+    const draftPlayerState = draft.ctx.time.players[playerId] as DynamicClockPlayerState;
+    if (draftPlayerState) {
+      draftPlayerState.actionBonusMsGranted += bonusMs;
+      draftPlayerState.reserveMsRemaining = Math.min(
+        cap,
+        draftPlayerState.reserveMsRemaining + bonusMs,
+      );
+    }
+  });
+}
+
+/**
+ * Award turn-pass bonus in dynamic clock mode.
+ * Called when a player passes their turn.
+ * Reserve is capped at reserveCapMs.
+ */
+export function awardDynamicTurnPassBonus(
+  state: MatchState & { ctx: { time: DynamicClockContext } },
+  playerId: string,
+): MatchState {
+  const playerState = state.ctx.time.players[playerId];
+  if (!playerState) return state;
+
+  const bonusMs = state.ctx.time.config.perTurnPassBonusMs;
+  const cap = state.ctx.time.config.reserveCapMs;
+  return produce(state, (draft) => {
+    const draftPlayerState = draft.ctx.time.players[playerId] as DynamicClockPlayerState;
+    if (draftPlayerState) {
+      draftPlayerState.turnPassBonusMsGranted += bonusMs;
+      draftPlayerState.reserveMsRemaining = Math.min(
+        cap,
+        draftPlayerState.reserveMsRemaining + bonusMs,
+      );
     }
   });
 }
@@ -332,6 +440,57 @@ export function handleReserveExpiry(state: MatchState, playerId: string): MatchS
 }
 
 // =============================================================================
+// Shared Timeout (Chess + Dynamic)
+// =============================================================================
+
+/**
+ * Check if a player has timed out (works for both chess and dynamic modes).
+ * Returns "first" if this is the first timeout (opponent can skip),
+ * "second" if this is the second timeout (opponent can drop),
+ * or null if no timeout.
+ */
+export function checkTimeout(state: MatchState, playerId: string): "first" | "second" | null {
+  const time = state.ctx.time;
+  if (time.mode !== "chess" && time.mode !== "dynamic") return null;
+
+  const playerState = time.players[playerId] as
+    | ChessClockPlayerState
+    | DynamicClockPlayerState
+    | undefined;
+  if (!playerState) return null;
+
+  if (!playerState.isInNegativeTime) return null;
+
+  if (playerState.timeoutCount >= 1) return "second";
+  return "first";
+}
+
+/**
+ * Reset a player's time after the opponent skips their turn.
+ * Sets reserve to resetTimeOnSkipMs, clears negative time, increments timeout count.
+ * Works for both chess and dynamic modes.
+ */
+export function resetPlayerTimeAfterSkip(state: MatchState, playerId: string): MatchState {
+  const time = state.ctx.time;
+  if (time.mode !== "chess" && time.mode !== "dynamic") return state;
+
+  const resetMs =
+    time.mode === "chess" ? time.config.resetTimeOnSkipMs : time.config.resetTimeOnSkipMs;
+
+  return produce(state, (draft) => {
+    const draftTime = draft.ctx.time as ChessClockContext | DynamicClockContext;
+    const playerState = draftTime.players[playerId] as
+      | ChessClockPlayerState
+      | DynamicClockPlayerState;
+    if (!playerState) return;
+
+    playerState.reserveMsRemaining = resetMs;
+    playerState.isInNegativeTime = false;
+    playerState.timeoutCount++;
+  });
+}
+
+// =============================================================================
 // Helpers
 // =============================================================================
 
@@ -343,35 +502,34 @@ function getOpponentId(state: MatchState, playerId: string): string | undefined 
   return players.find((p) => p !== playerId);
 }
 
+export type PlayerTimeSummary = {
+  reserveMsRemaining: number;
+  totalConsumedMs: number;
+  movesMade: number;
+  windowRemainingMs?: number;
+  isInNegativeTime?: boolean;
+  timeoutCount?: number;
+};
+
 /**
  * Get remaining time summary for a player
  */
 export function getPlayerTimeSummary(
   state: MatchState,
   playerId: string,
-): {
-  reserveMsRemaining: number;
-  totalConsumedMs: number;
-  movesMade: number;
-  windowRemainingMs?: number;
-} | null {
+): PlayerTimeSummary | null {
   if (state.ctx.time.mode === "none") return null;
 
   const playerState = state.ctx.time.players[playerId];
   if (!playerState) return null;
 
-  const summary: {
-    reserveMsRemaining: number;
-    totalConsumedMs: number;
-    movesMade: number;
-    windowRemainingMs?: number;
-  } = {
+  const summary: PlayerTimeSummary = {
     reserveMsRemaining: playerState.reserveMsRemaining,
     totalConsumedMs: playerState.totalConsumedMs,
     movesMade: playerState.movesMade,
   };
 
-  // Add window info if this player has priority
+  // Add window info if this player has priority (priority mode)
   if (
     state.ctx.time.mode === "priority" &&
     state.ctx.time.activePlayerID === playerId &&
@@ -379,6 +537,13 @@ export function getPlayerTimeSummary(
   ) {
     const now = Date.now();
     summary.windowRemainingMs = Math.max(0, state.ctx.time.activeWindow.deadlineMs - now);
+  }
+
+  // Add timeout info for chess and dynamic modes
+  if (state.ctx.time.mode === "chess" || state.ctx.time.mode === "dynamic") {
+    const timedPlayerState = playerState as ChessClockPlayerState | DynamicClockPlayerState;
+    summary.isInNegativeTime = timedPlayerState.isInNegativeTime;
+    summary.timeoutCount = timedPlayerState.timeoutCount;
   }
 
   return summary;

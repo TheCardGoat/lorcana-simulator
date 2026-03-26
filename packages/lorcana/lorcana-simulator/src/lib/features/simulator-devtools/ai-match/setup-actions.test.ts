@@ -1,4 +1,8 @@
 import { describe, expect, it, mock } from "bun:test";
+import {
+  BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+  DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+} from "@tcg/lorcana-engine";
 import { DECK_FIXTURES } from "../deck-fixtures/index.js";
 import {
   prepareAutomatedMatchSimulation,
@@ -30,8 +34,8 @@ function createConfig(): AutomatedMatchConfig {
     playerTwoDeckText: DECK_FIXTURES[1]!.cards,
     playerOneFixtureId: DECK_FIXTURES[0]!.id,
     playerTwoFixtureId: DECK_FIXTURES[1]!.id,
-    playerOneStrategyId: "default-lore-race",
-    playerTwoStrategyId: "board-control-lore-race",
+    playerOneStrategyId: DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+    playerTwoStrategyId: BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
     seed: "ai-match:seed",
   };
 }

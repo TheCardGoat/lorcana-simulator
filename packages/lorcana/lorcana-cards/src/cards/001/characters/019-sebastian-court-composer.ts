@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { sebastianCourtComposerI18n } from "./019-sebastian-court-composer.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const sebastianCourtComposer: CharacterCard = {
   id: "Xb7",
@@ -24,14 +25,6 @@ export const sebastianCourtComposer: CharacterCard = {
   },
   text: "Singer 4",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "8rz-1",
-      keyword: "Singer",
-      type: "keyword",
-      value: 4,
-      text: "Singer 4",
-    },
-  ],
+  abilities: [singer(4)],
   i18n: sebastianCourtComposerI18n,
 };

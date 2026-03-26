@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { cinderellaGentleAndKindI18n } from "./003-cinderella-gentle-and-kind.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const cinderellaGentleAndKind: CharacterCard = {
   id: "jZv",
@@ -33,13 +34,7 @@ export const cinderellaGentleAndKind: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "14u-1",
-      keyword: "Singer",
-      text: "Singer 5",
-      type: "keyword",
-      value: 5,
-    },
+    singer(5),
     {
       cost: {
         exert: true,

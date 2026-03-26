@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mrArrowLegacysFirstMateI18n } from "./182-mr-arrow-legacys-first-mate.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const mrArrowLegacysFirstMate: CharacterCard = {
   id: "Sh0",
@@ -24,14 +25,6 @@ export const mrArrowLegacysFirstMate: CharacterCard = {
   },
   text: "Resist +1",
   classifications: ["Storyborn", "Ally", "Alien"],
-  abilities: [
-    {
-      id: "1am-1",
-      keyword: "Resist",
-      type: "keyword",
-      value: 1,
-      text: "Resist +1",
-    },
-  ],
+  abilities: [resist(1)],
   i18n: mrArrowLegacysFirstMateI18n,
 };

@@ -1,33 +1,31 @@
 <script lang="ts">
+  import EyeIcon from "@lucide/svelte/icons/eye";
   import XIcon from "@lucide/svelte/icons/x";
   import type { LorcanaCardSnapshot } from "$lib/lorcana-simulator";
   import * as HoverCard from "$lib/design-system/primitives/hover-card/index.js";
+  import * as Popover from "$lib/design-system/primitives/popover/index.js";
   import CardBack from "@/design-system/simulator/cards/CardBack.svelte";
   import CardFace from "@/design-system/simulator/cards/CardFace.svelte";
   import CardHoverCardContent from "@/design-system/simulator/cards/CardHoverCardContent.svelte";
+  import {
+    CARD_IMAGE_ASPECT_RATIOS,
+    CARD_IMAGE_DIMENSIONS,
+    type ImageFormat,
+  } from "@/design-system/simulator/cards/card-image-format.js";
   import { cardHoverCardRegistry } from "@/design-system/simulator/cards/card-hover-card-registry.svelte.js";
-  import {useSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
+  import {
+    maybeUseSimulatorCardContext,
+    type SimulatorCardContextValue,
+  } from "@/features/simulator/context/simulator-card-context.svelte.js";
   import {SimulatorLayoutModeObserver} from "@/features/simulator/model/layout-mode.svelte.js";
-  import {useLorcanaSidebarPresenter} from "@/features/simulator/context/game-context.svelte.js";
+  import {
+    maybeUseLorcanaSidebarPresenter,
+    type LorcanaSidebarPresenter,
+  } from "@/features/simulator/context/game-context.svelte.js";
   import {
     useCardInteractionContext,
     type CardInteractionMeta,
   } from "@/features/simulator/context/card-interaction-context.svelte.js";
-
-  type ImageFormat = "full" | "art_only" | "art_and_name";
-
-  // Aspect ratios calculated from asset dimensions
-  const ASPECT_RATIOS: Record<ImageFormat, number> = {
-    full: 734 / 1024, // ~0.717
-    art_only: 734 / 602, // ~1.219
-    art_and_name: 734 / 766, // ~0.958
-  };
-
-  const DIMENSIONS: Record<ImageFormat, { width: number; height: number }> = {
-    full: { width: 734, height: 1024 },
-    art_only: { width: 734, height: 602 },
-    art_and_name: { width: 734, height: 766 },
-  };
 
   // Size scale factors (based on full card 734x1024)
   // These scale the actual dimensions to the desired display size
@@ -82,6 +80,7 @@
     showHoverCard?: boolean;
     hoverShowActions?: boolean;
     hoverAvailableInk?: number;
+    clickOpensHover?: boolean;
     onDragStart?: (event: DragEvent) => void;
   }
 
@@ -108,6 +107,7 @@
     showHoverCard = true,
     hoverShowActions = false,
     hoverAvailableInk = 0,
+    clickOpensHover = false,
     onDragStart: _onDragStart,
   }: LorcanaCardProps = $props();
 
@@ -116,10 +116,40 @@
   const isDryingState = $derived(isDrying || card?.isDrying || false);
   const isExertedState = $derived(isExerted || card?.readyState === "exerted" || false);
   const cardInteraction = useCardInteractionContext();
-  const simulatorCardContext = useSimulatorCardContext();
+  const simulatorCardContextFallback: Pick<
+    SimulatorCardContextValue,
+    | "inspectedCard"
+    | "canSelectCard"
+    | "openCardInspect"
+    | "closeCardInspect"
+    | "openGlobalPreview"
+  > = {
+    inspectedCard: null,
+    canSelectCard: () => false,
+    openCardInspect: () => {},
+    closeCardInspect: () => {},
+    openGlobalPreview: () => {},
+  };
+  const simulatorCardContext =
+    maybeUseSimulatorCardContext() ?? simulatorCardContextFallback;
   const layout = new SimulatorLayoutModeObserver();
-  const sidebar = useLorcanaSidebarPresenter();
+  const sidebarFallback: Pick<
+    LorcanaSidebarPresenter,
+    | "actionSelectionSession"
+    | "cardPreviewMode"
+    | "getActionSessionCardReason"
+    | "getCardActionViews"
+    | "handleCardActionClick"
+  > = {
+    actionSelectionSession: null,
+    cardPreviewMode: "immediate",
+    getActionSessionCardReason: () => null,
+    getCardActionViews: () => [],
+    handleCardActionClick: () => false,
+  };
+  const sidebar = maybeUseLorcanaSidebarPresenter() ?? sidebarFallback;
   let hoverCardOpen = $state(false);
+  let mobileCardAnchor = $state<HTMLElement | null>(null);
   const resolvedInteractionMeta = $derived<CardInteractionMeta | undefined>(
     card
       ? {
@@ -135,6 +165,12 @@
     shouldUseTouchInspect &&
     Boolean(card) &&
     simulatorCardContext.inspectedCard?.cardId === card?.cardId,
+  );
+  const isDesktopInspectCard = $derived.by(
+    () =>
+      !shouldUseTouchInspect &&
+      Boolean(card) &&
+      simulatorCardContext.inspectedCard?.cardId === card?.cardId,
   );
   const isChallengeTargetSelectionActive = $derived(
     sidebar.actionSelectionSession?.categoryId === "challenge" &&
@@ -153,10 +189,16 @@
       ? sidebar.getCardActionViews(card)
       : [],
   );
+  const shouldRenderPopover = $derived(
+    showHoverCard && shouldUseTouchInspect && isTouchInspectCard && !isChallengeTargetSelectionActive,
+  );
+  const isPreviewOpen = $derived(
+    shouldUseTouchInspect ? isTouchInspectCard : hoverCardOpen,
+  );
 
 
   // Calculate actual display dimensions based on image format and size
-  const { width, height } = $derived(DIMENSIONS[imageFormat]);
+  const { width, height } = $derived(CARD_IMAGE_DIMENSIONS[imageFormat]);
   const scale = $derived(SIZE_SCALES[size]);
   const displayWidth = $derived(Math.round(width * scale));
   const displayHeight = $derived(Math.round(height * scale));
@@ -182,6 +224,11 @@
 
   function handleSelect(event: MouseEvent): void {
     if (!card) {
+      return;
+    }
+
+    if (clickOpensHover && !sidebar.actionSelectionSession && !simulatorCardContext.canSelectCard(card, resolvedInteractionMeta)) {
+      simulatorCardContext.openCardInspect({ card, meta: resolvedInteractionMeta });
       return;
     }
 
@@ -214,12 +261,29 @@
   }
 
   function handleHoverCardClose(): void {
-    if (shouldUseTouchInspect) {
+    if (shouldUseTouchInspect || isDesktopInspectCard) {
       simulatorCardContext.closeCardInspect();
+    }
+
+    if (shouldUseTouchInspect) {
       return;
     }
 
     hoverCardOpen = false;
+  }
+
+  function handlePopoverOpenChange(open: boolean): void {
+    if (!open && isTouchInspectCard) {
+      simulatorCardContext.closeCardInspect();
+    }
+  }
+
+  function handleOpenPreview(): void {
+    if (!card) {
+      return;
+    }
+
+    simulatorCardContext.openGlobalPreview(card);
   }
 
   $effect(() => {
@@ -229,11 +293,22 @@
   });
 
   $effect(() => {
-    if (!shouldUseTouchInspect) {
+    if (!card || shouldUseTouchInspect) {
       return;
     }
 
-    hoverCardOpen = isTouchInspectCard;
+    if (isDesktopInspectCard) {
+      hoverCardOpen = true;
+      return;
+    }
+
+    if (simulatorCardContext.inspectedCard === null) {
+      return;
+    }
+
+    if (simulatorCardContext.inspectedCard.cardId !== card.cardId && hoverCardOpen) {
+      hoverCardOpen = false;
+    }
   });
 
   $effect(() => {
@@ -273,71 +348,146 @@
     {isGhost}
     {isPlayable}
     isExerted={isExertedState}
-    aspectRatio={ASPECT_RATIOS[imageFormat]}
+    aspectRatio={CARD_IMAGE_ASPECT_RATIOS[imageFormat]}
   />
 {:else if card}
-  <HoverCard.Root bind:open={hoverCardOpen} openDelay={200}>
-    <HoverCard.Trigger class="block">
-      <CardFace
-        {card}
-        {displayWidth}
-        {displayHeight}
-        {useContainerSize}
-        {size}
-        {imageFormat}
-        {isSelected}
-        isExerted={isExertedState}
-        {isGhost}
-        {isPlayable}
-        {isInvalidTarget}
-        {isBanishedPreview}
-        {isQuesting}
-        isDrying={isDryingState}
-        {damage}
-        {tagCollapseMode}
-        aspectRatio={ASPECT_RATIOS[imageFormat]}
-        on:pointerenter={handleCardFacePointerEnter}
-        on:pointerleave={handleCardFacePointerLeave}
-        on:select={handleCardFaceSelect}
-        on:contextmenu={handleCardFaceContextMenu}
-      />
-    </HoverCard.Trigger>
-    {#if shouldRenderHoverCard}
-      <HoverCard.Content
-        align="start"
-        sideOffset={8}
-        collisionPadding={12}
-        sticky="always"
-        updatePositionStrategy="always"
-        class="overflow-y-auto p-0 border-0 bg-transparent"
-        style="width: min(22rem, calc(var(--bits-link-preview-content-available-width) - 1rem)); max-width: calc(var(--bits-link-preview-content-available-width) - 1rem); max-height: calc(var(--bits-link-preview-content-available-height) - 1rem);"
-        onEscapeKeydown={handleHoverCardClose}
-        onInteractOutside={handleHoverCardClose}
-      >
-        <CardHoverCardContent
+  {#if shouldUseTouchInspect}
+    <Popover.Root
+      bind:open={() => isTouchInspectCard, handlePopoverOpenChange}
+    >
+      <div bind:this={mobileCardAnchor}>
+        <CardFace
           {card}
-          actions={hoverShowActions ? hoverActions : []}
-          contextMessage={hoverContextMessage}
-          onAction={(action) => {
-            const wasHandled = sidebar.handleCardActionClick(action, { skipConfirmation: true });
-            if (shouldUseTouchInspect && wasHandled) {
-              simulatorCardContext.closeCardInspect();
-            }
-          }}
+          {displayWidth}
+          {displayHeight}
+          {useContainerSize}
+          {size}
+          {imageFormat}
+          {isSelected}
+          isExerted={isExertedState}
+          {isGhost}
+          {isPlayable}
+          {isInvalidTarget}
+          {isBanishedPreview}
+          {isQuesting}
+          isDrying={isDryingState}
+          {damage}
+          {tagCollapseMode}
+          aspectRatio={CARD_IMAGE_ASPECT_RATIOS[imageFormat]}
+          on:pointerenter={handleCardFacePointerEnter}
+          on:pointerleave={handleCardFacePointerLeave}
+          on:select={handleCardFaceSelect}
+          on:contextmenu={handleCardFaceContextMenu}
+        />
+      </div>
+      {#if shouldRenderPopover}
+        <Popover.Content
+          customAnchor={mobileCardAnchor}
+          align="start"
+          sideOffset={8}
+          collisionPadding={12}
+          sticky="always"
+          updatePositionStrategy="always"
+          trapFocus={false}
+          class="overflow-y-auto p-0 border-0 bg-transparent"
+          style="width: min(22rem, calc(var(--bits-popover-content-available-width) - 1rem)); max-width: calc(var(--bits-popover-content-available-width) - 1rem); max-height: calc(var(--bits-popover-content-available-height) - 1rem);"
+          onEscapeKeydown={() => simulatorCardContext.closeCardInspect()}
+          onInteractOutside={() => simulatorCardContext.closeCardInspect()}
         >
-          {#snippet headerActions()}
-            <button
-              type="button"
-              class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
-              onclick={handleHoverCardClose}
-              aria-label={`Close ${card.label} details`}
-              title="Close"
-            >
-              <XIcon class="size-4" />
-            </button>
-          {/snippet}
-        </CardHoverCardContent>
-      </HoverCard.Content>
-    {/if}
-  </HoverCard.Root>
+          <CardHoverCardContent
+            {card}
+            actions={hoverShowActions ? hoverActions : []}
+            contextMessage={hoverContextMessage}
+            onAction={(action) => {
+              const wasHandled = sidebar.handleCardActionClick(action, { skipConfirmation: true });
+              if (wasHandled) {
+                simulatorCardContext.closeCardInspect();
+              }
+            }}
+          >
+            {#snippet headerActions()}
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
+                  onclick={handleOpenPreview}
+                  aria-label={`Open full preview for ${card.label}`}
+                  title="Open preview"
+                >
+                  <EyeIcon class="size-4" />
+                </button>
+                <button
+                  type="button"
+                  class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
+                  onclick={() => simulatorCardContext.closeCardInspect()}
+                  aria-label={`Close ${card.label} details`}
+                  title="Close"
+                >
+                  <XIcon class="size-4" />
+                </button>
+              </div>
+            {/snippet}
+          </CardHoverCardContent>
+        </Popover.Content>
+      {/if}
+    </Popover.Root>
+  {:else}
+    <HoverCard.Root bind:open={hoverCardOpen} openDelay={200}>
+      <HoverCard.Trigger class="block">
+        <CardFace
+          {card}
+          {displayWidth}
+          {displayHeight}
+          {useContainerSize}
+          {size}
+          {imageFormat}
+          {isSelected}
+          isExerted={isExertedState}
+          {isGhost}
+          {isPlayable}
+          {isInvalidTarget}
+          {isBanishedPreview}
+          {isQuesting}
+          isDrying={isDryingState}
+          {damage}
+          {tagCollapseMode}
+          aspectRatio={CARD_IMAGE_ASPECT_RATIOS[imageFormat]}
+          on:pointerenter={handleCardFacePointerEnter}
+          on:pointerleave={handleCardFacePointerLeave}
+          on:select={handleCardFaceSelect}
+          on:contextmenu={handleCardFaceContextMenu}
+        />
+      </HoverCard.Trigger>
+      {#if shouldRenderHoverCard}
+        <HoverCard.Content
+          class="w-fit p-0 border-0 bg-transparent overflow-y-auto"
+          style="width: min(22rem, calc(var(--bits-link-preview-content-available-width, 100vw) - 1rem)); max-width: calc(var(--bits-link-preview-content-available-width, 100vw) - 1rem); max-height: calc(var(--bits-link-preview-content-available-height, 100vh) - 1rem);"
+          onEscapeKeydown={handleHoverCardClose}
+          onInteractOutside={handleHoverCardClose}
+        >
+          <CardHoverCardContent
+            {card}
+            actions={hoverShowActions ? hoverActions : []}
+            contextMessage={hoverContextMessage}
+            onAction={(action) => {
+              sidebar.handleCardActionClick(action, { skipConfirmation: true });
+              handleHoverCardClose();
+            }}
+          >
+            {#snippet headerActions()}
+              <button
+                type="button"
+                class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
+                onclick={handleHoverCardClose}
+                aria-label={`Close ${card.label} details`}
+                title="Close"
+              >
+                <XIcon class="size-4" />
+              </button>
+            {/snippet}
+          </CardHoverCardContent>
+        </HoverCard.Content>
+      {/if}
+    </HoverCard.Root>
+  {/if}
 {/if}

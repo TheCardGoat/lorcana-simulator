@@ -29,3 +29,16 @@
 		{...restProps}
 	/>
 </HoverCardPortal>
+
+<style>
+  /*
+   * The bits-ui floating wrapper div is often larger than the visible content
+   * (due to min-width: max-content + available space calculations), which causes
+   * it to intercept clicks on elements behind it. Since the inner content div
+   * already has pointer-events: auto set inline by bits-ui, clicks on the visible
+   * popup still work correctly.
+   */
+  :global([data-bits-floating-content-wrapper]:has([data-slot="hover-card-content"])) {
+    pointer-events: none !important;
+  }
+</style>

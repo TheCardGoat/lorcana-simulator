@@ -38,6 +38,13 @@ export const peteBornToCheat: CharacterCard = {
           owner: "any",
           selector: "chosen",
           zones: ["play"],
+          filter: [
+            {
+              type: "strength-comparison",
+              comparison: "less-or-equal",
+              value: 2,
+            },
+          ],
         },
         type: "return-to-hand",
       },
@@ -48,6 +55,13 @@ export const peteBornToCheat: CharacterCard = {
         event: "quest",
         on: "SELF",
         timing: "whenever",
+        condition: {
+          type: "stat-threshold",
+          stat: "strength",
+          value: 5,
+          comparison: "greater-or-equal",
+          target: "SELF",
+        },
       },
       type: "triggered",
     },

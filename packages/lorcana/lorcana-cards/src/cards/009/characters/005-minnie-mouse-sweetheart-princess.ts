@@ -38,12 +38,25 @@ export const minnieMouseSweetheartPrincess: CharacterCard = {
     {
       effect: {
         keyword: "Support",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-name",
+              name: "Mickey Mouse",
+            },
+          ],
+        },
         type: "gain-keyword",
       },
       id: "ofq-1",
+      name: "ROYAL FAVOR",
       text: "ROYAL FAVOR Your characters named Mickey Mouse gain Support.",
-      type: "action",
+      type: "static",
     },
     {
       effect: {
@@ -55,14 +68,30 @@ export const minnieMouseSweetheartPrincess: CharacterCard = {
             owner: "any",
             zones: ["play"],
             cardTypes: ["character"],
+            filter: [
+              {
+                type: "exerted",
+              },
+              {
+                type: "strength-comparison",
+                comparison: "greater-or-equal",
+                value: 5,
+              },
+            ],
           },
           type: "banish",
         },
         type: "optional",
       },
       id: "ofq-2",
+      name: "BYE BYE, NOW",
       text: "BYE BYE, NOW Whenever this character quests, you may banish chosen exerted character with 5 {S} or more.",
-      type: "action",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
     },
   ],
   i18n: minnieMouseSweetheartPrincessI18n,

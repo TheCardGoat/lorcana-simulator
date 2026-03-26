@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tiggerWonderfulThingI18n } from "./127-tigger-wonderful-thing.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const tiggerWonderfulThing: CharacterCard = {
   id: "H06",
@@ -24,13 +25,6 @@ export const tiggerWonderfulThing: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Tigger"],
-  abilities: [
-    {
-      id: "1cg-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: tiggerWonderfulThingI18n,
 };

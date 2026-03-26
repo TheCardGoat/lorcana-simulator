@@ -31,6 +31,8 @@
       `top:${animation.sourceRect.y}px`,
       `width:${animation.sourceRect.width}px`,
       `height:${animation.sourceRect.height}px`,
+      `--zone-card-width:${animation.sourceRect.width}px`,
+      `--zone-card-height:${animation.sourceRect.height}px`,
       `--board-animation-dx:${dx}px`,
       `--board-animation-dy:${dy}px`,
       `--board-animation-scale-x:${scaleX}`,
@@ -59,7 +61,10 @@
   }
 
   function getAnimationImageFormat(animation: ResolvedBoardMoveAnimation): "art_and_name" | "full" {
-    return animation.destinationZoneId === "inkwell" ? "art_and_name" : "full";
+    if (animation.destinationZoneId === "inkwell") {
+      return "art_and_name";
+    }
+    return "full";
   }
 </script>
 
@@ -75,6 +80,7 @@
 
     <div
       class="board-animation-actor"
+      class:board-animation-actor--banish={animation.variant === "banish"}
       class:board-animation-actor--ink-faceDown={animation.variant === "ink-faceDown"}
       class:board-animation-actor--ink-faceUp={animation.variant === "ink-faceUp"}
       class:board-animation-actor--play-character={animation.variant === "play-character"}
@@ -123,6 +129,11 @@
     width: 100%;
     height: 100%;
     filter: drop-shadow(0 22px 28px rgba(5, 10, 18, 0.55));
+  }
+
+  .board-animation-actor--banish {
+    animation-name: board-animation-banish;
+    animation-timing-function: cubic-bezier(0.3, 0.0, 0.5, 1);
   }
 
   .board-animation-actor--ink-faceDown,
@@ -194,6 +205,30 @@
 
   .board-animation-card-shell--play-action-preview {
     filter: drop-shadow(0 26px 36px rgba(5, 10, 18, 0.68)) drop-shadow(0 0 28px rgba(104, 225, 255, 0.34));
+  }
+
+  @keyframes board-animation-banish {
+    0% {
+      opacity: 1;
+      transform: translate(0px, 0px) scale(1) rotate(0deg);
+      filter: brightness(1);
+    }
+    30% {
+      opacity: 0.9;
+      transform: translate(
+          calc(var(--board-animation-dx) * 0.25),
+          calc(var(--board-animation-dy) * 0.25 - 14px)
+        )
+        scale(0.96) rotate(-3deg);
+      filter: brightness(1.2) saturate(0.7);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(var(--board-animation-dx), var(--board-animation-dy))
+        scale(var(--board-animation-scale-x), var(--board-animation-scale-y))
+        rotate(6deg);
+      filter: brightness(0.6) saturate(0.3);
+    }
   }
 
   @keyframes board-animation-ink {

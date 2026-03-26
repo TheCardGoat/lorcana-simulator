@@ -156,6 +156,31 @@ describe("Tiana - Natural Talent", () => {
       expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacterA)).toBe(strengthBefore);
     });
 
+    it("regression: should reduce opposing characters' strength when Tiana sings a song herself", () => {
+      // Bug: Tiana was not reducing opposing characters' strength when a song was played.
+      // This verifies the basic flow when Tiana exerts to sing a song.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [tianaNaturalTalent],
+          hand: [cheapSong],
+          deck: 1,
+        },
+        {
+          play: [opposingCharacterA],
+          deck: 1,
+        },
+      );
+
+      const strengthBefore = testEngine.asPlayerTwo().getCardStrength(opposingCharacterA);
+
+      expect(
+        testEngine.asPlayerOne().singSong(cheapSong, tianaNaturalTalent),
+      ).toBeSuccessfulCommand();
+
+      // Opposing character should have -1 strength
+      expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacterA)).toBe(strengthBefore - 1);
+    });
+
     it("should NOT trigger when a non-song action is played", () => {
       const nonSongAction = {
         ...trialsAndTribulations,

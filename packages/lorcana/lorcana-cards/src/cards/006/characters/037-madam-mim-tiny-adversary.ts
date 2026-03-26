@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { madamMimTinyAdversaryI18n } from "./037-madam-mim-tiny-adversary.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const madamMimTinyAdversary: CharacterCard = {
   id: "SKE",
@@ -33,13 +34,7 @@ export const madamMimTinyAdversary: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer"],
   abilities: [
-    {
-      id: "jgv-1",
-      keyword: "Challenger",
-      text: "Challenger +1",
-      type: "keyword",
-      value: 1,
-    },
+    challenger(1),
     {
       effect: {
         keyword: "Challenger",

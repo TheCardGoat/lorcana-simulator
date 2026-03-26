@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { resist } from "../../../helpers/abilities/resist";
 import { francineEyeingTheEvidenceI18n } from "./176-francine-eyeing-the-evidence.i18n";
 
 export const francineEyeingTheEvidence: CharacterCard = {
@@ -24,14 +25,6 @@ export const francineEyeingTheEvidence: CharacterCard = {
   },
   text: "Resist +1",
   classifications: ["Storyborn", "Ally", "Detective"],
-  abilities: [
-    {
-      id: "1bg-1",
-      keyword: "Resist",
-      type: "keyword",
-      value: 1,
-      text: "Resist +1",
-    },
-  ],
+  abilities: [resist(1)],
   i18n: francineEyeingTheEvidenceI18n,
 };

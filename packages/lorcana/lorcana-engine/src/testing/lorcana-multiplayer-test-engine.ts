@@ -1,9 +1,11 @@
-import "../config/logtape/configure";
+import { configureLogtape } from "../config/logtape/configure";
 
-import { getLogger, type Logger } from "@logtape/logtape";
+import { getLogger, type Logger, type LogLevel } from "@logtape/logtape";
+
 const logger = getLogger(["lorcana-engine", "multiplayer-test-engine"]);
 
 import {
+  type BrowserTransportConfig,
   type CardsMaps,
   type EngineMoveExecutionResult,
   type EngineMoveHistoryEntry,
@@ -14,8 +16,10 @@ import {
   type MoveInput,
   type PlayerId,
   type CardInstanceId,
+  type TimeControlConfig,
   createCardsMapsFromStaticResources,
   createInMemoryTransportPair,
+  normalizeBrowserTransportConfig,
   type PublishedGameEvent,
 } from "#core";
 import {
@@ -92,19 +96,26 @@ export interface LorcanaTestMoves extends Record<string, unknown> {
 }
 
 export interface LorcanaTestEngineConfig {
+  browserTransport?: BrowserTransportConfig;
   seed?: string;
   includeSpectator?: boolean;
+  optimizeInactiveClientProjection?: boolean;
   startingLore?: Record<string, number>;
   startingInk?: Record<string, number>;
   initialView?: GameTestView;
   /** Pre-built static resources (e.g. from fromInitialStates). When not set, an empty bundle is used. */
   staticResources?: MatchStaticResources;
+  /** Time control configuration for the match. Defaults to no clock. */
+  timeControl?: TimeControlConfig;
 }
 
 export interface LorcanaFixtureInitOptions extends LorcanaTestEngineConfig {
   skipPreGame?: boolean;
   validateSync?: boolean;
   debugServerCommunication?: boolean;
+  // Enable verbose logging for debugging.
+  showLogs?: boolean;
+  logLevel?: LogLevel;
 }
 
 /**
@@ -142,6 +153,7 @@ export class LorcanaMultiplayerTestEngine {
     const includeSpectator = config.includeSpectator ?? true;
     const debugMode = fixtureOptions.debugServerCommunication ?? false;
     const seed = config.seed ?? "lorcana-multiplayer-test-engine";
+    const browserTransport = normalizeBrowserTransportConfig(config.browserTransport);
     const cardsMaps = createCardsMapsFromStaticResources(staticResources);
     this._cardsMaps = cardsMaps;
 
@@ -153,11 +165,12 @@ export class LorcanaMultiplayerTestEngine {
       cardCatalog: staticResources.cards,
       cardsMaps,
       debugServerCommunication: debugMode,
-    } as const;
+      timeControl: config.timeControl,
+    };
     this.serverEngine = new LorcanaServer(serverInitParams);
 
     for (const player of players) {
-      const transportPair = createInMemoryTransportPair();
+      const transportPair = createInMemoryTransportPair({ browserTransport });
       transportPair.identifier = `${player.id}:in-memory-transport`;
       this.transportPairs.set(player.id, transportPair);
       this.serverEngine.acceptConnection(player.id, transportPair.server);
@@ -174,6 +187,7 @@ export class LorcanaMultiplayerTestEngine {
         cardCatalog: staticResources.cards,
         cardsMaps,
         debugMode,
+        skipOptimisticState: browserTransport.mode === "sync",
       });
       const view = player.id === players[0].id ? "playerOne" : "playerTwo";
       this.playerEngines.set(view, clientEngine);
@@ -181,7 +195,7 @@ export class LorcanaMultiplayerTestEngine {
     }
 
     if (includeSpectator) {
-      const spectatorTransport = createInMemoryTransportPair();
+      const spectatorTransport = createInMemoryTransportPair({ browserTransport });
       spectatorTransport.identifier = `${SPECTATOR_PLAYER_ID}:in-memory-transport`;
       this.transportPairs.set(SPECTATOR_PLAYER_ID, spectatorTransport);
       this.serverEngine.acceptConnection(SPECTATOR_PLAYER_ID, spectatorTransport.server);
@@ -198,8 +212,13 @@ export class LorcanaMultiplayerTestEngine {
         cardCatalog: staticResources.cards,
         cardsMaps,
         debugMode,
+        skipOptimisticState: browserTransport.mode === "sync",
       });
       this.playerEngines.set("spectator", spectatorEngine);
+    }
+
+    if (config.optimizeInactiveClientProjection) {
+      this.setActiveClientView(this.currentView);
     }
 
     this.fixtureOptions = fixtureOptions;
@@ -249,6 +268,10 @@ export class LorcanaMultiplayerTestEngine {
     playerTwoStateOrOptions: TestInitialState | LorcanaFixtureInitOptions = {},
     options: LorcanaFixtureInitOptions = {},
   ): LorcanaMultiplayerTestEngine {
+    if (options?.showLogs) {
+      configureLogtape(options?.logLevel);
+    }
+
     const playerTwoState = isTestInitialState(playerTwoStateOrOptions)
       ? playerTwoStateOrOptions
       : {};
@@ -260,12 +283,14 @@ export class LorcanaMultiplayerTestEngine {
     const bundle = buildFixtureSeedBundle(normalizedPlayerOneState, normalizedPlayerTwoState);
 
     const config: LorcanaTestEngineConfig = {
+      browserTransport: resolvedOptions.browserTransport,
       seed: resolvedOptions.seed,
       includeSpectator: resolvedOptions.includeSpectator,
       startingLore: resolvedOptions.startingLore,
       startingInk: resolvedOptions.startingInk,
       initialView: resolvedOptions.initialView,
       staticResources: bundle.staticResources,
+      timeControl: resolvedOptions.timeControl,
     };
 
     const engine = new LorcanaMultiplayerTestEngine(config, resolvedOptions);
@@ -358,6 +383,16 @@ export class LorcanaMultiplayerTestEngine {
 
   getClientEngine(playerOrView: string): LorcanaClient | undefined {
     return this.resolveOptionalClient(playerOrView);
+  }
+
+  setActiveClientView(view: GameTestView): void {
+    const eagerView = view === "authoritative" ? null : view;
+
+    for (const candidate of ["playerOne", "playerTwo", "spectator"] as const) {
+      this.playerEngines
+        .get(candidate)
+        ?.engine.setProjectionMode(candidate === eagerView ? "eager" : "lazy");
+    }
   }
 
   executeMove<K extends keyof Record<string, MoveInput> & string>(

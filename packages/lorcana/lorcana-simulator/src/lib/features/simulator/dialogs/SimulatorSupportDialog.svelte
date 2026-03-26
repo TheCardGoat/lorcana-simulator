@@ -2,12 +2,14 @@
   import { m } from "$lib/i18n/messages.js";
   import * as Dialog from "$lib/design-system/primitives/dialog";
   import SimulatorSupportActions from "@/features/simulator/support/SimulatorSupportActions.svelte";
+  import type { BugReportContext } from "@/features/simulator/support/feedback-api.js";
 
   interface SimulatorSupportDialogProps {
     open?: boolean;
+    gameContext?: BugReportContext;
   }
 
-  let { open = $bindable(false) }: SimulatorSupportDialogProps = $props();
+  let { open = $bindable(false), gameContext }: SimulatorSupportDialogProps = $props();
 </script>
 
 <Dialog.Root bind:open>
@@ -23,7 +25,7 @@
         </Dialog.Description>
       </Dialog.Header>
 
-      <SimulatorSupportActions />
+      <SimulatorSupportActions {gameContext} />
 
       <Dialog.Footer>
         <Dialog.Close class="player-settings-close" aria-label={m["sim.settings.closeAria"]({})}>

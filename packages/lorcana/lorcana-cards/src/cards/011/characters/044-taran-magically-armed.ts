@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { taranMagicallyArmedI18n } from "./044-taran-magically-armed.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const taranMagicallyArmed: CharacterCard = {
   id: "8Qz",
@@ -25,12 +26,7 @@ export const taranMagicallyArmed: CharacterCard = {
   text: "Rush WEAKEN THE CAULDRON When you play this character, put up to 2 cards from chosen player's discard on the bottom of their deck in any order.",
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "u75-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
+    rush,
     {
       id: "u75-2",
       effect: {

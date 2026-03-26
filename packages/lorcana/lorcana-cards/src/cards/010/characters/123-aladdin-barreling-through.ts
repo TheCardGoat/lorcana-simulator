@@ -1,4 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
+import { reckless } from "../../../helpers/abilities/reckless";
 import { aladdinBarrelingThroughI18n } from "./123-aladdin-barreling-through.i18n";
 
 export const aladdinBarrelingThrough: CharacterCard = {
@@ -37,19 +39,8 @@ export const aladdinBarrelingThrough: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Whisper"],
   abilities: [
-    {
-      id: "1tr-1",
-      keyword: "Boost",
-      text: "Boost 1 {I}",
-      type: "keyword",
-      value: 1,
-    },
-    {
-      id: "1tr-2",
-      keyword: "Reckless",
-      text: "Reckless",
-      type: "keyword",
-    },
+    boost(1),
+    reckless,
     {
       id: "1tr-3",
       name: "ONLY THE BOLD",

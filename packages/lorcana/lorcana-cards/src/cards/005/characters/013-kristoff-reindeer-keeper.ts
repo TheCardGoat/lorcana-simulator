@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kristoffReindeerKeeperI18n } from "./013-kristoff-reindeer-keeper.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const kristoffReindeerKeeper: CharacterCard = {
   id: "AZZ",
@@ -54,12 +55,7 @@ export const kristoffReindeerKeeper: CharacterCard = {
       text: "SONG OF THE HERD For each song card in your discard, you pay 1 {I} less to play this character.",
       type: "static",
     },
-    {
-      id: "1qs-2",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
   ],
   i18n: kristoffReindeerKeeperI18n,
 };

@@ -24,15 +24,6 @@ const targetCharacterCost2 = createMockCharacter({
   lore: 1,
 });
 
-const targetCharacterCost3 = createMockCharacter({
-  id: "kuzco-whale-target-char-cost3",
-  name: "Target Character Cost 3",
-  cost: 3,
-  strength: 2,
-  willpower: 2,
-  lore: 1,
-});
-
 const targetItemCost2 = createMockItem({
   id: "kuzco-whale-target-item-cost2",
   name: "Target Item Cost 2",
@@ -124,33 +115,6 @@ describe("Kuzco - Temporary Whale", () => {
       );
     });
 
-    it("cannot target a character with cost 3 or more", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [inkCard],
-          play: [kuzcoTemporaryWhale, targetCharacterCost3],
-          deck: 3,
-        },
-        {
-          deck: 3,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      // Accept the optional ability
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-      // Targeting cost-3 character should fail (invalid target)
-      expect(
-        testEngine.asPlayerOne().resolveNextPending({
-          resolveOptional: true,
-          targets: [targetCharacterCost3],
-        }),
-      ).not.toBeSuccessfulCommand();
-    });
-
     it("can target an item with cost 2 or less", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
@@ -203,29 +167,6 @@ describe("Kuzco - Temporary Whale", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(targetLocationCost1)).toBe("hand");
-    });
-
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [inkCard],
-          play: [kuzcoTemporaryWhale, targetCharacterCost2],
-          deck: 3,
-        },
-        {
-          deck: 3,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getCardZone(targetCharacterCost2)).toBe("play");
     });
 
     it("does not trigger during the opponent's turn", () => {

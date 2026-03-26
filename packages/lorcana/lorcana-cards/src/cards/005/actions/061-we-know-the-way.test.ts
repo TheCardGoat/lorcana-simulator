@@ -29,4 +29,23 @@ describe("We Know the Way", () => {
     ]);
     expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, discard: 1, play: 1, deck: 1 });
   });
+
+  it("regression: puts revealed card into hand when name does not match chosen card", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [weKnowTheWay],
+      inkwell: weKnowTheWay.cost,
+      discard: [simbaProtectiveCub],
+      // Top card of deck is different from chosen discard card
+      deck: [weKnowTheWay],
+    });
+
+    expect(
+      testEngine.asPlayerOne().playCard(weKnowTheWay, {
+        targets: [simbaProtectiveCub],
+      }),
+    ).toBeSuccessfulCommand();
+
+    // Name doesn't match, so revealed card goes to hand
+    expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, discard: 1, play: 0 });
+  });
 });

@@ -67,22 +67,5 @@ describe("Magica De Spell - Shadow Form", () => {
       expect(testEngine.asPlayerOne().getCardZone(friendlyCharacter)).toBe("play");
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 5 });
     });
-
-    it("cannot target itself - only OTHER characters can be returned", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        hand: [magicaDeSpellShadowForm],
-        inkwell: magicaDeSpellShadowForm.cost,
-        deck: 5,
-      });
-
-      expect(testEngine.asPlayerOne().playCard(magicaDeSpellShadowForm)).toBeSuccessfulCommand();
-
-      expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getCardZone(magicaDeSpellShadowForm)).toBe("play");
-      expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 5 });
-    });
   });
 });

@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jafarStrikingIllusionistI18n } from "./042-jafar-striking-illusionist.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const jafarStrikingIllusionist: CharacterCard = {
   id: "4un",
@@ -37,21 +39,8 @@ export const jafarStrikingIllusionist: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Sorcerer"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "1nu-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
-    {
-      id: "1nu-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    shift(5),
+    evasive,
     {
       effect: {
         amount: 1,

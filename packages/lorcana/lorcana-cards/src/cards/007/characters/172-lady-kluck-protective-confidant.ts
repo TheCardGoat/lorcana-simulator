@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ladyKluckProtectiveConfidantI18n } from "./172-lady-kluck-protective-confidant.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const ladyKluckProtectiveConfidant: CharacterCard = {
   id: "wEk",
@@ -31,19 +33,6 @@ export const ladyKluckProtectiveConfidant: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "18v-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-    {
-      id: "18v-2",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard, ward],
   i18n: ladyKluckProtectiveConfidantI18n,
 };

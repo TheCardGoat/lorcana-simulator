@@ -42,6 +42,8 @@ export interface ReturnToHandEffect {
   filters?: readonly CardFilter[];
   /** Amount of cards to return */
   amount?: AmountExpr;
+  /** Who chooses which card to return */
+  chosenBy?: "you" | "opponent" | "TARGET";
 }
 
 /**
@@ -162,7 +164,14 @@ export interface MoveCardsFromUnderEffect {
  */
 export interface PlayCardEffect {
   type: "play-card";
-  from?: "hand" | "discard" | "deck" | "under-self" | "revealed";
+  from?:
+    | "hand"
+    | "discard"
+    | "deck"
+    | "inkwell"
+    | "under-self"
+    | "revealed"
+    | readonly ("hand" | "discard" | "deck")[];
   cardType?: CardType | "song" | "floodborn";
   costRestriction?: { comparison: "less-or-equal" | "equal"; value: number };
   cost?: "free" | "reduced";
@@ -213,6 +222,13 @@ export interface MoveToLocationEffect {
    * @example Tuk Tuk - Lively Partner: "move him and one of your other characters to the same location"
    */
   includeSelf?: boolean;
+  /**
+   * Sub-effects to execute once for each character that was successfully moved.
+   *
+   * @example Moana - Kakamora Leader: "Gain 1 lore for each character you moved."
+   * forEach: [{ type: "gain-lore", amount: 1 }]
+   */
+  forEach?: ReadonlyArray<{ type: string; [key: string]: unknown }>;
 }
 
 /**
@@ -220,6 +236,7 @@ export interface MoveToLocationEffect {
  *
  * @example "Your characters named Robin Hood may move here for free"
  * @example "Your Pirate characters may move here for free"
+ * @example "Once during your turn, you may pay 1 less to move this character to a location."
  */
 export interface MoveCostReductionEffect {
   type: "move-cost-reduction";
@@ -231,6 +248,13 @@ export interface MoveCostReductionEffect {
   reduction: AmountExpr | "free";
   /** Target location (usually "here" for location abilities) */
   location?: "here" | LocationTarget;
+  /**
+   * When "SELF", the reduction applies only when the card that has this ability
+   * is the character being moved (self-targeting reduction).
+   *
+   * @example Raksha - Fearless Mother: "you may pay 1 less to move this character to a location"
+   */
+  target?: "SELF";
 }
 
 /**

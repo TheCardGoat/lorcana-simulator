@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { challenger } from "../../../helpers/abilities/challenger";
 import { iagoStompinMadI18n } from "./043-iago-stompin-mad.i18n";
 
 export const iagoStompinMad: CharacterCard = {
@@ -24,14 +25,6 @@ export const iagoStompinMad: CharacterCard = {
   },
   text: "Challenger +5",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "87v-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 5,
-      text: "Challenger +5",
-    },
-  ],
+  abilities: [challenger(5)],
   i18n: iagoStompinMadI18n,
 };

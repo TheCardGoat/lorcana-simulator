@@ -2,8 +2,6 @@ import { describe, expect, it } from "bun:test";
 import { render } from "svelte/server";
 import type { CardInstanceId, ChallengePreviewResult } from "@tcg/lorcana-engine";
 
-import ChallengeAimOverlay from "@/features/simulator/board/ChallengeAimOverlay.svelte";
-
 const sourceRect = {
   x: 60,
   y: 220,
@@ -39,7 +37,9 @@ const basePreview: ChallengePreviewResult = {
 };
 
 describe("ChallengeAimOverlay", () => {
-  it("stays hidden when it does not have a target point", () => {
+  it("stays hidden when it does not have a target point", async () => {
+    const { default: ChallengeAimOverlay } =
+      await import("@/features/simulator/board/ChallengeAimOverlay.svelte");
     const { body } = render(ChallengeAimOverlay, {
       props: {
         width: 800,
@@ -53,7 +53,9 @@ describe("ChallengeAimOverlay", () => {
     expect(body).not.toContain("challenge-aim-arrowhead");
   });
 
-  it("renders an unlocked cursor-follow arrow without combat badges", () => {
+  it("renders an unlocked cursor-follow arrow without combat badges", async () => {
+    const { default: ChallengeAimOverlay } =
+      await import("@/features/simulator/board/ChallengeAimOverlay.svelte");
     const { body } = render(ChallengeAimOverlay, {
       props: {
         width: 800,
@@ -71,7 +73,9 @@ describe("ChallengeAimOverlay", () => {
     expect(body).not.toContain("Banished");
   });
 
-  it("renders locked challenge badges and banish markers when preview is lethal", () => {
+  it("renders locked challenge badges and banish markers when preview is lethal", async () => {
+    const { default: ChallengeAimOverlay } =
+      await import("@/features/simulator/board/ChallengeAimOverlay.svelte");
     const { body } = render(ChallengeAimOverlay, {
       props: {
         width: 800,
@@ -92,7 +96,9 @@ describe("ChallengeAimOverlay", () => {
     expect(body).toContain("Banished");
   });
 
-  it("omits return damage badges for location defenders", () => {
+  it("omits return damage badges for location defenders", async () => {
+    const { default: ChallengeAimOverlay } =
+      await import("@/features/simulator/board/ChallengeAimOverlay.svelte");
     const { body } = render(ChallengeAimOverlay, {
       props: {
         width: 800,

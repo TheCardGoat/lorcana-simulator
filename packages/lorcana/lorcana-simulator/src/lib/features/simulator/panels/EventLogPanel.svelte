@@ -4,7 +4,7 @@
   import { get } from "svelte/store";
   import { m } from "$lib/i18n/messages.js";
   import type {
-    LorcanaCardSnapshot,
+    LogCardReference,
     LorcanaPlayerSide,
     MoveLogEntrySnapshot,
   } from "@/features/simulator/model/contracts.js";
@@ -13,6 +13,7 @@
     buildEventLogRows,
     filterEntriesToLastTurns,
     groupEventLogRows,
+    type CardReferenceResolver,
     type EventLogGroup,
     type EventLogPlayerTone,
   } from "./event-log-presentation.js";
@@ -21,15 +22,17 @@
   interface EventLogPanelProps {
     entries: MoveLogEntrySnapshot[];
     viewerSide?: LorcanaPlayerSide | null;
+    resolveCard?: CardReferenceResolver;
     showRawLogRegistryJson?: boolean;
     compact?: boolean;
-    onCardHover?: (card: LorcanaCardSnapshot) => void;
+    onCardHover?: (cardRef: LogCardReference) => void;
     onCardLeave?: () => void;
   }
 
   let {
     entries,
     viewerSide = null,
+    resolveCard,
     showRawLogRegistryJson = false,
     compact = false,
     onCardHover = () => {},
@@ -43,7 +46,7 @@
   const browser = typeof window !== "undefined";
 
   const visibleEntries = $derived(filterEntriesToLastTurns(entries));
-  const rows = $derived(buildEventLogRows(entries, viewerSide));
+  const rows = $derived(buildEventLogRows(entries, viewerSide, resolveCard));
   const groups = $derived(groupEventLogRows(rows));
   const entryById = $derived(
     new Map<string, MoveLogEntrySnapshot>(visibleEntries.map((entry) => [entry.id, entry])),
@@ -75,14 +78,16 @@
       hasInitializedScroll = true;
       previousGroupCount = groups.length;
       requestAnimationFrame(() => {
-        if (!scrollElement || groups.length === 0) {
-          return;
-        }
+        requestAnimationFrame(() => {
+          if (!scrollElement || groups.length === 0) {
+            return;
+          }
 
-        get(virtualizer).scrollToIndex(groups.length - 1, {
-          align: "end",
+          get(virtualizer).scrollToIndex(groups.length - 1, {
+            align: "end",
+          });
+          scrollElement.scrollTop = scrollElement.scrollHeight;
         });
-        scrollElement.scrollTop = scrollElement.scrollHeight;
       });
       return;
     }
@@ -95,14 +100,16 @@
     previousGroupCount = groups.length;
 
     requestAnimationFrame(() => {
-      if (!scrollElement || groups.length === 0) {
-        return;
-      }
+      requestAnimationFrame(() => {
+        if (!scrollElement || groups.length === 0) {
+          return;
+        }
 
-      get(virtualizer).scrollToIndex(groups.length - 1, {
-        align: "end",
+        get(virtualizer).scrollToIndex(groups.length - 1, {
+          align: "end",
+        });
+        scrollElement.scrollTop = scrollElement.scrollHeight;
       });
-      scrollElement.scrollTop = scrollElement.scrollHeight;
     });
   });
 
@@ -150,20 +157,7 @@
   }
 
   function stringifyRawEntry(entry: MoveLogEntrySnapshot): string {
-    return JSON.stringify(
-      {
-        id: entry.id,
-        timestamp: entry.timestamp,
-        turnNumber: entry.turnNumber,
-        moveId: entry.moveId,
-        actorSide: entry.actorSide ?? null,
-        title: entry.title,
-        detail: entry.detail ?? null,
-        rawLogRegistry: entry.rawLogRegistry ?? null,
-      },
-      null,
-      2,
-    );
+    return JSON.stringify(entry, null, 2);
   }
 
   function playerChipClasses(tone: EventLogPlayerTone): string {
@@ -295,9 +289,6 @@
                             <span class="mt-[0.35rem] h-1 w-1 shrink-0 rounded-full bg-slate-500/60"></span>
                             <div class="min-w-0 flex-1 rounded border border-slate-800/80 bg-slate-950/70 px-2 py-1.5">
                               <p class="mb-1 text-[0.72rem] font-medium text-slate-200">{debugEntry.title}</p>
-                              {#if debugEntry.detail}
-                                <p class="mb-1 text-[0.68rem] text-slate-400">{debugEntry.detail}</p>
-                              {/if}
                               <pre class="overflow-x-auto whitespace-pre-wrap break-words text-[0.66rem] leading-5 text-slate-300">{stringifyRawEntry(debugEntry)}</pre>
                             </div>
                           </div>
@@ -309,9 +300,10 @@
                             {#each row.segments as segment}
                               {#if segment.kind === "card"}
                                 <CardTextToken
-                                  card={segment.card}
+                                  card={segment.cardRef}
                                   text={segment.text}
-                                  onHover={onCardHover}
+                                  interactive={false}
+                                  onHover={() => onCardHover(segment.cardRef)}
                                   onLeave={onCardLeave}
                                 />
                               {:else if segment.kind === "player"}
@@ -382,9 +374,6 @@
                         <span class="mt-[0.35rem] h-1 w-1 shrink-0 rounded-full bg-slate-500/60"></span>
                         <div class="min-w-0 flex-1 rounded border border-slate-800/80 bg-slate-950/70 px-2 py-1.5">
                           <p class="mb-1 text-[0.72rem] font-medium text-slate-200">{debugEntry.title}</p>
-                          {#if debugEntry.detail}
-                            <p class="mb-1 text-[0.68rem] text-slate-400">{debugEntry.detail}</p>
-                          {/if}
                           <pre class="overflow-x-auto whitespace-pre-wrap break-words text-[0.66rem] leading-5 text-slate-300">{stringifyRawEntry(debugEntry)}</pre>
                         </div>
                       </div>
@@ -396,9 +385,10 @@
                         {#each row.segments as segment}
                           {#if segment.kind === "card"}
                             <CardTextToken
-                              card={segment.card}
+                              card={segment.cardRef}
                               text={segment.text}
-                              onHover={onCardHover}
+                              interactive={false}
+                              onHover={() => onCardHover(segment.cardRef)}
                               onLeave={onCardLeave}
                             />
                           {:else if segment.kind === "player"}

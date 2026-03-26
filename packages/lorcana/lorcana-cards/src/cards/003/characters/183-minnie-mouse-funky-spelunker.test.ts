@@ -1,34 +1,47 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { minnieMouseFunkySpelunker } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { forbiddenMountainMaleficentsCastle } from "@lorcanito/lorcana-engine/cards/003/locations/locations";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Minnie Mouse - Funky Spelunker", () => {
-//   It("**JOURNEY** While this character is at a location, she gets +2 {S}.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: forbiddenMountainMaleficentsCastle.moveCost,
-//       Play: [minnieMouseFunkySpelunker, forbiddenMountainMaleficentsCastle],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       MinnieMouseFunkySpelunker.id,
-//     );
-//     Const location = testStore.getByZoneAndId(
-//       "play",
-//       ForbiddenMountainMaleficentsCastle.id,
-//     );
-//
-//     Expect(cardUnderTest.strength).toEqual(minnieMouseFunkySpelunker.strength);
-//     CardUnderTest.enterLocation(location);
-//     Expect(cardUnderTest.strength).toEqual(
-//       MinnieMouseFunkySpelunker.strength + 2,
-//     );
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockLocation } from "@tcg/lorcana-engine/testing";
+import { minnieMouseFunkySpelunker } from "./183-minnie-mouse-funky-spelunker";
+
+const forbiddenMountain = createMockLocation({
+  id: "minnie-forbidden-mountain",
+  name: "Forbidden Mountain",
+  cost: 1,
+  moveCost: 1,
+  willpower: 4,
+  lore: 1,
+});
+
+describe("Minnie Mouse - Funky Spelunker", () => {
+  describe("JOURNEY - While this character is at a location, she gets +2 {S}.", () => {
+    it("gets +2 strength while at a location", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [minnieMouseFunkySpelunker, forbiddenMountain],
+        inkwell: forbiddenMountain.moveCost,
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(minnieMouseFunkySpelunker)).toBe(
+        minnieMouseFunkySpelunker.strength,
+      );
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .moveCharacterToLocation(minnieMouseFunkySpelunker, forbiddenMountain),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardStrength(minnieMouseFunkySpelunker)).toBe(
+        minnieMouseFunkySpelunker.strength + 2,
+      );
+    });
+
+    it("does NOT get +2 strength when not at a location", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [minnieMouseFunkySpelunker],
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(minnieMouseFunkySpelunker)).toBe(
+        minnieMouseFunkySpelunker.strength,
+      );
+    });
+  });
+});

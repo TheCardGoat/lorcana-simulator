@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mulanFreeSpiritI18n } from "./010-mulan-free-spirit.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const mulanFreeSpirit: CharacterCard = {
   id: "E5z",
@@ -24,13 +25,6 @@ export const mulanFreeSpirit: CharacterCard = {
   },
   text: "Support",
   classifications: ["Dreamborn", "Hero", "Princess"],
-  abilities: [
-    {
-      id: "roa-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: mulanFreeSpiritI18n,
 };

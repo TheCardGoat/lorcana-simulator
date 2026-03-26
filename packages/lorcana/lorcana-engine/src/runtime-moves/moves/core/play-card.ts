@@ -16,7 +16,7 @@ import type {
   KeywordAbilityDefinition,
   LorcanaCard,
 } from "@tcg/lorcana-types";
-import { createLorcanaLogMessage } from "../../../types";
+import { createLorcanaLogProjection } from "../../../types";
 import type {
   CardPlayedPayload,
   Classification,
@@ -137,6 +137,22 @@ function getSacrificeAlternativeCostAbility(
       ability.type === "action" &&
       "alternativeCost" in ability &&
       ability.alternativeCost === "sacrifice-item",
+  );
+}
+
+/**
+ * Check if a card has an action ability that represents an exert-based alternative cost.
+ * Pattern: "you may exert 4 items of yours to play this character for free"
+ * Modeled as: action ability with `alternativeCost: "exert-4-items"` property.
+ */
+function getExertItemsAlternativeCostAbility(
+  cardDef: LorcanaCard,
+): ActionAbilityDefinition | undefined {
+  return cardDef.abilities?.find(
+    (ability): ability is ActionAbilityDefinition =>
+      ability.type === "action" &&
+      "alternativeCost" in ability &&
+      ability.alternativeCost === "exert-4-items",
   );
 }
 
@@ -653,12 +669,83 @@ function getPlayRestrictionError(
     };
   }
 
+  // Check self-play-conditions: abilities on the card being played that gate whether it can be played.
+  // e.g., "You can't play this character unless you have 5 or more characters in play."
+  const selfPlayConditionError = getSelfPlayConditionError(ctx, playerId, cardDef);
+  if (selfPlayConditionError) {
+    return selfPlayConditionError;
+  }
+
   return undefined;
 }
 
 /**
  * Play a card from hand
  */
+/**
+ * Checks whether a card has a self-play-condition static ability whose condition
+ * is NOT satisfied. If the condition is not met, the card cannot be played.
+ *
+ * Self-play-conditions are static abilities with `effect.type === "self-play-condition"`
+ * that gate whether the owning card can be played from hand.
+ */
+function getSelfPlayConditionError(
+  ctx: MoveValidationContext<MoveInput>,
+  playerId: PlayerId,
+  cardDef: LorcanaCard,
+): Extract<RuntimeValidationResult, { valid: false }> | undefined {
+  const abilities = cardDef.abilities;
+  if (!abilities || abilities.length === 0) {
+    return undefined;
+  }
+
+  for (const ability of abilities) {
+    if (ability.type !== "static") {
+      continue;
+    }
+
+    const effect = ability.effect as { type?: string } | undefined;
+    if (!effect || effect.type !== "self-play-condition") {
+      continue;
+    }
+
+    // This ability requires a condition to be met before the card can be played.
+    // If no condition is specified, the ability has no restriction effect.
+    const condition = ability.condition;
+    if (!condition) {
+      continue;
+    }
+
+    const staticAbilityState = {
+      priority: ctx.framework.state.priority,
+      status: ctx.framework.state.status,
+      _zonesPrivate: ctx.framework.state._zonesPrivate,
+      _zonesPublic: ctx.framework.state._zonesPublic,
+      G: ctx.G,
+    };
+
+    const getDefinitionByInstanceId = (instanceId: string) =>
+      ctx.cards.getDefinition(instanceId) as LorcanaCard | undefined;
+
+    const conditionMet = evaluateStaticCondition({
+      condition,
+      state: staticAbilityState,
+      controllerId: playerId,
+      getDefinitionByInstanceId,
+    });
+
+    if (!conditionMet) {
+      return {
+        valid: false,
+        error: `Card cannot be played: play condition not met (${ability.text ?? "self-play-condition"})`,
+        errorCode: "SELF_PLAY_CONDITION_NOT_MET",
+      };
+    }
+  }
+
+  return undefined;
+}
+
 export const playCard: LorcanaMoveDefinition<"playCard"> = {
   validate: (ctx): RuntimeValidationResult => {
     const params = ctx.args;
@@ -1087,6 +1174,55 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         }
         break;
       }
+
+      case "exert-items": {
+        // Validate exert-based alternative cost (e.g., Scrooge McDuck - Resourceful Miser)
+        const exertAbility = getExertItemsAlternativeCostAbility(cardDef);
+        if (!exertAbility) {
+          return fail(
+            "Card does not have an exert-items alternative cost ability",
+            "NO_EXERT_ITEMS_ABILITY",
+            cardDef,
+          );
+        }
+
+        const exertTargets = params.exertTargets;
+        if (!exertTargets || !Array.isArray(exertTargets) || exertTargets.length !== 4) {
+          return fail(
+            "Exert cost requires exactly 4 exertTargets",
+            "INVALID_EXERT_TARGETS_COUNT",
+            cardDef,
+          );
+        }
+
+        for (const exertTargetId of exertTargets) {
+          const exertCard = ctx.cards.get(exertTargetId);
+          if (!exertCard) {
+            return fail("Exert target card not found", "EXERT_TARGET_NOT_FOUND", cardDef);
+          }
+
+          const exertCardDef = exertCard.definition as LorcanaCard | undefined;
+          if (!exertCardDef || exertCardDef.cardType !== "item") {
+            return fail("Exert target must be an item", "EXERT_TARGET_NOT_ITEM", cardDef);
+          }
+
+          const exertZoneKey = ctx.framework.zones.getCardZone(exertTargetId);
+          const exertZone = getZoneFromZoneKey(exertZoneKey);
+          const exertOwner = ctx.framework.zones.getCardOwner(exertTargetId);
+          if (exertZone !== "play" || exertOwner !== currentPlayer) {
+            return fail(
+              "Exert target must be an item you control in play",
+              "EXERT_TARGET_NOT_IN_PLAY",
+              cardDef,
+            );
+          }
+
+          if (exertCard.meta?.state === "exerted") {
+            return fail("Exert target must be a ready item", "EXERT_TARGET_MUST_BE_READY", cardDef);
+          }
+        }
+        break;
+      }
     }
 
     if (cardDef.cardType === "action") {
@@ -1168,11 +1304,9 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             return false;
           }
 
-          return !(
-            Array.isArray(cards) &&
-            cards.length > 0 &&
-            cards.every((cardId) => typeof cardId === "string")
-          );
+          // Allow empty arrays: a player may skip a filtered destination
+          // (e.g. choosing no character from a "up to 1 character" scry slot).
+          return !(Array.isArray(cards) && cards.every((cardId) => typeof cardId === "string"));
         });
 
         if (hasInvalidDestination) {
@@ -1441,6 +1575,24 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         });
         break;
       }
+
+      case "exert-items": {
+        const exertTargets = params.exertTargets;
+        for (const exertTargetId of exertTargets) {
+          ctx.cards.patchMeta(exertTargetId, { state: "exerted" });
+          traceLorcanaRuntimeStep({
+            kind: "card.exerted",
+            moveId: "playCard",
+            playerId: currentPlayer,
+            cardId: exertTargetId,
+            cardName:
+              formatLorcanaCardName(ctx.cards.require(exertTargetId).definition as LorcanaCard) ??
+              "Unknown Card",
+            message: "Item exerted as alternative cost",
+          });
+        }
+        break;
+      }
     }
 
     tracePlayCardCostSelection(ctx, cost, cardDef, {
@@ -1498,14 +1650,17 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         costType: cost,
       },
     });
-    ctx.framework.log({
-      category: "action",
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: createLorcanaLogMessage("lorcana.move.playCard", {
-        playerId: currentPlayer,
-        cardId,
-      }),
-    });
+    ctx.framework.log(
+      createLorcanaLogProjection(
+        "lorcana.move.playCard",
+        {
+          playerId: currentPlayer,
+          cardId,
+        },
+        { mode: "PUBLIC" },
+        "action",
+      ),
+    );
 
     if (cardDef.cardType === "action") {
       const actionEffects = (cardDef.abilities ?? []).filter(
@@ -1575,6 +1730,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         event: "play",
         playerId: currentPlayer,
         subjectCardId: cardId,
+        triggerSourceCardId: cardId,
       });
       if (singerIds) {
         singerIds.forEach((singerId) =>
@@ -1676,7 +1832,10 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       ) {
         const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId);
         const keywordsBeforeBanish = getKeywordsBeforeBanish(ctx, cardId, currentPlayer);
-        moveCardOutOfPlayWithStack(ctx, cardId, { zone: "discard", playerId: currentPlayer });
+        moveCardOutOfPlayWithStack(ctx, cardId, {
+          zone: "discard",
+          playerId: currentPlayer,
+        });
         emitTriggeredLorcanaEvent(
           ctx,
           "cardBanished",
@@ -1751,6 +1910,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         event: "play",
         playerId: currentPlayer,
         subjectCardId: cardId,
+        triggerSourceCardId: cardId,
       });
       if (singerIds) {
         singerIds.forEach((singerId) =>

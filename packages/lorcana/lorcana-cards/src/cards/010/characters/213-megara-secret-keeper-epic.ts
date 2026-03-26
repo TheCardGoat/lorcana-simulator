@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { megaraSecretKeeperEpicI18n } from "./213-megara-secret-keeper-epic.i18n";
 
 export const megaraSecretKeeperEpic: CharacterCard = {
@@ -35,13 +36,7 @@ export const megaraSecretKeeperEpic: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Whisper"],
   abilities: [
-    {
-      id: "1af-1",
-      keyword: "Boost",
-      text: "Boost 1 {I}",
-      type: "keyword",
-      value: 1,
-    },
+    boost(1),
     {
       effect: {
         modifier: 1,

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tianaWarmAndHappyI18n } from "./005-tiana-warm-and-happy.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const tianaWarmAndHappy: CharacterCard = {
   id: "5Io",
@@ -24,13 +25,6 @@ export const tianaWarmAndHappy: CharacterCard = {
   },
   text: "Support",
   classifications: ["Dreamborn", "Hero", "Princess"],
-  abilities: [
-    {
-      id: "1ft-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: tianaWarmAndHappyI18n,
 };

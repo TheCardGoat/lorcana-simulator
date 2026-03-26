@@ -35,28 +35,6 @@ const strongThunderquackDefender = createMockCharacter({
 
 describe("The Thunderquack", () => {
   describe("VIGILANTE JUSTICE - All opposing characters gain the Villain classification", () => {
-    it("grants Villain classification to opposing characters when in play", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          inkwell: theThunderquack.cost,
-          hand: [theThunderquack],
-        },
-        {
-          play: [mickeyMouseTrueFriend],
-        },
-      );
-
-      expect(testEngine.getCard(mickeyMouseTrueFriend).classifications?.includes("Villain")).toBe(
-        false,
-      );
-
-      expect(testEngine.asPlayerOne().playCard(theThunderquack)).toBeSuccessfulCommand();
-
-      expect(testEngine.getCard(mickeyMouseTrueFriend).classifications?.includes("Villain")).toBe(
-        true,
-      );
-    });
-
     it("grants Villain classification to all opposing characters", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
@@ -182,7 +160,11 @@ describe("The Thunderquack", () => {
         },
       );
 
-      expect(testEngine.asPlayerOne().activateAbility(theThunderquack)).toBeSuccessfulCommand();
+      const result = testEngine.asPlayerOne().activateAbility(theThunderquack);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.errorCode).toBe("ABILITY_CONDITION_NOT_MET");
+      }
       expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
     });
 

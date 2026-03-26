@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { cobraBubblesFormerCiaI18n } from "./188-cobra-bubbles-former-cia.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const cobraBubblesFormerCia: CharacterCard = {
   id: "xkL",
@@ -33,12 +34,7 @@ export const cobraBubblesFormerCia: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Ally"],
   abilities: [
-    {
-      id: "1r8-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       cost: {
         exert: true,

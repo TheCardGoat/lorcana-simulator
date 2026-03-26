@@ -56,7 +56,6 @@ describe("Devil's Eye Diamond Enchanted", () => {
         ability: "THE PRICE OF POWER",
       }),
     ).toBeSuccessfulCommand();
-
     expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
   });
 });

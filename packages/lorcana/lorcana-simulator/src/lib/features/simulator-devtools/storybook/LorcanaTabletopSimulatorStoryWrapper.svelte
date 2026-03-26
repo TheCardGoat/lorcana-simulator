@@ -17,9 +17,14 @@ import LorcanaDebugControls from "./LorcanaDebugControls.svelte";
 
 import type {LorcanaSimulatorFixture} from "@/features/simulator/model/contracts";
 import type {LorcanaSimulatorLocale} from "@/features/simulator/model/contracts";
-import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import {
+	type BrowserTransportConfig,
+	LorcanaMultiplayerTestEngine,
+	normalizeBrowserTransportConfig,
+} from "@tcg/lorcana-engine/testing";
 
 interface StoryWrapperProps {
+	browserTransport?: BrowserTransportConfig;
 	fixture?: LorcanaSimulatorFixture;
 	fixtureId: string;
 	initialView: LorcanaSimulatorView;
@@ -40,6 +45,7 @@ const TEST_PLAYER_TWO_CARD_BACK_URL =
 // 	"https://r2.tcg.online/public/lorcana/simulator/playmats/pooh-001.webp";
 
 let {
+	browserTransport = { mode: "sync" },
 	fixtureId,
 	fixture: fixtureProp,
 	initialView,
@@ -67,11 +73,15 @@ $effect.pre(() => {
 });
 
 let fixture = $derived<LorcanaSimulatorFixture>(fixtureProp || getLorcanaFixture(fixtureId));
+let normalizedBrowserTransport = $derived(
+	normalizeBrowserTransportConfig(browserTransport),
+);
 let testEngine = $derived.by<LorcanaMultiplayerTestEngine>(() => {
 	return LorcanaMultiplayerTestEngine.createWithFixture(
 		fixture.playerOne,
 		fixture.playerTwo,
 		{
+			browserTransport: normalizedBrowserTransport,
 			seed: fixture.seed ?? "simulator-default",
 			skipPreGame: fixture.skipPreGame ?? true,
 			validateSync: false,

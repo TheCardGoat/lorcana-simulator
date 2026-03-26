@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ward } from "../../../helpers/abilities/ward";
 import { scuttleBirdbrainedI18n } from "./147-scuttle-birdbrained.i18n";
 
 export const scuttleBirdbrained: CharacterCard = {
@@ -24,13 +25,6 @@ export const scuttleBirdbrained: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Dreamborn", "Ally"],
-  abilities: [
-    {
-      id: "13d-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: scuttleBirdbrainedI18n,
 };

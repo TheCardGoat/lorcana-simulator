@@ -32,14 +32,19 @@ export const hiroHamadaRoboticsProdigy: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Inventor"],
   abilities: [
     {
+      cost: {
+        exert: true,
+        ink: 2,
+      },
       effect: {
         putInto: "hand",
         shuffle: true,
         type: "search-deck",
       },
       id: "r87-1",
+      name: "SWEET TECH",
       text: "SWEET TECH {2} {E} - Search your deck for an item card or a Robot character card and reveal it to all players. Shuffle your deck and put that card on top of it.",
-      type: "action",
+      type: "activated",
     },
   ],
   i18n: hiroHamadaRoboticsProdigyI18n,

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { eeyoreOverstuffedDonkeyI18n } from "./172-eeyore-overstuffed-donkey.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const eeyoreOverstuffedDonkey: CharacterCard = {
   id: "7qS",
@@ -24,14 +25,6 @@ export const eeyoreOverstuffedDonkey: CharacterCard = {
   },
   text: "Resist +1",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "16o-1",
-      keyword: "Resist",
-      type: "keyword",
-      value: 1,
-      text: "Resist +1",
-    },
-  ],
+  abilities: [resist(1)],
   i18n: eeyoreOverstuffedDonkeyI18n,
 };

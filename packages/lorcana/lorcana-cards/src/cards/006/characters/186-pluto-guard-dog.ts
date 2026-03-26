@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { plutoGuardDogI18n } from "./186-pluto-guard-dog.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const plutoGuardDog: CharacterCard = {
   id: "mEY",
@@ -32,12 +33,7 @@ export const plutoGuardDog: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "173-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         modifier: 4,

@@ -34,6 +34,7 @@ export const mrsPottsHeadHousekeeper: CharacterCard = {
       id: "cpn-1",
       cost: {
         exert: true,
+        banishItem: true,
       },
       effect: {
         amount: 1,

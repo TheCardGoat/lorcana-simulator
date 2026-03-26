@@ -4,16 +4,14 @@ import type {
 } from "@/features/simulator/model/contracts.js";
 import { m } from "$lib/i18n/messages.js";
 import {
+  type CardReferenceResolver,
   type EventLogMarkerId,
   type EventLogPlayerTone,
   type EventLogSegment,
-  collectTypedLorcanaMessages,
   formatEventLogBody,
-  toTypedLorcanaLogMessage,
 } from "@/features/simulator/model/event-log-formatting.js";
 
-export type { EventLogMarkerId, EventLogPlayerTone, EventLogSegment };
-export { collectTypedLorcanaMessages, toTypedLorcanaLogMessage };
+export type { CardReferenceResolver, EventLogMarkerId, EventLogPlayerTone, EventLogSegment };
 
 export type EventLogRow =
   | {

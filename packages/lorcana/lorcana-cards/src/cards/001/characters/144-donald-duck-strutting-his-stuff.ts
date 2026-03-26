@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { donaldDuckStruttingHisStuffI18n } from "./144-donald-duck-strutting-his-stuff.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const donaldDuckStruttingHisStuff: CharacterCard = {
   id: "fpc",
@@ -23,13 +24,6 @@ export const donaldDuckStruttingHisStuff: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Dreamborn", "Hero", "Inventor"],
-  abilities: [
-    {
-      id: "10b-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: donaldDuckStruttingHisStuffI18n,
 };

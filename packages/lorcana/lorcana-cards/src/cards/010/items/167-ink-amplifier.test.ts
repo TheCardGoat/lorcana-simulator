@@ -53,6 +53,40 @@ describe("Ink Amplifier", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
   });
 
+  it("regression: the ink added to inkwell is actually counted as available ink", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [inkAmplifier],
+        deck: 3,
+        inkwell: 0,
+      },
+      {
+        hand: [friendsOnTheOtherSide],
+        inkwell: friendsOnTheOtherSide.cost,
+        deck: 5,
+      },
+    );
+
+    const inkwellBefore = testEngine.asPlayerOne().getZonesCardCount().inkwell;
+    expect(inkwellBefore).toBe(0);
+
+    // P1 passes to let P2 take their turn
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    // P2 plays Friends on the Other Side (draws 2 cards, second draw triggers Ink Amplifier)
+    expect(testEngine.asPlayerTwo().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+
+    // Inkwell should have increased by 1
+    expect(testEngine.asPlayerOne().getZonesCardCount().inkwell).toBe(inkwellBefore + 1);
+  });
+
   it("ENERGY CAPTURE - does NOT trigger when the controller draws their own cards", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       play: [inkAmplifier],

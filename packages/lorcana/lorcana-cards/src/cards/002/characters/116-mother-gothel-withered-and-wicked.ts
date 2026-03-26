@@ -41,6 +41,5 @@ export const motherGothelWitheredAndWicked: CharacterCard = {
       type: "static",
     },
   ],
-  missingTests: true,
   i18n: motherGothelWitheredAndWickedI18n,
 };

@@ -12,6 +12,7 @@ import { createCardQueryAPI } from "./card-runtime";
 import type { MatchStaticResources } from "./static-resources";
 import type { BaseCardDefinition, BaseCardMeta } from "./card-contracts";
 import type { LorcanaG } from "../../types/runtime-state";
+import type { StateScopedValueCache } from "./state-scoped-value-cache";
 
 // Re-export from sub-modules
 export { createTimeQueryAPI, createTimeOperationsForDraft } from "./match-runtime.time-apis";
@@ -67,9 +68,13 @@ export function createCardQueryAPIForState(
   staticResources: MatchStaticResources,
   deriveRuntimeCard: RuntimeCardDeriver,
   actorPlayerId?: string,
+  runtimeCardCache?: StateScopedValueCache<unknown>,
+  cacheViews: boolean = true,
 ): CardQueryAPI {
   return createCardQueryAPI(state as unknown as MatchState, staticResources, {
     actorPlayerId,
     deriveRuntimeCard,
+    runtimeCardCache,
+    cacheViews,
   }) as CardQueryAPI;
 }

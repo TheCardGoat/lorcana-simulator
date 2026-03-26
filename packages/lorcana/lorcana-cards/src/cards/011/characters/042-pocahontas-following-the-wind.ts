@@ -30,6 +30,34 @@ export const pocahontasFollowingTheWind: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Princess"],
-  abilities: [],
+  abilities: [
+    {
+      id: "o0i-1",
+      name: "WHAT IS MY PATH?",
+      text: "WHAT IS MY PATH? Whenever this character quests, gain lore equal to another chosen exerted character's {L}.",
+      type: "triggered",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "gain-lore",
+        amount: {
+          type: "lore-value-of",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["character"],
+            filter: [{ type: "exerted" }],
+            excludeSelf: true,
+          },
+        },
+        target: "CONTROLLER",
+      },
+    },
+  ],
   i18n: pocahontasFollowingTheWindI18n,
 };

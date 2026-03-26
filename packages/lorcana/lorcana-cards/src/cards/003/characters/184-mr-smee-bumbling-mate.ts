@@ -32,18 +32,38 @@ export const mrSmeeBumblingMate: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Pirate"],
   abilities: [
     {
-      effect: {
-        condition: {
-          type: "and",
-          conditions: [
-            {
+      condition: {
+        type: "and",
+        conditions: [
+          {
+            type: "target-query",
+            query: {
+              selector: "all",
+              reference: "source",
+              filters: [
+                {
+                  type: "exerted",
+                },
+              ],
+            },
+            comparison: {
+              operator: "gte",
+              value: 1,
+            },
+          },
+          {
+            type: "not",
+            condition: {
               type: "target-query",
               query: {
                 selector: "all",
-                reference: "source",
+                owner: "you",
+                zones: ["play"],
+                cardType: "character",
                 filters: [
                   {
-                    type: "exerted",
+                    type: "has-classification",
+                    classification: "Captain",
                   },
                 ],
               },
@@ -52,36 +72,13 @@ export const mrSmeeBumblingMate: CharacterCard = {
                 value: 1,
               },
             },
-            {
-              type: "not",
-              condition: {
-                type: "target-query",
-                query: {
-                  selector: "all",
-                  owner: "you",
-                  zones: ["play"],
-                  cardType: "character",
-                  filters: [
-                    {
-                      type: "has-classification",
-                      classification: "Captain",
-                    },
-                  ],
-                },
-                comparison: {
-                  operator: "gte",
-                  value: 1,
-                },
-              },
-            },
-          ],
-        },
-        then: {
-          amount: 1,
-          target: "SELF",
-          type: "deal-damage",
-        },
-        type: "conditional",
+          },
+        ],
+      },
+      effect: {
+        amount: 1,
+        target: "SELF",
+        type: "deal-damage",
       },
       id: "16t-1",
       name: "OH DEAR, DEAR, DEAR",

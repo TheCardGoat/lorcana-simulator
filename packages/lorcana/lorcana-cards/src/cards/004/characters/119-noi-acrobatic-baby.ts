@@ -30,6 +30,27 @@ export const noiAcrobaticBaby: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "9pN-1",
+      type: "triggered",
+      name: "FANCY FOOTWORK",
+      text: "FANCY FOOTWORK Whenever you play an action, this character takes no damage from challenges this turn.",
+      trigger: {
+        event: "play",
+        on: {
+          cardType: "action",
+          controller: "you",
+        },
+        timing: "whenever",
+      },
+      effect: {
+        type: "grant-ability",
+        ability: "takes-no-damage-from-challenges",
+        duration: "this-turn",
+        target: "SELF",
+      },
+    },
+  ],
   i18n: noiAcrobaticBabyI18n,
 };

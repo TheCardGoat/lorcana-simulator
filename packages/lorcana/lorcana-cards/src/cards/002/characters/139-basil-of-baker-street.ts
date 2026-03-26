@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { basilOfBakerStreetI18n } from "./139-basil-of-baker-street.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const basilOfBakerStreet: CharacterCard = {
   id: "sCa",
@@ -24,13 +25,6 @@ export const basilOfBakerStreet: CharacterCard = {
   },
   text: "Support",
   classifications: ["Dreamborn", "Hero", "Detective"],
-  abilities: [
-    {
-      id: "1xt-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: basilOfBakerStreetI18n,
 };

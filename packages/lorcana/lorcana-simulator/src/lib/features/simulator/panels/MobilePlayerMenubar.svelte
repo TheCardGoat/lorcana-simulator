@@ -21,6 +21,7 @@
   import { ScrollArea } from "$lib/design-system/primitives/scroll-area";
   import { m } from "$lib/i18n/messages.js";
   import SimulatorSupportActions from "@/features/simulator/support/SimulatorSupportActions.svelte";
+  import type { BugReportContext } from "@/features/simulator/support/feedback-api.js";
   import type {
     ActionAvailableMovesSelectionState,
     ExecutableMoveEntry,
@@ -80,6 +81,7 @@
     onOpenCardPreview?: () => void;
     onConcede?: () => void;
     onReportPlayer?: () => void;
+    bugReportContext?: BugReportContext;
   }
 
   let {
@@ -105,6 +107,7 @@
     onOpenCardPreview,
     onConcede,
     onReportPlayer,
+    bugReportContext,
   }: MobilePlayerMenubarProps = $props();
 
   let detailsOpen = $state(false);
@@ -338,9 +341,6 @@
               {:else}
                 <Icon class="size-4" />
               {/if}
-              {#if summary.count > 1}
-                <span class="quick-action__badge">{summary.count}</span>
-              {/if}
             </Button>
           {/each}
 
@@ -405,7 +405,7 @@
   </div>
 {:else}
   <div
-    class={`mobile-menubar-frame mobile-menubar-frame--top border border-sky-300/20 p-1.5 bg-slate-950/90 shadow-[0_14px_36px_rgba(2,6,23,0.36)] backdrop-blur${seat === "top" ? " rounded-b-2xl" : ""}`}
+    class={`mobile-menubar-frame mobile-menubar-frame--top border border-sky-300/20 p-1 bg-slate-950/90 shadow-[0_14px_36px_rgba(2,6,23,0.36)] backdrop-blur${seat === "top" ? " rounded-b-2xl" : ""}`}
   >
     <div class="mobile-menubar-shell">
       <Button
@@ -521,7 +521,7 @@
               <p class="sheet-support-actions__description">
                 {m["sim.support.description"]({})}
               </p>
-              <SimulatorSupportActions surface="sheet" />
+              <SimulatorSupportActions surface="sheet" gameContext={bugReportContext} />
             </div>
 
             <button
@@ -626,8 +626,8 @@
 
 <style>
   .mobile-menubar-frame {
-    padding-left: max(0.5rem, env(safe-area-inset-left));
-    padding-right: max(0.5rem, env(safe-area-inset-right));
+    padding-left: max(0.35rem, env(safe-area-inset-left));
+    padding-right: max(0.35rem, env(safe-area-inset-right));
   }
 
   .mobile-menubar-shell {
@@ -669,13 +669,13 @@
   }
 
   :global(.lore-chip) {
-    min-height: 2.85rem;
-    min-width: 4.75rem;
-    gap: 0.45rem;
+    min-height: 2.2rem;
+    min-width: 4rem;
+    gap: 0.35rem;
     border: 1px solid rgba(125, 211, 252, 0.24);
     background:
       linear-gradient(180deg, rgba(8, 47, 73, 0.96), rgba(15, 23, 42, 0.96));
-    padding: 0.7rem 0.95rem;
+    padding: 0.4rem 0.7rem;
     color: #f8fafc;
     transition:
       border-color 160ms ease,
@@ -694,13 +694,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.7rem 0.55rem;
+    padding: 0.4rem 0.45rem;
   }
 
   :global(.mobile-anchor-button) {
     width: auto;
     min-width: 0;
-    min-height: 2.85rem;
+    min-height: 2.2rem;
     border-color: rgba(125, 211, 252, 0.28);
     background:
       linear-gradient(180deg, rgba(8, 47, 73, 0.96), rgba(15, 23, 42, 0.96));
@@ -732,8 +732,8 @@
   }
 
   :global(.mobile-side-button) {
-    width: 3.15rem;
-    min-width: 3.15rem;
+    width: 2.6rem;
+    min-width: 2.6rem;
   }
 
   :global(.mobile-side-button--disabled) {
@@ -783,7 +783,7 @@
 
   .lore-chip__value {
     display: block;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 900;
     line-height: 1;
     color: #fcd34d;
@@ -792,8 +792,8 @@
 
   .lore-chip__icon {
     display: block;
-    width: 1.15rem;
-    height: 1.15rem;
+    width: 1rem;
+    height: 1rem;
     flex-shrink: 0;
     background: #fcd34d;
     mask-repeat: no-repeat;
@@ -806,16 +806,16 @@
   }
 
   :global(.quick-action) {
-    min-height: 2.5rem;
-    gap: 0.45rem;
+    min-height: 2rem;
+    gap: 0.35rem;
     position: relative;
     flex-shrink: 0;
     border-width: 1px;
     border-style: solid;
     border-color: rgba(125, 211, 252, 0.16);
     background: transparent;
-    padding: 0.55rem 0.8rem;
-    font-size: 0.8rem;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: rgba(241, 245, 249, 0.92);
     transition:
@@ -854,13 +854,13 @@
   }
 
   :global(.quick-action--icon-only) {
-    min-width: 2.34rem;
+    min-width: 2rem;
     padding: 0;
   }
 
   :global(.mobile-bottom-control) {
-    min-width: 3rem;
-    min-height: 3rem;
+    min-width: 2.4rem;
+    min-height: 2.4rem;
   }
 
   :global(.quick-action--revealed) {
@@ -901,11 +901,11 @@
 
 
   :global(.quick-metric) {
-    min-height: 2.6rem;
-    gap: 0.35rem;
+    min-height: 2rem;
+    gap: 0.3rem;
     background: transparent;
     padding: 0;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: rgba(191, 219, 254, 0.88);
   }
@@ -925,7 +925,7 @@
   }
 
   :global(.player-details-sheet) {
-    max-height: min(62vh, 24rem);
+    max-height: min(62dvh, 24rem);
     box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.08), 0 24px 64px rgba(2, 6, 23, 0.72);
     padding-bottom: 0;
   }
@@ -1080,12 +1080,12 @@
 
   @media (max-width: 380px) {
     :global(.quick-action--icon-only) {
-      min-width: 2.2rem;
+      min-width: 1.8rem;
     }
 
     :global(.lore-chip) {
-      min-width: 4.2rem;
-      padding-inline: 0.82rem;
+      min-width: 3.6rem;
+      padding-inline: 0.55rem;
     }
   }
 </style>

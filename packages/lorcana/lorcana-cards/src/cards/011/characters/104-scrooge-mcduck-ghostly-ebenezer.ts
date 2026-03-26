@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { scroogeMcduckGhostlyEbenezerI18n } from "./104-scrooge-mcduck-ghostly-ebenezer.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const scroogeMcduckGhostlyEbenezer: CharacterCard = {
   id: "cXq",
@@ -33,22 +34,33 @@ export const scroogeMcduckGhostlyEbenezer: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Villain", "Ghost"],
   abilities: [
-    {
-      id: "11x-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 1,
-      text: "Boost 1 {I}",
-    },
+    boost(1),
     {
       id: "11x-2",
-      effect: {
-        modifier: 1,
-        stat: "strength",
-        target: "SELF",
-        type: "modify-stat",
-      },
+      name: "COUNTING COINS",
       type: "static",
+      effect: {
+        type: "modify-stat",
+        target: "SELF",
+        stat: "strength",
+        modifier: {
+          type: "cards-under-self",
+        },
+      },
+      text: "COUNTING COINS This character gets +1 {S} and +1 {W} for each card under him.",
+    },
+    {
+      id: "11x-3",
+      name: "COUNTING COINS",
+      type: "static",
+      effect: {
+        type: "modify-stat",
+        target: "SELF",
+        stat: "willpower",
+        modifier: {
+          type: "cards-under-self",
+        },
+      },
       text: "COUNTING COINS This character gets +1 {S} and +1 {W} for each card under him.",
     },
   ],

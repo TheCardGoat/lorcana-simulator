@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { scarTempestuousLionI18n } from "./047-scar-tempestuous-lion.i18n";
+import { rush } from "../../../helpers/abilities/rush";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const scarTempestuousLion: CharacterCard = {
   id: "7Y4",
@@ -31,20 +33,6 @@ export const scarTempestuousLion: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Villain", "Sorcerer"],
-  abilities: [
-    {
-      id: "ug5-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-    {
-      id: "ug5-2",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 3,
-      text: "Challenger +3",
-    },
-  ],
+  abilities: [rush, challenger(3)],
   i18n: scarTempestuousLionI18n,
 };

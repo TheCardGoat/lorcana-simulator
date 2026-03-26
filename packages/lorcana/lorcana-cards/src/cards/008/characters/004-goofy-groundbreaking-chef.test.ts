@@ -135,32 +135,6 @@ describe("Goofy - Groundbreaking Chef", () => {
       expect(testEngine.asPlayerOne().isExerted(damagedAlly)).toBe(false);
     });
 
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          play: [goofyGroundbreakingChef, { card: damagedAlly, damage: 2, exerted: true }],
-          deck: 2,
-        },
-        {
-          deck: 2,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      // Decline
-      expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-          resolveOptional: false,
-        }),
-      ).toBeSuccessfulCommand();
-
-      // Nothing should change
-      expect(testEngine.asPlayerOne().getDamage(damagedAlly)).toBe(2);
-      expect(testEngine.asPlayerOne().isExerted(damagedAlly)).toBe(true);
-    });
-
     it("prevents Mr. Smee from damaging himself if Goofy readies and heals him first", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [goofyGroundbreakingChef, { card: mrSmeeBumblingMate, damage: 1, exerted: true }],

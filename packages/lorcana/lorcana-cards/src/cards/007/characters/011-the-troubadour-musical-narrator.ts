@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { theTroubadourMusicalNarratorI18n } from "./011-the-troubadour-musical-narrator.i18n";
+import { resist } from "../../../helpers/abilities/resist";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const theTroubadourMusicalNarrator: CharacterCard = {
   id: "k1P",
@@ -30,21 +32,6 @@ export const theTroubadourMusicalNarrator: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1is-1",
-      keyword: "Resist",
-      type: "keyword",
-      value: 1,
-      text: "Resist +1",
-    },
-    {
-      id: "1is-2",
-      keyword: "Singer",
-      type: "keyword",
-      value: 4,
-      text: "Singer 4",
-    },
-  ],
+  abilities: [resist(1), singer(4)],
   i18n: theTroubadourMusicalNarratorI18n,
 };

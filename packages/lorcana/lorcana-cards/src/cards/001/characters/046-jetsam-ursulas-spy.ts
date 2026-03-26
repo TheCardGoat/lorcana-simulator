@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jetsamUrsulasSpyI18n } from "./046-jetsam-ursulas-spy.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const jetsamUrsulasSpy: CharacterCard = {
   id: "0Bx",
@@ -33,12 +34,7 @@ export const jetsamUrsulasSpy: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "cdv-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         keyword: "Evasive",

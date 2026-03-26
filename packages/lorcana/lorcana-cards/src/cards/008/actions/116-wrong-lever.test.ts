@@ -44,4 +44,30 @@ describe("Wrong Lever!", () => {
 
     expect(playerOne.getCardZone(pullTheLever)).toBe("deck");
   });
+
+  it("regression: second mode does NOT put character on bottom when no Pull the Lever! is in discard", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [wrongLever],
+        inkwell: wrongLever.cost,
+        discard: [], // No Pull the Lever! in discard
+      },
+      {
+        play: [goofyKnightForADay],
+        deck: [simbaProtectiveCub],
+      },
+    );
+    const goofyId = testEngine.findCardInstanceId(goofyKnightForADay, "play", "p2");
+
+    // Play Wrong Lever choosing second mode
+    const playResult = testEngine.asPlayerOne().playCardWithChoice(wrongLever, 1);
+    expect(playResult.success).toBe(true);
+
+    // Try to resolve the pending target for putting character on bottom
+    const pendingResult = testEngine.asPlayerOne().resolveNextPending({ targets: [goofyId] });
+
+    // Without Pull the Lever! in discard, the "if you do" condition should fail
+    // Goofy should NOT be put on bottom - should remain in play
+    expect(testEngine.asPlayerTwo().getCardZone(goofyKnightForADay)).toBe("play");
+  });
 });

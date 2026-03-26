@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { olafTrustingCompanionI18n } from "./150-olaf-trusting-companion.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const olafTrustingCompanion: CharacterCard = {
   id: "QcK",
@@ -24,13 +25,6 @@ export const olafTrustingCompanion: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1ki-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: olafTrustingCompanionI18n,
 };

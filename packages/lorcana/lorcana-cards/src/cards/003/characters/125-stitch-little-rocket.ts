@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { stitchLittleRocketI18n } from "./125-stitch-little-rocket.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const stitchLittleRocket: CharacterCard = {
   id: "1PU",
@@ -24,13 +25,6 @@ export const stitchLittleRocket: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Dreamborn", "Hero", "Alien"],
-  abilities: [
-    {
-      id: "cgj-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: stitchLittleRocketI18n,
 };

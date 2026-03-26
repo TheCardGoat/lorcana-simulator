@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ladyTremaineImperiousQueenEnchantedI18n } from "./211-lady-tremaine-imperious-queen-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const ladyTremaineImperiousQueenEnchanted: CharacterCard = {
   id: "SlK",
@@ -35,15 +36,7 @@ export const ladyTremaineImperiousQueenEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Queen"],
   abilities: [
-    {
-      id: "2qj-1",
-      keyword: "Shift",
-      type: "keyword",
-      cost: {
-        ink: 4,
-      },
-      text: "Shift 4",
-    },
+    shift(4),
     {
       id: "2qj-2",
       name: "POWER TO RULE AT LAST",

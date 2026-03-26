@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { lenaSabrewingPureEnergyI18n } from "./049-lena-sabrewing-pure-energy.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const lenaSabrewingPureEnergy: CharacterCard = {
   id: "q7a",
@@ -33,13 +34,11 @@ export const lenaSabrewingPureEnergy: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Sorcerer"],
   abilities: [
+    evasive,
     {
-      id: "1r9-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
-    {
+      cost: {
+        exert: true,
+      },
       effect: {
         amount: 1,
         target: {
@@ -52,8 +51,9 @@ export const lenaSabrewingPureEnergy: CharacterCard = {
         type: "deal-damage",
       },
       id: "1r9-2",
+      name: "SUPERNATURAL VENGEANCE",
       text: "SUPERNATURAL VENGEANCE {E} – Deal 1 damage to chosen character.",
-      type: "action",
+      type: "activated",
     },
   ],
   i18n: lenaSabrewingPureEnergyI18n,

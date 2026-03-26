@@ -8,13 +8,8 @@
   const board = useLorcanaBoardPresenter();
   const challengeAnimations = $derived(board.challengeAnimations);
 
-  function getBoardSize(): { width: number; height: number } {
-    const snapshot = board.boardSnapshot;
-    return {
-      width: snapshot ? 2000 : 0,
-      height: snapshot ? 1200 : 0,
-    };
-  }
+  let layerWidth = $state(0);
+  let layerHeight = $state(0);
 
   function buildPreview(animation: ResolvedChallengeAnimation): ChallengePreviewResult {
     return {
@@ -37,22 +32,51 @@
   function getTargetPoint(rect: BoardLocalRect): { x: number; y: number } {
     return { x: rect.centerX, y: rect.centerY };
   }
+
+  function hasBanish(animation: ResolvedChallengeAnimation): boolean {
+    return animation.preview.attackerWouldBeBanished || animation.preview.defenderWouldBeBanished;
+  }
+
+  function badgeStyle(x: number, y: number): string {
+    return `left:${x}px;top:${y}px;transform:translate(-50%,-50%);`;
+  }
 </script>
 
-<div class="challenge-animation-layer" aria-hidden="true">
+<div class="challenge-animation-layer" aria-hidden="true" bind:clientWidth={layerWidth} bind:clientHeight={layerHeight}>
   {#each challengeAnimations as animation (animation.id)}
     <div
       class="challenge-animation-wrapper"
       style="--challenge-animation-duration:{animation.durationMs}ms"
     >
-      <ChallengeAimOverlay
-        width={getBoardSize().width}
-        height={getBoardSize().height}
-        sourceRect={animation.sourceRect}
-        targetPoint={getTargetPoint(animation.destinationRect)}
-        lockedTargetRect={animation.destinationRect}
-        preview={buildPreview(animation)}
-      />
+      {#if !hasBanish(animation)}
+        <ChallengeAimOverlay
+          width={layerWidth}
+          height={layerHeight}
+          sourceRect={animation.sourceRect}
+          targetPoint={getTargetPoint(animation.destinationRect)}
+          lockedTargetRect={animation.destinationRect}
+          preview={buildPreview(animation)}
+        />
+      {:else}
+        <!-- When any card is banished, suppress the arrow (it would point to an empty grid slot).
+             Show only a subtle damage badge for the surviving card, if it took damage. -->
+        {#if !animation.preview.attackerWouldBeBanished && animation.preview.defenderDamageDealt > 0}
+          <div
+            class="challenge-damage-badge"
+            style={badgeStyle(animation.sourceRect.centerX, animation.sourceRect.centerY)}
+          >
+            -{animation.preview.defenderDamageDealt}
+          </div>
+        {/if}
+        {#if !animation.preview.defenderWouldBeBanished && animation.preview.attackerDamageDealt > 0}
+          <div
+            class="challenge-damage-badge"
+            style={badgeStyle(animation.destinationRect.centerX, animation.destinationRect.centerY)}
+          >
+            -{animation.preview.attackerDamageDealt}
+          </div>
+        {/if}
+      {/if}
     </div>
   {/each}
 </div>
@@ -86,6 +110,21 @@
     100% {
       opacity: 0;
     }
+  }
+
+  .challenge-damage-badge {
+    position: absolute;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(15, 23, 42, 0.85);
+    padding: 0.2rem 0.55rem;
+    font-size: 0.6rem;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgb(253, 230, 138);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.45);
+    pointer-events: none;
   }
 
   @media (prefers-reduced-motion: reduce) {

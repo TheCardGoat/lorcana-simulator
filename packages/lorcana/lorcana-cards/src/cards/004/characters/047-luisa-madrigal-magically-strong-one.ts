@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { luisaMadrigalMagicallyStrongOneI18n } from "./047-luisa-madrigal-magically-strong-one.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const luisaMadrigalMagicallyStrongOne: CharacterCard = {
   id: "MWD",
@@ -24,13 +25,6 @@ export const luisaMadrigalMagicallyStrongOne: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Ally", "Madrigal"],
-  abilities: [
-    {
-      id: "1rs-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: luisaMadrigalMagicallyStrongOneI18n,
 };

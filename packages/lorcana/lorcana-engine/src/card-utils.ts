@@ -227,6 +227,24 @@ export function hasVanish(card: LorcanaCardDefinition): boolean {
 }
 
 /**
+ * Check if a character has the Mimicry ability.
+ * Mimicry allows a character to be treated as having any name for Shift targeting purposes.
+ */
+export function hasMimicry(card: LorcanaCardDefinition): boolean {
+  if (!Array.isArray(card.abilities)) {
+    return false;
+  }
+
+  return card.abilities.some(
+    (ability) =>
+      ability.type === "static" &&
+      typeof ability.text === "string" &&
+      /\bMIMICRY\b/i.test(ability.text) &&
+      /as if this character had any name/i.test(ability.text),
+  );
+}
+
+/**
  * Check if a card can be put into the inkwell (has inkwell symbol)
  */
 export function canInk(card: LorcanaCardDefinition): boolean {
@@ -277,7 +295,7 @@ export function hasSameName(card1: LorcanaCardDefinition, card2: LorcanaCardDefi
 }
 
 function normalizeCardName(name: string): string {
-  return name.trim().toLowerCase();
+  return name.normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
 }
 
 function getExplicitNameAliases(card: LorcanaCardDefinition): string[] {

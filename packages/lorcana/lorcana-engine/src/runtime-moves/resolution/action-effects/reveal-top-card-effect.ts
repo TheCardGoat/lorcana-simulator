@@ -1,6 +1,7 @@
 import type { CardInstanceId } from "#core";
 import type { RevealTopCardEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
+import { createLorcanaLogProjection } from "../../../types";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 
@@ -39,10 +40,23 @@ export function resolveRevealTopCardEffect(
 
     revealedCardIds.push(topCard);
     ctx.framework.zones.reveal([topCard], "all");
+
+    ctx.framework.log(
+      createLorcanaLogProjection(
+        "lorcana.effect.resolve.revealTopCard",
+        {
+          playerId: cardPlayed.playerId,
+          targetPlayerId,
+          revealedCardId: topCard,
+        },
+        { mode: "PUBLIC" },
+        "action",
+      ),
+    );
   }
 
   if (!resolutionInput.eventSnapshot) {
-    return;
+    resolutionInput.eventSnapshot = {};
   }
 
   resolutionInput.eventSnapshot.revealedCardIds = revealedCardIds;

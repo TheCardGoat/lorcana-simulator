@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { belleAccomplishedMysticI18n } from "./036-belle-accomplished-mystic.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const belleAccomplishedMystic: CharacterCard = {
   id: "Ybr",
@@ -34,15 +35,7 @@ export const belleAccomplishedMystic: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess", "Sorcerer"],
   abilities: [
-    {
-      id: "Ybr-1",
-      cost: {
-        ink: 3,
-      },
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 3",
-    },
+    shift(3),
     {
       id: "Ybr-2",
       name: "ENHANCED HEALING",

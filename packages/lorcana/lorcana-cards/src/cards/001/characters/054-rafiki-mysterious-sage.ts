@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rafikiMysteriousSageI18n } from "./054-rafiki-mysterious-sage.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const rafikiMysteriousSage: CharacterCard = {
   id: "HXN",
@@ -24,13 +25,6 @@ export const rafikiMysteriousSage: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Dreamborn", "Mentor", "Sorcerer"],
-  abilities: [
-    {
-      id: "zqh-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: rafikiMysteriousSageI18n,
 };

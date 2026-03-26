@@ -1,59 +1,88 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   FlotillaCoconutArmada,
-//   KakamoraBoardingParty,
-//   KakamoraLongrangeSpecialist,
-//   KakamoraPiratePitcher,
-//   MoanaKakamoraLeader,
-// } from "@lorcanito/lorcana-engine/cards/006";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Moana - Kakamora Leader", () => {
-//   It("Shift 5 (You may pay 5 {I} to play this on top of one of your characters named Moana.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [moanaKakamoraLeader],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(moanaKakamoraLeader);
-//     Expect(cardUnderTest.hasShift).toBe(true);
-//   });
-//
-//   It("GATHERING FORCES When you play this character, you may move any number of your characters to the same location for free. Gain 1 lore for each character you moved.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: moanaKakamoraLeader.cost,
-//       Hand: [moanaKakamoraLeader],
-//       Play: [
-//         KakamoraLongrangeSpecialist,
-//         KakamoraPiratePitcher,
-//         KakamoraBoardingParty,
-//         FlotillaCoconutArmada,
-//       ],
-//     });
-//
-//     Await testEngine.playCard(moanaKakamoraLeader);
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack(
-//       {
-//         Targets: [
-//           KakamoraLongrangeSpecialist,
-//           KakamoraPiratePitcher,
-//           KakamoraBoardingParty,
-//           MoanaKakamoraLeader,
-//         ],
-//       },
-//       True,
-//     );
-//     Await testEngine.resolveTopOfStack({ targets: [flotillaCoconutArmada] });
-//
-//     Expect(
-//       TestEngine.getCardModel(flotillaCoconutArmada).charactersAtLocation,
-//     ).toHaveLength(4);
-//     Expect(testEngine.getLoreForPlayer("player_one")).toBe(4);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { moanaKakamoraLeader } from "./121-moana-kakamora-leader";
+import { kakamoraLongrangeSpecialist } from "./171-kakamora-long-range-specialist";
+import { kakamoraPiratePitcher } from "./105-kakamora-pirate-pitcher";
+import { kakamoraBoardingParty } from "./104-kakamora-boarding-party";
+import { flotillaCoconutArmada } from "../locations/135-flotilla-coconut-armada";
+
+describe("Moana - Kakamora Leader", () => {
+  it("Shift 5 (You may pay 5 {I} to play this on top of one of your characters named Moana.)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [moanaKakamoraLeader],
+    });
+
+    expect(testEngine.asPlayerOne().hasKeyword(moanaKakamoraLeader, "Shift")).toBe(true);
+  });
+
+  it("GATHERING FORCES - moves characters to a location and gains 1 lore per character moved", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: moanaKakamoraLeader.cost,
+      hand: [moanaKakamoraLeader],
+      play: [
+        kakamoraLongrangeSpecialist,
+        kakamoraPiratePitcher,
+        kakamoraBoardingParty,
+        flotillaCoconutArmada,
+      ],
+    });
+
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+
+    // Play Moana - triggers GATHERING FORCES
+    expect(testEngine.asPlayerOne().playCard(moanaKakamoraLeader)).toBeSuccessfulCommand();
+
+    // Accept optional ability and choose characters to move + location
+    expect(
+      testEngine.asPlayerOne().resolveNextBag({
+        resolveOptional: true,
+        targets: [
+          kakamoraLongrangeSpecialist,
+          kakamoraPiratePitcher,
+          kakamoraBoardingParty,
+          moanaKakamoraLeader,
+          flotillaCoconutArmada,
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    // 4 characters moved = 4 lore gained
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(4);
+
+    // All 4 characters should be at the location
+    expect(testEngine.asPlayerOne()).toBeAtLocation({
+      card: kakamoraLongrangeSpecialist,
+      location: flotillaCoconutArmada,
+    });
+    expect(testEngine.asPlayerOne()).toBeAtLocation({
+      card: kakamoraPiratePitcher,
+      location: flotillaCoconutArmada,
+    });
+    expect(testEngine.asPlayerOne()).toBeAtLocation({
+      card: kakamoraBoardingParty,
+      location: flotillaCoconutArmada,
+    });
+    expect(testEngine.asPlayerOne()).toBeAtLocation({
+      card: moanaKakamoraLeader,
+      location: flotillaCoconutArmada,
+    });
+  });
+
+  it("GATHERING FORCES - optional: declining does not move characters or gain lore", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: moanaKakamoraLeader.cost,
+      hand: [moanaKakamoraLeader],
+      play: [kakamoraBoardingParty, flotillaCoconutArmada],
+    });
+
+    // Play Moana - triggers GATHERING FORCES
+    expect(testEngine.asPlayerOne().playCard(moanaKakamoraLeader)).toBeSuccessfulCommand();
+
+    // Decline the optional ability
+    expect(
+      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+  });
+});

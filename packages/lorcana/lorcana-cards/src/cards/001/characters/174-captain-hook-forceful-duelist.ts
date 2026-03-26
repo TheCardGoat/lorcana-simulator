@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { captainHookForcefulDuelistI18n } from "./174-captain-hook-forceful-duelist.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const captainHookForcefulDuelist: CharacterCard = {
   id: "p7d",
@@ -24,14 +25,6 @@ export const captainHookForcefulDuelist: CharacterCard = {
   },
   text: "Challenger +2",
   classifications: ["Dreamborn", "Villain", "Pirate", "Captain"],
-  abilities: [
-    {
-      id: "bhv-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2",
-    },
-  ],
+  abilities: [challenger(2)],
   i18n: captainHookForcefulDuelistI18n,
 };

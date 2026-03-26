@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { todKnowsAllTheTricksEnchantedI18n } from "./230-tod-knows-all-the-tricks-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const todKnowsAllTheTricksEnchanted: CharacterCard = {
   id: "D1D",
@@ -38,21 +40,8 @@ export const todKnowsAllTheTricksEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      id: "15s-1",
-      cost: {
-        ink: 5,
-      },
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 5 {I}",
-    },
-    {
-      id: "15s-2",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    shift(5),
+    evasive,
     {
       id: "15s-3",
       effect: {

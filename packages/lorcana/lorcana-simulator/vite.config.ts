@@ -38,5 +38,15 @@ export default defineConfig(({ mode }) => {
       sveltekit(),
       paraglideVitePlugin({ project: "./project.inlang", outdir: "./src/lib/paraglide" }),
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("lorcana-engine")) return "lorcana-engine";
+            if (id.includes("lorcana-cards")) return "lorcana-cards";
+          },
+        },
+      },
+    },
   };
 });

@@ -3,7 +3,6 @@ import {
 	LORCANA_SIMULATOR_VIEWS,
 	LorcanaTabletopSimulator,
 	type LorcanaSimulatorFixture,
-	type LorcanaSimulatorReadModel,
 	type LorcanaSimulatorView,
 	type LorcanaZoneId,
 	type SimulatorDebugAnimationPlayer,
@@ -23,12 +22,22 @@ import {
 import { assertLorcanaSimulatorMoveId } from "@/features/simulator/model/contracts";
 import { dispatchSimulatorMove } from "@/features/simulator/model/move-dispatch";
 import LorcanaDebugControls from "@/features/simulator-devtools/storybook/LorcanaDebugControls.svelte";
-import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { HarnessAiController } from "@/features/simulator-devtools/harness";
+import { DEFAULT_AUTOMATED_ACTION_STRATEGY_ID } from "@tcg/lorcana-engine";
+import { createHumanVsAiContext } from "@/features/simulator-devtools/vs-ai/context.js";
+import {
+	type BrowserTransportConfig,
+	DEFAULT_DYNAMIC_CLOCK_CONFIG,
+	LorcanaMultiplayerTestEngine,
+	normalizeBrowserTransportConfig,
+} from "@tcg/lorcana-engine/testing";
 
 interface Props {
+	browserTransport?: BrowserTransportConfig;
 	fixture: LorcanaSimulatorFixture;
 	fixtureId?: string;
 	view?: LorcanaSimulatorView;
+	aiBot?: false | { strategyId?: string };
 }
 
 const ZONE_IDS: readonly LorcanaZoneId[] = [
@@ -40,7 +49,16 @@ const ZONE_IDS: readonly LorcanaZoneId[] = [
 	"limbo",
 ];
 
-let { fixture, fixtureId = fixture.id, view = "playerOne" }: Props = $props();
+let {
+    browserTransport = { mode: "async", latencyMs: 200, latencyModel: "rtt" },
+	// browserTransport = { mode: "sync" },
+	fixture,
+	fixtureId = fixture.id,
+	view = "playerOne",
+	aiBot = {},
+}: Props = $props();
+
+const aiOrchestratorStore = createHumanVsAiContext(null);
 
 let resetRevision = $state(0);
 let wrapperElement = $state<HTMLDivElement | null>(null);
@@ -54,6 +72,9 @@ let debugStateId = $state<number | null>(null);
 const currentView = $derived(
 	viewOverride ?? (LORCANA_SIMULATOR_VIEWS.includes(view) ? view : "playerOne"),
 );
+const normalizedBrowserTransport = $derived(
+	normalizeBrowserTransportConfig(browserTransport),
+);
 
 const testEngine = $derived.by(() => {
 	void resetRevision;
@@ -61,16 +82,31 @@ const testEngine = $derived.by(() => {
 		fixture.playerOne,
 		fixture.playerTwo,
 		{
+			browserTransport: normalizedBrowserTransport,
+			initialView: view,
+			optimizeInactiveClientProjection: true,
 			seed: fixture.seed ?? "simulator-default",
 			skipPreGame: fixture.skipPreGame ?? true,
 			validateSync: false,
 			debugServerCommunication: true,
+			showLogs: true,
+			logLevel: "trace",
+			timeControl: { mode: "dynamic", config: DEFAULT_DYNAMIC_CLOCK_CONFIG },
 		},
 	);
 });
 
+const aiController = $derived.by(() => {
+	if (aiBot === false) return null;
+	const strategyId = aiBot.strategyId ?? DEFAULT_AUTOMATED_ACTION_STRATEGY_ID;
+	return new HarnessAiController(testEngine.asServer(), { strategyId });
+});
+
 const adapter = $derived.by(
-	() => new LorcanaMultiplayerSimulatorAdapter(testEngine),
+	() =>
+		new LorcanaMultiplayerSimulatorAdapter(testEngine, {
+			stateUpdateView: currentView,
+		}),
 );
 
 const engine = $derived.by(() => {
@@ -85,13 +121,12 @@ const engine = $derived.by(() => {
 	return testEngine.asPlayerOne();
 });
 
-const readModel = $derived.by<Pick<LorcanaSimulatorReadModel, "getMoveLog">>(
-	() => {
-		return {
-			getMoveLog: (limit?: number) => adapter.getMoveLog(limit, currentView),
-		};
-	},
-);
+const readModel = $derived.by(() => ({
+	getMoveLog: (limit?: number, viewOverride?: LorcanaSimulatorView) =>
+		adapter.getMoveLog(limit, viewOverride ?? currentView),
+	subscribeStateUpdates: (handler: (stateID: number) => void) =>
+		adapter.subscribeStateUpdates(handler),
+}));
 
 function resolvePlayerId(targetView: LorcanaSimulatorView): string {
 	if (targetView === "playerOne") {
@@ -129,8 +164,8 @@ function toCanonicalPlayerId(
 	return undefined;
 }
 
-function getStatus(): LorcanaBrowserStatus {
-	const board = adapter.getBoard("authoritative");
+function getStatus(targetView: LorcanaSimulatorView = "authoritative"): LorcanaBrowserStatus {
+	const board = adapter.getBoard(targetView);
 	const zoneCounts = Object.fromEntries(
 		board.playerOrder.map((playerId) => {
 			const boardPlayer = board.players[String(playerId)] ?? {};
@@ -167,8 +202,16 @@ function getStatus(): LorcanaBrowserStatus {
 }
 
 function getConfig(): LorcanaBrowserHarnessConfig {
+	const transportConfig = normalizedBrowserTransport;
 	return {
 		fixtureId,
+		latencyModel:
+			transportConfig.mode === "async"
+				? transportConfig.latencyModel
+				: undefined,
+		latencyMs:
+			transportConfig.mode === "async" ? transportConfig.latencyMs : undefined,
+		transport: transportConfig.mode,
 		view: currentView,
 	};
 }
@@ -193,6 +236,27 @@ function refreshDebugPayloads(): void {
 		2,
 	);
 }
+
+$effect(() => {
+	const controller = aiController;
+	aiOrchestratorStore.set(controller);
+	return () => {
+		controller?.dispose();
+	};
+});
+
+$effect(() => {
+	if (!aiController) return;
+	if (aiController.state.mode === "takeover") {
+		viewOverride = "playerTwo";
+	} else if (viewOverride === "playerTwo" && aiController.state.currentPerspective === "playerOne") {
+		viewOverride = null;
+	}
+});
+
+$effect(() => {
+	testEngine.setActiveClientView(currentView);
+});
 
 function resetToInitialFixture(): void {
 	viewOverride = null;
@@ -285,28 +349,24 @@ const browserHarness: LorcanaBrowserHarness = {
 	reset,
 	execute,
 	getBoard,
-	getStatus: async () => getStatus(),
+	getStatus: async (targetView) => getStatus(targetView),
 	runAnimation,
 };
 
 $effect(() => {
 	refreshDebugPayloads();
 
-	const playerOneEngine = testEngine.getClientEngine("playerOne");
-	const playerTwoEngine = testEngine.getClientEngine("playerTwo");
-
-	const unsubscribePlayerOne =
-		playerOneEngine?.engine.onStateUpdate(() => {
-			refreshDebugPayloads();
-		}) ?? (() => {});
-	const unsubscribePlayerTwo =
-		playerTwoEngine?.engine.onStateUpdate(() => {
-			refreshDebugPayloads();
-		}) ?? (() => {});
+	const unsubscribe =
+		currentView === "authoritative"
+			? testEngine.getServerEngine().onStateUpdate(() => {
+					refreshDebugPayloads();
+				})
+			: testEngine.getClientEngine(currentView)?.engine.onStateUpdate(() => {
+					refreshDebugPayloads();
+				}) ?? (() => {});
 
 	return () => {
-		unsubscribePlayerOne();
-		unsubscribePlayerTwo();
+		unsubscribe();
 	};
 });
 
@@ -343,4 +403,5 @@ $effect(() => {
     onRunQuestAnimation={handleRunQuestAnimation}
     onRunChallengeAnimation={handleRunChallengeAnimation}
   />
+
 </div>

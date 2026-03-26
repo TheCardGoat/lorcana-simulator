@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { genieMagicalResearcherEpicI18n } from "./210-genie-magical-researcher-epic.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const genieMagicalResearcherEpic: CharacterCard = {
   id: "RUK",
@@ -34,13 +35,7 @@ export const genieMagicalResearcherEpic: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Whisper"],
   abilities: [
-    {
-      id: "h4v-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 1,
-      text: "Boost 1 {I}",
-    },
+    boost(1),
     {
       id: "h4v-2",
       name: "INCREASING WISDOM",

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { naniCaringSisterI18n } from "./019-nani-caring-sister.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const naniCaringSister: CharacterCard = {
   id: "eOi",
@@ -33,16 +34,15 @@ export const naniCaringSister: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
+    support,
     {
-      id: "1fu-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
-    {
+      cost: {
+        ink: 2,
+      },
       effect: {
         modifier: -1,
         stat: "strength",
+        duration: "until-start-of-next-turn",
         target: {
           cardTypes: ["character"],
           count: 1,
@@ -53,8 +53,9 @@ export const naniCaringSister: CharacterCard = {
         type: "modify-stat",
       },
       id: "1fu-2",
+      name: "I AM SO SORRY 2",
       text: "I AM SO SORRY 2 {I} - Chosen character gets -1 {S} until the start of your next turn.",
-      type: "action",
+      type: "activated",
     },
   ],
   i18n: naniCaringSisterI18n,

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { queenOfHeartsImpulsiveRulerI18n } from "./123-queen-of-hearts-impulsive-ruler.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const queenOfHeartsImpulsiveRuler: CharacterCard = {
   id: "7jf",
@@ -24,13 +25,6 @@ export const queenOfHeartsImpulsiveRuler: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Villain", "Queen"],
-  abilities: [
-    {
-      id: "106-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: queenOfHeartsImpulsiveRulerI18n,
 };

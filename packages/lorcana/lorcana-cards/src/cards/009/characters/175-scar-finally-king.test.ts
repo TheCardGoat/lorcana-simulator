@@ -188,10 +188,6 @@ describe("Scar - Finally King", () => {
         { deck: 5 },
       );
 
-      const allyStrength = testEngine.asPlayerOne().getCardStrength(lowStrengthAlly);
-      console.log("DEBUG: Ally strength before trigger:", allyStrength);
-      console.log("DEBUG: Low strength ally base:", lowStrengthAlly.strength);
-
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
@@ -204,9 +200,6 @@ describe("Scar - Finally King", () => {
       ).toBeSuccessfulCommand();
 
       const expectedDrawCount = lowStrengthAlly.strength + 1;
-      console.log("DEBUG: Expected draw count:", expectedDrawCount);
-      console.log("DEBUG: Actual deck count:", testEngine.asPlayerOne().getZonesCardCount().deck);
-      console.log("DEBUG: Cards drawn:", 10 - testEngine.asPlayerOne().getZonesCardCount().deck);
       expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(10 - expectedDrawCount);
 
       expect(
@@ -239,6 +232,22 @@ describe("Scar - Finally King", () => {
 
       expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(10);
       expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(0);
+    });
+
+    it("regression: presents the optional trigger when Scar is exerted at end of turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scarFinallyKing, exerted: true }, allyCharacter],
+          deck: 10,
+        },
+        { deck: 5 },
+      );
+
+      // Pass turn - end of turn trigger fires; Scar is exerted, condition is met
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // The optional bag effect should be available
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     });
   });
 });

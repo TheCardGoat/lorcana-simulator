@@ -95,7 +95,20 @@ export function dispatchSimulatorMove<K extends LorcanaSimulatorMoveId>(
         return createMoveDispatchError(engine, "playCard requires cardId.");
       }
 
-      const cost = paramsRecord.cost as PlayCardExecutionOptions["cost"] | undefined;
+      const costType = paramsRecord.cost;
+      const singer = getStringParam(paramsRecord, "singer");
+      const singers = getStringArrayParam(paramsRecord, "singers");
+      const shiftTarget = getStringParam(paramsRecord, "shiftTarget");
+      let cost: PlayCardExecutionOptions["cost"] | undefined;
+      if (costType === "shift" && shiftTarget) {
+        cost = { cost: "shift", shiftTarget: shiftTarget as CardInstanceId };
+      } else if (costType === "sing" && singer) {
+        cost = { cost: "sing", singer: singer as CardInstanceId };
+      } else if (costType === "singTogether" && singers) {
+        cost = { cost: "singTogether", singers: singers as CardInstanceId[] };
+      } else {
+        cost = costType as PlayCardExecutionOptions["cost"] | undefined;
+      }
       const targets = getStringArrayParam(paramsRecord, "targets");
       const amount = getNumberParam(paramsRecord, "amount");
       const namedCard = getStringParam(paramsRecord, "namedCard");
@@ -265,6 +278,9 @@ export function dispatchSimulatorMove<K extends LorcanaSimulatorMoveId>(
           : {}),
         ...(getNumberParam(nestedParams, "choiceIndex") !== undefined
           ? { choiceIndex: getNumberParam(nestedParams, "choiceIndex") }
+          : {}),
+        ...(getDestinationsParam(nestedParams) !== undefined
+          ? { destinations: getDestinationsParam(nestedParams) }
           : {}),
       });
     }

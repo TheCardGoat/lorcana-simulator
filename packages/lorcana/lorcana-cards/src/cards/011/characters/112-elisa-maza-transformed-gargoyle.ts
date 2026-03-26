@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { elisaMazaTransformedGargoyleI18n } from "./112-elisa-maza-transformed-gargoyle.i18n";
+import { stoneByDay } from "../../../helpers/abilities/stoneByDay";
 
 export const elisaMazaTransformedGargoyle: CharacterCard = {
   id: "HGB",
@@ -46,24 +47,7 @@ export const elisaMazaTransformedGargoyle: CharacterCard = {
         target: "YOUR_CHARACTERS",
       },
     },
-    {
-      id: "153-2",
-      name: "STONE BY DAY",
-      text: "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
-      type: "static",
-      condition: {
-        type: "resource-count",
-        what: "cards-in-hand",
-        controller: "you",
-        comparison: "greater-or-equal",
-        value: 3,
-      },
-      effect: {
-        type: "restriction",
-        restriction: "cant-ready",
-        target: "SELF",
-      },
-    },
+    stoneByDay,
   ],
   i18n: elisaMazaTransformedGargoyleI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { calhounMarineSergeantI18n } from "./191-calhoun-marine-sergeant.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const calhounMarineSergeant: CharacterCard = {
   id: "NLA",
@@ -34,13 +35,7 @@ export const calhounMarineSergeant: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "10g-1",
-      keyword: "Resist",
-      text: "Resist +1",
-      type: "keyword",
-      value: 1,
-    },
+    resist(1),
     {
       effect: {
         amount: 2,

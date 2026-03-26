@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { peterPanNeverLandingI18n } from "./091-peter-pan-never-landing.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const peterPanNeverLanding: CharacterCard = {
   id: "k9e",
@@ -24,13 +25,6 @@ export const peterPanNeverLanding: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Dreamborn", "Hero"],
-  abilities: [
-    {
-      id: "1g6-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: peterPanNeverLandingI18n,
 };

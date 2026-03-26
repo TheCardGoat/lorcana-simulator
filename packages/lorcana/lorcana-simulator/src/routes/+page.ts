@@ -66,6 +66,16 @@ const routeLinks: RouteLink[] = [
     label: "Multi-Target Test",
     description: "Validate simulator flows that target multiple cards or players.",
   },
+  {
+    href: "/tests/daisy-duck-donald-date",
+    label: "Daisy Duck Donald's Date Test",
+    description: "Test interactions with Daisy Duck Donald's Date card.",
+  },
+  {
+    href: "/tests/shift",
+    label: "Shift Test",
+    description: "Exercise shift mechanic and character transformations.",
+  },
 ];
 
 const routePatterns: RoutePattern[] = [

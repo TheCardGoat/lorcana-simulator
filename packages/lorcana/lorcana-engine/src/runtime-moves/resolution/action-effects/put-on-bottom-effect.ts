@@ -1,6 +1,7 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type { PutOnBottomEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
+import { createLorcanaLogProjection } from "../../../types";
 import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
@@ -83,6 +84,7 @@ export function resolvePutOnBottomEffect(
       cardPlayed,
       effect.target,
       getEffectTargetSelectionInput(effect.target, resolutionInput),
+      resolutionInput.eventSnapshot,
     ) ?? [];
   const selectedTargets = normalizeSelectedTargets(getCurrentSelectionInput(resolutionInput)) ?? [];
   const resolvedTargets =
@@ -118,6 +120,31 @@ export function resolvePutOnBottomEffect(
     resolutionInput.eventSnapshot.lastEffectTargetCount = resolvedTargets.length;
     if (resolvedTargets.length > 0) {
       resolutionInput.eventSnapshot.triggerAmount = resolvedTargets.length;
+    }
+  }
+
+  // Log when a previously-revealed card is automatically put on the bottom (non-interactive path,
+  // e.g. Daisy Duck's BIG PRIZE else branch for non-character reveals).
+  const revealedCardIds = resolutionInput.eventSnapshot?.revealedCardIds;
+  if (revealedCardIds && revealedCardIds.length > 0) {
+    for (const targetId of resolvedTargets) {
+      if (revealedCardIds.includes(targetId)) {
+        const targetPlayerId =
+          (ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined) ??
+          cardPlayed.playerId;
+        ctx.framework.log(
+          createLorcanaLogProjection(
+            "lorcana.effect.resolve.revealTopCard.autoBottom",
+            {
+              playerId: cardPlayed.playerId,
+              targetPlayerId,
+              revealedCardId: targetId,
+            },
+            { mode: "PUBLIC" },
+            "action",
+          ),
+        );
+      }
     }
   }
 }

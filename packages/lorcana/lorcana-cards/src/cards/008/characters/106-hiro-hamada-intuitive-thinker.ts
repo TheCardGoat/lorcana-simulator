@@ -29,6 +29,27 @@ export const hiroHamadaIntuitiveThinker: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Inventor"],
-  abilities: [],
+  abilities: [
+    {
+      cost: {
+        exert: true,
+      },
+      effect: {
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [{ type: "has-classification", classification: "Floodborn" }],
+        },
+        type: "ready",
+      },
+      id: "OeW-1",
+      name: "LOOK FOR A NEW ANGLE",
+      text: "LOOK FOR A NEW ANGLE {E} — Ready chosen Floodborn character.",
+      type: "activated",
+    },
+  ],
   i18n: hiroHamadaIntuitiveThinkerI18n,
 };

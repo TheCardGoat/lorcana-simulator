@@ -1,7 +1,9 @@
 import type { ScryDestination, ScryEffect } from "@tcg/lorcana-types";
+import { compareOperator } from "../../../rules/operator-utils";
 import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
 import type { CardPlayedPayload } from "../../../types/index";
 import type { PlayCardExecutionContext } from "./types";
+import { hasTemporaryPlayerRestriction } from "../../effects/temporary-effects";
 
 export type ScryDestinationSelection = {
   zone: string;
@@ -34,6 +36,12 @@ export function resolveScryDeckPlayerId(
     : cardPlayed.playerId;
 }
 
+/**
+ * Returns the top N cards of a player's deck for scry inspection.
+ *
+ * Deck ordering convention: index 0 = bottom, last index = top.
+ * So "top N cards" are the last N elements of the zone array.
+ */
 export function getScryLookedAtCards(
   ctx: ScryValidationContext,
   deckPlayerId: PlayerId,
@@ -43,12 +51,15 @@ export function getScryLookedAtCards(
     return [];
   }
 
+  // Deck zone array: index 0 = bottom of deck, last index = top of deck.
   const deckCards = ctx.framework.zones.getCards({
     zone: "deck",
     playerId: deckPlayerId,
   }) as CardInstanceId[];
 
-  return deckCards.slice(0, Math.min(amount, deckCards.length));
+  const count = Math.min(amount, deckCards.length);
+  // Slice the top N cards (last N elements).
+  return deckCards.slice(deckCards.length - count);
 }
 
 function normalizeDestinationCards(cards: unknown): CardInstanceId[] {
@@ -114,36 +125,6 @@ function normalizeScryFilters(filters: unknown): Record<string, unknown>[] {
   return [];
 }
 
-function evaluateNumericComparison(value: number, comparison: string, threshold: number): boolean {
-  switch (comparison) {
-    case "lte":
-    case "less-or-equal":
-    case "or-less":
-      return value <= threshold;
-    case "gte":
-    case "greater-or-equal":
-    case "or-more":
-      return value >= threshold;
-    case "lt":
-    case "less":
-    case "less-than":
-      return value < threshold;
-    case "gt":
-    case "greater":
-    case "greater-than":
-    case "more-than":
-      return value > threshold;
-    case "eq":
-    case "equal":
-      return value === threshold;
-    case "ne":
-    case "not-equal":
-      return value !== threshold;
-    default:
-      return true;
-  }
-}
-
 function evaluateSingleFilter(
   ctx: ScryValidationContext,
   cardId: CardInstanceId,
@@ -186,7 +167,7 @@ function evaluateSingleFilter(
       const threshold =
         typeof filter.value === "number" ? (filter.value as number) : Number(filter.value ?? 0);
       const comparison = String(filter.comparison ?? "eq");
-      return evaluateNumericComparison(cardCost, comparison, threshold);
+      return compareOperator(cardCost, comparison, threshold);
     }
     case "classification": {
       if (typeof filter.classification !== "string") {
@@ -256,6 +237,8 @@ export function validateScrySelection(
     return VALID_SCRY_SELECTION;
   }
 
+  // Top-of-deck cards that were looked at. Prefer the pre-resolved set (stored
+  // in the pending effect) over re-reading from the deck zone.
   const lookedAtCards =
     resolvedInput.lookedAtCards && resolvedInput.lookedAtCards.length > 0
       ? [...resolvedInput.lookedAtCards]
@@ -361,6 +344,14 @@ export function validateScrySelection(
   return VALID_SCRY_SELECTION;
 }
 
+/**
+ * Moves scry cards to their chosen destination zone.
+ *
+ * Deck ordering convention: index 0 = bottom, last index = top.
+ * - "deck-bottom": inserts at index 0 (bottom of deck).
+ * - "deck-top": appends to end (top of deck) — moveCard without an
+ *   explicit index appends to the end by default.
+ */
 function moveDestinationCards(
   cardsForDestination: CardInstanceId[],
   destination: ScryDestination,
@@ -377,15 +368,18 @@ function moveDestinationCards(
       }
       break;
     case "deck-bottom": {
+      // index 0 = bottom of deck
       for (const cardId of cardsForDestination) {
-        ctx.framework.zones.moveCard(cardId, {
-          playerId: zonePlayerId,
-          zone: "deck",
-        });
+        ctx.framework.zones.moveCard(
+          cardId,
+          { playerId: zonePlayerId, zone: "deck" },
+          { index: 0 },
+        );
       }
       break;
     }
     case "deck-top":
+      // No explicit index → appends to end = top of deck
       for (const cardId of cardsForDestination) {
         ctx.framework.zones.moveCard(cardId, {
           playerId: zonePlayerId,
@@ -415,7 +409,45 @@ function moveDestinationCards(
       break;
     case "play": {
       const playDest = destination as { entersExerted?: boolean };
+      const currentTurn = ctx.framework.state.status.turn ?? 1;
       for (const cardId of cardsForDestination) {
+        const definition = ctx.cards.getDefinition(cardId) as
+          | { cardType?: "character" | "item" | "location" | "action" }
+          | undefined;
+        const cardType = definition?.cardType;
+        const playerRestrictions = ctx.G.temporaryPlayerRestrictions;
+        const isBlocked =
+          hasTemporaryPlayerRestriction(
+            playerRestrictions,
+            zonePlayerId as PlayerId,
+            currentTurn,
+            "cant-play",
+          ) ||
+          (cardType === "action" &&
+            hasTemporaryPlayerRestriction(
+              playerRestrictions,
+              zonePlayerId as PlayerId,
+              currentTurn,
+              "cant-play-actions",
+            )) ||
+          (cardType === "item" &&
+            hasTemporaryPlayerRestriction(
+              playerRestrictions,
+              zonePlayerId as PlayerId,
+              currentTurn,
+              "cant-play-items",
+            )) ||
+          (cardType === "character" &&
+            hasTemporaryPlayerRestriction(
+              playerRestrictions,
+              zonePlayerId as PlayerId,
+              currentTurn,
+              "cant-play-characters",
+            ));
+        if (isBlocked) {
+          continue;
+        }
+
         ctx.framework.zones.moveCard(cardId, {
           playerId: zonePlayerId,
           zone: "play",
@@ -448,16 +480,18 @@ export function resolveScryEffect(
   }
 
   const deckPlayerId = resolveScryDeckPlayerId(cardPlayed, resolvedInput.selectedPlayerIds);
+  // Top-of-deck cards to inspect. Prefer pre-resolved cards (from a preceding
+  // reveal-top-card step) over re-reading from the deck zone.
   const lookedAtCards =
     resolvedInput.lookedAtCards && resolvedInput.lookedAtCards.length > 0
       ? [...resolvedInput.lookedAtCards]
       : getScryLookedAtCards(ctx, deckPlayerId, amount);
-  const revealIds = Array.isArray(resolvedInput.revealWindowIds)
+  const initialRevealIds = Array.isArray(resolvedInput.revealWindowIds)
     ? [...resolvedInput.revealWindowIds]
     : [];
   if (lookedAtCards.length > 0) {
-    if (revealIds.length === 0) {
-      revealIds.push(ctx.framework.zones.reveal(lookedAtCards, [cardPlayed.playerId]));
+    if (initialRevealIds.length === 0) {
+      initialRevealIds.push(ctx.framework.zones.reveal(lookedAtCards, [cardPlayed.playerId]));
     }
   }
 
@@ -467,6 +501,12 @@ export function resolveScryEffect(
   if (lookedAtCards.length === 0) {
     return;
   }
+
+  // UX rule-bend: when revealAll is set, persist destination reveals so both
+  // players can see the scried cards until a full turn cycle passes.
+  const persistReveal = effect.revealAll === true;
+  const currentStateID = ctx.framework.state.stateID ?? 0;
+  const ephemeralRevealIds: string[] = [];
 
   const destinationSelections = normalizeActionDestinationSelections(resolvedInput.destinations);
   const selectedByZone = new Map<string, CardInstanceId[][]>();
@@ -513,14 +553,26 @@ export function resolveScryEffect(
       }
     }
 
-    if (destination.reveal && cardsForDestination.length > 0 && opponentIds.length > 0) {
-      revealIds.push(ctx.framework.zones.reveal(cardsForDestination, opponentIds));
+    if (destination.reveal && cardsForDestination.length > 0) {
+      if (persistReveal) {
+        // Persistent reveal visible to all players, expires after ~1 full turn cycle
+        ctx.framework.zones.reveal(cardsForDestination, "all", {
+          stateID: currentStateID + 4,
+        });
+      } else if (opponentIds.length > 0) {
+        ephemeralRevealIds.push(ctx.framework.zones.reveal(cardsForDestination, opponentIds));
+      }
     }
 
     moveDestinationCards(cardsForDestination, destination, deckPlayerId, ctx);
   }
 
-  for (const revealId of revealIds) {
+  // Always clear the initial scry reveal windows (private "look" windows)
+  for (const revealId of initialRevealIds) {
+    ctx.framework.zones.clearReveal(revealId);
+  }
+  // Clear ephemeral destination reveals (non-persistent)
+  for (const revealId of ephemeralRevealIds) {
     ctx.framework.zones.clearReveal(revealId);
   }
 }

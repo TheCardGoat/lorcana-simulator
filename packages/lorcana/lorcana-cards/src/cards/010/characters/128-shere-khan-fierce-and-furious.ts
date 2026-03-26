@@ -45,7 +45,7 @@ export const shereKhanFierceAndFurious: CharacterCard = {
     },
     {
       cost: {
-        exert: true,
+        ink: 1,
       },
       effect: {
         steps: [
@@ -61,6 +61,16 @@ export const shereKhanFierceAndFurious: CharacterCard = {
             type: "deal-damage",
           },
           {
+            target: {
+              selector: "self",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+            type: "ready",
+          },
+          {
             duration: "this-turn",
             restriction: "cant-quest",
             target: "SELF",
@@ -70,6 +80,7 @@ export const shereKhanFierceAndFurious: CharacterCard = {
         type: "sequence",
       },
       id: "1uf-2",
+      name: "WILD RAGE 1",
       text: "WILD RAGE 1 {I}, Deal 1 damage to this character — Ready this character. He can't quest for the rest of this turn.",
       type: "activated",
     },

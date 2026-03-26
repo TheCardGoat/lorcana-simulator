@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { flynnRiderSpectralScoundrelI18n } from "./081-flynn-rider-spectral-scoundrel.i18n";
 
 export const flynnRiderSpectralScoundrel: CharacterCard = {
@@ -36,13 +37,7 @@ export const flynnRiderSpectralScoundrel: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Prince", "Whisper"],
   abilities: [
-    {
-      id: "73r-1",
-      keyword: "Boost",
-      text: "Boost 2 {I}",
-      type: "keyword",
-      value: 2,
-    },
+    boost(2),
     {
       id: "73r-2",
       name: "I'LL TAKE THAT",

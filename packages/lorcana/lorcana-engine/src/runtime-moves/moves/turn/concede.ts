@@ -2,7 +2,7 @@
 // .agents/skills/lorcana-rules/indexes/by-topic/turn-actions.md
 
 import type { PlayerId, RuntimeValidationResult } from "#core";
-import { createLorcanaLogMessage, type LorcanaMoveDefinition } from "../../../types";
+import { createLorcanaLogProjection, type LorcanaMoveDefinition } from "../../../types";
 
 /**
  * Concede the game
@@ -23,13 +23,16 @@ export const concede: LorcanaMoveDefinition<"concede"> = {
 
   execute: (ctx) => {
     const { playerId } = ctx.args;
-    ctx.framework.log({
-      category: "action",
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: createLorcanaLogMessage("lorcana.move.concede", {
-        playerId: playerId as PlayerId,
-      }),
-    });
+    ctx.framework.log(
+      createLorcanaLogProjection(
+        "lorcana.move.concede",
+        {
+          playerId: playerId as PlayerId,
+        },
+        { mode: "PUBLIC" },
+        "action",
+      ),
+    );
 
     // Determine winner (other player)
     const players = Object.keys(ctx.G.lore) as PlayerId[];

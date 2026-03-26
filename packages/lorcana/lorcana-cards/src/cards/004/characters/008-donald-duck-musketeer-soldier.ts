@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { donaldDuckMusketeerSoldierI18n } from "./008-donald-duck-musketeer-soldier.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const donaldDuckMusketeerSoldier: CharacterCard = {
   id: "1Pa",
@@ -32,12 +33,7 @@ export const donaldDuckMusketeerSoldier: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Musketeer"],
   abilities: [
-    {
-      id: "1hr-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         duration: "this-turn",

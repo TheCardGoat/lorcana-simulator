@@ -36,7 +36,7 @@ export const mauiWhale: CharacterCard = {
   abilities: [
     {
       effect: {
-        restriction: "cant-ready",
+        restriction: "cant-ready-at-start-of-turn",
         target: "SELF",
         type: "restriction",
       },

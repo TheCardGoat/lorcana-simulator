@@ -31,6 +31,9 @@ export const miloThatchSpiritedScholar: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      condition: {
+        type: "at-location",
+      },
       effect: {
         modifier: 2,
         stat: "strength",

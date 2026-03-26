@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { motherGothelUnwaveringSchemerI18n } from "./092-mother-gothel-unwavering-schemer.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const motherGothelUnwaveringSchemer: CharacterCard = {
   id: "7PI",
@@ -33,6 +34,33 @@ export const motherGothelUnwaveringSchemer: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain"],
-  abilities: [],
+  abilities: [
+    shift(4),
+    {
+      id: "7PI-2",
+      name: "THE WORLD IS DARK",
+      text: "THE WORLD IS DARK When you play this character, each opponent chooses one of their characters and returns that card to their hand.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "for-each-opponent",
+        effect: {
+          type: "return-to-hand",
+          chosenBy: "opponent",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "opponent",
+            zones: ["play"],
+            cardTypes: ["character"],
+          },
+        },
+      },
+    },
+  ],
   i18n: motherGothelUnwaveringSchemerI18n,
 };

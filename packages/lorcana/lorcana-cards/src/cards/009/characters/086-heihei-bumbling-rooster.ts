@@ -32,19 +32,22 @@ export const heiheiBumblingRooster: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "comparison",
+        left: { type: "cards-in-inkwell", controller: "opponent" },
+        comparison: "greater",
+        right: { type: "cards-in-inkwell", controller: "you" },
+      },
       effect: {
-        condition: {
-          expression: "an opponent has more cards in their inkwell than you",
-          type: "if",
-        },
-        then: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
           exerted: true,
           facedown: true,
           source: "top-of-deck",
           target: "CONTROLLER",
           type: "put-into-inkwell",
         },
-        type: "conditional",
       },
       id: "td9-1",
       name: "FATTEN YOU UP",

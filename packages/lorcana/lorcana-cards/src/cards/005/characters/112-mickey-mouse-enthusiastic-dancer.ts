@@ -31,6 +31,11 @@ export const mickeyMouseEnthusiasticDancer: CharacterCard = {
   classifications: ["Dreamborn", "Hero"],
   abilities: [
     {
+      condition: {
+        controller: "you",
+        name: "Minnie Mouse",
+        type: "has-named-character",
+      },
       effect: {
         modifier: 2,
         stat: "strength",
@@ -38,8 +43,9 @@ export const mickeyMouseEnthusiasticDancer: CharacterCard = {
         type: "modify-stat",
       },
       id: "18m-1",
+      name: "PERFECT PARTNERS",
       text: "PERFECT PARTNERS While you have a character named Minnie Mouse in play, this character gets +2 {S}.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: mickeyMouseEnthusiasticDancerI18n,

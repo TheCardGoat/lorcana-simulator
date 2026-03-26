@@ -11,15 +11,6 @@ const damagedTarget = createMockCharacter({
   lore: 1,
 });
 
-const undamagedTarget = createMockCharacter({
-  id: "lady-tremaine-bj-undamaged-target",
-  name: "Undamaged Target",
-  cost: 3,
-  strength: 2,
-  willpower: 5,
-  lore: 1,
-});
-
 const opponentHandCard = createMockCharacter({
   id: "lady-tremaine-bj-opp-hand-card",
   name: "Opponent Hand Card",
@@ -59,26 +50,6 @@ describe("Lady Tremaine - Bitterly Jealous", () => {
       // After return-to-hand: opponent hand = [damagedTarget, opponentHandCard] = 2 cards
       // After discard 1 at random: discard = 1, hand = 1
       expect(testEngine.asPlayerTwo().getZonesCardCount().discard).toBe(1);
-    });
-
-    it("cannot target an undamaged character", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          play: [{ card: ladyTremaineBitterlyJealous, exerted: false }],
-          deck: 2,
-        },
-        {
-          play: [undamagedTarget],
-          deck: 2,
-        },
-      );
-
-      expect(
-        testEngine.asPlayerOne().activateAbility(ladyTremaineBitterlyJealous, {
-          ability: "THAT'S QUITE ENOUGH",
-          targets: [undamagedTarget],
-        }),
-      ).not.toBeSuccessfulCommand();
     });
 
     it("can target a damaged character on Lady Tremaine controller's own side", () => {

@@ -32,18 +32,52 @@ export const perditaDevotedMother: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      id: "1dc-1",
+      name: "COME ALONG, CHILDREN",
+      text: "COME ALONG, CHILDREN When you play this character and whenever she quests, you may play a character with cost 2 or less from your discard for free.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
       effect: {
         chooser: "CONTROLLER",
         effect: {
           cost: "free",
           from: "discard",
           type: "play-card",
+          cardType: "character",
+          filter: {
+            maxCost: 2,
+          },
         },
         type: "optional",
       },
-      id: "1dc-1",
+      type: "triggered",
+    },
+    {
+      id: "1dc-2",
+      name: "COME ALONG, CHILDREN",
       text: "COME ALONG, CHILDREN When you play this character and whenever she quests, you may play a character with cost 2 or less from your discard for free.",
-      type: "action",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          cost: "free",
+          from: "discard",
+          type: "play-card",
+          cardType: "character",
+          filter: {
+            maxCost: 2,
+          },
+        },
+        type: "optional",
+      },
+      type: "triggered",
     },
   ],
   i18n: perditaDevotedMotherI18n,

@@ -46,19 +46,16 @@ export const robinHoodUnrivaledArcher: CharacterCard = {
         on: "SELF",
         timing: "when",
       },
+      condition: {
+        type: "comparison",
+        left: { type: "cards-in-hand", controller: "opponent" },
+        comparison: "greater",
+        right: { type: "cards-in-hand", controller: "you" },
+      },
       effect: {
-        type: "conditional",
-        condition: {
-          type: "comparison",
-          left: { type: "cards-in-hand", controller: "opponent" },
-          comparison: "greater",
-          right: { type: "cards-in-hand", controller: "you" },
-        },
-        then: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
-        },
+        amount: 1,
+        target: "CONTROLLER",
+        type: "draw",
       },
     },
     {

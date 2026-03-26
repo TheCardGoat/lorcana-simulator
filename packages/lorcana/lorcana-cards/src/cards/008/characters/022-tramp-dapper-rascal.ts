@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { trampDapperRascalI18n } from "./022-tramp-dapper-rascal.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const trampDapperRascal: CharacterCard = {
   id: "M9y",
@@ -34,15 +35,7 @@ export const trampDapperRascal: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      id: "1x4-1",
-      cost: {
-        ink: 4,
-      },
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 4",
-    },
+    shift(4),
     {
       id: "1x4-2",
       name: "PLAY IT COOL",

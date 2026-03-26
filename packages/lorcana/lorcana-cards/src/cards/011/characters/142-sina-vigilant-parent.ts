@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { sinaVigilantParentI18n } from "./142-sina-vigilant-parent.i18n";
+import { alert } from "../../../helpers/abilities/alert";
 
 export const sinaVigilantParent: CharacterCard = {
   id: "KYV",
@@ -29,13 +30,6 @@ export const sinaVigilantParent: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1bt-1",
-      keyword: "Alert",
-      type: "keyword",
-      text: "Alert",
-    },
-  ],
+  abilities: [alert],
   i18n: sinaVigilantParentI18n,
 };

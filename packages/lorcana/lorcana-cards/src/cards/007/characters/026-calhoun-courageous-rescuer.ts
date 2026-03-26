@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { calhounCourageousRescuerI18n } from "./026-calhoun-courageous-rescuer.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const calhounCourageousRescuer: CharacterCard = {
   id: "Vkp",
@@ -34,15 +35,7 @@ export const calhounCourageousRescuer: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Racer"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "1m4-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         chooser: "CONTROLLER",

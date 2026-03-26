@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { pegasusCloudRacerI18n } from "./083-pegasus-cloud-racer.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const pegasusCloudRacer: CharacterCard = {
   id: "nia",
@@ -37,33 +39,17 @@ export const pegasusCloudRacer: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally"],
   abilities: [
+    shift(3),
+    evasive,
     {
-      cost: {
-        ink: 3,
+      condition: {
+        type: "used-shift",
       },
-      id: "1b8-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
-    {
-      id: "1b8-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
-    {
       effect: {
-        condition: {
-          expression: "you used Shift to play him",
-          type: "if",
-        },
-        then: {
-          keyword: "Evasive",
-          target: "YOUR_CHARACTERS",
-          type: "gain-keyword",
-        },
-        type: "conditional",
+        keyword: "Evasive",
+        target: "YOUR_CHARACTERS",
+        type: "gain-keyword",
+        duration: "until-start-of-next-turn",
       },
       id: "1b8-3",
       name: "HOP ON!",

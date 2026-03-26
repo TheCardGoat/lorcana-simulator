@@ -36,4 +36,26 @@ describe("Lonely Grave", () => {
     expect(testEngine.getCardsUnder(scroogesCountingHouseEbenezersOffice)).toEqual([]);
     expect(testEngine.asPlayerOne().getCardZone(restlessSpirit)).toBe("deck");
   });
+
+  it.todo("regression: not activable when no characters or locations with Boost are in play", () => {
+    const noBoostCharacter = createMockCharacter({
+      id: "lonely-grave-no-boost-char",
+      name: "No Boost Character",
+      cost: 2,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [restlessSpirit],
+      play: [lonelyGrave, noBoostCharacter, willingSacrifice],
+    });
+
+    // No Boost targets in play, so ability should not be activable
+    const result = testEngine.asPlayerOne().activateAbility(lonelyGrave, {
+      costs: {
+        banishCharacters: [testEngine.findCardInstanceId(willingSacrifice, "play", "player_one")],
+      },
+    });
+
+    expect(result.success).toBe(false);
+  });
 });

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mushuYourWorstNightmareI18n } from "./142-mushu-your-worst-nightmare.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const mushuYourWorstNightmare: CharacterCard = {
   id: "dhS",
@@ -34,29 +35,42 @@ export const mushuYourWorstNightmare: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally", "Dragon"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "qm5-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
-        duration: "this-turn",
-        keyword: "Rush",
-        target: "CHOSEN_CHARACTER",
-        type: "gain-keyword",
+        type: "sequence",
+        steps: [
+          {
+            type: "gain-keyword",
+            keyword: "Rush",
+            duration: "this-turn",
+            target: "TRIGGERING_CHARACTER",
+          },
+          {
+            type: "gain-keyword",
+            keyword: "Reckless",
+            duration: "this-turn",
+            target: "TRIGGERING_CHARACTER",
+          },
+          {
+            type: "gain-keyword",
+            keyword: "Evasive",
+            duration: "this-turn",
+            target: "TRIGGERING_CHARACTER",
+          },
+        ],
       },
       id: "qm5-2",
       name: "ALL FIRED UP",
       text: "ALL FIRED UP Whenever you play another character, they gain Rush, Reckless, and Evasive this turn.",
       trigger: {
         event: "play",
-        on: "SELF",
-        timing: "when",
+        on: {
+          cardType: "character",
+          controller: "you",
+          excludeSelf: true,
+        },
+        timing: "whenever",
       },
       type: "triggered",
     },

@@ -32,21 +32,18 @@ export const brutusFearsomeCrocodile: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "turn-metric",
+        metric: "damaged-characters-by-owner",
+        ownerScope: "you",
+        comparison: {
+          operator: "gt",
+          value: 0,
+        },
+      },
       effect: {
-        condition: {
-          type: "turn-metric",
-          metric: "damaged-characters-by-owner",
-          ownerScope: "you",
-          comparison: {
-            operator: "gt",
-            value: 0,
-          },
-        },
-        then: {
-          amount: 2,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 2,
+        type: "gain-lore",
       },
       id: "j0c-1",
       name: "SPITEFUL",

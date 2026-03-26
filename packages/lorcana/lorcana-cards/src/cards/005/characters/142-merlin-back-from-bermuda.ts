@@ -31,15 +31,23 @@ export const merlinBackFromBermuda: CharacterCard = {
   classifications: ["Storyborn", "Mentor", "Sorcerer"],
   abilities: [
     {
-      effect: {
-        keyword: "Resist",
-        target: "YOUR_CHARACTERS",
-        type: "gain-keyword",
-        value: 1,
-      },
       id: "eka-1",
+      name: "LONG LIVE THE KING!",
       text: "LONG LIVE THE KING! Your characters named Arthur gain Resist +1.",
-      type: "action",
+      type: "static",
+      effect: {
+        type: "gain-keyword",
+        keyword: "Resist",
+        value: 1,
+        target: {
+          cardTypes: ["character"],
+          count: "all",
+          owner: "you",
+          selector: "all",
+          zones: ["play"],
+          filter: [{ type: "attribute", attribute: "name", comparison: "equals", value: "Arthur" }],
+        },
+      },
     },
   ],
   i18n: merlinBackFromBermudaI18n,

@@ -59,7 +59,7 @@ describe("Aurelian Gyrosensor", () => {
         resolveOptional: true,
         destinations: [
           { zone: "deck-top", cards: [] },
-          { zone: "deck-bottom", cards: [topDeckCard] },
+          { zone: "deck-bottom", cards: [secondDeckCard] },
         ],
       }),
     ).toBeSuccessfulCommand();

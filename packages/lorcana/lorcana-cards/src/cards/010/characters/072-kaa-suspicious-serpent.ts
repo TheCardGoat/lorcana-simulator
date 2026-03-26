@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { ward } from "../../../helpers/abilities/ward";
 import { kaaSuspiciousSerpentI18n } from "./072-kaa-suspicious-serpent.i18n";
 
 export const kaaSuspiciousSerpent: CharacterCard = {
@@ -24,13 +25,6 @@ export const kaaSuspiciousSerpent: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Storyborn", "Villain"],
-  abilities: [
-    {
-      id: "xkn-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: kaaSuspiciousSerpentI18n,
 };

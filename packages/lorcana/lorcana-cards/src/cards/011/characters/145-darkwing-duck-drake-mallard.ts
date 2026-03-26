@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { darkwingDuckDrakeMallardI18n } from "./145-darkwing-duck-drake-mallard.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const darkwingDuckDrakeMallard: CharacterCard = {
   id: "oJV",
@@ -24,13 +25,6 @@ export const darkwingDuckDrakeMallard: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Storyborn", "Super", "Hero", "Detective"],
-  abilities: [
-    {
-      id: "22s-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: darkwingDuckDrakeMallardI18n,
 };

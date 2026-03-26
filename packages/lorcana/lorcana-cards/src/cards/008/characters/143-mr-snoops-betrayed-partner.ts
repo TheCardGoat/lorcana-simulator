@@ -45,6 +45,12 @@ export const mrSnoopsBetrayedPartner: CharacterCard = {
       trigger: {
         event: "banish",
         on: "SELF",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
         timing: "when",
       },
       type: "triggered",

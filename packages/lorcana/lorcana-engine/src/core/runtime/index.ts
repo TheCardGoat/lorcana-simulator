@@ -35,7 +35,11 @@ export type {
   ChessClockContext,
   PriorityClockContext,
   ClockPlayerState,
+  ChessClockPlayerState,
   PriorityClockPlayerState,
+  DynamicClockPlayerState,
+  DynamicClockContext,
+  DynamicClockConfig,
   ChessClockConfig,
   PriorityClockConfig,
   TimeControlConfig,
@@ -70,8 +74,10 @@ export {
   createInitialTCGCtx,
   isChessClockContext,
   isPriorityClockContext,
+  isDynamicClockContext,
   isClockRunning,
 } from "./types";
+export { DEFAULT_DYNAMIC_CLOCK_CONFIG } from "./time-control";
 
 // Core runtime - explicit exports to avoid duplicate names with flow, game-definition, move-system
 export type {
@@ -212,8 +218,21 @@ export type { WebSocketTransportConfig, ServerWebSocketConfig } from "./websocke
 export { WebSocketTransport, createWebSocketServer } from "./websocket-transport";
 
 // In-Memory Transport (Phase 5)
-export type { InMemoryTransportPair } from "./in-memory-transport";
-export { InMemoryTransport, createInMemoryTransportPair } from "./in-memory-transport";
+export type {
+  BrowserTransportConfig,
+  BrowserTransportLatencyModel,
+  BrowserTransportMode,
+  InMemoryTransportPair,
+  InMemoryTransportScheduler,
+  InMemoryTransportScheduledTask,
+  NormalizedBrowserTransportConfig,
+} from "./in-memory-transport";
+export {
+  InMemoryTransport,
+  ManualInMemoryTransportScheduler,
+  createInMemoryTransportPair,
+  normalizeBrowserTransportConfig,
+} from "./in-memory-transport";
 
 // Persistence (Phase 6)
 export type {

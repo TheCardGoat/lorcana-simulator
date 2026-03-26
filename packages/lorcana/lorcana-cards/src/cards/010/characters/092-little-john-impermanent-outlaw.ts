@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { littleJohnImpermanentOutlawI18n } from "./092-little-john-impermanent-outlaw.i18n";
 
 export const littleJohnImpermanentOutlaw: CharacterCard = {
@@ -33,13 +34,7 @@ export const littleJohnImpermanentOutlaw: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Whisper"],
   abilities: [
-    {
-      id: "196-1",
-      keyword: "Boost",
-      text: "Boost 3 {I}",
-      type: "keyword",
-      value: 3,
-    },
+    boost(3),
     {
       effect: {
         chooser: "CONTROLLER",

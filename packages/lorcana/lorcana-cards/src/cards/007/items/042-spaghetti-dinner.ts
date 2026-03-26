@@ -32,6 +32,7 @@ export const spaghettiDinner: ItemCard = {
         ink: 1,
       },
       effect: {
+        type: "conditional",
         condition: {
           type: "has-character-count",
           controller: "you",
@@ -42,7 +43,6 @@ export const spaghettiDinner: ItemCard = {
           amount: 1,
           type: "gain-lore",
         },
-        type: "conditional",
       },
       id: "1bi-1",
       text: "FINE DINING {E}, 1 {I} — If you have 2 or more characters in play, gain 1 lore.",

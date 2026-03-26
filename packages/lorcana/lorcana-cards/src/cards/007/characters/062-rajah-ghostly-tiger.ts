@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rajahGhostlyTigerI18n } from "./062-rajah-ghostly-tiger.i18n";
+import { vanish } from "../../../helpers/abilities/vanish";
 
 export const rajahGhostlyTiger: CharacterCard = {
   id: "yQ2",
@@ -29,13 +30,6 @@ export const rajahGhostlyTiger: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Ally", "Illusion"],
-  abilities: [
-    {
-      id: "1ba-1",
-      keyword: "Vanish",
-      type: "keyword",
-      text: "Vanish",
-    },
-  ],
+  abilities: [vanish],
   i18n: rajahGhostlyTigerI18n,
 };

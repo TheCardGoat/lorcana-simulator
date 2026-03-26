@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { gizmoduckSuitedUpI18n } from "./105-gizmoduck-suited-up.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const gizmoduckSuitedUp: CharacterCard = {
   id: "4Oe",
@@ -33,13 +34,7 @@ export const gizmoduckSuitedUp: CharacterCard = {
   ],
   classifications: ["Storyborn", "Inventor"],
   abilities: [
-    {
-      id: "4Oe-1",
-      keyword: "Resist",
-      type: "keyword",
-      value: 1,
-      text: "Resist +1",
-    },
+    resist(1),
     {
       effect: {
         ability: {

@@ -43,13 +43,12 @@ export const merlinShapeshifter: CharacterCard = {
       name: "BATTLE OF WITS",
       text: "BATTLE OF WITS Whenever one of your other characters is returned to your hand from play, this character gets +1 {L} this turn.",
       trigger: {
-        event: "banish",
+        event: "return-to-hand",
         on: "YOUR_OTHER_CHARACTERS",
         timing: "whenever",
       },
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: merlinShapeshifterI18n,
 };

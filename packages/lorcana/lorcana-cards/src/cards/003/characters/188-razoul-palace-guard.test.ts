@@ -10,8 +10,7 @@ describe("Razoul - Palace Guard", () => {
         deck: 5,
       });
 
-      const card = testEngine.asPlayerOne().getCard(razoulPalaceGuard);
-      expect(card.strength).toBe(3);
+      expect(testEngine.asPlayerOne().getCardStrength(razoulPalaceGuard)).toBe(3);
     });
 
     it("should have base 1 strength when damaged (condition not met)", () => {
@@ -20,8 +19,7 @@ describe("Razoul - Palace Guard", () => {
         deck: 5,
       });
 
-      const card = testEngine.asPlayerOne().getCard(razoulPalaceGuard);
-      expect(card.strength).toBe(1);
+      expect(testEngine.asPlayerOne().getCardStrength(razoulPalaceGuard)).toBe(1);
     });
 
     it("has a static modify-stat ability with no-damage condition", () => {

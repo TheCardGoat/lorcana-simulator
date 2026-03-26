@@ -1,5 +1,6 @@
 import type { LocationCard } from "@tcg/lorcana-types";
 import { scroogesCountingHouseEbenezersOfficeI18n } from "./134-scrooges-counting-house-ebenezers-office.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const scroogesCountingHouseEbenezersOffice: LocationCard = {
   id: "Qwc",
@@ -33,13 +34,7 @@ export const scroogesCountingHouseEbenezersOffice: LocationCard = {
     },
   ],
   abilities: [
-    {
-      id: "v62-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 2,
-      text: "Boost 2 {I}",
-    },
+    boost(2),
     {
       id: "v62-2",
       effect: {

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { bobbyPurplePigeonI18n } from "./182-bobby-purple-pigeon.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const bobbyPurplePigeon: CharacterCard = {
   id: "hjd",
@@ -24,13 +25,6 @@ export const bobbyPurplePigeon: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn"],
-  abilities: [
-    {
-      id: "mbj-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: bobbyPurplePigeonI18n,
 };

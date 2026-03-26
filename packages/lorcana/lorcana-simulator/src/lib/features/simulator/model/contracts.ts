@@ -1,9 +1,10 @@
-import type { EnginePacketUpdate } from "@tcg/lorcana-engine";
+import type { EnginePacketUpdate, LorcanaGameLogEntry } from "@tcg/lorcana-engine";
 import type {
   LorcanaProjectedBoardView,
   LorcanaProjectedCard,
   LorcanaProjectedPlayerBoard,
   LorcanaRuntimeMoveParams,
+  ResolutionSelectionDestinationRule,
 } from "@tcg/lorcana-engine";
 import type { TestInitialState } from "@tcg/lorcana-engine/testing";
 
@@ -47,9 +48,28 @@ export interface LorcanaSimulatorFixture {
   skipPreGame?: boolean;
 }
 
+export interface SimulatorViewUpdateMetadata {
+  sourceAuthority: "client" | "server";
+  commandID?: string;
+  phase: "optimistic" | "confirmed" | "rejected";
+}
+
 export interface LorcanaCardTextEntrySnapshot {
   title: string;
   description?: string;
+}
+
+export interface LogCardReference {
+  cardId: string;
+  definitionId: string;
+  label: string;
+  inkType?: string[];
+  inkable?: boolean;
+  isMasked: boolean;
+  ownerSide: LorcanaPlayerSide;
+  cardType?: "character" | "action" | "item" | "location";
+  set?: string;
+  cardNumber?: number;
 }
 
 export interface LorcanaCardSnapshot {
@@ -63,6 +83,7 @@ export interface LorcanaCardSnapshot {
 
   // Optional gameplay + display metadata
   cardType?: "character" | "action" | "item" | "location";
+  actionSubtype?: string;
   cost?: number;
   inkType?: string[];
   inkable?: boolean;
@@ -89,6 +110,7 @@ export interface LorcanaCardSnapshot {
   atLocationId?: string;
   atLocationLabel?: string;
   cardsUnderCount?: number;
+  playedViaShift?: boolean;
   facePresentation: CardFacePresentation;
 
   // Grant source indicators (cards granting abilities/keywords to this card)
@@ -147,7 +169,6 @@ export interface MoveCategorySummary {
   categoryId: ExecutableMovePresentationCategoryId;
   categoryLabel: string;
   sourceCardIds: readonly string[];
-  count: number;
   isDirect: boolean;
 }
 
@@ -178,6 +199,7 @@ export interface AvailableMovesSelectionEntry {
   label: string;
   detail?: string;
   cardId?: string;
+  availableDestinationIds?: string[];
   moveId?: string;
   playerId?: string;
   selected: boolean;
@@ -216,10 +238,25 @@ export interface ActionAvailableMovesSelectionState extends AvailableMovesSelect
 
 export interface ResolutionTargetAvailableMovesSelectionState extends AvailableMovesSelectionBase {
   mode: "resolution-target";
+  sourceCardId: string | null;
   entries: AvailableMovesSelectionEntry[];
+  effectType: "move-damage" | "move-to-location" | null;
+  candidateEntries: AvailableMovesSelectionEntry[];
+  activeSlotIndex: number | null;
+  slots: ResolutionTargetSelectionSlotState[];
   selectedTargetLabels: string[];
   minimumSelections: number;
   maximumSelections: number;
+}
+
+export interface ResolutionTargetSelectionSlotState {
+  id: string;
+  label: string;
+  cardType: "character" | "location";
+  targetId: string | null;
+  targetLabel: string | null;
+  targetCardId: string | null;
+  locked: boolean;
 }
 
 export interface ResolutionChoiceAvailableMovesSelectionState extends AvailableMovesSelectionBase {
@@ -244,12 +281,16 @@ export interface AvailableMovesScryDestinationState {
   zone: string;
   label: string;
   detail: string;
+  orderingEnabled: boolean;
+  rule: ResolutionSelectionDestinationRule;
   cards: AvailableMovesSelectionEntry[];
 }
 
 export interface ResolutionScryAvailableMovesSelectionState extends AvailableMovesSelectionBase {
   mode: "resolution-scry";
+  sourceCardId: string | null;
   entries: AvailableMovesSelectionEntry[];
+  remainingManualAssignments: number;
   destinations: AvailableMovesScryDestinationState[];
 }
 
@@ -343,18 +384,9 @@ export interface MoveLogEntrySnapshot {
   moveId: LorcanaSimulatorMoveId;
   actorSide?: LorcanaPlayerSide;
   title: string;
-  detail?: string;
-  rawLogRegistry?: {
-    move: {
-      moveId: LorcanaSimulatorMoveId;
-      params?: SimulatorSerializedObject;
-      playerId: string;
-      timestamp: number;
-    };
-    matchingMoveLogEntry?: MoveLogRelatedEntrySnapshot;
-    relatedLogEntries: MoveLogRelatedEntrySnapshot[];
-    cardReferences?: LorcanaCardSnapshot[];
-  };
+  typedLogEntry?: LorcanaGameLogEntry;
+  playerId?: string;
+  params?: SimulatorSerializedObject;
 }
 
 export interface MoveValidationResult {
@@ -377,6 +409,15 @@ export interface SimulatorMoveError {
   rawReason?: string;
 }
 
+export interface LorcanaPlayerTimerSummary {
+  reserveMsRemaining: number;
+  isActive: boolean;
+  isRunning: boolean;
+  startedAtMs?: number;
+  timeoutCount?: number;
+  isInNegativeTime?: boolean;
+}
+
 export interface LorcanaPlayerSummary {
   lore: number;
   deckCount: number;
@@ -384,6 +425,7 @@ export interface LorcanaPlayerSummary {
   discardCount: number;
   inkwellCount: number;
   availableInk: number | null;
+  timer?: LorcanaPlayerTimerSummary;
 }
 
 export type PendingResolutionMoveEntry =
@@ -501,6 +543,7 @@ export interface LorcanaSimulatorReadModel {
   getStateID(): number;
 
   getLastPacketUpdate(view?: LorcanaSimulatorView): EnginePacketUpdate | null;
+  getViewUpdateMetadata?(view?: LorcanaSimulatorView): SimulatorViewUpdateMetadata | null;
 
   getBoard(view: LorcanaSimulatorView): LorcanaProjectedBoardView;
   getLegalActions(view: LorcanaSimulatorView): readonly unknown[];

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { hudsonDeterminedReaderI18n } from "./180-hudson-determined-reader.i18n";
+import { stoneByDay } from "../../../helpers/abilities/stoneByDay";
 
 export const hudsonDeterminedReader: CharacterCard = {
   id: "4NX",
@@ -56,24 +57,7 @@ export const hudsonDeterminedReader: CharacterCard = {
       },
       type: "triggered",
     },
-    {
-      id: "g6l-2",
-      name: "STONE BY DAY",
-      text: "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
-      type: "static",
-      condition: {
-        type: "resource-count",
-        what: "cards-in-hand",
-        controller: "you",
-        comparison: "greater-or-equal",
-        value: 3,
-      },
-      effect: {
-        type: "restriction",
-        restriction: "cant-ready",
-        target: "SELF",
-      },
-    },
+    stoneByDay,
   ],
   i18n: hudsonDeterminedReaderI18n,
 };

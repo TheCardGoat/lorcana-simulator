@@ -31,6 +31,25 @@ export const perditaOnTheLookout: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Puppy",
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
         modifier: 1,
         stat: "willpower",
@@ -38,8 +57,9 @@ export const perditaOnTheLookout: CharacterCard = {
         type: "modify-stat",
       },
       id: "1uw-1",
+      name: "KEEPING WATCH",
       text: "KEEPING WATCH While you have a Puppy character in play, this character gets +1 {W}.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: perditaOnTheLookoutI18n,

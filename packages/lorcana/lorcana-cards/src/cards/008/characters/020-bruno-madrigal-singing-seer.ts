@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { brunoMadrigalSingingSeerI18n } from "./020-bruno-madrigal-singing-seer.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const brunoMadrigalSingingSeer: CharacterCard = {
   id: "7WL",
@@ -34,15 +35,7 @@ export const brunoMadrigalSingingSeer: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally", "Madrigal"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "1cp-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       effect: {
         chooser: "CONTROLLER",

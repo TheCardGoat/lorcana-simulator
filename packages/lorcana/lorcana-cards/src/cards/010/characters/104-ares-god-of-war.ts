@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { reckless } from "../../../helpers/abilities/reckless";
 import { aresGodOfWarI18n } from "./104-ares-god-of-war.i18n";
 
 export const aresGodOfWar: CharacterCard = {
@@ -25,12 +26,7 @@ export const aresGodOfWar: CharacterCard = {
   text: "Reckless CALL TO BATTLE Once during your turn, whenever you put a card under one of your characters or locations, you may ready chosen character. If you do, that character can't quest for the rest of this turn.",
   classifications: ["Storyborn", "Deity"],
   abilities: [
-    {
-      id: "3s2-1",
-      keyword: "Reckless",
-      text: "Reckless",
-      type: "keyword",
-    },
+    reckless,
     {
       effect: {
         steps: [

@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { clawhauserFrontDeskOfficerI18n } from "./035-clawhauser-front-desk-officer.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const clawhauserFrontDeskOfficer: CharacterCard = {
   id: "q40",
@@ -31,20 +33,6 @@ export const clawhauserFrontDeskOfficer: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Detective"],
-  abilities: [
-    {
-      id: "1u1-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-    {
-      id: "1u1-2",
-      keyword: "Singer",
-      text: "Singer 4",
-      type: "keyword",
-      value: 4,
-    },
-  ],
+  abilities: [bodyguard, singer(4)],
   i18n: clawhauserFrontDeskOfficerI18n,
 };

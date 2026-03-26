@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { crikeeGoodLuckCharmI18n } from "./142-cri-kee-good-luck-charm.i18n";
+import { alert } from "../../../helpers/abilities/alert";
 
 export const crikeeGoodLuckCharm: CharacterCard = {
   id: "GwP",
@@ -29,13 +30,6 @@ export const crikeeGoodLuckCharm: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1gx-1",
-      keyword: "Alert",
-      type: "keyword",
-      text: "Alert",
-    },
-  ],
+  abilities: [alert],
   i18n: crikeeGoodLuckCharmI18n,
 };

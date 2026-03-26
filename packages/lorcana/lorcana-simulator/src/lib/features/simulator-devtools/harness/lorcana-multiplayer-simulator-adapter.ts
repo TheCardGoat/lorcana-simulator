@@ -22,18 +22,25 @@ import {
   type LocalizationData,
   type SupportedLocale,
 } from "@tcg/lorcana-cards/data";
-import { LorcanaMultiplayerTestEngine, PLAYER_ONE, PLAYER_TWO } from "@tcg/lorcana-engine/testing";
+import {
+  type BrowserTransportConfig,
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+  normalizeBrowserTransportConfig,
+} from "@tcg/lorcana-engine/testing";
 import {
   LORCANA_ZONE_IDS,
   LORCANA_SIMULATOR_VIEWS,
+  type LogCardReference,
   type LorcanaCardSnapshot,
   type LorcanaCardTextEntrySnapshot,
   type LorcanaSimulatorLocale,
   type LorcanaPlayerSide,
   type LorcanaSimulatorReadModel,
+  type SimulatorViewUpdateMetadata,
   type LorcanaSimulatorFixture,
   type SimulatorSerializedObject,
-  type SimulatorSerializedValue,
   type LorcanaSimulatorView,
   type LorcanaZoneId,
   type MoveLogEntrySnapshot,
@@ -180,6 +187,9 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
   #cardLocalization: LocalizationData | null = null;
   #localizationRequestId = 0;
   #localeRevision = 0;
+  #renderRevision = 0;
+  #engineUpdateUnsubscribers: Array<() => void> = [];
+  #stateUpdateView: LorcanaSimulatorView | "all";
 
   /**
    * Create an adapter from a fixture.
@@ -187,11 +197,15 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
    * This is the preferred way to create a session for testing/simulation.
    * Uses synchronous createWithFixture internally.
    */
-  static fromFixture(fixture: LorcanaSimulatorFixture): LorcanaMultiplayerSimulatorAdapter {
+  static fromFixture(
+    fixture: LorcanaSimulatorFixture,
+    browserTransport: BrowserTransportConfig = { mode: "sync" },
+  ): LorcanaMultiplayerSimulatorAdapter {
     const engine = LorcanaMultiplayerTestEngine.createWithFixture(
       fixture.playerOne,
       fixture.playerTwo,
       {
+        browserTransport: normalizeBrowserTransportConfig(browserTransport),
         seed: fixture.seed ?? "simulator-default",
         skipPreGame: fixture.skipPreGame ?? true,
         validateSync: false,
@@ -200,8 +214,13 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
     return new LorcanaMultiplayerSimulatorAdapter(engine);
   }
 
-  constructor(engine: LorcanaMultiplayerTestEngine) {
+  constructor(
+    engine: LorcanaMultiplayerTestEngine,
+    options: { stateUpdateView?: LorcanaSimulatorView | "all" } = {},
+  ) {
     this.#engine = engine;
+    this.#stateUpdateView = options.stateUpdateView ?? "all";
+    this.#subscribeToEngineRenderUpdates();
   }
 
   setLocale(locale: LorcanaSimulatorLocale): void {
@@ -245,7 +264,7 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
    * UI components can compare state IDs to avoid redundant updates.
    */
   getStateID(): number {
-    return this.#engine.getStateID() * 1_000_000 + this.#localeRevision;
+    return this.#renderRevision * 1_000_000 + this.#localeRevision;
   }
 
   /**
@@ -300,6 +319,19 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
     return this.#engine.getClientEngine(view)?.getLastPacketUpdate() ?? null;
   }
 
+  getViewUpdateMetadata(
+    view: LorcanaSimulatorView = "playerOne",
+  ): SimulatorViewUpdateMetadata | null {
+    if (view === "authoritative") {
+      return {
+        sourceAuthority: "server",
+        phase: "confirmed",
+      };
+    }
+
+    return this.#engine.getClientEngine(view)?.engine.getViewUpdateMetadata() ?? null;
+  }
+
   /**
    * Get the move log for display.
    */
@@ -341,12 +373,6 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
       const actorSide = this.#resolveSideFromOwner(entry.playerId);
       const actorId = String(entry.playerId);
       const moveId = assertLorcanaSimulatorMoveId(entry.moveId);
-      const rawMoveSnapshot = {
-        moveId,
-        params,
-        playerId: actorId,
-        timestamp: entry.timestamp,
-      };
 
       let matchingMoveLogEntry: MoveLogRelatedEntrySnapshot | undefined;
 
@@ -380,29 +406,35 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
         }
       }
 
-      const cardReferences = this.#buildLogCardReferences(params ?? {}, relatedLogEntries, view);
+      // Find the typed log entry from the game log entries that match this move
+      const typedLogEntry = (() => {
+        if (!matchingMoveLogEntry) return undefined;
+        const moveSourceSeqs = new Set<number>(matchingMoveLogEntry.sourceEventSeqs);
+        for (const logEntry of gameLogEntries) {
+          if (
+            logEntry.typedEntry &&
+            logEntry.sourceEventSeqs.some((seq) => moveSourceSeqs.has(seq))
+          ) {
+            return logEntry.typedEntry;
+          }
+        }
+        return undefined;
+      })();
+
       const snapshotEntry: MoveLogEntrySnapshot = {
         actorSide,
-        detail: undefined,
         id: `${entry.timestamp}-${index}-${entry.moveId}`,
         moveId,
-        rawLogRegistry: {
-          move: rawMoveSnapshot,
-          matchingMoveLogEntry: matchingMoveLogEntry
-            ? {
-                sourceEventSeqs: [...matchingMoveLogEntry.sourceEventSeqs],
-                defaultMessage: matchingMoveLogEntry.defaultMessage,
-              }
-            : undefined,
-          relatedLogEntries,
-          cardReferences,
-        },
+        typedLogEntry,
+        playerId: actorId,
+        params,
         timestamp: entry.timestamp,
         title: "",
         turnNumber: entry.turnNumber ?? 1,
       };
 
-      const presentation = formatEventLogBody(snapshotEntry, viewerSide, this.#locale);
+      const resolveCard = this.#buildCardReferenceResolver(view);
+      const presentation = formatEventLogBody(snapshotEntry, viewerSide, this.#locale, resolveCard);
 
       return {
         ...snapshotEntry,
@@ -412,67 +444,16 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
   }
 
   subscribeStateUpdates(handler: (stateID: number) => void): () => void {
-    const unsubscribers: Array<() => void> = [];
     let lastNotifiedStateID = this.getStateID();
-
-    const subscribeToView = (view: "playerOne" | "playerTwo" | "spectator") => {
-      try {
-        const engine = this.#engine.getEngineForView(view) as {
-          onStateUpdate?: (
-            callback: (state: unknown, stateID: number, packet: EnginePacketUpdate | null) => void,
-          ) => () => void;
-          engine?: {
-            onStateUpdate?: (
-              callback: (
-                state: unknown,
-                stateID: number,
-                packet: EnginePacketUpdate | null,
-              ) => void,
-            ) => () => void;
-          };
-        };
-        const subscribe =
-          typeof engine.onStateUpdate === "function"
-            ? engine.onStateUpdate.bind(engine)
-            : typeof engine.engine?.onStateUpdate === "function"
-              ? engine.engine.onStateUpdate.bind(engine.engine)
-              : null;
-
-        if (!subscribe) {
-          return;
-        }
-
-        const unsubscribe = subscribe((_state, stateID, _packet) => {
-          void stateID;
-          const nextStateID = this.getStateID();
-          if (nextStateID === lastNotifiedStateID) {
-            return;
-          }
-
-          lastNotifiedStateID = nextStateID;
-          handler(nextStateID);
-        });
-        unsubscribers.push(() => {
-          try {
-            unsubscribe();
-          } catch {
-            // Ignore cleanup failures so remaining view subscriptions still dispose.
-          }
-        });
-      } catch {
-        // Some simulator sessions do not allocate every client view.
+    return this.#subscribeToUpdateSource(() => {
+      const nextStateID = this.getStateID();
+      if (nextStateID === lastNotifiedStateID) {
+        return;
       }
-    };
 
-    subscribeToView("playerOne");
-    subscribeToView("playerTwo");
-    subscribeToView("spectator");
-
-    return () => {
-      for (const unsubscribe of unsubscribers) {
-        unsubscribe();
-      }
-    };
+      lastNotifiedStateID = nextStateID;
+      handler(nextStateID);
+    });
   }
 
   /**
@@ -489,6 +470,14 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
    * Clean up resources.
    */
   dispose(): void {
+    for (const unsubscribe of this.#engineUpdateUnsubscribers) {
+      try {
+        unsubscribe();
+      } catch {
+        // Ignore cleanup failures so adapter teardown remains best-effort.
+      }
+    }
+    this.#engineUpdateUnsubscribers = [];
     void this.#engine.dispose();
   }
 
@@ -498,6 +487,46 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
 
   #bumpLocaleRevision(): void {
     this.#localeRevision = (this.#localeRevision + 1) % 1_000_000;
+  }
+
+  #subscribeToEngineRenderUpdates(): void {
+    const unsubscribe = this.#subscribeToUpdateSource(() => {
+      this.#renderRevision += 1;
+    });
+    this.#engineUpdateUnsubscribers.push(unsubscribe);
+  }
+
+  #subscribeToUpdateSource(handler: () => void): () => void {
+    const unsubscribers: Array<() => void> = [];
+    const subscribeToView = (view: "playerOne" | "playerTwo" | "spectator") => {
+      try {
+        const client = this.#engine.getClientEngine(view);
+        const subscribe = client?.engine.onStateUpdate.bind(client.engine);
+        if (!subscribe) {
+          return;
+        }
+
+        unsubscribers.push(subscribe(handler));
+      } catch {
+        // Some simulator sessions do not allocate every client view.
+      }
+    };
+
+    if (this.#stateUpdateView === "all") {
+      subscribeToView("playerOne");
+      subscribeToView("playerTwo");
+      subscribeToView("spectator");
+    } else if (this.#stateUpdateView === "authoritative") {
+      unsubscribers.push(this.#engine.getServerEngine().onStateUpdate(handler));
+    } else {
+      subscribeToView(this.#stateUpdateView);
+    }
+
+    return () => {
+      for (const unsubscribe of unsubscribers) {
+        unsubscribe();
+      }
+    };
   }
 
   #translate(
@@ -598,6 +627,7 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
     category: "action" | "rules" | "system";
     defaultMessage?: { key: string; values: SimulatorSerializedObject };
     sourceEventSeqs: number[];
+    typedEntry?: import("@tcg/lorcana-engine").LorcanaGameLogEntry;
     visibility:
       | { mode: "PUBLIC" }
       | { mode: "PRIVATE"; visibleTo: string[] }
@@ -672,6 +702,7 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
                     visibleTo: [role.playerId],
                   },
                   defaultMessage: overrideMessage,
+                  // Keep the detail typedEntry for the override player
                 },
               ];
             }
@@ -681,85 +712,60 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
               ...entry,
               visibility: { mode: "PUBLIC" as const },
               defaultMessage: entry.defaultMessage,
+              // Strip detail typedEntry for non-override viewers:
+              // fall back to base version without private card info
+              typedEntry:
+                entry.typedEntry?.visibility?.mode === "PRIVATE" ? undefined : entry.typedEntry,
             },
           ];
       }
     });
   }
 
-  #buildLogCardReferences(
-    params: SimulatorSerializedObject,
-    relatedLogEntries: MoveLogRelatedEntrySnapshot[],
+  #buildCardReferenceResolver(
     view: LorcanaSimulatorView = "authoritative",
-  ): LorcanaCardSnapshot[] {
-    const cardIds = new Set<string>();
-
-    const addCardId = (value: SimulatorSerializedValue | undefined) => {
-      if (typeof value === "string" && value.trim().length > 0) {
-        cardIds.add(value);
-      }
-    };
-
-    const addAllCardIds = (obj: SimulatorSerializedObject) => {
-      addCardId(obj.cardId);
-      addCardId(obj.attackerId);
-      addCardId(obj.characterId);
-      addCardId(obj.defenderId);
-      addCardId(obj.locationId);
-      addCardId(obj.shiftTargetId);
-      addCardId(obj.sourceCardId);
-      addCardId(obj.sourceId);
-
-      for (const listKey of [
-        "cardIds",
-        "drawn",
-        "lookedAt",
-        "mulliganed",
-        "singerIds",
-        "targets",
-      ]) {
-        const list = obj[listKey];
-        if (Array.isArray(list)) {
-          for (const item of list) {
-            addCardId(item);
-          }
-        }
-      }
-    };
-
-    addAllCardIds(params);
-
-    for (const entry of relatedLogEntries) {
-      const values = entry.defaultMessage?.values;
-      if (!values) {
-        continue;
-      }
-
-      addAllCardIds(values);
-    }
-
-    if (cardIds.size === 0) {
-      return [];
-    }
-
+  ): (cardId: string) => LogCardReference | null {
     // Use the viewer's board so hand cards are fully visible for the owner.
     const board = this.#engine.getBoard(view);
-    const references: LorcanaCardSnapshot[] = [];
+    const authoritativeBoard =
+      view === "authoritative" ? board : this.#engine.getBoard("authoritative");
 
-    for (const cardId of cardIds) {
-      const card = board.cards[cardId];
+    return (cardId: string): LogCardReference | null => {
+      const card = board.cards[cardId] ?? authoritativeBoard.cards[cardId];
       if (card) {
+        const isMasked = card.hidden === true;
         const ownerSide = this.#resolveSideFromOwner(card.ownerId) ?? "playerOne";
-        const zoneId = parseBaseZone(card.zone) ?? "deck";
-        references.push(this.#projectCard(board, cardId, ownerSide, zoneId));
-        continue;
+        const definition = this.#engine.getCardDefinition(cardId) as LorcanaCard | undefined;
+        const shortId = definition ? this.#resolveCardShortId(definition, undefined) : undefined;
+        const localizedProjection =
+          shortId && definition ? this.#resolveLocalizedCardProjection(shortId, definition) : null;
+        const defaultLabel = definition
+          ? (getCardDisplayName(undefined, definition) ?? definition.name)
+          : cardId;
+        const label = isMasked
+          ? parseBaseZone(card.zone) === "deck"
+            ? this.#translate("sim.card.hiddenDeck")
+            : this.#translate("sim.card.hidden")
+          : (localizedProjection?.label ?? defaultLabel);
+
+        return {
+          cardId,
+          definitionId: definition?.id ?? cardId,
+          label,
+          inkType: definition?.inkType,
+          inkable: definition?.inkable,
+          isMasked,
+          ownerSide,
+          cardType: definition?.cardType,
+          set: definition?.set,
+          cardNumber: definition?.cardNumber,
+        };
       }
 
       // Fallback for cards not in the projected board (e.g. deck cards after mulligan).
-      // Look up the definition directly from the instance registry.
       const definition = this.#engine.getCardDefinition(cardId) as LorcanaCard | undefined;
       if (!definition) {
-        continue;
+        return null;
       }
 
       const shortId = this.#resolveCardShortId(definition, undefined);
@@ -769,23 +775,19 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
       const label =
         localizedProjection?.label ?? getCardDisplayName(undefined, definition) ?? definition.name;
 
-      references.push({
+      return {
         cardId,
         definitionId: definition.id,
-        isMasked: false,
         label,
-        ownerId: "",
-        ownerSide: "playerOne",
-        zoneId: "deck",
-        facePresentation: "faceUp",
-        cardType: definition.cardType,
         inkType: definition.inkType,
-        cost: definition.cost,
         inkable: definition.inkable,
-      });
-    }
-
-    return references;
+        isMasked: false,
+        ownerSide: "playerOne",
+        cardType: definition.cardType,
+        set: definition.set,
+        cardNumber: definition.cardNumber,
+      };
+    };
   }
 
   #projectCard(

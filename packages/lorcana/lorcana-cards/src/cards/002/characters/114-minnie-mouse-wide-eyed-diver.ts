@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { minnieMouseWideeyedDiverI18n } from "./114-minnie-mouse-wide-eyed-diver.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const minnieMouseWideeyedDiver: CharacterCard = {
   id: "8gH",
@@ -36,22 +38,17 @@ export const minnieMouseWideeyedDiver: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
+    shift(2),
+    evasive,
     {
-      cost: {
-        ink: 2,
+      condition: {
+        type: "turn-metric",
+        metric: "played-actions",
+        comparison: {
+          operator: "eq",
+          value: 2,
+        },
       },
-      id: "974-1",
-      keyword: "Shift",
-      text: "Shift 2",
-      type: "keyword",
-    },
-    {
-      id: "974-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
-    {
       effect: {
         duration: "this-turn",
         modifier: 2,
@@ -64,12 +61,14 @@ export const minnieMouseWideeyedDiver: CharacterCard = {
       text: "UNDERSEA ADVENTURE Whenever you play a second action in a turn, this character gets +2 {L} this turn.",
       trigger: {
         event: "play",
-        on: "SELF",
+        on: {
+          controller: "you",
+          cardType: "action",
+        },
         timing: "when",
       },
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: minnieMouseWideeyedDiverI18n,
 };

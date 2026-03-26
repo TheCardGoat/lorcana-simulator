@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kingCandySweetAbominationI18n } from "./154-king-candy-sweet-abomination.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const kingCandySweetAbomination: CharacterCard = {
   id: "reF",
@@ -34,15 +35,7 @@ export const kingCandySweetAbomination: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "King", "Racer"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "q61-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         chooser: "CONTROLLER",

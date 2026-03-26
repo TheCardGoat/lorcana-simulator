@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { minnieMouseDrumMajorI18n } from "./015-minnie-mouse-drum-major.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const minnieMouseDrumMajor: CharacterCard = {
   id: "p71",
@@ -11,7 +12,7 @@ export const minnieMouseDrumMajor: CharacterCard = {
   inkType: ["amber"],
   set: "005",
   cardNumber: 15,
-  rarity: "common",
+  rarity: "super_rare",
   cost: 5,
   strength: 4,
   willpower: 4,
@@ -33,28 +34,20 @@ export const minnieMouseDrumMajor: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
+    shift(4),
     {
-      cost: {
-        ink: 4,
+      condition: {
+        type: "used-shift",
       },
-      id: "o0p-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
-    {
       effect: {
-        condition: {
-          expression: "you used Shift to play her",
-          type: "if",
-        },
-        then: {
+        type: "optional",
+        effect: {
           cardType: "character",
-          putInto: "hand",
+          putInto: "top-of-deck",
+          reveal: true,
           shuffle: true,
           type: "search-deck",
         },
-        type: "conditional",
       },
       id: "o0p-2",
       name: "PARADE ORDER",

@@ -1,6 +1,6 @@
 import type { CardInstanceId, PlayerId } from "#core";
-import type { CardSelectionFilter, DiscardEffect } from "@tcg/lorcana-types";
-import type { CardPlayedPayload } from "../../../types";
+import type { CardSelectionFilter, DiscardEffect, LorcanaTargetDSL } from "@tcg/lorcana-types";
+import type { CardPlayedPayload, TargetResolutionSelectionContext } from "../../../types";
 import { queueTriggeredEvent } from "../../effects/triggered-abilities";
 import { applyReplacementEffects } from "../../effects/replacement-effects";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
@@ -217,6 +217,25 @@ export function resolveDiscardEffect(
       requiresExplicitSelectionByRules &&
       (actorId !== chooserId || selectedFromCandidates.length < effectiveAmount);
     if (requiresExplicitSelection) {
+      const currentTargets = getCurrentSelectionTargets(resolutionInput);
+      const selectionAmount = Math.min(effectiveAmount, candidates.length);
+      const discardSelectionContext: TargetResolutionSelectionContext = {
+        origin: "pending-effect",
+        requestId: `discard:${targetPlayerId}:${cardPlayed.cardId}`,
+        kind: "discard-choice",
+        sourceCardId: cardPlayed.cardId,
+        chooserId: chooserId as PlayerId,
+        currentSelection: currentTargets.length > 0 ? { targets: [...currentTargets] } : {},
+        submitField: "targets",
+        targetDsl: [{ selector: "chosen", count: selectionAmount } as LorcanaTargetDSL],
+        cardCandidateIds: [...candidates],
+        playerCandidateIds: [],
+        allowedZones: [sourceZone as "deck" | "hand" | "play" | "discard" | "inkwell" | "limbo"],
+        minSelections: selectionAmount,
+        maxSelections: selectionAmount,
+        ordered: false,
+        autoRejected: false,
+      };
       const pendingEffect = createPendingActionEffect(ctx, {
         kind: "discard-choice",
         sourceCardId: cardPlayed.cardId,
@@ -226,6 +245,7 @@ export function resolveDiscardEffect(
         effect,
         continuation: options?.continuation,
         resolutionInput,
+        selectionContext: discardSelectionContext,
       });
       enqueuePendingActionEffect(ctx, pendingEffect);
       return {

@@ -78,7 +78,11 @@ import {
 } from "./runtime-moves/rules/static-ability-utils";
 import { buildValidationContext } from "./core/runtime/match-runtime.utils";
 import { lorcanaRuntimeConfig } from "./runtime-game";
-import { computeChallengeDamageResult } from "./runtime-moves/rules/challenge-rules";
+import {
+  computeChallengeDamageResult,
+  getEligibleChallengeAttackers,
+  getLegalChallengeDefendersForAttacker,
+} from "./runtime-moves/rules/challenge-rules";
 import {
   analyzeEffectTargets,
   analyzeResolutionRequirements,
@@ -101,6 +105,9 @@ import type {
   AutomatedActionExecutionResult,
 } from "./automation";
 import type { DynamicAmountEventSnapshot } from "./types/domain-events";
+import { getLogger } from "@logtape/logtape";
+
+export const logger = getLogger(["lorcana-engine", "lorcana-engine-base"]);
 
 /**
  * Checks whether an effect record is an "or"-type effect (has options or choices array).
@@ -253,6 +260,12 @@ export abstract class LorcanaEngineBase {
   // calls across all callers (UI refresh, DnD checks, card hover, etc.).
   private _cachedAvailableMoves: AvailableMove[] | null = null;
   private _cachedAvailableMovesStateID: number = -1;
+  private _cachedLegalMoveIds: Array<keyof LorcanaRuntimeMoveInputs & string> = [];
+  private _cachedLegalMoveIdsStateID: number = -1;
+  private _cachedChallengeAttackersStateID: number = -1;
+  private _cachedChallengeAttackers: CardInstanceId[] = [];
+  private _cachedChallengeMoveOptionsStateID: number = -1;
+  private _cachedChallengeMoveOptions = new Map<CardInstanceId, MoveOption[]>();
 
   protected constructor(init: LorcanaBaseEngineParams) {
     const initialized = initializeLorcanaEngineBase(init);
@@ -516,6 +529,7 @@ export abstract class LorcanaEngineBase {
     prevStateID?: number,
     options: { skipAutoBagDrain?: boolean } = {},
   ): CommandResult {
+    logger.debug(`Executing Move: `, { moveId, playerId, input, prevStateID, options });
     const engineResult = this.executeMoveViaEngine(moveId, input, {
       playerId,
       prevStateID,
@@ -1176,7 +1190,85 @@ export abstract class LorcanaEngineBase {
   }
 
   enumerateMoves(): Array<keyof LorcanaRuntimeMoveInputs & string> {
-    return this.engine.enumerateMoves() as Array<keyof LorcanaRuntimeMoveInputs & string>;
+    const currentStateID = this.getStateID();
+    if (this._cachedLegalMoveIdsStateID === currentStateID) {
+      return this._cachedLegalMoveIds;
+    }
+
+    const legalMoveIds = this.engine.enumerateMoves() as Array<
+      keyof LorcanaRuntimeMoveInputs & string
+    >;
+    this._cachedLegalMoveIds = legalMoveIds;
+    this._cachedLegalMoveIdsStateID = currentStateID;
+    return legalMoveIds;
+  }
+
+  /**
+   * Internal perf helper used by simulator refresh paths to reuse move
+   * enumeration already computed for the current state.
+   */
+  getCachedLegalMoveIds(): Array<keyof LorcanaRuntimeMoveInputs & string> {
+    return this.enumerateMoves();
+  }
+
+  private buildChallengeIntentContext(playerId: PlayerId) {
+    return buildValidationContext(
+      this.getState() as LorcanaMatchState,
+      String(playerId),
+      { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      this.getResolvedStaticResources(),
+      !!this.getState().ctx.status.gameEnded,
+      "preflight",
+    );
+  }
+
+  private getCachedEligibleChallengeAttackers(playerId: string): CardInstanceId[] {
+    const typedPlayerId = asPlayerIdOptional(playerId);
+    const currentStateID = this.getStateID();
+    if (!typedPlayerId) {
+      return [];
+    }
+    if (this._cachedChallengeAttackersStateID === currentStateID) {
+      return this._cachedChallengeAttackers;
+    }
+
+    const attackers = getEligibleChallengeAttackers(
+      this.buildChallengeIntentContext(typedPlayerId),
+    ).slice();
+    this._cachedChallengeAttackersStateID = currentStateID;
+    this._cachedChallengeAttackers = attackers;
+    return attackers;
+  }
+
+  private getCachedChallengeMoveOptions(
+    playerId: string,
+    attackerId: CardInstanceId,
+  ): MoveOption[] {
+    const typedPlayerId = asPlayerIdOptional(playerId);
+    const currentStateID = this.getStateID();
+    if (!typedPlayerId) {
+      return [];
+    }
+    if (this._cachedChallengeMoveOptionsStateID !== currentStateID) {
+      this._cachedChallengeMoveOptionsStateID = currentStateID;
+      this._cachedChallengeMoveOptions.clear();
+    }
+
+    const cachedOptions = this._cachedChallengeMoveOptions.get(attackerId);
+    if (cachedOptions) {
+      return cachedOptions;
+    }
+
+    const options = getLegalChallengeDefendersForAttacker(
+      this.buildChallengeIntentContext(typedPlayerId),
+      attackerId,
+    ).map((cardId) => ({
+      kind: "card" as const,
+      cardId,
+    }));
+    this._cachedChallengeMoveOptions.set(attackerId, options);
+    return options;
   }
 
   loadState(state: MatchState): void {
@@ -1590,6 +1682,46 @@ export abstract class LorcanaEngineBase {
     return this.resolveEffect(matchingPendingEffects[0]!.id, opts);
   }
 
+  resolvePendingByCard(card: CardInput, opts: ResolutionExecutionOptions = {}): CommandResult {
+    const resolvedCardId = this.resolveCardId(card);
+    if (!resolvedCardId) {
+      return this.createErrorResult(
+        "Could not resolve card.",
+        "RESOLVE_PENDING_EFFECT_UNAVAILABLE",
+      );
+    }
+
+    // First, check for a pending effect belonging to this card
+    const matchingPendingEffects = this.getPendingEffects().filter((pendingEffect) => {
+      const payload = this.getPendingActionPayload(pendingEffect);
+      return payload?.sourceCardId === resolvedCardId || payload?.sourceId === resolvedCardId;
+    });
+
+    if (matchingPendingEffects.length === 1) {
+      return this.resolveEffect(matchingPendingEffects[0]!.id, opts);
+    }
+
+    // Then, check for a bag effect belonging to this card
+    const matchingBagEffects = this.getBagEffects().filter(
+      (bagEffect) => bagEffect.sourceId === resolvedCardId,
+    );
+
+    if (matchingBagEffects.length === 0) {
+      return this.createErrorResult(
+        "No pending effect or bag item found for this card.",
+        "RESOLVE_PENDING_EFFECT_UNAVAILABLE",
+      );
+    }
+
+    if (matchingBagEffects.length > 1) {
+      return this.createErrorResult(
+        "Multiple bag items match this card; resolve by bag id instead.",
+        "RESOLVE_PENDING_EFFECT_AMBIGUOUS",
+      );
+    }
+
+    return this.resolveBag(matchingBagEffects[0]!.id, opts);
+  }
   resolveNextPending(opts: ResolutionExecutionOptions = {}): CommandResult {
     const playerId = asPlayerIdOptional(this.getClientPlayerId());
     if (!playerId) {
@@ -1751,6 +1883,17 @@ export abstract class LorcanaEngineBase {
     }
 
     return this.resolveBag(matchingBagEffects[0]!.id, opts);
+  }
+
+  resolveAllBagEffects(opts: ResolutionExecutionOptions & { maxIterations?: number } = {}): void {
+    const maxIterations = opts.maxIterations ?? 50;
+    let iterations = 0;
+    while (this.getBagCount() > 0 && iterations < maxIterations) {
+      const bagEffects = this.getBagEffects();
+      if (bagEffects.length === 0) break;
+      this.resolveBag(bagEffects[0]!.id, opts);
+      iterations++;
+    }
   }
 
   respondWith(...targets: CardInput[]): CommandResult {
@@ -2155,7 +2298,8 @@ export abstract class LorcanaEngineBase {
       selectionContext.kind !== "target-selection" ||
       selectionContext.playerCandidateIds.length > 0 ||
       selectionContext.maxSelections !== 1 ||
-      selectionContext.ordered
+      selectionContext.ordered ||
+      selectionContext.autoRejected
     ) {
       return undefined;
     }
@@ -2774,12 +2918,12 @@ export abstract class LorcanaEngineBase {
               resolvedCards = [];
             }
 
-            if (resolvedCards.length > 0) {
-              acc.push({
-                cards: resolvedCards,
-                zone: destination.zone,
-              });
-            }
+            // Preserve empty destinations to maintain positional mapping
+            // between player selections and ability destination definitions.
+            acc.push({
+              cards: resolvedCards,
+              zone: destination.zone,
+            });
 
             return acc;
           }, [])
@@ -3428,29 +3572,9 @@ export abstract class LorcanaEngineBase {
       }
 
       if (moveId === "challenge") {
-        const challengerCardIds: CardInstanceId[] = [];
-        const opponentPlayerIds = board.playerOrder.filter((pid) => pid !== clientPlayerId);
-
-        for (const cardId of playerBoard.play) {
-          const attackerId = cardId as CardInstanceId;
-          // Check if this card can challenge ANY opponent card
-          const canChallengeAny = opponentPlayerIds.some((opponentId) => {
-            const opponentBoard = board.players[opponentId];
-            if (!opponentBoard) return false;
-            return opponentBoard.play.some(
-              (defenderId) =>
-                this.validateMove("challenge", {
-                  args: {
-                    attackerId,
-                    defenderId: defenderId as CardInstanceId,
-                  },
-                }).valid,
-            );
-          });
-          if (canChallengeAny) {
-            challengerCardIds.push(attackerId);
-          }
-        }
+        const challengerCardIds = this.getCachedEligibleChallengeAttackers(clientPlayerId).filter(
+          (attackerId) => playerBoard.play.includes(attackerId),
+        );
         if (challengerCardIds.length > 0) {
           moves.push({
             moveId: "challenge",
@@ -3550,6 +3674,8 @@ export abstract class LorcanaEngineBase {
 
     this._cachedAvailableMoves = moves;
     this._cachedAvailableMovesStateID = currentStateID;
+    this._cachedLegalMoveIds = legalMoveIds;
+    this._cachedLegalMoveIdsStateID = currentStateID;
     return moves;
   }
 
@@ -3593,23 +3719,7 @@ export abstract class LorcanaEngineBase {
       }
 
       case "challenge": {
-        const options: MoveOption[] = [];
-        const opponentPlayerIds = board.playerOrder.filter((pid) => pid !== clientPlayerId);
-        for (const opponentId of opponentPlayerIds) {
-          const opponentBoard = board.players[opponentId];
-          if (!opponentBoard) continue;
-          for (const defenderId of opponentBoard.play) {
-            const id = defenderId as CardInstanceId;
-            if (
-              this.validateMove("challenge", {
-                args: { attackerId: cardId, defenderId: id },
-              }).valid
-            ) {
-              options.push({ kind: "card", cardId: id });
-            }
-          }
-        }
-        return options;
+        return this.getCachedChallengeMoveOptions(clientPlayerId, cardId);
       }
 
       case "moveCharacterToLocation": {

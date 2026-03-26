@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ursulaMadSeaWitchI18n } from "./057-ursula-mad-sea-witch.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const ursulaMadSeaWitch: CharacterCard = {
   id: "pPz",
@@ -24,14 +25,6 @@ export const ursulaMadSeaWitch: CharacterCard = {
   },
   text: "Challenger +2",
   classifications: ["Dreamborn", "Villain", "Sorcerer"],
-  abilities: [
-    {
-      id: "ui8-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2",
-    },
-  ],
+  abilities: [challenger(2)],
   i18n: ursulaMadSeaWitchI18n,
 };

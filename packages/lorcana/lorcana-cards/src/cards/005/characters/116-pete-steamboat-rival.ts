@@ -31,6 +31,10 @@ export const peteSteamboatRival: CharacterCard = {
   classifications: ["Storyborn", "Villain"],
   abilities: [
     {
+      condition: {
+        type: "has-another-character",
+        name: "Pete",
+      },
       effect: {
         chooser: "CONTROLLER",
         effect: {

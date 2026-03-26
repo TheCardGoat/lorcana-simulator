@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { teKTheBurningOneI18n } from "./126-te-k-the-burning-one.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
 
 export const teKTheBurningOne: CharacterCard = {
   id: "Zd7",
@@ -24,13 +25,6 @@ export const teKTheBurningOne: CharacterCard = {
   },
   text: "Reckless",
   classifications: ["Storyborn", "Villain", "Deity"],
-  abilities: [
-    {
-      id: "14n-1",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-  ],
+  abilities: [reckless],
   i18n: teKTheBurningOneI18n,
 };
