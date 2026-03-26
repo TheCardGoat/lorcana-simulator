@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
-  import { useLorcanaSidebarPresenter } from "@/features/simulator/context/game-context.svelte.js";
+  import {
+    maybeUseSimulatorCardContext,
+  } from "@/features/simulator/context/simulator-card-context.svelte.js";
+  import { maybeUseLorcanaSidebarPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import CardTextToken from "./CardTextToken.svelte";
 
   interface CardLogTokenProps {
@@ -11,14 +13,15 @@
 
   let { cardId, fallbackLabel, fallbackInkType }: CardLogTokenProps = $props();
 
-  const sidebar = useLorcanaSidebarPresenter();
-  const cardContext = useSimulatorCardContext();
+  const sidebar = maybeUseLorcanaSidebarPresenter();
+  const cardContext = maybeUseSimulatorCardContext();
 
-  const snapshot = $derived(sidebar.cardSnapshotsById[cardId] ?? null);
+  const snapshot = $derived(sidebar?.cardSnapshotsById[cardId] ?? null);
   const label = $derived(snapshot?.label ?? fallbackLabel ?? cardId);
   const inkType = $derived(snapshot?.inkType ?? fallbackInkType);
 
   function handleHover(): void {
+    if (!cardContext) return;
     if (snapshot) {
       cardContext.setExternalPreviewCard(snapshot);
       return;
@@ -37,7 +40,7 @@
   }
 
   function handleLeave(): void {
-    cardContext.setExternalPreviewCard(null);
+    cardContext?.setExternalPreviewCard(null);
   }
 </script>
 

@@ -4,16 +4,14 @@
   import { get } from "svelte/store";
   import { m } from "$lib/i18n/messages.js";
   import type {
-    LogCardReference,
     LorcanaPlayerSide,
     MoveLogEntrySnapshot,
   } from "@/features/simulator/model/contracts.js";
-  import CardTextToken from "./CardTextToken.svelte";
+  import CardLogToken from "./CardLogToken.svelte";
   import {
     buildEventLogRows,
     filterEntriesToLastTurns,
     groupEventLogRows,
-    type CardReferenceResolver,
     type EventLogGroup,
     type EventLogPlayerTone,
   } from "./event-log-presentation.js";
@@ -22,21 +20,15 @@
   interface EventLogPanelProps {
     entries: MoveLogEntrySnapshot[];
     viewerSide?: LorcanaPlayerSide | null;
-    resolveCard?: CardReferenceResolver;
     showRawLogRegistryJson?: boolean;
     compact?: boolean;
-    onCardHover?: (cardRef: LogCardReference) => void;
-    onCardLeave?: () => void;
   }
 
   let {
     entries,
     viewerSide = null,
-    resolveCard,
     showRawLogRegistryJson = false,
     compact = false,
-    onCardHover = () => {},
-    onCardLeave = () => {},
   }: EventLogPanelProps = $props();
 
   let scrollElement = $state<HTMLDivElement | null>(null);
@@ -46,7 +38,7 @@
   const browser = typeof window !== "undefined";
 
   const visibleEntries = $derived(filterEntriesToLastTurns(entries));
-  const rows = $derived(buildEventLogRows(entries, viewerSide, resolveCard));
+  const rows = $derived(buildEventLogRows(entries, viewerSide));
   const groups = $derived(groupEventLogRows(rows));
   const entryById = $derived(
     new Map<string, MoveLogEntrySnapshot>(visibleEntries.map((entry) => [entry.id, entry])),
@@ -299,12 +291,10 @@
                           <p class="min-w-0 break-words text-[0.82rem] leading-[1.45] text-slate-200">
                             {#each row.segments as segment}
                               {#if segment.kind === "card"}
-                                <CardTextToken
-                                  card={segment.cardRef}
-                                  text={segment.text}
-                                  interactive={false}
-                                  onHover={() => onCardHover(segment.cardRef)}
-                                  onLeave={onCardLeave}
+                                <CardLogToken
+                                  cardId={segment.cardId}
+                                  fallbackLabel={segment.fallbackLabel}
+                                  fallbackInkType={segment.fallbackInkType}
                                 />
                               {:else if segment.kind === "player"}
                                 <span
@@ -384,12 +374,10 @@
                       <p class="min-w-0 break-words text-[0.82rem] leading-[1.45] text-slate-200">
                         {#each row.segments as segment}
                           {#if segment.kind === "card"}
-                            <CardTextToken
-                              card={segment.cardRef}
-                              text={segment.text}
-                              interactive={false}
-                              onHover={() => onCardHover(segment.cardRef)}
-                              onLeave={onCardLeave}
+                            <CardLogToken
+                              cardId={segment.cardId}
+                              fallbackLabel={segment.fallbackLabel}
+                              fallbackInkType={segment.fallbackInkType}
                             />
                           {:else if segment.kind === "player"}
                             <span

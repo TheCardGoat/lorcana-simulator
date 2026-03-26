@@ -33,7 +33,6 @@ import {
   getZoneCardCount,
   isZoneMasked as isBoardZoneMasked,
   type ExecutableMoveEntry,
-  type LogCardReference,
   type LorcanaCardSnapshot,
   type LorcanaPlayerSide,
   type LorcanaPlayerSummary,
@@ -2575,7 +2574,6 @@ export class LorcanaSidebarPresenter {
   showRawLogRegistryJson = $state(false);
   showRawErrorDialog = $state(false);
   mobileNotice = $state<{ id: number; message: string; tone: "info" } | null>(null);
-  hoveredLogCard = $state<LogCardReference | null>(null);
   pendingMulliganDangerConfirm = $state<"keepHand" | "allCards" | null>(null);
   skipActionConfirmation = $state(false);
   hotkeyMode = $state<HotkeyMode>("confirm-only");
@@ -6113,18 +6111,6 @@ export class LorcanaSidebarPresenter {
 
   handleGuidancePositionToggle = (): void => {
     this.guidancePosition = this.guidancePosition === "bottom" ? "top" : "bottom";
-  };
-
-  handleLogCardHover = (cardRef: LogCardReference): void => {
-    this.hoveredLogCard = cardRef;
-  };
-
-  handleLogCardLeave = (): void => {
-    this.hoveredLogCard = null;
-  };
-
-  resolveLogCardToSnapshot = (cardRef: LogCardReference): LorcanaCardSnapshot | null => {
-    return this.cardSnapshotsById[cardRef.cardId] ?? null;
   };
 }
 
