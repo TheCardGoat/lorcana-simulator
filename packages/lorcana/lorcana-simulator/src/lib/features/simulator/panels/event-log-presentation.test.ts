@@ -10,6 +10,7 @@ import {
   createLogEntry,
 } from "@/features/simulator-devtools/test-data/factories.js";
 import { buildEventLogRows, filterEntriesToLastTurns } from "./event-log-presentation.js";
+import { formatEventLogBody } from "@/features/simulator/model/event-log-formatting.js";
 
 type FormatCase = {
   moveId: MoveLogEntrySnapshot["moveId"];
@@ -349,30 +350,7 @@ function createTestResolver() {
 
 function flattenRowText(entry: MoveLogEntrySnapshot): string {
   const resolveCard = createTestResolver();
-  const eventRow = buildEventLogRows([entry], "playerOne").find(
-    (row): row is Extract<ReturnType<typeof buildEventLogRows>[number], { kind: "event-row" }> =>
-      row.kind === "event-row",
-  );
-
-  if (!eventRow) {
-    throw new Error("Expected an event row");
-  }
-
-  // Use the resolver for text output (card names) by applying it post-hoc like formatEventLogBody does.
-  return eventRow.segments
-    .map((segment) => {
-      switch (segment.kind) {
-        case "card":
-          return resolveCard(segment.cardId)?.label ?? segment.fallbackLabel ?? segment.cardId;
-        case "player":
-        case "stat":
-        case "text":
-          return segment.text;
-        case "icon":
-          return `[${segment.label}]`;
-      }
-    })
-    .join("");
+  return formatEventLogBody(entry, "playerOne", undefined, resolveCard).text;
 }
 
 describe("event log presentation", () => {

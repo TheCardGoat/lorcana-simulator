@@ -1,33 +1,51 @@
 <script lang="ts">
-    import * as Dialog from "$lib/design-system/primitives/dialog";
+  import * as Dialog from "$lib/design-system/primitives/dialog";
   import { m } from "$lib/i18n/messages.js";
   import type {
     LorcanaCardSnapshot,
     LorcanaPlayerSide,
   } from "@/features/simulator/model/contracts.js";
-    import {evaluateCardTargetMatches, describeTargetBadges} from "@/features/simulator/model/discard-target-dsl.js";
-    import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+  import { buildCardTargetDialogState } from "@/features/simulator/dialogs/card-target-dialog-state.js";
+  import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
   import type { LorcanaCardTarget } from "@tcg/lorcana-engine";
+
+  interface TargetSelectionPlayerEntry {
+    id: string;
+    label: string;
+    selected: boolean;
+    disabled?: boolean;
+    side?: LorcanaPlayerSide;
+  }
 
   interface CardTargetDialogProps {
     open?: boolean;
     cards: LorcanaCardSnapshot[];
     playerSide: LorcanaPlayerSide;
     viewerSide?: LorcanaPlayerSide | null;
-    target: LorcanaCardTarget;
+    target?: LorcanaCardTarget | null;
     selectable?: boolean;
+    players?: TargetSelectionPlayerEntry[];
     selectedCardIds?: string[];
+    canConfirm?: boolean;
     titleText?: string;
+    descriptionText?: string;
     emptyAllText?: string;
     emptyNoMatchText?: string;
     closeButtonLabel?: string;
     closeButtonAriaLabel?: string;
+    footerCancelLabel?: string;
+    footerConfirmLabel?: string;
+    selectionSummaryText?: string;
     summaryFormatter?: (
       matchCount: number,
       totalCount: number,
       playerLabel: string,
-      target: LorcanaCardTarget,
+      target: LorcanaCardTarget | null,
     ) => string;
+    onSelectCard?: (cardId: string) => void;
+    onSelectPlayer?: (playerId: string) => void;
+    onConfirm?: () => void;
+    onCancel?: () => void;
   }
 
   let {
@@ -35,33 +53,108 @@
     cards,
     playerSide,
     viewerSide = null,
-    target,
+    target = null,
     selectable = false,
+    players = [],
     selectedCardIds = [],
+    canConfirm = false,
     titleText,
+    descriptionText,
     emptyAllText = m["sim.target.emptyAll"]({}),
     emptyNoMatchText = m["sim.target.emptyNoMatch"]({}),
     closeButtonLabel = m["sim.target.close"]({}),
     closeButtonAriaLabel = m["sim.target.closeAria"]({}),
+    footerCancelLabel = m["sim.actions.cancel"]({}),
+    footerConfirmLabel = m["sim.actions.confirm"]({}),
+    selectionSummaryText,
     summaryFormatter = (matchCount, totalCount, playerLabel, _target) =>
       m["sim.target.summary"]({ matchCount, totalCount, playerLabel }),
+    onSelectCard,
+    onSelectPlayer,
+    onConfirm,
+    onCancel,
   }: CardTargetDialogProps = $props();
 
   const playerLabel = $derived(
-    playerSide === "playerOne" ? m["sim.player.side.playerOne"]({}) : m["sim.player.side.playerTwo"]({}),
+    playerSide === "playerOne"
+      ? m["sim.player.side.playerOne"]({})
+      : m["sim.player.side.playerTwo"]({}),
   );
 
-  const evaluation = $derived(
-    evaluateCardTargetMatches(cards, target, {
-      viewerSide: viewerSide ?? undefined,
+  const dialogState = $derived(
+    buildCardTargetDialogState({
+      cards,
+      target,
+      viewerSide,
+      selectedCardIds,
+      selectedPlayerCount: players.filter((player) => player.selected).length,
     }),
   );
-
-  const badgeModels = $derived(describeTargetBadges(target, evaluation.unsupportedFilters));
-  const orderedCards = $derived(evaluation.matchedCards.slice().reverse());
+  const badgeModels = $derived(dialogState.badgeModels);
+  const orderedCards = $derived(dialogState.orderedCards);
   const headerSummary = $derived(
-    summaryFormatter(orderedCards.length, cards.length, playerLabel, target),
+    descriptionText ??
+      summaryFormatter(orderedCards.length, cards.length, playerLabel, target),
   );
+  const hasFooter = $derived(Boolean(onConfirm || onCancel));
+  const resolvedSelectionSummaryText = $derived(
+    selectionSummaryText ??
+      m["sim.target.selectedCount"]({ selectedCount: dialogState.selectedCount }),
+  );
+
+  function handleSelectCard(cardId: string): void {
+    onSelectCard?.(cardId);
+  }
+
+  function handleSelectPlayer(playerId: string): void {
+    onSelectPlayer?.(playerId);
+  }
+
+  function handleCancel(): void {
+    onCancel?.();
+  }
+
+  function handlePlayerClick(event: MouseEvent): void {
+    const playerId = (event.currentTarget as HTMLButtonElement).dataset.playerId;
+    if (!playerId) {
+      return;
+    }
+
+    handleSelectPlayer(playerId);
+  }
+
+  function handleCardKeydown(event: KeyboardEvent, cardId: string): void {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    handleSelectCard(cardId);
+  }
+
+  function handleCardClick(event: MouseEvent, cardId: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    handleSelectCard(cardId);
+  }
+
+  function handleCardClickFromEvent(event: MouseEvent): void {
+    const cardId = (event.currentTarget as HTMLDivElement).dataset.cardId;
+    if (!cardId) {
+      return;
+    }
+
+    handleCardClick(event, cardId);
+  }
+
+  function handleCardKeydownFromEvent(event: KeyboardEvent): void {
+    const cardId = (event.currentTarget as HTMLDivElement).dataset.cardId;
+    if (!cardId) {
+      return;
+    }
+
+    handleCardKeydown(event, cardId);
+  }
 </script>
 
 <Dialog.Root bind:open>
@@ -70,7 +163,7 @@
       class="fixed inset-0 z-50 bg-black/70 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in"
     />
     <Dialog.Content
-      class="fixed z-50 left-1/2 top-1/2 w-[min(92vw,1024px)] h-[min(88vh,720px)] -translate-x-1/2 -translate-y-1/2 bg-slate-900/95 border border-slate-600/70 rounded-2xl shadow-2xl p-4 sm:p-5 flex flex-col gap-3 overflow-hidden"
+      class="fixed left-1/2 top-1/2 z-50 flex h-[min(88vh,760px)] w-[min(94vw,1120px)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-hidden rounded-3xl border border-sky-300/20 bg-slate-950/96 p-4 shadow-2xl sm:p-5"
       showCloseButton={false}
     >
       <Dialog.Title class="sr-only">
@@ -89,7 +182,7 @@
           <h2>{titleText ?? m["sim.target.dialog.header"]({ playerLabel })}</h2>
           <p>{headerSummary}</p>
         </div>
-        <Dialog.Close class="close-button" aria-label={closeButtonAriaLabel}>
+        <Dialog.Close class="close-button" aria-label={closeButtonAriaLabel} onclick={handleCancel}>
           <span aria-hidden="true" class="close-button__icon">
             <svg viewBox="0 0 16 16" focusable="false">
               <path
@@ -115,22 +208,54 @@
         </div>
       {/if}
 
+      {#if players.length > 0}
+        <section class="player-section">
+          <div class="section-header">
+            <h3>{m["sim.target.players"]({})}</h3>
+          </div>
+          <div class="player-grid">
+            {#each players as player (player.id)}
+              <button
+                type="button"
+                class="player-button"
+                class:player-button--selected={player.selected}
+                data-player-id={player.id}
+                disabled={player.disabled}
+                onclick={handlePlayerClick}
+              >
+                {player.label}
+              </button>
+            {/each}
+          </div>
+        </section>
+      {/if}
+
       <section class="dialog-content" aria-live="polite">
         {#if cards.length === 0}
           <p class="empty-state">{emptyAllText}</p>
         {:else if orderedCards.length === 0}
           <p class="empty-state">{emptyNoMatchText}</p>
         {:else}
+          <div class="section-header section-header--cards">
+            <h3>{m["sim.target.cards"]({})}</h3>
+            {#if selectable}
+              <span>{resolvedSelectionSummaryText}</span>
+            {/if}
+          </div>
           <div class="card-grid">
             {#each orderedCards as card (card.cardId)}
               {@const isSelected = selectedCardIds.includes(card.cardId)}
-              <button
-                type="button"
+              <div
+                role="button"
+                tabindex="0"
                 class="card-button"
                 class:card-button--selected={isSelected}
+                data-card-id={card.cardId}
                 aria-label={selectable
                   ? m["sim.target.toggleSelectionAria"]({ cardLabel: card.label })
                   : m["sim.target.inspectAria"]({ cardLabel: card.label })}
+                onclickcapture={handleCardClickFromEvent}
+                onkeydown={handleCardKeydownFromEvent}
               >
                 <LorcanaCard
                   {card}
@@ -146,11 +271,33 @@
                     selectable,
                   }}
                 />
-              </button>
+              </div>
             {/each}
           </div>
         {/if}
       </section>
+
+      {#if hasFooter}
+        <footer class="dialog-footer">
+          <button
+            type="button"
+            class="footer-button footer-button--secondary"
+            onclick={handleCancel}
+          >
+            {footerCancelLabel}
+          </button>
+          {#if onConfirm}
+            <button
+              type="button"
+              class="footer-button footer-button--primary"
+              disabled={!canConfirm}
+              onclick={onConfirm}
+            >
+              {footerConfirmLabel}
+            </button>
+          {/if}
+        </footer>
+      {/if}
     </Dialog.Content>
   </Dialog.Portal>
 </Dialog.Root>
@@ -177,7 +324,9 @@
     font-size: 0.85rem;
   }
 
-  :global(.close-button) {
+  :global(.close-button),
+  .footer-button,
+  .player-button {
     --close-border: rgba(148, 163, 184, 0.26);
     --close-bg: linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.58));
     --close-text: #e2e8f0;
@@ -193,7 +342,6 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.08),
       0 10px 24px rgba(2, 6, 23, 0.28);
     color: var(--close-text);
-    padding: 0.42rem 0.8rem 0.42rem 0.5rem;
     font-size: 0.82rem;
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -206,7 +354,18 @@
       box-shadow 160ms ease;
   }
 
-  :global(.close-button:hover) {
+  :global(.close-button) {
+    padding: 0.42rem 0.8rem 0.42rem 0.5rem;
+  }
+
+  .footer-button,
+  .player-button {
+    padding: 0.7rem 1rem;
+  }
+
+  :global(.close-button:hover),
+  .footer-button:hover:enabled,
+  .player-button:hover:enabled {
     border-color: rgba(125, 211, 252, 0.5);
     background:
       linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.74));
@@ -217,7 +376,10 @@
       0 16px 30px rgba(2, 6, 23, 0.35);
   }
 
-  :global(.close-button:focus-visible) {
+  :global(.close-button:focus-visible),
+  .footer-button:focus-visible,
+  .player-button:focus-visible,
+  .card-button:focus-visible {
     outline: 2px solid rgba(125, 211, 252, 0.9);
     outline-offset: 2px;
   }
@@ -240,11 +402,17 @@
     fill: currentColor;
   }
 
+  .badge-strip,
+  .player-section {
+    display: grid;
+    gap: 0.65rem;
+  }
+
   .badge-strip {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.1rem;
   }
 
   .badge {
@@ -264,6 +432,42 @@
     border-color: rgba(251, 146, 60, 0.45);
     background: rgba(127, 29, 29, 0.4);
     color: #fed7aa;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .section-header h3 {
+    margin: 0;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(186, 230, 253, 0.8);
+  }
+
+  .section-header span {
+    color: rgba(186, 230, 253, 0.78);
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .section-header--cards {
+    margin-bottom: 0.75rem;
+  }
+
+  .player-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .player-button--selected {
+    border-color: rgba(125, 211, 252, 0.52);
+    background: rgba(30, 41, 59, 0.96);
   }
 
   .dialog-content {
@@ -309,6 +513,18 @@
 
   .card-button--selected {
     outline: 2px solid rgba(59, 130, 246, 0.9);
+  }
+
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+
+  .footer-button--primary:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
   }
 
   @media (max-width: 700px) {

@@ -84,6 +84,31 @@ const cards = {
     cardType: "character",
     facePresentation: "faceUp",
   },
+  bodyguard: {
+    cardId: "bodyguard",
+    definitionId: "def-bodyguard",
+    isMasked: false,
+    label: "Bodyguard Ally",
+    ownerId: "player_one",
+    ownerSide: "playerOne",
+    zoneId: "hand",
+    cardType: "character",
+    keywords: ["Bodyguard"],
+    facePresentation: "faceUp",
+  },
+  forcedBodyguard: {
+    cardId: "forcedBodyguard",
+    definitionId: "def-forced-bodyguard",
+    isMasked: false,
+    label: "Forced Bodyguard",
+    ownerId: "player_one",
+    ownerSide: "playerOne",
+    zoneId: "hand",
+    cardType: "character",
+    keywords: ["Bodyguard"],
+    text: "This character enters play exerted.",
+    facePresentation: "faceUp",
+  },
 } satisfies CardSnapshotMap;
 
 describe("buildExecutableMoves", () => {
@@ -134,6 +159,48 @@ describe("buildExecutableMoves", () => {
         cardId: "smash",
       },
       label: "Smash",
+    });
+  });
+
+  it("expands bodyguard character play into ready and exerted variants", () => {
+    const engine = createStubEngine({ moveOptions: { bodyguard: [] } });
+
+    const entries = buildExecutableMoves(
+      engine,
+      cards,
+      [createAvailableMove("playCard", ["bodyguard"])],
+      [],
+    );
+
+    expect(entries).toHaveLength(2);
+    expect(entries.map((entry) => entry.params)).toEqual([
+      { cardId: "bodyguard" },
+      { cardId: "bodyguard", resolveOptional: true },
+    ]);
+    expect(entries.map((entry) => entry.presentation)).toEqual([
+      expect.objectContaining({
+        optionLabel: "Play Ready",
+      }),
+      expect.objectContaining({
+        optionLabel: "Play Exerted",
+      }),
+    ]);
+  });
+
+  it("does not add a redundant bodyguard choice when the card already enters play exerted", () => {
+    const engine = createStubEngine({ moveOptions: { forcedBodyguard: [] } });
+
+    const entries = buildExecutableMoves(
+      engine,
+      cards,
+      [createAvailableMove("playCard", ["forcedBodyguard"])],
+      [],
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      params: { cardId: "forcedBodyguard" },
+      label: "Forced Bodyguard",
     });
   });
 

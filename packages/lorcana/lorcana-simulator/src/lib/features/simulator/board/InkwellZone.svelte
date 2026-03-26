@@ -6,7 +6,6 @@ import type {
 import CardBack from "@/design-system/simulator/cards/CardBack.svelte";
 import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import InkwellReminder from "@/features/simulator/board/InkwellReminder.svelte";
-import autoAnimate from "@formkit/auto-animate";
 import {
 	createCardAnchorId,
 	createZoneAnchorId,
@@ -39,7 +38,8 @@ let {
 
 const board = useLorcanaBoardPresenter();
 const dnd = useLorcanaSimulatorDndContext();
-const cards = $derived(board.getZoneCards(playerSide, "inkwell"));
+const inFlightCardIds = $derived(board.inFlightCardIds);
+const cards = $derived(board.getZoneCards(playerSide, "inkwell").filter((card) => !inFlightCardIds.has(card.cardId)));
 const playerSummary = $derived(board.getPlayerSummary(playerSide));
 const boardSnapshot = $derived(board.boardSnapshot);
 const ownerId = $derived(board.getOwnerIdForSide(playerSide));

@@ -1,9 +1,14 @@
 <script lang="ts">
   import { useLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import type { ResolvedCardEffectAnimation } from "@/features/simulator/animations/card-effect-animations.js";
+  import { watchCssAnimation } from "@/features/simulator/animations/animation-shared.js";
 
   const board = useLorcanaBoardPresenter();
   const cardEffectAnimations = $derived(board.cardEffectAnimations);
+
+  function onCardEffectAnimationFinished(id: string): void {
+    board.onCardEffectAnimationFinished(id);
+  }
 
   function getGlowStyle(animation: ResolvedCardEffectAnimation): string {
     const rect = animation.sourceRect;
@@ -26,6 +31,7 @@
       class:card-effect-glow--sing={animation.effectKind === "sing"}
       class:card-effect-glow--resolve={animation.effectKind === "resolve-effect"}
       style={getGlowStyle(animation)}
+      use:watchCssAnimation={{ id: animation.id, onFinished: onCardEffectAnimationFinished }}
     ></div>
   {/each}
 </div>
@@ -92,6 +98,12 @@
   @media (prefers-reduced-motion: reduce) {
     .card-effect-glow {
       animation: none;
+    }
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .card-effect-glow {
+      box-shadow: none;
     }
   }
 </style>

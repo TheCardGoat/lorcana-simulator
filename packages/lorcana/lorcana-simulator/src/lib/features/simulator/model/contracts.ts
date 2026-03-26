@@ -1,6 +1,7 @@
 import type { EnginePacketUpdate, LorcanaGameLogEntry } from "@tcg/lorcana-engine";
 import type {
   LorcanaProjectedBoardView,
+  LorcanaCardTarget,
   LorcanaProjectedCard,
   LorcanaProjectedPlayerBoard,
   LorcanaRuntimeMoveParams,
@@ -238,9 +239,15 @@ export interface ActionAvailableMovesSelectionState extends AvailableMovesSelect
 
 export interface ResolutionTargetAvailableMovesSelectionState extends AvailableMovesSelectionBase {
   mode: "resolution-target";
+  sessionKey: string;
   sourceCardId: string | null;
   entries: AvailableMovesSelectionEntry[];
   effectType: "move-damage" | "move-to-location" | null;
+  target: LorcanaCardTarget | null;
+  allowedZones: LorcanaZoneId[];
+  candidateCardIds: string[];
+  candidatePlayerIds: string[];
+  viewerSide: LorcanaPlayerSide | null;
   candidateEntries: AvailableMovesSelectionEntry[];
   activeSlotIndex: number | null;
   slots: ResolutionTargetSelectionSlotState[];

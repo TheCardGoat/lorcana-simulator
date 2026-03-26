@@ -1,12 +1,20 @@
 <script lang="ts">
   import { useLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import ChallengeAimOverlay from "@/features/simulator/board/ChallengeAimOverlay.svelte";
+  import ChallengeResultPanel from "@/features/simulator/board/ChallengeResultPanel.svelte";
   import type { ResolvedChallengeAnimation } from "@/features/simulator/animations/challenge-animations.js";
   import type { ChallengePreviewResult } from "@tcg/lorcana-engine";
   import type { BoardLocalRect } from "@/features/simulator/animations/board-move-animations.js";
+  import { watchCssAnimation } from "@/features/simulator/animations/animation-shared.js";
 
   const board = useLorcanaBoardPresenter();
   const challengeAnimations = $derived(board.challengeAnimations);
+
+  function onChallengeAnimationFinished(id: string): void {
+    board.onChallengeAnimationFinished(id);
+  }
+  const cardSnapshotsById = $derived(board.cardSnapshotsById);
+  const bottomSide = $derived(board.bottomSide);
 
   let layerWidth = $state(0);
   let layerHeight = $state(0);
@@ -47,6 +55,7 @@
     <div
       class="challenge-animation-wrapper"
       style="--challenge-animation-duration:{animation.durationMs}ms"
+      use:watchCssAnimation={{ id: animation.id, onFinished: onChallengeAnimationFinished }}
     >
       {#if !hasBanish(animation)}
         <ChallengeAimOverlay
@@ -80,6 +89,15 @@
     </div>
   {/each}
 </div>
+
+{#each challengeAnimations as animation (animation.id)}
+  <ChallengeResultPanel
+    {animation}
+    attackerCard={cardSnapshotsById[animation.attackerId] ?? null}
+    defenderCard={cardSnapshotsById[animation.defenderId] ?? null}
+    {bottomSide}
+  />
+{/each}
 
 <style>
   .challenge-animation-layer {

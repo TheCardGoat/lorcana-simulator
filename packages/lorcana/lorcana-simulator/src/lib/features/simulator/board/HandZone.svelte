@@ -48,7 +48,8 @@
   const sidebar = useLorcanaSidebarPresenter();
   const simulatorCardContext = useSimulatorCardContext();
   const dnd = useLorcanaSimulatorDndContext();
-  const cards = $derived(board.getZoneCards(playerSide, "hand"));
+  const inFlightCardIds = $derived(board.inFlightCardIds);
+  const cards = $derived(board.getZoneCards(playerSide, "hand").filter((card) => !inFlightCardIds.has(card.cardId)));
   const totalCards = $derived(board.getZoneTotalCards(playerSide, "hand"));
   const isMasked = $derived(board.isZoneMasked(playerSide, "hand"));
   const ownerId = $derived(board.getOwnerIdForSide(playerSide));

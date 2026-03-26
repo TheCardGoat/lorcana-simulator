@@ -11,6 +11,10 @@ import { winStateFixture } from "./win-state.js";
 import { fullBoardAllCardTypes } from "./full-board-all-card-types.js";
 import { lookAtTheTopFixture } from "./look-at-the-top.js";
 import { shiftFixture } from "./shift.js";
+import { challengeKeywordsFixture } from "./challenge-keywords.js";
+import { defensiveKeywordsFixture } from "./defensive-keywords.js";
+import { questKeywordsFixture } from "./quest-keywords.js";
+import { boostKeywordFixture } from "./boost-keyword.js";
 
 export const DEFAULT_LORCANA_FIXTURE_ID = "empty-board";
 
@@ -32,6 +36,10 @@ export const LORCANA_SIMULATOR_FIXTURES: Record<string, LorcanaSimulatorFixture>
   [fullBoardAllCardTypes.id]: fullBoardAllCardTypes,
   [lookAtTheTopFixture.id]: lookAtTheTopFixture,
   [shiftFixture.id]: shiftFixture,
+  [challengeKeywordsFixture.id]: challengeKeywordsFixture,
+  [defensiveKeywordsFixture.id]: defensiveKeywordsFixture,
+  [questKeywordsFixture.id]: questKeywordsFixture,
+  [boostKeywordFixture.id]: boostKeywordFixture,
 };
 
 export const getLorcanaFixture = (fixtureId: string): LorcanaSimulatorFixture => {

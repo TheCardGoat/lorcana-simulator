@@ -2,9 +2,14 @@
   import { m } from "$lib/i18n/messages.js";
   import { useLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import type { ResolvedOverlayAnnouncement } from "@/features/simulator/animations/overlay-announcement-animations.js";
+  import { watchCssAnimation } from "@/features/simulator/animations/animation-shared.js";
 
   const board = useLorcanaBoardPresenter();
   const announcements = $derived(board.overlayAnnouncements);
+
+  function onOverlayFinished(id: string): void {
+    board.onOverlayAnnouncementFinished(id);
+  }
 
   function getLabel(announcement: ResolvedOverlayAnnouncement): { title: string; subtitle: string } {
     if (announcement.kind === "turn-change" && announcement.turnChange) {
@@ -56,6 +61,7 @@
       class:overlay-announcement--concede={announcement.kind === "concede"}
       class:overlay-announcement--mulligan={announcement.kind === "mulligan"}
       style="--overlay-duration:{announcement.durationMs}ms"
+      use:watchCssAnimation={{ id: announcement.id, onFinished: onOverlayFinished }}
     >
       <div class="overlay-announcement__backdrop"></div>
       <div class="overlay-announcement__content">

@@ -17,7 +17,8 @@
   let { isOpponent, playerSide, seat, onClick }: DiscardZoneProps = $props();
 
   const board = useLorcanaBoardPresenter();
-  const cards = $derived(board.getZoneCards(playerSide, "discard"));
+  const inFlightCardIds = $derived(board.inFlightCardIds);
+  const cards = $derived(board.getZoneCards(playerSide, "discard").filter((card) => !inFlightCardIds.has(card.cardId)));
   const isMasked = $derived(board.isZoneMasked(playerSide, "discard"));
   const topCard = $derived(cards.length > 0 ? cards[cards.length - 1] : null);
   const recentCards = $derived(cards.slice(-5).toReversed());

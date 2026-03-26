@@ -7,6 +7,7 @@ describe("shouldUseResolutionTargetOverlay", () => {
   it("uses the board overlay for move-damage target prompts", () => {
     const state: AvailableMovesSelectionState = {
       mode: "resolution-target",
+      sessionKey: "resolution:move-damage",
       sourceCardId: "source",
       categoryId: "unknown",
       categoryLabel: "Resolve effect",
@@ -17,6 +18,11 @@ describe("shouldUseResolutionTargetOverlay", () => {
       canConfirm: false,
       entries: [],
       effectType: "move-damage",
+      target: null,
+      allowedZones: ["play"],
+      candidateCardIds: [],
+      candidatePlayerIds: [],
+      viewerSide: "playerOne",
       candidateEntries: [],
       activeSlotIndex: 0,
       slots: [
@@ -50,6 +56,7 @@ describe("shouldUseResolutionTargetOverlay", () => {
   it("keeps generic target prompts on the legacy dialog", () => {
     const state: AvailableMovesSelectionState = {
       mode: "resolution-target",
+      sessionKey: "resolution:generic",
       sourceCardId: null,
       categoryId: "unknown",
       categoryLabel: "Resolve effect",
@@ -60,6 +67,11 @@ describe("shouldUseResolutionTargetOverlay", () => {
       canConfirm: false,
       entries: [],
       effectType: null,
+      target: null,
+      allowedZones: ["discard"],
+      candidateCardIds: [],
+      candidatePlayerIds: [],
+      viewerSide: "playerOne",
       candidateEntries: [],
       activeSlotIndex: null,
       slots: [],

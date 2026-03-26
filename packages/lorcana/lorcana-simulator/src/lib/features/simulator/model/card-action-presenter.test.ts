@@ -115,4 +115,54 @@ describe("buildCardActionViews", () => {
     expect(actions.some((action) => action.detail?.includes("target"))).toBe(false);
     expect(actions.some((action) => action.detail?.includes("location"))).toBe(false);
   });
+
+  it("keeps bodyguard play-state variants grouped under one play action", () => {
+    const card = createCard({
+      zoneId: "hand",
+      label: "Bodyguard Ally",
+      keywords: ["Bodyguard"],
+    });
+    const readyMove = createMove({
+      id: "playCard:card-1:ready",
+      label: "Play Ready (Bodyguard Ally)",
+      moveId: "playCard",
+      params: { cardId: card.cardId },
+      presentation: {
+        kind: "targeted",
+        categoryId: "play-card",
+        categoryLabel: "Play",
+        optionLabel: "Play Ready",
+      },
+    });
+    const exertedMove = createMove({
+      id: "playCard:card-1:exerted",
+      label: "Play Exerted (Bodyguard Ally)",
+      moveId: "playCard",
+      params: { cardId: card.cardId, resolveOptional: true },
+      presentation: {
+        kind: "targeted",
+        categoryId: "play-card",
+        categoryLabel: "Play",
+        optionLabel: "Play Exerted",
+      },
+    });
+
+    const actions = buildCardActionViews({
+      card,
+      executableMoves: [readyMove, exertedMove],
+      ownerSide: "playerOne",
+      challengeReadyCardIds: [],
+      movableToLocationCardIds: [],
+    });
+
+    expect(actions[0]).toEqual({
+      id: `play-card:${card.cardId}`,
+      cardId: card.cardId,
+      categoryId: "play-card",
+      label: "Play",
+      interaction: "execute-or-select",
+      enabled: true,
+      moves: [readyMove, exertedMove],
+    });
+  });
 });

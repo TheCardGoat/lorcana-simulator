@@ -5,6 +5,7 @@ import {
   createMockCharacter,
 } from "@tcg/lorcana-engine/testing";
 import { scarFinallyKing } from "./175-scar-finally-king";
+import { scarFinallyKingEnchanted } from "./239-scar-finally-king-enchanted";
 
 const allyCharacter = createMockCharacter({
   id: "scar-test-ally",
@@ -248,6 +249,34 @@ describe("Scar - Finally King", () => {
 
       // The optional bag effect should be available
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    });
+
+    it("enchanted print keeps the controller discard choice instead of random discard", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scarFinallyKingEnchanted, exerted: true }, allyCharacter],
+          hand: [discardFodder1, discardFodder2],
+          deck: 10,
+        },
+        { deck: 5 },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({
+          resolveOptional: true,
+          targets: [allyCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [discardFodder1, discardFodder2] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(discardFodder1)).toBe("discard");
+      expect(testEngine.asPlayerOne().getCardZone(discardFodder2)).toBe("discard");
+      expect(testEngine.asPlayerOne().getCardZone(allyCharacter)).toBe("discard");
     });
   });
 });

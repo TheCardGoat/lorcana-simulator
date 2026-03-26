@@ -62,10 +62,12 @@
   const sidebar = useLorcanaSidebarPresenter();
   const simulatorCardContext = useSimulatorCardContext();
   const dnd = useLorcanaSimulatorDndContext();
+  const inFlightCardIds = $derived(board.inFlightCardIds);
   const cards = $derived.by(() =>
     board
       .getZoneCards(playerSide, zoneId)
-      .filter((card) => !card.cardType || !excludeCardTypes.includes(card.cardType)),
+      .filter((card) => !card.cardType || !excludeCardTypes.includes(card.cardType))
+      .filter((card) => !inFlightCardIds.has(card.cardId)),
   );
   const playEntries = $derived.by<PlayZoneEntry[]>(() => buildOrderedPlayZoneEntries(cards, seat));
   const isMasked = $derived(board.isZoneMasked(playerSide, zoneId));

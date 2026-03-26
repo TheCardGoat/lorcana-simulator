@@ -270,6 +270,7 @@ describe("AvailableMovesPanel interactions", () => {
   it("renders available move card names with the shared event-log card token markup", () => {
     const selectionState: AvailableMovesSelectionState = {
       mode: "resolution-target",
+      sessionKey: "resolution:play-card",
       sourceCardId: null,
       categoryId: "play-card",
       categoryLabel: "Play",
@@ -279,6 +280,15 @@ describe("AvailableMovesPanel interactions", () => {
       canCancel: true,
       canConfirm: false,
       effectType: null,
+      target: {
+        selector: "all",
+        owner: "you",
+        zones: ["hand"],
+      },
+      allowedZones: ["hand"],
+      candidateCardIds: ["card-1"],
+      candidatePlayerIds: [],
+      viewerSide: "playerOne",
       candidateEntries: [],
       activeSlotIndex: null,
       slots: [],

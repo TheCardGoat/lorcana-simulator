@@ -2,15 +2,14 @@ import type { EnginePacketUpdate } from "@tcg/lorcana-engine";
 import type { LorcanaPlayerSide } from "@/features/simulator/model/contracts.js";
 import {
   createCardAnchorId,
-  type BoardAnchorRect,
   type BoardAnchorSnapshot,
-  type BoardLocalRect,
 } from "@/features/simulator/animations/board-move-animations.js";
-
-type AnchorReference = {
-  primaryId: string;
-  fallbackId?: string;
-};
+import {
+  type AnchorReference,
+  resolveAnchorRect,
+  toLocalRect,
+} from "@/features/simulator/animations/animation-shared.js";
+import type { BoardLocalRect } from "@/features/simulator/animations/board-move-animations.js";
 
 export interface ChallengeAnimationPreview {
   attackerDamageDealt: number;
@@ -33,6 +32,7 @@ export interface QueuedChallengeAnimation {
 
 export interface ResolvedChallengeAnimation {
   id: string;
+  actorSide: LorcanaPlayerSide;
   attackerId: string;
   defenderId: string;
   sourceRect: BoardLocalRect;
@@ -133,42 +133,12 @@ export function resolveQueuedChallengeAnimation(
 
   return {
     id: animation.id,
+    actorSide: animation.actorSide,
     attackerId: animation.attackerId,
     defenderId: animation.defenderId,
     sourceRect: toLocalRect(sourceRect, boardRect),
     destinationRect: toLocalRect(destinationRect, boardRect),
     preview: animation.preview,
     durationMs: animation.durationMs,
-  };
-}
-
-function resolveAnchorRect(
-  snapshot: BoardAnchorSnapshot | null,
-  reference: AnchorReference,
-): BoardAnchorRect | null {
-  if (!snapshot) {
-    return null;
-  }
-
-  const primary = snapshot.anchors[reference.primaryId];
-  if (primary) {
-    return primary;
-  }
-
-  if (reference.fallbackId) {
-    return snapshot.anchors[reference.fallbackId] ?? null;
-  }
-
-  return null;
-}
-
-function toLocalRect(rect: BoardAnchorRect, boardRect: BoardAnchorRect): BoardLocalRect {
-  return {
-    x: rect.left - boardRect.left,
-    y: rect.top - boardRect.top,
-    width: rect.width,
-    height: rect.height,
-    centerX: rect.centerX - boardRect.left,
-    centerY: rect.centerY - boardRect.top,
   };
 }

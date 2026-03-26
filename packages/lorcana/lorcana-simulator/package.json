@@ -81,6 +81,7 @@
     "prosekit": "^0.18.4",
     "svelte-confetti": "^2.3.2",
     "svelte-json-tree": "^2.2.0",
+    "tsx": "^4.21.0",
     "x": "^0.1.2"
   },
   "devDependencies": {

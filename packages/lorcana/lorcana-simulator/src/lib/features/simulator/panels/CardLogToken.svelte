@@ -44,4 +44,4 @@
   }
 </script>
 
-<CardTextToken card={{ label, inkType }} onHover={handleHover} onLeave={handleLeave} />
+<CardTextToken card={{ label, inkType }} interactive={false} onHover={handleHover} onLeave={handleLeave} />

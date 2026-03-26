@@ -2,46 +2,56 @@
     import {useLorcanaBoardPresenter} from "@/features/simulator/context/game-context.svelte.js";
     import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
     import {type ResolvedBoardMoveAnimation} from "@/features/simulator/animations/board-move-animations.js";
+    import type {BoardAnimationPlaceholder} from "@/features/simulator/animations/animation-orchestrator.svelte.js";
+    import {watchCssAnimation} from "@/features/simulator/animations/animation-shared.js";
 
   const board = useLorcanaBoardPresenter();
   const animations = $derived(board.animations);
+  const placeholders = $derived(board.boardAnimationPlaceholders);
+
+  function onBoardAnimationFinished(id: string): void {
+    board.onBoardAnimationFinished(id);
+  }
+
+  function getPlaceholderStyle(placeholder: BoardAnimationPlaceholder): string {
+    return [
+      `left:${placeholder.rect.x}px`,
+      `top:${placeholder.rect.y}px`,
+      `width:${placeholder.rect.width}px`,
+      `height:${placeholder.rect.height}px`,
+      `--zone-card-width:${placeholder.rect.width}px`,
+      `--zone-card-height:${placeholder.rect.height}px`,
+    ].join(";");
+  }
 
   function getAnimationStyle(animation: ResolvedBoardMoveAnimation): string {
+    // Use the source rect dimensions for the animated card. The destination rect
+    // can be a zone-level fallback anchor (spanning the full zone width) when the
+    // card-specific anchor isn't in the DOM yet — using those dimensions would
+    // stretch the card across the screen. Source is always a real card-sized rect.
+    const w = animation.sourceRect.width;
+    const h = animation.sourceRect.height;
+
     const dx = animation.destinationRect.centerX - animation.sourceRect.centerX;
     const dy = animation.destinationRect.centerY - animation.sourceRect.centerY;
-    const scaleX = animation.destinationRect.width / Math.max(animation.sourceRect.width, 1);
-    const scaleY = animation.destinationRect.height / Math.max(animation.sourceRect.height, 1);
     const viaDx = animation.viaRect
       ? animation.viaRect.centerX - animation.sourceRect.centerX
       : dx;
     const viaDy = animation.viaRect
       ? animation.viaRect.centerY - animation.sourceRect.centerY
       : dy;
-    const viaScaleX = animation.viaRect
-      ? animation.viaRect.width / Math.max(animation.sourceRect.width, 1)
-      : scaleX;
-    const viaScaleY = animation.viaRect
-      ? animation.viaRect.height / Math.max(animation.sourceRect.height, 1)
-      : scaleY;
-    // Use uniform scale at via-point to prevent card distortion
-    const viaScale = Math.min(viaScaleX, viaScaleY);
 
     return [
       `left:${animation.sourceRect.x}px`,
       `top:${animation.sourceRect.y}px`,
-      `width:${animation.sourceRect.width}px`,
-      `height:${animation.sourceRect.height}px`,
-      `--zone-card-width:${animation.sourceRect.width}px`,
-      `--zone-card-height:${animation.sourceRect.height}px`,
+      `width:${w}px`,
+      `height:${h}px`,
+      `--zone-card-width:${w}px`,
+      `--zone-card-height:${h}px`,
       `--board-animation-dx:${dx}px`,
       `--board-animation-dy:${dy}px`,
-      `--board-animation-scale-x:${scaleX}`,
-      `--board-animation-scale-y:${scaleY}`,
       `--board-animation-mid-dx:${viaDx}px`,
       `--board-animation-mid-dy:${viaDy}px`,
-      `--board-animation-mid-scale-x:${viaScaleX}`,
-      `--board-animation-mid-scale-y:${viaScaleY}`,
-      `--board-animation-mid-scale:${viaScale}`,
       `--board-animation-duration:${animation.durationMs}ms`,
     ].join(";");
   }
@@ -69,6 +79,23 @@
 </script>
 
 <div class="board-animation-layer" aria-hidden="true">
+  {#each placeholders as placeholder (placeholder.id)}
+    <div
+      class="board-animation-placeholder"
+      style={getPlaceholderStyle(placeholder)}
+    >
+      <div class="board-animation-card-shell">
+        <LorcanaCard
+          card={placeholder.card}
+          useContainerSize
+          imageFormat="art_and_name"
+          isMasked={placeholder.renderFace === "faceDown"}
+          showHoverCard={false}
+        />
+      </div>
+    </div>
+  {/each}
+
   {#each animations as animation (animation.id)}
     <div
       class="board-animation-impact"
@@ -90,6 +117,7 @@
       class:board-animation-actor--move-to-location={animation.variant === "move-to-location"}
       class:board-animation-actor--play-action-preview={animation.variant === "play-action-preview"}
       style={getAnimationStyle(animation)}
+      use:watchCssAnimation={{ id: animation.id, onFinished: onBoardAnimationFinished }}
     >
       <div
         class="board-animation-card-shell"
@@ -99,7 +127,7 @@
           card={animation.card}
           useContainerSize
           imageFormat={getAnimationImageFormat(animation)}
-          isMasked={animation.renderFace === "faceDown"}
+          isMasked={animation.variant !== "ink-faceDown" && animation.variant !== "ink-faceUp" && animation.renderFace === "faceDown"}
           showHoverCard={false}
         />
       </div>
@@ -116,11 +144,16 @@
     z-index: 25;
   }
 
+  .board-animation-placeholder {
+    position: absolute;
+    pointer-events: none;
+  }
+
   .board-animation-actor {
     position: absolute;
     pointer-events: none;
     transform-origin: center center;
-    will-change: transform, opacity, filter;
+    will-change: transform, opacity;
     animation-duration: var(--board-animation-duration);
     animation-fill-mode: both;
   }
@@ -210,8 +243,7 @@
   @keyframes board-animation-banish {
     0% {
       opacity: 1;
-      transform: translate(0px, 0px) scale(1) rotate(0deg);
-      filter: brightness(1);
+      transform: translate(0px, 0px) rotate(0deg);
     }
     30% {
       opacity: 0.9;
@@ -219,37 +251,36 @@
           calc(var(--board-animation-dx) * 0.25),
           calc(var(--board-animation-dy) * 0.25 - 14px)
         )
-        scale(0.96) rotate(-3deg);
-      filter: brightness(1.2) saturate(0.7);
+        rotate(-3deg);
     }
     100% {
       opacity: 0;
       transform: translate(var(--board-animation-dx), var(--board-animation-dy))
-        scale(var(--board-animation-scale-x), var(--board-animation-scale-y))
         rotate(6deg);
-      filter: brightness(0.6) saturate(0.3);
     }
   }
 
   @keyframes board-animation-ink {
     0% {
-      opacity: 0.15;
-      transform: translate(0px, 0px) scale(1) rotate(-8deg);
+      opacity: 0;
+      transform: translate(0px, 0px) rotate(-8deg);
     }
-    18% {
+    15% {
       opacity: 1;
     }
-    52% {
-      transform: translate(
-          calc(var(--board-animation-dx) * 0.58),
-          calc(var(--board-animation-dy) * 0.58 - 42px)
-        )
-        scale(1.04);
+    35% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        rotate(0deg);
+    }
+    55% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        rotate(0deg);
     }
     100% {
       opacity: 0.96;
       transform: translate(var(--board-animation-dx), var(--board-animation-dy))
-        scale(var(--board-animation-scale-x), var(--board-animation-scale-y))
         rotate(0deg);
     }
   }
@@ -257,7 +288,7 @@
   @keyframes board-animation-play-character {
     0% {
       opacity: 0;
-      transform: translate(0px, 0px) scale(1) rotate(-6deg);
+      transform: translate(0px, 0px) rotate(-6deg);
     }
     15% {
       opacity: 1;
@@ -265,13 +296,11 @@
     35% {
       opacity: 1;
       transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
-        scale(var(--board-animation-mid-scale))
         rotate(0deg);
     }
     55% {
       opacity: 1;
       transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
-        scale(calc(var(--board-animation-mid-scale) * 1.02))
         rotate(0deg);
     }
     70% {
@@ -280,7 +309,6 @@
     100% {
       opacity: 0.98;
       transform: translate(var(--board-animation-dx), var(--board-animation-dy))
-        scale(var(--board-animation-scale-x), var(--board-animation-scale-y))
         rotate(0deg);
     }
   }
@@ -288,7 +316,7 @@
   @keyframes board-animation-play-item {
     0% {
       opacity: 0;
-      transform: translate(0px, 0px) scale(1) rotate(-4deg);
+      transform: translate(0px, 0px) rotate(-4deg);
     }
     15% {
       opacity: 1;
@@ -296,13 +324,11 @@
     35% {
       opacity: 1;
       transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
-        scale(var(--board-animation-mid-scale))
         rotate(0deg);
     }
     55% {
       opacity: 1;
       transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
-        scale(calc(var(--board-animation-mid-scale) * 1.02))
         rotate(0deg);
     }
     70% {
@@ -311,7 +337,6 @@
     100% {
       opacity: 0.98;
       transform: translate(var(--board-animation-dx), var(--board-animation-dy))
-        scale(var(--board-animation-scale-x), var(--board-animation-scale-y))
         rotate(0deg);
     }
   }
@@ -319,7 +344,7 @@
   @keyframes board-animation-play-location {
     0% {
       opacity: 0;
-      transform: translate(0px, 0px) scale(1) rotate(-3deg);
+      transform: translate(0px, 0px) rotate(-3deg);
     }
     15% {
       opacity: 1;
@@ -327,13 +352,11 @@
     35% {
       opacity: 1;
       transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
-        scale(var(--board-animation-mid-scale))
         rotate(0deg);
     }
     55% {
       opacity: 1;
       transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
-        scale(calc(var(--board-animation-mid-scale) * 1.02))
         rotate(0deg);
     }
     70% {
@@ -342,7 +365,6 @@
     100% {
       opacity: 0.98;
       transform: translate(var(--board-animation-dx), var(--board-animation-dy))
-        scale(var(--board-animation-scale-x), var(--board-animation-scale-y))
         rotate(0deg);
     }
   }
@@ -350,7 +372,7 @@
   @keyframes board-animation-play-action {
     0% {
       opacity: 0;
-      transform: translate(0px, 0px) scale(1) rotate(-6deg);
+      transform: translate(0px, 0px) rotate(-6deg);
     }
     15% {
       opacity: 1;
@@ -358,13 +380,11 @@
     30% {
       opacity: 1;
       transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
-        scale(var(--board-animation-mid-scale))
         rotate(0deg);
     }
     55% {
       opacity: 1;
       transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
-        scale(calc(var(--board-animation-mid-scale) * 1.02))
         rotate(0deg);
     }
     75% {
@@ -373,7 +393,6 @@
     100% {
       opacity: 0;
       transform: translate(var(--board-animation-dx), var(--board-animation-dy))
-        scale(var(--board-animation-scale-x), var(--board-animation-scale-y))
         rotate(3deg);
     }
   }
@@ -388,15 +407,15 @@
     }
     32% {
       opacity: 1;
-      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy)) scale(calc(var(--board-animation-mid-scale) * 1.04)) rotate(0deg);
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy)) rotate(0deg);
     }
     74% {
       opacity: 1;
-      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy)) scale(calc(var(--board-animation-mid-scale) * 1.12)) rotate(0deg);
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy)) rotate(0deg);
     }
     100% {
       opacity: 0;
-      transform: translate(var(--board-animation-mid-dx), calc(var(--board-animation-mid-dy) - 28px)) scale(calc(var(--board-animation-mid-scale) * 0.82))
+      transform: translate(var(--board-animation-mid-dx), calc(var(--board-animation-mid-dy) - 28px))
         rotate(3deg);
     }
   }
@@ -404,20 +423,18 @@
   @keyframes board-animation-move-to-location {
     0% {
       opacity: 1;
-      transform: translate(0px, 0px) scale(1);
+      transform: translate(0px, 0px);
     }
     40% {
       opacity: 1;
       transform: translate(
           calc(var(--board-animation-dx) * 0.5),
           calc(var(--board-animation-dy) * 0.5 - 18px)
-        )
-        scale(1.03);
+        );
     }
     100% {
       opacity: 0.96;
-      transform: translate(var(--board-animation-dx), var(--board-animation-dy))
-        scale(var(--board-animation-scale-x), var(--board-animation-scale-y));
+      transform: translate(var(--board-animation-dx), var(--board-animation-dy));
     }
   }
 
@@ -432,6 +449,31 @@
     100% {
       opacity: 0;
       transform: scale(1.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .board-animation-actor {
+      animation: none;
+    }
+
+    .board-animation-impact {
+      animation: none;
+    }
+  }
+
+  /* Mobile: skip impact rings and reduce filter complexity for better perf */
+  @media (hover: none) and (pointer: coarse) {
+    .board-animation-card-shell {
+      filter: none;
+    }
+
+    .board-animation-card-shell--play-action-preview {
+      filter: none;
+    }
+
+    .board-animation-impact {
+      display: none;
     }
   }
 </style>

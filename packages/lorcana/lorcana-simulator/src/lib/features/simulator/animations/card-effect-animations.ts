@@ -2,15 +2,14 @@ import type { EnginePacketUpdate } from "@tcg/lorcana-engine";
 import type { LorcanaPlayerSide } from "@/features/simulator/model/contracts.js";
 import {
   createCardAnchorId,
-  type BoardAnchorRect,
   type BoardAnchorSnapshot,
-  type BoardLocalRect,
 } from "@/features/simulator/animations/board-move-animations.js";
-
-type AnchorReference = {
-  primaryId: string;
-  fallbackId?: string;
-};
+import {
+  type AnchorReference,
+  resolveAnchorRect,
+  toLocalRect,
+} from "@/features/simulator/animations/animation-shared.js";
+import type { BoardLocalRect } from "@/features/simulator/animations/board-move-animations.js";
 
 export type CardEffectKind = "activate-ability" | "sing" | "resolve-effect";
 
@@ -104,36 +103,5 @@ export function resolveQueuedCardEffectAnimation(
     effectKind: animation.effectKind,
     sourceRect: toLocalRect(sourceRect, boardRect),
     durationMs: animation.durationMs,
-  };
-}
-
-function resolveAnchorRect(
-  snapshot: BoardAnchorSnapshot | null,
-  reference: AnchorReference,
-): BoardAnchorRect | null {
-  if (!snapshot) {
-    return null;
-  }
-
-  const primary = snapshot.anchors[reference.primaryId];
-  if (primary) {
-    return primary;
-  }
-
-  if (reference.fallbackId) {
-    return snapshot.anchors[reference.fallbackId] ?? null;
-  }
-
-  return null;
-}
-
-function toLocalRect(rect: BoardAnchorRect, boardRect: BoardAnchorRect): BoardLocalRect {
-  return {
-    x: rect.left - boardRect.left,
-    y: rect.top - boardRect.top,
-    width: rect.width,
-    height: rect.height,
-    centerX: rect.centerX - boardRect.left,
-    centerY: rect.centerY - boardRect.top,
   };
 }

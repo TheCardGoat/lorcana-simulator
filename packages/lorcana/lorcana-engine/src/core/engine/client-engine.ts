@@ -440,6 +440,7 @@ export class ClientEngine implements GameEngine {
       this.config.playerId,
       this.runtime.getCurrentStateID(),
       "player",
+      { logInvalid: false },
     );
   }
 
