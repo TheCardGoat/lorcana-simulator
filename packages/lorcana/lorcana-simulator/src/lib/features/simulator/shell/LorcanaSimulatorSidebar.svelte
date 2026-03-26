@@ -7,6 +7,7 @@
   import SimulatorSupportDialog from "@/features/simulator/dialogs/SimulatorSupportDialog.svelte";
   import {useSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
   import {useLorcanaSidebarPresenter} from "@/features/simulator/context/game-context.svelte.js";
+  import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
   import { bugReportContextFromBoard } from "@/features/simulator/support/feedback-api.js";
   import { useHumanVsAiOrchestrator } from "@/features/simulator-devtools/vs-ai/context.js";
   import AiPlayerControls from "@/features/simulator-devtools/vs-ai/AiPlayerControls.svelte";
@@ -22,6 +23,14 @@
   const aiOrchestratorStore = useHumanVsAiOrchestrator();
   const simulatorCardContext = useSimulatorCardContext();
 
+  function handleCardHover(card: LorcanaCardSnapshot): void {
+    simulatorCardContext.setExternalPreviewCard(card);
+  }
+
+  function handleCardLeave(): void {
+    simulatorCardContext.setExternalPreviewCard(null);
+  }
+
   const boardSnapshot = $derived(sidebar.boardSnapshot);
   const topSide = $derived(sidebar.topSide);
   const bottomSide = $derived(sidebar.bottomSide);
@@ -33,57 +42,14 @@
   const ownerSide = $derived(sidebar.ownerSide);
   const activeSide = $derived(sidebar.activeSide);
   const showRawLogRegistryJson = $derived(sidebar.showRawLogRegistryJson);
-  const hoveredLogCard = $derived(sidebar.hoveredLogCard);
   const availableMovesSelectionState = $derived(sidebar.availableMovesSelectionState);
 
-  const resolveCard = $derived((cardId: string) => {
-    const snapshot = sidebar.cardSnapshotsById[cardId];
-    if (!snapshot) return null;
-    return {
-      cardId: snapshot.cardId,
-      definitionId: snapshot.definitionId,
-      label: snapshot.label,
-      inkType: snapshot.inkType,
-      inkable: snapshot.inkable,
-      isMasked: snapshot.isMasked,
-      ownerSide: snapshot.ownerSide,
-      cardType: snapshot.cardType,
-      set: snapshot.set,
-      cardNumber: snapshot.cardNumber,
-    };
-  });
   const sidebarSelectionState = $derived(
     availableMovesSelectionState?.mode === "resolution-scry" ? null : availableMovesSelectionState,
   );
   let supportDialogOpen = $state(false);
 
   const bugReportContext = $derived(bugReportContextFromBoard(boardSnapshot));
-
-  $effect(() => {
-    if (!hoveredLogCard) {
-      simulatorCardContext.setExternalPreviewCard(null);
-      return;
-    }
-    const boardCard = sidebar.cardSnapshotsById[hoveredLogCard.cardId] ?? null;
-    if (boardCard) {
-      simulatorCardContext.setExternalPreviewCard(boardCard);
-      return;
-    }
-    simulatorCardContext.setExternalPreviewCard({
-      cardId: hoveredLogCard.cardId,
-      definitionId: hoveredLogCard.definitionId,
-      label: hoveredLogCard.label,
-      ownerId: "",
-      ownerSide: hoveredLogCard.ownerSide,
-      zoneId: "play",
-      isMasked: hoveredLogCard.isMasked,
-      facePresentation: hoveredLogCard.isMasked ? "faceDown" : "faceUp",
-      inkType: hoveredLogCard.inkType,
-      cardType: hoveredLogCard.cardType,
-      set: hoveredLogCard.set,
-      cardNumber: hoveredLogCard.cardNumber,
-    });
-  });
 </script>
 
 <Sidebar.Root collapsible="offcanvas" variant="sidebar" side="left">
@@ -115,10 +81,7 @@
       <EventLogPanel
         entries={moveLogEntries}
         viewerSide={ownerSide}
-        {resolveCard}
         {showRawLogRegistryJson}
-        onCardHover={sidebar.handleLogCardHover}
-        onCardLeave={sidebar.handleLogCardLeave}
       />
 
       {#if readOnly}
@@ -140,8 +103,8 @@
           {showRawLogRegistryJson}
           activePlayerGuidance={sidebar.activePlayerGuidanceController}
           cardSnapshots={sidebar.cardSnapshotsById}
-          onCardHover={sidebar.handleLogCardHover}
-          onCardLeave={sidebar.handleLogCardLeave}
+          onCardHover={handleCardHover}
+          onCardLeave={handleCardLeave}
           onStartManualMoveSelection={({ id, moves }) =>
             sidebar.startManualCardActionSelection(id, moves)}
           onSelectCard={sidebar.handleAvailableMovesSelectionCard}

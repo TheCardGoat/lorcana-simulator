@@ -1,0 +1,1979 @@
+{
+  "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch",
+  "deckSummary": [
+    {
+      "deckId": "Steel-Sapphire-Aggressive",
+      "games": 27,
+      "wins": 2,
+      "losses": 25,
+      "totalLoreFor": 318,
+      "totalLoreAgainst": 531,
+      "averageLoreFor": 11.78,
+      "averageLoreAgainst": 19.67,
+      "winRate": 0.074
+    },
+    {
+      "deckId": "Steel-Sapphire-Midrange",
+      "games": 27,
+      "wins": 3,
+      "losses": 24,
+      "totalLoreFor": 248,
+      "totalLoreAgainst": 533,
+      "averageLoreFor": 9.19,
+      "averageLoreAgainst": 19.74,
+      "winRate": 0.111
+    },
+    {
+      "deckId": "Steel-Amethyst-Basil-Genie",
+      "games": 22,
+      "wins": 10,
+      "losses": 12,
+      "totalLoreFor": 342,
+      "totalLoreAgainst": 390,
+      "averageLoreFor": 15.55,
+      "averageLoreAgainst": 17.73,
+      "winRate": 0.455
+    },
+    {
+      "deckId": "Amber-Steel-Lilo-Rapunzel",
+      "games": 26,
+      "wins": 12,
+      "losses": 14,
+      "totalLoreFor": 474,
+      "totalLoreAgainst": 389,
+      "averageLoreFor": 18.23,
+      "averageLoreAgainst": 14.96,
+      "winRate": 0.462
+    },
+    {
+      "deckId": "Emerald-Amethyst-Ink",
+      "games": 20,
+      "wins": 11,
+      "losses": 9,
+      "totalLoreFor": 391,
+      "totalLoreAgainst": 313,
+      "averageLoreFor": 19.55,
+      "averageLoreAgainst": 15.65,
+      "winRate": 0.55
+    },
+    {
+      "deckId": "Amber-Steel-Goofy-Lilo",
+      "games": 26,
+      "wins": 19,
+      "losses": 7,
+      "totalLoreFor": 483,
+      "totalLoreAgainst": 358,
+      "averageLoreFor": 18.58,
+      "averageLoreAgainst": 13.77,
+      "winRate": 0.731
+    },
+    {
+      "deckId": "Amber-Amethyst-Aggressive",
+      "games": 26,
+      "wins": 19,
+      "losses": 7,
+      "totalLoreFor": 474,
+      "totalLoreAgainst": 375,
+      "averageLoreFor": 18.23,
+      "averageLoreAgainst": 14.42,
+      "winRate": 0.731
+    },
+    {
+      "deckId": "Amber-Amethyst-Control",
+      "games": 26,
+      "wins": 24,
+      "losses": 2,
+      "totalLoreFor": 509,
+      "totalLoreAgainst": 350,
+      "averageLoreFor": 19.58,
+      "averageLoreAgainst": 13.46,
+      "winRate": 0.923
+    }
+  ],
+  "orderedPairSummary": [
+    {
+      "key": "Steel-Sapphire-Midrange__vs__Amber-Steel-Lilo-Rapunzel",
+      "playerOneDeckId": "Steel-Sapphire-Midrange",
+      "playerTwoDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 36,
+      "totalTurns": 18,
+      "matches": [
+        {
+          "matchId": "baseline-2-Steel-Sapphire-Midrange-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 2,
+            "player_two": 20
+          },
+          "turns": 9,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Amber-Steel-Lilo-Rapunzel:0:2",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-2-Steel-Sapphire-Midrange-vs-Amber-Steel-Lilo-Rapunzel"
+        },
+        {
+          "matchId": "baseline-58-Steel-Sapphire-Midrange-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 3,
+            "player_two": 21
+          },
+          "turns": 9,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Amber-Steel-Lilo-Rapunzel:1:58",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-58-Steel-Sapphire-Midrange-vs-Amber-Steel-Lilo-Rapunzel"
+        }
+      ],
+      "averageMargin": 18,
+      "averageTurns": 9
+    },
+    {
+      "key": "Steel-Sapphire-Aggressive__vs__Amber-Amethyst-Control",
+      "playerOneDeckId": "Steel-Sapphire-Aggressive",
+      "playerTwoDeckId": "Amber-Amethyst-Control",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 32,
+      "totalTurns": 26,
+      "matches": [
+        {
+          "matchId": "baseline-10-Steel-Sapphire-Aggressive-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 4,
+            "player_two": 20
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Amber-Amethyst-Control:0:10",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-10-Steel-Sapphire-Aggressive-vs-Amber-Amethyst-Control"
+        },
+        {
+          "matchId": "baseline-66-Steel-Sapphire-Aggressive-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 4,
+            "player_two": 20
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Amber-Amethyst-Control:1:66",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-66-Steel-Sapphire-Aggressive-vs-Amber-Amethyst-Control"
+        }
+      ],
+      "averageMargin": 16,
+      "averageTurns": 13
+    },
+    {
+      "key": "Steel-Sapphire-Midrange__vs__Amber-Amethyst-Aggressive",
+      "playerOneDeckId": "Steel-Sapphire-Midrange",
+      "playerTwoDeckId": "Amber-Amethyst-Aggressive",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 31,
+      "totalTurns": 29,
+      "matches": [
+        {
+          "matchId": "baseline-4-Steel-Sapphire-Midrange-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 3,
+            "player_two": 20
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Amber-Amethyst-Aggressive:0:4",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-4-Steel-Sapphire-Midrange-vs-Amber-Amethyst-Aggressive"
+        },
+        {
+          "matchId": "baseline-60-Steel-Sapphire-Midrange-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 6,
+            "player_two": 20
+          },
+          "turns": 16,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Amber-Amethyst-Aggressive:1:60",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-60-Steel-Sapphire-Midrange-vs-Amber-Amethyst-Aggressive"
+        }
+      ],
+      "averageMargin": 15.5,
+      "averageTurns": 14.5
+    },
+    {
+      "key": "Steel-Sapphire-Midrange__vs__Amber-Steel-Goofy-Lilo",
+      "playerOneDeckId": "Steel-Sapphire-Midrange",
+      "playerTwoDeckId": "Amber-Steel-Goofy-Lilo",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 29,
+      "totalTurns": 26,
+      "matches": [
+        {
+          "matchId": "baseline-1-Steel-Sapphire-Midrange-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 12,
+            "player_two": 21
+          },
+          "turns": 15,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Amber-Steel-Goofy-Lilo:0:1",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-1-Steel-Sapphire-Midrange-vs-Amber-Steel-Goofy-Lilo"
+        },
+        {
+          "matchId": "baseline-57-Steel-Sapphire-Midrange-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 0,
+            "player_two": 20
+          },
+          "turns": 11,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Amber-Steel-Goofy-Lilo:1:57",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-57-Steel-Sapphire-Midrange-vs-Amber-Steel-Goofy-Lilo"
+        }
+      ],
+      "averageMargin": 14.5,
+      "averageTurns": 13
+    },
+    {
+      "key": "Steel-Sapphire-Aggressive__vs__Amber-Steel-Lilo-Rapunzel",
+      "playerOneDeckId": "Steel-Sapphire-Aggressive",
+      "playerTwoDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 29,
+      "totalTurns": 24,
+      "matches": [
+        {
+          "matchId": "baseline-9-Steel-Sapphire-Aggressive-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 5,
+            "player_two": 20
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Amber-Steel-Lilo-Rapunzel:0:9",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-9-Steel-Sapphire-Aggressive-vs-Amber-Steel-Lilo-Rapunzel"
+        },
+        {
+          "matchId": "baseline-65-Steel-Sapphire-Aggressive-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 7,
+            "player_two": 21
+          },
+          "turns": 11,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Amber-Steel-Lilo-Rapunzel:1:65",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-65-Steel-Sapphire-Aggressive-vs-Amber-Steel-Lilo-Rapunzel"
+        }
+      ],
+      "averageMargin": 14.5,
+      "averageTurns": 12
+    },
+    {
+      "key": "Steel-Sapphire-Aggressive__vs__Amber-Steel-Goofy-Lilo",
+      "playerOneDeckId": "Steel-Sapphire-Aggressive",
+      "playerTwoDeckId": "Amber-Steel-Goofy-Lilo",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 28,
+      "totalTurns": 24,
+      "matches": [
+        {
+          "matchId": "baseline-8-Steel-Sapphire-Aggressive-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 9,
+            "player_two": 21
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Amber-Steel-Goofy-Lilo:0:8",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-8-Steel-Sapphire-Aggressive-vs-Amber-Steel-Goofy-Lilo"
+        },
+        {
+          "matchId": "baseline-64-Steel-Sapphire-Aggressive-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 4,
+            "player_two": 20
+          },
+          "turns": 11,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Amber-Steel-Goofy-Lilo:1:64",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-64-Steel-Sapphire-Aggressive-vs-Amber-Steel-Goofy-Lilo"
+        }
+      ],
+      "averageMargin": 14,
+      "averageTurns": 12
+    },
+    {
+      "key": "Steel-Sapphire-Midrange__vs__Emerald-Amethyst-Ink",
+      "playerOneDeckId": "Steel-Sapphire-Midrange",
+      "playerTwoDeckId": "Emerald-Amethyst-Ink",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 27,
+      "totalTurns": 20,
+      "matches": [
+        {
+          "matchId": "baseline-6-Steel-Sapphire-Midrange-vs-Emerald-Amethyst-Ink",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 6,
+            "player_two": 20
+          },
+          "turns": 9,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Emerald-Amethyst-Ink:0:6",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-6-Steel-Sapphire-Midrange-vs-Emerald-Amethyst-Ink"
+        },
+        {
+          "matchId": "baseline-62-Steel-Sapphire-Midrange-vs-Emerald-Amethyst-Ink",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 9,
+            "player_two": 22
+          },
+          "turns": 11,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Emerald-Amethyst-Ink:1:62",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-62-Steel-Sapphire-Midrange-vs-Emerald-Amethyst-Ink"
+        }
+      ],
+      "averageMargin": 13.5,
+      "averageTurns": 10
+    },
+    {
+      "key": "Steel-Sapphire-Midrange__vs__Amber-Amethyst-Control",
+      "playerOneDeckId": "Steel-Sapphire-Midrange",
+      "playerTwoDeckId": "Amber-Amethyst-Control",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 25,
+      "totalTurns": 24,
+      "matches": [
+        {
+          "matchId": "baseline-3-Steel-Sapphire-Midrange-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 11,
+            "player_two": 20
+          },
+          "turns": 11,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Amber-Amethyst-Control:0:3",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-3-Steel-Sapphire-Midrange-vs-Amber-Amethyst-Control"
+        },
+        {
+          "matchId": "baseline-59-Steel-Sapphire-Midrange-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 4,
+            "player_two": 20
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Amber-Amethyst-Control:1:59",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-59-Steel-Sapphire-Midrange-vs-Amber-Amethyst-Control"
+        }
+      ],
+      "averageMargin": 12.5,
+      "averageTurns": 12
+    },
+    {
+      "key": "Amber-Steel-Goofy-Lilo__vs__Emerald-Amethyst-Ink",
+      "playerOneDeckId": "Amber-Steel-Goofy-Lilo",
+      "playerTwoDeckId": "Emerald-Amethyst-Ink",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 14,
+      "totalTurns": 24,
+      "matches": [
+        {
+          "matchId": "baseline-20-Amber-Steel-Goofy-Lilo-vs-Emerald-Amethyst-Ink",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 13,
+            "player_two": 20
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Emerald-Amethyst-Ink:0:20",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-20-Amber-Steel-Goofy-Lilo-vs-Emerald-Amethyst-Ink"
+        },
+        {
+          "matchId": "baseline-76-Amber-Steel-Goofy-Lilo-vs-Emerald-Amethyst-Ink",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 13,
+            "player_two": 20
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Emerald-Amethyst-Ink:1:76",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-76-Amber-Steel-Goofy-Lilo-vs-Emerald-Amethyst-Ink"
+        }
+      ],
+      "averageMargin": 7,
+      "averageTurns": 12
+    },
+    {
+      "key": "Amber-Steel-Lilo-Rapunzel__vs__Steel-Amethyst-Basil-Genie",
+      "playerOneDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "playerTwoDeckId": "Steel-Amethyst-Basil-Genie",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 14,
+      "totalTurns": 30,
+      "matches": [
+        {
+          "matchId": "baseline-26-Amber-Steel-Lilo-Rapunzel-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 13,
+            "player_two": 20
+          },
+          "turns": 15,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Steel-Amethyst-Basil-Genie:0:26",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-26-Amber-Steel-Lilo-Rapunzel-vs-Steel-Amethyst-Basil-Genie"
+        },
+        {
+          "matchId": "baseline-82-Amber-Steel-Lilo-Rapunzel-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 13,
+            "player_two": 20
+          },
+          "turns": 15,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Steel-Amethyst-Basil-Genie:1:82",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-82-Amber-Steel-Lilo-Rapunzel-vs-Steel-Amethyst-Basil-Genie"
+        }
+      ],
+      "averageMargin": 7,
+      "averageTurns": 15
+    },
+    {
+      "key": "Amber-Amethyst-Control__vs__Amber-Amethyst-Aggressive",
+      "playerOneDeckId": "Amber-Amethyst-Control",
+      "playerTwoDeckId": "Amber-Amethyst-Aggressive",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 12,
+      "totalTurns": 38,
+      "matches": [
+        {
+          "matchId": "baseline-32-Amber-Amethyst-Control-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 14,
+            "player_two": 20
+          },
+          "turns": 19,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Amber-Amethyst-Aggressive:0:32",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-32-Amber-Amethyst-Control-vs-Amber-Amethyst-Aggressive"
+        },
+        {
+          "matchId": "baseline-88-Amber-Amethyst-Control-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 14,
+            "player_two": 20
+          },
+          "turns": 19,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Amber-Amethyst-Aggressive:1:88",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-88-Amber-Amethyst-Control-vs-Amber-Amethyst-Aggressive"
+        }
+      ],
+      "averageMargin": 6,
+      "averageTurns": 19
+    },
+    {
+      "key": "Steel-Sapphire-Aggressive__vs__Amber-Amethyst-Aggressive",
+      "playerOneDeckId": "Steel-Sapphire-Aggressive",
+      "playerTwoDeckId": "Amber-Amethyst-Aggressive",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 10,
+      "totalTurns": 30,
+      "matches": [
+        {
+          "matchId": "baseline-11-Steel-Sapphire-Aggressive-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 15,
+            "player_two": 20
+          },
+          "turns": 15,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Amber-Amethyst-Aggressive:0:11",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-11-Steel-Sapphire-Aggressive-vs-Amber-Amethyst-Aggressive"
+        },
+        {
+          "matchId": "baseline-67-Steel-Sapphire-Aggressive-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 15,
+            "player_two": 20
+          },
+          "turns": 15,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Amber-Amethyst-Aggressive:1:67",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-67-Steel-Sapphire-Aggressive-vs-Amber-Amethyst-Aggressive"
+        }
+      ],
+      "averageMargin": 5,
+      "averageTurns": 15
+    },
+    {
+      "key": "Amber-Steel-Goofy-Lilo__vs__Amber-Amethyst-Control",
+      "playerOneDeckId": "Amber-Steel-Goofy-Lilo",
+      "playerTwoDeckId": "Amber-Amethyst-Control",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 10,
+      "totalTurns": 30,
+      "matches": [
+        {
+          "matchId": "baseline-17-Amber-Steel-Goofy-Lilo-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 15,
+            "player_two": 20
+          },
+          "turns": 15,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Amber-Amethyst-Control:0:17",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-17-Amber-Steel-Goofy-Lilo-vs-Amber-Amethyst-Control"
+        },
+        {
+          "matchId": "baseline-73-Amber-Steel-Goofy-Lilo-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 15,
+            "player_two": 20
+          },
+          "turns": 15,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Amber-Amethyst-Control:1:73",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-73-Amber-Steel-Goofy-Lilo-vs-Amber-Amethyst-Control"
+        }
+      ],
+      "averageMargin": 5,
+      "averageTurns": 15
+    },
+    {
+      "key": "Amber-Steel-Lilo-Rapunzel__vs__Amber-Amethyst-Control",
+      "playerOneDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "playerTwoDeckId": "Amber-Amethyst-Control",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 10,
+      "totalTurns": 28,
+      "matches": [
+        {
+          "matchId": "baseline-24-Amber-Steel-Lilo-Rapunzel-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 15,
+            "player_two": 20
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Amber-Amethyst-Control:0:24",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-24-Amber-Steel-Lilo-Rapunzel-vs-Amber-Amethyst-Control"
+        },
+        {
+          "matchId": "baseline-80-Amber-Steel-Lilo-Rapunzel-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 15,
+            "player_two": 20
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Amber-Amethyst-Control:1:80",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-80-Amber-Steel-Lilo-Rapunzel-vs-Amber-Amethyst-Control"
+        }
+      ],
+      "averageMargin": 5,
+      "averageTurns": 14
+    },
+    {
+      "key": "Amber-Amethyst-Aggressive__vs__Amber-Steel-Goofy-Lilo",
+      "playerOneDeckId": "Amber-Amethyst-Aggressive",
+      "playerTwoDeckId": "Amber-Steel-Goofy-Lilo",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 10,
+      "totalTurns": 22,
+      "matches": [
+        {
+          "matchId": "baseline-37-Amber-Amethyst-Aggressive-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 15,
+            "player_two": 20
+          },
+          "turns": 11,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Amber-Steel-Goofy-Lilo:0:37",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-37-Amber-Amethyst-Aggressive-vs-Amber-Steel-Goofy-Lilo"
+        },
+        {
+          "matchId": "baseline-93-Amber-Amethyst-Aggressive-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 15,
+            "player_two": 20
+          },
+          "turns": 11,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Amber-Steel-Goofy-Lilo:1:93",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-93-Amber-Amethyst-Aggressive-vs-Amber-Steel-Goofy-Lilo"
+        }
+      ],
+      "averageMargin": 5,
+      "averageTurns": 11
+    },
+    {
+      "key": "Steel-Sapphire-Aggressive__vs__Emerald-Amethyst-Ink",
+      "playerOneDeckId": "Steel-Sapphire-Aggressive",
+      "playerTwoDeckId": "Emerald-Amethyst-Ink",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 6,
+      "totalTurns": 24,
+      "matches": [
+        {
+          "matchId": "baseline-13-Steel-Sapphire-Aggressive-vs-Emerald-Amethyst-Ink",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 17,
+            "player_two": 20
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Emerald-Amethyst-Ink:0:13",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-13-Steel-Sapphire-Aggressive-vs-Emerald-Amethyst-Ink"
+        },
+        {
+          "matchId": "baseline-69-Steel-Sapphire-Aggressive-vs-Emerald-Amethyst-Ink",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 17,
+            "player_two": 20
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Emerald-Amethyst-Ink:1:69",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-69-Steel-Sapphire-Aggressive-vs-Emerald-Amethyst-Ink"
+        }
+      ],
+      "averageMargin": 3,
+      "averageTurns": 12
+    },
+    {
+      "key": "Amber-Amethyst-Aggressive__vs__Amber-Amethyst-Control",
+      "playerOneDeckId": "Amber-Amethyst-Aggressive",
+      "playerTwoDeckId": "Amber-Amethyst-Control",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 4,
+      "totalTurns": 26,
+      "matches": [
+        {
+          "matchId": "baseline-39-Amber-Amethyst-Aggressive-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 18,
+            "player_two": 20
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Amber-Amethyst-Control:0:39",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-39-Amber-Amethyst-Aggressive-vs-Amber-Amethyst-Control"
+        },
+        {
+          "matchId": "baseline-95-Amber-Amethyst-Aggressive-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 18,
+            "player_two": 20
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Amber-Amethyst-Control:1:95",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-95-Amber-Amethyst-Aggressive-vs-Amber-Amethyst-Control"
+        }
+      ],
+      "averageMargin": 2,
+      "averageTurns": 13
+    },
+    {
+      "key": "Steel-Sapphire-Aggressive__vs__Steel-Amethyst-Basil-Genie",
+      "playerOneDeckId": "Steel-Sapphire-Aggressive",
+      "playerTwoDeckId": "Steel-Amethyst-Basil-Genie",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 2,
+      "totalTurns": 34,
+      "matches": [
+        {
+          "matchId": "baseline-12-Steel-Sapphire-Aggressive-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 19,
+            "player_two": 20
+          },
+          "turns": 17,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Steel-Amethyst-Basil-Genie:0:12",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-12-Steel-Sapphire-Aggressive-vs-Steel-Amethyst-Basil-Genie"
+        },
+        {
+          "matchId": "baseline-68-Steel-Sapphire-Aggressive-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 19,
+            "player_two": 20
+          },
+          "turns": 17,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Steel-Amethyst-Basil-Genie:1:68",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-68-Steel-Sapphire-Aggressive-vs-Steel-Amethyst-Basil-Genie"
+        }
+      ],
+      "averageMargin": 1,
+      "averageTurns": 17
+    },
+    {
+      "key": "Amber-Steel-Lilo-Rapunzel__vs__Amber-Steel-Goofy-Lilo",
+      "playerOneDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "playerTwoDeckId": "Amber-Steel-Goofy-Lilo",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 2,
+      "totalTurns": 22,
+      "matches": [
+        {
+          "matchId": "baseline-23-Amber-Steel-Lilo-Rapunzel-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 19,
+            "player_two": 20
+          },
+          "turns": 11,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Amber-Steel-Goofy-Lilo:0:23",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-23-Amber-Steel-Lilo-Rapunzel-vs-Amber-Steel-Goofy-Lilo"
+        },
+        {
+          "matchId": "baseline-79-Amber-Steel-Lilo-Rapunzel-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 19,
+            "player_two": 20
+          },
+          "turns": 11,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Amber-Steel-Goofy-Lilo:1:79",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-79-Amber-Steel-Lilo-Rapunzel-vs-Amber-Steel-Goofy-Lilo"
+        }
+      ],
+      "averageMargin": 1,
+      "averageTurns": 11
+    },
+    {
+      "key": "Amber-Steel-Lilo-Rapunzel__vs__Amber-Amethyst-Aggressive",
+      "playerOneDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "playerTwoDeckId": "Amber-Amethyst-Aggressive",
+      "games": 2,
+      "playerOneWins": 0,
+      "playerTwoWins": 2,
+      "totalMargin": 2,
+      "totalTurns": 28,
+      "matches": [
+        {
+          "matchId": "baseline-25-Amber-Steel-Lilo-Rapunzel-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 19,
+            "player_two": 20
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Amber-Amethyst-Aggressive:0:25",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-25-Amber-Steel-Lilo-Rapunzel-vs-Amber-Amethyst-Aggressive"
+        },
+        {
+          "matchId": "baseline-81-Amber-Steel-Lilo-Rapunzel-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 19,
+            "player_two": 20
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Amber-Amethyst-Aggressive:1:81",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-81-Amber-Steel-Lilo-Rapunzel-vs-Amber-Amethyst-Aggressive"
+        }
+      ],
+      "averageMargin": 1,
+      "averageTurns": 14
+    },
+    {
+      "key": "Steel-Amethyst-Basil-Genie__vs__Amber-Amethyst-Aggressive",
+      "playerOneDeckId": "Steel-Amethyst-Basil-Genie",
+      "playerTwoDeckId": "Amber-Amethyst-Aggressive",
+      "games": 1,
+      "playerOneWins": 0,
+      "playerTwoWins": 1,
+      "totalMargin": 13,
+      "totalTurns": 13,
+      "matches": [
+        {
+          "matchId": "baseline-47-Steel-Amethyst-Basil-Genie-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 8,
+            "player_two": 21
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Steel-Amethyst-Basil-Genie:Amber-Amethyst-Aggressive:0:47",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-47-Steel-Amethyst-Basil-Genie-vs-Amber-Amethyst-Aggressive"
+        }
+      ],
+      "averageMargin": 13,
+      "averageTurns": 13
+    },
+    {
+      "key": "Steel-Amethyst-Basil-Genie__vs__Amber-Steel-Lilo-Rapunzel",
+      "playerOneDeckId": "Steel-Amethyst-Basil-Genie",
+      "playerTwoDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "games": 1,
+      "playerOneWins": 0,
+      "playerTwoWins": 1,
+      "totalMargin": 11,
+      "totalTurns": 17,
+      "matches": [
+        {
+          "matchId": "baseline-45-Steel-Amethyst-Basil-Genie-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 9,
+            "player_two": 20
+          },
+          "turns": 17,
+          "seed": "strategy-benchmark:Steel-Amethyst-Basil-Genie:Amber-Steel-Lilo-Rapunzel:0:45",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-45-Steel-Amethyst-Basil-Genie-vs-Amber-Steel-Lilo-Rapunzel"
+        }
+      ],
+      "averageMargin": 11,
+      "averageTurns": 17
+    },
+    {
+      "key": "Steel-Amethyst-Basil-Genie__vs__Amber-Amethyst-Control",
+      "playerOneDeckId": "Steel-Amethyst-Basil-Genie",
+      "playerTwoDeckId": "Amber-Amethyst-Control",
+      "games": 1,
+      "playerOneWins": 0,
+      "playerTwoWins": 1,
+      "totalMargin": 5,
+      "totalTurns": 15,
+      "matches": [
+        {
+          "matchId": "baseline-46-Steel-Amethyst-Basil-Genie-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 16,
+            "player_two": 21
+          },
+          "turns": 15,
+          "seed": "strategy-benchmark:Steel-Amethyst-Basil-Genie:Amber-Amethyst-Control:0:46",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-46-Steel-Amethyst-Basil-Genie-vs-Amber-Amethyst-Control"
+        }
+      ],
+      "averageMargin": 5,
+      "averageTurns": 15
+    },
+    {
+      "key": "Emerald-Amethyst-Ink__vs__Amber-Steel-Goofy-Lilo",
+      "playerOneDeckId": "Emerald-Amethyst-Ink",
+      "playerTwoDeckId": "Amber-Steel-Goofy-Lilo",
+      "games": 1,
+      "playerOneWins": 0,
+      "playerTwoWins": 1,
+      "totalMargin": 3,
+      "totalTurns": 14,
+      "matches": [
+        {
+          "matchId": "baseline-51-Emerald-Amethyst-Ink-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 17,
+            "player_two": 20
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Emerald-Amethyst-Ink:Amber-Steel-Goofy-Lilo:0:51",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-51-Emerald-Amethyst-Ink-vs-Amber-Steel-Goofy-Lilo"
+        }
+      ],
+      "averageMargin": 3,
+      "averageTurns": 14
+    },
+    {
+      "key": "Steel-Amethyst-Basil-Genie__vs__Emerald-Amethyst-Ink",
+      "playerOneDeckId": "Steel-Amethyst-Basil-Genie",
+      "playerTwoDeckId": "Emerald-Amethyst-Ink",
+      "games": 1,
+      "playerOneWins": 0,
+      "playerTwoWins": 1,
+      "totalMargin": 1,
+      "totalTurns": 16,
+      "matches": [
+        {
+          "matchId": "baseline-48-Steel-Amethyst-Basil-Genie-vs-Emerald-Amethyst-Ink",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 19,
+            "player_two": 20
+          },
+          "turns": 16,
+          "seed": "strategy-benchmark:Steel-Amethyst-Basil-Genie:Emerald-Amethyst-Ink:0:48",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-48-Steel-Amethyst-Basil-Genie-vs-Emerald-Amethyst-Ink"
+        }
+      ],
+      "averageMargin": 1,
+      "averageTurns": 16
+    },
+    {
+      "key": "Emerald-Amethyst-Ink__vs__Amber-Steel-Lilo-Rapunzel",
+      "playerOneDeckId": "Emerald-Amethyst-Ink",
+      "playerTwoDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "games": 1,
+      "playerOneWins": 0,
+      "playerTwoWins": 1,
+      "totalMargin": 1,
+      "totalTurns": 11,
+      "matches": [
+        {
+          "matchId": "baseline-52-Emerald-Amethyst-Ink-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 19,
+            "player_two": 20
+          },
+          "turns": 11,
+          "seed": "strategy-benchmark:Emerald-Amethyst-Ink:Amber-Steel-Lilo-Rapunzel:0:52",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-52-Emerald-Amethyst-Ink-vs-Amber-Steel-Lilo-Rapunzel"
+        }
+      ],
+      "averageMargin": 1,
+      "averageTurns": 11
+    },
+    {
+      "key": "Emerald-Amethyst-Ink__vs__Amber-Amethyst-Control",
+      "playerOneDeckId": "Emerald-Amethyst-Ink",
+      "playerTwoDeckId": "Amber-Amethyst-Control",
+      "games": 1,
+      "playerOneWins": 0,
+      "playerTwoWins": 1,
+      "totalMargin": 1,
+      "totalTurns": 18,
+      "matches": [
+        {
+          "matchId": "baseline-53-Emerald-Amethyst-Ink-vs-Amber-Amethyst-Control",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 19,
+            "player_two": 20
+          },
+          "turns": 18,
+          "seed": "strategy-benchmark:Emerald-Amethyst-Ink:Amber-Amethyst-Control:0:53",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-53-Emerald-Amethyst-Ink-vs-Amber-Amethyst-Control"
+        }
+      ],
+      "averageMargin": 1,
+      "averageTurns": 18
+    },
+    {
+      "key": "Steel-Sapphire-Midrange__vs__Steel-Amethyst-Basil-Genie",
+      "playerOneDeckId": "Steel-Sapphire-Midrange",
+      "playerTwoDeckId": "Steel-Amethyst-Basil-Genie",
+      "games": 2,
+      "playerOneWins": 1,
+      "playerTwoWins": 1,
+      "totalMargin": 19,
+      "totalTurns": 25,
+      "matches": [
+        {
+          "matchId": "baseline-5-Steel-Sapphire-Midrange-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 5,
+            "player_two": 20
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Steel-Amethyst-Basil-Genie:0:5",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-5-Steel-Sapphire-Midrange-vs-Steel-Amethyst-Basil-Genie"
+        },
+        {
+          "matchId": "baseline-61-Steel-Sapphire-Midrange-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 16
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Steel-Amethyst-Basil-Genie:1:61",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-61-Steel-Sapphire-Midrange-vs-Steel-Amethyst-Basil-Genie"
+        }
+      ],
+      "averageMargin": 9.5,
+      "averageTurns": 12.5
+    },
+    {
+      "key": "Steel-Sapphire-Midrange__vs__Steel-Sapphire-Aggressive",
+      "playerOneDeckId": "Steel-Sapphire-Midrange",
+      "playerTwoDeckId": "Steel-Sapphire-Aggressive",
+      "games": 2,
+      "playerOneWins": 1,
+      "playerTwoWins": 1,
+      "totalMargin": 10,
+      "totalTurns": 31,
+      "matches": [
+        {
+          "matchId": "baseline-0-Steel-Sapphire-Midrange-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 14,
+            "player_two": 20
+          },
+          "turns": 17,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Steel-Sapphire-Aggressive:0:0",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-0-Steel-Sapphire-Midrange-vs-Steel-Sapphire-Aggressive"
+        },
+        {
+          "matchId": "baseline-56-Steel-Sapphire-Midrange-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 16
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Steel-Sapphire-Midrange:Steel-Sapphire-Aggressive:1:56",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-56-Steel-Sapphire-Midrange-vs-Steel-Sapphire-Aggressive"
+        }
+      ],
+      "averageMargin": 5,
+      "averageTurns": 15.5
+    },
+    {
+      "key": "Steel-Sapphire-Aggressive__vs__Steel-Sapphire-Midrange",
+      "playerOneDeckId": "Steel-Sapphire-Aggressive",
+      "playerTwoDeckId": "Steel-Sapphire-Midrange",
+      "games": 2,
+      "playerOneWins": 1,
+      "playerTwoWins": 1,
+      "totalMargin": 10,
+      "totalTurns": 36,
+      "matches": [
+        {
+          "matchId": "baseline-7-Steel-Sapphire-Aggressive-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 15
+          },
+          "turns": 19,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Steel-Sapphire-Midrange:0:7",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-7-Steel-Sapphire-Aggressive-vs-Steel-Sapphire-Midrange"
+        },
+        {
+          "matchId": "baseline-63-Steel-Sapphire-Aggressive-vs-Steel-Sapphire-Midrange",
+          "winner": "player_two",
+          "loreTotals": {
+            "player_one": 15,
+            "player_two": 20
+          },
+          "turns": 17,
+          "seed": "strategy-benchmark:Steel-Sapphire-Aggressive:Steel-Sapphire-Midrange:1:63",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-63-Steel-Sapphire-Aggressive-vs-Steel-Sapphire-Midrange"
+        }
+      ],
+      "averageMargin": 5,
+      "averageTurns": 18
+    },
+    {
+      "key": "Emerald-Amethyst-Ink__vs__Steel-Amethyst-Basil-Genie",
+      "playerOneDeckId": "Emerald-Amethyst-Ink",
+      "playerTwoDeckId": "Steel-Amethyst-Basil-Genie",
+      "games": 1,
+      "playerOneWins": 1,
+      "playerTwoWins": 0,
+      "totalMargin": 14,
+      "totalTurns": 8,
+      "matches": [
+        {
+          "matchId": "baseline-55-Emerald-Amethyst-Ink-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 6
+          },
+          "turns": 8,
+          "seed": "strategy-benchmark:Emerald-Amethyst-Ink:Steel-Amethyst-Basil-Genie:0:55",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-55-Emerald-Amethyst-Ink-vs-Steel-Amethyst-Basil-Genie"
+        }
+      ],
+      "averageMargin": 14,
+      "averageTurns": 8
+    },
+    {
+      "key": "Emerald-Amethyst-Ink__vs__Steel-Sapphire-Midrange",
+      "playerOneDeckId": "Emerald-Amethyst-Ink",
+      "playerTwoDeckId": "Steel-Sapphire-Midrange",
+      "games": 1,
+      "playerOneWins": 1,
+      "playerTwoWins": 0,
+      "totalMargin": 10,
+      "totalTurns": 12,
+      "matches": [
+        {
+          "matchId": "baseline-49-Emerald-Amethyst-Ink-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 10
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Emerald-Amethyst-Ink:Steel-Sapphire-Midrange:0:49",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-49-Emerald-Amethyst-Ink-vs-Steel-Sapphire-Midrange"
+        }
+      ],
+      "averageMargin": 10,
+      "averageTurns": 12
+    },
+    {
+      "key": "Emerald-Amethyst-Ink__vs__Steel-Sapphire-Aggressive",
+      "playerOneDeckId": "Emerald-Amethyst-Ink",
+      "playerTwoDeckId": "Steel-Sapphire-Aggressive",
+      "games": 1,
+      "playerOneWins": 1,
+      "playerTwoWins": 0,
+      "totalMargin": 10,
+      "totalTurns": 13,
+      "matches": [
+        {
+          "matchId": "baseline-50-Emerald-Amethyst-Ink-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 10
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Emerald-Amethyst-Ink:Steel-Sapphire-Aggressive:0:50",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-50-Emerald-Amethyst-Ink-vs-Steel-Sapphire-Aggressive"
+        }
+      ],
+      "averageMargin": 10,
+      "averageTurns": 13
+    },
+    {
+      "key": "Emerald-Amethyst-Ink__vs__Amber-Amethyst-Aggressive",
+      "playerOneDeckId": "Emerald-Amethyst-Ink",
+      "playerTwoDeckId": "Amber-Amethyst-Aggressive",
+      "games": 1,
+      "playerOneWins": 1,
+      "playerTwoWins": 0,
+      "totalMargin": 7,
+      "totalTurns": 10,
+      "matches": [
+        {
+          "matchId": "baseline-54-Emerald-Amethyst-Ink-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 13
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Emerald-Amethyst-Ink:Amber-Amethyst-Aggressive:0:54",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-54-Emerald-Amethyst-Ink-vs-Amber-Amethyst-Aggressive"
+        }
+      ],
+      "averageMargin": 7,
+      "averageTurns": 10
+    },
+    {
+      "key": "Steel-Amethyst-Basil-Genie__vs__Amber-Steel-Goofy-Lilo",
+      "playerOneDeckId": "Steel-Amethyst-Basil-Genie",
+      "playerTwoDeckId": "Amber-Steel-Goofy-Lilo",
+      "games": 1,
+      "playerOneWins": 1,
+      "playerTwoWins": 0,
+      "totalMargin": 3,
+      "totalTurns": 28,
+      "matches": [
+        {
+          "matchId": "baseline-44-Steel-Amethyst-Basil-Genie-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 17
+          },
+          "turns": 28,
+          "seed": "strategy-benchmark:Steel-Amethyst-Basil-Genie:Amber-Steel-Goofy-Lilo:0:44",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-44-Steel-Amethyst-Basil-Genie-vs-Amber-Steel-Goofy-Lilo"
+        }
+      ],
+      "averageMargin": 3,
+      "averageTurns": 28
+    },
+    {
+      "key": "Amber-Steel-Goofy-Lilo__vs__Steel-Sapphire-Midrange",
+      "playerOneDeckId": "Amber-Steel-Goofy-Lilo",
+      "playerTwoDeckId": "Steel-Sapphire-Midrange",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 38,
+      "totalTurns": 16,
+      "matches": [
+        {
+          "matchId": "baseline-14-Amber-Steel-Goofy-Lilo-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 21,
+            "player_two": 2
+          },
+          "turns": 8,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Steel-Sapphire-Midrange:0:14",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-14-Amber-Steel-Goofy-Lilo-vs-Steel-Sapphire-Midrange"
+        },
+        {
+          "matchId": "baseline-70-Amber-Steel-Goofy-Lilo-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 21,
+            "player_two": 2
+          },
+          "turns": 8,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Steel-Sapphire-Midrange:1:70",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-70-Amber-Steel-Goofy-Lilo-vs-Steel-Sapphire-Midrange"
+        }
+      ],
+      "averageMargin": 19,
+      "averageTurns": 8
+    },
+    {
+      "key": "Amber-Steel-Lilo-Rapunzel__vs__Steel-Sapphire-Aggressive",
+      "playerOneDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "playerTwoDeckId": "Steel-Sapphire-Aggressive",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 34,
+      "totalTurns": 18,
+      "matches": [
+        {
+          "matchId": "baseline-22-Amber-Steel-Lilo-Rapunzel-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 3
+          },
+          "turns": 9,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Steel-Sapphire-Aggressive:0:22",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-22-Amber-Steel-Lilo-Rapunzel-vs-Steel-Sapphire-Aggressive"
+        },
+        {
+          "matchId": "baseline-78-Amber-Steel-Lilo-Rapunzel-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 3
+          },
+          "turns": 9,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Steel-Sapphire-Aggressive:1:78",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-78-Amber-Steel-Lilo-Rapunzel-vs-Steel-Sapphire-Aggressive"
+        }
+      ],
+      "averageMargin": 17,
+      "averageTurns": 9
+    },
+    {
+      "key": "Amber-Amethyst-Control__vs__Steel-Sapphire-Midrange",
+      "playerOneDeckId": "Amber-Amethyst-Control",
+      "playerTwoDeckId": "Steel-Sapphire-Midrange",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 30,
+      "totalTurns": 20,
+      "matches": [
+        {
+          "matchId": "baseline-28-Amber-Amethyst-Control-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 5
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Steel-Sapphire-Midrange:0:28",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-28-Amber-Amethyst-Control-vs-Steel-Sapphire-Midrange"
+        },
+        {
+          "matchId": "baseline-84-Amber-Amethyst-Control-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 5
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Steel-Sapphire-Midrange:1:84",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-84-Amber-Amethyst-Control-vs-Steel-Sapphire-Midrange"
+        }
+      ],
+      "averageMargin": 15,
+      "averageTurns": 10
+    },
+    {
+      "key": "Amber-Amethyst-Aggressive__vs__Steel-Amethyst-Basil-Genie",
+      "playerOneDeckId": "Amber-Amethyst-Aggressive",
+      "playerTwoDeckId": "Steel-Amethyst-Basil-Genie",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 28,
+      "totalTurns": 20,
+      "matches": [
+        {
+          "matchId": "baseline-40-Amber-Amethyst-Aggressive-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 6
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Steel-Amethyst-Basil-Genie:0:40",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-40-Amber-Amethyst-Aggressive-vs-Steel-Amethyst-Basil-Genie"
+        },
+        {
+          "matchId": "baseline-96-Amber-Amethyst-Aggressive-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 6
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Steel-Amethyst-Basil-Genie:1:96",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-96-Amber-Amethyst-Aggressive-vs-Steel-Amethyst-Basil-Genie"
+        }
+      ],
+      "averageMargin": 14,
+      "averageTurns": 10
+    },
+    {
+      "key": "Amber-Steel-Goofy-Lilo__vs__Amber-Amethyst-Aggressive",
+      "playerOneDeckId": "Amber-Steel-Goofy-Lilo",
+      "playerTwoDeckId": "Amber-Amethyst-Aggressive",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 26,
+      "totalTurns": 20,
+      "matches": [
+        {
+          "matchId": "baseline-18-Amber-Steel-Goofy-Lilo-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 7
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Amber-Amethyst-Aggressive:0:18",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-18-Amber-Steel-Goofy-Lilo-vs-Amber-Amethyst-Aggressive"
+        },
+        {
+          "matchId": "baseline-74-Amber-Steel-Goofy-Lilo-vs-Amber-Amethyst-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 7
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Amber-Amethyst-Aggressive:1:74",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-74-Amber-Steel-Goofy-Lilo-vs-Amber-Amethyst-Aggressive"
+        }
+      ],
+      "averageMargin": 13,
+      "averageTurns": 10
+    },
+    {
+      "key": "Amber-Amethyst-Aggressive__vs__Steel-Sapphire-Aggressive",
+      "playerOneDeckId": "Amber-Amethyst-Aggressive",
+      "playerTwoDeckId": "Steel-Sapphire-Aggressive",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 26,
+      "totalTurns": 24,
+      "matches": [
+        {
+          "matchId": "baseline-36-Amber-Amethyst-Aggressive-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 7
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Steel-Sapphire-Aggressive:0:36",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-36-Amber-Amethyst-Aggressive-vs-Steel-Sapphire-Aggressive"
+        },
+        {
+          "matchId": "baseline-92-Amber-Amethyst-Aggressive-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 7
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Steel-Sapphire-Aggressive:1:92",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-92-Amber-Amethyst-Aggressive-vs-Steel-Sapphire-Aggressive"
+        }
+      ],
+      "averageMargin": 13,
+      "averageTurns": 12
+    },
+    {
+      "key": "Amber-Steel-Lilo-Rapunzel__vs__Steel-Sapphire-Midrange",
+      "playerOneDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "playerTwoDeckId": "Steel-Sapphire-Midrange",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 22,
+      "totalTurns": 20,
+      "matches": [
+        {
+          "matchId": "baseline-21-Amber-Steel-Lilo-Rapunzel-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 9
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Steel-Sapphire-Midrange:0:21",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-21-Amber-Steel-Lilo-Rapunzel-vs-Steel-Sapphire-Midrange"
+        },
+        {
+          "matchId": "baseline-77-Amber-Steel-Lilo-Rapunzel-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 9
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Steel-Sapphire-Midrange:1:77",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-77-Amber-Steel-Lilo-Rapunzel-vs-Steel-Sapphire-Midrange"
+        }
+      ],
+      "averageMargin": 11,
+      "averageTurns": 10
+    },
+    {
+      "key": "Amber-Steel-Goofy-Lilo__vs__Steel-Sapphire-Aggressive",
+      "playerOneDeckId": "Amber-Steel-Goofy-Lilo",
+      "playerTwoDeckId": "Steel-Sapphire-Aggressive",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 20,
+      "totalTurns": 28,
+      "matches": [
+        {
+          "matchId": "baseline-15-Amber-Steel-Goofy-Lilo-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 10
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Steel-Sapphire-Aggressive:0:15",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-15-Amber-Steel-Goofy-Lilo-vs-Steel-Sapphire-Aggressive"
+        },
+        {
+          "matchId": "baseline-71-Amber-Steel-Goofy-Lilo-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 10
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Steel-Sapphire-Aggressive:1:71",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-71-Amber-Steel-Goofy-Lilo-vs-Steel-Sapphire-Aggressive"
+        }
+      ],
+      "averageMargin": 10,
+      "averageTurns": 14
+    },
+    {
+      "key": "Amber-Amethyst-Control__vs__Amber-Steel-Goofy-Lilo",
+      "playerOneDeckId": "Amber-Amethyst-Control",
+      "playerTwoDeckId": "Amber-Steel-Goofy-Lilo",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 18,
+      "totalTurns": 24,
+      "matches": [
+        {
+          "matchId": "baseline-30-Amber-Amethyst-Control-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 11
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Amber-Steel-Goofy-Lilo:0:30",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-30-Amber-Amethyst-Control-vs-Amber-Steel-Goofy-Lilo"
+        },
+        {
+          "matchId": "baseline-86-Amber-Amethyst-Control-vs-Amber-Steel-Goofy-Lilo",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 11
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Amber-Steel-Goofy-Lilo:1:86",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-86-Amber-Amethyst-Control-vs-Amber-Steel-Goofy-Lilo"
+        }
+      ],
+      "averageMargin": 9,
+      "averageTurns": 12
+    },
+    {
+      "key": "Amber-Amethyst-Control__vs__Steel-Amethyst-Basil-Genie",
+      "playerOneDeckId": "Amber-Amethyst-Control",
+      "playerTwoDeckId": "Steel-Amethyst-Basil-Genie",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 16,
+      "totalTurns": 24,
+      "matches": [
+        {
+          "matchId": "baseline-33-Amber-Amethyst-Control-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 12
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Steel-Amethyst-Basil-Genie:0:33",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-33-Amber-Amethyst-Control-vs-Steel-Amethyst-Basil-Genie"
+        },
+        {
+          "matchId": "baseline-89-Amber-Amethyst-Control-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 12
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Steel-Amethyst-Basil-Genie:1:89",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-89-Amber-Amethyst-Control-vs-Steel-Amethyst-Basil-Genie"
+        }
+      ],
+      "averageMargin": 8,
+      "averageTurns": 12
+    },
+    {
+      "key": "Amber-Amethyst-Aggressive__vs__Steel-Sapphire-Midrange",
+      "playerOneDeckId": "Amber-Amethyst-Aggressive",
+      "playerTwoDeckId": "Steel-Sapphire-Midrange",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 12,
+      "totalTurns": 24,
+      "matches": [
+        {
+          "matchId": "baseline-35-Amber-Amethyst-Aggressive-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 14
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Steel-Sapphire-Midrange:0:35",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-35-Amber-Amethyst-Aggressive-vs-Steel-Sapphire-Midrange"
+        },
+        {
+          "matchId": "baseline-91-Amber-Amethyst-Aggressive-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 14
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Steel-Sapphire-Midrange:1:91",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-91-Amber-Amethyst-Aggressive-vs-Steel-Sapphire-Midrange"
+        }
+      ],
+      "averageMargin": 6,
+      "averageTurns": 12
+    },
+    {
+      "key": "Steel-Amethyst-Basil-Genie__vs__Steel-Sapphire-Midrange",
+      "playerOneDeckId": "Steel-Amethyst-Basil-Genie",
+      "playerTwoDeckId": "Steel-Sapphire-Midrange",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 12,
+      "totalTurns": 28,
+      "matches": [
+        {
+          "matchId": "baseline-42-Steel-Amethyst-Basil-Genie-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 14
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Steel-Amethyst-Basil-Genie:Steel-Sapphire-Midrange:0:42",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-42-Steel-Amethyst-Basil-Genie-vs-Steel-Sapphire-Midrange"
+        },
+        {
+          "matchId": "baseline-98-Steel-Amethyst-Basil-Genie-vs-Steel-Sapphire-Midrange",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 14
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Steel-Amethyst-Basil-Genie:Steel-Sapphire-Midrange:1:98",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-98-Steel-Amethyst-Basil-Genie-vs-Steel-Sapphire-Midrange"
+        }
+      ],
+      "averageMargin": 6,
+      "averageTurns": 14
+    },
+    {
+      "key": "Amber-Steel-Goofy-Lilo__vs__Steel-Amethyst-Basil-Genie",
+      "playerOneDeckId": "Amber-Steel-Goofy-Lilo",
+      "playerTwoDeckId": "Steel-Amethyst-Basil-Genie",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 10,
+      "totalTurns": 28,
+      "matches": [
+        {
+          "matchId": "baseline-19-Amber-Steel-Goofy-Lilo-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 21,
+            "player_two": 16
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Steel-Amethyst-Basil-Genie:0:19",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-19-Amber-Steel-Goofy-Lilo-vs-Steel-Amethyst-Basil-Genie"
+        },
+        {
+          "matchId": "baseline-75-Amber-Steel-Goofy-Lilo-vs-Steel-Amethyst-Basil-Genie",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 21,
+            "player_two": 16
+          },
+          "turns": 14,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Steel-Amethyst-Basil-Genie:1:75",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-75-Amber-Steel-Goofy-Lilo-vs-Steel-Amethyst-Basil-Genie"
+        }
+      ],
+      "averageMargin": 5,
+      "averageTurns": 14
+    },
+    {
+      "key": "Amber-Amethyst-Control__vs__Steel-Sapphire-Aggressive",
+      "playerOneDeckId": "Amber-Amethyst-Control",
+      "playerTwoDeckId": "Steel-Sapphire-Aggressive",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 10,
+      "totalTurns": 30,
+      "matches": [
+        {
+          "matchId": "baseline-29-Amber-Amethyst-Control-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 15
+          },
+          "turns": 15,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Steel-Sapphire-Aggressive:0:29",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-29-Amber-Amethyst-Control-vs-Steel-Sapphire-Aggressive"
+        },
+        {
+          "matchId": "baseline-85-Amber-Amethyst-Control-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 15
+          },
+          "turns": 15,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Steel-Sapphire-Aggressive:1:85",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-85-Amber-Amethyst-Control-vs-Steel-Sapphire-Aggressive"
+        }
+      ],
+      "averageMargin": 5,
+      "averageTurns": 15
+    },
+    {
+      "key": "Amber-Amethyst-Aggressive__vs__Amber-Steel-Lilo-Rapunzel",
+      "playerOneDeckId": "Amber-Amethyst-Aggressive",
+      "playerTwoDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 10,
+      "totalTurns": 20,
+      "matches": [
+        {
+          "matchId": "baseline-38-Amber-Amethyst-Aggressive-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 15
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Amber-Steel-Lilo-Rapunzel:0:38",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-38-Amber-Amethyst-Aggressive-vs-Amber-Steel-Lilo-Rapunzel"
+        },
+        {
+          "matchId": "baseline-94-Amber-Amethyst-Aggressive-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 15
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Amber-Steel-Lilo-Rapunzel:1:94",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-94-Amber-Amethyst-Aggressive-vs-Amber-Steel-Lilo-Rapunzel"
+        }
+      ],
+      "averageMargin": 5,
+      "averageTurns": 10
+    },
+    {
+      "key": "Amber-Amethyst-Control__vs__Amber-Steel-Lilo-Rapunzel",
+      "playerOneDeckId": "Amber-Amethyst-Control",
+      "playerTwoDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 8,
+      "totalTurns": 24,
+      "matches": [
+        {
+          "matchId": "baseline-31-Amber-Amethyst-Control-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 16
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Amber-Steel-Lilo-Rapunzel:0:31",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-31-Amber-Amethyst-Control-vs-Amber-Steel-Lilo-Rapunzel"
+        },
+        {
+          "matchId": "baseline-87-Amber-Amethyst-Control-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 16
+          },
+          "turns": 12,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Amber-Steel-Lilo-Rapunzel:1:87",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-87-Amber-Amethyst-Control-vs-Amber-Steel-Lilo-Rapunzel"
+        }
+      ],
+      "averageMargin": 4,
+      "averageTurns": 12
+    },
+    {
+      "key": "Steel-Amethyst-Basil-Genie__vs__Steel-Sapphire-Aggressive",
+      "playerOneDeckId": "Steel-Amethyst-Basil-Genie",
+      "playerTwoDeckId": "Steel-Sapphire-Aggressive",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 8,
+      "totalTurns": 32,
+      "matches": [
+        {
+          "matchId": "baseline-43-Steel-Amethyst-Basil-Genie-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 16
+          },
+          "turns": 16,
+          "seed": "strategy-benchmark:Steel-Amethyst-Basil-Genie:Steel-Sapphire-Aggressive:0:43",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-43-Steel-Amethyst-Basil-Genie-vs-Steel-Sapphire-Aggressive"
+        },
+        {
+          "matchId": "baseline-99-Steel-Amethyst-Basil-Genie-vs-Steel-Sapphire-Aggressive",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 16
+          },
+          "turns": 16,
+          "seed": "strategy-benchmark:Steel-Amethyst-Basil-Genie:Steel-Sapphire-Aggressive:1:99",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-99-Steel-Amethyst-Basil-Genie-vs-Steel-Sapphire-Aggressive"
+        }
+      ],
+      "averageMargin": 4,
+      "averageTurns": 16
+    },
+    {
+      "key": "Amber-Steel-Goofy-Lilo__vs__Amber-Steel-Lilo-Rapunzel",
+      "playerOneDeckId": "Amber-Steel-Goofy-Lilo",
+      "playerTwoDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 4,
+      "totalTurns": 20,
+      "matches": [
+        {
+          "matchId": "baseline-16-Amber-Steel-Goofy-Lilo-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 21,
+            "player_two": 19
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Amber-Steel-Lilo-Rapunzel:0:16",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-16-Amber-Steel-Goofy-Lilo-vs-Amber-Steel-Lilo-Rapunzel"
+        },
+        {
+          "matchId": "baseline-72-Amber-Steel-Goofy-Lilo-vs-Amber-Steel-Lilo-Rapunzel",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 21,
+            "player_two": 19
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Steel-Goofy-Lilo:Amber-Steel-Lilo-Rapunzel:1:72",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-72-Amber-Steel-Goofy-Lilo-vs-Amber-Steel-Lilo-Rapunzel"
+        }
+      ],
+      "averageMargin": 2,
+      "averageTurns": 10
+    },
+    {
+      "key": "Amber-Steel-Lilo-Rapunzel__vs__Emerald-Amethyst-Ink",
+      "playerOneDeckId": "Amber-Steel-Lilo-Rapunzel",
+      "playerTwoDeckId": "Emerald-Amethyst-Ink",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 2,
+      "totalTurns": 20,
+      "matches": [
+        {
+          "matchId": "baseline-27-Amber-Steel-Lilo-Rapunzel-vs-Emerald-Amethyst-Ink",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 19
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Emerald-Amethyst-Ink:0:27",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-27-Amber-Steel-Lilo-Rapunzel-vs-Emerald-Amethyst-Ink"
+        },
+        {
+          "matchId": "baseline-83-Amber-Steel-Lilo-Rapunzel-vs-Emerald-Amethyst-Ink",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 19
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Steel-Lilo-Rapunzel:Emerald-Amethyst-Ink:1:83",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-83-Amber-Steel-Lilo-Rapunzel-vs-Emerald-Amethyst-Ink"
+        }
+      ],
+      "averageMargin": 1,
+      "averageTurns": 10
+    },
+    {
+      "key": "Amber-Amethyst-Control__vs__Emerald-Amethyst-Ink",
+      "playerOneDeckId": "Amber-Amethyst-Control",
+      "playerTwoDeckId": "Emerald-Amethyst-Ink",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 2,
+      "totalTurns": 26,
+      "matches": [
+        {
+          "matchId": "baseline-34-Amber-Amethyst-Control-vs-Emerald-Amethyst-Ink",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 19
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Emerald-Amethyst-Ink:0:34",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-34-Amber-Amethyst-Control-vs-Emerald-Amethyst-Ink"
+        },
+        {
+          "matchId": "baseline-90-Amber-Amethyst-Control-vs-Emerald-Amethyst-Ink",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 19
+          },
+          "turns": 13,
+          "seed": "strategy-benchmark:Amber-Amethyst-Control:Emerald-Amethyst-Ink:1:90",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-90-Amber-Amethyst-Control-vs-Emerald-Amethyst-Ink"
+        }
+      ],
+      "averageMargin": 1,
+      "averageTurns": 13
+    },
+    {
+      "key": "Amber-Amethyst-Aggressive__vs__Emerald-Amethyst-Ink",
+      "playerOneDeckId": "Amber-Amethyst-Aggressive",
+      "playerTwoDeckId": "Emerald-Amethyst-Ink",
+      "games": 2,
+      "playerOneWins": 2,
+      "playerTwoWins": 0,
+      "totalMargin": 2,
+      "totalTurns": 20,
+      "matches": [
+        {
+          "matchId": "baseline-41-Amber-Amethyst-Aggressive-vs-Emerald-Amethyst-Ink",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 19
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Emerald-Amethyst-Ink:0:41",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-41-Amber-Amethyst-Aggressive-vs-Emerald-Amethyst-Ink"
+        },
+        {
+          "matchId": "baseline-97-Amber-Amethyst-Aggressive-vs-Emerald-Amethyst-Ink",
+          "winner": "player_one",
+          "loreTotals": {
+            "player_one": 20,
+            "player_two": 19
+          },
+          "turns": 10,
+          "seed": "strategy-benchmark:Amber-Amethyst-Aggressive:Emerald-Amethyst-Ink:1:97",
+          "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/baseline-batch/baseline-97-Amber-Amethyst-Aggressive-vs-Emerald-Amethyst-Ink"
+        }
+      ],
+      "averageMargin": 1,
+      "averageTurns": 10
+    }
+  ]
+}

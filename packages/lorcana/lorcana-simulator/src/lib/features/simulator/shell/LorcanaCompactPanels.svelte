@@ -9,6 +9,7 @@
   import {AvailableMovesPanel, EventLogPanel} from "@/features/simulator/index.js";
   import {useSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
   import {useLorcanaSidebarPresenter} from "@/features/simulator/context/game-context.svelte.js";
+  import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
 
   type CompactPanelTab = "moves" | "log";
 
@@ -27,31 +28,22 @@
   const sidebar = useLorcanaSidebarPresenter();
   const simulatorCardContext = useSimulatorCardContext();
 
+  function handleCardHover(card: LorcanaCardSnapshot): void {
+    simulatorCardContext.setExternalPreviewCard(card);
+  }
+
+  function handleCardLeave(): void {
+    simulatorCardContext.setExternalPreviewCard(null);
+  }
+
   const moveCategorySummaries = $derived(sidebar.moveCategorySummaries);
   const availableMoveCategoryCount = $derived(sidebar.moveCategoryCount);
   const moveLogEntries = $derived(sidebar.moveLogEntries);
   const ownerSide = $derived(sidebar.ownerSide);
   const activeSide = $derived(sidebar.activeSide);
   const showRawLogRegistryJson = $derived(sidebar.showRawLogRegistryJson);
-  const hoveredLogCard = $derived(sidebar.hoveredLogCard);
   const availableMovesSelectionState = $derived(sidebar.availableMovesSelectionState);
 
-  const resolveCard = $derived((cardId: string) => {
-    const snapshot = sidebar.cardSnapshotsById[cardId];
-    if (!snapshot) return null;
-    return {
-      cardId: snapshot.cardId,
-      definitionId: snapshot.definitionId,
-      label: snapshot.label,
-      inkType: snapshot.inkType,
-      inkable: snapshot.inkable,
-      isMasked: snapshot.isMasked,
-      ownerSide: snapshot.ownerSide,
-      cardType: snapshot.cardType,
-      set: snapshot.set,
-      cardNumber: snapshot.cardNumber,
-    };
-  });
   const compactSelectionState = $derived(
     availableMovesSelectionState?.mode === "resolution-scry" ? null : availableMovesSelectionState,
   );
@@ -61,32 +53,6 @@
   const eventLogTitle = $derived(m["sim.tabletop.eventLog.title"]({}));
 
   let concedeDialogOpen = $state(false);
-
-  $effect(() => {
-    if (!hoveredLogCard) {
-      simulatorCardContext.setExternalPreviewCard(null);
-      return;
-    }
-    const boardCard = sidebar.cardSnapshotsById[hoveredLogCard.cardId] ?? null;
-    if (boardCard) {
-      simulatorCardContext.setExternalPreviewCard(boardCard);
-      return;
-    }
-    simulatorCardContext.setExternalPreviewCard({
-      cardId: hoveredLogCard.cardId,
-      definitionId: hoveredLogCard.definitionId,
-      label: hoveredLogCard.label,
-      ownerId: "",
-      ownerSide: hoveredLogCard.ownerSide,
-      zoneId: "play",
-      isMasked: hoveredLogCard.isMasked,
-      facePresentation: hoveredLogCard.isMasked ? "faceDown" : "faceUp",
-      inkType: hoveredLogCard.inkType,
-      cardType: hoveredLogCard.cardType,
-      set: hoveredLogCard.set,
-      cardNumber: hoveredLogCard.cardNumber,
-    });
-  });
 
   async function openConcedeDialog(): Promise<void> {
     if (!canConcede) {
@@ -192,8 +158,8 @@
             {showRawLogRegistryJson}
             activePlayerGuidance={sidebar.activePlayerGuidanceController}
             cardSnapshots={sidebar.cardSnapshotsById}
-            onCardHover={sidebar.handleLogCardHover}
-            onCardLeave={sidebar.handleLogCardLeave}
+            onCardHover={handleCardHover}
+            onCardLeave={handleCardLeave}
             onStartManualMoveSelection={({ id, moves }) =>
               sidebar.startManualCardActionSelection(id, moves)}
             onSelectCard={sidebar.handleAvailableMovesSelectionCard}
@@ -216,10 +182,7 @@
           compact
           entries={moveLogEntries}
           viewerSide={ownerSide}
-          {resolveCard}
           {showRawLogRegistryJson}
-          onCardHover={sidebar.handleLogCardHover}
-          onCardLeave={sidebar.handleLogCardLeave}
         />
       {/if}
     </div>

@@ -476,7 +476,30 @@ function interpolateTemplateSegments(
   return segments;
 }
 
-// Note: inkable icon injection is intentionally removed; CardLogToken handles live card data.
+function injectInkableIcon(
+  segments: EventLogSegment[],
+  resolveCard: CardReferenceResolver,
+  cardId: CardInstanceId,
+): EventLogSegment[] {
+  const cardRef = resolveCard(cardId);
+  if (!cardRef?.inkable) {
+    return segments;
+  }
+
+  const result: EventLogSegment[] = [];
+  let inserted = false;
+
+  for (const segment of segments) {
+    if (!inserted && segment.kind === "card" && segment.cardId === cardId) {
+      result.push({ kind: "icon", icon: "inkable", label: "Inkable" });
+      result.push({ kind: "text", text: " " });
+      inserted = true;
+    }
+    result.push(segment);
+  }
+
+  return result;
+}
 
 // =============================================================================
 // Segment helpers

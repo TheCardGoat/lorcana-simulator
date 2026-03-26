@@ -1,0 +1,452 @@
+{
+  "artifactRoot": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror",
+  "baselineStrategyId": "default-lore-race",
+  "candidateManifests": [
+    {
+      "candidateId": "board-control-lore-race",
+      "changedHeuristics": [
+        "Prefer banishing challenges over questing when the challenge cuts meaningful opposing lore pressure.",
+        "Prefer board-developing plays over inking when the play uses current ink and keeps branching bounded."
+      ],
+      "hypothesis": "Board-control lore racing should gain mirror equity by contesting opposing lore engines earlier without collapsing tempo.",
+      "notes": "Use quick and candidate presets to validate same-deck gains first, then promotion to confirm full-fixture regression safety.",
+      "parentStrategyId": "default-lore-race",
+      "status": "candidate"
+    },
+    {
+      "candidateId": "aggressive-board-control-lore-race",
+      "changedHeuristics": [
+        "Reuse the current self-first and structural mulligan opening choices.",
+        "Challenge earlier when the opposing exerted character is worth a favorable or equal value trade.",
+        "Allow mutual-banish trades when they remove a higher-value opposing lore engine or board anchor."
+      ],
+      "hypothesis": "An aggressive board-control variant should outperform the current board-control profile in threat-dense mirrors by cashing in more value trades before the opponent snowballs lore.",
+      "notes": "Compare it directly against board-control-lore-race and default-lore-race on the quick preset before widening to promotion coverage.",
+      "parentStrategyId": "board-control-lore-race",
+      "status": "draft"
+    }
+  ],
+  "deckIds": ["amber-amethyst-aggressive", "steel-sapphire-midrange"],
+  "gameCount": 1,
+  "gameCounts": {
+    "crossDeck": 1,
+    "mirror": 1
+  },
+  "generatedAt": "2026-03-22T14:44:45.711Z",
+  "matches": [
+    {
+      "actions": 83,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-default-lore-race-vs-board-control-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-default-lore-race-vs-board-control-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 83,
+        "total": 293,
+        "unsupported": 0,
+        "validation": 210
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 0,
+        "passTurn": 16
+      },
+      "gameEndReason": "Reached 20 lore",
+      "loreTotals": {
+        "player_one": 20,
+        "player_two": 3
+      },
+      "matchId": "steel-sapphire-midrange-mirror-default-lore-race-vs-board-control-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "steel-sapphire-midrange",
+      "playerOneStrategyId": "default-lore-race",
+      "playerTwoDeckId": "steel-sapphire-midrange",
+      "playerTwoStrategyId": "board-control-lore-race",
+      "seed": "strategy-lab:steel-sapphire-midrange-mirror-default-lore-race-vs-board-control-lore-race-0",
+      "turns": 17,
+      "winner": "player_one"
+    },
+    {
+      "actions": 99,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-default-lore-race-vs-aggressive-board-control-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-default-lore-race-vs-aggressive-board-control-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 99,
+        "total": 449,
+        "unsupported": 0,
+        "validation": 350
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 0,
+        "passTurn": 19
+      },
+      "gameEndReason": "Reached 20 lore",
+      "loreTotals": {
+        "player_one": 6,
+        "player_two": 20
+      },
+      "matchId": "steel-sapphire-midrange-mirror-default-lore-race-vs-aggressive-board-control-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "steel-sapphire-midrange",
+      "playerOneStrategyId": "default-lore-race",
+      "playerTwoDeckId": "steel-sapphire-midrange",
+      "playerTwoStrategyId": "aggressive-board-control-lore-race",
+      "seed": "strategy-lab:steel-sapphire-midrange-mirror-default-lore-race-vs-aggressive-board-control-lore-race-0",
+      "turns": 20,
+      "winner": "player_two"
+    },
+    {
+      "actions": 106,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-board-control-lore-race-vs-default-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-board-control-lore-race-vs-default-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 106,
+        "total": 378,
+        "unsupported": 0,
+        "validation": 272
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 0,
+        "passTurn": 20
+      },
+      "gameEndReason": "Reached 20 lore",
+      "loreTotals": {
+        "player_one": 20,
+        "player_two": 4
+      },
+      "matchId": "steel-sapphire-midrange-mirror-board-control-lore-race-vs-default-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "steel-sapphire-midrange",
+      "playerOneStrategyId": "board-control-lore-race",
+      "playerTwoDeckId": "steel-sapphire-midrange",
+      "playerTwoStrategyId": "default-lore-race",
+      "seed": "strategy-lab:steel-sapphire-midrange-mirror-board-control-lore-race-vs-default-lore-race-0",
+      "turns": 21,
+      "winner": "player_one"
+    },
+    {
+      "actions": 100,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-board-control-lore-race-vs-aggressive-board-control-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-board-control-lore-race-vs-aggressive-board-control-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 100,
+        "total": 521,
+        "unsupported": 0,
+        "validation": 421
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 0,
+        "passTurn": 20
+      },
+      "gameEndReason": "Reached 20 lore",
+      "loreTotals": {
+        "player_one": 20,
+        "player_two": 8
+      },
+      "matchId": "steel-sapphire-midrange-mirror-board-control-lore-race-vs-aggressive-board-control-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "steel-sapphire-midrange",
+      "playerOneStrategyId": "board-control-lore-race",
+      "playerTwoDeckId": "steel-sapphire-midrange",
+      "playerTwoStrategyId": "aggressive-board-control-lore-race",
+      "seed": "strategy-lab:steel-sapphire-midrange-mirror-board-control-lore-race-vs-aggressive-board-control-lore-race-0",
+      "turns": 21,
+      "winner": "player_one"
+    },
+    {
+      "actions": 107,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-aggressive-board-control-lore-race-vs-default-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-aggressive-board-control-lore-race-vs-default-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 107,
+        "total": 854,
+        "unsupported": 0,
+        "validation": 747
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 0,
+        "passTurn": 17
+      },
+      "gameEndReason": "Reached 20 lore",
+      "loreTotals": {
+        "player_one": 11,
+        "player_two": 20
+      },
+      "matchId": "steel-sapphire-midrange-mirror-aggressive-board-control-lore-race-vs-default-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "steel-sapphire-midrange",
+      "playerOneStrategyId": "aggressive-board-control-lore-race",
+      "playerTwoDeckId": "steel-sapphire-midrange",
+      "playerTwoStrategyId": "default-lore-race",
+      "seed": "strategy-lab:steel-sapphire-midrange-mirror-aggressive-board-control-lore-race-vs-default-lore-race-0",
+      "turns": 18,
+      "winner": "player_two"
+    },
+    {
+      "actions": 102,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-aggressive-board-control-lore-race-vs-board-control-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/steel-sapphire-midrange-mirror-aggressive-board-control-lore-race-vs-board-control-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 102,
+        "total": 463,
+        "unsupported": 0,
+        "validation": 361
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 0,
+        "passTurn": 18
+      },
+      "gameEndReason": "Reached 20 lore",
+      "loreTotals": {
+        "player_one": 20,
+        "player_two": 11
+      },
+      "matchId": "steel-sapphire-midrange-mirror-aggressive-board-control-lore-race-vs-board-control-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "steel-sapphire-midrange",
+      "playerOneStrategyId": "aggressive-board-control-lore-race",
+      "playerTwoDeckId": "steel-sapphire-midrange",
+      "playerTwoStrategyId": "board-control-lore-race",
+      "seed": "strategy-lab:steel-sapphire-midrange-mirror-aggressive-board-control-lore-race-vs-board-control-lore-race-0",
+      "turns": 19,
+      "winner": "player_one"
+    },
+    {
+      "actions": 90,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-default-lore-race-vs-board-control-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-default-lore-race-vs-board-control-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 90,
+        "total": 386,
+        "unsupported": 0,
+        "validation": 296
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 0,
+        "passTurn": 19
+      },
+      "gameEndReason": "Reached 20 lore",
+      "loreTotals": {
+        "player_one": 8,
+        "player_two": 20
+      },
+      "matchId": "amber-amethyst-aggressive-mirror-default-lore-race-vs-board-control-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "amber-amethyst-aggressive",
+      "playerOneStrategyId": "default-lore-race",
+      "playerTwoDeckId": "amber-amethyst-aggressive",
+      "playerTwoStrategyId": "board-control-lore-race",
+      "seed": "strategy-lab:amber-amethyst-aggressive-mirror-default-lore-race-vs-board-control-lore-race-0",
+      "turns": 20,
+      "winner": "player_two"
+    },
+    {
+      "actions": 64,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-default-lore-race-vs-aggressive-board-control-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-default-lore-race-vs-aggressive-board-control-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 64,
+        "total": 218,
+        "unsupported": 0,
+        "validation": 154
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 0,
+        "passTurn": 14
+      },
+      "gameEndReason": "Reached 20 lore",
+      "loreTotals": {
+        "player_one": 20,
+        "player_two": 0
+      },
+      "matchId": "amber-amethyst-aggressive-mirror-default-lore-race-vs-aggressive-board-control-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "amber-amethyst-aggressive",
+      "playerOneStrategyId": "default-lore-race",
+      "playerTwoDeckId": "amber-amethyst-aggressive",
+      "playerTwoStrategyId": "aggressive-board-control-lore-race",
+      "seed": "strategy-lab:amber-amethyst-aggressive-mirror-default-lore-race-vs-aggressive-board-control-lore-race-0",
+      "turns": 15,
+      "winner": "player_one"
+    },
+    {
+      "actions": 88,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-board-control-lore-race-vs-default-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-board-control-lore-race-vs-default-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 88,
+        "total": 346,
+        "unsupported": 0,
+        "validation": 258
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 0,
+        "passTurn": 17
+      },
+      "gameEndReason": "Reached 20 lore",
+      "loreTotals": {
+        "player_one": 12,
+        "player_two": 20
+      },
+      "matchId": "amber-amethyst-aggressive-mirror-board-control-lore-race-vs-default-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "amber-amethyst-aggressive",
+      "playerOneStrategyId": "board-control-lore-race",
+      "playerTwoDeckId": "amber-amethyst-aggressive",
+      "playerTwoStrategyId": "default-lore-race",
+      "seed": "strategy-lab:amber-amethyst-aggressive-mirror-board-control-lore-race-vs-default-lore-race-0",
+      "turns": 18,
+      "winner": "player_two"
+    },
+    {
+      "actions": 75,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-board-control-lore-race-vs-aggressive-board-control-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-board-control-lore-race-vs-aggressive-board-control-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 75,
+        "total": 1018,
+        "unsupported": 1,
+        "validation": 942
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 1,
+        "passTurn": 14
+      },
+      "gameEndReason": "player_one conceded",
+      "loreTotals": {
+        "player_one": 17,
+        "player_two": 15
+      },
+      "matchId": "amber-amethyst-aggressive-mirror-board-control-lore-race-vs-aggressive-board-control-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "amber-amethyst-aggressive",
+      "playerOneStrategyId": "board-control-lore-race",
+      "playerTwoDeckId": "amber-amethyst-aggressive",
+      "playerTwoStrategyId": "aggressive-board-control-lore-race",
+      "seed": "strategy-lab:amber-amethyst-aggressive-mirror-board-control-lore-race-vs-aggressive-board-control-lore-race-0",
+      "turns": 15,
+      "winner": "player_two"
+    },
+    {
+      "actions": 81,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-aggressive-board-control-lore-race-vs-default-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-aggressive-board-control-lore-race-vs-default-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 81,
+        "total": 447,
+        "unsupported": 0,
+        "validation": 366
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 0,
+        "passTurn": 17
+      },
+      "gameEndReason": "Reached 20 lore",
+      "loreTotals": {
+        "player_one": 10,
+        "player_two": 20
+      },
+      "matchId": "amber-amethyst-aggressive-mirror-aggressive-board-control-lore-race-vs-default-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "amber-amethyst-aggressive",
+      "playerOneStrategyId": "aggressive-board-control-lore-race",
+      "playerTwoDeckId": "amber-amethyst-aggressive",
+      "playerTwoStrategyId": "default-lore-race",
+      "seed": "strategy-lab:amber-amethyst-aggressive-mirror-aggressive-board-control-lore-race-vs-default-lore-race-0",
+      "turns": 18,
+      "winner": "player_two"
+    },
+    {
+      "actions": 108,
+      "artifactPaths": {
+        "gameRuntime": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-aggressive-board-control-lore-race-vs-board-control-lore-race-0/game-runtime.jsonl",
+        "strategyDecisions": "/Users/wazar/projects/the-card-goat-online/packages/lorcana/lorcana-simulator/.artifacts/strategy/latest/mirror/amber-amethyst-aggressive-mirror-aggressive-board-control-lore-race-vs-board-control-lore-race-0/strategy-decisions.jsonl"
+      },
+      "deadlockConcedeCount": 0,
+      "deadlock": false,
+      "diagnosticCounts": {
+        "actorResolution": 108,
+        "total": 366,
+        "unsupported": 0,
+        "validation": 258
+      },
+      "endReason": "winner",
+      "fallbackCounts": {
+        "concede": 0,
+        "passTurn": 22
+      },
+      "gameEndReason": "Reached 20 lore",
+      "loreTotals": {
+        "player_one": 21,
+        "player_two": 3
+      },
+      "matchId": "amber-amethyst-aggressive-mirror-aggressive-board-control-lore-race-vs-board-control-lore-race-0",
+      "outcome": "winner",
+      "playerOneDeckId": "amber-amethyst-aggressive",
+      "playerOneStrategyId": "aggressive-board-control-lore-race",
+      "playerTwoDeckId": "amber-amethyst-aggressive",
+      "playerTwoStrategyId": "board-control-lore-race",
+      "seed": "strategy-lab:amber-amethyst-aggressive-mirror-aggressive-board-control-lore-race-vs-board-control-lore-race-0",
+      "turns": 23,
+      "winner": "player_one"
+    }
+  ],
+  "mode": "mirror",
+  "strategyIds": [
+    "aggressive-board-control-lore-race",
+    "board-control-lore-race",
+    "default-lore-race"
+  ]
+}

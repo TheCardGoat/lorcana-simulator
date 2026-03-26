@@ -42,16 +42,10 @@ describe("EventLogPanel", () => {
       turnNumber: 2,
     });
 
-    const resolveCard = (cardId: string) => {
-      if (cardId === inkedCard.cardId) return inkedCard;
-      return null;
-    };
-
     const { body } = render(EventLogPanel, {
       props: {
         entries: [entry],
         viewerSide: "playerOne",
-        resolveCard,
       },
     });
 
@@ -59,7 +53,9 @@ describe("EventLogPanel", () => {
     expect(body).toContain("Turn 2");
     expect(body).toContain("You");
     expect(body).toContain("into the inkwell");
-    expect(body).toContain("Mickey Mouse - Brave Little Tailor");
+    // Card name is now resolved at render time via CardLogToken with live context;
+    // in SSR unit tests without full context, the fallback cardId appears instead.
+    expect(body).toContain(inkedCard.cardId);
   });
 
   it("renders raw log payloads when debug mode is enabled", () => {
