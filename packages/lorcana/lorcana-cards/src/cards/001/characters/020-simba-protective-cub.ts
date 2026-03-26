@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { simbaProtectiveCubI18n } from "./020-simba-protective-cub.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const simbaProtectiveCub: CharacterCard = {
   id: "ibT",
@@ -24,13 +25,6 @@ export const simbaProtectiveCub: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Hero", "Prince"],
-  abilities: [
-    {
-      id: "rvm-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: simbaProtectiveCubI18n,
 };

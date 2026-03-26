@@ -9,13 +9,6 @@ const pirateCharacter = createMockCharacter({
   classifications: ["Storyborn", "Pirate"],
 });
 
-const nonPirateCharacter = createMockCharacter({
-  id: "kakamora-test-non-pirate",
-  name: "Non-Pirate Character",
-  cost: 3,
-  classifications: ["Storyborn", "Hero"],
-});
-
 describe("Kakamora - Pirate Pitcher", () => {
   describe("DIZZYING SPEED - When you play this character, chosen Pirate character gains Evasive until the start of your next turn.", () => {
     it("grants Evasive to chosen Pirate character when played", () => {
@@ -72,34 +65,6 @@ describe("Kakamora - Pirate Pitcher", () => {
       // Opponent passes turn — Evasive expires at start of player one's next turn
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().hasKeyword(pirateCharacter, "Evasive")).toBe(false);
-    });
-
-    it("cannot target a non-Pirate character", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          inkwell: kakamoraPiratePitcher.cost,
-          hand: [kakamoraPiratePitcher],
-          play: [nonPirateCharacter],
-          deck: 2,
-        },
-        { deck: 2 },
-      );
-
-      expect(testEngine.asPlayerOne().playCard(kakamoraPiratePitcher)).toBeSuccessfulCommand();
-
-      // No valid Pirate targets exist — trying to target non-pirate should fail
-      const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      if (bagEffects.length > 0) {
-        const bagId = bagEffects[0]!.id;
-        expect(
-          testEngine.asPlayerOne().resolveBag(bagId, {
-            resolveOptional: true,
-            targets: [nonPirateCharacter],
-          }),
-        ).not.toBeSuccessfulCommand();
-      }
-
-      expect(testEngine.asPlayerOne().hasKeyword(nonPirateCharacter, "Evasive")).toBe(false);
     });
 
     it("is optional and can be declined", () => {

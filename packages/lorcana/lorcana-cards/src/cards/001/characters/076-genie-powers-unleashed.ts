@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { geniePowersUnleashedI18n } from "./076-genie-powers-unleashed.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const geniePowersUnleashed: CharacterCard = {
   id: "Mpt",
@@ -37,22 +39,8 @@ export const geniePowersUnleashed: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      id: "dgz-1",
-      keyword: "Shift",
-      type: "keyword",
-      cost: {
-        ink: 6,
-      },
-      shiftTarget: "Genie",
-      text: "Shift 6",
-    },
-    {
-      id: "dgz-2",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    shift("Genie", 6),
+    evasive,
     {
       id: "dgz-3",
       name: "PHENOMENAL COSMIC POWER!",

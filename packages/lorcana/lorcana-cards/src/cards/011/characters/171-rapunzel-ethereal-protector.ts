@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rapunzelEtherealProtectorI18n } from "./171-rapunzel-ethereal-protector.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const rapunzelEtherealProtector: CharacterCard = {
   id: "Jsw",
@@ -33,6 +34,28 @@ export const rapunzelEtherealProtector: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Princess", "Whisper"],
-  abilities: [],
+  abilities: [
+    boost(2),
+    {
+      condition: {
+        type: "has-card-under",
+      },
+      effect: {
+        restriction: "cant-challenge",
+        target: "CHOSEN_OPPOSING_CHARACTER",
+        duration: "their-next-turn",
+        type: "restriction",
+      },
+      id: "Jsw-2",
+      name: "CLONK!",
+      text: "CLONK! Whenever this character quests, if there's a card under her, chosen opposing character can't challenge until the start of your next turn.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
   i18n: rapunzelEtherealProtectorI18n,
 };

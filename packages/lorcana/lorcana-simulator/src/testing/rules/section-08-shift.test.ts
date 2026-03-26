@@ -16,6 +16,7 @@ import { hiddenCoveTranquilHaven, mickeyMousePlayfulSorcerer } from "@tcg/lorcan
 import { baymaxGiantRobot, thunderboltWonderDog } from "@tcg/lorcana-cards/cards/007";
 import { dalmatianPuppyTailWagger } from "@tcg/lorcana-cards/cards/008";
 import { mickeyMouseBraveLittlePrince } from "@tcg/lorcana-cards/cards/009";
+import { resolveOnlyBagEffect } from "./section-08-test-utils";
 
 describe("#### 8. KEYWORDS", () => {
   describe("# 8.10. Shift", () => {
@@ -69,7 +70,7 @@ describe("#### 8. KEYWORDS", () => {
       ).toBe(true);
       expect(dryEngine.asPlayerOne().getCard(mickeyMouseBraveLittlePrince).drying).toBe(false);
       expect(dryEngine.asPlayerOne().quest(mickeyMouseBraveLittlePrince).success).toBe(true);
-      expect(dryEngine.getLore(PLAYER_ONE)).toBe(mickeyMouseBraveLittlePrince.lore);
+      expect(dryEngine.getLore(PLAYER_ONE)).toBe(mickeyMouseBraveLittlePrince.lore + 3);
 
       const dryingEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [mickeyMouseBraveLittlePrince],
@@ -138,6 +139,7 @@ describe("#### 8. KEYWORDS", () => {
         "play",
         PLAYER_ONE,
       );
+      resolveOnlyBagEffect(testEngine, { targets: [secondShiftTarget] });
       expect(
         testEngine.asPlayerOne().playCard(mickeyMouseArtfulRogue, {
           cost: { cost: "shift", shiftTarget: secondShiftTarget },
@@ -175,6 +177,7 @@ describe("#### 8. KEYWORDS", () => {
         "play",
         PLAYER_ONE,
       );
+      resolveOnlyBagEffect(testEngine, { targets: [secondShiftTarget] });
       expect(
         testEngine.asPlayerOne().playCard(mickeyMouseArtfulRogue, {
           cost: { cost: "shift", shiftTarget: secondShiftTarget },

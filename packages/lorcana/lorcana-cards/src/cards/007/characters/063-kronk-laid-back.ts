@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kronkLaidBackI18n } from "./063-kronk-laid-back.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const kronkLaidBack: CharacterCard = {
   id: "5gf",
@@ -33,11 +34,7 @@ export const kronkLaidBack: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      type: "keyword",
-      keyword: "Ward",
-      text: "Ward",
-    },
+    ward,
     {
       id: "im-lovin-this",
       type: "replacement",

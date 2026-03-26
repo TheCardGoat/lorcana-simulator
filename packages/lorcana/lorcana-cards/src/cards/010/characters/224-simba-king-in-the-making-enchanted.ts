@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { simbaKingInTheMakingEnchantedI18n } from "./224-simba-king-in-the-making-enchanted.i18n";
 
 export const simbaKingInTheMakingEnchanted: CharacterCard = {
@@ -35,13 +36,7 @@ export const simbaKingInTheMakingEnchanted: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Prince", "Whisper"],
   abilities: [
-    {
-      id: "dbt-1",
-      keyword: "Boost",
-      text: "Boost 3 {I}",
-      type: "keyword",
-      value: 3,
-    },
+    boost(3),
     {
       id: "dbt-2",
       type: "triggered",

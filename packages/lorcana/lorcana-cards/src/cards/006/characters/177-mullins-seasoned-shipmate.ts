@@ -32,15 +32,21 @@ export const mullinsSeasonedShipmate: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Pirate"],
   abilities: [
     {
+      id: "meu-1",
+      type: "static",
+      name: "FALL IN LINE",
+      text: "FALL IN LINE While you have a character named Mr. Smee in play, this character gains Resist +1.",
+      condition: {
+        type: "has-named-character",
+        name: "Mr. Smee",
+        controller: "you",
+      },
       effect: {
         keyword: "Resist",
         target: "SELF",
         type: "gain-keyword",
         value: 1,
       },
-      id: "meu-1",
-      text: "FALL IN LINE While you have a character named Mr. Smee in play, this character gains Resist +1.",
-      type: "action",
     },
   ],
   i18n: mullinsSeasonedShipmateI18n,

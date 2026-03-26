@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { princeEricSeafaringPrinceI18n } from "./021-prince-eric-seafaring-prince.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const princeEricSeafaringPrince: CharacterCard = {
   id: "U2e",
@@ -30,13 +31,6 @@ export const princeEricSeafaringPrince: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Prince"],
-  abilities: [
-    {
-      id: "98x-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: princeEricSeafaringPrinceI18n,
 };

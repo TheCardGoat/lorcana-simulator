@@ -19,7 +19,7 @@ import type {
   TriggerRegistrationAbility,
   TriggeredAbilitiesState,
 } from "../types";
-import type { CardPlayedPayload, LorcanaCard } from "../types";
+import type { CardPlayedPayload, LorcanaCard, LorcanaCardMeta } from "../types";
 import type {
   Condition,
   LorcanaCardDefinition,
@@ -35,14 +35,14 @@ import {
   hasReturnFromDiscardCandidates,
   isReturnFromDiscardEffect,
 } from "../runtime-moves/resolution/action-effects/return-from-discard-effect";
-import { hasKeyword } from "../card-utils";
-import { projectLorcanaCardDerived } from "../projection/card-derived";
-import { createProjectionState } from "../rules/derived-state";
-import { hasTemporaryKeyword } from "../runtime-moves/effects/temporary-effects";
+import { buildResolutionSelectionContext } from "../runtime-moves/resolution/action-effects/selection-context";
+import { cardHasName, hasKeyword } from "../card-utils";
+import { compareOperator } from "../rules/operator-utils";
 import { getLorcanaCardName, traceLorcanaRuntimeStep } from "../runtime-trace";
 import { passesFilter, resolveCandidateTargets } from "../targeting/runtime";
 import { countDamagedCharactersInPlay, evaluateCondition } from "../rules/condition-evaluator";
 import type { ConditionEvaluationContext } from "../rules/condition-evaluator";
+import type { LorcanaCardDerived } from "../types/projected-board";
 
 export type TriggerWindow =
   | "challenge-declaration"
@@ -87,6 +87,8 @@ type TriggerMatchCandidate = {
 };
 
 type TriggerSourceZone = "play" | "hand" | "discard" | "inkwell";
+type PrintedTriggerScanZones = readonly TriggerSourceZone[] | null;
+type DerivedRuntimeCard = import("#core").RuntimeCardWithDefinition & LorcanaCardDerived;
 
 type RegisterAbilityParams = {
   controllerId: PlayerId;
@@ -202,6 +204,13 @@ function getCardType(
   return (ctx.cards.getDefinition(cardId) as LorcanaCard | undefined)?.cardType;
 }
 
+function getDerivedRuntimeCard(
+  ctx: TriggerRuntimeContext,
+  cardId: CardInstanceId,
+): DerivedRuntimeCard | undefined {
+  return ctx.cards.get(cardId) as DerivedRuntimeCard | undefined;
+}
+
 function normalizeBufferedEvent(raw: string | undefined): BufferedTriggeredEvent | undefined {
   switch (raw) {
     case "play":
@@ -311,6 +320,13 @@ function getBagItemId(ctx: TriggerRuntimeContext): string {
   return `bag:${ctx.framework.state.stateID ?? 0}:${bag.nextSeq}`;
 }
 
+const ZONE_CHANGE_EVENTS: Set<BufferedTriggeredEvent> = new Set([
+  "banish",
+  "banish-in-challenge",
+  "return-to-hand",
+  "ink",
+]);
+
 function shouldAllowSnapshotCandidate(
   candidate: TriggerMatchCandidate,
   event: PendingTriggeredEvent,
@@ -319,7 +335,28 @@ function shouldAllowSnapshotCandidate(
     return true;
   }
 
-  return candidate.ability.trigger.on === "SELF";
+  // Only apply self-trigger filtering for zone-change events (banish, ink, return-to-hand).
+  // For other events (e.g., remove-damage), a card CAN observe its own state changes.
+  if (!ZONE_CHANGE_EVENTS.has(event.event)) {
+    return true;
+  }
+
+  // When the trigger source is the subject card itself (e.g. a card being
+  // banished or inked), only allow it through if the trigger explicitly
+  // references SELF or uses a query that could match the source.
+  // Non-self-referential triggers like on: "CONTROLLER" or "YOUR_CHARACTERS"
+  // should not fire for the card's own zone change, because the card is
+  // leaving play and cannot observe its own departure.
+  const triggerOn = candidate.ability.trigger?.on;
+  if (triggerOn === "SELF") {
+    return true;
+  }
+  if (typeof triggerOn === "object" && triggerOn !== null) {
+    // Query-based triggers (e.g. { controller: "you", classification: "Puppy" })
+    // may legitimately match the source card — let triggerMatchesEvent decide.
+    return true;
+  }
+  return false;
 }
 
 function buildSourcePayload(ctx: TriggerRuntimeContext, sourceId: string): CardPlayedPayload {
@@ -374,22 +411,6 @@ function collectTriggeredCandidatesFromCard(args: {
     (ability): ability is Extract<typeof ability, { type: "triggered" }> =>
       ability.type === "triggered",
   );
-  const projected =
-    zone === "play"
-      ? projectLorcanaCardDerived({
-          definition,
-          meta: ctx.cards.require(sourceId).meta ?? {},
-          state: createProjectionState(ctx.framework.state, ctx.G),
-          cardInstanceId: sourceId,
-          ownerID: ctx.framework.zones.getCardOwner(sourceId) as PlayerId | undefined,
-          controllerID:
-            (ctx.framework.zones.getCardController(sourceId) as PlayerId | undefined) ??
-            (ctx.framework.zones.getCardOwner(sourceId) as PlayerId | undefined),
-          zoneID: ctx.framework.zones.getCardZone(sourceId),
-          actorPlayerId: controllerId,
-          getDefinitionByInstanceId: (cardId) => ctx.cards.getDefinition(cardId),
-        })
-      : undefined;
   const hasPrintedSupportTriggeredAbility = triggerAbilities.some((ability) => {
     if (
       ability.trigger.event !== "quest" ||
@@ -402,24 +423,22 @@ function collectTriggeredCandidatesFromCard(args: {
     const nestedEffect = ability.effect.effect;
     return nestedEffect?.type === "support";
   });
-  const meta = ctx.cards.require(sourceId).meta as
-    | {
-        temporaryAbilities?: Record<string, number>;
-        temporaryAbilityStarts?: Record<string, number>;
-        temporaryAbilityPayloads?: Record<string, unknown>;
-      }
-    | undefined;
+  const meta = ctx.cards.require(sourceId).meta as LorcanaCardMeta | undefined;
   const temporaryAbilityEntries = Object.entries(meta?.temporaryAbilities ?? {});
+  const currentTurn = getCurrentTurn(ctx);
+  // Use the full derived card projection to check for Support. The cards API now projects from
+  // a plain state snapshot (no Immer proxy overhead), so this correctly handles Support granted
+  // via conditional static abilities (e.g., "characters with strength ≥ N gain Support").
+  const derived = zone === "play" ? getDerivedRuntimeCard(ctx, sourceId) : undefined;
+  const hasDerivedSupport = zone === "play" && Boolean(derived?.hasSupport);
 
   if (
     triggerAbilities.length === 0 &&
     temporaryAbilityEntries.length === 0 &&
-    !(projected?.hasSupport === true && !hasPrintedSupportTriggeredAbility)
+    !(hasDerivedSupport && !hasPrintedSupportTriggeredAbility)
   ) {
     return [];
   }
-
-  const currentTurn = getCurrentTurn(ctx);
   const sourcePayload = buildSourcePayload(ctx, sourceId);
   const candidates: TriggerMatchCandidate[] = [];
 
@@ -446,7 +465,7 @@ function collectTriggeredCandidatesFromCard(args: {
     });
   });
 
-  if (projected?.hasSupport === true && !hasPrintedSupportTriggeredAbility && zone === "play") {
+  if (hasDerivedSupport && !hasPrintedSupportTriggeredAbility && zone === "play") {
     candidates.push({
       abilityId: `${sourceId}:synthetic-support`,
       controllerId,
@@ -589,43 +608,14 @@ function subjectHasKeyword(
     return true;
   }
 
-  const definition = ctx.cards.getDefinition(subjectCardId);
-  if (!definition) {
+  if (!ctx.cards.getDefinition(subjectCardId)) {
     return false;
   }
 
-  // 2. If card is still in play, project derived keywords (including static/continuous effects)
-  const ownerId = getCardOwnerId(ctx, subjectCardId);
-  const zoneKey = ctx.framework.zones.getCardZone(subjectCardId);
-  if (zoneKey && ownerId) {
-    const projected = projectLorcanaCardDerived({
-      definition,
-      meta: ctx.cards.require(subjectCardId).meta ?? {},
-      state: createProjectionState(ctx.framework.state, ctx.G),
-      cardInstanceId: subjectCardId,
-      ownerID: ownerId,
-      controllerID:
-        (ctx.framework.zones.getCardController(subjectCardId) as PlayerId | undefined) ?? ownerId,
-      zoneID: zoneKey,
-      actorPlayerId: event.playerId,
-      getDefinitionByInstanceId: (cardId) => ctx.cards.getDefinition(cardId),
-    });
-
-    if (Array.isArray(projected.keywords) && projected.keywords.includes(keyword)) {
-      return true;
-    }
-  }
-
-  // 3. Fall back to printed/temporary keywords
-  const hasPrintedKeyword = hasKeyword(definition, keyword);
-  const currentTurn = getCurrentTurn(ctx);
-  const hasGainedKeyword = hasTemporaryKeyword(
-    ctx.cards.require(subjectCardId).meta,
-    currentTurn,
-    keyword,
-  );
-
-  return hasPrintedKeyword || hasGainedKeyword;
+  // Use the full derived card state — the cards API projects from a plain state snapshot
+  // so this correctly handles printed, temporary, and statically-granted keywords.
+  const projected = getDerivedRuntimeCard(ctx, subjectCardId);
+  return Array.isArray(projected?.keywords) && projected.keywords.includes(keyword);
 }
 
 function queryMatchesSubject(
@@ -660,15 +650,24 @@ function queryMatchesSubject(
     return false;
   }
 
-  if (subject.cardType && definition.cardType !== subject.cardType) {
-    if (
-      subject.cardType === "song" &&
-      definition.cardType === "action" &&
-      "actionSubtype" in definition &&
-      definition.actionSubtype === "song"
-    ) {
-      // Song trigger matches action cards with actionSubtype "song"
-    } else {
+  if (subject.cardType) {
+    const requestedCardTypes = Array.isArray(subject.cardType)
+      ? subject.cardType
+      : [subject.cardType];
+    const matchesRequestedCardType = requestedCardTypes.some((requestedCardType) => {
+      if (definition.cardType === requestedCardType) {
+        return true;
+      }
+
+      return (
+        requestedCardType === "song" &&
+        definition.cardType === "action" &&
+        "actionSubtype" in definition &&
+        definition.actionSubtype === "song"
+      );
+    });
+
+    if (!matchesRequestedCardType) {
       return false;
     }
   }
@@ -687,30 +686,17 @@ function queryMatchesSubject(
     const classifications: readonly string[] = Array.isArray(snapshotClassifications)
       ? [...snapshotClassifications]
       : (() => {
-          const projected = projectLorcanaCardDerived({
-            definition,
-            meta: ctx.cards.require(subjectCardId).meta ?? {},
-            state: createProjectionState(ctx.framework.state, ctx.G),
-            cardInstanceId: subjectCardId,
-            ownerID: ownerId,
-            controllerID:
-              (ctx.framework.zones.getCardController(subjectCardId) as PlayerId | undefined) ??
-              ownerId,
-            zoneID: ctx.framework.zones.getCardZone(subjectCardId),
-            actorPlayerId: candidate.controllerId,
-            getDefinitionByInstanceId: (cardId) =>
-              ctx.cards.getDefinition(cardId) as LorcanaCardDefinition | undefined,
-          });
+          const projected = getDerivedRuntimeCard(ctx, subjectCardId);
           const definitionClassifications =
             "classifications" in definition ? (definition.classifications as string[]) : undefined;
-          return projected.classifications ?? definitionClassifications ?? [];
+          return projected?.classifications ?? definitionClassifications ?? [];
         })();
     if (!classifications.includes(subject.classification)) {
       return false;
     }
   }
 
-  if (subject.name && definition.name !== subject.name) {
+  if (subject.name && !cardHasName(definition, subject.name)) {
     return false;
   }
 
@@ -758,73 +744,15 @@ function queryMatchesSubject(
           break;
         }
         case "strength-comparison": {
-          const runtimeCard = ctx.cards.require(subjectCardId);
+          const runtimeCard = ctx.cards.require(subjectCardId) as DerivedRuntimeCard;
           const baseStrength = definition.cardType === "character" ? definition.strength : 0;
-          const projectionState = {
-            ctx: {
-              priority: ctx.framework.state.priority,
-              status: ctx.framework.state.status,
-              zones: { private: ctx.framework.state._zonesPrivate },
-            },
-            G: ctx.G,
-          };
-          const strength = Number(
-            projectLorcanaCardDerived({
-              definition,
-              meta: runtimeCard.meta,
-              state: projectionState,
-              cardInstanceId: subjectCardId,
-              ownerID: runtimeCard.ownerID as PlayerId,
-              controllerID: runtimeCard.controllerID as PlayerId,
-              zoneID: runtimeCard.zoneID,
-              actorPlayerId: event.playerId,
-              getDefinitionByInstanceId: (cardId) =>
-                ctx.cards.getDefinition(cardId) as LorcanaCardDefinition | undefined,
-            }).strength ??
-              baseStrength ??
-              0,
-          );
+          const strength = Number(runtimeCard.strength ?? baseStrength ?? 0);
           if (typeof filter.value !== "number") {
             return false;
           }
           const comparisonValue = filter.value;
-          switch (filter.comparison) {
-            case "greater":
-            case "greater-than":
-            case "more-than":
-              if (!(strength > comparisonValue)) {
-                return false;
-              }
-              break;
-            case "greater-or-equal":
-            case "or-more":
-              if (!(strength >= comparisonValue)) {
-                return false;
-              }
-              break;
-            case "less":
-            case "less-than":
-              if (!(strength < comparisonValue)) {
-                return false;
-              }
-              break;
-            case "less-or-equal":
-            case "or-less":
-              if (!(strength <= comparisonValue)) {
-                return false;
-              }
-              break;
-            case "not-equal":
-              if (strength === comparisonValue) {
-                return false;
-              }
-              break;
-            case "equal":
-            default:
-              if (strength !== comparisonValue) {
-                return false;
-              }
-              break;
+          if (!compareOperator(strength, String(filter.comparison ?? "equal"), comparisonValue)) {
+            return false;
           }
           break;
         }
@@ -834,43 +762,8 @@ function queryMatchesSubject(
             return false;
           }
           const comparisonValue = filter.value;
-          switch (filter.comparison) {
-            case "greater":
-            case "greater-than":
-            case "more-than":
-              if (!(cost > comparisonValue)) {
-                return false;
-              }
-              break;
-            case "greater-or-equal":
-            case "or-more":
-              if (!(cost >= comparisonValue)) {
-                return false;
-              }
-              break;
-            case "less":
-            case "less-than":
-              if (!(cost < comparisonValue)) {
-                return false;
-              }
-              break;
-            case "less-or-equal":
-            case "or-less":
-              if (!(cost <= comparisonValue)) {
-                return false;
-              }
-              break;
-            case "not-equal":
-              if (cost === comparisonValue) {
-                return false;
-              }
-              break;
-            case "equal":
-            default:
-              if (cost !== comparisonValue) {
-                return false;
-              }
-              break;
+          if (!compareOperator(cost, String(filter.comparison ?? "equal"), comparisonValue)) {
+            return false;
           }
           break;
         }
@@ -936,6 +829,27 @@ function subjectMatches(
         subjectCardType === "character" &&
         subjectCardId !== candidate.sourceId
       );
+    case "YOUR_OTHER_AMETHYST_CHARACTERS":
+    case "YOUR_OTHER_SAPPHIRE_CHARACTERS":
+    case "YOUR_OTHER_STEEL_CHARACTERS": {
+      if (
+        subjectOwnerId !== candidate.controllerId ||
+        subjectCardType !== "character" ||
+        subjectCardId === candidate.sourceId
+      ) {
+        return false;
+      }
+      const requiredInk =
+        subject === "YOUR_OTHER_AMETHYST_CHARACTERS"
+          ? "amethyst"
+          : subject === "YOUR_OTHER_SAPPHIRE_CHARACTERS"
+            ? "sapphire"
+            : "steel";
+      const def = subjectCardId
+        ? (ctx.cards.getDefinition(subjectCardId) as LorcanaCardDefinition | undefined)
+        : undefined;
+      return def?.inkType?.includes(requiredInk as never) ?? false;
+    }
     case "OPPONENT_CHARACTERS":
     case "OPPOSING_CHARACTERS":
       return subjectOwnerId !== undefined && subjectOwnerId !== candidate.controllerId;
@@ -1033,9 +947,12 @@ function restrictionsMatch(
         );
       case "in-challenge":
         return event.happenedInChallenge === true;
+      case "defender-is-character":
+        return event.defenderId !== undefined && getCardType(ctx, event.defenderId) === "character";
       case "once-per-turn":
       case "first-time-each-turn":
       case "n-times-per-turn":
+      case "once-per-song":
         return true;
       default:
         return false;
@@ -1043,16 +960,47 @@ function restrictionsMatch(
   });
 }
 
+function getUsageKey(
+  turn: number,
+  sourceId: CardInstanceId,
+  abilityId: string,
+  occurrenceScope?: string,
+): string {
+  return occurrenceScope
+    ? `${turn}:${sourceId}:${abilityId}:${occurrenceScope}`
+    : `${turn}:${sourceId}:${abilityId}`;
+}
+
+function getOccurrenceScope(
+  trigger: Trigger | undefined,
+  event?: Pick<PendingTriggeredEvent, "triggerSourceCardId">,
+): string | undefined {
+  if (
+    trigger?.restrictions?.some((restriction) => restriction.type === "once-per-song") &&
+    event?.triggerSourceCardId
+  ) {
+    return `song:${event.triggerSourceCardId}`;
+  }
+
+  return undefined;
+}
+
 function shouldSkipByNTimesPerTurn(
   ctx: TriggerRuntimeContext,
   candidate: TriggerMatchCandidate,
+  event?: Pick<PendingTriggeredEvent, "triggerSourceCardId">,
 ): boolean {
   const restrictions = candidate.ability.trigger.restrictions;
   if (!restrictions) {
     return false;
   }
   const currentTurn = getCurrentTurn(ctx);
-  const abilityKey = getUsageKey(currentTurn, candidate.sourceId, candidate.abilityId);
+  const abilityKey = getUsageKey(
+    currentTurn,
+    candidate.sourceId,
+    candidate.abilityId,
+    getOccurrenceScope(candidate.ability.trigger, event),
+  );
   const occurrences = getTriggeredAbilitiesState(ctx.G).usageLedger.occurrences[abilityKey] ?? 0;
   const resolutions = getTriggeredAbilitiesState(ctx.G).usageLedger.resolutions[abilityKey] ?? 0;
 
@@ -1061,6 +1009,10 @@ function shouldSkipByNTimesPerTurn(
   }
 
   if (restrictions.some((r) => r.type === "first-time-each-turn") && occurrences > 0) {
+    return true;
+  }
+
+  if (restrictions.some((r) => r.type === "once-per-song") && occurrences > 0) {
     return true;
   }
 
@@ -1133,6 +1085,98 @@ function shouldSkipOptionalReturnFromDiscardWithNoTargets(
   }
 
   return false;
+}
+
+/**
+ * Returns true when a triggered ability wraps an optional play-card effect
+ * that sources from the discard zone, but the controller's discard contains
+ * no cards that satisfy the effect's filters (cardType, maxCost, etc.).
+ *
+ * Presenting the optional prompt in that case is meaningless so the bag entry
+ * is suppressed entirely.
+ *
+ * @example COME ALONG, CHILDREN (Perdita - Devoted Mother):
+ *   optional → play-card { from: "discard", cardType: "character", filter: { maxCost: 2 } }
+ *   If no character with cost 2 or less is in the controller's discard, skip.
+ */
+function shouldSkipOptionalPlayCardFromDiscardWithNoTargets(
+  ctx: TriggerRuntimeContext,
+  candidate: TriggerMatchCandidate,
+): boolean {
+  const effect = candidate.ability.effect;
+  if (!effect || typeof effect !== "object") {
+    return false;
+  }
+  const effectRecord = effect as unknown as Record<string, unknown>;
+
+  if (effectRecord.type !== "optional") {
+    return false;
+  }
+
+  const innerEffect = effectRecord.effect;
+  if (!innerEffect || typeof innerEffect !== "object") {
+    return false;
+  }
+
+  const innerRecord = innerEffect as Record<string, unknown>;
+
+  // Direct play-card effect inside optional wrapper
+  if (innerRecord.type === "play-card" && innerRecord.from === "discard") {
+    return !hasPlayCardFromDiscardCandidates(ctx, candidate.controllerId, innerRecord);
+  }
+
+  return false;
+}
+
+function hasPlayCardFromDiscardCandidates(
+  ctx: TriggerRuntimeContext,
+  controllerId: PlayerId,
+  effect: Record<string, unknown>,
+): boolean {
+  const cardsInDiscard = ctx.framework.zones.getCards({
+    zone: "discard",
+    playerId: controllerId,
+  });
+
+  if (cardsInDiscard.length === 0) {
+    return false;
+  }
+
+  const expectedCardType = typeof effect.cardType === "string" ? effect.cardType : undefined;
+  const filter =
+    effect.filter && typeof effect.filter === "object" && !Array.isArray(effect.filter)
+      ? (effect.filter as Record<string, unknown>)
+      : undefined;
+  const maxCost = typeof filter?.maxCost === "number" ? filter.maxCost : undefined;
+  const classification =
+    typeof filter?.classification === "string" ? filter.classification : undefined;
+
+  return cardsInDiscard.some((cardId) => {
+    const definition = ctx.cards.getDefinition(cardId as CardInstanceId) as LorcanaCard | undefined;
+    if (!definition) {
+      return false;
+    }
+
+    if (expectedCardType && definition.cardType !== expectedCardType) {
+      return false;
+    }
+
+    if (typeof maxCost === "number") {
+      const cost = Number((definition as { cost?: unknown }).cost ?? Number.NaN);
+      if (!Number.isFinite(cost) || cost > maxCost) {
+        return false;
+      }
+    }
+
+    if (classification) {
+      const classifications = (definition as { classifications?: string[] }).classifications ?? [];
+      if (!classifications.includes(classification)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 }
 
 /**
@@ -1342,6 +1386,99 @@ function shouldSkipOptionalMillSequenceWithInsufficientDeck(
   return deckCards.length < millAmount;
 }
 
+function hasNoValidTargetsForOptionalEffect(
+  ctx: TriggerRuntimeContext,
+  candidate: TriggerMatchCandidate,
+  optionalEffect: Record<string, unknown>,
+): boolean {
+  const innerEffect = optionalEffect.effect;
+  if (!innerEffect || typeof innerEffect !== "object") {
+    return false;
+  }
+  const innerRecord = innerEffect as Record<string, unknown>;
+
+  // For banish effects, use resolveCandidateTargets directly since
+  // buildResolutionSelectionContext doesn't handle "banish" effect types.
+  if (
+    innerRecord.type === "banish" &&
+    innerRecord.target &&
+    typeof innerRecord.target === "object"
+  ) {
+    const fakeCardPlayed = {
+      cardId: candidate.sourceId,
+      playerId: candidate.controllerId,
+      cardType: "character" as const,
+      costType: "standard" as const,
+    };
+    const candidates = resolveCandidateTargets(ctx, fakeCardPlayed, innerRecord.target as never, {
+      controllerId: candidate.controllerId,
+      sourceCardId: candidate.sourceId,
+    });
+    return candidates.length === 0;
+  }
+
+  const selectionContext = buildResolutionSelectionContext({
+    origin: "bag",
+    requestId: "skip-check",
+    sourceCardId: candidate.sourceId,
+    chooserId: candidate.controllerId,
+    cardPlayed: {
+      cardId: candidate.sourceId,
+      cardType: "character",
+      costType: "free",
+      playerId: candidate.controllerId,
+    },
+    effect: innerEffect,
+    resolutionInput: {},
+    ctx,
+  });
+
+  return !!(
+    selectionContext &&
+    (selectionContext.kind === "target-selection" || selectionContext.kind === "discard-choice") &&
+    selectionContext.cardCandidateIds.length === 0 &&
+    selectionContext.playerCandidateIds.length === 0
+  );
+}
+
+function shouldSkipOptionalEffectWithNoValidTargets(
+  ctx: TriggerRuntimeContext,
+  candidate: TriggerMatchCandidate,
+): boolean {
+  const effect = candidate.ability.effect;
+  if (!effect || typeof effect !== "object") {
+    return false;
+  }
+  const effectRecord = effect as unknown as Record<string, unknown>;
+
+  // Direct optional effect: the ability's top-level effect is optional
+  if (effectRecord.type === "optional") {
+    return hasNoValidTargetsForOptionalEffect(ctx, candidate, effectRecord);
+  }
+
+  // Sequence where the first step is an optional targeted effect:
+  // e.g. "you may banish chosen item of yours to draw a card"
+  // If the optional first step has no valid targets, the entire sequence
+  // should be suppressed — there is nothing meaningful for the player to do.
+  if (effectRecord.type === "sequence") {
+    const steps = Array.isArray(effectRecord.steps) ? effectRecord.steps : [];
+    const firstStep = steps[0];
+    if (
+      firstStep &&
+      typeof firstStep === "object" &&
+      (firstStep as Record<string, unknown>).type === "optional"
+    ) {
+      return hasNoValidTargetsForOptionalEffect(
+        ctx,
+        candidate,
+        firstStep as Record<string, unknown>,
+      );
+    }
+  }
+
+  return false;
+}
+
 function challengeParticipantMatches(args: {
   ctx: TriggerRuntimeContext;
   candidate: TriggerMatchCandidate;
@@ -1494,14 +1631,17 @@ function evaluateTriggeredAbilityCondition(args: {
       );
     case "your-turn":
       return ctx.framework.state.currentPlayer === candidate.controllerId;
+    case "is-exerted":
     case "exerted": {
       const selectedTargets = Array.isArray(resolutionInput.targets)
         ? resolutionInput.targets
         : resolutionInput.targets
           ? [resolutionInput.targets]
           : [];
+      const conditionTarget =
+        "target" in condition ? (condition as { target?: string }).target : undefined;
       const targetId =
-        condition.target === "SELF" || condition.target == null
+        conditionTarget === "SELF" || conditionTarget == null
           ? candidate.sourceId
           : selectedTargets[0];
       if (!targetId) {
@@ -1559,7 +1699,8 @@ function evaluateTriggeredAbilityCondition(args: {
     case "has-another-character":
     case "has-card-under":
     case "put-card-under-self-this-turn":
-    case "at-location": {
+    case "at-location":
+    case "stat-threshold": {
       // Board-state "if" conditions must be checked at trigger time per Lorcana rules:
       // if the condition is not met when the event occurs, the ability should not trigger.
       const conditionCtx: ConditionEvaluationContext = {
@@ -1719,17 +1860,14 @@ function shouldDeduplicateDiscardBatch(trigger: Trigger, event: PendingTriggered
   }
 }
 
-function getUsageKey(turn: number, sourceId: CardInstanceId, abilityId: string): string {
-  return `${turn}:${sourceId}:${abilityId}`;
-}
-
 function recordOccurrence(
   ctx: TriggerRuntimeContext,
   sourceId: CardInstanceId,
   abilityId: string,
+  occurrenceScope?: string,
 ): { abilityKey: string; occurrenceIndex: number } {
   const currentTurn = getCurrentTurn(ctx);
-  const abilityKey = getUsageKey(currentTurn, sourceId, abilityId);
+  const abilityKey = getUsageKey(currentTurn, sourceId, abilityId, occurrenceScope);
   const ledger = getTriggeredAbilitiesState(ctx.G).usageLedger.occurrences;
   const occurrenceIndex = (ledger[abilityKey] ?? 0) + 1;
   ledger[abilityKey] = occurrenceIndex;
@@ -1765,17 +1903,33 @@ function enqueueBagEffect(
   return bagEntry;
 }
 
-function collectPrintedTriggerCandidates(ctx: TriggerRuntimeContext): TriggerMatchCandidate[] {
+function getPrintedTriggerScanZones(window?: TriggerWindow): PrintedTriggerScanZones {
+  switch (window) {
+    case "after-challenge":
+      return ["play"];
+    case "start-of-turn":
+      return ["play", "discard"];
+    case "end-of-turn":
+      return ["play"];
+    default:
+      return null;
+  }
+}
+
+function isDelayedTriggerWindow(window: TriggerWindow): window is DelayedTriggerWindow {
+  return window === "start-of-turn" || window === "end-of-turn";
+}
+
+function collectPrintedTriggerCandidates(
+  ctx: TriggerRuntimeContext,
+  params?: { window?: TriggerWindow },
+): TriggerMatchCandidate[] {
   const candidates: TriggerMatchCandidate[] = [];
+  const zoneBuckets =
+    getPrintedTriggerScanZones(params?.window) ?? (["play", "hand", "discard", "inkwell"] as const);
 
   for (const playerId of ctx.framework.state.playerIds) {
     const visitedCardIds = new Set<string>();
-    const zoneBuckets: Array<"play" | "hand" | "discard" | "inkwell"> = [
-      "play",
-      "hand",
-      "discard",
-      "inkwell",
-    ];
 
     for (const zone of zoneBuckets) {
       const cardsInZone = ctx.framework.zones.getCards({ zone, playerId });
@@ -1836,6 +1990,7 @@ function enqueueMatchedTrigger(
     ctx,
     candidate.sourceId,
     candidate.abilityId,
+    getOccurrenceScope(candidate.ability.trigger, event),
   );
 
   const resolutionInput = buildTriggeredResolutionInput(candidate, event);
@@ -2080,7 +2235,7 @@ export function finalizeResolutionBoundary(
   ctx: TriggerRuntimeContext,
   params?: {
     playerId?: PlayerId;
-    window?: DelayedTriggerWindow;
+    window?: TriggerWindow;
   },
 ): number {
   const state = getTriggeredAbilitiesState(ctx.G);
@@ -2091,17 +2246,21 @@ export function finalizeResolutionBoundary(
   let created = 0;
   if (events.length > 0) {
     const boardCandidates = [
-      ...collectPrintedTriggerCandidates(ctx),
+      ...collectPrintedTriggerCandidates(ctx, { window: params?.window }),
       ...collectFloatingTriggerCandidates(ctx),
     ];
     const deduplicatedDiscardBatches = new Set<string>();
+    const deduplicatedSingBatches = new Set<string>();
 
     for (const event of events) {
       const eventCandidates: TriggerMatchCandidate[] = (event.triggerCandidates ?? [])
         .map((candidate) => cloneTriggeredEventCandidate(candidate))
         .filter((candidate) => shouldAllowSnapshotCandidate(candidate, event));
+      const filteredBoardCandidates = boardCandidates.filter((candidate) =>
+        shouldAllowSnapshotCandidate(candidate, event),
+      );
       const seenCandidates = new Set<string>();
-      for (const candidate of [...eventCandidates, ...boardCandidates]) {
+      for (const candidate of [...eventCandidates, ...filteredBoardCandidates]) {
         const candidateKey = getTriggerCandidateKey(candidate);
         if (seenCandidates.has(candidateKey)) {
           continue;
@@ -2125,11 +2284,15 @@ export function finalizeResolutionBoundary(
           deduplicatedDiscardBatches.add(dedupeKey);
         }
 
-        if (shouldSkipByNTimesPerTurn(ctx, candidate)) {
+        if (shouldSkipByNTimesPerTurn(ctx, candidate, event)) {
           continue;
         }
 
         if (shouldSkipOptionalReturnFromDiscardWithNoTargets(ctx, candidate)) {
+          continue;
+        }
+
+        if (shouldSkipOptionalPlayCardFromDiscardWithNoTargets(ctx, candidate)) {
           continue;
         }
 
@@ -2145,13 +2308,17 @@ export function finalizeResolutionBoundary(
           continue;
         }
 
+        if (shouldSkipOptionalEffectWithNoValidTargets(ctx, candidate)) {
+          continue;
+        }
+
         enqueueMatchedTrigger(ctx, candidate, event);
         created += 1;
       }
     }
   }
 
-  if (params?.playerId && params.window) {
+  if (params?.playerId && params.window && isDelayedTriggerWindow(params.window)) {
     created += enqueueDueDelayedRegistrations(ctx, {
       playerId: params.playerId,
       window: params.window,
@@ -2222,7 +2389,8 @@ export function recordBagEffectResolution(
       (restriction) =>
         restriction.type === "once-per-turn" ||
         restriction.type === "first-time-each-turn" ||
-        restriction.type === "n-times-per-turn",
+        restriction.type === "n-times-per-turn" ||
+        restriction.type === "once-per-song",
     )
   ) {
     return;

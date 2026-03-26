@@ -11,7 +11,6 @@
     },
     args: {
       entry: createLogEntry("Played a card", {
-        detail: "Played Mickey Mouse - Brave Little Tailor for 3 ink",
         actorSide: "playerOne",
         moveId: "playCard",
       }),
@@ -60,10 +59,10 @@
 >
   {#snippet children()}
     <div class="story-column">
-      <LogEntry entry={createLogEntry("Drew a card", { detail: "Drew Captain Hook - Forceful Duelist", actorSide: "playerOne" })} />
-      <LogEntry entry={createLogEntry("Played a card", { detail: "Played Mickey Mouse for 3 ink", actorSide: "playerOne" })} />
-      <LogEntry entry={createLogEntry("Quested", { detail: "Ariel quested for 2 lore", actorSide: "playerOne" })} />
-      <LogEntry entry={createLogEntry("Challenged", { detail: "Mulan challenged Beast", actorSide: "playerTwo" })} />
+      <LogEntry entry={createLogEntry("Drew a card", { actorSide: "playerOne" })} />
+      <LogEntry entry={createLogEntry("Played a card", { actorSide: "playerOne", moveId: "playCard" })} />
+      <LogEntry entry={createLogEntry("Quested", { actorSide: "playerOne", moveId: "quest" })} />
+      <LogEntry entry={createLogEntry("Challenged", { actorSide: "playerTwo", moveId: "challenge" })} />
       <LogEntry entry={createLogEntry("Put into inkwell", { actorSide: "playerOne" })} />
       <LogEntry entry={createLogEntry("Passed turn", { actorSide: "playerTwo" })} />
     </div>

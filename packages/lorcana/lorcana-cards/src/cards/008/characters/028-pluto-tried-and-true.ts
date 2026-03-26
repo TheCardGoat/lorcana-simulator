@@ -31,23 +31,29 @@ export const plutoTriedAndTrue: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "no-damage",
+      },
       effect: {
-        steps: [
-          {
-            modifier: 2,
-            stat: "strength",
-            target: "SELF",
-            type: "modify-stat",
-          },
-          {
-            keyword: "Support",
-            target: "SELF",
-            type: "gain-keyword",
-          },
-        ],
-        type: "sequence",
+        modifier: 2,
+        stat: "strength",
+        target: "SELF",
+        type: "modify-stat",
       },
       id: "3hj-1",
+      text: "HAPPY HELPER While this character has no damage, he gets +2 {S} and gains Support.",
+      type: "static",
+    },
+    {
+      condition: {
+        type: "no-damage",
+      },
+      effect: {
+        keyword: "Support",
+        target: "SELF",
+        type: "gain-keyword",
+      },
+      id: "3hj-2",
       text: "HAPPY HELPER While this character has no damage, he gets +2 {S} and gains Support.",
       type: "static",
     },

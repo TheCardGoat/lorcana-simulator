@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { goofyExpertShipwrightI18n } from "./089-goofy-expert-shipwright.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const goofyExpertShipwright: CharacterCard = {
   id: "T9c",
@@ -33,12 +34,7 @@ export const goofyExpertShipwright: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Inventor"],
   abilities: [
-    {
-      id: "gjx-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         duration: "until-start-of-next-turn",

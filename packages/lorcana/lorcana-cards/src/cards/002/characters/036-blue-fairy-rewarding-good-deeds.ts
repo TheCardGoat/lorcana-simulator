@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { blueFairyRewardingGoodDeedsI18n } from "./036-blue-fairy-rewarding-good-deeds.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const blueFairyRewardingGoodDeeds: CharacterCard = {
   id: "llN",
@@ -33,12 +34,7 @@ export const blueFairyRewardingGoodDeeds: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Fairy"],
   abilities: [
-    {
-      id: "tv6-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    evasive,
     {
       id: "tv6-2",
       effect: {

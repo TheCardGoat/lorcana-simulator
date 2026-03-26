@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { boltDependableFriendI18n } from "./018-bolt-dependable-friend.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const boltDependableFriend: CharacterCard = {
   id: "XZV",
@@ -25,12 +26,7 @@ export const boltDependableFriend: CharacterCard = {
   text: "Support",
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "j9c-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
+    support,
     {
       id: "j9c-2",
       type: "triggered",

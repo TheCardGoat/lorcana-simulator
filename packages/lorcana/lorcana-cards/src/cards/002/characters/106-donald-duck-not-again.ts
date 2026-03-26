@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { donaldDuckNotAgainI18n } from "./106-donald-duck-not-again.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const donaldDuckNotAgain: CharacterCard = {
   id: "2q9",
@@ -32,12 +33,7 @@ export const donaldDuckNotAgain: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero"],
   abilities: [
-    {
-      id: "1mm-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         modifier: {

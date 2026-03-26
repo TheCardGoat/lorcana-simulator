@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { beastTragicHeroI18n } from "./173-beast-tragic-hero.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const beastTragicHero: CharacterCard = {
   id: "VVb",
@@ -34,15 +35,7 @@ export const beastTragicHero: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Prince"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "kyf-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       id: "kyf-2",
       name: "IT'S BETTER THIS WAY",

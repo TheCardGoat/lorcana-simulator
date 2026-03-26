@@ -2,6 +2,11 @@
   "$schema": "https://turbo.build/schema.json",
   "extends": ["//"],
   "tasks": {
+    "dev": {
+      "dependsOn": ["i18n:compile"],
+      "cache": false,
+      "persistent": true
+    },
     "check-types": {
       "dependsOn": ["^build", "i18n:compile"]
     },

@@ -33,17 +33,22 @@ export const scroogeMcduckOnTheRightTrack: CharacterCard = {
   abilities: [
     {
       effect: {
-        duration: "this-turn",
-        modifier: 1,
-        stat: "lore",
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          duration: "this-turn",
+          modifier: 1,
+          stat: "lore",
+          target: {
+            cardTypes: ["character"],
+            count: 1,
+            owner: "any",
+            selector: "chosen",
+            zones: ["play"],
+            filter: [{ type: "cards-under", comparison: "greater-or-equal", value: 1 }],
+          },
+          type: "modify-stat",
         },
-        type: "modify-stat",
       },
       id: "ut8-1",
       name: "FABULOUS WEALTH",

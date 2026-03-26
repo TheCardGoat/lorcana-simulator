@@ -41,8 +41,23 @@ export const minnieMousePirateLookout: CharacterCard = {
         type: "optional",
       },
       id: "1hl-1",
+      name: "LAND, HO!",
       text: "LAND, HO! Once during your turn, whenever a card is put into your inkwell, you may return a location card from your discard to your hand.",
-      type: "action",
+      trigger: {
+        event: "ink",
+        on: "CONTROLLER",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+          {
+            type: "once-per-turn",
+          },
+        ],
+      },
+      type: "triggered",
     },
   ],
   i18n: minnieMousePirateLookoutI18n,

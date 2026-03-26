@@ -36,22 +36,45 @@ export const mickeyMouseWaywardSorcerer: CharacterCard = {
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["card"],
-          },
-          type: "return-to-hand",
-        },
-        type: "optional",
+        amount: 1,
+        cardType: "character",
+        classification: "Broom",
+        type: "cost-reduction",
       },
       id: "kuw-1",
-      text: "**CEASELESS WORKER** Whenever one of your Broom characters is banished in a challenge, you may return that card to your hand.",
-      type: "action",
+      name: "ANIMATE BROOM",
+      text: "ANIMATE BROOM You pay 1 {I} less to play Broom characters.",
+      type: "static",
+    },
+    {
+      id: "kuw-2",
+      name: "CEASELESS WORKER",
+      type: "triggered",
+      trigger: {
+        event: "banish",
+        on: {
+          cardType: "character",
+          classification: "Broom",
+          controller: "you",
+        },
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "in-challenge",
+          },
+        ],
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "return-to-hand",
+          target: {
+            ref: "trigger-source",
+          },
+        },
+      },
+      text: "CEASELESS WORKER Whenever one of your Broom characters is banished in a challenge, you may return that card to your hand.",
     },
   ],
   i18n: mickeyMouseWaywardSorcererI18n,

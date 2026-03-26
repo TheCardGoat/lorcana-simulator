@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { louieChillNephewI18n } from "./149-louie-chill-nephew.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const louieChillNephew: CharacterCard = {
   id: "ph4",
@@ -24,13 +25,6 @@ export const louieChillNephew: CharacterCard = {
   },
   text: "Support",
   classifications: ["Dreamborn", "Ally"],
-  abilities: [
-    {
-      id: "1ac-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: louieChillNephewI18n,
 };

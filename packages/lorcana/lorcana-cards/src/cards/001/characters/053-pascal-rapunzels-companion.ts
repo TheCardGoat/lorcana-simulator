@@ -31,8 +31,10 @@ export const pascalRapunzelsCompanion: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "has-another-character",
+      },
       effect: {
-        duration: "this-turn",
         keyword: "Evasive",
         target: "SELF",
         type: "gain-keyword",

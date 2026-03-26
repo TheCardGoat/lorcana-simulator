@@ -8,6 +8,7 @@ import type {
 } from "@tcg/lorcana-types";
 import { cardHasName, hasKeyword } from "../../card-utils";
 import { normalizeTargetDescriptor, resolveCandidateTargets } from "../../targeting/runtime";
+import { compareOperator } from "../../rules/operator-utils";
 import type {
   LorcanaG,
   StaticAbilityDefinition,
@@ -170,59 +171,6 @@ const temporaryGrantedActivatedAbilityRegistry: Record<
     text: "{E} - Banish chosen damaged character.",
   }),
 };
-
-function compareLegacyNumbers(left: number, operator: string | undefined, right: number): boolean {
-  switch (operator) {
-    case "eq":
-    case "equal":
-      return left === right;
-    case "ne":
-    case "not-equal":
-      return left !== right;
-    case "gt":
-    case "greater":
-    case "greater-than":
-    case "more-than":
-      return left > right;
-    case "gte":
-    case "greater-or-equal":
-    case "or-more":
-      return left >= right;
-    case "lt":
-    case "less":
-    case "less-than":
-      return left < right;
-    case "lte":
-    case "less-or-equal":
-    case "or-less":
-      return left <= right;
-    default:
-      return false;
-  }
-}
-
-function compareConditionNumbers(
-  left: number,
-  operator: string | undefined,
-  right: number,
-): boolean {
-  switch (operator) {
-    case "eq":
-      return left === right;
-    case "ne":
-      return left !== right;
-    case "gt":
-      return left > right;
-    case "gte":
-      return left >= right;
-    case "lt":
-      return left < right;
-    case "lte":
-      return left <= right;
-    default:
-      return false;
-  }
-}
 
 function countCardsPlayedThisTurnMatching(args: {
   state: StaticAbilityState;
@@ -561,6 +509,20 @@ function matchesLegacyStaticTarget(args: {
         targetControllerId === controllerId &&
         targetDefinition?.cardType === "character" &&
         (targetDefinition.classifications ?? []).includes("Seven Dwarfs")
+      );
+    case "YOUR_OTHER_AMBER_CHARACTERS":
+      return (
+        targetCardId !== sourceId &&
+        targetControllerId === controllerId &&
+        targetDefinition?.cardType === "character" &&
+        (targetDefinition.inkType ?? []).includes("amber")
+      );
+    case "YOUR_OTHER_RUBY_CHARACTERS":
+      return (
+        targetCardId !== sourceId &&
+        targetControllerId === controllerId &&
+        targetDefinition?.cardType === "character" &&
+        (targetDefinition.inkType ?? []).includes("ruby")
       );
     case "YOUR_OTHER_SAPPHIRE_CHARACTERS":
       return (
@@ -927,6 +889,12 @@ export function hasStaticChallengerFilteredRestriction(args: {
     attackerDefinition && typeof attackerDefinition.cost === "number"
       ? attackerDefinition.cost
       : undefined;
+  const attackerStrength =
+    attackerDefinition &&
+    attackerDefinition.cardType === "character" &&
+    typeof attackerDefinition.strength === "number"
+      ? attackerDefinition.strength
+      : undefined;
   const attackerDamage =
     typeof attackerId === "string"
       ? Number(state._zonesPrivate?.cardMeta?.[attackerId]?.damage ?? 0)
@@ -990,11 +958,7 @@ export function hasStaticChallengerFilteredRestriction(args: {
           if (typeof attackerCost !== "number") {
             return false;
           }
-          return compareLegacyNumbers(
-            attackerCost,
-            challengerFilter.operator,
-            challengerFilter.value,
-          );
+          return compareOperator(attackerCost, challengerFilter.operator, challengerFilter.value);
         case "has-classification":
           if (
             !isClassification(challengerFilter.classification) ||
@@ -1004,6 +968,15 @@ export function hasStaticChallengerFilteredRestriction(args: {
           }
 
           return attackerDefinition.classifications.includes(challengerFilter.classification);
+        case "strength-comparison":
+          if (typeof attackerStrength !== "number") {
+            return false;
+          }
+          return compareOperator(
+            attackerStrength,
+            challengerFilter.operator,
+            challengerFilter.value,
+          );
         case "is-damaged":
           return attackerDamage > 0;
         default:
@@ -1211,6 +1184,26 @@ export function resolveStaticVariableAmount(args: {
         const definition = getDefinitionByInstanceId?.(candidateId);
         return definition?.cardType === "character" ? total + 1 : total;
       }, 0);
+    case "items-in-play":
+      return Object.keys(state._zonesPrivate?.cardIndex ?? {}).reduce((total, cardId) => {
+        const candidateId = cardId as CardInstanceId;
+        if (!isCardInPlay(state, candidateId)) {
+          return total;
+        }
+
+        const candidateControllerId = state._zonesPrivate?.cardIndex?.[candidateId]?.controllerID as
+          | PlayerId
+          | undefined;
+        if (amount.controller === "you" && candidateControllerId !== controllerId) {
+          return total;
+        }
+        if (amount.controller === "opponent" && candidateControllerId === controllerId) {
+          return total;
+        }
+
+        const definition = getDefinitionByInstanceId?.(candidateId);
+        return definition?.cardType === "item" ? total + 1 : total;
+      }, 0);
     case "reducer":
       if (amount.reducer !== "damage") {
         return 0;
@@ -1300,6 +1293,28 @@ export function resolveStaticVariableAmount(args: {
         const damage = Number(state._zonesPrivate?.cardMeta?.[candidateId]?.damage ?? 0);
         return total + damage;
       }, 0);
+    case "turn-metric": {
+      if (amount.metric !== "banished-in-challenge-count") {
+        return 0;
+      }
+      const counts = state.G?.turnMetadata?.banishedCharactersInChallengeByOwnerThisTurn ?? {};
+      const multiplier = typeof amount.multiplier === "number" ? amount.multiplier : 1;
+      if (amount.owner === "opponent") {
+        // Sum counts for all players that are NOT the controller
+        return (
+          Object.entries(counts).reduce((total, [playerId, count]) => {
+            if (playerId !== controllerId) {
+              return total + Number(count ?? 0);
+            }
+            return total;
+          }, 0) * multiplier
+        );
+      }
+      if (amount.owner === "you") {
+        return Number(counts[controllerId as string as keyof typeof counts] ?? 0) * multiplier;
+      }
+      return 0;
+    }
     default:
       return 0;
   }
@@ -1423,6 +1438,74 @@ export function hasOpponentStaticPlayRestriction(args: {
   }
 
   return false;
+}
+
+/**
+ * Return the lowest challenge-per-turn limit imposed by any in-play card via a
+ * static "challenge-limit" restriction that targets "ALL_PLAYERS", or `null`
+ * if no such restriction is active.
+ *
+ * @example Prince Charming - Protector of the Realm: "Each turn, only one
+ * character can challenge."
+ */
+export function getStaticChallengeLimit(args: {
+  state: StaticAbilityState;
+  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+}): number | null {
+  const { state, getDefinitionByInstanceId } = args;
+  if (!getDefinitionByInstanceId) {
+    return null;
+  }
+
+  let lowestLimit: number | null = null;
+
+  for (const cardId of Object.keys(state._zonesPrivate?.cardIndex ?? {}) as CardInstanceId[]) {
+    if (!isCardInPlay(state, cardId)) {
+      continue;
+    }
+
+    const controllerId = state._zonesPrivate?.cardIndex?.[cardId]?.controllerID as
+      | PlayerId
+      | undefined;
+
+    const definition = getDefinitionByInstanceId(cardId);
+    if (!definition) {
+      continue;
+    }
+
+    for (const ability of definition.abilities ?? []) {
+      if (ability.type !== "static") {
+        continue;
+      }
+      const { effect } = ability;
+      if (
+        effect.type !== "restriction" ||
+        effect.restriction !== "challenge-limit" ||
+        effect.target !== "ALL_PLAYERS"
+      ) {
+        continue;
+      }
+
+      if (
+        !evaluateStaticCondition({
+          condition: ability.condition,
+          state,
+          controllerId,
+          sourceId: cardId,
+          getDefinitionByInstanceId,
+        })
+      ) {
+        continue;
+      }
+
+      const limit = typeof effect.limit === "number" ? effect.limit : 1;
+      if (lowestLimit === null || limit < lowestLimit) {
+        lowestLimit = limit;
+      }
+    }
+  }
+
+  return lowestLimit;
 }
 
 export function getStaticPropertyModifierTotal(args: {

@@ -10,6 +10,8 @@ import { mickeyMouseTrueFriend } from "../../001";
 import { plasmaBlaster } from "../../001/items/204-plasma-blaster";
 import { dragonFire } from "../../010/actions/133-dragon-fire";
 import { ragingStorm } from "../actions/028-raging-storm";
+import { strengthOfARagingFire } from "../../002/actions/201-strength-of-a-raging-fire";
+import { goliathClanLeader } from "../../010/characters/173-goliath-clan-leader";
 import { johnSmithUndauntedProtector } from "./193-john-smith-undaunted-protector";
 
 const johnSmithWithWard: CharacterCard = {
@@ -146,6 +148,36 @@ describe("John Smith - Undaunted Protector", () => {
     expect(testEngine.asPlayerOne().playCard(ragingStorm)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().getCardZone(johnSmithUndauntedProtector)).toBe("discard");
     expect(testEngine.asPlayerTwo().getCardZone(mickeyMouseTrueFriend)).toBe("discard");
+  });
+
+  // Regression: John Smith's DO YOUR WORST was not preventing Strength of a Raging Fire
+  // from targeting Goliath - Clan Leader when John Smith was in play (fixed Feb 23)
+  it("regression: prevents Strength of a Raging Fire from targeting Goliath when John Smith is in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [strengthOfARagingFire],
+        inkwell: strengthOfARagingFire.cost,
+        play: [mickeyMouseTrueFriend, goliathClanLeader],
+      },
+      {
+        play: [johnSmithUndauntedProtector, goliathClanLeader],
+      },
+    );
+
+    // Attempting to target opponent's Goliath should fail because John Smith must be chosen
+    const rejectedResult = testEngine.asPlayerOne().playCard(strengthOfARagingFire, {
+      targets: [testEngine.findCardInstanceId(goliathClanLeader, "play", PLAYER_TWO)],
+    }) as CommandFailure;
+
+    expect(rejectedResult.success).toBe(false);
+    expect(rejectedResult.errorCode).toBe("TARGET_DO_YOUR_WORST_RESTRICTION");
+
+    // Targeting John Smith should succeed
+    expect(
+      testEngine.asPlayerOne().playCard(strengthOfARagingFire, {
+        targets: [johnSmithUndauntedProtector],
+      }),
+    ).toBeSuccessfulCommand();
   });
 
   it("allows other targets when John Smith has Ward and is not legal", () => {

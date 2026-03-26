@@ -39,16 +39,17 @@ export const mushuMajesticDragon: CharacterCard = {
     {
       effect: {
         keyword: "Resist",
-        target: "YOUR_CHARACTERS",
+        target: { ref: "trigger-subject" },
         type: "gain-keyword",
         value: 2,
+        duration: "this-turn",
       },
       id: "bra-1",
       name: "INTIMIDATING AND AWE-INSPIRING",
       text: "INTIMIDATING AND AWE-INSPIRING Whenever one of your characters challenges, they gain Resist +2 during that challenge.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "challenge",
+        on: "YOUR_CHARACTERS",
         timing: "whenever",
       },
       type: "triggered",
@@ -56,15 +57,17 @@ export const mushuMajesticDragon: CharacterCard = {
     {
       effect: {
         amount: 2,
+        target: "CONTROLLER",
         type: "gain-lore",
       },
       id: "bra-2",
       name: "GUARDIAN OF LOST SOULS",
       text: "GUARDIAN OF LOST SOULS During your turn, whenever one of your characters banishes another character in a challenge, gain 2 lore.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "banish-in-challenge",
+        on: "YOUR_CHARACTERS",
         timing: "whenever",
+        restrictions: [{ type: "during-turn", whose: "your" }],
       },
       type: "triggered",
     },

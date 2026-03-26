@@ -30,16 +30,16 @@ describe("Gramma Tala - Keeper of Ancient Stories", () => {
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           destinations: [
-            { zone: "hand", cards: [fillerA] },
-            { zone: "deck-bottom", cards: [fillerB] },
+            { zone: "hand", cards: [fillerB] },
+            { zone: "deck-bottom", cards: [fillerC] },
           ],
         }),
       ).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getCardZone(fillerA)).toBe("hand");
+      expect(testEngine.asPlayerOne().getCardZone(fillerB)).toBe("hand");
       expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
         fillerC.id,
-        fillerB.id,
+        fillerA.id,
       ]);
     });
   });

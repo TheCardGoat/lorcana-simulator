@@ -6,6 +6,37 @@ import {
   LorcanaSimulatorPom,
 } from "../support/lorcana-test.js";
 
+test("mulligan phase: clicking hand cards in UI selects them for mulliganing", async ({ page }) => {
+  const pom = new LorcanaSimulatorPom(page);
+  await pom.goto({ fixtureId: "pre-game", view: "playerOne" });
+
+  await pom.asBottomPlayer().chooseFirstPlayer(PLAYER_ONE);
+  await expect(pom.asBottomPlayer()).toBeInPhase("mulligan");
+
+  const handCards = await pom.asBottomPlayer().getHandCardIds(PLAYER_ONE);
+  expect(handCards.length).toBeGreaterThan(0);
+
+  // Before selecting any cards, confirm button shows 0 and is disabled
+  await expect(page.getByRole("button", { name: "Alter 0 Cards" })).toBeDisabled();
+
+  // Click the first hand card via UI — should select it for mulliganing, not open inspect
+  const [firstCard, secondCard] = handCards;
+  await pom.asBottomPlayer().clickHandCard(firstCard);
+  await expect(page.getByRole("button", { name: "Alter 1 Cards" })).toBeEnabled();
+
+  // Click a second card
+  await pom.asBottomPlayer().clickHandCard(secondCard);
+  await expect(page.getByRole("button", { name: "Alter 2 Cards" })).toBeEnabled();
+
+  // Clicking a selected card deselects it
+  await pom.asBottomPlayer().clickHandCard(firstCard);
+  await expect(page.getByRole("button", { name: "Alter 1 Cards" })).toBeEnabled();
+
+  // Confirm — should submit the mulligan with 1 card
+  await page.getByRole("button", { name: "Alter 1 Cards" }).click();
+  await expect(pom.asBottomPlayer()).toHavePendingMulligan([PLAYER_TWO]);
+});
+
 test("chooseFirstPlayer keeps pregame browser state aligned with the Lorcana test engine", async ({
   page,
 }) => {

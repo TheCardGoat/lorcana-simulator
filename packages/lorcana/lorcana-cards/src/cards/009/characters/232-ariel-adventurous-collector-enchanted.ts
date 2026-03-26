@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { arielAdventurousCollectorEnchantedI18n } from "./232-ariel-adventurous-collector-enchanted.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const arielAdventurousCollectorEnchanted: CharacterCard = {
   id: "NxO",
@@ -35,12 +36,7 @@ export const arielAdventurousCollectorEnchanted: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "NxO-0",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         keyword: "Evasive",

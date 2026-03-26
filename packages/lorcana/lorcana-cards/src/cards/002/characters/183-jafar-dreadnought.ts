@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jafarDreadnoughtI18n } from "./183-jafar-dreadnought.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const jafarDreadnought: CharacterCard = {
   id: "OLg",
@@ -34,15 +35,7 @@ export const jafarDreadnought: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Sorcerer"],
   abilities: [
-    {
-      id: "22g-1",
-      cost: {
-        ink: 2,
-      },
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 2",
-    },
+    shift(2),
     {
       id: "22g-2",
       effect: {
@@ -56,9 +49,10 @@ export const jafarDreadnought: CharacterCard = {
       },
       name: "NOW WHERE WERE WE?",
       trigger: {
-        event: "banish",
-        on: "OPPONENT_CHARACTERS",
+        event: "banish-in-challenge",
+        on: "SELF",
         timing: "whenever",
+        restrictions: [{ type: "during-turn", whose: "your" }],
       },
       type: "triggered",
       text: "NOW WHERE WERE WE? During your turn, whenever this character banishes another character in a challenge, you may draw a card.",

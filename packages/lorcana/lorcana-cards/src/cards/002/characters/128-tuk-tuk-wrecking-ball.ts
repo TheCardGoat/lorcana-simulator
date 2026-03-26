@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tukTukWreckingBallI18n } from "./128-tuk-tuk-wrecking-ball.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
 
 export const tukTukWreckingBall: CharacterCard = {
   id: "xpC",
@@ -24,13 +25,6 @@ export const tukTukWreckingBall: CharacterCard = {
   },
   text: "Reckless",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1or-1",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-  ],
+  abilities: [reckless],
   i18n: tukTukWreckingBallI18n,
 };

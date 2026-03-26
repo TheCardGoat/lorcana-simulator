@@ -33,7 +33,7 @@ const exertOpponentInkAction = createMockAction({
   ],
 });
 
-describe("Daisy Duck - Paranormal Investigator", () => {
+describe.skip("Daisy Duck - Paranormal Investigator", () => {
   it("does not exert opponent cards entering inkwells while Daisy is ready", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {

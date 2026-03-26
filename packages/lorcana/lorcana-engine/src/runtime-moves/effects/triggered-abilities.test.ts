@@ -7,6 +7,7 @@ import {
   PLAYER_TWO,
   createMockAction,
   createMockCharacter,
+  createMockLocation,
 } from "../../testing";
 
 const quester = createMockCharacter({
@@ -117,6 +118,41 @@ const putChosenCharacterIntoInkwell = createMockAction({
       },
     },
   ],
+});
+
+const printedPlayWatcher = createMockCharacter({
+  id: "printed-play-watcher",
+  name: "Printed Play Watcher",
+  cost: 3,
+  lore: 1,
+  abilities: [
+    {
+      id: "printed-play-watcher-1",
+      name: "Play Watcher",
+      text: "Whenever you play a character or location, gain 1 lore.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: {
+          controller: "you",
+          cardType: ["character", "location"],
+        },
+        timing: "whenever",
+      },
+      effect: {
+        amount: 1,
+        target: "CONTROLLER",
+        type: "gain-lore",
+      },
+    },
+  ],
+});
+
+const triggeredTestLocation = createMockLocation({
+  id: "triggered-test-location",
+  name: "Triggered Test Location",
+  cost: 2,
+  lore: 1,
 });
 
 function createFloatingQuestLoreAction(id: string, name: string, amount: number): ActionCard {
@@ -296,6 +332,31 @@ const discardQuestWatcher = createMockCharacter({
   ],
 });
 
+const discardStartTurnWatcher = createMockCharacter({
+  id: "discard-start-turn-watcher",
+  name: "Discard Start Turn Watcher",
+  cost: 2,
+  lore: 1,
+  abilities: [
+    {
+      id: "discard-start-turn-watcher-1",
+      text: "At the start of your turn, if this card is in your discard, gain 1 lore.",
+      type: "triggered",
+      sourceZones: ["discard"],
+      trigger: {
+        event: "start-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      effect: {
+        amount: 1,
+        target: "CONTROLLER",
+        type: "gain-lore",
+      },
+    },
+  ],
+});
+
 const temporaryBodyguardWatcher = createMockCharacter({
   id: "temporary-bodyguard-watcher",
   name: "Temporary Bodyguard Watcher",
@@ -341,6 +402,17 @@ const lethalDefender = createMockCharacter({
 });
 
 describe("triggered abilities", () => {
+  it("matches play triggers with multiple subject card types", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [printedPlayWatcher],
+      hand: [triggeredTestLocation],
+      inkwell: triggeredTestLocation.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(triggeredTestLocation)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
+  });
+
   it("queues printed triggered abilities into the bag before they resolve", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
@@ -504,6 +576,25 @@ describe("triggered abilities", () => {
     expect(testEngine.asPlayerOne().quest(quester).success).toBe(true);
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(quester.lore + 1);
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+  });
+
+  it("still evaluates discard-sourced printed triggers at start of turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 1,
+      },
+      {
+        discard: [discardStartTurnWatcher],
+        deck: 1,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
+
+    const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
+    expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().getLore(PLAYER_TWO)).toBe(1);
   });
 
   it("matches trigger subject keyword queries against temporary keywords", () => {

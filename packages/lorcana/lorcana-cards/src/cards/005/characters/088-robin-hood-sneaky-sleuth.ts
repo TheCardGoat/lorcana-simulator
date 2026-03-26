@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { robinHoodSneakySleuthI18n } from "./088-robin-hood-sneaky-sleuth.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const robinHoodSneakySleuth: CharacterCard = {
   id: "9VF",
@@ -33,15 +34,7 @@ export const robinHoodSneakySleuth: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "qao-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         modifier: {

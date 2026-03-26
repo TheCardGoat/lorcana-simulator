@@ -1,87 +1,76 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
 import { motherGothelSelfishManipulator } from "./090-mother-gothel-selfish-manipulator";
 
-describe("Mother Gothel - Selfish Manipulator", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [motherGoethelSelfishManipulator] });
-  //   Expect(testEngine.getCardModel(motherGoethelSelfishManipulator).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const opposingCharacterA = createMockCharacter({
+  id: "mg-opposing-a",
+  name: "Opposing Character A",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   MegaraPullingTheStrings,
-//   MickeyMouseTrueFriend,
-//   MotherGoethelSelfishManipulator,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Mother Gothel - Selfish Manipulator", () => {
-//   Describe("**SKIP THE DRAMA, STAY WITH MAMA** While this character is exerted, opposing character can't quest.", () => {
-//     It("Opposing character CANNOT quest when she's exerted", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [megaraPullingTheStrings, mickeyMouseTrueFriend],
-//         },
-//         {
-//           Play: [motherGoethelSelfishManipulator],
-//         },
-//       );
-//
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         MotherGoethelSelfishManipulator.id,
-//         "player_two",
-//       );
-//       Const target = testStore.getByZoneAndId(
-//         "play",
-//         MegaraPullingTheStrings.id,
-//       );
-//       Const anotherTarget = testStore.getByZoneAndId(
-//         "play",
-//         MickeyMouseTrueFriend.id,
-//       );
-//
-//       CardUnderTest.updateCardMeta({ exerted: true });
-//
-//       [target, anotherTarget].forEach((char) => {
-//         Expect(char.hasQuestRestriction).toBe(true);
-//       });
-//
-//       Expect(testStore.store.tableStore.getTable("player_one").lore).toEqual(0);
-//       Target.quest();
-//       Expect(testStore.store.tableStore.getTable("player_one").lore).toEqual(0);
-//       AnotherTarget.quest();
-//       Expect(testStore.store.tableStore.getTable("player_one").lore).toEqual(0);
-//     });
-//
-//     It("Opposing character CAN quest when she's NOT exerted", () => {
-//       Const testStore = new TestStore(
-//         {
-//           Play: [megaraPullingTheStrings],
-//         },
-//         {
-//           Play: [motherGoethelSelfishManipulator],
-//         },
-//       );
-//
-//       Const target = testStore.getByZoneAndId(
-//         "play",
-//         MegaraPullingTheStrings.id,
-//       );
-//
-//       Expect(testStore.store.tableStore.getTable("player_one").lore).toEqual(0);
-//       Target.quest();
-//       Expect(testStore.store.tableStore.getTable("player_one").lore).toEqual(1);
-//     });
-//   });
-// });
-//
+const opposingCharacterB = createMockCharacter({
+  id: "mg-opposing-b",
+  name: "Opposing Character B",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+  lore: 2,
+});
+
+describe("Mother Gothel - Selfish Manipulator", () => {
+  describe("SKIP THE DRAMA, STAY WITH MAMA - While this character is exerted, opposing characters can't quest.", () => {
+    it("opposing characters CANNOT quest when she is exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [opposingCharacterA, opposingCharacterB],
+          deck: 2,
+        },
+        {
+          play: [motherGothelSelfishManipulator],
+          deck: 2,
+        },
+      );
+
+      // Exert Mother Gothel
+      const gothelInstanceId = testEngine.findCardInstanceId(
+        motherGothelSelfishManipulator,
+        "play",
+        PLAYER_TWO,
+      );
+      testEngine.manualExertCard(gothelInstanceId);
+
+      // Opposing characters should not be able to quest
+      expect(testEngine.asPlayerOne().quest(opposingCharacterA)).not.toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().quest(opposingCharacterB)).not.toBeSuccessfulCommand();
+
+      // Lore should remain 0
+      expect(testEngine.asPlayerOne().getLore("player_one")).toBe(0);
+    });
+
+    it("opposing characters CAN quest when she is NOT exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [opposingCharacterA],
+          deck: 2,
+        },
+        {
+          play: [motherGothelSelfishManipulator],
+          deck: 2,
+        },
+      );
+
+      // Mother Gothel is not exerted - opposing character should be able to quest
+      expect(testEngine.asPlayerOne().quest(opposingCharacterA)).toBeSuccessfulCommand();
+
+      // Lore should increase
+      expect(testEngine.asPlayerOne().getLore("player_one")).toBe(opposingCharacterA.lore);
+    });
+  });
+});

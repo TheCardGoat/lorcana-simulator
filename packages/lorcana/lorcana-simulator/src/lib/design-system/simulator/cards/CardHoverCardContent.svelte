@@ -45,8 +45,6 @@ let {
 interface RenderableRulesEntry extends LorcanaCardTextEntrySnapshot {
 	kind: "keyword" | "ability";
 	textEntryIndex: number;
-	/** Index within ability-only entries (excluding keywords), matching engine's abilityIndex */
-	activatedAbilityIndex: number;
 }
 
 interface TextToken {
@@ -194,6 +192,25 @@ function isActivateAbilityMove(
 	return move?.moveId === "activateAbility";
 }
 
+function normalizeAbilityMatchKey(value: string | undefined): string {
+	return (value ?? "")
+		.toLowerCase()
+		.replace(/\{[^}]+\}/g, "")
+		.replace(/[^a-z0-9]+/g, "");
+}
+
+function getAbilityTitleMatchKeys(title: string): string[] {
+	const normalized = normalizeAbilityMatchKey(title);
+	if (!normalized) {
+		return [];
+	}
+
+	const withoutTrailingDigits = normalized.replace(/\d+$/g, "");
+	return withoutTrailingDigits && withoutTrailingDigits !== normalized
+		? [normalized, withoutTrailingDigits]
+		: [normalized];
+}
+
 // Derived state
 const primaryInk = $derived(normalizeInk(card.inkType?.[0] ?? "amber"));
 const secondaryInk = $derived(
@@ -209,9 +226,11 @@ const hasCharacterStats = $derived(
 			card.willpower !== undefined ||
 			card.loreValue !== undefined),
 );
+const isSongCard = $derived(
+  card.cardType === "action" && card.actionSubtype === "song",
+);
 const textEntries = $derived(
 	(() => {
-		let abilityCounter = 0;
 		return (card.textEntries ?? []).reduce<RenderableRulesEntry[]>(
 			(entries, entry, textEntryIndex) => {
 				const title = entry.title.trim();
@@ -220,15 +239,12 @@ const textEntries = $derived(
 				}
 
 				const kind = isKeywordTitle(title) ? "keyword" : "ability";
-				const activatedAbilityIndex =
-					kind === "ability" ? abilityCounter++ : -1;
 				const description = entry.description?.trim();
 				entries.push({
 					title,
 					...(description ? { description } : {}),
 					kind,
 					textEntryIndex,
-					activatedAbilityIndex,
 				});
 
 				return entries;
@@ -239,8 +255,8 @@ const textEntries = $derived(
 );
 const hasStructuredText = $derived(textEntries.length > 0);
 const activatedAbilityActionsByIndex = $derived(
-	new Map(
-		actions.flatMap((action) => {
+	(() => {
+		const abilityActions = actions.flatMap((action) => {
 			if (action.categoryId !== "activate-ability") {
 				return [];
 			}
@@ -250,18 +266,38 @@ const activatedAbilityActionsByIndex = $derived(
 					return [];
 				}
 
-				const abilityIndex =
-					typeof move.params.abilityIndex === "number"
-						? move.params.abilityIndex
-						: 0;
-				const singleMoveAction: CardActionView = {
-					...action,
-					moves: [move],
-				};
-				return [[abilityIndex, singleMoveAction]] as const;
+				return [
+					{
+						matchLabel: normalizeAbilityMatchKey(move.label),
+						action: {
+							...action,
+							moves: [move],
+						} satisfies CardActionView,
+					},
+				];
 			});
-		}),
-	),
+		});
+
+		const mappedActions = new Map<number, CardActionView>();
+		for (const entry of textEntries) {
+			const matchKeys = getAbilityTitleMatchKeys(entry.title);
+			if (matchKeys.length === 0) {
+				continue;
+			}
+
+			const matchedIndex = abilityActions.findIndex(({ matchLabel }) =>
+				matchKeys.some((key) => matchLabel.includes(key)),
+			);
+			if (matchedIndex === -1) {
+				continue;
+			}
+
+			mappedActions.set(entry.textEntryIndex, abilityActions[matchedIndex]!.action);
+			abilityActions.splice(matchedIndex, 1);
+		}
+
+		return mappedActions;
+	})(),
 );
 const nonAbilityActions = $derived(
 	actions.filter((action) => action.categoryId !== "activate-ability"),
@@ -279,6 +315,21 @@ const grantSourceByTitle = $derived(
 		),
 	),
 );
+const statModifierSources = $derived.by(() => {
+	const sources = new Map<"strength" | "willpower" | "lore", string>();
+	for (const source of card.grantSources ?? []) {
+		for (const grant of source.grants) {
+			const match = grant.match(/^([+-]\d+)\s+(Strength|Willpower|Lore)$/);
+			if (match) {
+				const stat = (match[2]?.toLowerCase() ?? "") as "strength" | "willpower" | "lore";
+				if (!sources.has(stat)) {
+					sources.set(stat, source.sourceLabel);
+				}
+			}
+		}
+	}
+	return sources;
+});
 const cardText = $derived(card.text?.trim() ?? "");
 const board = maybeUseLorcanaBoardPresenter();
 const simulatorCardContext = maybeUseSimulatorCardContext();
@@ -293,7 +344,7 @@ const cardTextLines = $derived(
 				.filter((line) => line.text.length > 0)
 		: [],
 );
-const hasActions = $derived(nonAbilityActions.length > 0);
+const hasActions = $derived(enabledNonAbilityActions.length > 0);
 const resolvedLocationOccupants = $derived.by(() => {
 	if (card.cardType !== "location") {
 		return [];
@@ -376,23 +427,50 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
 
       <div class="stats-row stats-row--compact">
         {#if card.strength !== undefined}
-          <div class="stat-box stat-strength">
-            <img src={getStatSmallIconUrl("strength")} alt="Strength" class="stat-icon" />
-            <span class="stat-value">{card.strength}</span>
+          <div class="stat-wrapper">
+            <div class="stat-box stat-strength">
+              <img src={getStatSmallIconUrl("strength")} alt="Strength" class="stat-icon" />
+              <span class="stat-value">{card.strength}</span>
+            </div>
+            {#if statModifierSources.get("strength")}
+              <span class="stat-modifier-source">Granted by {statModifierSources.get("strength")}</span>
+            {/if}
           </div>
         {/if}
         {#if card.willpower !== undefined}
-          <div class="stat-box stat-willpower">
-            <img src={getStatSmallIconUrl("defense")} alt="Willpower" class="stat-icon" />
-            <span class="stat-value">{effectiveWillpower}</span>
+          <div class="stat-wrapper">
+            <div class="stat-box stat-willpower">
+              <img src={getStatSmallIconUrl("defense")} alt="Willpower" class="stat-icon" />
+              <span class="stat-value">{effectiveWillpower}</span>
+            </div>
+            {#if statModifierSources.get("willpower")}
+              <span class="stat-modifier-source">Granted by {statModifierSources.get("willpower")}</span>
+            {/if}
           </div>
         {/if}
         {#if card.loreValue !== undefined}
-          <div class="stat-box stat-lore">
-            <img src={getLoreIconUrl()} alt="lore" class="stat-icon" />
-            <span class="stat-value">{card.loreValue}</span>
+          <div class="stat-wrapper">
+            <div class="stat-box stat-lore">
+              <img src={getLoreIconUrl()} alt="lore" class="stat-icon" />
+              <span class="stat-value">{card.loreValue}</span>
+            </div>
+            {#if statModifierSources.get("lore")}
+              <span class="stat-modifier-source">Granted by {statModifierSources.get("lore")}</span>
+            {/if}
           </div>
         {/if}
+      </div>
+    </div>
+  {:else if isSongCard}
+    <!-- Combined Type + Song Badge Row -->
+    <div class="meta-row">
+      <div class="type-line type-line--compact">
+        <span class="card-type">Action</span>
+      </div>
+      <div class="stats-row stats-row--compact">
+        <div class="stat-box stat-song">
+          <span class="stat-value">Song</span>
+        </div>
       </div>
     </div>
   {:else}
@@ -462,8 +540,7 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
     <div class="text-box">
       {#if hasStructuredText}
         {#each textEntries as entry, index (`${entry.title}-${index}`)}
-          {@const entryAction =
-            entry.kind === "ability" ? activatedAbilityActionsByIndex.get(entry.activatedAbilityIndex) : undefined}
+          {@const entryAction = activatedAbilityActionsByIndex.get(entry.textEntryIndex)}
           {@const grantedBy = grantSourceByTitle.get(entry.title)}
           {#if entryAction}
             <button
@@ -609,29 +686,6 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
           </button>
         {/each}
 
-        {#each disabledNonAbilityActions as action (action.id)}
-          {@const ActionIcon = getCardActionCategoryIcon(action.categoryId)}
-          <button
-            type="button"
-            class="action-chip action-chip--disabled"
-            disabled
-            aria-label={action.reason ? `${action.label}: ${action.reason}` : action.label}
-            title={action.reason ?? action.detail ?? action.label}
-            data-testid={`card-hover-action-chip-${action.categoryId}`}
-          >
-            <span class="action-chip__icon-shell" data-action-icon={action.categoryId} aria-hidden="true">
-              <ActionIcon class="action-chip__icon" />
-            </span>
-            <span class="action-chip__content">
-              <span class="action-chip__label">{action.label}</span>
-              {#if action.detail}
-                <span class="action-chip__detail">{action.detail}</span>
-              {:else if action.reason}
-                <span class="action-chip__detail">{action.reason}</span>
-              {/if}
-            </span>
-          </button>
-        {/each}
       </div>
     </div>
   {/if}
@@ -1219,6 +1273,36 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
 
   .stat-lore .stat-value {
     color: #fcd34d;
+  }
+
+  .stat-song {
+    background: rgba(var(--ink-rgb), 0.18);
+    border-color: rgba(var(--ink-rgb), 0.32);
+  }
+
+  .stat-song .stat-value {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: rgba(248, 250, 252, 0.92);
+    letter-spacing: 0.03em;
+  }
+
+  .stat-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .stat-modifier-source {
+    display: block;
+    font-size: 0.6rem;
+    font-style: italic;
+    color: rgba(100, 80, 60, 0.7);
+    line-height: 1.2;
+    text-align: center;
+    max-width: 40px;
+    word-wrap: break-word;
   }
 
   /* Text Box - Parchment Style */

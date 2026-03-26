@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { baymaxUpgradedRobotI18n } from "./175-baymax-upgraded-robot.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const baymaxUpgradedRobot: CharacterCard = {
   id: "ibv",
@@ -34,12 +35,7 @@ export const baymaxUpgradedRobot: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Robot"],
   abilities: [
-    {
-      id: "10n-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         type: "scry",

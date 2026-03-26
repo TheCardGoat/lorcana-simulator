@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { balooVonBruinwaldXiiiI18n } from "./001-baloo-von-bruinwald-xiii.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const balooVonBruinwaldXiii: CharacterCard = {
   id: "LOs",
@@ -33,12 +34,7 @@ export const balooVonBruinwaldXiii: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero"],
   abilities: [
-    {
-      id: "owv-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         amount: 2,

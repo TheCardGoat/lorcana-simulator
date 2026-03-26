@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { joshuaSweetTheDoctorI18n } from "./005-joshua-sweet-the-doctor.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const joshuaSweetTheDoctor: CharacterCard = {
   id: "eZE",
@@ -24,13 +25,6 @@ export const joshuaSweetTheDoctor: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1qp-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: joshuaSweetTheDoctorI18n,
 };

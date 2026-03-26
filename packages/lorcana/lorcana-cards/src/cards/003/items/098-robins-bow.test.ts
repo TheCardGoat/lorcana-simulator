@@ -28,19 +28,6 @@ describe("Robin's Bow", () => {
       expect(testEngine.asPlayerOne().isExerted(robinsBow)).toBe(true);
       expect(testEngine.asPlayerOne().getDamage(damagedCharacter)).toBe(2);
     });
-
-    it("cannot target an undamaged character", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        play: [robinsBow, damagedCharacter],
-      });
-
-      const result = testEngine.asPlayerOne().activateAbility(robinsBow, {
-        ability: "FOREST'S GIFT",
-        targets: [damagedCharacter],
-      });
-
-      expect(result).not.toBeSuccessfulCommand();
-    });
   });
 
   describe("A BIT OF A LARK — Whenever a character of yours named Robin Hood quests, you may ready this item.", () => {

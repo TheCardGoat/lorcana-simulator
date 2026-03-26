@@ -42,11 +42,11 @@ describe("The Boss Is on a Roll", () => {
 
     expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE).slice(0, 5)).toEqual([
-      tinkerBellPeterPansAlly.id,
-      healingGlow.id,
-      simbaProtectiveCub.id,
-      arielOnHumanLegs.id,
       aladdinPrinceAli.id,
+      arielOnHumanLegs.id,
+      simbaProtectiveCub.id,
+      healingGlow.id,
+      tinkerBellPeterPansAlly.id,
     ]);
   });
 });

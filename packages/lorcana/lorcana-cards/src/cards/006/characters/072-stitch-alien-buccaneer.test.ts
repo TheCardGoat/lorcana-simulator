@@ -94,6 +94,37 @@ describe("Stitch - Alien Buccaneer", () => {
       expect(testEngine.asPlayerOne().getCardZone(actionInDiscard)).toBe("discard");
     });
 
+    it("regression: triggers when shifted onto another Stitch character", () => {
+      // Bug: READY FOR ACTION was not triggering when Stitch - Alien Buccaneer was shifted
+      // onto another Stitch character.
+      // The Stitch - Little Trickster is a valid shift target (same name "Stitch").
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: stitchAlienBuccaneer.cost,
+        hand: [stitchAlienBuccaneer],
+        play: [stitchLittleTrickster],
+        discard: [{ card: actionInDiscard }],
+        deck: 3,
+      });
+
+      const shiftTarget = testEngine.findCardInstanceId(
+        stitchLittleTrickster,
+        "play",
+        "player_one",
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(stitchAlienBuccaneer, {
+          cost: {
+            cost: "shift",
+            shiftTarget,
+          },
+        }),
+      ).toBeSuccessfulCommand();
+
+      // READY FOR ACTION should trigger because Shift was used
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    });
+
     it("does not trigger when played normally without Shift", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         inkwell: stitchAlienBuccaneer.cost,

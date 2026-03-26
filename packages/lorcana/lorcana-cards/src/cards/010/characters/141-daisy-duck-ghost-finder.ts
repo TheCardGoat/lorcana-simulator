@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { support } from "../../../helpers/abilities/support";
 import { daisyDuckGhostFinderI18n } from "./141-daisy-duck-ghost-finder.i18n";
 
 export const daisyDuckGhostFinder: CharacterCard = {
@@ -23,13 +24,6 @@ export const daisyDuckGhostFinder: CharacterCard = {
   },
   text: "Support",
   classifications: ["Dreamborn", "Hero", "Detective"],
-  abilities: [
-    {
-      id: "1m1-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: daisyDuckGhostFinderI18n,
 };

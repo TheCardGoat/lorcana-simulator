@@ -32,6 +32,12 @@ export const pachaTrekmate: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      condition: {
+        type: "comparison",
+        left: { type: "cards-in-hand", controller: "you" },
+        comparison: "greater",
+        right: { type: "cards-in-hand", controller: "opponent" },
+      },
       effect: {
         modifier: 2,
         stat: "lore",
@@ -39,8 +45,9 @@ export const pachaTrekmate: CharacterCard = {
         type: "modify-stat",
       },
       id: "19c-1",
+      name: "FULL PACK",
       text: "FULL PACK While you have more cards in your hand than each opponent, this character gets +2 {L}.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: pachaTrekmateI18n,

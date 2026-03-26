@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { diabloSpitefulRavenI18n } from "./066-diablo-spiteful-raven.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const diabloSpitefulRaven: CharacterCard = {
   id: "4Ff",
@@ -31,20 +33,6 @@ export const diabloSpitefulRaven: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1v4-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-    {
-      id: "1v4-2",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2",
-    },
-  ],
+  abilities: [evasive, challenger(2)],
   i18n: diabloSpitefulRavenI18n,
 };

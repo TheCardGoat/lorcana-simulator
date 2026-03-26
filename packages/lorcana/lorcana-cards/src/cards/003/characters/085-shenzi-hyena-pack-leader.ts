@@ -36,29 +36,42 @@ export const shenziHyenaPackLeader: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Hyena"],
   abilities: [
     {
+      id: "qk2-1",
+      name: "I'LL HANDLE THIS",
+      condition: {
+        type: "at-location",
+      },
       effect: {
         modifier: 3,
         stat: "strength",
         target: "SELF",
         type: "modify-stat",
       },
-      id: "qk2-1",
       text: "I'LL HANDLE THIS While this character is at a location, she gets +3 {S}.",
       type: "static",
     },
     {
+      id: "qk2-2",
+      name: "WHAT'S THE HURRY?",
+      type: "triggered",
+      trigger: {
+        event: "challenge",
+        on: "SELF",
+        timing: "whenever",
+      },
+      condition: {
+        type: "at-location",
+      },
       effect: {
+        type: "optional",
         chooser: "CONTROLLER",
         effect: {
+          type: "draw",
           amount: 1,
           target: "CONTROLLER",
-          type: "draw",
         },
-        type: "optional",
       },
-      id: "qk2-2",
       text: "WHAT'S THE HURRY? While this character is at a location, whenever she challenges another character, you may draw a card.",
-      type: "static",
     },
   ],
   i18n: shenziHyenaPackLeaderI18n,

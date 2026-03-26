@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { wendyDarlingPirateQueenI18n } from "./012-wendy-darling-pirate-queen.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const wendyDarlingPirateQueen: CharacterCard = {
   id: "3a1",
@@ -34,12 +35,7 @@ export const wendyDarlingPirateQueen: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Queen", "Pirate", "Captain"],
   abilities: [
-    {
-      id: "3a1-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         chooser: "CONTROLLER",

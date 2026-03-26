@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { cheshireCatInexplicableI18n } from "./060-cheshire-cat-inexplicable.i18n";
 
 export const cheshireCatInexplicable: CharacterCard = {
@@ -34,13 +35,7 @@ export const cheshireCatInexplicable: CharacterCard = {
   ],
   classifications: ["Storyborn", "Whisper"],
   abilities: [
-    {
-      id: "akT-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 2,
-      text: "Boost 2 {I}",
-    },
+    boost(2),
     {
       id: "akT-2",
       name: "IT'S LOADS OF FUN",

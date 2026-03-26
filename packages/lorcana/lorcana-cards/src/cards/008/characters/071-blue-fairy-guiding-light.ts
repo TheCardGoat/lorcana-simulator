@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { blueFairyGuidingLightI18n } from "./071-blue-fairy-guiding-light.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { support } from "../../../helpers/abilities/support";
 
 export const blueFairyGuidingLight: CharacterCard = {
   id: "IbB",
@@ -32,18 +34,8 @@ export const blueFairyGuidingLight: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Fairy"],
   abilities: [
-    {
-      id: "1iq-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-    {
-      id: "1iq-2",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
+    evasive,
+    support,
     {
       id: "1iq-3",
       type: "triggered",

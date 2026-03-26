@@ -107,6 +107,8 @@ export interface TurnMetadata {
   charactersQuesting: CardInstanceId[];
   /** Card instance IDs inked this turn (one per turn by default; supports "second inkwell" effects) */
   inkedThisTurn: CardInstanceId[];
+  /** Card instance IDs put into any inkwell this turn, including effect-based moves */
+  cardsPutIntoInkwellThisTurn: CardInstanceId[];
   /** Additional hand-to-inkwell actions allowed for the active player this turn */
   additionalInkwellActions?: number;
   /** Top cards that were played using Shift this turn */
@@ -165,6 +167,13 @@ export interface TemporaryRestrictionPayload {
   type: string;
   sourceId?: CardInstanceId;
   activeWhileSourceInPlay?: boolean;
+  /**
+   * A condition that must be met for the restriction to be active.
+   * When present, the restriction is only enforced while the condition evaluates to true.
+   * For example, `{ type: "not", condition: { type: "at-location" } }` means
+   * the restriction is inactive when the card is at a location.
+   */
+  condition?: { type: string; [key: string]: unknown };
 }
 
 export interface TemporaryKeywordPayload {
@@ -554,6 +563,7 @@ export function createInitialLorcanaG(player1Id: PlayerId, player2Id: PlayerId):
       cardsPlayedThisTurn: [],
       charactersQuesting: [],
       inkedThisTurn: [],
+      cardsPutIntoInkwellThisTurn: [],
       additionalInkwellActions: 0,
       shiftPlayedThisTurn: [],
       challengesByPlayerThisTurn: {},

@@ -1,37 +1,32 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { clarabelleNewsReporter } from "@lorcanito/lorcana-engine/cards/007/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Clarabelle - Journalist", () => {
-//   It.skip("SUPPORT (When this character is sent on an adventure, you can add its {S} to that of another character of your choice for the rest of this turn.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: clarabelleNewsReporter.cost,
-//       Play: [clarabelleNewsReporter],
-//       Hand: [clarabelleNewsReporter],
-//     });
-//
-//     Await testEngine.playCard(clarabelleNewsReporter);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-//
-//   It.skip("SCOOP Your other characters with Support gain +1 {S}.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: clarabelleNewsReporter.cost,
-//       Play: [clarabelleNewsReporter],
-//       Hand: [clarabelleNewsReporter],
-//     });
-//
-//     Await testEngine.playCard(clarabelleNewsReporter);
-//
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { helpingHand } from "../../006/actions/164-helping-hand";
+import { clarabelleNewsReporter } from "./153-clarabelle-news-reporter";
+const quester = createMockCharacter({
+  id: "clarabelle-quester",
+  name: "Quester",
+  cost: 2,
+  strength: 1,
+  willpower: 2,
+  lore: 1,
+});
+
+describe("Clarabelle - News Reporter", () => {
+  it("regression: BREAKING STORY grants +1 strength to characters that gain Support from other sources", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [
+        { card: clarabelleNewsReporter, isDrying: false },
+        { card: quester, isDrying: false },
+      ],
+      hand: [helpingHand],
+      inkwell: helpingHand.cost,
+      deck: 5,
+    });
+
+    expect(
+      testEngine.asPlayerOne().playCard(helpingHand, { targets: [quester] }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().hasKeyword(quester, "Support")).toBe(true);
+    expect(testEngine.asPlayerOne().getCardStrength(quester)).toBe(2);
+  });
+});

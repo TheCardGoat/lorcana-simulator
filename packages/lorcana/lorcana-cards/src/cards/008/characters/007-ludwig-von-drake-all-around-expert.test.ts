@@ -46,6 +46,7 @@ describe("Ludwig Von Drake - All-Around Expert", () => {
         testEngine.asPlayerOne().playCard(ludwigVonDrakeAllaroundExpert),
       ).toBeSuccessfulCommand();
 
+      expect(testEngine.asPlayerOne().resolveOnlyBag()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().respondWith(actionCardId)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(healingGlow)).toBe("discard");

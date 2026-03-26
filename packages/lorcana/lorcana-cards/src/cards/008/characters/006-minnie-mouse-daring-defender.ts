@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { minnieMouseDaringDefenderI18n } from "./006-minnie-mouse-daring-defender.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const minnieMouseDaringDefender: CharacterCard = {
   id: "t5R",
@@ -32,20 +33,18 @@ export const minnieMouseDaringDefender: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero"],
   abilities: [
-    {
-      id: "7k3-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
-        modifier: 1,
+        modifier: {
+          type: "damage-on-self",
+        },
         stat: "strength",
         target: "SELF",
         type: "modify-stat",
       },
       id: "7k3-2",
+      name: "TRUE VALOR",
       text: "TRUE VALOR This character gets +1 {S} for each 1 damage on her.",
       type: "static",
     },

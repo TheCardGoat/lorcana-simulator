@@ -36,7 +36,7 @@ describe("Ursula's Cauldron", () => {
 
     expect(
       testEngine.asPlayerOne().resolvePendingEffect(ursulasCauldron, {
-        destinations: [{ zone: "deck-bottom", cards: [topDeckCard, secondDeckCard] }],
+        destinations: [{ zone: "deck-bottom", cards: [secondDeckCard, bottomDeckCard] }],
       }),
     ).toMatchObject({
       success: false,
@@ -63,17 +63,17 @@ describe("Ursula's Cauldron", () => {
     expect(
       testEngine.asPlayerOne().resolvePendingEffect(ursulasCauldron, {
         destinations: [
-          { zone: "deck-top", cards: [secondDeckCard] },
-          { zone: "deck-bottom", cards: [topDeckCard] },
+          { zone: "deck-top", cards: [bottomDeckCard] },
+          { zone: "deck-bottom", cards: [secondDeckCard] },
         ],
       }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
-      bottomDeckCard.id,
       secondDeckCard.id,
       topDeckCard.id,
+      bottomDeckCard.id,
     ]);
   });
 });

@@ -28,7 +28,7 @@ describe("Elsa - Ice Maker (Epic)", () => {
           deck: 3,
         },
         {
-          play: [{ card: opponentCharacter, exerted: true }],
+          play: [opponentCharacter],
           deck: 3,
         },
       );

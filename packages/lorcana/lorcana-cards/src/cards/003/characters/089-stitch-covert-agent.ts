@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { stitchCovertAgentI18n } from "./089-stitch-covert-agent.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const stitchCovertAgent: CharacterCard = {
   id: "uqB",
@@ -33,12 +34,7 @@ export const stitchCovertAgent: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Alien"],
   abilities: [
-    {
-      id: "1c3-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       condition: {
         type: "at-location",

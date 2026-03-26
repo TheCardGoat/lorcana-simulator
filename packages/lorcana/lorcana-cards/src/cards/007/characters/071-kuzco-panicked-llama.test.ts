@@ -94,5 +94,44 @@ describe("Kuzco - Panicked Llama", () => {
         expect.objectContaining({ discard: 1 }),
       );
     });
+
+    it("regression: discard mode fully resolves for both players (doesn't skip discard resolution)", () => {
+      const handCardP1 = createMockCharacter({
+        id: "kuzco-regression-hand-p1",
+        name: "P1 Hand Card",
+        cost: 1,
+      });
+      const handCardP2 = createMockCharacter({
+        id: "kuzco-regression-hand-p2",
+        name: "P2 Hand Card",
+        cost: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        { deck: 3, hand: [handCardP1] },
+        { deck: 3, play: [kuzcoPanickedLlama], hand: [handCardP2] },
+      );
+
+      // Pass P1's turn -> P2's turn starts, WE CAN FIGURE THIS OUT triggers
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // P2 (controller) resolves bag with mode 1 (discard)
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
+      expect(testEngine.asPlayerTwo().resolveNextBag({ choiceIndex: 1 })).toBeSuccessfulCommand();
+
+      // P2 resolves their pending discard
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({ targets: [handCardP2] }),
+      ).toBeSuccessfulCommand();
+
+      // P1 resolves their pending discard
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [handCardP1] }),
+      ).toBeSuccessfulCommand();
+
+      // Both cards should be in discard
+      expect(testEngine.asPlayerOne().getCardZone(handCardP1)).toBe("discard");
+      expect(testEngine.asPlayerTwo().getCardZone(handCardP2)).toBe("discard");
+    });
   });
 });

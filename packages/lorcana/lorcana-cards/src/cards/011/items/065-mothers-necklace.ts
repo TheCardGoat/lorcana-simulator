@@ -35,29 +35,26 @@ export const mothersNecklace: ItemCard = {
         on: "YOU",
         timing: "at",
       },
+      condition: {
+        type: "turn-metric",
+        metric: "challenges-by-player",
+        comparison: {
+          operator: "eq",
+          value: 0,
+        },
+        playerScope: "you",
+      },
       effect: {
-        condition: {
-          type: "turn-metric",
-          metric: "challenges-by-player",
-          comparison: {
-            operator: "eq",
-            value: 0,
-          },
-          playerScope: "you",
+        keyword: "Evasive",
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          owner: "you",
+          selector: "chosen",
+          zones: ["play"],
         },
-        then: {
-          keyword: "Evasive",
-          target: {
-            cardTypes: ["character"],
-            count: 1,
-            owner: "you",
-            selector: "chosen",
-            zones: ["play"],
-          },
-          type: "gain-keyword",
-          duration: "until-start-of-next-turn",
-        },
-        type: "conditional",
+        type: "gain-keyword",
+        duration: "until-start-of-next-turn",
       },
       text: "PRECIOUS GIFT At the end of your turn, if none of your characters challenged this turn, chosen character of yours gains Evasive until the start of your next turn.",
     },

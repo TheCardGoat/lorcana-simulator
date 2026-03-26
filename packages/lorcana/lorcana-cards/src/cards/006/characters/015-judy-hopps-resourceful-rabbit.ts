@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { judyHoppsResourcefulRabbitI18n } from "./015-judy-hopps-resourceful-rabbit.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const judyHoppsResourcefulRabbit: CharacterCard = {
   id: "Z78",
@@ -33,12 +34,7 @@ export const judyHoppsResourcefulRabbit: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "1r5-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         chooser: "CONTROLLER",

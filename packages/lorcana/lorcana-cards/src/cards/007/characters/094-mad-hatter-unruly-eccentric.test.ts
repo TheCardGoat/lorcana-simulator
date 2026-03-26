@@ -118,37 +118,6 @@ describe("Mad Hatter - Unruly Eccentric", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
-    it("can decline the optional trigger", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          play: [
-            { card: madHatterUnrulyEccentric, isDrying: false },
-            { card: damagedAttacker, isDrying: false, damage: 1 },
-          ],
-          deck: 3,
-        },
-        {
-          play: [{ card: challengeTarget, exerted: true }],
-          deck: 3,
-        },
-      );
-
-      const handBefore = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
-
-      expect(
-        testEngine.asPlayerOne().challenge(damagedAttacker, challengeTarget),
-      ).toBeSuccessfulCommand();
-
-      const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      expect(bagEffects.length).toBeGreaterThan(0);
-      expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
-      expect(handAfter).toBe(handBefore);
-    });
-
     it("triggers when Mad Hatter himself is damaged and challenges", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

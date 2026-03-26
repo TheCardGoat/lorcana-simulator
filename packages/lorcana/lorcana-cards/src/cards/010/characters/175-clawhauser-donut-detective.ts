@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { challenger } from "../../../helpers/abilities/challenger";
 import { clawhauserDonutDetectiveI18n } from "./175-clawhauser-donut-detective.i18n";
 
 export const clawhauserDonutDetective: CharacterCard = {
@@ -24,14 +25,6 @@ export const clawhauserDonutDetective: CharacterCard = {
   },
   text: "Challenger +2",
   classifications: ["Dreamborn", "Ally", "Detective"],
-  abilities: [
-    {
-      id: "1ur-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2",
-    },
-  ],
+  abilities: [challenger(2)],
   i18n: clawhauserDonutDetectiveI18n,
 };

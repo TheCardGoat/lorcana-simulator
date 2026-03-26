@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rayaUnstoppableForceI18n } from "./193-raya-unstoppable-force.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const rayaUnstoppableForce: CharacterCard = {
   id: "u57",
@@ -37,20 +39,8 @@ export const rayaUnstoppableForce: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "jk9-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2",
-    },
-    {
-      id: "jk9-2",
-      keyword: "Resist",
-      type: "keyword",
-      value: 2,
-      text: "Resist +2",
-    },
+    challenger(2),
+    resist(2),
     {
       id: "jk9-3",
       effect: {
@@ -64,9 +54,10 @@ export const rayaUnstoppableForce: CharacterCard = {
       },
       name: "YOU GAVE IT YOUR BEST",
       trigger: {
-        event: "banish",
-        on: "OPPONENT_CHARACTERS",
+        event: "banish-in-challenge",
+        on: "SELF",
         timing: "whenever",
+        restrictions: [{ type: "during-turn", whose: "your" }],
       },
       type: "triggered",
       text: "YOU GAVE IT YOUR BEST During your turn, whenever this character banishes another character in a challenge, you may draw a card.",

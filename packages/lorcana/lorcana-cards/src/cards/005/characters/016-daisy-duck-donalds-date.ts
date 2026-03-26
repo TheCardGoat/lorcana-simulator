@@ -34,60 +34,30 @@ export const daisyDuckDonaldsDate: CharacterCard = {
       id: "czn-1",
       name: "BIG PRIZE",
       text: "BIG PRIZE Whenever this character quests, each opponent reveals the top card of their deck. If it's a character card, they may put it into their hand. Otherwise, they put it on the bottom of their deck.",
+      type: "triggered",
       trigger: {
         event: "quest",
         on: "SELF",
         timing: "whenever",
       },
-      type: "triggered",
       effect: {
-        type: "sequence",
-        steps: [
+        type: "scry",
+        amount: 1,
+        target: "EACH_OPPONENT",
+        chooser: "OPPONENT",
+        revealAll: true,
+        destinations: [
           {
-            type: "reveal-top-card",
-            target: "EACH_OPPONENT",
+            zone: "hand",
+            min: 0,
+            max: 1,
+            filter: { type: "card-type", cardType: "character" },
+            reveal: true,
           },
           {
-            type: "conditional",
-            condition: {
-              type: "target-query",
-              query: {
-                selector: "all",
-                reference: "revealed-first",
-                cardType: "character",
-              },
-              comparison: {
-                operator: "gte",
-                value: 1,
-              },
-            },
-            then: {
-              type: "choice",
-              chooser: "OPPONENT",
-              options: [
-                {
-                  type: "put-in-hand",
-                  source: "revealed",
-                  target: "OPPONENT",
-                },
-                {
-                  type: "put-on-bottom",
-                  target: {
-                    selector: "chosen",
-                    count: 1,
-                    reference: "revealed-first",
-                  },
-                },
-              ],
-            },
-            else: {
-              type: "put-on-bottom",
-              target: {
-                selector: "chosen",
-                count: 1,
-                reference: "revealed-first",
-              },
-            },
+            zone: "deck-bottom",
+            remainder: true,
+            reveal: true,
           },
         ],
       },

@@ -79,6 +79,9 @@ export type {
   RedirectDamageEffect,
   RepeatEffect,
   RevealAndConditionalEffect,
+  RevealAndRouteEffect,
+  RevealRoute,
+  RevealRouteDestination,
   SequenceEffect,
 } from "./control-flow";
 
@@ -102,6 +105,7 @@ export type {
   RevealHandEffect,
   RevealTopCardEffect,
   SearchDeckEffect,
+  SelfPlayConditionEffect,
   StatFloorEffect,
   SetStatEffect,
   WinConditionEffect,

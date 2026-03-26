@@ -40,6 +40,40 @@ describe("Blessed Bagpipes", () => {
     expect(testEngine.getCardsUnder(megaraSecretKeeper)).toEqual([storedCardId]);
   });
 
+  it("regression: BATTLE ANTHEM should NOT trigger when challenging character has no cards under", () => {
+    // Bug: Blessed Bagpipes was triggering on every challenge, not just when
+    // the challenged character has cards under it.
+    const charWithoutCardsUnder = createMockCharacter({
+      id: "bagpipes-no-cards-under",
+      name: "Character Without Cards Under",
+      cost: 3,
+      strength: 3,
+      willpower: 5,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [blessedBagpipes, { card: charWithoutCardsUnder, exerted: true }],
+        deck: 5,
+      },
+      {
+        play: [opponentAttacker],
+        deck: 1,
+      },
+    );
+
+    // Pass to player two's turn
+    expect(testEngine.asServer().manualPassTurn()).toBeSuccessfulCommand();
+
+    // Opponent challenges our character that has NO cards under it
+    const attackerId = testEngine.findCardInstanceId(opponentAttacker, "play", PLAYER_TWO);
+    const defenderId = testEngine.findCardInstanceId(charWithoutCardsUnder, "play", PLAYER_ONE);
+    expect(testEngine.asPlayerTwo().challenge(attackerId, defenderId)).toBeSuccessfulCommand();
+
+    // BATTLE ANTHEM should NOT have triggered because the challenged character has no cards under
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+  });
+
   it("gains 1 lore when one of your characters with a card under it is challenged", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {

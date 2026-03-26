@@ -24,4 +24,23 @@ describe("Ohana Means Family", () => {
     expect(testEngine.asPlayerOne().getDamage(goofyKnightForADay)).toBe(0);
     expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(3);
   });
+
+  it("draws no cards if character has no damage", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [ohanaMeansFamily],
+      inkwell: ohanaMeansFamily.cost,
+      play: [goofyKnightForADay],
+      deck: [heiheiBoatSnack, mickeyMouseTrueFriend, simbaProtectiveCub],
+    });
+
+    expect(
+      testEngine.asPlayerOne().playCard(ohanaMeansFamily, {
+        targets: [goofyKnightForADay],
+      }).success,
+    ).toBe(true);
+
+    expect(testEngine.asPlayerOne().getDamage(goofyKnightForADay)).toBe(0);
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+    expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(3);
+  });
 });

@@ -5,6 +5,7 @@ import {
   type PlayCardExecutionContext,
 } from "./action-effects/types";
 import { resolveActionEffect } from "./action-effects/composed-effect-resolver";
+import { evaluateActionCondition } from "./action-effects/action-condition-evaluator";
 import { resolveRecordedVanishTargets } from "./action-effects/vanish";
 import { emitBeChosenEvents } from "../effects/be-chosen";
 
@@ -27,6 +28,12 @@ export function resolveActionCardEffects(
 
   for (const ability of actionCard.abilities ?? []) {
     if (ability.type !== "action") {
+      continue;
+    }
+    if (
+      ability.condition &&
+      !evaluateActionCondition(ability.condition, ctx, cardPlayed, effectiveResolutionInput)
+    ) {
       continue;
     }
     const result = resolveActionEffect(ctx, cardPlayed, ability.effect, effectiveResolutionInput, {

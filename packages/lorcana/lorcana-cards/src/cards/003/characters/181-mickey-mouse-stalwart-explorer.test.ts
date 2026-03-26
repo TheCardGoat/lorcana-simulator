@@ -1,24 +1,71 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, it } from "@jest/globals";
-// Import { mickeyMouseStalwartExplorer } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Mickey Mouse - Stalwart Explorer", () => {
-//   It.skip("**LET'S TAKE A LOOK** This character gets +1 {S} for each location you have in play.", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: mickeyMouseStalwartExplorer.cost,
-//       Play: [mickeyMouseStalwartExplorer],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(mickeyMouseStalwartExplorer);
-//
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveOptionalAbility();
-//     TestStore.resolveTopOfStack({});
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockLocation } from "@tcg/lorcana-engine/testing";
+import { mickeyMouseStalwartExplorer } from "./181-mickey-mouse-stalwart-explorer";
+
+const myLocation = createMockLocation({
+  id: "stalwart-explorer-location-1",
+  name: "Treasure Planet",
+  cost: 2,
+  willpower: 4,
+  lore: 1,
+});
+
+const myLocation2 = createMockLocation({
+  id: "stalwart-explorer-location-2",
+  name: "Treasure Island",
+  cost: 2,
+  willpower: 4,
+  lore: 1,
+});
+
+const opponentLocation = createMockLocation({
+  id: "stalwart-explorer-opp-location",
+  name: "Opponent Location",
+  cost: 2,
+  willpower: 4,
+  lore: 1,
+});
+
+describe("Mickey Mouse - Stalwart Explorer", () => {
+  describe("LET'S TAKE A LOOK - +1 strength per location", () => {
+    it("has no strength bonus when no locations are in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mickeyMouseStalwartExplorer],
+        deck: 5,
+      });
+
+      const card = testEngine.asPlayerOne().getCard(mickeyMouseStalwartExplorer);
+      expect(card.strength).toBe(mickeyMouseStalwartExplorer.strength);
+    });
+
+    it("gets +1 strength with 1 location in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mickeyMouseStalwartExplorer, myLocation],
+        deck: 5,
+      });
+
+      const card = testEngine.asPlayerOne().getCard(mickeyMouseStalwartExplorer);
+      expect(card.strength).toBe(mickeyMouseStalwartExplorer.strength + 1);
+    });
+
+    it("gets +2 strength with 2 locations in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mickeyMouseStalwartExplorer, myLocation, myLocation2],
+        deck: 5,
+      });
+
+      const card = testEngine.asPlayerOne().getCard(mickeyMouseStalwartExplorer);
+      expect(card.strength).toBe(mickeyMouseStalwartExplorer.strength + 2);
+    });
+
+    it("does not count opponent's locations", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        { play: [mickeyMouseStalwartExplorer], deck: 5 },
+        { play: [opponentLocation], deck: 5 },
+      );
+
+      const card = testEngine.asPlayerOne().getCard(mickeyMouseStalwartExplorer);
+      expect(card.strength).toBe(mickeyMouseStalwartExplorer.strength);
+    });
+  });
+});

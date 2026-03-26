@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { naniProtectiveSisterI18n } from "./017-nani-protective-sister.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const naniProtectiveSister: CharacterCard = {
   id: "UJ6",
@@ -24,13 +25,6 @@ export const naniProtectiveSister: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "1fn-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: naniProtectiveSisterI18n,
 };

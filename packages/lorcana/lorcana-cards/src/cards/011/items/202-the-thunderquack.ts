@@ -55,17 +55,14 @@ export const theThunderquack: ItemCard = {
       cost: {
         exert: true,
       },
+      condition: {
+        type: "banished-in-challenge-this-turn",
+        owner: "any",
+      },
       effect: {
-        type: "conditional",
-        condition: {
-          type: "banished-in-challenge-this-turn",
-          owner: "any",
-        },
-        then: {
-          type: "gain-lore",
-          amount: 1,
-          target: "CONTROLLER",
-        },
+        type: "gain-lore",
+        amount: 1,
+        target: "CONTROLLER",
       },
       text: "LAY OF THE LAND {E} — If a character was banished in a challenge this turn, gain 1 lore.",
     },

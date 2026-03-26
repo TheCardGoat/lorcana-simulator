@@ -31,14 +31,20 @@ export const rapunzelAppreciativeArtist: CharacterCard = {
   classifications: ["Dreamborn", "Hero", "Princess"],
   abilities: [
     {
+      condition: {
+        type: "has-named-character",
+        name: "Pascal",
+        controller: "you",
+      },
       effect: {
         keyword: "Ward",
         target: "SELF",
         type: "gain-keyword",
       },
       id: "1qj-1",
+      name: "PERCEPTIVE PARTNER",
       text: "PERCEPTIVE PARTNER While you have a character named Pascal in play, this character gains Ward.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: rapunzelAppreciativeArtistI18n,

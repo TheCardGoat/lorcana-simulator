@@ -46,7 +46,7 @@ describe("Mushu's Rocket", () => {
   it("banishes itself to give the chosen character Rush", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
-        inkwell: 1,
+        inkwell: 2,
         play: [mushusRocket, { card: freshAlly, isDrying: true }],
       },
       {
@@ -57,7 +57,7 @@ describe("Mushu's Rocket", () => {
     expect(testEngine.asPlayerOne().canChallenge(freshAlly, challengeDummy)).toBe(false);
     expect(
       testEngine.asPlayerOne().activateAbility(mushusRocket, {
-        ability: "HITCH A RIDE 2",
+        ability: "HITCH A RIDE",
         targets: [freshAlly],
       }),
     ).toBeSuccessfulCommand();

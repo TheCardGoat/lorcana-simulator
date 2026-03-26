@@ -61,6 +61,9 @@ export const negaduckPublicEnemyNumberOne: CharacterCard = {
       },
       name: "STICKY FINGERS",
       trigger: {
+        defender: {
+          controller: "opponent",
+        },
         event: "challenge",
         on: "SELF",
         timing: "whenever",

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rollyHungryPupI18n } from "./021-rolly-hungry-pup.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const rollyHungryPup: CharacterCard = {
   id: "5D2",
@@ -24,13 +25,6 @@ export const rollyHungryPup: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Puppy"],
-  abilities: [
-    {
-      id: "evp-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: rollyHungryPupI18n,
 };

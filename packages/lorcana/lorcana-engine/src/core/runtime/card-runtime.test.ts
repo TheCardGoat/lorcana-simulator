@@ -1,7 +1,13 @@
 import { describe, expect, it } from "bun:test";
 import { createPlayerId } from "../types";
 import { createCardQueryAPI } from "./card-runtime";
+import { createCardRuntimeAPI } from "./match-runtime.framework-api";
 import { createRecordCardCatalog, createRecordCardInstanceRegistry } from "./static-resources";
+import {
+  createStateScopedValueCache,
+  getOrBuildStateScopedValue,
+  getStateScopedValueCacheStats,
+} from "./state-scoped-value-cache";
 import { createInitialTCGCtx } from "./types";
 import type { MatchState } from "./types";
 import type { ZoneConfig } from "./match-runtime.types";
@@ -216,5 +222,244 @@ describe("card-runtime", () => {
         `${card.instanceId}:${card.definitionId}:${(card as unknown as { isOwnedByActor: () => boolean }).isOwnedByActor()}`,
     );
     expect(projected).toEqual(["c1:alpha:true", "c2:beta:true"]);
+  });
+
+  it("reuses the same runtime card object within one query context", () => {
+    const ctx = createInitialTCGCtx({
+      matchID: "match-3",
+      gameID: "lorcana",
+      rulesetHash: "ruleset-3",
+    });
+
+    ctx.zones.zoneDefs["play:p1"] = {
+      id: "play:p1",
+      name: "Play p1",
+      visibility: "public",
+      ordered: false,
+      ownerScoped: true,
+    };
+    ctx.zones.private.zoneCards["play:p1"] = ["c1"];
+    ctx.zones.private.cardIndex.c1 = {
+      zoneKey: "play:p1",
+      index: 0,
+      ownerID: createPlayerId("p1"),
+      controllerID: createPlayerId("p1"),
+    };
+
+    const state = {
+      G: { ok: true },
+      ctx,
+    } as unknown as MatchState;
+
+    const cards = createCardQueryAPI(
+      state,
+      {
+        zoneDefinitions: testZones,
+        cards: createRecordCardCatalog("cards:test", {
+          alpha: {
+            id: "alpha",
+            canonicalId: "alpha",
+            name: "Alpha Unit",
+            cardType: "unit",
+          } as unknown as BaseCardDefinition,
+        }),
+        instances: createRecordCardInstanceRegistry("instances:test", {
+          c1: {
+            instanceId: "c1",
+            definitionId: "alpha",
+            ownerID: "p1",
+          },
+        }),
+      },
+      {
+        actorPlayerId: "p1",
+        deriveRuntimeCard: ({ card }) => ({
+          ownerSnapshot: card.ownerID,
+        }),
+      },
+    );
+
+    const fromGet = cards.get("c1");
+    const fromRequire = cards.require("c1");
+    const fromZone = cards.inZone("play:p1")[0];
+    const fromQuery = cards.queryRuntime({ zones: ["play"] })[0];
+
+    expect(fromGet).toBeDefined();
+    expect(fromGet).toBe(fromRequire);
+    expect(fromRequire).toBe(fromZone);
+    expect(fromZone).toBe(fromQuery);
+  });
+
+  it("reuses derived payloads across query contexts for the same state+actor and resets on actor/state changes", () => {
+    const ctx = createInitialTCGCtx({
+      matchID: "match-4",
+      gameID: "lorcana",
+      rulesetHash: "ruleset-4",
+    });
+
+    ctx._stateID = 7;
+    ctx.zones.zoneDefs["play:p1"] = {
+      id: "play:p1",
+      name: "Play p1",
+      visibility: "public",
+      ordered: false,
+      ownerScoped: true,
+    };
+    ctx.zones.private.zoneCards["play:p1"] = ["c1"];
+    ctx.zones.private.cardIndex.c1 = {
+      zoneKey: "play:p1",
+      index: 0,
+      ownerID: createPlayerId("p1"),
+      controllerID: createPlayerId("p1"),
+    };
+
+    const state = {
+      G: { ok: true },
+      ctx,
+    } as unknown as MatchState;
+
+    const staticResources = {
+      zoneDefinitions: testZones,
+      cards: createRecordCardCatalog("cards:test", {
+        alpha: {
+          id: "alpha",
+          canonicalId: "alpha",
+          name: "Alpha Unit",
+          cardType: "unit",
+        } as unknown as BaseCardDefinition,
+      }),
+      instances: createRecordCardInstanceRegistry("instances:test", {
+        c1: {
+          instanceId: "c1",
+          definitionId: "alpha",
+          ownerID: "p1",
+        },
+      }),
+    };
+
+    let deriveCalls = 0;
+    const runtimeCardCache = createStateScopedValueCache<unknown>();
+    const makeCards = (actorPlayerId?: string, sourceState: MatchState = state) =>
+      createCardQueryAPI(sourceState, staticResources, {
+        actorPlayerId,
+        runtimeCardCache,
+        deriveRuntimeCard: ({ actorPlayerId: actorId, runtimeCardCache: sharedCache, cardId }) => {
+          const cached = getOrBuildStateScopedValue({
+            cache: sharedCache!,
+            stateID: sourceState.ctx._stateID,
+            actorKey: actorId,
+            cardId,
+            build: () => {
+              deriveCalls += 1;
+              return { seenBy: actorId ?? "system" };
+            },
+          });
+          return cached as { seenBy: string };
+        },
+      });
+
+    makeCards("p1").require("c1");
+    expect(deriveCalls).toBe(1);
+    expect(getStateScopedValueCacheStats(runtimeCardCache)).toMatchObject({
+      stateID: 7,
+      hits: 0,
+      misses: 1,
+    });
+
+    makeCards("p1").require("c1");
+    expect(deriveCalls).toBe(1);
+    expect(getStateScopedValueCacheStats(runtimeCardCache)).toMatchObject({
+      stateID: 7,
+      hits: 1,
+      misses: 1,
+    });
+
+    makeCards("p2").require("c1");
+    expect(deriveCalls).toBe(2);
+    expect(getStateScopedValueCacheStats(runtimeCardCache)).toMatchObject({
+      stateID: 7,
+      hits: 1,
+      misses: 2,
+    });
+
+    const nextState = {
+      ...state,
+      ctx: {
+        ...state.ctx,
+        _stateID: 8,
+      },
+    } as MatchState;
+    makeCards("p1", nextState).require("c1");
+    expect(deriveCalls).toBe(3);
+    expect(getStateScopedValueCacheStats(runtimeCardCache)).toMatchObject({
+      stateID: 8,
+      hits: 0,
+      misses: 1,
+    });
+  });
+
+  it("does not reuse stale runtime card views in write contexts", () => {
+    const ctx = createInitialTCGCtx({
+      matchID: "match-5",
+      gameID: "lorcana",
+      rulesetHash: "ruleset-5",
+    });
+
+    ctx.zones.zoneDefs["play:p1"] = {
+      id: "play:p1",
+      name: "Play p1",
+      visibility: "public",
+      ordered: false,
+      ownerScoped: true,
+    };
+    ctx.zones.private.zoneCards["play:p1"] = ["c1"];
+    ctx.zones.private.cardIndex.c1 = {
+      zoneKey: "play:p1",
+      index: 0,
+      ownerID: createPlayerId("p1"),
+      controllerID: createPlayerId("p1"),
+    };
+    ctx.zones.private.cardMeta.c1 = { damage: 1 };
+
+    const state = {
+      G: { ok: true },
+      ctx,
+    } as unknown as MatchState;
+
+    const cardsApi = createCardQueryAPI(
+      state,
+      {
+        zoneDefinitions: testZones,
+        cards: createRecordCardCatalog("cards:test", {
+          alpha: {
+            id: "alpha",
+            canonicalId: "alpha",
+            name: "Alpha Unit",
+            cardType: "unit",
+          } as unknown as BaseCardDefinition,
+        }),
+        instances: createRecordCardInstanceRegistry("instances:test", {
+          c1: {
+            instanceId: "c1",
+            definitionId: "alpha",
+            ownerID: "p1",
+          },
+        }),
+      },
+      {
+        cacheViews: false,
+        deriveRuntimeCard: ({ card }) => ({
+          damageSnapshot: card.meta.damage ?? 0,
+        }),
+      },
+    );
+    const runtimeCards = createCardRuntimeAPI(state as never, cardsApi);
+
+    expect(runtimeCards.require("c1").meta.damage).toBe(1);
+    runtimeCards.patchMeta("c1", { damage: 4 });
+    expect(runtimeCards.require("c1").meta.damage).toBe(4);
+    expect(
+      (runtimeCards.require("c1") as unknown as { damageSnapshot: number }).damageSnapshot,
+    ).toBe(4);
   });
 });

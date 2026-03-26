@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { angelSirenSingerI18n } from "./025-angel-siren-singer.i18n";
+import { underdog } from "../../../helpers/abilities/underdog";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const angelSirenSinger: CharacterCard = {
   id: "FwE",
@@ -33,27 +35,6 @@ export const angelSirenSinger: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Alien"],
-  abilities: [
-    {
-      id: "izw-1",
-      name: "UNDERDOG",
-      type: "static",
-      condition: {
-        type: "first-turn-non-otp",
-      },
-      effect: {
-        type: "cost-reduction",
-        amount: 1,
-      },
-      text: "UNDERDOG If this is your first turn and you're not the first player, you pay 1 {I} less to play this character.",
-    },
-    {
-      id: "izw-2",
-      keyword: "Singer",
-      type: "keyword",
-      value: 3,
-      text: "Singer 3",
-    },
-  ],
+  abilities: [underdog, singer(3)],
   i18n: angelSirenSingerI18n,
 };

@@ -97,7 +97,7 @@ const desktopRatio = $derived(
       min(
         var(--board-max-width, 1600px),
         calc(100vw * 0.9),
-        calc(100vh * 0.9 * var(--board-aspect-w, 3) / var(--board-aspect-h, 2))
+        calc(100dvh * 0.9 * var(--board-aspect-w, 3) / var(--board-aspect-h, 2))
       )
     );
     max-width: var(--board-max-width, 1600px);
@@ -113,7 +113,7 @@ const desktopRatio = $derived(
           var(--board-max-width, 1600px),
           calc(100vw * 0.95),
           calc(
-            100vh *
+            100dvh *
             0.95 *
             var(--board-mobile-aspect-w, 9) /
             var(--board-mobile-aspect-h, 16)
@@ -133,7 +133,7 @@ const desktopRatio = $derived(
           var(--board-max-width, 1600px),
           calc(100vw * 0.9),
           calc(
-            100vh *
+            100dvh *
             0.9 *
             var(--board-desktop-aspect-w, 16) /
             var(--board-desktop-aspect-h, 9)

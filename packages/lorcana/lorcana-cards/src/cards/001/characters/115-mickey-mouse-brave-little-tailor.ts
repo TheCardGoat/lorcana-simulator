@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mickeyMouseBraveLittleTailorI18n } from "./115-mickey-mouse-brave-little-tailor.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const mickeyMouseBraveLittleTailor: CharacterCard = {
   id: "vrS",
@@ -23,13 +24,6 @@ export const mickeyMouseBraveLittleTailor: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Dreamborn", "Hero"],
-  abilities: [
-    {
-      id: "a81-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: mickeyMouseBraveLittleTailorI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { boltSuperdogI18n } from "./004-bolt-superdog.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const boltSuperdog: CharacterCard = {
   id: "xfP",
@@ -38,15 +39,7 @@ export const boltSuperdog: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      id: "xfP-1",
-      keyword: "Shift",
-      type: "keyword",
-      cost: {
-        ink: 3,
-      },
-      text: "Shift 3",
-    },
+    shift(3),
     {
       id: "xfP-2",
       name: "MARK OF POWER",

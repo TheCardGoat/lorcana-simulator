@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mauiSnowSliderI18n } from "./109-maui-snow-slider.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const mauiSnowSlider: CharacterCard = {
   id: "1ji",
@@ -24,13 +25,6 @@ export const mauiSnowSlider: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Hero", "Deity"],
-  abilities: [
-    {
-      id: "7r1-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: mauiSnowSliderI18n,
 };

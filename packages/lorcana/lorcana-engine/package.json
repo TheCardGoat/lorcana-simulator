@@ -25,6 +25,10 @@
     "./testing": {
       "types": "./src/testing/index.ts",
       "default": "./src/testing/index.ts"
+    },
+    "./testing/matchers": {
+      "types": "./src/testing/matchers.d.ts",
+      "default": "./src/testing/matchers.d.ts"
     }
   },
   "scripts": {

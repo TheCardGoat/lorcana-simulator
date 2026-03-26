@@ -17,7 +17,7 @@ import {
 } from "#core";
 import type { CardInput } from "./types";
 import { lorcanaRuntimeConfig } from "./runtime-game";
-import type { LorcanaG, LorcanaMatchState, LorcanaProjectedBoardView } from "./types";
+import type { LorcanaMatchState, LorcanaProjectedBoardView } from "./types";
 import { type LorcanaBaseEngineParams } from "./engine-initialization";
 
 type LorcanaClientParams = {
@@ -26,6 +26,7 @@ type LorcanaClientParams = {
   transport?: InMemoryTransport;
   identifier?: string;
   debugMode?: boolean;
+  skipOptimisticState?: boolean;
 };
 
 export class LorcanaClient extends LorcanaEngineBase {
@@ -52,6 +53,7 @@ export class LorcanaClient extends LorcanaEngineBase {
       debugMode: params.debugMode ?? false,
       transport: params.transport,
       identifier: params.identifier,
+      skipOptimisticState: params.skipOptimisticState,
     };
 
     this.engine = new ClientEngine(clientEngineConfig);
@@ -78,19 +80,11 @@ export class LorcanaClient extends LorcanaEngineBase {
   }
 
   getBoard(): LorcanaProjectedBoardView {
-    const state = this.engine.getState();
-    if (state && typeof state === "object" && "G" in state && "ctx" in state) {
-      const projected = this.projectState(state as LorcanaMatchState);
-      this.projectedBoard = projected;
-      return projected;
-    }
-
-    return (
-      this.projectedBoard ??
-      this.normalizeProjectedBoardPayload(
-        this.engine.getBoard() as unknown as LorcanaProjectedBoardView,
-      )
+    const board = this.normalizeProjectedBoardPayload(
+      this.engine.getBoard() as unknown as LorcanaProjectedBoardView,
     );
+    this.projectedBoard = board;
+    return board;
   }
 
   protected loadStateViaEngine(state: LorcanaMatchState): void {

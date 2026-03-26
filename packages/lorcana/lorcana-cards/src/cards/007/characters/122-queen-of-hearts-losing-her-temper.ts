@@ -31,6 +31,9 @@ export const queenOfHeartsLosingHerTemper: CharacterCard = {
   classifications: ["Storyborn", "Villain", "Queen"],
   abilities: [
     {
+      condition: {
+        type: "has-any-damage",
+      },
       effect: {
         modifier: 3,
         stat: "strength",

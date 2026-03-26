@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jiminyCricketLevelheadedAndWiseI18n } from "./062-jiminy-cricket-level-headed-and-wise.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const jiminyCricketLevelheadedAndWise: CharacterCard = {
   id: "JE3",
@@ -34,12 +35,7 @@ export const jiminyCricketLevelheadedAndWise: CharacterCard = {
   ],
   classifications: ["Storyborn", "Mentor"],
   abilities: [
-    {
-      id: "1i2-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       condition: {
         type: "is-exerted",

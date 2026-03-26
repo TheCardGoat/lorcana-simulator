@@ -1,5 +1,8 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { archimedesElectrifiedOwlI18n } from "./047-archimedes-electrified-owl.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const archimedesElectrifiedOwl: CharacterCard = {
   id: "IT1",
@@ -34,29 +37,6 @@ export const archimedesElectrifiedOwl: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Ally"],
-  abilities: [
-    {
-      id: "oah-1",
-      cost: {
-        ink: 3,
-      },
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 3",
-    },
-    {
-      id: "oah-2",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-    {
-      id: "oah-3",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 3,
-      text: "Challenger +3",
-    },
-  ],
+  abilities: [shift(3), evasive, challenger(3)],
   i18n: archimedesElectrifiedOwlI18n,
 };

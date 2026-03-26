@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { heraQueenOfTheGodsI18n } from "./076-hera-queen-of-the-gods.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const heraQueenOfTheGods: CharacterCard = {
   id: "vHX",
@@ -37,12 +38,7 @@ export const heraQueenOfTheGods: CharacterCard = {
   ],
   classifications: ["Storyborn", "Queen", "Deity"],
   abilities: [
-    {
-      id: "149-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         keyword: "Ward",

@@ -158,6 +158,8 @@ export function executeCommand(
               endGameTracker,
               lifecyclePlayerId,
               moveLogSink,
+              undefined, // runtimeCardCache
+              true, // useSnapshotForReads: lifecycle hooks only read — no Immer proxy overhead
             ),
         );
 
@@ -169,6 +171,32 @@ export function executeCommand(
             draft.ctx.time.startedAtMs = timestamp;
             draft.ctx.time.running = true;
             draft.ctx.time.pausedReason = undefined;
+          }
+
+          // Dynamic clock bonuses
+          if (draft.ctx.time.mode === "dynamic") {
+            const actorState = draft.ctx.time.players[actingPlayerId];
+            if (actorState) {
+              const cap = draft.ctx.time.config.reserveCapMs;
+
+              // Award per-action bonus for every action
+              const actionBonusMs = draft.ctx.time.config.perActionBonusMs;
+              actorState.actionBonusMsGranted += actionBonusMs;
+              actorState.reserveMsRemaining = Math.min(
+                cap,
+                actorState.reserveMsRemaining + actionBonusMs,
+              );
+
+              // Award turn-pass bonus specifically for passTurn
+              if (command.move === "passTurn") {
+                const turnBonusMs = draft.ctx.time.config.perTurnPassBonusMs;
+                actorState.turnPassBonusMsGranted += turnBonusMs;
+                actorState.reserveMsRemaining = Math.min(
+                  cap,
+                  actorState.reserveMsRemaining + turnBonusMs,
+                );
+              }
+            }
           }
         }
 

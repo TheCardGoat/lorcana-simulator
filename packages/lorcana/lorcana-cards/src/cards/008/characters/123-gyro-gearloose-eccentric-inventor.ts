@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { gyroGearlooseEccentricInventorI18n } from "./123-gyro-gearloose-eccentric-inventor.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const gyroGearlooseEccentricInventor: CharacterCard = {
   id: "mYr",
@@ -33,12 +34,7 @@ export const gyroGearlooseEccentricInventor: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Inventor"],
   abilities: [
-    {
-      id: "1fz-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         duration: "this-turn",

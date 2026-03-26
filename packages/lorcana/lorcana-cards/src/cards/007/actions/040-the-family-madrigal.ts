@@ -39,6 +39,7 @@ export const theFamilyMadrigal: ActionCard = {
                 },
               ],
             },
+            label: "Hand (Madrigal character)",
             max: 1,
             min: 0,
             reveal: true,
@@ -48,6 +49,7 @@ export const theFamilyMadrigal: ActionCard = {
             filter: {
               type: "song",
             },
+            label: "Hand (Song)",
             max: 1,
             min: 0,
             reveal: true,

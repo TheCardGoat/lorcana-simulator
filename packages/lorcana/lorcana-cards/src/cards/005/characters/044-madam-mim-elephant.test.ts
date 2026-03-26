@@ -150,4 +150,22 @@ describe("Madam Mim - Elephant", () => {
       expect(testEngine.asPlayerTwo().getDamage(madamMimElephant)).toBe(2);
     });
   });
+
+  it("regression: self-banishes when no other character of yours can be returned to hand", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: madamMimElephant.cost,
+      hand: [madamMimElephant],
+      // No other characters in play to return
+    });
+
+    expect(testEngine.asPlayerOne().playCard(madamMimElephant)).toBeSuccessfulCommand();
+
+    // A LITTLE GAME triggers - must choose between banish self or return another character
+    // Since there's no other character to return, the second option has no valid targets
+    // So she must banish herself
+    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 0 });
+
+    expect(testEngine.asPlayerOne().getCardZone(madamMimElephant)).toBe("discard");
+  });
 });

@@ -33,12 +33,12 @@ describe("Diablo - Faithful Pet", () => {
         resolveOptional: true,
         destinations: [
           { zone: "deck-top", cards: [] },
-          { zone: "deck-bottom", cards: [topCard] },
+          { zone: "deck-bottom", cards: [secondCard] },
         ],
       }),
     ).toBeSuccessfulCommand();
 
-    // Verify order: secondCard on top, topCard on bottom
+    // Verify order: topCard on top, secondCard on bottom
     const deckIds = testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE);
     expect(deckIds).toEqual([secondCard.id, topCard.id]);
   });

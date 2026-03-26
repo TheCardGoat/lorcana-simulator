@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { calhounHardnosedLeaderI18n } from "./032-calhoun-hard-nosed-leader.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const calhounHardnosedLeader: CharacterCard = {
   id: "g8l",
@@ -33,12 +34,7 @@ export const calhounHardnosedLeader: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "eco-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         amount: 1,

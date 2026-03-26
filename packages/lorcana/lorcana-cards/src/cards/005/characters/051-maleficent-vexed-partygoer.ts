@@ -40,6 +40,7 @@ export const maleficentVexedPartygoer: CharacterCard = {
               type: "discard",
               amount: 1,
               chosen: true,
+              from: "hand",
               target: "CONTROLLER",
             },
             type: "optional",

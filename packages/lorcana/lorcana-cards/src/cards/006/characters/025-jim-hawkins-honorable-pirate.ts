@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jimHawkinsHonorablePirateI18n } from "./025-jim-hawkins-honorable-pirate.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const jimHawkinsHonorablePirate: CharacterCard = {
   id: "I2f",
@@ -34,12 +35,7 @@ export const jimHawkinsHonorablePirate: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Pirate", "Captain"],
   abilities: [
-    {
-      id: "1el-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         type: "scry",

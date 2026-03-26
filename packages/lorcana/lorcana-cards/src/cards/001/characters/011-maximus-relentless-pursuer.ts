@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { maximusRelentlessPursuerI18n } from "./011-maximus-relentless-pursuer.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const maximusRelentlessPursuer: CharacterCard = {
   id: "bqd",
@@ -30,12 +31,7 @@ export const maximusRelentlessPursuer: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Ally"],
   abilities: [
-    {
-      id: "2z0-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       effect: {
         duration: "this-turn",

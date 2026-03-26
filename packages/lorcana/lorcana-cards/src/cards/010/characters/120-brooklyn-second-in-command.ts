@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { brooklynSecondInCommandI18n } from "./120-brooklyn-second-in-command.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
+import { stoneByDay } from "../../../helpers/abilities/stoneByDay";
 
 export const brooklynSecondInCommand: CharacterCard = {
   id: "jg3",
@@ -32,31 +34,6 @@ export const brooklynSecondInCommand: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Gargoyle"],
-  abilities: [
-    {
-      id: "nda-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
-    {
-      id: "nda-2",
-      name: "STONE BY DAY",
-      text: "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
-      type: "static",
-      condition: {
-        type: "resource-count",
-        what: "cards-in-hand",
-        controller: "you",
-        comparison: "greater-or-equal",
-        value: 3,
-      },
-      effect: {
-        type: "restriction",
-        restriction: "cant-ready",
-        target: "SELF",
-      },
-    },
-  ],
+  abilities: [evasive, stoneByDay],
   i18n: brooklynSecondInCommandI18n,
 };

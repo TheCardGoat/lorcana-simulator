@@ -36,4 +36,21 @@ describe("Spooky Sight", () => {
       expect.objectContaining({ zone: "inkwell", exerted: true }),
     );
   });
+
+  it("regression: sends opponent's characters to inkwell, not just controller's", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [spookySight],
+        inkwell: spookySight.cost,
+      },
+      {
+        play: [mowgliManCub],
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(spookySight)).toBeSuccessfulCommand();
+
+    // Opponent's cheap character should be moved to opponent's inkwell
+    expect(testEngine.asPlayerTwo().getCardZone(mowgliManCub)).toBe("inkwell");
+  });
 });

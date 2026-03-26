@@ -1,5 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { DEFAULT_AUTOMATED_ACTION_STRATEGY_ID } from "@tcg/lorcana-engine";
+import {
+  BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+  DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+} from "@tcg/lorcana-engine";
 import { DECK_FIXTURES } from "../deck-fixtures/index.js";
 import {
   AUTOMATED_MATCH_STORAGE_KEY,
@@ -43,8 +46,8 @@ describe("automated match storage", () => {
       playerTwoDeckText: "1 Grab Your Bow",
       playerOneFixtureId: "custom-one",
       playerTwoFixtureId: "custom-two",
-      playerOneStrategyId: "default-lore-race",
-      playerTwoStrategyId: "board-control-lore-race",
+      playerOneStrategyId: DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+      playerTwoStrategyId: BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
       seed: "ai-match:123",
     };
 

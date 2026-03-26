@@ -1,29 +1,24 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { goofyKnightForADay } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import { mosquitoBite } from "@lorcanito/lorcana-engine/cards/006/actions/actions";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Mosquito Bite", () => {
-//   It("Put 1 damage counter on chosen character.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: mosquitoBite.cost,
-//         Hand: [mosquitoBite],
-//         Deck: 2,
-//       },
-//       {
-//         Play: [goofyKnightForADay],
-//       },
-//     );
-//
-//     Await testEngine.playCard(mosquitoBite);
-//     Await testEngine.resolveTopOfStack({ targets: [goofyKnightForADay] });
-//     Expect(testEngine.getCardModel(goofyKnightForADay).meta.damage).toEqual(1);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { mosquitoBite } from "./096-mosquito-bite";
+import { goofyKnightForADay } from "../../002";
+
+describe("Mosquito Bite", () => {
+  it("Put 1 damage counter on chosen character.", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [mosquitoBite],
+        inkwell: mosquitoBite.cost,
+      },
+      {
+        play: [goofyKnightForADay],
+      },
+    );
+
+    testEngine.asPlayerOne().playCard(mosquitoBite, {
+      targets: [goofyKnightForADay],
+    });
+
+    expect(testEngine.asPlayerTwo().getDamage(goofyKnightForADay)).toBe(1);
+  });
+});

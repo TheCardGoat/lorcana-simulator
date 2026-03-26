@@ -36,12 +36,14 @@ export const princeJohnGoldLover: CharacterCard = {
         exert: true,
       },
       effect: {
+        cardType: "item",
         cost: "free",
         costRestriction: {
           comparison: "less-or-equal",
           value: 5,
         },
-        from: "hand",
+        entersExerted: true,
+        from: ["hand", "discard"],
         type: "play-card",
       },
       id: "1b5-1",

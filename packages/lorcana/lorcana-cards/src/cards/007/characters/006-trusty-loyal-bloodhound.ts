@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { trustyLoyalBloodhoundI18n } from "./006-trusty-loyal-bloodhound.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const trustyLoyalBloodhound: CharacterCard = {
   id: "zUf",
@@ -24,13 +25,6 @@ export const trustyLoyalBloodhound: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "oyt-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: trustyLoyalBloodhoundI18n,
 };

@@ -1,4 +1,8 @@
-import type { EnginePendingEffectProjection } from "@tcg/lorcana-engine";
+import type {
+  EnginePendingEffectProjection,
+  ResolutionSelectionRevealedCard,
+} from "@tcg/lorcana-engine";
+import type { CardFilter, ScryCardOrdering } from "@tcg/lorcana-types";
 import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
 import type { CardSnapshotMap } from "./board-utils.js";
 
@@ -29,10 +33,26 @@ function getStringArray(record: Record<string, unknown> | null, key: string): st
   return value.filter((entry): entry is string => typeof entry === "string" && entry.length > 0);
 }
 
+function getFilterArray(record: Record<string, unknown> | null, key: string): CardFilter[] {
+  const value = record?.[key];
+  if (Array.isArray(value)) {
+    return value.filter((entry): entry is CardFilter =>
+      Boolean(entry && typeof entry === "object" && !Array.isArray(entry)),
+    );
+  }
+
+  if (value && typeof value === "object") {
+    return [value as CardFilter];
+  }
+
+  return [];
+}
+
 export interface PendingEffectPayloadMeta {
   kind?: string;
   sourceId?: string;
   sourceCardId?: string;
+  effectType?: string;
 }
 
 export interface BagEffectPayloadMeta {
@@ -48,6 +68,18 @@ export interface ScryDestinationRuleView {
   min: number;
   max: number | null;
   remainder: boolean;
+  label?: string;
+  filters: readonly CardFilter[];
+  playFilters: readonly CardFilter[];
+  ordering?: ScryCardOrdering;
+  reveal: boolean;
+  exclusiveGroup?: string;
+  cost?: "free" | "reduced";
+  entersExerted?: boolean;
+  grantsRush?: boolean;
+  banishAtEndOfTurn?: boolean;
+  exerted?: boolean;
+  facedown?: boolean;
 }
 
 export interface ScryPendingEffectView {
@@ -57,16 +89,18 @@ export interface ScryPendingEffectView {
   sourceCard: LorcanaCardSnapshot | null;
   amount: number;
   revealedCardIds: string[];
-  revealedCards: LorcanaCardSnapshot[];
+  revealedCards: ResolutionSelectionRevealedCard[];
   destinationRules: ScryDestinationRuleView[];
 }
 
 export function getPendingEffectPayloadMeta(payload: unknown): PendingEffectPayloadMeta {
   const payloadRecord = asRecord(payload);
+  const effectRecord = asRecord(payloadRecord?.effect);
   return {
     kind: getRecordString(payloadRecord, "kind"),
     sourceId: getRecordString(payloadRecord, "sourceId"),
     sourceCardId: getRecordString(payloadRecord, "sourceCardId"),
+    effectType: getRecordString(effectRecord, "type"),
   };
 }
 
@@ -115,6 +149,20 @@ export function parseScryPendingEffect(
               min: getRecordNumber(entry, "min") ?? 0,
               max: getRecordNumber(entry, "max") ?? null,
               remainder: entry.remainder === true,
+              label: getRecordString(entry, "label"),
+              filters: getFilterArray(entry, "filters"),
+              playFilters: getFilterArray(entry, "playFilters"),
+              ordering: getRecordString(entry, "ordering") as ScryCardOrdering | undefined,
+              reveal: entry.reveal === true,
+              exclusiveGroup: getRecordString(entry, "exclusiveGroup"),
+              cost: getRecordString(entry, "cost") as "free" | "reduced" | undefined,
+              entersExerted:
+                typeof entry.entersExerted === "boolean" ? entry.entersExerted : undefined,
+              grantsRush: typeof entry.grantsRush === "boolean" ? entry.grantsRush : undefined,
+              banishAtEndOfTurn:
+                typeof entry.banishAtEndOfTurn === "boolean" ? entry.banishAtEndOfTurn : undefined,
+              exerted: typeof entry.exerted === "boolean" ? entry.exerted : undefined,
+              facedown: typeof entry.facedown === "boolean" ? entry.facedown : undefined,
             };
           })
           .filter((entry): entry is ScryDestinationRuleView => entry !== null)
@@ -124,10 +172,42 @@ export function parseScryPendingEffect(
       return null;
     }
 
-    const revealedCards = revealedCardIds
-      .map((cardId) => cardSnapshotsById[cardId] ?? null)
-      .filter((card): card is LorcanaCardSnapshot => card !== null);
-    if (revealedCards.length !== revealedCardIds.length) {
+    const revealedCardRecords = Array.isArray(selectionContext?.revealedCards)
+      ? selectionContext.revealedCards
+          .map((entry) => asRecord(entry))
+          .filter((entry): entry is Record<string, unknown> => entry !== null)
+      : [];
+    const revealedCards = revealedCardIds.map<ResolutionSelectionRevealedCard | null>(
+      (cardId, index) => {
+        const record = revealedCardRecords[index] ?? null;
+        const snapshot = cardSnapshotsById[cardId] ?? null;
+        const label = getRecordString(record, "label") ?? snapshot?.label;
+        if (!label) {
+          return null;
+        }
+
+        const cardType = getRecordString(record, "cardType");
+        const actionSubtype = getRecordString(record, "actionSubtype");
+        const cost = getRecordNumber(record, "cost");
+        const classifications = getStringArray(record, "classifications");
+
+        return {
+          cardId: cardId as ResolutionSelectionRevealedCard["cardId"],
+          label,
+          cardType:
+            cardType === "character" ||
+            cardType === "action" ||
+            cardType === "item" ||
+            cardType === "location"
+              ? cardType
+              : snapshot?.cardType,
+          actionSubtype: actionSubtype ?? snapshot?.actionSubtype,
+          cost: cost ?? snapshot?.cost,
+          classifications: classifications.length > 0 ? classifications : snapshot?.classifications,
+        };
+      },
+    );
+    if (revealedCards.some((card) => card === null)) {
       return null;
     }
 
@@ -138,7 +218,9 @@ export function parseScryPendingEffect(
       sourceCard: sourceCardId ? (cardSnapshotsById[sourceCardId] ?? null) : null,
       amount,
       revealedCardIds,
-      revealedCards,
+      revealedCards: revealedCards.filter(
+        (card): card is ResolutionSelectionRevealedCard => card !== null,
+      ),
       destinationRules,
     };
   }
@@ -182,6 +264,19 @@ export function parseScryPendingEffect(
         min: getRecordNumber(entry, "min") ?? 0,
         max: getRecordNumber(entry, "max") ?? null,
         remainder: entry.remainder === true,
+        label: getRecordString(entry, "label"),
+        filters: getFilterArray(entry, "filters"),
+        playFilters: getFilterArray(entry, "playFilters"),
+        ordering: getRecordString(entry, "ordering") as ScryCardOrdering | undefined,
+        reveal: entry.reveal === true,
+        exclusiveGroup: getRecordString(entry, "exclusiveGroup"),
+        cost: getRecordString(entry, "cost") as "free" | "reduced" | undefined,
+        entersExerted: typeof entry.entersExerted === "boolean" ? entry.entersExerted : undefined,
+        grantsRush: typeof entry.grantsRush === "boolean" ? entry.grantsRush : undefined,
+        banishAtEndOfTurn:
+          typeof entry.banishAtEndOfTurn === "boolean" ? entry.banishAtEndOfTurn : undefined,
+        exerted: typeof entry.exerted === "boolean" ? entry.exerted : undefined,
+        facedown: typeof entry.facedown === "boolean" ? entry.facedown : undefined,
       };
     })
     .filter((entry): entry is ScryDestinationRuleView => entry !== null);
@@ -197,10 +292,22 @@ export function parseScryPendingEffect(
     return null;
   }
 
-  const revealedCards = revealedCardIds
-    .map((cardId) => cardSnapshotsById[cardId] ?? null)
-    .filter((card): card is LorcanaCardSnapshot => card !== null);
-  if (revealedCards.length !== revealedCardIds.length) {
+  const revealedCards = revealedCardIds.map<ResolutionSelectionRevealedCard | null>((cardId) => {
+    const snapshot = cardSnapshotsById[cardId] ?? null;
+    if (!snapshot) {
+      return null;
+    }
+
+    return {
+      cardId: cardId as ResolutionSelectionRevealedCard["cardId"],
+      label: snapshot.label,
+      cardType: snapshot.cardType,
+      actionSubtype: snapshot.actionSubtype,
+      cost: snapshot.cost,
+      classifications: snapshot.classifications,
+    };
+  });
+  if (revealedCards.some((card) => card === null)) {
     return null;
   }
 
@@ -217,7 +324,9 @@ export function parseScryPendingEffect(
     sourceCard: sourceCardId ? (cardSnapshotsById[sourceCardId] ?? null) : null,
     amount,
     revealedCardIds,
-    revealedCards,
+    revealedCards: revealedCards.filter(
+      (card): card is ResolutionSelectionRevealedCard => card !== null,
+    ),
     destinationRules,
   };
 }

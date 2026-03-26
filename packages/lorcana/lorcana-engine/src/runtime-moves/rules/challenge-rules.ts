@@ -20,6 +20,7 @@ import {
   hasStaticCardRestriction,
   hasStaticChallengerFilteredRestriction,
   hasStaticPlayerRestriction,
+  getStaticChallengeLimit,
   isCardInPlay,
   evaluateStaticCondition,
 } from "./static-ability-utils";
@@ -56,7 +57,7 @@ type ChallengeCardReadContext = { cards: unknown };
 type ChallengeFrameworkReadContext = Pick<ChallengeAnyContext, "framework" | "G">;
 type ChallengeCardStateContext = ChallengeCardReadContext & ChallengeFrameworkReadContext;
 
-type RuntimeLorcanaCardWithDerived = RuntimeCardWithDefinition;
+type RuntimeLorcanaCardWithDerived = RuntimeCardWithDefinition & LorcanaCardDerived;
 
 function isCardStillInPlay(ctx: ChallengeAnyContext, sourceId: string): boolean {
   const zoneKey = ctx.framework.zones.getCardZone(sourceId);
@@ -102,18 +103,7 @@ function hasKeywordIncludingTemporary(
   keyword: string,
 ): boolean {
   const runtimeCard = getCardsApi(ctx).require(cardId);
-  const derived = projectLorcanaCardDerived({
-    definition: runtimeCard.definition,
-    meta: runtimeCard.meta,
-    state: createProjectionState(ctx.framework.state, ctx.G),
-    cardInstanceId: cardId,
-    ownerID: runtimeCard.ownerID as PlayerId,
-    controllerID: runtimeCard.controllerID as PlayerId,
-    zoneID: runtimeCard.zoneID,
-    getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
-  });
-
-  return derived.keywords?.includes(keyword) ?? false;
+  return runtimeCard.keywords?.includes(keyword) ?? false;
 }
 
 function hasRushForChallenge(ctx: ChallengeAnyContext, cardId: CardInstanceId): boolean {
@@ -141,19 +131,8 @@ function canChallengeReadyCharacters(
       return false;
     }
 
-    const defenderDerived = projectLorcanaCardDerived({
-      definition: defenderRuntimeCard.definition,
-      meta: defenderRuntimeCard.meta,
-      state: createProjectionState(ctx.framework.state, ctx.G),
-      cardInstanceId: defenderId,
-      ownerID: defenderRuntimeCard.ownerID as PlayerId,
-      controllerID: defenderRuntimeCard.controllerID as PlayerId,
-      zoneID: defenderRuntimeCard.zoneID,
-      getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
-    });
-
-    return Array.isArray(defenderDerived.classifications)
-      ? defenderDerived.classifications.includes(classification)
+    return Array.isArray(defenderRuntimeCard.classifications)
+      ? defenderRuntimeCard.classifications.includes(classification)
       : false;
   };
 
@@ -186,6 +165,10 @@ function canChallengeReadyCharacters(
     return Number(defenderMeta.damage ?? 0) > 0;
   };
 
+  const attackerControllerId = getCardsApi(ctx).require(attackerId).controllerID as
+    | PlayerId
+    | undefined;
+
   const matchesStaticReadyGrant = (attackerDefinition.abilities ?? []).some((ability) => {
     if (ability.type !== "static" || ability.effect.type !== "grant-ability") {
       return false;
@@ -207,6 +190,18 @@ function canChallengeReadyCharacters(
       return false;
     }
 
+    if (
+      !evaluateStaticCondition({
+        condition: ability.condition,
+        state: ctx.framework.state,
+        controllerId: attackerControllerId,
+        sourceId: attackerId,
+        getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+      })
+    ) {
+      return false;
+    }
+
     const grantedClassification =
       grantedAbility && typeof grantedAbility === "object" && !Array.isArray(grantedAbility)
         ? (grantedAbility as { classification?: unknown }).classification
@@ -224,6 +219,62 @@ function canChallengeReadyCharacters(
   });
 
   return matchesStaticReadyGrant;
+}
+
+function hasStaticTakesNoDamageFromChallenges(
+  ctx: ChallengeCardStateContext,
+  cardId: CardInstanceId,
+): boolean {
+  const cardDef = getCardDefinition(ctx, cardId);
+  if (!cardDef) {
+    return false;
+  }
+
+  const abilities = cardDef.abilities ?? [];
+  const controllerId = getCardsApi(ctx).require(cardId).controllerID as PlayerId | undefined;
+
+  for (const ability of abilities) {
+    if (ability.type !== "static") {
+      continue;
+    }
+    const effect = ability.effect;
+    if (effect.type !== "grant-ability") {
+      continue;
+    }
+    if (effect.ability !== "takes-no-damage-from-challenges") {
+      continue;
+    }
+    // Must target SELF (or undefined, which defaults to SELF)
+    if (effect.target !== undefined && effect.target !== "SELF") {
+      continue;
+    }
+
+    // Evaluate the condition
+    if (!ability.condition) {
+      return true; // Unconditional static grant
+    }
+
+    if (!controllerId) {
+      continue;
+    }
+
+    // Merge G into the state so that condition evaluator can access turnMetadata
+    const stateWithG = { ...ctx.framework.state, G: ctx.G };
+
+    const conditionMet = evaluateStaticCondition({
+      condition: ability.condition,
+      state: stateWithG,
+      controllerId,
+      sourceId: cardId,
+      getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+    });
+
+    if (conditionMet) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function takesNoDamageFromChallenges(
@@ -261,24 +312,19 @@ function takesNoDamageFromChallenges(
       // Also check derived/projected classifications for runtime modifications
       const runtimeCard = getCardsApi(ctx).get(opponentCardId);
       if (runtimeCard) {
-        const derived = projectLorcanaCardDerived({
-          definition: runtimeCard.definition,
-          meta: runtimeCard.meta,
-          state: createProjectionState(ctx.framework.state, ctx.G),
-          cardInstanceId: opponentCardId,
-          ownerID: runtimeCard.ownerID as PlayerId,
-          controllerID: runtimeCard.controllerID as PlayerId,
-          zoneID: runtimeCard.zoneID,
-          getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
-        });
         if (
-          Array.isArray(derived.classifications) &&
-          derived.classifications.includes(requiredClassification)
+          Array.isArray(runtimeCard.classifications) &&
+          runtimeCard.classifications.includes(requiredClassification)
         ) {
           return true;
         }
       }
     }
+  }
+
+  // Check static abilities on the card definition that grant "takes-no-damage-from-challenges"
+  if (hasStaticTakesNoDamageFromChallenges(ctx, cardId)) {
+    return true;
   }
 
   return false;
@@ -398,7 +444,32 @@ function isChallengeReadyAttacker(ctx: ChallengeAnyContext, attackerId: CardInst
     return false;
   }
 
+  if (hasExceededChallengeLimit(ctx, attackerId)) {
+    return false;
+  }
+
   return true;
+}
+
+function hasExceededChallengeLimit(ctx: ChallengeAnyContext, attackerId: CardInstanceId): boolean {
+  const challengeLimit = getStaticChallengeLimit({
+    state: ctx.framework.state,
+    getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+  });
+  if (challengeLimit === null) {
+    return false;
+  }
+
+  const attackerControllerId = getCardsApi(ctx).require(attackerId).controllerID as
+    | PlayerId
+    | undefined;
+  if (!attackerControllerId) {
+    return false;
+  }
+
+  const challengesDoneThisTurn =
+    ctx.G.turnMetadata?.challengesByPlayerThisTurn?.[attackerControllerId] ?? 0;
+  return challengesDoneThisTurn >= challengeLimit;
 }
 
 function getActingPlayerId(ctx: ChallengeIntentContext): PlayerId | undefined {
@@ -667,6 +738,13 @@ export function validateChallengeAction(ctx: ChallengeValidationContext): Runtim
 
   if (attackerMeta.isDrying === true && !hasRushForChallenge(ctx, attackerId)) {
     return createFailure("Attacker is drying and does not have Rush", "ATTACKER_DRYING");
+  }
+
+  if (hasExceededChallengeLimit(ctx, attackerId)) {
+    return createFailure(
+      "Challenge limit reached: only one character can challenge this turn",
+      "CHALLENGE_LIMIT_REACHED",
+    );
   }
 
   if (isPreflight && !defenderId) {

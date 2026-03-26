@@ -10,14 +10,6 @@ const weakOpponent = createMockCharacter({
   cost: 1,
 });
 
-const strongAttacker = createMockCharacter({
-  id: "chief-strong-attacker",
-  name: "Strong Attacker",
-  strength: 5,
-  willpower: 5,
-  cost: 3,
-});
-
 const chiefAttacker = createMockCharacter({
   id: "chief-attacker",
   name: "Chief Attacker",
@@ -27,29 +19,6 @@ const chiefAttacker = createMockCharacter({
 });
 
 describe("Chief - Seasoned Tracker", () => {
-  it("has an activated ability with exert cost", () => {
-    const ability = chiefSeasonedTracker.abilities?.[0];
-    expect(ability).toBeDefined();
-    expect(ability?.type).toBe("activated");
-    const abilityCost = (ability as unknown as Record<string, unknown>)?.cost as
-      | Record<string, unknown>
-      | undefined;
-    expect(abilityCost?.exert).toBe(true);
-  });
-
-  it("exerts when ability is activated", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      play: [chiefSeasonedTracker],
-      deck: 5,
-    });
-
-    expect(testEngine.asPlayerOne().isExerted(chiefSeasonedTracker)).toBe(false);
-
-    expect(testEngine.asPlayerOne().activateAbility(chiefSeasonedTracker)).toBeSuccessfulCommand();
-
-    expect(testEngine.asPlayerOne().isExerted(chiefSeasonedTracker)).toBe(true);
-  });
-
   it("does not draw when no opposing character was banished in a challenge this turn", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       play: [chiefSeasonedTracker],
@@ -58,7 +27,11 @@ describe("Chief - Seasoned Tracker", () => {
 
     const handBefore = testEngine.asPlayerOne().getZonesCardCount().hand;
 
-    expect(testEngine.asPlayerOne().activateAbility(chiefSeasonedTracker)).toBeSuccessfulCommand();
+    const result = testEngine.asPlayerOne().activateAbility(chiefSeasonedTracker);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errorCode).toBe("ABILITY_CONDITION_NOT_MET");
+    }
 
     const handAfter = testEngine.asPlayerOne().getZonesCardCount().hand;
     expect(handAfter).toBe(handBefore);

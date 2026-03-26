@@ -11,7 +11,7 @@
   import { onMount, onDestroy } from "svelte";
   import { HumanVsAiOrchestrator } from "./human-vs-ai-orchestrator.svelte.js";
   import { readStoredHumanVsAiConfig, type HumanVsAiStorage } from "./storage.js";
-  import { setHumanVsAiContext } from "./context.js";
+  import { createHumanVsAiContext } from "./context.js";
   import { createAutomatedMatchSeed } from "../ai-match/config.js";
   import { VsAiOnboardingState } from "./onboarding.svelte.js";
   import VsAiOnboardingOverlay from "./VsAiOnboardingOverlay.svelte";
@@ -30,29 +30,23 @@
 
   const getStorage = (): HumanVsAiStorage | undefined => storage;
 
-  let orchestrator = $state<HumanVsAiOrchestrator | null>(null);
+  const storedConfig = readStoredHumanVsAiConfig(getStorage());
+
   let loadError = $state<string | null>(null);
-  let shouldRedirect = $state(false);
+  let shouldRedirect = $state(!storedConfig);
   const onboarding = new VsAiOnboardingState();
 
-  // Try synchronous init so setContext works during component initialization
-  const storedConfig = readStoredHumanVsAiConfig(getStorage());
-  if (storedConfig) {
+  const orchestrator = (() => {
+    if (!storedConfig) return null;
     try {
-      orchestrator = new HumanVsAiOrchestrator({ ...storedConfig, seed: createAutomatedMatchSeed() });
+      return new HumanVsAiOrchestrator({ ...storedConfig, seed: createAutomatedMatchSeed() });
     } catch (error) {
       loadError = error instanceof Error ? error.message : "Unable to initialize match.";
+      return null;
     }
-  } else {
-    shouldRedirect = true;
-  }
+  })();
 
-  // Set context during component init (required by Svelte)
-  $effect(() => {
-    if (orchestrator) {
-      setHumanVsAiContext(orchestrator);
-    }
-  });
+  createHumanVsAiContext(orchestrator);
 
   onMount(() => {
     if (shouldRedirect) {
@@ -65,9 +59,9 @@
   });
 </script>
 
-<main class="relative min-h-screen text-slate-100">
+<main class="immersive-app-shell relative text-slate-100">
   {#if loadError}
-    <div class="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4 py-8">
+      <div class="mx-auto flex h-full max-w-3xl items-center justify-center px-4 py-8">
       <Card class="w-full border-rose-400/20 bg-slate-950/88 text-slate-100">
         <CardHeader>
           <CardTitle>Match failed to load</CardTitle>
@@ -83,12 +77,13 @@
       <LorcanaTabletopSimulator
         engine={orchestrator.currentEngine}
         readModel={orchestrator.readModel}
+        postGameGameId={orchestrator.gameId}
       />
     {/key}
 
     <VsAiOnboardingOverlay {onboarding} />
   {:else}
-    <div class="grid min-h-screen place-items-center px-4 text-slate-400">
+      <div class="grid h-full place-items-center px-4 text-slate-400">
       Loading match...
     </div>
   {/if}

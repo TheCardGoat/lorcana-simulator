@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { magicaDeSpellTheMidasTouchI18n } from "./049-magica-de-spell-the-midas-touch.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const magicaDeSpellTheMidasTouch: CharacterCard = {
   id: "XJy",
@@ -34,13 +35,7 @@ export const magicaDeSpellTheMidasTouch: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Sorcerer"],
   abilities: [
-    {
-      id: "XJy-0",
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 5",
-      cost: { ink: 5 },
-    },
+    shift(5),
     {
       id: "XJy-1",
       name: "ALL MINE",

@@ -31,14 +31,20 @@ export const pennyTheOrphanCleverChild: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "has-character-with-classification",
+        classification: "Hero",
+        controller: "you",
+      },
       effect: {
         keyword: "Ward",
         target: "SELF",
         type: "gain-keyword",
       },
       id: "szl-1",
+      name: "OUR BOTTLE WORKED!",
       text: "OUR BOTTLE WORKED! While you have a Hero character in play, this character gains Ward.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: pennyTheOrphanCleverChildI18n,

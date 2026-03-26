@@ -1,72 +1,190 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { scroogeMcduckOnTheRightTrack } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe.skip("Scrooge McDuck - On the Right Track", () => {
-//   Describe.skip("FABULOUS WEALTH", () => {
-//     It("should have FABULOUS WEALTH ability defined", () => {
-//       Const ability = scroogeMcduckOnTheRightTrack.abilities?.find(
-//         (ability) => "name" in ability && ability.name === "FABULOUS WEALTH",
-//       );
-//       Expect(ability).toBeDefined();
-//       If (ability && "type" in ability) {
-//         Expect(ability.type).toBe("resolution");
-//       }
-//     });
-//
-//     It("When you play this character, chosen character with a card under them gets +1 this turn", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: scroogeMcduckOnTheRightTrack.cost,
-//         Hand: [scroogeMcduckOnTheRightTrack],
-//       });
-//
-//       Await testEngine.playCard(scroogeMcduckOnTheRightTrack);
-//
-//       // Should trigger the optional ability
-//       Await testEngine.acceptOptionalLayer();
-//       Await testEngine.resolveTopOfStack({});
-//     });
-//   });
-//
-//   Describe("Stats and basic properties", () => {
-//     It("should have correct stats", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [scroogeMcduckOnTheRightTrack],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(
-//         ScroogeMcduckOnTheRightTrack,
-//       );
-//
-//       Expect(cardUnderTest.strength).toBe(4);
-//       Expect(cardUnderTest.willpower).toBe(3);
-//       Expect(cardUnderTest.lore).toBe(1);
-//       Expect(cardUnderTest.cost).toBe(3);
-//     });
-//
-//     It("should be inkwell card", () => {
-//       Expect(scroogeMcduckOnTheRightTrack.inkwell).toBe(true);
-//     });
-//
-//     It("should have correct characteristics", () => {
-//       Expect(scroogeMcduckOnTheRightTrack.characteristics).toEqual([
-//         "storyborn",
-//         "hero",
-//       ]);
-//     });
-//
-//     It("should be amber color", () => {
-//       Expect(scroogeMcduckOnTheRightTrack.colors).toEqual(["amber"]);
-//     });
-//
-//     It("should be uncommon rarity", () => {
-//       Expect(scroogeMcduckOnTheRightTrack.rarity).toBe("uncommon");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { scroogeMcduckOnTheRightTrack } from "./008-scrooge-mcduck-on-the-right-track";
+
+const underCard = createMockCharacter({
+  id: "scrooge-under-card",
+  name: "Under Card",
+  cost: 1,
+});
+
+const characterWithCardUnder = createMockCharacter({
+  id: "scrooge-character-with-under",
+  name: "Character With Card Under",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+const characterWithoutCardUnder = createMockCharacter({
+  id: "scrooge-character-without-under",
+  name: "Character Without Card Under",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Scrooge McDuck - On the Right Track", () => {
+  it("should have correct base stats", () => {
+    expect(scroogeMcduckOnTheRightTrack.cost).toBe(3);
+    expect(scroogeMcduckOnTheRightTrack.strength).toBe(4);
+    expect(scroogeMcduckOnTheRightTrack.willpower).toBe(3);
+    expect(scroogeMcduckOnTheRightTrack.lore).toBe(1);
+  });
+
+  it("should have correct metadata", () => {
+    expect(scroogeMcduckOnTheRightTrack.set).toBe("010");
+    expect(scroogeMcduckOnTheRightTrack.cardNumber).toBe(8);
+    expect(scroogeMcduckOnTheRightTrack.rarity).toBe("uncommon");
+    expect(scroogeMcduckOnTheRightTrack.inkable).toBe(true);
+    expect(scroogeMcduckOnTheRightTrack.inkType).toEqual(["amber"]);
+    expect(scroogeMcduckOnTheRightTrack.classifications).toContain("Storyborn");
+    expect(scroogeMcduckOnTheRightTrack.classifications).toContain("Hero");
+  });
+
+  describe("FABULOUS WEALTH - When you play this character, chosen character with a card under them gets +1 {L} this turn.", () => {
+    it("triggers an optional bag effect when Scrooge is played and there is a character with a card under them", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: scroogeMcduckOnTheRightTrack.cost,
+        hand: [scroogeMcduckOnTheRightTrack],
+        play: [{ card: characterWithCardUnder, cardsUnder: [underCard] }],
+        deck: 1,
+      });
+
+      expect(
+        testEngine.asPlayerOne().playCard(scroogeMcduckOnTheRightTrack),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+    });
+
+    it("gives +1 lore to chosen character with a card under them when accepting the optional trigger", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: scroogeMcduckOnTheRightTrack.cost,
+        hand: [scroogeMcduckOnTheRightTrack],
+        play: [{ card: characterWithCardUnder, cardsUnder: [underCard] }],
+        deck: 1,
+      });
+
+      const baseLore = characterWithCardUnder.lore;
+      expect(
+        testEngine.asPlayerOne().playCard(scroogeMcduckOnTheRightTrack),
+      ).toBeSuccessfulCommand();
+
+      const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          resolveOptional: true,
+          targets: [characterWithCardUnder],
+        }),
+      ).toBeSuccessfulCommand();
+
+      const targetCard = testEngine.asPlayerOne().getCard(characterWithCardUnder);
+      expect(targetCard.lore).toBe(baseLore + 1);
+    });
+
+    it("does not give lore bonus when declining the optional trigger", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: scroogeMcduckOnTheRightTrack.cost,
+        hand: [scroogeMcduckOnTheRightTrack],
+        play: [{ card: characterWithCardUnder, cardsUnder: [underCard] }],
+        deck: 1,
+      });
+
+      const baseLore = characterWithCardUnder.lore;
+      expect(
+        testEngine.asPlayerOne().playCard(scroogeMcduckOnTheRightTrack),
+      ).toBeSuccessfulCommand();
+
+      const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      const targetCard = testEngine.asPlayerOne().getCard(characterWithCardUnder);
+      expect(targetCard.lore).toBe(baseLore);
+    });
+
+    it("lore bonus expires at end of turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: scroogeMcduckOnTheRightTrack.cost,
+        hand: [scroogeMcduckOnTheRightTrack],
+        play: [{ card: characterWithCardUnder, cardsUnder: [underCard] }],
+        deck: 5,
+      });
+
+      const baseLore = characterWithCardUnder.lore;
+      expect(
+        testEngine.asPlayerOne().playCard(scroogeMcduckOnTheRightTrack),
+      ).toBeSuccessfulCommand();
+
+      const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          resolveOptional: true,
+          targets: [characterWithCardUnder],
+        }),
+      ).toBeSuccessfulCommand();
+
+      const targetCardBefore = testEngine.asPlayerOne().getCard(characterWithCardUnder);
+      expect(targetCardBefore.lore).toBe(baseLore + 1);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      const targetCardAfter = testEngine.asPlayerOne().getCard(characterWithCardUnder);
+      expect(targetCardAfter.lore).toBe(baseLore);
+    });
+
+    it("regression: does NOT allow targeting characters WITHOUT cards under them", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: scroogeMcduckOnTheRightTrack.cost,
+        hand: [scroogeMcduckOnTheRightTrack],
+        play: [characterWithoutCardUnder],
+        deck: 1,
+      });
+
+      const baseLore = characterWithoutCardUnder.lore;
+      expect(
+        testEngine.asPlayerOne().playCard(scroogeMcduckOnTheRightTrack),
+      ).toBeSuccessfulCommand();
+
+      // No valid targets (no character with cards under), so no bag effect should fire
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      const targetCard = testEngine.asPlayerOne().getCard(characterWithoutCardUnder);
+      expect(targetCard.lore).toBe(baseLore);
+    });
+
+    it("can target an opponent's character with a card under them", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: scroogeMcduckOnTheRightTrack.cost,
+          hand: [scroogeMcduckOnTheRightTrack],
+          deck: 1,
+        },
+        {
+          play: [{ card: characterWithCardUnder, cardsUnder: [underCard] }],
+        },
+      );
+
+      const baseLore = characterWithCardUnder.lore;
+      expect(
+        testEngine.asPlayerOne().playCard(scroogeMcduckOnTheRightTrack),
+      ).toBeSuccessfulCommand();
+
+      const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          resolveOptional: true,
+          targets: [characterWithCardUnder],
+        }),
+      ).toBeSuccessfulCommand();
+
+      const targetCard = testEngine.asPlayerTwo().getCard(characterWithCardUnder);
+      expect(targetCard.lore).toBe(baseLore + 1);
+    });
+  });
+});

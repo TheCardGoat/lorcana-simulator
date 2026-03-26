@@ -129,6 +129,28 @@ describe("Belle - Hidden Archer", () => {
       expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(3);
     });
 
+    it("regression: does not trigger when a DIFFERENT character on the same side is challenged", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: attacker, isDrying: false }],
+          hand: [handCard, handCard2, handCard3],
+          deck: 1,
+        },
+        {
+          play: [belleHiddenArcher, { card: defender, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      // Player one challenges the defender (NOT Belle)
+      expect(testEngine.asPlayerOne().challenge(attacker, defender)).toBeSuccessfulCommand();
+
+      // Belle's THORNY ARROWS should NOT trigger because Belle was not challenged
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(3);
+    });
+
     it("works when the challenging player has no cards in hand", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

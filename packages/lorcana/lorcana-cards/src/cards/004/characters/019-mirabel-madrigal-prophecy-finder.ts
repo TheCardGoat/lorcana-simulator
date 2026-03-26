@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mirabelMadrigalProphecyFinderI18n } from "./019-mirabel-madrigal-prophecy-finder.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const mirabelMadrigalProphecyFinder: CharacterCard = {
   id: "tXZ",
@@ -24,13 +25,6 @@ export const mirabelMadrigalProphecyFinder: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Hero", "Madrigal"],
-  abilities: [
-    {
-      id: "1lv-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: mirabelMadrigalProphecyFinderI18n,
 };

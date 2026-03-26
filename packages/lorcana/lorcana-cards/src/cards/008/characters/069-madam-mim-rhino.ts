@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { madamMimRhinoI18n } from "./069-madam-mim-rhino.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const madamMimRhino: CharacterCard = {
   id: "buu",
@@ -34,15 +35,7 @@ export const madamMimRhino: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Sorcerer"],
   abilities: [
-    {
-      cost: {
-        ink: 2,
-      },
-      id: "1jr-1",
-      keyword: "Shift",
-      text: "Shift 2",
-      type: "keyword",
-    },
+    shift(2),
     {
       effect: {
         type: "or",

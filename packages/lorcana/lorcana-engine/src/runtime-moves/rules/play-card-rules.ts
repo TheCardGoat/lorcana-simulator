@@ -2,9 +2,13 @@ import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
 import type { KeywordAbilityDefinition, LorcanaCardDefinition } from "@tcg/lorcana-types";
 import { isShiftKeywordAbility, isValueKeywordAbility } from "@tcg/lorcana-types";
 import type { LorcanaCardMeta } from "../../types";
-import { cardHasName } from "../../card-utils";
+import { cardHasName, hasMimicry } from "../../card-utils";
 import { getActiveStatModifierTotal } from "../effects/continuous-effects";
-import { getStaticPropertyModifierTotal } from "./static-ability-utils";
+import {
+  evaluateStaticCondition,
+  getStaticPropertyModifierTotal,
+  matchesStaticAbilityTarget,
+} from "./static-ability-utils";
 
 const INKWELL_ZONE_PREFIX = "inkwell:";
 const SHIFT_LABEL_PATTERN = /\b(?:([A-Za-z][A-Za-z' -]+)\s+)?Shift\s+(\d+)\b/i;
@@ -274,7 +278,11 @@ function parseShiftCostFromLabel(label: string | undefined): number | undefined 
 function resolveShiftCostSupport(
   shiftKeyword: KeywordAbilityDefinition | undefined,
   fallbackLabel: string | undefined,
-): { inkCost?: number; discardCost?: ShiftDiscardCost; unsupportedReason?: string } {
+): {
+  inkCost?: number;
+  discardCost?: ShiftDiscardCost;
+  unsupportedReason?: string;
+} {
   if (shiftKeyword && isShiftKeywordAbility(shiftKeyword)) {
     const cost = shiftKeyword.cost;
 
@@ -417,7 +425,10 @@ export function getAvailableInk(
   },
   playerId: PlayerId,
 ): number {
-  const cards = state.framework.zones.getCards({ zone: "inkwell", playerId }) as string[];
+  const cards = state.framework.zones.getCards({
+    zone: "inkwell",
+    playerId,
+  }) as string[];
   return cards.filter((id) => state.framework.cards.require(id).meta?.state !== "exerted").length;
 }
 
@@ -427,7 +438,10 @@ export function spendInk(
   playerId: PlayerId,
   amount: number,
 ): CardInstanceId[] {
-  const cards = ctx.framework.zones.getCards({ zone: "inkwell", playerId }) as string[];
+  const cards = ctx.framework.zones.getCards({
+    zone: "inkwell",
+    playerId,
+  }) as string[];
   const paidWith: CardInstanceId[] = [];
 
   for (const cardId of cards) {
@@ -470,6 +484,73 @@ export function getSingerThresholdForInstance(args: {
     return null;
   }
 
+  const rawState = framework.state as {
+    priority?: unknown;
+    status?: unknown;
+    _zonesPrivate?: {
+      cardIndex?: Record<string, { zoneKey?: string; controllerID?: PlayerId }>;
+    };
+  };
+  const state = {
+    priority: rawState.priority,
+    status: rawState.status,
+    _zonesPrivate: rawState._zonesPrivate,
+    G,
+  } as Parameters<typeof evaluateStaticCondition>[0]["state"];
+
+  let grantedSingerThreshold = 0;
+  for (const [cardId, entry] of Object.entries(rawState._zonesPrivate?.cardIndex ?? {}) as Array<
+    [CardInstanceId, { zoneKey?: string; controllerID?: PlayerId }]
+  >) {
+    if (typeof entry.zoneKey !== "string" || !entry.zoneKey.startsWith("play")) {
+      continue;
+    }
+
+    const definition = getDefinitionByInstanceId(cardId);
+    if (!definition) {
+      continue;
+    }
+
+    for (const ability of definition.abilities ?? []) {
+      if (
+        ability.type !== "static" ||
+        ability.effect?.type !== "gain-keyword" ||
+        ability.effect.keyword !== "Singer"
+      ) {
+        continue;
+      }
+
+      if (
+        !evaluateStaticCondition({
+          condition: ability.condition,
+          state,
+          controllerId: entry.controllerID,
+          sourceId: cardId,
+          getDefinitionByInstanceId,
+        })
+      ) {
+        continue;
+      }
+
+      if (
+        !matchesStaticAbilityTarget({
+          state,
+          target: ability.effect.target,
+          sourceId: cardId,
+          targetCardId: singerId,
+          controllerId: entry.controllerID,
+          getDefinitionByInstanceId,
+        })
+      ) {
+        continue;
+      }
+
+      if (typeof ability.effect.value === "number" && Number.isFinite(ability.effect.value)) {
+        grantedSingerThreshold = Math.max(grantedSingerThreshold, ability.effect.value);
+      }
+    }
+  }
+
   const staticModifier = getStaticPropertyModifierTotal({
     state: framework.state as Parameters<typeof getStaticPropertyModifierTotal>[0]["state"],
     cardId: singerId,
@@ -486,7 +567,7 @@ export function getSingerThresholdForInstance(args: {
       )
     : 0;
 
-  return baseThreshold + staticModifier + continuousModifier;
+  return Math.max(baseThreshold, grantedSingerThreshold) + staticModifier + continuousModifier;
 }
 
 /** Sing Together N from keyword data when available, else from card text fallback. */
@@ -566,6 +647,10 @@ export function resolveShiftTargetCandidates(
     if (candidate?.cardType !== "character") {
       return false;
     }
+    // Mimicry: character is treated as having any name for Shift targeting
+    if (hasMimicry(candidate)) {
+      return true;
+    }
     return targetNames.some((targetName) => cardHasName(candidate, targetName));
   });
 }
@@ -594,7 +679,11 @@ export function validateExertCost(
   cardType: string | undefined,
 ): ExertCostValidationResult {
   if (meta?.state === "exerted") {
-    return { valid: false, error: "Card is exerted", errorCode: "CARD_EXERTED" };
+    return {
+      valid: false,
+      error: "Card is exerted",
+      errorCode: "CARD_EXERTED",
+    };
   }
   if (cardType === "character" && meta?.isDrying) {
     return { valid: false, error: "Card is drying", errorCode: "CARD_DRYING" };

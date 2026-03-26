@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tukTukLivelyPartnerI18n } from "./129-tuk-tuk-lively-partner.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const tukTukLivelyPartner: CharacterCard = {
   id: "WVh",
@@ -25,13 +26,7 @@ export const tukTukLivelyPartner: CharacterCard = {
   text: "Evasive ON A ROLL When you play this character, you may move him and one of your other characters to the same location for free. If you do, the other character gets +2 {S} this turn.",
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "WVh-1",
-      name: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-      keyword: "Evasive",
-    },
+    evasive,
     {
       id: "WVh-2",
       name: "ON A ROLL",

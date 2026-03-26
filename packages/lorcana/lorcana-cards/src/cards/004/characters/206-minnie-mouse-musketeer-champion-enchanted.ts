@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { minnieMouseMusketeerChampionEnchantedI18n } from "./206-minnie-mouse-musketeer-champion-enchanted.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const minnieMouseMusketeerChampionEnchanted: CharacterCard = {
   id: "ixE",
@@ -34,12 +35,7 @@ export const minnieMouseMusketeerChampionEnchanted: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Musketeer"],
   abilities: [
-    {
-      id: "1kb-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         target: {

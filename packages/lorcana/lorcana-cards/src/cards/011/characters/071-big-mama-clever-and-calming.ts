@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { bigMamaCleverAndCalmingI18n } from "./071-big-mama-clever-and-calming.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const bigMamaCleverAndCalming: CharacterCard = {
   id: "vUl",
@@ -24,13 +25,6 @@ export const bigMamaCleverAndCalming: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1cw-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: bigMamaCleverAndCalmingI18n,
 };

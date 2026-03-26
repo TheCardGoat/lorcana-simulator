@@ -1,190 +1,124 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   DonaldGhostHunter,
-//   MinnieMouseGhostHunter,
-// } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Minnie Mouse - Ghost Hunter", () => {
-//   Describe("SEARCH THE SHADOWS - Behavioral Tests", () => {
-//     It("should grant Alert to chosen Detective character when played", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: minnieMouseGhostHunter.cost,
-//         Hand: [minnieMouseGhostHunter],
-//         Play: [donaldGhostHunter],
-//       });
-//
-//       Const targetDetective = testEngine.getCardModel(donaldGhostHunter);
-//       Expect(targetDetective.hasAlert).toBe(false);
-//
-//       Await testEngine.playCard(minnieMouseGhostHunter);
-//       Await testEngine.resolveTopOfStack({ targets: [targetDetective] });
-//
-//       // Donald should now have Alert
-//       Expect(targetDetective.hasAlert).toBe(true);
-//     });
-//
-//     It("should allow Minnie to target herself (she is a Detective)", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: minnieMouseGhostHunter.cost,
-//         Hand: [minnieMouseGhostHunter],
-//       });
-//
-//       Await testEngine.playCard(minnieMouseGhostHunter);
-//       Const minnieModel = testEngine.getCardModel(minnieMouseGhostHunter);
-//
-//       Await testEngine.resolveTopOfStack({ targets: [minnieModel] });
-//
-//       // Minnie should have Alert
-//       Expect(minnieModel.hasAlert).toBe(true);
-//     });
-//
-//     It("should only target Detective characters", () => {
-//       Const ability = minnieMouseGhostHunter.abilities?.find(
-//         (a) => "name" in a && a.name === "SEARCH THE SHADOWS",
-//       );
-//
-//       Expect(ability).toBeDefined();
-//
-//       If (ability && "effects" in ability && Array.isArray(ability.effects)) {
-//         Const alertEffect = ability.effects[0] as any;
-//         Const target = alertEffect.target;
-//         Expect(target).toBeDefined();
-//         Expect(target.filters).toBeDefined();
-//
-//         Const hasDetectiveFilter = target.filters.some(
-//           (f: any) =>
-//             F.filter === "characteristics" && f.value.includes("detective"),
-//         );
-//         Expect(hasDetectiveFilter).toBe(true);
-//       }
-//     });
-//
-//     It("should grant Alert for the rest of the turn only", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: minnieMouseGhostHunter.cost,
-//         Hand: [minnieMouseGhostHunter],
-//         Play: [donaldGhostHunter],
-//       });
-//
-//       Const targetDetective = testEngine.getCardModel(donaldGhostHunter);
-//
-//       Await testEngine.playCard(minnieMouseGhostHunter);
-//       Await testEngine.resolveTopOfStack({ targets: [targetDetective] });
-//
-//       Expect(targetDetective.hasAlert).toBe(true);
-//
-//       // Pass to next turn
-//       TestEngine.passTurn();
-//
-//       // Alert should be removed after turn ends (duration: "turn", until: true)
-//       Expect(targetDetective.hasAlert).toBe(false);
-//     });
-//
-//     It("should trigger when you play this character", () => {
-//       Const ability = minnieMouseGhostHunter.abilities?.find(
-//         (a) => "name" in a && a.name === "SEARCH THE SHADOWS",
-//       );
-//
-//       Expect(ability).toBeDefined();
-//
-//       If (
-//         Ability &&
-//         "trigger" in ability &&
-//         Ability.trigger &&
-//         Typeof ability.trigger === "object"
-//       ) {
-//         Expect((ability.trigger as any).on).toBe("play");
-//       }
-//     });
-//   });
-//
-//   Describe("SEARCH THE SHADOWS - Structure Tests", () => {
-//     It("should have the ability defined with correct structure", () => {
-//       Const ability = minnieMouseGhostHunter.abilities?.find(
-//         (a) => "name" in a && a.name === "SEARCH THE SHADOWS",
-//       );
-//
-//       Expect(ability).toBeDefined();
-//
-//       If (ability && "effects" in ability && Array.isArray(ability.effects)) {
-//         Const alertEffect = ability.effects[0] as any;
-//         Expect(alertEffect.type).toBe("ability");
-//         Expect(alertEffect.ability).toBe("alert");
-//         Expect(alertEffect.duration).toBe("turn");
-//         Expect(alertEffect.until).toBe(true);
-//       }
-//     });
-//
-//     It("should target Detective characters in play", () => {
-//       Const ability = minnieMouseGhostHunter.abilities?.find(
-//         (a) => "name" in a && a.name === "SEARCH THE SHADOWS",
-//       );
-//
-//       Expect(ability).toBeDefined();
-//
-//       If (ability && "effects" in ability && Array.isArray(ability.effects)) {
-//         Const alertEffect = ability.effects[0] as any;
-//         Const target = alertEffect.target;
-//         Expect(target).toBeDefined();
-//         Expect(target.type).toBe("card");
-//         Expect(target.value).toBe(1);
-//
-//         Const hasZoneFilter = target.filters.some(
-//           (f: any) => f.filter === "zone" && f.value === "play",
-//         );
-//         Const hasTypeFilter = target.filters.some(
-//           (f: any) => f.filter === "type" && f.value === "character",
-//         );
-//         Const hasOwnerFilter = target.filters.some(
-//           (f: any) => f.filter === "owner" && f.value === "self",
-//         );
-//
-//         Expect(hasZoneFilter).toBe(true);
-//         Expect(hasTypeFilter).toBe(true);
-//         Expect(hasOwnerFilter).toBe(true);
-//       }
-//     });
-//   });
-//
-//   Describe("Stats and basic properties", () => {
-//     It("should have correct stats", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [minnieMouseGhostHunter],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(minnieMouseGhostHunter);
-//
-//       Expect(cardUnderTest.strength).toBe(2);
-//       Expect(cardUnderTest.willpower).toBe(3);
-//       Expect(cardUnderTest.lore).toBe(1);
-//       Expect(cardUnderTest.cost).toBe(2);
-//     });
-//
-//     It("should be inkwell card", () => {
-//       Expect(minnieMouseGhostHunter.inkwell).toBe(true);
-//     });
-//
-//     It("should have correct characteristics for Detective synergy", () => {
-//       Expect(minnieMouseGhostHunter.characteristics).toEqual([
-//         "dreamborn",
-//         "hero",
-//         "detective",
-//       ]);
-//     });
-//
-//     It("should be steel color", () => {
-//       Expect(minnieMouseGhostHunter.colors).toEqual(["steel"]);
-//     });
-//
-//     It("should be common rarity", () => {
-//       Expect(minnieMouseGhostHunter.rarity).toBe("common");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { minnieMouseGhostHunter } from "./181-minnie-mouse-ghost-hunter";
+import { donaldDuckGhostHunter } from "./172-donald-duck-ghost-hunter";
+
+const nonDetectiveCharacter = createMockCharacter({
+  id: "minnie-test-non-detective",
+  name: "Non-Detective",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  classifications: ["Storyborn", "Hero"],
+});
+
+describe("Minnie Mouse - Ghost Hunter", () => {
+  describe("SEARCH THE SHADOWS - When you play this character, chosen Detective character gains Alert this turn.", () => {
+    it("grants Alert to chosen Detective character when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [minnieMouseGhostHunter],
+        inkwell: minnieMouseGhostHunter.cost,
+        play: [donaldDuckGhostHunter],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(minnieMouseGhostHunter)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [donaldDuckGhostHunter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne()).toHaveKeyword({
+        card: donaldDuckGhostHunter,
+        keyword: "Alert",
+      });
+    });
+
+    it("allows Minnie to target herself since she is a Detective", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [minnieMouseGhostHunter],
+        inkwell: minnieMouseGhostHunter.cost,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(minnieMouseGhostHunter)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [minnieMouseGhostHunter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne()).toHaveKeyword({
+        card: minnieMouseGhostHunter,
+        keyword: "Alert",
+      });
+    });
+
+    it("Alert expires at the end of the turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [minnieMouseGhostHunter],
+        inkwell: minnieMouseGhostHunter.cost,
+        play: [donaldDuckGhostHunter],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(minnieMouseGhostHunter)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [donaldDuckGhostHunter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne()).toHaveKeyword({
+        card: donaldDuckGhostHunter,
+        keyword: "Alert",
+      });
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().hasKeyword(donaldDuckGhostHunter, "Alert")).toBe(false);
+    });
+
+    it("only targets Detective characters, not non-Detective characters", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [minnieMouseGhostHunter],
+        inkwell: minnieMouseGhostHunter.cost,
+        play: [nonDetectiveCharacter],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(minnieMouseGhostHunter)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+      // The non-detective should not be a valid target, so targeting it should fail
+      const result = testEngine
+        .asPlayerOne()
+        .resolveNextPending({ targets: [nonDetectiveCharacter] });
+      expect(result).not.toBeSuccessfulCommand();
+    });
+  });
+
+  describe("Card properties", () => {
+    it("has correct base stats", () => {
+      expect(minnieMouseGhostHunter.strength).toBe(2);
+      expect(minnieMouseGhostHunter.willpower).toBe(3);
+      expect(minnieMouseGhostHunter.lore).toBe(1);
+      expect(minnieMouseGhostHunter.cost).toBe(2);
+    });
+
+    it("is a common Steel character and is inkable", () => {
+      expect(minnieMouseGhostHunter.inkable).toBe(true);
+      expect(minnieMouseGhostHunter.inkType).toEqual(["steel"]);
+      expect(minnieMouseGhostHunter.rarity).toBe("common");
+    });
+
+    it("has Detective classification", () => {
+      expect(minnieMouseGhostHunter.classifications).toContain("Detective");
+    });
+  });
+});

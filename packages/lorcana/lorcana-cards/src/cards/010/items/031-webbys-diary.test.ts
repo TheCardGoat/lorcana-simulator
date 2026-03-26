@@ -3,6 +3,7 @@ import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-
 import { megaraSecretKeeper } from "../characters/086-megara-secret-keeper";
 import { blessedBagpipes } from "./101-blessed-bagpipes";
 import { webbysDiary } from "./031-webbys-diary";
+import { theBlackCauldron } from "./032-the-black-cauldron";
 
 const topDeckCard = createMockCharacter({
   id: "webbys-diary-top-deck-card",
@@ -14,6 +15,14 @@ const drawnCard = createMockCharacter({
   id: "webbys-diary-drawn-card",
   name: "Drawn Card",
   cost: 1,
+});
+
+const raisedSoldier = createMockCharacter({
+  id: "webbys-diary-raised-soldier",
+  name: "Raised Soldier",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
 });
 
 const opponentHost = createMockCharacter({
@@ -58,6 +67,26 @@ describe("Webby's Diary", () => {
 
     // topDeckCard is drawn via the Webby's Diary effect (drawnCard was put under megaraSecretKeeper)
     expect(testEngine.asPlayerOne().getCardZone(topDeckCard)).toBe("hand");
+  });
+
+  it("regression: does NOT trigger when a card is put under The Black Cauldron (an item, not a character or location)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [webbysDiary, theBlackCauldron],
+      discard: [raisedSoldier],
+      inkwell: 1,
+      deck: 2,
+    });
+
+    // Use The Black Cauldron's THE CAULDRON CALLS to put a character under the item
+    expect(
+      testEngine.asPlayerOne().activateAbility(theBlackCauldron, {
+        ability: "THE CAULDRON CALLS",
+        targets: [raisedSoldier],
+      }),
+    ).toBeSuccessfulCommand();
+
+    // Webby's Diary should NOT trigger because The Black Cauldron is an item, not a character or location
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
   });
 
   it("does not trigger when an opponent puts a card under one of their characters", () => {

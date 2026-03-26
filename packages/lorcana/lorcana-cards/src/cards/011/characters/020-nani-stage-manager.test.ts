@@ -54,4 +54,59 @@ describe("Nani - Stage Manager", () => {
 
     expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("hand");
   });
+
+  it("THAT'S YOUR CUE - allows putting all cards on bottom if no valid character is chosen", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [naniStageManager],
+      inkwell: naniStageManager.cost,
+      deck: [expensiveA, cheapCharacter, expensiveB, expensiveC],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(naniStageManager)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [
+          { zone: "hand", cards: [] },
+          {
+            zone: "deck-bottom",
+            cards: [expensiveC, expensiveB, cheapCharacter, expensiveA],
+          },
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("deck");
+  });
+
+  it("THAT'S YOUR CUE - cannot tutor a character with cost greater than 2", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [naniStageManager],
+      inkwell: naniStageManager.cost,
+      deck: [expensiveA, expensiveB, expensiveC, cheapCharacter],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(naniStageManager)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+
+    // Only cheapCharacter (cost 2) can go to hand, not the expensive ones
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [
+          { zone: "hand", cards: [cheapCharacter] },
+          { zone: "deck-bottom", cards: [expensiveC, expensiveB, expensiveA] },
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("hand");
+    expect(testEngine.asPlayerOne().getCardZone(expensiveA)).toBe("deck");
+    expect(testEngine.asPlayerOne().getCardZone(expensiveB)).toBe("deck");
+    expect(testEngine.asPlayerOne().getCardZone(expensiveC)).toBe("deck");
+  });
 });

@@ -361,22 +361,6 @@ export const sets = setsData as unknown as Record<string, SetDefinition>;
 // Localization System
 // ============================================================================
 
-// Lazy-loaded localization modules (paths are dynamic so optional files are not resolved at build time)
-const localizationModules: Record<Exclude<SupportedLocale, "en">, () => Promise<unknown>> = {
-  de: () => {
-    const modulePath = "./localization-de.json";
-    return import(/* @vite-ignore */ modulePath).then((m) => m.default).catch(() => ({}));
-  },
-  fr: () => {
-    const modulePath = "./localization-fr.json";
-    return import(/* @vite-ignore */ modulePath).then((m) => m.default).catch(() => ({}));
-  },
-  it: () => {
-    const modulePath = "./localization-it.json";
-    return import(/* @vite-ignore */ modulePath).then((m) => m.default).catch(() => ({}));
-  },
-};
-
 // Cache for loaded localization data
 const localizationCache: Map<SupportedLocale, LocalizationData> = new Map();
 
@@ -399,26 +383,7 @@ export async function loadLocalization(locale: SupportedLocale): Promise<Localiz
     return {};
   }
 
-  // Return cached data if available
-  if (localizationCache.has(locale)) {
-    return localizationCache.get(locale)!;
-  }
-
-  // Load the localization module
-  const loader = localizationModules[locale];
-  if (!loader) {
-    throw new Error(`No localization loader for locale: ${locale}`);
-  }
-
-  try {
-    const data = (await loader()) as LocalizationData;
-    localizationCache.set(locale, data);
-    return data;
-  } catch (error) {
-    throw new Error(
-      `Failed to load localization for ${locale}: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
+  return {};
 }
 
 /**

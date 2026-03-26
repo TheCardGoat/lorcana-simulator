@@ -33,10 +33,29 @@ export const ratiganVeryLargeMouse: CharacterCard = {
   abilities: [
     {
       effect: {
-        duration: "this-turn",
-        restriction: "cant-quest",
-        target: "SELF",
-        type: "restriction",
+        type: "sequence",
+        steps: [
+          {
+            type: "exert",
+            target: "CHOSEN_OPPOSING_CHARACTER_3_STRENGTH_OR_LESS",
+          },
+          {
+            type: "ready",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          },
+          {
+            type: "restriction",
+            duration: "this-turn",
+            restriction: "cant-quest",
+            target: { ref: "previous-target" },
+          },
+        ],
       },
       id: "1wj-1",
       name: "THIS IS MY KINGDOM",

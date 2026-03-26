@@ -9,6 +9,8 @@ import {
   addTemporaryRestriction,
   resolveTemporaryEffectWindow,
 } from "../../effects/temporary-effects";
+import { hasStaticCardRestriction } from "../../rules/static-ability-utils";
+import { markLastEffectPerformed } from "./event-snapshot-utils";
 import { getEffectTargetSelectionInput } from "./selection-state";
 
 export function isReadyEffect(effect: unknown): effect is ReadyEffect {
@@ -39,13 +41,27 @@ export function resolveReadyEffect(
       ? effect.restriction.trim()
       : undefined;
 
+  let readiedAny = false;
+
   for (const targetId of resolvedTargets) {
     const currentMeta = ctx.cards.require(targetId).meta ?? {};
     const playerId = ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined;
+    const cantReadyByAnyMeans = hasStaticCardRestriction({
+      state: ctx.framework.state,
+      cardId: targetId,
+      restriction: "cant-ready",
+      getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
+    });
+
+    if (cantReadyByAnyMeans) {
+      continue;
+    }
+
     ctx.cards.patchMeta(targetId, {
       ...currentMeta,
       state: "ready",
     });
+    readiedAny = true;
     if (playerId) {
       emitTriggeredLorcanaEvent(
         ctx,
@@ -71,4 +87,6 @@ export function resolveReadyEffect(
       );
     }
   }
+
+  markLastEffectPerformed(resolutionInput.eventSnapshot, readiedAny);
 }

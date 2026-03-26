@@ -29,6 +29,22 @@ export const neroFearsomeCrocodile: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "hjp-1",
+      name: "AND MEAN",
+      text: "AND MEAN {E} — Move 1 damage counter from this character to chosen opposing character.",
+      type: "activated",
+      cost: {
+        exert: true,
+      },
+      effect: {
+        type: "move-damage",
+        amount: 1,
+        from: "SELF",
+        to: "CHOSEN_OPPOSING_CHARACTER",
+      },
+    },
+  ],
   i18n: neroFearsomeCrocodileI18n,
 };

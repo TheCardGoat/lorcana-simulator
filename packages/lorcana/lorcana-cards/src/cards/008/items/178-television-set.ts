@@ -32,49 +32,23 @@ export const televisionSet: ItemCard = {
         ink: 1,
       },
       effect: {
-        type: "sequence",
-        steps: [
+        type: "scry",
+        amount: 1,
+        target: "CONTROLLER",
+        revealAll: true,
+        destinations: [
           {
-            type: "reveal-top-card",
-            target: "CONTROLLER",
+            zone: "hand",
+            min: 0,
+            max: 1,
+            filters: [
+              { type: "card-type", cardType: "character" },
+              { type: "has-classification", classification: "Puppy" },
+            ],
           },
           {
-            type: "conditional",
-            condition: {
-              type: "target-query",
-              query: {
-                selector: "all",
-                reference: "revealed-first",
-                cardType: "character",
-                filters: [
-                  {
-                    type: "has-classification",
-                    classification: "Puppy",
-                  },
-                ],
-              },
-              comparison: {
-                operator: "gte",
-                value: 1,
-              },
-            },
-            then: {
-              type: "optional",
-              chooser: "CONTROLLER",
-              effect: {
-                type: "put-in-hand",
-                source: "revealed",
-                target: "CONTROLLER",
-              },
-            },
-            else: {
-              type: "put-on-bottom",
-              target: {
-                selector: "chosen",
-                count: 1,
-                reference: "revealed-first",
-              },
-            },
+            zone: "deck-bottom",
+            remainder: true,
           },
         ],
       },

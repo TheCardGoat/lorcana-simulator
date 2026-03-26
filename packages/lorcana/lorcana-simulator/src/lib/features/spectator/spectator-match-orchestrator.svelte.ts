@@ -2,7 +2,6 @@ import { getLorcanaCardCatalogSync } from "@tcg/lorcana-cards/cards/sync";
 import {
   createPlayerId,
   createLorcanaClient,
-  type LorcanaProjectedBoardView,
   type CardsMaps,
   type LorcanaClient,
   type LorcanaMatchState,
@@ -10,13 +9,11 @@ import {
 import { applyPatches, type Patch } from "immer";
 import type { GatewayClientStore } from "../gateway/gateway-client.svelte.js";
 import type {
+  LogCardReference,
   LorcanaPlayerSide,
-  LorcanaCardSnapshot,
   LorcanaSimulatorMoveId,
   LorcanaZoneId,
   MoveLogEntrySnapshot,
-  MoveLogRelatedEntrySnapshot,
-  SimulatorSerializedValue,
   SimulatorSerializedObject,
 } from "../simulator/model/contracts.js";
 import {
@@ -93,22 +90,6 @@ function normalizePersistedMoveParams(input?: unknown): SimulatorSerializedObjec
   return args as SimulatorSerializedObject;
 }
 
-function snapshotRelatedEntries(
-  history: SpectatorRecentHistory["engineLogs"],
-): MoveLogRelatedEntrySnapshot[] {
-  return history.map((entry) => ({
-    sourceEventSeqs: [...entry.sourceEventSeqs],
-    ...(entry.defaultMessage?.key && entry.defaultMessage.values
-      ? {
-          defaultMessage: {
-            key: entry.defaultMessage.key,
-            values: entry.defaultMessage.values as SimulatorSerializedObject,
-          },
-        }
-      : {}),
-  }));
-}
-
 function parseBaseZone(zone?: string): LorcanaZoneId | null {
   if (!zone) {
     return null;
@@ -139,9 +120,6 @@ export function createSpectatorHistoryEntries(args: {
       return [];
     }
 
-    const relatedEntries = snapshotRelatedEntries(
-      args.engineLogs.filter((entry) => entry.sourceEventSeqs.includes(move.stateVersion)),
-    );
     const params = normalizePersistedMoveParams(move.input);
 
     const entry: MoveLogEntrySnapshot = {
@@ -151,19 +129,12 @@ export function createSpectatorHistoryEntries(args: {
       moveId: move.moveId,
       actorSide: args.resolveActorSide(move.actorId),
       title: "",
-      rawLogRegistry: {
-        move: {
-          moveId: move.moveId,
-          params,
-          playerId: move.actorId,
-          timestamp: move.timestamp,
-        },
-        relatedLogEntries: relatedEntries,
-        cardReferences: buildLogCardReferences(args.engine, args.cardsMaps, params, relatedEntries),
-      },
+      playerId: move.actorId,
+      params,
     };
 
-    return [{ ...entry, title: formatEventLogBody(entry).text }];
+    const resolveCard = buildCardReferenceResolver(args.engine, args.cardsMaps);
+    return [{ ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text }];
   });
 }
 
@@ -176,7 +147,6 @@ function createLiveEntry(args: {
 }): MoveLogEntrySnapshot {
   const moveId = assertLorcanaSimulatorMoveId(args.acceptedMove.moveId);
   const params = normalizePersistedMoveParams(args.acceptedMove.input);
-  const relatedLogEntries = snapshotRelatedEntries(args.engineLogs);
   const entry: MoveLogEntrySnapshot = {
     id: `spectator-live-${args.acceptedMove.turnNumber}-${args.acceptedMove.timestamp}-${moveId}`,
     timestamp: args.acceptedMove.timestamp,
@@ -184,189 +154,73 @@ function createLiveEntry(args: {
     moveId,
     actorSide: args.resolveActorSide(args.acceptedMove.actorId),
     title: "",
-    rawLogRegistry: {
-      move: {
-        moveId,
-        params,
-        playerId: args.acceptedMove.actorId,
-        timestamp: args.acceptedMove.timestamp,
-      },
-      relatedLogEntries,
-      cardReferences: buildLogCardReferences(
-        args.engine,
-        args.cardsMaps,
-        params,
-        relatedLogEntries,
-      ),
-    },
+    playerId: args.acceptedMove.actorId,
+    params,
   };
 
-  return { ...entry, title: formatEventLogBody(entry).text };
+  const resolveCard = buildCardReferenceResolver(args.engine, args.cardsMaps);
+  return { ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text };
 }
 
-function buildLogCardReferences(
+function buildCardReferenceResolver(
   engine: LorcanaClient | undefined,
   cardsMaps: CardsMaps | undefined,
-  params: SimulatorSerializedObject | undefined,
-  relatedLogEntries: MoveLogRelatedEntrySnapshot[],
-): LorcanaCardSnapshot[] {
-  if (!engine && !cardsMaps) {
-    return [];
-  }
-
-  const cardIds = new Set<string>();
-
-  const addCardId = (value: SimulatorSerializedValue | undefined) => {
-    if (typeof value === "string" && value.trim().length > 0 && value.startsWith("t")) {
-      cardIds.add(value);
-    }
-  };
-
-  const addAllCardIds = (obj: SimulatorSerializedObject | undefined) => {
-    if (!obj) {
-      return;
-    }
-
-    addCardId(obj.cardId);
-    addCardId(obj.attackerId);
-    addCardId(obj.characterId);
-    addCardId(obj.defenderId);
-    addCardId(obj.locationId);
-    addCardId(obj.shiftTargetId);
-    addCardId(obj.sourceCardId);
-    addCardId(obj.sourceId);
-
-    for (const listKey of [
-      "cardIds",
-      "drawn",
-      "lookedAt",
-      "mulliganed",
-      "singerIds",
-      "targets",
-    ] as const) {
-      const list = obj[listKey];
-      if (!Array.isArray(list)) {
-        continue;
-      }
-
-      for (const item of list) {
-        addCardId(item);
-      }
-    }
-  };
-
-  addAllCardIds(params);
-
-  for (const entry of relatedLogEntries) {
-    addAllCardIds(entry.defaultMessage?.values);
-  }
-
-  if (cardIds.size === 0) {
-    return [];
-  }
-
+): (cardId: string) => LogCardReference | null {
   const board = engine?.getBoard();
   const cardCatalog = getLorcanaCardCatalogSync();
-  const references: LorcanaCardSnapshot[] = [];
 
-  for (const cardId of cardIds) {
+  return (cardId: string): LogCardReference | null => {
     const projectedCard = board?.cards[cardId];
     if (projectedCard) {
+      const isMasked = projectedCard.hidden === true;
       const ownerSide =
         (engine ? resolveOwnerSide(engine, projectedCard.ownerId) : undefined) ?? "playerOne";
-      const zoneId = parseBaseZone(projectedCard.zone) ?? "deck";
-      references.push(projectCard(board, cardId, ownerSide, zoneId));
-      continue;
+      const definitionId = cardsMaps?.cardInstances[cardId];
+      const definition = definitionId ? cardCatalog.get(definitionId) : undefined;
+      const label = isMasked ? "A card" : (definition?.fullName ?? definition?.name ?? cardId);
+
+      return {
+        cardId,
+        definitionId: definitionId ?? cardId,
+        label,
+        inkType:
+          "inkType" in (definition ?? {})
+            ? (definition as { inkType: string[] }).inkType
+            : undefined,
+        inkable:
+          "inkable" in (definition ?? {})
+            ? (definition as { inkable: boolean }).inkable
+            : undefined,
+        isMasked,
+        ownerSide,
+        cardType: definition && "cardType" in definition ? definition.cardType : undefined,
+        set: definition && "set" in definition ? definition.set : undefined,
+        cardNumber: definition && "cardNumber" in definition ? definition.cardNumber : undefined,
+      };
     }
 
     const definitionId = cardsMaps?.cardInstances[cardId];
     if (!definitionId) {
-      continue;
+      return null;
     }
     const definition = definitionId ? cardCatalog.get(definitionId) : undefined;
     if (!definition) {
-      continue;
+      return null;
     }
 
-    references.push({
+    return {
       cardId,
       definitionId,
       label: definition.fullName ?? definition.name,
-      ownerId: resolveOwnerId(cardsMaps, cardId) ?? "",
-      ownerSide: "playerOne",
-      zoneId: "deck",
-      facePresentation: "faceUp",
-      isMasked: false,
-      cardType: "cardType" in definition ? definition.cardType : undefined,
-      cost: "cost" in definition ? definition.cost : undefined,
       inkType: "inkType" in definition ? definition.inkType : undefined,
       inkable: "inkable" in definition ? definition.inkable : undefined,
-      baseLoreValue: "lore" in definition ? definition.lore : undefined,
-      baseStrength: "strength" in definition ? definition.strength : undefined,
-      baseWillpower: "willpower" in definition ? definition.willpower : undefined,
+      isMasked: false,
+      ownerSide: "playerOne",
+      cardType: "cardType" in definition ? definition.cardType : undefined,
+      set: "set" in definition ? definition.set : undefined,
       cardNumber: "cardNumber" in definition ? definition.cardNumber : undefined,
-      classifications: "classifications" in definition ? definition.classifications : undefined,
-      cardsUnderCount: 0,
-      damage: 0,
-      hasQuestRestriction: false,
-      isDrying: false,
-      keywords: [],
-      readyState: "unknown",
-      strength: "strength" in definition ? definition.strength : undefined,
-      willpower: "willpower" in definition ? definition.willpower : undefined,
-      loreValue: "lore" in definition ? definition.lore : undefined,
-    });
-  }
-
-  return references;
-}
-
-function projectCard(
-  board: LorcanaProjectedBoardView,
-  cardId: string,
-  ownerSide: LorcanaPlayerSide,
-  zoneId: LorcanaZoneId,
-): LorcanaCardSnapshot {
-  const card = board.cards[cardId];
-  const isMasked = card?.hidden === true;
-  const label = isMasked ? "Hidden Card" : (card?.fullName ?? cardId);
-  const atLocationCard = card?.atLocationId ? board.cards[card.atLocationId] : undefined;
-
-  return {
-    cardId,
-    atLocationId: card?.atLocationId,
-    atLocationLabel: atLocationCard?.fullName,
-    cardsUnderCount: card?.cardsUnder?.length ?? 0,
-    damage: card?.damage ?? 0,
-    definitionId: card?.definitionId ?? cardId,
-    keywordValues: card?.keywordValues,
-    keywords: card?.keywords ?? [],
-    hasQuestRestriction: card?.hasQuestRestriction ?? false,
-    isDrying: card?.drying ?? false,
-    isMasked,
-    facePresentation: zoneId === "inkwell" && isMasked ? "faceDown" : "faceUp",
-    label,
-    ownerId: card?.ownerId ?? "",
-    ownerSide,
-    readyState: card?.exerted === true ? "exerted" : card?.exerted === false ? "ready" : "unknown",
-    strength: card?.strength,
-    willpower: card?.willpower,
-    zoneId,
+    };
   };
-}
-
-function resolveOwnerId(cardsMaps: CardsMaps | undefined, cardId: string): string | undefined {
-  if (!cardsMaps) {
-    return undefined;
-  }
-
-  for (const [ownerId, instanceIds] of Object.entries(cardsMaps.owners)) {
-    if (instanceIds.includes(cardId)) {
-      return ownerId;
-    }
-  }
-
-  return undefined;
 }
 
 function resolveOwnerSide(

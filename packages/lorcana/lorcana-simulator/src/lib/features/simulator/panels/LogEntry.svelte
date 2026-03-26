@@ -21,9 +21,6 @@
     <span class="log-title">{entry.title}</span>
     <time class="log-time">{formatTime(entry.timestamp)}</time>
   </header>
-  {#if entry.detail}
-    <p class="log-detail">{entry.detail}</p>
-  {/if}
 </article>
 
 <style>
@@ -58,10 +55,4 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .log-detail {
-    margin: 0.25rem 0 0;
-    color: #cbd5e1;
-    font-size: 0.75rem;
-    line-height: 1.35;
-  }
 </style>

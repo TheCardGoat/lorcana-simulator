@@ -1,11 +1,14 @@
 <script lang="ts">
-  import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
+  interface CardTokenData {
+    inkType?: string[];
+    label: string;
+  }
 
   interface CardTextTokenProps {
-    card: LorcanaCardSnapshot;
+    card: CardTokenData;
     text?: string;
     interactive?: boolean;
-    onHover?: (card: LorcanaCardSnapshot) => void;
+    onHover?: () => void;
     onLeave?: () => void;
   }
 
@@ -17,7 +20,7 @@
     onLeave = () => {},
   }: CardTextTokenProps = $props();
 
-  function cardTokenClasses(card: LorcanaCardSnapshot): string {
+  function cardTokenClasses(card: CardTokenData): string {
     const ink = card.inkType?.[0]?.toLowerCase() ?? "";
     switch (ink) {
       case "amber":
@@ -42,9 +45,9 @@
   <button
     type="button"
     class={`inline cursor-pointer border-0 bg-transparent p-0 font-bold underline underline-offset-2 decoration-1 align-baseline leading-[inherit] transition hover:opacity-75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-current ${cardTokenClasses(card)}`}
-    onmouseenter={() => onHover(card)}
+    onmouseenter={onHover}
     onmouseleave={onLeave}
-    onfocus={() => onHover(card)}
+    onfocus={onHover}
     onblur={onLeave}
   >
     {text}
@@ -53,7 +56,7 @@
   <span
     role="presentation"
     class={`inline font-bold underline underline-offset-2 decoration-1 align-baseline leading-[inherit] ${cardTokenClasses(card)}`}
-    onmouseenter={() => onHover(card)}
+    onmouseenter={onHover}
     onmouseleave={onLeave}
   >
     {text}

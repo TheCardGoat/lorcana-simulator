@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { evasive } from "../../../helpers/abilities/evasive";
 import { shereKhanFearsomeTigerI18n } from "./088-shere-khan-fearsome-tiger.i18n";
 
 export const shereKhanFearsomeTiger: CharacterCard = {
@@ -34,27 +35,31 @@ export const shereKhanFearsomeTiger: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain"],
   abilities: [
-    {
-      id: "1gj-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          amount: 1,
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
+        steps: [
+          {
+            target: "CHOSEN_OPPOSING_DAMAGED_CHARACTER",
+            type: "banish",
           },
-          type: "put-damage",
-        },
-        type: "optional",
+          {
+            chooser: "CONTROLLER",
+            effect: {
+              amount: 1,
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "any",
+                zones: ["play"],
+                cardTypes: ["character"],
+              },
+              type: "put-damage",
+            },
+            type: "optional",
+          },
+        ],
+        type: "sequence",
       },
       id: "1gj-2",
       name: "ON THE HUNT",

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { fairyGodmotherMagicalBenefactorI18n } from "./192-fairy-godmother-magical-benefactor.i18n";
 
 export const fairyGodmotherMagicalBenefactor: CharacterCard = {
@@ -34,13 +35,7 @@ export const fairyGodmotherMagicalBenefactor: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Fairy", "Sorcerer", "Whisper"],
   abilities: [
-    {
-      id: "45t-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 3,
-      text: "Boost 3 {I}",
-    },
+    boost(3),
     {
       id: "45t-2",
       type: "triggered",

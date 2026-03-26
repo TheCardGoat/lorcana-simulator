@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kenaiMagicalBearI18n } from "./070-kenai-magical-bear.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const kenaiMagicalBear: CharacterCard = {
   id: "7zp",
@@ -34,13 +35,7 @@ export const kenaiMagicalBear: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "wwk-1",
-      keyword: "Challenger",
-      text: "Challenger +2",
-      type: "keyword",
-      value: 2,
-    },
+    challenger(2),
     {
       effect: {
         steps: [

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { littleJohnResourcefulOutlawI18n } from "./178-little-john-resourceful-outlaw.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const littleJohnResourcefulOutlaw: CharacterCard = {
   id: "qJp",
@@ -34,15 +35,7 @@ export const littleJohnResourcefulOutlaw: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "kck-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       condition: {
         type: "exerted",

@@ -24,12 +24,44 @@ export const mowgliManCub: CharacterCard = {
   },
   text: [
     {
-      title: "HAVE",
+      title: "HAVE A BETTER LOOK",
       description:
-        "A BETTER LOOK When you play this character, chosen opponent reveals their hand and discards a non-character card of their choice.",
+        "When you play this character, chosen opponent reveals their hand and discards a non-character card of their choice.",
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      id: "65q-1",
+      type: "triggered",
+      name: "HAVE A BETTER LOOK",
+      text: "HAVE A BETTER LOOK When you play this character, chosen opponent reveals their hand and discards a non-character card of their choice.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "reveal-hand",
+            target: "OPPONENT",
+          },
+          {
+            type: "discard",
+            amount: 1,
+            target: "OPPONENT",
+            from: "hand",
+            chosen: true,
+            chosenBy: "opponent",
+            filter: {
+              notCardType: "character",
+            },
+          },
+        ],
+      },
+    },
+  ],
   i18n: mowgliManCubI18n,
 };

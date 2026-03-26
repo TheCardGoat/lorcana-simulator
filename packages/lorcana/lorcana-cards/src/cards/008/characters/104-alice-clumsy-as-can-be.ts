@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { aliceClumsyAsCanBeI18n } from "./104-alice-clumsy-as-can-be.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const aliceClumsyAsCanBe: CharacterCard = {
   id: "Xgj",
@@ -33,15 +34,7 @@ export const aliceClumsyAsCanBe: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "luf-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         amount: 1,

@@ -85,7 +85,8 @@ describe("Sisu - Uniting Dragon", () => {
     });
 
     it("repeats effect when two dragons are on top", () => {
-      // The first deck entry is the top card, so dragonTwo is revealed first.
+      // deck: [dragonTwo, dragonOne] — index 0 = bottom, index 1 = top.
+      // dragonOne is on top, so it's revealed first.
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [sisuUnitingDragon],
         deck: [dragonTwo, dragonOne],
@@ -93,23 +94,23 @@ describe("Sisu - Uniting Dragon", () => {
 
       expect(testEngine.asPlayerOne().quest(sisuUnitingDragon)).toBeSuccessfulCommand();
 
-      // First iteration: dragonTwo is on top, it's a Dragon → put in hand
+      // First iteration: dragonOne is on top, it's a Dragon → put in hand
       expect(
         testEngine.asPlayerOne().resolveOnlyBag({
-          destinations: [{ zone: "hand", cards: [dragonTwo] }],
-        }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getCardZone(dragonTwo)).toBe("hand");
-
-      // Second iteration creates a pending scry selection for the next revealed card.
-      expect(
-        testEngine.asPlayerOne().resolveNextPending({
           destinations: [{ zone: "hand", cards: [dragonOne] }],
         }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(dragonOne)).toBe("hand");
+
+      // Second iteration creates a pending scry selection for the next revealed card.
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          destinations: [{ zone: "hand", cards: [dragonTwo] }],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(dragonTwo)).toBe("hand");
     });
 
     it("stops repeating when a non-dragon is revealed", () => {

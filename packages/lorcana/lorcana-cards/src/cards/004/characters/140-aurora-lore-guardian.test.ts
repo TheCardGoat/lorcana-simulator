@@ -45,7 +45,7 @@ describe("Aurora - Lore Guardian", () => {
         testEngine.asPlayerOne().resolveNextPending({
           destinations: [
             { zone: "deck-top", cards: [] },
-            { zone: "deck-bottom", cards: [topCard] },
+            { zone: "deck-bottom", cards: [secondCard] },
           ],
         }),
       ).toBeSuccessfulCommand();
@@ -75,7 +75,7 @@ describe("Aurora - Lore Guardian", () => {
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           destinations: [
-            { zone: "deck-top", cards: [topCard] },
+            { zone: "deck-top", cards: [secondCard] },
             { zone: "deck-bottom", cards: [] },
           ],
         }),
@@ -91,6 +91,22 @@ describe("Aurora - Lore Guardian", () => {
     it("fails if no items are available to exert", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [{ card: auroraLoreGuardian, isDrying: false }],
+        deck: [topCard, secondCard],
+      });
+
+      const result = testEngine.asPlayerOne().activateAbility(auroraLoreGuardian) as CommandFailure;
+      expect(result.success).toBe(false);
+    });
+
+    it("regression: fails if all items are already exerted (no valid item targets remain)", () => {
+      // Bug: Aurora's exert ability was triggerable even when no valid item targets
+      // remain to exert (all items already exerted).
+      // Expected: Ability should not be activatable when all items are exerted.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [
+          { card: auroraLoreGuardian, isDrying: false },
+          { card: pawpsicle, exerted: true },
+        ],
         deck: [topCard, secondCard],
       });
 

@@ -43,9 +43,20 @@ export const plutoSteelChampion: CharacterCard = {
       name: "WINNER TAKE ALL",
       text: "WINNER TAKE ALL During your turn, whenever one of your other Steel characters banishes another character in a challenge, gain 2 lore.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "banish-in-challenge",
+        on: {
+          controller: "you",
+          cardType: "character",
+          excludeSelf: true,
+          filters: [{ type: "ink-type", inkType: "steel" }],
+        },
         timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
       },
       type: "triggered",
     },
@@ -69,8 +80,13 @@ export const plutoSteelChampion: CharacterCard = {
       text: "MAKE ROOM Whenever you play another Steel character, you may banish chosen item.",
       trigger: {
         event: "play",
-        on: "SELF",
-        timing: "when",
+        on: {
+          controller: "you",
+          cardType: "character",
+          excludeSelf: true,
+          filters: [{ type: "ink-type", inkType: "steel" }],
+        },
+        timing: "whenever",
       },
       type: "triggered",
     },

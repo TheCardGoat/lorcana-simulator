@@ -42,23 +42,15 @@ export const theSorcerersHat: ItemCard = {
             type: "name-a-card",
           },
           {
-            type: "reveal-top-card",
+            type: "reveal-and-route",
             target: "CONTROLLER",
-          },
-          {
-            type: "conditional",
-            condition: {
-              type: "revealed-matches-named",
-            },
-            then: {
-              type: "put-in-hand",
-              source: "revealed",
-              target: "CONTROLLER",
-            },
-            else: {
-              type: "put-on-top",
-              source: "revealed",
-            },
+            routes: [
+              {
+                condition: { type: "revealed-matches-named" },
+                destination: { zone: "hand" },
+              },
+            ],
+            fallback: { zone: "deck-top" },
           },
         ],
       },

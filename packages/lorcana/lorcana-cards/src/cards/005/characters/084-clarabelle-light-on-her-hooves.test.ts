@@ -68,6 +68,35 @@ describe("Clarabelle - Light on Her Hooves", () => {
       }
     });
 
+    it("regression: actually draws the correct number of cards to match opponent's hand size", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [clarabelleLightOnHerHooves],
+          inkwell: clarabelleLightOnHerHooves.cost,
+          deck: drawnCards,
+        },
+        {
+          hand: 3,
+        },
+      );
+
+      // Play Clarabelle, hand becomes 0
+      expect(testEngine.asPlayerOne().playCard(clarabelleLightOnHerHooves)).toBeSuccessfulCommand();
+
+      // Pass turn to trigger KEEP IN STEP (opponent has 3 cards, player has 0)
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Should have drawn 3 cards to match opponent's 3
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 3 });
+    });
+
     it("does not trigger if the opponent does not have more cards in hand", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

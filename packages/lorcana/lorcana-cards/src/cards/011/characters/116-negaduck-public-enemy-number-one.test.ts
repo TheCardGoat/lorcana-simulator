@@ -5,6 +5,7 @@ import {
   PLAYER_ONE,
   PLAYER_TWO,
   createMockCharacter,
+  createMockLocation,
 } from "@tcg/lorcana-engine/testing";
 import { negaduckPublicEnemyNumberOne } from "./116-negaduck-public-enemy-number-one";
 
@@ -52,5 +53,41 @@ describe("Negaduck - Public Enemy Number One", () => {
     expect(testEngine.getLore(PLAYER_TWO)).toBe(2);
     // P1 should have gained 1 lore (0 -> 1)
     expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
+  });
+
+  it("regression: STICKY FINGERS does not trigger when challenging a location", () => {
+    const opponentLocation = createMockLocation({
+      id: "negaduck-opponent-location",
+      name: "Opponent Location",
+      cost: 3,
+      moveCost: 1,
+      willpower: 4,
+      lore: 1,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: negaduckPublicEnemyNumberOne, isDrying: false }],
+        deck: 2,
+      },
+      {
+        play: [opponentLocation],
+        deck: 2,
+      },
+      {
+        startingLore: {
+          [PLAYER_ONE]: 0,
+          [PLAYER_TWO]: 3,
+        },
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().challenge(negaduckPublicEnemyNumberOne, opponentLocation),
+    ).toBeSuccessfulCommand();
+
+    // STICKY FINGERS should NOT trigger for locations — only characters
+    expect(testEngine.getLore(PLAYER_TWO)).toBe(3);
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
   });
 });

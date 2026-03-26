@@ -5,7 +5,7 @@
  * Add new log keys here first so type-checking enforces translation coverage.
  */
 
-import type { CardInstanceId, LogMessage, LogValue, PlayerId } from "#core";
+import type { CardInstanceId, LogMessage, LogValue, LogVisibility, PlayerId } from "#core";
 
 export interface FirstPlayerChosenLogValues {
   chooser: PlayerId;
@@ -146,6 +146,43 @@ export interface ResolveScrySelectionLogValues {
   sourceCardId: CardInstanceId;
 }
 
+export interface ScryDestinationEntry {
+  zone: string;
+  cardIds: CardInstanceId[];
+  cardNames: string[];
+  inkTypes?: (string[] | undefined)[];
+}
+
+export interface ResolveScrySelectionDetailLogValues extends ResolveScrySelectionLogValues {
+  selection: string[];
+  destinations?: ScryDestinationEntry[];
+  deckTopCards?: CardInstanceId[];
+  deckBottomCards?: CardInstanceId[];
+  handCards?: CardInstanceId[];
+  playCards?: CardInstanceId[];
+  inkwellCards?: CardInstanceId[];
+  discardCards?: CardInstanceId[];
+}
+
+export interface RevealTopCardLogValues {
+  playerId: PlayerId;
+  targetPlayerId: PlayerId;
+  revealedCardId: CardInstanceId;
+}
+
+export interface RevealTopCardAutoBottomLogValues {
+  playerId: PlayerId;
+  targetPlayerId: PlayerId;
+  revealedCardId: CardInstanceId;
+}
+
+export interface ResolveChoiceWithRevealLogValues {
+  playerId: PlayerId;
+  sourceCardId: CardInstanceId;
+  revealedCardId: CardInstanceId;
+  choiceIndex: number;
+}
+
 export interface LorcanaLogMessageMap {
   "lorcana.setup.firstPlayerChosen": FirstPlayerChosenLogValues;
   "lorcana.setup.mulligan.count": SetupMulliganCountLogValues;
@@ -178,6 +215,10 @@ export interface LorcanaLogMessageMap {
   "lorcana.effect.resolve.optionalSelection.rejected": ResolveOptionalSelectionLogValues;
   "lorcana.effect.resolve.nameCardSelection": ResolveNameCardSelectionLogValues;
   "lorcana.effect.resolve.scrySelection": ResolveScrySelectionLogValues;
+  "lorcana.effect.resolve.scrySelection.detail": ResolveScrySelectionDetailLogValues;
+  "lorcana.effect.resolve.revealTopCard": RevealTopCardLogValues;
+  "lorcana.effect.resolve.revealTopCard.autoBottom": RevealTopCardAutoBottomLogValues;
+  "lorcana.effect.resolve.choiceSelection.withReveal": ResolveChoiceWithRevealLogValues;
 }
 
 export type LorcanaLogMessageKey = keyof LorcanaLogMessageMap & string;
@@ -226,6 +267,12 @@ export const LORCANA_LOG_TRANSLATION_KEYS = {
     "lorcana.effect.resolve.optionalSelection.rejected",
   "lorcana.effect.resolve.nameCardSelection": "lorcana.effect.resolve.nameCardSelection",
   "lorcana.effect.resolve.scrySelection": "lorcana.effect.resolve.scrySelection",
+  "lorcana.effect.resolve.scrySelection.detail": "lorcana.effect.resolve.scrySelection.detail",
+  "lorcana.effect.resolve.revealTopCard": "lorcana.effect.resolve.revealTopCard",
+  "lorcana.effect.resolve.revealTopCard.autoBottom":
+    "lorcana.effect.resolve.revealTopCard.autoBottom",
+  "lorcana.effect.resolve.choiceSelection.withReveal":
+    "lorcana.effect.resolve.choiceSelection.withReveal",
 } as const satisfies Record<LorcanaLogMessageKey, LorcanaParaglideMessageKey>;
 
 export const LORCANA_LOG_TRANSLATION_VALUE_KEYS = {
@@ -260,9 +307,76 @@ export const LORCANA_LOG_TRANSLATION_VALUE_KEYS = {
   "lorcana.effect.resolve.optionalSelection.rejected": ["sourceCardId"],
   "lorcana.effect.resolve.nameCardSelection": ["sourceCardId", "namedCard"],
   "lorcana.effect.resolve.scrySelection": ["sourceCardId"],
+  "lorcana.effect.resolve.scrySelection.detail": ["sourceCardId", "selection"],
+  "lorcana.effect.resolve.revealTopCard": ["playerId", "revealedCardId", "targetPlayerId"],
+  "lorcana.effect.resolve.revealTopCard.autoBottom": ["revealedCardId", "targetPlayerId"],
+  "lorcana.effect.resolve.choiceSelection.withReveal": [
+    "choiceIndex",
+    "playerId",
+    "revealedCardId",
+  ],
 } as const satisfies {
   [K in LorcanaLogMessageKey]: readonly (keyof LorcanaLogMessageMap[K] & string)[];
 };
+
+// =============================================================================
+// Typed Game Log Entry — discriminated union for the UI
+// =============================================================================
+
+export type LorcanaGameLogEntryCategory = "action" | "rules" | "system";
+
+/**
+ * A fully-typed game log entry. Each variant carries exactly the data
+ * the UI needs to render that log type.
+ *
+ * Discriminated on `type` (which matches a LorcanaLogMessageKey).
+ */
+export type LorcanaGameLogEntry = {
+  [K in LorcanaLogMessageKey]: {
+    type: K;
+    values: LorcanaLogMessageMap[K];
+    visibility: LogVisibility;
+    category: LorcanaGameLogEntryCategory;
+  };
+}[LorcanaLogMessageKey];
+
+export function createLorcanaGameLogEntry<K extends LorcanaLogMessageKey>(
+  type: K,
+  values: LorcanaLogMessageMap[K],
+  visibility: LogVisibility,
+  category: LorcanaGameLogEntryCategory,
+): Extract<LorcanaGameLogEntry, { type: K }> {
+  return { type, values, visibility, category } as Extract<LorcanaGameLogEntry, { type: K }>;
+}
+
+/**
+ * Creates a ProjectedLogEntry-compatible object with both `defaultMessage`
+ * (for backward compat / i18n) and `typedEntry` (for the new typed pipeline).
+ */
+export type LorcanaLogProjection = {
+  category: LorcanaGameLogEntryCategory;
+  visibility: LogVisibility;
+  defaultMessage: LogMessage;
+  typedEntry: LorcanaGameLogEntry;
+};
+
+export function createLorcanaLogProjection<K extends LorcanaLogMessageKey>(
+  key: K,
+  values: LorcanaLogMessageMap[K],
+  visibility: LogVisibility,
+  category: LorcanaGameLogEntryCategory,
+): LorcanaLogProjection {
+  return {
+    category,
+    visibility,
+    defaultMessage: { key, values: values as Record<string, LogValue> },
+    typedEntry: { type: key, values, visibility, category } as LorcanaGameLogEntry,
+  };
+}
+
+// =============================================================================
+// Log Message Helpers
+// =============================================================================
 
 export function createLorcanaLogMessage(key: "lorcana.setup.done"): LogMessage;
 export function createLorcanaLogMessage<

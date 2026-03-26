@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tinkerBellInsistentFairyI18n } from "./136-tinker-bell-insistent-fairy.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const tinkerBellInsistentFairy: CharacterCard = {
   id: "01E",
@@ -34,12 +35,7 @@ export const tinkerBellInsistentFairy: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Fairy"],
   abilities: [
-    {
-      id: "ay2-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         chooser: "CONTROLLER",

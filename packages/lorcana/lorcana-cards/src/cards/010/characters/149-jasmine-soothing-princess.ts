@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { jasmineSoothingPrincessI18n } from "./149-jasmine-soothing-princess.i18n";
 
 export const jasmineSoothingPrincess: CharacterCard = {
@@ -34,13 +35,7 @@ export const jasmineSoothingPrincess: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess", "Whisper"],
   abilities: [
-    {
-      id: "1rh-1",
-      keyword: "Boost",
-      text: "Boost 2 {I}",
-      type: "keyword",
-      value: 2,
-    },
+    boost(2),
     {
       effect: {
         condition: {

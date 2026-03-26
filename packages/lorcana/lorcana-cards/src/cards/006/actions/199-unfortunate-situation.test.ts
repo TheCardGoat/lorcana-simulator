@@ -25,4 +25,30 @@ describe("Unfortunate Situation", () => {
     expect(testEngine.asPlayerTwo().getCardZone(simbaProtectiveCub)).toBe("discard");
     expect(testEngine.asPlayerTwo().getCardZone(mickeyMouseTrueFriend)).toBe("play");
   });
+
+  it("regression: should work at all - dealing 4 damage to a character chosen by opponent", () => {
+    // Bug: Unfortunate Situation was not working at all.
+    // Verify the basic flow: play the card, opponent chooses, damage is dealt.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [unfortunateSituation],
+        inkwell: unfortunateSituation.cost,
+      },
+      {
+        play: [mickeyMouseTrueFriend],
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(unfortunateSituation)).toBeSuccessfulCommand();
+
+    // Opponent should have a pending effect to choose a character
+    expect(testEngine.asPlayerTwo()).toHavePendingEffectCount(1);
+
+    expect(
+      testEngine.asPlayerTwo().resolveNextPending({ targets: [mickeyMouseTrueFriend] }).success,
+    ).toBe(true);
+
+    // Mickey (willpower 2) should take 4 damage and be banished
+    expect(testEngine.asPlayerTwo().getCardZone(mickeyMouseTrueFriend)).toBe("discard");
+  });
 });

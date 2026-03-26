@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jasmineQueenOfAgrabahI18n } from "./149-jasmine-queen-of-agrabah.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const jasmineQueenOfAgrabah: CharacterCard = {
   id: "Abg",
@@ -34,15 +35,7 @@ export const jasmineQueenOfAgrabah: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess", "Queen"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "8w9-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         chooser: "CONTROLLER",

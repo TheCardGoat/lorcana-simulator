@@ -31,10 +31,18 @@ export const motherGothelSelfishManipulator: CharacterCard = {
   classifications: ["Storyborn", "Villain"],
   abilities: [
     {
+      condition: {
+        type: "exerted",
+      },
       effect: {
-        restriction: "cant-quest",
-        target: "SELF",
         type: "restriction",
+        restriction: "cant-quest",
+        target: {
+          selector: "all",
+          zones: ["play"],
+          owner: "opponent",
+          count: "all",
+        },
       },
       id: "xse-1",
       name: "SKIP THE DRAMA, STAY WITH MAMA",

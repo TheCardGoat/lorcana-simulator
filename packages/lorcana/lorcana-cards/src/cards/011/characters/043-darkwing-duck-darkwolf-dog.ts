@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { darkwingDuckDarkwolfDogI18n } from "./043-darkwing-duck-darkwolf-dog.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const darkwingDuckDarkwolfDog: CharacterCard = {
   id: "l2V",
@@ -24,13 +25,6 @@ export const darkwingDuckDarkwolfDog: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Super", "Hero", "Detective"],
-  abilities: [
-    {
-      id: "1en-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: darkwingDuckDarkwolfDogI18n,
 };

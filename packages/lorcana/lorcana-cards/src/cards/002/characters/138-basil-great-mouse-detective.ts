@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { basilGreatMouseDetectiveI18n } from "./138-basil-great-mouse-detective.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const basilGreatMouseDetective: CharacterCard = {
   id: "rNe",
@@ -34,15 +35,7 @@ export const basilGreatMouseDetective: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Detective"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "1vg-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       id: "1vg-2",
       name: "THERE'S ALWAYS A CHANCE",

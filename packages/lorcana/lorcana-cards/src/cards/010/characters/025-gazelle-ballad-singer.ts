@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { singer } from "../../../helpers/abilities/singer";
 import { gazelleBalladSingerI18n } from "./025-gazelle-ballad-singer.i18n";
 
 export const gazelleBalladSinger: CharacterCard = {
@@ -34,13 +35,7 @@ export const gazelleBalladSinger: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Ally"],
   abilities: [
-    {
-      id: "OP1-1",
-      keyword: "Singer",
-      type: "keyword",
-      value: 7,
-      text: "Singer 7",
-    },
+    singer(7),
     {
       id: "OP1-2",
       name: "CROWD FAVORITE",

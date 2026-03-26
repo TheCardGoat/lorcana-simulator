@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { moanaKakamoraLeaderI18n } from "./121-moana-kakamora-leader.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const moanaKakamoraLeader: CharacterCard = {
   id: "OXn",
@@ -34,21 +35,32 @@ export const moanaKakamoraLeader: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess", "Pirate", "Captain"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "cew-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 1,
-          type: "gain-lore",
+          type: "move-to-location",
+          character: {
+            selector: "chosen",
+            count: "all",
+            owner: "you",
+            zones: ["play"],
+            cardTypes: ["character"],
+          },
+          location: {
+            selector: "chosen",
+            count: 1,
+            owner: "you",
+            zones: ["play"],
+          },
+          cost: "free",
+          forEach: [
+            {
+              type: "gain-lore",
+              amount: 1,
+            },
+          ],
         },
         type: "optional",
       },

@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ratiganPartyCrasherI18n } from "./123-ratigan-party-crasher.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const ratiganPartyCrasher: CharacterCard = {
   id: "7v2",
@@ -36,26 +38,20 @@ export const ratiganPartyCrasher: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "1b4-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
-    {
-      id: "1b4-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    shift(4),
+    evasive,
     {
       effect: {
         modifier: 2,
         stat: "strength",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [{ type: "status", status: "damaged" }],
+        },
         type: "modify-stat",
       },
       id: "1b4-3",

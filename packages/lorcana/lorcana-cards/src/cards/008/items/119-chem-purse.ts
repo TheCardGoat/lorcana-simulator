@@ -39,23 +39,20 @@ export const chemPurse: ItemCard = {
         },
         timing: "whenever",
       },
+      condition: {
+        type: "play-context",
+        context: "used-shift",
+      },
       effect: {
-        condition: {
-          type: "play-context",
-          context: "used-shift",
+        duration: "this-turn",
+        modifier: 4,
+        stat: "strength",
+        target: {
+          selector: "all",
+          count: 1,
+          reference: "trigger-subject",
         },
-        then: {
-          duration: "this-turn",
-          modifier: 4,
-          stat: "strength",
-          target: {
-            selector: "all",
-            count: 1,
-            reference: "trigger-subject",
-          },
-          type: "modify-stat",
-        },
-        type: "conditional",
+        type: "modify-stat",
       },
     },
   ],

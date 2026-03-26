@@ -30,5 +30,9 @@
   "lorcana.effect.resolve.optionalSelection.accepted": "Loeste {sourceCardId} mit Ja auf.",
   "lorcana.effect.resolve.optionalSelection.rejected": "Loeste {sourceCardId} mit Nein auf.",
   "lorcana.effect.resolve.nameCardSelection": "Loeste {sourceCardId} auf und nannte {namedCard}.",
-  "lorcana.effect.resolve.scrySelection": "Beendete das Sortieren der Karten fuer {sourceCardId}."
+  "lorcana.effect.resolve.scrySelection": "Beendete das Sortieren der Karten fuer {sourceCardId}.",
+  "lorcana.effect.resolve.scrySelection.detail": "Beendete das Sortieren der Karten fuer {sourceCardId}: {selection}.",
+  "lorcana.effect.resolve.revealTopCard": "{playerId} hat {revealedCardId} vom Deck von {targetPlayerId} aufgedeckt.",
+  "lorcana.effect.resolve.revealTopCard.autoBottom": "Aufgedeckt {revealedCardId} — auf den unteren Teil des Decks von {targetPlayerId} gelegt.",
+  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} hat Option {choiceIndex} fuer {revealedCardId} gewaehlt."
 }

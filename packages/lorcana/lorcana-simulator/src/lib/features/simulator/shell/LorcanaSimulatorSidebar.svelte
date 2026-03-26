@@ -7,14 +7,16 @@
   import SimulatorSupportDialog from "@/features/simulator/dialogs/SimulatorSupportDialog.svelte";
   import {useSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
   import {useLorcanaSidebarPresenter} from "@/features/simulator/context/game-context.svelte.js";
+  import { bugReportContextFromBoard } from "@/features/simulator/support/feedback-api.js";
   import { useHumanVsAiOrchestrator } from "@/features/simulator-devtools/vs-ai/context.js";
   import AiPlayerControls from "@/features/simulator-devtools/vs-ai/AiPlayerControls.svelte";
 
   interface LorcanaSimulatorSidebarProps {
     readOnly?: boolean;
+    onOpenHotkeys?: () => void;
   }
 
-  let { readOnly = false }: LorcanaSimulatorSidebarProps = $props();
+  let { readOnly = false, onOpenHotkeys }: LorcanaSimulatorSidebarProps = $props();
 
   const sidebar = useLorcanaSidebarPresenter();
   const aiOrchestratorStore = useHumanVsAiOrchestrator();
@@ -33,10 +35,54 @@
   const showRawLogRegistryJson = $derived(sidebar.showRawLogRegistryJson);
   const hoveredLogCard = $derived(sidebar.hoveredLogCard);
   const availableMovesSelectionState = $derived(sidebar.availableMovesSelectionState);
+
+  const resolveCard = $derived((cardId: string) => {
+    const snapshot = sidebar.cardSnapshotsById[cardId];
+    if (!snapshot) return null;
+    return {
+      cardId: snapshot.cardId,
+      definitionId: snapshot.definitionId,
+      label: snapshot.label,
+      inkType: snapshot.inkType,
+      inkable: snapshot.inkable,
+      isMasked: snapshot.isMasked,
+      ownerSide: snapshot.ownerSide,
+      cardType: snapshot.cardType,
+      set: snapshot.set,
+      cardNumber: snapshot.cardNumber,
+    };
+  });
+  const sidebarSelectionState = $derived(
+    availableMovesSelectionState?.mode === "resolution-scry" ? null : availableMovesSelectionState,
+  );
   let supportDialogOpen = $state(false);
 
+  const bugReportContext = $derived(bugReportContextFromBoard(boardSnapshot));
+
   $effect(() => {
-    simulatorCardContext.setExternalPreviewCard(hoveredLogCard);
+    if (!hoveredLogCard) {
+      simulatorCardContext.setExternalPreviewCard(null);
+      return;
+    }
+    const boardCard = sidebar.cardSnapshotsById[hoveredLogCard.cardId] ?? null;
+    if (boardCard) {
+      simulatorCardContext.setExternalPreviewCard(boardCard);
+      return;
+    }
+    simulatorCardContext.setExternalPreviewCard({
+      cardId: hoveredLogCard.cardId,
+      definitionId: hoveredLogCard.definitionId,
+      label: hoveredLogCard.label,
+      ownerId: "",
+      ownerSide: hoveredLogCard.ownerSide,
+      zoneId: "play",
+      isMasked: hoveredLogCard.isMasked,
+      facePresentation: hoveredLogCard.isMasked ? "faceDown" : "faceUp",
+      inkType: hoveredLogCard.inkType,
+      cardType: hoveredLogCard.cardType,
+      set: hoveredLogCard.set,
+      cardNumber: hoveredLogCard.cardNumber,
+    });
   });
 </script>
 
@@ -55,6 +101,7 @@
         availableInk={headerPlayerData.availableInk}
         isActive={activeSide === topSide}
         isOpponent={hasOwnedView}
+        timer={headerPlayerData.timer}
       >
         {#if $aiOrchestratorStore}
           <AiPlayerControls orchestrator={$aiOrchestratorStore} />
@@ -68,6 +115,7 @@
       <EventLogPanel
         entries={moveLogEntries}
         viewerSide={ownerSide}
+        {resolveCard}
         {showRawLogRegistryJson}
         onCardHover={sidebar.handleLogCardHover}
         onCardLeave={sidebar.handleLogCardLeave}
@@ -86,7 +134,7 @@
           summaries={moveCategorySummaries}
           onExpandCategory={sidebar.expandCategoryMoves}
           supplementalActions={sidebar.resolutionActions}
-          selectionState={availableMovesSelectionState}
+          selectionState={sidebarSelectionState}
           interactiveSide={ownerSide}
           activeSide={activeSide ?? undefined}
           {showRawLogRegistryJson}
@@ -108,6 +156,7 @@
           onConfirmSelection={sidebar.confirmActionSelection}
           onResetManualMoveSelection={sidebar.cancelManualCardActionSelection}
           onExecuteMove={sidebar.handleAvailableMoveClick}
+          hotkeyMode={sidebar.hotkeyMode}
         />
       {/if}
     </div>
@@ -129,6 +178,7 @@
         isOpponent={false}
         showSettings
         showSupport
+        timer={footerPlayerData.timer}
         onSettingsClick={sidebar.handleOpenPlayerSettings}
         onSupportClick={() => {
           supportDialogOpen = true;
@@ -142,13 +192,16 @@
 
 <PlayerSettingsDialog
   bind:open={sidebar.isPlayerSettingsOpen}
+  bugReportContext={bugReportContext}
   selectedLocale={sidebar.selectedLocale}
   {showRawLogRegistryJson}
   skipActionConfirmation={sidebar.skipActionConfirmation}
+  hotkeyMode={sidebar.hotkeyMode}
   cardPreviewMode={sidebar.cardPreviewMode}
   onLocaleSelection={sidebar.handleLocaleSelection}
   onToggleRawLogRegistryJson={sidebar.handleRawLogRegistryToggle}
   onToggleSkipActionConfirmation={sidebar.handleSkipActionConfirmationToggle}
+  onHotkeyModeChange={sidebar.handleHotkeyModeChange}
   onCardPreviewModeChange={sidebar.handleCardPreviewModeChange}
   primaryClickAction={sidebar.primaryClickAction}
   onPrimaryClickActionChange={sidebar.handlePrimaryClickActionChange}
@@ -156,9 +209,12 @@
   onAnimationSpeedChange={sidebar.handleAnimationSpeedChange}
   soundVolume={sidebar.soundVolume}
   onSoundVolumeChange={sidebar.handleSoundVolumeChange}
+  accessibleMobileControls={sidebar.accessibleMobileControls}
+  onToggleAccessibleMobileControls={sidebar.handleAccessibleMobileControlsToggle}
+  {onOpenHotkeys}
 />
 
-<SimulatorSupportDialog bind:open={supportDialogOpen} />
+<SimulatorSupportDialog bind:open={supportDialogOpen} gameContext={bugReportContext} />
 
 <style>
   :global([data-sidebar="sidebar"]) {

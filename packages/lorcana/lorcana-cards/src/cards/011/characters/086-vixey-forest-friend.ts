@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { vixeyForestFriendI18n } from "./086-vixey-forest-friend.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const vixeyForestFriend: CharacterCard = {
   id: "tPQ",
@@ -51,12 +52,7 @@ export const vixeyForestFriend: CharacterCard = {
       type: "static",
       text: "SHOWIN' UP If you have a character named Tod in play, you pay 1 {I} less to play this character.",
     },
-    {
-      id: "q34-2",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    evasive,
   ],
   i18n: vixeyForestFriendI18n,
 };

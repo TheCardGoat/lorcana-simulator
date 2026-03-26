@@ -55,7 +55,7 @@ export const mushusRocket: ItemCard = {
     },
     {
       cost: {
-        ink: 1,
+        ink: 2,
         banishSelf: true,
       },
       effect: {
@@ -71,7 +71,7 @@ export const mushusRocket: ItemCard = {
         type: "gain-keyword",
       },
       id: "u0o-2",
-      name: "HITCH A RIDE 2",
+      name: "HITCH A RIDE",
       text: "HITCH A RIDE 2 {I}, Banish this item — Chosen character gains Rush this turn.",
       type: "activated",
     },

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { merlinSelfappointedMentorI18n } from "./153-merlin-self-appointed-mentor.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const merlinSelfappointedMentor: CharacterCard = {
   id: "m4N",
@@ -24,13 +25,6 @@ export const merlinSelfappointedMentor: CharacterCard = {
   },
   text: "Support",
   classifications: ["Dreamborn", "Mentor", "Sorcerer"],
-  abilities: [
-    {
-      id: "uii-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: merlinSelfappointedMentorI18n,
 };

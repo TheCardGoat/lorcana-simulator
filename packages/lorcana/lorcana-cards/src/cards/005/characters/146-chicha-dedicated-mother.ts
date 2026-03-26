@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { chichaDedicatedMotherI18n } from "./146-chicha-dedicated-mother.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const chichaDedicatedMother: CharacterCard = {
   id: "RHS",
@@ -34,12 +35,7 @@ export const chichaDedicatedMother: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "q5f-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
+    support,
     {
       id: "q5f-2",
       effect: {

@@ -24,6 +24,21 @@ describe("Sail the Azurite Sea", () => {
     expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, discard: 1, inkwell: 4 });
   });
 
+  it("regression: should draw a card even when played from a non-hand source like Kristoff's Lute", () => {
+    // Bug: Sail the Azurite Sea was not drawing when played from Kristoff's Lute.
+    // The draw effect should fire regardless of how the card was played.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [sailTheAzuriteSea],
+      deck: [mickeyMouseTrueFriend, simbaProtectiveCub],
+      inkwell: sailTheAzuriteSea.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(sailTheAzuriteSea)).toBeSuccessfulCommand();
+
+    // Should have drawn a card (1 card from the draw effect)
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBeGreaterThanOrEqual(1);
+  });
+
   it("stacks its extra ink allowance with Belle's static allowance", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [sailTheAzuriteSea, microbots, simbaProtectiveCub, mickeyMouseTrueFriend],

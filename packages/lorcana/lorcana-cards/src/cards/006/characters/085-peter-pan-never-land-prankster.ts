@@ -34,6 +34,44 @@ export const peterPanNeverLandPrankster: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      type: "static",
+      id: "QDn-1",
+      name: "LOOK INNOCENT",
+      text: "LOOK INNOCENT This character enters play exerted.",
+      effect: {
+        type: "restriction",
+        restriction: "enters-play-exerted",
+        target: "SELF",
+      },
+    },
+    {
+      type: "static",
+      id: "QDn-2",
+      name: "CAN'T TAKE A JOKE?",
+      text: "CAN'T TAKE A JOKE? While this character is exerted, each opposing player can't gain lore unless one of their characters has challenged this turn.",
+      effect: {
+        type: "restriction",
+        restriction: "cant-gain-lore",
+        target: "OPPONENTS",
+        condition: {
+          type: "and",
+          conditions: [
+            { type: "is-exerted" },
+            {
+              type: "not",
+              condition: {
+                type: "turn-metric",
+                metric: "challenges-by-player",
+                playerScope: "opponent",
+                comparison: { operator: "gte", value: 1 },
+              },
+            },
+          ],
+        },
+      },
+    },
+  ],
   i18n: peterPanNeverLandPranksterI18n,
 };

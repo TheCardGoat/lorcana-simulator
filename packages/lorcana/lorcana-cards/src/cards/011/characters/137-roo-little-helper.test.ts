@@ -107,4 +107,29 @@ describe("Roo - Little Helper", () => {
       expect(testEngine.asPlayerOne().getCardZone(rooLittleHelper)).toBe("play");
     });
   });
+
+  it("regression: cards stacked under Roo should follow when Roo is moved under another character", () => {
+    // Bug: Cards stacked under a character were not following when that character
+    // was moved under another character via HOPPING IN.
+    // When Roo (who has cards under him) uses HOPPING IN to go under a Boost character,
+    // those cards should also move under the new character.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: rooLittleHelper, isDrying: false }, littleJohnImpermanentOutlaw],
+      deck: 5,
+    });
+
+    expect(testEngine.getCardsUnder(littleJohnImpermanentOutlaw)).toHaveLength(0);
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(rooLittleHelper, { ability: "HOPPING IN" }),
+    ).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [littleJohnImpermanentOutlaw] }),
+    ).toBeSuccessfulCommand();
+
+    // Roo should be under Little John now
+    expect(testEngine.asPlayerOne().getCardZone(rooLittleHelper)).toBe("limbo");
+    expect(testEngine.getCardsUnder(littleJohnImpermanentOutlaw)).toHaveLength(1);
+  });
 });

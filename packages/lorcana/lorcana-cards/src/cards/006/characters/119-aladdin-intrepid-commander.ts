@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { aladdinIntrepidCommanderI18n } from "./119-aladdin-intrepid-commander.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const aladdinIntrepidCommander: CharacterCard = {
   id: "brg",
@@ -33,15 +34,7 @@ export const aladdinIntrepidCommander: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Prince"],
   abilities: [
-    {
-      cost: {
-        ink: 2,
-      },
-      id: "z1l-1",
-      keyword: "Shift",
-      text: "Shift 2",
-      type: "keyword",
-    },
+    shift(2),
     {
       effect: {
         duration: "this-turn",

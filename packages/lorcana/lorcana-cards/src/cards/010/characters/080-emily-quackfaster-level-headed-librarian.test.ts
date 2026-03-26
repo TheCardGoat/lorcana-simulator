@@ -135,3 +135,12 @@
 //   });
 // });
 //
+
+import { describe, it } from "bun:test";
+
+describe("Emily Quackfaster - Level-Headed Librarian", () => {
+  // Regression: RECOMMENDED READING was unable to put deck cards under Boost locations
+  // like Scrooge's Counting House (fixed March 8).
+  // Card abilities array is currently empty — ability not yet migrated to new engine.
+  it.todo("regression: RECOMMENDED READING can put top card of deck under a Boost location", () => {});
+});

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { goGoTomagoDartingDynamoI18n } from "./073-go-go-tomago-darting-dynamo.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const goGoTomagoDartingDynamo: CharacterCard = {
   id: "4JN",
@@ -34,12 +35,7 @@ export const goGoTomagoDartingDynamo: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Inventor"],
   abilities: [
-    {
-      id: "1b9-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         type: "optional",

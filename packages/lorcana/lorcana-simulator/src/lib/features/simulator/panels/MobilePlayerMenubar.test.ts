@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { render } from "svelte/server";
 
-import MobilePlayerMenubar from "@/features/simulator/panels/MobilePlayerMenubar.svelte";
 import {
   isBottomControlRevealed,
   revealBottomControl,
@@ -16,21 +15,18 @@ describe("MobilePlayerMenubar helpers", () => {
         categoryId: "undo",
         categoryLabel: "Undo",
         sourceCardIds: [],
-        count: 1,
         isDirect: true,
       },
       {
         categoryId: "challenge",
         categoryLabel: "Challenge",
         sourceCardIds: ["challenger-1"],
-        count: 1,
         isDirect: false,
       },
       {
         categoryId: "play-card",
         categoryLabel: "Play card",
         sourceCardIds: ["card-1"],
-        count: 2,
         isDirect: false,
       },
     ] satisfies MoveCategorySummary[]);
@@ -44,21 +40,18 @@ describe("MobilePlayerMenubar helpers", () => {
         categoryId: "unknown",
         categoryLabel: "Mystery action",
         sourceCardIds: [],
-        count: 1,
         isDirect: true,
       },
       {
         categoryId: "activate-ability",
         categoryLabel: "Activate ability",
         sourceCardIds: ["ability-1"],
-        count: 1,
         isDirect: false,
       },
       {
         categoryId: "unknown",
         categoryLabel: "Another mystery action",
         sourceCardIds: [],
-        count: 1,
         isDirect: true,
       },
     ] satisfies MoveCategorySummary[]);
@@ -103,19 +96,19 @@ describe("MobilePlayerMenubar rendering", () => {
       categoryId: "play-card",
       categoryLabel: "Play card",
       sourceCardIds: ["card-1"],
-      count: 2,
       isDirect: false,
     },
     {
       categoryId: "pass-turn",
       categoryLabel: "Pass turn",
       sourceCardIds: [],
-      count: 1,
       isDirect: true,
     },
   ];
 
-  it("renders the lore icon before the lore value in the mobile lore chip", () => {
+  it("renders the lore icon before the lore value in the mobile lore chip", async () => {
+    const { default: MobilePlayerMenubar } =
+      await import("@/features/simulator/panels/MobilePlayerMenubar.svelte");
     const { body } = render(MobilePlayerMenubar, {
       props: {
         seat: "bottom",
@@ -127,7 +120,9 @@ describe("MobilePlayerMenubar rendering", () => {
     expect(body.indexOf("lore-chip__icon")).toBeLessThan(body.indexOf(">7<"));
   });
 
-  it("renders top-bar settings and event log controls together", () => {
+  it("renders top-bar settings and event log controls together", async () => {
+    const { default: MobilePlayerMenubar } =
+      await import("@/features/simulator/panels/MobilePlayerMenubar.svelte");
     const { body } = render(MobilePlayerMenubar, {
       props: {
         seat: "top",
@@ -143,7 +138,9 @@ describe("MobilePlayerMenubar rendering", () => {
     expect(body).toContain("Open event log");
   });
 
-  it("does not render the bottom-bar event log control", () => {
+  it("does not render the bottom-bar event log control", async () => {
+    const { default: MobilePlayerMenubar } =
+      await import("@/features/simulator/panels/MobilePlayerMenubar.svelte");
     const { body } = render(MobilePlayerMenubar, {
       props: {
         seat: "bottom",
@@ -159,7 +156,9 @@ describe("MobilePlayerMenubar rendering", () => {
     expect(body).not.toContain("Open event log");
   });
 
-  it("renders bottom action buttons as icon-only before they are used", () => {
+  it("renders bottom action buttons as icon-only before they are used", async () => {
+    const { default: MobilePlayerMenubar } =
+      await import("@/features/simulator/panels/MobilePlayerMenubar.svelte");
     const { body } = render(MobilePlayerMenubar, {
       props: {
         seat: "bottom",
@@ -173,5 +172,6 @@ describe("MobilePlayerMenubar rendering", () => {
     expect(body).toContain("mobile-bottom-move-play-card");
     expect(body).toContain("quick-action--icon-only");
     expect(body).not.toContain('quick-action__label">Play card');
+    expect(body).not.toContain('quick-action__badge">2<');
   });
 });

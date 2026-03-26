@@ -35,8 +35,15 @@ export function resolveExertEffect(
   });
   const targets = selectTargets(candidates, descriptor, selectedTargets);
 
+  let exertedAny = false;
+
   for (const targetId of targets) {
+    if (ctx.cards.require(targetId).meta?.state === "exerted") {
+      continue;
+    }
+
     ctx.cards.patchMeta(targetId, { state: "exerted" });
+    exertedAny = true;
     emitTriggeredLorcanaEvent(
       ctx,
       "cardExerted",
@@ -59,11 +66,11 @@ export function resolveExertEffect(
         resolutionInput.eventSnapshot.chosenCardId = targetId;
       }
       if (resolutionInput.eventSnapshot.chosenCardCost === undefined) {
-        const targetDefinition = ctx.cards.getDefinition(targetId) as
+        const chosenDefinition = ctx.cards.getDefinition(targetId) as
           | { cost?: unknown }
           | undefined;
         const targetCost =
-          typeof targetDefinition?.cost === "number" ? targetDefinition.cost : undefined;
+          typeof chosenDefinition?.cost === "number" ? chosenDefinition.cost : undefined;
         if (typeof targetCost === "number") {
           resolutionInput.eventSnapshot.chosenCardCost = targetCost;
         }
@@ -71,5 +78,5 @@ export function resolveExertEffect(
     }
   }
 
-  markLastEffectPerformed(resolutionInput.eventSnapshot, targets.length > 0);
+  markLastEffectPerformed(resolutionInput.eventSnapshot, exertedAny);
 }

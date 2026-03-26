@@ -30,6 +30,22 @@ export const mulanStandingHerGround: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
-  abilities: [],
+  abilities: [
+    {
+      id: "bX2-1",
+      type: "static",
+      name: "FLOWING BLADE",
+      text: "FLOWING BLADE During your turn, if you've put a card under one of your characters or locations this turn, this character takes no damage from challenges.",
+      condition: {
+        type: "and",
+        conditions: [{ type: "your-turn" }, { type: "put-card-under-any-this-turn" }],
+      },
+      effect: {
+        type: "grant-ability",
+        ability: "takes-no-damage-from-challenges",
+        target: "SELF",
+      },
+    },
+  ],
   i18n: mulanStandingHerGroundI18n,
 };

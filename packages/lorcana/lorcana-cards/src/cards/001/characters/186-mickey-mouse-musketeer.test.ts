@@ -1,86 +1,83 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { mickeyMouseMusketeer } from "./186-mickey-mouse-musketeer";
 
-describe("Mickey Mouse - Musketeer", () => {
-  // Add ability tests here
-  // Examples:
-  // It("has [Keyword]", () => {
-  //   Const testEngine = new LorcanaTestEngine({ play: [mickeyMouseMusketeer] });
-  //   Expect(testEngine.getCardModel(mickeyMouseMusketeer).hasKeyword()).toBe(true);
-  // });
-  // TODO: Add tests for abilities
+const musketeerAlly = createMockCharacter({
+  id: "musketeer-ally-1",
+  name: "Musketeer Ally",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+  classifications: ["Dreamborn", "Musketeer"],
 });
 
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   DonaldDuckMusketeer,
-//   GoofyMusketeer,
-//   JumbaJokibaaRenegadeScientist,
-//   LefouBumbler,
-//   MickeyMouseMusketeer,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Mickey Mouse - Musketeer", () => {
-//   Describe("**ALL FOR ONE** Your other Musketeer characters get +1 {S}.", () => {
-//     It("Your other Musketeer characters get +1 {S}.", () => {
-//       Const testStore = new TestStore({
-//         Play: [mickeyMouseMusketeer, donaldDuckMusketeer, goofyMusketeer],
-//       });
-//
-//       Const target = testStore.getByZoneAndId("play", donaldDuckMusketeer.id);
-//       Const anotherTarget = testStore.getByZoneAndId("play", goofyMusketeer.id);
-//
-//       Expect(target.strength).toEqual((target.lorcanitoCard.strength || 0) + 1);
-//       Expect(anotherTarget.strength).toEqual(
-//         (anotherTarget.lorcanitoCard.strength || 0) + 1,
-//       );
-//     });
-//
-//     It("Mickey and non-musketeers don't get the bonus", () => {
-//       Const testStore = new TestStore({
-//         Play: [
-//           MickeyMouseMusketeer,
-//           LefouBumbler,
-//           JumbaJokibaaRenegadeScientist,
-//         ],
-//       });
-//
-//       Const cardUnderTest = testStore.getByZoneAndId(
-//         "play",
-//         MickeyMouseMusketeer.id,
-//       );
-//       Const target = testStore.getByZoneAndId("play", lefouBumbler.id);
-//       Const anotherTarget = testStore.getByZoneAndId(
-//         "play",
-//         JumbaJokibaaRenegadeScientist.id,
-//       );
-//
-//       Expect(cardUnderTest.strength).toEqual(cardUnderTest.strength);
-//       Expect(target.strength).toEqual(target.lorcanitoCard.strength);
-//       Expect(anotherTarget.strength).toEqual(
-//         AnotherTarget.lorcanitoCard.strength,
-//       );
-//     });
-//   });
-//
-//   It("**Bodyguard** _(This character may enter play exerted. An opposing character who challenges one of your characters must choose one with Bodyguard if able.)_", () => {
-//     Const testStore = new TestStore({
-//       Play: [mickeyMouseMusketeer],
-//     });
-//
-//     Const cardUnderTest = testStore.getByZoneAndId(
-//       "play",
-//       MickeyMouseMusketeer.id,
-//     );
-//
-//     Expect(cardUnderTest.hasBodyguard).toBe(true);
-//   });
-// });
-//
+const musketeerAlly2 = createMockCharacter({
+  id: "musketeer-ally-2",
+  name: "Musketeer Ally 2",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
+  classifications: ["Dreamborn", "Musketeer"],
+});
+
+const nonMusketeer = createMockCharacter({
+  id: "non-musketeer-1",
+  name: "Non Musketeer",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+  classifications: ["Dreamborn", "Hero"],
+});
+
+describe("Mickey Mouse - Musketeer", () => {
+  it("has Bodyguard keyword", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [mickeyMouseMusketeer],
+      deck: 1,
+    });
+
+    expect(testEngine.hasKeyword(mickeyMouseMusketeer, "Bodyguard")).toBe(true);
+  });
+
+  describe("ALL FOR ONE - Your other Musketeer characters get +1 {S}.", () => {
+    it("other Musketeer characters get +1 strength", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mickeyMouseMusketeer, musketeerAlly, musketeerAlly2],
+        deck: 1,
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(musketeerAlly)).toBe(3);
+      expect(testEngine.asPlayerOne().getCardStrength(musketeerAlly2)).toBe(4);
+    });
+
+    it("Mickey Musketeer does not buff himself", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mickeyMouseMusketeer, musketeerAlly],
+        deck: 1,
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(mickeyMouseMusketeer)).toBe(2);
+    });
+
+    it("non-Musketeer characters do not get buffed", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mickeyMouseMusketeer, nonMusketeer],
+        deck: 1,
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(nonMusketeer)).toBe(2);
+    });
+
+    it("Musketeer characters get buffed even without Mickey attacking", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mickeyMouseMusketeer, musketeerAlly],
+        deck: 1,
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(musketeerAlly)).toBe(3);
+    });
+  });
+});

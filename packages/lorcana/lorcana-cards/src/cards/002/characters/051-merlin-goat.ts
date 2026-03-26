@@ -32,20 +32,11 @@ export const merlinGoat: CharacterCard = {
   abilities: [
     {
       effect: {
-        steps: [
-          {
-            from: "hand",
-            type: "play-card",
-          },
-          {
-            amount: 1,
-            type: "gain-lore",
-          },
-        ],
-        type: "sequence",
+        amount: 1,
+        type: "gain-lore",
       },
-      id: "198-1",
-      name: "HERE I COME! When you play this character and",
+      id: "nZn-1",
+      name: "HERE I COME!",
       text: "HERE I COME! When you play this character and when he leaves play, gain 1 lore.",
       trigger: {
         event: "play",
@@ -54,7 +45,21 @@ export const merlinGoat: CharacterCard = {
       },
       type: "triggered",
     },
+    {
+      effect: {
+        amount: 1,
+        type: "gain-lore",
+      },
+      id: "nZn-2",
+      name: "HERE I COME!",
+      text: "HERE I COME! When you play this character and when he leaves play, gain 1 lore.",
+      trigger: {
+        event: "leave-play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
   ],
-  missingTests: true,
   i18n: merlinGoatI18n,
 };

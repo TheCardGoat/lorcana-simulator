@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { pegasusFlyingSteedI18n } from "./120-pegasus-flying-steed.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const pegasusFlyingSteed: CharacterCard = {
   id: "iG3",
@@ -24,13 +25,6 @@ export const pegasusFlyingSteed: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "dxe-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: pegasusFlyingSteedI18n,
 };

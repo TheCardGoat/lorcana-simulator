@@ -33,36 +33,21 @@ export const merlinCrab: CharacterCard = {
   abilities: [
     {
       effect: {
-        steps: [
-          {
-            target: {
-              selector: "self",
-              count: 1,
-              owner: "any",
-              zones: ["play"],
-              cardTypes: ["character"],
-            },
-            type: "ready",
-          },
-          {
-            duration: "this-turn",
-            keyword: "Challenger",
-            target: {
-              selector: "chosen",
-              count: 1,
-              owner: "any",
-              zones: ["play"],
-              cardTypes: ["character"],
-            },
-            type: "gain-keyword",
-            value: 3,
-          },
-        ],
-        type: "sequence",
+        duration: "this-turn",
+        keyword: "Challenger",
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          owner: "any",
+          selector: "chosen",
+          zones: ["play"],
+        },
+        type: "gain-keyword",
+        value: 3,
       },
-      id: "1ih-1",
-      name: "READY OR NOT! When you play this character and",
-      text: "READY OR NOT! When you play this character and when he leaves play, chosen character gains Challenger +3 this turn.",
+      id: "mYZ-1",
+      name: "READY OR NOT!",
+      text: "When you play this character and when he leaves play, chosen character gains Challenger +3 this turn.",
       trigger: {
         event: "play",
         on: "SELF",
@@ -70,7 +55,30 @@ export const merlinCrab: CharacterCard = {
       },
       type: "triggered",
     },
+    {
+      effect: {
+        duration: "this-turn",
+        keyword: "Challenger",
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          owner: "any",
+          selector: "chosen",
+          zones: ["play"],
+        },
+        type: "gain-keyword",
+        value: 3,
+      },
+      id: "mYZ-2",
+      name: "READY OR NOT!",
+      text: "When you play this character and when he leaves play, chosen character gains Challenger +3 this turn.",
+      trigger: {
+        event: "leave-play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
   ],
-  missingTests: true,
   i18n: merlinCrabI18n,
 };

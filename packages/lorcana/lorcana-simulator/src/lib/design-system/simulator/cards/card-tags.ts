@@ -355,7 +355,7 @@ function buildLorcanaCardTagGroups(card: LorcanaCardSnapshot): LorcanaCardTagGro
 
   pushTag(
     postStatTags,
-    (card.cardsUnderCount ?? 0) > 0
+    card.playedViaShift === true
       ? {
           id: "shifted",
           label: m["sim.card.tags.shifted.label"]({}),

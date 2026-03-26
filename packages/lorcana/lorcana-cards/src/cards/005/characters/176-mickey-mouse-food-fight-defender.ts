@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mickeyMouseFoodFightDefenderI18n } from "./176-mickey-mouse-food-fight-defender.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const mickeyMouseFoodFightDefender: CharacterCard = {
   id: "z89",
@@ -23,14 +24,6 @@ export const mickeyMouseFoodFightDefender: CharacterCard = {
   },
   text: "Resist +1",
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "1m7-1",
-      keyword: "Resist",
-      type: "keyword",
-      value: 1,
-      text: "Resist +1",
-    },
-  ],
+  abilities: [resist(1)],
   i18n: mickeyMouseFoodFightDefenderI18n,
 };

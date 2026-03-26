@@ -1,6 +1,8 @@
 import type { Page } from "@playwright/test";
 import type { LorcanaProjectedBoardView, LorcanaProjectedCard } from "@tcg/lorcana-engine";
 import type {
+  BrowserTransportLatencyModel,
+  BrowserTransportMode,
   LorcanaBrowserHarnessConfig,
   LorcanaBrowserHarnessExecuteResult,
   LorcanaBrowserStatus,
@@ -46,30 +48,47 @@ export interface LorcanaSimulatorPomLike {
   getZoneCardCount(expected: { zone: LorcanaZoneId; player: string }): Promise<number>;
 }
 
+export interface LorcanaHarnessGotoOptions {
+  fixture?: LorcanaBrowserFixtureInput | LorcanaSimulatorFixture;
+  fixtureId?: string;
+  latencyModel?: BrowserTransportLatencyModel;
+  latencyMs?: number;
+  transport?: BrowserTransportMode;
+  view?: LorcanaSimulatorView;
+}
+
+export function buildLorcanaHarnessPath(options?: LorcanaHarnessGotoOptions): string {
+  const view = options?.view ?? LORCANA_HARNESS_DEFAULT_VIEW;
+  const params = new URLSearchParams({ view });
+  const registeredFixtureId = resolveRegisteredFixtureId(options?.fixture);
+  const fixtureId = options?.fixtureId ?? registeredFixtureId ?? LORCANA_HARNESS_DEFAULT_FIXTURE_ID;
+
+  if (options?.fixture && !registeredFixtureId && !options.fixtureId) {
+    params.set("fixture", encodeInlineFixtureParam(serializeInlineFixture(options.fixture)));
+  } else {
+    params.set("fixtureId", fixtureId);
+  }
+
+  if (options?.transport === "async") {
+    params.set("transport", "async");
+    if (typeof options.latencyMs === "number") {
+      params.set("latencyMs", String(options.latencyMs));
+    }
+    if (options.latencyModel) {
+      params.set("latencyModel", options.latencyModel);
+    }
+  }
+
+  return `/test?${params.toString()}`;
+}
+
 export class LorcanaSimulatorPom {
   private currentView: OwnedSimulatorView = LORCANA_HARNESS_DEFAULT_VIEW;
 
   constructor(readonly page: Page) {}
 
-  async goto(options?: {
-    fixture?: LorcanaBrowserFixtureInput | LorcanaSimulatorFixture;
-    fixtureId?: string;
-    view?: LorcanaSimulatorView;
-  }): Promise<void> {
-    const view = options?.view ?? LORCANA_HARNESS_DEFAULT_VIEW;
-    const params = new URLSearchParams({ view });
-    const registeredFixtureId = resolveRegisteredFixtureId(options?.fixture);
-    const fixtureId =
-      options?.fixtureId ?? registeredFixtureId ?? LORCANA_HARNESS_DEFAULT_FIXTURE_ID;
-
-    if (options?.fixture && !registeredFixtureId && !options.fixtureId) {
-      params.set("fixture", encodeInlineFixtureParam(serializeInlineFixture(options.fixture)));
-    } else {
-      params.set("fixtureId", fixtureId);
-    }
-
-    const url = `/?${params.toString()}`;
-    await this.gotoPath(url);
+  async goto(options?: LorcanaHarnessGotoOptions): Promise<void> {
+    await this.gotoPath(buildLorcanaHarnessPath(options));
   }
 
   async gotoPath(path: string): Promise<void> {
@@ -278,6 +297,12 @@ export class LorcanaSimulatorSeatPom implements LorcanaSimulatorPomLike {
     }
 
     return playerBoard.hand.map(String);
+  }
+
+  async clickHandCard(cardId: string): Promise<void> {
+    await this.pom.page
+      .locator(`[data-testid="hand-zone-${this.seat}"] [data-card-id="${cardId}"]`)
+      .click();
   }
 
   async mulligan(cardsToMulligan: string[]): Promise<void> {

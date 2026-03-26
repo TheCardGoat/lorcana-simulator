@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { princeJohnGreediestOfAllI18n } from "./089-prince-john-greediest-of-all.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const princeJohnGreediestOfAll: CharacterCard = {
   id: "Jlo",
@@ -34,12 +35,7 @@ export const princeJohnGreediestOfAll: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Villain", "Prince"],
   abilities: [
-    {
-      id: "9so-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         chooser: "CONTROLLER",
@@ -63,6 +59,5 @@ export const princeJohnGreediestOfAll: CharacterCard = {
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: princeJohnGreediestOfAllI18n,
 };

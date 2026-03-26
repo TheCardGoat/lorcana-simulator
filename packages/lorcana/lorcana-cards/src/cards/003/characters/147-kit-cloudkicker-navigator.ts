@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kitCloudkickerNavigatorI18n } from "./147-kit-cloudkicker-navigator.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const kitCloudkickerNavigator: CharacterCard = {
   id: "RK7",
@@ -31,22 +33,6 @@ export const kitCloudkickerNavigator: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Ally"],
-  abilities: [
-    {
-      id: "jtu-1",
-      cost: {
-        ink: 3,
-      },
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 3",
-    },
-    {
-      id: "jtu-2",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [shift(3), ward],
   i18n: kitCloudkickerNavigatorI18n,
 };

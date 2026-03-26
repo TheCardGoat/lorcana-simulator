@@ -23,7 +23,6 @@ export const shereKhanMenacingPredatorEnchanted: CharacterCard = {
     lorcast: "crd_4245d44a1e8344e1878acd9002b813e0",
     tcgPlayer: 650042,
   },
-  missingTests: true,
   text: [
     {
       title: "DON'T INSULT MY INTELLIGENCE",
@@ -41,8 +40,8 @@ export const shereKhanMenacingPredatorEnchanted: CharacterCard = {
       name: "DON'T INSULT MY INTELLIGENCE",
       text: "DON'T INSULT MY INTELLIGENCE Whenever one of your characters challenges another character, gain 1 lore.",
       trigger: {
-        event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        event: "challenge",
+        on: "YOUR_CHARACTERS",
         timing: "whenever",
       },
       type: "triggered",

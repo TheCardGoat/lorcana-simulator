@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { evasive } from "../../../helpers/abilities/evasive";
 import { violetSabrewingSeniorJuniorWoodchuckI18n } from "./044-violet-sabrewing-senior-junior-woodchuck.i18n";
 
 export const violetSabrewingSeniorJuniorWoodchuck: CharacterCard = {
@@ -24,13 +25,6 @@ export const violetSabrewingSeniorJuniorWoodchuck: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "ynj-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: violetSabrewingSeniorJuniorWoodchuckI18n,
 };

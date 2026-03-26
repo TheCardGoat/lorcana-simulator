@@ -103,7 +103,7 @@
       </div>
     </div>
   {:else}
-    <div class={`pointer-events-auto flex flex-wrap items-center gap-1.5 ${className}`}>
+    <div class={`pointer-events-auto flex flex-wrap items-center ${compact ? "tag-strip-compact" : "gap-1.5"} ${className}`}>
       {#each visibleTags as tag (tag.id)}
         <Tooltip.Root>
           <Tooltip.Trigger>
@@ -111,7 +111,7 @@
               <button
                 type="button"
                 {...props}
-                class={`group inline-flex items-center rounded-full border backdrop-blur-sm transition-colors ${compact ? "h-6 w-6 justify-center p-0" : "gap-1.5 px-2 py-1 text-[0.68rem] font-semibold tracking-[0.02em]"} ${getToneClass(tag.tone)}`}
+                class={`group inline-flex items-center rounded-full border backdrop-blur-sm transition-colors ${compact ? "h-6 w-6 justify-center p-0 hover:z-10 hover:scale-105" : "gap-1.5 px-2 py-1 text-[0.68rem] font-semibold tracking-[0.02em]"} ${getToneClass(tag.tone)}`}
                 aria-label={tag.label}
                 onclick={(event) => event.stopPropagation()}
               >
@@ -159,3 +159,9 @@
     </div>
   {/if}
 {/if}
+
+<style>
+  .tag-strip-compact :global(> * + *) {
+    margin-left: -6px;
+  }
+</style>

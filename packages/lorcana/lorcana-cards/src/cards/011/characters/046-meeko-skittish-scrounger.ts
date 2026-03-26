@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { meekoSkittishScroungerI18n } from "./046-meeko-skittish-scrounger.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const meekoSkittishScrounger: CharacterCard = {
   id: "9zz",
@@ -34,12 +35,7 @@ export const meekoSkittishScrounger: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "157-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    evasive,
     {
       id: "157-2",
       name: "BOTTOMLESS PIT",

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { zeusMissingHisSparkI18n } from "./193-zeus-missing-his-spark.i18n";
 
 export const zeusMissingHisSpark: CharacterCard = {
@@ -33,13 +34,7 @@ export const zeusMissingHisSpark: CharacterCard = {
   ],
   classifications: ["Storyborn", "King", "Deity", "Whisper"],
   abilities: [
-    {
-      id: "gow-1",
-      keyword: "Boost",
-      text: "Boost 2 {I}",
-      type: "keyword",
-      value: 2,
-    },
+    boost(2),
     {
       id: "gow-2",
       name: "I NEED MORE THUNDERBOLTS!",

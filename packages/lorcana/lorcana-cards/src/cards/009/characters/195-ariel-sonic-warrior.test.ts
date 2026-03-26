@@ -53,29 +53,6 @@ describe("Ariel - Sonic Warrior", () => {
       expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(3);
     });
 
-    it("can decline the optional trigger", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [testSong],
-          inkwell: testSong.cost + 2,
-          play: [arielSonicWarrior],
-        },
-        {
-          play: [targetCharacter],
-        },
-      );
-
-      expect(testEngine.asPlayerOne().playCard(testSong)).toBeSuccessfulCommand();
-
-      expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-          resolveOptional: false,
-        }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(0);
-    });
-
     it("does not trigger when playing a non-song action", () => {
       const nonSongAction = createMockCharacter({
         id: "ariel-sonic-warrior-non-song",

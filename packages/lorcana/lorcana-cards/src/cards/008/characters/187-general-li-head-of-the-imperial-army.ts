@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { generalLiHeadOfTheImperialArmyI18n } from "./187-general-li-head-of-the-imperial-army.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const generalLiHeadOfTheImperialArmy: CharacterCard = {
   id: "KF3",
@@ -24,14 +25,6 @@ export const generalLiHeadOfTheImperialArmy: CharacterCard = {
   },
   text: "Resist +1",
   classifications: ["Storyborn", "Mentor"],
-  abilities: [
-    {
-      id: "iiq-1",
-      keyword: "Resist",
-      type: "keyword",
-      value: 1,
-      text: "Resist +1",
-    },
-  ],
+  abilities: [resist(1)],
   i18n: generalLiHeadOfTheImperialArmyI18n,
 };

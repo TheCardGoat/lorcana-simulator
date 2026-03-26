@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { pinocchioStringsAttachedI18n } from "./061-pinocchio-strings-attached.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const pinocchioStringsAttached: CharacterCard = {
   id: "4F7",
@@ -33,12 +34,7 @@ export const pinocchioStringsAttached: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "1m2-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    evasive,
     {
       id: "1m2-2",
       effect: {
@@ -50,11 +46,12 @@ export const pinocchioStringsAttached: CharacterCard = {
         },
         type: "optional",
       },
-      name: "GOT TO KEEP REAL QUIET Once",
+      name: "GOT TO KEEP REAL QUIET",
       trigger: {
-        event: "play",
+        event: "ready",
         on: "SELF",
-        timing: "when",
+        timing: "whenever",
+        restrictions: [{ type: "during-turn", whose: "your" }, { type: "once-per-turn" }],
       },
       type: "triggered",
       text: "GOT TO KEEP REAL QUIET Once during your turn, whenever you ready this character, you may draw a card.",

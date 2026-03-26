@@ -212,6 +212,100 @@ describe("LorcanaEngineBase.getAvailableMoves", () => {
     expect(challengeMove!.selectableCardIds.length).toBe(1);
   });
 
+  it("reuses cached challenge availability for repeated calls in the same state", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [questableCharacter],
+        deck: 1,
+        inkwell: 3,
+      },
+      {
+        play: [{ card: opponentCharacter, exerted: true }],
+        deck: 1,
+      },
+    );
+
+    const p1 = testEngine.asPlayerOne();
+    const p1Internals = p1 as unknown as {
+      _cachedChallengeAttackersStateID: number;
+      getStateID(): number;
+    };
+    const firstMoves = p1.getAvailableMoves();
+    const secondMoves = p1.getAvailableMoves();
+
+    expect(secondMoves).toBe(firstMoves);
+    expect(p1Internals._cachedChallengeAttackersStateID).toBe(p1Internals.getStateID());
+    expect(
+      secondMoves.find((move: (typeof secondMoves)[number]) => move.moveId === "challenge")
+        ?.selectableCardIds,
+    ).toEqual(
+      firstMoves.find((move: (typeof firstMoves)[number]) => move.moveId === "challenge")
+        ?.selectableCardIds,
+    );
+  });
+
+  it("reuses cached legal move ids when enumerateMoves is called after getAvailableMoves", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [questableCharacter],
+        deck: 1,
+        inkwell: 3,
+      },
+      {
+        play: [{ card: opponentCharacter, exerted: true }],
+        deck: 1,
+      },
+    );
+
+    const p1 = testEngine.asPlayerOne();
+    const underlyingEngine = p1.engine as unknown as {
+      enumerateMoves(): string[];
+    };
+    const originalEnumerateMoves = underlyingEngine.enumerateMoves.bind(underlyingEngine);
+    let enumerateMoveCalls = 0;
+    underlyingEngine.enumerateMoves = () => {
+      enumerateMoveCalls += 1;
+      return originalEnumerateMoves();
+    };
+
+    try {
+      p1.getAvailableMoves();
+      const legalMoves = p1.enumerateMoves();
+
+      expect(enumerateMoveCalls).toBe(1);
+      expect(legalMoves).toContain("challenge");
+    } finally {
+      underlyingEngine.enumerateMoves = originalEnumerateMoves;
+    }
+  });
+
+  it("reuses runtime enumeration results for repeated same-state calls", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [questableCharacter],
+        deck: 1,
+        inkwell: 3,
+      },
+      {
+        play: [{ card: opponentCharacter, exerted: true }],
+        deck: 1,
+      },
+    );
+
+    const clientEngine = testEngine.asPlayerOne().engine as unknown as {
+      runtime: {
+        enumerateMovesForPlayer(playerId: string, actorRole: string): string[];
+      };
+      getPlayerId(): string;
+    };
+    const playerId = clientEngine.getPlayerId();
+    const firstMoves = clientEngine.runtime.enumerateMovesForPlayer(playerId, "player");
+    const secondMoves = clientEngine.runtime.enumerateMovesForPlayer(playerId, "player");
+
+    expect(secondMoves).toBe(firstMoves);
+    expect(secondMoves).toEqual(firstMoves);
+  });
+
   it("returns putCardIntoInkwell for inkable hand cards", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
@@ -313,6 +407,29 @@ describe("LorcanaEngineBase.getMoveOptions", () => {
 
     expect(options.length).toBe(1);
     expect(options[0].kind).toBe("card");
+  });
+
+  it("reuses cached challenge move options for the same attacker in the same state", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [questableCharacter],
+        deck: 1,
+        inkwell: 3,
+      },
+      {
+        play: [{ card: opponentCharacter, exerted: true }],
+        deck: 1,
+      },
+    );
+
+    const p1 = testEngine.asPlayerOne();
+    const attackerId = p1.getAvailableMoves().find((m) => m.moveId === "challenge")!
+      .selectableCardIds[0];
+    const firstOptions = p1.getMoveOptions("challenge", attackerId);
+    const secondOptions = p1.getMoveOptions("challenge", attackerId);
+
+    expect(secondOptions).toBe(firstOptions);
+    expect(secondOptions).toEqual(firstOptions);
   });
 
   it("filters out Evasive defenders for non-Evasive attackers", () => {

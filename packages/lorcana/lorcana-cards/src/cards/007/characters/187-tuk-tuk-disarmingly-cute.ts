@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tukTukDisarminglyCuteI18n } from "./187-tuk-tuk-disarmingly-cute.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const tukTukDisarminglyCute: CharacterCard = {
   id: "MK2",
@@ -31,20 +33,6 @@ export const tukTukDisarminglyCute: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1xz-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-    {
-      id: "1xz-2",
-      keyword: "Resist",
-      text: "Resist +2",
-      type: "keyword",
-      value: 2,
-    },
-  ],
+  abilities: [bodyguard, resist(2)],
   i18n: tukTukDisarminglyCuteI18n,
 };

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { evasive } from "../../../helpers/abilities/evasive";
 import { kaaSecretiveSnakeI18n } from "./079-kaa-secretive-snake.i18n";
 
 export const kaaSecretiveSnake: CharacterCard = {
@@ -24,13 +25,6 @@ export const kaaSecretiveSnake: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Villain"],
-  abilities: [
-    {
-      id: "r2h-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: kaaSecretiveSnakeI18n,
 };

@@ -159,4 +159,42 @@ describe("Ursula - Voice Stealer", () => {
       expect(testEngine.asPlayerOne().getCardZone(cheapSong)).toBe("hand");
     });
   });
+
+  it("regression: free song should still be playable after exerting the opposing character", () => {
+    // Bug: Ursula's free song was not playing when the opposing character was exerted.
+    // The song should be playable after the exert step completes.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [ursulaVoiceStealer, cheapSong],
+        inkwell: ursulaVoiceStealer.cost,
+      },
+      {
+        play: [opposingCharacter], // cost 4, ready
+      },
+    );
+
+    // Opposing character must be ready for the exert effect to target it
+    expect(testEngine.asPlayerTwo().isExerted(opposingCharacter)).toBe(false);
+
+    expect(
+      testEngine.asPlayerOne().playCard(ursulaVoiceStealer, {
+        targets: [opposingCharacter],
+      }),
+    ).toBeSuccessfulCommand();
+
+    const bagEffects = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffects.length).toBeGreaterThan(0);
+
+    // Accept and resolve: exert opposing character, then play cheap song for free
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        targets: [opposingCharacter, cheapSong],
+        resolveOptional: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    // Character should be exerted and song should have been played (in discard after being cast)
+    expect(testEngine.asPlayerTwo().isExerted(opposingCharacter)).toBe(true);
+    expect(testEngine.asPlayerOne().getCardZone(cheapSong)).toBe("discard");
+  });
 });

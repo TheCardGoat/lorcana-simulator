@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { archimedesExasperatedOwlI18n } from "./039-archimedes-exasperated-owl.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const archimedesExasperatedOwl: CharacterCard = {
   id: "KbE",
@@ -24,13 +25,6 @@ export const archimedesExasperatedOwl: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "12v-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: archimedesExasperatedOwlI18n,
 };

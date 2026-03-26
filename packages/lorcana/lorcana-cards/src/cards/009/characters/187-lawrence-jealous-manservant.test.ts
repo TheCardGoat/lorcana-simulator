@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { lawrenceJealousManservant } from "./187-lawrence-jealous-manservant";
+import { mosquitoBite } from "../../006";
 
 describe("Lawrence - Jealous Manservant (Set 9)", () => {
   describe("PAYBACK - While this character has no damage, he gets +4 {S}.", () => {
@@ -14,9 +15,16 @@ describe("Lawrence - Jealous Manservant (Set 9)", () => {
       expect(card.strength).toBe(4);
     });
 
-    it("has a static modify-stat ability", () => {
-      const staticAbility = lawrenceJealousManservant.abilities?.find((a) => a.type === "static");
-      expect(staticAbility).toBeDefined();
+    it("should have base 0 strength when damaged (condition not met)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [mosquitoBite],
+        inkwell: mosquitoBite.cost,
+        play: [lawrenceJealousManservant],
+        deck: 5,
+      });
+
+      testEngine.asPlayerOne().playCard(mosquitoBite, { targets: [lawrenceJealousManservant] });
+      expect(testEngine.asPlayerOne().getCard(lawrenceJealousManservant).strength).toBe(0);
     });
   });
 });

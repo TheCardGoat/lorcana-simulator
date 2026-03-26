@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kitCloudkickerSpunkyBearCubI18n } from "./148-kit-cloudkicker-spunky-bear-cub.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const kitCloudkickerSpunkyBearCub: CharacterCard = {
   id: "0ke",
@@ -24,13 +25,6 @@ export const kitCloudkickerSpunkyBearCub: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "hkt-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: kitCloudkickerSpunkyBearCubI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mirabelMadrigalGiftOfTheFamilyI18n } from "./018-mirabel-madrigal-gift-of-the-family.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const mirabelMadrigalGiftOfTheFamily: CharacterCard = {
   id: "iqv",
@@ -34,18 +35,26 @@ export const mirabelMadrigalGiftOfTheFamily: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Madrigal"],
   abilities: [
-    {
-      id: "1a6-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         duration: "this-turn",
         modifier: 1,
         stat: "lore",
-        target: "CHOSEN_CHARACTER",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          excludeSelf: true,
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Madrigal",
+            },
+          ],
+        },
         type: "modify-stat",
       },
       id: "1a6-2",

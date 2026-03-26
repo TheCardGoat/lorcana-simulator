@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rayEasygoingFireflyI18n } from "./092-ray-easygoing-firefly.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const rayEasygoingFirefly: CharacterCard = {
   id: "Jkc",
@@ -24,13 +25,6 @@ export const rayEasygoingFirefly: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1bk-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: rayEasygoingFireflyI18n,
 };

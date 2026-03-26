@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { elsaIceMakerI18n } from "./069-elsa-ice-maker.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const elsaIceMaker: CharacterCard = {
   id: "EtJ",
@@ -34,15 +35,7 @@ export const elsaIceMaker: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Queen", "Sorcerer"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "1v2-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         chooser: "CONTROLLER",

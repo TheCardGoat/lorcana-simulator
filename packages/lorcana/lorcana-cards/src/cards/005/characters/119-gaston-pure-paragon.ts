@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { gastonPureParagonI18n } from "./119-gaston-pure-paragon.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const gastonPureParagon: CharacterCard = {
   id: "JSc",
@@ -57,12 +58,7 @@ export const gastonPureParagon: CharacterCard = {
       text: "A MAN AMONG MEN! For each damaged character you have in play, you pay 2 {I} less to play this character.",
       type: "static",
     },
-    {
-      id: "z5u-2",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
   ],
   i18n: gastonPureParagonI18n,
 };

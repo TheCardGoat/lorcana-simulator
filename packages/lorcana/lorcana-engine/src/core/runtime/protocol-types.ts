@@ -1,7 +1,7 @@
 import type {
   CommandEnvelope,
-  FilteredMatchView,
   GameLogEntry,
+  MatchState,
   PacketAnimation,
   PublishedGameEvent,
   Role,
@@ -12,7 +12,7 @@ import type { NetworkMatchData } from "./network-state";
 // Protocol Version
 // =============================================================================
 
-export const PROTOCOL_VERSION = 4;
+export const PROTOCOL_VERSION = 5;
 
 // =============================================================================
 // Common Envelope
@@ -63,6 +63,7 @@ export interface ChatMessage extends ProtocolEnvelope {
 export interface UndoRequestMessage extends ProtocolEnvelope {
   type: "UNDO_REQUEST";
   prevStateID: number;
+  commandID?: string;
 }
 
 // =============================================================================
@@ -95,8 +96,7 @@ export interface UpdateFullMessage extends ProtocolEnvelope {
   type: "UPDATE_FULL";
   stateID: number;
   canUndo: boolean;
-  state: FilteredMatchView;
-  board?: FilteredMatchView;
+  state: MatchState;
   processedCommand: CommandEnvelope;
   animations: PacketAnimation[];
   deltalogDelta?: unknown[];
@@ -109,8 +109,7 @@ export interface SyncFullMessage extends ProtocolEnvelope {
   type: "SYNC_FULL";
   stateID: number;
   canUndo: boolean;
-  state: FilteredMatchView;
-  board?: FilteredMatchView;
+  state: MatchState;
   deltalogDelta?: unknown[];
   gameEventsDelta?: PublishedGameEvent[];
   logEntriesDelta?: GameLogEntry[];

@@ -32,31 +32,28 @@ export const coldstoneReincarnatedCyborg: CharacterCard = {
   classifications: ["Storyborn", "Ally", "Gargoyle"],
   abilities: [
     {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["discard"],
+          cardType: "character",
+          filters: [
+            {
+              type: "classification",
+              classification: "Gargoyle",
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 2,
+        },
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["discard"],
-            cardType: "character",
-            filters: [
-              {
-                type: "classification",
-                classification: "Gargoyle",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 2,
-          },
-        },
-        then: {
-          amount: 2,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 2,
+        type: "gain-lore",
       },
       id: "1uk-1",
       name: "THE CANTRIPS HAVE BEEN SPOKEN",

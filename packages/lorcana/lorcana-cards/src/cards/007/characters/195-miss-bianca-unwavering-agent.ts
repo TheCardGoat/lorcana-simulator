@@ -24,43 +24,42 @@ export const missBiancaUnwaveringAgent: CharacterCard = {
   },
   text: [
     {
-      title: "HAVE",
+      title: "HAVE A LITTLE FAITH",
       description:
-        "A LITTLE FAITH If you have an Ally character in play, you pay 2 {I} less to play this character.",
+        "If you have an Ally character in play, you pay 2 {I} less to play this character.",
     },
   ],
   classifications: ["Dreamborn", "Hero"],
   abilities: [
     {
-      effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            filters: [
-              {
-                type: "has-classification",
-                classification: "Ally",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
-      },
+      type: "static",
       id: "jeo-1",
+      name: "HAVE A LITTLE FAITH",
       text: "HAVE A LITTLE FAITH If you have an Ally character in play, you pay 2 {I} less to play this character.",
-      type: "action",
+      sourceZones: ["hand"],
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          filters: [
+            {
+              type: "has-classification",
+              classification: "Ally",
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
+      effect: {
+        type: "cost-reduction",
+        amount: 2,
+      },
     },
   ],
   i18n: missBiancaUnwaveringAgentI18n,

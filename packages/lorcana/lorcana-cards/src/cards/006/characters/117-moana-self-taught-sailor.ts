@@ -31,6 +31,14 @@ export const moanaSelftaughtSailor: CharacterCard = {
   classifications: ["Dreamborn", "Hero", "Princess", "Pirate"],
   abilities: [
     {
+      condition: {
+        type: "not",
+        condition: {
+          type: "has-character-with-classification",
+          classification: "Captain",
+          controller: "you",
+        },
+      },
       effect: {
         restriction: "cant-challenge",
         target: "SELF",

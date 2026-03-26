@@ -21,6 +21,8 @@ interface SeatLaneProps {
 	hasPriority: boolean;
 	lore?: number;
 	seatPosition: "top" | "bottom";
+	playHotkeyBindings?: Map<string, string>;
+	isPlayerEffectTarget?: boolean;
 	onDiscardClick?: () => void;
 	onInkwellClick?: () => void;
 }
@@ -34,6 +36,8 @@ let {
 	hasPriority,
 	lore = 0,
 	seatPosition,
+	playHotkeyBindings = new Map(),
+	isPlayerEffectTarget = false,
 	onDiscardClick,
 	onInkwellClick,
 }: SeatLaneProps = $props();
@@ -54,6 +58,7 @@ const hasItemsInPlay = $derived.by(() =>
   class:seat-lane--bottom={seatPosition === "bottom"}
   class:seat-lane--turn={isTurnPlayer}
   class:seat-lane--priority={hasPriority}
+  class:seat-lane--player-effect-target={isPlayerEffectTarget}
   data-layout-mode={layoutMode}
 >
   <div
@@ -136,6 +141,7 @@ const hasItemsInPlay = $derived.by(() =>
       {isOpponent}
       label=""
       excludeCardTypes={["item"]}
+      hotkeyBindings={playHotkeyBindings}
     />
   </div>
 </div>
@@ -247,6 +253,38 @@ const hasItemsInPlay = $derived.by(() =>
       0 0 28px rgba(45, 146, 221, 0.22),
       inset 0 0 0 1px rgba(190, 230, 255, 0.08),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .seat-lane--player-effect-target {
+    animation: seat-player-effect-pulse 600ms ease-out both;
+  }
+
+  @keyframes seat-player-effect-pulse {
+    0% {
+      border-color: rgba(255, 100, 100, 0.85);
+      box-shadow:
+        0 0 0 2px rgba(255, 80, 80, 0.4),
+        0 0 36px rgba(220, 60, 60, 0.36),
+        inset 0 0 0 1px rgba(255, 160, 160, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    40% {
+      border-color: rgba(255, 120, 120, 0.7);
+      box-shadow:
+        0 0 0 1px rgba(255, 100, 100, 0.3),
+        0 0 20px rgba(220, 60, 60, 0.22);
+    }
+    100% {
+      border-color: rgba(96, 125, 165, 0.16);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .seat-lane--player-effect-target {
+      animation: none;
+      border-color: rgba(255, 100, 100, 0.4);
+    }
   }
 
   .seat-chip {
@@ -453,28 +491,22 @@ const hasItemsInPlay = $derived.by(() =>
   }
 
   .seat-lane[data-layout-mode="mobile"] {
-    gap: 0.38rem;
-    padding: 0.5rem 0.4rem 0.42rem;
+    gap: 0.25rem;
+    padding: 0.35rem 0.35rem 0.3rem;
     border-radius: 14px;
   }
 
-  .seat-lane--top[data-layout-mode="mobile"] {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-  }
-
-  .seat-lane--bottom[data-layout-mode="mobile"] {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+  .seat-lane[data-layout-mode="mobile"] {
+    border-radius: 0;
   }
 
   .seat-lane[data-layout-mode="mobile"] .bar-zones {
-    --bar-row-card-height: 44px;
-    height: 74px;
-    min-height: 74px;
-    max-height: 74px;
-    padding: 0.25rem;
-    gap: 0.25rem;
+    --bar-row-card-height: 36px;
+    height: 58px;
+    min-height: 58px;
+    max-height: 58px;
+    padding: 0.2rem;
+    gap: 0.2rem;
   }
 
   .seat-lane[data-layout-mode="mobile"] .seat-chip {

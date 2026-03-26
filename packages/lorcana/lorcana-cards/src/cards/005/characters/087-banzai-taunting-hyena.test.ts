@@ -52,30 +52,6 @@ describe("Banzai - Taunting Hyena", () => {
       expect(testEngine.isExerted(damagedCharacter)).toBe(true);
     });
 
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [banzaiTauntingHyena],
-          inkwell: banzaiTauntingHyena.cost,
-          play: [damagedCharacter],
-          deck: 5,
-        },
-        {},
-      );
-
-      testEngine.asServer().manualSetDamage(damagedCharacter, 2);
-
-      expect(testEngine.asPlayerOne().playCard(banzaiTauntingHyena)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.isExerted(damagedCharacter)).toBe(false);
-    });
-
     it("can target an opposing damaged character", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

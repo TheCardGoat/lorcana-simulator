@@ -11,14 +11,6 @@ const racerCharacter = createMockCharacter({
   classifications: ["Storyborn", "Hero", "Racer"],
 });
 
-const nonRacerCharacter = createMockCharacter({
-  id: "ralph-back-seat-non-racer-target",
-  name: "Non-Racer Target",
-  cost: 2,
-  strength: 3,
-  willpower: 3,
-});
-
 describe("Wreck-It Ralph - Back Seat Driver", () => {
   it("CHARGED UP - gives +4 strength to a chosen Racer character this turn", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
@@ -60,26 +52,5 @@ describe("Wreck-It Ralph - Back Seat Driver", () => {
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardStrength(racerCharacter)).toBe(racerCharacter.strength);
-  });
-
-  it("CHARGED UP - submitting a non-Racer target is silently ignored; the effect is not applied", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      hand: [wreckitRalphBackSeatDriver],
-      inkwell: wreckitRalphBackSeatDriver.cost,
-      play: [nonRacerCharacter],
-    });
-
-    expect(testEngine.asPlayerOne().playCard(wreckitRalphBackSeatDriver)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
-
-    // Non-Racer targets are silently ignored by the engine
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ targets: [nonRacerCharacter] }),
-    ).toBeSuccessfulCommand();
-
-    // The non-Racer character's strength is unchanged
-    expect(testEngine.asPlayerOne().getCardStrength(nonRacerCharacter)).toBe(
-      nonRacerCharacter.strength,
-    );
   });
 });

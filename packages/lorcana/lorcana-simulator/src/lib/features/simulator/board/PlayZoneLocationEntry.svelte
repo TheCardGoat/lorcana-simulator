@@ -7,6 +7,7 @@
   } from "@/features/simulator/model/contracts.js";
   import { createCardAnchorId } from "@/features/simulator/animations/board-move-animations.js";
   import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+  import HotkeyCardBadge from "@/features/simulator/hotkeys/HotkeyCardBadge.svelte";
   import { useLorcanaSidebarPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
   import {
@@ -35,6 +36,7 @@
     isMasked: boolean;
     isValidTarget: (cardId: string) => boolean;
     isInvalidTarget: (cardId: string) => boolean;
+    hotkey?: string;
   }
 
   let {
@@ -46,6 +48,7 @@
     isMasked,
     isValidTarget,
     isInvalidTarget,
+    hotkey,
   }: PlayZoneLocationEntryProps = $props();
 
   const sidebar = useLorcanaSidebarPresenter();
@@ -100,6 +103,9 @@
     data-board-anchor-id={createCardAnchorId(playerSide, zoneId, card.cardId)}
     {@attach locationDroppable.attach}
   >
+    {#if hotkey}
+      <HotkeyCardBadge {hotkey} />
+    {/if}
     <div class="location-card-shell">
       <div class="location-card-rotate">
         <LorcanaCard
@@ -149,6 +155,9 @@
     data-board-anchor-id={createCardAnchorId(playerSide, zoneId, card.cardId)}
     {@attach occupantDraggable.attach}
   >
+    {#if hotkey}
+      <HotkeyCardBadge {hotkey} />
+    {/if}
     <LorcanaCard
       {card}
       onSelect={(selectedCard, event) => handleDirectCardSelection(selectedCard, event)}

@@ -147,7 +147,7 @@ export interface CardPlayedPayload {
   playerId: PlayerId;
   cardId: CardInstanceId;
   cardType: "character" | "action" | "item" | "location";
-  costType: "standard" | "shift" | "sing" | "singTogether" | "free" | "sacrifice";
+  costType: "standard" | "shift" | "sing" | "singTogether" | "free" | "sacrifice" | "exert-items";
   shiftTargetId?: CardInstanceId;
   singerIds?: readonly CardInstanceId[];
   inkPaid?: number;

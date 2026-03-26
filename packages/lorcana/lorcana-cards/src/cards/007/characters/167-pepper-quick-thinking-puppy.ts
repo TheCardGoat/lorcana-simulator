@@ -37,7 +37,7 @@ export const pepperQuickthinkingPuppy: CharacterCard = {
         effect: {
           exerted: true,
           facedown: true,
-          source: "hand",
+          source: { reference: "trigger-subject" },
           target: "CONTROLLER",
           type: "put-into-inkwell",
         },
@@ -48,7 +48,11 @@ export const pepperQuickthinkingPuppy: CharacterCard = {
       text: "IN THE NICK OF TIME Whenever one of your Puppy characters is banished, you may put that card into your inkwell facedown and exerted.",
       trigger: {
         event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        on: {
+          controller: "you",
+          cardType: "character",
+          classification: "Puppy",
+        },
         timing: "whenever",
       },
       type: "triggered",

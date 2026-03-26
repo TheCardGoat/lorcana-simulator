@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { dumboNinthWonderOfTheUniverseI18n } from "./045-dumbo-ninth-wonder-of-the-universe.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const dumboNinthWonderOfTheUniverse: CharacterCard = {
   id: "JlP",
@@ -38,12 +39,7 @@ export const dumboNinthWonderOfTheUniverse: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "181-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       id: "181-2",
       name: "BREAKING RECORDS",

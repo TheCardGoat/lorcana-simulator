@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { liShangSolemnSonI18n } from "./175-li-shang-solemn-son.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const liShangSolemnSon: CharacterCard = {
   id: "e25",
@@ -24,14 +25,6 @@ export const liShangSolemnSon: CharacterCard = {
   },
   text: "Challenger +2",
   classifications: ["Storyborn", "Hero", "Captain"],
-  abilities: [
-    {
-      id: "1bv-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2",
-    },
-  ],
+  abilities: [challenger(2)],
   i18n: liShangSolemnSonI18n,
 };

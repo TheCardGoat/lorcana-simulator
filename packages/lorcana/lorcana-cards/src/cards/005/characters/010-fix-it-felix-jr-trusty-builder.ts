@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { fixitFelixJrTrustyBuilderI18n } from "./010-fix-it-felix-jr-trusty-builder.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const fixitFelixJrTrustyBuilder: CharacterCard = {
   id: "pKi",
@@ -24,13 +25,6 @@ export const fixitFelixJrTrustyBuilder: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "1hm-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: fixitFelixJrTrustyBuilderI18n,
 };

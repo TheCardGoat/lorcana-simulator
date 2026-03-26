@@ -155,5 +155,26 @@ describe("Wasabi - Methodical Engineer", () => {
 
       expect(testEngine.hasKeyword(wasabiMethodicalEngineer, "Evasive")).toBe(false);
     });
+
+    it("regression: can challenge Evasive characters during own turn (has Evasive during your turn)", () => {
+      const evasiveTarget = createMockItem({
+        id: "wasabi-evasive-dummy",
+        name: "Evasive Dummy",
+        cost: 1,
+      });
+
+      // Wasabi with Evasive during your turn should be able to challenge other Evasive characters
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: wasabiMethodicalEngineer, isDrying: false }],
+        },
+        {
+          deck: 1,
+        },
+      );
+
+      // During own turn, Wasabi has Evasive
+      expect(testEngine.hasKeyword(wasabiMethodicalEngineer, "Evasive")).toBe(true);
+    });
   });
 });

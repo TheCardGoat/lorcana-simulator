@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tukTukLivelyPartnerI18n } from "./127-tuk-tuk-lively-partner.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const tukTukLivelyPartner: CharacterCard = {
   id: "PQN",
@@ -34,13 +35,7 @@ export const tukTukLivelyPartner: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "PQN-1",
-      name: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-      keyword: "Evasive",
-    },
+    evasive,
     {
       id: "PQN-2",
       name: "ON A ROLL",

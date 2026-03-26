@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { gigiBestInSnowI18n } from "./189-gigi-best-in-snow.i18n";
+import { alert } from "../../../helpers/abilities/alert";
 
 export const gigiBestInSnow: CharacterCard = {
   id: "keA",
@@ -34,12 +35,7 @@ export const gigiBestInSnow: CharacterCard = {
   ],
   classifications: ["Storyborn", "Alien"],
   abilities: [
-    {
-      id: "5r3-1",
-      keyword: "Alert",
-      type: "keyword",
-      text: "Alert",
-    },
+    alert,
     {
       id: "5r3-2",
       condition: {

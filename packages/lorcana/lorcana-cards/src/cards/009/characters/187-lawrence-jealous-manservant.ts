@@ -31,6 +31,9 @@ export const lawrenceJealousManservant: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "no-damage",
+      },
       effect: {
         modifier: 4,
         stat: "strength",

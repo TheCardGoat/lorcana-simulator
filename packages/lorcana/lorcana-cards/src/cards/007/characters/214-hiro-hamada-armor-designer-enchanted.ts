@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { hiroHamadaArmorDesignerEnchantedI18n } from "./214-hiro-hamada-armor-designer-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const hiroHamadaArmorDesignerEnchanted: CharacterCard = {
   id: "dNZ",
@@ -35,15 +36,7 @@ export const hiroHamadaArmorDesignerEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Inventor"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "zri-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       effect: {
         keyword: "Evasive",

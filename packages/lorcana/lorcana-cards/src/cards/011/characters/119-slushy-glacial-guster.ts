@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { slushyGlacialGusterI18n } from "./119-slushy-glacial-guster.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const slushyGlacialGuster: CharacterCard = {
   id: "34k",
@@ -24,13 +25,6 @@ export const slushyGlacialGuster: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Alien"],
-  abilities: [
-    {
-      id: "139-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: slushyGlacialGusterI18n,
 };

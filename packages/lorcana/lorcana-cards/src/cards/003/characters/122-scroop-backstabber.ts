@@ -31,6 +31,9 @@ export const scroopBackstabber: CharacterCard = {
   classifications: ["Storyborn", "Villain", "Alien", "Pirate"],
   abilities: [
     {
+      condition: {
+        type: "self-has-damage",
+      },
       effect: {
         modifier: 3,
         stat: "strength",

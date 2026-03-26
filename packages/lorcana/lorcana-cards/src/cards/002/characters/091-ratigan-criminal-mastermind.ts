@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ratiganCriminalMastermindI18n } from "./091-ratigan-criminal-mastermind.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const ratiganCriminalMastermind: CharacterCard = {
   id: "yTi",
@@ -24,13 +25,6 @@ export const ratiganCriminalMastermind: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Dreamborn", "Villain"],
-  abilities: [
-    {
-      id: "952-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: ratiganCriminalMastermindI18n,
 };

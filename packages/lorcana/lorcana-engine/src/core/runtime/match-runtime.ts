@@ -46,8 +46,11 @@ import { isMoveAllowedByFlow } from "./match-runtime.flow";
 import { canPlayerTakeActions } from "./match-runtime.apis";
 import { projectGameLog } from "./match-runtime.logs";
 import { getLogger } from "@logtape/logtape";
-import type { BaseCardDefinition } from "./card-contracts";
-import type { LorcanaG } from "../../types/runtime-state";
+import {
+  clearStateScopedValueCache,
+  createStateScopedValueCache,
+  getStateScopedValueCacheStats,
+} from "./state-scoped-value-cache";
 
 const logger = getLogger(["core-engine", "match-runtime"]);
 
@@ -115,6 +118,9 @@ export class MatchRuntime {
 
   private state: MatchState;
   private board: FilteredMatchView;
+  private cachedEnumeratedMovesStateID = -1;
+  private cachedEnumeratedMovesByActor = new Map<string, RuntimeLegalMove<MoveRecord>[]>();
+  private runtimeCardCache = createStateScopedValueCache<unknown>();
 
   constructor(config: MatchRuntimeConfig, init: MatchRuntimeInit) {
     this.config = config;
@@ -139,6 +145,11 @@ export class MatchRuntime {
     this.board = board as FilteredMatchView;
   }
 
+  private clearEnumeratedMovesCache(): void {
+    this.cachedEnumeratedMovesStateID = -1;
+    this.cachedEnumeratedMovesByActor.clear();
+  }
+
   /**
    * Load a previously serialized state.
    * Used for restoring game state from Redis or replays.
@@ -149,6 +160,8 @@ export class MatchRuntime {
    */
   loadState(state: MatchState): void {
     this.state = state;
+    this.clearEnumeratedMovesCache();
+    clearStateScopedValueCache(this.runtimeCardCache);
     this.gameEnded = state.ctx.status.gameEnded ?? false;
     this.gameEndResult = state.ctx.status.gameEnded
       ? { winner: state.ctx.status.winner, reason: state.ctx.status.reason ?? "" }
@@ -168,6 +181,7 @@ export class MatchRuntime {
   ): CommandResult {
     if (this.state.ctx.time.mode !== "none") {
       this.state = settleClocks(this.state, timestamp);
+      this.clearEnumeratedMovesCache();
     }
 
     const pendingGameEvents: GameEvent[] = [];
@@ -182,6 +196,7 @@ export class MatchRuntime {
     });
 
     this.state = execResult.newState;
+    this.clearEnumeratedMovesCache();
 
     if (!execResult.result.success) {
       return execResult.result as CommandFailure;
@@ -229,6 +244,7 @@ export class MatchRuntime {
 
   grantPriority(playerId: string, timestamp: number): void {
     this.state = grantPriority(this.state, playerId, timestamp);
+    this.clearEnumeratedMovesCache();
   }
 
   passPriority(playerId: string, timestamp: number): CommandResult {
@@ -237,6 +253,7 @@ export class MatchRuntime {
       currentStateID: this.state.ctx._stateID,
     });
     this.state = passResult.newState;
+    this.clearEnumeratedMovesCache();
     const gameEvents = this.publishGameEvents(
       passResult.result.pendingGameEvents,
       passResult.newState.ctx._stateID,
@@ -311,12 +328,10 @@ export class MatchRuntime {
     projectionCtx: RuntimeBoardProjectionContext,
   ): FilteredMatchView | undefined {
     if (typeof this.config.projectBoard === "function") {
-      return this.config.projectBoard(
-        this.getState(),
-        roleCtx,
-        this.staticResources,
-        projectionCtx,
-      );
+      return this.config.projectBoard(this.getState(), roleCtx, this.staticResources, {
+        ...projectionCtx,
+        runtimeCardCache: this.runtimeCardCache,
+      });
     }
 
     return undefined;
@@ -328,6 +343,17 @@ export class MatchRuntime {
   ): RuntimeLegalMove<MoveRecord>[] {
     if (!playerId) {
       return [];
+    }
+
+    const currentStateID = this.state.ctx._stateID;
+    if (this.cachedEnumeratedMovesStateID !== currentStateID) {
+      this.cachedEnumeratedMovesStateID = currentStateID;
+      this.cachedEnumeratedMovesByActor.clear();
+    }
+    const cacheKey = `${actorRole}:${playerId}`;
+    const cachedMoves = this.cachedEnumeratedMovesByActor.get(cacheKey);
+    if (cachedMoves) {
+      return cachedMoves;
     }
 
     const legalMoves: RuntimeLegalMove<MoveRecord>[] = [];
@@ -378,6 +404,7 @@ export class MatchRuntime {
       legalMoves.push(moveId as keyof MoveRecord & string);
     }
 
+    this.cachedEnumeratedMovesByActor.set(cacheKey, legalMoves);
     return legalMoves;
   }
 
@@ -443,6 +470,7 @@ export class MatchRuntime {
     }
 
     this.state = restoredState;
+    this.clearEnumeratedMovesCache();
     if (!options?.preserveHistory) {
       this.publishedGameEvents.length = snapshot.publishedGameEventsLength;
       this.gameLog.length = snapshot.gameLogLength;
@@ -516,7 +544,12 @@ export class MatchRuntime {
       this.staticResources,
       this.gameEnded,
       validationMode,
+      this.runtimeCardCache,
     );
+  }
+
+  getRuntimeCardCacheStats() {
+    return getStateScopedValueCacheStats(this.runtimeCardCache);
   }
 
   private publishGameEvents(

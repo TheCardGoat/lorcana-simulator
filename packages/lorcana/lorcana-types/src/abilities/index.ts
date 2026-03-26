@@ -267,6 +267,9 @@ export type {
   ReturnRandomFromInkwellEffect,
   // Zone movement effects
   ReturnToHandEffect,
+  RevealAndRouteEffect,
+  RevealRoute,
+  RevealRouteDestination,
   RevealHandEffect,
   RevealUntilMatchEffect,
   // Reveal effects
@@ -285,6 +288,7 @@ export type {
   // Search effects
   SearchDeckEffect,
   SelectTargetEffect,
+  SelfPlayConditionEffect,
   SelfReplacementCondition,
   // Control flow effects
   SequenceEffect,

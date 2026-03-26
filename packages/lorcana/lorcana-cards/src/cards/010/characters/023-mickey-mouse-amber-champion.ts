@@ -33,6 +33,44 @@ export const mickeyMouseAmberChampion: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        modifier: 2,
+        stat: "willpower",
+        target: "YOUR_OTHER_AMBER_CHARACTERS",
+        type: "modify-stat",
+      },
+      id: "qnB-1",
+      name: "LEADING THE WAY",
+      text: "LEADING THE WAY Your other Amber characters get +2 {W}.",
+      type: "static",
+    },
+    {
+      condition: {
+        comparison: { operator: "gte", value: 2 },
+        query: {
+          cardTypes: ["character"],
+          count: "all",
+          excludeSelf: true,
+          filters: [{ inkType: "amber", type: "ink-type" }],
+          owner: "you",
+          selector: "all",
+          zones: ["play"],
+        },
+        type: "target-query",
+      },
+      effect: {
+        keyword: "Singer",
+        target: "SELF",
+        type: "gain-keyword",
+        value: 8,
+      },
+      id: "qnB-2",
+      name: "FRIENDLY CHORUS",
+      text: "FRIENDLY CHORUS While you have 2 or more other Amber characters in play, this character gains Singer 8.",
+      type: "static",
+    },
+  ],
   i18n: mickeyMouseAmberChampionI18n,
 };

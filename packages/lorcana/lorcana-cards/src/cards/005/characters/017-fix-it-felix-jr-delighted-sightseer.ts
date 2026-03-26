@@ -33,27 +33,24 @@ export const fixitFelixJrDelightedSightseer: CharacterCard = {
     {
       id: "108-1",
       name: "OH, MY LAND!",
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardType: "location",
+          filters: [],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "location",
-            filters: [],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
-        },
-        type: "conditional",
+        amount: 1,
+        target: "CONTROLLER",
+        type: "draw",
       },
       trigger: {
         event: "play",

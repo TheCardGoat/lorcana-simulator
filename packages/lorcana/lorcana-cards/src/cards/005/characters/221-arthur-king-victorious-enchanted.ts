@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { arthurKingVictoriousEnchantedI18n } from "./221-arthur-king-victorious-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const arthurKingVictoriousEnchanted: CharacterCard = {
   id: "Uoa",
@@ -35,15 +36,7 @@ export const arthurKingVictoriousEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "King"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "d3q-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       effect: {
         type: "sequence",

@@ -71,6 +71,32 @@ describe("Coconut Basket", () => {
     expect(testEngine.asPlayerOne().getDamage(lightlyDamagedFriend)).toBe(0);
   });
 
+  it("regression: allows choosing to remove only 1 damage when character has 2+ damage (up to 2, not exactly 2)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [playedCharacter],
+      inkwell: playedCharacter.cost,
+      play: [coconutBasket, damagedFriend],
+    });
+
+    testEngine.asServer().manualSetDamage(damagedFriend, 3);
+
+    expect(testEngine.asPlayerOne().playCard(playedCharacter)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        resolveOptional: true,
+        targets: [damagedFriend],
+        amount: 1,
+      }),
+    ).toBeSuccessfulCommand();
+
+    // Should have removed only 1 damage, leaving 2
+    expect(testEngine.asPlayerOne().getDamage(damagedFriend)).toBe(2);
+  });
+
   it("lets you decline the healing trigger", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [playedCharacter],

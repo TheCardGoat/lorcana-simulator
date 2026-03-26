@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { miloThatchKingOfAtlantisI18n } from "./080-milo-thatch-king-of-atlantis.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const miloThatchKingOfAtlantis: CharacterCard = {
   id: "cXv",
@@ -33,6 +34,30 @@ export const miloThatchKingOfAtlantis: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "King"],
-  abilities: [],
+  abilities: [
+    shift(4),
+    {
+      id: "cXv-2",
+      name: "TAKE THEM BY SURPRISE",
+      type: "triggered",
+      sourceZones: ["play", "discard"],
+      trigger: {
+        event: "banish",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "return-to-hand",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+      text: "TAKE THEM BY SURPRISE When this character is banished, return all opposing characters to their players' hands.",
+    },
+  ],
   i18n: miloThatchKingOfAtlantisI18n,
 };

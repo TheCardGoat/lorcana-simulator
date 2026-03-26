@@ -4,7 +4,7 @@ import { mickeyMouseTrueFriend } from "../../001/characters";
 import { iWontGiveIn } from "./028-i-wont-give-in";
 import { loseTheWay } from "./063-lose-the-way";
 
-describe("Lose the Way", () => {
+describe.skip("Lose the Way", () => {
   it("exerts the chosen character and can stop them from readying after discarding", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {

@@ -1,171 +1,177 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
-  import * as Tooltip from "$lib/design-system/primitives/tooltip/index.js";
-  import type { LorcanaCardSnapshot } from "$lib/lorcana-simulator";
-  import { m } from "$lib/i18n/messages.js";
-  import CardImage from "$lib/design-system/simulator/cards/CardImage.svelte";
-  import CardGrantSourceBadges from "@/design-system/simulator/cards/CardGrantSourceBadges.svelte";
-  import CardTagStrip from "@/design-system/simulator/cards/CardTagStrip.svelte";
-  import {
-    getLorcanaCardTagGroups,
-    type LorcanaCardStatModifier,
-  } from "./card-tags.js";
+import { createEventDispatcher } from "svelte";
+import * as Tooltip from "$lib/design-system/primitives/tooltip/index.js";
+import type { LorcanaCardSnapshot } from "$lib/lorcana-simulator";
+import { m } from "$lib/i18n/messages.js";
+import CardImage from "$lib/design-system/simulator/cards/CardImage.svelte";
+import type { ImageFormat } from "$lib/design-system/simulator/cards/card-image-format.js";
+import CardGrantSourceBadges from "@/design-system/simulator/cards/CardGrantSourceBadges.svelte";
+import CardTagStrip from "@/design-system/simulator/cards/CardTagStrip.svelte";
+import {
+	getLorcanaCardTagGroups,
+	type LorcanaCardStatModifier,
+} from "./card-tags.js";
 
+type CardSize =
+	| "micro"
+	| "tiny"
+	| "small"
+	| "small-plus"
+	| "medium"
+	| "large"
+	| "x-large";
 
-  type ImageFormat = "full" | "art_only" | "art_and_name";
-  type CardSize = "micro" | "tiny" | "small" | "small-plus" | "medium" | "large" | "x-large";
+interface CardFaceProps {
+	// Card data
+	card?: LorcanaCardSnapshot;
 
-  interface CardFaceProps {
-    // Card data
-    card?: LorcanaCardSnapshot;
+	// Sizing
+	displayWidth: number;
+	displayHeight: number;
+	useContainerSize?: boolean;
+	size?: CardSize;
+	imageFormat?: ImageFormat;
+	aspectRatio: number;
 
-    // Sizing
-    displayWidth: number;
-    displayHeight: number;
-    useContainerSize?: boolean;
-    size?: CardSize;
-    imageFormat?: ImageFormat;
-    aspectRatio: number;
+	// Visual states
+	isSelected?: boolean;
+	isExerted?: boolean;
+	isGhost?: boolean;
+	isDraggable?: boolean;
+	isPlayable?: boolean;
+	isInvalidTarget?: boolean;
+	isBanishedPreview?: boolean;
+	isQuesting?: boolean;
+	isDrying?: boolean;
+	damage?: number;
+	tagCollapseMode?: "none" | "hover-stack";
+}
 
-    // Visual states
-    isSelected?: boolean;
-    isExerted?: boolean;
-    isGhost?: boolean;
-    isDraggable?: boolean;
-    isPlayable?: boolean;
-    isInvalidTarget?: boolean;
-    isBanishedPreview?: boolean;
-    isQuesting?: boolean;
-    isDrying?: boolean;
-    damage?: number;
-    tagCollapseMode?: "none" | "hover-stack";
-  }
+let {
+	card,
+	displayWidth,
+	displayHeight,
+	useContainerSize = false,
+	size = "medium",
+	imageFormat = "full",
+	aspectRatio,
+	isSelected = false,
+	isExerted = false,
+	isGhost = false,
+	isDraggable = false,
+	isPlayable = false,
+	isInvalidTarget = false,
+	isBanishedPreview = false,
+	isQuesting = false,
+	isDrying = false,
+	damage = 0,
+	tagCollapseMode = "none",
+}: CardFaceProps = $props();
 
-  let {
-    card,
-    displayWidth,
-    displayHeight,
-    useContainerSize = false,
-    size = "medium",
-    imageFormat = "full",
-    aspectRatio,
-    isSelected = false,
-    isExerted = false,
-    isGhost = false,
-    isDraggable = false,
-    isPlayable = false,
-    isInvalidTarget = false,
-    isBanishedPreview = false,
-    isQuesting = false,
-    isDrying = false,
-    damage = 0,
-    tagCollapseMode = "none",
-  }: CardFaceProps = $props();
+// Image loading state
+let imageLoaded = $state(false);
+let imageError = $state(false);
+let isHovering = $state(false);
+const dispatch = createEventDispatcher<{
+	pointerenter: { event: MouseEvent };
+	pointerleave: void;
+	select: { event: MouseEvent };
+	contextmenu: { event: MouseEvent };
+}>();
 
-  // Image loading state
-  let imageLoaded = $state(false);
-  let imageError = $state(false);
-  let isHovering = $state(false);
-  const dispatch = createEventDispatcher<{
-    pointerenter: { event: MouseEvent };
-    pointerleave: void;
-    select: { event: MouseEvent };
-    contextmenu: { event: MouseEvent };
-  }>();
+function getCost(): string {
+	if (card?.cost !== undefined) {
+		return String(card.cost);
+	}
+	if (card?.definitionId) {
+		const match = card.definitionId.match(/-(\d+)$/);
+		return match ? match[1] : "0";
+	}
+	return "0";
+}
 
-  function getCost(): string {
-    if (card?.cost !== undefined) {
-      return String(card.cost);
-    }
-    if (card?.definitionId) {
-      const match = card.definitionId.match(/-(\d+)$/);
-      return match ? match[1] : "0";
-    }
-    return "0";
-  }
+function getCardLabel(): string {
+	return card?.label ?? m["sim.card.unknown"]({});
+}
 
-  function getCardLabel(): string {
-    return card?.label ?? m["sim.card.unknown"]({});
-  }
+function handleMouseEnter(event: MouseEvent) {
+	if (!isGhost) {
+		isHovering = true;
+	}
+	dispatch("pointerenter", { event });
+}
 
-  function handleMouseEnter(event: MouseEvent) {
-    if (!isGhost) {
-      isHovering = true;
-    }
-    dispatch("pointerenter", { event });
-  }
+function handleMouseLeave() {
+	isHovering = false;
+	dispatch("pointerleave");
+}
 
-  function handleMouseLeave() {
-    isHovering = false;
-    dispatch("pointerleave");
-  }
+function handleClick(event: MouseEvent) {
+	dispatch("select", { event });
+}
 
-  function handleClick(event: MouseEvent) {
-    dispatch("select", { event });
-  }
+function handleContextMenu(event: MouseEvent) {
+	event.preventDefault();
+	dispatch("contextmenu", { event });
+}
 
-  function handleContextMenu(event: MouseEvent) {
-    event.preventDefault();
-    dispatch("contextmenu", { event });
-  }
+function handleImageLoad() {
+	imageLoaded = true;
+}
 
-  function handleImageLoad() {
-    imageLoaded = true;
-  }
+function handleImageError() {
+	imageError = true;
+}
 
-  function handleImageError() {
-    imageError = true;
-  }
+function handleStatModifierClick(event: MouseEvent) {
+	event.stopPropagation();
+}
 
-  function handleStatModifierClick(event: MouseEvent) {
-    event.stopPropagation();
-  }
+function getModifierToneClass(tone: LorcanaCardStatModifier["tone"]): string {
+	switch (tone) {
+		case "success":
+			return "border-emerald-300/65 bg-emerald-500/88 text-emerald-50";
+		case "warning":
+			return "border-amber-200/75 bg-amber-500/90 text-amber-950";
+		case "danger":
+			return "border-rose-300/65 bg-rose-500/88 text-rose-50";
+		case "info":
+			return "border-sky-300/65 bg-sky-500/88 text-sky-50";
+		default:
+			return "border-slate-100/20 bg-slate-950/82 text-slate-50";
+	}
+}
 
-  function getModifierToneClass(tone: LorcanaCardStatModifier["tone"]): string {
-    switch (tone) {
-      case "success":
-        return "border-emerald-300/65 bg-emerald-500/88 text-emerald-50";
-      case "warning":
-        return "border-amber-200/75 bg-amber-500/90 text-amber-950";
-      case "danger":
-        return "border-rose-300/65 bg-rose-500/88 text-rose-50";
-      case "info":
-        return "border-sky-300/65 bg-sky-500/88 text-sky-50";
-      default:
-        return "border-slate-100/20 bg-slate-950/82 text-slate-50";
-    }
-  }
+const tagGroups = $derived(
+	card ? getLorcanaCardTagGroups(card) : { tags: [], statModifiers: [] },
+);
+const cardTags = $derived(tagGroups.tags.filter((tag) => tag.id !== "damage"));
+const statModifiers = $derived(tagGroups.statModifiers);
+const modifierChipClass = $derived.by(() => {
+	if (size === "micro" || size === "tiny") {
+		return "min-h-5 min-w-[2.15rem] gap-0.75 rounded-md px-1 py-0.5 text-[0.54rem]";
+	}
 
-  const tagGroups = $derived(
-    card ? getLorcanaCardTagGroups(card) : { tags: [], statModifiers: [] },
-  );
-  const cardTags = $derived(tagGroups.tags.filter((tag) => tag.id !== "damage"));
-  const statModifiers = $derived(tagGroups.statModifiers);
-  const modifierChipClass = $derived.by(() => {
-    if (size === "micro" || size === "tiny") {
-      return "min-h-5 min-w-[2.15rem] gap-0.75 rounded-md px-1 py-0.5 text-[0.54rem]";
-    }
+	if (size === "small") {
+		return "min-h-6 min-w-[2.45rem] gap-0.75 rounded-md px-1.5 py-0.5 text-[0.6rem]";
+	}
 
-    if (size === "small") {
-      return "min-h-6 min-w-[2.45rem] gap-0.75 rounded-md px-1.5 py-0.5 text-[0.6rem]";
-    }
+	return "min-h-6 min-w-[2.7rem] gap-1 rounded-md px-1.5 py-0.5 text-[0.68rem]";
+});
+const modifierIconClass = $derived(
+	size === "micro" || size === "tiny" ? "h-2.25 w-2.25" : "h-2.75 w-2.75",
+);
+const modifierValueClass = $derived.by(() => {
+	if (size === "micro" || size === "tiny") {
+		return "text-[0.66rem]";
+	}
 
-    return "min-h-6 min-w-[2.7rem] gap-1 rounded-md px-1.5 py-0.5 text-[0.68rem]";
-  });
-  const modifierIconClass = $derived(
-    size === "micro" || size === "tiny" ? "h-2.25 w-2.25" : "h-2.75 w-2.75",
-  );
-  const modifierValueClass = $derived.by(() => {
-    if (size === "micro" || size === "tiny") {
-      return "text-[0.66rem]";
-    }
+	if (size === "small") {
+		return "text-[0.74rem]";
+	}
 
-    if (size === "small") {
-      return "text-[0.74rem]";
-    }
-
-    return "text-[0.82rem]";
-  });
+	return "text-[0.82rem]";
+});
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -182,8 +188,8 @@
   class:card-face--questing={isQuesting}
   class:card-face--drying={isDrying}
   class:card-face--damaged={damage > 0}
-  style:width={useContainerSize ? "var(--zone-card-width, 90px)" : `${displayWidth}px`}
-  style:height={useContainerSize ? "var(--zone-card-height, 128px)" : `${displayHeight}px`}
+  style:width={useContainerSize ? `var(--zone-card-width, ${displayWidth}px)` : `${displayWidth}px`}
+  style:height={useContainerSize ? `var(--zone-card-height, ${displayHeight}px)` : `${displayHeight}px`}
   style:transform={isHovering && !isGhost ? "scale3d(1.02, 1.02, 1.02)" : "scale3d(1, 1, 1)"}
   data-card-id={card?.cardId}
   data-card-size={size}
@@ -203,7 +209,7 @@
       <div class="absolute inset-0 flex items-center justify-center">
         {#if card?.set && card?.cardNumber}
           <!-- Real Card Image -->
-          <div class="card-image-wrapper absolute inset-0 z-[1]" class:loaded={imageLoaded}>
+          <div data-testid={`${card.set}-${card.cardNumber}-${imageFormat}`} class="card-image-wrapper absolute inset-0 z-[1]" class:loaded={imageLoaded}>
             <CardImage
               set={card.set}
               number={card.cardNumber}

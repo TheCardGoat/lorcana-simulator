@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { fairyGodmotherMysticArmorerI18n } from "./041-fairy-godmother-mystic-armorer.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const fairyGodmotherMysticArmorer: CharacterCard = {
   id: "1WY",
@@ -34,15 +35,7 @@ export const fairyGodmotherMysticArmorer: CharacterCard = {
   ],
   classifications: ["Floodborn", "Mentor", "Fairy"],
   abilities: [
-    {
-      cost: {
-        ink: 2,
-      },
-      id: "fq8-1",
-      keyword: "Shift",
-      text: "Shift 2",
-      type: "keyword",
-    },
+    shift(2),
     {
       effect: {
         steps: [

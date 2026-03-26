@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mulanSoldierInTrainingI18n } from "./117-mulan-soldier-in-training.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const mulanSoldierInTraining: CharacterCard = {
   id: "d6s",
@@ -24,13 +25,6 @@ export const mulanSoldierInTraining: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Hero", "Princess"],
-  abilities: [
-    {
-      id: "x7m-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: mulanSoldierInTrainingI18n,
 };

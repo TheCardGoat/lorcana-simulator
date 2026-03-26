@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { theNokkWaterSpiritI18n } from "./160-the-nokk-water-spirit.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const theNokkWaterSpirit: CharacterCard = {
   id: "2Pk",
@@ -24,13 +25,6 @@ export const theNokkWaterSpirit: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Storyborn"],
-  abilities: [
-    {
-      id: "q84-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: theNokkWaterSpiritI18n,
 };

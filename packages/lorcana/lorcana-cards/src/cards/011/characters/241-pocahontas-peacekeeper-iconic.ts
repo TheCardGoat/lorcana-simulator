@@ -46,17 +46,29 @@ export const pocahontasPeacekeeperIconic: CharacterCard = {
     },
     {
       id: "sbm-2",
+      condition: {
+        type: "and",
+        conditions: [
+          {
+            type: "play-context",
+            context: "used-shift",
+          },
+          {
+            type: "turn-metric",
+            metric: "challenges-by-player",
+            playerScope: "you",
+            comparison: {
+              operator: "eq",
+              value: 0,
+            },
+          },
+        ],
+      },
       effect: {
-        condition: {
-          expression: "you used Shift to play her and none of your characters challenged this turn",
-          type: "if",
-        },
-        then: {
-          restriction: "cant-challenge",
-          target: "SELF",
-          type: "restriction",
-        },
-        type: "conditional",
+        duration: "until-start-of-next-turn",
+        restriction: "cant-challenge",
+        target: "ALL_PLAYERS",
+        type: "restriction",
       },
       name: "CALMING WORDS",
       trigger: {

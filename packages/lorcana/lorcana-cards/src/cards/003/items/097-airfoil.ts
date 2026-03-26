@@ -30,21 +30,18 @@ export const airfoil: ItemCard = {
       cost: {
         exert: true,
       },
+      condition: {
+        type: "turn-metric",
+        metric: "played-actions",
+        comparison: {
+          operator: "gte",
+          value: 2,
+        },
+      },
       effect: {
-        condition: {
-          type: "turn-metric",
-          metric: "played-actions",
-          comparison: {
-            operator: "gte",
-            value: 2,
-          },
-        },
-        then: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
-        },
-        type: "conditional",
+        amount: 1,
+        target: "CONTROLLER",
+        type: "draw",
       },
       type: "activated",
       name: "I GOT TO BE GOING",

@@ -59,6 +59,11 @@ export const queenOfHeartsSensingWeakness: CharacterCard = {
         event: "challenge",
         timing: "whenever",
         on: "YOUR_CHARACTERS",
+        restrictions: [
+          {
+            type: "defender-is-character",
+          },
+        ],
       },
       type: "triggered",
       text: "LET THE GAME BEGIN Whenever one of your characters challenges another character, you may draw a card.",

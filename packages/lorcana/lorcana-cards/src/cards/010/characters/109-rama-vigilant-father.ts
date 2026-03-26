@@ -49,10 +49,16 @@ export const ramaVigilantFather: CharacterCard = {
             type: "optional",
           },
           {
-            duration: "this-turn",
-            restriction: "cant-quest",
-            target: "SELF",
-            type: "restriction",
+            condition: {
+              type: "if-you-do",
+            },
+            then: {
+              duration: "this-turn",
+              restriction: "cant-quest",
+              target: "SELF",
+              type: "restriction",
+            },
+            type: "conditional",
           },
         ],
         type: "sequence",
@@ -62,8 +68,19 @@ export const ramaVigilantFather: CharacterCard = {
       text: "PROTECTION OF THE PACK Whenever you play another character with 5 {S} or more, you may ready this character. If you do, he can't quest for the rest of this turn.",
       trigger: {
         event: "play",
-        on: "SELF",
-        timing: "when",
+        on: {
+          cardType: "character",
+          controller: "you",
+          excludeSelf: true,
+          filters: [
+            {
+              type: "strength-comparison",
+              comparison: "greater-or-equal",
+              value: 5,
+            },
+          ],
+        },
+        timing: "whenever",
       },
       type: "triggered",
     },

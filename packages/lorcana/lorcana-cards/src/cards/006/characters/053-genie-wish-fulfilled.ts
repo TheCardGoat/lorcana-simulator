@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { genieWishFulfilledI18n } from "./053-genie-wish-fulfilled.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const genieWishFulfilled: CharacterCard = {
   id: "B2Y",
@@ -33,12 +34,7 @@ export const genieWishFulfilled: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "n6c-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         amount: 1,

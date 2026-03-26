@@ -588,6 +588,7 @@ describe("LorcanaSidebarPresenter", () => {
           minSelections: 1,
           maxSelections: 1,
           ordered: false,
+          autoRejected: false,
         },
       },
     ];
@@ -708,9 +709,18 @@ describe("LorcanaSidebarPresenter", () => {
           submitField: "destinations",
           amount: 1,
           revealedCardIds: [revealedCardId],
+          revealedCards: [
+            {
+              cardId: revealedCardId,
+              label: revealedCard.label,
+              cardType: "character",
+              cost: 8,
+              classifications: ["Hero"],
+            },
+          ],
           destinationRules: [
-            { id: "top", zone: "top", min: 0, max: null, remainder: true },
-            { id: "bottom", zone: "bottom", min: 0, max: null, remainder: false },
+            { id: "top", zone: "deck-top", min: 0, max: null, remainder: true },
+            { id: "bottom", zone: "deck-bottom", min: 0, max: null, remainder: false },
           ],
         },
       },
@@ -792,6 +802,7 @@ describe("LorcanaSidebarPresenter", () => {
           minSelections: 1,
           maxSelections: 1,
           ordered: false,
+          autoRejected: false,
         },
       },
     ];
@@ -1106,6 +1117,7 @@ describe("LorcanaSidebarPresenter", () => {
           minSelections: 1,
           maxSelections: 1,
           ordered: false,
+          autoRejected: false,
         },
       },
     ];
@@ -1184,9 +1196,25 @@ describe("LorcanaSidebarPresenter", () => {
             firstCard.cardId as CardInstanceId,
             secondCard.cardId as CardInstanceId,
           ],
+          revealedCards: [
+            {
+              cardId: firstCard.cardId as CardInstanceId,
+              label: firstCard.label,
+              cardType: "action",
+              actionSubtype: "song",
+              cost: 2,
+            },
+            {
+              cardId: secondCard.cardId as CardInstanceId,
+              label: secondCard.label,
+              cardType: "character",
+              cost: 4,
+              classifications: ["Princess"],
+            },
+          ],
           destinationRules: [
-            { id: "top", zone: "top", min: 0, max: null, remainder: false },
-            { id: "bottom", zone: "bottom", min: 0, max: null, remainder: true },
+            { id: "top", zone: "deck-top", min: 0, max: null, remainder: false },
+            { id: "bottom", zone: "deck-bottom", min: 0, max: null, remainder: true },
           ],
         },
       },
@@ -1222,7 +1250,7 @@ describe("LorcanaSidebarPresenter", () => {
 
     expect(presenter.availableMovesSelectionState).toMatchObject({
       mode: "resolution-scry",
-      destinations: [{ zone: "top" }, { zone: "bottom" }],
+      destinations: [{ zone: "deck-top" }, { zone: "deck-bottom" }],
     });
 
     expect(presenter.handleAvailableMovesScryAssignment(firstCard.cardId, "bottom")).toBe(true);
@@ -1235,8 +1263,8 @@ describe("LorcanaSidebarPresenter", () => {
         effectId: "pending-1",
         params: {
           destinations: [
-            { zone: "top", cards: [] },
-            { zone: "bottom", cards: [secondCard.cardId, firstCard.cardId] },
+            { zone: "deck-top", cards: [] },
+            { zone: "deck-bottom", cards: [secondCard.cardId, firstCard.cardId] },
           ],
         },
       },
@@ -1293,6 +1321,7 @@ describe("LorcanaSidebarPresenter", () => {
           minSelections: 1,
           maxSelections: 1,
           ordered: false,
+          autoRejected: false,
         },
       },
     ];
@@ -1478,6 +1507,7 @@ describe("LorcanaSidebarPresenter", () => {
           minSelections: 1,
           maxSelections: 1,
           ordered: false,
+          autoRejected: false,
         },
       },
     ];
@@ -1548,9 +1578,18 @@ describe("LorcanaSidebarPresenter", () => {
           submitField: "destinations",
           amount: 1,
           revealedCardIds: [revealedCardId],
+          revealedCards: [
+            {
+              cardId: revealedCardId,
+              label: revealedCard.label,
+              cardType: "character",
+              cost: 8,
+              classifications: ["Hero"],
+            },
+          ],
           destinationRules: [
-            { id: "top", zone: "top", min: 0, max: null, remainder: true },
-            { id: "bottom", zone: "bottom", min: 0, max: null, remainder: false },
+            { id: "top", zone: "deck-top", min: 0, max: null, remainder: true },
+            { id: "bottom", zone: "deck-bottom", min: 0, max: null, remainder: false },
           ],
         },
       },
@@ -1636,9 +1675,18 @@ describe("LorcanaSidebarPresenter", () => {
           submitField: "destinations",
           amount: 1,
           revealedCardIds: [revealedCardId],
+          revealedCards: [
+            {
+              cardId: revealedCardId,
+              label: revealedCard.label,
+              cardType: "character",
+              cost: 8,
+              classifications: ["Hero"],
+            },
+          ],
           destinationRules: [
-            { id: "top", zone: "top", min: 0, max: null, remainder: true },
-            { id: "bottom", zone: "bottom", min: 0, max: null, remainder: false },
+            { id: "top", zone: "deck-top", min: 0, max: null, remainder: true },
+            { id: "bottom", zone: "deck-bottom", min: 0, max: null, remainder: false },
           ],
         },
       },
@@ -2132,7 +2180,6 @@ describe("LorcanaSidebarPresenter", () => {
         cardId: card.cardId,
         categoryId: "activate-ability",
         label: "Activate Ability",
-        detail: "1 ability",
         interaction: "execute-or-select",
         enabled: true,
         moves: [executableMoves[1]!],
@@ -2211,7 +2258,6 @@ describe("LorcanaSidebarPresenter", () => {
         cardId: card.cardId,
         categoryId: "activate-ability",
         label: "Activate Ability",
-        detail: "1 ability",
         interaction: "execute-or-select",
         enabled: true,
         moves: [executableMoves[0]!],
@@ -2386,7 +2432,6 @@ describe("LorcanaSidebarPresenter", () => {
             categoryId: "move-to-location",
             categoryLabel: "Move to Location",
             sourceCardIds: [character.cardId],
-            count: 1,
             isDirect: false,
           },
         ],
@@ -2680,13 +2725,8 @@ describe("LorcanaSidebarPresenter", () => {
     );
 
     expect(presenter.handleCardAbilityByIndex(card.cardId, 1)).toBe(true);
-    expect(presenter.actionSelectionSession?.phase).toBe("choose-option");
-    expect(presenter.actionSelectionSession?.sourceCardId).toBe(card.cardId);
-
-    // skipConfirmation is true for handleCardAbilityByIndex, so selecting
-    // an option executes the move immediately without requiring confirmation
-    expect(presenter.selectActionSelectionOption(secondAbilityMove.id)).toBe(true);
     expect(executedMoves).toEqual([{ cardId: card.cardId, abilityIndex: 1 }]);
+    expect(presenter.actionSelectionSession).toBeNull();
     expect(presenter.handleCardAbilityByIndex(card.cardId, 2)).toBe(false);
   });
 
@@ -2740,6 +2780,7 @@ describe("LorcanaSidebarPresenter", () => {
           minSelections: 1,
           maxSelections: 1,
           ordered: false,
+          autoRejected: false,
         },
       },
     ];
@@ -2845,6 +2886,7 @@ describe("LorcanaSidebarPresenter", () => {
           minSelections: 1,
           maxSelections: 1,
           ordered: false,
+          autoRejected: false,
         },
       },
     ];

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jetsamRiffraffI18n } from "./076-jetsam-riffraff.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const jetsamRiffraff: CharacterCard = {
   id: "j0a",
@@ -33,12 +34,7 @@ export const jetsamRiffraff: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Ally"],
   abilities: [
-    {
-      id: "1py-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         keyword: "Ward",

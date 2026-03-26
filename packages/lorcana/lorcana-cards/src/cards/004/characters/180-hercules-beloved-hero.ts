@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { herculesBelovedHeroI18n } from "./180-hercules-beloved-hero.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const herculesBelovedHero: CharacterCard = {
   id: "FCJ",
@@ -32,12 +33,7 @@ export const herculesBelovedHero: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Prince"],
   abilities: [
-    {
-      id: "1wx-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       id: "1wx-2",
       keyword: "Resist",

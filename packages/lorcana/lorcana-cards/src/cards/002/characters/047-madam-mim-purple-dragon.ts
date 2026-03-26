@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { madamMimPurpleDragonI18n } from "./047-madam-mim-purple-dragon.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const madamMimPurpleDragon: CharacterCard = {
   id: "EHY",
@@ -34,12 +35,7 @@ export const madamMimPurpleDragon: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer", "Dragon"],
   abilities: [
-    {
-      id: "12t-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         type: "or",

@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { johnSilverSternCaptainI18n } from "./194-john-silver-stern-captain.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const johnSilverSternCaptain: CharacterCard = {
   id: "9kF",
@@ -36,22 +38,8 @@ export const johnSilverSternCaptain: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Alien", "Pirate", "Captain"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "19b-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
-    {
-      id: "19b-2",
-      keyword: "Resist",
-      text: "Resist +2",
-      type: "keyword",
-      value: 2,
-    },
+    shift(5),
+    resist(2),
     {
       effect: {
         amount: 1,

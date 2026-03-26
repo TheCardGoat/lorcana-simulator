@@ -39,7 +39,7 @@ const overflowClasses: Record<OverflowStrategy, string> = {
 -->
 <div
   class={cn(
-    "w-screen h-screen flex items-center justify-center",
+    "w-screen h-dvh flex items-center justify-center",
     overflowClasses[overflow],
     className
   )}

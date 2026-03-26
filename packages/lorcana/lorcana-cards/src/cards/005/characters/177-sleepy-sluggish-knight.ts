@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { sleepySluggishKnightI18n } from "./177-sleepy-sluggish-knight.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const sleepySluggishKnight: CharacterCard = {
   id: "72x",
@@ -24,13 +25,6 @@ export const sleepySluggishKnight: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Dreamborn", "Ally", "Knight", "Seven Dwarfs"],
-  abilities: [
-    {
-      id: "1k0-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: sleepySluggishKnightI18n,
 };

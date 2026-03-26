@@ -32,16 +32,14 @@ export const elsaTrustedSister: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Queen", "Sorcerer"],
   abilities: [
     {
+      condition: {
+        type: "has-named-character",
+        name: "Anna",
+        controller: "you",
+      },
       effect: {
-        condition: {
-          expression: "you have a character named Anna in play",
-          type: "if",
-        },
-        then: {
-          amount: 1,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 1,
+        type: "gain-lore",
       },
       id: "yr0-1",
       name: "WHAT DO WE DO NOW?",

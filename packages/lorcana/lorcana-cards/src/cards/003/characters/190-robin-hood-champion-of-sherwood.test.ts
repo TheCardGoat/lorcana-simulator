@@ -3,6 +3,7 @@ import {
   LorcanaMultiplayerTestEngine,
   PLAYER_ONE,
   PLAYER_TWO,
+  createMockAction,
   createMockCharacter,
 } from "@tcg/lorcana-engine/testing";
 import { robinHoodChampionOfSherwood } from "./190-robin-hood-champion-of-sherwood";
@@ -224,5 +225,57 @@ describe("Robin Hood - Champion of Sherwood", () => {
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, deck: 1 });
     });
+  });
+
+  it("regression: THE GOOD OF OTHERS should not trigger when banished by an action (only in challenge)", () => {
+    // Bug: Robin Hood's draw was triggering on action banish, but it should
+    // only trigger when banished in a challenge.
+    const banishAction = createMockAction({
+      id: "robin-hood-banish-action",
+      name: "Test Banish Action",
+      cost: 3,
+      text: "Banish chosen character.",
+      abilities: [
+        {
+          effect: {
+            target: {
+              cardTypes: ["character" as const],
+              count: 1,
+              owner: "any" as const,
+              selector: "chosen" as const,
+              zones: ["play" as const],
+            },
+            type: "banish" as const,
+          },
+          type: "action" as const,
+        },
+      ],
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [robinHoodChampionOfSherwood],
+        deck: 3,
+      },
+      {
+        hand: [banishAction],
+        inkwell: banishAction.cost,
+        deck: 3,
+      },
+    );
+
+    // Pass turn to player two
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    // Player two plays an action to banish Robin Hood
+    expect(
+      testEngine.asPlayerTwo().playCard(banishAction, { targets: [robinHoodChampionOfSherwood] }),
+    ).toBeSuccessfulCommand();
+
+    // Robin Hood should be banished
+    expect(testEngine.asPlayerOne().getCardZone(robinHoodChampionOfSherwood)).toBe("discard");
+
+    // THE GOOD OF OTHERS should NOT trigger (banished by action, not in challenge)
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
   });
 });

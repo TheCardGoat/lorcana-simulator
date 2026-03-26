@@ -10,7 +10,11 @@ import { resolveTargetPlayerIds } from "./player-target-resolver";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
 import { handleUnsupportedActionEffect } from "./unsupported-action-effect";
-import { isDiscardZoneKey, recordDiscardExitThisTurn } from "../../state/turn-metrics";
+import {
+  isDiscardZoneKey,
+  recordCardPutIntoInkwellThisTurn,
+  recordDiscardExitThisTurn,
+} from "../../state/turn-metrics";
 import { resolveEffectTargets } from "../../../targeting/runtime";
 
 export function isPutIntoInkwellEffect(effect: unknown): effect is PutIntoInkwellEffect {
@@ -113,10 +117,24 @@ function moveCardIntoInkwell(
     zone: "inkwell",
     playerId: destinationPlayerId,
   });
+  recordCardPutIntoInkwellThisTurn(ctx, cardId);
   ctx.cards.patchMeta(cardId, { state, publicFaceState });
 
   if (isDiscardZoneKey(sourceZoneKey)) {
     recordDiscardExitThisTurn(ctx);
+    const ownerId = resolveCardOwnerId(ctx, cardId, destinationPlayerId);
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "cardLeftDiscard",
+      { cardId, ownerId, toZone: "inkwell" },
+      {
+        event: "leave-discard",
+        playerId: ownerId,
+        subjectCardId: cardId,
+        fromZone: "discard",
+        toZone: "inkwell",
+      },
+    );
   }
 
   emitTriggeredLorcanaEvent(

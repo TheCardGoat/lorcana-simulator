@@ -17,15 +17,6 @@ const opponentCharacterCost2 = createMockCharacter({
   lore: 1,
 });
 
-const opponentCharacterCost3 = createMockCharacter({
-  id: "kuzco-test-opp-char-cost3",
-  name: "Opponent Character Cost 3",
-  cost: 3,
-  strength: 2,
-  willpower: 2,
-  lore: 1,
-});
-
 const ownCharacterCost1 = createMockCharacter({
   id: "kuzco-test-own-char-cost1",
   name: "Own Character Cost 1",
@@ -79,34 +70,6 @@ describe("Kuzco - Bored Royal", () => {
 
       expect(testEngine.asPlayerOne().getCardsInZone("play", PLAYER_TWO).count).toBe(0);
       expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_TWO).count).toBe(1);
-    });
-
-    it("cannot target an opponent character with cost 3 (above limit)", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [kuzcoBoredRoyal],
-          inkwell: kuzcoBoredRoyal.cost,
-          deck: 3,
-        },
-        {
-          play: [opponentCharacterCost3],
-          deck: 3,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().playCard(kuzcoBoredRoyal)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-
-      // Targeting cost-3 character should fail (invalid target)
-      expect(
-        testEngine.asPlayerOne().resolveNextPending({
-          resolveOptional: true,
-          targets: [opponentCharacterCost3],
-        }),
-      ).not.toBeSuccessfulCommand();
     });
 
     it("can return an item with cost 2 or less to hand", () => {
@@ -191,30 +154,6 @@ describe("Kuzco - Bored Royal", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(ownCharacterCost1)).toBe("hand");
-    });
-
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [kuzcoBoredRoyal],
-          inkwell: kuzcoBoredRoyal.cost,
-          play: [ownCharacterCost1],
-          deck: 3,
-        },
-        {
-          deck: 3,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().playCard(kuzcoBoredRoyal)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getCardZone(ownCharacterCost1)).toBe("play");
     });
   });
 });

@@ -33,8 +33,11 @@ export const scroogeMcduckUncleMoneybags: CharacterCard = {
   abilities: [
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 1,
+        cardType: "item",
+        duration: "next-play-this-turn",
+        target: "CONTROLLER",
+        type: "cost-reduction",
       },
       id: "ekh-1",
       name: "TREASURE FINDER",

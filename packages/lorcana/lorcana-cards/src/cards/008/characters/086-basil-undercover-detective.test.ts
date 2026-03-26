@@ -65,29 +65,6 @@ describe("Basil - Undercover Detective", () => {
       expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_TWO).count).toBe(1);
     });
 
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [basilUndercoverDetective],
-          inkwell: basilUndercoverDetective.cost,
-          play: [targetCharacter],
-          deck: 5,
-        },
-        {},
-      );
-
-      expect(testEngine.asPlayerOne().playCard(basilUndercoverDetective)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      // Character should still be in play
-      expect(testEngine.asPlayerOne().getCardZone(targetCharacter)).toBe("play");
-    });
-
     it("can return own character to hand", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

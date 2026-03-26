@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { copperOnTheScentI18n } from "./107-copper-on-the-scent.i18n";
+import { rush } from "../../../helpers/abilities/rush";
+import { reckless } from "../../../helpers/abilities/reckless";
 
 export const copperOnTheScent: CharacterCard = {
   id: "5td",
@@ -31,19 +33,6 @@ export const copperOnTheScent: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "17g-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-    {
-      id: "17g-2",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-  ],
+  abilities: [rush, reckless],
   i18n: copperOnTheScentI18n,
 };

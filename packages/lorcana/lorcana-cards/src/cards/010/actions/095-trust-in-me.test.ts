@@ -80,6 +80,42 @@ describe("Trust In Me", () => {
     expect(playerTwo).toHaveZoneCounts({ hand: 1, discard: 2 });
   });
 
+  it("regression: lore reduction persists through opponent's turn (does not wear off prematurely)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [trustInMe],
+        inkwell: trustInMe.cost,
+        play: [balooFriendAndGuardian],
+        deck: 2,
+      },
+      {
+        play: [{ card: duckworthGhostButler, isDrying: false }],
+        deck: 2,
+      },
+    );
+
+    const playerOne = testEngine.asPlayerOne();
+    const playerTwo = testEngine.asPlayerTwo();
+
+    // Play Trust In Me choosing lore reduction mode
+    expect(playerOne.playCardWithChoice(trustInMe, 0)).toBeSuccessfulCommand();
+
+    // Duckworth normally has 2 lore, should now have 1 lore
+    expect(playerTwo).toHaveLore({ card: duckworthGhostButler, value: 1 });
+
+    // Pass to opponent's turn
+    expect(playerOne.passTurn()).toBeSuccessfulCommand();
+
+    // During opponent's turn, the reduction should still be active
+    expect(playerTwo).toHaveLore({ card: duckworthGhostButler, value: 1 });
+
+    // Quest with reduced lore - should only gain 1 lore instead of 2
+    expect(playerTwo.quest(duckworthGhostButler)).toBeSuccessfulCommand();
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+    // The opponent should have gained only 1 lore from questing
+    expect(testEngine.getLore("player_two")).toBe(1);
+  });
+
   it("can be sung for free and still choose a mode", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {

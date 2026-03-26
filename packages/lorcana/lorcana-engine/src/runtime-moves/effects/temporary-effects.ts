@@ -536,6 +536,7 @@ export function hasTemporaryRestriction(
   restriction: string,
   options?: {
     isSourceInPlay?: (sourceId: string) => boolean;
+    isCardAtLocation?: boolean;
   },
 ): boolean {
   if (!meta) {
@@ -569,6 +570,17 @@ export function hasTemporaryRestriction(
   ];
   if (payload?.activeWhileSourceInPlay && payload.sourceId && options?.isSourceInPlay) {
     return options.isSourceInPlay(payload.sourceId);
+  }
+
+  // Evaluate payload condition (e.g., "unless at a location")
+  if (payload?.condition && typeof payload.condition === "object") {
+    const condition = payload.condition as { type: string; condition?: { type: string } };
+    if (condition.type === "not" && condition.condition?.type === "at-location") {
+      // Restriction is active only when the card is NOT at a location
+      if (options?.isCardAtLocation === true) {
+        return false;
+      }
+    }
   }
 
   return true;

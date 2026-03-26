@@ -44,41 +44,38 @@ export const elsaIceSurfer: CharacterCard = {
         },
         timing: "whenever",
       },
-      effect: {
-        type: "conditional",
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            reference: "trigger-subject",
-            cardType: "character",
-            filters: [
-              {
-                type: "name",
-                equals: "Anna",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          type: "sequence",
-          steps: [
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          reference: "trigger-subject",
+          cardType: "character",
+          filters: [
             {
-              type: "ready",
-              target: "SELF",
-            },
-            {
-              type: "restriction",
-              duration: "this-turn",
-              restriction: "cant-quest",
-              target: "SELF",
+              type: "name",
+              equals: "Anna",
             },
           ],
         },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "ready",
+            target: "SELF",
+          },
+          {
+            type: "restriction",
+            duration: "this-turn",
+            restriction: "cant-quest",
+            target: "SELF",
+          },
+        ],
       },
     },
   ],

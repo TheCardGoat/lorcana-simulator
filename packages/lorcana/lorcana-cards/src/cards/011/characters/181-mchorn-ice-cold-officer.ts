@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mchornIcecoldOfficerI18n } from "./181-mchorn-ice-cold-officer.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const mchornIcecoldOfficer: CharacterCard = {
   id: "8pd",
@@ -24,13 +25,6 @@ export const mchornIcecoldOfficer: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Dreamborn", "Ally", "Detective"],
-  abilities: [
-    {
-      id: "130-1",
-      keyword: "Bodyguard",
-      type: "keyword",
-      text: "Bodyguard",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: mchornIcecoldOfficerI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tiggerInTheCrowsNestI18n } from "./126-tigger-in-the-crows-nest.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const tiggerInTheCrowsNest: CharacterCard = {
   id: "puw",
@@ -33,12 +34,7 @@ export const tiggerInTheCrowsNest: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Tigger", "Pirate"],
   abilities: [
-    {
-      id: "1q4-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         steps: [

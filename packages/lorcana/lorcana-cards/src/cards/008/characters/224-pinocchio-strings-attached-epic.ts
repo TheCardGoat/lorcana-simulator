@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { pinocchioStringsAttachedEpicI18n } from "./224-pinocchio-strings-attached-epic.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const pinocchioStringsAttachedEpic: CharacterCard = {
   id: "QOp",
@@ -26,12 +27,7 @@ export const pinocchioStringsAttachedEpic: CharacterCard = {
   text: "Evasive GOT TO KEEP REAL QUIET Once during your turn, whenever you ready this character, you may draw a card.",
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "1m2-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    evasive,
     {
       id: "1m2-2",
       effect: {

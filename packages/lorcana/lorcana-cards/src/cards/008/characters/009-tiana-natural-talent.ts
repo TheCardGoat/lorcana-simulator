@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tianaNaturalTalentI18n } from "./009-tiana-natural-talent.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const tianaNaturalTalent: CharacterCard = {
   id: "9h6",
@@ -34,13 +35,7 @@ export const tianaNaturalTalent: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "tr1-1",
-      keyword: "Singer",
-      text: "Singer 6",
-      type: "keyword",
-      value: 6,
-    },
+    singer(6),
     {
       effect: {
         duration: "until-start-of-next-turn",

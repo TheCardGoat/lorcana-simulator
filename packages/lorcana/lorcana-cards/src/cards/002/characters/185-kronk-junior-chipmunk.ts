@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kronkJuniorChipmunkI18n } from "./185-kronk-junior-chipmunk.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const kronkJuniorChipmunk: CharacterCard = {
   id: "XpE",
@@ -34,13 +35,7 @@ export const kronkJuniorChipmunk: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "6z5-1",
-      keyword: "Resist",
-      text: "Resist +1",
-      type: "keyword",
-      value: 1,
-    },
+    resist(1),
     {
       effect: {
         chooser: "CONTROLLER",

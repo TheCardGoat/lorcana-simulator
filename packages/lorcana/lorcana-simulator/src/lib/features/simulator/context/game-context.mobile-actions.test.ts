@@ -2,7 +2,11 @@ import { describe, expect, it } from "bun:test";
 import type { LorcanaGameContextValue } from "@/features/simulator/context/game-context.svelte.js";
 import { LorcanaSidebarPresenter } from "@/features/simulator/context/game-context.svelte.js";
 import { DEFAULT_LORCANA_PLAYER_VISUAL_SETTINGS } from "@/features/simulator/model/player-visual-settings.js";
-import type { ExecutableMoveEntry } from "@/features/simulator/model/contracts.js";
+import type {
+  ExecutableMoveEntry,
+  LorcanaCardSnapshot,
+  LorcanaSimulatorMoveParams,
+} from "@/features/simulator/model/contracts.js";
 
 function createGameContextStub(
   overrides: Partial<LorcanaGameContextValue> = {},
@@ -102,6 +106,24 @@ function createResolveEffectMove(): ExecutableMoveEntry {
   };
 }
 
+function createCardSnapshot(overrides: Partial<LorcanaCardSnapshot> = {}): LorcanaCardSnapshot {
+  return {
+    cardId: overrides.cardId ?? "card-1",
+    definitionId: overrides.definitionId ?? "card-1",
+    ownerId: overrides.ownerId ?? "player-1",
+    ownerSide: overrides.ownerSide ?? "playerOne",
+    zoneId: overrides.zoneId ?? "play",
+    label: overrides.label ?? "Goofy - Musketeer",
+    isMasked: overrides.isMasked ?? false,
+    facePresentation: overrides.facePresentation ?? "faceUp",
+    cardType: overrides.cardType ?? "character",
+    readyState: overrides.readyState ?? "ready",
+    isDrying: overrides.isDrying ?? false,
+    textEntries: overrides.textEntries ?? [],
+    ...overrides,
+  } as LorcanaCardSnapshot;
+}
+
 describe("LorcanaSidebarPresenter mobile actions", () => {
   it("keeps guidance at the bottom by default and resets it between presenter instances", () => {
     const firstPresenter = new LorcanaSidebarPresenter(createGameContextStub());
@@ -126,7 +148,6 @@ describe("LorcanaSidebarPresenter mobile actions", () => {
             categoryId: "concede",
             categoryLabel: "Concede",
             sourceCardIds: [],
-            count: 1,
             isDirect: true,
           },
         ],
@@ -194,5 +215,64 @@ describe("LorcanaSidebarPresenter mobile actions", () => {
     expect(presenter.canAdvancePendingEffects).toBe(true);
     expect(presenter.handleAdvancePendingEffects()).toBe(true);
     expect(resolved).toEqual(["resolveEffect"]);
+  });
+
+  it("executes the clicked activated ability index instead of the aggregated category", () => {
+    const card = createCardSnapshot({
+      cardId: "pawpsicle-1",
+      label: "Pawpsicle",
+      cardType: "item",
+      textEntries: [
+        {
+          title: "JUMBO POP",
+          description: "When you play this item, you may draw a card.",
+        },
+        {
+          title: "THAT'S REDWOOD",
+          description: "Banish this item - Remove up to 2 damage from chosen character.",
+        },
+      ],
+    });
+    const executed: LorcanaSimulatorMoveParams["activateAbility"][] = [];
+    const onlyLegalActivatedAbility: ExecutableMoveEntry = {
+      id: "activateAbility:pawpsicle-1:1",
+      label: "Pawpsicle: THAT'S REDWOOD",
+      moveId: "activateAbility",
+      params: { cardId: card.cardId, abilityIndex: 1 },
+      presentation: {
+        kind: "targeted",
+        categoryId: "activate-ability",
+        categoryLabel: "Activate Ability",
+        optionLabel: "Pawpsicle: THAT'S REDWOOD",
+      },
+    };
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        ownerSide: () => "playerOne",
+        cardSnapshotsById: () => ({ [card.cardId]: card }),
+        expandCardMoves: () => [onlyLegalActivatedAbility],
+        moveCategorySummaries: () => [
+          {
+            categoryId: "activate-ability",
+            categoryLabel: "Activate Ability",
+            sourceCardIds: [card.cardId],
+            isDirect: false,
+          },
+        ],
+        executeMove: (moveId, params) => {
+          if (moveId !== "activateAbility") {
+            return false;
+          }
+
+          executed.push(params as LorcanaSimulatorMoveParams["activateAbility"]);
+          return true;
+        },
+      }),
+    );
+
+    expect(presenter.handleCardAbilityByIndex(card.cardId, 0)).toBe(false);
+    expect(presenter.handleCardAbilityByIndex(card.cardId, 1)).toBe(true);
+    expect(executed).toEqual([{ cardId: card.cardId, abilityIndex: 1 }]);
   });
 });

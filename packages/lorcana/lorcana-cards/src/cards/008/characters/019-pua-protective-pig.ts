@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { puaProtectivePigI18n } from "./019-pua-protective-pig.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const puaProtectivePig: CharacterCard = {
   id: "Ai2",
@@ -33,12 +34,7 @@ export const puaProtectivePig: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "1x6-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         chooser: "CONTROLLER",

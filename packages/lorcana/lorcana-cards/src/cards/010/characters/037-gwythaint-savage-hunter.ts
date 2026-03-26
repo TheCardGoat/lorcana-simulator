@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { evasive } from "../../../helpers/abilities/evasive";
 import { gwythaintSavageHunterI18n } from "./037-gwythaint-savage-hunter.i18n";
 
 export const gwythaintSavageHunter: CharacterCard = {
@@ -34,12 +35,7 @@ export const gwythaintSavageHunter: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Dragon"],
   abilities: [
-    {
-      id: "t21-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       id: "t21-2",
       name: "SWOOPING STRIKE",

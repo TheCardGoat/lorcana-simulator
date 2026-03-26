@@ -5,7 +5,7 @@ import type {
   LorcanaCardMeta,
   LorcanaMoveDefinition,
 } from "../../../types";
-import { createLorcanaLogMessage } from "../../../types";
+import { createLorcanaLogProjection } from "../../../types";
 import {
   analyzeEffectTargets,
   flattenNormalizedTargetSelection,
@@ -659,7 +659,7 @@ function validateExertCharacterCostSelections(
 
     // Check that the character is ready to be exerted
     const costCardMeta = ctx.cards.require(cardId).meta as LorcanaCardMeta | undefined;
-    if (costCardMeta?.state === "exerted") {
+    if (costCardMeta?.state === "exerted" || costCardMeta?.isDrying === true) {
       return createFailure(
         "Additional exerted character cost must be ready (not exerted)",
         "ABILITY_COST_CARD_NOT_READY",
@@ -1192,20 +1192,28 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       abilityIndex: abilityIndex ?? 0,
       inkPaid: payResult.inkPaid > 0 ? payResult.inkPaid : undefined,
     });
-    ctx.framework.log({
-      category: "action",
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: ability.name
-        ? createLorcanaLogMessage("lorcana.ability.activated.named", {
-            playerId: currentPlayer,
-            cardId: cardId as CardInstanceId,
-            abilityName: ability.name,
-          })
-        : createLorcanaLogMessage("lorcana.ability.activated", {
-            playerId: currentPlayer,
-            cardId: cardId as CardInstanceId,
-          }),
-    });
+    ctx.framework.log(
+      ability.name
+        ? createLorcanaLogProjection(
+            "lorcana.ability.activated.named",
+            {
+              playerId: currentPlayer,
+              cardId: cardId as CardInstanceId,
+              abilityName: ability.name,
+            },
+            { mode: "PUBLIC" },
+            "action",
+          )
+        : createLorcanaLogProjection(
+            "lorcana.ability.activated",
+            {
+              playerId: currentPlayer,
+              cardId: cardId as CardInstanceId,
+            },
+            { mode: "PUBLIC" },
+            "action",
+          ),
+    );
 
     const analysis = analyzeEffectTargets(
       ability.effect,

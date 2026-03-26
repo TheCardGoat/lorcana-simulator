@@ -2,6 +2,8 @@ import type { CardInstanceId, PlayerId } from "#core";
 import type {
   CardSelectionFilter,
   ChosenCardCostMaxCostConstraint,
+  Condition,
+  LorcanaCardDefinition,
   PlayCardEffect,
 } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
@@ -13,7 +15,11 @@ import type {
 import { handleUnsupportedActionEffect } from "./unsupported-action-effect";
 import { isDiscardZoneKey, recordDiscardExitThisTurn } from "../../state/turn-metrics";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
-import { addTemporaryKeyword, resolveTemporaryEffectWindow } from "../../effects/temporary-effects";
+import {
+  addTemporaryKeyword,
+  hasTemporaryPlayerRestriction,
+  resolveTemporaryEffectWindow,
+} from "../../effects/temporary-effects";
 import {
   emitTriggeredLorcanaEvent,
   flushTriggeredEventsToBag,
@@ -26,6 +32,10 @@ import {
   moveSuspendedActionCardToLimbo,
 } from "./pending-action-effects";
 import { payBasicCost, validateBasicCost } from "../../rules/play-card-rules";
+import {
+  evaluateStaticCondition,
+  hasStaticCardRestriction,
+} from "../../rules/static-ability-utils";
 import {
   clearCurrentSelectionTargets,
   getCombinedSelectionInput,
@@ -208,6 +218,28 @@ function resolveSourceCards(
     }
 
     return cardsInZone;
+  }
+
+  // Array of zones: collect cards from each listed zone and merge them.
+  // Explicit target selection is validated against the combined pool.
+  if (Array.isArray(from)) {
+    const supportedZones = from.filter(
+      (zone): zone is "hand" | "discard" | "deck" =>
+        zone === "hand" || zone === "discard" || zone === "deck",
+    );
+    const allCards: CardInstanceId[] = [];
+    for (const zone of supportedZones) {
+      const zoneCards = ctx.framework.zones.getCards({
+        zone,
+        playerId: sourcePlayerId,
+      }) as CardInstanceId[];
+      allCards.push(...zoneCards);
+    }
+    if (hasExplicitTargetSelection) {
+      const allCardsSet = new Set(allCards);
+      return selectedTargets.filter((cardId) => allCardsSet.has(cardId));
+    }
+    return allCards;
   }
 
   handleUnsupportedActionEffect("play-card", `Unsupported source "${from}"`);
@@ -459,7 +491,7 @@ function initializePlayedCardMeta(
   // resolvePlayCardEffect rejects action cards before this is called, so this
   // branch is intentionally item/location-only and keeps character-only fields unset.
   ctx.cards.setMeta(cardId, {
-    state: undefined,
+    state: entersExerted ? "exerted" : undefined,
     damage: undefined,
     isDrying: undefined,
     publicFaceState: undefined,
@@ -468,6 +500,61 @@ function initializePlayedCardMeta(
     stackParentId: undefined,
     playedViaShift: false,
     playedCostType,
+  });
+}
+
+function cardEntersPlayExerted(
+  ctx: PlayCardExecutionContext,
+  cardId: CardInstanceId,
+  definition: CardDefinitionLike,
+  playerId: PlayerId,
+): boolean {
+  const state = {
+    priority: ctx.framework.state.priority,
+    status: ctx.framework.state.status,
+    _zonesPrivate: ctx.framework.state._zonesPrivate,
+    G: ctx.G,
+  };
+  const getDefinitionByInstanceId = (instanceId: CardInstanceId) =>
+    ctx.cards.getDefinition(instanceId) as LorcanaCardDefinition | undefined;
+
+  const selfRestricted = (definition.abilities ?? []).some((ability) => {
+    if (
+      typeof ability !== "object" ||
+      ability === null ||
+      !("type" in ability) ||
+      ability.type !== "static" ||
+      !("effect" in ability) ||
+      typeof ability.effect !== "object" ||
+      ability.effect === null ||
+      !("type" in ability.effect) ||
+      ability.effect.type !== "restriction" ||
+      !("restriction" in ability.effect) ||
+      ability.effect.restriction !== "enters-play-exerted" ||
+      !("target" in ability.effect) ||
+      ability.effect.target !== "SELF"
+    ) {
+      return false;
+    }
+
+    return evaluateStaticCondition({
+      condition: ("condition" in ability ? ability.condition : undefined) as Condition | undefined,
+      state,
+      controllerId: playerId,
+      sourceId: cardId,
+      getDefinitionByInstanceId,
+    });
+  });
+
+  if (selfRestricted) {
+    return true;
+  }
+
+  return hasStaticCardRestriction({
+    state,
+    cardId,
+    restriction: "enters-play-exerted",
+    getDefinitionByInstanceId,
   });
 }
 
@@ -535,6 +622,37 @@ export function resolvePlayCardEffect(
 
     if (!cardType) {
       continue;
+    }
+
+    // Respect player play restrictions when executing play-card effects.
+    // A "cant-play-actions" restriction (e.g. Pete - Games Referee) should prevent
+    // playing action cards (including songs) even via triggered or activated abilities.
+    if (cardType === "action") {
+      const currentTurn = ctx.framework.state.status.turn ?? 1;
+      if (
+        hasTemporaryPlayerRestriction(
+          ctx.G.temporaryPlayerRestrictions,
+          playerId as PlayerId,
+          currentTurn,
+          "cant-play-actions",
+        )
+      ) {
+        continue;
+      }
+    }
+
+    if (cardType === "item") {
+      const currentTurn = ctx.framework.state.status.turn ?? 1;
+      if (
+        hasTemporaryPlayerRestriction(
+          ctx.G.temporaryPlayerRestrictions,
+          playerId as PlayerId,
+          currentTurn,
+          "cant-play-items",
+        )
+      ) {
+        continue;
+      }
     }
 
     const inkCost = costType === "free" ? 0 : Math.max(0, Number(definition.cost ?? 0));
@@ -623,6 +741,7 @@ export function resolvePlayCardEffect(
       chosenCardId,
       definition,
       effect.entersExerted === true ||
+        cardEntersPlayExerted(ctx, chosenCardId, definition, playerId as PlayerId) ||
         (cardType === "character" &&
           resolutionInput.eventSnapshot?.autoExertBodyguardOnNestedPlay === true &&
           hasBodyguardKeyword(definition)),

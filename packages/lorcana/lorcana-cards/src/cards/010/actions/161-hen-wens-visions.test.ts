@@ -30,10 +30,10 @@ describe("Hen Wen's Visions", () => {
     const deckIds = testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE);
 
     expect(deckIds.slice(0, 4)).toEqual([
-      goofyKnightForADay.id,
-      simbaProtectiveCub.id,
-      fairyGodmothersWand.id,
       duckburgFunsosFunzone.id,
+      fairyGodmothersWand.id,
+      simbaProtectiveCub.id,
+      goofyKnightForADay.id,
     ]);
   });
 });

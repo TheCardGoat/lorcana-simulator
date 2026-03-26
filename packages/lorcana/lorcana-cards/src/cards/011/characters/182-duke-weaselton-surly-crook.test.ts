@@ -69,4 +69,31 @@ describe("Duke Weaselton - Surly Crook", () => {
 
     expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("hand");
   });
+
+  it("regression: APPREHENDED should NOT trigger when a different character is banished (only self-banish)", () => {
+    // Bug: Duke Weaselton was triggering on any character banished, not just when he himself was banished.
+    const otherCharacter = createMockCharacter({
+      id: "duke-other-char",
+      name: "Other Character",
+      strength: 1,
+      willpower: 1,
+      cost: 1,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [dukeWeaseltonSurlyCrook, otherCharacter],
+      hand: [cheapCharacter],
+      deck: 5,
+    });
+
+    // Banish the other character (not Duke Weaselton)
+    testEngine.asServer().manualSetDamage(otherCharacter, 1);
+
+    expect(testEngine.asPlayerOne().getCardZone(otherCharacter)).toBe("discard");
+    // Duke should still be in play
+    expect(testEngine.asPlayerOne().getCardZone(dukeWeaseltonSurlyCrook)).toBe("play");
+
+    // APPREHENDED should NOT have triggered
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+  });
 });

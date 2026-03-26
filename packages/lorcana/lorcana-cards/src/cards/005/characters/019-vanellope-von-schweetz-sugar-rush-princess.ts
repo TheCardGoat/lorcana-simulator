@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { vanellopeVonSchweetzSugarRushPrincessI18n } from "./019-vanellope-von-schweetz-sugar-rush-princess.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const vanellopeVonSchweetzSugarRushPrincess: CharacterCard = {
   id: "5Sq",
@@ -34,15 +35,7 @@ export const vanellopeVonSchweetzSugarRushPrincess: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess", "Racer"],
   abilities: [
-    {
-      cost: {
-        ink: 2,
-      },
-      id: "s65-1",
-      keyword: "Shift",
-      text: "Shift 2",
-      type: "keyword",
-    },
+    shift(2),
     {
       effect: {
         duration: "until-start-of-next-turn",

@@ -33,11 +33,11 @@ export const princePhillipWardenOfTheWoods: CharacterCard = {
     {
       effect: {
         keyword: "Ward",
-        target: "CHOSEN_CHARACTER",
+        target: "YOUR_OTHER_HERO_CHARACTERS",
         type: "gain-keyword",
       },
       id: "1kf-1",
-      name: "SHINING BEACON Your other Hero",
+      name: "SHINING BEACON",
       text: "SHINING BEACON Your other Hero characters gain Ward.",
       type: "static",
     },

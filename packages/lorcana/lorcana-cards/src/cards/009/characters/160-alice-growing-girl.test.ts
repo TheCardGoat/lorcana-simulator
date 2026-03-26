@@ -87,5 +87,45 @@ describe("Alice - Growing Girl (Set 9)", () => {
       expect(testEngine.asPlayerOne().getCardStrength(aliceGrowingGirl)).toBe(11);
       expect(testEngine.asPlayerOne().getCardLore(aliceGrowingGirl)).toBe(5);
     });
+
+    it("regression: uses effective (modified) strength, not printed strength, when checking 10+ threshold", () => {
+      // If a modifier brings Alice to 10+ strength, she should get +4 lore
+      // even though her printed strength is only 1
+      const smallStrengthBuff = createMockCharacter({
+        id: "alice-small-str-buff-s9",
+        name: "Small Buffer",
+        cost: 1,
+        strength: 1,
+        willpower: 1,
+        lore: 1,
+        abilities: [
+          {
+            id: "alice-small-str-buff-s9-1",
+            type: "static",
+            text: "Other characters get +9 strength.",
+            effect: {
+              type: "modify-stat",
+              stat: "strength",
+              modifier: 9,
+              target: {
+                selector: "all",
+                count: "all",
+                zones: ["play"],
+                owner: "you",
+                excludeSelf: true,
+              },
+            },
+          },
+        ],
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [aliceGrowingGirl, smallStrengthBuff],
+      });
+
+      // Alice base strength 1 + 9 buff = 10 >= 10 => condition passes => lore = 1+4 = 5
+      expect(testEngine.asPlayerOne().getCardStrength(aliceGrowingGirl)).toBe(10);
+      expect(testEngine.asPlayerOne().getCardLore(aliceGrowingGirl)).toBe(5);
+    });
   });
 });

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { willieTheGiantGhostOfChristmasPresentI18n } from "./126-willie-the-giant-ghost-of-christmas-present.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const willieTheGiantGhostOfChristmasPresent: CharacterCard = {
   id: "4Qt",
@@ -33,6 +34,25 @@ export const willieTheGiantGhostOfChristmasPresent: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Ghost", "Giant"],
-  abilities: [],
+  abilities: [
+    boost(3),
+    {
+      id: "4Qt-2",
+      name: "THE FOOD OF GENEROSITY",
+      type: "static",
+      effect: {
+        type: "restriction",
+        restriction: "cant-quest-or-challenge",
+        target: "SELF",
+      },
+      condition: {
+        type: "not",
+        condition: {
+          type: "put-card-under-self-this-turn",
+        },
+      },
+      text: "THE FOOD OF GENEROSITY This character can't quest or challenge unless you put a card under him this turn.",
+    },
+  ],
   i18n: willieTheGiantGhostOfChristmasPresentI18n,
 };

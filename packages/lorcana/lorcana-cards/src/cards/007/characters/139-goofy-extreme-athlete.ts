@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { goofyExtremeAthleteI18n } from "./139-goofy-extreme-athlete.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const goofyExtremeAthlete: CharacterCard = {
   id: "3Ct",
@@ -33,12 +34,7 @@ export const goofyExtremeAthlete: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "15u-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         duration: "this-turn",

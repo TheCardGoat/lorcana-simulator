@@ -107,4 +107,37 @@ describe("Louis - Endearing Alligator", () => {
       expect(testEngine.hasKeyword(opposingCharacter, "Reckless")).toBe(false);
     });
   });
+
+  it("regression: Reckless does not persist beyond the opponent's next turn", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        inkwell: louisEndearingAlligator.cost,
+        hand: [louisEndearingAlligator],
+        deck: 2,
+      },
+      {
+        play: [opposingCharacter],
+        deck: 5,
+      },
+    );
+
+    testEngine.asPlayerOne().playCard(louisEndearingAlligator);
+    testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      targets: [opposingCharacter],
+    });
+
+    // P1 passes -> P2's turn starts, Reckless should be active
+    expect(testEngine.asServer().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.hasKeyword(opposingCharacter, "Reckless")).toBe(true);
+
+    // P2 challenges (satisfying Reckless) then passes
+    expect(
+      testEngine.asPlayerTwo().challenge(opposingCharacter, louisEndearingAlligator),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asServer().passTurn()).toBeSuccessfulCommand();
+
+    // P1's turn -> P2's turn again: Reckless should be gone
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.hasKeyword(opposingCharacter, "Reckless")).toBe(false);
+  });
 });

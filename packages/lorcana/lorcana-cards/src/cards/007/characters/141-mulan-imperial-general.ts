@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mulanImperialGeneralI18n } from "./141-mulan-imperial-general.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const mulanImperialGeneral: CharacterCard = {
   id: "jFo",
@@ -37,25 +39,13 @@ export const mulanImperialGeneral: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "17b-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
-    {
-      id: "17b-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    shift(5),
+    evasive,
     {
       effect: {
         ability: "can-challenge-ready",
-        target: "SELF",
+        duration: "this-turn",
+        target: "YOUR_OTHER_CHARACTERS",
         type: "grant-ability",
       },
       id: "17b-3",

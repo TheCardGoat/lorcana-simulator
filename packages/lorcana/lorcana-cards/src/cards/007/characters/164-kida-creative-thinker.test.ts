@@ -85,4 +85,33 @@ describe("Kida - Creative Thinker", () => {
       expect(testEngine.asPlayerOne().getCardZone(deckCard2Id)).toBe("deck");
     }
   });
+
+  it("projects inkwell destination metadata for the pending scry selection", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: kidaCreativeThinker, isDrying: false }],
+      deck: [deckCard1, deckCard2],
+    });
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(kidaCreativeThinker, "KEY TO THE PUZZLE"),
+    ).toBeSuccessfulCommand();
+
+    const pendingEffect = testEngine.asServer().getState().G.pendingEffects[0];
+    expect(pendingEffect?.selectionContext).toMatchObject({
+      kind: "scry-selection",
+      destinationRules: [
+        {
+          zone: "inkwell",
+          max: 1,
+          min: 1,
+          exerted: true,
+          facedown: true,
+        },
+        {
+          zone: "deck-top",
+          remainder: true,
+        },
+      ],
+    });
+  });
 });

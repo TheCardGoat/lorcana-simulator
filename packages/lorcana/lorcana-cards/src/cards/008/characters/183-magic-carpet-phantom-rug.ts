@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { magicCarpetPhantomRugI18n } from "./183-magic-carpet-phantom-rug.i18n";
+import { vanish } from "../../../helpers/abilities/vanish";
 
 export const magicCarpetPhantomRug: CharacterCard = {
   id: "a00",
@@ -35,12 +36,7 @@ export const magicCarpetPhantomRug: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Ally", "Illusion"],
   abilities: [
-    {
-      id: "3wd-1",
-      keyword: "Vanish",
-      text: "Vanish",
-      type: "keyword",
-    },
+    vanish,
     {
       effect: {
         keyword: "Challenger",

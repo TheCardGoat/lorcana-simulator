@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { helgaSinclairFemmeFataleI18n } from "./074-helga-sinclair-femme-fatale.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const helgaSinclairFemmeFatale: CharacterCard = {
   id: "akr",
@@ -34,15 +35,7 @@ export const helgaSinclairFemmeFatale: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "1t9-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         chooser: "CONTROLLER",

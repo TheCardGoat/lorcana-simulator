@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kuzcoImpulsiveLlamaI18n } from "./067-kuzco-impulsive-llama.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const kuzcoImpulsiveLlama: CharacterCard = {
   id: "uQg",
@@ -34,15 +35,7 @@ export const kuzcoImpulsiveLlama: CharacterCard = {
   ],
   classifications: ["Floodborn", "King"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "1p1-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         type: "sequence",

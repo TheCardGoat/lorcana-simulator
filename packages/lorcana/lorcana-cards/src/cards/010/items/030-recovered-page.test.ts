@@ -40,9 +40,9 @@ describe("Recovered Page", () => {
 
       expect(testEngine.asPlayerOne().getCardZone(simbaProtectiveCub)).toBe("hand");
       expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
-        mickeyMouseTrueFriend.id,
-        healingGlow.id,
         aladdinPrinceAli.id,
+        healingGlow.id,
+        mickeyMouseTrueFriend.id,
       ]);
     });
   });

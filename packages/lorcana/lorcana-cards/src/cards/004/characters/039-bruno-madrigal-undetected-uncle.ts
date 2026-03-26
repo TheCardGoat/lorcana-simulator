@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { brunoMadrigalUndetectedUncleI18n } from "./039-bruno-madrigal-undetected-uncle.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const brunoMadrigalUndetectedUncle: CharacterCard = {
   id: "Hx7",
@@ -34,12 +35,7 @@ export const brunoMadrigalUndetectedUncle: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Madrigal"],
   abilities: [
-    {
-      id: "13f-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       cost: {
         exert: true,
@@ -51,33 +47,22 @@ export const brunoMadrigalUndetectedUncle: CharacterCard = {
             type: "name-a-card",
           },
           {
-            type: "reveal-top-card",
+            type: "reveal-and-route",
             target: "CONTROLLER",
-          },
-          {
-            type: "conditional",
-            condition: {
-              type: "revealed-matches-named",
-            },
-            then: {
-              type: "sequence",
-              steps: [
-                {
-                  type: "put-in-hand",
-                  source: "revealed",
-                  target: "CONTROLLER",
-                },
-                {
-                  type: "gain-lore",
-                  amount: 3,
-                  target: "CONTROLLER",
-                },
-              ],
-            },
-            else: {
-              type: "put-on-top",
-              source: "revealed",
-            },
+            routes: [
+              {
+                condition: { type: "revealed-matches-named" },
+                destination: { zone: "hand" },
+                sideEffects: [
+                  {
+                    type: "gain-lore",
+                    amount: 3,
+                    target: "CONTROLLER",
+                  },
+                ],
+              },
+            ],
+            fallback: { zone: "deck-top" },
           },
         ],
       },

@@ -5,7 +5,7 @@
  */
 
 import type { PlayerId, RuntimeValidationResult } from "#core";
-import { createLorcanaLogMessage, type LorcanaMoveDefinition } from "../../../types";
+import { createLorcanaLogProjection, type LorcanaMoveDefinition } from "../../../types";
 import { resolveRuntimePlayerIds } from "./resolve-player-ids";
 
 /**
@@ -58,14 +58,17 @@ export const chooseWhoGoesFirst: LorcanaMoveDefinition<"chooseWhoGoesFirst"> = {
       framework.zones.shuffle({ zone: "deck", playerId });
     }
 
-    framework.log({
-      category: "action",
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: createLorcanaLogMessage("lorcana.setup.firstPlayerChosen", {
-        chooser,
-        chosen: chosenPlayer,
-      }),
-    });
+    framework.log(
+      createLorcanaLogProjection(
+        "lorcana.setup.firstPlayerChosen",
+        {
+          chooser,
+          chosen: chosenPlayer,
+        },
+        { mode: "PUBLIC" },
+        "action",
+      ),
+    );
   },
 
   available: ({ framework }) => {

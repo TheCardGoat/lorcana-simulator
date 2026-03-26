@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { markowskiSpaceTrooperI18n } from "./113-markowski-space-trooper.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const markowskiSpaceTrooper: CharacterCard = {
   id: "hrO",
@@ -24,13 +25,6 @@ export const markowskiSpaceTrooper: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1t3-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: markowskiSpaceTrooperI18n,
 };

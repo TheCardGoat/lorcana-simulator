@@ -8,6 +8,7 @@ import {
 } from "@tcg/lorcana-engine/testing";
 import { kristoffIcyExplorer } from "./051-kristoff-icy-explorer";
 import { annaSoothingSister } from "./050-anna-soothing-sister";
+import { jiminyCricketGhostOfChristmasPast } from "./146-jiminy-cricket-ghost-of-christmas-past";
 
 const discardFodder = createMockCharacter({
   id: "kristoff-discard-fodder",
@@ -248,6 +249,66 @@ describe("Kristoff - Icy Explorer", () => {
       // No bag effects either
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
+  });
+
+  it("regression: STROKE OF LUCK triggers when Pull the Lever puts a card from discard to deck bottom", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [
+        { card: kristoffIcyExplorer, isDrying: false },
+        { card: annaSoothingSister, isDrying: false },
+      ],
+      discard: [discardFodder],
+      deck: 5,
+    });
+
+    const discardId = testEngine.findCardInstanceId(discardFodder, "discard", PLAYER_ONE);
+    const initialHandCount = testEngine.asPlayerOne().getZonesCardCount("player_one").hand;
+
+    // Simulate Pull the Lever putting a card from discard on bottom of deck
+    expect(
+      testEngine.asPlayerOne().manualMoveCard(discardId, "deck:player_one" as ZoneId),
+    ).toBeSuccessfulCommand();
+
+    // STROKE OF LUCK should trigger because a card left the discard
+    expect(testEngine.asPlayerOne().getZonesCardCount("player_one").hand).toBe(
+      initialHandCount + 1,
+    );
+  });
+
+  it("regression: STROKE OF LUCK triggers when Jiminy Cricket's boost moves a card from discard to inkwell", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: kristoffIcyExplorer, isDrying: false }, jiminyCricketGhostOfChristmasPast],
+      discard: [discardFodder],
+      deck: 5,
+      inkwell: 10,
+    });
+
+    const initialHandCount = testEngine.asPlayerOne().getZonesCardCount("player_one").hand;
+
+    // Activate Jiminy Cricket's Boost ability (puts top card of deck under Jiminy)
+    expect(
+      testEngine.asPlayerOne().activateAbility(jiminyCricketGhostOfChristmasPast, {
+        ability: "Boost",
+        preventAutoResolveTriggeredEffects: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    // LOOK INTO YOUR PAST triggers - accept it to move a card from discard to inkwell
+    expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        resolveOptional: true,
+        targets: [discardFodder],
+      }),
+    ).toBeSuccessfulCommand();
+
+    // The card left the discard (moved to inkwell), so STROKE OF LUCK should trigger
+    // Kristoff should have drawn a card
+    expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("inkwell");
+    expect(testEngine.asPlayerOne().getZonesCardCount("player_one").hand).toBe(
+      initialHandCount + 1,
+    );
   });
 
   describe("Stats and basic properties", () => {

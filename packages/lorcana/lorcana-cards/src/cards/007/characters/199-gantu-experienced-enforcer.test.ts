@@ -149,6 +149,29 @@ describe("Gantu - Experienced Enforcer", () => {
       expect(testEngine.asPlayerTwo().playCard(action).success).toBe(false);
     });
 
+    it("regression: cost increase applies to both players for actions and items", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [gantuExperiencedEnforcer],
+          hand: [action],
+          inkwell: action.cost + 2, // exact increased cost
+          deck: 1,
+        },
+        {
+          hand: [item],
+          inkwell: item.cost + 2, // exact increased cost
+          deck: 1,
+        },
+      );
+
+      // P1 can play action at increased cost (base + 2)
+      expect(testEngine.asPlayerOne().playCard(action)).toBeSuccessfulCommand();
+
+      // P2 can play item at increased cost (base + 2)
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().playCard(item)).toBeSuccessfulCommand();
+    });
+
     it("stacks when two copies are in play", () => {
       const gantu2 = createMockCharacter({
         id: "gantu-experienced-enforcer-2",

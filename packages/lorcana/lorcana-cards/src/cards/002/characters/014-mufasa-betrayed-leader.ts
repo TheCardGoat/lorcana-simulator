@@ -33,47 +33,24 @@ export const mufasaBetrayedLeader: CharacterCard = {
   abilities: [
     {
       effect: {
-        steps: [
+        type: "scry",
+        amount: 1,
+        target: "CONTROLLER",
+        revealAll: true,
+        destinations: [
           {
-            target: "CONTROLLER",
-            type: "reveal-top-card",
+            zone: "play",
+            min: 0,
+            max: 1,
+            cost: "free",
+            entersExerted: true,
+            filter: { type: "card-type", cardType: "character" },
           },
           {
-            type: "conditional",
-            condition: {
-              type: "target-query",
-              query: {
-                selector: "all",
-                reference: "revealed-first",
-                filters: [
-                  {
-                    type: "card-type",
-                    value: "character",
-                  },
-                ],
-              },
-              comparison: {
-                operator: "gte",
-                value: 1,
-              },
-            },
-            then: {
-              effect: {
-                cost: "free",
-                from: "revealed",
-                entersExerted: true,
-                target: "CONTROLLER",
-                type: "play-card",
-              },
-              type: "optional",
-            },
-            else: {
-              source: "revealed",
-              type: "put-on-top",
-            },
+            zone: "deck-top",
+            remainder: true,
           },
         ],
-        type: "sequence",
       },
       id: "6k5-1",
       name: "THE SUN WILL SET",

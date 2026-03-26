@@ -1,88 +1,86 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   FrancineEyeingTheEvidence,
-//   PlutoSteelChampion,
-//   RecoveredPage,
-//   TheSultanPlayfulMonarch,
-//   TinkerBellFancyFootwork,
-// } from "@lorcanito/lorcana-engine/cards/010";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Pluto - Steel Champion", () => {
-//   It("WINNER TAKE ALL During your turn, whenever one of your other Steel characters banishes another character in a challenge, gain 2 lore. MAKE ROOM Whenever you play another Steel character, you may banish chosen item.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Play: [plutoSteelChampion, francineEyeingTheEvidence],
-//       },
-//       {
-//         Play: [theSultanPlayfulMonarch, tinkerBellFancyFootwork],
-//       },
-//     );
-//
-//     Await testEngine.exertCard(theSultanPlayfulMonarch);
-//     Await testEngine.exertCard(tinkerBellFancyFootwork);
-//
-//     Await testEngine.challenge({
-//       Attacker: francineEyeingTheEvidence,
-//       Defender: theSultanPlayfulMonarch,
-//     });
-//
-//     Expect(testEngine.getLoreForPlayer("player_one")).toBe(2);
-//
-//     // Pluto should not trigger on self
-//     Await testEngine.challenge({
-//       Attacker: plutoSteelChampion,
-//       Defender: tinkerBellFancyFootwork,
-//     });
-//
-//     Expect(testEngine.getLoreForPlayer("player_one")).toBe(2);
-//   });
-//
-//   It("MAKE ROOM Whenever you play another Steel character, you may banish chosen item.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: plutoSteelChampion.cost + francineEyeingTheEvidence.cost,
-//         Hand: [plutoSteelChampion, francineEyeingTheEvidence],
-//       },
-//       {
-//         Play: [recoveredPage],
-//       },
-//     );
-//
-//     Await testEngine.playCard(plutoSteelChampion);
-//     Expect(testEngine.stackLayers).toHaveLength(0);
-//
-//     Await testEngine.playCard(francineEyeingTheEvidence);
-//     Expect(testEngine.stackLayers).toHaveLength(1);
-//
-//     Await testEngine.acceptOptionalLayer();
-//     Await testEngine.resolveTopOfStack({ targets: [recoveredPage] });
-//
-//     Expect(testEngine.getCardModel(recoveredPage).zone).toBe("discard");
-//   });
-// });
-//
-// Describe("Regression", () => {
-//   It("Do not banish item when playing pluto", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: plutoSteelChampion.cost,
-//         Hand: [plutoSteelChampion],
-//       },
-//       {
-//         Play: [recoveredPage],
-//       },
-//     );
-//
-//     Await testEngine.playCard(plutoSteelChampion);
-//     Expect(testEngine.stackLayers).toHaveLength(0);
-//
-//     Expect(testEngine.getCardModel(recoveredPage).zone).toBe("play");
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { plutoSteelChampion } from "./191-pluto-steel-champion";
+
+const steelAlly = createMockCharacter({
+  id: "pluto-steel-ally",
+  name: "Steel Ally",
+  cost: 3,
+  strength: 5,
+  willpower: 5,
+  inkType: ["steel"],
+  classifications: ["Storyborn"],
+});
+
+const weakOpponent = createMockCharacter({
+  id: "pluto-weak-opponent",
+  name: "Weak Opponent",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+});
+
+describe("Pluto - Steel Champion", () => {
+  it("regression: gains 2 lore when another Steel character banishes an opponent in a challenge", () => {
+    // Bug: Pluto was not gaining lore when another Steel character banished
+    // an opponent's character in a challenge.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [plutoSteelChampion, { card: steelAlly, isDrying: false }],
+        lore: 0,
+      },
+      {
+        play: [{ card: weakOpponent, exerted: true }],
+      },
+    );
+
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+
+    // Steel ally challenges and banishes the weak opponent
+    expect(testEngine.asPlayerOne().challenge(steelAlly, weakOpponent)).toBeSuccessfulCommand();
+
+    // Weak opponent should be banished
+    expect(testEngine.asPlayerTwo().getCardZone(weakOpponent)).toBe("discard");
+
+    // Pluto's WINNER TAKE ALL should trigger, gaining 2 lore
+    // Resolve bag effects if needed
+    const bagEffects = testEngine.asPlayerOne().getBagEffects();
+    for (const bagEffect of bagEffects) {
+      testEngine.asPlayerOne().resolveBag(bagEffect.id);
+    }
+
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(2);
+  });
+
+  it("does not gain lore when Pluto himself banishes a character (only OTHER Steel characters)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: plutoSteelChampion, isDrying: false }],
+        lore: 0,
+      },
+      {
+        play: [{ card: weakOpponent, exerted: true }],
+      },
+    );
+
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+
+    expect(
+      testEngine.asPlayerOne().challenge(plutoSteelChampion, weakOpponent),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getCardZone(weakOpponent)).toBe("discard");
+
+    // Pluto should NOT gain lore when he himself banishes (trigger is on OTHER characters)
+    const bagEffects = testEngine.asPlayerOne().getBagEffects();
+    for (const bagEffect of bagEffects) {
+      testEngine.asPlayerOne().resolveBag(bagEffect.id);
+    }
+
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+  });
+});

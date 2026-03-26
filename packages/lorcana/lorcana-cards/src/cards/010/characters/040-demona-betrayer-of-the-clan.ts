@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { demonaBetrayerOfTheClanI18n } from "./040-demona-betrayer-of-the-clan.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
+import { stoneByDay } from "../../../helpers/abilities/stoneByDay";
 
 export const demonaBetrayerOfTheClan: CharacterCard = {
   id: "dX5",
@@ -32,32 +34,6 @@ export const demonaBetrayerOfTheClan: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Villain", "Gargoyle", "Sorcerer"],
-  abilities: [
-    {
-      id: "t99-1",
-      keyword: "Challenger",
-      text: "Challenger +2",
-      type: "keyword",
-      value: 2,
-    },
-    {
-      id: "t99-2",
-      name: "STONE BY DAY",
-      text: "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
-      type: "static",
-      condition: {
-        type: "resource-count",
-        what: "cards-in-hand",
-        controller: "you",
-        comparison: "greater-or-equal",
-        value: 3,
-      },
-      effect: {
-        type: "restriction",
-        restriction: "cant-ready",
-        target: "SELF",
-      },
-    },
-  ],
+  abilities: [challenger(2), stoneByDay],
   i18n: demonaBetrayerOfTheClanI18n,
 };

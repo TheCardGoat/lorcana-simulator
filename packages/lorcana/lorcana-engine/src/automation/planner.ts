@@ -9,6 +9,7 @@ import type {
 } from "#core";
 import type { Effect, ScryDestination, ScryEffect } from "@tcg/lorcana-types";
 import { buildValidationContext } from "../core/runtime/match-runtime.utils";
+import { compareOperator } from "../rules/operator-utils";
 import type { ChallengePreviewResult, PlayCardCostInput } from "../lorcana-engine-base";
 import { lorcanaRuntimeConfig } from "../runtime-game";
 import {
@@ -317,36 +318,6 @@ function normalizeScryFilters(filters: unknown): Record<string, unknown>[] {
   return [];
 }
 
-function evaluateNumericComparison(value: number, comparison: string, threshold: number): boolean {
-  switch (comparison) {
-    case "lte":
-    case "less-or-equal":
-    case "or-less":
-      return value <= threshold;
-    case "gte":
-    case "greater-or-equal":
-    case "or-more":
-      return value >= threshold;
-    case "lt":
-    case "less":
-    case "less-than":
-      return value < threshold;
-    case "gt":
-    case "greater":
-    case "greater-than":
-    case "more-than":
-      return value > threshold;
-    case "eq":
-    case "equal":
-      return value === threshold;
-    case "ne":
-    case "not-equal":
-      return value !== threshold;
-    default:
-      return true;
-  }
-}
-
 function matchesScryFilter(
   adapter: AutomatedActionPlannerAdapter,
   cardId: CardInstanceId,
@@ -400,7 +371,7 @@ function matchesScryFilter(
     case "cost-comparison": {
       const cardCost = typeof definition.cost === "number" ? definition.cost : 0;
       const threshold = typeof filter.value === "number" ? filter.value : Number(filter.value ?? 0);
-      return evaluateNumericComparison(cardCost, String(filter.comparison ?? "eq"), threshold);
+      return compareOperator(cardCost, String(filter.comparison ?? "eq"), threshold);
     }
     default:
       return true;
@@ -415,6 +386,19 @@ function cardMatchesScryDestination(
   const filters = normalizeScryFilters(destination.filters ?? destination.filter);
   return (
     filters.length === 0 || filters.every((filter) => matchesScryFilter(adapter, cardId, filter))
+  );
+}
+
+/**
+ * Returns true when the scry effect's target or chooser is a non-controller player.
+ * In that case, the engine creates a pending effect for the other player and the
+ * automation planner must not pre-plan destinations.
+ */
+function scryEffectDelegatesToOtherPlayer(scryEffect: ScryEffect): boolean {
+  const CONTROLLER_ALIASES = new Set<string | undefined>([undefined, "CONTROLLER", "SELF"]);
+  return (
+    !CONTROLLER_ALIASES.has(scryEffect.target as string | undefined) ||
+    !CONTROLLER_ALIASES.has(scryEffect.chooser as string | undefined)
   );
 }
 
@@ -1069,6 +1053,13 @@ function buildTargetVariants(args: {
     return null;
   }
 
+  // Pool has cards but fewer than minSelections (e.g. move-damage needs 2 targets but only 1 char exists).
+  // Return [[]] so the parent optional-wrapping logic can generate a "decline" variant instead of producing
+  // zero candidates and causing the AI to freeze.
+  if (analysis.requiresExplicitSelection && combinations.length === 0) {
+    return [[]];
+  }
+
   if (
     analysis.allowsDeferredResolutionWithoutInitialSelection &&
     !combinations.some((combination) => combination.length === 0)
@@ -1121,8 +1112,15 @@ function buildResolutionVariants(args: {
     });
     return null;
   }
-  const scryEffect = findAutomatableScryEffect(effect);
-  if (shape.requiresDestinations && !scryEffect) {
+  const rawScryEffect = findAutomatableScryEffect(effect);
+  // When the scry targets a non-controller player's deck (e.g. target: "EACH_OPPONENT")
+  // or is chosen by a non-controller player (e.g. chooser: "OPPONENT"), the engine will
+  // create a pending effect for that player. The planner must not pre-plan destinations:
+  // it would read the wrong deck and bypass the pending effect for the opponent.
+  const scryDelegatesToOtherPlayer =
+    rawScryEffect != null && scryEffectDelegatesToOtherPlayer(rawScryEffect);
+  const scryEffect = scryDelegatesToOtherPlayer ? undefined : rawScryEffect;
+  if (shape.requiresDestinations && !scryEffect && !scryDelegatesToOtherPlayer) {
     diagnostics.push({
       kind: "unsupported-shape",
       family,
@@ -1553,10 +1551,9 @@ function getPendingEffectsForActor(
   const pendingChoice = adapter.state.ctx.priority.pendingChoice;
 
   if (pendingChoice?.type === "action-effect") {
-    if (pendingChoice.playerID !== actorId) {
-      return [];
-    }
-
+    // Find the pending effect where THIS actor is the chooser (regardless of who triggered the
+    // effect). This handles "OPPONENT" chooser effects (e.g. Hades) where pendingChoice.playerID
+    // is the controller (P1) but the chooser is the opponent (P2).
     const matchingEffect = pendingEffects.find(
       (entry) => entry.id === pendingChoice.requestID && entry.chooserId === actorId,
     );

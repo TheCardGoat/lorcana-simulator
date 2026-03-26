@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { peterPanFearlessFighterI18n } from "./119-peter-pan-fearless-fighter.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const peterPanFearlessFighter: CharacterCard = {
   id: "1O4",
@@ -24,13 +25,6 @@ export const peterPanFearlessFighter: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "czp-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: peterPanFearlessFighterI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rafikiMysticalFighterI18n } from "./054-rafiki-mystical-fighter.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const rafikiMysticalFighter: CharacterCard = {
   id: "YW7",
@@ -34,13 +35,7 @@ export const rafikiMysticalFighter: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Mentor", "Sorcerer"],
   abilities: [
-    {
-      id: "w1t-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 3,
-      text: "Challenger +3",
-    },
+    challenger(3),
     {
       effect: {
         duration: "this-turn",

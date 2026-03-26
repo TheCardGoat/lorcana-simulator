@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { docBoldKnight } from "./193-doc-bold-knight";
+import { ladyFamilyDog } from "../../008";
 
 const kingVictorious = createMockCharacter({
   id: "doc-king-victorious",
@@ -56,34 +57,60 @@ describe("Doc - Bold Knight", () => {
     );
   });
 
-  it("projects an optional bag selection and lets you decline it", () => {
+  it("Can be played with an empty hand", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      hand: [docBoldKnight, kingVictorious, mischievousCub, ukulelePlayer, northernMoose],
+      hand: [docBoldKnight],
       inkwell: docBoldKnight.cost,
       deck: [drawOne, drawTwo, drawThree],
     });
 
     expect(testEngine.asPlayerOne().playCard(docBoldKnight)).toBeSuccessfulCommand();
-
-    const bagEffect = testEngine.asPlayerOne().getBoard().bagEffects[0];
-
-    expect(bagEffect?.selectionContext).toMatchObject({
-      kind: "optional-selection",
-      chooserId: "player_one",
-      submitField: "resolveOptional",
-    });
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
       testEngine
         .asPlayerOne()
-        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: false }),
+        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
       expect.objectContaining({
-        hand: 4,
-        deck: 3,
-        discard: 0,
+        hand: 2,
+        deck: 1,
+      }),
+    );
+  });
+
+  it("regression: triggers draw ability when played for free (e.g., cost reduction to 0)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [docBoldKnight, ladyFamilyDog],
+      inkwell: ladyFamilyDog.cost,
+      deck: [drawOne, drawTwo, drawThree],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(ladyFamilyDog)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveNextBag({ targets: [docBoldKnight] }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
+      expect.objectContaining({
+        play: 2,
+        hand: 0,
+      }),
+    );
+
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
+      expect.objectContaining({
+        hand: 2,
       }),
     );
   });

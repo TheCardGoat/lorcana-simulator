@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { hadesKingOfOlympusEnchantedI18n } from "./205-hades-king-of-olympus-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const hadesKingOfOlympusEnchanted: CharacterCard = {
   id: "QmK",
@@ -34,15 +35,7 @@ export const hadesKingOfOlympusEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "King", "Deity"],
   abilities: [
-    {
-      cost: {
-        ink: 6,
-      },
-      id: "1e5-1",
-      keyword: "Shift",
-      text: "Shift 6",
-      type: "keyword",
-    },
+    shift(6),
     {
       effect: {
         modifier: {

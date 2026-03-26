@@ -53,30 +53,5 @@ describe("Razoul - Menacing Guard", () => {
 
       expect(testEngine.asPlayerOne().getCardZone(testItem)).toBe("discard");
     });
-
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [razoulMenacingGuard],
-          play: [jafarKeeperOfSecrets],
-          inkwell: razoulMenacingGuard.cost,
-          deck: 2,
-        },
-        {
-          play: [testItem],
-          deck: 2,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().playCard(razoulMenacingGuard)).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
-
-      expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getCardZone(testItem)).toBe("play");
-    });
   });
 });

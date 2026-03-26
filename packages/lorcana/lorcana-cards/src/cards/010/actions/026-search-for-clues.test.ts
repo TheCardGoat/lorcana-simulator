@@ -49,6 +49,7 @@ describe("Search for Clues", () => {
 
     expect(playerOne).toHaveZoneCounts({ hand: 0, discard: 3 });
     expect(playerTwo).toHaveZoneCounts({ hand: 0, discard: 2 });
+    expect(playerOne.getLore(PLAYER_ONE)).toBe(0);
   });
 
   it("does not create discard choices when no player has cards in hand", () => {

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rafikiEtherealGuideI18n } from "./052-rafiki-ethereal-guide.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const rafikiEtherealGuide: CharacterCard = {
   id: "4UH",
@@ -34,15 +35,7 @@ export const rafikiEtherealGuide: CharacterCard = {
   ],
   classifications: ["Floodborn", "Mentor", "Sorcerer"],
   abilities: [
-    {
-      id: "yg2-1",
-      cost: {
-        ink: 7,
-      },
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 7",
-    },
+    shift(7),
     {
       id: "yg2-2",
       effect: {
@@ -56,9 +49,15 @@ export const rafikiEtherealGuide: CharacterCard = {
       },
       name: "ASTRAL ATTUNEMENT",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "ink",
+        on: "CONTROLLER",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
       },
       type: "triggered",
       text: "ASTRAL ATTUNEMENT During your turn, whenever a card is put into your inkwell, you may draw a card.",

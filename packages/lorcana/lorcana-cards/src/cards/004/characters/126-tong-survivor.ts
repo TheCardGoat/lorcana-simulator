@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tongSurvivorI18n } from "./126-tong-survivor.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
 
 export const tongSurvivor: CharacterCard = {
   id: "S7p",
@@ -24,13 +25,6 @@ export const tongSurvivor: CharacterCard = {
   },
   text: "Reckless",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "qqa-1",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-  ],
+  abilities: [reckless],
   i18n: tongSurvivorI18n,
 };

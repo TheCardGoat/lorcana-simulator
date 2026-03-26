@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { robinHoodEyeForDetailI18n } from "./170-robin-hood-eye-for-detail.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const robinHoodEyeForDetail: CharacterCard = {
   id: "JTC",
@@ -24,13 +25,6 @@ export const robinHoodEyeForDetail: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "193-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: robinHoodEyeForDetailI18n,
 };

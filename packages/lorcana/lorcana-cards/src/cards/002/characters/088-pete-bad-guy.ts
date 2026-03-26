@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { peteBadGuyI18n } from "./088-pete-bad-guy.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const peteBadGuy: CharacterCard = {
   id: "2R8",
@@ -36,12 +37,7 @@ export const peteBadGuy: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain"],
   abilities: [
-    {
-      id: "kek-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         duration: "this-turn",
@@ -64,6 +60,12 @@ export const peteBadGuy: CharacterCard = {
       type: "triggered",
     },
     {
+      condition: {
+        type: "stat-threshold",
+        stat: "strength",
+        value: 7,
+        comparison: "greater-or-equal",
+      },
       effect: {
         modifier: 2,
         stat: "lore",
@@ -71,10 +73,10 @@ export const peteBadGuy: CharacterCard = {
         type: "modify-stat",
       },
       id: "kek-3",
+      name: "WHO'S NEXT?",
       text: "WHO'S NEXT? While this character has 7 {S} or more, he gets +2 {L}.",
       type: "static",
     },
   ],
-  missingTests: true,
   i18n: peteBadGuyI18n,
 };

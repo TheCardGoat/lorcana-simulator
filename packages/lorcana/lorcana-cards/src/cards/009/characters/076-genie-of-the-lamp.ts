@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { genieOfTheLampI18n } from "./076-genie-of-the-lamp.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const genieOfTheLamp: CharacterCard = {
   id: "4IA",
@@ -33,12 +34,7 @@ export const genieOfTheLamp: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Ally"],
   abilities: [
-    {
-      id: "msr-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       condition: {
         type: "exerted",

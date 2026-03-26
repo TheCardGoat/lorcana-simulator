@@ -30,6 +30,39 @@ export const rayaInfiltrationExpert: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          type: "pay-cost",
+          cost: {
+            ink: 2,
+          },
+          effect: {
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+              excludeSelf: true,
+            },
+            type: "ready",
+          },
+        },
+        type: "optional",
+      },
+      id: "XZW-1",
+      name: "UNCONVENTIONAL TACTICS",
+      text: "UNCONVENTIONAL TACTICS Whenever this character quests, you may pay 2 {I} to ready another chosen character.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+  ],
   i18n: rayaInfiltrationExpertI18n,
 };

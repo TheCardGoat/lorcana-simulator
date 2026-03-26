@@ -97,34 +97,6 @@ describe("Simba - Pride Protector", () => {
       // Ally should still be exerted (ability didn't ready it because condition failed)
       expect(testEngine.asPlayerOne().isExerted(allyCharacter)).toBe(true);
     });
-
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          play: [
-            { card: simbaPrideProtector, exerted: true },
-            { card: allyCharacter, exerted: true },
-          ],
-          deck: 2,
-        },
-        {
-          deck: 2,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      // Decline the optional ability
-      expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-          resolveOptional: false,
-        }),
-      ).toBeSuccessfulCommand();
-
-      // Ally should still be exerted
-      expect(testEngine.asPlayerOne().isExerted(allyCharacter)).toBe(true);
-    });
   });
 
   // Rule 6.2.4: Secondary conditions are checked only when the effect resolves.

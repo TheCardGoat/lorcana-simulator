@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { falinePlayfulFawnI18n } from "./145-faline-playful-fawn.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const falinePlayfulFawn: CharacterCard = {
   id: "OjR",
@@ -34,12 +35,7 @@ export const falinePlayfulFawn: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "12c-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       condition: {
         type: "target-aggregate-comparison",

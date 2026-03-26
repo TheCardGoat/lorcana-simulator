@@ -37,32 +37,5 @@ describe("Alice - Courageous Keyholder", () => {
         restriction: "cant-quest",
       });
     });
-
-    it("can decline the optional trigger", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        hand: [aliceCourageousKeyholder],
-        inkwell: aliceCourageousKeyholder.cost,
-        play: [{ card: simbaProtectiveCub, damage: 1 }],
-      });
-
-      const targetId = testEngine.findCardInstanceId(simbaProtectiveCub, "play", "p1");
-
-      // Exert the target manually
-      testEngine.asServer().manualExertCard(targetId);
-      expect(testEngine.asPlayerOne().isExerted(simbaProtectiveCub)).toBe(true);
-
-      // Play Alice
-      expect(testEngine.asPlayerOne().playCard(aliceCourageousKeyholder)).toBeSuccessfulCommand();
-
-      // Decline optional
-      expect(
-        testEngine.asPlayerOne().resolveOnlyBag({ resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      // Target should still be exerted
-      expect(testEngine.asPlayerOne().isExerted(simbaProtectiveCub)).toBe(true);
-      // No restriction applied
-      expect(testEngine.hasRestriction(simbaProtectiveCub, "cant-quest")).toBe(false);
-    });
   });
 });

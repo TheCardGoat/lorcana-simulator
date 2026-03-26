@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { princePhillipRoyalExplorerI18n } from "./083-prince-phillip-royal-explorer.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const princePhillipRoyalExplorer: CharacterCard = {
   id: "ccM",
@@ -24,13 +25,6 @@ export const princePhillipRoyalExplorer: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Storyborn", "Hero", "Prince"],
-  abilities: [
-    {
-      id: "11j-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: princePhillipRoyalExplorerI18n,
 };

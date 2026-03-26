@@ -8,6 +8,12 @@ const otherCard = createMockCharacter({
   cost: 1,
 });
 
+const deckCard = createMockCharacter({
+  id: "robin-hood-deck-card",
+  name: "Deck Card",
+  cost: 1,
+});
+
 describe("Robin Hood - Unrivaled Archer", () => {
   describe("GOOD SHOT - During your turn, this character gains Evasive.", () => {
     it("has Evasive during your turn", () => {
@@ -67,7 +73,7 @@ describe("Robin Hood - Unrivaled Archer", () => {
         {
           hand: [robinHoodUnrivaledArcher, otherCard],
           inkwell: robinHoodUnrivaledArcher.cost,
-          deck: [otherCard],
+          deck: [deckCard],
         },
         {
           hand: [otherCard],
@@ -76,7 +82,7 @@ describe("Robin Hood - Unrivaled Archer", () => {
 
       expect(testEngine.asPlayerOne().playCard(robinHoodUnrivaledArcher)).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getCardZone(otherCard)).toBe("deck");
+      expect(testEngine.asPlayerOne().getCardZone(deckCard)).toBe("deck");
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, deck: 1, play: 1 });
     });
 
@@ -85,7 +91,7 @@ describe("Robin Hood - Unrivaled Archer", () => {
         {
           hand: [robinHoodUnrivaledArcher, otherCard, otherCard],
           inkwell: robinHoodUnrivaledArcher.cost,
-          deck: [otherCard],
+          deck: [deckCard],
         },
         {
           hand: [otherCard, otherCard],
@@ -94,7 +100,7 @@ describe("Robin Hood - Unrivaled Archer", () => {
 
       expect(testEngine.asPlayerOne().playCard(robinHoodUnrivaledArcher)).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getCardZone(otherCard)).toBe("deck");
+      expect(testEngine.asPlayerOne().getCardZone(deckCard)).toBe("deck");
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 2, deck: 1, play: 1 });
     });
   });

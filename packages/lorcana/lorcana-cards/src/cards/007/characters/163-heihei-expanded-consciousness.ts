@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { heiheiExpandedConsciousnessI18n } from "./163-heihei-expanded-consciousness.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const heiheiExpandedConsciousness: CharacterCard = {
   id: "MiH",
@@ -37,22 +39,8 @@ export const heiheiExpandedConsciousness: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "quw-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
-    {
-      id: "quw-2",
-      keyword: "Resist",
-      text: "Resist +1",
-      type: "keyword",
-      value: 1,
-    },
+    shift(3),
+    resist(1),
     {
       effect: {
         exerted: true,

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { sisuDaringVisitorI18n } from "./123-sisu-daring-visitor.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const sisuDaringVisitor: CharacterCard = {
   id: "W3s",
@@ -34,12 +35,7 @@ export const sisuDaringVisitor: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Deity", "Dragon"],
   abilities: [
-    {
-      id: "1y1-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         type: "banish",

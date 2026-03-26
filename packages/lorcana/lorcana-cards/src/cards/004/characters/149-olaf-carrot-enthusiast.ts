@@ -34,6 +34,43 @@ export const olafCarrotEnthusiast: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "fW1-1",
+      type: "keyword",
+      keyword: "Shift",
+      cost: {
+        discardCards: 1,
+        discardCardType: "item",
+      },
+      shiftTarget: "Olaf",
+      text: "Shift: Discard an item card (You may discard an item card to play this on top of one of your characters named Olaf.)",
+    },
+    {
+      id: "fW1-2",
+      name: "CARROTS ALL AROUND!",
+      text: "CARROTS ALL AROUND! Whenever he quests, each of your other characters gets +{S} equal to this character's {S} this turn.",
+      type: "triggered",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "modify-stat",
+          stat: "strength",
+          modifier: {
+            type: "strength-of",
+            target: { ref: "self" },
+          },
+          target: "YOUR_OTHER_CHARACTERS",
+          duration: "this-turn",
+        },
+      },
+    },
+  ],
   i18n: olafCarrotEnthusiastI18n,
 };

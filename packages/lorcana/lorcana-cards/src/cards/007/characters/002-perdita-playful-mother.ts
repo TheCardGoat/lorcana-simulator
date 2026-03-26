@@ -57,11 +57,11 @@ export const perditaPlayfulMother: CharacterCard = {
     {
       effect: {
         keyword: "Ward",
-        target: "YOUR_CHARACTERS",
+        target: "YOUR_PUPPY_CHARACTERS",
         type: "gain-keyword",
       },
       id: "ehi-2",
-      name: "DON'T BE AFRAID Your Puppy",
+      name: "DON'T BE AFRAID",
       text: "DON'T BE AFRAID Your Puppy characters gain Ward.",
       type: "static",
     },

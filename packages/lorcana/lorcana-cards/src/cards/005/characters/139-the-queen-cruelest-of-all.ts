@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { theQueenCruelestOfAllI18n } from "./139-the-queen-cruelest-of-all.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const theQueenCruelestOfAll: CharacterCard = {
   id: "W5f",
@@ -24,13 +25,6 @@ export const theQueenCruelestOfAll: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Storyborn", "Villain", "Queen", "Sorcerer"],
-  abilities: [
-    {
-      id: "s28-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: theQueenCruelestOfAllI18n,
 };

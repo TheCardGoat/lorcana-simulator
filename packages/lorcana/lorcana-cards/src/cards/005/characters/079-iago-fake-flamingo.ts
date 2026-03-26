@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { iagoFakeFlamingoI18n } from "./079-iago-fake-flamingo.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const iagoFakeFlamingo: CharacterCard = {
   id: "Lbm",
@@ -34,12 +35,7 @@ export const iagoFakeFlamingo: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "1y2-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         from: "hand",

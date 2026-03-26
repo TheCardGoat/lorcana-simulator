@@ -546,6 +546,12 @@ describe("resolveActionEffect", () => {
     expect(ctx.G.pendingEffects?.[0]).toMatchObject({
       chooserId: PLAYER_TWO,
       kind: "target-selection",
+      selectionContext: {
+        kind: "target-selection",
+        ordered: true,
+        chooserId: PLAYER_TWO,
+        cardCandidateIds: [firstTarget, secondTarget],
+      },
     });
   });
 

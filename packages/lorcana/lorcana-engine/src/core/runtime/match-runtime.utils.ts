@@ -4,6 +4,7 @@
  * Context builders and utility functions.
  */
 
+import { current as immerCurrent } from "immer";
 import type { Draft } from "immer";
 import type { GameEvent, MatchState, MoveInput } from "./types";
 import type {
@@ -31,6 +32,7 @@ import {
   createFrameworkWriteAPI,
 } from "./match-runtime.framework-api";
 import type { LorcanaG } from "../../types/runtime-state";
+import type { StateScopedValueCache } from "./state-scoped-value-cache";
 
 // =============================================================================
 // Context Builders
@@ -81,12 +83,15 @@ function createReadContextBase(
   config: MatchRuntimeConfig,
   staticResources: MatchStaticResources,
   effectiveGameEnded: boolean,
+  runtimeCardCache?: StateScopedValueCache<unknown>,
 ): Omit<MoveValidationContext<MoveInput>, keyof MoveInputView> {
   const cardsApi = createCardQueryAPIForState(
     state,
     staticResources,
     config.deriveRuntimeCard,
     playerId,
+    runtimeCardCache,
+    true,
   );
   const frameworkState = createFrameworkStateSnapshot(state, effectiveGameEnded);
   const zones = createZoneQueryAPI(state, cardsApi);
@@ -112,12 +117,20 @@ function createWriteContextBase(
   emitGameEvent: (event: GameEvent) => void,
   gameEndTracker: { ended: boolean; result?: GameEndResult },
   moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
+  runtimeCardCache?: StateScopedValueCache<unknown>,
+  useSnapshotForReads?: boolean,
 ): RuntimeLifecycleContext {
+  // When useSnapshotForReads is true (lifecycle/trigger contexts), project from a plain snapshot
+  // to avoid Immer proxy overhead. Move execution contexts use the live draft so that reads
+  // after in-move mutations reflect the current state.
+  const readState = useSnapshotForReads ? immerCurrent(draft) : draft;
   const cardsApi = createCardQueryAPIForState(
-    draft,
+    readState,
     staticResources,
     config.deriveRuntimeCard,
     playerId,
+    undefined,
+    false,
   );
   const cardRuntimeApi = createCardRuntimeAPI(draft, cardsApi);
   const random = createRandomAPIForDraft(draft);
@@ -156,8 +169,16 @@ export function buildValidationContext<TInput extends MoveInput = MoveInput>(
   staticResources: MatchStaticResources,
   gameEnded: boolean,
   validationMode: "preflight" | "final" = "final",
+  runtimeCardCache?: StateScopedValueCache<unknown>,
 ): MoveValidationContext<TInput> {
-  const base = createReadContextBase(state, playerId, config, staticResources, gameEnded);
+  const base = createReadContextBase(
+    state,
+    playerId,
+    config,
+    staticResources,
+    gameEnded,
+    runtimeCardCache,
+  );
   return {
     ...base,
     validationMode,
@@ -175,6 +196,7 @@ export function buildExecutionContext<TInput extends MoveInput = MoveInput>(
   emitGameEvent: (event: GameEvent) => void,
   gameEndTracker: { ended: boolean; result?: GameEndResult },
   moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
+  runtimeCardCache?: StateScopedValueCache<unknown>,
 ): MoveExecutionContext<TInput> {
   const lifecycleContext = buildLifecycleContext(
     draft,
@@ -185,6 +207,7 @@ export function buildExecutionContext<TInput extends MoveInput = MoveInput>(
     gameEndTracker,
     playerId,
     moveLogSink,
+    runtimeCardCache,
   );
 
   return {
@@ -203,6 +226,10 @@ export function buildLifecycleContext(
   gameEndTracker: { ended: boolean; result?: GameEndResult },
   playerId: string | undefined = draft.ctx.priority.holder,
   moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
+  runtimeCardCache?: StateScopedValueCache<unknown>,
+  /** When true, card projections use a plain snapshot of the draft (no Immer proxy overhead).
+   * Only safe for read-only lifecycle hooks (trigger collection) — NOT for move execution. */
+  useSnapshotForReads?: boolean,
 ): RuntimeLifecycleContext {
   const effectiveGameEnded = gameEnded || draft.ctx.status.gameEnded;
   return createWriteContextBase(
@@ -214,6 +241,8 @@ export function buildLifecycleContext(
     emitGameEvent,
     gameEndTracker,
     moveLogSink,
+    runtimeCardCache,
+    useSnapshotForReads,
   );
 }
 

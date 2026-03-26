@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jimHawkinsRiggingSpecialistI18n } from "./183-jim-hawkins-rigging-specialist.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const jimHawkinsRiggingSpecialist: CharacterCard = {
   id: "FZ4",
@@ -34,15 +35,7 @@ export const jimHawkinsRiggingSpecialist: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "woa-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         chooser: "CONTROLLER",

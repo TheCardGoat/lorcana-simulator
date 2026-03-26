@@ -67,9 +67,98 @@ describe("Scrooge McDuck - Ebenezer Scrooge", () => {
       expect(testEngine.getLore(PLAYER_TWO)).toBe(0);
     });
 
-    // Note: The "for-each lore-lost" draw effect is defined in the ability data but
-    // the for-each counter for lore-lost may not be fully implemented in the engine.
-    // Draw tests will be added once the for-each lore-lost counter is supported.
+    it("draws 1 card when opponent loses 1 lore", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scroogeMcduckEbenezerScrooge, isDrying: false }],
+          deck: 5,
+        },
+        {
+          deck: 5,
+        },
+        {
+          startingLore: {
+            [PLAYER_ONE]: 0,
+            [PLAYER_TWO]: 3,
+          },
+        },
+      );
+
+      const handBefore = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+
+      expect(testEngine.asPlayerOne().quest(scroogeMcduckEbenezerScrooge)).toBeSuccessfulCommand();
+
+      if (testEngine.asPlayerOne().getBagCount() > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        ).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toBe(
+        handBefore + 1,
+      );
+    });
+
+    it("does not draw when opponent has 0 lore (no lore lost)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scroogeMcduckEbenezerScrooge, isDrying: false }],
+          deck: 5,
+        },
+        {
+          deck: 5,
+        },
+        {
+          startingLore: {
+            [PLAYER_ONE]: 0,
+            [PLAYER_TWO]: 0,
+          },
+        },
+      );
+
+      const handBefore = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+
+      expect(testEngine.asPlayerOne().quest(scroogeMcduckEbenezerScrooge)).toBeSuccessfulCommand();
+
+      if (testEngine.asPlayerOne().getBagCount() > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        ).toBeSuccessfulCommand();
+      }
+
+      expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toBe(handBefore);
+    });
+
+    it("regression: PAYMENT DUE actually deducts lore from opponent (not just gaining for self)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scroogeMcduckEbenezerScrooge, isDrying: false }],
+          deck: 5,
+        },
+        {
+          deck: 5,
+        },
+        {
+          startingLore: {
+            [PLAYER_ONE]: 0,
+            [PLAYER_TWO]: 1,
+          },
+        },
+      );
+
+      expect(testEngine.asPlayerOne().quest(scroogeMcduckEbenezerScrooge)).toBeSuccessfulCommand();
+
+      if (testEngine.asPlayerOne().getBagCount() > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        ).toBeSuccessfulCommand();
+      }
+
+      // P2 lost 1 lore (1 -> 0)
+      expect(testEngine.getLore(PLAYER_TWO)).toBe(0);
+      // P1 gained quest lore + drew 1 card for the 1 lore lost
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(scroogeMcduckEbenezerScrooge.lore);
+    });
   });
 
   describe("FORECLOSURE", () => {

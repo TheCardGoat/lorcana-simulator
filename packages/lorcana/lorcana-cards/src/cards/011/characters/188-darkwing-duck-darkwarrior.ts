@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { darkwingDuckDarkwarriorI18n } from "./188-darkwing-duck-darkwarrior.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const darkwingDuckDarkwarrior: CharacterCard = {
   id: "8XU",
@@ -34,13 +35,7 @@ export const darkwingDuckDarkwarrior: CharacterCard = {
   ],
   classifications: ["Storyborn", "Super", "Detective"],
   abilities: [
-    {
-      id: "l0p-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2",
-    },
+    challenger(2),
     {
       id: "l0p-2",
       effect: {

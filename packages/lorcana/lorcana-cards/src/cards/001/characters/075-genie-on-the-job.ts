@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { genieOnTheJobI18n } from "./075-genie-on-the-job.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const genieOnTheJob: CharacterCard = {
   id: "Y8v",
@@ -34,12 +35,7 @@ export const genieOnTheJob: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "n53-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         chooser: "CONTROLLER",

@@ -1,3 +1,136 @@
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { ramaVigilantFather } from "./109-rama-vigilant-father";
+import { headlessManhorseManny } from "./004-headless-manhorse-manny";
+import { theHornedKingWickedRuler } from "./036-the-horned-king-wicked-ruler";
+
+const weakCharacter = createMockCharacter({
+  id: "rama-test-weak-char",
+  name: "Weak Character",
+  cost: 2,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Rama - Vigilant Father", () => {
+  describe("PROTECTION OF THE PACK - Whenever you play another character with 5 {S} or more, you may ready this character. If you do, he can't quest for the rest of this turn.", () => {
+    it("triggers when you play another character with 5 or more strength, readies Rama and applies cant-quest", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: ramaVigilantFather, exerted: true }],
+          hand: [headlessManhorseManny],
+          inkwell: headlessManhorseManny.cost,
+          deck: 2,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().isExerted(ramaVigilantFather)).toBe(true);
+
+      expect(testEngine.asPlayerOne().playCard(headlessManhorseManny)).toBeSuccessfulCommand();
+
+      // PROTECTION OF THE PACK should be in the bag
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Accept the optional ability (ready Rama)
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // Rama should now be ready
+      expect(testEngine.asPlayerOne().isExerted(ramaVigilantFather)).toBe(false);
+
+      // Rama should have cant-quest restriction
+      expect(testEngine.asPlayerOne()).toHaveRestriction({
+        card: ramaVigilantFather,
+        restriction: "cant-quest",
+      });
+    });
+
+    it("does not trigger when you play a character with less than 5 strength", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: ramaVigilantFather, exerted: true }],
+          hand: [weakCharacter],
+          inkwell: weakCharacter.cost,
+          deck: 2,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(weakCharacter)).toBeSuccessfulCommand();
+
+      // PROTECTION OF THE PACK should NOT trigger for strength 3 character
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+
+      // Rama should still be exerted
+      expect(testEngine.asPlayerOne().isExerted(ramaVigilantFather)).toBe(true);
+    });
+
+    it("does not trigger when Rama himself is played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [ramaVigilantFather],
+          inkwell: ramaVigilantFather.cost,
+          deck: 2,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(ramaVigilantFather)).toBeSuccessfulCommand();
+
+      // Should not trigger his own ability when he's played
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
+    it("can decline the optional - Rama stays exerted with no restriction", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: ramaVigilantFather, exerted: true }],
+          hand: [headlessManhorseManny],
+          inkwell: headlessManhorseManny.cost,
+          deck: 2,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().isExerted(ramaVigilantFather)).toBe(true);
+
+      expect(testEngine.asPlayerOne().playCard(headlessManhorseManny)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Decline the optional ability
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // Rama should still be exerted
+      expect(testEngine.asPlayerOne().isExerted(ramaVigilantFather)).toBe(true);
+
+      // No cant-quest restriction applied
+      expect(testEngine.hasRestriction(ramaVigilantFather, "cant-quest")).toBe(false);
+    });
+
+    it("does not trigger when playing a character with strength 3 (The Horned King)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: ramaVigilantFather, exerted: true }],
+          hand: [theHornedKingWickedRuler],
+          inkwell: theHornedKingWickedRuler.cost,
+          deck: 2,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(theHornedKingWickedRuler)).toBeSuccessfulCommand();
+
+      // PROTECTION OF THE PACK should NOT trigger for strength 3 character
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+  });
+});
+
 // LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
 // /**
 //  * @jest-environment node

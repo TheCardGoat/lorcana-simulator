@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { goliathGuardianOfCastleWyvernI18n } from "./119-goliath-guardian-of-castle-wyvern.i18n";
+import { stoneByDay } from "../../../helpers/abilities/stoneByDay";
 
 export const goliathGuardianOfCastleWyvern: CharacterCard = {
   id: "5GE",
@@ -53,24 +54,7 @@ export const goliathGuardianOfCastleWyvern: CharacterCard = {
       },
       type: "triggered",
     },
-    {
-      id: "153-2",
-      text: "STONE BY DAY If you have 3 or more cards in your hand, this character can't ready.",
-      name: "STONE BY DAY",
-      condition: {
-        comparison: "greater-or-equal",
-        controller: "you",
-        type: "resource-count",
-        value: 3,
-        what: "cards-in-hand",
-      },
-      effect: {
-        restriction: "cant-ready",
-        target: "SELF",
-        type: "restriction",
-      },
-      type: "static",
-    },
+    stoneByDay,
   ],
   i18n: goliathGuardianOfCastleWyvernI18n,
 };

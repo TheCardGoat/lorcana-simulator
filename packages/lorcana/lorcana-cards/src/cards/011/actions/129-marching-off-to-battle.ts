@@ -24,6 +24,7 @@ export const marchingOffToBattle: ActionCard = {
     {
       id: "yrv-1",
       effect: {
+        type: "conditional",
         condition: {
           type: "turn-metric",
           metric: "banished-characters",
@@ -32,12 +33,11 @@ export const marchingOffToBattle: ActionCard = {
             value: 1,
           },
         },
-        then: {
+        effect: {
           amount: 2,
           target: "CONTROLLER",
           type: "draw",
         },
-        type: "conditional",
       },
       type: "action",
       text: "If a character was banished this turn, draw 2 cards.",

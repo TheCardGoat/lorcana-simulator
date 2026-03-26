@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { genieMagicalResearcherI18n } from "./049-genie-magical-researcher.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const genieMagicalResearcher: CharacterCard = {
   id: "fkH",
@@ -25,13 +26,7 @@ export const genieMagicalResearcher: CharacterCard = {
   text: "Boost 1 {I} INCREASING WISDOM This character gets +1 {L} for each card under him.",
   classifications: ["Storyborn", "Ally", "Whisper"],
   abilities: [
-    {
-      id: "h4v-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 1,
-      text: "Boost 1 {I}",
-    },
+    boost(1),
     {
       id: "h4v-2",
       name: "INCREASING WISDOM",

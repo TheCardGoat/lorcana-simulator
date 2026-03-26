@@ -32,55 +32,52 @@ export const hansNobleScoundrel: CharacterCard = {
   classifications: ["Storyborn", "Villain", "Prince"],
   abilities: [
     {
+      condition: {
+        type: "or",
+        conditions: [
+          {
+            type: "target-query",
+            query: {
+              selector: "all",
+              owner: "any",
+              zones: ["play"],
+              cardType: "character",
+              filter: [
+                {
+                  type: "has-classification",
+                  classification: "Princess",
+                },
+              ],
+            },
+            comparison: {
+              operator: "gte",
+              value: 1,
+            },
+          },
+          {
+            type: "target-query",
+            query: {
+              selector: "all",
+              owner: "any",
+              zones: ["play"],
+              cardType: "character",
+              filter: [
+                {
+                  type: "has-classification",
+                  classification: "Queen",
+                },
+              ],
+            },
+            comparison: {
+              operator: "gte",
+              value: 1,
+            },
+          },
+        ],
+      },
       effect: {
-        condition: {
-          type: "or",
-          conditions: [
-            {
-              type: "target-query",
-              query: {
-                selector: "all",
-                owner: "any",
-                zones: ["play"],
-                cardType: "character",
-                filter: [
-                  {
-                    type: "has-classification",
-                    classification: "Princess",
-                  },
-                ],
-              },
-              comparison: {
-                operator: "gte",
-                value: 1,
-              },
-            },
-            {
-              type: "target-query",
-              query: {
-                selector: "all",
-                owner: "any",
-                zones: ["play"],
-                cardType: "character",
-                filter: [
-                  {
-                    type: "has-classification",
-                    classification: "Queen",
-                  },
-                ],
-              },
-              comparison: {
-                operator: "gte",
-                value: 1,
-              },
-            },
-          ],
-        },
-        then: {
-          amount: 1,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 1,
+        type: "gain-lore",
       },
       id: "1wq-1",
       name: "ROYAL SCHEMES",

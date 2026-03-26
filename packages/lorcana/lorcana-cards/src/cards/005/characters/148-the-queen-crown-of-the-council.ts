@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { theQueenCrownOfTheCouncilI18n } from "./148-the-queen-crown-of-the-council.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const theQueenCrownOfTheCouncil: CharacterCard = {
   id: "05o",
@@ -34,12 +35,7 @@ export const theQueenCrownOfTheCouncil: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Queen", "Sorcerer"],
   abilities: [
-    {
-      id: "vdv-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
+    ward,
     {
       id: "vdv-2",
       effect: {

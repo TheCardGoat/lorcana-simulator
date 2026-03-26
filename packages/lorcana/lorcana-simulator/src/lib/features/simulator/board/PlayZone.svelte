@@ -8,6 +8,8 @@
   import { m } from "$lib/i18n/messages.js";
   import { EmptyState, DropIndicator } from "@/design-system/simulator/display/index.js";
   import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+  import HotkeyCardBadge from "@/features/simulator/hotkeys/HotkeyCardBadge.svelte";
+  import { buildOrderedPlayZoneEntries } from "@/features/simulator/hotkeys/board-order.js";
   import PlayZoneLocationEntry from "./PlayZoneLocationEntry.svelte";
   import {
     createCardAnchorId,
@@ -43,6 +45,7 @@
     isOpponent: boolean;
     label: string;
     excludeCardTypes?: Array<NonNullable<LorcanaCardSnapshot["cardType"]>>;
+    hotkeyBindings?: Map<string, string>;
   }
 
   let {
@@ -52,6 +55,7 @@
     isOpponent,
     label,
     excludeCardTypes = [],
+    hotkeyBindings = new Map(),
   }: BoardZoneProps = $props();
 
   const board = useLorcanaBoardPresenter();
@@ -63,86 +67,7 @@
       .getZoneCards(playerSide, zoneId)
       .filter((card) => !card.cardType || !excludeCardTypes.includes(card.cardType)),
   );
-  const playEntries = $derived.by<PlayZoneEntry[]>(() => {
-    const locationIds = new Set(
-      cards.filter((card) => card.cardType === "location").map((card) => card.cardId),
-    );
-    const occupantsByLocation = new Map<string, LorcanaCardSnapshot[]>();
-    const orderedEntries: PlayZoneEntry[] = [];
-    const standaloneEntries: PlayZoneEntry[] = [];
-    const locationClusterEntries: PlayZoneEntry[] = [];
-
-    for (const card of cards) {
-      if (
-        card.cardType !== "character" ||
-        !card.atLocationId ||
-        !locationIds.has(card.atLocationId)
-      ) {
-        continue;
-      }
-
-      const occupants = occupantsByLocation.get(card.atLocationId) ?? [];
-      occupants.push(card);
-      occupantsByLocation.set(card.atLocationId, occupants);
-    }
-
-    for (const card of cards) {
-      if (card.cardType === "location") {
-        const occupants = occupantsByLocation.get(card.cardId) ?? [];
-        const clusterSize = 1 + occupants.length;
-        const clusterEntries: PlayZoneEntry[] = [
-          {
-            card,
-            association: {
-              clusterId: card.cardId,
-              role: "location",
-              clusterSize,
-              isClusterStart: true,
-              isClusterEnd: occupants.length === 0,
-            },
-          },
-          ...occupants.map((occupant, occupantIndex) => ({
-            card: occupant,
-            association: {
-              clusterId: card.cardId,
-              role: "occupant" as const,
-              clusterSize,
-              isClusterStart: false,
-              isClusterEnd: occupantIndex === occupants.length - 1,
-            },
-          })),
-        ];
-
-        if (seat === "bottom") {
-          locationClusterEntries.push(...clusterEntries);
-        } else {
-          orderedEntries.push(...clusterEntries);
-        }
-        continue;
-      }
-
-      if (
-        card.cardType === "character" &&
-        card.atLocationId &&
-        locationIds.has(card.atLocationId)
-      ) {
-        continue;
-      }
-
-      const nextEntry = { card };
-      if (seat === "bottom") {
-        standaloneEntries.push(nextEntry);
-      } else {
-        orderedEntries.push(nextEntry);
-      }
-    }
-
-    if (seat !== "bottom") {
-      return orderedEntries;
-    }
-
-    return [...standaloneEntries, ...locationClusterEntries];
-  });
+  const playEntries = $derived.by<PlayZoneEntry[]>(() => buildOrderedPlayZoneEntries(cards, seat));
   const isMasked = $derived(board.isZoneMasked(playerSide, zoneId));
   const challengeMode = $derived(
     sidebar.actionSelectionSession?.categoryId === "challenge" &&
@@ -217,6 +142,7 @@
                 {isMasked}
                 {isValidTarget}
                 {isInvalidTarget}
+                hotkey={hotkeyBindings.get(entry.card.cardId)}
               />
             {:else}
               {@const draggable = dnd.createOptionalDraggable({ card: entry.card })}
@@ -231,6 +157,9 @@
                 data-board-anchor-id={createCardAnchorId(playerSide, zoneId, entry.card.cardId)}
                 {@attach draggable.attach}
               >
+                {#if hotkeyBindings.has(entry.card.cardId)}
+                  <HotkeyCardBadge hotkey={hotkeyBindings.get(entry.card.cardId)!} />
+                {/if}
                 <LorcanaCard
                   card={entry.card}
                   useContainerSize
@@ -268,6 +197,9 @@
     --card-aspect: 0.9582;
     --play-zone-padding: 0.5rem;
     --play-grid-gap: 0.5rem;
+    --play-scrollbar-size: 10px;
+    --play-scrollbar-thumb: rgba(143, 211, 255, 0.65);
+    --play-scrollbar-track: rgba(7, 18, 31, 0.36);
     --play-counter-size: 28px;
     --play-counter-offset: -6px;
     --play-counter-translate-x: 50%;
@@ -363,23 +295,26 @@
     justify-content: center;
     min-height: 0;
     overflow-x: hidden;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(143, 211, 255, 0.55) rgba(7, 18, 31, 0.2);
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+    scrollbar-width: auto;
+    scrollbar-color: var(--play-scrollbar-thumb) var(--play-scrollbar-track);
   }
 
   .cards-container::-webkit-scrollbar {
-    width: 10px;
+    width: var(--play-scrollbar-size);
   }
 
   .cards-container::-webkit-scrollbar-track {
-    background: rgba(7, 18, 31, 0.24);
+    background: var(--play-scrollbar-track);
     border-radius: 999px;
   }
 
   .cards-container::-webkit-scrollbar-thumb {
-    background: rgba(143, 211, 255, 0.4);
+    background: var(--play-scrollbar-thumb);
     border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
 
   .cards-grid {
@@ -413,6 +348,7 @@
 
   .card-slot {
     --zone-card-height: calc(var(--zone-card-width) / var(--card-aspect));
+    position: relative;
     width: var(--zone-card-width);
     height: var(--zone-card-height);
   }
@@ -428,7 +364,7 @@
     .card-slot {
       --zone-card-width:
         min(
-          clamp(50px, 30cqw, 100px),
+          clamp(60px, 35cqw, 130px),
           calc(
             (
               100cqh
@@ -480,6 +416,9 @@
   @media (max-width: 640px) {
     .board-zone {
       --play-grid-gap: 0.6rem;
+      --play-scrollbar-size: 14px;
+      --play-scrollbar-thumb: rgba(143, 211, 255, 0.85);
+      --play-scrollbar-track: rgba(7, 18, 31, 0.52);
     }
 
     .cards-grid {

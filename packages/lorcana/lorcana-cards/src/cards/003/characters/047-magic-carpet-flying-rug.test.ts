@@ -34,7 +34,7 @@ describe("Magic Carpet - Flying Rug", () => {
       });
     });
 
-    it("triggers enter location abilities when a character moves to a location", () => {
+    it("triggers move-to-location abilities when a character moves to a location", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [
           { card: magicCarpetFlyingRug, exerted: false },
@@ -61,11 +61,7 @@ describe("Magic Carpet - Flying Rug", () => {
         location: hiddenCoveTranquilHaven,
       });
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-      ).toBeSuccessfulCommand();
-
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(2);
     });
   });

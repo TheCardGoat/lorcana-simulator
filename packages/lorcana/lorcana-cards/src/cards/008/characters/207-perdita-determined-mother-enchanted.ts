@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { perditaDeterminedMotherEnchantedI18n } from "./207-perdita-determined-mother-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const perditaDeterminedMotherEnchanted: CharacterCard = {
   id: "RxC",
@@ -35,15 +36,7 @@ export const perditaDeterminedMotherEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "169-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         chooser: "CONTROLLER",

@@ -1,6 +1,7 @@
 import type { MatchState, PlayerId, RuntimeFlowDefinition, RuntimeLifecycleContext } from "#core";
 import type { LorcanaG } from "../types";
 import { hasTemporaryRestriction } from "../runtime-moves/effects/temporary-effects";
+import { hasStaticCardRestriction } from "../runtime-moves/rules/static-ability-utils";
 
 function canAutoAdvanceBeginningPhase(state: MatchState): boolean {
   return (
@@ -110,6 +111,18 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
                   const card = ctx.cards.get(cardId);
                   if (!card?.meta) continue;
                   const nextMeta = { ...card.meta } as Record<string, unknown>;
+                  const cardMeta = card.meta as Record<string, unknown> | undefined;
+                  const atLocId = cardMeta?.atLocationId;
+                  const isCardAtLoc =
+                    !!atLocId &&
+                    typeof atLocId === "string" &&
+                    (() => {
+                      const zoneKey = ctx.framework.zones.getCardZone(atLocId);
+                      return (
+                        typeof zoneKey === "string" &&
+                        (zoneKey === "play" || zoneKey.startsWith("play:"))
+                      );
+                    })();
                   const cantReady =
                     hasTemporaryRestriction(card.meta, currentTurn, "cant-ready", {
                       isSourceInPlay: (sourceId) => {
@@ -119,6 +132,19 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
                           (zoneKey === "play" || zoneKey.startsWith("play:"))
                         );
                       },
+                      isCardAtLocation: isCardAtLoc,
+                    }) ||
+                    hasStaticCardRestriction({
+                      state: ctx.framework.state,
+                      cardId: cardId as never,
+                      restriction: "cant-ready-at-start-of-turn",
+                      getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
+                    }) ||
+                    hasStaticCardRestriction({
+                      state: ctx.framework.state,
+                      cardId: cardId as never,
+                      restriction: "cant-ready",
+                      getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
                     }) ||
                     hasTemporaryRestriction(card.meta, currentTurn, "doesnt-ready", {
                       isSourceInPlay: (sourceId) => {
@@ -128,6 +154,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
                           (zoneKey === "play" || zoneKey.startsWith("play:"))
                         );
                       },
+                      isCardAtLocation: isCardAtLoc,
                     });
                   if (
                     card.meta &&

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { teKLavaMonsterI18n } from "./058-te-k-lava-monster.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const teKLavaMonster: CharacterCard = {
   id: "e8J",
@@ -24,14 +25,6 @@ export const teKLavaMonster: CharacterCard = {
   },
   text: "Challenger +2",
   classifications: ["Storyborn", "Villain", "Deity"],
-  abilities: [
-    {
-      id: "84p-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2",
-    },
-  ],
+  abilities: [challenger(2)],
   i18n: teKLavaMonsterI18n,
 };

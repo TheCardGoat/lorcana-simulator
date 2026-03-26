@@ -30,6 +30,9 @@ export const minnieMouseFunkySpelunker: CharacterCard = {
   classifications: ["Dreamborn", "Hero"],
   abilities: [
     {
+      condition: {
+        type: "at-location",
+      },
       effect: {
         modifier: 2,
         stat: "strength",
@@ -37,6 +40,7 @@ export const minnieMouseFunkySpelunker: CharacterCard = {
         type: "modify-stat",
       },
       id: "11y-1",
+      name: "JOURNEY",
       text: "JOURNEY While this character is at a location, she gets +2 {S}.",
       type: "static",
     },

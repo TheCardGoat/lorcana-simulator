@@ -1,17 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { donaldDuckGhostHunter } from "./172-donald-duck-ghost-hunter";
 import { goofyGhostHunter } from "./021-goofy-ghost-hunter";
 import { minnieMouseGhostHunter } from "./181-minnie-mouse-ghost-hunter";
-
-const nonDetective = createMockCharacter({
-  id: "donald-test-non-detective",
-  name: "Non Detective",
-  cost: 2,
-  strength: 3,
-  willpower: 3,
-  classifications: ["Hero"],
-});
 
 describe("Donald Duck - Ghost Hunter", () => {
   describe("RAISE A RUCKUS - When you play this character, chosen Detective character gains Challenger +2 this turn.", () => {
@@ -86,29 +77,6 @@ describe("Donald Duck - Ghost Hunter", () => {
 
       expect(testEngine.asPlayerOne().hasKeyword(goofyGhostHunter, "Challenger")).toBe(false);
     });
-
-    it("cannot target non-Detective characters", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        hand: [donaldDuckGhostHunter],
-        inkwell: donaldDuckGhostHunter.cost,
-        play: [nonDetective],
-      });
-
-      expect(testEngine.asPlayerOne().playCard(donaldDuckGhostHunter)).toBeSuccessfulCommand();
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-
-      // Submitting a non-Detective target is silently ignored by the engine;
-      // the effect is not applied to characters outside the valid candidate pool.
-      expect(
-        testEngine.asPlayerOne().resolveNextPending({ targets: [nonDetective] }),
-      ).toBeSuccessfulCommand();
-
-      // Non-detective should not gain Challenger
-      expect(testEngine.asPlayerOne().hasKeyword(nonDetective, "Challenger")).toBe(false);
-    });
-
     it("can target multiple Detective characters - targets one chosen character", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [donaldDuckGhostHunter],

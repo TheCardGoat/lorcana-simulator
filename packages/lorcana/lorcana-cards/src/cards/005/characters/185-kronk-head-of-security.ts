@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kronkHeadOfSecurityI18n } from "./185-kronk-head-of-security.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const kronkHeadOfSecurity: CharacterCard = {
   id: "qAr",
@@ -34,15 +35,7 @@ export const kronkHeadOfSecurity: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally", "Captain"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "156-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       effect: {
         chooser: "CONTROLLER",

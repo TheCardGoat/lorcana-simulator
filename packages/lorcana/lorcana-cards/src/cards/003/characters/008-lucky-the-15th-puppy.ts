@@ -78,29 +78,26 @@ export const luckyThe15thPuppy: CharacterCard = {
       type: "activated",
     },
     {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          excludeSelf: true,
+        },
+        comparison: {
+          operator: "gte",
+          value: 4,
+        },
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            excludeSelf: true,
-          },
-          comparison: {
-            operator: "gte",
-            value: 4,
-          },
-        },
-        effect: {
-          duration: "this-turn",
-          modifier: 1,
-          stat: "lore",
-          target: "YOUR_OTHER_CHARACTERS",
-          type: "modify-stat",
-        },
-        type: "conditional",
+        duration: "this-turn",
+        modifier: 1,
+        stat: "lore",
+        target: "YOUR_OTHER_CHARACTERS",
+        type: "modify-stat",
       },
       id: "5ql-2",
       name: "PUPPY LOVE",

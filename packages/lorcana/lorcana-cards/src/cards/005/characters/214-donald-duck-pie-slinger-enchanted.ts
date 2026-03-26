@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { donaldDuckPieSlingerEnchantedI18n } from "./214-donald-duck-pie-slinger-enchanted.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const donaldDuckPieSlingerEnchanted: CharacterCard = {
   id: "LmE",
@@ -38,15 +39,7 @@ export const donaldDuckPieSlingerEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Knight"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "14s-0",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       id: "14s-1",
       text: "HUMBLE PIE When you play this character, if you used Shift to play him, each opponent loses {d} lore.",

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { drFacilierFortuneTellerI18n } from "./079-dr-facilier-fortune-teller.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const drFacilierFortuneTeller: CharacterCard = {
   id: "WRE",
@@ -34,12 +35,7 @@ export const drFacilierFortuneTeller: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer"],
   abilities: [
-    {
-      id: "h8r-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         duration: "their-next-turn",

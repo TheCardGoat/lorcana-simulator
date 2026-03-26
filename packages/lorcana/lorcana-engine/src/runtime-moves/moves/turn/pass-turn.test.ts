@@ -215,4 +215,33 @@ describe("passTurn", () => {
 
     expectFailureCode(result, "PASS_TURN_RECKLESS_CHALLENGE_REQUIRED");
   });
+
+  it("keeps passTurn available during enumeration when Reckless is the only blocker", () => {
+    const recklessAttacker = createMockCharacter({
+      id: "reckless-attacker-available",
+      name: "Reckless Attacker",
+      cost: 2,
+      abilities: [{ id: "reckless", type: "keyword", keyword: "Reckless", text: "Reckless" }],
+    });
+    const defender = createMockCharacter({
+      id: "reckless-defender-available",
+      name: "Defender",
+      cost: 2,
+    });
+
+    engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      { play: [recklessAttacker], deck: 0 },
+      { play: [defender], deck: 0 },
+    );
+
+    const defenderId = findInstanceInZone(engine, "play", PLAYER_TWO, defender.id);
+    const exertResult = executeMoveAsJudge(engine, "manualExertCard", { cardId: defenderId });
+    expect(exertResult.success).toBe(true);
+
+    const availableMoves = engine.asLorcanaPlayerOne().getAvailableMoves();
+    expect(availableMoves.some((move) => move.moveId === "passTurn")).toBe(true);
+
+    const result = executeMoveAsPlayer(engine, "passTurn", {});
+    expectFailureCode(result, "PASS_TURN_RECKLESS_CHALLENGE_REQUIRED");
+  });
 });

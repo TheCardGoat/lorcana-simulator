@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { plutoDeterminedDefenderI18n } from "./017-pluto-determined-defender.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const plutoDeterminedDefender: CharacterCard = {
   id: "MU4",
@@ -44,12 +45,7 @@ export const plutoDeterminedDefender: CharacterCard = {
       text: "Shift 5 {I}",
       type: "keyword",
     },
-    {
-      id: "zh2-2",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         amount: 3,

@@ -11,6 +11,15 @@ const inkableCard = createMockCharacter({
   lore: 1,
 });
 
+const secondInkableCard = createMockCharacter({
+  id: "moana-test-inkable-2",
+  name: "Second Inkable Card",
+  cost: 3,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
 const nonInkableCard = createMockCharacter({
   id: "moana-test-noink",
   name: "Non Inkable Card",
@@ -60,6 +69,22 @@ describe("Moana - Curious Explorer", () => {
 
       expect(testEngine.asPlayerOne().ink(inkableCard)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getCardZone(inkableCard)).toBe("inkwell");
+    });
+
+    it("does not allow inking twice in the same turn (one from hand, one from discard)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [moanaCuriousExplorer],
+        hand: [inkableCard],
+        discard: [secondInkableCard],
+      });
+
+      // First ink from hand should succeed
+      expect(testEngine.asPlayerOne().ink(inkableCard)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(inkableCard)).toBe("inkwell");
+
+      // Second ink from discard should fail (already inked this turn)
+      expect(testEngine.asPlayerOne().ink(secondInkableCard)).not.toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(secondInkableCard)).toBe("discard");
     });
   });
 });

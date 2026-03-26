@@ -44,9 +44,14 @@ function getSourceCardId(move: ExecutableMoveEntry): string | null {
 
 function getTargetCardId(move: ExecutableMoveEntry): string | null {
   switch (move.presentation.categoryId) {
-    case "play-card": {
+    case "play-card":
+    case "shift-card": {
       const targets = (move.params as { targets?: unknown }).targets;
       return Array.isArray(targets) && typeof targets[0] === "string" ? targets[0] : null;
+    }
+    case "sing-card": {
+      const singer = (move.params as { singer?: unknown }).singer;
+      return typeof singer === "string" ? singer : null;
     }
     case "challenge": {
       const defenderId = (move.params as { defenderId?: unknown }).defenderId;
@@ -106,14 +111,7 @@ function buildEnabledCategoryAction(
     categoryId === "quest" && typeof card.loreValue === "number"
       ? `${m["sim.actions.label.quest"]({})} for ${card.loreValue} lore`
       : (moves[0]?.presentation.categoryLabel ?? categoryId);
-  const detail =
-    categoryId === "play-card"
-      ? getPlayActionDetail(card, moves[0]!)
-      : categoryId === "shift-card" || categoryId === "sing-card"
-        ? undefined
-        : categoryId === "activate-ability"
-          ? `${moves.length} abilit${moves.length === 1 ? "y" : "ies"}`
-          : undefined;
+  const detail = categoryId === "play-card" ? getPlayActionDetail(card, moves[0]!) : undefined;
   const interaction =
     categoryId === "challenge" || categoryId === "move-to-location"
       ? "expand-on-click"

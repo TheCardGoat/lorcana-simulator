@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jafarTyrannicalHypnotistI18n } from "./172-jafar-tyrannical-hypnotist.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const jafarTyrannicalHypnotist: CharacterCard = {
   id: "4QY",
@@ -33,13 +34,7 @@ export const jafarTyrannicalHypnotist: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Villain", "Sorcerer"],
   abilities: [
-    {
-      id: "xg5-1",
-      keyword: "Challenger",
-      text: "Challenger +7",
-      type: "keyword",
-      value: 7,
-    },
+    challenger(7),
     {
       effect: {
         restriction: "cant-challenge",

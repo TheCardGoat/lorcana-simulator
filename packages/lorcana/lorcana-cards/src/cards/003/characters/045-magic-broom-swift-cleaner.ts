@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { magicBroomSwiftCleanerI18n } from "./045-magic-broom-swift-cleaner.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const magicBroomSwiftCleaner: CharacterCard = {
   id: "sUV",
@@ -34,12 +35,7 @@ export const magicBroomSwiftCleaner: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Broom"],
   abilities: [
-    {
-      id: "114-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       id: "114-2",
       name: "CLEAN THIS, CLEAN THAT",

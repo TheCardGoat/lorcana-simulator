@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { robinHoodEphemeralArcherI18n } from "./171-robin-hood-ephemeral-archer.i18n";
 
 export const robinHoodEphemeralArcher: CharacterCard = {
@@ -34,13 +35,7 @@ export const robinHoodEphemeralArcher: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Whisper"],
   abilities: [
-    {
-      id: "1pw-1",
-      keyword: "Boost",
-      text: "Boost 1 {I}",
-      type: "keyword",
-      value: 1,
-    },
+    boost(1),
     {
       condition: {
         type: "has-card-under",

@@ -5,7 +5,12 @@
  */
 
 import { type CardInstanceId, type PlayerId, type RuntimeValidationResult } from "#core";
-import { createLorcanaLogMessage, type LorcanaMoveDefinition } from "../../../types";
+import {
+  createLorcanaGameLogEntry,
+  createLorcanaLogMessage,
+  createLorcanaLogProjection,
+  type LorcanaMoveDefinition,
+} from "../../../types";
 
 function enumerateCardSelections(cards: readonly CardInstanceId[]): CardInstanceId[][] {
   const selections: CardInstanceId[][] = [[]];
@@ -24,6 +29,7 @@ function enumerateCardSelections(cards: readonly CardInstanceId[]): CardInstance
  * Alter hand (mulligan)
  */
 export const alterHand: LorcanaMoveDefinition<"alterHand"> = {
+  optimistic: "auto",
   validate: (ctx): RuntimeValidationResult => {
     const { playerId } = ctx.args;
     const cardsToMulligan = ctx.args.cardsToMulligan ?? [];
@@ -68,12 +74,8 @@ export const alterHand: LorcanaMoveDefinition<"alterHand"> = {
       count: cardsToMulligan.length,
     });
 
-    framework.logPublicWithOverrides({
-      category: "action",
-      defaultMessage: createLorcanaLogMessage("lorcana.setup.mulligan.count", {
-        playerId,
-        count: cardsToMulligan.length,
-      }),
+    const mulliganVisibility = {
+      mode: "PUBLIC_WITH_OVERRIDES" as const,
       overrides: {
         [playerId]: createLorcanaLogMessage("lorcana.setup.mulligan.detail", {
           playerId,
@@ -82,6 +84,23 @@ export const alterHand: LorcanaMoveDefinition<"alterHand"> = {
           drawn: drawn as CardInstanceId[],
         }),
       },
+    };
+    framework.log({
+      category: "action",
+      visibility: mulliganVisibility,
+      defaultMessage: createLorcanaLogMessage("lorcana.setup.mulligan.count", {
+        playerId,
+        count: cardsToMulligan.length,
+      }),
+      typedEntry: createLorcanaGameLogEntry(
+        "lorcana.setup.mulligan.count",
+        {
+          playerId,
+          count: cardsToMulligan.length,
+        },
+        mulliganVisibility,
+        "action",
+      ),
     });
 
     const pendingMulligan = (ctx.framework.state.status.pendingMulligan ?? []) as PlayerId[];
@@ -95,11 +114,9 @@ export const alterHand: LorcanaMoveDefinition<"alterHand"> = {
       ctx.framework.priority.openWindow(nextPending[0]);
     } else {
       // All players have mulliganed, lorcanaRuntimeFlow will transition to the next Segment
-      framework.log({
-        category: "action",
-        visibility: { mode: "PUBLIC" },
-        defaultMessage: createLorcanaLogMessage("lorcana.setup.done"),
-      });
+      framework.log(
+        createLorcanaLogProjection("lorcana.setup.done", {}, { mode: "PUBLIC" }, "action"),
+      );
     }
   },
 

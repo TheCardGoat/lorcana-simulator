@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { gastonArrogantHunterI18n } from "./110-gaston-arrogant-hunter.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
 
 export const gastonArrogantHunter: CharacterCard = {
   id: "sHc",
@@ -24,13 +25,6 @@ export const gastonArrogantHunter: CharacterCard = {
   },
   text: "Reckless",
   classifications: ["Storyborn", "Villain"],
-  abilities: [
-    {
-      id: "enf-1",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-  ],
+  abilities: [reckless],
   i18n: gastonArrogantHunterI18n,
 };

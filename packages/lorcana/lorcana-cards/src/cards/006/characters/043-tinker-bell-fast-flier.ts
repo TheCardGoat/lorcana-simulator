@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tinkerBellFastFlierI18n } from "./043-tinker-bell-fast-flier.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const tinkerBellFastFlier: CharacterCard = {
   id: "kEF",
@@ -24,13 +25,6 @@ export const tinkerBellFastFlier: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally", "Fairy"],
-  abilities: [
-    {
-      id: "1k9-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: tinkerBellFastFlierI18n,
 };

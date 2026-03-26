@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { davidProtectiveSnowboarderI18n } from "./009-david-protective-snowboarder.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const davidProtectiveSnowboarder: CharacterCard = {
   id: "qaR",
@@ -24,13 +25,6 @@ export const davidProtectiveSnowboarder: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1yj-1",
-      keyword: "Bodyguard",
-      type: "keyword",
-      text: "Bodyguard",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: davidProtectiveSnowboarderI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mulanChargingAheadI18n } from "./141-mulan-charging-ahead.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
 
 export const mulanChargingAhead: CharacterCard = {
   id: "KZj",
@@ -38,12 +39,7 @@ export const mulanChargingAhead: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "17c-1",
-      keyword: "Reckless",
-      text: "Reckless",
-      type: "keyword",
-    },
+    reckless,
     {
       condition: {
         type: "turn",

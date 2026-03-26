@@ -32,21 +32,18 @@ export const faZhouWarHero: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
+      condition: {
+        type: "turn-metric",
+        metric: "challenges-by-player",
+        playerScope: "you",
+        comparison: {
+          operator: "eq",
+          value: 2,
+        },
+      },
       effect: {
-        condition: {
-          type: "turn-metric",
-          metric: "challenges-by-player",
-          playerScope: "you",
-          comparison: {
-            operator: "eq",
-            value: 2,
-          },
-        },
-        then: {
-          amount: 3,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 3,
+        type: "gain-lore",
       },
       id: "1i5-1",
       name: "TRAINING EXERCISES",

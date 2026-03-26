@@ -30,6 +30,7 @@ export const devilsEyeDiamond: ItemCard = {
         exert: true,
       },
       effect: {
+        type: "conditional",
         condition: {
           type: "turn-metric",
           metric: "damaged-characters-by-owner",
@@ -43,7 +44,6 @@ export const devilsEyeDiamond: ItemCard = {
           amount: 1,
           type: "gain-lore",
         },
-        type: "conditional",
       },
       id: "136-1",
       name: "THE PRICE OF POWER",

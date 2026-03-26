@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { denahiImpatientHunterI18n } from "./124-denahi-impatient-hunter.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const denahiImpatientHunter: CharacterCard = {
   id: "OYJ",
@@ -31,20 +33,6 @@ export const denahiImpatientHunter: CharacterCard = {
     },
   ],
   classifications: ["Storyborn"],
-  abilities: [
-    {
-      id: "8xy-1",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-    {
-      id: "8xy-2",
-      keyword: "Resist",
-      type: "keyword",
-      value: 2,
-      text: "Resist +2",
-    },
-  ],
+  abilities: [reckless, resist(2)],
   i18n: denahiImpatientHunterI18n,
 };

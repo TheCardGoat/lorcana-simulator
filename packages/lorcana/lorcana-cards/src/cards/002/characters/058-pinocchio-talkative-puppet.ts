@@ -56,6 +56,5 @@ export const pinocchioTalkativePuppet: CharacterCard = {
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: pinocchioTalkativePuppetI18n,
 };

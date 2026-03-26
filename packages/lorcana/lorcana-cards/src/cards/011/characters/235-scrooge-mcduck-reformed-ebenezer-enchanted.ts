@@ -48,7 +48,8 @@ export const scroogeMcduckReformedEbenezerEnchanted: CharacterCard = {
       id: "1yi-2",
       effect: {
         keyword: "Ward",
-        target: "YOUR_CHARACTERS",
+        target: "YOUR_OTHER_CHARACTERS",
+        duration: "until-start-of-next-turn",
         type: "gain-keyword",
       },
       name: "SPREADING JOY",

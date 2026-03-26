@@ -46,51 +46,27 @@ export const chiefBogoCommandingOfficer: CharacterCard = {
           {
             type: "conditional",
             condition: {
-              type: "target-query",
-              query: {
-                selector: "all",
-                reference: "revealed-first",
-                filters: [
-                  {
-                    type: "card-type",
-                    value: "character",
-                  },
-                ],
-              },
-              comparison: {
-                operator: "gte",
-                value: 1,
-              },
+              type: "if-you-do",
             },
             then: {
-              type: "sequence",
-              steps: [
+              type: "scry",
+              amount: 1,
+              target: "CONTROLLER",
+              destinations: [
                 {
-                  type: "optional",
-                  chooser: "CONTROLLER",
-                  effect: {
-                    type: "play-card",
-                    cost: "free",
-                    entersExerted: true,
-                    from: "revealed",
-                    target: "CONTROLLER",
-                  },
+                  zone: "play",
+                  min: 0,
+                  max: 1,
+                  cost: "free",
+                  entersExerted: true,
+                  reveal: true,
+                  filter: { type: "card-type", cardType: "character" },
                 },
                 {
-                  type: "conditional",
-                  condition: {
-                    type: "if-you-do",
-                  },
-                  else: {
-                    type: "put-on-top",
-                    source: "revealed",
-                  },
+                  zone: "deck-top",
+                  remainder: true,
                 },
               ],
-            },
-            else: {
-              type: "put-on-top",
-              source: "revealed",
             },
           },
         ],

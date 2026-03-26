@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { hueySavvyNephewI18n } from "./145-huey-savvy-nephew.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const hueySavvyNephew: CharacterCard = {
   id: "iYO",
@@ -34,22 +35,24 @@ export const hueySavvyNephew: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Ally"],
   abilities: [
-    {
-      id: "aka-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         condition: {
-          expression: "you have characters named Dewey and Louie in play",
-          type: "if",
+          type: "and",
+          conditions: [
+            { type: "has-named-character", name: "Dewey", controller: "you" },
+            { type: "has-named-character", name: "Louie", controller: "you" },
+          ],
         },
         then: {
-          amount: 3,
-          target: "CONTROLLER",
-          type: "draw",
+          type: "optional",
+          chooser: "CONTROLLER",
+          effect: {
+            amount: 3,
+            target: "CONTROLLER",
+            type: "draw",
+          },
         },
         type: "conditional",
       },

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { createMockCharacter, LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import {
+  createMockCharacter,
+  createMockLocation,
+  LorcanaMultiplayerTestEngine,
+} from "@tcg/lorcana-engine/testing";
 import { tianaRestaurantOwner } from "./016-tiana-restaurant-owner";
 
 const ally = createMockCharacter({
@@ -16,6 +20,15 @@ const attacker = createMockCharacter({
   cost: 3,
   strength: 4,
   willpower: 3,
+});
+
+const locationTarget = createMockLocation({
+  id: "tiana-restaurant-owner-location",
+  name: "Test Location",
+  cost: 2,
+  moveCost: 1,
+  willpower: 6,
+  lore: 1,
 });
 
 describe("Tiana - Restaurant Owner", () => {
@@ -71,6 +84,30 @@ describe("Tiana - Restaurant Owner", () => {
       expect(testEngine.asPlayerTwo().challenge(attacker, ally)).toBeSuccessfulCommand();
 
       // No modifier should be applied since Tiana is not exerted
+      expect(testEngine.asPlayerTwo().getCard(attacker).strength).toBe(attacker.strength);
+    });
+
+    it("regression: should NOT trigger when a location is challenged (only triggers for characters)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: tianaRestaurantOwner, exerted: true }, locationTarget],
+          deck: 2,
+        },
+        {
+          play: [{ card: attacker, exerted: false, isDrying: false }],
+          deck: 2,
+        },
+      );
+
+      // Pass priority to player two so they can challenge the location
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().challenge(attacker, locationTarget)).toBeSuccessfulCommand();
+
+      // Tiana's ability should NOT trigger for location challenges
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+
+      // Attacker strength should be unchanged
       expect(testEngine.asPlayerTwo().getCard(attacker).strength).toBe(attacker.strength);
     });
   });

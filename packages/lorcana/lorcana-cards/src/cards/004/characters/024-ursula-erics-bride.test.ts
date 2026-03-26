@@ -154,6 +154,7 @@ describe("Ursula - Eric's Bride", () => {
       expect(testEngine.asPlayerOne().quest(ursulaEricsBride)).toBeSuccessfulCommand();
 
       // Controller chooses the non-character card to discard
+      expect(testEngine.asPlayerOne().resolveOnlyBag()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().respondWith(actionCardId)).toBeSuccessfulCommand();
 
       // Opponent's hand cards should have been revealed

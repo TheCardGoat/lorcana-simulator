@@ -59,4 +59,30 @@ describe("Visiting Christmas Past", () => {
     expect(testEngine.getCardsUnder(simbaProtectiveCub)).toHaveLength(1);
     expect(testEngine.asPlayerOne().getZonesCardCount().inkwell).toBe(visitingChristmasPast.cost);
   });
+
+  it("regression: ability triggers and moves cards from under characters into inkwell", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [visitingChristmasPast],
+      inkwell: visitingChristmasPast.cost,
+      play: [simbaProtectiveCub],
+      deck: [heiheiBoatSnack],
+    });
+
+    testEngine.putCardUnder(simbaProtectiveCub, heiheiBoatSnack);
+    const [heiheiId] = testEngine.getCardsUnder(simbaProtectiveCub);
+
+    // Verify card is under the character before playing
+    expect(testEngine.getCardsUnder(simbaProtectiveCub)).toHaveLength(1);
+
+    expect(
+      testEngine.asPlayerOne().playCard(visitingChristmasPast, {
+        targets: [heiheiId],
+      }).success,
+    ).toBe(true);
+
+    // Card should now be in inkwell
+    expect(testEngine.asPlayerOne().getCardZone(heiheiId)).toBe("inkwell");
+    // Character should no longer have cards underneath
+    expect(testEngine.getCardsUnder(simbaProtectiveCub)).toHaveLength(0);
+  });
 });

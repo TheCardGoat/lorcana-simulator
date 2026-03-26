@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { merlinIntellectualVisionaryI18n } from "./159-merlin-intellectual-visionary.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const merlinIntellectualVisionary: CharacterCard = {
   id: "ngW",
@@ -34,27 +35,18 @@ export const merlinIntellectualVisionary: CharacterCard = {
   ],
   classifications: ["Floodborn", "Mentor", "Sorcerer"],
   abilities: [
+    shift(5),
     {
-      cost: {
-        ink: 5,
+      condition: {
+        type: "used-shift",
       },
-      id: "1g2-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
-    {
       effect: {
-        condition: {
-          expression: "you used Shift to play him",
-          type: "if",
-        },
-        then: {
+        type: "optional",
+        effect: {
           putInto: "hand",
           shuffle: true,
           type: "search-deck",
         },
-        type: "conditional",
       },
       id: "1g2-2",
       name: "OVERDEVELOPED BRAIN",

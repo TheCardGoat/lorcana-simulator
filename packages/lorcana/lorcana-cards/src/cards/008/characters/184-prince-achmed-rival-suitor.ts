@@ -40,6 +40,7 @@ export const princeAchmedRivalSuitor: CharacterCard = {
             owner: "any",
             zones: ["play"],
             cardTypes: ["character"],
+            filter: [{ type: "has-classification", classification: "Princess" }],
           },
           type: "exert",
         },

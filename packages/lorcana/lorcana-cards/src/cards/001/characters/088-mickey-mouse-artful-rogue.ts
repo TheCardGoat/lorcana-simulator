@@ -34,17 +34,36 @@ export const mickeyMouseArtfulRogue: CharacterCard = {
   classifications: ["Floodborn", "Hero"],
   abilities: [
     {
-      effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          from: "hand",
-          type: "play-card",
-        },
-        type: "optional",
-      },
       id: "dul-1",
-      text: "**Shift** 5 (_You may pay 5 {I} to play this on top of one of your characters named Tinker Bell._)\n**MISDIRECTION** Whenever you play an action, chosen opposing character can",
-      type: "action",
+      keyword: "Shift",
+      cost: {
+        ink: 5,
+      },
+      shiftTarget: "Mickey Mouse",
+      type: "keyword",
+    },
+    {
+      effect: {
+        duration: "their-next-turn",
+        restriction: "cant-quest",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+        type: "restriction",
+      },
+      id: "dul-2",
+      name: "MISDIRECTION",
+      text: "MISDIRECTION Whenever you play an action, chosen opposing character can't quest during their next turn.",
+      trigger: {
+        event: "play",
+        on: "YOUR_ACTIONS",
+        timing: "whenever",
+      },
+      type: "triggered",
     },
   ],
   i18n: mickeyMouseArtfulRogueI18n,

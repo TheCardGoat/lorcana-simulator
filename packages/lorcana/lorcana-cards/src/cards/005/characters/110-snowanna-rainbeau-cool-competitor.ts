@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { snowannaRainbeauCoolCompetitorI18n } from "./110-snowanna-rainbeau-cool-competitor.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const snowannaRainbeauCoolCompetitor: CharacterCard = {
   id: "3sJ",
@@ -24,13 +25,6 @@ export const snowannaRainbeauCoolCompetitor: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn", "Ally", "Racer"],
-  abilities: [
-    {
-      id: "rgl-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: snowannaRainbeauCoolCompetitorI18n,
 };

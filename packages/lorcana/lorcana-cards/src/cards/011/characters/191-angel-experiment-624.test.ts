@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { angelExperiment624 } from "./191-angel-experiment-624";
 import { angelExperiment624Enchanted } from "./238-angel-experiment-624-enchanted";
+import { princeJohnGreediestOfAll } from "../../002/characters/089-prince-john-greediest-of-all";
 
 const handFodder = createMockCharacter({
   id: "angel-hand-fodder",
@@ -152,6 +153,45 @@ describe("Angel - Experiment 624", () => {
         targets: [targetCharacter],
       });
       expect(result.success).toBe(false);
+    });
+  });
+
+  // Regression: Angel's GOOD AIM discard cost was not triggering Prince John - Greediest of All's
+  // "I SENTENCE YOU" draw ability (fixed March 7)
+  describe("regression: GOOD AIM discard triggers opponent's Prince John draw", () => {
+    it("regression: activating GOOD AIM triggers Prince John - Greediest of All's I SENTENCE YOU", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [angelExperiment624],
+          hand: [handFodder],
+          deck: 5,
+        },
+        {
+          play: [princeJohnGreediestOfAll, targetCharacter],
+          deck: 5,
+        },
+      );
+
+      const initialZones = testEngine.asPlayerTwo().getZonesCardCount("player_two");
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(angelExperiment624, {
+          costs: { discardCards: [handFodder] },
+          targets: [targetCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Prince John's I SENTENCE YOU should trigger — opponent discarded a card
+      expect(testEngine.asPlayerTwo().getBagCount()).toBeGreaterThan(0);
+
+      // Accept the optional draw
+      expect(
+        testEngine.asPlayerTwo().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // Player two should have drawn a card
+      const updatedZones = testEngine.asPlayerTwo().getZonesCardCount("player_two");
+      expect(updatedZones.hand).toBe(initialZones.hand + 1);
     });
   });
 

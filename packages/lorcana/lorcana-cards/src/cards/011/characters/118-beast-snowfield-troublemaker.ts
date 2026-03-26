@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { beastSnowfieldTroublemakerI18n } from "./118-beast-snowfield-troublemaker.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const beastSnowfieldTroublemaker: CharacterCard = {
   id: "dg5",
@@ -34,12 +35,7 @@ export const beastSnowfieldTroublemaker: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Prince"],
   abilities: [
-    {
-      id: "dg5-rush",
-      type: "keyword",
-      keyword: "Rush",
-      text: "Rush",
-    },
+    rush,
     {
       id: "dg5-1",
       type: "triggered",

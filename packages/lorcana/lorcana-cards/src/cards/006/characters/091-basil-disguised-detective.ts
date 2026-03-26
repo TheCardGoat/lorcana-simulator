@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { basilDisguisedDetectiveI18n } from "./091-basil-disguised-detective.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const basilDisguisedDetective: CharacterCard = {
   id: "357",
@@ -34,15 +35,7 @@ export const basilDisguisedDetective: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Detective"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "fop-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         chooser: "CONTROLLER",

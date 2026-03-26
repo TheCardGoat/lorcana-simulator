@@ -353,7 +353,9 @@ export type SourceAttributeKey =
   | "lore"
   | "damage"
   | "chars-at-location"
-  | "cards-under-them";
+  | "cards-under-them"
+  /** Lore value of the location this character is currently at */
+  | "location-lore";
 
 export type TriggerTargetAttributeKey =
   | "cards-under-count-before-banish"
@@ -434,6 +436,13 @@ export type VariableAmount =
       excludeSelf?: boolean;
     }
   | { type: "locations-in-play"; controller: "you" | "opponent" | "opponents" }
+  // Turn-metric based amounts (read from turn metadata counters)
+  | {
+      type: "turn-metric";
+      metric: "banished-in-challenge-count";
+      owner: "you" | "opponent";
+      multiplier?: number;
+    }
   | {
       type: "for-each";
       counter: ForEachCounterType | { type: string; controller?: string };

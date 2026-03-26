@@ -49,6 +49,18 @@ export const munchingsAndCrunchings: ItemCard = {
       text: "WHAT A JUICY APPLE {E} — Remove up to 2 damage from chosen character.",
       type: "activated",
     },
+    {
+      effect: {
+        amount: 1,
+        cardType: "character",
+        cardName: "Gurgi",
+        type: "cost-reduction",
+      },
+      id: "16w-2",
+      name: "COME ON OUT",
+      text: "COME ON OUT You pay 1 {I} less to play characters named Gurgi.",
+      type: "static",
+    },
   ],
   i18n: munchingsAndCrunchingsI18n,
 };

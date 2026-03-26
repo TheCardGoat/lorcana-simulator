@@ -1,4 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { shift } from "../../../helpers/abilities/shift";
+import { ward } from "../../../helpers/abilities/ward";
 import { webbyVanderquackJuniorProspectorEnchantedI18n } from "./229-webby-vanderquack-junior-prospector-enchanted.i18n";
 
 export const webbyVanderquackJuniorProspectorEnchanted: CharacterCard = {
@@ -38,21 +40,8 @@ export const webbyVanderquackJuniorProspectorEnchanted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally"],
   abilities: [
-    {
-      cost: {
-        ink: 2,
-      },
-      id: "y1i-1",
-      keyword: "Shift",
-      text: "Shift 2 {I}",
-      type: "keyword",
-    },
-    {
-      id: "y1i-2",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    shift(2),
+    ward,
     {
       effect: {
         condition: {

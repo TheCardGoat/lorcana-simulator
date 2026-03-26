@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { goofyMusketeerI18n } from "./004-goofy-musketeer.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const goofyMusketeer: CharacterCard = {
   id: "BTg",
@@ -33,12 +34,7 @@ export const goofyMusketeer: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Musketeer"],
   abilities: [
-    {
-      id: "11w-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         chooser: "CONTROLLER",

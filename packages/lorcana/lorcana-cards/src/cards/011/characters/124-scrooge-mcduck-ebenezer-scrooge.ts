@@ -69,29 +69,26 @@ export const scroogeMcduckEbenezerScrooge: CharacterCard = {
     },
     {
       id: "12w-2",
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "opponent",
+          filters: [
+            {
+              type: "lore",
+              comparison: "eq",
+              value: 0,
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "opponent",
-            filters: [
-              {
-                type: "lore",
-                comparison: "eq",
-                value: 0,
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          amount: 1,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 1,
+        type: "gain-lore",
       },
       trigger: {
         event: "end-turn",

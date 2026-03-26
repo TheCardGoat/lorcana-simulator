@@ -38,8 +38,8 @@ describe("Gaston - Intellectual Powerhouse", () => {
 
       expect(testEngine.asPlayerOne().getCardZone(fillerA)).toBe("hand");
       expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
-        fillerC.id,
         fillerB.id,
+        fillerC.id,
       ]);
     });
   });

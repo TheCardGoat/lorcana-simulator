@@ -71,7 +71,89 @@ describe("Stitch - Rock Star (Set 9 reprint)", () => {
     });
   });
 
+  it("regression: with two copies in play, only one draws when a cheap character is exerted (exert cost can only be paid once)", () => {
+    const cheapCharacter = createMockCharacter({
+      id: "stitch-rock-star-cheap-char",
+      name: "Cheap Character",
+      cost: 1,
+      strength: 1,
+      willpower: 1,
+      lore: 1,
+    });
+
+    // Create a second copy of Stitch - Rock Star with a different instance
+    const stitchRockStarCopy: typeof stitchRockStar = {
+      ...stitchRockStar,
+    };
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 5,
+        inkwell: cheapCharacter.cost,
+        hand: [cheapCharacter],
+        play: [stitchRockStar, stitchRockStarCopy],
+      },
+      { deck: 2 },
+    );
+
+    const initialDeckCount = testEngine.asPlayerOne().getZonesCardCount().deck;
+
+    // Play the cheap character - both Stitch triggers fire
+    expect(testEngine.asPlayerOne().playCard(cheapCharacter)).toBeSuccessfulCommand();
+
+    // There should be 2 bag effects (one from each Stitch)
+    const bagEffects = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffects).toHaveLength(2);
+
+    // Accept the first trigger by bag ID - exerts the cheap character and draws
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+
+    // The cheap character should now be exerted
+    expect(testEngine.isExerted(cheapCharacter)).toBe(true);
+
+    // The second trigger should fizzle or fail because the character is already exerted
+    // (exert cost cannot be paid again)
+    expect(
+      testEngine.asPlayerOne().resolveBag(bagEffects[1]!.id, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+
+    // Only 1 card should have been drawn total (not 2)
+    const finalDeckCount = testEngine.asPlayerOne().getZonesCardCount().deck;
+    expect(finalDeckCount).toBe(initialDeckCount - 1);
+  });
+
   describe("Interaction with Lilo Escape Artist", () => {
-    it.todo("should NOT draw a card when Lilo enters play already exerted from discard", () => {});
+    it("should NOT draw a card when Lilo enters play already exerted from discard", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          discard: [liloEscapeArtist],
+          inkwell: liloEscapeArtist.cost,
+          play: [stitchRockStar],
+          deck: [stitchNewDog, stitchNewDog],
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      const initialDeckCount = testEngine.asPlayerOne().getZonesCardCount().deck;
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(liloEscapeArtist)).toBe("play");
+      expect(testEngine.isExerted(liloEscapeArtist)).toBe(true);
+      expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(initialDeckCount);
+    });
   });
 });

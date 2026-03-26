@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { stabbingtonBrotherWithoutAPatchI18n } from "./125-stabbington-brother-without-a-patch.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const stabbingtonBrotherWithoutAPatch: CharacterCard = {
   id: "ij4",
@@ -25,12 +26,7 @@ export const stabbingtonBrotherWithoutAPatch: CharacterCard = {
   text: "Rush GET 'EM! Your other characters named Stabbington Brother gain Rush.",
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "ij4-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       effect: {
         keyword: "Rush",

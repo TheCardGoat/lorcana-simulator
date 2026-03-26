@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ticktockEverpresentPursuerI18n } from "./056-tick-tock-ever-present-pursuer.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const ticktockEverpresentPursuer: CharacterCard = {
   id: "9tn",
@@ -24,13 +25,6 @@ export const ticktockEverpresentPursuer: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "16h-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: ticktockEverpresentPursuerI18n,
 };

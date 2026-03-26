@@ -34,28 +34,16 @@ export const weKnowTheWay: ActionCard = {
             type: "shuffle-into-deck",
           },
           {
+            type: "reveal-and-route",
             target: "CONTROLLER",
-            type: "reveal-top-card",
-          },
-          {
-            condition: {
-              type: "revealed-matches-chosen-name",
-            },
-            else: {
-              type: "put-in-hand",
-              source: "revealed",
-              target: "CONTROLLER",
-            },
-            then: {
-              type: "optional",
-              effect: {
-                type: "play-card",
-                from: "revealed",
-                cost: "free",
-                target: "CONTROLLER",
+            routes: [
+              {
+                condition: { type: "revealed-matches-chosen-name" },
+                destination: { zone: "play", cost: "free" },
+                optional: true,
               },
-            },
-            type: "conditional",
+            ],
+            fallback: { zone: "hand" },
           },
         ],
         type: "sequence",

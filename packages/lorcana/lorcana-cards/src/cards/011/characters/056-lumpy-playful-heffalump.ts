@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { lumpyPlayfulHeffalumpI18n } from "./056-lumpy-playful-heffalump.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const lumpyPlayfulHeffalump: CharacterCard = {
   id: "RK4",
@@ -24,13 +25,6 @@ export const lumpyPlayfulHeffalump: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "2kg-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: lumpyPlayfulHeffalumpI18n,
 };

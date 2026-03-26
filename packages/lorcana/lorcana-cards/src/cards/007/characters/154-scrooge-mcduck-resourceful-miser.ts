@@ -37,20 +37,19 @@ export const scroogeMcduckResourcefulMiser: CharacterCard = {
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: {
-            selector: "self",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "exert",
+        type: "exert",
+        target: {
+          selector: "chosen",
+          count: 4,
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["item"],
+          filter: [{ type: "ready" }],
         },
-        type: "optional",
       },
+      alternativeCost: "exert-4-items",
       id: "18b-1",
+      name: "PUT IT TO GOOD USE",
       text: "PUT IT TO GOOD USE You may exert 4 items of yours to play this character for free.",
       type: "action",
     },

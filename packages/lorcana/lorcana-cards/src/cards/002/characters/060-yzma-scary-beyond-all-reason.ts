@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { yzmaScaryBeyondAllReasonI18n } from "./060-yzma-scary-beyond-all-reason.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const yzmaScaryBeyondAllReason: CharacterCard = {
   id: "mCu",
@@ -34,15 +35,7 @@ export const yzmaScaryBeyondAllReason: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Sorcerer"],
   abilities: [
-    {
-      id: "1c0-1",
-      cost: {
-        ink: 4,
-      },
-      keyword: "Shift",
-      type: "keyword",
-      text: "Shift 4",
-    },
+    shift(4),
     {
       id: "1c0-2",
       effect: {

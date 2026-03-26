@@ -31,31 +31,24 @@ export const queenOfHeartsCapriciousMonarch: CharacterCard = {
   classifications: ["Storyborn", "Villain", "Queen"],
   abilities: [
     {
-      effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: {
-            selector: "self",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "ready",
-        },
-        type: "optional",
-      },
       id: "qi9-1",
       name: "OFF WITH THEIR HEADS!",
       text: "OFF WITH THEIR HEADS! Whenever an opposing character is banished, you may ready this character.",
-      trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
-      },
       type: "triggered",
+      trigger: {
+        event: "banish",
+        on: "OPPONENT_CHARACTERS",
+        timing: "whenever",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "ready",
+          target: "SELF",
+        },
+      },
     },
   ],
-  missingTests: true,
   i18n: queenOfHeartsCapriciousMonarchI18n,
 };

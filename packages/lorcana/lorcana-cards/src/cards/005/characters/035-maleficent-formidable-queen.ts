@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { maleficentFormidableQueenI18n } from "./035-maleficent-formidable-queen.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const maleficentFormidableQueen: CharacterCard = {
   id: "IEz",
@@ -34,15 +35,7 @@ export const maleficentFormidableQueen: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Queen", "Sorcerer"],
   abilities: [
-    {
-      cost: {
-        ink: 6,
-      },
-      id: "1a2-1",
-      keyword: "Shift",
-      text: "Shift 6",
-      type: "keyword",
-    },
+    shift(6),
     {
       effect: {
         type: "for-each",

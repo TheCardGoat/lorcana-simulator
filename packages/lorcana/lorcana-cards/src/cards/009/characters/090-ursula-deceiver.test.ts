@@ -56,4 +56,25 @@ describe("Ursula - Deceiver (set 009)", () => {
       expect(testEngine.asPlayerTwo().getCardZone(mickeyMouseTrueFriend)).toBe("hand");
     });
   });
+
+  it("regression: controller (not opponent) chooses which song to discard", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [ursulaDeceiver],
+        inkwell: ursulaDeceiver.cost,
+      },
+      {
+        hand: [andThenAlongCameZeus, mickeyMouseTrueFriend],
+      },
+    );
+
+    const songCardId = testEngine.findCardInstanceId(andThenAlongCameZeus, "hand", "p2");
+
+    expect(testEngine.asPlayerOne().playCard(ursulaDeceiver)).toBeSuccessfulCommand();
+
+    // The CONTROLLER (player one) should choose which card to discard, not the opponent
+    expect(testEngine.asPlayerOne().respondWith(songCardId)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getCardZone(andThenAlongCameZeus)).toBe("discard");
+  });
 });

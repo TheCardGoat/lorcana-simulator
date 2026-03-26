@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ryderFleetfootedInfiltratorI18n } from "./056-ryder-fleet-footed-infiltrator.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const ryderFleetfootedInfiltrator: CharacterCard = {
   id: "yNt",
@@ -24,13 +25,6 @@ export const ryderFleetfootedInfiltrator: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "14o-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: ryderFleetfootedInfiltratorI18n,
 };

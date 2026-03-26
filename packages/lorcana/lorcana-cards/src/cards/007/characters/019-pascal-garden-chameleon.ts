@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { pascalGardenChameleonI18n } from "./019-pascal-garden-chameleon.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const pascalGardenChameleon: CharacterCard = {
   id: "CD3",
@@ -24,13 +25,6 @@ export const pascalGardenChameleon: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1oz-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: pascalGardenChameleonI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { pinocchioOnTheRunI18n } from "./057-pinocchio-on-the-run.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const pinocchioOnTheRun: CharacterCard = {
   id: "e9v",
@@ -34,15 +35,7 @@ export const pinocchioOnTheRun: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "186-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         chooser: "CONTROLLER",
@@ -52,7 +45,14 @@ export const pinocchioOnTheRun: CharacterCard = {
             count: 1,
             owner: "any",
             zones: ["play"],
-            cardTypes: ["character"],
+            cardTypes: ["character", "item"],
+            filters: [
+              {
+                type: "cost-comparison",
+                comparison: "less-or-equal",
+                value: 3,
+              },
+            ],
           },
           type: "return-to-hand",
         },
@@ -69,6 +69,5 @@ export const pinocchioOnTheRun: CharacterCard = {
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: pinocchioOnTheRunI18n,
 };

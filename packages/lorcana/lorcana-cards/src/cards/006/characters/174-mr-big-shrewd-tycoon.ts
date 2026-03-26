@@ -35,6 +35,11 @@ export const mrBigShrewdTycoon: CharacterCard = {
         restriction: "cant-be-challenged",
         target: "SELF",
         type: "restriction",
+        challengerFilter: {
+          type: "strength-comparison",
+          operator: "gte",
+          value: 2,
+        },
       },
       id: "1lm-1",
       name: "REPUTATION",

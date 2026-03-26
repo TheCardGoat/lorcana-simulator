@@ -1,6 +1,6 @@
 import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
 import type { PendingActionResolutionInput } from "../../types";
-import { createLorcanaLogMessage, type LorcanaMoveDefinition } from "../../types";
+import { createLorcanaLogProjection, type LorcanaMoveDefinition } from "../../types";
 import type { LogTargetId } from "../../types/log-messages";
 import { continuePendingChallengeResolution } from "../moves/core/challenge";
 import { continuePendingTurnTransition } from "../moves/turn/pass-turn";
@@ -79,55 +79,94 @@ function logResolveBagMessage(
   const abilityName = bagEffect.abilityName?.trim();
   const targets = normalizeResolveBagTargets(getCurrentSelectionInput(resolutionInput));
 
-  const defaultMessage = (() => {
+  const visibility = { mode: "PUBLIC" as const };
+  const category = "action" as const;
+
+  const projection = (() => {
     switch (status) {
       case "completed":
         if (abilityName && targets && targets.length > 0) {
-          return createLorcanaLogMessage("lorcana.bag.resolve.completed.targets.named", {
-            ...common,
-            abilityName,
-            targets,
-          });
+          return createLorcanaLogProjection(
+            "lorcana.bag.resolve.completed.targets.named",
+            {
+              ...common,
+              abilityName,
+              targets,
+            },
+            visibility,
+            category,
+          );
         }
         if (targets && targets.length > 0) {
-          return createLorcanaLogMessage("lorcana.bag.resolve.completed.targets", {
-            ...common,
-            targets,
-          });
+          return createLorcanaLogProjection(
+            "lorcana.bag.resolve.completed.targets",
+            {
+              ...common,
+              targets,
+            },
+            visibility,
+            category,
+          );
         }
         if (abilityName) {
-          return createLorcanaLogMessage("lorcana.bag.resolve.completed.named", {
-            ...common,
-            abilityName,
-          });
+          return createLorcanaLogProjection(
+            "lorcana.bag.resolve.completed.named",
+            {
+              ...common,
+              abilityName,
+            },
+            visibility,
+            category,
+          );
         }
-        return createLorcanaLogMessage("lorcana.bag.resolve.completed", common);
+        return createLorcanaLogProjection(
+          "lorcana.bag.resolve.completed",
+          common,
+          visibility,
+          category,
+        );
       case "pending":
         if (abilityName) {
-          return createLorcanaLogMessage("lorcana.bag.resolve.pending.named", {
-            ...common,
-            abilityName,
-          });
+          return createLorcanaLogProjection(
+            "lorcana.bag.resolve.pending.named",
+            {
+              ...common,
+              abilityName,
+            },
+            visibility,
+            category,
+          );
         }
-        return createLorcanaLogMessage("lorcana.bag.resolve.pending", common);
+        return createLorcanaLogProjection(
+          "lorcana.bag.resolve.pending",
+          common,
+          visibility,
+          category,
+        );
       case "skipped":
         if (abilityName) {
-          return createLorcanaLogMessage("lorcana.bag.resolve.skipped.named", {
-            ...common,
-            abilityName,
-          });
+          return createLorcanaLogProjection(
+            "lorcana.bag.resolve.skipped.named",
+            {
+              ...common,
+              abilityName,
+            },
+            visibility,
+            category,
+          );
         }
-        return createLorcanaLogMessage("lorcana.bag.resolve.skipped", common);
+        return createLorcanaLogProjection(
+          "lorcana.bag.resolve.skipped",
+          common,
+          visibility,
+          category,
+        );
       default:
         return assertNever(status);
     }
   })();
 
-  ctx.framework.log({
-    category: "action",
-    visibility: { mode: "PUBLIC" },
-    defaultMessage,
-  });
+  ctx.framework.log(projection);
 }
 
 function getBagEffect(
@@ -298,12 +337,47 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
       bagEffect.effect,
       currentSelectionAnalysis,
     );
+    // For sequences, the whole-effect target analysis aggregates candidates from
+    // ALL steps, which can mask that the current step has zero valid candidates.
+    // Re-analyze the first step in isolation so shouldAutoRejectForNoValidTargets
+    // reflects the step the player is actually resolving.
+    const effectRecord = bagEffect.effect as Record<string, unknown> | null;
+    const firstStepEffect =
+      effectRecord?.type === "sequence"
+        ? ((effectRecord.steps as unknown[] | undefined)?.[0] ?? null)
+        : null;
+    const shouldAutoRejectForNoValidTargets =
+      targetAvailability.shouldAutoRejectForNoValidTargets ||
+      (firstStepEffect != null &&
+        (() => {
+          const stepAnalysis = analyzeEffectTargets(
+            firstStepEffect,
+            controllerId,
+            ctx,
+            bagEffect.sourceId as CardInstanceId,
+          );
+          const stepSelectionAnalysis =
+            bagSelectionContext?.kind === "target-selection" ||
+            bagSelectionContext?.kind === "discard-choice"
+              ? {
+                  ...stepAnalysis,
+                  minSelections: bagSelectionContext.minSelections,
+                  maxSelections: bagSelectionContext.maxSelections,
+                  ordered: bagSelectionContext.ordered,
+                }
+              : stepAnalysis;
+          return analyzeTargetSelectionAvailabilityFromAnalysis(
+            firstStepEffect,
+            stepSelectionAnalysis,
+          ).shouldAutoRejectForNoValidTargets;
+        })());
     if (
       requirements.requiresExplicitTargetSelection &&
       !requirements.allowsExplicitEmptyTargetSelection &&
       hasExplicitTargets &&
       explicitTargetCount === 0 &&
-      !isDecliningOptional
+      !isDecliningOptional &&
+      !shouldAutoRejectForNoValidTargets
     ) {
       traceLorcanaRuntimeStep({
         kind: "move.validation.failed",
@@ -345,7 +419,7 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
       const normalizedSelection =
         !selectionValidation.valid &&
         selectionValidation.errorCode === "TOO_FEW_TARGETS" &&
-        targetAvailability.shouldAutoRejectForNoValidTargets
+        shouldAutoRejectForNoValidTargets
           ? validateAndNormalizeTargetSelection(
               explicitTargets,
               {
@@ -446,10 +520,23 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
       const isAcceptingOptional = mergedResolutionInput.resolveOptional === true;
       const hasResolvedChoice = typeof mergedResolutionInput.choiceIndex === "number";
       const mergedRequirements = analyzeResolutionRequirements(bagEntry.effect);
+      // When accepting an optional that wraps a play-card from hand effect, the
+      // player must select which card to play before the bag executes.
+      // play-card from hand does not use the pending-effect suspension path, so
+      // we advance the bag state here to show the hand-card picker to the player.
+      // Use targetDsl.length === 0 to identify play-card contexts: buildPlayCardSelectionContext
+      // always returns targetDsl: [] while other hand-targeting effects (put-into-inkwell, etc.)
+      // return a non-empty targetDsl and DO use the pending-effect suspension path.
+      const isAcceptingOptionalWithHandPlayCard =
+        isAcceptingOptional &&
+        nextSelectionContext?.kind === "target-selection" &&
+        (nextSelectionContext.allowedZones as string[] | undefined)?.includes("hand") === true &&
+        (nextSelectionContext.targetDsl as unknown[])?.length === 0;
       const shouldAdvance =
         nextSelectionContext &&
-        mergedRequirements.requiresExplicitTargetSelection &&
-        !isAcceptingOptional &&
+        (mergedRequirements.requiresExplicitTargetSelection ||
+          isAcceptingOptionalWithHandPlayCard) &&
+        (!isAcceptingOptional || isAcceptingOptionalWithHandPlayCard) &&
         !hasResolvedChoice;
       if (shouldAdvance) {
         // There's still more input needed — advance the bag item's state
@@ -648,6 +735,13 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
   },
 
   available: (ctx) => {
+    // Block bag resolution while a pending effect (e.g., target selection from a played action card)
+    // is awaiting resolution. Rule 6.7.7: effects of a card played during resolution must fully
+    // resolve before other bag triggers can be resolved.
+    if (ctx.framework.state.priority.pendingChoice || (ctx.G.pendingEffects?.length ?? 0) > 0) {
+      return false;
+    }
+
     if (ctx.playerId !== getNextBagResolver(ctx)) {
       return false;
     }

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { tipoJuniorChipmunkI18n } from "./089-tipo-junior-chipmunk.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const tipoJuniorChipmunk: CharacterCard = {
   id: "xfC",
@@ -24,13 +25,6 @@ export const tipoJuniorChipmunk: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "y4v-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: tipoJuniorChipmunkI18n,
 };

@@ -32,14 +32,22 @@ export const iagoOutOfReach: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "resource-count",
+        what: "exerted-characters",
+        controller: "you",
+        comparison: "greater-or-equal",
+        value: 2,
+      },
       effect: {
         restriction: "cant-be-challenged",
         target: "SELF",
         type: "restriction",
       },
       id: "9cu-1",
+      name: "SELF-PRESERVATION",
       text: "SELF-PRESERVATION While you have another exerted character in play, this character can't be challenged.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: iagoOutOfReachI18n,

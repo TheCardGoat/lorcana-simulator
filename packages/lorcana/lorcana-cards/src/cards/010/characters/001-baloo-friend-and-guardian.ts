@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { balooFriendAndGuardianI18n } from "./001-baloo-friend-and-guardian.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
+import { support } from "../../../helpers/abilities/support";
 
 export const balooFriendAndGuardian: CharacterCard = {
   id: "T1d",
@@ -31,19 +33,6 @@ export const balooFriendAndGuardian: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "qnc-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-    {
-      id: "qnc-2",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard, support],
   i18n: balooFriendAndGuardianI18n,
 };

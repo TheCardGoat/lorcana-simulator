@@ -102,6 +102,7 @@ export function resolveRestrictionEffect(
         type: "restriction",
         sourceId: effect.linkedToSource ? cardPlayed.cardId : undefined,
         activeWhileSourceInPlay: effect.linkedToSource === true,
+        condition: effect.condition as { type: string; [key: string]: unknown } | undefined,
       }),
     );
   }

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rafikiShamanDuelistI18n } from "./055-rafiki-shaman-duelist.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const rafikiShamanDuelist: CharacterCard = {
   id: "q4q",
@@ -34,17 +35,12 @@ export const rafikiShamanDuelist: CharacterCard = {
   ],
   classifications: ["Storyborn", "Mentor", "Sorcerer"],
   abilities: [
-    {
-      id: "v9e-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       effect: {
         duration: "this-turn",
         keyword: "Challenger",
-        target: "CHOSEN_CHARACTER",
+        target: "SELF",
         type: "gain-keyword",
         value: 4,
       },

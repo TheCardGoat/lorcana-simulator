@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { boost } from "../../../helpers/abilities/boost";
 import { ladyTremaineSinisterSocialiteEnchantedI18n } from "./233-lady-tremaine-sinister-socialite-enchanted.i18n";
 
 export const ladyTremaineSinisterSocialiteEnchanted: CharacterCard = {
@@ -35,13 +36,7 @@ export const ladyTremaineSinisterSocialiteEnchanted: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Whisper"],
   abilities: [
-    {
-      id: "a1d-1",
-      keyword: "Boost",
-      text: "Boost 2 {I}",
-      type: "keyword",
-      value: 2,
-    },
+    boost(2),
     {
       condition: {
         type: "put-card-under-self-this-turn",

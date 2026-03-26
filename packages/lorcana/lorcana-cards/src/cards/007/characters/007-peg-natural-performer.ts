@@ -35,17 +35,17 @@ export const pegNaturalPerformer: CharacterCard = {
       cost: {
         exert: true,
       },
+      condition: {
+        type: "has-character-count",
+        controller: "you",
+        comparison: "greater-or-equal",
+        count: 3,
+        excludeSelf: true,
+      },
       effect: {
-        condition: {
-          expression: "you have 3 or more other characters in play",
-          type: "if",
-        },
-        then: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
-        },
-        type: "conditional",
+        amount: 1,
+        target: "CONTROLLER",
+        type: "draw",
       },
       type: "activated",
       text: "CAPTIVE AUDIENCE {E} — If you have 3 or more other characters in play, draw a card.",

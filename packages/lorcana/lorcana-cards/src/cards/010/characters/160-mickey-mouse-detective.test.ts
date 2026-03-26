@@ -1,93 +1,57 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { mickeyMouseDetective } from "@lorcanito/lorcana-engine/cards/010/index";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Mickey Mouse - Detective", () => {
-//   Describe("GET A CLUE", () => {
-//     It("should have the ability defined with correct structure", () => {
-//       Const ability = mickeyMouseDetective.abilities?.find(
-//         (a) => "name" in a && a.name === "GET A CLUE",
-//       );
-//
-//       Expect(ability).toBeDefined();
-//
-//       If (ability && "effects" in ability && Array.isArray(ability.effects)) {
-//         Const moveEffect = ability.effects[0] as any;
-//         Expect(moveEffect.type).toBe("move");
-//         Expect(moveEffect.to).toBe("inkwell");
-//         Expect(moveEffect.exerted).toBe(true);
-//       }
-//     });
-//
-//     It("should be optional ability", () => {
-//       Const ability = mickeyMouseDetective.abilities?.find(
-//         (a) => "name" in a && a.name === "GET A CLUE",
-//       );
-//
-//       Expect(ability).toBeDefined();
-//
-//       If (ability && "optional" in ability) {
-//         Expect(ability.optional).toBe(true);
-//       }
-//     });
-//
-//     It("should trigger when you play this character", () => {
-//       Const ability = mickeyMouseDetective.abilities?.find(
-//         (a) => "name" in a && a.name === "GET A CLUE",
-//       );
-//
-//       Expect(ability).toBeDefined();
-//
-//       If (
-//         Ability &&
-//         "trigger" in ability &&
-//         Ability.trigger &&
-//         Typeof ability.trigger === "object" &&
-//         "on" in ability.trigger
-//       ) {
-//         Expect(ability.trigger.on).toBe("play");
-//       }
-//     });
-//   });
-//
-//   Describe("Stats and basic properties", () => {
-//     It("should have correct stats", () => {
-//       Const testEngine = new TestEngine({
-//         Play: [mickeyMouseDetective],
-//       });
-//
-//       Const cardUnderTest = testEngine.getCardModel(mickeyMouseDetective);
-//
-//       Expect(cardUnderTest.strength).toBe(1);
-//       Expect(cardUnderTest.willpower).toBe(3);
-//       Expect(cardUnderTest.lore).toBe(1);
-//       Expect(cardUnderTest.cost).toBe(3);
-//     });
-//
-//     It("should not be inkwell card", () => {
-//       Expect(mickeyMouseDetective.inkwell).toBe(false);
-//     });
-//
-//     It("should have correct characteristics for Detective synergy", () => {
-//       Expect(mickeyMouseDetective.characteristics).toEqual([
-//         "dreamborn",
-//         "hero",
-//         "detective",
-//       ]);
-//     });
-//
-//     It("should be sapphire color", () => {
-//       Expect(mickeyMouseDetective.colors).toEqual(["sapphire"]);
-//     });
-//
-//     It("should be common rarity", () => {
-//       Expect(mickeyMouseDetective.rarity).toBe("common");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import { mickeyMouseDetective } from "./160-mickey-mouse-detective";
+
+describe("Mickey Mouse - Detective", () => {
+  describe("GET A CLUE - When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.", () => {
+    it("puts the top card of deck into inkwell facedown and exerted when accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [mickeyMouseDetective],
+        inkwell: mickeyMouseDetective.cost,
+        deck: 5,
+      });
+
+      const initialInkwellCount = testEngine.asPlayerOne().getZonesCardCount("player_one").inkwell;
+      const initialDeckCount = testEngine.asPlayerOne().getZonesCardCount("player_one").deck;
+
+      expect(testEngine.asPlayerOne().playCard(mickeyMouseDetective)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getZonesCardCount("player_one").inkwell).toBe(
+        initialInkwellCount + 1,
+      );
+      expect(testEngine.asPlayerOne().getZonesCardCount("player_one").deck).toBe(
+        initialDeckCount - 1,
+      );
+    });
+
+    it("does not put a card into inkwell when declined", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [mickeyMouseDetective],
+        inkwell: mickeyMouseDetective.cost,
+        deck: 5,
+      });
+
+      const initialInkwellCount = testEngine.asPlayerOne().getZonesCardCount("player_one").inkwell;
+      const initialDeckCount = testEngine.asPlayerOne().getZonesCardCount("player_one").deck;
+
+      expect(testEngine.asPlayerOne().playCard(mickeyMouseDetective)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getZonesCardCount("player_one").inkwell).toBe(
+        initialInkwellCount,
+      );
+      expect(testEngine.asPlayerOne().getZonesCardCount("player_one").deck).toBe(initialDeckCount);
+    });
+  });
+});

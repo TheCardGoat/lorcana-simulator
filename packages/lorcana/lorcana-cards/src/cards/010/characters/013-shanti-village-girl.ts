@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { singer } from "../../../helpers/abilities/singer";
 import { shantiVillageGirlI18n } from "./013-shanti-village-girl.i18n";
 
 export const shantiVillageGirl: CharacterCard = {
@@ -24,13 +25,6 @@ export const shantiVillageGirl: CharacterCard = {
   },
   text: "Singer 5",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      keyword: "Singer",
-      type: "keyword",
-      value: 5,
-      text: "Singer 5",
-    },
-  ],
+  abilities: [singer(5)],
   i18n: shantiVillageGirlI18n,
 };

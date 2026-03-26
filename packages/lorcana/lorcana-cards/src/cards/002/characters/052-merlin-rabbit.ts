@@ -31,6 +31,7 @@ export const merlinRabbit: CharacterCard = {
   classifications: ["Storyborn", "Mentor", "Sorcerer"],
   abilities: [
     {
+      id: "LZe-1",
       effect: {
         chooser: "CONTROLLER",
         effect: {
@@ -40,8 +41,7 @@ export const merlinRabbit: CharacterCard = {
         },
         type: "optional",
       },
-      id: "11g-1",
-      name: "HOPPITY HIP! When you play this character and",
+      name: "HOPPITY HIP!",
       text: "HOPPITY HIP! When you play this character and when he leaves play, you may draw a card.",
       trigger: {
         event: "play",
@@ -50,7 +50,26 @@ export const merlinRabbit: CharacterCard = {
       },
       type: "triggered",
     },
+    {
+      id: "LZe-2",
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          amount: 1,
+          target: "CONTROLLER",
+          type: "draw",
+        },
+        type: "optional",
+      },
+      name: "HOPPITY HIP!",
+      text: "HOPPITY HIP! When you play this character and when he leaves play, you may draw a card.",
+      trigger: {
+        event: "leave-play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
   ],
-  missingTests: true,
   i18n: merlinRabbitI18n,
 };

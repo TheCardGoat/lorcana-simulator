@@ -11,7 +11,7 @@ import type {
 } from "#core";
 import { getLoreValue, hasKeyword, isLocation } from "../../../card-utils";
 import {
-  createLorcanaLogMessage,
+  createLorcanaLogProjection,
   type LorcanaCard,
   type LorcanaCardMeta,
   type LorcanaMoveDefinition,
@@ -74,6 +74,31 @@ export type AdvanceTurnResult = {
   turnNumber: number;
 };
 
+function getCheapPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null {
+  if (
+    ctx.G.pendingTurnTransition ||
+    hasPendingBagItems(ctx) ||
+    ctx.framework.state.priority.pendingChoice ||
+    (ctx.G.pendingEffects?.length ?? 0) > 0
+  ) {
+    return {
+      valid: false,
+      error: "Cannot pass turn while a player decision is pending",
+      errorCode: PASS_TURN_DECISION_PENDING_ERROR_CODE,
+    };
+  }
+
+  if (ctx.framework.state.priority.stackDepth > 0) {
+    return {
+      valid: false,
+      error: "Cannot pass turn while stack has unresolved effects",
+      errorCode: PASS_TURN_STACK_PENDING_ERROR_CODE,
+    };
+  }
+
+  return null;
+}
+
 function pruneExpiredTemporaryCardMeta(ctx: PassTurnExecutionContext, currentTurn: number): void {
   const cardMetaEntries = ctx.cards.entriesMeta();
   for (const [cardId, rawMeta] of cardMetaEntries) {
@@ -126,12 +151,22 @@ function readyCardsForPlayer(
     for (const cardId of cards) {
       const currentMeta = (ctx.cards.require(cardId).meta ?? {}) as LorcanaCardMeta;
       const nextMeta = { ...currentMeta } as Record<string, unknown>;
+      const atLocationId = currentMeta.atLocationId;
+      const isCardAtLocation = !!atLocationId && isCardStillInPlay(ctx, atLocationId as string);
       const cantReady =
         hasTemporaryRestriction(currentMeta, currentTurn, "cant-ready", {
           isSourceInPlay: (sourceId) => isCardStillInPlay(ctx, sourceId),
+          isCardAtLocation,
+        }) ||
+        hasStaticCardRestriction({
+          state: ctx.framework.state,
+          cardId,
+          restriction: "cant-ready-at-start-of-turn",
+          getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
         }) ||
         hasTemporaryRestriction(currentMeta, currentTurn, "doesnt-ready", {
           isSourceInPlay: (sourceId) => isCardStillInPlay(ctx, sourceId),
+          isCardAtLocation,
         }) ||
         hasStaticCardRestriction({
           state: ctx.framework.state,
@@ -246,7 +281,12 @@ function playerHasNoCardsInDeck(ctx: PassTurnExecutionContext, playerId: PlayerI
 
 export function advanceTurnToNextPlayer(ctx: PassTurnExecutionContext): AdvanceTurnResult {
   const players = Object.keys(ctx.G.lore) as PlayerId[];
-  const previousPlayer = ctx.framework.state.currentPlayer!;
+  // Use pendingTurnTransition.previousPlayer when available — finalizeResolutionBoundary
+  // transfers priority to the bag resolver, which may be a different player than the one
+  // who ended their turn, so ctx.framework.state.currentPlayer (= priority.holder) is
+  // unreliable here when the turn advance happens after bag resolution.
+  const previousPlayer = (ctx.G.pendingTurnTransition?.previousPlayer ??
+    ctx.framework.state.currentPlayer) as PlayerId;
   const currentIndex = players.indexOf(previousPlayer as PlayerId);
   const nextIndex = (currentIndex + 1) % players.length;
   const nextPlayer = players[nextIndex];
@@ -283,6 +323,7 @@ export function advanceTurnToNextPlayer(ctx: PassTurnExecutionContext): AdvanceT
     cardsPlayedThisTurn: [],
     charactersQuesting: [],
     inkedThisTurn: [],
+    cardsPutIntoInkwellThisTurn: [],
     additionalInkwellActions: 0,
     shiftPlayedThisTurn: [],
     challengesByPlayerThisTurn: {},
@@ -428,25 +469,9 @@ export function continuePendingTurnTransition(ctx: PassTurnExecutionContext): vo
 }
 
 function getPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null {
-  if (
-    ctx.G.pendingTurnTransition ||
-    hasPendingBagItems(ctx) ||
-    ctx.framework.state.priority.pendingChoice ||
-    (ctx.G.pendingEffects?.length ?? 0) > 0
-  ) {
-    return {
-      valid: false,
-      error: "Cannot pass turn while a player decision is pending",
-      errorCode: PASS_TURN_DECISION_PENDING_ERROR_CODE,
-    };
-  }
-
-  if (ctx.framework.state.priority.stackDepth > 0) {
-    return {
-      valid: false,
-      error: "Cannot pass turn while stack has unresolved effects",
-      errorCode: PASS_TURN_STACK_PENDING_ERROR_CODE,
-    };
+  const cheapFailure = getCheapPassTurnFailure(ctx);
+  if (cheapFailure) {
+    return cheapFailure;
   }
 
   const recklessAttackerCanChallenge = getEligibleChallengeAttackers(ctx).some((attackerId) => {
@@ -491,17 +516,21 @@ function getPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null 
  * Pass turn to next player
  */
 export const passTurn: LorcanaMoveDefinition<"passTurn"> = {
+  optimistic: true,
   validate: (ctx): RuntimeValidationResult => getPassTurnFailure(ctx) ?? { valid: true },
 
   execute: (ctx) => {
     const currentPlayer = ctx.playerId as PlayerId;
-    ctx.framework.log({
-      category: "action",
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: createLorcanaLogMessage("lorcana.move.passTurn", {
-        playerId: currentPlayer,
-      }),
-    });
+    ctx.framework.log(
+      createLorcanaLogProjection(
+        "lorcana.move.passTurn",
+        {
+          playerId: currentPlayer,
+        },
+        { mode: "PUBLIC" },
+        "action",
+      ),
+    );
     if (playerHasNoCardsInDeck(ctx, currentPlayer)) {
       const winner = getOpponents(ctx, currentPlayer)[0];
       ctx.framework.events.endGame({
@@ -515,5 +544,5 @@ export const passTurn: LorcanaMoveDefinition<"passTurn"> = {
     continuePendingTurnTransition(ctx);
   },
 
-  available: (ctx) => !getPassTurnFailure(ctx),
+  available: (ctx) => !getCheapPassTurnFailure(ctx),
 };

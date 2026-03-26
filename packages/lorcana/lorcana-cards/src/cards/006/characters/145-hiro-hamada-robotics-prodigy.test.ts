@@ -1,41 +1,58 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   LiloMakingAWish,
-//   StichtNewDog,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { pawpsicle } from "@lorcanito/lorcana-engine/cards/002/items/items";
-// Import { aladdinBraveRescuer } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { hiroHamadaRoboticsProdigy } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Hiro Hamada - Robotics Prodigy", () => {
-//   It("**SWEET TECH**  {E}, 2 {I} − Search your deck for an item card or a Robot character card and reveal it to all players. Shuffle your deck and put that card on top of it.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: 2,
-//         Play: [hiroHamadaRoboticsProdigy],
-//         Deck: [liloMakingAWish, stichtNewDog, pawpsicle, aladdinBraveRescuer],
-//       },
-//       {
-//         Deck: 1,
-//       },
-//     );
-//
-//     Const cardUnderTest = testEngine.getCardModel(hiroHamadaRoboticsProdigy);
-//     Const target = testEngine.getCardModel(pawpsicle);
-//     Await testEngine.activateCard(cardUnderTest, { ability: "SWEET TECH" });
-//
-//     Await testEngine.resolveTopOfStack({ targets: [target] });
-//
-//     Await testEngine.passTurn();
-//     Await testEngine.passTurn();
-//
-//     Expect(target.zone).toEqual("hand");
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  createMockItem,
+} from "@tcg/lorcana-engine/testing";
+import { hiroHamadaRoboticsProdigy } from "./145-hiro-hamada-robotics-prodigy";
+
+const robotCharacter = createMockCharacter({
+  id: "hiro-robot-char",
+  name: "Robot Friend",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+  classifications: ["Storyborn", "Robot"],
+});
+
+const mockItem = createMockItem({
+  id: "hiro-test-item",
+  name: "Test Item",
+  cost: 2,
+});
+
+const nonRobotNonItem = createMockCharacter({
+  id: "hiro-non-robot",
+  name: "Non Robot",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  classifications: ["Storyborn", "Hero"],
+});
+
+describe("Hiro Hamada - Robotics Prodigy", () => {
+  describe("SWEET TECH - {2} {E} - Search your deck for an item card or a Robot character card", () => {
+    it("regression: exert ability to search deck for robot or item works", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: hiroHamadaRoboticsProdigy, isDrying: false }],
+          inkwell: 2,
+          deck: [nonRobotNonItem, robotCharacter, mockItem],
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      // Activate SWEET TECH (costs 2 ink + exert)
+      const result = testEngine.asPlayerOne().activateAbility(hiroHamadaRoboticsProdigy, {
+        ability: "SWEET TECH",
+      });
+
+      expect(result).toBeSuccessfulCommand();
+
+      // Hiro should be exerted after using the ability
+      expect(testEngine.asPlayerOne().isExerted(hiroHamadaRoboticsProdigy)).toBe(true);
+    });
+  });
+});

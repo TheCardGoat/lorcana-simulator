@@ -30,5 +30,9 @@
   "lorcana.effect.resolve.optionalSelection.accepted": "Resolvio {sourceCardId} eligiendo si.",
   "lorcana.effect.resolve.optionalSelection.rejected": "Resolvio {sourceCardId} eligiendo no.",
   "lorcana.effect.resolve.nameCardSelection": "Resolvio {sourceCardId} nombrando {namedCard}.",
-  "lorcana.effect.resolve.scrySelection": "Termino de ordenar las cartas de {sourceCardId}."
+  "lorcana.effect.resolve.scrySelection": "Termino de ordenar las cartas de {sourceCardId}.",
+  "lorcana.effect.resolve.scrySelection.detail": "Termino de ordenar las cartas de {sourceCardId}: {selection}.",
+  "lorcana.effect.resolve.revealTopCard": "{playerId} revelo {revealedCardId} del mazo de {targetPlayerId}.",
+  "lorcana.effect.resolve.revealTopCard.autoBottom": "Revelado {revealedCardId} — puesto en el fondo del mazo de {targetPlayerId}.",
+  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} eligio la opcion {choiceIndex} para {revealedCardId}."
 }

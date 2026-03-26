@@ -57,7 +57,8 @@ export const shenziHeadHyena: CharacterCard = {
       text: "WHAT HAVE WE GOT HERE? Whenever one of your Hyena characters challenges a damaged character, gain 2 lore.",
       name: "WHAT HAVE WE GOT HERE?",
       effect: {
-        amount: 0,
+        amount: 2,
+        target: "CONTROLLER",
         type: "gain-lore",
       },
       trigger: {

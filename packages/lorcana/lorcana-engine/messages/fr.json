@@ -30,5 +30,9 @@
   "lorcana.effect.resolve.optionalSelection.accepted": "A resolu {sourceCardId} en choisissant oui.",
   "lorcana.effect.resolve.optionalSelection.rejected": "A resolu {sourceCardId} en choisissant non.",
   "lorcana.effect.resolve.nameCardSelection": "A resolu {sourceCardId} en nommant {namedCard}.",
-  "lorcana.effect.resolve.scrySelection": "A termine l'ordre des cartes pour {sourceCardId}."
+  "lorcana.effect.resolve.scrySelection": "A termine l'ordre des cartes pour {sourceCardId}.",
+  "lorcana.effect.resolve.scrySelection.detail": "A termine l'ordre des cartes pour {sourceCardId} : {selection}.",
+  "lorcana.effect.resolve.revealTopCard": "{playerId} a revele {revealedCardId} du deck de {targetPlayerId}.",
+  "lorcana.effect.resolve.revealTopCard.autoBottom": "Révélé {revealedCardId} — mis au fond du deck de {targetPlayerId}.",
+  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} a choisi l'option {choiceIndex} pour {revealedCardId}."
 }

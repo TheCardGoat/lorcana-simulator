@@ -71,7 +71,7 @@ export const daisyDuckSapphireChampion: CharacterCard = {
       text: "LOOK AHEAD Whenever one of your other Sapphire characters quests, you may look at the top card of your deck. Put it on either the top or the bottom of your deck.",
       trigger: {
         event: "quest",
-        on: "YOUR_OTHER_CHARACTERS",
+        on: "YOUR_OTHER_SAPPHIRE_CHARACTERS",
         timing: "whenever",
       },
       type: "triggered",

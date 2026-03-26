@@ -15,9 +15,9 @@ const ORDERED_MOVE_CATEGORIES: readonly ExecutableMovePresentationCategoryId[] =
   "challenge",
   "activate-ability",
   "move-to-location",
-  "undo",
   "pass-turn",
   "alter-hand",
+  "undo",
   "concede",
 ] as const;
 

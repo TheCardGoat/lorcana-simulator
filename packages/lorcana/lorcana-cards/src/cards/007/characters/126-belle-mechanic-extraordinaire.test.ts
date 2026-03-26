@@ -150,6 +150,37 @@ describe("Belle - Mechanic Extraordinaire", () => {
       expect(testEngine.getLore(PLAYER_ONE)).toBe(belleMechanicExtraordinaire.lore + 1);
     });
 
+    // Regression: REPURPOSE was only granting 1 lore regardless of how many items moved (fixed March 15)
+    it("regression: moves 2 items from discard to deck and gains exactly 2 extra lore", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: belleMechanicExtraordinaire, isDrying: false }],
+        discard: [itemA, itemB],
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().quest(belleMechanicExtraordinaire)).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffects.length).toBeGreaterThan(0);
+
+      const itemAId = testEngine.findCardInstanceId(itemA, "discard", PLAYER_ONE);
+      const itemBId = testEngine.findCardInstanceId(itemB, "discard", PLAYER_ONE);
+
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          resolveOptional: true,
+          targets: [itemAId, itemBId],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Items should be in deck
+      expect(testEngine.asPlayerOne().getCardZone(itemA)).toBe("deck");
+      expect(testEngine.asPlayerOne().getCardZone(itemB)).toBe("deck");
+
+      // Lore: 3 (quest) + 2 (one per item moved) = 5 — NOT quest + 1
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(belleMechanicExtraordinaire.lore + 2);
+    });
+
     it("can decline the optional ability", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [{ card: belleMechanicExtraordinaire, isDrying: false }],

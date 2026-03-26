@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { robinHoodTimelyContestantI18n } from "./069-robin-hood-timely-contestant.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const robinHoodTimelyContestant: CharacterCard = {
   id: "LKY",
@@ -52,12 +53,7 @@ export const robinHoodTimelyContestant: CharacterCard = {
       type: "static",
       text: "TAG ME IN! For each 1 damage on opposing characters, you pay 1 {I} less to play this character.",
     },
-    {
-      id: "rhk-2",
-      type: "keyword",
-      keyword: "Ward",
-      text: "Ward",
-    },
+    ward,
   ],
   i18n: robinHoodTimelyContestantI18n,
 };

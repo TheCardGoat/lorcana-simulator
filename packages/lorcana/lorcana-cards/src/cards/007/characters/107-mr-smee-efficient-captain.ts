@@ -41,6 +41,7 @@ export const mrSmeeEfficientCaptain: CharacterCard = {
             owner: "any",
             zones: ["play"],
             cardTypes: ["character"],
+            filter: [{ type: "has-classification", classification: "Pirate" }],
           },
           type: "ready",
         },
@@ -54,6 +55,7 @@ export const mrSmeeEfficientCaptain: CharacterCard = {
         on: {
           cardType: "action",
           controller: "you",
+          excludeSong: true,
         },
         timing: "whenever",
       },

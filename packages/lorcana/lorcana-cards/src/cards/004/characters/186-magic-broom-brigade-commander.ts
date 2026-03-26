@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { magicBroomBrigadeCommanderI18n } from "./186-magic-broom-brigade-commander.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const magicBroomBrigadeCommander: CharacterCard = {
   id: "g7O",
@@ -34,13 +35,7 @@ export const magicBroomBrigadeCommander: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Broom"],
   abilities: [
-    {
-      id: "pct-1",
-      keyword: "Resist",
-      text: "Resist +1",
-      type: "keyword",
-      value: 1,
-    },
+    resist(1),
     {
       effect: {
         modifier: {

@@ -12,7 +12,7 @@ export const namaariNemesis: CharacterCard = {
   franchise: "Raya and the Last Dragon",
   set: "002",
   cardNumber: 118,
-  rarity: "common",
+  rarity: "super_rare",
   cost: 4,
   strength: 3,
   willpower: 3,

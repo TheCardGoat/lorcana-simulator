@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { queenOfHeartsUnpredictableBullyI18n } from "./095-queen-of-hearts-unpredictable-bully.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const queenOfHeartsUnpredictableBully: CharacterCard = {
   id: "4p4",
@@ -33,6 +34,24 @@ export const queenOfHeartsUnpredictableBully: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Villain", "Queen"],
-  abilities: [],
+  abilities: [
+    shift("Queen of Hearts", 3),
+    {
+      id: "4p4-2",
+      name: "IF I LOSE MY TEMPER…",
+      text: "IF I LOSE MY TEMPER… Whenever another character is played, put a damage counter on them.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "OTHER_CHARACTERS",
+        timing: "whenever",
+      },
+      effect: {
+        type: "put-damage",
+        amount: 1,
+        target: { ref: "trigger-subject" },
+      },
+    },
+  ],
   i18n: queenOfHeartsUnpredictableBullyI18n,
 };

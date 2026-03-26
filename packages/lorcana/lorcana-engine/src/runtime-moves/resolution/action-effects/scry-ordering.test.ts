@@ -18,6 +18,9 @@ import { showMeMore } from "../../../../../lorcana-cards/src/cards/007/actions/0
 
 describe("scry ordering", () => {
   it("preserves the selected top-card order while keeping untouched cards in place", () => {
+    // Deck (index 0 = bottom, last = top):
+    //   [liloMakingAWish, moanaOfMotunui, chiefTuiRespectedLeader, heiheiBoatSnack, mickeyMouseTrueFriend]
+    // Scry 3 looks at the top 3: [chiefTuiRespectedLeader, heiheiBoatSnack, mickeyMouseTrueFriend]
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [reflection],
@@ -38,20 +41,25 @@ describe("scry ordering", () => {
     expect(
       testEngine.asPlayerOne().playCardWithDestinations(reflection, {
         zone: "deck-top",
-        cards: [chiefTuiRespectedLeader, liloMakingAWish, moanaOfMotunui],
+        cards: [mickeyMouseTrueFriend, chiefTuiRespectedLeader, heiheiBoatSnack],
       }),
     ).toBeSuccessfulCommand();
 
+    // Bottom 2 untouched, then reordered top 3
     expect(testEngine.getCardDefinitionIdsInZone("deck", "player_one")).toEqual([
-      heiheiBoatSnack.id,
-      mickeyMouseTrueFriend.id,
-      chiefTuiRespectedLeader.id,
       liloMakingAWish.id,
       moanaOfMotunui.id,
+      mickeyMouseTrueFriend.id,
+      chiefTuiRespectedLeader.id,
+      heiheiBoatSnack.id,
     ]);
   });
 
   it("keeps the chosen player's untouched card ahead of the reordered looked-at cards", () => {
+    // P2 Deck (index 0 = bottom, last = top):
+    //   [doubleTrouble, allIsFound, showMeMore, soMuchToGive, tinkerBellPeterPansAlly]
+    // Scry 4 looks at top 4: [allIsFound, showMeMore, soMuchToGive, tinkerBellPeterPansAlly]
+    // doubleTrouble (bottom) is untouched.
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [waterHasMemory],
@@ -69,18 +77,19 @@ describe("scry ordering", () => {
     expect(
       testEngine.asPlayerOne().resolveNextPending({
         destinations: [
-          { zone: "deck-top", cards: [doubleTrouble] },
+          { zone: "deck-top", cards: [tinkerBellPeterPansAlly] },
           { zone: "deck-bottom", cards: [allIsFound, showMeMore, soMuchToGive] },
         ],
       }),
     ).toBeSuccessfulCommand();
 
+    // doubleTrouble untouched at bottom, then bottom-placed cards, then top-placed card
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_TWO)).toEqual([
-      tinkerBellPeterPansAlly.id,
-      doubleTrouble.id,
-      allIsFound.id,
-      showMeMore.id,
       soMuchToGive.id,
+      showMeMore.id,
+      allIsFound.id,
+      doubleTrouble.id,
+      tinkerBellPeterPansAlly.id,
     ]);
   });
 });

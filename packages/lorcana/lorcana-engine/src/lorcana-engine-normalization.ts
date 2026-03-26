@@ -33,6 +33,12 @@ type PlayCardCostObject =
       sacrificeTarget: CardInstanceId;
       amount?: number;
       targets?: CardInstanceId[];
+    }
+  | {
+      cost: "exert-items";
+      exertTargets: CardInstanceId[];
+      amount?: number;
+      targets?: CardInstanceId[];
     };
 
 type PlayCardMoveParams = LorcanaRuntimeMoveParams["playCard"];
@@ -162,6 +168,13 @@ export function normalizePlayCardCost(
         cardId,
         cost: "sacrifice",
         sacrificeTarget: cost.sacrificeTarget,
+        ...actionResolutionFields,
+      };
+    case "exert-items":
+      return {
+        cardId,
+        cost: "exert-items",
+        exertTargets: cost.exertTargets,
         ...actionResolutionFields,
       };
   }

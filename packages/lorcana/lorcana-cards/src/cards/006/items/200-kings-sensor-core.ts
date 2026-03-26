@@ -72,54 +72,29 @@ export const kingsSensorCore: ItemCard = {
         ink: 2,
       },
       effect: {
-        type: "sequence",
-        steps: [
+        type: "scry",
+        amount: 1,
+        target: "CONTROLLER",
+        revealAll: true,
+        destinations: [
           {
-            type: "reveal-top-card",
-            target: "CONTROLLER",
-          },
-          {
-            type: "conditional",
-            condition: {
-              type: "target-query",
-              query: {
-                selector: "all",
-                reference: "revealed-first",
-                cardType: "character",
+            zone: "hand",
+            min: 0,
+            max: 1,
+            filters: [
+              { type: "card-type", cardType: "character" },
+              {
+                type: "or",
                 filters: [
-                  {
-                    type: "or",
-                    filters: [
-                      {
-                        type: "has-classification",
-                        classification: "Prince",
-                      },
-                      {
-                        type: "has-classification",
-                        classification: "King",
-                      },
-                    ],
-                  },
+                  { type: "has-classification", classification: "Prince" },
+                  { type: "has-classification", classification: "King" },
                 ],
               },
-              comparison: {
-                operator: "gte",
-                value: 1,
-              },
-            },
-            then: {
-              type: "optional",
-              chooser: "CONTROLLER",
-              effect: {
-                type: "put-in-hand",
-                source: "revealed",
-                target: "CONTROLLER",
-              },
-            },
-            else: {
-              type: "put-on-top",
-              source: "revealed",
-            },
+            ],
+          },
+          {
+            zone: "deck-top",
+            remainder: true,
           },
         ],
       },

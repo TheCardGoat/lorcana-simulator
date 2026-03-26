@@ -14,6 +14,14 @@ const sapphireQuester = createMockCharacter({
   inkType: ["sapphire"],
 });
 
+const nonSapphireQuester = createMockCharacter({
+  id: "daisy-champ-non-sapphire-quester",
+  name: "Non-Sapphire Quester",
+  cost: 2,
+  lore: 1,
+  inkType: ["amber"],
+});
+
 const topCard = createMockCharacter({
   id: "daisy-champ-top-card",
   name: "Top Card",
@@ -62,12 +70,25 @@ describe("Daisy Duck - Sapphire Champion", () => {
         resolveOptional: true,
         destinations: [
           { zone: "deck-top", cards: [] },
-          { zone: "deck-bottom", cards: [topCard] },
+          { zone: "deck-bottom", cards: [secondCard] },
         ],
       }),
     ).toBeSuccessfulCommand();
 
     const deckIds = testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE);
-    expect(deckIds).toEqual([secondCard.id, topCard.id]);
+    expect(deckIds).toEqual([secondCard.id, topCard.id]); // index 0 = bottom, index 1 = top
+  });
+
+  it("LOOK AHEAD - does NOT trigger when a non-Sapphire character quests", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [topCard, secondCard],
+      play: [
+        { card: daisyDuckSapphireChampion, isDrying: false },
+        { card: nonSapphireQuester, isDrying: false },
+      ],
+    });
+
+    expect(testEngine.asPlayerOne().quest(nonSapphireQuester)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
   });
 });

@@ -1,5 +1,8 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mickeyMouseMusketeerCaptainI18n } from "./016-mickey-mouse-musketeer-captain.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
+import { shift } from "../../../helpers/abilities/shift";
+import { support } from "../../../helpers/abilities/support";
 
 export const mickeyMouseMusketeerCaptain: CharacterCard = {
   id: "OVa",
@@ -35,6 +38,36 @@ export const mickeyMouseMusketeerCaptain: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero", "Musketeer", "Captain"],
-  abilities: [],
+  abilities: [
+    shift(5),
+    bodyguard,
+    support,
+    {
+      condition: {
+        type: "used-shift",
+      },
+      effect: {
+        amount: {
+          cardTypes: ["character"],
+          excludeSelf: false,
+          filters: [{ type: "has-keyword", keyword: "Bodyguard" }],
+          owner: "you",
+          type: "filtered-count",
+          zones: ["play"],
+        },
+        target: "CONTROLLER",
+        type: "draw",
+      },
+      id: "OVa-4",
+      name: "MUSKETEERS UNITED",
+      text: "MUSKETEERS UNITED When you play this character, if you used Shift to play him, you may draw a card for each character with Bodyguard you have in play.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
+  ],
   i18n: mickeyMouseMusketeerCaptainI18n,
 };

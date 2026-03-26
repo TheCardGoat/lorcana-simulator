@@ -1,58 +1,125 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { bePrepared } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import {
-//   MauiHalfshark,
-//   SailTheAzuriteSea,
-// } from "@lorcanito/lorcana-engine/cards/006";
-// Import { mowgliManCub } from "@lorcanito/lorcana-engine/cards/010";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Mowgli - Man Cub", () => {
-//   Describe("HAVE A BETTER LOOK", () => {
-//     It("When you play this character, chosen opponent reveals their hand and discards a non-character card of their choice.", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: mowgliManCub.cost,
-//           Hand: [mowgliManCub],
-//         },
-//         {
-//           Hand: [bePrepared, sailTheAzuriteSea, mauiHalfshark],
-//         },
-//       );
-//
-//       Const actionCard = testEngine.getCardModel(bePrepared);
-//       Expect(actionCard.zone).toBe("hand");
-//       Expect(testEngine.getCardsByZone("hand", "player_two").length).toBe(3);
-//
-//       Await testEngine.playCard(mowgliManCub);
-//
-//       Await testEngine.acceptOptionalLayer();
-//       // Opponent's hand should be revealed
-//       Expect(
-//         TestEngine
-//           .getCardsByZone("hand", "player_two")
-//           .every((card) => card.isRevealed),
-//       ).toBe(true);
-//
-//       // Switch to opponent's perspective (they make the choice)
-//       TestEngine.testStore.changePlayer("player_two");
-//       Await testEngine.resolveTopOfStack({ targets: [actionCard] });
-//
-//       // Switch back to original player
-//       TestEngine.testStore.changePlayer("player_one");
-//
-//       // Action card should be discarded (opponent chose to discard it)
-//       Expect(actionCard.zone).toBe("discard");
-//
-//       // Character card should still be in hand (opponent cannot discard character cards with this ability)
-//       Const characterCard = testEngine.getCardModel(mauiHalfshark);
-//       Expect(characterCard.zone).toBe("hand");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_TWO,
+  createMockAction,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { mowgliManCub } from "./019-mowgli-man-cub";
+
+const opponentAction1 = createMockAction({
+  id: "mowgli-opp-action-1",
+  name: "Opponent Action 1",
+  cost: 2,
+});
+
+const opponentAction2 = createMockAction({
+  id: "mowgli-opp-action-2",
+  name: "Opponent Action 2",
+  cost: 3,
+});
+
+const opponentCharacter = createMockCharacter({
+  id: "mowgli-opp-char",
+  name: "Opponent Character",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+});
+
+describe("Mowgli - Man Cub", () => {
+  describe("HAVE A BETTER LOOK - When you play this character, chosen opponent reveals their hand and discards a non-character card of their choice.", () => {
+    it("reveals the opponent's hand and opponent chooses which non-character card to discard", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [mowgliManCub],
+          inkwell: mowgliManCub.cost,
+        },
+        {
+          hand: [opponentAction1, opponentAction2, opponentCharacter],
+        },
+      );
+
+      const opponentHandIds = testEngine.getCardInstanceIdsInZone("hand", PLAYER_TWO);
+      const action1Id = testEngine.findCardInstanceId(opponentAction1, "hand", PLAYER_TWO);
+
+      // Play Mowgli — triggers the ability
+      expect(testEngine.asPlayerOne().playCard(mowgliManCub)).toBeSuccessfulCommand();
+
+      // Controller resolves the bag (reveal + discard sequence)
+      expect(testEngine.asPlayerOne().resolveOnlyBag()).toBeSuccessfulCommand();
+
+      // Opponent chooses which non-character card to discard
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({
+          resolveOptional: true,
+          targets: [action1Id],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // The chosen action card should be discarded
+      expect(testEngine.asPlayerTwo().getCardZone(opponentAction1)).toBe("discard");
+
+      // The other action card should still be in hand (opponent chose a different one)
+      expect(testEngine.asPlayerTwo().getCardZone(opponentAction2)).toBe("hand");
+
+      // Character card should still be in hand (cannot discard character cards with this ability)
+      expect(testEngine.asPlayerTwo().getCardZone(opponentCharacter)).toBe("hand");
+
+      // All opponent hand cards should have been revealed
+      const cardMeta = testEngine.getAuthoritativeState().ctx.zones.private.cardMeta;
+      for (const cardId of opponentHandIds) {
+        expect(cardMeta[cardId]?.revealed).toBe(true);
+      }
+    });
+
+    it("opponent must still resolve pending even with only one valid non-character card", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [mowgliManCub],
+          inkwell: mowgliManCub.cost,
+        },
+        {
+          hand: [opponentAction1, opponentCharacter],
+        },
+      );
+
+      const action1Id = testEngine.findCardInstanceId(opponentAction1, "hand", PLAYER_TWO);
+
+      // Play Mowgli — triggers the ability
+      expect(testEngine.asPlayerOne().playCard(mowgliManCub)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolveOnlyBag()).toBeSuccessfulCommand();
+
+      // Opponent resolves the pending discard choice
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({
+          resolveOptional: true,
+          targets: [action1Id],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // The only action card is discarded
+      expect(testEngine.asPlayerTwo().getCardZone(opponentAction1)).toBe("discard");
+
+      // Character card stays in hand
+      expect(testEngine.asPlayerTwo().getCardZone(opponentCharacter)).toBe("hand");
+    });
+
+    it("does not discard when opponent has only character cards", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [mowgliManCub],
+          inkwell: mowgliManCub.cost,
+        },
+        {
+          hand: [opponentCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(mowgliManCub)).toBeSuccessfulCommand();
+
+      // Character card stays in hand (no valid non-character targets)
+      expect(testEngine.asPlayerTwo().getCardZone(opponentCharacter)).toBe("hand");
+    });
+  });
+});

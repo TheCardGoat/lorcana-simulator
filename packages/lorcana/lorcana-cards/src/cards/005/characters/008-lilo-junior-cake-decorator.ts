@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { liloJuniorCakeDecoratorI18n } from "./008-lilo-junior-cake-decorator.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const liloJuniorCakeDecorator: CharacterCard = {
   id: "s1Y",
@@ -24,13 +25,6 @@ export const liloJuniorCakeDecorator: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "183-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: liloJuniorCakeDecoratorI18n,
 };

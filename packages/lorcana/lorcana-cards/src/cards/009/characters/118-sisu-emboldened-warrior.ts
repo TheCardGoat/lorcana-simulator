@@ -32,7 +32,10 @@ export const sisuEmboldenedWarrior: CharacterCard = {
   abilities: [
     {
       effect: {
-        modifier: 1,
+        modifier: {
+          type: "cards-in-hand",
+          controller: "opponents",
+        },
         stat: "strength",
         target: "SELF",
         type: "modify-stat",

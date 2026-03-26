@@ -32,12 +32,12 @@ export const honeyLemonCostumedCatalyst: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Inventor"],
   abilities: [
     {
+      condition: {
+        type: "used-shift",
+      },
       effect: {
-        condition: {
-          expression: "you used Shift to play them",
-          type: "if",
-        },
-        then: {
+        chooser: "CONTROLLER",
+        effect: {
           target: {
             selector: "chosen",
             count: 1,
@@ -47,7 +47,7 @@ export const honeyLemonCostumedCatalyst: CharacterCard = {
           },
           type: "return-to-hand",
         },
-        type: "conditional",
+        type: "optional",
       },
       id: "1h9-1",
       name: "LET'S DO THIS!",

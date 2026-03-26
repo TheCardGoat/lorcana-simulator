@@ -140,6 +140,12 @@ export interface TargetDSL<TFilter = unknown, TContext extends BaseContext = Bas
   /** Exclude the source card from valid targets */
   excludeSelf?: boolean;
 
+  /** Exclude the challenger (defender in a challenge) from valid targets */
+  excludeChallenger?: boolean;
+
+  /** Exclude the trigger subject (e.g., the challenged/banished character) from valid targets */
+  excludeTriggerSubject?: boolean;
+
   /** All selected targets must be different cards */
   requireDifferentTargets?: boolean;
 }

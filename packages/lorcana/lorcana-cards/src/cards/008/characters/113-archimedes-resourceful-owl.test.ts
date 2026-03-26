@@ -226,5 +226,48 @@ describe("Archimedes - Resourceful Owl", () => {
       // Deck should remain at 3 (no draw happened)
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ deck: 3 });
     });
+
+    // TODO: requires manualBanish method on LorcanaServer
+    // it("regression: second ability does NOT trigger when opponent banishes an item on their turn", () => {
+    //   // Archimedes is on P1. P2 has an item-banishing ability.
+    //   // When P2 banishes their own item during P2's turn, Archimedes on P1 should NOT trigger.
+    //   const p2Item = createMockItem({
+    //     id: "archimedes-p2-item",
+    //     name: "P2 Item",
+    //     cost: 1,
+    //   });
+
+    //   const itemBanisher = createMockCharacter({
+    //     id: "archimedes-item-banisher",
+    //     name: "Item Banisher",
+    //     cost: 2,
+    //     strength: 2,
+    //     willpower: 2,
+    //   });
+
+    //   const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+    //     {
+    //       play: [archimedesResourcefulOwl],
+    //       deck: 3,
+    //     },
+    //     {
+    //       play: [p2Item],
+    //       deck: 3,
+    //     },
+    //   );
+
+    //   // Pass to P2's turn
+    //   expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    //   // P2 manually banishes their own item (simulating an ability that banishes items)
+    //   testEngine.asServer().manualBanish(p2Item);
+
+    //   // Archimedes on P1 should NOT have any triggered effects (it's not P1's turn)
+    //   const p1BagEffects = testEngine
+    //     .asPlayerOne()
+    //     .getBagEffects()
+    //     .filter((b: { controllerId: string }) => b.controllerId === "player_one");
+    //   expect(p1BagEffects.length).toBe(0);
+    // });
   });
 });

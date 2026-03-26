@@ -28,6 +28,7 @@ export interface SimulatorCardContextValue extends CardInteractionController {
   inspectedMeta: CardInteractionMeta | null;
   isInspectOpen: boolean;
   isGlobalPreviewOpen: boolean;
+  canSelectCard: (card: LorcanaCardSnapshot | null, meta?: CardInteractionMeta) => boolean;
   canSelectInspectedCard: boolean;
   previewCard: LorcanaCardSnapshot | null;
   previewPosition: PreviewPosition;
@@ -57,6 +58,12 @@ class SimulatorCardController implements SimulatorCardContextValue {
 
   constructor(options: SimulatorCardContextOptions = {}) {
     this.#options = options;
+
+    $effect(() => {
+      if (this.#sidebar.actionSelectionSession) {
+        this.closeCardInspect();
+      }
+    });
   }
 
   get previewCard(): LorcanaCardSnapshot | null {

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { minnieMouseTinyTimsMotherI18n } from "./141-minnie-mouse-tiny-tims-mother.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const minnieMouseTinyTimsMother: CharacterCard = {
   id: "4Kj",
@@ -25,12 +26,7 @@ export const minnieMouseTinyTimsMother: CharacterCard = {
   text: "Support",
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "8ol-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
+    support,
     {
       id: "8ol-2",
       type: "triggered",

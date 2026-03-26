@@ -1,31 +1,33 @@
 // LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { mickeyBraveLittleTailor } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { forbiddenMountainMaleficentsCastle } from "@lorcanito/lorcana-engine/cards/003/locations/locations";
-// Import { theIslandsIPulledFromTheSea } from "@lorcanito/lorcana-engine/cards/006";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("The Islands I Pulled From The Sea", () => {
-//   It("Search your deck for a location card, reveal that card to all players, and put it into your hand. Then, shuffle your deck.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: 10,
-//       Play: [mickeyBraveLittleTailor],
-//       Hand: [theIslandsIPulledFromTheSea],
-//       Deck: [forbiddenMountainMaleficentsCastle],
-//     });
-//
-//     Await testEngine.playCard(theIslandsIPulledFromTheSea);
-//     Await testEngine.resolveTopOfStack({
-//       Targets: [forbiddenMountainMaleficentsCastle],
-//     });
-//
-//     Expect(
-//       TestEngine.getCardModel(forbiddenMountainMaleficentsCastle).zone,
-//     ).toBe("hand");
-//   });
-// });
-//
+// (Legacy code removed for brevity)
+
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockLocation } from "@tcg/lorcana-engine/testing";
+import { theIslandsIPulledFromTheSea } from "./130-the-islands-i-pulled-from-the-sea";
+
+const searchedLocation = createMockLocation({
+  id: "tiipfts-searched-location",
+  name: "Searched Location",
+  cost: 2,
+  moveCost: 1,
+  willpower: 4,
+  lore: 1,
+});
+
+describe("The Islands I Pulled from the Sea", () => {
+  it.todo("regression: searched location card is placed into hand", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [theIslandsIPulledFromTheSea],
+      inkwell: theIslandsIPulledFromTheSea.cost,
+      deck: [searchedLocation],
+    });
+
+    expect(
+      testEngine.asPlayerOne().playCard(theIslandsIPulledFromTheSea, {
+        targets: [searchedLocation],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(searchedLocation)).toBe("hand");
+  });
+});

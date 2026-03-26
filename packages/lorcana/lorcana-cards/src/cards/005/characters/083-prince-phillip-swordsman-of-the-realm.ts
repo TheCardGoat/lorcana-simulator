@@ -40,9 +40,10 @@ export const princePhillipSwordsmanOfTheRealm: CharacterCard = {
         target: {
           cardTypes: ["character"],
           count: 1,
-          owner: "any",
+          owner: "opponent",
           selector: "chosen",
           zones: ["play"],
+          filter: [{ type: "has-classification", classification: "Dragon" }],
         },
         type: "banish",
       },
@@ -58,22 +59,19 @@ export const princePhillipSwordsmanOfTheRealm: CharacterCard = {
     },
     {
       effect: {
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "self",
-          zones: ["play"],
-        },
+        target: "SELF",
         type: "ready",
       },
       id: "1ov-2",
       name: "PRESSING THE ADVANTAGE",
       text: "PRESSING THE ADVANTAGE Whenever he challenges a damaged character, ready this character after the challenge.",
       trigger: {
-        event: "play",
+        event: "challenge",
         on: "SELF",
-        timing: "when",
+        timing: "whenever",
+        defender: {
+          filters: [{ type: "damaged" }],
+        },
       },
       type: "triggered",
     },

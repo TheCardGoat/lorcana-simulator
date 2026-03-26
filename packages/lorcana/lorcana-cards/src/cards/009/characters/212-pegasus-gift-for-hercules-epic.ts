@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { pegasusGiftForHerculesEpicI18n } from "./212-pegasus-gift-for-hercules-epic.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const pegasusGiftForHerculesEpic: CharacterCard = {
   id: "fMf",
@@ -25,13 +26,6 @@ export const pegasusGiftForHerculesEpic: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1fc-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: pegasusGiftForHerculesEpicI18n,
 };

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { daisyDuckSpotlessFoodfighterI18n } from "./111-daisy-duck-spotless-food-fighter.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const daisyDuckSpotlessFoodfighter: CharacterCard = {
   id: "wsY",
@@ -23,13 +24,6 @@ export const daisyDuckSpotlessFoodfighter: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "1d8-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: daisyDuckSpotlessFoodfighterI18n,
 };

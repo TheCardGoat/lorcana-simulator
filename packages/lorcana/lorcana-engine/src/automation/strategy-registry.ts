@@ -14,6 +14,9 @@ export interface AutomatedActionStrategyOption {
 }
 
 export const DEFAULT_AUTOMATED_ACTION_STRATEGY_ID = "default-lore-race";
+export const LEGACY_LORE_RACE_STRATEGY_ID = "legacy-lore-race";
+export const BOARD_CONTROL_LORE_RACE_STRATEGY_ID = "board-control-lore-race";
+export const AGGRESSIVE_BOARD_CONTROL_LORE_RACE_STRATEGY_ID = "aggressive-board-control-lore-race";
 
 export const AUTOMATED_ACTION_STRATEGIES: readonly AutomatedActionStrategyOption[] = [
   {
@@ -23,21 +26,21 @@ export const AUTOMATED_ACTION_STRATEGIES: readonly AutomatedActionStrategyOption
     strategy: defaultLoreRaceAutomatedActionStrategy,
   },
   {
-    id: "legacy-lore-race",
+    id: LEGACY_LORE_RACE_STRATEGY_ID,
     label: "Legacy lore race",
     description:
       "Uses the legacy lore-race heuristic ordering for comparison and regression checks.",
     strategy: legacyLoreRaceAutomatedActionStrategy,
   },
   {
-    id: "board-control-lore-race",
+    id: BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
     label: "Board control lore race",
     description:
       "Pressures lore while trading off tempo to remove opposing quest threats and develop stable permanents.",
     strategy: boardControlLoreRaceAutomatedActionStrategy,
   },
   {
-    id: "aggressive-board-control-lore-race",
+    id: AGGRESSIVE_BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
     label: "Aggressive board control lore race",
     description:
       "Reuses the stable opening plan but pushes harder into value trades and mutual-banish challenges to break opposing boards.",

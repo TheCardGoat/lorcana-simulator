@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mickeyMouseBraveLittlePrinceIconicI18n } from "./242-mickey-mouse-brave-little-prince-iconic.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const mickeyMouseBraveLittlePrinceIconic: CharacterCard = {
   id: "FeJ",
@@ -36,22 +38,12 @@ export const mickeyMouseBraveLittlePrinceIconic: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Prince"],
   abilities: [
+    shift(5),
+    evasive,
     {
-      cost: {
-        ink: 5,
+      condition: {
+        type: "has-card-under",
       },
-      id: "cbw-1",
-      keyword: "Shift",
-      text: "Shift 5 {I}",
-      type: "keyword",
-    },
-    {
-      id: "cbw-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
-    {
       effect: {
         modifier: 3,
         stat: "strength",
@@ -59,6 +51,34 @@ export const mickeyMouseBraveLittlePrinceIconic: CharacterCard = {
         type: "modify-stat",
       },
       id: "cbw-3",
+      text: "CROWNING ACHIEVEMENT While this character has a card under him, he gets +3 {S}, +3 {W}, and +3 {L}.",
+      type: "static",
+    },
+    {
+      condition: {
+        type: "has-card-under",
+      },
+      effect: {
+        modifier: 3,
+        stat: "willpower",
+        target: "SELF",
+        type: "modify-stat",
+      },
+      id: "cbw-4",
+      text: "CROWNING ACHIEVEMENT While this character has a card under him, he gets +3 {S}, +3 {W}, and +3 {L}.",
+      type: "static",
+    },
+    {
+      condition: {
+        type: "has-card-under",
+      },
+      effect: {
+        modifier: 3,
+        stat: "lore",
+        target: "SELF",
+        type: "modify-stat",
+      },
+      id: "cbw-5",
       text: "CROWNING ACHIEVEMENT While this character has a card under him, he gets +3 {S}, +3 {W}, and +3 {L}.",
       type: "static",
     },

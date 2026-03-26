@@ -32,15 +32,21 @@ export const nickWildeSoggyFox: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      id: "10j-1",
+      name: "NICE TO HAVE A PARTNER",
+      type: "static",
+      condition: {
+        type: "has-character-with-keyword",
+        keyword: "Support",
+        controller: "you",
+      },
       effect: {
         modifier: 2,
         stat: "strength",
         target: "SELF",
         type: "modify-stat",
       },
-      id: "10j-1",
       text: "NICE TO HAVE A PARTNER While you have another character with Support in play, this character gets +2 {S}.",
-      type: "action",
     },
   ],
   i18n: nickWildeSoggyFoxI18n,

@@ -1,19 +1,14 @@
-import type { LorcanaLogMessage } from "@tcg/lorcana-engine";
-import type { LorcanaProjectedBoardView } from "@tcg/lorcana-engine";
+import type { LorcanaLogMessage, LorcanaProjectedBoardView } from "@tcg/lorcana-engine";
 import {
   getAvailableInkForSide,
   getOwnerIdForSide,
   getSideForOwnerId,
   getZoneCardIds,
   type LorcanaPlayerSide,
-  type MoveLogDefaultMessageSnapshot,
   type MoveLogEntrySnapshot,
   type SimulatorSerializedObject,
 } from "@/features/simulator/model/contracts.js";
-import {
-  collectTypedLorcanaMessages,
-  formatEventLogBody,
-} from "@/features/simulator/model/event-log-formatting.js";
+import { formatEventLogBody } from "@/features/simulator/model/event-log-formatting.js";
 import type {
   PostGameActionCounters,
   PostGameActorTone,
@@ -77,7 +72,7 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
   for (const entry of input.entries) {
     const actorSide = resolveEntryActorSide(board, entry);
     const body = formatEventLogBody(entry, viewerSide);
-    const typedMessages = collectTypedLorcanaMessages(entry);
+    const typedMessages = getTypedMessages(entry);
 
     forensics.push({
       id: entry.id,
@@ -92,11 +87,7 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
         key: message.key,
         text: renderTypedMessageText(entry, message, viewerSide),
       })),
-      cardReferences: (entry.rawLogRegistry?.cardReferences ?? []).map((card) => ({
-        cardId: card.cardId,
-        label: card.label,
-        ownerSide: card.ownerSide,
-      })),
+      cardReferences: [],
     });
 
     if (!actorSide) {
@@ -107,7 +98,7 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
     switch (entry.moveId) {
       case "playCard": {
         counters.cardsPlayed += 1;
-        const cardId = getStringValue(entry.rawLogRegistry?.move.params, "cardId");
+        const cardId = getStringValue(entry.params, "cardId");
         if (cardId) {
           incrementCardAggregate(
             playedCards,
@@ -149,8 +140,8 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
       }
       case "challenge": {
         counters.challengeInitiations += 1;
-        const attackerId = getStringValue(entry.rawLogRegistry?.move.params, "attackerId");
-        const defenderId = getStringValue(entry.rawLogRegistry?.move.params, "defenderId");
+        const attackerId = getStringValue(entry.params, "attackerId");
+        const defenderId = getStringValue(entry.params, "defenderId");
         if (attackerId) {
           incrementCardAggregate(
             challengedCards,
@@ -282,6 +273,16 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
   };
 }
 
+function getTypedMessages(entry: MoveLogEntrySnapshot): LorcanaLogMessage[] {
+  if (!entry.typedLogEntry) return [];
+  return [
+    {
+      key: entry.typedLogEntry.type,
+      values: entry.typedLogEntry.values,
+    } as LorcanaLogMessage,
+  ];
+}
+
 function createEmptyCounters(): PostGameActionCounters {
   return {
     cardsPlayed: 0,
@@ -368,32 +369,22 @@ function resolveWinnerSide(board: LorcanaProjectedBoardView): LorcanaPlayerSide 
 
 function buildCardReferenceMap(
   board: LorcanaProjectedBoardView,
-  entries: MoveLogEntrySnapshot[],
+  _entries: MoveLogEntrySnapshot[],
 ): Map<string, CardReferenceMeta> {
   const cards = new Map<string, CardReferenceMeta>();
 
-  for (const entry of entries) {
-    for (const card of entry.rawLogRegistry?.cardReferences ?? []) {
-      if (!cards.has(card.cardId)) {
-        cards.set(card.cardId, {
-          cardId: card.cardId,
-          label: card.label,
-          ownerSide: card.ownerSide,
-          loreValue: card.loreValue ?? null,
-        });
-      }
-    }
-  }
-
   for (const side of PLAYER_SIDES) {
-    for (const cardId of getZoneCardIds(board, side, "play")) {
-      if (!cards.has(cardId)) {
-        cards.set(cardId, {
-          cardId,
-          label: cardId,
-          ownerSide: side,
-          loreValue: board.cards[cardId]?.lore ?? null,
-        });
+    for (const zoneId of ["play", "hand", "inkwell", "discard"] as const) {
+      for (const cardId of getZoneCardIds(board, side, zoneId)) {
+        if (!cards.has(cardId)) {
+          const boardCard = board.cards[cardId];
+          cards.set(cardId, {
+            cardId,
+            label: boardCard?.fullName ?? cardId,
+            ownerSide: side,
+            loreValue: boardCard?.lore ?? null,
+          });
+        }
       }
     }
   }
@@ -409,7 +400,7 @@ function resolveEntryActorSide(
     return entry.actorSide;
   }
 
-  const rawPlayerId = entry.rawLogRegistry?.move.playerId;
+  const rawPlayerId = entry.playerId;
   if (!rawPlayerId) {
     return null;
   }
@@ -451,23 +442,12 @@ function renderTypedMessageText(
 ): string {
   const syntheticEntry: MoveLogEntrySnapshot = {
     ...entry,
-    rawLogRegistry: {
-      move: entry.rawLogRegistry?.move ?? {
-        moveId: entry.moveId,
-        params: entry.rawLogRegistry?.move.params,
-        playerId: entry.rawLogRegistry?.move.playerId ?? "player_one",
-        timestamp: entry.timestamp,
-      },
-      matchingMoveLogEntry: {
-        sourceEventSeqs: [],
-        defaultMessage: {
-          key: message.key,
-          values: message.values as unknown as SimulatorSerializedObject,
-        } satisfies MoveLogDefaultMessageSnapshot,
-      },
-      relatedLogEntries: [],
-      cardReferences: entry.rawLogRegistry?.cardReferences ?? [],
-    },
+    typedLogEntry: {
+      type: message.key,
+      values: message.values,
+      visibility: entry.typedLogEntry?.visibility ?? { mode: "PUBLIC" },
+      category: entry.typedLogEntry?.category ?? "action",
+    } as import("@tcg/lorcana-engine").LorcanaGameLogEntry,
   };
 
   return formatEventLogBody(syntheticEntry, viewerSide).text;
@@ -513,7 +493,7 @@ function applyLoreContribution(
   cardReferenceMap: Map<string, CardReferenceMeta>,
   store: Map<string, MutableCardAggregate>,
 ): void {
-  const params = entry.rawLogRegistry?.move.params;
+  const params = entry.params;
 
   if (entry.moveId === "quest") {
     const cardId = getStringValue(params, "cardId");
@@ -572,7 +552,7 @@ function applyAbilityContribution(
   cardReferenceMap: Map<string, CardReferenceMeta>,
   store: Map<string, MutableAbilityAggregate>,
 ): void {
-  const typedMessages = collectTypedLorcanaMessages(entry);
+  const typedMessages = getTypedMessages(entry);
   let recorded = false;
 
   for (const message of typedMessages) {
@@ -622,7 +602,7 @@ function applyAbilityContribution(
     return;
   }
 
-  const sourceCardId = getStringValue(entry.rawLogRegistry?.move.params, "cardId");
+  const sourceCardId = getStringValue(entry.params, "cardId");
   if (!sourceCardId) {
     return;
   }
@@ -688,7 +668,7 @@ function rankAbilityAggregates(
 }
 
 function getNumericValueFromMessages(entry: MoveLogEntrySnapshot, key: string): number | null {
-  const typedMessages = collectTypedLorcanaMessages(entry);
+  const typedMessages = getTypedMessages(entry);
 
   for (const message of typedMessages) {
     const candidate = message.values[key as keyof typeof message.values];
@@ -697,7 +677,7 @@ function getNumericValueFromMessages(entry: MoveLogEntrySnapshot, key: string): 
     }
   }
 
-  const raw = entry.rawLogRegistry?.move.params?.[key];
+  const raw = entry.params?.[key];
   return typeof raw === "number" ? raw : null;
 }
 

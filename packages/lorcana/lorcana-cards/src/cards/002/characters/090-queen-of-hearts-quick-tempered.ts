@@ -34,13 +34,7 @@ export const queenOfHeartsQuicktempered: CharacterCard = {
     {
       effect: {
         amount: 1,
-        target: {
-          cardTypes: ["character"],
-          count: "all",
-          owner: "opponent",
-          selector: "all",
-          zones: ["play"],
-        },
+        target: "CHOSEN_OPPOSING_DAMAGED_CHARACTER",
         type: "deal-damage",
       },
       id: "hry-1",
@@ -54,6 +48,5 @@ export const queenOfHeartsQuicktempered: CharacterCard = {
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: queenOfHeartsQuicktemperedI18n,
 };

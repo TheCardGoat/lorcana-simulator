@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { sisuInHerElementI18n } from "./039-sisu-in-her-element.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const sisuInHerElement: CharacterCard = {
   id: "qi6",
@@ -24,14 +25,6 @@ export const sisuInHerElement: CharacterCard = {
   },
   text: "Challenger +2 (While challenging, this character gets +2 {S}).",
   classifications: ["Storyborn", "Hero", "Deity", "Dragon"],
-  abilities: [
-    {
-      id: "39b-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 2,
-      text: "Challenger +2.",
-    },
-  ],
+  abilities: [challenger(2)],
   i18n: sisuInHerElementI18n,
 };

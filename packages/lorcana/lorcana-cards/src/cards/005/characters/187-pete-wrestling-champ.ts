@@ -31,38 +31,28 @@ export const peteWrestlingChamp: CharacterCard = {
   classifications: ["Dreamborn", "Villain"],
   abilities: [
     {
+      cost: {
+        exert: true,
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            reference: "revealed-first",
-            filters: [
-              {
-                type: "card-type",
-                value: "character",
-              },
-              {
-                type: "name",
-                equals: "Pete",
-              },
-            ],
+        type: "reveal-and-route",
+        target: "CONTROLLER",
+        routes: [
+          {
+            condition: {
+              type: "revealed-is-character-named",
+              name: "Pete",
+            },
+            destination: { zone: "play", cost: "free" },
+            optional: true,
           },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          cost: "free",
-          from: "hand",
-          type: "play-card",
-        },
-        type: "conditional",
+        ],
+        fallback: { zone: "deck-top" },
       },
       id: "pvv-1",
+      name: "RE-PETE",
       text: "RE-PETE {E} - Reveal the top card of your deck. If it's a character card named Pete, you may play it for free.",
-      type: "action",
+      type: "activated",
     },
   ],
   i18n: peteWrestlingChampI18n,

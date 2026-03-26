@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { arielSpectacularSingerI18n } from "./002-ariel-spectacular-singer.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const arielSpectacularSinger: CharacterCard = {
   id: "Z4N",
@@ -34,13 +35,7 @@ export const arielSpectacularSinger: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "1k6-1",
-      keyword: "Singer",
-      text: "Singer 5",
-      type: "keyword",
-      value: 5,
-    },
+    singer(5),
     {
       effect: {
         amount: 4,

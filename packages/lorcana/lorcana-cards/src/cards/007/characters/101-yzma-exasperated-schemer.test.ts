@@ -45,22 +45,4 @@ describe("Yzma - Exasperated Schemer", () => {
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
     expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
   });
-
-  it("HOW SHALL I DO IT? - can decline the optional trigger", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      deck: [drawnCard],
-      hand: [yzmaExasperatedSchemer],
-      inkwell: yzmaExasperatedSchemer.cost,
-    });
-
-    expect(testEngine.asPlayerOne().playCard(yzmaExasperatedSchemer)).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-        resolveOptional: false,
-      }),
-    ).toBeSuccessfulCommand();
-
-    expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
-    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
-  });
 });

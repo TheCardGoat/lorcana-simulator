@@ -51,9 +51,8 @@ function createBoard(): LorcanaProjectedBoardView {
       "card-ariel": {
         ownerId: "player_one",
         zone: "play",
-        name: "Ariel - On Human Legs",
-        title: "Ariel - On Human Legs",
-        type: "character",
+        fullName: "Ariel - On Human Legs",
+        cardType: "character",
         exerted: false,
         lore: 2,
         hidden: false,
@@ -61,9 +60,8 @@ function createBoard(): LorcanaProjectedBoardView {
       "card-location": {
         ownerId: "player_one",
         zone: "play",
-        name: "Motunui - Island Paradise",
-        title: "Motunui - Island Paradise",
-        type: "location",
+        fullName: "Motunui - Island Paradise",
+        cardType: "location",
         exerted: true,
         lore: 0,
         hidden: false,
@@ -71,9 +69,8 @@ function createBoard(): LorcanaProjectedBoardView {
       "card-mickey": {
         ownerId: "player_two",
         zone: "play",
-        name: "Mickey Mouse - Detective",
-        title: "Mickey Mouse - Detective",
-        type: "character",
+        fullName: "Mickey Mouse - Detective",
+        cardType: "character",
         exerted: true,
         lore: 1,
         hidden: false,
@@ -96,33 +93,21 @@ function createTypedLogEntry(
   moveId: MoveLogEntrySnapshot["moveId"],
   key: string,
   values: SimulatorSerializedObject,
-  options: Partial<Omit<MoveLogEntrySnapshot, "rawLogRegistry">> & {
-    cardReferences?: NonNullable<MoveLogEntrySnapshot["rawLogRegistry"]>["cardReferences"];
-  } = {},
+  options: Partial<MoveLogEntrySnapshot> = {},
 ): MoveLogEntrySnapshot {
   return createLogEntry(options.title ?? key, {
     moveId,
     actorSide: options.actorSide ?? "playerOne",
     turnNumber: options.turnNumber ?? 1,
-    detail: options.detail,
     ...options,
-    rawLogRegistry: {
-      move: {
-        moveId,
-        params: values,
-        playerId: options.actorSide === "playerTwo" ? "player_two" : "player_one",
-        timestamp: options.timestamp ?? 1_710_000_000_000,
-      },
-      matchingMoveLogEntry: {
-        sourceEventSeqs: [],
-        defaultMessage: {
-          key,
-          values,
-        },
-      },
-      relatedLogEntries: [],
-      cardReferences: options.cardReferences ?? [],
-    },
+    typedLogEntry: {
+      type: key,
+      values,
+      visibility: { mode: "PUBLIC" },
+      category: "action",
+    } as import("@tcg/lorcana-engine").LorcanaGameLogEntry,
+    playerId: options.actorSide === "playerTwo" ? "player_two" : "player_one",
+    params: values,
   });
 }
 
@@ -166,7 +151,6 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 2,
-          cardReferences: [ariel],
         },
       ),
       createTypedLogEntry(
@@ -178,7 +162,6 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 2,
-          cardReferences: [ariel],
         },
       ),
       createTypedLogEntry(
@@ -191,7 +174,6 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 3,
-          cardReferences: [ariel],
         },
       ),
       createTypedLogEntry(
@@ -204,7 +186,6 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 4,
-          cardReferences: [ariel, mickey],
         },
       ),
       createTypedLogEntry(
@@ -217,7 +198,6 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 4,
-          cardReferences: [ariel, motunui],
         },
       ),
       createTypedLogEntry(
@@ -230,7 +210,6 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 5,
-          cardReferences: [ariel],
         },
       ),
       createTypedLogEntry(
@@ -244,7 +223,6 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 5,
-          cardReferences: [ariel, mickey, motunui],
         },
       ),
       createTypedLogEntry("passTurn", "lorcana.move.passTurn", {
@@ -257,7 +235,6 @@ describe("buildPostGameSummary", () => {
         moveId: "passTurn",
         actorSide: "playerTwo",
         turnNumber: 6,
-        detail: "Fallback only detail.",
       }),
     ];
 

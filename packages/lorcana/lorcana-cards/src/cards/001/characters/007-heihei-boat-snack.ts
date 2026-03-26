@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { heiheiBoatSnackI18n } from "./007-heihei-boat-snack.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const heiheiBoatSnack: CharacterCard = {
   id: "7AO",
@@ -25,12 +26,7 @@ export const heiheiBoatSnack: CharacterCard = {
   text: "Support",
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "uio-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
+    support,
     {
       id: "uio-2",
       type: "triggered",

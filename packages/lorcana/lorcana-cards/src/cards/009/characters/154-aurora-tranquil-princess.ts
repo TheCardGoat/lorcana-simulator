@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { auroraTranquilPrincessI18n } from "./154-aurora-tranquil-princess.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const auroraTranquilPrincess: CharacterCard = {
   id: "aHj",
@@ -24,13 +25,6 @@ export const auroraTranquilPrincess: CharacterCard = {
   },
   text: "Ward",
   classifications: ["Dreamborn", "Hero", "Princess"],
-  abilities: [
-    {
-      id: "1sr-1",
-      keyword: "Ward",
-      type: "keyword",
-      text: "Ward",
-    },
-  ],
+  abilities: [ward],
   i18n: auroraTranquilPrincessI18n,
 };

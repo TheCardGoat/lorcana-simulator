@@ -1,27 +1,37 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { queenOfHeartsLosingHerTemper } from "@lorcanito/lorcana-engine/cards/007";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Queen Of Hearts - Losing Her Temper", () => {
-//   It("ROYAL PAIN While this character has damage, she gets +3 {S}.", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [queenOfHeartsLosingHerTemper],
-//     });
-//
-//     Expect(testEngine.getCardModel(queenOfHeartsLosingHerTemper).strength).toBe(
-//       QueenOfHeartsLosingHerTemper.strength,
-//     );
-//
-//     Await testEngine.setCardDamage(queenOfHeartsLosingHerTemper, 1);
-//
-//     Expect(testEngine.getCardModel(queenOfHeartsLosingHerTemper).strength).toBe(
-//       QueenOfHeartsLosingHerTemper.strength + 3,
-//     );
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { queenOfHeartsLosingHerTemper } from "./122-queen-of-hearts-losing-her-temper";
+
+describe("Queen of Hearts - Losing Her Temper", () => {
+  describe("ROYAL PAIN - While this character has damage, she gets +3 {S}.", () => {
+    it("should have base strength when undamaged (condition not met)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [queenOfHeartsLosingHerTemper],
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(queenOfHeartsLosingHerTemper)).toBe(
+        queenOfHeartsLosingHerTemper.strength,
+      );
+    });
+
+    it("should get +3 strength when damaged (base 1 + 3 = 4)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: queenOfHeartsLosingHerTemper, damage: 1 }],
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().getCardStrength(queenOfHeartsLosingHerTemper)).toBe(
+        queenOfHeartsLosingHerTemper.strength + 3,
+      );
+    });
+
+    it("has a static modify-stat ability with has-any-damage condition", () => {
+      const staticAbility = queenOfHeartsLosingHerTemper.abilities?.find(
+        (a) => a.type === "static",
+      );
+      expect(staticAbility).toBeDefined();
+      expect(staticAbility?.condition).toEqual({ type: "has-any-damage" });
+    });
+  });
+});

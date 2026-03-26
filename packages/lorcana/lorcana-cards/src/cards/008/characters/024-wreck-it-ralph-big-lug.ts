@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { wreckitRalphBigLugI18n } from "./024-wreck-it-ralph-big-lug.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const wreckitRalphBigLug: CharacterCard = {
   id: "WSI",
@@ -34,15 +35,7 @@ export const wreckitRalphBigLug: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Racer"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "1ic-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       effect: {
         chooser: "CONTROLLER",

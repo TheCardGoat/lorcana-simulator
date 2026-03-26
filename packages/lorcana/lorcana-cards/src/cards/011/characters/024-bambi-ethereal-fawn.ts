@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { bambiEtherealFawnI18n } from "./024-bambi-ethereal-fawn.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const bambiEtherealFawn: CharacterCard = {
   id: "Ab7",
@@ -34,13 +35,7 @@ export const bambiEtherealFawn: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Prince", "Whisper"],
   abilities: [
-    {
-      id: "1ye-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 2,
-      text: "Boost 2 {I}",
-    },
+    boost(2),
     {
       id: "1ye-2",
       condition: {

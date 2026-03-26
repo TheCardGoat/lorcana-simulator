@@ -19,6 +19,7 @@ export const princeNaveenBundledUp: CharacterCard = {
   lore: 1,
   inkable: true,
   vanilla: true,
+  abilities: [],
   externalIds: {
     lorcast: "crd_6c7e5e05d9ad44ceb4f84c5a82ee8c6b",
     tcgPlayer: 676236,

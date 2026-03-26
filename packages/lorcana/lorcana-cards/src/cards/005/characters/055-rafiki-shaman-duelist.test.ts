@@ -1,24 +1,28 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { rafikiShamanDuelist } from "@lorcanito/lorcana-engine/cards/005/characters/characters";
-// Import { TestStore } from "@lorcanito/lorcana-engine/rules/testStore";
-//
-// Describe("Rafiki - Shaman Duelist", () => {
-//   It("**SURPRISING SKILL** When you play this character, he gains **Challenger** +4 this turn. _(They get +4 while challenging.)_", () => {
-//     Const testStore = new TestStore({
-//       Inkwell: rafikiShamanDuelist.cost,
-//       Hand: [rafikiShamanDuelist],
-//     });
-//
-//     Const cardUnderTest = testStore.getCard(rafikiShamanDuelist);
-//
-//     CardUnderTest.playFromHand();
-//     TestStore.resolveTopOfStack({});
-//     Expect(cardUnderTest.hasChallenger).toBe(true);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { rafikiShamanDuelist } from "./055-rafiki-shaman-duelist";
+
+describe("Rafiki - Shaman Duelist", () => {
+  describe("SURPRISING SKILL - When you play this character, he gains Challenger +4 this turn.", () => {
+    it("gains Challenger +4 when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [rafikiShamanDuelist],
+        inkwell: rafikiShamanDuelist.cost,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(rafikiShamanDuelist)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().hasKeyword(rafikiShamanDuelist, "Challenger")).toBe(true);
+      expect(testEngine.asPlayerOne().getKeywordValue(rafikiShamanDuelist, "Challenger")).toBe(4);
+    });
+
+    it("does not have Challenger before being played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [rafikiShamanDuelist],
+        inkwell: rafikiShamanDuelist.cost,
+      });
+
+      expect(testEngine.asPlayerOne().hasKeyword(rafikiShamanDuelist, "Challenger")).toBe(false);
+    });
+  });
+});

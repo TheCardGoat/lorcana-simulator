@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mrsBeakleyFormerShushAgentI18n } from "./011-mrs-beakley-former-shush-agent.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const mrsBeakleyFormerShushAgent: CharacterCard = {
   id: "13A",
@@ -24,13 +25,6 @@ export const mrsBeakleyFormerShushAgent: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "16m-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: mrsBeakleyFormerShushAgentI18n,
 };

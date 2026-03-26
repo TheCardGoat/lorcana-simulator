@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { princeEricUrsulasGroomI18n } from "./022-prince-eric-ursulas-groom.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const princeEricUrsulasGroom: CharacterCard = {
   id: "sTh",
@@ -34,35 +35,39 @@ export const princeEricUrsulasGroom: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Prince"],
   abilities: [
+    shift(4),
     {
-      cost: {
-        ink: 4,
+      condition: {
+        type: "has-named-character",
+        name: "Ursula",
+        controller: "you",
       },
-      id: "1rd-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
-    {
       effect: {
-        steps: [
-          {
-            keyword: "Bodyguard",
-            target: "SELF",
-            type: "gain-keyword",
-          },
-          {
-            modifier: 2,
-            stat: "willpower",
-            target: "CHOSEN_CHARACTER",
-            type: "modify-stat",
-          },
-        ],
-        type: "sequence",
+        keyword: "Bodyguard",
+        target: "SELF",
+        type: "gain-keyword",
       },
       id: "1rd-2",
+      name: "UNDER VANESSA'S SPELL",
       text: "UNDER VANESSA'S SPELL While you have a character named Ursula in play, this character gains Bodyguard and gets +2 {W}.",
-      type: "action",
+      type: "static",
+    },
+    {
+      condition: {
+        type: "has-named-character",
+        name: "Ursula",
+        controller: "you",
+      },
+      effect: {
+        modifier: 2,
+        stat: "willpower",
+        target: "SELF",
+        type: "modify-stat",
+      },
+      id: "1rd-3",
+      name: "UNDER VANESSA'S SPELL",
+      text: "UNDER VANESSA'S SPELL While you have a character named Ursula in play, this character gains Bodyguard and gets +2 {W}.",
+      type: "static",
     },
   ],
   i18n: princeEricUrsulasGroomI18n,

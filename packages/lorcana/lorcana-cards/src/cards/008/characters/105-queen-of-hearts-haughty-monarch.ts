@@ -32,6 +32,13 @@ export const queenOfHeartsHaughtyMonarch: CharacterCard = {
   classifications: ["Storyborn", "Villain", "Queen"],
   abilities: [
     {
+      condition: {
+        type: "resource-count",
+        what: "damaged-characters",
+        controller: "any",
+        comparison: "greater-or-equal",
+        value: 5,
+      },
       effect: {
         modifier: 3,
         stat: "lore",
@@ -39,8 +46,9 @@ export const queenOfHeartsHaughtyMonarch: CharacterCard = {
         type: "modify-stat",
       },
       id: "1dq-1",
+      name: "COUNT OFF!",
       text: "COUNT OFF! While there are 5 or more characters with damage in play, this character gets +3 {L}.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: queenOfHeartsHaughtyMonarchI18n,

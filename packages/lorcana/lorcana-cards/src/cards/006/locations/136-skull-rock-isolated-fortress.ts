@@ -46,34 +46,31 @@ export const skullRockIsolatedFortress: LocationCard = {
       type: "static",
     },
     {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardType: "character",
+          filters: [
+            {
+              type: "same-location-as-source",
+            },
+            {
+              type: "has-classification",
+              classification: "Pirate",
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "you",
-            zones: ["play"],
-            cardType: "character",
-            filters: [
-              {
-                type: "same-location-as-source",
-              },
-              {
-                type: "has-classification",
-                classification: "Pirate",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          amount: 1,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 1,
+        type: "gain-lore",
       },
       id: "1rj-2",
       name: "SAFE HAVEN",

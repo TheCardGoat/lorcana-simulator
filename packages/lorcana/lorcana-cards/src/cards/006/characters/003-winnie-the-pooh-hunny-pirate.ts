@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { winnieThePoohHunnyPirateI18n } from "./003-winnie-the-pooh-hunny-pirate.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const winnieThePoohHunnyPirate: CharacterCard = {
   id: "R7L",
@@ -34,12 +35,7 @@ export const winnieThePoohHunnyPirate: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Pirate"],
   abilities: [
-    {
-      id: "1v3-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         amount: 1,

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { mauiSoaringDemigodI18n } from "./113-maui-soaring-demigod.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
 
 export const mauiSoaringDemigod: CharacterCard = {
   id: "IYc",
@@ -34,12 +35,7 @@ export const mauiSoaringDemigod: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Deity"],
   abilities: [
-    {
-      id: "q08-1",
-      keyword: "Reckless",
-      text: "Reckless",
-      type: "keyword",
-    },
+    reckless,
     {
       effect: {
         steps: [

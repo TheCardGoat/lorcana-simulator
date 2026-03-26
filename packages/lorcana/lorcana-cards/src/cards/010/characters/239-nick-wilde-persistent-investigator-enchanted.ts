@@ -53,9 +53,14 @@ export const nickWildePersistentInvestigatorEnchanted: CharacterCard = {
       },
       name: "CASE CLOSED",
       trigger: {
-        event: "banish",
+        event: "banish-in-challenge",
         timing: "whenever",
-        on: "YOUR_OTHER_CHARACTERS",
+        on: {
+          controller: "you",
+          cardType: "character",
+          classification: "Detective",
+        },
+        restrictions: [{ type: "during-turn", whose: "your" }],
       },
       type: "triggered",
       text: "CASE CLOSED During your turn, whenever one of your Detective characters banishes another character in a challenge, draw a card.",

@@ -1,6 +1,12 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type { CardRuntimeReadAPI, DeepReadonly, FrameworkReadAPI } from "../../../core/runtime";
-import type { Condition, LorcanaCard } from "@tcg/lorcana-types";
+import type {
+  AmountExpr,
+  CardFilter,
+  Condition,
+  LorcanaCard,
+  ScryCardOrdering,
+} from "@tcg/lorcana-types";
 import type { CardPlayedPayload, LorcanaG, PendingActionResolutionInput } from "../../../types";
 import type {
   ChoiceResolutionSelectionContext,
@@ -77,6 +83,45 @@ function getStringArray(record: Record<string, unknown> | null, key: string): st
   return Array.isArray(value)
     ? value.filter((entry): entry is string => typeof entry === "string" && entry.length > 0)
     : [];
+}
+
+function normalizeCardFilters(value: unknown): CardFilter[] {
+  if (Array.isArray(value)) {
+    return value.filter((entry): entry is CardFilter =>
+      Boolean(entry && typeof entry === "object" && !Array.isArray(entry)),
+    );
+  }
+
+  if (value && typeof value === "object") {
+    return [value as CardFilter];
+  }
+
+  return [];
+}
+
+function getOptionalBoolean(record: Record<string, unknown>, key: string): boolean | undefined {
+  const value = record[key];
+  return typeof value === "boolean" ? value : undefined;
+}
+
+function getOptionalString<T extends string>(
+  record: Record<string, unknown>,
+  key: string,
+): T | undefined {
+  const value = record[key];
+  return typeof value === "string" && value.length > 0 ? (value as T) : undefined;
+}
+
+function getOptionalAmountExpr(
+  record: Record<string, unknown>,
+  key: string,
+): AmountExpr | undefined {
+  const value = record[key];
+  if (typeof value === "number") {
+    return value;
+  }
+
+  return value && typeof value === "object" ? (value as AmountExpr) : undefined;
 }
 
 function normalizeCurrentSelection(
@@ -314,6 +359,7 @@ function buildChosenPlayerTargetSelectionContext(
     minSelections: 1,
     maxSelections: 1,
     ordered: false,
+    autoRejected: false,
   };
 }
 
@@ -408,6 +454,27 @@ function buildScrySelectionContext(
     return undefined;
   }
 
+  const revealedCards = revealedCardIds.map((cardId) => {
+    const definition = args.ctx.cards.getDefinition(cardId);
+    const label =
+      definition?.name && typeof definition.name === "string"
+        ? `${definition.name}${definition.version ? ` - ${definition.version}` : ""}`
+        : cardId;
+
+    return {
+      cardId,
+      label,
+      cardType: definition?.cardType,
+      actionSubtype:
+        definition?.cardType === "action" ? (definition.actionSubtype ?? undefined) : undefined,
+      cost: typeof definition?.cost === "number" ? definition.cost : undefined,
+      classifications:
+        definition?.cardType === "character" && Array.isArray(definition.classifications)
+          ? [...definition.classifications]
+          : undefined,
+    };
+  });
+
   return {
     origin: args.origin,
     requestId: args.requestId,
@@ -418,12 +485,26 @@ function buildScrySelectionContext(
     submitField: "destinations",
     amount,
     revealedCardIds,
+    revealedCards,
     destinationRules: destinations.map((destination, index) => ({
       id: `${args.requestId}:${destination.zone ?? "destination"}:${index}`,
       zone: String(destination.zone),
       min: getRecordNumber(destination, "min") ?? 0,
       max: getRecordNumber(destination, "max") ?? null,
       remainder: destination.remainder === true,
+      label: getRecordString(destination, "label"),
+      filters: normalizeCardFilters(destination.filters ?? destination.filter),
+      playFilters: normalizeCardFilters(destination.playFilters ?? destination.playFilter),
+      ordering: getOptionalString<ScryCardOrdering>(destination, "ordering"),
+      reveal: destination.reveal === true,
+      exclusiveGroup: getRecordString(destination, "exclusiveGroup"),
+      cost: getOptionalString<"free" | "reduced">(destination, "cost"),
+      reducedBy: getOptionalAmountExpr(destination, "reducedBy"),
+      entersExerted: getOptionalBoolean(destination, "entersExerted"),
+      grantsRush: getOptionalBoolean(destination, "grantsRush"),
+      banishAtEndOfTurn: getOptionalBoolean(destination, "banishAtEndOfTurn"),
+      exerted: getOptionalBoolean(destination, "exerted"),
+      facedown: getOptionalBoolean(destination, "facedown"),
     })),
   };
 }
@@ -435,11 +516,15 @@ function buildGenericTargetSelectionContext(
     ordered?: boolean;
   },
 ): TargetResolutionSelectionContext | undefined {
+  const chooserScopedCtx: ResolutionSelectionRuntimeContext = {
+    ...args.ctx,
+    playerId: args.chooserId,
+  };
   const effectRecord = asRecord(args.effect);
   const analysis = analyzeEffectTargets(
     args.effect,
     args.cardPlayed.playerId,
-    args.ctx,
+    chooserScopedCtx,
     args.sourceCardId,
     {
       includeDeferredChosenSelections: true,
@@ -459,7 +544,7 @@ function buildGenericTargetSelectionContext(
   const runtimeCardCandidates =
     effectTarget !== undefined && effectTargetRequiresSelection
       ? resolveCandidateTargets(
-          args.ctx,
+          chooserScopedCtx,
           args.cardPlayed,
           normalizeTargetDescriptor(effectTarget),
           {
@@ -472,11 +557,11 @@ function buildGenericTargetSelectionContext(
       : analysis.cardCandidates;
   const runtimePlayerCandidates =
     effectTarget !== undefined && effectTargetRequiresSelection
-      ? resolveTargetPlayerIds(args.ctx, effectTarget, {
+      ? resolveTargetPlayerIds(chooserScopedCtx, effectTarget, {
           controllerId: args.cardPlayed.playerId,
           sourceCardId: args.sourceCardId,
           selectedPlayerIds: resolveSelectedPlayerIds(
-            args.ctx.framework.state.playerIds,
+            chooserScopedCtx.framework.state.playerIds,
             effectTargetSelection,
           ),
         })
@@ -484,7 +569,7 @@ function buildGenericTargetSelectionContext(
   const resolvedContextCardTargets =
     effectTarget !== undefined && effectTargetRequiresSelection
       ? (resolveEffectTargets(
-          args.ctx,
+          chooserScopedCtx,
           args.cardPlayed,
           effectTarget,
           effectTargetSelection,
@@ -493,11 +578,11 @@ function buildGenericTargetSelectionContext(
       : [];
   const resolvedContextPlayerTargets =
     effectTarget !== undefined && effectTargetRequiresSelection
-      ? resolveTargetPlayerIds(args.ctx, effectTarget, {
+      ? resolveTargetPlayerIds(chooserScopedCtx, effectTarget, {
           controllerId: args.cardPlayed.playerId,
           sourceCardId: args.sourceCardId,
           selectedPlayerIds: resolveSelectedPlayerIds(
-            args.ctx.framework.state.playerIds,
+            chooserScopedCtx.framework.state.playerIds,
             effectTargetSelection,
           ),
         })
@@ -556,6 +641,184 @@ function buildGenericTargetSelectionContext(
     minSelections,
     maxSelections: analysis.maxSelections,
     ordered: args.ordered === true,
+    autoRejected: allowEmptyResolution,
+  };
+}
+
+type PlayCardEffectRecord = {
+  from?: unknown;
+  target?: unknown;
+  cardType?: unknown;
+  costRestriction?: unknown;
+  filter?: unknown;
+};
+
+function isNameRestrictedPlayCard(effectRecord: Record<string, unknown>): boolean {
+  const filter = effectRecord.filter;
+  if (!filter || typeof filter !== "object" || Array.isArray(filter)) {
+    return false;
+  }
+  const filterRecord = filter as Record<string, unknown>;
+  return (
+    typeof filterRecord.name === "string" ||
+    filterRecord.sameNameAsChosenCard === true ||
+    filterRecord.sameInstanceAsSource === true
+  );
+}
+
+function isContextDependentPlayCardFilter(filter: unknown): boolean {
+  if (!filter || typeof filter !== "object" || Array.isArray(filter)) {
+    return false;
+  }
+  const f = filter as Record<string, unknown>;
+  return (
+    f.excludeChosenCard === true ||
+    f.sameNameAsChosenCard === true ||
+    f.maxCost === "chosen-card-cost" ||
+    (typeof f.maxCost === "object" &&
+      f.maxCost !== null &&
+      (f.maxCost as Record<string, unknown>).type === "chosen-card-cost")
+  );
+}
+
+function getEligibleHandCardsForPlayCard(
+  args: ResolutionSelectionBuildArgs,
+  effectRecord: PlayCardEffectRecord,
+): CardInstanceId[] {
+  const from = typeof effectRecord.from === "string" ? effectRecord.from : "hand";
+  if (from !== "hand") {
+    return [];
+  }
+
+  // Context-dependent filters rely on prior sequence steps; let existing logic handle them.
+  if (isContextDependentPlayCardFilter(effectRecord.filter)) {
+    return [];
+  }
+
+  // Resolve the target player(s) — mirrors the logic in resolvePlayCardEffect execution.
+  const targetPlayerIds =
+    typeof effectRecord.target === "string"
+      ? resolveTargetPlayerIds(args.ctx, effectRecord.target, {
+          controllerId: args.cardPlayed.playerId,
+          sourceCardId: args.sourceCardId,
+        })
+      : [];
+  const resolvedPlayerIds =
+    targetPlayerIds.length > 0 ? targetPlayerIds : [args.cardPlayed.playerId];
+
+  const handCards: CardInstanceId[] = [];
+  for (const playerId of resolvedPlayerIds) {
+    const zoneCards = args.ctx.framework.zones.getCards({
+      zone: "hand",
+      playerId,
+    }) as CardInstanceId[];
+    handCards.push(...zoneCards);
+  }
+
+  return handCards.filter((cardId) => {
+    const definition = args.ctx.cards.getDefinition(cardId) as
+      | { cost?: number; cardType?: string; classifications?: string[] }
+      | undefined;
+    if (!definition) {
+      return false;
+    }
+
+    // Top-level card type constraint (e.g. effect.cardType = "character")
+    const cardTypeConstraint = effectRecord.cardType;
+    if (typeof cardTypeConstraint === "string" && definition.cardType !== cardTypeConstraint) {
+      return false;
+    }
+
+    // Cost restriction (e.g. costRestriction: { comparison: "less-or-equal", value: 2 })
+    const costRestriction = effectRecord.costRestriction;
+    if (costRestriction && typeof costRestriction === "object" && !Array.isArray(costRestriction)) {
+      const { comparison, value } = costRestriction as { comparison?: unknown; value?: unknown };
+      if (typeof comparison === "string" && typeof value === "number") {
+        const cardCost = Number(definition.cost ?? Number.NaN);
+        if (!Number.isFinite(cardCost)) {
+          return false;
+        }
+        if (comparison === "less-or-equal" && cardCost > value) return false;
+        if (comparison === "less-than" && cardCost >= value) return false;
+        if (comparison === "equal" && cardCost !== value) return false;
+        if (comparison === "greater-than" && cardCost <= value) return false;
+        if (comparison === "greater-or-equal" && cardCost < value) return false;
+      }
+    }
+
+    // Filter-level card type, max cost, and classification constraints (static values only)
+    const filter = effectRecord.filter;
+    if (filter && typeof filter === "object" && !Array.isArray(filter)) {
+      const filterRecord = filter as Record<string, unknown>;
+      if (
+        typeof filterRecord.cardType === "string" &&
+        definition.cardType !== filterRecord.cardType
+      ) {
+        return false;
+      }
+      if (typeof filterRecord.maxCost === "number") {
+        const cardCost = Number(definition.cost ?? Number.NaN);
+        if (!Number.isFinite(cardCost) || cardCost > filterRecord.maxCost) {
+          return false;
+        }
+      }
+      if (
+        typeof filterRecord.classification === "string" &&
+        !(definition.classifications ?? []).includes(filterRecord.classification)
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
+
+function buildPlayCardSelectionContext(
+  args: ResolutionSelectionBuildArgs,
+  effectRecord: Record<string, unknown>,
+): TargetResolutionSelectionContext | undefined {
+  // Only build hand-picker selection context in the bag resolution path.
+  // Direct play-card executions (action cards, sequence steps) use the existing
+  // auto-selection fallback in play-card-effect.ts.
+  if (args.origin !== "bag") {
+    return undefined;
+  }
+
+  // If the effect is name-restricted (filter.name / sameNameAsChosenCard),
+  // the card to play is unambiguous — let the engine auto-select.
+  if (isNameRestrictedPlayCard(effectRecord)) {
+    return undefined;
+  }
+
+  // If a target has already been selected, proceed to execution.
+  const alreadySelected =
+    normalizeSelectedTargets(getCurrentSelectionInput(args.resolutionInput)) ?? [];
+  if (alreadySelected.length > 0) {
+    return undefined;
+  }
+
+  const eligibleCards = getEligibleHandCardsForPlayCard(args, effectRecord as PlayCardEffectRecord);
+  if (eligibleCards.length === 0) {
+    return undefined;
+  }
+
+  return {
+    origin: args.origin,
+    requestId: args.requestId,
+    kind: "target-selection",
+    sourceCardId: args.sourceCardId,
+    chooserId: args.chooserId,
+    currentSelection: normalizeCurrentSelection(args.resolutionInput),
+    submitField: "targets",
+    targetDsl: [],
+    cardCandidateIds: eligibleCards,
+    playerCandidateIds: [],
+    allowedZones: ["hand"],
+    minSelections: 1,
+    maxSelections: 1,
+    ordered: false,
+    autoRejected: false,
   };
 }
 
@@ -751,7 +1014,7 @@ function buildImmediateSelectionContext(
   }
 
   if (effectRecord.type === "play-card") {
-    return undefined;
+    return buildPlayCardSelectionContext(args, effectRecord);
   }
 
   if (effectRecord.chooser === "CHOSEN_PLAYER" || effectRecord.target === "CHOSEN_PLAYER") {

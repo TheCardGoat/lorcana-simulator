@@ -30,6 +30,40 @@ export const merryweatherGoodFairy: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Fairy"],
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          type: "pay-cost",
+          cost: {
+            ink: 1,
+          },
+          effect: {
+            modifier: 2,
+            stat: "strength",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+            type: "modify-stat",
+          },
+        },
+        type: "optional",
+      },
+      id: "463-1",
+      name: "RAY OF HOPE",
+      text: "RAY OF HOPE When you play this character, you may pay 1 {I} to give chosen character +2 {S} this turn.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
+  ],
   i18n: merryweatherGoodFairyI18n,
 };

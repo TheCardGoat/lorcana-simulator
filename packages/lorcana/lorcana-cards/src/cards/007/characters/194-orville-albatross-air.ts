@@ -32,14 +32,28 @@ export const orvilleAlbatrossAir: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      id: "1jn-1",
+      type: "static",
+      name: "WELCOME ABOARD, FOLKS",
+      text: "WELCOME ABOARD, FOLKS During your turn, while you have a character named Miss Bianca or Bernard in play, this character gains Evasive.",
+      condition: {
+        type: "and",
+        conditions: [
+          { type: "your-turn" },
+          {
+            type: "or",
+            conditions: [
+              { type: "has-named-character", name: "Miss Bianca", controller: "you" },
+              { type: "has-named-character", name: "Bernard", controller: "you" },
+            ],
+          },
+        ],
+      },
       effect: {
         keyword: "Evasive",
         target: "SELF",
         type: "gain-keyword",
       },
-      id: "1jn-1",
-      text: "WELCOME ABOARD, FOLKS During your turn, while you have a character named Miss Bianca or Bernard in play, this character gains Evasive.",
-      type: "action",
     },
   ],
   i18n: orvilleAlbatrossAirI18n,

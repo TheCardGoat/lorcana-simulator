@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { theQueenFairestOfAllI18n } from "./144-the-queen-fairest-of-all.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const theQueenFairestOfAll: CharacterCard = {
   id: "Wpl",
@@ -37,21 +39,8 @@ export const theQueenFairestOfAll: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Queen", "Sorcerer"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "1ho-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
-    {
-      id: "1ho-2",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    shift(3),
+    ward,
     {
       effect: {
         modifier: {

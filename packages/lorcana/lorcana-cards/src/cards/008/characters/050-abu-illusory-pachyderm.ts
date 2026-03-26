@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { abuIllusoryPachydermI18n } from "./050-abu-illusory-pachyderm.i18n";
+import { vanish } from "../../../helpers/abilities/vanish";
 
 export const abuIllusoryPachyderm: CharacterCard = {
   id: "Ath",
@@ -35,12 +36,7 @@ export const abuIllusoryPachyderm: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Ally", "Illusion"],
   abilities: [
-    {
-      id: "Ath-1",
-      keyword: "Vanish",
-      text: "Vanish",
-      type: "keyword",
-    },
+    vanish,
     {
       id: "Ath-2",
       name: "GRASPING TRUNK",

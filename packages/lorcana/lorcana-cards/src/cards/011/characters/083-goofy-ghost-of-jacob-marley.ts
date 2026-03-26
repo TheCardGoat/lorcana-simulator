@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { goofyGhostOfJacobMarleyI18n } from "./083-goofy-ghost-of-jacob-marley.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const goofyGhostOfJacobMarley: CharacterCard = {
   id: "r4K",
@@ -34,13 +35,7 @@ export const goofyGhostOfJacobMarley: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Ghost"],
   abilities: [
-    {
-      id: "p4g-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 2,
-      text: "Boost 2 {I}",
-    },
+    boost(2),
     {
       id: "p4g-2",
       effect: {

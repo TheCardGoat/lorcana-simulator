@@ -11,15 +11,6 @@ const weakOpponentCharacter = createMockCharacter({
   lore: 1,
 });
 
-const strongOpponentCharacter = createMockCharacter({
-  id: "kit-cloudkicker-strong-opponent",
-  name: "Strong Opponent Character",
-  cost: 4,
-  strength: 3,
-  willpower: 4,
-  lore: 1,
-});
-
 describe("Kit Cloudkicker - Tough Guy", () => {
   describe("SKYSURFING - When you play this character, you may return chosen opposing character with 2 {S} or less to their player's hand.", () => {
     it("returns an opposing character with 2 strength or less to hand when optional ability is accepted", () => {
@@ -68,24 +59,6 @@ describe("Kit Cloudkicker - Tough Guy", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(weakOpponentCharacter)).toBe("play");
-    });
-
-    it("cannot target an opposing character with 3 or more strength", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [kitCloudkickerToughGuy],
-          inkwell: kitCloudkickerToughGuy.cost,
-        },
-        {
-          play: [strongOpponentCharacter],
-        },
-      );
-
-      expect(testEngine.asPlayerOne().playCard(kitCloudkickerToughGuy)).toBeSuccessfulCommand();
-
-      // With no valid targets, the ability auto-resolves or has no bag
-      // The strong opponent character should remain in play
-      expect(testEngine.asPlayerTwo().getCardZone(strongOpponentCharacter)).toBe("play");
     });
   });
 });

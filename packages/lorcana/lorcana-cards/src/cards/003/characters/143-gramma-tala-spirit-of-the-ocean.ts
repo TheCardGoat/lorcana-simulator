@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { grammaTalaSpiritOfTheOceanI18n } from "./143-gramma-tala-spirit-of-the-ocean.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const grammaTalaSpiritOfTheOcean: CharacterCard = {
   id: "0Rd",
@@ -33,15 +34,7 @@ export const grammaTalaSpiritOfTheOcean: CharacterCard = {
   ],
   classifications: ["Floodborn", "Mentor"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "1xw-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       effect: {
         amount: 1,

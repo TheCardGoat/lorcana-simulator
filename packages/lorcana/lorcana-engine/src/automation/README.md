@@ -95,10 +95,10 @@ The registry for selectable strategies is in [strategy-registry.ts](./strategy-r
 
 Right now the engine ships with three strategies:
 
-| Strategy id | What it tries to do |
-| --- | --- |
-| `default-lore-race` | Push lore in a straightforward way while staying legal and keeping choices simple. |
-| `legacy-lore-race` | Older ordering rules, mainly kept around for comparison and regression checking. |
+| Strategy id               | What it tries to do                                                                                                        |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `default-lore-race`       | Push lore in a straightforward way while staying legal and keeping choices simple.                                         |
+| `legacy-lore-race`        | Older ordering rules, mainly kept around for comparison and regression checking.                                           |
 | `board-control-lore-race` | Still wants lore, but is more willing to trade tempo to remove opposing threats and spend ink on stable board development. |
 
 The main ranking logic for those strategies lives in [default-strategy.ts](./default-strategy.ts).
@@ -194,17 +194,17 @@ So if a move is technically legal but creates too many combinations, the planner
 
 If you want to understand or change automation, these are the best starting points:
 
-| File | Why it matters |
-| --- | --- |
-| [types.ts](./types.ts) | Shared types for candidates, strategies, traces, diagnostics, and limits. |
-| [planner.ts](./planner.ts) | The main planner and executor. This is where legal candidates are built and tried. |
-| [default-strategy.ts](./default-strategy.ts) | The ranking rules for the built-in strategies. |
-| [strategy-registry.ts](./strategy-registry.ts) | The list of strategies that can be selected by id. |
-| [actor-resolution.ts](./actor-resolution.ts) | How the server figures out which player should act. |
-| [move-adapter.ts](./move-adapter.ts) | Turns a chosen candidate into a real engine move request. |
-| [decision-trace.ts](./decision-trace.ts) | Builds stable snapshots and fingerprints for debugging and analysis. |
-| [automated-actions.test.ts](./automated-actions.test.ts) | Best place to see concrete examples of current behavior. |
-| [REFINEMENT_PROMPT.md](./REFINEMENT_PROMPT.md) | Maintainer notes for improving strategy quality with tests and simulations. |
+| File                                                     | Why it matters                                                                     |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [types.ts](./types.ts)                                   | Shared types for candidates, strategies, traces, diagnostics, and limits.          |
+| [planner.ts](./planner.ts)                               | The main planner and executor. This is where legal candidates are built and tried. |
+| [default-strategy.ts](./default-strategy.ts)             | The ranking rules for the built-in strategies.                                     |
+| [strategy-registry.ts](./strategy-registry.ts)           | The list of strategies that can be selected by id.                                 |
+| [actor-resolution.ts](./actor-resolution.ts)             | How the server figures out which player should act.                                |
+| [move-adapter.ts](./move-adapter.ts)                     | Turns a chosen candidate into a real engine move request.                          |
+| [decision-trace.ts](./decision-trace.ts)                 | Builds stable snapshots and fingerprints for debugging and analysis.               |
+| [automated-actions.test.ts](./automated-actions.test.ts) | Best place to see concrete examples of current behavior.                           |
+| [REFINEMENT_PROMPT.md](./REFINEMENT_PROMPT.md)           | Maintainer notes for improving strategy quality with tests and simulations.        |
 
 ## How to improve an existing strategy
 

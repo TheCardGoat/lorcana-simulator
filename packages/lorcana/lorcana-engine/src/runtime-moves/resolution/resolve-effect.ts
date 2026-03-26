@@ -1,7 +1,12 @@
 import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
-import { createLorcanaLogMessage, type LorcanaMoveDefinition } from "../../types";
+import {
+  createLorcanaGameLogEntry,
+  createLorcanaLogMessage,
+  createLorcanaLogProjection,
+  type LorcanaMoveDefinition,
+} from "../../types";
 import type { PendingActionEffect, PendingActionResolutionInput } from "../../types";
-import type { LogTargetId } from "../../types/log-messages";
+import type { LogTargetId, ScryDestinationEntry } from "../../types/log-messages";
 import { resolveActionEffect } from "./action-effects/composed-effect-resolver";
 import { isScryEffect, validateScrySelection } from "./action-effects/scry-effect";
 import { resolveRecordedVanishTargets } from "./action-effects/vanish";
@@ -117,16 +122,136 @@ function buildContinuationResolutionInput(
           targetSelectionResolved: undefined,
         }
       : inputWithoutOptional;
+  // Clear destinations and scry-specific eventSnapshot fields so that the
+  // current effect's resolution choices do not bleed into subsequent continuation
+  // steps (e.g. P1 scry destinations and revealedCardIds leaking into the P2
+  // scry in a multi-player sequence like Let's Get Dangerous).
+  // We preserve the rest of eventSnapshot (e.g. lastEffectTargetCount) since
+  // continuation steps like for-each may depend on it.
+  const needsClearDestinations = inputWithoutTransientSelectionState.destinations !== undefined;
+  const needsClearRevealedCards =
+    inputWithoutTransientSelectionState.eventSnapshot?.revealedCardIds !== undefined ||
+    inputWithoutTransientSelectionState.eventSnapshot?.revealWindowIds !== undefined;
+  const inputWithoutTransientDestinations =
+    needsClearDestinations || needsClearRevealedCards
+      ? {
+          ...inputWithoutTransientSelectionState,
+          destinations: undefined,
+          ...(needsClearRevealedCards
+            ? {
+                eventSnapshot: {
+                  ...inputWithoutTransientSelectionState.eventSnapshot,
+                  revealedCardIds: undefined,
+                  revealWindowIds: undefined,
+                },
+              }
+            : {}),
+        }
+      : inputWithoutTransientSelectionState;
 
   if (pendingEffect.kind === "target-selection") {
-    return promoteCurrentSelectionTargetsToContext(inputWithoutTransientSelectionState);
+    return promoteCurrentSelectionTargetsToContext(inputWithoutTransientDestinations);
   }
 
-  if (countResolvedTargets(getCurrentSelectionInput(inputWithoutTransientSelectionState)) > 0) {
-    return promoteCurrentSelectionTargetsToContext(inputWithoutTransientSelectionState);
+  if (countResolvedTargets(getCurrentSelectionInput(inputWithoutTransientDestinations)) > 0) {
+    return promoteCurrentSelectionTargetsToContext(inputWithoutTransientDestinations);
   }
 
-  return clearCurrentSelectionTargets(inputWithoutTransientSelectionState);
+  return clearCurrentSelectionTargets(inputWithoutTransientDestinations);
+}
+
+function getScryDestinationLogLabel(zone: string): string {
+  switch (zone) {
+    case "deck-top":
+      return "Top of deck";
+    case "deck-bottom":
+      return "Bottom of deck";
+    case "hand":
+      return "Hand";
+    case "play":
+      return "Play";
+    case "inkwell":
+      return "Inkwell";
+    case "discard":
+      return "Discard";
+    default:
+      return zone;
+  }
+}
+
+function buildScrySelectionLogDetail(
+  ctx: ResolveEffectExecutionContext,
+  resolutionInput: PendingActionResolutionInput,
+): {
+  selection: string[];
+  destinations: ScryDestinationEntry[];
+  deckTopCards?: CardInstanceId[];
+  deckBottomCards?: CardInstanceId[];
+  handCards?: CardInstanceId[];
+  playCards?: CardInstanceId[];
+  inkwellCards?: CardInstanceId[];
+  discardCards?: CardInstanceId[];
+} {
+  if (!Array.isArray(resolutionInput.destinations)) {
+    return { selection: [], destinations: [] };
+  }
+
+  const detail: {
+    selection: string[];
+    destinations: ScryDestinationEntry[];
+    deckTopCards?: CardInstanceId[];
+    deckBottomCards?: CardInstanceId[];
+    handCards?: CardInstanceId[];
+    playCards?: CardInstanceId[];
+    inkwellCards?: CardInstanceId[];
+    discardCards?: CardInstanceId[];
+  } = { selection: [], destinations: [] };
+
+  for (const destination of resolutionInput.destinations) {
+    if (!destination || typeof destination.zone !== "string" || !Array.isArray(destination.cards)) {
+      continue;
+    }
+
+    const cardIds = destination.cards.filter(
+      (cardId): cardId is CardInstanceId => typeof cardId === "string" && cardId.length > 0,
+    );
+    if (cardIds.length === 0) {
+      continue;
+    }
+    const cardNames = cardIds.map(
+      (cardId) => getLorcanaCardName(cardId, ctx.cards.getDefinition) ?? cardId,
+    );
+    const inkTypes = cardIds.map(
+      (cardId) => ctx.cards.getDefinition(cardId)?.inkType as string[] | undefined,
+    );
+
+    detail.selection.push(
+      `${getScryDestinationLogLabel(destination.zone)}: ${cardNames.join(", ")}`,
+    );
+    detail.destinations.push({ zone: destination.zone, cardIds, cardNames, inkTypes });
+    switch (destination.zone) {
+      case "deck-top":
+        detail.deckTopCards = cardIds;
+        break;
+      case "deck-bottom":
+        detail.deckBottomCards = cardIds;
+        break;
+      case "hand":
+        detail.handCards = cardIds;
+        break;
+      case "play":
+        detail.playCards = cardIds;
+        break;
+      case "inkwell":
+        detail.inkwellCards = cardIds;
+        break;
+      case "discard":
+        detail.discardCards = cardIds;
+        break;
+    }
+  }
+
+  return detail;
 }
 
 function logResolveEffectMessage(
@@ -139,44 +264,126 @@ function logResolveEffectMessage(
     sourceCardId: pendingEffect.sourceCardId,
   };
 
-  const defaultMessage = (() => {
+  const visibility = { mode: "PUBLIC" as const };
+  const category = "action" as const;
+
+  if (pendingEffect.kind === "scry-selection") {
+    const selection = buildScrySelectionLogDetail(ctx, resolutionInput);
+    const hasSelection = selection.selection.length > 0;
+    const scryVisibility = hasSelection
+      ? {
+          mode: "PUBLIC_WITH_OVERRIDES" as const,
+          overrides: {
+            [pendingEffect.chooserId]: createLorcanaLogMessage(
+              "lorcana.effect.resolve.scrySelection.detail",
+              { ...common, ...selection },
+            ),
+          },
+        }
+      : visibility;
+
+    // typedEntry uses the detail version so the acting player sees
+    // what cards went where. The adapter strips this for other players
+    // based on the PUBLIC_WITH_OVERRIDES visibility.
+    const typedEntry = hasSelection
+      ? createLorcanaGameLogEntry(
+          "lorcana.effect.resolve.scrySelection.detail",
+          { ...common, ...selection },
+          { mode: "PRIVATE", visibleTo: [pendingEffect.chooserId] },
+          category,
+        )
+      : createLorcanaGameLogEntry(
+          "lorcana.effect.resolve.scrySelection",
+          common,
+          visibility,
+          category,
+        );
+
+    ctx.framework.log({
+      category,
+      visibility: scryVisibility,
+      defaultMessage: createLorcanaLogMessage("lorcana.effect.resolve.scrySelection", common),
+      typedEntry,
+    });
+    return;
+  }
+
+  const projection = (() => {
     switch (pendingEffect.kind) {
       case "discard-choice":
-        return createLorcanaLogMessage("lorcana.effect.resolve.discardChoice", {
-          ...common,
-          targets: normalizeResolveEffectTargets(getCurrentSelectionInput(resolutionInput)),
-        });
+        return createLorcanaLogProjection(
+          "lorcana.effect.resolve.discardChoice",
+          {
+            ...common,
+            targets: normalizeResolveEffectTargets(getCurrentSelectionInput(resolutionInput)),
+          },
+          visibility,
+          category,
+        );
       case "target-selection":
-        return createLorcanaLogMessage("lorcana.effect.resolve.targetSelection", {
-          ...common,
-          targets: normalizeResolveEffectTargets(getCurrentSelectionInput(resolutionInput)),
-        });
-      case "choice-selection":
-        return createLorcanaLogMessage("lorcana.effect.resolve.choiceSelection", {
-          ...common,
-          choiceIndex: (resolutionInput.choiceIndex ?? 0) + 1,
-        });
+        return createLorcanaLogProjection(
+          "lorcana.effect.resolve.targetSelection",
+          {
+            ...common,
+            targets: normalizeResolveEffectTargets(getCurrentSelectionInput(resolutionInput)),
+          },
+          visibility,
+          category,
+        );
+      case "choice-selection": {
+        const revealedCardId = resolutionInput.eventSnapshot?.revealedCardIds?.[0];
+        if (revealedCardId) {
+          return createLorcanaLogProjection(
+            "lorcana.effect.resolve.choiceSelection.withReveal",
+            {
+              ...common,
+              revealedCardId,
+              choiceIndex: (resolutionInput.choiceIndex ?? 0) + 1,
+            },
+            visibility,
+            category,
+          );
+        }
+        return createLorcanaLogProjection(
+          "lorcana.effect.resolve.choiceSelection",
+          {
+            ...common,
+            choiceIndex: (resolutionInput.choiceIndex ?? 0) + 1,
+          },
+          visibility,
+          category,
+        );
+      }
       case "optional-selection":
         return resolutionInput.resolveOptional
-          ? createLorcanaLogMessage("lorcana.effect.resolve.optionalSelection.accepted", common)
-          : createLorcanaLogMessage("lorcana.effect.resolve.optionalSelection.rejected", common);
+          ? createLorcanaLogProjection(
+              "lorcana.effect.resolve.optionalSelection.accepted",
+              common,
+              visibility,
+              category,
+            )
+          : createLorcanaLogProjection(
+              "lorcana.effect.resolve.optionalSelection.rejected",
+              common,
+              visibility,
+              category,
+            );
       case "name-card-selection":
-        return createLorcanaLogMessage("lorcana.effect.resolve.nameCardSelection", {
-          ...common,
-          namedCard: resolutionInput.namedCard ?? "",
-        });
-      case "scry-selection":
-        return createLorcanaLogMessage("lorcana.effect.resolve.scrySelection", common);
+        return createLorcanaLogProjection(
+          "lorcana.effect.resolve.nameCardSelection",
+          {
+            ...common,
+            namedCard: resolutionInput.namedCard ?? "",
+          },
+          visibility,
+          category,
+        );
       default:
         return assertNever(pendingEffect.kind);
     }
   })();
 
-  ctx.framework.log({
-    category: "action",
-    visibility: { mode: "PUBLIC" },
-    defaultMessage,
-  });
+  ctx.framework.log(projection);
 }
 
 function isValidActionResolutionAmount(value: unknown): boolean {
@@ -386,15 +593,25 @@ function validatePendingEffectParams(
           includeDeferredChosenSelections: true,
         },
       );
+      const scCardCandidates =
+        targetSelectionContext && targetSelectionContext.cardCandidateIds.length > 0
+          ? targetSelectionContext.cardCandidateIds
+          : undefined;
+      const scPlayerCandidates =
+        targetSelectionContext && targetSelectionContext.playerCandidateIds.length > 0
+          ? targetSelectionContext.playerCandidateIds
+          : undefined;
       const targetValidation = validateAndNormalizeTargetSelection(
         normalizedTargets,
         {
           ...analysis,
+          cardCandidates: scCardCandidates ?? analysis.cardCandidates,
+          playerCandidates: scPlayerCandidates ?? analysis.playerCandidates,
           minSelections: targetSelectionContext?.minSelections ?? analysis.minSelections,
           maxSelections: targetSelectionContext?.maxSelections ?? analysis.maxSelections,
         },
         {
-          currentPlayer: pendingEffect.controllerId,
+          currentPlayer: pendingEffect.chooserId,
           ctx,
         },
       );
@@ -529,7 +746,9 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
     }
 
     const actorId = ctx.playerId;
-    if (!actorId || actorId !== pendingChoice.playerID || actorId !== pendingEffect.chooserId) {
+    // Check only chooserId: for opponent-choice effects (e.g. Hades), pendingChoice.playerID is
+    // the controller (P1) but the chooser may be the opponent (P2). The chooserId is authoritative.
+    if (!actorId || actorId !== pendingEffect.chooserId) {
       traceLorcanaRuntimeStep({
         kind: "move.validation.failed",
         moveId: "resolveEffect",
@@ -776,10 +995,13 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
 
   available: (ctx) => {
     const pendingChoice = ctx.framework.state.priority.pendingChoice;
-    if (!pendingChoice || ctx.playerId !== pendingChoice.playerID) {
+    if (!pendingChoice) {
       return false;
     }
 
+    // Do NOT restrict by pendingChoice.playerID here: for opponent-choice effects (e.g. Hades),
+    // pendingChoice.playerID is the controller (P1) but the chooser is the opponent (P2).
+    // The chooserId check below is sufficient to restrict access to the correct player.
     const pendingEffect = getPendingEffect(ctx, pendingChoice.requestID);
     if (!pendingEffect || pendingEffect.chooserId !== ctx.playerId) {
       return false;

@@ -12,12 +12,16 @@ export type SoundEffectId =
   | "move-to-location"
   | "quest"
   | "challenge"
+  | "challenge-hit"
+  | "banish"
   | "turn-change"
   | "concede"
   | "mulligan"
   | "activate-ability"
   | "sing"
-  | "resolve-effect";
+  | "resolve-effect"
+  | "victory"
+  | "defeat";
 
 const howlMap = new Map<SoundEffectId, Howl>();
 const blobUrls: string[] = [];
@@ -86,12 +90,16 @@ const recipes: Record<SoundEffectId, SynthRecipe> = {
   "move-to-location": { duration: 0.25, render: synthMoveToLocation },
   quest: { duration: 0.45, render: synthQuest },
   challenge: { duration: 0.15, render: synthChallenge },
+  "challenge-hit": { duration: 0.18, render: synthChallengeHit },
+  banish: { duration: 0.3, render: synthBanish },
   "turn-change": { duration: 0.35, render: synthTurnChange },
   concede: { duration: 0.55, render: synthConcede },
   mulligan: { duration: 0.2, render: synthMulligan },
   "activate-ability": { duration: 0.25, render: synthActivateAbility },
   sing: { duration: 0.4, render: synthSing },
   "resolve-effect": { duration: 0.2, render: synthResolveEffect },
+  victory: { duration: 1.6, render: synthVictory },
+  defeat: { duration: 1.4, render: synthDefeat },
 };
 
 async function prerenderSound(
@@ -186,6 +194,8 @@ export function boardMoveVariantToSoundId(
       return "play-action";
     case "move-to-location":
       return "move-to-location";
+    case "banish":
+      return "banish";
     default:
       return null;
   }
@@ -336,6 +346,48 @@ function synthChallenge(ctx: BaseAudioContext, dest: AudioNode, now: number): vo
   osc.stop(now + 0.1);
 }
 
+function synthChallengeHit(ctx: BaseAudioContext, dest: AudioNode, now: number): void {
+  // Sharp crack on impact
+  const noise = ctx.createBufferSource();
+  noise.buffer = createNoiseBuffer(ctx, 0.04);
+  const crack = ctx.createBiquadFilter();
+  crack.type = "bandpass";
+  crack.frequency.value = 500;
+  crack.Q.value = 0.8;
+  const crackEnv = ctx.createGain();
+  crackEnv.gain.setValueAtTime(0.5, now);
+  crackEnv.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+  noise.connect(crack).connect(crackEnv).connect(dest);
+  noise.start(now);
+  noise.stop(now + 0.04);
+  // Sub thump for physical weight
+  const osc = ctx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.value = 60;
+  const thumpEnv = ctx.createGain();
+  thumpEnv.gain.setValueAtTime(0.4, now);
+  thumpEnv.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+  osc.connect(thumpEnv).connect(dest);
+  osc.start(now);
+  osc.stop(now + 0.14);
+}
+
+function synthBanish(ctx: BaseAudioContext, dest: AudioNode, now: number): void {
+  // Noise swept downward — card dissolving/swept away
+  const noise = ctx.createBufferSource();
+  noise.buffer = createNoiseBuffer(ctx, 0.28);
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(1400, now);
+  filter.frequency.exponentialRampToValueAtTime(120, now + 0.26);
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0.28, now);
+  env.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+  noise.connect(filter).connect(env).connect(dest);
+  noise.start(now);
+  noise.stop(now + 0.26);
+}
+
 function synthTurnChange(ctx: BaseAudioContext, dest: AudioNode, now: number): void {
   const notes = [392, 523];
   const durations = [0.12, 0.18];
@@ -441,4 +493,57 @@ function synthResolveEffect(ctx: BaseAudioContext, dest: AudioNode, now: number)
   osc.connect(env).connect(dest);
   osc.start(now);
   osc.stop(now + 0.15);
+}
+
+function synthVictory(ctx: BaseAudioContext, dest: AudioNode, now: number): void {
+  // Ascending major arpeggio (C4-E4-G4-C5) then held chord
+  const notes = [261.63, 329.63, 392.0, 523.25];
+  const noteDur = 0.18;
+  for (let i = 0; i < notes.length; i++) {
+    const t = now + i * noteDur;
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.value = notes[i];
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.001, t);
+    env.gain.linearRampToValueAtTime(0.28, t + 0.01);
+    env.gain.exponentialRampToValueAtTime(0.001, t + noteDur + 0.4);
+    osc.connect(env).connect(dest);
+    osc.start(t);
+    osc.stop(t + noteDur + 0.45);
+  }
+  // Shimmer noise burst
+  const noise = ctx.createBufferSource();
+  noise.buffer = createNoiseBuffer(ctx, 0.8);
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = "highpass";
+  noiseFilter.frequency.value = 6000;
+  const noiseEnv = ctx.createGain();
+  noiseEnv.gain.setValueAtTime(0.08, now);
+  noiseEnv.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+  noise.connect(noiseFilter).connect(noiseEnv).connect(dest);
+  noise.start(now);
+  noise.stop(now + 0.8);
+}
+
+function synthDefeat(ctx: BaseAudioContext, dest: AudioNode, now: number): void {
+  // Descending minor arpeggio
+  const notes = [392.0, 329.63, 261.63, 196.0];
+  const noteDur = 0.22;
+  for (let i = 0; i < notes.length; i++) {
+    const t = now + i * noteDur;
+    const osc = ctx.createOscillator();
+    osc.type = "sawtooth";
+    osc.frequency.value = notes[i];
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 800;
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.001, t);
+    env.gain.linearRampToValueAtTime(0.22, t + 0.02);
+    env.gain.exponentialRampToValueAtTime(0.001, t + noteDur + 0.3);
+    osc.connect(filter).connect(env).connect(dest);
+    osc.start(t);
+    osc.stop(t + noteDur + 0.35);
+  }
 }

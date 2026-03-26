@@ -24,6 +24,27 @@ export const peterPanLostBoyLeader: CharacterCard = {
   },
   text: "I CAME TO LISTEN TO THE STORIES Once per turn, when this character moves to a location, gain lore equal to that location's {L}.",
   classifications: ["Dreamborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      id: "ous-1",
+      type: "triggered",
+      name: "I CAME TO LISTEN TO THE STORIES",
+      text: "I CAME TO LISTEN TO THE STORIES Once per turn, when this character moves to a location, gain lore equal to that location's {L}.",
+      trigger: {
+        event: "move",
+        on: "SELF",
+        timing: "whenever",
+        restrictions: [{ type: "once-per-turn" }],
+      },
+      effect: {
+        type: "gain-lore",
+        target: "CONTROLLER",
+        amount: {
+          type: "source-attribute",
+          attribute: "location-lore",
+        },
+      },
+    },
+  ],
   i18n: peterPanLostBoyLeaderI18n,
 };

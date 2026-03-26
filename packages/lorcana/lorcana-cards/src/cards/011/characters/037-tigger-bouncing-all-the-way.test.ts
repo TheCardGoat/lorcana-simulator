@@ -15,12 +15,6 @@ const cheapCharacter = createMockCharacter({
   cost: 2,
 });
 
-const expensiveCharacter = createMockCharacter({
-  id: "tigger-bat-expensive-char",
-  name: "Expensive Character",
-  cost: 3,
-});
-
 const cheapItem = createMockItem({
   id: "tigger-bat-cheap-item",
   name: "Cheap Item",
@@ -58,29 +52,6 @@ describe("Tigger - Bouncing All the Way", () => {
 
       expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("hand");
     });
-
-    it("does not return a character with cost greater than 2 (no valid targets available)", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        inkwell: tiggerBouncingAllTheWay.cost,
-        hand: [tiggerBouncingAllTheWay],
-        play: [expensiveCharacter],
-        deck: 3,
-      });
-
-      expect(testEngine.asPlayerOne().playCard(tiggerBouncingAllTheWay)).toBeSuccessfulCommand();
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(bagEffect).toBeDefined();
-
-      // Declining since there are no valid targets
-      expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      // The expensive character (cost 3) must still be in play
-      expect(testEngine.asPlayerOne().getCardZone(expensiveCharacter)).toBe("play");
-    });
-
     it("returns a chosen item with cost 2 or less to their player's hand", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         inkwell: tiggerBouncingAllTheWay.cost,

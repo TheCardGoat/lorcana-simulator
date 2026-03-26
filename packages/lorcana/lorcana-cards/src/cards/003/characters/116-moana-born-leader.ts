@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { moanaBornLeaderI18n } from "./116-moana-born-leader.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const moanaBornLeader: CharacterCard = {
   id: "xR2",
@@ -34,36 +35,24 @@ export const moanaBornLeader: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess", "Captain"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "cku-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
-        steps: [
-          {
-            target: {
-              selector: "all",
-              count: "all",
-              owner: "any",
-              zones: ["play"],
-              cardTypes: ["character"],
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+          filter: [
+            {
+              type: "same-location-as-source",
             },
-            type: "ready",
-          },
-          {
-            duration: "this-turn",
-            restriction: "cant-quest",
-            target: "SELF",
-            type: "restriction",
-          },
-        ],
-        type: "sequence",
+          ],
+        },
+        restriction: "cant-quest",
+        type: "ready",
       },
       id: "cku-2",
       name: "WELCOME TO MY BOAT",
@@ -72,6 +61,22 @@ export const moanaBornLeader: CharacterCard = {
         event: "quest",
         on: "SELF",
         timing: "whenever",
+      },
+      condition: {
+        type: "target-query",
+        query: {
+          filter: [
+            {
+              type: "at-location",
+            },
+          ],
+          reference: "trigger-subject",
+          selector: "all",
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
       },
       type: "triggered",
     },

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { patchPlayfulPupI18n } from "./025-patch-playful-pup.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const patchPlayfulPup: CharacterCard = {
   id: "vSi",
@@ -33,13 +34,28 @@ export const patchPlayfulPup: CharacterCard = {
   ],
   classifications: ["Storyborn", "Puppy"],
   abilities: [
+    ward,
     {
-      id: "1x2-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
-    {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Puppy",
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
         modifier: 1,
         stat: "lore",
@@ -47,8 +63,9 @@ export const patchPlayfulPup: CharacterCard = {
         type: "modify-stat",
       },
       id: "1x2-2",
+      name: "PUPPY BARKING",
       text: "PUPPY BARKING While you have another Puppy character in play, this character gets +1 {L}.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: patchPlayfulPupI18n,

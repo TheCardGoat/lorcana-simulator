@@ -40,35 +40,19 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       ).toBeSuccessfulCommand();
       expect(noDrawEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(noDrawEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+    });
 
-      const drawEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        hand: [stitchCarefreeSurfer, minnieMouseAlwaysClassy],
+    it("6.2.4.1. Stitch's play trigger does NOT add a bag entry if condition is not met at trigger time.", () => {
+      const noTriggerEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [stitchCarefreeSurfer],
         inkwell: stitchCarefreeSurfer.cost,
         deck: 2,
         play: [simbaProtectiveCub],
       });
 
-      expect(drawEngine.asPlayerOne().playCard(stitchCarefreeSurfer)).toBeSuccessfulCommand();
-      expect(drawEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(drawEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
-
-      const minnieInHandId = drawEngine.findCardInstanceId(
-        minnieMouseAlwaysClassy,
-        "hand",
-        PLAYER_ONE,
-      );
-      expect(
-        drawEngine.asServer().manualMoveCard(minnieInHandId, `play:${PLAYER_ONE}` as ZoneId)
-          .success,
-      ).toBe(true);
-      expect(drawEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
-      expect(
-        drawEngine.asPlayerOne().resolveBag(drawEngine.asPlayerOne().getBagEffects()[0]!.id, {
-          resolveOptional: true,
-        }).success,
-      ).toBe(true);
-      expect(drawEngine.asPlayerOne().getBagCount()).toBe(0);
-      expect(drawEngine.asPlayerOne().getZonesCardCount().hand).toBe(2);
+      expect(noTriggerEngine.asPlayerOne().playCard(stitchCarefreeSurfer)).toBeSuccessfulCommand();
+      expect(noTriggerEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(noTriggerEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
     });
 
     it("6.2.5. Scar's two sentences share one challenge-banish trigger, and without that trigger he can still quest normally.", () => {

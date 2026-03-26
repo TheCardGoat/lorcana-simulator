@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { stratosTornadoTitanI18n } from "./055-stratos-tornado-titan.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const stratosTornadoTitan: CharacterCard = {
   id: "NxG",
@@ -33,12 +34,7 @@ export const stratosTornadoTitan: CharacterCard = {
   ],
   classifications: ["Storyborn", "Titan"],
   abilities: [
-    {
-      id: "NxG-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
+    evasive,
     {
       id: "NxG-2",
       name: "CYCLONE",

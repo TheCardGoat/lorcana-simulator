@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { aliceSavvySailorI18n } from "./161-alice-savvy-sailor.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const aliceSavvySailor: CharacterCard = {
   id: "4E5",
@@ -34,12 +35,7 @@ export const aliceSavvySailor: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero"],
   abilities: [
-    {
-      id: "1hn-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         steps: [

@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { support } from "../../../helpers/abilities/support";
 import { eilonwyPrincessOfLlyrI18n } from "./007-eilonwy-princess-of-llyr.i18n";
 
 export const eilonwyPrincessOfLlyr: CharacterCard = {
@@ -24,13 +25,6 @@ export const eilonwyPrincessOfLlyr: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Ally", "Princess"],
-  abilities: [
-    {
-      id: "49a-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: eilonwyPrincessOfLlyrI18n,
 };

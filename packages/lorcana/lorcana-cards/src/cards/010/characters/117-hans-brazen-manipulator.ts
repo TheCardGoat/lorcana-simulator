@@ -68,30 +68,27 @@ export const hansBrazenManipulator: CharacterCard = {
       type: "static",
     },
     {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "opponent",
+          zones: ["play"],
+          cardType: "character",
+          filters: [
+            {
+              type: "ready",
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 2,
+        },
+      },
       effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            owner: "opponent",
-            zones: ["play"],
-            cardType: "character",
-            filters: [
-              {
-                type: "ready",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 2,
-          },
-        },
-        then: {
-          amount: 2,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 2,
+        type: "gain-lore",
       },
       id: "bkr-2",
       name: "GROWING INFLUENCE",

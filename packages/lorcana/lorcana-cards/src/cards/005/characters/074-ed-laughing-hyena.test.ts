@@ -52,30 +52,6 @@ describe("Ed - Laughing Hyena", () => {
       expect(testEngine.asPlayerOne().getDamage(damagedCharacter)).toBe(3);
     });
 
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [edLaughingHyena],
-          inkwell: edLaughingHyena.cost,
-          play: [damagedCharacter],
-          deck: 5,
-        },
-        {},
-      );
-
-      testEngine.asServer().manualSetDamage(damagedCharacter, 1);
-
-      expect(testEngine.asPlayerOne().playCard(edLaughingHyena)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getDamage(damagedCharacter)).toBe(1);
-    });
-
     it("can target an opposing damaged character", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

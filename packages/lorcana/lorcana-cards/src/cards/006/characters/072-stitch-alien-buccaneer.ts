@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { stitchAlienBuccaneerI18n } from "./072-stitch-alien-buccaneer.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const stitchAlienBuccaneer: CharacterCard = {
   id: "z1V",
@@ -34,15 +35,7 @@ export const stitchAlienBuccaneer: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Alien", "Pirate"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "19n-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       condition: {
         type: "used-shift",

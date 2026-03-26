@@ -12,23 +12,23 @@ type ActionSelectionZone = "deck" | "hand" | "play" | "discard" | "inkwell" | "l
 
 type RemoveDamageTargetDescriptor = {
   owner: "you" | "opponent" | "any";
-  cardTypes?: string[];
+  cardTypes?: readonly string[];
   filter?: TargetDescriptor["filter"];
   filters?: TargetDescriptor["filters"];
 };
 
 type ReturnToHandTargetDescriptor = {
   owner: "you" | "opponent" | "any";
-  cardTypes?: string[];
+  cardTypes?: readonly string[];
   filter?: TargetDescriptor["filter"];
   filters?: TargetDescriptor["filters"];
 };
 
 type ReturnFromDiscardTargetDescriptor = {
   owner: "you" | "opponent" | "any";
-  actionSubtypes?: string[];
+  actionSubtypes?: readonly string[];
   cardName?: string;
-  cardTypes?: string[];
+  cardTypes?: readonly string[];
   filter?: {
     maxCost?: number;
     classification?: string;
@@ -52,6 +52,7 @@ type DiscardTargetDescriptor = {
 type PlayCardSelectionDescriptor = {
   owner: "you" | "opponent" | "any";
   sourceZone: "deck" | "hand" | "discard";
+  sourceZones?: readonly ("deck" | "hand" | "discard")[];
   cardType?: LorcanaCard["cardType"] | "song" | "floodborn";
   filter?: {
     cardType?: LorcanaCard["cardType"] | "song" | "floodborn";
@@ -322,7 +323,7 @@ function buildReturnFromDiscardTargetDsl(
     count: 1,
     owner: descriptor.owner,
     zones: ["discard"],
-    cardTypes: descriptor.cardTypes,
+    cardTypes: descriptor.cardTypes ? [...descriptor.cardTypes] : undefined,
   };
 
   if (descriptor.cardName) {
@@ -398,11 +399,12 @@ function buildDiscardTargetDsl(descriptor: DiscardTargetDescriptor): LorcanaCard
 function buildPlayCardSelectionTargetDsl(
   descriptor: PlayCardSelectionDescriptor,
 ): LorcanaCardTarget {
+  const zones = descriptor.sourceZones ?? [descriptor.sourceZone];
   let target: LorcanaCardTarget = {
     selector: "chosen",
     count: 1,
     owner: descriptor.owner,
-    zones: [descriptor.sourceZone],
+    zones: zones as LorcanaCardTarget["zones"],
   };
 
   const cardType = descriptor.cardType ?? descriptor.filter?.cardType;
@@ -451,6 +453,16 @@ function buildPlayCardSelectionTargetDsl(
   return target;
 }
 
+function normalizeMoveDamageParticipantOwner(target: unknown): "you" | "opponent" | "any" {
+  if (target === "CHOSEN_OPPOSING_CHARACTER" || target === "CHOSEN_OPPONENT_CHARACTER") {
+    return "opponent";
+  }
+  if (typeof target === "string" && target.startsWith("CHOSEN_")) {
+    return "any";
+  }
+  return normalizeTargetOwner(target);
+}
+
 function collectRemoveDamageTargetDescriptors(effect: unknown): RemoveDamageTargetDescriptor[] {
   if (!effect || typeof effect !== "object") {
     return [];
@@ -470,6 +482,23 @@ function collectRemoveDamageTargetDescriptors(effect: unknown): RemoveDamageTarg
         filters: targetRecord?.filters,
       },
     ];
+  }
+
+  if (effectRecord.type === "move-damage") {
+    const descriptors: RemoveDamageTargetDescriptor[] = [];
+    if (effectRecord.from !== undefined) {
+      descriptors.push({
+        owner: normalizeMoveDamageParticipantOwner(effectRecord.from),
+        cardTypes: ["character"],
+      });
+    }
+    if (effectRecord.to !== undefined) {
+      descriptors.push({
+        owner: normalizeMoveDamageParticipantOwner(effectRecord.to),
+        cardTypes: ["character"],
+      });
+    }
+    return descriptors;
   }
 
   const nestedEffects = [
@@ -636,9 +665,6 @@ function normalizeDiscardTargetSourceZone(value: unknown): DiscardTargetSourceZo
     case "inkwell":
       return value;
     default:
-      logger.warn("Invalid discard target source zone: {value}, defaulting to 'hand'", {
-        value,
-      });
       return "hand";
   }
 }
@@ -692,6 +718,11 @@ function collectDiscardTargetDescriptors(effect: unknown): DiscardTargetDescript
   if (effectRecord.type === "discard") {
     // Random discards do not require explicit player selection — skip them.
     if (effectRecord.random === true) {
+      return [];
+    }
+    // "Discard all" automatically discards every matching card — no explicit
+    // target selection is needed from the player.
+    if (effectRecord.amount === "all") {
       return [];
     }
     return [normalizeDiscardTargetDescriptor(effectRecord)];
@@ -773,7 +804,24 @@ function normalizePlayCardSelectionDescriptor(
   }
 
   const from = effectRecord.from;
-  if (from !== "deck" && from !== "hand" && from !== "discard") {
+  const validSingleZones = ["deck", "hand", "discard"] as const;
+  type SingleZone = (typeof validSingleZones)[number];
+
+  let sourceZone: SingleZone | undefined;
+  let sourceZones: readonly SingleZone[] | undefined;
+
+  if (Array.isArray(from)) {
+    const normalizedZones = from.filter((z): z is SingleZone =>
+      (validSingleZones as readonly unknown[]).includes(z),
+    );
+    if (normalizedZones.length === 0) {
+      return undefined;
+    }
+    sourceZones = normalizedZones;
+    sourceZone = normalizedZones[0];
+  } else if (from === "deck" || from === "hand" || from === "discard") {
+    sourceZone = from;
+  } else {
     return undefined;
   }
 
@@ -802,7 +850,8 @@ function normalizePlayCardSelectionDescriptor(
 
   return {
     owner,
-    sourceZone: from,
+    sourceZone,
+    ...(sourceZones ? { sourceZones } : {}),
     cardType,
     filter,
   };
@@ -1277,28 +1326,32 @@ function resolveActionPlayCardSelectionCandidates(
           ? playerIds
           : [playerId];
 
-    for (const sourcePlayerId of sourcePlayerIds) {
-      const zoneCards = ctx.framework.zones.getCards({
-        zone: targetDescriptor.sourceZone,
-        playerId: sourcePlayerId,
-      }) as CardInstanceId[];
+    const zonesToSearch = targetDescriptor.sourceZones ?? [targetDescriptor.sourceZone];
 
-      for (const cardId of zoneCards) {
-        const definition = getCardDefinition(ctx, cardId);
-        if (!definition) {
-          continue;
+    for (const sourcePlayerId of sourcePlayerIds) {
+      for (const zone of zonesToSearch) {
+        const zoneCards = ctx.framework.zones.getCards({
+          zone,
+          playerId: sourcePlayerId,
+        }) as CardInstanceId[];
+
+        for (const cardId of zoneCards) {
+          const definition = getCardDefinition(ctx, cardId);
+          if (!definition) {
+            continue;
+          }
+          if (
+            !matchesPlayCardSelectionCriteria(
+              definition,
+              targetDescriptor,
+              sourceDefinition,
+              chosenDefinition,
+            )
+          ) {
+            continue;
+          }
+          candidates.add(cardId as CardInstanceId);
         }
-        if (
-          !matchesPlayCardSelectionCriteria(
-            definition,
-            targetDescriptor,
-            sourceDefinition,
-            chosenDefinition,
-          )
-        ) {
-          continue;
-        }
-        candidates.add(cardId as CardInstanceId);
       }
     }
   }
@@ -1484,7 +1537,10 @@ export function analyzeEffectTargets(
     }
   }
   for (const descriptor of playCardSelectionDescriptors) {
-    allowedZones.add(descriptor.sourceZone);
+    const zones = descriptor.sourceZones ?? [descriptor.sourceZone];
+    for (const zone of zones) {
+      allowedZones.add(zone);
+    }
   }
 
   const explicitDescriptorCount =

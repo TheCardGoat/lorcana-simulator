@@ -35,13 +35,7 @@ export const princePhillipDragonslayer: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
+          target: { ref: "defender" },
           type: "banish",
         },
         type: "optional",
@@ -50,9 +44,10 @@ export const princePhillipDragonslayer: CharacterCard = {
       name: "HEROISM",
       text: "HEROISM When this character challenges and is banished, you may banish the challenged character.",
       trigger: {
-        event: "challenge",
+        event: "banish",
         on: "SELF",
         timing: "when",
+        restrictions: [{ type: "in-challenge" }],
       },
       type: "triggered",
     },

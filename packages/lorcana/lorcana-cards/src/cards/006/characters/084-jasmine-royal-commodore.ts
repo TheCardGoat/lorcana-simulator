@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jasmineRoyalCommodoreI18n } from "./084-jasmine-royal-commodore.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const jasmineRoyalCommodore: CharacterCard = {
   id: "J56",
@@ -34,15 +35,7 @@ export const jasmineRoyalCommodore: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
   abilities: [
-    {
-      cost: {
-        ink: 5,
-      },
-      id: "8v1-1",
-      keyword: "Shift",
-      text: "Shift 5",
-      type: "keyword",
-    },
+    shift(5),
     {
       condition: {
         type: "used-shift",

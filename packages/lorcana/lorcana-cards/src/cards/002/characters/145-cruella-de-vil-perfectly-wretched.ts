@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { cruellaDeVilPerfectlyWretchedI18n } from "./145-cruella-de-vil-perfectly-wretched.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const cruellaDeVilPerfectlyWretched: CharacterCard = {
   id: "8wy",
@@ -34,15 +35,7 @@ export const cruellaDeVilPerfectlyWretched: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "1l6-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         duration: "this-turn",

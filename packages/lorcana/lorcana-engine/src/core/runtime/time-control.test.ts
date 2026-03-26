@@ -12,7 +12,11 @@ import {
   pauseClock,
   resumeClock,
   awardMoveBonus,
+  awardDynamicActionBonus,
+  awardDynamicTurnPassBonus,
   checkPriorityTimeout,
+  checkTimeout,
+  resetPlayerTimeAfterSkip,
   handleWindowExpiry,
   handleReserveExpiry,
   getPlayerTimeSummary,
@@ -23,9 +27,10 @@ import type {
   TimeContext,
   ChessClockConfig,
   PriorityClockConfig,
+  DynamicClockConfig,
   ChessClockContext,
   PriorityClockContext,
-  ClockPlayerState,
+  DynamicClockContext,
 } from "./types";
 
 function asChess(time: TimeContext): ChessClockContext {
@@ -34,6 +39,10 @@ function asChess(time: TimeContext): ChessClockContext {
 }
 function asPriority(time: TimeContext): PriorityClockContext {
   if (time.mode !== "priority") throw new Error("expected priority clock");
+  return time;
+}
+function asDynamic(time: TimeContext): DynamicClockContext {
+  if (time.mode !== "dynamic") throw new Error("expected dynamic clock");
   return time;
 }
 
@@ -45,12 +54,14 @@ function createTestState(timeMode: "chess"): MatchState & { ctx: { time: ChessCl
 function createTestState(
   timeMode: "priority",
 ): MatchState & { ctx: { time: PriorityClockContext } };
-function createTestState(timeMode: "none" | "chess" | "priority" = "none") {
+function createTestState(timeMode: "dynamic"): MatchState & { ctx: { time: DynamicClockContext } };
+function createTestState(timeMode: "none" | "chess" | "priority" | "dynamic" = "none") {
   const chessConfig: ChessClockConfig = {
     initialReserveMs: 600_000,
     incrementMs: 0,
     delayMs: 0,
     graceMs: 0,
+    resetTimeOnSkipMs: 60_000,
     lossPolicy: "lose-on-time",
   };
 
@@ -64,12 +75,23 @@ function createTestState(timeMode: "none" | "chess" | "priority" = "none") {
     onReserveExpiry: "lose-on-time",
   };
 
+  const dynamicConfig: DynamicClockConfig = {
+    initialReserveMs: 150_000,
+    reserveCapMs: 150_000,
+    perActionBonusMs: 5_000,
+    perTurnPassBonusMs: 60_000,
+    resetTimeOnSkipMs: 60_000,
+    graceMs: 0,
+  };
+
   const timeControl =
     timeMode === "none"
       ? { mode: "none" as const }
       : timeMode === "chess"
         ? { mode: "chess" as const, config: chessConfig }
-        : { mode: "priority" as const, config: priorityConfig };
+        : timeMode === "priority"
+          ? { mode: "priority" as const, config: priorityConfig }
+          : { mode: "dynamic" as const, config: dynamicConfig };
 
   const ctx = createInitialTCGCtx({
     matchID: "match-123",
@@ -78,33 +100,45 @@ function createTestState(timeMode: "none" | "chess" | "priority" = "none") {
     timeConfig: timeControl,
   });
 
-  // Add players to time control (ctx.time is narrowed by createInitialTCGCtx when mode is chess/priority)
+  // Add players to time control
   if (timeMode !== "none") {
-    const time = ctx.time as ChessClockContext | PriorityClockContext;
-    time.players["p1"] = {
-      reserveMsRemaining:
-        timeMode === "chess" ? chessConfig.initialReserveMs : priorityConfig.reserveMs,
-      totalConsumedMs: 0,
-      movesMade: 0,
-      lastUpdatedAtMs: 1000,
-    };
-
-    if (timeMode === "priority") {
-      const p1 = time.players["p1"] as
-        | undefined
-        | (ClockPlayerState & {
-            totalWindowOverageMs: number;
-            moveBonusMsGranted: number;
-            windowTimeouts: number;
-          });
-      if (p1) {
-        p1.totalWindowOverageMs = 0;
-        p1.moveBonusMsGranted = 0;
-        p1.windowTimeouts = 0;
-      }
+    if (timeMode === "chess") {
+      const time = ctx.time as ChessClockContext;
+      time.players["p1"] = {
+        reserveMsRemaining: chessConfig.initialReserveMs,
+        totalConsumedMs: 0,
+        movesMade: 0,
+        lastUpdatedAtMs: 1000,
+        timeoutCount: 0,
+        isInNegativeTime: false,
+      };
+      time.players["p2"] = { ...time.players["p1"] };
+    } else if (timeMode === "priority") {
+      const time = ctx.time as PriorityClockContext;
+      time.players["p1"] = {
+        reserveMsRemaining: priorityConfig.reserveMs,
+        totalConsumedMs: 0,
+        movesMade: 0,
+        lastUpdatedAtMs: 1000,
+        totalWindowOverageMs: 0,
+        moveBonusMsGranted: 0,
+        windowTimeouts: 0,
+      };
+      time.players["p2"] = { ...time.players["p1"] };
+    } else if (timeMode === "dynamic") {
+      const time = ctx.time as DynamicClockContext;
+      time.players["p1"] = {
+        reserveMsRemaining: dynamicConfig.initialReserveMs,
+        totalConsumedMs: 0,
+        movesMade: 0,
+        lastUpdatedAtMs: 1000,
+        timeoutCount: 0,
+        isInNegativeTime: false,
+        actionBonusMsGranted: 0,
+        turnPassBonusMsGranted: 0,
+      };
+      time.players["p2"] = { ...time.players["p1"] };
     }
-
-    time.players["p2"] = { ...time.players["p1"] };
   }
 
   return {
@@ -143,7 +177,7 @@ describe("Time Control", () => {
       expect(time.players["p1"].reserveMsRemaining).toBe(595_000);
     });
 
-    it("should handle chess clock timeout", () => {
+    it("should allow chess clock to go negative (two-strike timeout)", () => {
       const state = createTestState("chess");
       const st = asChess(state.ctx.time);
       st.running = true;
@@ -153,9 +187,9 @@ describe("Time Control", () => {
 
       const result = settleClocks(state, 10_000); // 9 seconds elapsed
       const time = asChess(result.ctx.time);
-      expect(time.players["p1"].reserveMsRemaining).toBe(0);
-      expect(time.running).toBe(false);
-      expect(time.pausedReason).toBe("GAME_ENDED");
+      expect(time.players["p1"].reserveMsRemaining).toBe(-4000); // Goes negative
+      expect(time.players["p1"].isInNegativeTime).toBe(true);
+      expect(time.running).toBe(true); // Clock keeps running - opponent decides
     });
 
     it("should settle priority clock within window (no reserve burn)", () => {
@@ -460,6 +494,221 @@ describe("Time Control", () => {
       const result = getPlayerTimeSummary(state, "unknown");
 
       expect(result).toBeNull();
+    });
+
+    it("should include timeout info for chess mode", () => {
+      const state = createTestState("chess");
+      const st = asChess(state.ctx.time);
+      st.players["p1"].timeoutCount = 1;
+      st.players["p1"].isInNegativeTime = true;
+
+      const result = getPlayerTimeSummary(state, "p1");
+      expect(result?.isInNegativeTime).toBe(true);
+      expect(result?.timeoutCount).toBe(1);
+    });
+
+    it("should include timeout info for dynamic mode", () => {
+      const state = createTestState("dynamic");
+      const result = getPlayerTimeSummary(state, "p1");
+      expect(result?.isInNegativeTime).toBe(false);
+      expect(result?.timeoutCount).toBe(0);
+    });
+  });
+
+  describe("Dynamic Clock", () => {
+    describe("settleClocks", () => {
+      it("should settle dynamic clock correctly", () => {
+        const state = createTestState("dynamic");
+        const st = asDynamic(state.ctx.time);
+        st.running = true;
+        st.activePlayerID = "p1";
+        st.startedAtMs = 1000;
+
+        const result = settleClocks(state, 6000); // 5 seconds elapsed
+        const time = asDynamic(result.ctx.time);
+        expect(time.players["p1"].totalConsumedMs).toBe(5000);
+        expect(time.players["p1"].reserveMsRemaining).toBe(145_000);
+        expect(time.players["p1"].isInNegativeTime).toBe(false);
+      });
+
+      it("should allow dynamic clock to go negative", () => {
+        const state = createTestState("dynamic");
+        const st = asDynamic(state.ctx.time);
+        st.running = true;
+        st.activePlayerID = "p1";
+        st.startedAtMs = 1000;
+        st.players["p1"].reserveMsRemaining = 5000;
+
+        const result = settleClocks(state, 10_000); // 9 seconds elapsed
+        const time = asDynamic(result.ctx.time);
+        expect(time.players["p1"].reserveMsRemaining).toBe(-4000);
+        expect(time.players["p1"].isInNegativeTime).toBe(true);
+      });
+    });
+
+    describe("grantPriority", () => {
+      it("should start dynamic clock when granting priority", () => {
+        const state = createTestState("dynamic");
+        const result = grantPriority(state, "p1", 1000);
+        const time = asDynamic(result.ctx.time);
+        expect(time.activePlayerID).toBe("p1");
+        expect(time.running).toBe(true);
+        expect(time.startedAtMs).toBe(1000);
+      });
+    });
+
+    describe("awardDynamicActionBonus", () => {
+      it("should award action bonus", () => {
+        const state = createTestState("dynamic");
+        const result = awardDynamicActionBonus(state, "p1");
+        const time = asDynamic(result.ctx.time);
+        expect(time.players["p1"].actionBonusMsGranted).toBe(5000);
+        expect(time.players["p1"].reserveMsRemaining).toBe(150_000); // capped at max
+      });
+
+      it("should not exceed cap", () => {
+        const state = createTestState("dynamic");
+        const st = asDynamic(state.ctx.time);
+        st.players["p1"].reserveMsRemaining = 148_000;
+
+        const result = awardDynamicActionBonus(state, "p1");
+        const time = asDynamic(result.ctx.time);
+        // 148000 + 5000 = 153000, but capped at 150000
+        expect(time.players["p1"].reserveMsRemaining).toBe(150_000);
+        expect(time.players["p1"].actionBonusMsGranted).toBe(5000);
+      });
+
+      it("should add bonus when below cap", () => {
+        const state = createTestState("dynamic");
+        const st = asDynamic(state.ctx.time);
+        st.players["p1"].reserveMsRemaining = 100_000;
+
+        const result = awardDynamicActionBonus(state, "p1");
+        const time = asDynamic(result.ctx.time);
+        expect(time.players["p1"].reserveMsRemaining).toBe(105_000);
+      });
+    });
+
+    describe("awardDynamicTurnPassBonus", () => {
+      it("should award turn pass bonus", () => {
+        const state = createTestState("dynamic");
+        const st = asDynamic(state.ctx.time);
+        st.players["p1"].reserveMsRemaining = 80_000;
+
+        const result = awardDynamicTurnPassBonus(state, "p1");
+        const time = asDynamic(result.ctx.time);
+        expect(time.players["p1"].turnPassBonusMsGranted).toBe(60_000);
+        expect(time.players["p1"].reserveMsRemaining).toBe(140_000);
+      });
+
+      it("should cap turn pass bonus at reserveCapMs", () => {
+        const state = createTestState("dynamic");
+        const st = asDynamic(state.ctx.time);
+        st.players["p1"].reserveMsRemaining = 120_000;
+
+        const result = awardDynamicTurnPassBonus(state, "p1");
+        const time = asDynamic(result.ctx.time);
+        // 120000 + 60000 = 180000, capped at 150000
+        expect(time.players["p1"].reserveMsRemaining).toBe(150_000);
+      });
+    });
+  });
+
+  describe("Shared Timeout System", () => {
+    describe("checkTimeout", () => {
+      it("should return null when player has time remaining", () => {
+        const state = createTestState("chess");
+        expect(checkTimeout(state, "p1")).toBeNull();
+      });
+
+      it("should return 'first' on first timeout (chess)", () => {
+        const state = createTestState("chess");
+        const st = asChess(state.ctx.time);
+        st.players["p1"].isInNegativeTime = true;
+        st.players["p1"].timeoutCount = 0;
+
+        expect(checkTimeout(state, "p1")).toBe("first");
+      });
+
+      it("should return 'second' on second timeout (chess)", () => {
+        const state = createTestState("chess");
+        const st = asChess(state.ctx.time);
+        st.players["p1"].isInNegativeTime = true;
+        st.players["p1"].timeoutCount = 1;
+
+        expect(checkTimeout(state, "p1")).toBe("second");
+      });
+
+      it("should return 'first' on first timeout (dynamic)", () => {
+        const state = createTestState("dynamic");
+        const st = asDynamic(state.ctx.time);
+        st.players["p1"].isInNegativeTime = true;
+        st.players["p1"].timeoutCount = 0;
+
+        expect(checkTimeout(state, "p1")).toBe("first");
+      });
+
+      it("should return 'second' on second timeout (dynamic)", () => {
+        const state = createTestState("dynamic");
+        const st = asDynamic(state.ctx.time);
+        st.players["p1"].isInNegativeTime = true;
+        st.players["p1"].timeoutCount = 1;
+
+        expect(checkTimeout(state, "p1")).toBe("second");
+      });
+
+      it("should return null for priority mode", () => {
+        const state = createTestState("priority");
+        expect(checkTimeout(state, "p1")).toBeNull();
+      });
+    });
+
+    describe("resetPlayerTimeAfterSkip", () => {
+      it("should reset chess clock player time after skip", () => {
+        const state = createTestState("chess");
+        const st = asChess(state.ctx.time);
+        st.players["p1"].reserveMsRemaining = -5000;
+        st.players["p1"].isInNegativeTime = true;
+        st.players["p1"].timeoutCount = 0;
+
+        const result = resetPlayerTimeAfterSkip(state, "p1");
+        const time = asChess(result.ctx.time);
+        expect(time.players["p1"].reserveMsRemaining).toBe(60_000);
+        expect(time.players["p1"].isInNegativeTime).toBe(false);
+        expect(time.players["p1"].timeoutCount).toBe(1);
+      });
+
+      it("should reset dynamic clock player time after skip", () => {
+        const state = createTestState("dynamic");
+        const st = asDynamic(state.ctx.time);
+        st.players["p1"].reserveMsRemaining = -3000;
+        st.players["p1"].isInNegativeTime = true;
+        st.players["p1"].timeoutCount = 0;
+
+        const result = resetPlayerTimeAfterSkip(state, "p1");
+        const time = asDynamic(result.ctx.time);
+        expect(time.players["p1"].reserveMsRemaining).toBe(60_000);
+        expect(time.players["p1"].isInNegativeTime).toBe(false);
+        expect(time.players["p1"].timeoutCount).toBe(1);
+      });
+
+      it("should increment timeout count on second skip", () => {
+        const state = createTestState("dynamic");
+        const st = asDynamic(state.ctx.time);
+        st.players["p1"].reserveMsRemaining = -3000;
+        st.players["p1"].isInNegativeTime = true;
+        st.players["p1"].timeoutCount = 1;
+
+        const result = resetPlayerTimeAfterSkip(state, "p1");
+        const time = asDynamic(result.ctx.time);
+        expect(time.players["p1"].timeoutCount).toBe(2);
+      });
+
+      it("should not modify priority mode", () => {
+        const state = createTestState("priority");
+        const result = resetPlayerTimeAfterSkip(state, "p1");
+        expect(result).toBe(state); // No change
+      });
     });
   });
 });

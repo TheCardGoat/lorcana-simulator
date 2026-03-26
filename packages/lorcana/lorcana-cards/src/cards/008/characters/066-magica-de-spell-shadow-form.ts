@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { magicaDeSpellShadowFormI18n } from "./066-magica-de-spell-shadow-form.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const magicaDeSpellShadowForm: CharacterCard = {
   id: "dre",
@@ -34,12 +35,7 @@ export const magicaDeSpellShadowForm: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer"],
   abilities: [
-    {
-      id: "sma-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         steps: [

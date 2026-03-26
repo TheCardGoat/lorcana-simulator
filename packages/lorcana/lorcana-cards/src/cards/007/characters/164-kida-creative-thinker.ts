@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kidaCreativeThinkerI18n } from "./164-kida-creative-thinker.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const kidaCreativeThinker: CharacterCard = {
   id: "F39",
@@ -34,12 +35,7 @@ export const kidaCreativeThinker: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "13v-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       cost: {
         exert: true,

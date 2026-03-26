@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { yokaiScientificSupervillainI18n } from "./160-yokai-scientific-supervillain.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const yokaiScientificSupervillain: CharacterCard = {
   id: "dzp",
@@ -38,15 +39,7 @@ export const yokaiScientificSupervillain: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Inventor"],
   abilities: [
-    {
-      cost: {
-        ink: 6,
-      },
-      id: "11l-1",
-      keyword: "Shift",
-      text: "Shift 6",
-      type: "keyword",
-    },
+    shift(6),
     {
       effect: {
         type: "cost-reduction",

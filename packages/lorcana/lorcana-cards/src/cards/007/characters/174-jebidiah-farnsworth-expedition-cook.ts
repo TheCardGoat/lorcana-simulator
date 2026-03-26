@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { jebidiahFarnsworthExpeditionCookI18n } from "./174-jebidiah-farnsworth-expedition-cook.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const jebidiahFarnsworthExpeditionCook: CharacterCard = {
   id: "FOI",
@@ -34,12 +35,7 @@ export const jebidiahFarnsworthExpeditionCook: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "1z1-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         duration: "until-start-of-next-turn",

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rapunzelHighClimberEnchantedI18n } from "./214-rapunzel-high-climber-enchanted.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const rapunzelHighClimberEnchanted: CharacterCard = {
   id: "3c0",
@@ -35,17 +36,12 @@ export const rapunzelHighClimberEnchanted: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "1ob-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       effect: {
         duration: "until-start-of-next-turn",
         restriction: "cant-quest",
-        target: "SELF",
+        target: "CHOSEN_OPPOSING_CHARACTER",
         type: "restriction",
       },
       id: "1ob-2",

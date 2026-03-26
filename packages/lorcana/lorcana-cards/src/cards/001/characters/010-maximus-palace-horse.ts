@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { maximusPalaceHorseI18n } from "./010-maximus-palace-horse.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
+import { support } from "../../../helpers/abilities/support";
 
 export const maximusPalaceHorse: CharacterCard = {
   id: "A1E",
@@ -31,19 +33,6 @@ export const maximusPalaceHorse: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "174-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-    {
-      id: "174-2",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard, support],
   i18n: maximusPalaceHorseI18n,
 };

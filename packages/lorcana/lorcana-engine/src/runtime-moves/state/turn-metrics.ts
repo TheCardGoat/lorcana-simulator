@@ -31,6 +31,7 @@ function ensureTurnMetadata(ctx: Pick<TurnMetricContext, "G">): LorcanaG["turnMe
     cardsPlayedThisTurn: [],
     charactersQuesting: [],
     inkedThisTurn: [],
+    cardsPutIntoInkwellThisTurn: [],
     additionalInkwellActions: 0,
     shiftPlayedThisTurn: [],
     challengesByPlayerThisTurn: {} as Record<PlayerId, number>,
@@ -146,6 +147,19 @@ export function recordDiscardExitThisTurn(ctx: Pick<TurnMetricContext, "G">, amo
 
   const turnMetadata = ensureTurnMetadata(ctx);
   turnMetadata.discardCardsLeftThisTurn = (turnMetadata.discardCardsLeftThisTurn ?? 0) + amount;
+}
+
+export function recordCardPutIntoInkwellThisTurn(
+  ctx: Pick<TurnMetricContext, "G">,
+  cardId: CardInstanceId,
+): void {
+  const turnMetadata = ensureTurnMetadata(ctx);
+  const cards =
+    turnMetadata.cardsPutIntoInkwellThisTurn ??
+    (turnMetadata.cardsPutIntoInkwellThisTurn = [] as CardInstanceId[]);
+  if (!cards.includes(cardId)) {
+    cards.push(cardId);
+  }
 }
 
 export function isDiscardZoneKey(zoneKey: string | undefined): boolean {

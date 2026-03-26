@@ -73,6 +73,7 @@ function findCardZone(
 }
 
 export type LorcanaBoardMoveAnimationVariant =
+  | "banish"
   | "ink-faceDown"
   | "ink-faceUp"
   | "move-to-location"
@@ -139,12 +140,19 @@ export type LorcanaMulliganAnimationPayload = {
   mulliganCount: number;
 };
 
+export type LorcanaPlayerEffectAnimationPayload = {
+  actorSide: "playerOne" | "playerTwo";
+  cardId: string;
+  targetSides: readonly ("playerOne" | "playerTwo")[];
+};
+
 type LorcanaPacketAnimationPayloads = {
   "lorcana.boardMove": LorcanaBoardMoveAnimationPayload;
   "lorcana.cardEffect": LorcanaCardEffectAnimationPayload;
   "lorcana.challenge": LorcanaChallengeAnimationPayload;
   "lorcana.concede": LorcanaConcedeAnimationPayload;
   "lorcana.mulligan": LorcanaMulliganAnimationPayload;
+  "lorcana.playerEffect": LorcanaPlayerEffectAnimationPayload;
   "lorcana.quest": LorcanaQuestAnimationPayload;
   "lorcana.turnChange": LorcanaTurnChangeAnimationPayload;
   "play.action": CardActionPlayerAnimationPayload;
@@ -156,6 +164,111 @@ export type LorcanaPacketAnimation = {
     LorcanaPacketAnimationPayloads[TKind]
   >;
 }[keyof LorcanaPacketAnimationPayloads];
+
+function detectPlayerStateChanges(
+  context: PacketAnimationContext,
+): readonly ("playerOne" | "playerTwo")[] {
+  const playerIds = context.nextState.ctx.playerIds;
+  const previousLore = context.previousState.G.lore as Record<string, number>;
+  const nextLore = context.nextState.G.lore as Record<string, number>;
+  const previousZoneCards = context.previousState.ctx.zones.private.zoneCards;
+  const nextZoneCards = context.nextState.ctx.zones.private.zoneCards;
+  const previousRestrictions =
+    (
+      context.previousState.G as {
+        temporaryPlayerRestrictions?: {
+          restrictionsByPlayer?: Record<string, Record<string, number>>;
+        };
+      }
+    ).temporaryPlayerRestrictions?.restrictionsByPlayer ?? {};
+  const nextRestrictions =
+    (
+      context.nextState.G as {
+        temporaryPlayerRestrictions?: {
+          restrictionsByPlayer?: Record<string, Record<string, number>>;
+        };
+      }
+    ).temporaryPlayerRestrictions?.restrictionsByPlayer ?? {};
+
+  const result: ("playerOne" | "playerTwo")[] = [];
+
+  for (let i = 0; i < 2; i++) {
+    const playerId = playerIds[i];
+    const side = i === 0 ? "playerOne" : "playerTwo";
+
+    if (previousLore[playerId] !== nextLore[playerId]) {
+      result.push(side);
+      continue;
+    }
+
+    const handKey = `hand:${playerId}`;
+    const prevHandCount = (previousZoneCards[handKey] as string[] | undefined)?.length ?? 0;
+    const nextHandCount = (nextZoneCards[handKey] as string[] | undefined)?.length ?? 0;
+    if (prevHandCount !== nextHandCount) {
+      result.push(side);
+      continue;
+    }
+
+    const prevPlayerRestrictions = previousRestrictions[playerId] ?? {};
+    const nextPlayerRestrictions = nextRestrictions[playerId] ?? {};
+    const prevKeys = Object.keys(prevPlayerRestrictions).length;
+    const nextKeys = Object.keys(nextPlayerRestrictions).length;
+    if (prevKeys !== nextKeys) {
+      result.push(side);
+    }
+  }
+
+  return result;
+}
+
+function detectBanishAnimations(
+  context: PacketAnimationContext,
+  commandId: string,
+): LorcanaPacketAnimation[] {
+  const previousZoneCards = context.previousState.ctx.zones.private.zoneCards;
+  const nextZoneCards = context.nextState.ctx.zones.private.zoneCards;
+  const playerIds = context.nextState.ctx.playerIds;
+  const animations: LorcanaPacketAnimation[] = [];
+
+  for (const playerId of playerIds) {
+    const playKey = `play:${playerId}`;
+    const discardKey = `discard:${playerId}`;
+    const previousPlay = previousZoneCards[playKey];
+    const nextDiscard = nextZoneCards[discardKey];
+    const previousDiscard = previousZoneCards[discardKey];
+
+    if (!Array.isArray(previousPlay) || !Array.isArray(nextDiscard)) {
+      continue;
+    }
+
+    const actorSide: "playerOne" | "playerTwo" =
+      playerIds[0] === playerId ? "playerOne" : "playerTwo";
+
+    for (const cardId of previousPlay) {
+      const movedToDiscard = nextDiscard.includes(cardId);
+      const alreadyInDiscard = Array.isArray(previousDiscard) && previousDiscard.includes(cardId);
+
+      if (movedToDiscard && !alreadyInDiscard) {
+        animations.push({
+          id: `${commandId}:banish:${cardId}`,
+          kind: "lorcana.boardMove",
+          payload: {
+            actorPlayerId: playerId,
+            actorSide,
+            cardId,
+            destinationZoneId: "discard",
+            impactAt: "destination",
+            renderFace: "faceUp",
+            sourceZoneId: "play",
+            variant: "banish",
+          },
+        });
+      }
+    }
+  }
+
+  return animations;
+}
 
 export function deriveLorcanaPacketAnimations(
   context: PacketAnimationContext,
@@ -258,6 +371,7 @@ export function deriveLorcanaPacketAnimations(
           defenderWouldBeBanished,
         },
       },
+      ...detectBanishAnimations(context, command.commandID),
     ];
   }
 
@@ -498,6 +612,7 @@ export function deriveLorcanaPacketAnimations(
           effectKind: "activate-ability",
         },
       },
+      ...detectBanishAnimations(context, command.commandID),
     ];
   }
 
@@ -521,7 +636,8 @@ export function deriveLorcanaPacketAnimations(
       return [];
     }
 
-    return [
+    const bagTargetSides = detectPlayerStateChanges(context);
+    const bagAnimations: LorcanaPacketAnimation[] = [
       {
         id: `${command.commandID}:cardEffect:${sourceId}`,
         kind: "lorcana.cardEffect",
@@ -531,7 +647,16 @@ export function deriveLorcanaPacketAnimations(
           effectKind: "resolve-effect",
         },
       },
+      ...detectBanishAnimations(context, command.commandID),
     ];
+    if (bagTargetSides.length > 0) {
+      bagAnimations.push({
+        id: `${command.commandID}:playerEffect:${sourceId}`,
+        kind: "lorcana.playerEffect",
+        payload: { actorSide, cardId: sourceId, targetSides: bagTargetSides },
+      });
+    }
+    return bagAnimations;
   }
 
   if (command.move === "resolveEffect") {
@@ -554,7 +679,8 @@ export function deriveLorcanaPacketAnimations(
       return [];
     }
 
-    return [
+    const effectTargetSides = detectPlayerStateChanges(context);
+    const effectAnimations: LorcanaPacketAnimation[] = [
       {
         id: `${command.commandID}:cardEffect:${sourceId}`,
         kind: "lorcana.cardEffect",
@@ -564,7 +690,16 @@ export function deriveLorcanaPacketAnimations(
           effectKind: "resolve-effect",
         },
       },
+      ...detectBanishAnimations(context, command.commandID),
     ];
+    if (effectTargetSides.length > 0) {
+      effectAnimations.push({
+        id: `${command.commandID}:playerEffect:${sourceId}`,
+        kind: "lorcana.playerEffect",
+        payload: { actorSide, cardId: sourceId, targetSides: effectTargetSides },
+      });
+    }
+    return effectAnimations;
   }
 
   if (command.move === "alterHand") {

@@ -383,6 +383,13 @@ export const CHARACTER_ENUM_EXPANSIONS: Record<CharacterTargetEnum, LorcanaCardT
     owner: "you",
     zones: ["deck"],
   },
+  TRIGGERING_CHARACTER: {
+    reference: "trigger-source",
+    cardTypes: ["character"],
+  },
+  TRIGGERING_CARD: {
+    reference: "trigger-source",
+  },
 } as unknown as Record<CharacterTargetEnum, LorcanaCardTarget>;
 
 export const ITEM_ENUM_EXPANSIONS: Record<ItemTargetEnum, LorcanaCardTarget> = {

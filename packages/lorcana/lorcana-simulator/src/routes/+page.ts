@@ -27,6 +27,11 @@ const routeLinks: RouteLink[] = [
     description: "Create or join a live match and navigate into active game sessions.",
   },
   {
+    href: "/matchmaking/archetype",
+    label: "Archetype Matchmaking",
+    description: "Browse player-created matches and create a new archetype-based room.",
+  },
+  {
     href: "/sandbox/simulator",
     label: "Sandbox Simulator",
     description: "Open the local simulator harness with fixture-driven tabletop state.",
@@ -60,6 +65,16 @@ const routeLinks: RouteLink[] = [
     href: "/tests/multi-target",
     label: "Multi-Target Test",
     description: "Validate simulator flows that target multiple cards or players.",
+  },
+  {
+    href: "/tests/daisy-duck-donald-date",
+    label: "Daisy Duck Donald's Date Test",
+    description: "Test interactions with Daisy Duck Donald's Date card.",
+  },
+  {
+    href: "/tests/shift",
+    label: "Shift Test",
+    description: "Exercise shift mechanic and character transformations.",
   },
 ];
 

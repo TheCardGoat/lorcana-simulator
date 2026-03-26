@@ -149,6 +149,7 @@ export type TriggerSubjectEnum =
   | "CONTROLLER" // The controller of this card
   | "CHARACTERS_HERE" // Characters at this location
   | "YOUR_OTHER_STEEL_CHARACTERS" // Your other Steel characters
+  | "YOUR_OTHER_SAPPHIRE_CHARACTERS" // Your other Sapphire characters
   // Additional trigger subjects for more card coverage
   | "CHARACTERS_AT_LOCATION" // Characters at a location
   | "CHARACTERS_MOVED_HERE" // Characters that moved here
@@ -170,7 +171,7 @@ export interface TriggerSubjectQuery {
   controller?: TargetController;
 
   /** What type of card */
-  cardType?: TriggerCardType;
+  cardType?: TriggerCardType | TriggerCardType[];
 
   /** Additional filters (e.g., damaged, has keyword) - supports all card types */
   filters?: (CharacterFilter | ItemFilter | LocationFilter)[];
@@ -373,6 +374,8 @@ export type TriggerRestriction =
   | { type: "once-per-turn" }
   | { type: "first-time-each-turn" }
   | { type: "n-times-per-turn"; count: number }
+  // Fires at most once per song-play event, even when multiple characters sing together.
+  | { type: "once-per-song" }
 
   // Turn phase
   | { type: "during-turn"; whose: "your" | "opponent" }
@@ -384,7 +387,11 @@ export type TriggerRestriction =
 
   // Zone of origin
   // True only when the subject card moved from the discard zone.
-  | { type: "from-discard" };
+  | { type: "from-discard" }
+
+  // Card type of the damage target (for deal-damage events in challenge).
+  // True only when the defending card in the challenge is a character.
+  | { type: "defender-is-character" };
 
 // ============================================================================
 // Pre-built Trigger Patterns

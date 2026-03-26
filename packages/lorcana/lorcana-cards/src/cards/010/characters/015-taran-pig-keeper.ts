@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { support } from "../../../helpers/abilities/support";
 import { taranPigKeeperI18n } from "./015-taran-pig-keeper.i18n";
 
 export const taranPigKeeper: CharacterCard = {
@@ -34,12 +35,7 @@ export const taranPigKeeper: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
-    {
-      id: "5f5-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         chooser: "CONTROLLER",

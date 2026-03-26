@@ -5,7 +5,7 @@ import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
 import type { LorcanaCard } from "@tcg/lorcana-types";
 import { getMoveCost, isCharacter, isLocation } from "../../../card-utils";
 import {
-  createLorcanaLogMessage,
+  createLorcanaLogProjection,
   type Classification,
   type LorcanaMoveDefinition,
 } from "../../../types";
@@ -47,6 +47,8 @@ type StaticMoveCostReductionEffect = {
     name?: string;
     classification?: Classification;
   };
+  /** When "SELF", reduction only applies when the source card itself is the moving character */
+  target?: "SELF";
 };
 
 function getCardOwnerId(ctx: MoveReadableContext, cardId: CardInstanceId): PlayerId | undefined {
@@ -125,6 +127,12 @@ function getStaticMoveCostReduction(
           characterDefinition.cardType !== "character" ||
           !(characterDefinition.classifications ?? []).includes(effect.filter.classification))
       ) {
+        continue;
+      }
+
+      // "SELF" target means the reduction only applies when the source card (the one with the ability)
+      // is the character being moved. This handles "pay X less to move this character" abilities.
+      if (effect.target === "SELF" && sourceId !== characterId) {
         continue;
       }
 
@@ -339,15 +347,18 @@ export const moveCharacterToLocation: LorcanaMoveDefinition<"moveCharacterToLoca
         subjectCardId: characterId as CardInstanceId,
       },
     );
-    ctx.framework.log({
-      category: "action",
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: createLorcanaLogMessage("lorcana.move.moveCharacterToLocation", {
-        playerId: currentPlayer,
-        characterId: characterId as CardInstanceId,
-        locationId: locationId as CardInstanceId,
-      }),
-    });
+    ctx.framework.log(
+      createLorcanaLogProjection(
+        "lorcana.move.moveCharacterToLocation",
+        {
+          playerId: currentPlayer,
+          characterId: characterId as CardInstanceId,
+          locationId: locationId as CardInstanceId,
+        },
+        { mode: "PUBLIC" },
+        "action",
+      ),
+    );
 
     flushTriggeredEventsToBag(ctx);
   },

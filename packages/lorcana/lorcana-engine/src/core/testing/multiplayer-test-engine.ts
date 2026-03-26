@@ -462,7 +462,7 @@ class ClientEngineAdapter implements GameEngine {
   constructor(private clientEngine: ClientEngine) {}
 
   getState(): DeepReadonly<MatchState> {
-    return this.clientEngine.getBoard() as unknown as DeepReadonly<MatchState>;
+    return this.clientEngine.getState();
   }
 
   getBoard(): DeepReadonly<FilteredMatchView> {

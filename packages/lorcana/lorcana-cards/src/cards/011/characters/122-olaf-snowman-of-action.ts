@@ -37,11 +37,18 @@ export const olafSnowmanOfAction: CharacterCard = {
   abilities: [
     {
       id: "g8u-1",
+      name: "ABOUT TIME!",
       effect: {
-        from: "hand",
-        type: "play-card",
+        type: "cost-reduction",
+        amount: {
+          type: "filtered-count",
+          filters: [{ type: "card-type", cardType: "action" }],
+          owner: "you",
+          zones: ["discard"],
+        },
       },
-      type: "action",
+      sourceZones: ["hand"],
+      type: "static",
       text: "ABOUT TIME! For each action card in your discard, you pay 1 {I} less to play this character.",
     },
     {

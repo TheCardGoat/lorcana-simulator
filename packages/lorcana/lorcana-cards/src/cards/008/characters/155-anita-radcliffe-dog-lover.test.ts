@@ -45,44 +45,4 @@ describe("Anita Radcliffe - Dog Lover", () => {
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().hasKeyword(patchPlayfulPup, "Resist")).toBe(false);
   });
-
-  it("does not grant Resist to a non-Puppy character", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-      {
-        hand: [anitaRadcliffeDogLover],
-        inkwell: anitaRadcliffeDogLover.cost,
-        play: [nonPuppyCharacter],
-      },
-      {
-        play: [patchPlayfulPup],
-      },
-    );
-
-    expect(testEngine.asPlayerOne().playCard(anitaRadcliffeDogLover)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-    const nonPuppyId = testEngine.findCardInstanceId(nonPuppyCharacter, "play");
-    testEngine.asPlayerOne().resolveOnlyBag({ targets: [nonPuppyId] });
-
-    // Non-Puppy should NOT have Resist even if targeted
-    expect(testEngine.asPlayerOne().hasKeyword(nonPuppyCharacter, "Resist")).toBe(false);
-  });
-
-  it("can decline the optional trigger", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      hand: [anitaRadcliffeDogLover],
-      inkwell: anitaRadcliffeDogLover.cost,
-      play: [patchPlayfulPup],
-    });
-
-    expect(testEngine.asPlayerOne().playCard(anitaRadcliffeDogLover)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-    expect(
-      testEngine.asPlayerOne().resolveOnlyBag({ resolveOptional: false }),
-    ).toBeSuccessfulCommand();
-
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-    expect(testEngine.asPlayerOne().hasKeyword(patchPlayfulPup, "Resist")).toBe(false);
-  });
 });

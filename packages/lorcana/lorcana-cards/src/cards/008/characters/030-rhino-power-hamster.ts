@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rhinoPowerHamsterI18n } from "./030-rhino-power-hamster.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const rhinoPowerHamster: CharacterCard = {
   id: "I1B",
@@ -33,15 +34,7 @@ export const rhinoPowerHamster: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally"],
   abilities: [
-    {
-      cost: {
-        ink: 2,
-      },
-      id: "g5c-1",
-      keyword: "Shift",
-      text: "Shift 2",
-      type: "keyword",
-    },
+    shift(2),
     {
       condition: {
         type: "no-damage",

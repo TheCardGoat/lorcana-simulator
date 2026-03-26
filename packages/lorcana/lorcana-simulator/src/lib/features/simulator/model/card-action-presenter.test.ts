@@ -108,7 +108,6 @@ describe("buildCardActionViews", () => {
       cardId: card.cardId,
       categoryId: "activate-ability",
       label: "Activate Ability",
-      detail: "1 ability",
       interaction: "execute-or-select",
       enabled: true,
       moves: [abilityMove],

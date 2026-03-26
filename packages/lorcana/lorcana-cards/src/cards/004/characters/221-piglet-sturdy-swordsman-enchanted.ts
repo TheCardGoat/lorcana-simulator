@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { pigletSturdySwordsmanEnchantedI18n } from "./221-piglet-sturdy-swordsman-enchanted.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const pigletSturdySwordsmanEnchanted: CharacterCard = {
   id: "WaO",
@@ -35,20 +36,22 @@ export const pigletSturdySwordsmanEnchanted: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero"],
   abilities: [
+    resist(1),
     {
-      id: "1bb-1",
-      keyword: "Resist",
-      text: "Resist +1",
-      type: "keyword",
-      value: 1,
-    },
-    {
+      condition: {
+        type: "resource-count",
+        what: "cards-in-hand",
+        controller: "you",
+        comparison: "equal",
+        value: 0,
+      },
       effect: {
         ability: "can-challenge-ready",
         target: "SELF",
         type: "grant-ability",
       },
       id: "1bb-2",
+      name: "NOT SO SMALL ANYMORE",
       text: "NOT SO SMALL ANYMORE While you have no cards in your hand, this character can challenge ready characters.",
       type: "static",
     },

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { beastWolfsbaneI18n } from "./070-beast-wolfsbane.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const beastWolfsbane: CharacterCard = {
   id: "bXY",
@@ -33,12 +34,7 @@ export const beastWolfsbane: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Prince"],
   abilities: [
-    {
-      id: "bXY-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
+    rush,
     {
       id: "bXY-2",
       name: "ROAR",

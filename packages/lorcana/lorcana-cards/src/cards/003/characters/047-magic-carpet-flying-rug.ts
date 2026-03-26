@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { magicCarpetFlyingRugI18n } from "./047-magic-carpet-flying-rug.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const magicCarpetFlyingRug: CharacterCard = {
   id: "oLg",
@@ -33,12 +34,7 @@ export const magicCarpetFlyingRug: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally"],
   abilities: [
-    {
-      id: "oLg-1",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
     {
       id: "oLg-2",
       name: "FIND THE WAY",

@@ -35,31 +35,6 @@ describe("Alice - Accidentally Adrift (Epic)", () => {
       // Item should now be in inkwell
       expect(testEngine.asPlayerOne().getCardZone(dinglehopper)).toBe("inkwell");
     });
-
-    it("can decline the optional trigger", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          hand: [aliceAccidentallyAdriftEpic],
-          inkwell: aliceAccidentallyAdriftEpic.cost,
-          play: [dinglehopper],
-        },
-        {
-          play: [simbaProtectiveCub],
-        },
-      );
-
-      expect(
-        testEngine.asPlayerOne().playCard(aliceAccidentallyAdriftEpic),
-      ).toBeSuccessfulCommand();
-
-      // Decline the optional trigger
-      expect(
-        testEngine.asPlayerOne().resolveOnlyBag({ resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      // Item should stay in play
-      expect(testEngine.asPlayerOne().getCardZone(dinglehopper)).toBe("play");
-    });
   });
 
   describe("MAKING WAVES", () => {

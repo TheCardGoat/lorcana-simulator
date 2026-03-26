@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { heiheiProtectiveRoosterI18n } from "./179-heihei-protective-rooster.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const heiheiProtectiveRooster: CharacterCard = {
   id: "xE6",
@@ -24,13 +25,6 @@ export const heiheiProtectiveRooster: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Dreamborn", "Ally"],
-  abilities: [
-    {
-      id: "9lo-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: heiheiProtectiveRoosterI18n,
 };

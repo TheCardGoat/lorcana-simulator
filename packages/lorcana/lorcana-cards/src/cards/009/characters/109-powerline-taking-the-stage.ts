@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { powerlineTakingTheStageI18n } from "./109-powerline-taking-the-stage.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const powerlineTakingTheStage: CharacterCard = {
   id: "aRw",
@@ -24,14 +25,6 @@ export const powerlineTakingTheStage: CharacterCard = {
   },
   text: "Singer 4",
   classifications: ["Storyborn"],
-  abilities: [
-    {
-      id: "1t6-1",
-      keyword: "Singer",
-      type: "keyword",
-      value: 4,
-      text: "Singer 4",
-    },
-  ],
+  abilities: [singer(4)],
   i18n: powerlineTakingTheStageI18n,
 };

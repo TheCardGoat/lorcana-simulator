@@ -7,13 +7,13 @@ import type {
   LorcanaCardSnapshot,
   MoveCategorySummary,
 } from "@/features/simulator/model/contracts.js";
+import { getFormattedHotkeyParts } from "@/features/simulator/hotkeys/hotkey-bindings.js";
 
 const placeholderSummaries: MoveCategorySummary[] = [
   {
     categoryId: "pass-turn",
     categoryLabel: "Pass turn",
     sourceCardIds: [],
-    count: 1,
     isDirect: true,
   },
 ];
@@ -40,21 +40,18 @@ describe("AvailableMovesPanel interactions", () => {
         categoryId: "quest",
         categoryLabel: "Quest",
         sourceCardIds: ["card-1"],
-        count: 1,
         isDirect: false,
       },
       {
         categoryId: "challenge",
         categoryLabel: "Challenge",
         sourceCardIds: ["card-2"],
-        count: 2,
         isDirect: false,
       },
       {
         categoryId: "move-to-location",
         categoryLabel: "Move to location",
         sourceCardIds: ["card-3"],
-        count: 1,
         isDirect: false,
       },
     ];
@@ -70,6 +67,62 @@ describe("AvailableMovesPanel interactions", () => {
     expect(body).toContain('data-action-icon="quest"');
     expect(body).toContain('data-action-icon="challenge"');
     expect(body).toContain('data-action-icon="move-to-location"');
+  });
+
+  it("renders fixed move and selection hotkey hints", () => {
+    const selectionState: AvailableMovesSelectionState = {
+      mode: "resolution-choice",
+      categoryId: "unknown",
+      categoryLabel: "Resolve effect",
+      title: "Resolve effect",
+      message: "Choose a branch.",
+      canBack: true,
+      canCancel: true,
+      canConfirm: true,
+      entries: [
+        {
+          id: "choice:0",
+          kind: "option",
+          moveId: "0",
+          label: "Ready chosen character",
+          selected: false,
+        },
+      ],
+    };
+
+    const rootView = render(AvailableMovesPanel, {
+      props: {
+        summaries: [
+          {
+            categoryId: "play-card",
+            categoryLabel: "Play",
+            sourceCardIds: ["card-1"],
+            isDirect: false,
+          },
+        ],
+        onExpandCategory: () => [],
+        interactiveSide: "playerOne",
+      },
+    });
+
+    const selectionView = render(AvailableMovesPanel, {
+      props: {
+        summaries: placeholderSummaries,
+        onExpandCategory: () => [],
+        interactiveSide: "playerOne",
+        selectionState,
+      },
+    });
+
+    const playHotkey = getFormattedHotkeyParts("2")[0]!;
+    const cancelHotkey = getFormattedHotkeyParts("Escape")[0]!;
+    const confirmHotkey = getFormattedHotkeyParts("Enter")[0]!;
+    const backHotkey = getFormattedHotkeyParts("Backspace")[0]!;
+
+    expect(rootView.body).toContain(`>${playHotkey}<`);
+    expect(selectionView.body).toContain(`>${cancelHotkey}<`);
+    expect(selectionView.body).toContain(`>${confirmHotkey}<`);
+    expect(selectionView.body).toContain(`>${backHotkey}<`);
   });
 
   it("renders disabled resolution choices in the sidebar list", () => {
@@ -154,16 +207,18 @@ describe("AvailableMovesPanel interactions", () => {
     expect(body).toContain("Elsa - Ice Surfer");
   });
 
-  it("renders scry destinations with assignment controls", () => {
+  it("renders scry destinations as an overlay summary without assignment controls", () => {
     const selectionState: AvailableMovesSelectionState = {
       mode: "resolution-scry",
       categoryId: "unknown",
       categoryLabel: "Resolve effect",
+      sourceCardId: "card-1",
       title: "Merlin - Rabbit",
       message: "Arrange the revealed cards to finish resolving this effect.",
       canBack: false,
       canCancel: true,
       canConfirm: false,
+      remainingManualAssignments: 1,
       entries: [
         {
           id: "scry:1",
@@ -177,16 +232,20 @@ describe("AvailableMovesPanel interactions", () => {
       destinations: [
         {
           id: "top",
-          zone: "top",
-          label: "top",
+          zone: "deck-top",
+          label: "Top of deck",
           detail: "0+ cards",
+          orderingEnabled: true,
+          rule: { id: "top", zone: "deck-top", min: 0, max: null, remainder: false },
           cards: [],
         },
         {
           id: "bottom",
-          zone: "bottom",
-          label: "bottom",
+          zone: "deck-bottom",
+          label: "Bottom of deck",
           detail: "0+ cards",
+          orderingEnabled: true,
+          rule: { id: "bottom", zone: "deck-bottom", min: 0, max: null, remainder: true },
           cards: [],
         },
       ],
@@ -202,14 +261,16 @@ describe("AvailableMovesPanel interactions", () => {
     });
 
     expect(body).toContain("Revealed cards");
-    expect(body).toContain("Elsa - Ice Surfer");
-    expect(body).toContain(">top<");
-    expect(body).toContain(">bottom<");
+    expect(body).toContain("Use the board overlay to drag cards between rows");
+    expect(body).toContain(">Top of deck<");
+    expect(body).toContain(">Bottom of deck<");
+    expect(body).not.toContain("Elsa - Ice Surfer");
   });
 
   it("renders available move card names with the shared event-log card token markup", () => {
     const selectionState: AvailableMovesSelectionState = {
       mode: "resolution-target",
+      sourceCardId: null,
       categoryId: "play-card",
       categoryLabel: "Play",
       title: "Play",
@@ -217,6 +278,10 @@ describe("AvailableMovesPanel interactions", () => {
       canBack: false,
       canCancel: true,
       canConfirm: false,
+      effectType: null,
+      candidateEntries: [],
+      activeSlotIndex: null,
+      slots: [],
       selectedTargetLabels: [],
       minimumSelections: 1,
       maximumSelections: 1,

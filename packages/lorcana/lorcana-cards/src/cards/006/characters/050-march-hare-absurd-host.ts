@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { marchHareAbsurdHostI18n } from "./050-march-hare-absurd-host.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const marchHareAbsurdHost: CharacterCard = {
   id: "don",
@@ -24,13 +25,6 @@ export const marchHareAbsurdHost: CharacterCard = {
   },
   text: "Rush",
   classifications: ["Storyborn"],
-  abilities: [
-    {
-      id: "110-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-  ],
+  abilities: [rush],
   i18n: marchHareAbsurdHostI18n,
 };

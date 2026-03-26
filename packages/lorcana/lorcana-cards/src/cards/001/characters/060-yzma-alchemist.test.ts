@@ -40,7 +40,7 @@ describe("Yzma - Alchemist", () => {
       testEngine.asPlayerOne().resolveNextPending({
         destinations: [
           { zone: "deck-top", cards: [] },
-          { zone: "deck-bottom", cards: [yzmaTopDeckCard] },
+          { zone: "deck-bottom", cards: [yzmaSecondDeckCard] },
         ],
       }),
     ).toBeSuccessfulCommand();

@@ -50,6 +50,5 @@ export const painUnderworldImp: CharacterCard = {
       },
     },
   ],
-  missingTests: true,
   i18n: painUnderworldImpI18n,
 };

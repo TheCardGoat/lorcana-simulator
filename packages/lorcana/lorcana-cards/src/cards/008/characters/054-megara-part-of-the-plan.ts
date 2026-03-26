@@ -32,15 +32,21 @@ export const megaraPartOfThePlan: CharacterCard = {
   classifications: ["Dreamborn", "Ally"],
   abilities: [
     {
+      id: "d0s-1",
+      type: "static",
+      name: "CONTENTIOUS ALLIANCE",
+      text: "CONTENTIOUS ALLIANCE While you have a character named Hades in play, this character gains Challenger +2.",
+      condition: {
+        type: "has-named-character",
+        name: "Hades",
+        controller: "you",
+      },
       effect: {
         keyword: "Challenger",
         target: "SELF",
         type: "gain-keyword",
         value: 2,
       },
-      id: "d0s-1",
-      text: "CONTENTIOUS ALLIANCE While you have a character named Hades in play, this character gains Challenger +2.",
-      type: "action",
     },
   ],
   i18n: megaraPartOfThePlanI18n,

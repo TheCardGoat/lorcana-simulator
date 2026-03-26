@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kangaPeacefulGathererI18n } from "./138-kanga-peaceful-gatherer.i18n";
+import { boost } from "../../../helpers/abilities/boost";
 
 export const kangaPeacefulGatherer: CharacterCard = {
   id: "Nld",
@@ -33,13 +34,7 @@ export const kangaPeacefulGatherer: CharacterCard = {
   ],
   classifications: ["Storyborn", "Ally", "Whisper"],
   abilities: [
-    {
-      id: "i6v-1",
-      keyword: "Boost",
-      type: "keyword",
-      value: 2,
-      text: "Boost 2 {I}",
-    },
+    boost(2),
     {
       id: "i6v-2",
       name: "EXTRA HELP",

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { monstroInfamousWhaleI18n } from "./064-monstro-infamous-whale.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const monstroInfamousWhale: CharacterCard = {
   id: "kcf",
@@ -34,20 +35,23 @@ export const monstroInfamousWhale: CharacterCard = {
   ],
   classifications: ["Storyborn"],
   abilities: [
+    rush,
     {
-      id: "7w3-1",
-      keyword: "Rush",
-      text: "Rush",
-      type: "keyword",
-    },
-    {
+      id: "7w3-2",
+      name: "FULL BREACH",
+      text: "FULL BREACH Choose and discard a card – Ready this character. He can't quest for the rest of this turn.",
+      type: "activated",
+      cost: {
+        discardCards: 1,
+        discardChosen: true,
+      },
       effect: {
+        type: "sequence",
         steps: [
           {
-            amount: 1,
-            chosen: true,
-            target: "CONTROLLER",
-            type: "discard",
+            type: "ready",
+            target: "SELF",
+            restriction: "cant-quest",
           },
           {
             duration: "this-turn",
@@ -56,11 +60,7 @@ export const monstroInfamousWhale: CharacterCard = {
             type: "restriction",
           },
         ],
-        type: "sequence",
       },
-      id: "7w3-2",
-      text: "FULL BREACH Choose and discard a card – Ready this character. He can't quest for the rest of this turn.",
-      type: "action",
     },
   ],
   i18n: monstroInfamousWhaleI18n,

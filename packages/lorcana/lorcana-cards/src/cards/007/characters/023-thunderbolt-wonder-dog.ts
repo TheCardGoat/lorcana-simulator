@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { thunderboltWonderDogI18n } from "./023-thunderbolt-wonder-dog.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const thunderboltWonderDog: CharacterCard = {
   id: "xjz",
@@ -42,12 +43,7 @@ export const thunderboltWonderDog: CharacterCard = {
       text: "Puppy Shift 3",
       type: "keyword",
     },
-    {
-      id: "18d-2",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
   ],
   i18n: thunderboltWonderDogI18n,
 };

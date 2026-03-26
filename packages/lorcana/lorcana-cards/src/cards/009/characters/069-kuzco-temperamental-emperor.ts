@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { kuzcoTemperamentalEmperorI18n } from "./069-kuzco-temperamental-emperor.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const kuzcoTemperamentalEmperor: CharacterCard = {
   id: "0lp",
@@ -34,12 +35,7 @@ export const kuzcoTemperamentalEmperor: CharacterCard = {
   ],
   classifications: ["Storyborn", "King"],
   abilities: [
-    {
-      id: "1og-1",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    ward,
     {
       effect: {
         chooser: "CONTROLLER",

@@ -32,14 +32,27 @@ export const rajahRoyalProtector: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "resource-count",
+        what: "cards-in-hand",
+        controller: "you",
+        comparison: "equal",
+        value: 0,
+      },
       effect: {
-        restriction: "cant-challenge",
+        restriction: "cant-be-challenged",
         target: "SELF",
         type: "restriction",
+        challengerFilter: {
+          type: "cost-comparison",
+          operator: "lte",
+          value: 4,
+        },
       },
       id: "f6t-1",
+      name: "STEADY GAZE",
       text: "STEADY GAZE While you have no cards in your hand, characters with cost 4 or less can't challenge this character.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: rajahRoyalProtectorI18n,

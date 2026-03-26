@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rabbitFedUpI18n } from "./041-rabbit-fed-up.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const rabbitFedUp: CharacterCard = {
   id: "8cq",
@@ -24,14 +25,6 @@ export const rabbitFedUp: CharacterCard = {
   },
   text: "Challenger +3",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "18l-1",
-      keyword: "Challenger",
-      type: "keyword",
-      value: 3,
-      text: "Challenger +3",
-    },
-  ],
+  abilities: [challenger(3)],
   i18n: rabbitFedUpI18n,
 };

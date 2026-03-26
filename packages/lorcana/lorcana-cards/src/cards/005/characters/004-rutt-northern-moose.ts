@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { ruttNorthernMooseI18n } from "./004-rutt-northern-moose.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const ruttNorthernMoose: CharacterCard = {
   id: "6Ic",
@@ -24,13 +25,6 @@ export const ruttNorthernMoose: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "sqf-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: ruttNorthernMooseI18n,
 };

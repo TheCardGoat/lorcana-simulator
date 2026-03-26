@@ -29,4 +29,25 @@ describe("Hypnotize", () => {
     expect(testEngine.asPlayerTwo()).toHaveZoneCounts({ hand: 0, discard: 1 });
     expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toBe(1);
   });
+
+  it("regression: always draws a card for the controller even when opponent has no cards to discard", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [hypnotize],
+        inkwell: hypnotize.cost,
+        deck: [simbaProtectiveCub, bibbidiBobbidiBoo],
+      },
+      {
+        hand: [],
+      },
+    );
+
+    const handBefore = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+
+    expect(testEngine.asPlayerOne().playCard(hypnotize)).toBeSuccessfulCommand();
+
+    // Controller should still draw a card even if opponent had nothing to discard
+    expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toBe(handBefore); // hand had hypnotize (played), so 0 + 1 drawn = 1
+    expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_ONE).hand).toBe(1);
+  });
 });

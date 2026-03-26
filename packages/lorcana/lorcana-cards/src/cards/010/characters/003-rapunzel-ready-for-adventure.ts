@@ -1,4 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
+import { support } from "../../../helpers/abilities/support";
 import { rapunzelReadyForAdventureI18n } from "./003-rapunzel-ready-for-adventure.i18n";
 
 export const rapunzelReadyForAdventure: CharacterCard = {
@@ -34,12 +35,7 @@ export const rapunzelReadyForAdventure: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Princess"],
   abilities: [
-    {
-      id: "8hR-1",
-      keyword: "Support",
-      text: "Support",
-      type: "keyword",
-    },
+    support,
     {
       effect: {
         duration: "until-start-of-next-turn",

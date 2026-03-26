@@ -128,6 +128,7 @@ export interface RestrictionEffect {
     | "cant-challenge"
     | "cant-be-challenged"
     | "cant-ready"
+    | "cant-ready-at-start-of-turn"
     | "cant-quest-or-challenge"
     | "cant-be-dealt-damage"
     | "cant-sing"
@@ -140,9 +141,16 @@ export interface RestrictionEffect {
     | "cant-play-characters" // Opponents can't play characters
     | "cant-play" // Generic can't play restriction
     | "must-be-chosen-for-effects" // Opponents must choose this character for actions and abilities if able
+    | "cant-gain-lore" // Player can't gain lore
     // Extended restrictions for card text coverage
     | "doesnt-ready" // Character doesn't ready (alias for cant-ready)
-    | "ready-only-one-character"; // Can't ready more than 1 character at start of turn
+    | "ready-only-one-character" // Can't ready more than 1 character at start of turn
+    | "challenge-limit"; // Limits the number of challenges per turn (e.g. only one character can challenge)
+  /**
+   * For "challenge-limit" restrictions: the maximum number of challenges allowed per turn.
+   * When omitted, defaults to 1.
+   */
+  limit?: number;
   target?: CharacterTarget | LocationTarget | ItemTarget | PlayerTarget;
   duration?: EffectDuration;
   /** Condition for when the restriction applies */
@@ -160,6 +168,11 @@ export interface RestrictionEffect {
   challengerFilter?:
     | {
         type: "cost-comparison";
+        operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte";
+        value: number;
+      }
+    | {
+        type: "strength-comparison";
         operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte";
         value: number;
       }
@@ -365,4 +378,22 @@ export interface GrantHandInkabilityEffect {
  */
 export interface GrantDiscardInkabilityEffect {
   type: "grant-discard-inkability";
+}
+
+// ============================================================================
+// Self Play Condition Effects
+// ============================================================================
+
+/**
+ * Self play condition effect - gates whether the card itself can be played
+ *
+ * When a static ability with this effect is on a card, the card can only be
+ * played if the parent ability's condition evaluates to true. The condition
+ * is checked during play validation from the hand zone.
+ *
+ * @example "You can't play this character unless you have 5 or more characters in play."
+ * @example "You can't play this character unless an opposing character was damaged this turn."
+ */
+export interface SelfPlayConditionEffect {
+  type: "self-play-condition";
 }

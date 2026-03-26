@@ -106,4 +106,54 @@ describe("Wreck-it Ralph - Raging Wrecker", () => {
     // And "banish all" ignores Ward
     expect(testEngine.asPlayerTwo().getCardZone(wardCharacter)).toBe("discard");
   });
+
+  it("regression: should consider effective strength including Support bonuses when determining which characters to banish", () => {
+    // Bug: WHO'S COMIN' WITH ME? was not considering effective strength
+    // (including Support bonuses) when determining which characters to banish.
+    // If Ralph has boosted strength, the banish threshold should use his effective strength.
+    const supportCharacter = createMockCharacter({
+      id: "ralph-support-char",
+      name: "Support Character",
+      cost: 2,
+      strength: 2,
+      willpower: 2,
+      abilities: [
+        {
+          type: "keyword",
+          keyword: "Support",
+        },
+      ],
+    });
+
+    const targetChar = createMockCharacter({
+      id: "ralph-target-char",
+      name: "Target Character",
+      strength: 4,
+      willpower: 4,
+      cost: 4,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [wreckitRalphRagingWrecker, supportCharacter],
+        deck: 5,
+        inkwell: 10,
+      },
+      {
+        play: [targetChar], // Strength 4
+      },
+    );
+
+    // Boost once to get Ralph to 4 strength
+    testEngine.asPlayerOne().activateAbility(wreckitRalphRagingWrecker, { ability: "Boost" });
+
+    const ralph = testEngine.asPlayerOne().getCard(wreckitRalphRagingWrecker);
+    expect(ralph.strength).toBe(4);
+
+    // Banish Ralph - should banish characters with strength <= 4
+    testEngine.asServer().manualSetDamage(wreckitRalphRagingWrecker, 4);
+
+    // Target character (4 strength) should be banished because 4 <= 4
+    expect(testEngine.asPlayerTwo().getCardZone(targetChar)).toBe("discard");
+  });
 });

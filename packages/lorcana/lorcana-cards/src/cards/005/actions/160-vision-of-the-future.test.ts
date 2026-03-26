@@ -39,10 +39,10 @@ describe("Vision of the Future", () => {
 
     expect(testEngine.asPlayerOne().getCardZone(mickeyMouseTrueFriend)).toBe("hand");
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
-      simbaProtectiveCub.id,
-      aladdinPrinceAli.id,
-      tinkerBellPeterPansAlly.id,
       healingGlow.id,
+      tinkerBellPeterPansAlly.id,
+      aladdinPrinceAli.id,
+      simbaProtectiveCub.id,
     ]);
   });
 });

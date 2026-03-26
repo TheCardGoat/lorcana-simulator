@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { namaariMorningMistEnchantedI18n } from "./216-namaari-morning-mist-enchanted.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const namaariMorningMistEnchanted: CharacterCard = {
   id: "2qq",
@@ -23,7 +24,6 @@ export const namaariMorningMistEnchanted: CharacterCard = {
     lorcast: "crd_8b02499c992945e2990cb669d7468256",
     tcgPlayer: 527798,
   },
-  missingTests: true,
   text: [
     {
       title: "Bodyguard",
@@ -35,12 +35,7 @@ export const namaariMorningMistEnchanted: CharacterCard = {
   ],
   classifications: ["Storyborn", "Villain", "Princess"],
   abilities: [
-    {
-      id: "1dg-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
+    bodyguard,
     {
       effect: {
         ability: "can-challenge-ready",

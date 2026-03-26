@@ -30,6 +30,9 @@ export const mickeyMouseCourageousSailor: CharacterCard = {
   classifications: ["Dreamborn", "Hero"],
   abilities: [
     {
+      condition: {
+        type: "at-location",
+      },
       effect: {
         modifier: 2,
         stat: "strength",

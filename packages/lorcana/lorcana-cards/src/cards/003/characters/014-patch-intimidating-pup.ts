@@ -35,6 +35,7 @@ export const patchIntimidatingPup: CharacterCard = {
         exert: true,
       },
       effect: {
+        duration: "until-start-of-next-turn",
         modifier: -2,
         stat: "strength",
         target: {
@@ -47,6 +48,7 @@ export const patchIntimidatingPup: CharacterCard = {
         type: "modify-stat",
       },
       id: "1p9-1",
+      name: "BARK",
       text: "BARK {E} — Chosen character gets -2 {S} until the start of your next turn.",
       type: "activated",
     },

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { montereyJackDefiantProtectorI18n } from "./188-monterey-jack-defiant-protector.i18n";
+import { bodyguard } from "../../../helpers/abilities/bodyguard";
 
 export const montereyJackDefiantProtector: CharacterCard = {
   id: "scr",
@@ -24,13 +25,6 @@ export const montereyJackDefiantProtector: CharacterCard = {
   },
   text: "Bodyguard",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1s2-1",
-      keyword: "Bodyguard",
-      text: "Bodyguard",
-      type: "keyword",
-    },
-  ],
+  abilities: [bodyguard],
   i18n: montereyJackDefiantProtectorI18n,
 };

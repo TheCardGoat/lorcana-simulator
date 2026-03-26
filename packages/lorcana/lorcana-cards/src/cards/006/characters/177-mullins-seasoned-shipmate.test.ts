@@ -1,81 +1,64 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { dragonFire } from "@lorcanito/lorcana-engine/cards/001/actions/actions";
-// Import { goonsMaleficent } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { goofyKnightForADay } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import {
-//   MrSmeeSteadfastMate,
-//   MullinsSeasonedShipmate,
-// } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Mullins - Seasoned Shipmate", () => {
-//   It("FALL IN LINE While you have a character named Mr. Smee in play, this character gains Resist +1. (Damage dealt to them is reduced by 1.)", async () => {
-//     // Test when Mr. Smee is not in play
-//     Const testEngine = new TestEngine({
-//       Play: [mullinsSeasonedShipmate],
-//     });
-//
-//     Const mullins = testEngine.getCardModel(mullinsSeasonedShipmate);
-//     Expect(mullins.hasResist).toBe(false);
-//
-//     // Add Mr. Smee to play and verify Mullins gains Resist +1
-//     Const testEngineWithSmee = new TestEngine({
-//       Play: [mullinsSeasonedShipmate, mrSmeeSteadfastMate],
-//     });
-//
-//     Const mullinsWithSmee = testEngineWithSmee.getCardModel(
-//       MullinsSeasonedShipmate,
-//     );
-//     Expect(mullinsWithSmee.hasResist).toBe(true);
-//
-//     // Test damage reduction when Mullins has Resist
-//     Const testEngineWithDamage = new TestEngine(
-//       {
-//         Play: [mullinsSeasonedShipmate, mrSmeeSteadfastMate],
-//       },
-//       {
-//         Play: [goonsMaleficent],
-//       },
-//     );
-//
-//     Const mullinsWithResist = testEngineWithDamage.getCardModel(
-//       MullinsSeasonedShipmate,
-//     );
-//     MullinsWithResist.updateCardMeta({ exerted: true });
-//
-//     Const attacker = testEngineWithDamage.getCardModel(goonsMaleficent);
-//     Attacker.challenge(mullinsWithResist);
-//     Expect(mullinsWithResist.damage).toBe(goonsMaleficent.strength - 1);
-//   });
-//
-//   It("FALL IN LINE ability is dynamic and updates when Mr. Smee enters or leaves play", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: mrSmeeSteadfastMate.cost + dragonFire.cost,
-//         Play: [mullinsSeasonedShipmate],
-//         Hand: [mrSmeeSteadfastMate, dragonFire],
-//       },
-//       {
-//         Play: [goofyKnightForADay],
-//       },
-//     );
-//
-//     Const mullins = testEngine.getCardModel(mullinsSeasonedShipmate);
-//     Expect(mullins.hasResist).toBe(false);
-//
-//     Await testEngine.playCard(mrSmeeSteadfastMate);
-//     Expect(mullins.hasResist).toBe(true);
-//
-//     Await testEngine.playCard(dragonFire, {
-//       Targets: [mrSmeeSteadfastMate],
-//     });
-//
-//     Expect(mullins.hasResist).toBe(false);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { mullinsSeasonedShipmate } from "./177-mullins-seasoned-shipmate";
+import { mrSmeeSteadfastMate } from "./175-mr-smee-steadfast-mate";
+
+const nonSmeeCharacter = createMockCharacter({
+  id: "mullins-test-non-smee",
+  name: "Some Other Character",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+});
+
+const attackerCharacter = createMockCharacter({
+  id: "mullins-test-attacker",
+  name: "Attacker",
+  cost: 3,
+  strength: 4,
+  willpower: 3,
+});
+
+describe("Mullins - Seasoned Shipmate", () => {
+  it("does not have Resist without a Mr. Smee character in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [mullinsSeasonedShipmate, nonSmeeCharacter],
+      deck: 2,
+    });
+
+    expect(testEngine.asPlayerOne().hasKeyword(mullinsSeasonedShipmate, "Resist")).toBe(false);
+  });
+
+  it("FALL IN LINE - gains Resist +1 while you have a character named Mr. Smee in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [mullinsSeasonedShipmate, mrSmeeSteadfastMate],
+      deck: 2,
+    });
+
+    expect(testEngine.asPlayerOne().hasKeyword(mullinsSeasonedShipmate, "Resist")).toBe(true);
+    expect(testEngine.getKeywordValue(mullinsSeasonedShipmate, "Resist")).toBe(1);
+  });
+
+  it("Resist reduces damage by 1 when challenged", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: mullinsSeasonedShipmate, exerted: true }, mrSmeeSteadfastMate],
+        deck: 2,
+      },
+      {
+        play: [attackerCharacter],
+        deck: 2,
+      },
+    );
+
+    // Pass turn to player two so they can challenge
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerTwo().challenge(attackerCharacter, mullinsSeasonedShipmate),
+    ).toBeSuccessfulCommand();
+
+    // Attacker has 4 strength, Resist reduces by 1, so damage should be 3
+    expect(testEngine.asPlayerOne().getDamage(mullinsSeasonedShipmate)).toBe(3);
+  });
+});

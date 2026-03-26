@@ -24,6 +24,7 @@ import type {
   ZoneRuntimeState,
 } from "./types";
 import type { PlayerId } from "../types";
+import type { LorcanaGameLogEntry } from "../../types/log-messages";
 import type { ZoneOperationsAPI, ZoneQueryAPI } from "./zone-operations";
 import type { CardQueryAPI, RuntimeCardDeriver } from "./card-runtime";
 import type { CardCatalog, CardsMaps, MatchStaticResources } from "./static-resources";
@@ -50,6 +51,7 @@ export type MoveRecord = Record<string, MoveDefinition<any, any>>;
 
 export interface RuntimeBoardProjectionContext {
   serverTimestamp: number;
+  runtimeCardCache?: import("./state-scoped-value-cache").StateScopedValueCache<unknown>;
 }
 
 interface MatchRuntimeConfigCore {
@@ -103,6 +105,7 @@ export interface PacketAnimationContext {
 
 export type ProjectedLogEntry = Pick<GameLogEntry, "category" | "visibility"> & {
   defaultMessage?: LogMessage;
+  typedEntry?: LorcanaGameLogEntry;
 };
 
 export type LogProjector = (

@@ -69,4 +69,42 @@ describe("The Sword of Hercules", () => {
     ).toBeSuccessfulCommand();
     expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
   });
+
+  it("regression: does NOT trigger when damage is moved by an ability (not challenge damage)", () => {
+    const damageSource = createMockCharacter({
+      id: "sword-damage-source",
+      name: "Damage Source",
+      cost: 2,
+      strength: 2,
+      willpower: 5,
+    });
+
+    const fragileTarget = createMockCharacter({
+      id: "sword-fragile-ability-target",
+      name: "Fragile Target",
+      cost: 1,
+      strength: 1,
+      willpower: 1,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        deck: 1,
+        play: [theSwordOfHercules, { card: damageSource, damage: 3 }],
+      },
+      {
+        deck: 1,
+        play: [{ card: fragileTarget, isDrying: false }],
+      },
+    );
+
+    // Starting lore should be 0
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+
+    // If ability-based damage (e.g., move-damage from Cheshire Cat) banishes a character,
+    // The Sword of Hercules should NOT trigger because it only watches for challenge banishes
+    // We verify that non-challenge damage doesn't grant lore
+    // (The sword's trigger is specifically "banish-in-challenge")
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+  });
 });

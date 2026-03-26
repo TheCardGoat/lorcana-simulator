@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { slightlyLostBoyI18n } from "./124-slightly-lost-boy.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const slightlyLostBoy: CharacterCard = {
   id: "pa7",
@@ -61,12 +62,7 @@ export const slightlyLostBoy: CharacterCard = {
         cardType: "character",
       },
     },
-    {
-      id: "1pb-2",
-      keyword: "Evasive",
-      text: "Evasive",
-      type: "keyword",
-    },
+    evasive,
   ],
   i18n: slightlyLostBoyI18n,
 };

@@ -32,12 +32,25 @@ export const honeyLemonChemistryWhiz: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Inventor"],
   abilities: [
     {
-      effect: {
-        condition: {
-          type: "play-context",
-          context: "used-shift",
+      id: "1q1-1",
+      name: "PRETTY GREAT, HUH?",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: {
+          cardType: "character",
+          classification: "Floodborn",
+          controller: "you",
         },
-        then: {
+        timing: "whenever",
+      },
+      condition: {
+        type: "play-context",
+        context: "used-shift",
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
           amount: 2,
           target: {
             selector: "chosen",
@@ -49,11 +62,9 @@ export const honeyLemonChemistryWhiz: CharacterCard = {
           type: "remove-damage",
           upTo: true,
         },
-        type: "conditional",
+        type: "optional",
       },
-      id: "1q1-1",
       text: "PRETTY GREAT, HUH? Whenever you play a Floodborn character, if you used Shift to play them, you may remove up to 2 damage from chosen character.",
-      type: "action",
     },
   ],
   i18n: honeyLemonChemistryWhizI18n,

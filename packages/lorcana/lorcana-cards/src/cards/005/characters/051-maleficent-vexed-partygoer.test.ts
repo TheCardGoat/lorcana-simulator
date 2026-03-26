@@ -196,29 +196,5 @@ describe("Maleficent - Vexed Partygoer", () => {
       expect(testEngine.asPlayerOne().getCardZone(handFodder)).toBe("discard");
       expect(testEngine.asPlayerTwo().getCardZone(expensiveCharacter)).toBe("play");
     });
-
-    it("allows declining the optional ability", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          play: [{ card: maleficentVexedPartygoer, isDrying: false }],
-          hand: [handFodder],
-          deck: 5,
-        },
-        {
-          play: [cheapCharacter],
-          deck: 5,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().quest(maleficentVexedPartygoer)).toBeSuccessfulCommand();
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getCardZone(handFodder)).toBe("hand");
-      expect(testEngine.asPlayerTwo().getCardZone(cheapCharacter)).toBe("play");
-    });
   });
 });

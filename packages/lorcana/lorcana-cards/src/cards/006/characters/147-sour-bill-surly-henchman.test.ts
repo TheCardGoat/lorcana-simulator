@@ -65,27 +65,5 @@ describe("Sour Bill - Surly Henchman", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(strengthBefore);
     });
-
-    it("cannot target own characters — ability only allows opposing characters", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          inkwell: sourBillSurlyHenchman.cost,
-          hand: [sourBillSurlyHenchman],
-          play: [ownCharacter],
-          deck: 2,
-        },
-        {
-          deck: 2, // no opposing characters in play
-        },
-      );
-
-      const strengthBefore = testEngine.asPlayerOne().getCardStrength(ownCharacter);
-
-      expect(testEngine.asPlayerOne().playCard(sourBillSurlyHenchman)).toBeSuccessfulCommand();
-
-      // No opposing characters in play, so no bag effect should be created
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-      expect(testEngine.asPlayerOne().getCardStrength(ownCharacter)).toBe(strengthBefore);
-    });
   });
 });

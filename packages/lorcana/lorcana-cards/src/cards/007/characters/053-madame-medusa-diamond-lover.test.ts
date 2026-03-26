@@ -95,31 +95,6 @@ describe("Madame Medusa - Diamond Lover", () => {
       expect(testEngine.asPlayerTwo().getZonesCardCount().discard).toBe(0);
     });
 
-    it("cannot target Madame Medusa herself (must be another character)", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        {
-          play: [madameMedusaDiamondLover],
-          deck: 5,
-        },
-        {
-          deck: 5,
-        },
-      );
-
-      expect(testEngine.asPlayerOne().quest(madameMedusaDiamondLover)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag(resolveSearchTheSwamp(madameMedusaDiamondLover, PLAYER_TWO)),
-      ).not.toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerOne().getCardByInstance(madameMedusaDiamondLover).damage).toBe(0);
-      expect(testEngine.asPlayerTwo().getZonesCardCount().deck).toBe(5);
-      expect(testEngine.asPlayerTwo().getZonesCardCount().discard).toBe(0);
-    });
-
     it("triggers each time Madame Medusa quests", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

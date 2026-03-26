@@ -1,9 +1,15 @@
 import type { RuntimeCardDeriver } from "#core";
 import type { LorcanaCardDefinition } from "@tcg/lorcana-types";
-import type { CardInstanceId, LorcanaCardMeta, LorcanaG } from "../../types";
+import type {
+  CardInstanceId,
+  LorcanaCardMeta,
+  LorcanaG,
+  ProjectedLorcanaCardDerived,
+} from "../../types";
 import type { LorcanaCardDerived } from "../../types/projected-board";
-import { projectLorcanaCardDerived } from "../../projection/card-derived";
 import type { PlayerId } from "#core";
+import type { StateScopedValueCache } from "../../core/runtime/state-scoped-value-cache";
+import { getOrBuildDerivedLorcanaCardProjection } from "./derived-card-cache";
 
 export const INKWELL_CANDIDATE_QUERY_DSL = {
   selector: "chosen",
@@ -20,8 +26,12 @@ export {
 export type { TurnActionInkState as TurnActionInkContext } from "./turn-action-ink";
 
 export function createLorcanaRuntimeCardDeriver(): RuntimeCardDeriver {
-  return ({ card, state, actorPlayerId, staticResources }) => {
-    const projected = projectLorcanaCardDerived({
+  return ({ card, state, actorPlayerId, staticResources, runtimeCardCache }) => {
+    const projected = getOrBuildDerivedLorcanaCardProjection({
+      runtimeCardCache: runtimeCardCache as
+        | StateScopedValueCache<ProjectedLorcanaCardDerived>
+        | undefined,
+      stateID: state.ctx._stateID,
       definition: card.definition,
       meta: card.meta,
       state,
@@ -62,6 +72,7 @@ export function createLorcanaRuntimeCardDeriver(): RuntimeCardDeriver {
       temporaryAbilityStarts: projected.temporaryAbilityStarts ?? {},
       temporaryRestrictions: projected.temporaryRestrictions ?? {},
       temporaryRestrictionStarts: projected.temporaryRestrictionStarts ?? {},
+      grantedAbilityTextEntries: projected.grantedAbilityTextEntries,
     };
   };
 }

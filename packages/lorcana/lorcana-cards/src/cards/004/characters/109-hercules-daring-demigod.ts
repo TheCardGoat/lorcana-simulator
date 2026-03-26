@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { herculesDaringDemigodI18n } from "./109-hercules-daring-demigod.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const herculesDaringDemigod: CharacterCard = {
   id: "044",
@@ -31,19 +33,6 @@ export const herculesDaringDemigod: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Hero", "Prince"],
-  abilities: [
-    {
-      id: "1s3-1",
-      keyword: "Rush",
-      type: "keyword",
-      text: "Rush",
-    },
-    {
-      id: "1s3-2",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-  ],
+  abilities: [rush, reckless],
   i18n: herculesDaringDemigodI18n,
 };

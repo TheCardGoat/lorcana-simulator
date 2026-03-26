@@ -48,4 +48,22 @@ describe("Spaghetti Dinner", () => {
 
     expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
   });
+
+  it("regression: should not be activatable with zero characters in play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: 1,
+      play: [spaghettiDinner],
+      // No characters in play at all
+    });
+
+    // The ability should still be activatable (exert + pay ink), but condition fails
+    expect(
+      testEngine.asPlayerOne().activateAbility(spaghettiDinner, {
+        ability: "FINE DINING",
+      }),
+    ).toBeSuccessfulCommand();
+
+    // No lore gained because condition requires 2+ characters
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+  });
 });

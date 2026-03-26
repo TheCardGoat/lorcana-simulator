@@ -38,7 +38,7 @@ export const olafHelpingHand: CharacterCard = {
           target: {
             selector: "chosen",
             count: 1,
-            owner: "any",
+            owner: "you",
             zones: ["play"],
             cardTypes: ["character"],
           },

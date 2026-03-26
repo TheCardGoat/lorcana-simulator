@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { rapunzelGiftedArtistI18n } from "./019-rapunzel-gifted-artist.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const rapunzelGiftedArtist: CharacterCard = {
   id: "q6B",
@@ -34,15 +35,7 @@ export const rapunzelGiftedArtist: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "n2g-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       effect: {
         chooser: "CONTROLLER",

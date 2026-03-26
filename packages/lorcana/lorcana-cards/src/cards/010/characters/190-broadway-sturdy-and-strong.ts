@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { broadwaySturdyAndStrongI18n } from "./190-broadway-sturdy-and-strong.i18n";
+import { stoneByDay } from "../../../helpers/abilities/stoneByDay";
 
 export const broadwaySturdyAndStrong: CharacterCard = {
   id: "y1f",
@@ -32,6 +33,6 @@ export const broadwaySturdyAndStrong: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Gargoyle"],
-  abilities: [],
+  abilities: [stoneByDay],
   i18n: broadwaySturdyAndStrongI18n,
 };

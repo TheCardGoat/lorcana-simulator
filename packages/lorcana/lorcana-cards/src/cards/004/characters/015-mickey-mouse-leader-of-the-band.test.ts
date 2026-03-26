@@ -1,53 +1,41 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   MickeyMouseLeaderOfTheBand,
-//   PrinceEricSeafaringPrince,
-//   UrsulaVanessa,
-// } from "@lorcanito/lorcana-engine/cards/004/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Mickey Mouse - Leader of the Band", () => {
-//   It("**Support** _(Whenever this character quests, you may add their {S} to another chosen character's {S} this turn.)_", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: mickeyMouseLeaderOfTheBand.cost,
-//       Play: [mickeyMouseLeaderOfTheBand, ursulaVanessa],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(mickeyMouseLeaderOfTheBand);
-//     Const target = testEngine.getCardModel(ursulaVanessa);
-//
-//     Expect(cardUnderTest.hasAbility("support")).toBe(true);
-//     CardUnderTest.quest();
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({ targets: [target] }, true);
-//
-//     Expect(target.strength).toBe(3);
-//   });
-//   It("When you play this character, chosen character gains **Support ** this turn.", async () => {
-//     Const testEngine = new TestEngine({
-//       Inkwell: mickeyMouseLeaderOfTheBand.cost,
-//       Play: [ursulaVanessa, princeEricSeafaringPrince],
-//       Hand: [mickeyMouseLeaderOfTheBand],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(mickeyMouseLeaderOfTheBand);
-//     Const target = testEngine.getCardModel(ursulaVanessa);
-//     Const target2 = testEngine.getCardModel(princeEricSeafaringPrince);
-//
-//     CardUnderTest.playFromHand();
-//     Await testEngine.resolveTopOfStack({ targets: [target] }, true);
-//     Expect(target.hasAbility("support")).toBe(true);
-//
-//     Target.quest();
-//     Await testEngine.resolveOptionalAbility();
-//     Await testEngine.resolveTopOfStack({ targets: [target2] }, true);
-//
-//     Expect(target2.strength).toBe(4);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { mickeyMouseLeaderOfTheBand } from "./015-mickey-mouse-leader-of-the-band";
+
+const targetCharacter = createMockCharacter({
+  id: "mm-lb-target",
+  name: "Target Character",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+});
+
+describe("Mickey Mouse - Leader of the Band", () => {
+  it("has Support keyword", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [mickeyMouseLeaderOfTheBand],
+    });
+
+    expect(testEngine.asPlayerOne().hasKeyword(mickeyMouseLeaderOfTheBand, "Support")).toBe(true);
+  });
+
+  describe("STRIKE UP THE MUSIC - When you play this character, chosen character gains Support this turn.", () => {
+    it("gives chosen character Support when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [mickeyMouseLeaderOfTheBand],
+        play: [targetCharacter],
+        inkwell: mickeyMouseLeaderOfTheBand.cost,
+        deck: 3,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(mickeyMouseLeaderOfTheBand)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolveOnlyBag({ targets: [targetCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().hasKeyword(targetCharacter, "Support")).toBe(true);
+    });
+  });
+});

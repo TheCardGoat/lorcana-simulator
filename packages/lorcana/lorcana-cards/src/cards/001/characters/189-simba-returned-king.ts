@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { simbaReturnedKingI18n } from "./189-simba-returned-king.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const simbaReturnedKing: CharacterCard = {
   id: "mW3",
@@ -34,13 +35,7 @@ export const simbaReturnedKing: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "King"],
   abilities: [
-    {
-      id: "nj8-1",
-      keyword: "Challenger",
-      text: "Challenger +4",
-      type: "keyword",
-      value: 4,
-    },
+    challenger(4),
     {
       condition: {
         type: "turn",

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { deweyShowyNephewI18n } from "./139-dewey-showy-nephew.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const deweyShowyNephew: CharacterCard = {
   id: "7di",
@@ -24,13 +25,6 @@ export const deweyShowyNephew: CharacterCard = {
   },
   text: "Support",
   classifications: ["Dreamborn", "Ally"],
-  abilities: [
-    {
-      id: "32f-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: deweyShowyNephewI18n,
 };

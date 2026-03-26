@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { beastThickskinnedI18n } from "./176-beast-thick-skinned.i18n";
+import { resist } from "../../../helpers/abilities/resist";
 
 export const beastThickskinned: CharacterCard = {
   id: "P74",
@@ -24,14 +25,6 @@ export const beastThickskinned: CharacterCard = {
   },
   text: "Resist +1",
   classifications: ["Storyborn", "Hero", "Prince"],
-  abilities: [
-    {
-      id: "qz9-1",
-      keyword: "Resist",
-      type: "keyword",
-      value: 1,
-      text: "Resist +1",
-    },
-  ],
+  abilities: [resist(1)],
   i18n: beastThickskinnedI18n,
 };

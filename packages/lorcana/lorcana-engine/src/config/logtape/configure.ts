@@ -26,19 +26,24 @@ function getConfiguredLogLevel(): LogLevel {
   const value = processEnv.process?.env?.LOG_LEVEL?.toLowerCase();
 
   if (!value) {
-    return "trace";
+    return "fatal";
   }
 
-  return validLogLevels[value] ?? "trace";
+  return validLogLevels[value] ?? "fatal";
 }
-
-const resolvedLogLevel = getConfiguredLogLevel();
 
 const globalConfigState = globalThis as { __tcgLogtapeConfigured?: boolean };
 
-if (!globalConfigState.__tcgLogtapeConfigured) {
+export function configureLogtape(logLevel?: LogLevel): void {
+  if (globalConfigState.__tcgLogtapeConfigured) {
+    return;
+  }
+
+  const resolvedLogLevel = logLevel || getConfiguredLogLevel();
+
   try {
     configureSync({
+      reset: true,
       sinks: {
         meta: getConsoleSink(),
         console: getConsoleSink({
@@ -52,6 +57,7 @@ if (!globalConfigState.__tcgLogtapeConfigured) {
       ],
     });
   } catch (error) {
+    console.error(error);
     const message = error instanceof Error ? error.message : String(error);
     if (!message.includes("Already configured")) {
       throw error;

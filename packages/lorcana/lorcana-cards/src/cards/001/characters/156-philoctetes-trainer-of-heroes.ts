@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { philoctetesTrainerOfHeroesI18n } from "./156-philoctetes-trainer-of-heroes.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const philoctetesTrainerOfHeroes: CharacterCard = {
   id: "BXf",
@@ -24,13 +25,6 @@ export const philoctetesTrainerOfHeroes: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Mentor"],
-  abilities: [
-    {
-      id: "1g8-1",
-      keyword: "Support",
-      type: "keyword",
-      text: "Support",
-    },
-  ],
+  abilities: [support],
   i18n: philoctetesTrainerOfHeroesI18n,
 };

@@ -109,4 +109,19 @@ describe("Goofy - Emerald Champion", () => {
       expect(testEngine.asPlayerOne().getCardZone(attacker)).toBe("play");
     });
   });
+
+  it("regression: Ward from PROVIDE COVER protects Emerald characters from being targeted by opponent", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [goofyEmeraldChampion, emeraldAlly],
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    // Emerald ally should have Ward, which PROTECTS them from opponent targeting
+    expect(testEngine.asPlayerOne().hasKeyword(emeraldAlly, "Ward")).toBe(true);
+    // Ward should not force the opponent to target — it should prevent targeting
+  });
 });

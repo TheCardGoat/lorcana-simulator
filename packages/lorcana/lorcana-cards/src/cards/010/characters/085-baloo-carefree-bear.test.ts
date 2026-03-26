@@ -11,6 +11,15 @@ const filler = createMockCharacter({
   lore: 1,
 });
 
+const fillerTwo = createMockCharacter({
+  id: "baloo-test-filler-two",
+  name: "Filler Card Two",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+  lore: 1,
+});
+
 describe("Baloo - Carefree Bear", () => {
   it("has shift 3", () => {
     const shiftAbility = (balooCarefreeBear.abilities ?? []).find(
@@ -50,7 +59,7 @@ describe("Baloo - Carefree Bear", () => {
           hand: [balooCarefreeBear, filler],
         },
         {
-          hand: [filler],
+          hand: [fillerTwo],
         },
       );
 
@@ -68,10 +77,30 @@ describe("Baloo - Carefree Bear", () => {
 
       // Player two should also choose and discard
       expect(
-        testEngine.asPlayerTwo().resolveNextPending({ targets: [filler] }),
+        testEngine.asPlayerTwo().resolveNextPending({ targets: [fillerTwo] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(filler)).toBe("discard");
     });
+  });
+
+  it("regression: ROLL WITH IT ability should trigger and create a bag effect when played", () => {
+    // Bug: Baloo's ROLL WITH IT ability was not working at all.
+    // When played, the triggered ability should fire and offer a choice.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        inkwell: balooCarefreeBear.cost,
+        hand: [balooCarefreeBear],
+        deck: 5,
+      },
+      {
+        deck: 5,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(balooCarefreeBear)).toBeSuccessfulCommand();
+
+    // The ability should create a bag effect with a choice
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
   });
 });

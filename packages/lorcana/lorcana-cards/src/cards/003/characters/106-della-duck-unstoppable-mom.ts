@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { dellaDuckUnstoppableMomI18n } from "./106-della-duck-unstoppable-mom.i18n";
+import { reckless } from "../../../helpers/abilities/reckless";
 
 export const dellaDuckUnstoppableMom: CharacterCard = {
   id: "EO7",
@@ -24,13 +25,6 @@ export const dellaDuckUnstoppableMom: CharacterCard = {
   },
   text: "Reckless",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    {
-      id: "1xa-1",
-      keyword: "Reckless",
-      type: "keyword",
-      text: "Reckless",
-    },
-  ],
+  abilities: [reckless],
   i18n: dellaDuckUnstoppableMomI18n,
 };

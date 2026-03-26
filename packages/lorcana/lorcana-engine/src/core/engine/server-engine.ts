@@ -1,7 +1,7 @@
 /**
  * Responsibility: authoritative runtime host and state distributor.
- * Owns command validation/execution against `MatchRuntime`, per-recipient view filtering,
- * and broadcasting sync/patch updates to connected clients.
+ * Owns command validation/execution against `MatchRuntime` and broadcasts
+ * authoritative state updates to connected clients.
  *
  * Docs:
  * - ../../docs/ENGINE_SIMPLIFICATION_PLAN.md
@@ -14,21 +14,17 @@ import {
   type MatchRuntimeConfig,
   type MatchState,
   type FilteredMatchView,
-  type ViewRoleContext,
   type CommandEnvelope,
   type CommandResult,
   type MoveInput,
   type MatchStaticResources,
   type RuntimeActorRole,
   type RuntimeSnapshot,
-  filterPatches,
-  canApplyPatchesToState,
 } from "../runtime";
 import type { Player } from "../runtime/match-runtime.types";
 import type {
   InMemoryTransport,
   ClientMessage,
-  UpdatePatchMessage,
   UpdateFullMessage,
   SyncFullMessage,
   ErrorMessage,
@@ -73,9 +69,6 @@ export interface StateSnapshot {
   undoneMoveId?: string;
 }
 
-// To speed up development, we're temporarily disabling patch sending and just sending full state updates on every move. This is because we don't yet have a robust way to generate and filter patches for the complex state updates in our test game, and implementing that is taking more time than expected. TODO: Re-enable patch updates once filtered patch generation is robust enough for multiplayer synchronization.
-const arePatchesDisabled = true;
-
 export interface UndoCheckpoint {
   stateID: number;
   playerId: string;
@@ -90,6 +83,7 @@ export class ServerEngine implements GameEngine {
   private transports: Map<string, InMemoryTransport> = new Map();
   private stateHistory: StateSnapshot[] = [];
   private moveHistory: EngineMoveHistoryEntry[] = [];
+  private stateUpdateHandlers: Array<(stateID: number) => void> = [];
   private debug: boolean = false;
   private staticResources: MatchStaticResources;
   private undoCheckpoint: UndoCheckpoint | null = null;
@@ -205,7 +199,7 @@ export class ServerEngine implements GameEngine {
         this.sendError(playerId, "INVALID_MOVE", result.error || "Command failed", false);
       }
     } else if (isUndoRequestMessage(message)) {
-      this.undo(playerId, message.prevStateID);
+      this.undo(playerId, message.prevStateID, message.commandID);
     } else if (isSyncRequestMessage(message)) {
       this.sendFullSync(playerId);
     }
@@ -216,94 +210,47 @@ export class ServerEngine implements GameEngine {
     stateID: number,
   ): void {
     const fullState = this.runtime.getState();
-    const patches = result.patches;
     const command = result.processedCommand;
     const animations = result.animations;
 
     for (const [playerId, transport] of this.transports) {
-      const roleContext: ViewRoleContext =
-        playerId === "spectator" ? { role: "spectator" } : { role: "player", playerID: playerId };
-
-      const { filteredView, projectedView } = this.buildRecipientUpdate(playerId);
-
-      const filteredPatches =
-        patches && patches.length > 0
-          ? filterPatches(patches, this.runtime.getState(), roleContext)
-          : [];
-
-      const canSendPatch =
-        filteredPatches.length > 0 &&
-        canApplyPatchesToState(filteredView, filteredPatches as unknown[]);
-
-      const shouldSendPatch =
-        canSendPatch &&
-        !arePatchesDisabled &&
-        typeof this.runtime.getRuntimeConfig().projectBoard !== "function";
-
-      if (shouldSendPatch) {
-        const message: UpdatePatchMessage = {
-          type: "UPDATE_PATCH",
-          stateID,
-          prevStateID: stateID - 1, // This doesn't sound right
-          canUndo: this.canUndoForRecipient(playerId),
-          protocolVersion: PROTOCOL_VERSION,
-          matchID: fullState.ctx.matchID,
-          processedCommand: command,
-          animations,
-          patchFormat: "immer",
-          // TODO: WE should send patches of board state, not only state
-          patchOps: filteredPatches,
-        };
-
-        if (this.debug) {
-          logger.debug(`Broadcasting state update to player ${playerId} (stateID: ${stateID}):`, {
+      const message: UpdateFullMessage = {
+        type: "UPDATE_FULL",
+        reason: "PATCH_DISABLED",
+        stateID,
+        canUndo: this.canUndoForRecipient(playerId),
+        protocolVersion: PROTOCOL_VERSION,
+        matchID: fullState.ctx.matchID,
+        processedCommand: command,
+        animations,
+        state: fullState,
+      };
+      if (this.debug) {
+        logger.debug(
+          `Broadcasting full state update to player ${playerId} (stateID: ${stateID}):`,
+          {
             message,
             command,
-          });
-        }
-
-        transport.simulateReceive(message);
-      } else {
-        const message: UpdateFullMessage = {
-          type: "UPDATE_FULL",
-          reason: !shouldSendPatch ? "PATCH_DISABLED" : undefined,
-          stateID,
-          canUndo: this.canUndoForRecipient(playerId),
-          protocolVersion: PROTOCOL_VERSION,
-          matchID: fullState.ctx.matchID,
-          processedCommand: command,
-          animations,
-          state: filteredView,
-          board: projectedView,
-        };
-        if (this.debug) {
-          logger.debug(
-            `Broadcasting full state update to player ${playerId} (stateID: ${stateID}):`,
-            {
-              message,
-              command,
-            },
-          );
-          console.log(JSON.stringify(projectedView, null, 2));
-        }
-
-        transport.simulateReceive(message);
+          },
+        );
       }
+
+      transport.simulateReceive(message);
     }
+
+    this.notifyStateUpdate(stateID);
   }
 
   private sendFullSync(playerId: string): void {
     const transport = this.transports.get(playerId);
     if (!transport) return;
     const fullState = this.runtime.getState();
-    const { projectedView, filteredView } = this.buildRecipientUpdate(playerId);
 
     const message: SyncFullMessage = {
       type: "SYNC_FULL",
       stateID: fullState.ctx._stateID,
       canUndo: this.canUndoForRecipient(playerId),
-      state: filteredView,
-      board: projectedView,
+      state: fullState,
       protocolVersion: PROTOCOL_VERSION,
       matchID: fullState.ctx.matchID,
       matchData: {
@@ -314,32 +261,6 @@ export class ServerEngine implements GameEngine {
     };
 
     transport.simulateReceive(message);
-  }
-
-  private buildRecipientUpdate(playerId: string): {
-    filteredView: FilteredMatchView;
-    projectedView: FilteredMatchView | undefined;
-  } {
-    if (playerId === "spectator") {
-      return {
-        filteredView: this.runtime.getFilteredView({ role: "spectator" }),
-        projectedView: this.runtime.getProjectedBoardView(
-          { role: "spectator" },
-          { serverTimestamp: Date.now() },
-        ),
-      };
-    }
-
-    return {
-      filteredView: this.runtime.getFilteredView({
-        role: "player",
-        playerID: playerId,
-      }),
-      projectedView: this.runtime.getProjectedBoardView(
-        { role: "player", playerID: playerId },
-        { serverTimestamp: Date.now() },
-      ),
-    };
   }
 
   private canUndoForRecipient(playerId: string): boolean {
@@ -369,7 +290,7 @@ export class ServerEngine implements GameEngine {
     return this.undoCheckpoint !== null && this.undoCheckpoint.playerId === playerId;
   }
 
-  undo(playerId: string, prevStateID?: number): boolean {
+  undo(playerId: string, prevStateID?: number, commandID?: string): boolean {
     if (typeof prevStateID === "number" && prevStateID !== this.runtime.getCurrentStateID()) {
       this.sendError(
         playerId,
@@ -396,7 +317,7 @@ export class ServerEngine implements GameEngine {
     const timestamp = Date.now();
     const nextStateID = previousStateID + 1;
     const undoCommand: CommandEnvelope = {
-      commandID: `undo-${playerId}-${timestamp}`,
+      commandID: commandID ?? `undo-${playerId}-${timestamp}`,
       move: "undo",
     };
 
@@ -565,6 +486,7 @@ export class ServerEngine implements GameEngine {
     );
 
     if (result.success) {
+      const newStateID = this.runtime.getCurrentStateID();
       const processedResult = this.withPacketAnimations(
         result,
         previousState,
@@ -572,7 +494,23 @@ export class ServerEngine implements GameEngine {
         playerId,
         actorRole,
       );
-      this.broadcastStateUpdate(processedResult, this.runtime.getCurrentStateID());
+      this.broadcastStateUpdate(processedResult, newStateID);
+
+      if (actorRole === "player") {
+        this.moveHistory.push({
+          moveId,
+          input,
+          playerId,
+          role: "player",
+          timestamp: Date.now(),
+          stateID: newStateID,
+          // Attribute the move to the turn it was issued in, even if the move
+          // itself advances the game to the next turn before history is stored.
+          turnNumber: previousState.ctx.status.turn,
+          transitionType: "move",
+          newStateID: newStateID,
+        });
+      }
 
       // Clear undo checkpoint for non-protocol moves so it doesn't go stale
       this.undoCheckpoint = null;
@@ -607,6 +545,16 @@ export class ServerEngine implements GameEngine {
 
   getActorContext(): EngineActorContext {
     return { role: "judge" };
+  }
+
+  onStateUpdate(handler: (stateID: number) => void): () => void {
+    this.stateUpdateHandlers.push(handler);
+    return () => {
+      const index = this.stateUpdateHandlers.indexOf(handler);
+      if (index !== -1) {
+        this.stateUpdateHandlers.splice(index, 1);
+      }
+    };
   }
 
   async dispose(skipLogs?: boolean): Promise<void> {
@@ -652,6 +600,8 @@ export class ServerEngine implements GameEngine {
     for (const connectedPlayerId of this.transports.keys()) {
       this.sendFullSync(connectedPlayerId);
     }
+
+    this.notifyStateUpdate(this.runtime.getCurrentStateID());
   }
 
   private withPacketAnimations(
@@ -698,5 +648,11 @@ export class ServerEngine implements GameEngine {
         staticResources: this.staticResources,
       }),
     ];
+  }
+
+  private notifyStateUpdate(stateID: number): void {
+    for (const handler of this.stateUpdateHandlers) {
+      handler(stateID);
+    }
   }
 }

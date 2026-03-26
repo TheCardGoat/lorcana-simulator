@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { madamMimRivalOfMerlinI18n } from "./048-madam-mim-rival-of-merlin.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const madamMimRivalOfMerlin: CharacterCard = {
   id: "RM2",
@@ -34,15 +35,7 @@ export const madamMimRivalOfMerlin: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Sorcerer"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "dz2-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
+    shift(3),
     {
       id: "dz2-2",
       name: "GRUESOME AND GRIM",

@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { princeNaveenUkulelePlayerEnchantedI18n } from "./205-prince-naveen-ukulele-player-enchanted.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const princeNaveenUkulelePlayerEnchanted: CharacterCard = {
   id: "SoY",
@@ -35,13 +36,7 @@ export const princeNaveenUkulelePlayerEnchanted: CharacterCard = {
   ],
   classifications: ["Storyborn", "Hero", "Prince"],
   abilities: [
-    {
-      id: "v3r-1",
-      keyword: "Singer",
-      text: "Singer 6",
-      type: "keyword",
-      value: 6,
-    },
+    singer(6),
     {
       effect: {
         chooser: "CONTROLLER",
@@ -53,12 +48,19 @@ export const princeNaveenUkulelePlayerEnchanted: CharacterCard = {
           },
           from: "hand",
           type: "play-card",
+          cardType: "song",
         },
         type: "optional",
       },
       id: "v3r-2",
+      name: "IT'S BEAUTIFUL, NO?",
       text: "IT'S BEAUTIFUL, NO? When you play this character, you may play a song with cost 6 or less for free.",
-      type: "action",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
     },
   ],
   i18n: princeNaveenUkulelePlayerEnchantedI18n,

@@ -32,9 +32,16 @@ export const mirabelMadrigalFamilyGatherer: CharacterCard = {
   abilities: [
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        type: "self-play-condition",
       },
+      condition: {
+        type: "resource-count",
+        what: "characters",
+        controller: "you",
+        comparison: "greater-or-equal",
+        value: 5,
+      },
+      sourceZones: ["hand"],
       id: "1v7-1",
       text: "NOT WITHOUT MY FAMILY You can't play this character unless you have 5 or more characters in play.",
       type: "static",

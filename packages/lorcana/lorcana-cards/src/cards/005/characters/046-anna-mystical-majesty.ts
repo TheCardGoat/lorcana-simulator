@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { annaMysticalMajestyI18n } from "./046-anna-mystical-majesty.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const annaMysticalMajesty: CharacterCard = {
   id: "JaG",
@@ -33,15 +34,7 @@ export const annaMysticalMajesty: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Queen", "Sorcerer"],
   abilities: [
-    {
-      cost: {
-        ink: 4,
-      },
-      id: "iok-1",
-      keyword: "Shift",
-      text: "Shift 4",
-      type: "keyword",
-    },
+    shift(4),
     {
       effect: {
         target: {

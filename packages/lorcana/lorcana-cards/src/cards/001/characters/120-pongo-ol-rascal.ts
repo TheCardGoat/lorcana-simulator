@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { pongoOlRascalI18n } from "./120-pongo-ol-rascal.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const pongoOlRascal: CharacterCard = {
   id: "Sa8",
@@ -24,13 +25,6 @@ export const pongoOlRascal: CharacterCard = {
   },
   text: "Evasive",
   classifications: ["Storyborn", "Hero"],
-  abilities: [
-    {
-      id: "37j-1",
-      keyword: "Evasive",
-      type: "keyword",
-      text: "Evasive",
-    },
-  ],
+  abilities: [evasive],
   i18n: pongoOlRascalI18n,
 };

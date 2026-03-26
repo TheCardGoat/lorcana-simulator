@@ -44,4 +44,20 @@ describe("Pride Lands - Jungle Oasis", () => {
     expect(testEngine.asPlayerOne().getCardZone(prideLandsJungleOasis)).toBe("discard");
     expect(testEngine.asPlayerOne().getCardZone(discardedLion)).toBe("play");
   });
+
+  it("cannot activate the ability if fewer than 3 characters are at the location", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [
+        prideLandsJungleOasis,
+        { card: residentOne, atLocation: prideLandsJungleOasis },
+        { card: residentTwo, atLocation: prideLandsJungleOasis },
+      ],
+      discard: [discardedLion],
+      deck: 1,
+    });
+
+    expect(testEngine.asPlayerOne().activateAbility(prideLandsJungleOasis).success).toBe(false);
+    expect(testEngine.asPlayerOne().getCardZone(prideLandsJungleOasis)).toBe("play");
+    expect(testEngine.asPlayerOne().getCardZone(discardedLion)).toBe("discard");
+  });
 });

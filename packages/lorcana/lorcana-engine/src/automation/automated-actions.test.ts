@@ -720,6 +720,20 @@ describe("automated actions", () => {
             origin: "pending-effect",
             requestId: "pending:scry:1",
             revealedCardIds: [usefulTopCardId, badBottomCardId],
+            revealedCards: [
+              {
+                cardId: usefulTopCardId,
+                label: "Useful Top Card",
+                cardType: "character",
+                cost: 2,
+              },
+              {
+                cardId: badBottomCardId,
+                label: "Bad Bottom Card",
+                cardType: "character",
+                cost: 7,
+              },
+            ],
             sourceCardId: sourceId,
             submitField: "destinations",
           },
@@ -1706,6 +1720,27 @@ describe("automated actions", () => {
             origin: "pending-effect",
             requestId: "pending:stuck-scry:1",
             revealedCardIds,
+            revealedCards: [
+              {
+                cardId: fillerAId,
+                label: "Stuck Filler A",
+                cardType: "character",
+                cost: 1,
+              },
+              {
+                cardId: princessMatchId,
+                label: "Stuck Princess Match",
+                cardType: "character",
+                cost: 5,
+                classifications: ["Storyborn", "Princess"],
+              },
+              {
+                cardId: fillerBId,
+                label: "Stuck Filler B",
+                cardType: "character",
+                cost: 2,
+              },
+            ],
             sourceCardId: sourceId,
             submitField: "destinations",
           },

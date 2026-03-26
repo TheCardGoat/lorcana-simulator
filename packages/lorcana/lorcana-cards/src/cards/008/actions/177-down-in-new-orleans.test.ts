@@ -29,8 +29,8 @@ describe("Down in New Orleans", () => {
 
     expect(testEngine.asPlayerOne().getCardZone(duckburgFunsosFunzone)).toBe("play");
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
-      fairyGodmothersWand.id,
       goofyKnightForADay.id,
+      fairyGodmothersWand.id,
     ]);
   });
 
@@ -49,9 +49,9 @@ describe("Down in New Orleans", () => {
     ).toBe(true);
 
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
-      desperatePlan.id,
-      wrongLever.id,
       lightTheFuse.id,
+      wrongLever.id,
+      desperatePlan.id,
     ]);
   });
 
@@ -74,5 +74,34 @@ describe("Down in New Orleans", () => {
 
     // The command was rejected (server-side); kuzco must still be in the deck (not in play)
     expect(testEngine.asPlayerOne().getCardZone(kuzcoImpulsiveLlama)).not.toBe("play");
+  });
+
+  it("projects play destination metadata for the pending scry selection", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [downInNewOrleans],
+      inkwell: downInNewOrleans.cost,
+      deck: [goofyKnightForADay, fairyGodmothersWand, duckburgFunsosFunzone],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(downInNewOrleans)).toBeSuccessfulCommand();
+
+    const pendingEffect = testEngine.asServer().getState().G.pendingEffects[0];
+    expect(pendingEffect?.selectionContext).toMatchObject({
+      kind: "scry-selection",
+      destinationRules: [
+        {
+          zone: "play",
+          max: 1,
+          reveal: true,
+          cost: "free",
+          filters: [{ type: "or" }, { type: "cost-comparison" }],
+        },
+        {
+          zone: "deck-bottom",
+          remainder: true,
+          ordering: "player-choice",
+        },
+      ],
+    });
   });
 });

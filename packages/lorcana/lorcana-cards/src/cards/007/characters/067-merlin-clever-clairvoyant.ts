@@ -41,23 +41,15 @@ export const merlinCleverClairvoyant: CharacterCard = {
             type: "name-a-card",
           },
           {
+            type: "reveal-and-route",
             target: "CONTROLLER",
-            type: "reveal-top-card",
-          },
-          {
-            condition: {
-              type: "revealed-matches-named",
-            },
-            else: {
-              type: "put-on-top",
-              source: "revealed",
-            },
-            then: {
-              type: "put-into-inkwell",
-              source: "revealed",
-              exerted: true,
-            },
-            type: "conditional",
+            routes: [
+              {
+                condition: { type: "revealed-matches-named" },
+                destination: { zone: "inkwell", exerted: true },
+              },
+            ],
+            fallback: { zone: "deck-top" },
           },
         ],
         type: "sequence",

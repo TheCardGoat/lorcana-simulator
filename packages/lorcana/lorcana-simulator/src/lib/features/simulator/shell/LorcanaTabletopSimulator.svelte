@@ -5,12 +5,22 @@
   import { Button } from "$lib/design-system/primitives/button";
   import * as Dialog from "$lib/design-system/primitives/dialog";
   import * as Sidebar from "$lib/design-system/primitives/sidebar";
+  import SimulatorHotkeyLayer from "@/features/simulator/hotkeys/SimulatorHotkeyLayer.svelte";
+  import SimulatorHotkeysDialog from "@/features/simulator/hotkeys/SimulatorHotkeysDialog.svelte";
+  import { buildSimulatorHotkeyDescriptors } from "@/features/simulator/hotkeys/simulator-hotkey-registry.js";
+  import {
+    HAND_CARD_HOTKEYS,
+    OPPONENT_CARD_HOTKEYS,
+    PLAY_CARD_HOTKEYS,
+  } from "@/features/simulator/hotkeys/hotkey-bindings.js";
+  import { getOrderedPlayZoneCards } from "@/features/simulator/hotkeys/board-order.js";
   import { Toaster } from "$lib/design-system/primitives/sonner";
   import { toast } from "svelte-sonner";
   import { DragDropProvider } from "@dnd-kit/svelte";
   import { Feedback, PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
   import type { LorcanaEngineBase } from "@tcg/lorcana-engine";
   import type {
+    ExecutableMovePresentationCategoryId,
     LorcanaSimulatorReadModel,
     SimulatorMoveError,
   } from "@/features/simulator/model/contracts.js";
@@ -25,10 +35,13 @@
   import {
     type LorcanaGameContext,
     setLorcanaGameContext,
+    useLorcanaBoardPresenter,
     useLorcanaSidebarPresenter,
   } from "@/features/simulator/context/game-context.svelte.js";
   import { SimulatorLayoutModeObserver } from "@/features/simulator/model/layout-mode.svelte.js";
   import PostGameSummaryDialog from "@/features/simulator/post-game/PostGameSummaryDialog.svelte";
+  import ConfettiOverlay from "@/features/simulator/board/ConfettiOverlay.svelte";
+  import { playSound } from "@/features/simulator/animations/sound-service.js";
   import {
     createInitialPostGameModalState,
     dismissPostGameModal,
@@ -36,6 +49,7 @@
     syncPostGameModalState,
   } from "@/features/simulator/post-game/modal-state.js";
   import { buildPostGameSummary } from "@/features/simulator/post-game/summary.js";
+  import type { HotkeyMode } from "@/features/simulator/context/game-context.svelte.js";
 
   interface LorcanaTabletopSimulatorProps {
     engine: LorcanaEngineBase;
@@ -73,8 +87,9 @@
   gameContext = game;
 
   const sidebar = useLorcanaSidebarPresenter();
+  const board = useLorcanaBoardPresenter();
 
-  setSimulatorCardContext({
+  const simulatorCardContext = setSimulatorCardContext({
     onMulliganSelectionChange: () => {
       sidebar.pendingMulliganDangerConfirm = null;
     },
@@ -89,17 +104,36 @@
   const layout = new SimulatorLayoutModeObserver();
   const layoutMode = $derived(layout.current);
   const isCompactLayout = $derived(layout.isCompact);
-  const isPostGame = $derived(
-    Boolean(postGameGameId) && boardSnapshot?.status === "finished",
-  );
+  const isPostGame = $derived(boardSnapshot?.status === "finished");
   const isSpectator = $derived(viewerMode === "spectator");
   const readOnlyMode = $derived(isPostGame || isSpectator);
   const compactActionCount = $derived(isPostGame ? 0 : sidebar.moveCategoryCount);
+  const moveCategorySummaries = $derived(sidebar.moveCategorySummaries);
+  const availableMovesSelectionState = $derived(sidebar.availableMovesSelectionState);
+  const topSide = $derived(sidebar.topSide);
+  const bottomSide = $derived(sidebar.bottomSide);
   const pendingEffectsPopoverItems = $derived.by(() =>
     isPostGame ? ([] as PendingEffectsPopoverItem[]) : sidebar.pendingEffectsPopoverItems,
   );
   const activePlayerGuidance = $derived.by(() =>
     isPostGame ? [] : sidebar.activePlayerGuidance,
+  );
+  const opponentPlayHotkeyCards = $derived.by(() =>
+    getOrderedPlayZoneCards(
+      board.getZoneCards(topSide, "play").filter((card) => card.cardType !== "item"),
+      "top",
+    ).slice(0, OPPONENT_CARD_HOTKEYS.length),
+  );
+  const ownedPlayHotkeyCards = $derived.by(() =>
+    ownerSide
+      ? getOrderedPlayZoneCards(
+          board.getZoneCards(bottomSide, "play").filter((card) => card.cardType !== "item"),
+          "bottom",
+        ).slice(0, PLAY_CARD_HOTKEYS.length)
+      : [],
+  );
+  const ownedHandHotkeyCards = $derived.by(() =>
+    ownerSide ? board.getZoneCards(bottomSide, "hand").slice(0, HAND_CARD_HOTKEYS.length) : [],
   );
   const finishedGameKey = $derived.by(() =>
     isPostGame && boardSnapshot && postGameGameId
@@ -124,10 +158,10 @@
     PointerSensor.configure({
       activationConstraints(event) {
         if (event.pointerType === "touch") {
-          return [new PointerActivationConstraints.Distance({ value: 10 })];
+          return [new PointerActivationConstraints.Distance({ value: 4 })];
         }
 
-        return [new PointerActivationConstraints.Distance({ value: 6 })];
+        return [new PointerActivationConstraints.Distance({ value: 2 })];
       },
     }),
   ];
@@ -135,8 +169,16 @@
   let compactPanelsOpen = $state(false);
   let compactPanelsTab = $state<"moves" | "log">("moves");
   let lastMobileNoticeId = $state<number | null>(null);
+  let showConfetti = $state(false);
   let postGameModalState = $state(createInitialPostGameModalState());
   let postGameDialogOpen = $state(false);
+  let hotkeysDialogOpen = $state(false);
+  let pendingDirectMove = $state<{
+    id: string;
+    label: string;
+    categoryId: "pass-turn" | "undo" | "quest-all";
+    execute: () => void;
+  } | null>(null);
 
   $effect(() => {
     const nextEngine = engine;
@@ -171,6 +213,20 @@
   });
 
   $effect(() => {
+    if (!isPostGame || !postGameSummary) {
+      return;
+    }
+
+    const result = postGameSummary.outcome.viewerResult;
+    if (result === "victory") {
+      playSound("victory");
+      showConfetti = true;
+    } else if (result === "defeat") {
+      playSound("defeat");
+    }
+  });
+
+  $effect(() => {
     if (postGameDialogOpen === postGameModalState.open) {
       return;
     }
@@ -178,21 +234,6 @@
     postGameModalState = postGameDialogOpen
       ? reopenPostGameModal(postGameModalState)
       : dismissPostGameModal(postGameModalState);
-  });
-
-  $effect(() => {
-    if (!pendingMoveError || pendingMoveError === lastToastedMoveError) {
-      return;
-    }
-
-    lastToastedMoveError = pendingMoveError;
-
-    toast.error(pendingMoveError.rawReason ?? pendingMoveError.message, {
-      description:
-        pendingMoveError.rawReason && pendingMoveError.rawReason !== pendingMoveError.message
-          ? pendingMoveError.message
-          : undefined,
-    });
   });
 
   $effect(() => {
@@ -225,6 +266,79 @@
     toast(mobileNotice.message);
   });
 
+  $effect(() => {
+    if (!pendingDirectMove) {
+      return;
+    }
+
+    const queuedMove = pendingDirectMove;
+    const directMoveAvailable = moveCategorySummaries.some(
+      (summary) => summary.categoryId === queuedMove.categoryId,
+    );
+
+    if (!directMoveAvailable) {
+      pendingDirectMove = null;
+    }
+  });
+
+  const hotkeyDescriptors = $derived.by(() =>
+    buildSimulatorHotkeyDescriptors({
+      moveCategorySummaries,
+      selectionState: availableMovesSelectionState,
+      pendingDirectMove,
+      opponentPlayCards: opponentPlayHotkeyCards,
+      ownedPlayCards: ownedPlayHotkeyCards,
+      ownedHandCards: ownedHandHotkeyCards,
+      canBack: availableMovesSelectionState?.canBack ?? false,
+      canCancel:
+        Boolean(pendingDirectMove) ||
+        Boolean(availableMovesSelectionState?.canCancel) ||
+        Boolean(sidebar.actionSelectionSession) ||
+        Boolean(sidebar.resolutionSelectionSession),
+      canConfirm:
+        Boolean(pendingDirectMove) ||
+        Boolean(availableMovesSelectionState?.canConfirm) ||
+        sidebar.actionSelectionSession?.phase === "confirm",
+      openCommandPalette: () => {
+        hotkeysDialogOpen = true;
+      },
+      cancel: handleCancelHotkey,
+      back: handleBackHotkey,
+      confirm: handleConfirmHotkey,
+      runMoveCategory: handleMoveCategoryHotkey,
+      inspectCard: (card) => {
+        simulatorCardContext.openCardInspect({ card });
+      },
+      selectCard: (cardId) => {
+        sidebar.handleAvailableMovesSelectionCard(cardId);
+      },
+    }),
+  );
+  function getVisibleHotkeyDescriptors(
+    descriptors: typeof hotkeyDescriptors,
+    hotkeyMode: HotkeyMode,
+  ) {
+    switch (hotkeyMode) {
+      case "off":
+        return [];
+      case "confirm-only":
+        return descriptors.filter(
+          (descriptor) =>
+            descriptor.id === "global-cancel" ||
+            descriptor.id === "global-back" ||
+            descriptor.id === "global-confirm" ||
+            (descriptor.kind === "move" && descriptor.categoryId === "pass-turn"),
+        );
+      case "on":
+      default:
+        return descriptors;
+    }
+  }
+  const visibleHotkeyDescriptors = $derived(
+    getVisibleHotkeyDescriptors(hotkeyDescriptors, sidebar.hotkeyMode),
+  );
+  const gameplayHotkeysPaused = $derived(sidebar.isPlayerSettingsOpen);
+
   export function runAnimation(...args: Parameters<typeof game.runAnimation>): ReturnType<typeof game.runAnimation> {
     return game.runAnimation(...args);
   }
@@ -242,6 +356,90 @@
   async function handleReturnToMatchmaking(): Promise<void> {
     await onReturnToMatchmaking?.();
   }
+
+  function queueDirectMoveConfirmation(
+    categoryId: "pass-turn" | "undo" | "quest-all",
+    label: string,
+    execute: () => void,
+    id: string,
+  ): void {
+    pendingDirectMove = { id, label, categoryId, execute };
+    toast.info(m["sim.actions.confirmMoveLabel"]({ label }), {
+      description: m["sim.actions.confirmMoveHotkeyHint"]({}),
+    });
+  }
+
+  function handleMoveCategoryHotkey(categoryId: ExecutableMovePresentationCategoryId): void {
+    const summary = moveCategorySummaries.find((candidate) => candidate.categoryId === categoryId);
+    if (!summary) {
+      return;
+    }
+
+    const moves = sidebar.expandCategoryMoves(summary.categoryId);
+    if (moves.length === 0) {
+      return;
+    }
+
+    if (summary.isDirect) {
+      const move = moves[0];
+      if (!move) {
+        return;
+      }
+
+      if (summary.categoryId === "undo" || summary.categoryId === "pass-turn" || summary.categoryId === "quest-all") {
+        if (pendingDirectMove?.id === move.id) {
+          // Second press of the same move — confirm immediately
+          const pending = pendingDirectMove;
+          pendingDirectMove = null;
+          pending.execute();
+          return;
+        }
+        queueDirectMoveConfirmation(
+          summary.categoryId,
+          move.label,
+          () => sidebar.handleAvailableMoveClick(move),
+          move.id,
+        );
+        return;
+      }
+
+      sidebar.handleAvailableMoveClick(move);
+      pendingDirectMove = null;
+      return;
+    }
+
+    sidebar.startManualCardActionSelection(summary.categoryId, moves);
+    pendingDirectMove = null;
+  }
+
+  function handleCancelHotkey(): void {
+    if (hotkeysDialogOpen) {
+      hotkeysDialogOpen = false;
+      return;
+    }
+
+    if (pendingDirectMove) {
+      pendingDirectMove = null;
+      return;
+    }
+
+    sidebar.cancelActionSelectionSession();
+  }
+
+  function handleBackHotkey(): void {
+    sidebar.backActionSelectionSession();
+  }
+
+  function handleConfirmHotkey(): void {
+    if (pendingDirectMove) {
+      const pendingMove = pendingDirectMove;
+      pendingDirectMove = null;
+      pendingMove.execute();
+      return;
+    }
+
+    sidebar.confirmActionSelection();
+  }
 </script>
 
 <DragDropProvider
@@ -253,9 +451,15 @@
 >
   <Sidebar.Provider bind:open={sidebarOpen}>
     <div class="simulator-dark simulator-v2">
+      <SimulatorHotkeyLayer descriptors={visibleHotkeyDescriptors} paused={gameplayHotkeysPaused} />
       <Toaster theme="dark"/>
       {#if !isCompactLayout}
-        <LorcanaSimulatorSidebar readOnly={readOnlyMode} />
+        <LorcanaSimulatorSidebar
+          readOnly={readOnlyMode}
+          onOpenHotkeys={() => {
+            hotkeysDialogOpen = true;
+          }}
+        />
       {/if}
 
       {#if !isCompactLayout}
@@ -270,6 +474,7 @@
               {compactActionCount}
               {pendingEffectsPopoverItems}
               {activePlayerGuidance}
+              hotkeyDescriptors={visibleHotkeyDescriptors}
             />
           {:else}
             <div class="loading">{m["sim.tabletop.loading"]({})}</div>
@@ -285,6 +490,7 @@
               {pendingEffectsPopoverItems}
               {activePlayerGuidance}
               onOpenCompactPanels={openCompactPanels}
+              hotkeyDescriptors={visibleHotkeyDescriptors}
             />
           {:else}
             <div class="loading">{m["sim.tabletop.loading"]({})}</div>
@@ -318,6 +524,10 @@
     {/if}
 
       <GlobalCardPreview/>
+      <SimulatorHotkeysDialog
+        bind:open={hotkeysDialogOpen}
+        descriptors={visibleHotkeyDescriptors.filter((descriptor) => descriptor.enabled)}
+      />
       {#if isCompactLayout}
         <LorcanaCompactPanels
           bind:open={compactPanelsOpen}
@@ -342,6 +552,7 @@
           </div>
         {/if}
       {/if}
+      <ConfettiOverlay show={showConfetti} />
     </div>
   </Sidebar.Provider>
 </DragDropProvider>
@@ -349,7 +560,10 @@
 <style>
   :global([data-slot="sidebar-wrapper"]) {
     min-height: 100vh !important;
+    min-height: 100dvh !important;
     height: 100vh !important;
+    height: 100dvh !important;
+    overflow: hidden;
   }
 
   .simulator-v2 {
@@ -357,7 +571,9 @@
     --text-primary: #e5edf7;
 
     height: 100vh;
+    height: 100dvh;
     max-height: 100vh;
+    max-height: 100dvh;
     width: 100%;
     display: flex;
     background:

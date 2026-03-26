@@ -31,27 +31,49 @@ export const oswaldTheLuckyRabbit: CharacterCard = {
   classifications: ["Storyborn", "Hero"],
   abilities: [
     {
-      effect: {
-        condition: {
-          expression: "it’s an item card",
-          type: "if",
-        },
-        then: {
-          restriction: "enters-play-exerted",
-          target: "SELF",
-          type: "restriction",
-        },
-        type: "conditional",
-      },
       id: "tu2-1",
+      type: "triggered",
       name: "FAVORABLE CHANCE",
       text: "FAVORABLE CHANCE During your turn, whenever a card is put into your inkwell, you may reveal the top card of your deck. If it’s an item card, you may play that item for free and it enters play exerted. Otherwise, put it on the bottom of your deck.",
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "ink",
+        on: "CONTROLLER",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
       },
-      type: "triggered",
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "scry",
+          amount: 1,
+          destinations: [
+            {
+              zone: "play",
+              min: 0,
+              max: 1,
+              cost: "free",
+              reveal: true,
+              entersExerted: true,
+              filters: [
+                {
+                  type: "card-type",
+                  cardType: "item",
+                },
+              ],
+            },
+            {
+              zone: "deck-bottom",
+              remainder: true,
+            },
+          ],
+        },
+      },
     },
   ],
   i18n: oswaldTheLuckyRabbitI18n,

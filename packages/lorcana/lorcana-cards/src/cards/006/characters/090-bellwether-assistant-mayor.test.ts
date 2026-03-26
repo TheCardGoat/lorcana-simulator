@@ -84,5 +84,35 @@ describe("Bellwether - Assistant Mayor", () => {
       // Bellwether's ability should not trigger since it's not player one's turn
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
+
+    it("regression: player can pass turn after resolving Bellwether's ability without freezing", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [bellwetherAssistantMayor],
+          hand: [inkableCard],
+          deck: 5,
+        },
+        {
+          play: [opponentCharacter],
+          deck: 5,
+        },
+      );
+
+      // Ink a card to trigger the ability
+      expect(testEngine.asPlayerOne().ink(inkableCard)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Resolve the trigger
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(
+        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          resolveOptional: true,
+          targets: [opponentCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Now pass turn - this should NOT freeze
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    });
   });
 });

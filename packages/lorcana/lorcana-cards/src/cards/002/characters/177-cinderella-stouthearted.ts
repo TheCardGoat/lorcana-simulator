@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { cinderellaStoutheartedI18n } from "./177-cinderella-stouthearted.i18n";
+import { resist } from "../../../helpers/abilities/resist";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const cinderellaStouthearted: CharacterCard = {
   id: "T3C",
@@ -37,22 +39,8 @@ export const cinderellaStouthearted: CharacterCard = {
   ],
   classifications: ["Floodborn", "Hero", "Princess", "Knight"],
   abilities: [
-    {
-      id: "172-1",
-      keyword: "Shift",
-      type: "keyword",
-      cost: {
-        ink: 5,
-      },
-      text: "Shift 5",
-    },
-    {
-      id: "172-2",
-      keyword: "Resist",
-      type: "keyword",
-      value: 2,
-      text: "Resist +2",
-    },
+    shift(5),
+    resist(2),
     {
       id: "172-3",
       name: "THE SINGING SWORD",

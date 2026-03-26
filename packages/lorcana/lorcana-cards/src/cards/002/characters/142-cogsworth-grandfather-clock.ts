@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { cogsworthGrandfatherClockI18n } from "./142-cogsworth-grandfather-clock.i18n";
+import { shift } from "../../../helpers/abilities/shift";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const cogsworthGrandfatherClock: CharacterCard = {
   id: "oib",
@@ -36,21 +38,8 @@ export const cogsworthGrandfatherClock: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally"],
   abilities: [
-    {
-      cost: {
-        ink: 3,
-      },
-      id: "184-1",
-      keyword: "Shift",
-      text: "Shift 3",
-      type: "keyword",
-    },
-    {
-      id: "184-2",
-      keyword: "Ward",
-      text: "Ward",
-      type: "keyword",
-    },
+    shift(3),
+    ward,
     {
       effect: {
         keyword: "Resist",
