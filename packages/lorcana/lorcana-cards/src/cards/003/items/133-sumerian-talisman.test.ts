@@ -58,7 +58,9 @@ describe("Sumerian Talisman", () => {
       ).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(sumerianTalisman),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, deck: 1 });
     });
@@ -80,7 +82,7 @@ describe("Sumerian Talisman", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(sumerianTalisman, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 2 });

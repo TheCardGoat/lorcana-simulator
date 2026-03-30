@@ -42,6 +42,7 @@ export const mrSmeeSteadfastMate: CharacterCard = {
         type: "gain-keyword",
       },
       id: "8zn-1",
+      name: "GOOD CATCH",
       text: "GOOD CATCH During your turn, this character gains Evasive.",
       type: "static",
     },

@@ -23,6 +23,19 @@ import type {
   SpecialRarity,
 } from "../types";
 
+function nextAvailableNumericSuffix(
+  isTaken: (suffix: number) => boolean,
+  maxAttempts = 10_000,
+): number {
+  for (let suffix = 2; suffix < maxAttempts + 2; suffix += 1) {
+    if (!isTaken(suffix)) {
+      return suffix;
+    }
+  }
+
+  throw new Error(`Unable to find an available numeric suffix after ${maxAttempts} attempts.`);
+}
+
 /**
  * Map rarity string to output format
  */
@@ -103,9 +116,8 @@ export function computePrintingIdsInOrder(items: PrintingItem[]): string[] {
     const specialRarity = getSpecialRarity(card);
     let printingId = generatePrintingId(setId, parsed.cardNumber, specialRarity ?? undefined);
     if (seen[printingId]) {
-      let n = 2;
-      while (seen[`${printingId}-${n}`]) n++;
-      printingId = `${printingId}-${n}`;
+      const suffix = nextAvailableNumericSuffix((n) => Boolean(seen[`${printingId}-${n}`]));
+      printingId = `${printingId}-${suffix}`;
     }
     seen[printingId] = true;
     order.push(printingId);
@@ -176,9 +188,8 @@ function ensureUniquePrintingId(
 ): CardPrinting {
   let id = printing.id;
   if (!printings[id]) return printing;
-  let n = 2;
-  while (printings[`${id}-${n}`]) n++;
-  return { ...printing, id: `${id}-${n}` };
+  const suffix = nextAvailableNumericSuffix((n) => Boolean(printings[`${id}-${n}`]));
+  return { ...printing, id: `${id}-${suffix}` };
 }
 
 /**

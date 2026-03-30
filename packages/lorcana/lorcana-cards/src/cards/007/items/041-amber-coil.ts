@@ -55,7 +55,7 @@ export const amberCoil: ItemCard = {
             whose: "your",
           },
         ],
-        timing: "when",
+        timing: "whenever",
       },
       type: "triggered",
     },

@@ -37,6 +37,8 @@ import { projectLorcanaCardDerived } from "../../../projection/card-derived";
 import { createProjectionState } from "../../../rules/derived-state";
 import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
 import { hasStaticCardRestriction } from "../../rules/static-ability-utils";
+import { buildStaticEffectRegistry } from "../../../rules/static-effect-registry";
+import type { StaticEffectRegistry } from "../../../rules/static-effect-registry";
 
 type ChallengeExecutionContext = Parameters<LorcanaMoveDefinition<"challenge">["execute"]>[0];
 type ChallengeContinuationContext = Pick<ChallengeExecutionContext, "G" | "framework" | "cards">;
@@ -94,6 +96,7 @@ function getClassificationsBeforeBanish(
   ctx: ChallengeContinuationContext,
   cardId: CardInstanceId,
   actorPlayerId: PlayerId,
+  registry: StaticEffectRegistry,
 ): Classification[] | undefined {
   const definition = ctx.cards.getDefinition(cardId);
   const ownerID = ctx.cards.require(cardId).ownerID as PlayerId | undefined;
@@ -112,6 +115,7 @@ function getClassificationsBeforeBanish(
     zoneID: ctx.framework.zones.getCardZone(cardId),
     actorPlayerId,
     getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
+    registry,
   });
 
   return Array.isArray(projected.classifications)
@@ -124,6 +128,12 @@ function resolveChallengeDamage(
   state: NonNullable<ChallengeContinuationContext["G"]["challengeState"]>,
 ): void {
   const { attacker: attackerId, defender: defenderId, attackerOwnerId, defenderOwnerId } = state;
+  const getDefinitionByInstanceId = (cardId: CardInstanceId) => ctx.cards.getDefinition(cardId);
+  // ctx.G.challengeState is set at this point; build fresh so in-challenge conditions resolve.
+  const registry = buildStaticEffectRegistry(
+    createProjectionState(ctx.framework.state, ctx.G),
+    getDefinitionByInstanceId,
+  );
   if (!isCardStillInPlay(ctx, attackerId) || !isCardStillInPlay(ctx, defenderId)) {
     return;
   }
@@ -188,6 +198,7 @@ function resolveChallengeDamage(
           finalDefenderTargetDef,
           defenderEvent.amount,
           attackerId,
+          registry,
         )
       : 0;
   const defenderToAttackerDamage =
@@ -201,22 +212,22 @@ function resolveChallengeDamage(
           finalAttackerTargetDef,
           attackerEvent.amount,
           defenderId,
+          registry,
         )
       : 0;
 
   // Check for "cant-be-dealt-damage" static restriction on targets
-  const getDefinitionByInstanceId = (cardId: CardInstanceId) => ctx.cards.getDefinition(cardId);
   const defenderHasDamageRestriction = hasStaticCardRestriction({
     state: ctx.framework.state as Parameters<typeof hasStaticCardRestriction>[0]["state"],
     cardId: finalDefenderTargetId,
     restriction: "cant-be-dealt-damage",
-    getDefinitionByInstanceId,
+    registry,
   });
   const attackerHasDamageRestriction = hasStaticCardRestriction({
     state: ctx.framework.state as Parameters<typeof hasStaticCardRestriction>[0]["state"],
     cardId: finalAttackerTargetId,
     restriction: "cant-be-dealt-damage",
-    getDefinitionByInstanceId,
+    registry,
   });
 
   const effectiveAttackerToDefenderDamage = defenderHasDamageRestriction
@@ -345,6 +356,7 @@ function resolveChallengeDamage(
       ctx,
       finalDefenderTargetId,
       attackerOwnerId,
+      registry,
     );
     const defenderKeywordsBeforeBanish = getKeywordsBeforeBanish(
       ctx,
@@ -479,6 +491,7 @@ function resolveChallengeDamage(
       ctx,
       finalAttackerTargetId,
       defenderOwnerId,
+      registry,
     );
     const attackerKeywordsBeforeBanish = getKeywordsBeforeBanish(
       ctx,

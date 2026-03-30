@@ -42,6 +42,7 @@ export const genieSatisfiedDragon: CharacterCard = {
         type: "gain-keyword",
       },
       id: "ofy-1",
+      name: "BUG CATCHER",
       text: "BUG CATCHER During your turn, this character gains Evasive.",
       type: "static",
     },

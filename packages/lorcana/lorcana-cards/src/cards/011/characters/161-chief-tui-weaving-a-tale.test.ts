@@ -32,7 +32,9 @@ describe("Chief Tui - Weaving a Tale", () => {
     // If the trigger fires, resolve the bag effect
     if (testEngine.asPlayerOne().getBagCount() > 0) {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(chiefTuiWeavingATale),
+      ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           resolveOptional: true,

@@ -24,9 +24,9 @@ export const flynnRiderBreakingAndEntering: CharacterCard = {
   },
   text: [
     {
-      title: "THIS IS",
+      title: "THIS IS A VERY BIG DAY",
       description:
-        "A VERY BIG DAY Whenever this character is challenged, the challenging player may choose and discard a card. If they don't, you gain 2 lore.",
+        "Whenever this character is challenged, the challenging player may choose and discard a card. If they don't, you gain 2 lore.",
     },
   ],
   classifications: ["Storyborn", "Hero", "Prince"],

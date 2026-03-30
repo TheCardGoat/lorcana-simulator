@@ -186,7 +186,9 @@ describe("Angel - Experiment 624", () => {
 
       // Accept the optional draw
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(princeJohnGreediestOfAll, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Player two should have drawn a card

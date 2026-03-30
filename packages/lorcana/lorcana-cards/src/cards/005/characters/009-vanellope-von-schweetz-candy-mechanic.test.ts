@@ -46,7 +46,9 @@ describe("Vanellope von Schweetz - Candy Mechanic", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [opposingCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(vanellopeVonSchweetzCandyMechanic, {
+          targets: [opposingCharacter],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(strengthBefore - 1);

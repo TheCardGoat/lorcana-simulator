@@ -28,9 +28,8 @@ export const queenOfHeartsUnpredictableBully: CharacterCard = {
       title: "Shift 3",
     },
     {
-      title: "IF",
-      description:
-        "I LOSE MY TEMPER... Whenever another character is played, put a damage counter on them.",
+      title: "IF I LOSE MY TEMPER...",
+      description: "Whenever another character is played, put a damage counter on them.",
     },
   ],
   classifications: ["Floodborn", "Villain", "Queen"],
@@ -38,8 +37,8 @@ export const queenOfHeartsUnpredictableBully: CharacterCard = {
     shift("Queen of Hearts", 3),
     {
       id: "4p4-2",
-      name: "IF I LOSE MY TEMPER…",
-      text: "IF I LOSE MY TEMPER… Whenever another character is played, put a damage counter on them.",
+      name: "IF I LOSE MY TEMPER...",
+      text: "IF I LOSE MY TEMPER... Whenever another character is played, put a damage counter on them.",
       type: "triggered",
       trigger: {
         event: "play",

@@ -27,7 +27,9 @@ describe("Camilo Madrigal - Prankster", () => {
       // Resolve the bag entry (the trigger fires at start of turn)
       // Accept the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(camiloMadrigalPrankster, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       // Choose option 0: +1 lore this turn
       expect(testEngine.asPlayerOne().respondWithChoice(0)).toBeSuccessfulCommand();
@@ -47,7 +49,9 @@ describe("Camilo Madrigal - Prankster", () => {
 
       // Accept the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(camiloMadrigalPrankster, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       // Choose option 1: Challenger +2 this turn
       expect(testEngine.asPlayerOne().respondWithChoice(1)).toBeSuccessfulCommand();
@@ -70,7 +74,9 @@ describe("Camilo Madrigal - Prankster", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(camiloMadrigalPrankster, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Lore should remain unchanged
@@ -92,7 +98,9 @@ describe("Camilo Madrigal - Prankster", () => {
 
       // Accept the optional ability and choose +1 lore
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(camiloMadrigalPrankster, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().respondWithChoice(0)).toBeSuccessfulCommand();
 
@@ -105,7 +113,9 @@ describe("Camilo Madrigal - Prankster", () => {
       // The lore bonus should have expired before the new trigger fires
       // Decline the new trigger to isolate the test
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(camiloMadrigalPrankster, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardLore(camiloMadrigalPrankster)).toBe(baseLore);

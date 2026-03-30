@@ -50,9 +50,15 @@ export const pyrosLavaTitan: CharacterCard = {
       name: "ERUPTION",
       text: "ERUPTION During your turn, whenever this character banishes another character in a challenge, you may ready chosen character.",
       trigger: {
-        event: "banish",
-        on: "OPPONENT_CHARACTERS",
+        event: "banish-in-challenge",
+        on: "SELF",
         timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
       },
       type: "triggered",
     },

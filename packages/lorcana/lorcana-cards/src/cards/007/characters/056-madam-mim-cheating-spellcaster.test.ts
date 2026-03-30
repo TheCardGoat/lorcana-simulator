@@ -36,7 +36,9 @@ describe("Madam Mim - Cheating Spellcaster", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharA] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(madamMimCheatingSpellcaster, { targets: [opponentCharA] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCard(opponentCharA).exerted).toBe(true);
@@ -57,7 +59,9 @@ describe("Madam Mim - Cheating Spellcaster", () => {
 
       expect(testEngine.asPlayerOne().quest(madamMimCheatingSpellcaster)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharA] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(madamMimCheatingSpellcaster, { targets: [opponentCharA] }),
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().getCard(opponentCharA).exerted).toBe(true);
 
@@ -66,7 +70,9 @@ describe("Madam Mim - Cheating Spellcaster", () => {
 
       expect(testEngine.asPlayerOne().quest(madamMimCheatingSpellcaster)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharB] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(madamMimCheatingSpellcaster, { targets: [opponentCharB] }),
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().getCard(opponentCharB).exerted).toBe(true);
     });

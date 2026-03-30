@@ -44,7 +44,7 @@ describe("Widow Tweed - Kindly Soul", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(widowTweedKindlySoul, {
           targets: [nonTodCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -101,7 +101,7 @@ describe("Widow Tweed - Kindly Soul", () => {
 
       // Resolve the bag — targeting Tod in discard
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(widowTweedKindlySoul, {
           targets: [todPlayfulKit],
         }),
       ).toBeSuccessfulCommand();

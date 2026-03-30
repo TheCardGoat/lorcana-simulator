@@ -50,7 +50,7 @@ describe("Maid Marian - Badminton Ace", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(maidMarianBadmintonAce, {
           targets: [opposingTarget],
         }),
       ).toBeSuccessfulCommand();
@@ -78,7 +78,7 @@ describe("Maid Marian - Badminton Ace", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(maidMarianBadmintonAce, {
           targets: [opponentAttacker],
         }),
       ).toBeSuccessfulCommand();

@@ -45,7 +45,7 @@ describe("Prince John - Fraidy-Cat", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThanOrEqual(1);
 
-      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id);
+      testEngine.asPlayerOne().resolvePendingByCard(princeJohnFraidycat);
 
       // Prince John should have taken 1 damage
       expect(testEngine.asPlayerOne().getDamage(princeJohnFraidycat)).toBe(1);
@@ -65,7 +65,7 @@ describe("Prince John - Fraidy-Cat", () => {
       // Resolve any bag effects that may exist (none should be HELP!)
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const effect of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(effect.id);
+        testEngine.asPlayerOne().resolvePendingByCard(princeJohnFraidycat);
       }
 
       // Prince John should have taken no damage

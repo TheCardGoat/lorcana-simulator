@@ -4,6 +4,160 @@ import { LorcanaMultiplayerTestEngine, createMockCharacter } from "../../testing
 import { matchesStaticAbilityTarget } from "./static-ability-utils";
 
 describe("static ability utils", () => {
+  it("applies generic character cost reductions to Shift alternate costs", () => {
+    const shiftBase = createMockCharacter({
+      id: "static-utils-shift-base",
+      name: "Shift Target",
+      cost: 2,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+    const shiftedCharacter = createMockCharacter({
+      id: "static-utils-shift-top",
+      name: "Shift Target",
+      cost: 6,
+      strength: 4,
+      willpower: 5,
+      lore: 2,
+      abilities: [
+        {
+          id: "static-utils-shift-top-kw",
+          keyword: "Shift",
+          text: "Shift 4",
+          type: "keyword",
+          cost: { ink: 4 },
+        },
+      ],
+    });
+    const genericReducer = createMockCharacter({
+      id: "static-utils-generic-reducer",
+      name: "Generic Reducer",
+      cost: 2,
+      strength: 1,
+      willpower: 2,
+      lore: 1,
+      abilities: [
+        {
+          id: "static-utils-generic-reducer-1",
+          type: "static",
+          text: "Your characters cost 1 ink less to play.",
+          effect: {
+            type: "cost-reduction",
+            amount: 1,
+            cardType: "character",
+          },
+        },
+      ],
+    });
+
+    const withoutReduction = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [shiftedCharacter],
+      inkwell: 3,
+      play: [shiftBase],
+    });
+    const withoutReductionShiftTarget = withoutReduction.findCardInstanceId(
+      shiftBase,
+      "play",
+      "player_one",
+    );
+
+    expect(
+      withoutReduction.asPlayerOne().playCard(shiftedCharacter, {
+        cost: { cost: "shift", shiftTarget: withoutReductionShiftTarget },
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        success: false,
+        errorCode: "INSUFFICIENT_INK",
+      }),
+    );
+
+    const withReduction = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [shiftedCharacter],
+      inkwell: 3,
+      play: [shiftBase, genericReducer],
+    });
+    const withReductionShiftTarget = withReduction.findCardInstanceId(
+      shiftBase,
+      "play",
+      "player_one",
+    );
+
+    expect(
+      withReduction.asPlayerOne().playCard(shiftedCharacter, {
+        cost: { cost: "shift", shiftTarget: withReductionShiftTarget },
+      }),
+    ).toBeSuccessfulCommand();
+  });
+
+  it("does not apply standard-only cost reductions to Shift alternate costs", () => {
+    const shiftBase = createMockCharacter({
+      id: "static-utils-standard-only-shift-base",
+      name: "Shift Target",
+      cost: 2,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+    const shiftedCharacter = createMockCharacter({
+      id: "static-utils-standard-only-shift-top",
+      name: "Shift Target",
+      cost: 6,
+      strength: 4,
+      willpower: 5,
+      lore: 2,
+      abilities: [
+        {
+          id: "static-utils-standard-only-shift-top-kw",
+          keyword: "Shift",
+          text: "Shift 4",
+          type: "keyword",
+          cost: { ink: 4 },
+        },
+      ],
+    });
+    const standardOnlyReducer = createMockCharacter({
+      id: "static-utils-standard-only-reducer",
+      name: "Standard Only Reducer",
+      cost: 2,
+      strength: 1,
+      willpower: 2,
+      lore: 1,
+      abilities: [
+        {
+          id: "static-utils-standard-only-reducer-1",
+          type: "static",
+          text: "Your characters cost 1 ink less to play normally.",
+          effect: {
+            type: "cost-reduction",
+            amount: 1,
+            cardType: "character",
+            playMethod: "standard",
+          },
+        },
+      ],
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [shiftedCharacter],
+      inkwell: 3,
+      play: [shiftBase, standardOnlyReducer],
+    });
+    const shiftTarget = testEngine.findCardInstanceId(shiftBase, "play", "player_one");
+
+    expect(
+      testEngine.asPlayerOne().playCard(shiftedCharacter, {
+        cost: { cost: "shift", shiftTarget },
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        success: false,
+        errorCode: "INSUFFICIENT_INK",
+      }),
+    );
+  });
+
   it("keeps SELF-targeted static effects on the source character", () => {
     const selfBuffSource = createMockCharacter({
       id: "self-buff-source",

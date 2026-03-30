@@ -248,6 +248,112 @@ const chosenOpponentChoiceAction = createMockActionCard({
   ],
 });
 
+const projectedHowlerSource = createMockCharacter({
+  id: "projected-howler-source",
+  name: "Projected Howler Source",
+  cost: 1,
+  strength: 1,
+  willpower: 2,
+  lore: 1,
+  abilities: [
+    {
+      id: "projected-howler-source-1",
+      type: "triggered",
+      name: "Tiny Howl",
+      text: "When you play this character, chosen opposing character gets -1 {S} until the start of your next turn.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "modify-stat",
+        stat: "strength",
+        modifier: -1,
+        duration: "until-start-of-next-turn",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+    },
+  ],
+});
+
+const projectedKeywordRestrictionAction = createMockActionCard({
+  id: "projected-keyword-restriction-action",
+  name: "Projected Veil of Caution",
+  cost: 2,
+  text: "Chosen character gains Evasive and can't challenge until the start of your next turn.",
+  abilities: [
+    {
+      type: "action",
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "gain-keyword",
+            keyword: "Evasive",
+            duration: "until-start-of-next-turn",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          },
+          {
+            type: "restriction",
+            restriction: "cant-challenge",
+            duration: "until-start-of-next-turn",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          },
+        ],
+      },
+    },
+  ],
+});
+
+const projectedPlayerEffectAction = createMockActionCard({
+  id: "projected-player-effect-action",
+  name: "Projected Tactical Advantage",
+  cost: 3,
+  text: "Your next character costs 2 less this turn. Opponents can't play actions until the start of your next turn.",
+  abilities: [
+    {
+      type: "action",
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "cost-reduction",
+            amount: 2,
+            duration: "next-play-this-turn",
+            cardType: "character",
+            target: "CONTROLLER",
+          },
+          {
+            type: "restriction",
+            restriction: "cant-play-actions",
+            duration: "until-start-of-next-turn",
+            target: "OPPONENTS",
+          },
+        ],
+      },
+    },
+  ],
+});
+
 describe("projectLorcanaBoardView", () => {
   it("uses otp-based turn calculation when skip-pre-game fixtures set otp to player one", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({ deck: 10 }, { deck: 10 });
@@ -419,7 +525,7 @@ describe("projectLorcanaBoardView", () => {
     expect(bagEffect.selectionContext.cardCandidateIds).not.toContain(friendlyId);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(bagEffect.sourceId, {
         targets: [opposingId, friendlyId],
       }),
     ).toBeSuccessfulCommand();
@@ -486,5 +592,154 @@ describe("projectLorcanaBoardView", () => {
     expect(
       testEngine.getAuthoritativeState().ctx.zones.private.cardIndex[opponentId]?.zoneKey,
     ).toBe("deck:player_two");
+  });
+
+  it("projects target-aware continuous stat modifiers with source and duration metadata", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [projectedHowlerSource],
+        inkwell: projectedHowlerSource.cost,
+        deck: 5,
+      },
+      {
+        play: [projectedOpponent],
+        deck: 5,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(projectedHowlerSource)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(projectedHowlerSource, {
+        targets: [projectedOpponent],
+      }),
+    ).toBeSuccessfulCommand();
+
+    const board = testEngine.asPlayerOne().getBoard();
+    const sourceId = board.players[CANONICAL_PLAYER_ONE]?.play.find(
+      (cardId) => board.cards[cardId]?.fullName === "Projected Howler Source",
+    );
+    const targetId = board.players[CANONICAL_PLAYER_TWO]?.play.find(
+      (cardId) => board.cards[cardId]?.fullName === "Projected Opponent",
+    );
+
+    expect(board.activeEffects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "stat-modifier",
+          sourceId,
+          targetCardId: targetId,
+          startsAtTurn: 1,
+          expiresAtTurn: 2,
+        }),
+      ]),
+    );
+  });
+
+  it("projects temporary keyword and restriction effects with target card attribution", () => {
+    const keywordTarget = createMockCharacter({
+      id: "projected-friendly-evasive-target",
+      name: "Projected Friendly Evasive Target",
+      cost: 2,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+    const restrictionTarget = createMockCharacter({
+      id: "projected-friendly-restriction-target",
+      name: "Projected Friendly Restriction Target",
+      cost: 2,
+      strength: 3,
+      willpower: 3,
+      lore: 1,
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [projectedKeywordRestrictionAction],
+        inkwell: projectedKeywordRestrictionAction.cost,
+        play: [keywordTarget, restrictionTarget],
+        deck: 5,
+      },
+      { deck: 5 },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(projectedKeywordRestrictionAction),
+    ).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(projectedKeywordRestrictionAction, {
+        targets: [keywordTarget],
+      }),
+    ).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(projectedKeywordRestrictionAction, {
+        targets: [restrictionTarget],
+      }),
+    ).toBeSuccessfulCommand();
+
+    const board = testEngine.asPlayerOne().getBoard();
+    const sourceId = board.players[CANONICAL_PLAYER_ONE]?.discard.find(
+      (cardId) => board.cards[cardId]?.fullName === "Projected Veil of Caution",
+    );
+    const keywordTargetId = board.players[CANONICAL_PLAYER_ONE]?.play.find(
+      (cardId) => board.cards[cardId]?.fullName === "Projected Friendly Evasive Target",
+    );
+    const restrictionTargetId = board.players[CANONICAL_PLAYER_ONE]?.play.find(
+      (cardId) => board.cards[cardId]?.fullName === "Projected Friendly Restriction Target",
+    );
+
+    expect(board.activeEffects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "temporary-keyword",
+          sourceId,
+          targetCardId: keywordTargetId,
+          startsAtTurn: 1,
+          expiresAtTurn: 2,
+        }),
+        expect.objectContaining({
+          type: "temporary-restriction",
+          sourceId,
+          targetCardId: restrictionTargetId,
+          startsAtTurn: 1,
+          expiresAtTurn: 2,
+        }),
+      ]),
+    );
+  });
+
+  it("projects player-targeted cost reduction and restriction effects with source attribution", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [projectedPlayerEffectAction],
+        inkwell: projectedPlayerEffectAction.cost,
+        deck: 5,
+      },
+      { deck: 5 },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(projectedPlayerEffectAction)).toBeSuccessfulCommand();
+
+    const board = testEngine.asPlayerOne().getBoard();
+    const sourceId = board.players[CANONICAL_PLAYER_ONE]?.discard.find(
+      (cardId) => board.cards[cardId]?.fullName === "Projected Tactical Advantage",
+    );
+
+    expect(board.activeEffects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "player-cost-reduction",
+          sourceId,
+          targetPlayerId: CANONICAL_PLAYER_ONE,
+          expiresAtTurn: 1,
+        }),
+        expect.objectContaining({
+          type: "player-restriction",
+          sourceId,
+          targetPlayerId: CANONICAL_PLAYER_TWO,
+          startsAtTurn: 1,
+          expiresAtTurn: 2,
+        }),
+      ]),
+    );
   });
 });

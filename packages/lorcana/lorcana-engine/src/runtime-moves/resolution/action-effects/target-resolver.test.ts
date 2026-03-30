@@ -193,6 +193,43 @@ describe("target-resolver", () => {
     expect(resolvedTargets).toEqual([selectedTarget]);
   });
 
+  it("filters matching cards by the chosen card name and excludes the chosen card", () => {
+    const source = "source" as CardInstanceId;
+    const chosen = "chosen" as CardInstanceId;
+    const sameNameOther = "same-name-other" as CardInstanceId;
+    const differentName = "different-name" as CardInstanceId;
+    const ctx = createTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action", name: "Source" },
+        [chosen]: { id: "chosen", cardType: "character", name: "Merlin" },
+        [sameNameOther]: { id: "same-name-other", cardType: "character", name: "Merlin" },
+        [differentName]: { id: "different-name", cardType: "character", name: "Madam Mim" },
+      },
+      zoneCards: {
+        [`play:${PLAYER_TWO}`]: [chosen, sameNameOther, differentName],
+      },
+    });
+
+    const resolvedTargets = resolveEffectTargets(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        selector: "all",
+        count: "all",
+        owner: "opponent",
+        cardTypes: ["character"],
+        filter: {
+          sameNameAsChosenCard: true,
+          excludeChosenCard: true,
+        },
+      },
+      undefined,
+      { chosenCardId: chosen },
+    );
+
+    expect(resolvedTargets).toEqual([sameNameOther]);
+  });
+
   it("counts a repeated chosen target descriptor only once when later steps reuse the same target", () => {
     const source = "source" as CardInstanceId;
     const selectedTarget = "selected-target" as CardInstanceId;
@@ -259,6 +296,36 @@ describe("target-resolver", () => {
     );
 
     expect(resolvedTargets).toEqual([triggeredCharacter]);
+  });
+
+  it("honors explicit zone constraints for trigger-subject references", () => {
+    const source = "source" as CardInstanceId;
+    const triggeredCharacter = "triggered-character" as CardInstanceId;
+    const ctx = createTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "location" },
+        [triggeredCharacter]: { id: "triggered-character", cardType: "character" },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [source],
+        [`hand:${PLAYER_ONE}`]: [triggeredCharacter],
+      },
+    });
+
+    const resolvedTargets = resolveEffectTargets(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        selector: "all",
+        count: 1,
+        reference: "trigger-subject",
+        zones: ["discard"],
+      },
+      undefined,
+      { subjectCardId: triggeredCharacter },
+    );
+
+    expect(resolvedTargets).toEqual([]);
   });
 
   it("resolves trigger-destination references from a move event snapshot", () => {

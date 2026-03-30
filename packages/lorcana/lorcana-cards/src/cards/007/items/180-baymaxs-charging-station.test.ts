@@ -35,7 +35,7 @@ describe("Baymax's Charging Station", () => {
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(baymaxsChargingStation, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();
@@ -54,7 +54,7 @@ describe("Baymax's Charging Station", () => {
     expect(testEngine.asPlayerOne().playCard(thunderboltWonderDog)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(baymaxsChargingStation),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");

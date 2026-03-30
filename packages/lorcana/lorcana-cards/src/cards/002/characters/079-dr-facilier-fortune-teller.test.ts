@@ -44,7 +44,7 @@ describe("Dr. Facilier - Fortune Teller", () => {
 
     // Resolve the triggered ability with target selection
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
+      testEngine.asPlayerOne().resolvePendingByCard(drFacilierFortuneTeller, {
         targets: [targetInstanceId],
       }),
     ).toBeSuccessfulCommand();

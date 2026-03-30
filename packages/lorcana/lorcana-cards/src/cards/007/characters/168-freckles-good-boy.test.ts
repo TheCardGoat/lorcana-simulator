@@ -19,7 +19,7 @@ describe("Freckles - Good Boy", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(frecklesGoodBoy, {
         targets: [simbaProtectiveCub],
       }),
     ).toBeSuccessfulCommand();

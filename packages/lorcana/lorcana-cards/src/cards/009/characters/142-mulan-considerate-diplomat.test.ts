@@ -40,7 +40,9 @@ describe("Mulan - Considerate Diplomat", () => {
     expect(testEngine.asPlayerOne().quest(mulanConsiderateDiplomat)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(mulanConsiderateDiplomat),
+    ).toBeSuccessfulCommand();
 
     expect(
       testEngine.asPlayerOne().resolveNextPending({

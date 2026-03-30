@@ -48,7 +48,9 @@ describe("Scrooge McDuck - Miserly Ebenezer", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckMiserlyEbenezer),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -85,7 +87,9 @@ describe("Scrooge McDuck - Miserly Ebenezer", () => {
       expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckMiserlyEbenezer),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -128,7 +132,9 @@ describe("Scrooge McDuck - Miserly Ebenezer", () => {
       expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckMiserlyEbenezer),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -150,7 +156,9 @@ describe("Scrooge McDuck - Miserly Ebenezer", () => {
       expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckMiserlyEbenezer),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -173,7 +181,9 @@ describe("Scrooge McDuck - Miserly Ebenezer", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckMiserlyEbenezer),
+      ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           targets: [targetCharacter],
@@ -195,7 +205,9 @@ describe("Scrooge McDuck - Miserly Ebenezer", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [secondBagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(secondBagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckMiserlyEbenezer),
+      ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           targets: [targetCharacter],

@@ -5,6 +5,43 @@ const DEFAULT_GAME_SERVER_ORIGIN = "http://localhost:3001";
 const DEFAULT_SIMULATOR_ASSET_BASE_URL = "https://r2.tcg.online/public/lorcana/simulator";
 const DEFAULT_LORCANA_ASSET_BASE_URL = "https://r2.tcg.online/public/lorcana";
 
+function addDefaultProtocolIfMissing(value: string, allowedProtocols: readonly string[]): string {
+  if (/^[a-z][a-z\d+\-.]*:\/\//i.test(value)) {
+    return value;
+  }
+
+  const hostnameCandidate = value.split("/")[0] ?? "";
+  const looksLikeHost =
+    hostnameCandidate === "localhost" ||
+    hostnameCandidate.startsWith("localhost:") ||
+    /^\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?$/.test(hostnameCandidate) ||
+    /^[a-z\d](?:[a-z\d-]*[a-z\d])?(?:\.[a-z\d](?:[a-z\d-]*[a-z\d])?)+(?::\d+)?$/i.test(
+      hostnameCandidate,
+    );
+
+  if (!looksLikeHost) {
+    return value;
+  }
+
+  if (allowedProtocols.includes("https:")) {
+    return `https://${value}`;
+  }
+
+  if (allowedProtocols.includes("http:")) {
+    return `http://${value}`;
+  }
+
+  if (allowedProtocols.includes("wss:")) {
+    return `wss://${value}`;
+  }
+
+  if (allowedProtocols.includes("ws:")) {
+    return `ws://${value}`;
+  }
+
+  return value;
+}
+
 function normalizeConfiguredUrl(
   value: string | undefined,
   {
@@ -21,7 +58,10 @@ function normalizeConfiguredUrl(
 ): string {
   const trimmedValue = value?.trim();
   const candidate = trimmedValue?.length ? trimmedValue : fallback;
-  const normalizedCandidate = stripTrailingV1 ? candidate.replace(/\/v1\/?$/, "") : candidate;
+  const candidateWithProtocol = addDefaultProtocolIfMissing(candidate, allowedProtocols);
+  const normalizedCandidate = stripTrailingV1
+    ? candidateWithProtocol.replace(/\/v1\/?$/, "")
+    : candidateWithProtocol;
 
   let parsedUrl: URL;
   try {

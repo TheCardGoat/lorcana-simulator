@@ -44,7 +44,9 @@ describe("Mad Hatter - Eccentric Host", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(madHatterEccentricHost, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(opponentTopCard)).toBe("deck");

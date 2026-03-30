@@ -40,7 +40,9 @@ describe("Chief Bogo - Commanding Officer", () => {
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(chiefBogoCommandingOfficer, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     const zone = testEngine.asServer().getState().ctx.zones.private.cardIndex[

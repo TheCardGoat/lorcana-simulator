@@ -37,7 +37,7 @@ describe("Namaari - Single-Minded Rival", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(namaariSinglemindedRival, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -68,7 +68,7 @@ describe("Namaari - Single-Minded Rival", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(namaariSinglemindedRival, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -97,7 +97,7 @@ describe("Namaari - Single-Minded Rival", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(namaariSinglemindedRival, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();

@@ -84,7 +84,7 @@ describe("Stegmutt - Clumsy Dinosaur", () => {
       const bagId = bagEffects[0]!.id;
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(stegmuttClumsyDinosaur, {
           targets: [...items, target],
         }),
       ).toBeSuccessfulCommand();
@@ -127,7 +127,9 @@ describe("Stegmutt - Clumsy Dinosaur", () => {
       if (bagEffects.length > 0) {
         const bagId = bagEffects[0]!.id;
         expect(
-          testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(stegmuttClumsyDinosaur, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 
@@ -164,7 +166,9 @@ describe("Stegmutt - Clumsy Dinosaur", () => {
       if (bagEffects.length > 0) {
         const bagId = bagEffects[0]!.id;
         expect(
-          testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(stegmuttClumsyDinosaur, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 

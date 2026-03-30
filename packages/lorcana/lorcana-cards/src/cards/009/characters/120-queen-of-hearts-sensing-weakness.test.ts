@@ -45,7 +45,9 @@ describe("Queen of Hearts - Sensing Weakness [Set 009]", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(queenOfHeartsSensingWeakness, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
@@ -71,7 +73,9 @@ describe("Queen of Hearts - Sensing Weakness [Set 009]", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(queenOfHeartsSensingWeakness, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
@@ -107,7 +111,9 @@ describe("Queen of Hearts - Sensing Weakness [Set 009]", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(queenOfHeartsSensingWeakness, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;

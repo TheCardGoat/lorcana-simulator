@@ -23,7 +23,7 @@ describe("Mickey Mouse - Friendly Face", () => {
     testEngine.asPlayerOne().quest(mickeyId);
 
     // Resolve trigger
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseFriendlyFace);
 
     // Now cost should be 0 (3 - 3)
     expect(testEngine.asPlayerOne().canPlayCard(gastonId)).toBe(true);

@@ -26,7 +26,7 @@ describe("Fix-It Felix, Jr. - Delighted Sightseer", () => {
     for (let i = 0; i < bagCount; i++) {
       const effects = testEngine.asPlayerOne().getBagEffects();
       if (effects.length > 0) {
-        testEngine.asPlayerOne().resolveBag(effects[0]!.id);
+        testEngine.asPlayerOne().resolvePendingByCard(fixitFelixJrDelightedSightseer);
       }
     }
 
@@ -59,7 +59,7 @@ describe("Fix-It Felix, Jr. - Delighted Sightseer", () => {
     for (let i = 0; i < bagCount; i++) {
       const effects = testEngine.asPlayerOne().getBagEffects();
       if (effects.length > 0) {
-        testEngine.asPlayerOne().resolveBag(effects[0]!.id);
+        testEngine.asPlayerOne().resolvePendingByCard(fixitFelixJrDelightedSightseer);
       }
     }
 

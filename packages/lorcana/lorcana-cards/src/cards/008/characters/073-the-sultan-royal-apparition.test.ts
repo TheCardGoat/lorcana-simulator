@@ -64,7 +64,9 @@ describe("The Sultan - Royal Apparition", () => {
 
       // Resolve the triggered ability targeting the opponent's character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theSultanRoyalApparition, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(opponentCharacter)).toBe(true);
@@ -87,7 +89,9 @@ describe("The Sultan - Royal Apparition", () => {
       expect(testEngine.asPlayerOne().quest(theSultanRoyalApparition)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theSultanRoyalApparition, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(opponentCharacter)).toBe(true);
@@ -132,7 +136,9 @@ describe("The Sultan - Royal Apparition", () => {
       expect(testEngine.asPlayerOne().quest(illusionCharacter)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theSultanRoyalApparition, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore + illusionCharacter.lore);

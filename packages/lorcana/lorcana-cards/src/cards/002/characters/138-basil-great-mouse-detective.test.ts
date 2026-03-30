@@ -35,7 +35,9 @@ describe("Basil - Great Mouse Detective", () => {
       // Resolve optional triggered ability (THERE'S ALWAYS A CHANCE) - accept
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(basilGreatMouseDetective, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Started with 1 in hand (basil), played it (-1), drew 2 (+2) = 2 in hand

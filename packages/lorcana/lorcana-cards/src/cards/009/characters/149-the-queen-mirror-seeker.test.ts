@@ -17,7 +17,9 @@ describe("The Queen - Mirror Seeker", () => {
       expect(testEngine.asPlayerOne().quest(theQueenMirrorSeeker)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theQueenMirrorSeeker),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -40,7 +42,9 @@ describe("The Queen - Mirror Seeker", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theQueenMirrorSeeker, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ deck: 3 });

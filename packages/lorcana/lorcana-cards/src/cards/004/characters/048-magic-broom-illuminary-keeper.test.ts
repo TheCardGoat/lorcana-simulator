@@ -37,7 +37,9 @@ describe("Magic Broom - Illuminary Keeper", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(magicBroomIlluminaryKeeper, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(magicBroomIlluminaryKeeper)).toBe("discard");
@@ -63,7 +65,9 @@ describe("Magic Broom - Illuminary Keeper", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(magicBroomIlluminaryKeeper, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(magicBroomIlluminaryKeeper)).toBe("play");

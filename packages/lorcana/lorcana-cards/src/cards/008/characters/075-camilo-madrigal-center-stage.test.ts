@@ -80,7 +80,7 @@ describe("Camilo Madrigal - Center Stage", () => {
     ).toBeSuccessfulCommand();
     if (testEngine.asPlayerTwo().getBagCount() > 0) {
       expect(
-        testEngine.asPlayerTwo().resolveBag(testEngine.asPlayerTwo().getBagEffects()[0]!.id),
+        testEngine.asPlayerTwo().resolvePendingByCard(camiloMadrigalCenterStage),
       ).toBeSuccessfulCommand();
     }
 

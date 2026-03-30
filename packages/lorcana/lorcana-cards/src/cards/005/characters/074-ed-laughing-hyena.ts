@@ -24,9 +24,9 @@ export const edLaughingHyena: CharacterCard = {
   },
   text: [
     {
-      title: "CAUSE",
+      title: "CAUSE A PANIC",
       description:
-        "A PANIC When you play this character, you may deal 2 damage to chosen damaged character.",
+        "When you play this character, you may deal 2 damage to chosen damaged character.",
     },
   ],
   classifications: ["Storyborn", "Ally", "Hyena"],

@@ -31,7 +31,9 @@ describe("Isis Vanderchill - Ice Queen of St. Canard", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opposingCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(isisVanderchillIceQueenOfStCanard, {
+          targets: [opposingCharacter],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().isExerted(opposingCharacter)).toBe(true);

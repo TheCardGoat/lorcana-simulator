@@ -123,15 +123,12 @@ export function stripLeadingKeywords(
 ): { keywords: Array<{ title: string }>; remainder: string } {
   const keywords: Array<{ title: string }> = [];
   let remaining = text;
-  let stripped = 0;
-
-  while (stripped < expectedKeywordCount) {
+  for (let stripped = 0; stripped < expectedKeywordCount; stripped += 1) {
     const match = matchKeywordAtStart(remaining, locale);
     if (!match) break;
 
     keywords.push({ title: match.text });
     remaining = remaining.slice(match.length).trimStart();
-    stripped++;
 
     // Skip any trailing parenthetical reminder text (e.g. "(You may pay 5 to play...)")
     // that was not stripped during localization generation.
@@ -159,9 +156,8 @@ export function stripTrailingKeywords(
 ): { trailingKeywords: Array<{ title: string }>; textBeforeTrailing: string } {
   const trailingKeywords: Array<{ title: string }> = [];
   let remaining = text.trimEnd();
-  let stripped = 0;
 
-  while (stripped < expectedCount) {
+  for (let stripped = 0; stripped < expectedCount; stripped += 1) {
     // Strip trailing reminder text first
     remaining = skipTrailingReminderText(remaining);
     // Strip trailing comma/semicolons
@@ -172,7 +168,6 @@ export function stripTrailingKeywords(
 
     trailingKeywords.unshift({ title: match.text });
     remaining = remaining.slice(0, remaining.length - match.length).trimEnd();
-    stripped++;
   }
 
   return { trailingKeywords, textBeforeTrailing: remaining };

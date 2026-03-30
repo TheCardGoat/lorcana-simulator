@@ -36,11 +36,11 @@ class MemoryStorage implements Storage {
 }
 
 describe("pending effects view preference", () => {
-  it("defaults to compact when storage is unavailable", () => {
+  it("defaults to full view when storage is unavailable", () => {
     expect(readPendingEffectsViewModePreference(undefined)).toBe(DEFAULT_PENDING_EFFECTS_VIEW_MODE);
   });
 
-  it("defaults to compact when the stored value is invalid", () => {
+  it("defaults to full view when the stored value is invalid", () => {
     const storage = new MemoryStorage();
     storage.setItem(PENDING_EFFECTS_VIEW_MODE_STORAGE_KEY, "expanded");
 

@@ -18,7 +18,7 @@
         title: m["sim.overlay.turnChange.title"]({ turnNumber: String(announcement.turnChange.turnNumber) }),
         subtitle: isOwner
           ? m["sim.overlay.turnChange.subtitle.you"]({})
-          : m["sim.overlay.turnChange.subtitle.opponent"]({}),
+          : m["sim.overlay.turnChange.subtitle.opponentFallback"]({}),
       };
     }
 
@@ -87,7 +87,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: overlay-announcement-lifecycle var(--overlay-duration, 1800ms) ease both;
+    animation: overlay-announcement-lifecycle var(--overlay-duration, 1800ms)
+      cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .overlay-announcement__backdrop {
@@ -130,19 +131,19 @@
   @keyframes overlay-announcement-lifecycle {
     0% {
       opacity: 0;
-      transform: scale(0.8);
+      transform: scale(0.92) translateY(18px);
     }
-    15% {
+    18% {
       opacity: 1;
-      transform: scale(1);
+      transform: scale(1) translateY(0);
     }
-    65% {
+    70% {
       opacity: 1;
-      transform: scale(1);
+      transform: scale(1) translateY(0);
     }
     100% {
       opacity: 0;
-      transform: scale(1.05);
+      transform: scale(1.03) translateY(-12px);
     }
   }
 

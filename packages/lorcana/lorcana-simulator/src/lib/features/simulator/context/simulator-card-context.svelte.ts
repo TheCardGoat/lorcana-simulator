@@ -224,6 +224,10 @@ class SimulatorCardController implements SimulatorCardContextValue {
       return true;
     }
 
+    if (this.#sidebar.getSingleClickItemAbilityAction(card)) {
+      return true;
+    }
+
     const ownerSide = this.#game.ownerSide();
 
     if (
@@ -309,6 +313,12 @@ class SimulatorCardController implements SimulatorCardContextValue {
     }
 
     if (ownerSide && card.zoneId === "play" && card.ownerSide === ownerSide) {
+      const itemAbilityAction = this.#sidebar.getSingleClickItemAbilityAction(card);
+      if (itemAbilityAction) {
+        this.#sidebar.handleCardActionClick(itemAbilityAction);
+        return;
+      }
+
       this.#triggerClickAction(card, this.#sidebar.primaryClickAction);
     }
   }
@@ -327,6 +337,12 @@ class SimulatorCardController implements SimulatorCardContextValue {
     if (!card) return;
     const ownerSide = this.#game.ownerSide();
     if (!ownerSide || card.zoneId !== "play" || card.ownerSide !== ownerSide) return;
+
+    const itemAbilityAction = this.#sidebar.getSingleClickItemAbilityAction(card);
+    if (itemAbilityAction) {
+      this.#sidebar.handleCardActionClick(itemAbilityAction);
+      return;
+    }
 
     const primary = this.#sidebar.primaryClickAction;
     const secondary: PrimaryClickAction =

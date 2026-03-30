@@ -96,6 +96,7 @@ export const cruellaDeVilStyleIcon: CharacterCard = {
         type: "modify-stat",
       },
       id: "1r1-2",
+      name: "INSULTING REMARK",
       text: "INSULTING REMARK During your turn, each opposing character with cost 2 or less gets -1 {S}.",
       type: "static",
     },

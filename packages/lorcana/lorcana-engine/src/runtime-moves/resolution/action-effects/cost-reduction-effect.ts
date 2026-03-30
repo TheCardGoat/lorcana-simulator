@@ -92,6 +92,7 @@ export function resolveCostReductionEffect(
     const playerReductions = reductionsByPlayer[playerId] ?? [];
     playerReductions.push({
       amount,
+      sourceId: cardPlayed.cardId,
       cardType: normalizedCardType,
       classification: normalizedClassification,
       consumeOnUse,

@@ -30,7 +30,9 @@ describe("Goofy - Ghost Hunter (Epic)", () => {
       }),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(goofyGhostHunterEpic),
+    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({
         targets: [opposingCharacter],

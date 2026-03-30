@@ -33,7 +33,9 @@ describe("Jasmine - Queen of Agrabah", () => {
 
       // Optional triggered ability queued in bag — resolve it (accept)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jasmineQueenOfAgrabah, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(woundedAlly)).toBe(2);
@@ -55,7 +57,9 @@ describe("Jasmine - Queen of Agrabah", () => {
 
       // Optional triggered ability queued in bag — decline it
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jasmineQueenOfAgrabah, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(woundedAlly)).toBe(4);
@@ -76,7 +80,9 @@ describe("Jasmine - Queen of Agrabah", () => {
 
       // Optional triggered ability queued in bag — resolve it (accept)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jasmineQueenOfAgrabah, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(woundedAlly)).toBe(0);
@@ -97,7 +103,9 @@ describe("Jasmine - Queen of Agrabah", () => {
 
       // Optional triggered ability queued in bag — decline it
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jasmineQueenOfAgrabah, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(woundedAlly)).toBe(2);

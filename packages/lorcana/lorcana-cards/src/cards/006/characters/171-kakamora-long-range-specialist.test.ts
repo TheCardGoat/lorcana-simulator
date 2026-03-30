@@ -46,7 +46,7 @@ describe("Kakamora - Long-Range Specialist", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(kakamoraLongrangeSpecialist, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -76,7 +76,7 @@ describe("Kakamora - Long-Range Specialist", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(kakamoraLongrangeSpecialist, {
           resolveOptional: true,
           targets: [mockLocation],
         }),
@@ -127,7 +127,9 @@ describe("Kakamora - Long-Range Specialist", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kakamoraLongrangeSpecialist, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(opponentCharacter)).toBe(0);

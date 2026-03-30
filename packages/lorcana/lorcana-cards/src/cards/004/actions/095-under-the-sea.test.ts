@@ -22,7 +22,7 @@ describe("Under the Sea", () => {
     );
   });
 
-  it("puts opposing characters with 2 strength or less on the bottom of their deck in the chosen order", () => {
+  it("lets the player who played the song choose the order for opposing characters put on the bottom", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [underTheSea],
@@ -42,7 +42,7 @@ describe("Under the Sea", () => {
 
     expect(testEngine.asPlayerOne().playCard(underTheSea).success).toBe(true);
     expect(
-      testEngine.asPlayerTwo().resolveNextPending({
+      testEngine.asPlayerOne().resolveNextPending({
         targets: [minnieId, simbaId],
       }).success,
     ).toBe(true);
@@ -60,7 +60,6 @@ describe("Under the Sea", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [underTheSea],
-        // No inkwell -- paying via Sing Together only
         play: [moanaChosenByTheOcean, simbaReturnedKing],
       },
       {
@@ -68,13 +67,11 @@ describe("Under the Sea", () => {
       },
     );
 
-    // Moana (cost 5) + Ariel (cost 4) = 9 >= Sing Together 8
     const result = testEngine
       .asPlayerOne()
       .playSongTogether(underTheSea, [moanaChosenByTheOcean, simbaReturnedKing]);
     expect(result).toBeSuccessfulCommand();
 
-    // Singers should be exerted after singing
     expect(testEngine.asPlayerOne().isExerted(moanaChosenByTheOcean)).toBe(true);
     expect(testEngine.asPlayerOne().isExerted(simbaReturnedKing)).toBe(true);
 
@@ -85,14 +82,12 @@ describe("Under the Sea", () => {
       "player_two",
     );
 
-    // Opponent chooses the order of cards placed on bottom
     expect(
-      testEngine.asPlayerTwo().resolveNextPending({
+      testEngine.asPlayerOne().resolveNextPending({
         targets: [simbaId, minnieId],
       }).success,
     ).toBe(true);
 
-    // Effect should still work: opposing characters with strength <= 2 go to deck bottom
     expect(testEngine.asPlayerTwo().getCardZone(simbaProtectiveCub)).toBe("deck");
     expect(testEngine.asPlayerTwo().getCardZone(minnieMouseBelovedPrincess)).toBe("deck");
   });

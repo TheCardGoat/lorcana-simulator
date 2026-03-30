@@ -39,7 +39,9 @@ describe("Baymax - Armored Companion", () => {
       // Resolve the triggered optional ability
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(baymaxArmoredCompanion),
+      ).toBeSuccessfulCommand();
 
       // Resolve optional + target selection + amount
       expect(
@@ -84,7 +86,9 @@ describe("Baymax - Armored Companion", () => {
       // Resolve the triggered optional ability
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(baymaxArmoredCompanion),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -121,7 +125,9 @@ describe("Baymax - Armored Companion", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(baymaxArmoredCompanion),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -159,7 +165,9 @@ describe("Baymax - Armored Companion", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(baymaxArmoredCompanion, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Only quest lore, no heal lore
@@ -177,7 +185,9 @@ describe("Baymax - Armored Companion", () => {
       expect(testEngine.asPlayerOne().quest(baymaxArmoredCompanion)).toBeSuccessfulCommand();
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(baymaxArmoredCompanion),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({

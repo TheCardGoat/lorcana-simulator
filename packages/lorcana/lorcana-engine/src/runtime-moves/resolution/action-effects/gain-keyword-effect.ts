@@ -62,9 +62,12 @@ export function resolveGainKeywordEffect(
       },
     );
     const currentMeta = (ctx.cards.require(targetId).meta ?? {}) as LorcanaCardMeta;
-    const payload = isWhileInPlay
-      ? { type: "gain-keyword", sourceId: cardPlayed.cardId, activeWhileSourceInPlay: true }
-      : undefined;
+    const payload = {
+      type: "gain-keyword",
+      sourceId: cardPlayed.cardId,
+      duration: effect.duration,
+      ...(isWhileInPlay ? { activeWhileSourceInPlay: true } : {}),
+    };
     ctx.cards.patchMeta(
       targetId,
       addTemporaryKeyword(currentMeta, keyword, expiresAtTurn, keywordValue, startsAtTurn, payload),

@@ -47,12 +47,26 @@ export const pocahontasPeacekeeper: CharacterCard = {
       id: "sbm-2",
       effect: {
         condition: {
-          expression: "you used Shift to play her and none of your characters challenged this turn",
-          type: "if",
+          type: "and",
+          conditions: [
+            {
+              type: "used-shift",
+            },
+            {
+              type: "turn-metric",
+              metric: "challenges-by-player",
+              comparison: {
+                operator: "eq",
+                value: 0,
+              },
+              playerScope: "you",
+            },
+          ],
         },
         then: {
+          duration: "until-start-of-next-turn",
           restriction: "cant-challenge",
-          target: "SELF",
+          target: "ALL_CHARACTERS",
           type: "restriction",
         },
         type: "conditional",

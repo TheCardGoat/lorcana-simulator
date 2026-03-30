@@ -55,7 +55,7 @@ describe("Bernard - Brand-New Agent", () => {
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
         // Resolve it - condition should fail since Bernard is not exerted
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(bernardBrandnewAgent, {
           resolveOptional: true,
         });
       }

@@ -56,7 +56,7 @@ describe("Simba - Rightful King", () => {
 
       // Resolve ability by choosing target character as the restricted opponent
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(simbaRightfulKing, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -162,7 +162,7 @@ describe("Simba - Rightful King", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(simbaRightfulKing, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();

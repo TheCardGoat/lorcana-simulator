@@ -51,7 +51,7 @@ describe("Piglet - Cocoa Maker", () => {
     // Resolve the SPECIAL RECIPE bag effect
     if (testEngine.asPlayerOne().getBagCount() > 0) {
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(pigletCocoaMaker),
       ).toBeSuccessfulCommand();
     }
 
@@ -79,7 +79,7 @@ describe("Piglet - Cocoa Maker", () => {
 
     if (testEngine.asPlayerOne().getBagCount() > 0) {
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(pigletCocoaMaker),
       ).toBeSuccessfulCommand();
     }
 

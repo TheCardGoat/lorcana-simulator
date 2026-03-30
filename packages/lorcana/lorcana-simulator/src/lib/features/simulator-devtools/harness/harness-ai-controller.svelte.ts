@@ -1,5 +1,7 @@
 import {
+  createPlayerId,
   getAutomatedActionStrategyOption,
+  getSafeAutomatedActionStrategyOption,
   computeAutomatedActionStateFingerprint,
   type AutomatedActionExecutionResult,
   type AutomatedActionStrategyOption,
@@ -23,7 +25,10 @@ export interface HarnessAiBotConfig {
   strategyId: string;
 }
 
+const HARNESS_AI_PLAYER_ID = createPlayerId("player_two");
+
 export class HarnessAiController implements AiControllableOrchestrator {
+  #requestedStrategyId: string;
   #server: LorcanaServer;
   #strategyOption: AutomatedActionStrategyOption;
   #deadlockTracker = createRepeatedStateDeadlockTracker();
@@ -42,20 +47,22 @@ export class HarnessAiController implements AiControllableOrchestrator {
   });
 
   constructor(server: LorcanaServer, config: HarnessAiBotConfig) {
-    const strategyOption = getAutomatedActionStrategyOption(config.strategyId);
-    if (!strategyOption) {
-      throw new Error(`Unknown strategy "${config.strategyId}".`);
-    }
+    const strategyOption = getSafeAutomatedActionStrategyOption(config.strategyId);
 
     this.#server = server;
-    this.#strategyOption = strategyOption;
+    this.#requestedStrategyId = config.strategyId;
+    this.#strategyOption =
+      this.#server.resolveAutomatedActionStrategyForPlayer(
+        this.#requestedStrategyId,
+        HARNESS_AI_PLAYER_ID,
+      ) ?? strategyOption;
 
     this.state = {
       mode: "waiting-for-human",
       aiPlayMode: "auto",
       aiSpeed: "balanced",
-      strategyId: config.strategyId,
-      strategyLabel: strategyOption.label,
+      strategyId: this.#strategyOption.id,
+      strategyLabel: this.#strategyOption.label,
       currentPerspective: "playerOne",
       turnNumber: this.#server.getTurnNumber(),
     };
@@ -99,11 +106,16 @@ export class HarnessAiController implements AiControllableOrchestrator {
     const option = getAutomatedActionStrategyOption(strategyId);
     if (!option) return;
 
-    this.#strategyOption = option;
+    this.#requestedStrategyId = strategyId;
+    this.#strategyOption =
+      this.#server.resolveAutomatedActionStrategyForPlayer(
+        this.#requestedStrategyId,
+        HARNESS_AI_PLAYER_ID,
+      ) ?? option;
     this.state = {
       ...this.state,
-      strategyId,
-      strategyLabel: option.label,
+      strategyId: this.#strategyOption.id,
+      strategyLabel: this.#strategyOption.label,
     };
   }
 
@@ -198,6 +210,14 @@ export class HarnessAiController implements AiControllableOrchestrator {
         mode: "error",
         error: result.finalResult.error ?? "AI action failed.",
       };
+      return;
+    }
+
+    if (result.fallbackTaken === "concede" || this.#server.getWinner()) {
+      const winnerAfterAction = this.#server.getWinner();
+      if (winnerAfterAction) {
+        this.state = { ...this.state, mode: "complete", winner: winnerAfterAction };
+      }
       return;
     }
 

@@ -33,6 +33,7 @@ export const beastSelflessProtector: CharacterCard = {
   abilities: [
     {
       id: "sLs-1",
+      name: "SHIELD ANOTHER",
       replaces: "damage-to-character",
       replacement: {
         type: "redirect-damage",

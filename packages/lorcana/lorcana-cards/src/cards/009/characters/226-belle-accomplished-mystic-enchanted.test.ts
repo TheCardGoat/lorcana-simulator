@@ -43,7 +43,9 @@ describe("Belle - Accomplished Mystic Enchanted", () => {
       testEngine.asPlayerOne().playCard(belleAccomplishedMysticEnchanted),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(belleAccomplishedMysticEnchanted),
+    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [damagedAlly, opposingTarget] })
         .success,
@@ -69,7 +71,9 @@ describe("Belle - Accomplished Mystic Enchanted", () => {
       testEngine.asPlayerOne().playCard(belleAccomplishedMysticEnchanted),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(belleAccomplishedMysticEnchanted),
+    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [damagedAlly, opposingTarget] })
         .success,

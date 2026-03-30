@@ -38,7 +38,7 @@ describe.skip("Peter Pan - Never Land Prankster", () => {
     // Resolve any bag effects from Merlin's triggered ability
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
     if (bagEffects.length > 0) {
-      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id);
+      testEngine.asPlayerOne().resolvePendingByCard(peterPanNeverLandPrankster);
     }
 
     // Player one should NOT have gained lore because Peter Pan is exerted
@@ -66,7 +66,7 @@ describe.skip("Peter Pan - Never Land Prankster", () => {
     // Resolve Merlin's bag effects
     const merlinBagEffects = testEngine.asPlayerOne().getBagEffects();
     if (merlinBagEffects.length > 0) {
-      testEngine.asPlayerOne().resolveBag(merlinBagEffects[0]!.id);
+      testEngine.asPlayerOne().resolvePendingByCard(peterPanNeverLandPrankster);
     }
 
     // Lore should still be 0 (blocked by Peter Pan)

@@ -145,9 +145,9 @@ describe("Robin Hood - Ephemeral Archer", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ targets: [opponentCharacter1, opponentCharacter2] }),
+        testEngine.asPlayerOne().resolvePendingByCard(robinHoodEphemeralArcher, {
+          targets: [opponentCharacter1, opponentCharacter2],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCard(opponentCharacter1).damage).toBe(1);
@@ -168,7 +168,9 @@ describe("Robin Hood - Ephemeral Archer", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter1] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(robinHoodEphemeralArcher, { targets: [opponentCharacter1] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCard(opponentCharacter1).damage).toBe(1);
@@ -191,7 +193,9 @@ describe("Robin Hood - Ephemeral Archer", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [ownCharacter, opponentCharacter1] }),
+        testEngine.asPlayerOne().resolvePendingByCard(robinHoodEphemeralArcher, {
+          targets: [ownCharacter, opponentCharacter1],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCard(ownCharacter).damage).toBe(1);

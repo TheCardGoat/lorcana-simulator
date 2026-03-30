@@ -59,19 +59,18 @@ describe("Darkwing Duck - Cool Under Pressure", () => {
     expect(testEngine.asPlayerOne().playCard(donaldDuckAlongForTheRide)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
-    const triggerBag = testEngine.asPlayerOne().getBagEffects()[0]!;
     expect(
-      testEngine.asPlayerOne().resolveBag(triggerBag.id, { resolveOptional: true }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(donaldDuckAlongForTheRide, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [banishedItemTarget] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-    const darkwingBag = testEngine.asPlayerOne().getBagEffects()[0]!;
     expect(
-      testEngine.asPlayerOne().resolveBag(darkwingBag.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(darkwingDuckCoolUnderPressure, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();

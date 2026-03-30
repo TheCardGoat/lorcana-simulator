@@ -55,7 +55,7 @@ describe("Great Stone Dragon", () => {
 
     // Accept the optional and play Great Stone Dragon for free
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(tamatoaHappyAsAClam, {
         resolveOptional: true,
         targets: [greatStoneDragon],
       }),

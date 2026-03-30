@@ -53,7 +53,7 @@ export const magicCarpetPhantomRug: CharacterCard = {
         value: 1,
       },
       id: "3wd-2",
-      name: "SPECTRAL FORCE Your other Illusion",
+      name: "SPECTRAL FORCE",
       text: "SPECTRAL FORCE Your other Illusion characters gain Challenger +1.",
       type: "static",
     },

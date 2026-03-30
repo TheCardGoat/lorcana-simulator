@@ -50,7 +50,7 @@ describe("Mother Gothel - Vain Sorceress", () => {
 
       // Accept the optional ability and move 1 damage from Gothel to defender
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelVainSorceress, {
           resolveOptional: true,
           targets: [motherGothelVainSorceress, defender],
         }),
@@ -80,7 +80,9 @@ describe("Mother Gothel - Vain Sorceress", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(motherGothelVainSorceress, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage on attacker is unchanged (still 2, though combat damage from defender might add more)
@@ -110,7 +112,7 @@ describe("Mother Gothel - Vain Sorceress", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelVainSorceress, {
           resolveOptional: true,
           targets: [motherGothelVainSorceress, defender],
         }),
@@ -176,7 +178,7 @@ describe("Mother Gothel - Vain Sorceress", () => {
 
       // Accept and move 1 damage from Gothel to weak attacker
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelVainSorceress, {
           resolveOptional: true,
           targets: [motherGothelVainSorceress, weakAttacker],
         }),
@@ -210,7 +212,7 @@ describe("Mother Gothel - Vain Sorceress", () => {
 
       // Accept but try to move damage from attacker - attacker has 0 damage before combat
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelVainSorceress, {
           resolveOptional: true,
           targets: [attacker, defender],
         }),

@@ -36,7 +36,7 @@ describe("Lilo - Junior Cake Decorator", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(liloJuniorCakeDecorator, {
         resolveOptional: true,
         targets: [supportTarget],
       }),
@@ -58,7 +58,7 @@ describe("Lilo - Junior Cake Decorator", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(liloJuniorCakeDecorator, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

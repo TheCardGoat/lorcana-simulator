@@ -29,7 +29,7 @@ describe("Merryweather - Good Fairy", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(merryweatherGoodFairy, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -53,7 +53,7 @@ describe("Merryweather - Good Fairy", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(merryweatherGoodFairy, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

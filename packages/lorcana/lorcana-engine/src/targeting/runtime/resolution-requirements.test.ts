@@ -91,4 +91,18 @@ describe("resolution-requirements", () => {
     expect(requiresAmountSelection(effect)).toBe(true);
     expect(canAutoResolve(effect)).toBe(true);
   });
+
+  it("classifies up-to move-damage as amount-selectable but not target-free", () => {
+    const effect = {
+      type: "move-damage",
+      amount: 2,
+      upTo: true,
+      from: "CHOSEN_CHARACTER",
+      to: "CHOSEN_OPPOSING_CHARACTER",
+    };
+
+    expect(requiresAmountSelection(effect)).toBe(true);
+    expect(requiresExplicitTargetSelection(effect)).toBe(true);
+    expect(canAutoResolve(effect)).toBe(false);
+  });
 });

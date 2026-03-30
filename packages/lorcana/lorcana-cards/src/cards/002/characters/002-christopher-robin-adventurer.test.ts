@@ -75,7 +75,9 @@ describe("Christopher Robin - Adventurer", () => {
 
       // Auto-resolve might not trigger for Player 2 since Player 1 passed the turn
       if (testEngine.asPlayerTwo().getBagCount() > 0) {
-        expect(testEngine.asPlayerTwo().resolveNextBag()).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(christopherRobinAdventurer),
+        ).toBeSuccessfulCommand();
       }
 
       // Should have gained 2 lore from the ready trigger

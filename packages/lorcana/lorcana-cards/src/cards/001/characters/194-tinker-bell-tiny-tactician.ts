@@ -51,6 +51,7 @@ export const tinkerBellTinyTactician: CharacterCard = {
         type: "sequence",
       },
       id: "n9y-1",
+      name: "BATTLE PLANS",
       text: "BATTLE PLANS {E} — Draw a card, then choose and discard a card.",
       type: "activated",
     },

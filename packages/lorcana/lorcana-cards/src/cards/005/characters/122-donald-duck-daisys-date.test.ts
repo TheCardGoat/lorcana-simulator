@@ -42,7 +42,7 @@ describe("Donald Duck - Daisy's Date", () => {
 
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+          testEngine.asPlayerOne().resolvePendingByCard(donaldDuckDaisysDate),
         ).toBeSuccessfulCommand();
       }
 
@@ -86,7 +86,7 @@ describe("Donald Duck - Daisy's Date", () => {
 
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+          testEngine.asPlayerOne().resolvePendingByCard(donaldDuckDaisysDate),
         ).toBeSuccessfulCommand();
       }
 

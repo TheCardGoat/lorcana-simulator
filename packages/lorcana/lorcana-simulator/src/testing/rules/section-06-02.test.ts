@@ -34,9 +34,11 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       ).toBe(true);
       expect(noDrawEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        noDrawEngine.asPlayerOne().resolveBag(noDrawEngine.asPlayerOne().getBagEffects()[0]!.id, {
-          resolveOptional: true,
-        }),
+        noDrawEngine
+          .asPlayerOne()
+          .resolvePendingByCard(noDrawEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: true,
+          }),
       ).toBeSuccessfulCommand();
       expect(noDrawEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(noDrawEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
@@ -76,7 +78,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       expect(
         triggeredEngine
           .asPlayerOne()
-          .resolveBag(triggeredEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          .resolvePendingByCard(triggeredEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
             resolveOptional: true,
           }),
       ).toBeSuccessfulCommand();
@@ -122,7 +124,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       expect(
         playTriggerEngine
           .asPlayerOne()
-          .resolveBag(playTriggerEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          .resolvePendingByCard(playTriggerEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
             targets: [simbaId],
           }),
       ).toBeSuccessfulCommand();
@@ -161,7 +163,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       expect(
         questTriggerEngine
           .asPlayerOne()
-          .resolveBag(questTriggerEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          .resolvePendingByCard(questTriggerEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
             targets: [laterSimbaId],
           }),
       ).toBeSuccessfulCommand();

@@ -47,6 +47,8 @@ export {
   createGameId,
   createPlayerId,
   createRecordCardCatalog,
+  createRecordCardInstanceRegistry,
+  stripPrivateFields,
 } from "#core";
 
 // ============================================================================
@@ -59,15 +61,27 @@ export {
   AUTOMATED_ACTION_STRATEGIES,
   AGGRESSIVE_BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
   BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+  BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID,
+  BEST_DECK_AWARE_ORACLE_LORE_RACE_STRATEGY_ID,
+  CHALLENGE_ONLY_TEST_STRATEGY_ID,
+  DECK_AWARE_LORE_RACE_STRATEGY_ID,
   DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
-  LEGACY_LORE_RACE_STRATEGY_ID,
   aggressiveBoardControlLoreRaceAutomatedActionStrategy,
+  bestDeckAwareLoreRaceAutomatedActionStrategy,
+  bestDeckAwareOracleLoreRaceAutomatedActionStrategy,
   boardControlLoreRaceAutomatedActionStrategy,
+  buildBestAiMatchupWeightReport,
+  buildBestAiMatchupWeightReportMarkdown,
+  challengeOnlyTestAutomatedActionStrategy,
   computeAutomatedActionStateFingerprint,
   createAutomatedActionBoardSnapshot,
+  deckAwareLoreRaceAutomatedActionStrategy,
   defaultLoreRaceAutomatedActionStrategy,
   getAutomatedActionStrategyOption,
+  getSafeAutomatedActionStrategyOption,
   legacyLoreRaceAutomatedActionStrategy,
+  QUEST_ONLY_TEST_STRATEGY_ID,
+  questOnlyTestAutomatedActionStrategy,
 } from "./automation";
 export type { AutomatedActionStrategyOption } from "./automation";
 export type {

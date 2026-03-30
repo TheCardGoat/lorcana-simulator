@@ -43,6 +43,7 @@ export const hiroHamadaArmorDesigner: CharacterCard = {
         type: "gain-keyword",
       },
       id: "zri-2",
+      name: "YOU CAN BE WAY MORE",
       text: "YOU CAN BE WAY MORE Your Floodborn characters that have a card under them gain Evasive and Ward.",
       type: "action",
     },

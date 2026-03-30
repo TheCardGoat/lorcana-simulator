@@ -20,8 +20,8 @@ export const kanineKrunchies: ItemCard = {
   },
   text: [
     {
-      title: "YOU CAN BE",
-      description: "A CHAMPION, TOO Your Puppy characters get +1 {W}.",
+      title: "YOU CAN BE A CHAMPION, TOO",
+      description: "Your Puppy characters get +1 {W}.",
     },
   ],
   abilities: [
@@ -45,6 +45,7 @@ export const kanineKrunchies: ItemCard = {
         type: "modify-stat",
       },
       id: "3wn-1",
+      name: "YOU CAN BE A CHAMPION, TOO",
       text: "YOU CAN BE A CHAMPION, TOO Your Puppy characters get +1 {W}.",
       type: "static",
     },

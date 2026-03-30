@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { dispatchDropIntent, type DropActionGame } from "./simulator-dnd-dispatch.js";
+import { dispatchDropIntent } from "./simulator-dnd-dispatch.js";
 
 function createDropActionGame(
   overrides: Partial<Parameters<typeof dispatchDropIntent>[0]["game"]> = {},
@@ -11,16 +11,39 @@ function createDropActionGame(
     ink: () => false,
     shouldOpenPlayCardSelectionOnDrop: () => false,
     canDropHandCardIntoZone: () => false,
-    canPlayCardOnTarget: () => false,
-    canMoveCharacterToLocation: () => false,
-    executeMove: () => false,
     ...overrides,
   };
 }
 
 describe("dispatchDropIntent", () => {
-  it("opens play selection instead of executing immediately for bodyguard-style play variants", () => {
+  it("auto-plays a hand card dropped on play when only one variant exists", () => {
     const calls: string[] = [];
+
+    const result = dispatchDropIntent({
+      cardId: "vanilla",
+      dropIntent: {
+        kind: "zone",
+        playerSide: "playerOne",
+        zoneId: "play",
+      },
+      draggedCardKind: "hand",
+      ownerSide: "playerOne",
+      game: createDropActionGame({
+        canDropHandCardIntoZone: () => true,
+        playCard: () => {
+          calls.push("playCard");
+          return true;
+        },
+      }),
+    });
+
+    expect(result).toBe(true);
+    expect(calls).toEqual(["playCard"]);
+  });
+
+  it("opens play selection when a hand card dropped on play has multiple variants", () => {
+    const calls: string[] = [];
+
     const result = dispatchDropIntent({
       cardId: "bodyguard",
       dropIntent: {
@@ -48,55 +71,60 @@ describe("dispatchDropIntent", () => {
     expect(calls).toEqual(["openPlayCardSelection"]);
   });
 
-  it("still executes immediate play for single-variant hand drops", () => {
+  it("inks a hand card dropped on inkwell when legal", () => {
     const calls: string[] = [];
+
     const result = dispatchDropIntent({
-      cardId: "vanilla",
+      cardId: "inkable",
       dropIntent: {
         kind: "zone",
         playerSide: "playerOne",
-        zoneId: "play",
+        zoneId: "inkwell",
       },
       draggedCardKind: "hand",
       ownerSide: "playerOne",
       game: createDropActionGame({
         canDropHandCardIntoZone: () => true,
+        ink: () => {
+          calls.push("ink");
+          return true;
+        },
+      }),
+    });
+
+    expect(result).toBe(true);
+    expect(calls).toEqual(["ink"]);
+  });
+
+  it("treats hand as a no-op cancel target while dragging a hand card", () => {
+    const calls: string[] = [];
+
+    const result = dispatchDropIntent({
+      cardId: "cancel-me",
+      dropIntent: {
+        kind: "zone",
+        playerSide: "playerOne",
+        zoneId: "hand",
+      },
+      draggedCardKind: "hand",
+      ownerSide: "playerOne",
+      game: createDropActionGame({
+        openPlayCardSelection: () => {
+          calls.push("openPlayCardSelection");
+          return true;
+        },
         playCard: () => {
           calls.push("playCard");
           return true;
         },
-      }),
-    });
-
-    expect(result).toBe(true);
-    expect(calls).toEqual(["playCard"]);
-  });
-
-  it("preserves targeted drag behavior by opening play selection with the dropped target", () => {
-    const calls: Array<{ kind: string; targetCardId?: string }> = [];
-    const result = dispatchDropIntent({
-      cardId: "bodyguardAction",
-      dropIntent: {
-        kind: "card",
-        playerSide: "playerOne",
-        zoneId: "play",
-        targetCardId: "target-card",
-      },
-      draggedCardKind: "hand-targeted-action",
-      ownerSide: "playerOne",
-      game: createDropActionGame({
-        canPlayCardOnTarget: () => true,
-        openPlayCardSelection: (
-          _cardId: string,
-          options?: Parameters<DropActionGame["openPlayCardSelection"]>[1],
-        ) => {
-          calls.push({ kind: "openPlayCardSelection", targetCardId: options?.targetCardId });
+        ink: () => {
+          calls.push("ink");
           return true;
         },
       }),
     });
 
-    expect(result).toBe(true);
-    expect(calls).toEqual([{ kind: "openPlayCardSelection", targetCardId: "target-card" }]);
+    expect(result).toBe(false);
+    expect(calls).toEqual([]);
   });
 });

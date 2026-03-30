@@ -1,54 +1,15 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { brunosReturnI18n } from "./029-brunos-return.i18n";
+import { brunosReturn as canonicalBrunosReturn } from "../../004";
 
 export const brunosReturn: ActionCard = {
+  ...canonicalBrunosReturn,
   id: "c1X",
-  canonicalId: "ci_RJP",
   reprints: ["set4-026", "set9-029"],
-  cardType: "action",
-  name: "Bruno's Return",
-  inkType: ["amber"],
-  franchise: "Encanto",
   set: "009",
   cardNumber: 29,
   rarity: "uncommon",
-  cost: 2,
-  inkable: false,
   externalIds: {
     lorcast: "crd_abc3f1da50d04f768b1181878b17f8da",
     tcgPlayer: 649976,
   },
-  text: "Return a character card from your discard to your hand. You may remove up to 2 damage from chosen character.",
-  abilities: [
-    {
-      type: "action",
-      effect: {
-        type: "sequence",
-        steps: [
-          {
-            type: "return-to-hand",
-            target: {
-              selector: "chosen",
-              count: 1,
-              owner: "you",
-              zones: ["discard"],
-              cardTypes: ["character"],
-            },
-          },
-          {
-            type: "remove-damage",
-            amount: 2,
-            target: {
-              selector: "chosen",
-              count: 1,
-              owner: "any",
-              zones: ["play"],
-              cardTypes: ["character"],
-            },
-          },
-        ],
-      },
-    },
-  ],
-  i18n: brunosReturnI18n,
 };

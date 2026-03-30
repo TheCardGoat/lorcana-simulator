@@ -54,7 +54,7 @@ describe("Don Karnage - Air Pirate Leader", () => {
 
       // Resolve the bag (triggered ability)
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(donKarnageAirPirateLeader),
       ).toBeSuccessfulCommand();
 
       // Choose the opposing character as the target for Reckless

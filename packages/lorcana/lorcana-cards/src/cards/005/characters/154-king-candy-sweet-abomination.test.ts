@@ -76,7 +76,9 @@ describe("King Candy - Sweet Abomination", () => {
 
       // Accept the optional ability (draws 2 cards)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kingCandySweetAbomination, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // After drawing 2 cards, we have 2 cards in hand
@@ -105,7 +107,9 @@ describe("King Candy - Sweet Abomination", () => {
       expect(testEngine.asPlayerOne().playCard(kingCandySweetAbomination)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kingCandySweetAbomination, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // After drawing 2, we have 2 cards in hand (deckCard4, deckCard5 - the top 2)
@@ -138,7 +142,9 @@ describe("King Candy - Sweet Abomination", () => {
 
       // Accept the optional ability (draws 2 cards)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kingCandySweetAbomination, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // After drawing 2 cards, we have 2 cards in hand
@@ -167,7 +173,9 @@ describe("King Candy - Sweet Abomination", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kingCandySweetAbomination, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // No cards drawn, hand is still empty (King Candy was played)

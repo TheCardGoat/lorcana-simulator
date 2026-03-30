@@ -85,7 +85,7 @@ describe("Merlin - Intellectual Visionary", () => {
 
       // Accept the optional search
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(merlinIntellectualVisionary, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -117,7 +117,7 @@ describe("Merlin - Intellectual Visionary", () => {
 
       // Decline the optional search
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(merlinIntellectualVisionary, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

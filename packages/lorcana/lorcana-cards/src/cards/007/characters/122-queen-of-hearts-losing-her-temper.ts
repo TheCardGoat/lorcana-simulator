@@ -41,6 +41,7 @@ export const queenOfHeartsLosingHerTemper: CharacterCard = {
         type: "modify-stat",
       },
       id: "123-1",
+      name: "ROYAL PAIN",
       text: "ROYAL PAIN While this character has damage, she gets +3 {S}.",
       type: "static",
     },

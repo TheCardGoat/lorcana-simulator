@@ -36,7 +36,7 @@ describe("Mother Gothel - Conceited Manipulator", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelConceitedManipulator, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -83,7 +83,7 @@ describe("Mother Gothel - Conceited Manipulator", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelConceitedManipulator, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -119,7 +119,7 @@ describe("Mother Gothel - Conceited Manipulator", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelConceitedManipulator, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -148,7 +148,7 @@ describe("Mother Gothel - Conceited Manipulator", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelConceitedManipulator, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -185,7 +185,7 @@ describe("Mother Gothel - Conceited Manipulator", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       if (bagEffect) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(motherGothelConceitedManipulator, {
             resolveOptional: true,
           }),
         ).toBeSuccessfulCommand();

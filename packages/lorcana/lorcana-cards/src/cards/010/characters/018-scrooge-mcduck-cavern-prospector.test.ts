@@ -69,7 +69,9 @@ describe("Scrooge McDuck - Cavern Prospector", () => {
       expect(testEngine.asPlayerOne().playCard(gastonFrightfulBully)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckCavernProspector),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.getCardsUnder(gastonFrightfulBully)).toHaveLength(1);
     });
@@ -87,7 +89,9 @@ describe("Scrooge McDuck - Cavern Prospector", () => {
       ).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckCavernProspector),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.getCardsUnder(scroogesCountingHouseEbenezersOffice)).toHaveLength(1);
     });
@@ -104,7 +108,9 @@ describe("Scrooge McDuck - Cavern Prospector", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scroogeMcduckCavernProspector, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.getCardsUnder(gastonFrightfulBully)).toHaveLength(0);

@@ -34,6 +34,8 @@ export const theSorcerersTowerWondrousWorkspace: LocationCard = {
   ],
   abilities: [
     {
+      id: "GJL-1",
+      name: "BROOM CLOSET",
       effect: {
         filter: {
           name: "Magic Broom",
@@ -42,15 +44,19 @@ export const theSorcerersTowerWondrousWorkspace: LocationCard = {
         reduction: "free",
         type: "move-cost-reduction",
       },
+      text: "BROOM CLOSET Your characters named Magic Broom may move here for free.",
       type: "static",
     },
     {
+      id: "GJL-2",
+      name: "MAGICAL POWER",
       effect: {
         modifier: 1,
         stat: "lore",
         target: "CHARACTERS_HERE",
         type: "modify-stat",
       },
+      text: "MAGICAL POWER Characters get +1 {L} while here.",
       type: "static",
     },
   ],

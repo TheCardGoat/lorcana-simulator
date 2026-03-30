@@ -51,6 +51,7 @@ export const lefouCakeThief: CharacterCard = {
         type: "sequence",
       },
       id: "13j-1",
+      name: "ALL FOR ME",
       text: "ALL FOR ME {E}, Banish one of your items — Chosen opponent loses 1 lore and you gain 1 lore.",
       type: "activated",
     },

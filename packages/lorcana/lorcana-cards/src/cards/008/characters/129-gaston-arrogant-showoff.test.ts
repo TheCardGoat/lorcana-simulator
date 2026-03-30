@@ -32,7 +32,7 @@ describe("Gaston - Arrogant Showoff", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(gastonArrogantShowoff, {
         resolveOptional: true,
         targets: [ownItem],
       }),
@@ -66,7 +66,7 @@ describe("Gaston - Arrogant Showoff", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(gastonArrogantShowoff, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

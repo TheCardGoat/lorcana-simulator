@@ -73,7 +73,7 @@ describe("Tramp - Street-Smart Dog", () => {
     expect(testEngine.asPlayerOne().playCard(trampStreetsmartDog)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(trampStreetsmartDog, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();
@@ -114,7 +114,7 @@ describe("Tramp - Street-Smart Dog", () => {
     expect(testEngine.asPlayerOne().playCard(trampStreetsmartDog)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(trampStreetsmartDog, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();
@@ -152,7 +152,7 @@ describe("Tramp - Street-Smart Dog", () => {
     expect(testEngine.asPlayerOne().playCard(trampStreetsmartDog)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(trampStreetsmartDog, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

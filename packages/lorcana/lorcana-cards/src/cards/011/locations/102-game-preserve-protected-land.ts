@@ -32,6 +32,7 @@ export const gamePreserveProtectedLand: LocationCard = {
   abilities: [
     {
       id: "fh4-1",
+      name: "EASY TO MISS",
       condition: {
         type: "target-query",
         query: {

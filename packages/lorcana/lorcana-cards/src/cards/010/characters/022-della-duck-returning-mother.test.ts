@@ -14,7 +14,7 @@ describe("Della Duck - Returning Mother", () => {
 
     expect(testEngine.asPlayerOne().playCard(dellaDuckReturningMother)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
+      testEngine.asPlayerOne().resolvePendingByCard(dellaDuckReturningMother, {
         resolveOptional: true,
         targets: [arielEtherealVoice],
       }),
@@ -41,7 +41,9 @@ describe("Della Duck - Returning Mother", () => {
 
     expect(testEngine.asPlayerOne().playCard(dellaDuckReturningMother)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(dellaDuckReturningMother, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().isExerted(arielEtherealVoice)).toBe(true);

@@ -27,7 +27,9 @@ describe("Mr. Snoops - Betrayed Partner", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mrSnoopsBetrayedPartner, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({
@@ -51,7 +53,9 @@ describe("Mr. Snoops - Betrayed Partner", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mrSnoopsBetrayedPartner, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({

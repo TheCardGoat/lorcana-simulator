@@ -27,7 +27,9 @@ describe("Dawson - Puzzling Sleuth", () => {
     // If the trigger fires, resolve the bag effect
     if (testEngine.asPlayerOne().getBagCount() > 0) {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(dawsonPuzzlingSleuth),
+      ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           resolveOptional: true,
@@ -63,7 +65,9 @@ describe("Dawson - Puzzling Sleuth", () => {
     // If the trigger fires, resolve to keep topCard on top
     if (testEngine.asPlayerOne().getBagCount() > 0) {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(dawsonPuzzlingSleuth),
+      ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           resolveOptional: true,

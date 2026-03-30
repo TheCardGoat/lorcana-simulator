@@ -50,7 +50,9 @@ describe("Milo Thatch - Undaunted Scholar", () => {
 
       // Accept the optional trigger
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(miloThatchUndauntedScholar, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose target character
@@ -78,7 +80,9 @@ describe("Milo Thatch - Undaunted Scholar", () => {
 
       // Decline the optional trigger
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(miloThatchUndauntedScholar, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Strength should be unchanged
@@ -101,7 +105,9 @@ describe("Milo Thatch - Undaunted Scholar", () => {
       expect(testEngine.asPlayerOne().playCard(testAction)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(miloThatchUndauntedScholar, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(

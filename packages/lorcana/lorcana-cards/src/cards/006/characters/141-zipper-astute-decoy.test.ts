@@ -49,7 +49,7 @@ describe("Zipper - Astute Decoy", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(zipperAstuteDecoy, {
           resolveOptional: true,
           targets: [anotherCharacter],
         }),
@@ -96,7 +96,7 @@ describe("Zipper - Astute Decoy", () => {
 
       expect(testEngine.asPlayerOne().ink(inkableCard)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(zipperAstuteDecoy, {
           resolveOptional: true,
           targets: [anotherCharacter],
         }),
@@ -129,7 +129,9 @@ describe("Zipper - Astute Decoy", () => {
 
       // Decline the optional
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(zipperAstuteDecoy, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.hasKeyword(anotherCharacter, "Resist")).toBe(false);

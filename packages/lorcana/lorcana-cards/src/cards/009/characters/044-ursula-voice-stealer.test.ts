@@ -53,7 +53,7 @@ describe("Ursula - Voice Stealer", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(ursulaVoiceStealer, {
             targets: [opposingCharacter],
             resolveOptional: false,
           }),
@@ -85,7 +85,7 @@ describe("Ursula - Voice Stealer", () => {
 
       // Resolve: exert opposing character, then optionally play a song
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(ursulaVoiceStealer, {
           targets: [opposingCharacter, cheapSong],
           resolveOptional: true,
         }),
@@ -116,7 +116,7 @@ describe("Ursula - Voice Stealer", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         // Attempting to play the expensive song should fail or the song should remain in hand
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(ursulaVoiceStealer, {
           targets: [opposingCharacter, expensiveSong],
           resolveOptional: true,
         });
@@ -146,7 +146,7 @@ describe("Ursula - Voice Stealer", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(ursulaVoiceStealer, {
             targets: [opposingCharacter],
             resolveOptional: false,
           }),
@@ -187,7 +187,7 @@ describe("Ursula - Voice Stealer", () => {
 
     // Accept and resolve: exert opposing character, then play cheap song for free
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(ursulaVoiceStealer, {
         targets: [opposingCharacter, cheapSong],
         resolveOptional: true,
       }),

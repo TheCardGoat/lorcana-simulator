@@ -25,6 +25,7 @@ export interface CardFactoryOptions {
   readyState?: "ready" | "exerted";
   isDrying?: boolean;
   text?: string;
+  textEntries?: LorcanaCardSnapshot["textEntries"];
   keywords?: string[];
   // Card image properties
   set?: string;
@@ -56,6 +57,7 @@ export function createCardSnapshot(
     inkable: options.inkable ?? true,
     keywords: options.keywords ?? [],
     text: options.text ?? "Test card text.",
+    textEntries: options.textEntries ? [...options.textEntries] : [],
     strength: options.strength ?? (type === "character" ? 2 : undefined),
     baseStrength: options.strength ?? (type === "character" ? 2 : undefined),
     willpower: options.willpower ?? (type === "character" ? 3 : undefined),

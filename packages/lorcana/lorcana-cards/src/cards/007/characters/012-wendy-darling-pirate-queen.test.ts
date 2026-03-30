@@ -68,7 +68,9 @@ describe("Wendy Darling - Pirate Queen", () => {
       // Resolve TELL NO TALES, accepting the optional
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(wendyDarlingPirateQueen, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [damagedCharacter] }),
@@ -94,7 +96,9 @@ describe("Wendy Darling - Pirate Queen", () => {
       // Decline the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(wendyDarlingPirateQueen, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain unchanged
@@ -131,7 +135,9 @@ describe("Wendy Darling - Pirate Queen", () => {
       // TELL NO TALES triggers
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(wendyDarlingPirateQueen, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [damagedCharacter] }),

@@ -53,7 +53,9 @@ describe("Gramma Tala - Spirit of the Ocean", () => {
         }),
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(grammaTalaSpiritOfTheOcean),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
       expect(testEngine.asPlayerOne().getCardZone(inkTargetId)).toBe("inkwell");

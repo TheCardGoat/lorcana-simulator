@@ -44,6 +44,7 @@ export const pigletCocoaMaker: CharacterCard = {
     },
     {
       id: "1iy-2",
+      name: "SPECIAL RECIPE",
       effect: {
         amount: 2,
         target: {

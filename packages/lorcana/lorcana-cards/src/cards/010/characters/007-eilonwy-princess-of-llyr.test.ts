@@ -40,7 +40,7 @@ describe("Eilonwy - Princess of Llyr", () => {
     expect(bagEffect).toBeDefined();
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(eilonwyPrincessOfLlyr, {
         resolveOptional: true,
         targets: [supportTarget],
       }),

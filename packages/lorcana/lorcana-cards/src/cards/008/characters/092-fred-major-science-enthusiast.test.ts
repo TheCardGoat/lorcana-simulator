@@ -25,7 +25,7 @@ describe("Fred - Major Science Enthusiast", () => {
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(bagEffect).toBeDefined();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(fredMajorScienceEnthusiast, {
         resolveOptional: true,
         targets: [itemToBanish],
       }),

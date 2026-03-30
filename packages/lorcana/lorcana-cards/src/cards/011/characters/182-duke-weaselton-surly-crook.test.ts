@@ -40,7 +40,7 @@ describe("Duke Weaselton - Surly Crook", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(dukeWeaseltonSurlyCrook, {
         resolveOptional: true,
         targets: [cheapCharacter],
       }),
@@ -62,7 +62,7 @@ describe("Duke Weaselton - Surly Crook", () => {
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(dukeWeaseltonSurlyCrook, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

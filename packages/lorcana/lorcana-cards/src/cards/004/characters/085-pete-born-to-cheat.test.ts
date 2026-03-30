@@ -96,7 +96,7 @@ describe("Pete - Born to Cheat", () => {
 
       // Return the weak target to hand
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(peteBornToCheat, {
           targets: [weakTarget],
         }),
       ).toBeSuccessfulCommand();

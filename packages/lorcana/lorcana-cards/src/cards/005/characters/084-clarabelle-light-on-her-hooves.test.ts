@@ -29,7 +29,7 @@ describe("Clarabelle - Light on Her Hooves", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(clarabelleLightOnHerHooves, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -57,7 +57,7 @@ describe("Clarabelle - Light on Her Hooves", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(clarabelleLightOnHerHooves, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -88,7 +88,7 @@ describe("Clarabelle - Light on Her Hooves", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(clarabelleLightOnHerHooves, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();

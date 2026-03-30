@@ -58,7 +58,7 @@ describe("Goofy - Groundbreaking Chef", () => {
 
       // Resolve the bag effect (accept the optional ability)
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(goofyGroundbreakingChef, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -90,7 +90,7 @@ describe("Goofy - Groundbreaking Chef", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(goofyGroundbreakingChef, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -120,7 +120,7 @@ describe("Goofy - Groundbreaking Chef", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(goofyGroundbreakingChef, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -144,7 +144,7 @@ describe("Goofy - Groundbreaking Chef", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(goofyGroundbreakingChef, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();

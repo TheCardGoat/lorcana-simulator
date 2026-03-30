@@ -47,6 +47,7 @@ export const scroogeMcduckRichestDuckInTheWorld: CharacterCard = {
         type: "gain-keyword",
       },
       id: "1f8-1",
+      name: "I'M GOING HOME!",
       text: "I'M GOING HOME! During your turn, this character gains Evasive.",
       type: "static",
     },

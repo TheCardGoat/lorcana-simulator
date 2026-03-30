@@ -1,4 +1,5 @@
 import type { LorcanaLogMessage, LorcanaProjectedBoardView } from "@tcg/lorcana-engine";
+import { m } from "$lib/i18n/messages.js";
 import {
   getAvailableInkForSide,
   getOwnerIdForSide,
@@ -8,7 +9,15 @@ import {
   type MoveLogEntrySnapshot,
   type SimulatorSerializedObject,
 } from "@/features/simulator/model/contracts.js";
-import { formatEventLogBody } from "@/features/simulator/model/event-log-formatting.js";
+import {
+  formatEventLogBody,
+  type CardReferenceResolver,
+} from "@/features/simulator/model/event-log-formatting.js";
+import {
+  getMoveCategoryId,
+  getMoveCategoryLabel,
+} from "@/features/simulator/model/move-presentation.js";
+import type { PostGameCanonicalData } from "./notes-api.js";
 import type {
   PostGameActionCounters,
   PostGameActorTone,
@@ -17,6 +26,8 @@ import type {
   PostGameSpotlightAbility,
   PostGameSpotlightCard,
   PostGameSummary,
+  PostGameTimelineIconId,
+  PostGameTurnSummary,
 } from "./types.js";
 
 type CardReferenceMeta = {
@@ -50,10 +61,25 @@ export interface BuildPostGameSummaryInput {
 
 const PLAYER_SIDES: LorcanaPlayerSide[] = ["playerOne", "playerTwo"];
 
+export function buildPostGameSummaryFromCanonical(
+  postGame: PostGameCanonicalData,
+  viewerSide?: LorcanaPlayerSide | null,
+): PostGameSummary {
+  return buildPostGameSummary({
+    board: {
+      ...postGame.board,
+      reason: postGame.reason ?? postGame.board.reason ?? null,
+    },
+    entries: createPersistedMoveLogEntries(postGame),
+    viewerSide,
+  });
+}
+
 export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGameSummary {
   const viewerSide = input.viewerSide ?? null;
   const board = input.board;
   const cardReferenceMap = buildCardReferenceMap(board, input.entries);
+  const resolveCard = buildCardResolver(cardReferenceMap);
   const countersBySide = {
     playerOne: createEmptyCounters(),
     playerTwo: createEmptyCounters(),
@@ -63,7 +89,7 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
   const challengedCards = new Map<string, MutableCardAggregate>();
   const triggeredAbilities = new Map<string, MutableAbilityAggregate>();
   const highlights: PostGameHighlight[] = [];
-  const forensics: PostGameForensicEntry[] = [];
+  const timeline: PostGameForensicEntry[] = [];
 
   let firstChallengeHighlight: PostGameHighlight | null = null;
   let firstQuestHighlight: PostGameHighlight | null = null;
@@ -71,23 +97,28 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
 
   for (const entry of input.entries) {
     const actorSide = resolveEntryActorSide(board, entry);
-    const body = formatEventLogBody(entry, viewerSide);
+    const body = formatEventLogBody(entry, viewerSide, undefined, resolveCard);
+    const normalizedBodyText = normalizeTimelineText(entry, body.text, resolveCard);
     const typedMessages = getTypedMessages(entry);
+    const moveCategoryId = resolveMoveCategoryId(entry);
 
-    forensics.push({
+    timeline.push({
       id: entry.id,
       turnNumber: entry.turnNumber,
       timestamp: entry.timestamp,
       moveId: entry.moveId,
       actorSide,
       actorTone: resolveActorTone(actorSide, viewerSide),
-      text: body.text,
+      moveCategoryId,
+      moveCategoryLabel: resolveMoveCategoryLabel(moveCategoryId, entry.moveId),
+      timelineIconId: resolveTimelineIconId(moveCategoryId),
+      text: normalizedBodyText,
       source: body.source,
+      segments: body.segments,
       typedMessages: typedMessages.map((message) => ({
         key: message.key,
-        text: renderTypedMessageText(entry, message, viewerSide),
+        text: renderTypedMessageText(entry, message, viewerSide, resolveCard),
       })),
-      cardReferences: [],
     });
 
     if (!actorSide) {
@@ -102,7 +133,7 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
         if (cardId) {
           incrementCardAggregate(
             playedCards,
-            resolveCardAggregate(cardReferenceMap, cardId, actorSide, "Played"),
+            resolveCardAggregate(cardReferenceMap, cardId, actorSide, ""),
           );
         }
         break;
@@ -116,8 +147,8 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
         if (!firstQuestHighlight) {
           firstQuestHighlight = {
             id: `highlight:${entry.id}:quest`,
-            title: "Quest pressure started",
-            detail: body.text,
+            title: m["sim.postGame.highlight.quest.title"]({}),
+            detail: normalizedBodyText,
             turnNumber: entry.turnNumber,
             actorSide,
           };
@@ -130,8 +161,8 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
         if (!firstQuestHighlight) {
           firstQuestHighlight = {
             id: `highlight:${entry.id}:quest-all`,
-            title: "Board-wide quest swing",
-            detail: body.text,
+            title: m["sim.postGame.highlight.questAll.title"]({}),
+            detail: normalizedBodyText,
             turnNumber: entry.turnNumber,
             actorSide,
           };
@@ -145,7 +176,7 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
         if (attackerId) {
           incrementCardAggregate(
             challengedCards,
-            resolveCardAggregate(cardReferenceMap, attackerId, actorSide, "Challenge involvement"),
+            resolveCardAggregate(cardReferenceMap, attackerId, actorSide, ""),
           );
         }
         if (defenderId) {
@@ -155,15 +186,15 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
               cardReferenceMap,
               defenderId,
               actorSide === "playerOne" ? "playerTwo" : "playerOne",
-              "Challenge involvement",
+              "",
             ),
           );
         }
         if (!firstChallengeHighlight) {
           firstChallengeHighlight = {
             id: `highlight:${entry.id}:challenge`,
-            title: "First challenge landed",
-            detail: body.text,
+            title: m["sim.postGame.highlight.challenge.title"]({}),
+            detail: normalizedBodyText,
             turnNumber: entry.turnNumber,
             actorSide,
           };
@@ -189,8 +220,8 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
         counters.concedes += 1;
         concedeHighlight = {
           id: `highlight:${entry.id}:concede`,
-          title: "The game ended by concession",
-          detail: body.text,
+          title: m["sim.postGame.highlight.concede.title"]({}),
+          detail: normalizedBodyText,
           emphasis: true,
           turnNumber: entry.turnNumber,
           actorSide,
@@ -204,15 +235,11 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
   const outcome = buildOutcomeSummary(board, viewerSide);
   const outcomeTitle =
     outcome.viewerResult === "victory"
-      ? "Victory secured"
+      ? m["sim.postGame.highlight.outcome.victory.title"]({})
       : outcome.viewerResult === "defeat"
-        ? "Match slipped away"
-        : "Match complete";
-  const outcomeDetail =
-    board.reason ??
-    (outcome.winnerSide
-      ? `${sideToLabel(outcome.winnerSide, viewerSide)} won on turn ${board.turnNumber}.`
-      : `The game finished on turn ${board.turnNumber}.`);
+        ? m["sim.postGame.highlight.outcome.defeat.title"]({})
+        : m["sim.postGame.highlight.outcome.complete.title"]({});
+  const outcomeDetail = buildOutcomeDetail(board, outcome.winnerSide, viewerSide);
 
   highlights.push({
     id: "highlight:outcome",
@@ -233,27 +260,44 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
     highlights.push(firstChallengeHighlight);
   }
 
-  const topLoreContributors = rankCardAggregates(loreContributors, "Lore generated");
-  const mostPlayedCards = rankCardAggregates(playedCards, "Times played");
-  const mostInvolvedChallengeCards = rankCardAggregates(challengedCards, "Challenges");
+  const topLoreContributors = rankCardAggregates(
+    loreContributors,
+    m["sim.postGame.spotlight.detail.loreGenerated"]({ value: "{value}" }),
+  );
+  const mostPlayedCards = rankCardAggregates(
+    playedCards,
+    m["sim.postGame.spotlight.detail.timesPlayed"]({ value: "{value}" }),
+  );
+  const mostInvolvedChallengeCards = rankCardAggregates(
+    challengedCards,
+    m["sim.postGame.spotlight.detail.challenges"]({ value: "{value}" }),
+  );
   const mostTriggeredAbilities = rankAbilityAggregates(triggeredAbilities);
 
   if (topLoreContributors[0]) {
     highlights.push({
       id: "highlight:top-lore-contributor",
-      title: "Top lore contributor",
-      detail: `${topLoreContributors[0].label} generated ${topLoreContributors[0].value} lore across the game.`,
+      title: m["sim.postGame.highlight.topLore.title"]({}),
+      detail: m["sim.postGame.highlight.topLore.detail"]({
+        card: topLoreContributors[0].label,
+        value: topLoreContributors[0].value,
+      }),
       actorSide: topLoreContributors[0].ownerSide,
     });
   }
   if (mostPlayedCards[0]) {
     highlights.push({
       id: "highlight:most-played-card",
-      title: "Most repeated play pattern",
-      detail: `${mostPlayedCards[0].label} was played ${mostPlayedCards[0].value} time${mostPlayedCards[0].value === 1 ? "" : "s"}.`,
+      title: m["sim.postGame.highlight.mostPlayed.title"]({}),
+      detail: m["sim.postGame.highlight.mostPlayed.detail"]({
+        card: mostPlayedCards[0].label,
+        value: mostPlayedCards[0].value,
+      }),
       actorSide: mostPlayedCards[0].ownerSide,
     });
   }
+
+  const turns = buildTurnSummaries(timeline);
 
   return {
     board,
@@ -268,13 +312,14 @@ export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGame
     mostInvolvedChallengeCards,
     mostTriggeredAbilities,
     highlights: highlights.slice(0, 6),
-    forensics,
+    timeline,
+    turns,
     totalLogEntries: input.entries.length,
   };
 }
 
 function getTypedMessages(entry: MoveLogEntrySnapshot): LorcanaLogMessage[] {
-  if (!entry.typedLogEntry) return [];
+  if (!entry.typedLogEntry || !("values" in entry.typedLogEntry)) return [];
   return [
     {
       key: entry.typedLogEntry.type,
@@ -295,6 +340,37 @@ function createEmptyCounters(): PostGameActionCounters {
     passes: 0,
     concedes: 0,
   };
+}
+
+function buildTurnSummaries(entries: PostGameForensicEntry[]): PostGameTurnSummary[] {
+  const turns: PostGameTurnSummary[] = [];
+
+  for (const entry of entries) {
+    const currentTurn = turns.at(-1);
+    if (!currentTurn || currentTurn.turnNumber !== entry.turnNumber) {
+      turns.push({
+        id: `turn-${entry.turnNumber}`,
+        turnNumber: entry.turnNumber,
+        actorSide: entry.actorSide,
+        startedAt: entry.timestamp,
+        endedAt: entry.timestamp,
+        durationMs: 0,
+        moveCount: 1,
+        actions: [entry],
+      });
+      continue;
+    }
+
+    currentTurn.actions.push(entry);
+    currentTurn.endedAt = entry.timestamp;
+    currentTurn.durationMs = Math.max(0, currentTurn.endedAt - currentTurn.startedAt);
+    currentTurn.moveCount += 1;
+    if (!currentTurn.actorSide && entry.actorSide) {
+      currentTurn.actorSide = entry.actorSide;
+    }
+  }
+
+  return turns;
 }
 
 function buildPlayerBoardSummary(board: LorcanaProjectedBoardView, side: LorcanaPlayerSide) {
@@ -389,7 +465,30 @@ function buildCardReferenceMap(
     }
   }
 
+  // Capture any remaining cards from board.cards that weren't in a zone
+  // (e.g. cards referenced in log entries but removed from zones).
+  for (const [cardId, boardCard] of Object.entries(board.cards)) {
+    if (!cards.has(cardId) && boardCard) {
+      cards.set(cardId, {
+        cardId,
+        label: boardCard.fullName ?? cardId,
+        ownerSide: null,
+        loreValue: boardCard.lore ?? null,
+      });
+    }
+  }
+
   return cards;
+}
+
+function buildCardResolver(
+  cardReferenceMap: Map<string, CardReferenceMeta>,
+): CardReferenceResolver {
+  return (cardId: string) => {
+    const card = cardReferenceMap.get(cardId);
+    if (!card) return null;
+    return { label: card.label };
+  };
 }
 
 function resolveEntryActorSide(
@@ -439,18 +538,86 @@ function renderTypedMessageText(
   entry: MoveLogEntrySnapshot,
   message: LorcanaLogMessage,
   viewerSide: LorcanaPlayerSide | null,
+  resolveCard?: CardReferenceResolver,
 ): string {
+  const legacyTypedEntry =
+    entry.typedLogEntry && "values" in entry.typedLogEntry ? entry.typedLogEntry : undefined;
   const syntheticEntry: MoveLogEntrySnapshot = {
     ...entry,
     typedLogEntry: {
       type: message.key,
       values: message.values,
-      visibility: entry.typedLogEntry?.visibility ?? { mode: "PUBLIC" },
-      category: entry.typedLogEntry?.category ?? "action",
+      visibility: legacyTypedEntry?.visibility ?? { mode: "PUBLIC" },
+      category: legacyTypedEntry?.category ?? "action",
     } as import("@tcg/lorcana-engine").LorcanaGameLogEntry,
   };
 
-  return formatEventLogBody(syntheticEntry, viewerSide).text;
+  return formatEventLogBody(syntheticEntry, viewerSide, undefined, resolveCard).text;
+}
+
+function buildOutcomeDetail(
+  board: LorcanaProjectedBoardView,
+  winnerSide: LorcanaPlayerSide | null,
+  viewerSide: LorcanaPlayerSide | null,
+): string {
+  const normalizedReason = normalizeOutcomeReason(board.reason);
+  if (normalizedReason) {
+    return normalizedReason;
+  }
+
+  if (winnerSide) {
+    return m["sim.postGame.highlight.outcome.winnerDetail"]({
+      winner: sideToLabel(winnerSide, viewerSide),
+      turn: board.turnNumber,
+    });
+  }
+
+  return m["sim.postGame.highlight.outcome.finishedDetail"]({
+    turn: board.turnNumber,
+  });
+}
+
+function resolveCardReference(
+  cardReferenceMap: Map<string, CardReferenceMeta>,
+  cardId: string,
+): { label?: string } | null {
+  const card = cardReferenceMap.get(cardId);
+  if (!card) {
+    return null;
+  }
+
+  return {
+    label: card.label,
+  };
+}
+
+function resolveMoveCategoryId(
+  entry: MoveLogEntrySnapshot,
+): PostGameForensicEntry["moveCategoryId"] {
+  switch (entry.moveId) {
+    case "resolveBag":
+    case "resolveEffect":
+      return "activate-ability";
+    default:
+      return getMoveCategoryId(entry.moveId);
+  }
+}
+
+function resolveTimelineIconId(
+  moveCategoryId: PostGameForensicEntry["moveCategoryId"],
+): PostGameTimelineIconId {
+  return moveCategoryId === "unknown" ? "system" : moveCategoryId;
+}
+
+function resolveMoveCategoryLabel(
+  moveCategoryId: PostGameForensicEntry["moveCategoryId"],
+  moveId: MoveLogEntrySnapshot["moveId"],
+): string {
+  if (moveCategoryId === "activate-ability" && moveId !== "activateAbility") {
+    return m["sim.actions.label.activateAbility"]({});
+  }
+
+  return getMoveCategoryLabel(moveId);
 }
 
 function resolveCardAggregate(
@@ -504,7 +671,7 @@ function applyLoreContribution(
     const loreGained = getNumericValueFromMessages(entry, "loreGained") ?? 0;
     incrementCardAggregate(
       store,
-      resolveCardAggregate(cardReferenceMap, cardId, actorSide, "Lore generated"),
+      resolveCardAggregate(cardReferenceMap, cardId, actorSide, ""),
       Math.max(1, loreGained),
     );
     return;
@@ -540,7 +707,7 @@ function applyLoreContribution(
 
     incrementCardAggregate(
       store,
-      resolveCardAggregate(cardReferenceMap, cardId, actorSide, "Lore generated"),
+      resolveCardAggregate(cardReferenceMap, cardId, actorSide, ""),
       Math.max(1, contribution),
     );
   }
@@ -576,7 +743,7 @@ function applyAbilityContribution(
     }
 
     const card = sourceCardId ? cardReferenceMap.get(sourceCardId) : null;
-    const label = abilityName ?? card?.label ?? "Unnamed effect";
+    const label = abilityName ?? card?.label ?? m["sim.postGame.ability.unnamed"]({});
     const key = `${sourceCardId ?? "no-card"}:${label}`;
     const existing = store.get(key);
 
@@ -608,7 +775,8 @@ function applyAbilityContribution(
   }
 
   const card = cardReferenceMap.get(sourceCardId);
-  const key = `${sourceCardId}:Activated ability`;
+  const fallbackActivatedAbilityLabel = m["sim.postGame.ability.activated"]({});
+  const key = `${sourceCardId}:${fallbackActivatedAbilityLabel}`;
   const existing = store.get(key);
   if (existing) {
     existing.count += 1;
@@ -616,7 +784,7 @@ function applyAbilityContribution(
   }
 
   store.set(key, {
-    label: "Activated ability",
+    label: fallbackActivatedAbilityLabel,
     cardId: sourceCardId,
     cardLabel: card?.label ?? null,
     ownerSide: card?.ownerSide ?? actorSide,
@@ -642,7 +810,7 @@ function rankCardAggregates(
       label: entry.label,
       ownerSide: entry.ownerSide,
       value: entry.value,
-      detail: `${detailLabel}: ${entry.value}`,
+      detail: detailLabel.replace("{value}", String(entry.value)),
     }));
 }
 
@@ -697,12 +865,168 @@ function getStringArrayValue(values: SimulatorSerializedObject | undefined, key:
 
 function sideToLabel(side: LorcanaPlayerSide, viewerSide: LorcanaPlayerSide | null): string {
   if (viewerSide && side === viewerSide) {
-    return "You";
+    return m["sim.player.you"]({});
   }
 
   if (viewerSide && side !== viewerSide) {
-    return "Opponent";
+    return m["sim.player.opponent"]({});
   }
 
-  return side === "playerOne" ? "Player One" : "Player Two";
+  return side === "playerOne"
+    ? m["sim.player.side.playerOne"]({})
+    : m["sim.player.side.playerTwo"]({});
+}
+
+function createPersistedMoveLogEntries(postGame: PostGameCanonicalData): MoveLogEntrySnapshot[] {
+  return postGame.acceptedMoves.flatMap((acceptedMove, index) => {
+    const matchingLog = postGame.engineLogs.find(
+      (record) => record.stateVersion === acceptedMove.stateVersion,
+    );
+    const actorSide = postGame.players.find((player) => player.id === acceptedMove.actorId)?.side;
+    const entry: MoveLogEntrySnapshot = {
+      actorSide,
+      id: `post-game-${acceptedMove.stateVersion}-${index}-${acceptedMove.moveId}`,
+      moveId: acceptedMove.moveId as MoveLogEntrySnapshot["moveId"],
+      playerId: acceptedMove.actorId,
+      params: normalizePersistedMoveParams(acceptedMove.input),
+      timestamp: acceptedMove.timestamp,
+      title: "",
+      turnNumber: acceptedMove.turnNumber,
+      typedLogEntry: matchingLog?.log as MoveLogEntrySnapshot["typedLogEntry"],
+    };
+    const presentation = formatEventLogBody(entry);
+
+    return [
+      {
+        ...entry,
+        title: matchingLog ? normalizeTimelineText(entry, presentation.text) : "",
+      },
+    ];
+  });
+}
+
+function normalizePersistedMoveParams(
+  input?: PostGameCanonicalData["acceptedMoves"][number]["input"],
+): SimulatorSerializedObject | undefined {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return undefined;
+  }
+
+  const args = "args" in input ? input.args : undefined;
+  if (!args || typeof args !== "object" || Array.isArray(args)) {
+    return undefined;
+  }
+
+  return args as SimulatorSerializedObject;
+}
+
+function normalizeTimelineText(
+  entry: MoveLogEntrySnapshot,
+  text: string,
+  resolveCard?: CardReferenceResolver,
+): string {
+  const shouldUseFallback = (genericLabels: string[] = []) => {
+    if (!text) {
+      return true;
+    }
+
+    if (text === entry.moveId) {
+      return true;
+    }
+
+    return genericLabels.includes(text);
+  };
+
+  const labelFor = (cardId: string | null) => {
+    if (!cardId) {
+      return null;
+    }
+    return resolveCard?.(cardId)?.label ?? cardId;
+  };
+
+  switch (entry.moveId) {
+    case "putCardIntoInkwell": {
+      if (!shouldUseFallback([m["sim.actions.label.inkCard"]({})])) {
+        return text;
+      }
+
+      const cardLabel = labelFor(getStringValue(entry.params, "cardId"));
+      return cardLabel
+        ? m["sim.postGame.fallback.inkCard.named"]({ card: cardLabel })
+        : m["sim.actions.label.inkCard"]({});
+    }
+    case "questWithAll":
+      if (!shouldUseFallback([m["sim.actions.label.quest"]({})])) {
+        return text;
+      }
+
+      return m["sim.postGame.fallback.questWithAll"]({});
+    case "moveCharacterToLocation": {
+      if (!shouldUseFallback([m["sim.actions.label.moveToLocation"]({})])) {
+        return text;
+      }
+
+      const character = labelFor(getStringValue(entry.params, "characterId"));
+      const location = labelFor(getStringValue(entry.params, "locationId"));
+      if (character && location) {
+        return m["sim.postGame.fallback.moveToLocation.named"]({
+          character,
+          location,
+        });
+      }
+      return m["sim.actions.label.moveToLocation"]({});
+    }
+    case "passTurn":
+      if (!shouldUseFallback([m["sim.actions.label.passTurn"]({})])) {
+        return text;
+      }
+
+      return m["sim.postGame.fallback.passTurn"]({});
+    case "concede":
+      if (!shouldUseFallback([m["sim.actions.label.concede"]({})])) {
+        return text;
+      }
+
+      return m["sim.postGame.fallback.concede"]({});
+    case "challenge":
+      if (!shouldUseFallback([m["sim.actions.label.challenge"]({})])) {
+        return text;
+      }
+
+      return m["sim.actions.label.challenge"]({});
+    case "playCard":
+      if (!shouldUseFallback([m["sim.actions.label.playCard"]({})])) {
+        return text;
+      }
+
+      return m["sim.actions.label.playCard"]({});
+    case "activateAbility":
+    case "resolveEffect":
+    case "resolveBag":
+      if (!shouldUseFallback([m["sim.actions.label.activateAbility"]({})])) {
+        return text;
+      }
+
+      return m["sim.actions.label.activateAbility"]({});
+    case "quest":
+      if (!shouldUseFallback([m["sim.actions.label.quest"]({})])) {
+        return text;
+      }
+
+      return m["sim.actions.label.quest"]({});
+    default:
+      return text || getMoveCategoryLabel(entry.moveId);
+  }
+}
+
+function normalizeOutcomeReason(reason: string | null | undefined): string | null {
+  if (!reason) {
+    return null;
+  }
+
+  if (reason === "Game completed") {
+    return null;
+  }
+
+  return reason;
 }

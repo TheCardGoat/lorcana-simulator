@@ -38,7 +38,7 @@ describe("Merlin - Rabbit", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(merlinRabbit)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, deck: 0 });
@@ -58,7 +58,7 @@ describe("Merlin - Rabbit", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(merlinRabbit, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
@@ -90,7 +90,7 @@ describe("Merlin - Rabbit", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(merlinRabbit)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
     });
@@ -115,7 +115,7 @@ describe("Merlin - Rabbit", () => {
       expect(testEngine.asPlayerOne().playCard(madamMimFox)).toBeSuccessfulCommand();
 
       // Resolve CHASING THE RABBIT: choose to return Merlin to hand (option 1)
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimFox);
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1, targets: [merlinRabbit] });
 
       // Merlin's leave-play trigger (HOPPITY HIP!) should fire — accept the optional draw
@@ -125,10 +125,10 @@ describe("Merlin - Rabbit", () => {
           (b) => (b.payload as { abilityName?: string }).abilityName === "HOPPITY HIP!",
         );
         if (hoppityBag) {
-          testEngine.asPlayerOne().resolveBag(hoppityBag.id, { resolveOptional: true });
+          testEngine.asPlayerOne().resolvePendingByCard(merlinRabbit, { resolveOptional: true });
           break;
         }
-        testEngine.asPlayerOne().resolveNextBag({});
+        testEngine.asPlayerOne().resolvePendingByCard(merlinRabbit, {});
       }
 
       // Merlin should be in hand now (returned by Mim)
@@ -161,7 +161,7 @@ describe("Merlin - Rabbit", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(merlinRabbit, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");

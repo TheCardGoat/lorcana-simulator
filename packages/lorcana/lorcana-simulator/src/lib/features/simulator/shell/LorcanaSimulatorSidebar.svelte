@@ -1,35 +1,39 @@
 <script lang="ts">
-  import { m } from "$lib/i18n/messages.js";
+  import OctagonX from "@lucide/svelte/icons/octagon-x";
+  import Undo2 from "@lucide/svelte/icons/undo-2";
+  import { Button } from "$lib/design-system/primitives/button";
+  import * as Dialog from "$lib/design-system/primitives/dialog";
   import * as Sidebar from "$lib/design-system/primitives/sidebar";
-  import EmptyState from "@/design-system/simulator/display/EmptyState.svelte";
-  import {AvailableMovesPanel, EventLogPanel, PlayerInfo} from "@/features/simulator/index.js";
-  import PlayerSettingsDialog from "@/features/simulator/dialogs/PlayerSettingsDialog.svelte";
-  import SimulatorSupportDialog from "@/features/simulator/dialogs/SimulatorSupportDialog.svelte";
-  import {useSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
-  import {useLorcanaSidebarPresenter} from "@/features/simulator/context/game-context.svelte.js";
-  import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
-  import { bugReportContextFromBoard } from "@/features/simulator/support/feedback-api.js";
+  import { m } from "$lib/i18n/messages.js";
+  import { useLorcanaSidebarPresenter } from "@/features/simulator/context/game-context.svelte.js";
+  import type { ConfirmableDirectMoveCategoryId } from "@/features/simulator/model/direct-action-state.js";
+  import EventLogPanel from "@/features/simulator/panels/EventLogPanel.svelte";
+  import PlayerInfo from "@/features/simulator/panels/PlayerInfo.svelte";
   import { useHumanVsAiOrchestrator } from "@/features/simulator-devtools/vs-ai/context.js";
   import AiPlayerControls from "@/features/simulator-devtools/vs-ai/AiPlayerControls.svelte";
 
   interface LorcanaSimulatorSidebarProps {
     readOnly?: boolean;
     onOpenHotkeys?: () => void;
+    onOpenSupport?: () => void;
+    supportReminderText?: string | null;
+    onDismissSupportReminder?: () => void;
+    pendingDirectMoveCategoryId?: ConfirmableDirectMoveCategoryId | null;
+    onTriggerUndo?: (() => void) | null;
   }
 
-  let { readOnly = false, onOpenHotkeys }: LorcanaSimulatorSidebarProps = $props();
+  let {
+    readOnly = false,
+    onOpenHotkeys,
+    onOpenSupport,
+    supportReminderText = null,
+    onDismissSupportReminder,
+    pendingDirectMoveCategoryId = null,
+    onTriggerUndo = null,
+  }: LorcanaSimulatorSidebarProps = $props();
 
   const sidebar = useLorcanaSidebarPresenter();
   const aiOrchestratorStore = useHumanVsAiOrchestrator();
-  const simulatorCardContext = useSimulatorCardContext();
-
-  function handleCardHover(card: LorcanaCardSnapshot): void {
-    simulatorCardContext.setExternalPreviewCard(card);
-  }
-
-  function handleCardLeave(): void {
-    simulatorCardContext.setExternalPreviewCard(null);
-  }
 
   const boardSnapshot = $derived(sidebar.boardSnapshot);
   const topSide = $derived(sidebar.topSide);
@@ -37,19 +41,48 @@
   const hasOwnedView = $derived(sidebar.hasOwnedView);
   const headerPlayerData = $derived(sidebar.headerPlayerData);
   const footerPlayerData = $derived(sidebar.footerPlayerData);
-  const moveCategorySummaries = $derived(sidebar.moveCategorySummaries);
   const moveLogEntries = $derived(sidebar.moveLogEntries);
   const ownerSide = $derived(sidebar.ownerSide);
   const activeSide = $derived(sidebar.activeSide);
   const showRawLogRegistryJson = $derived(sidebar.showRawLogRegistryJson);
-  const availableMovesSelectionState = $derived(sidebar.availableMovesSelectionState);
-
-  const sidebarSelectionState = $derived(
-    availableMovesSelectionState?.mode === "resolution-scry" ? null : availableMovesSelectionState,
+  const canUndo = $derived(
+    !readOnly && sidebar.moveCategorySummaries.some((summary) => summary.categoryId === "undo"),
   );
-  let supportDialogOpen = $state(false);
+  const canConcede = $derived(!readOnly && sidebar.canConcede);
+  const undoArmed = $derived(pendingDirectMoveCategoryId === "undo");
+  const undoLabel = $derived(
+    undoArmed
+      ? m["sim.actions.confirmMoveLabel"]({ label: m["sim.actions.label.undo"]({}) })
+      : m["sim.actions.label.undo"]({}),
+  );
+  const concedeLabel = $derived(m["sim.actions.label.concede"]({}));
 
-  const bugReportContext = $derived(bugReportContextFromBoard(boardSnapshot));
+  let concedeDialogOpen = $state(false);
+
+  function handleUndoClick(): void {
+    if (!canUndo) {
+      return;
+    }
+
+    onTriggerUndo?.();
+  }
+
+  function openConcedeDialog(): void {
+    if (!canConcede) {
+      return;
+    }
+
+    concedeDialogOpen = true;
+  }
+
+  function closeConcedeDialog(): void {
+    concedeDialogOpen = false;
+  }
+
+  function confirmConcede(): void {
+    concedeDialogOpen = false;
+    sidebar.handleMobileConcede();
+  }
 </script>
 
 <Sidebar.Root collapsible="offcanvas" variant="sidebar" side="left">
@@ -84,44 +117,31 @@
         {showRawLogRegistryJson}
       />
 
-      {#if readOnly}
-        <div class="sidebar-readonly-state">
-          <p class="sidebar-readonly-title">{m["sim.postGame.actionsLocked"]({})}</p>
-          <EmptyState
-            icon="🏁"
-            label={m["sim.postGame.actionsLockedDetail"]({})}
-          />
-        </div>
-      {:else}
-        <AvailableMovesPanel
-          summaries={moveCategorySummaries}
-          onExpandCategory={sidebar.expandCategoryMoves}
-          supplementalActions={sidebar.resolutionActions}
-          selectionState={sidebarSelectionState}
-          interactiveSide={ownerSide}
-          activeSide={activeSide ?? undefined}
-          {showRawLogRegistryJson}
-          activePlayerGuidance={sidebar.activePlayerGuidanceController}
-          cardSnapshots={sidebar.cardSnapshotsById}
-          onCardHover={handleCardHover}
-          onCardLeave={handleCardLeave}
-          onStartManualMoveSelection={({ id, moves }) =>
-            sidebar.startManualCardActionSelection(id, moves)}
-          onSelectCard={sidebar.handleAvailableMovesSelectionCard}
-          onSelectPlayer={sidebar.handleAvailableMovesSelectionPlayer}
-          onSelectOption={sidebar.handleAvailableMovesSelectionOption}
-          onResolutionNamedCardQueryInput={sidebar.handleAvailableMovesNamedCardQueryInput}
-          onSelectNamedCard={sidebar.handleAvailableMovesNamedCardSelection}
-          onAssignScryCard={sidebar.handleAvailableMovesScryAssignment}
-          onReorderScryCard={sidebar.handleAvailableMovesScryReorder}
-          onBackSelection={sidebar.backActionSelectionSession}
-          onCancelSelection={sidebar.cancelActionSelectionSession}
-          onConfirmSelection={sidebar.confirmActionSelection}
-          onResetManualMoveSelection={sidebar.cancelManualCardActionSelection}
-          onExecuteMove={sidebar.handleAvailableMoveClick}
-          hotkeyMode={sidebar.hotkeyMode}
-        />
-      {/if}
+      <div class="sidebar-action-strip" aria-label={m["sim.sidebar.actions.aria"]({})}>
+        <Button
+          variant="outline"
+          class={`sidebar-action-button sidebar-action-button--undo${undoArmed ? " sidebar-action-button--armed" : ""}`}
+          onclick={handleUndoClick}
+          disabled={!canUndo}
+          aria-label={canUndo ? undoLabel : "Undo unavailable"}
+          title={canUndo ? undoLabel : "Undo unavailable"}
+        >
+          <Undo2 class="size-4" />
+          <span>{undoLabel}</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          class="sidebar-action-button sidebar-action-button--concede"
+          onclick={openConcedeDialog}
+          disabled={!canConcede}
+          aria-label={canConcede ? concedeLabel : "Concede unavailable"}
+          title={canConcede ? concedeLabel : "Concede unavailable"}
+        >
+          <OctagonX class="size-4" />
+          <span>{concedeLabel}</span>
+        </Button>
+      </div>
     </div>
   </Sidebar.Content>
 
@@ -143,9 +163,9 @@
         showSupport
         timer={footerPlayerData.timer}
         onSettingsClick={sidebar.handleOpenPlayerSettings}
-        onSupportClick={() => {
-          supportDialogOpen = true;
-        }}
+        onSupportClick={onOpenSupport}
+        {supportReminderText}
+        onDismissSupportReminder={onDismissSupportReminder}
       />
     {/if}
   </Sidebar.Footer>
@@ -153,31 +173,38 @@
   <Sidebar.Rail />
 </Sidebar.Root>
 
-<PlayerSettingsDialog
-  bind:open={sidebar.isPlayerSettingsOpen}
-  bugReportContext={bugReportContext}
-  selectedLocale={sidebar.selectedLocale}
-  {showRawLogRegistryJson}
-  skipActionConfirmation={sidebar.skipActionConfirmation}
-  hotkeyMode={sidebar.hotkeyMode}
-  cardPreviewMode={sidebar.cardPreviewMode}
-  onLocaleSelection={sidebar.handleLocaleSelection}
-  onToggleRawLogRegistryJson={sidebar.handleRawLogRegistryToggle}
-  onToggleSkipActionConfirmation={sidebar.handleSkipActionConfirmationToggle}
-  onHotkeyModeChange={sidebar.handleHotkeyModeChange}
-  onCardPreviewModeChange={sidebar.handleCardPreviewModeChange}
-  primaryClickAction={sidebar.primaryClickAction}
-  onPrimaryClickActionChange={sidebar.handlePrimaryClickActionChange}
-  animationSpeed={sidebar.animationSpeed}
-  onAnimationSpeedChange={sidebar.handleAnimationSpeedChange}
-  soundVolume={sidebar.soundVolume}
-  onSoundVolumeChange={sidebar.handleSoundVolumeChange}
-  accessibleMobileControls={sidebar.accessibleMobileControls}
-  onToggleAccessibleMobileControls={sidebar.handleAccessibleMobileControlsToggle}
-  {onOpenHotkeys}
-/>
+<Dialog.Root bind:open={concedeDialogOpen}>
+  <Dialog.Portal>
+    <Dialog.Overlay />
+    <Dialog.Content class="sidebar-concede-dialog" showCloseButton={false}>
+      <Dialog.Header class="sidebar-concede-dialog__header">
+        <Dialog.Title class="sidebar-concede-dialog__title">
+          {m["sim.sidebar.concedeDialog.title"]({})}
+        </Dialog.Title>
+        <Dialog.Description class="sidebar-concede-dialog__description">
+          {m["sim.sidebar.concedeDialog.description"]({})}
+        </Dialog.Description>
+      </Dialog.Header>
 
-<SimulatorSupportDialog bind:open={supportDialogOpen} gameContext={bugReportContext} />
+      <Dialog.Footer class="sidebar-concede-dialog__footer">
+        <Button
+          variant="outline"
+          class="sidebar-concede-dialog__button"
+          onclick={closeConcedeDialog}
+        >
+          {m["sim.actions.cancel"]({})}
+        </Button>
+        <Button
+          variant="destructive"
+          class="sidebar-concede-dialog__button"
+          onclick={confirmConcede}
+        >
+          {m["sim.actions.label.concede"]({})}
+        </Button>
+      </Dialog.Footer>
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
 
 <style>
   :global([data-sidebar="sidebar"]) {
@@ -214,31 +241,90 @@
   }
 
   .sidebar-content-stack {
-    display: grid;
-    grid-template-rows: minmax(10rem, 1fr) minmax(10rem, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: 0.45rem;
     height: 100%;
     min-height: 0;
   }
 
-  .sidebar-content-stack > :nth-child(2) {
-    border-top: 1px solid rgba(109, 149, 195, 0.16);
-    padding-top: 0.25rem;
-  }
-
-  .sidebar-readonly-state {
-    display: grid;
-    place-items: center;
-    gap: 0.4rem;
+  .sidebar-content-stack > * {
     min-height: 0;
-    padding: 1rem 0.25rem;
-    border-top: 1px solid rgba(109, 149, 195, 0.16);
   }
 
-  .sidebar-readonly-title {
-    margin: 0;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: rgba(226, 232, 240, 0.9);
+  .sidebar-content-stack > :first-child {
+    flex: 1 1 0;
+  }
+
+  .sidebar-action-strip {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    border-top: 1px solid rgba(109, 149, 195, 0.16);
+    padding-top: 0.45rem;
+  }
+
+  :global(.sidebar-action-button) {
+    min-height: 2.4rem;
+    justify-content: center;
+    gap: 0.45rem;
+    border-radius: 0.9rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  :global(.sidebar-action-button--undo) {
+    border-color: rgba(125, 211, 252, 0.22);
+    background:
+      linear-gradient(180deg, rgba(8, 47, 73, 0.88), rgba(15, 23, 42, 0.96));
+    color: #e0f2fe;
+  }
+
+  :global(.sidebar-action-button--concede) {
+    border-color: rgba(153, 27, 27, 0.42);
+    background:
+      linear-gradient(180deg, rgba(69, 10, 10, 0.76), rgba(28, 25, 23, 0.94));
+    color: #fee2e2;
+  }
+
+  :global(.sidebar-action-button--armed) {
+    border-color: rgba(251, 191, 36, 0.58);
+    box-shadow:
+      0 0 0 1px rgba(251, 191, 36, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  :global(.sidebar-action-button:disabled) {
+    border-color: rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.34);
+    color: rgba(148, 163, 184, 0.78);
+    opacity: 1;
+  }
+
+  :global(.sidebar-concede-dialog) {
+    max-width: 24rem;
+  }
+
+  :global(.sidebar-concede-dialog__header) {
+    gap: 0.45rem;
+  }
+
+  :global(.sidebar-concede-dialog__title) {
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  :global(.sidebar-concede-dialog__description) {
+    color: rgba(71, 85, 105, 1);
+  }
+
+  :global(.sidebar-concede-dialog__footer) {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+  }
+
+  :global(.sidebar-concede-dialog__button) {
+    min-width: 7rem;
   }
 </style>

@@ -41,7 +41,9 @@ describe("LeFou - Instigator", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [exertedCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(lefouInstigator, { targets: [exertedCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCard(exertedCharacter).exerted).toBe(false);
@@ -64,7 +66,9 @@ describe("LeFou - Instigator", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [exertedCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(lefouInstigator, { targets: [exertedCharacter] }),
       ).toBeSuccessfulCommand();
 
       // The readied character cannot quest this turn
@@ -86,7 +90,9 @@ describe("LeFou - Instigator", () => {
 
       expect(testEngine.asPlayerOne().playCard(lefouInstigator)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [exertedCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(lefouInstigator, { targets: [exertedCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCard(exertedCharacter).hasQuestRestriction).toBe(true);
@@ -114,7 +120,9 @@ describe("LeFou - Instigator", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(lefouInstigator, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCard(opponentCharacter).exerted).toBe(false);

@@ -4,7 +4,7 @@
  * MatchRuntimeConfig for the Lorcana engine.
  */
 
-import type { Draft } from "immer";
+import type { Draft } from "mutative";
 import type { BoardSetupContext, PacketAnimationContext, PlayerId } from "#core";
 import {
   filterMatchView,
@@ -19,6 +19,7 @@ import { createLorcanaRuntimeCardDeriver } from "../runtime-moves/state/runtime-
 import { lorcanaRuntimeFlow } from "../flow/runtime-flow-config";
 import { projectLorcanaBoardView } from "./project-board";
 import { deriveLorcanaPacketAnimations } from "./lorcanaPacketAnimations";
+import { buildZoneRegistry } from "../core/runtime/zone-registry";
 
 const DECK_ZONE_ID = "deck" as const;
 /**
@@ -41,8 +42,11 @@ export const lorcanaRuntimeConfig: MatchRuntimeConfig = {
       return;
     }
 
-    const deckCards = draft.ctx.zones.private.zoneCards[DECK_ZONE_ID] ?? [];
     for (const player of players) {
+      const deckZoneId = `${DECK_ZONE_ID}:${player.id}`;
+      const deckCards =
+        draft.ctx.zones.private.zoneCards[deckZoneId] ??
+        (draft.ctx.zones.private.zoneCards[deckZoneId] = []);
       const instanceIds: string[] = [];
       for (const record of staticResources.instances.entries()) {
         if (record.ownerID === player.id) {
@@ -54,16 +58,16 @@ export const lorcanaRuntimeConfig: MatchRuntimeConfig = {
         const cardId = shuffledIds[i];
         deckCards.push(cardId);
         draft.ctx.zones.private.cardIndex[cardId] = {
-          zoneKey: DECK_ZONE_ID,
+          zoneKey: deckZoneId,
           index: deckCards.length - 1,
           ownerID: player.id as PlayerId,
           controllerID: player.id as PlayerId,
         };
       }
-    }
 
-    const summary = draft.ctx.zones.public.zoneSummaries[DECK_ZONE_ID];
-    if (summary) {
+      const summary =
+        draft.ctx.zones.public.zoneSummaries[deckZoneId] ??
+        (draft.ctx.zones.public.zoneSummaries[deckZoneId] = { revision: 0, count: 0 });
       summary.revision = 1;
       summary.count = deckCards.length;
     }
@@ -77,7 +81,11 @@ export const lorcanaRuntimeConfig: MatchRuntimeConfig = {
   playerView: (state, roleCtx) => {
     // playerView only affects filtered/client-facing state snapshots.
     // Authoritative server projections are built from full state directly.
-    return filterMatchView(state, roleCtx);
+    return filterMatchView(
+      state,
+      roleCtx,
+      buildZoneRegistry(lorcanaRuntimeZones, state.ctx.playerIds),
+    );
   },
 
   // This return ALL the data the UI needs to render the board.

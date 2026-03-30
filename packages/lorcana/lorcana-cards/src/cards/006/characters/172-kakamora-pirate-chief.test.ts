@@ -68,7 +68,9 @@ describe("Kakamora - Pirate Chief", () => {
 
       // Accept the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kakamoraPirateChief, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Discard the non-pirate character
@@ -122,7 +124,9 @@ describe("Kakamora - Pirate Chief", () => {
 
       // Accept the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kakamoraPirateChief, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Discard the pirate character
@@ -174,7 +178,9 @@ describe("Kakamora - Pirate Chief", () => {
       expect(testEngine.asPlayerOne().quest(kakamoraPirateChief)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kakamoraPirateChief, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
@@ -219,7 +225,9 @@ describe("Kakamora - Pirate Chief", () => {
       expect(testEngine.asPlayerOne().quest(kakamoraPirateChief)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kakamoraPirateChief, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
@@ -274,7 +282,9 @@ describe("Kakamora - Pirate Chief", () => {
       expect(testEngine.asPlayerOne().quest(kakamoraPirateChief)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kakamoraPirateChief, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
@@ -317,7 +327,9 @@ describe("Kakamora - Pirate Chief", () => {
       expect(testEngine.asPlayerOne().quest(kakamoraPirateChief)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kakamoraPirateChief, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);

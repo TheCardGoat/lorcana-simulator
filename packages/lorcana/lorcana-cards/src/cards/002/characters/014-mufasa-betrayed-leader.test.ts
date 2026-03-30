@@ -22,7 +22,9 @@ describe("Mufasa - Betrayed Leader", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(mufasaBetrayedLeader),
+      ).toBeSuccessfulCommand();
 
       // Resolve the scry — choose to play Gaston for free
       expect(
@@ -57,7 +59,9 @@ describe("Mufasa - Betrayed Leader", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(mufasaBetrayedLeader),
+      ).toBeSuccessfulCommand();
 
       // Non-character doesn't match the play filter — resolve scry with no hand selection
       expect(
@@ -86,7 +90,9 @@ describe("Mufasa - Betrayed Leader", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(mufasaBetrayedLeader),
+      ).toBeSuccessfulCommand();
 
       // Decline playing — resolve scry with empty destinations, Gaston goes to deck-top (remainder)
       expect(
@@ -129,7 +135,9 @@ describe("Mufasa - Betrayed Leader", () => {
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
-      expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(mufasaBetrayedLeader),
+      ).toBeSuccessfulCommand();
 
       // Resolve the scry — choose to play Gaston for free
       expect(

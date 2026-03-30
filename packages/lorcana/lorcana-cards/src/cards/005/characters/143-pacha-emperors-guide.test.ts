@@ -42,8 +42,9 @@ describe("Pacha - Emperor's Guide", () => {
 
       // The HELPFUL SUPPLIES triggered ability should be in the bag — resolve it
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(pachaEmperorsGuide),
+      ).toBeSuccessfulCommand();
 
       // At start of player one's next turn, HELPFUL SUPPLIES should have fired
       expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore + 1);
@@ -91,8 +92,9 @@ describe("Pacha - Emperor's Guide", () => {
 
       // The PERFECT DIRECTIONS triggered ability should be in the bag — resolve it
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(pachaEmperorsGuide),
+      ).toBeSuccessfulCommand();
 
       // At start of player one's next turn, PERFECT DIRECTIONS should have fired
       expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore + 1);

@@ -84,7 +84,9 @@ describe("Stitch - Experiment 626", () => {
       // STEALTH MODE should trigger - accept the optional
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(stitchExperiment626, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose to discard an inkable card from hand
@@ -120,7 +122,9 @@ describe("Stitch - Experiment 626", () => {
       // STEALTH MODE triggers, decline it
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(stitchExperiment626, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(arthurDeterminedSquire)).toBe("hand");

@@ -69,6 +69,7 @@ export const robinHoodUnrivaledArcher: CharacterCard = {
         type: "gain-keyword",
       },
       id: "v3n-2",
+      name: "GOOD SHOT",
       text: "GOOD SHOT During your turn, this character gains Evasive.",
       type: "static",
     },

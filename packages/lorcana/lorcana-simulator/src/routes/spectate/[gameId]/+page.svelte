@@ -12,7 +12,10 @@
   import { getGatewayWsUrl } from "$lib/config/public-url-config.js";
   import { GatewayClientStore } from "@/features/gateway/gateway-client.svelte.js";
   import { LorcanaTabletopSimulator } from "$lib";
-  import { SpectatorMatchOrchestrator } from "@/features/spectator/spectator-match-orchestrator.svelte.js";
+  import {
+    SpectatorMatchOrchestrator,
+    extractMatchState,
+  } from "@/features/spectator/spectator-match-orchestrator.svelte.js";
   import type { CardsMaps, LorcanaMatchState } from "@tcg/lorcana-engine";
 
   let { data } = $props();
@@ -25,12 +28,76 @@
   let loading = $state(true);
   let loadError = $state<string | null>(null);
 
+  function parseStateUpdatePayload(msg: Record<string, unknown>) {
+    return {
+      actorId: String(msg.actorId ?? ""),
+      moveType: String(msg.moveType ?? ""),
+      stateVersion: Number(msg.stateVersion ?? 0),
+      patches: Array.isArray(msg.patches) ? msg.patches : [],
+      state: msg.state ?? undefined,
+      acceptedMove:
+        msg.acceptedMove && typeof msg.acceptedMove === "object" && !Array.isArray(msg.acceptedMove)
+          ? (msg.acceptedMove as {
+              actorId: string;
+              moveId: string;
+              stateVersion: number;
+              timestamp: number;
+              turnNumber: number;
+              input?: unknown;
+            })
+          : undefined,
+      engineLogs: Array.isArray(msg.engineLogs)
+        ? (msg.engineLogs as Array<{
+            stateVersion: number;
+            log: unknown;
+          }>)
+        : undefined,
+    };
+  }
+
+  function initOrchestrator(
+    gw: GatewayClientStore,
+    state: LorcanaMatchState,
+    cardsMaps: CardsMaps,
+    recentHistory?: { type: string; [key: string]: unknown },
+  ): SpectatorMatchOrchestrator {
+    return new SpectatorMatchOrchestrator({
+      gateway: gw,
+      state,
+      cardsMaps,
+      recentHistory:
+        recentHistory &&
+        typeof recentHistory === "object" &&
+        !Array.isArray(recentHistory)
+          ? (recentHistory as unknown as {
+              acceptedMoves: Array<{
+                actorId: string;
+                moveId: string;
+                stateVersion: number;
+                timestamp: number;
+                turnNumber: number;
+                input?: unknown;
+              }>;
+              engineLogs: Array<{
+                stateVersion: number;
+                log: unknown;
+              }>;
+            })
+          : undefined,
+    });
+  }
+
   async function initSpectatorView(): Promise<void> {
     const gameId = getGameId();
     let gameJoinedResolve: ((msg: { type: string; [key: string]: unknown }) => void) | null = null;
     const gameJoinedPromise = new Promise<{ type: string; [key: string]: unknown }>((resolve) => {
       gameJoinedResolve = resolve;
     });
+
+    // For client-authority games, game_joined may have null state.
+    // We queue state_update messages and wait for the first one with full state.
+    let deferredStateResolve: ((msg: Record<string, unknown>) => void) | null = null;
+    const pendingUpdates: Record<string, unknown>[] = [];
 
     gateway = new GatewayClientStore(GATEWAY_WS_URL, undefined, (msg) => {
       if (msg.type === "game_joined") {
@@ -39,29 +106,16 @@
       }
 
       if (msg.type === "state_update") {
-        orchestrator?.applyStateUpdate({
-          actorId: String(msg.actorId ?? ""),
-          moveType: String(msg.moveType ?? ""),
-          stateVersion: Number(msg.stateVersion ?? 0),
-          patches: Array.isArray(msg.patches) ? msg.patches : [],
-          acceptedMove:
-            msg.acceptedMove && typeof msg.acceptedMove === "object" && !Array.isArray(msg.acceptedMove)
-              ? (msg.acceptedMove as {
-                  actorId: string;
-                  moveId: string;
-                  stateVersion: number;
-                  timestamp: number;
-                  turnNumber: number;
-                  input?: unknown;
-                })
-              : undefined,
-          engineLogs: Array.isArray(msg.engineLogs)
-            ? (msg.engineLogs as Array<{
-                defaultMessage?: { key?: string; values?: Record<string, unknown> };
-                sourceEventSeqs: number[];
-              }>)
-            : undefined,
-        });
+        if (!orchestrator && deferredStateResolve && msg.state) {
+          deferredStateResolve(msg as Record<string, unknown>);
+          deferredStateResolve = null;
+          return;
+        }
+        if (!orchestrator) {
+          pendingUpdates.push(msg as Record<string, unknown>);
+          return;
+        }
+        orchestrator.applyStateUpdate(parseStateUpdatePayload(msg as Record<string, unknown>));
         return;
       }
 
@@ -105,38 +159,58 @@
       return;
     }
 
-    const state = gameJoinedMsg.state as LorcanaMatchState | null;
-    const cardsMaps = (gameJoinedMsg.cardsMaps as CardsMaps | undefined) ?? undefined;
+    // Try to extract state from game_joined (works for server-authority
+    // and client-authority games where state has already been pushed).
+    let state = gameJoinedMsg.state as LorcanaMatchState | null;
+    let cardsMaps = (gameJoinedMsg.cardsMaps as CardsMaps | undefined) ?? undefined;
 
-    if (!state || !cardsMaps) {
-      loadError = "This match cannot be spectated right now.";
-      return;
+    // For client-authority games, the state may be a PracticeMatchSnapshot
+    // with state/cardsMaps nested inside engineSnapshot.
+    if (state && !cardsMaps) {
+      const extracted = extractMatchState(state);
+      if (extracted) {
+        state = extracted.state;
+        cardsMaps = extracted.cardsMaps;
+      }
     }
 
-    orchestrator = new SpectatorMatchOrchestrator({
+    // If state is null (client-authority game, player hasn't pushed yet),
+    // wait for the first state_update which includes the full state.
+    if (!state || !cardsMaps) {
+      const deferredPromise = new Promise<Record<string, unknown>>((resolve) => {
+        deferredStateResolve = resolve;
+      });
+
+      const firstUpdate = await Promise.race([
+        deferredPromise,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 15_000)),
+      ]);
+
+      if (!firstUpdate?.state) {
+        loadError = "Timed out waiting for match state. The player may not have started yet.";
+        return;
+      }
+
+      const extracted = extractMatchState(firstUpdate.state);
+      if (!extracted) {
+        loadError = "Unable to read match state.";
+        return;
+      }
+
+      state = extracted.state;
+      cardsMaps = extracted.cardsMaps;
+    }
+
+    orchestrator = initOrchestrator(
       gateway,
       state,
       cardsMaps,
-      recentHistory:
-        gameJoinedMsg.recentHistory &&
-        typeof gameJoinedMsg.recentHistory === "object" &&
-        !Array.isArray(gameJoinedMsg.recentHistory)
-          ? (gameJoinedMsg.recentHistory as {
-              acceptedMoves: Array<{
-                actorId: string;
-                moveId: string;
-                stateVersion: number;
-                timestamp: number;
-                turnNumber: number;
-                input?: unknown;
-              }>;
-              engineLogs: Array<{
-                defaultMessage?: { key?: string; values?: Record<string, unknown> };
-                sourceEventSeqs: number[];
-              }>;
-            })
-          : undefined,
-    });
+      gameJoinedMsg.recentHistory as { type: string; [key: string]: unknown } | undefined,
+    );
+
+    for (const pending of pendingUpdates.splice(0)) {
+      orchestrator.applyStateUpdate(parseStateUpdatePayload(pending));
+    }
   }
 
   onMount(async () => {

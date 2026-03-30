@@ -33,8 +33,8 @@ import {
   EFFECT_PENDING_ERROR_CODE,
   hasPendingActionEffectResolution,
 } from "../../resolution/action-effects/pending-action-effects";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import type { PlayCardExecutionContext } from "../../resolution/action-effects/types";
-import type { LorcanaCardDerived } from "../../../types/projected-board";
 import { validateExertCost } from "../../rules/play-card-rules";
 import {
   emitTriggeredLorcanaEvent,
@@ -77,6 +77,8 @@ function validateQuestCard(
   ctx: QuestReadableContext,
   cardId: CardInstanceId,
 ): RuntimeValidationResult {
+  const registry = getOrBuildMoveRegistry(ctx);
+
   if (hasPendingActionEffectResolution(ctx)) {
     return {
       valid: false,
@@ -167,8 +169,7 @@ function validateQuestCard(
       state: ctx.framework.state,
       cardId,
       restriction: "cant-quest",
-      getDefinitionByInstanceId: (instanceId) =>
-        getCardDefinitionFromContext(ctx, instanceId) as LorcanaCard | undefined,
+      registry,
     })
   ) {
     return {
@@ -192,8 +193,7 @@ function isPlayerBlockedFromGainingLore(
     _zonesPublic: ctx.framework.state._zonesPublic,
     G: ctx.G,
   };
-  const getDefinitionByInstanceId = (instanceId: string) =>
-    ctx.cards.getDefinition(instanceId) as LorcanaCard | undefined;
+  const registry = getOrBuildMoveRegistry(ctx);
 
   if (
     hasTemporaryPlayerRestriction(
@@ -210,12 +210,13 @@ function isPlayerBlockedFromGainingLore(
     state: staticAbilityState,
     playerId,
     restriction: "cant-gain-lore",
-    getDefinitionByInstanceId,
+    registry,
   });
 }
 
 function executeQuestCard(ctx: PlayCardExecutionContext, cardId: CardInstanceId): number {
   const currentPlayer = ctx.framework.state.currentPlayer!;
+  const registry = getOrBuildMoveRegistry(ctx);
 
   ctx.cards.patchMeta(cardId, { state: "exerted" });
 
@@ -224,6 +225,7 @@ function executeQuestCard(ctx: PlayCardExecutionContext, cardId: CardInstanceId)
     createProjectionState(ctx.framework.state, ctx.G),
     cardId,
     (id) => ctx.cards.getDefinition(id) as any,
+    registry,
   );
 
   const blocked = isPlayerBlockedFromGainingLore(ctx, currentPlayer as PlayerId);
@@ -319,6 +321,7 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
       return false;
     }
 
+    const registry = getOrBuildMoveRegistry(ctx);
     const descriptor = normalizeTargetDescriptor(QUEST_TARGET_DSL);
     const candidates = resolveCandidateTargets(ctx, descriptor, {
       controllerId: ctx.playerId as PlayerId,
@@ -375,8 +378,7 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
             state: ctx.framework.state,
             cardId: cardId as CardInstanceId,
             restriction: "cant-quest",
-            getDefinitionByInstanceId: (instanceId) =>
-              getCardDefinitionFromContext(ctx, instanceId) as LorcanaCard | undefined,
+            registry,
           })
         ) {
           return false;

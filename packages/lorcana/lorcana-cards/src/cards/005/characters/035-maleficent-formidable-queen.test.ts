@@ -84,7 +84,7 @@ describe("Maleficent - Formidable Queen", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentFormidableQueen, {
           targets: [simbaProtectiveCub],
         }),
       ).toBeSuccessfulCommand();
@@ -117,7 +117,7 @@ describe("Maleficent - Formidable Queen", () => {
       // The for-each effect requires choosing one target per Maleficent in play (3 total)
       // All targets should be provided in a single bag resolution
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentFormidableQueen, {
           targets: [simbaProtectiveCub, dinglehopper, rapunzelsTowerSecludedPrison],
         }),
       ).toBeSuccessfulCommand();
@@ -141,7 +141,7 @@ describe("Maleficent - Formidable Queen", () => {
       expect(testEngine.asPlayerOne().playCard(maleficentFormidableQueen)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentFormidableQueen, {
           targets: [dinglehopper],
         }),
       ).toBeSuccessfulCommand();
@@ -163,7 +163,7 @@ describe("Maleficent - Formidable Queen", () => {
       expect(testEngine.asPlayerOne().playCard(maleficentFormidableQueen)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentFormidableQueen, {
           targets: [rapunzelsTowerSecludedPrison],
         }),
       ).toBeSuccessfulCommand();
@@ -187,7 +187,7 @@ describe("Maleficent - Formidable Queen", () => {
 
       // Should only get 1 return (for this Maleficent only), not 2
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentFormidableQueen, {
           targets: [simbaProtectiveCub],
         }),
       ).toBeSuccessfulCommand();

@@ -32,7 +32,9 @@ describe("Morty Fieldmouse - Tiny Tim", () => {
       // HOLIDAY SPIRIT triggers: put top card of deck under Morty
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(mortyFieldmouseTinyTim),
+        ).toBeSuccessfulCommand();
       }
 
       expect(testEngine.getCardsUnder(mortyId)).toHaveLength(1);
@@ -52,11 +54,9 @@ describe("Morty Fieldmouse - Tiny Tim", () => {
         testEngine.asPlayerOne().activateAbility(tamatoaSeekerOfShine, { ability: "Boost" }),
       ).toBeSuccessfulCommand();
 
-      // Resolve the HOLIDAY SPIRIT bag effect before proceeding
-      const bagEffectsAfterFirst = testEngine.asPlayerOne().getBagEffects();
-      for (const e of bagEffectsAfterFirst) {
-        testEngine.asPlayerOne().resolveBag(e.id);
-      }
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(tamatoaSeekerOfShine),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.getCardsUnder(mortyId)).toHaveLength(1);
 
@@ -249,7 +249,7 @@ describe("Morty Fieldmouse - Tiny Tim", () => {
     // Resolve any bag effects
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
     for (const e of bagEffects) {
-      testEngine.asPlayerOne().resolveBag(e.id);
+      testEngine.asPlayerOne().resolvePendingByCard(mortyFieldmouseTinyTim);
     }
 
     // Morty should have exactly 1 card under him (once per turn), not more

@@ -23,7 +23,7 @@ describe("Wisdom of the Willow", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(wisdomOfTheWillow, {
         resolveOptional: true,
       }).success,
     ).toBe(true);

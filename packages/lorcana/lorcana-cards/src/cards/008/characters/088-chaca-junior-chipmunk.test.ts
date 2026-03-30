@@ -35,7 +35,9 @@ describe("Chaca - Junior Chipmunk", () => {
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0];
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [opposingCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(chacaJuniorChipmunk, { targets: [opposingCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.hasKeyword(opposingCharacter, "Reckless")).toBe(false);

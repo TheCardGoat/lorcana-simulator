@@ -214,7 +214,6 @@ export function isLorcanaPlayerTarget(target: unknown): target is LorcanaPlayerT
   return (
     selector === "you" ||
     selector === "opponent" ||
-    selector === "each-opponent" ||
     selector === "each-player" ||
     selector === "chosen"
   );

@@ -24,8 +24,8 @@ export const shereKhanInfamousTiger: CharacterCard = {
   },
   text: [
     {
-      title: "WHAT",
-      description: "A PITY When you play this character, discard your hand.",
+      title: "WHAT A PITY",
+      description: "When you play this character, discard your hand.",
     },
   ],
   classifications: ["Storyborn", "Villain"],

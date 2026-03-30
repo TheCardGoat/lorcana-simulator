@@ -1,12 +1,15 @@
 import type { LorcanaProjectedBoardView } from "@tcg/lorcana-engine";
 import type {
+  ExecutableMovePresentationCategoryId,
   LorcanaPlayerSide,
   MoveLogEntrySnapshot,
 } from "@/features/simulator/model/contracts.js";
+import type { EventLogSegment } from "@/features/simulator/model/event-log-formatting.js";
 
 export type PostGameViewerResult = "victory" | "defeat" | "spectator" | "unknown";
-export type PostGameSectionId = "overview" | "forensics" | "notes";
+export type PostGameSectionId = "overview" | "timeline" | "notes";
 export type PostGameActorTone = "self" | "opponent" | "playerOne" | "playerTwo" | "system";
+export type PostGameTimelineIconId = ExecutableMovePresentationCategoryId | "system";
 
 export interface PostGameActionCounters {
   cardsPlayed: number;
@@ -74,12 +77,6 @@ export interface PostGameTypedMessageSummary {
   text: string;
 }
 
-export interface PostGameForensicCardReference {
-  cardId: string;
-  label: string;
-  ownerSide: LorcanaPlayerSide | null;
-}
-
 export interface PostGameForensicEntry {
   id: string;
   turnNumber: number;
@@ -87,10 +84,24 @@ export interface PostGameForensicEntry {
   moveId: MoveLogEntrySnapshot["moveId"];
   actorSide: LorcanaPlayerSide | null;
   actorTone: PostGameActorTone;
+  moveCategoryId: ExecutableMovePresentationCategoryId;
+  moveCategoryLabel: string;
+  timelineIconId: PostGameTimelineIconId;
   text: string;
   source: "typed" | "fallback";
+  segments: EventLogSegment[];
   typedMessages: PostGameTypedMessageSummary[];
-  cardReferences: PostGameForensicCardReference[];
+}
+
+export interface PostGameTurnSummary {
+  id: string;
+  turnNumber: number;
+  actorSide: LorcanaPlayerSide | null;
+  startedAt: number;
+  endedAt: number;
+  durationMs: number;
+  moveCount: number;
+  actions: PostGameForensicEntry[];
 }
 
 export interface PostGameSummary {
@@ -103,7 +114,8 @@ export interface PostGameSummary {
   mostInvolvedChallengeCards: PostGameSpotlightCard[];
   mostTriggeredAbilities: PostGameSpotlightAbility[];
   highlights: PostGameHighlight[];
-  forensics: PostGameForensicEntry[];
+  timeline: PostGameForensicEntry[];
+  turns: PostGameTurnSummary[];
   totalLogEntries: number;
 }
 

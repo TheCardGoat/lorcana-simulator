@@ -12,6 +12,7 @@
     Settings,
     Swords,
     Trash2,
+    Users,
     X,
     OctagonX,
   } from "@lucide/svelte";
@@ -21,6 +22,7 @@
   import { ScrollArea } from "$lib/design-system/primitives/scroll-area";
   import { m } from "$lib/i18n/messages.js";
   import SimulatorSupportActions from "@/features/simulator/support/SimulatorSupportActions.svelte";
+  import SimulatorSupportReminder from "@/features/simulator/support/SimulatorSupportReminder.svelte";
   import type { BugReportContext } from "@/features/simulator/support/feedback-api.js";
   import type {
     ActionAvailableMovesSelectionState,
@@ -40,6 +42,11 @@
     sortBottomSeatMoveSummaries,
   } from "@/features/simulator/panels/mobile-player-menubar.js";
   import { getMoveCategoryIcon } from "@/features/simulator/model/action-icons.js";
+  import PlayerTimer from "@/features/simulator/panels/PlayerTimer.svelte";
+  import type {
+    ConfirmableDirectMoveCategoryId,
+  } from "@/features/simulator/model/direct-action-state.js";
+  import type { LorcanaPlayerTimerSummary } from "@/features/simulator/model/contracts.js";
 
   interface CompactPlayerSummary {
     label: string;
@@ -64,6 +71,10 @@
     actionCount?: number;
     moveSummaries?: MoveCategorySummary[];
     activeMoveCategoryId?: ExecutableMovePresentationCategoryId | null;
+    timer?: LorcanaPlayerTimerSummary;
+    questAllCount?: number | null;
+    questAllLore?: number | null;
+    armedDirectCategoryId?: ConfirmableDirectMoveCategoryId | null;
     pendingCount?: number;
     hasPendingEffects?: boolean;
     pendingEffectsOpen?: boolean;
@@ -78,6 +89,10 @@
     onOpenPendingEffects?: () => void;
     onOpenSettings?: () => void;
     onOpenSupport?: () => void;
+    supportReminderText?: string | null;
+    onDismissSupportReminder?: () => void;
+    onOpenFeedback?: () => void;
+    onOpenBugReport?: () => void;
     onOpenCardPreview?: () => void;
     onConcede?: () => void;
     onReportPlayer?: () => void;
@@ -90,6 +105,10 @@
     actionCount = 0,
     moveSummaries = [],
     activeMoveCategoryId = null,
+    timer,
+    questAllCount = null,
+    questAllLore = null,
+    armedDirectCategoryId = null,
     pendingCount = 0,
     hasPendingEffects = false,
     pendingEffectsOpen = false,
@@ -104,6 +123,10 @@
     onOpenPendingEffects,
     onOpenSettings,
     onOpenSupport,
+    supportReminderText = null,
+    onDismissSupportReminder,
+    onOpenFeedback,
+    onOpenBugReport,
     onOpenCardPreview,
     onConcede,
     onReportPlayer,
@@ -139,11 +162,11 @@
   const loreMaskStyle = `mask-image: url("${loreIconUrl}"); -webkit-mask-image: url("${loreIconUrl}");`;
   const confirmationMoveCategoryIds = new Set<ExecutableMovePresentationCategoryId>([
     "concede",
-    "pass-turn",
   ]);
   const moveStripBlockedCategoryIds = new Set<ExecutableMovePresentationCategoryId>([
     "concede",
     "pass-turn",
+    "quest-all",
   ]);
   const passTurnSummary = $derived(
     seat === "bottom"
@@ -151,6 +174,38 @@
       : null,
   );
   const passTurnAvailable = $derived(passTurnSummary !== null);
+  const questAllSummary = $derived(
+    seat === "bottom"
+      ? moveSummaries.find((summary) => summary.categoryId === "quest-all") ?? null
+      : null,
+  );
+  const questAllAvailable = $derived(
+    questAllSummary !== null && questAllLore !== null && questAllCount !== null,
+  );
+  const passTurnArmed = $derived(armedDirectCategoryId === "pass-turn");
+  const questAllArmed = $derived(armedDirectCategoryId === "quest-all");
+  const passTurnButtonLabel = $derived(
+    passTurnArmed
+      ? m["sim.actions.confirmMoveLabel"]({ label: m["sim.actions.label.passTurn"]({}) })
+      : "Pass",
+  );
+  const questAllButtonLabel = $derived(
+    questAllArmed
+      ? "Confirm"
+      : questAllLore !== null && questAllCount !== null
+        ? m["sim.actions.label.questWithAll"]({ count: questAllCount, lore: questAllLore })
+        : m["sim.actions.label.questAll"]({}),
+  );
+  const questAllButtonMeta = $derived(
+    questAllLore !== null && questAllCount !== null
+      ? `${questAllCount} Ready | +${questAllLore} Lore`
+      : null,
+  );
+  const questAllAriaLabel = $derived(
+    questAllLore !== null && questAllCount !== null
+      ? `Quest with all using ${questAllCount} character${questAllCount === 1 ? "" : "s"} for ${questAllLore} lore`
+      : "Quest with all",
+  );
   const safeMoveSummaries = $derived.by(() =>
     seat === "bottom"
       ? moveSummaries.filter((summary) => !moveStripBlockedCategoryIds.has(summary.categoryId))
@@ -228,7 +283,16 @@
     }
 
     markBottomControlAsRevealed("pass-turn");
-    openMoveConfirmation("pass-turn");
+    onExecuteMoveCategory?.("pass-turn");
+  }
+
+  function handleQuestAllClick(): void {
+    if (!questAllAvailable) {
+      return;
+    }
+
+    markBottomControlAsRevealed("quest-all");
+    onExecuteMoveCategory?.("quest-all");
   }
 
   function handleMoveCategoryClick(categoryId: ExecutableMovePresentationCategoryId): void {
@@ -256,22 +320,13 @@
   }
 
   function openMoveConfirmation(categoryId: ExecutableMovePresentationCategoryId): void {
-    moveConfirmation =
-      categoryId === "concede"
-        ? {
-            categoryId,
-            title: "Concede game?",
-            description: "This will immediately end the current match for you.",
-            confirmLabel: "Concede",
-            tone: "danger",
-          }
-        : {
-            categoryId,
-            title: "Pass turn?",
-            description: "You will end your turn and give up any remaining actions.",
-            confirmLabel: "Pass turn",
-            tone: "default",
-          };
+    moveConfirmation = {
+      categoryId,
+      title: "Concede game?",
+      description: "This will immediately end the current match for you.",
+      confirmLabel: "Concede",
+      tone: "danger",
+    };
     confirmDialogOpen = true;
   }
 
@@ -324,6 +379,19 @@
         class="mobile-menubar-center"
         data-testid="mobile-bottom-center"
       >
+        {#if timer}
+          <div class="mobile-turn-status" data-testid="mobile-bottom-timer">
+            <PlayerTimer
+              reserveMsRemaining={timer.reserveMsRemaining}
+              isActive={timer.isActive}
+              isRunning={timer.isRunning}
+              startedAtMs={timer.startedAtMs}
+              timeoutCount={timer.timeoutCount}
+              isInNegativeTime={timer.isInNegativeTime}
+            />
+          </div>
+        {/if}
+
         <div class="mobile-move-strip" aria-label="Available moves" data-testid="mobile-bottom-move-strip">
           {#each moveButtonSummaries as summary (summary.categoryId)}
             {@const Icon = summary.icon}
@@ -384,18 +452,41 @@
       </div>
 
       <div class="mobile-menubar-secondary" data-testid="mobile-bottom-secondary">
+        {#if questAllAvailable}
+          <Button
+            variant="outline"
+            size="icon-sm"
+            class={`mobile-anchor-button mobile-stack-button quick-action mobile-bottom-control${questAllArmed || isBottomControlRevealed(revealedBottomControls, "quest-all") ? " quick-action--revealed" : " quick-action--icon-only"}${questAllArmed ? " quick-action--primary" : ""}`}
+            onclick={handleQuestAllClick}
+            aria-label={questAllAriaLabel}
+            title={questAllAriaLabel}
+            data-testid="mobile-bottom-quest-all"
+          >
+            {#if questAllArmed || isBottomControlRevealed(revealedBottomControls, "quest-all")}
+              <span class="quick-action__label-group">
+                <span class="quick-action__label">{questAllButtonLabel}</span>
+                {#if questAllButtonMeta}
+                  <span class="quick-action__meta">{questAllButtonMeta}</span>
+                {/if}
+              </span>
+            {:else}
+              <Users class="size-4" />
+            {/if}
+          </Button>
+        {/if}
+
         <Button
           variant="outline"
           size="icon-sm"
-          class={`mobile-anchor-button mobile-side-button quick-action mobile-bottom-control${isBottomControlRevealed(revealedBottomControls, "pass-turn") ? " quick-action--revealed" : " quick-action--icon-only"}${passTurnAvailable ? "" : " mobile-side-button--disabled"}`}
+          class={`mobile-anchor-button mobile-side-button mobile-stack-button quick-action mobile-bottom-control${passTurnArmed || isBottomControlRevealed(revealedBottomControls, "pass-turn") ? " quick-action--revealed" : " quick-action--icon-only"}${passTurnArmed ? " quick-action--primary" : ""}${passTurnAvailable ? "" : " mobile-side-button--disabled"}`}
           onclick={handlePassTurnClick}
           disabled={!passTurnAvailable}
-          aria-label={passTurnAvailable ? "Pass turn" : "Pass turn unavailable"}
-          title={passTurnAvailable ? "Pass turn" : "Pass turn unavailable"}
+          aria-label={passTurnAvailable ? passTurnButtonLabel : "Pass turn unavailable"}
+          title={passTurnAvailable ? passTurnButtonLabel : "Pass turn unavailable"}
           data-testid="mobile-bottom-pass-turn"
         >
-          {#if isBottomControlRevealed(revealedBottomControls, "pass-turn")}
-            <span class="quick-action__label">Pass</span>
+          {#if passTurnArmed || isBottomControlRevealed(revealedBottomControls, "pass-turn")}
+            <span class="quick-action__label">{passTurnButtonLabel}</span>
           {:else}
             <Flag class="size-4" />
           {/if}
@@ -423,6 +514,14 @@
       </Button>
 
       <div data-slot="button-group" class="mobile-action-group">
+        {#if supportReminderText && onOpenSupport}
+          <SimulatorSupportReminder
+            text={supportReminderText}
+            onOpen={onOpenSupport}
+            onDismiss={onDismissSupportReminder}
+          />
+        {/if}
+
         <Button
           variant="outline"
           size="icon-sm"
@@ -521,7 +620,11 @@
               <p class="sheet-support-actions__description">
                 {m["sim.support.description"]({})}
               </p>
-              <SimulatorSupportActions surface="sheet" gameContext={bugReportContext} />
+              <SimulatorSupportActions
+                surface="sheet"
+                onOpenBugReport={onOpenBugReport}
+                onOpenFeedback={onOpenFeedback}
+              />
             </div>
 
             <button
@@ -645,6 +748,11 @@
     flex: 0 0 auto;
   }
 
+  .mobile-menubar-secondary {
+    display: grid;
+    gap: 0.22rem;
+  }
+
   .mobile-menubar-center {
     display: flex;
     min-width: 0;
@@ -657,6 +765,12 @@
     background: rgba(15, 23, 42, 0.82);
     padding: 0.18rem 0.22rem;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .mobile-turn-status {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
   }
 
   .mobile-menubar-utility {
@@ -734,6 +848,11 @@
   :global(.mobile-side-button) {
     width: 2.6rem;
     min-width: 2.6rem;
+  }
+
+  :global(.mobile-stack-button) {
+    width: 100%;
+    min-width: 2.8rem;
   }
 
   :global(.mobile-side-button--disabled) {
@@ -875,6 +994,21 @@
     justify-content: center;
     white-space: nowrap;
     line-height: 1;
+  }
+
+  .quick-action__label-group {
+    display: grid;
+    justify-items: center;
+    gap: 0.1rem;
+  }
+
+  .quick-action__meta {
+    font-size: 0.55rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(224, 242, 254, 0.82);
   }
 
   .quick-action__badge {

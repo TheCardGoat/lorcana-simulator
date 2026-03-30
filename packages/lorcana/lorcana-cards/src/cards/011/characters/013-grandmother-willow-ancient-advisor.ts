@@ -33,17 +33,35 @@ export const grandmotherWillowAncientAdvisor: CharacterCard = {
   abilities: [
     {
       id: "r79-1",
-      type: "activated",
       name: "SMOOTH THE WAY",
-      cost: {},
-      restrictions: [
-        {
-          type: "once-per-turn",
-        },
-      ],
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
       effect: {
         type: "cost-reduction",
         amount: 1,
+        target: "CONTROLLER",
+        cardType: "character",
+        duration: "next-play-this-turn",
+      },
+      text: "SMOOTH THE WAY Once during your turn, you pay 1 {I} less for the next character you play this turn.",
+    },
+    {
+      id: "r79-2",
+      name: "SMOOTH THE WAY",
+      type: "triggered",
+      trigger: {
+        event: "start-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      effect: {
+        type: "cost-reduction",
+        amount: 1,
+        target: "CONTROLLER",
         cardType: "character",
         duration: "next-play-this-turn",
       },

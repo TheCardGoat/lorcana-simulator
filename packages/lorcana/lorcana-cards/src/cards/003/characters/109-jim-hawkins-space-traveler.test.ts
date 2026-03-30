@@ -45,7 +45,7 @@ describe("Jim Hawkins - Space Traveler", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(jimHawkinsSpaceTraveler, {
           resolveOptional: true,
           targets: [locationId],
         }),
@@ -66,7 +66,7 @@ describe("Jim Hawkins - Space Traveler", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(jimHawkinsSpaceTraveler, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -88,7 +88,7 @@ describe("Jim Hawkins - Space Traveler", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(jimHawkinsSpaceTraveler, {
           resolveOptional: true,
           targets: [locationId],
         }),
@@ -114,7 +114,7 @@ describe("Jim Hawkins - Space Traveler", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(jimHawkinsSpaceTraveler, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -138,7 +138,7 @@ describe("Jim Hawkins - Space Traveler", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(jimHawkinsSpaceTraveler, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -162,7 +162,7 @@ describe("Jim Hawkins - Space Traveler", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [thisIsItBagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(thisIsItBagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(jimHawkinsSpaceTraveler, {
           resolveOptional: true,
           targets: [locationId],
         }),
@@ -175,7 +175,7 @@ describe("Jim Hawkins - Space Traveler", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [takeTheHelmBagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(takeTheHelmBagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(jimHawkinsSpaceTraveler, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -199,7 +199,7 @@ describe("Jim Hawkins - Space Traveler", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(jimHawkinsSpaceTraveler, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();

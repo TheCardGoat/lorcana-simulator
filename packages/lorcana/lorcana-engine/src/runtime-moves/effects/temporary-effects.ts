@@ -3,6 +3,7 @@ import type {
   LorcanaCardMeta,
   TemporaryGrantedAbilityPayload,
   TemporaryKeywordPayload,
+  TemporaryPlayerRestrictionPayload,
   TemporaryRestrictionPayload,
   TemporaryPlayerRestrictionsState,
 } from "../../types";
@@ -130,6 +131,36 @@ function normalizeRestrictionPayloadMap(raw: unknown): Record<string, TemporaryR
     }
 
     normalized[key] = payload as unknown as TemporaryRestrictionPayload;
+  }
+
+  return normalized;
+}
+
+function normalizePlayerRestrictionPayloadMap(
+  raw: unknown,
+): Record<string, TemporaryPlayerRestrictionPayload> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return {};
+  }
+
+  const normalized: Record<string, TemporaryPlayerRestrictionPayload> = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (
+      typeof key !== "string" ||
+      key.length === 0 ||
+      !value ||
+      typeof value !== "object" ||
+      Array.isArray(value)
+    ) {
+      continue;
+    }
+
+    const payload = value as Record<string, unknown>;
+    if (typeof payload.type !== "string" || payload.type.trim().length === 0) {
+      continue;
+    }
+
+    normalized[key] = payload as unknown as TemporaryPlayerRestrictionPayload;
   }
 
   return normalized;
@@ -726,10 +757,15 @@ export function pruneExpiredTemporaryEffects(
 function getPlayerRestrictionMaps(
   state: TemporaryPlayerRestrictionsState,
   playerId: PlayerId,
-): { restrictions: Record<string, number>; starts: Record<string, number> } {
+): {
+  restrictions: Record<string, number>;
+  starts: Record<string, number>;
+  payloads: Record<string, TemporaryPlayerRestrictionPayload>;
+} {
   return {
     restrictions: normalizeEffectMap(state.restrictionsByPlayer[playerId]),
     starts: normalizeEffectMap(state.startsByPlayer[playerId]),
+    payloads: normalizePlayerRestrictionPayloadMap(state.payloadsByPlayer?.[playerId]),
   };
 }
 
@@ -739,6 +775,7 @@ export function addTemporaryPlayerRestriction(
   restriction: string,
   expiresAtTurn: number,
   startsAtTurn?: number,
+  payload?: TemporaryPlayerRestrictionPayload,
 ): TemporaryPlayerRestrictionsState {
   const normalizedRestriction = normalizeTemporaryKey(restriction);
   if (!normalizedRestriction) {
@@ -760,7 +797,8 @@ export function addTemporaryPlayerRestriction(
 
   const nextRestrictionsByPlayer = { ...state.restrictionsByPlayer };
   const nextStartsByPlayer = { ...state.startsByPlayer };
-  const { restrictions, starts } = getPlayerRestrictionMaps(state, playerId);
+  const nextPayloadsByPlayer = { ...state.payloadsByPlayer };
+  const { restrictions, starts, payloads } = getPlayerRestrictionMaps(state, playerId);
   const currentExpiry = restrictions[normalizedRestriction] ?? 0;
 
   if (normalizedExpiresAtTurn > currentExpiry) {
@@ -775,10 +813,15 @@ export function addTemporaryPlayerRestriction(
 
   nextRestrictionsByPlayer[playerId] = restrictions;
   nextStartsByPlayer[playerId] = starts;
+  if (payload && typeof payload.type === "string" && payload.type.trim().length > 0) {
+    payloads[normalizedRestriction] = payload;
+  }
+  nextPayloadsByPlayer[playerId] = payloads;
 
   return {
     restrictionsByPlayer: nextRestrictionsByPlayer,
     startsByPlayer: nextStartsByPlayer,
+    payloadsByPlayer: nextPayloadsByPlayer,
   };
 }
 
@@ -813,12 +856,14 @@ export function pruneExpiredTemporaryPlayerRestrictions(
 
   const restrictionsByPlayer: Record<PlayerId, Record<string, number>> = {};
   const startsByPlayer: Record<PlayerId, Record<string, number>> = {};
+  const payloadsByPlayer: Record<PlayerId, Record<string, TemporaryPlayerRestrictionPayload>> = {};
 
   for (const playerId of new Set<PlayerId>([
     ...(Object.keys(state.restrictionsByPlayer) as PlayerId[]),
     ...(Object.keys(state.startsByPlayer) as PlayerId[]),
+    ...(Object.keys(state.payloadsByPlayer ?? {}) as PlayerId[]),
   ])) {
-    const { restrictions, starts } = getPlayerRestrictionMaps(state, playerId);
+    const { restrictions, starts, payloads } = getPlayerRestrictionMaps(state, playerId);
 
     for (const [restriction, expiryTurn] of Object.entries(restrictions)) {
       if (isEffectExpired({ expiresAtTurn: expiryTurn }, currentTurn)) {
@@ -831,6 +876,11 @@ export function pruneExpiredTemporaryPlayerRestrictions(
         delete starts[restriction];
       }
     }
+    for (const restriction of Object.keys(payloads)) {
+      if (!(restriction in restrictions)) {
+        delete payloads[restriction];
+      }
+    }
 
     if (Object.keys(restrictions).length > 0) {
       restrictionsByPlayer[playerId] = restrictions;
@@ -838,10 +888,14 @@ export function pruneExpiredTemporaryPlayerRestrictions(
     if (Object.keys(starts).length > 0) {
       startsByPlayer[playerId] = starts;
     }
+    if (Object.keys(payloads).length > 0) {
+      payloadsByPlayer[playerId] = payloads;
+    }
   }
 
   return {
     restrictionsByPlayer,
     startsByPlayer,
+    payloadsByPlayer,
   };
 }

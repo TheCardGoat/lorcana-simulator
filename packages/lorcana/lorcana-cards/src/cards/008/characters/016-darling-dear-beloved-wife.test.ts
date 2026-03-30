@@ -14,7 +14,7 @@ describe("Darling Dear - Beloved Wife", () => {
 
     expect(testEngine.asPlayerOne().playCard(darlingDearBelovedWife)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
+      testEngine.asPlayerOne().resolvePendingByCard(darlingDearBelovedWife, {
         targets: [mickeyMouseTrueFriend],
       }),
     ).toBeSuccessfulCommand();

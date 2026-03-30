@@ -40,7 +40,9 @@ describe("Aunt Cass - Biggest Fan", () => {
       // Resolve the triggered ability
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(auntCassBiggestFan),
+      ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           targets: [inventorCharacter],
@@ -81,7 +83,9 @@ describe("Aunt Cass - Biggest Fan", () => {
       expect(testEngine.asPlayerOne().quest(auntCassBiggestFan)).toBeSuccessfulCommand();
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(auntCassBiggestFan),
+      ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           targets: [inventorCharacter],

@@ -56,7 +56,9 @@ describe("Scar - Mastermind", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [opposingCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scarMastermind, { targets: [opposingCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(strengthBefore - 5);

@@ -30,7 +30,7 @@ describe("Chip - Quick Thinker", () => {
 
     const bagEffect = testEngine.asPlayerOne().getBagEffects()[0];
     expect(bagEffect).toBeDefined();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(chipQuickThinker)).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().respondWith(opponentHandCard1)).toBeSuccessfulCommand();
 

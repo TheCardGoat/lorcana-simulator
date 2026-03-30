@@ -41,7 +41,9 @@ describe("Gosalyn Mallard - Curious Child", () => {
     expect(testEngine.asPlayerOne().playCard(gosalynMallardCuriousChild)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(gosalynMallardCuriousChild),
+    ).toBeSuccessfulCommand();
 
     expect(
       testEngine.asPlayerOne().resolveNextPending({

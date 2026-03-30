@@ -73,7 +73,7 @@ describe("Simba - King in the Making", () => {
       // Accept the optional trigger
       const [bagEffect] = playerOne.getBagEffects();
       expect(
-        playerOne.resolveBag(bagEffect!.id, {
+        playerOne.resolvePendingByCard(simbaKingInTheMaking, {
           resolveOptional: true,
           destinations: [{ zone: "play", cards: [topDeckCharacter] }],
         }),
@@ -104,7 +104,7 @@ describe("Simba - King in the Making", () => {
       // Accept the optional trigger - put non-character on bottom
       const [bagEffect] = playerOne.getBagEffects();
       expect(
-        playerOne.resolveBag(bagEffect!.id, {
+        playerOne.resolvePendingByCard(simbaKingInTheMaking, {
           resolveOptional: true,
           destinations: [{ zone: "deck-bottom", cards: [topDeckAction] }],
         }),
@@ -131,7 +131,7 @@ describe("Simba - King in the Making", () => {
       // TIMELY ALLIANCE should trigger (optional bag)
       const [bagEffect] = playerOne.getBagEffects();
       expect(
-        playerOne.resolveBag(bagEffect!.id, { resolveOptional: false }),
+        playerOne.resolvePendingByCard(simbaKingInTheMaking, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Character should still be in deck

@@ -55,9 +55,26 @@ export const goofyGalumphingGumshoe: CharacterCard = {
       text: "HOT PURSUIT When you play this character and whenever he quests, each opposing character gets -1 {S} until the start of your next turn.",
       trigger: {
         event: "play",
-        events: ["quest"],
         on: "SELF",
         timing: "when",
+      },
+      type: "triggered",
+    },
+    {
+      effect: {
+        duration: "until-start-of-next-turn",
+        modifier: -1,
+        stat: "strength",
+        target: "ALL_OPPOSING_CHARACTERS",
+        type: "modify-stat",
+      },
+      id: "1mo-3",
+      name: "HOT PURSUIT",
+      text: "HOT PURSUIT When you play this character and whenever he quests, each opposing character gets -1 {S} until the start of your next turn.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
       },
       type: "triggered",
     },

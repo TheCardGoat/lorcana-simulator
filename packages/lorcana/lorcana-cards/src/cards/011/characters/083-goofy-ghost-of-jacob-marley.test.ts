@@ -70,7 +70,9 @@ describe("Goofy - Ghost of Jacob Marley", () => {
       // GRAVE OUTCOME triggers: Player One (opponent) must discard 1 card
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       if (bagEffects.length > 0) {
-        expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(goofyGhostOfJacobMarley),
+        ).toBeSuccessfulCommand();
         expect(
           testEngine.asPlayerOne().resolveNextPending({ targets: [handFodder1] }),
         ).toBeSuccessfulCommand();
@@ -123,7 +125,9 @@ describe("Goofy - Ghost of Jacob Marley", () => {
       // GRAVE OUTCOME triggers: Player One (opponent) must discard 2 cards
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       if (bagEffects.length > 0) {
-        expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(goofyGhostOfJacobMarley),
+        ).toBeSuccessfulCommand();
         expect(
           testEngine.asPlayerOne().resolveNextPending({
             targets: [handFodder1, handFodder2],

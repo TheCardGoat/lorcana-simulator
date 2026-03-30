@@ -37,6 +37,7 @@ export const johnSmithUndauntedProtector: CharacterCard = {
     bodyguard,
     {
       id: "h1O-2",
+      name: "DO YOUR WORST",
       type: "static",
       text: "DO YOUR WORST Opponents must choose this character for actions and abilities if able.",
       effect: {

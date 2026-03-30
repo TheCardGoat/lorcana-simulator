@@ -33,7 +33,7 @@ describe("Tanana - Wise Woman", () => {
       // Triggered ability should fire as optional
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(tananaWiseWoman, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [damagedAlly] }),
@@ -59,7 +59,7 @@ describe("Tanana - Wise Woman", () => {
       // Decline the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(tananaWiseWoman, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain unchanged
@@ -83,7 +83,9 @@ describe("Tanana - Wise Woman", () => {
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
         expect(
-          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(tananaWiseWoman, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 

@@ -32,13 +32,25 @@ export const simbaRightfulHeir: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Prince"],
   abilities: [
     {
+      name: "I KNOW WHAT I HAVE TO DO",
       effect: {
         amount: 1,
         type: "gain-lore",
       },
       id: "ac0-1",
-      text: "**I KNOW WHAT I HAVE TO DO** During your turn, whenever this character banishes another character in a challenge, you gain 1 lore.",
-      type: "action",
+      text: "I KNOW WHAT I HAVE TO DO During your turn, whenever this character banishes another character in a challenge, you gain 1 lore.",
+      trigger: {
+        event: "banish-in-challenge",
+        on: "SELF",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
+      },
+      type: "triggered",
     },
   ],
   i18n: simbaRightfulHeirI18n,

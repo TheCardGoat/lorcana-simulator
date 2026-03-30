@@ -1,36 +1,52 @@
 import { createFixture } from "./fixture-factory";
+import { friendsOnTheOtherSide, hakunaMatata, reflection } from "@tcg/lorcana-cards/cards/001";
+import { diabloFaithfulPet } from "@tcg/lorcana-cards/cards/003";
 import {
-  genieOnTheJob,
-  geniePowersUnleashed,
-  hakunaMatata,
-  mickeyMouseTrueFriend,
-  reflection,
-} from "@tcg/lorcana-cards/cards/001";
-import { moanaDeterminedExplorer } from "@tcg/lorcana-cards/cards/005";
-import { chipFriendIndeed, chipNDaleRecoveryRangers } from "@tcg/lorcana-cards/cards/006";
-import { daleBumbler } from "@tcg/lorcana-cards/cards/008";
-import { balooCarefreeBear, balooLaidbackBear } from "@tcg/lorcana-cards/cards/010";
+  aladdinBraveRescuer,
+  aladdinResoluteSwordsman,
+  diabloDevotedHerald,
+  flotsamJetsamEntanglingEels,
+  flotsamUrsulasBaby,
+  hiddenCoveTranquilHaven,
+  jetsamUrsulasBaby,
+  ursulaEricsBride,
+  ursulaVanessa,
+} from "@tcg/lorcana-cards/cards/004";
+import { baymaxGiantRobot, thunderboltWonderDog } from "@tcg/lorcana-cards/cards/007";
+import { dalmatianPuppyTailWagger } from "@tcg/lorcana-cards/cards/008";
 
 export const shiftFixture = createFixture({
   id: "shift",
   name: "Shift",
   description:
-    "Testing shift UI: universal shift, named shift (single name), and named shift (multiple names)",
+    "Testing shift UI: Universal Shift, Puppy Shift, discard-cost Shift, and named Shift with multiple target names",
   skipPreGame: true,
   playerOne: {
     inkwell: 20,
-    hand: [balooCarefreeBear, geniePowersUnleashed, chipNDaleRecoveryRangers],
+    hand: [
+      baymaxGiantRobot,
+      thunderboltWonderDog,
+      diabloDevotedHerald,
+      ursulaEricsBride,
+      aladdinBraveRescuer,
+      flotsamJetsamEntanglingEels,
+      reflection,
+      hakunaMatata,
+      hiddenCoveTranquilHaven,
+      friendsOnTheOtherSide,
+    ],
     play: [
-      balooLaidbackBear,
-      genieOnTheJob,
-      chipFriendIndeed,
-      daleBumbler,
-      moanaDeterminedExplorer,
+      dalmatianPuppyTailWagger,
+      diabloFaithfulPet,
+      ursulaVanessa,
+      aladdinResoluteSwordsman,
+      flotsamUrsulasBaby,
+      jetsamUrsulasBaby,
     ],
     deck: [reflection, hakunaMatata],
   },
   playerTwo: {
-    hand: [mickeyMouseTrueFriend, reflection, hakunaMatata],
+    hand: [reflection, hakunaMatata],
     play: [],
     deck: [hakunaMatata, reflection],
   },

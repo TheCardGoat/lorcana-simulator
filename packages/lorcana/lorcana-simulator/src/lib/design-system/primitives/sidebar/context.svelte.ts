@@ -1,5 +1,5 @@
 import { IsMobile } from "$lib/hooks/is-mobile.svelte.js";
-import { getContext, setContext } from "svelte";
+import { getContext, hasContext, setContext } from "svelte";
 import { SIDEBAR_KEYBOARD_SHORTCUT } from "./constants.js";
 
 type Getter<T> = () => T;
@@ -75,5 +75,12 @@ export function setSidebar(props: SidebarStateProps): SidebarState {
  * @returns The `SidebarState` instance.
  */
 export function useSidebar(): SidebarState {
+  if (!hasContext(Symbol.for(SYMBOL_KEY))) {
+    return new SidebarState({
+      open: () => true,
+      setOpen: () => {},
+    });
+  }
+
   return getContext(Symbol.for(SYMBOL_KEY));
 }

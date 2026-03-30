@@ -36,7 +36,9 @@ describe("Perdita - Determined Mother", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(perditaDeterminedMother, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // All Puppy characters should be in inkwell, facedown, and exerted
@@ -68,7 +70,9 @@ describe("Perdita - Determined Mother", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(perditaDeterminedMother, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // All cards should remain in discard

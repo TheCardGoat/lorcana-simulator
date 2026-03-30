@@ -223,7 +223,7 @@
           {...getDisplayDimensions("medium")}
           aspectRatio={ASPECT_RATIOS.full}
         />
-        <p class="story-label">Exerted (90° rotation)</p>
+        <p class="story-label">Exerted (35° rotation)</p>
       </div>
       <div class="story-item">
         <CardFace

@@ -66,7 +66,7 @@ describe("Merlin - Shapeshifter", () => {
 
       expect(testEngine.asPlayerOne().playCard(madamMimFox)).toBeSuccessfulCommand();
 
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimFox);
       expect(
         testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1, targets: [otherCharacter] }),
       ).toBeSuccessfulCommand();
@@ -89,7 +89,7 @@ describe("Merlin - Shapeshifter", () => {
 
       expect(testEngine.asPlayerOne().playCard(madamMimFox)).toBeSuccessfulCommand();
 
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimFox);
       expect(
         testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1, targets: [otherCharacter] }),
       ).toBeSuccessfulCommand();
@@ -125,7 +125,7 @@ describe("Merlin - Shapeshifter", () => {
 
       expect(testEngine.asPlayerOne().playCard(madamMimFox)).toBeSuccessfulCommand();
 
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimFox);
       expect(
         testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1, targets: [otherCharacter] }),
       ).toBeSuccessfulCommand();
@@ -194,7 +194,7 @@ describe("Merlin - Shapeshifter", () => {
 
       const bagEffects1 = testEngine2.asPlayerOne().getBagEffects();
       expect(
-        testEngine2.asPlayerOne().resolveBag(bagEffects1[0]!.id, { targets: [otherCharacter] }),
+        testEngine2.asPlayerOne().resolvePendingByCard(returnCard1, { targets: [otherCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine2.asPlayerOne().getCardZone(otherCharacter)).toBe("hand");
@@ -206,7 +206,7 @@ describe("Merlin - Shapeshifter", () => {
 
       const bagEffects2 = testEngine2.asPlayerOne().getBagEffects();
       expect(
-        testEngine2.asPlayerOne().resolveBag(bagEffects2[0]!.id, { targets: [otherCharacter3] }),
+        testEngine2.asPlayerOne().resolvePendingByCard(returnCard2, { targets: [otherCharacter3] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine2.asPlayerOne().getCardZone(otherCharacter3)).toBe("hand");

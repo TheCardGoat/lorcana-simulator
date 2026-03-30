@@ -26,7 +26,9 @@ describe("Maid Marian - Lady of the Lists", () => {
       expect(testEngine.asPlayerOne().playCard(maidMarianLadyOfTheLists)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opposingCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maidMarianLadyOfTheLists, { targets: [opposingCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(

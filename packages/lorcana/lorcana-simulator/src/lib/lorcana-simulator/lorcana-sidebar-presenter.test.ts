@@ -4,6 +4,7 @@ import {
   type CardInstanceId,
   type LorcanaProjectedBoardView,
 } from "@tcg/lorcana-engine";
+import "../../testing/public-env";
 import { m } from "$lib/i18n/messages.js";
 
 import { LorcanaSidebarPresenter } from "@/features/simulator/presenters/sidebar-presenter.svelte.js";
@@ -104,10 +105,8 @@ function createGameContextStub(
     executeMove: () => false,
     playCard: () => false,
     ink: () => false,
-    canDragCharacterToLocation: () => false,
     canMoveCharacterToLocation: () => false,
     canDropHandCardIntoZone: () => false,
-    usesTargetedPlayCardDrag: () => false,
     handleBoardAnchorsChange: () => {},
     getOwnerIdForSide: () => null,
     getPlayerVisualSettings: () => DEFAULT_LORCANA_PLAYER_VISUAL_SETTINGS,
@@ -285,6 +284,16 @@ describe("LorcanaSidebarPresenter", () => {
     expect(presenter.showRawLogRegistryJson).toBe(true);
   });
 
+  it("defaults skip action confirmation to disabled when no value is stored", () => {
+    const storage = new MemoryStorage();
+    globalThis.localStorage = storage;
+
+    const presenter = new LorcanaSidebarPresenter(createGameContextStub());
+    presenter.initializeLocale();
+
+    expect(presenter.skipActionConfirmation).toBe(false);
+  });
+
   it("persists raw-log toggle changes back to localStorage", () => {
     const storage = new MemoryStorage();
     globalThis.localStorage = storage;
@@ -361,6 +370,12 @@ describe("LorcanaSidebarPresenter", () => {
       name: "Maleficent - Sorceress",
       type: "character",
     });
+    card.textEntries = [
+      {
+        title: "POWER FROM DARKNESS",
+        description: "When you play this character, you may draw a card.",
+      },
+    ];
     const board = createBoardWithBagEffect({
       id: "bag-1",
       sourceId: "card-1",
@@ -393,6 +408,8 @@ describe("LorcanaSidebarPresenter", () => {
 
     const presenterWithSelection = new LorcanaSidebarPresenter(
       createGameContextStub({
+        ownerSide: () => "playerOne" as const,
+        getOwnerIdForSide: (side) => (side === "playerOne" ? playerOneId : playerTwoId),
         boardSnapshot: () => board,
         cardSnapshotsById: () => ({
           [card.cardId]: card,
@@ -425,6 +442,9 @@ describe("LorcanaSidebarPresenter", () => {
       canAccept: true,
       canReject: true,
     });
+    expect(item?.detail).toBe(
+      "Resolve optional effect from Maleficent - Sorceress: POWER FROM DARKNESS. When you play this character, you may draw a card.",
+    );
 
     item?.onAccept?.();
 
@@ -447,6 +467,7 @@ describe("LorcanaSidebarPresenter", () => {
   });
 
   it("shows inline accept and decline actions for auto-opened optional pending effects", () => {
+    const executedMoves: Array<Record<string, unknown>> = [];
     const sourceCard = createCardSnapshot("playerOne", "play", {
       id: "card-1",
       name: "Maleficent - Sorceress",
@@ -497,6 +518,10 @@ describe("LorcanaSidebarPresenter", () => {
           },
         ],
         pendingResolutionAutoOpenStateId: () => 12,
+        executeMove: (_moveId, params) => {
+          executedMoves.push(params as Record<string, unknown>);
+          return true;
+        },
       }),
     );
 
@@ -508,29 +533,15 @@ describe("LorcanaSidebarPresenter", () => {
 
     item?.inlineActions?.[0]?.onClick();
 
-    expect(presenter.availableMovesSelectionState).toMatchObject({
-      mode: "resolution-optional",
-      entries: [
-        {
-          moveId: "accept",
-          label: "Accept",
-          selected: true,
+    expect(presenter.resolutionSelectionSession).toBeNull();
+    expect(executedMoves).toEqual([
+      {
+        effectId: "pending-1",
+        params: {
+          resolveOptional: true,
         },
-        {
-          moveId: "reject",
-          label: "Decline",
-          selected: false,
-        },
-      ],
-    });
-
-    expect(presenter.activePlayerGuidance).toContainEqual({
-      id: "resolution-optional-inline",
-      message: "This effect can be accepted or declined directly from the simulator.",
-      actions: expect.any(Array),
-      mode: "default",
-      order: 2,
-    });
+      },
+    ]);
   });
 
   it("starts an inline resolution session for bag target selection and submits the chosen target", () => {
@@ -595,6 +606,8 @@ describe("LorcanaSidebarPresenter", () => {
 
     const presenter = new LorcanaSidebarPresenter(
       createGameContextStub({
+        ownerSide: () => "playerOne" as const,
+        getOwnerIdForSide: (side) => (side === "playerOne" ? playerOneId : playerTwoId),
         boardSnapshot: () => board,
         cardSnapshotsById: () => ({
           [sourceCard.cardId]: sourceCard,
@@ -728,6 +741,8 @@ describe("LorcanaSidebarPresenter", () => {
 
     const presenter = new LorcanaSidebarPresenter(
       createGameContextStub({
+        ownerSide: () => "playerOne" as const,
+        getOwnerIdForSide: (side) => (side === "playerOne" ? playerOneId : playerTwoId),
         boardSnapshot: () => board,
         cardSnapshotsById: () => ({
           [sourceCard.cardId]: sourceCard,
@@ -834,11 +849,18 @@ describe("LorcanaSidebarPresenter", () => {
   });
 
   it("auto-opens the single optional pending resolution into the sidebar", () => {
+    const executedMoves: Array<Record<string, unknown>> = [];
     const sourceCard = createCardSnapshot("playerOne", "play", {
       id: "card-1",
       name: "Maleficent - Sorceress",
       type: "character",
     });
+    sourceCard.textEntries = [
+      {
+        title: "POWER FROM DARKNESS",
+        description: "When you play this character, you may draw a card.",
+      },
+    ];
     const board = createBoardWithPendingEffect({
       id: "pending-1",
       sourceId: sourceCard.cardId as CardInstanceId,
@@ -884,6 +906,10 @@ describe("LorcanaSidebarPresenter", () => {
           },
         ],
         pendingResolutionAutoOpenStateId: () => 12,
+        executeMove: (_moveId, params) => {
+          executedMoves.push(params as Record<string, unknown>);
+          return true;
+        },
       }),
     );
 
@@ -891,11 +917,653 @@ describe("LorcanaSidebarPresenter", () => {
 
     expect(presenter.availableMovesSelectionState).toMatchObject({
       mode: "resolution-optional",
+      message:
+        "Resolve optional effect from Maleficent - Sorceress: POWER FROM DARKNESS. When you play this character, you may draw a card.",
       entries: [
         { moveId: "accept", label: "Accept" },
         { moveId: "reject", label: "Decline" },
       ],
+      canCancel: false,
+      canConfirm: false,
     });
+    expect(presenter.activePlayerGuidance[0]?.message).toBe(
+      "Resolve optional effect from Maleficent - Sorceress: POWER FROM DARKNESS. When you play this character, you may draw a card.",
+    );
+    expect(presenter.activePlayerGuidance[0]?.actions.map((action) => action.label)).toEqual([
+      "Accept",
+      "Decline",
+    ]);
+    expect(presenter.pendingEffectsPopoverItems[0]?.onCancel).toBeUndefined();
+
+    expect(presenter.handleAvailableMovesSelectionOption("accept")).toBe(true);
+    expect(presenter.resolutionSelectionSession).toBeNull();
+    expect(executedMoves).toEqual([
+      {
+        effectId: "pending-1",
+        params: {
+          resolveOptional: true,
+        },
+      },
+    ]);
+  });
+
+  it("does not show decline for auto-opened follow-up target selection from an accepted optional effect", () => {
+    const executedMoves: Array<Record<string, unknown>> = [];
+    const sourceCard = createCardSnapshot("playerOne", "play", {
+      id: "card-1",
+      name: "Pride Lands - Jungle Oasis",
+      type: "location",
+    });
+    const targetCard = createCardSnapshot("playerOne", "discard", {
+      id: "target-1",
+      name: "Donald Duck - Pie Slinger",
+      type: "character",
+    });
+    const sourceCardId = sourceCard.cardId as CardInstanceId;
+    const targetCardId = targetCard.cardId as CardInstanceId;
+    const board = createBoardWithPendingEffect({
+      id: "pending-1",
+      sourceId: sourceCardId,
+      sourceCardId,
+      controllerId: "player_one",
+      chooserId: "player_one",
+      kind: "target-selection",
+      effect: {
+        type: "play",
+        target: "CHOSEN_CHARACTER",
+      },
+    });
+    board.stateID = 13;
+    board.pendingEffects = [
+      {
+        ...board.pendingEffects[0]!,
+        selectionContext: {
+          origin: "pending-effect",
+          requestId: "pending-1",
+          kind: "target-selection",
+          sourceCardId,
+          chooserId: playerOneId,
+          currentSelection: { resolveOptional: true },
+          submitField: "targets",
+          targetDsl: [
+            {
+              selector: "chosen",
+              count: 1,
+              zones: ["discard"],
+              cardTypes: ["character"],
+            },
+          ],
+          cardCandidateIds: [targetCardId],
+          playerCandidateIds: [],
+          allowedZones: ["discard"],
+          minSelections: 1,
+          maxSelections: 1,
+          ordered: false,
+          autoRejected: false,
+        },
+      },
+    ];
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        boardSnapshot: () => board,
+        cardSnapshotsById: () => ({
+          [sourceCard.cardId]: sourceCard,
+          [targetCard.cardId]: targetCard,
+        }),
+        pendingResolutionMoves: () => [
+          {
+            id: "resolveEffect:pending-1",
+            moveId: "resolveEffect",
+            params: { effectId: "pending-1" },
+          },
+        ],
+        pendingResolutionAutoOpenStateId: () => 13,
+        executeMove: (_moveId, params) => {
+          executedMoves.push(params as Record<string, unknown>);
+          return true;
+        },
+      }),
+    );
+
+    presenter.syncAutoOpenPendingResolution();
+
+    expect(presenter.availableMovesSelectionState).toMatchObject({
+      mode: "resolution-target",
+      canDecline: false,
+      declineLabel: undefined,
+    });
+
+    expect(presenter.handleAvailableMovesSelectionOption("reject")).toBe(false);
+    expect(presenter.resolutionSelectionSession).not.toBeNull();
+    expect(executedMoves).toEqual([]);
+  });
+
+  it("auto-opens immediate optional target selection before the yes-no step", () => {
+    const executedMoves: Array<Record<string, unknown>> = [];
+    const sourceCard = createCardSnapshot("playerOne", "play", {
+      id: "card-1",
+      name: "Jasmine - Resourceful Infiltrator",
+      type: "character",
+    });
+    const targetCard = createCardSnapshot("playerOne", "play", {
+      id: "target-1",
+      name: "Mulan - Disguised Soldier",
+      type: "character",
+    });
+    const sourceCardId = sourceCard.cardId as CardInstanceId;
+    const targetCardId = targetCard.cardId as CardInstanceId;
+    const board = createBoardWithPendingEffect({
+      id: "pending-1",
+      sourceId: sourceCardId,
+      sourceCardId,
+      controllerId: "player_one",
+      chooserId: "player_one",
+      kind: "target-selection",
+      effect: {
+        type: "ready",
+        target: "CHOSEN_CHARACTER",
+      },
+    });
+    board.stateID = 14;
+    board.pendingEffects = [
+      {
+        ...board.pendingEffects[0]!,
+        selectionContext: {
+          origin: "pending-effect",
+          requestId: "pending-1",
+          kind: "target-selection",
+          sourceCardId,
+          chooserId: playerOneId,
+          currentSelection: {},
+          submitField: "targets",
+          originatesFromOptional: true,
+          targetDsl: [
+            {
+              selector: "chosen",
+              count: 1,
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          ],
+          cardCandidateIds: [targetCardId],
+          playerCandidateIds: [],
+          allowedZones: ["play"],
+          minSelections: 1,
+          maxSelections: 1,
+          ordered: false,
+          autoRejected: false,
+        },
+      },
+    ];
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        boardSnapshot: () => board,
+        cardSnapshotsById: () => ({
+          [sourceCard.cardId]: sourceCard,
+          [targetCard.cardId]: targetCard,
+        }),
+        pendingResolutionMoves: () => [
+          {
+            id: "resolveEffect:pending-1",
+            moveId: "resolveEffect",
+            params: { effectId: "pending-1" },
+          },
+        ],
+        pendingResolutionAutoOpenStateId: () => 14,
+        executeMove: (_moveId, params) => {
+          executedMoves.push(params as Record<string, unknown>);
+          return true;
+        },
+      }),
+    );
+
+    presenter.syncAutoOpenPendingResolution();
+
+    expect(presenter.availableMovesSelectionState).toMatchObject({
+      mode: "resolution-target",
+      canCancel: true,
+      canDecline: false,
+      canConfirm: false,
+      title: "Resolve optional effect from Jasmine - Resourceful Infiltrator",
+    });
+    expect(presenter.activePlayerGuidance[0]?.actions.map((action) => action.label)).toEqual([
+      "Cancel",
+      "Confirm",
+    ]);
+
+    expect(presenter.handleAvailableMovesSelectionCard(targetCard.cardId)).toBe(true);
+    expect(presenter.confirmResolutionSelection()).toBe(true);
+    expect(executedMoves).toEqual([
+      {
+        effectId: "pending-1",
+        params: {
+          resolveOptional: true,
+          targets: [targetCardId],
+        },
+      },
+    ]);
+  });
+
+  it("replaces 'this effect' with the action card name in resolution guidance", () => {
+    const sourceCard = createCardSnapshot("playerOne", "hand", {
+      id: "card-1",
+      name: "Dragon Fire",
+      type: "action",
+    });
+    const targetCard = createCardSnapshot("playerTwo", "play", {
+      id: "target-1",
+      name: "Maui - Hero to All",
+      type: "character",
+    });
+    const sourceCardId = sourceCard.cardId as CardInstanceId;
+    const targetCardId = targetCard.cardId as CardInstanceId;
+    const board = createBoardWithPendingEffect({
+      id: "pending-1",
+      sourceId: sourceCardId,
+      sourceCardId,
+      controllerId: "player_one",
+      chooserId: "player_one",
+      kind: "target-selection",
+      cardPlayed: {
+        playerId: playerOneId,
+        cardId: sourceCardId,
+        cardType: "action",
+        costType: "standard",
+      },
+      effect: {
+        type: "banish",
+        target: "CHOSEN_CHARACTER",
+      },
+    });
+    board.stateID = 15;
+    board.pendingEffects = [
+      {
+        ...board.pendingEffects[0]!,
+        selectionContext: {
+          origin: "pending-effect",
+          requestId: "pending-1",
+          kind: "target-selection",
+          sourceCardId,
+          chooserId: playerOneId,
+          currentSelection: {},
+          submitField: "targets",
+          targetDsl: [
+            {
+              selector: "chosen",
+              count: 1,
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          ],
+          cardCandidateIds: [targetCardId],
+          playerCandidateIds: [],
+          allowedZones: ["play"],
+          minSelections: 1,
+          maxSelections: 1,
+          ordered: false,
+          autoRejected: false,
+        },
+      },
+    ];
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        boardSnapshot: () => board,
+        cardSnapshotsById: () => ({
+          [sourceCard.cardId]: sourceCard,
+          [targetCard.cardId]: targetCard,
+        }),
+        pendingResolutionMoves: () => [
+          {
+            id: "resolveEffect:pending-1",
+            moveId: "resolveEffect",
+            params: { effectId: "pending-1" },
+          },
+        ],
+        pendingResolutionAutoOpenStateId: () => 15,
+      }),
+    );
+
+    presenter.syncAutoOpenPendingResolution();
+
+    expect(presenter.activePlayerGuidance[0]).toMatchObject({
+      message: "Select the required target or player for Dragon Fire.",
+      inlineReference: {
+        label: "Dragon Fire",
+        card: { cardId: sourceCardId },
+        prefix: "Select the required target or player for ",
+        suffix: ".",
+      },
+    });
+  });
+
+  it("replaces 'this effect' with the activated ability title in resolution guidance", () => {
+    const sourceCard = createCardSnapshot("playerOne", "play", {
+      id: "card-1",
+      name: "Goofy - Musketeer",
+      type: "character",
+    });
+    sourceCard.textEntries = [
+      { title: "{E} Bodyguard Orders", description: "Ready chosen character." },
+    ];
+    const targetCard = createCardSnapshot("playerOne", "play", {
+      id: "target-1",
+      name: "Mickey Mouse - Brave Little Tailor",
+      type: "character",
+    });
+    const sourceCardId = sourceCard.cardId as CardInstanceId;
+    const targetCardId = targetCard.cardId as CardInstanceId;
+    const board = createBoardWithPendingEffect({
+      id: "pending-1",
+      sourceId: sourceCardId,
+      sourceCardId,
+      controllerId: "player_one",
+      chooserId: "player_one",
+      kind: "target-selection",
+      cardPlayed: {
+        playerId: playerOneId,
+        cardId: sourceCardId,
+        cardType: "character",
+        costType: "free",
+      },
+      effect: {
+        type: "ready",
+        target: "CHOSEN_CHARACTER",
+      },
+    });
+    board.stateID = 16;
+    board.pendingEffects = [
+      {
+        ...board.pendingEffects[0]!,
+        selectionContext: {
+          origin: "pending-effect",
+          requestId: "pending-1",
+          kind: "target-selection",
+          sourceCardId,
+          chooserId: playerOneId,
+          currentSelection: {},
+          submitField: "targets",
+          targetDsl: [
+            {
+              selector: "chosen",
+              count: 1,
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          ],
+          cardCandidateIds: [targetCardId],
+          playerCandidateIds: [],
+          allowedZones: ["play"],
+          minSelections: 1,
+          maxSelections: 1,
+          ordered: false,
+          autoRejected: false,
+        },
+      },
+    ];
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        boardSnapshot: () => board,
+        cardSnapshotsById: () => ({
+          [sourceCard.cardId]: sourceCard,
+          [targetCard.cardId]: targetCard,
+        }),
+        pendingResolutionMoves: () => [
+          {
+            id: "resolveEffect:pending-1",
+            moveId: "resolveEffect",
+            params: { effectId: "pending-1" },
+          },
+        ],
+        pendingResolutionAutoOpenStateId: () => 16,
+        executableMoves: () => [
+          createExecutableMove({
+            id: "activateAbility:card-1:0",
+            label: "Activate Bodyguard Orders",
+            moveId: "activateAbility",
+            params: { cardId: sourceCard.cardId, abilityIndex: 0 },
+            presentation: {
+              kind: "direct",
+              categoryId: "activate-ability",
+              categoryLabel: "Activate ability",
+            },
+          }),
+        ],
+        executeMove: () => true,
+      }),
+    );
+
+    presenter.handleCardAbilityByIndex(sourceCard.cardId, 0);
+    presenter.syncAutoOpenPendingResolution();
+
+    expect(presenter.activePlayerGuidance[0]).toMatchObject({
+      message: "Select the required target or player for Goofy - Musketeer: {E} Bodyguard Orders.",
+      inlineReference: {
+        label: "Goofy - Musketeer: {E} Bodyguard Orders",
+        card: { cardId: sourceCardId },
+        prefix: "Select the required target or player for ",
+        suffix: ".",
+      },
+    });
+    expect(presenter.pendingEffectsPopoverItems[0]).toMatchObject({
+      title: "Goofy - Musketeer",
+      secondaryTitle: "{E} Bodyguard Orders",
+    });
+  });
+
+  it("falls back to the card name when an activated ability title is unavailable", () => {
+    const sourceCard = createCardSnapshot("playerOne", "play", {
+      id: "card-1",
+      name: "Donald Duck - Boisterous Fowl",
+      type: "character",
+    });
+    sourceCard.textEntries = [
+      { title: "{E} First Ability", description: "Do a thing." },
+      { title: "{E} Second Ability", description: "Do another thing." },
+    ];
+    const targetCard = createCardSnapshot("playerOne", "play", {
+      id: "target-1",
+      name: "Pluto - Friendly Pooch",
+      type: "character",
+    });
+    const sourceCardId = sourceCard.cardId as CardInstanceId;
+    const targetCardId = targetCard.cardId as CardInstanceId;
+    const board = createBoardWithPendingEffect({
+      id: "pending-1",
+      sourceId: sourceCardId,
+      sourceCardId,
+      controllerId: "player_one",
+      chooserId: "player_one",
+      kind: "target-selection",
+      cardPlayed: {
+        playerId: playerOneId,
+        cardId: sourceCardId,
+        cardType: "character",
+        costType: "free",
+      },
+      effect: {
+        type: "ready",
+        target: "CHOSEN_CHARACTER",
+      },
+    });
+    board.stateID = 17;
+    board.pendingEffects = [
+      {
+        ...board.pendingEffects[0]!,
+        selectionContext: {
+          origin: "pending-effect",
+          requestId: "pending-1",
+          kind: "target-selection",
+          sourceCardId,
+          chooserId: playerOneId,
+          currentSelection: {},
+          submitField: "targets",
+          targetDsl: [
+            {
+              selector: "chosen",
+              count: 1,
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          ],
+          cardCandidateIds: [targetCardId],
+          playerCandidateIds: [],
+          allowedZones: ["play"],
+          minSelections: 1,
+          maxSelections: 1,
+          ordered: false,
+          autoRejected: false,
+        },
+      },
+    ];
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        boardSnapshot: () => board,
+        cardSnapshotsById: () => ({
+          [sourceCard.cardId]: sourceCard,
+          [targetCard.cardId]: targetCard,
+        }),
+        pendingResolutionMoves: () => [
+          {
+            id: "resolveEffect:pending-1",
+            moveId: "resolveEffect",
+            params: { effectId: "pending-1" },
+          },
+        ],
+        pendingResolutionAutoOpenStateId: () => 17,
+        executableMoves: () => [
+          createExecutableMove({
+            id: "activateAbility:card-1:2",
+            label: "Activate Missing Ability",
+            moveId: "activateAbility",
+            params: { cardId: sourceCard.cardId, abilityIndex: 2 },
+            presentation: {
+              kind: "direct",
+              categoryId: "activate-ability",
+              categoryLabel: "Activate ability",
+            },
+          }),
+        ],
+        executeMove: () => true,
+      }),
+    );
+
+    presenter.handleCardAbilityByIndex(sourceCard.cardId, 2);
+    presenter.syncAutoOpenPendingResolution();
+
+    expect(presenter.activePlayerGuidance[0]).toMatchObject({
+      message: "Select the required target or player for Donald Duck - Boisterous Fowl.",
+      inlineReference: {
+        label: "Donald Duck - Boisterous Fowl",
+        card: { cardId: sourceCardId },
+        prefix: "Select the required target or player for ",
+        suffix: ".",
+      },
+    });
+  });
+
+  it("uses source card, ability title, and target card in pending effect guidance summaries", () => {
+    const sourceCard = createCardSnapshot("playerOne", "play", {
+      id: "card-1",
+      name: "Hades - Looking for a Deal",
+      type: "character",
+    });
+    sourceCard.textEntries = [
+      {
+        title: "WHAT D'YA SAY?",
+        description:
+          "When you play this character, choose one: Return chosen opposing character to the bottom of their deck or draw 2 cards.",
+      },
+    ];
+    const targetCard = createCardSnapshot("playerTwo", "play", {
+      id: "target-1",
+      name: "Cinderella - Dream Come True",
+      type: "character",
+    });
+    const sourceCardId = sourceCard.cardId as CardInstanceId;
+    const targetCardId = targetCard.cardId as CardInstanceId;
+    const board = createBoardWithPendingEffect({
+      id: "pending-1",
+      sourceId: sourceCardId,
+      sourceCardId,
+      controllerId: "player_one",
+      chooserId: "player_one",
+      kind: "choice-selection",
+      abilityIndex: 0,
+      resolutionInput: {
+        contextTargets: targetCardId,
+      },
+      effect: {
+        type: "choice",
+        chooser: "OPPONENT",
+        optionLabels: ["put that character on the bottom of their deck", "you draw 2 cards"],
+        options: [
+          {
+            type: "put-on-bottom",
+            target: {
+              ref: "previous-target",
+            },
+          },
+          {
+            type: "draw",
+            amount: 2,
+            target: "CONTROLLER",
+          },
+        ],
+      },
+    });
+    board.pendingEffects = [
+      {
+        ...board.pendingEffects[0]!,
+        abilityIndex: 0,
+        selectionContext: {
+          origin: "pending-effect",
+          requestId: "pending-1",
+          kind: "choice-selection",
+          sourceCardId,
+          chooserId: playerOneId,
+          currentSelection: {},
+          submitField: "choiceIndex",
+          options: [
+            { index: 0, label: "put that character on the bottom of their deck", legal: true },
+            { index: 1, label: "you draw 2 cards", legal: true },
+          ],
+        },
+      },
+    ];
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        ownerSide: () => "playerOne" as const,
+        getOwnerIdForSide: (side) => (side === "playerOne" ? playerOneId : playerTwoId),
+        boardSnapshot: () => board,
+        cardSnapshotsById: () => ({
+          [sourceCard.cardId]: sourceCard,
+          [targetCard.cardId]: targetCard,
+        }),
+        pendingResolutionMoves: () => [
+          {
+            id: "resolveEffect:pending-1",
+            moveId: "resolveEffect",
+            params: { effectId: "pending-1" },
+          },
+        ],
+      }),
+    );
+
+    const expectedSummary =
+      "Resolving Hades - Looking for a Deal: WHAT D'YA SAY? targeting Cinderella - Dream Come True.";
+
+    expect(presenter.pendingEffectsPopoverItems[0]).toMatchObject({
+      title: "Hades - Looking for a Deal",
+      secondaryTitle: "WHAT D'YA SAY?",
+      summaryTitle: expectedSummary,
+    });
+    expect(presenter.activePlayerGuidance[0]?.message).toBe(expectedSummary);
   });
 
   it("lists pending choice alternatives in the sidebar and submits the chosen branch", () => {
@@ -980,6 +1648,83 @@ describe("LorcanaSidebarPresenter", () => {
         },
       },
     ]);
+  });
+
+  it("auto-opens a pending choice selection into the resolution-choice session", () => {
+    const sourceCard = createCardSnapshot("playerOne", "play", {
+      id: "card-1",
+      name: "Hades - Looking for a Deal",
+      type: "character",
+    });
+    sourceCard.textEntries = [{ title: "WHAT D'YA SAY?", description: "Choose one." }];
+    const sourceCardId = sourceCard.cardId as CardInstanceId;
+    const board = createBoardWithPendingEffect({
+      id: "pending-1",
+      sourceId: sourceCardId,
+      sourceCardId,
+      controllerId: "player_one",
+      chooserId: "player_one",
+      kind: "choice-selection",
+      effect: {
+        type: "custom",
+      },
+    });
+    board.stateID = 18;
+    board.pendingEffects = [
+      {
+        ...board.pendingEffects[0]!,
+        selectionContext: {
+          origin: "pending-effect",
+          requestId: "pending-1",
+          kind: "choice-selection",
+          sourceCardId,
+          chooserId: playerOneId,
+          currentSelection: {},
+          submitField: "choiceIndex",
+          options: [
+            {
+              index: 0,
+              label: "put that character on the bottom of their deck",
+              legal: true,
+            },
+            {
+              index: 1,
+              label: "you draw 2 cards",
+              legal: true,
+            },
+          ],
+        },
+      },
+    ];
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        boardSnapshot: () => board,
+        cardSnapshotsById: () => ({
+          [sourceCard.cardId]: sourceCard,
+        }),
+        pendingResolutionMoves: () => [
+          {
+            id: "resolveEffect:pending-1",
+            moveId: "resolveEffect",
+            params: { effectId: "pending-1" },
+          },
+        ],
+        pendingResolutionAutoOpenStateId: () => 18,
+      }),
+    );
+
+    presenter.syncAutoOpenPendingResolution();
+
+    expect(presenter.availableMovesSelectionState).toMatchObject({
+      mode: "resolution-choice",
+      title: "Hades - Looking for a Deal",
+      message: "Choose an effect for Hades - Looking for a Deal: WHAT D'YA SAY?.",
+      entries: [
+        { moveId: "0", label: "put that character on the bottom of their deck", disabled: false },
+        { moveId: "1", label: "you draw 2 cards", disabled: false },
+      ],
+    });
   });
 
   it("updates named-card search and submits the selected card name", () => {
@@ -2787,6 +3532,8 @@ describe("LorcanaSidebarPresenter", () => {
 
     const presenter = new LorcanaSidebarPresenter(
       createGameContextStub({
+        ownerSide: () => "playerOne" as const,
+        getOwnerIdForSide: (side) => (side === "playerOne" ? playerOneId : playerTwoId),
         boardSnapshot: () => board,
         cardSnapshotsById: () => ({
           [sourceCard.cardId]: sourceCard,
@@ -2911,6 +3658,8 @@ describe("LorcanaSidebarPresenter", () => {
 
     const presenter = new LorcanaSidebarPresenter(
       createGameContextStub({
+        ownerSide: () => "playerOne" as const,
+        getOwnerIdForSide: (side) => (side === "playerOne" ? playerOneId : playerTwoId),
         boardSnapshot: () => board,
         cardSnapshotsById: () => ({
           [sourceCard.cardId]: sourceCard,

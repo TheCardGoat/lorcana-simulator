@@ -28,7 +28,7 @@ describe("Magica De Spell - Shadowy and Sinister", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicaDeSpellShadowyAndSinister, {
           resolveOptional: true,
           targets: [otherCard],
         }),
@@ -62,7 +62,7 @@ describe("Magica De Spell - Shadowy and Sinister", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicaDeSpellShadowyAndSinister, {
           resolveOptional: true,
           targets: [otherCard],
         }),
@@ -89,7 +89,9 @@ describe("Magica De Spell - Shadowy and Sinister", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(magicaDeSpellShadowyAndSinister, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(otherCard)).toBe("discard");

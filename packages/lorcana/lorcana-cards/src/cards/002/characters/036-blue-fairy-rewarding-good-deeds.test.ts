@@ -31,7 +31,9 @@ describe("Blue Fairy - Rewarding Good Deeds", () => {
 
       expect(testEngine.asPlayerOne().playCard(floodbornCharacter)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(blueFairyRewardingGoodDeeds, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
@@ -52,7 +54,9 @@ describe("Blue Fairy - Rewarding Good Deeds", () => {
 
       expect(testEngine.asPlayerOne().playCard(floodbornCharacter)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(blueFairyRewardingGoodDeeds, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(

@@ -20,7 +20,7 @@ function createContext(args: {
   zoneCards: Record<string, CardInstanceId[]>;
   shuffle?: (cards: CardInstanceId[]) => CardInstanceId[];
 }) {
-  const zoneCards = structuredClone(args.zoneCards);
+  const zoneCards = args.zoneCards;
   const cardIndex: Record<string, { ownerID: PlayerId; zoneKey: string }> = {};
 
   for (const [zoneKey, cards] of Object.entries(zoneCards)) {

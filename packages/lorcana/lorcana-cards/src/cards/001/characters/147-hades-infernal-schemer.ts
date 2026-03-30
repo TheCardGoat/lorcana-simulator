@@ -24,9 +24,9 @@ export const hadesInfernalSchemer: CharacterCard = {
   },
   text: [
     {
-      title: "IS THERE",
+      title: "IS THERE A DOWNSIDE TO THIS?",
       description:
-        "A DOWNSIDE TO THIS? When you play this character, you may put chosen opposing character into their player's inkwell facedown.",
+        "When you play this character, you may put chosen opposing character into their player's inkwell facedown.",
     },
   ],
   classifications: ["Dreamborn", "Villain", "Deity"],

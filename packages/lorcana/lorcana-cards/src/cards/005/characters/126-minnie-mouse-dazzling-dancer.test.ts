@@ -38,7 +38,7 @@ describe("Minnie Mouse - Dazzling Dancer", () => {
 
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+          testEngine.asPlayerOne().resolvePendingByCard(minnieMouseDazzlingDancer),
         ).toBeSuccessfulCommand();
       }
 
@@ -65,7 +65,7 @@ describe("Minnie Mouse - Dazzling Dancer", () => {
 
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+          testEngine.asPlayerOne().resolvePendingByCard(minnieMouseDazzlingDancer),
         ).toBeSuccessfulCommand();
       }
 
@@ -104,7 +104,7 @@ describe("Minnie Mouse - Dazzling Dancer", () => {
 
       if (testEngine.asPlayerTwo().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerTwo().resolveBag(testEngine.asPlayerTwo().getBagEffects()[0]!.id),
+          testEngine.asPlayerTwo().resolvePendingByCard(minnieMouseDazzlingDancer),
         ).toBeSuccessfulCommand();
       }
 

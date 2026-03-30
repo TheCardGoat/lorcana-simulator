@@ -63,9 +63,45 @@ export const hadesRuthlessTyrant: CharacterCard = {
       text: "SHORT ON PATIENCE When you play this character and whenever he quests, you may deal 2 damage to another chosen character of yours to draw 2 cards.",
       trigger: {
         event: "play",
-        events: ["quest"],
         on: "SELF",
         timing: "when",
+      },
+      type: "triggered",
+    },
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          steps: [
+            {
+              amount: 2,
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["character"],
+                excludeSelf: true,
+              },
+              type: "deal-damage",
+            },
+            {
+              amount: 2,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+          ],
+          type: "sequence",
+        },
+        type: "optional",
+      },
+      id: "keg-2",
+      name: "SHORT ON PATIENCE",
+      text: "SHORT ON PATIENCE When you play this character and whenever he quests, you may deal 2 damage to another chosen character of yours to draw 2 cards.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
       },
       type: "triggered",
     },

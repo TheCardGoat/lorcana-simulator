@@ -47,6 +47,7 @@ export const littleJohnRobinsPal: CharacterCard = {
         type: "gain-keyword",
       },
       id: "1ta-2",
+      name: "DISGUISED",
       text: "DISGUISED During your turn, this character gains Evasive.",
       type: "static",
     },

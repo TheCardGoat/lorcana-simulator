@@ -9,7 +9,10 @@
   import { Button } from "$lib/design-system/primitives/button";
   import { LorcanaTabletopSimulator } from "$lib";
   import { onMount, onDestroy } from "svelte";
-  import { HumanVsAiOrchestrator } from "./human-vs-ai-orchestrator.svelte.js";
+  import {
+    HumanVsAiOrchestrator,
+    type HumanVsAiStateChangeCallback,
+  } from "./human-vs-ai-orchestrator.svelte.js";
   import { readStoredHumanVsAiConfig, type HumanVsAiStorage } from "./storage.js";
   import { createHumanVsAiContext } from "./context.js";
   import { createAutomatedMatchSeed } from "../ai-match/config.js";
@@ -20,12 +23,17 @@
     onNavigateToSetup?: (path: string) => Promise<void> | void;
     setupPath?: string;
     storage?: HumanVsAiStorage;
+    onStateChange?: HumanVsAiStateChangeCallback;
+    /** Server-assigned game ID (UUID) for post-game/replay lookups. Overrides local seed when set. */
+    serverGameId?: string | null;
   }
 
   let {
     onNavigateToSetup = () => undefined,
     setupPath = "/sandbox/simulator/vs-ai",
     storage,
+    onStateChange,
+    serverGameId = null,
   }: HumanVsAiMatchPageProps = $props();
 
   const getStorage = (): HumanVsAiStorage | undefined => storage;
@@ -39,12 +47,30 @@
   const orchestrator = (() => {
     if (!storedConfig) return null;
     try {
-      return new HumanVsAiOrchestrator({ ...storedConfig, seed: createAutomatedMatchSeed() });
+      return new HumanVsAiOrchestrator(
+        { ...storedConfig, seed: createAutomatedMatchSeed() },
+        onStateChange ? { onStateChange } : undefined,
+      );
     } catch (error) {
       loadError = error instanceof Error ? error.message : "Unable to initialize match.";
       return null;
     }
   })();
+
+  const scopedReadModel = $derived.by(() => {
+    if (!orchestrator) {
+      return undefined;
+    }
+
+    return {
+      getMoveLog: (limit?: number) =>
+        orchestrator.readModel.getMoveLog(limit, orchestrator.state.currentPerspective),
+      subscribeStateUpdates:
+        "subscribeStateUpdates" in orchestrator.readModel
+          ? orchestrator.readModel.subscribeStateUpdates?.bind(orchestrator.readModel)
+          : undefined,
+    };
+  });
 
   createHumanVsAiContext(orchestrator);
 
@@ -76,8 +102,8 @@
     {#key orchestrator.sessionRevision}
       <LorcanaTabletopSimulator
         engine={orchestrator.currentEngine}
-        readModel={orchestrator.readModel}
-        postGameGameId={orchestrator.gameId}
+        readModel={scopedReadModel}
+        postGameGameId={serverGameId ?? orchestrator.gameId}
       />
     {/key}
 

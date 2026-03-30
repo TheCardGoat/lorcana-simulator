@@ -32,6 +32,7 @@ export const mrsPottsHeadHousekeeper: CharacterCard = {
   abilities: [
     {
       id: "cpn-1",
+      name: "CLEAN UP",
       cost: {
         exert: true,
         banishItem: true,

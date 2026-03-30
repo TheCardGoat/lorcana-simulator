@@ -53,6 +53,7 @@ export const lythosRockTitan: CharacterCard = {
         value: 2,
       },
       id: "ae9-2",
+      name: "STONE SKIN",
       text: "STONE SKIN {E} — Chosen character gains Resist +2 this turn.",
       type: "activated",
     },

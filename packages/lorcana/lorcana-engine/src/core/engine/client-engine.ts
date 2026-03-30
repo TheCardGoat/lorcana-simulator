@@ -7,7 +7,6 @@
  * - ../../docs/ENGINE_SIMPLIFICATION_PLAN.md
  */
 
-import { applyPatches, type Patch } from "immer";
 import { getLogger } from "@logtape/logtape";
 import {
   type FilteredMatchView,
@@ -24,7 +23,6 @@ import {
 import type {
   InMemoryTransport,
   ServerMessage,
-  UpdatePatchMessage,
   UpdateFullMessage,
   SyncFullMessage,
 } from "../runtime/protocol-types";
@@ -46,6 +44,7 @@ import type {
   EngineMoveHistoryEntry,
 } from "./contracts";
 import { buildEngineProjectionSnapshot } from "./projection";
+import { buildZoneRegistry } from "../runtime/zone-registry";
 const logger = getLogger(["core-engine", "client-engine"]);
 const PROJECTED_VIEW_AUTHORITATIVE_KEYS = new Set<PropertyKey>(["ctx", "G"]);
 
@@ -139,6 +138,7 @@ export class ClientEngine implements GameEngine {
     this.runtime = new MatchRuntime(config.runtimeConfig, {
       players: config.players,
       seed: config.seed,
+      capturePatches: false,
       cardsMaps: createCardsMapsFromStaticResources(config.staticResources),
       cardCatalog: config.staticResources.cards,
     });
@@ -170,7 +170,9 @@ export class ClientEngine implements GameEngine {
       }
 
       if (isUpdatePatchMessage(typedMessage)) {
-        this.applyPatch(typedMessage);
+        this.handleFatalSyncError("Patch updates are disabled on browser clients", {
+          stateID: typedMessage.stateID,
+        });
       } else if (isUpdateFullMessage(typedMessage)) {
         this.applyFullState(typedMessage);
       } else if (isSyncFullMessage(typedMessage)) {
@@ -184,47 +186,10 @@ export class ClientEngine implements GameEngine {
     });
   }
 
-  private applyPatch(message: UpdatePatchMessage): void {
-    if (!this.localView) {
-      return;
-    }
-
-    if (this.config.role === "player" || typeof this.runtimeConfig.projectBoard === "function") {
-      this.handleFatalSyncError("Player clients require full authoritative state sync updates");
-      return;
-    }
-
-    try {
-      this.localView = applyPatches(this.localView, message.patchOps as Patch[]);
-      this.runtime.loadState(this.localView as unknown as MatchState);
-      this.confirmedState = this.localView as unknown as MatchState;
-      this.stateID = message.stateID;
-      this.canUndoState = message.canUndo;
-      this.undoCheckpointState = null;
-      this.lastPacketUpdate = {
-        processedCommand: message.processedCommand,
-        animations: [...message.animations],
-        canUndo: message.canUndo,
-      };
-      this.optimisticState = null;
-      this.emitVisibleStateUpdate(this.lastPacketUpdate, {
-        sourceAuthority: "server",
-        commandID: message.processedCommand.commandID,
-        phase: "confirmed",
-      });
-    } catch (error) {
-      this.handleFatalSyncError("Failed to apply patch; requesting full sync", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
   private applyFullState(message: UpdateFullMessage | SyncFullMessage): void {
-    const previousConfirmedState = this.confirmedState
-      ? (structuredClone(this.confirmedState) as MatchState)
-      : null;
+    const previousConfirmedState = this.confirmedState ?? null;
     const pendingOptimisticCommandID = this.optimisticState?.command.commandID;
-    const authoritativeState = structuredClone(message.state) as MatchState;
+    const authoritativeState = message.state as MatchState;
 
     this.confirmedState = authoritativeState;
     this.runtime.loadState(authoritativeState);
@@ -288,7 +253,7 @@ export class ClientEngine implements GameEngine {
       // Restore the main runtime to the confirmed state since we loaded
       // the optimistic state into it during executeMove/undo.
       if (this.confirmedState) {
-        this.runtime.loadState(structuredClone(this.confirmedState) as MatchState);
+        this.runtime.loadState(this.confirmedState as MatchState);
       }
       this.emitVisibleStateUpdate(this.lastPacketUpdate, {
         sourceAuthority: "server",
@@ -369,7 +334,7 @@ export class ClientEngine implements GameEngine {
 
   loadState(state: MatchState): void {
     this.runtime.loadState(state);
-    this.confirmedState = structuredClone(state) as MatchState;
+    this.confirmedState = state;
     if (this.projectionMode === "eager") {
       this.localView = this.buildVisibleViewFromRuntime(this.runtime, state, Date.now());
       this.projectionDirty = false;
@@ -413,10 +378,15 @@ export class ClientEngine implements GameEngine {
   }
 
   getProjection(): EngineProjectionSnapshot {
-    return buildEngineProjectionSnapshot(this.getState() as never, {
-      role: this.config.role,
-      playerId: this.config.playerId,
-    });
+    const state = this.getState() as MatchState;
+    return buildEngineProjectionSnapshot(
+      state as never,
+      {
+        role: this.config.role,
+        playerId: this.config.playerId,
+      },
+      buildZoneRegistry(this.runtimeConfig.zones ?? {}, state.ctx.playerIds),
+    );
   }
 
   validateMove(moveId: string, input: MoveInput): EngineMoveValidationResult {
@@ -579,10 +549,11 @@ export class ClientEngine implements GameEngine {
       move: "undo",
     };
     if (!this.config.skipOptimisticState) {
-      const optimisticUndoState = structuredClone(this.undoCheckpointState) as MatchState;
+      const optimisticUndoState = this.undoCheckpointState as MatchState;
       const undoRuntime = new MatchRuntime(this.runtimeConfig, {
         players: this.config.players,
         seed: this.config.seed,
+        capturePatches: false,
         cardsMaps: createCardsMapsFromStaticResources(this.config.staticResources),
         cardCatalog: this.config.staticResources.cards,
       });
@@ -682,10 +653,11 @@ export class ClientEngine implements GameEngine {
       const sandboxRuntime = new MatchRuntime(this.runtimeConfig, {
         players: this.config.players,
         seed: this.config.seed,
+        capturePatches: false,
         cardsMaps: createCardsMapsFromStaticResources(this.config.staticResources),
         cardCatalog: this.config.staticResources.cards,
       });
-      const confirmedState = structuredClone(this.confirmedState) as MatchState;
+      const confirmedState = this.confirmedState as MatchState;
       sandboxRuntime.loadState(confirmedState);
       const result = sandboxRuntime.processCommand(
         command,
@@ -708,7 +680,7 @@ export class ClientEngine implements GameEngine {
 
       return {
         kind: "success",
-        state: structuredClone(result.state) as MatchState,
+        state: result.state as MatchState,
         view: this.buildVisibleViewFromRuntime(sandboxRuntime, result.state, Date.now()),
       };
     } catch (error) {

@@ -74,7 +74,7 @@ describe("Triton - Young Prince", () => {
 
       // Accept the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(tritonYoungPrince, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // The location should now be in the inkwell
@@ -99,7 +99,9 @@ describe("Triton - Young Prince", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(tritonYoungPrince, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // The location should remain in the discard

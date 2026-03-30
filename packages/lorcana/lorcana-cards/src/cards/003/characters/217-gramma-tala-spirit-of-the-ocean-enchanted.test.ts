@@ -30,11 +30,10 @@ describe("Gramma Tala - Spirit of the Ocean Enchanted", () => {
 
     expect(testEngine.asPlayerOne().playCard(donaldDuckFocusedFlatfoot)).toBeSuccessfulCommand();
 
-    const bagEffects = testEngine.asPlayerOne().getBagEffects();
-    expect(bagEffects).toHaveLength(1);
-
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: true }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(donaldDuckFocusedFlatfoot, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(deckInkCard)).toBe("inkwell");

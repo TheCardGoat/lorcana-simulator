@@ -59,7 +59,9 @@ describe("Tinker Bell - Insistent Fairy", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       // Accept the optional effect
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(tinkerBellInsistentFairy),
+      ).toBeSuccessfulCommand();
 
       // The played character should be exerted
       expect(testEngine.isExerted(strongCharacter)).toBe(true);
@@ -109,7 +111,9 @@ describe("Tinker Bell - Insistent Fairy", () => {
 
       // Decline
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(tinkerBellInsistentFairy, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Played character should still be ready
@@ -190,7 +194,9 @@ describe("Tinker Bell - Insistent Fairy", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       // Accept the optional effect
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(tinkerBellInsistentFairy),
+      ).toBeSuccessfulCommand();
 
       // Should gain 2 lore
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(loreBefore + 2);

@@ -36,7 +36,7 @@ describe("Fairy Godmother - Pure Heart", () => {
 
       // Resolve the optional trigger: exert the Fairy Godmother itself
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(fairyGodmotherPureHeart, {
           resolveOptional: true,
           targets: [fairyGodmotherPureHeart],
         }),
@@ -90,7 +90,7 @@ describe("Fairy Godmother - Pure Heart", () => {
 
       // Decline the optional trigger
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(fairyGodmotherPureHeart, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

@@ -1,6 +1,9 @@
 import {
   AGGRESSIVE_BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+  BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID,
+  BEST_DECK_AWARE_ORACLE_LORE_RACE_STRATEGY_ID,
   BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+  DECK_AWARE_LORE_RACE_STRATEGY_ID,
   DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
 } from "@tcg/lorcana-engine";
 import { DECK_FIXTURES } from "../../lib/features/simulator-devtools/deck-fixtures/index.js";
@@ -30,6 +33,33 @@ export const PROMOTED_STRATEGY_BASELINE_ID = DEFAULT_AUTOMATED_ACTION_STRATEGY_I
 export const FULL_STRATEGY_REGRESSION_DECK_IDS = DECK_FIXTURES.map((fixture) => fixture.id);
 
 export const STRATEGY_CANDIDATE_MANIFESTS: readonly StrategyCandidateManifest[] = [
+  {
+    candidateId: BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID,
+    changedHeuristics: [
+      "Apply typed deck dossiers, matchup plans, and card strategy rules instead of ad hoc per-card overrides.",
+      "Respect fair-information hidden-zone limits while still exposing structured contributor and matched-rule traces.",
+      "Expand matchup-aware card weighting beyond mulligan and ink into play, challenge, and target scoring.",
+    ],
+    hypothesis:
+      "A typed fair-information deck-aware candidate should gain consistency and observability without needing hidden opponent deck access.",
+    notes:
+      "Validate it first against the current deck-aware baseline on the candidate preset, then compare the oracle variant on the same 8-fixture pool.",
+    parentStrategyId: DECK_AWARE_LORE_RACE_STRATEGY_ID,
+    status: "candidate",
+  },
+  {
+    candidateId: BEST_DECK_AWARE_ORACLE_LORE_RACE_STRATEGY_ID,
+    changedHeuristics: [
+      "Reuse the typed matchup system from the fair candidate.",
+      "Allow opponent deck signatures and hidden deck-role selectors when resolving matchup-specific card weights.",
+    ],
+    hypothesis:
+      "The oracle variant should outperform the fair candidate once hidden matchup data is allowed through the new typed rule system.",
+    notes:
+      "Benchmark it directly against the fair candidate and keep the default strategy unchanged until the promotion preset is favorable.",
+    parentStrategyId: BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID,
+    status: "draft",
+  },
   {
     candidateId: BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
     changedHeuristics: [

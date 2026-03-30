@@ -49,7 +49,7 @@ describe("Gunther - Interior Designer", () => {
 
     const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
     expect(
-      testEngine.asPlayerTwo().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerTwo().resolvePendingByCard(guntherInteriorDesigner, {
         targets: [opponentCharacterTwo],
       }),
     ).toBeSuccessfulCommand();

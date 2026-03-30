@@ -1,69 +1,71 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   ArielSpectacularSinger,
-//   HeiheiBoatSnack,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { friendsOnTheOtherSide } from "@lorcanito/lorcana-engine/cards/001/songs/songs";
-// Import {
-//   HiroHamadaRoboticsProdigy,
-//   HiroHamadaTeamLeader,
-//   WasabiMethodicalEngineer,
-// } from "@lorcanito/lorcana-engine/cards/006/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Hiro Hamada - Team Leader", () => {
-//   It("**I NEED TO UPGRADE ALL OF YOU** Your other Inventor characters gain **Resist** +1. _(Damage dealt to them is reduced by 1.)_**SHAPE THE FUTURE** 2 {I} − Look at the top card of your deck. Put it on either the top or the bottom of your deck.", () => {
-//     Const testEngine = new TestEngine({
-//       Play: [
-//         HiroHamadaTeamLeader,
-//         HiroHamadaRoboticsProdigy,
-//         WasabiMethodicalEngineer,
-//       ],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(hiroHamadaTeamLeader);
-//     Const hiroHamadaRoboticsProdigyCard = testEngine.getCardModel(
-//       HiroHamadaRoboticsProdigy,
-//     );
-//     Const wasabiMethodicalEngineerCard = testEngine.getCardModel(
-//       WasabiMethodicalEngineer,
-//     );
-//
-//     Expect(hiroHamadaRoboticsProdigyCard.hasResist).toBe(true);
-//     Expect(wasabiMethodicalEngineerCard.hasResist).toBe(true);
-//     Expect(cardUnderTest.hasResist).toBe(false);
-//   });
-//
-//   It("**SHAPE THE FUTURE** 2 {I} − Look at the top card of your deck. Put it on either the top or the bottom of your deck.", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: 2,
-//         Play: [hiroHamadaTeamLeader],
-//         Deck: [heiheiBoatSnack, friendsOnTheOtherSide, arielSpectacularSinger],
-//       },
-//       {
-//         Deck: 2,
-//       },
-//     );
-//
-//     Const cardUnderTest = testEngine.getCardModel(hiroHamadaTeamLeader);
-//     Const first = testEngine.getCardModel(arielSpectacularSinger);
-//
-//     Await testEngine.activateCard(cardUnderTest, {
-//       Ability: "SHAPE THE FUTURE",
-//     });
-//
-//     Await testEngine.resolveTopOfStack({ scry: { top: [first] } });
-//
-//     Await testEngine.passTurn();
-//     Await testEngine.passTurn();
-//
-//     Expect(first.zone).toBe("hand");
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { hiroHamadaTeamLeader } from "./154-hiro-hamada-team-leader";
+
+const inventorAlly = createMockCharacter({
+  id: "hiro-inventor-ally",
+  name: "Inventor Ally",
+  cost: 2,
+  classifications: ["Storyborn", "Inventor"],
+});
+
+const nonInventorAlly = createMockCharacter({
+  id: "hiro-non-inventor-ally",
+  name: "Non-Inventor Ally",
+  cost: 2,
+  classifications: ["Storyborn", "Hero"],
+});
+
+const topCard = createMockCharacter({
+  id: "hiro-top-card",
+  name: "Top Card",
+  cost: 1,
+});
+
+const secondCard = createMockCharacter({
+  id: "hiro-second-card",
+  name: "Second Card",
+  cost: 2,
+});
+
+describe("Hiro Hamada - Team Leader", () => {
+  it("gives your other Inventor characters Resist +1", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [hiroHamadaTeamLeader, inventorAlly, nonInventorAlly],
+    });
+
+    expect(testEngine.asPlayerOne()).toHaveKeyword({
+      card: inventorAlly,
+      keyword: "Resist",
+      value: 1,
+    });
+    expect(testEngine.hasKeyword(nonInventorAlly, "Resist")).toBe(false);
+    expect(testEngine.hasKeyword(hiroHamadaTeamLeader, "Resist")).toBe(false);
+  });
+
+  it("looks at the top card and can put it on the bottom for 2 ink", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: 2,
+      deck: [topCard, secondCard],
+      play: [{ card: hiroHamadaTeamLeader, isDrying: false }],
+    });
+
+    expect(testEngine.asPlayerOne().activateAbility(hiroHamadaTeamLeader)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [
+          { zone: "deck-top", cards: [] },
+          { zone: "deck-bottom", cards: [secondCard] },
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    const deckIds = testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE);
+    expect(deckIds).toEqual([secondCard.id, topCard.id]);
+    expect(testEngine.asPlayerOne().getAvailableInk(PLAYER_ONE)).toBe(0);
+  });
+});

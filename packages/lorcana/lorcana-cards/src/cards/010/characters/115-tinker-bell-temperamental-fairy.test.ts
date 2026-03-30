@@ -56,7 +56,9 @@ describe("Tinker Bell - Temperamental Fairy", () => {
 
       // Resolve the bag effect, targeting the weak opponent
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [weakOpponent] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(tinkerBellTemperamentalFairy, { targets: [weakOpponent] }),
       ).toBeSuccessfulCommand();
 
       // The weak opponent should now be exerted
@@ -109,7 +111,9 @@ describe("Tinker Bell - Temperamental Fairy", () => {
 
       // Target only the weak opponent (2 strength)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [weakOpponent] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(tinkerBellTemperamentalFairy, { targets: [weakOpponent] }),
       ).toBeSuccessfulCommand();
 
       // Weak opponent is exerted, strong opponent is not
@@ -138,7 +142,9 @@ describe("Tinker Bell - Temperamental Fairy", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       // Attempting to target the strong opponent (4 strength) should fail
-      const resolveResult = testEngine.asPlayerOne().resolveNextBag({ targets: [strongOpponent] });
+      const resolveResult = testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(tinkerBellTemperamentalFairy, { targets: [strongOpponent] });
       expect(resolveResult.success).toBe(false);
 
       // Neither opponent should be exerted

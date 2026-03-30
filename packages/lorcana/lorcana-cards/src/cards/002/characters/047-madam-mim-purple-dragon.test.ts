@@ -33,7 +33,7 @@ describe("Madam Mim - Purple Dragon", () => {
       expect(testEngine.asPlayerOne().playCard(madamMimPurpleDragon)).toBeSuccessfulCommand();
 
       // The "or" trigger fires; choose option 0 (banish self)
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimPurpleDragon);
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 0 });
 
       expect(testEngine.asPlayerOne().getCardZone(madamMimPurpleDragon)).toBe("discard");
@@ -49,7 +49,7 @@ describe("Madam Mim - Purple Dragon", () => {
       expect(testEngine.asPlayerOne().playCard(madamMimPurpleDragon)).toBeSuccessfulCommand();
 
       // The "or" trigger fires; choose option 1 (return 2 to hand)
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimPurpleDragon);
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1, targets: [allyOne, allyTwo] });
 
       expect(testEngine.asPlayerOne().getCardZone(allyOne)).toBe("hand");

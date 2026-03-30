@@ -70,6 +70,7 @@ export const captainAmeliaCommanderOfTheLegacy: CharacterCard = {
         value: 1,
       },
       id: "1ln-2",
+      name: "EVERYTHING SHIPSHAPE",
       text: "EVERYTHING SHIPSHAPE While being challenged, your other characters gain Resist +1.",
       type: "static",
     },

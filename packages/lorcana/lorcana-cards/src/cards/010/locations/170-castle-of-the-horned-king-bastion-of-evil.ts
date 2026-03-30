@@ -46,11 +46,11 @@ export const castleOfTheHornedKingBastionOfEvil: LocationCard = {
         type: "optional",
       },
       id: "lzh-1",
-      name: "INTO THE GLOOM Once",
+      name: "INTO THE GLOOM",
       text: "INTO THE GLOOM Once during your turn, whenever a character quests while here, you may ready chosen item.",
       trigger: {
         event: "quest",
-        on: "CHARACTER_HERE",
+        on: "CHARACTERS_HERE",
         restrictions: [
           {
             type: "during-turn",

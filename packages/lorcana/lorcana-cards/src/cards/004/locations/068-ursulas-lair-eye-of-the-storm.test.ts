@@ -55,9 +55,9 @@ describe("Ursula's Lair - Eye of the Storm", () => {
     );
     expect(testEngine.asPlayerOne().getCardZone(banishedResident)).toBe("discard");
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(ursulasLairEyeOfTheStorm).success).toBe(
+      true,
+    );
     expect(testEngine.asPlayerOne().getCardZone(banishedResident)).toBe("hand");
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
   });

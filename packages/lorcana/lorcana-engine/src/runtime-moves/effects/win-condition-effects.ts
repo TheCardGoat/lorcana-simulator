@@ -15,7 +15,7 @@
  *   state, to stay correct under edge cases (multiple Donalds, banish+replay).
  */
 
-import type { Draft } from "immer";
+import type { Draft } from "mutative";
 import type { PlayerId } from "#core";
 import type { LorcanaCard } from "@tcg/lorcana-types";
 import type { LorcanaG, LorcanaMatchState } from "../../types";

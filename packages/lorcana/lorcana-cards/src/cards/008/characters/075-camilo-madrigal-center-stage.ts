@@ -24,10 +24,7 @@ export const camiloMadrigalCenterStage: CharacterCard = {
   },
   text: [
     {
-      title: "ENCORE!",
-    },
-    {
-      title: "ENCORE!",
+      title: "ENCORE! ENCORE!",
       description: "When this character is banished in a challenge, return this card to your hand.",
     },
   ],

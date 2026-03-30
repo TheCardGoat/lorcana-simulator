@@ -183,7 +183,6 @@ export function isPlayerTargetRecord(record: LegacyTargetRecord): boolean {
   if (
     record.selector !== "you" &&
     record.selector !== "opponent" &&
-    record.selector !== "each-opponent" &&
     record.selector !== "each-player" &&
     record.selector !== "chosen"
   ) {

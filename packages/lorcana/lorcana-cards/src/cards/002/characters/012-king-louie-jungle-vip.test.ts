@@ -19,7 +19,7 @@ describe("King Louie - Jungle VIP", () => {
     testEngine.asServer().passTurn();
 
     // Resolve the trigger as Player 1 (Controller of King Louie)
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(kingLouieJungleVip);
 
     // Verify damage is reduced
     const king = testEngine.asServer().getCard(kingId);

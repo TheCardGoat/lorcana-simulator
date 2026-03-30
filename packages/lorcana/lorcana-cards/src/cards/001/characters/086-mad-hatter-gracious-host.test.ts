@@ -50,7 +50,9 @@ describe("Mad Hatter - Gracious Host", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(madHatterGraciousHost, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand).toBe(handBefore + 1);
@@ -80,7 +82,9 @@ describe("Mad Hatter - Gracious Host", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(madHatterGraciousHost, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand).toBe(handBefore);
@@ -108,7 +112,9 @@ describe("Mad Hatter - Gracious Host", () => {
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id, { resolveOptional: true }),
+          testEngine
+            .asPlayerTwo()
+            .resolvePendingByCard(madHatterGraciousHost, { resolveOptional: true }),
         ).toBeSuccessfulCommand();
       }
 

@@ -80,7 +80,7 @@ describe("Heihei - Persistent Presence", () => {
     ).toBeSuccessfulCommand();
     if (testEngine.asPlayerTwo().getBagCount() > 0) {
       expect(
-        testEngine.asPlayerTwo().resolveBag(testEngine.asPlayerTwo().getBagEffects()[0]!.id),
+        testEngine.asPlayerTwo().resolvePendingByCard(heiheiPersistentPresence),
       ).toBeSuccessfulCommand();
     }
 

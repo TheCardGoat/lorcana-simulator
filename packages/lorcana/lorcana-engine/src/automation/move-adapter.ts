@@ -49,14 +49,18 @@ function splitTargets(
 function buildActionResolutionParams(
   targets: readonly AutomatedActionTargetId[] | undefined,
   choiceIndex: number | undefined,
+  namedCard: string | undefined,
   resolveOptional: boolean | undefined,
   destinations: readonly AutomatedActionDestinationSelection[] | undefined,
-): Omit<PendingActionResolutionInput, "amount" | "namedCard"> {
+): Omit<PendingActionResolutionInput, "amount"> {
   return {
     ...(targets && targets.length > 0
       ? { targets: [...targets] as PendingActionResolutionInput["targets"] }
       : {}),
     ...(typeof choiceIndex === "number" ? { choiceIndex } : {}),
+    ...(typeof namedCard === "string" && namedCard.trim().length > 0
+      ? { namedCard: namedCard.trim() }
+      : {}),
     ...(typeof resolveOptional === "boolean" ? { resolveOptional } : {}),
     ...(destinations
       ? {
@@ -103,6 +107,7 @@ export function buildAutomatedActionMoveRequest(
             params: buildActionResolutionParams(
               candidate.targets,
               candidate.choiceIndex,
+              candidate.namedCard,
               candidate.resolveOptional,
               candidate.destinations,
             ),
@@ -118,6 +123,7 @@ export function buildAutomatedActionMoveRequest(
             params: buildActionResolutionParams(
               candidate.targets,
               candidate.choiceIndex,
+              candidate.namedCard,
               candidate.resolveOptional,
               candidate.destinations,
             ),

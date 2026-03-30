@@ -16,7 +16,7 @@ function extractPlaceholders(message: string): string[] {
 }
 
 async function loadCatalog(locale: Locale): Promise<Catalog> {
-  const file = new URL(`../messages/${locale}.json`, import.meta.url);
+  const file = new URL(`../src/messages/${locale}.json`, import.meta.url);
   const raw = await readFile(file, "utf8");
   return JSON.parse(raw) as Catalog;
 }

@@ -32,7 +32,7 @@ describe("Treasure Mountain - Azurite Sea Island", () => {
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(treasureMountainAzuriteSeaIsland, {
         targets: [treasureMountainAzuriteSeaIsland],
       }).success,
     ).toBe(true);

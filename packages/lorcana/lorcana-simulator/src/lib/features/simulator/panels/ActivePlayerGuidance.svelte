@@ -5,6 +5,8 @@
     ActivePlayerGuidanceItem,
     GuidanceAnchor,
   } from "@/features/simulator/model/active-player-guidance.js";
+  import { maybeUseSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
+  import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
   import NamedCardSearchInput from "@/features/simulator/panels/NamedCardSearchInput.svelte";
 
   interface ActivePlayerGuidanceProps {
@@ -17,14 +19,41 @@
 
   let { items = [], anchor = "bottom", isBottomHandExpanded = false, isTopHandExpanded = false, onToggleAnchor }: ActivePlayerGuidanceProps = $props();
 
-  const handTargetable = $derived(items.some((item) => item.mode === "pregame"));
+  const PAGE_SIZE = 3;
+  let page = $state(0);
+
+  $effect(() => {
+    // Reset to first page when items change
+    void items;
+    page = 0;
+  });
+
+  const pageCount = $derived(Math.ceil(items.length / PAGE_SIZE));
+  const visibleItems = $derived(items.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE));
+  const handTargetable = $derived(visibleItems.some((item) => item.mode === "pregame"));
   const isTopAnchor = $derived(anchor === "top");
-  const toggleLabel = $derived(isTopAnchor ? "Bottom" : "Top");
   const toggleTitle = $derived(isTopAnchor ? "Move guidance to bottom" : "Move guidance to top");
   const needsHandClearance = $derived(
     (anchor === "bottom" && isBottomHandExpanded) ||
     (anchor === "top" && isTopHandExpanded),
   );
+  const simulatorCardContext = maybeUseSimulatorCardContext();
+
+  function handleReferencePreviewEnter(card: LorcanaCardSnapshot | null): void {
+    if (!card?.isMasked) {
+      simulatorCardContext?.setExternalPreviewCard(card);
+    }
+  }
+
+  function handleReferencePreviewLeave(card: LorcanaCardSnapshot | null): void {
+    if (
+      card &&
+      !card.isMasked &&
+      simulatorCardContext?.previewCard?.cardId === card.cardId
+    ) {
+      simulatorCardContext.setExternalPreviewCard(null);
+    }
+  }
 </script>
 
 {#if items.length > 0}
@@ -37,13 +66,33 @@
   >
     <div class="guidance-stack" role="region" aria-label={m["sim.guidance.aria"]({})}>
 
+      {#if pageCount > 1}
+        <div class="guidance-pagination">
+          <button
+            type="button"
+            class="guidance-page-btn"
+            disabled={page === 0}
+            onclick={() => page--}
+            aria-label="Previous guidance items"
+          >‹</button>
+          <span class="guidance-page-indicator">{page + 1} / {pageCount}</span>
+          <button
+            type="button"
+            class="guidance-page-btn"
+            disabled={page >= pageCount - 1}
+            onclick={() => page++}
+            aria-label="Next guidance items"
+          >›</button>
+          <span class="guidance-total-count">{items.length} total</span>
+        </div>
+      {/if}
 
-      {#each items as item, index (item.id)}
+      {#each visibleItems as item, index (item.id)}
         <section class="guidance-pill relative" class:guidance-pill--has-search={Boolean(item.namedCardSearch)} data-mode={item.mode}>
           {#if index === 0}
             <button
               type="button"
-              class="guidance-toggle absolute top-0 left-0 -translate-y-1/2"
+              class="guidance-toggle guidance-toggle--icon-only absolute top-0 left-0 -translate-y-1/2"
               class:guidance-toggle--top={isTopAnchor}
               onclick={onToggleAnchor}
               aria-label={toggleTitle}
@@ -56,10 +105,34 @@
               {:else}
                 <ArrowUpToLine class="size-4" />
               {/if}
-              <span>{toggleLabel}</span>
             </button>
           {/if}
-          <p class="guidance-message" role="status" aria-live="polite" aria-atomic="true">{item.message}</p>
+          <p
+            class="guidance-message"
+            class:guidance-message--with-inline-reference={Boolean(item.inlineReference)}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {#if item.inlineReference}
+              {item.inlineReference.prefix ?? ""}
+              <!-- svelte-ignore a11y_no_noninteractive_tabindex a11y_no_static_element_interactions -->
+              <span
+                class="guidance-message-reference"
+                role={item.inlineReference.card ? "button" : undefined}
+                tabindex={item.inlineReference.card ? 0 : undefined}
+                onmouseenter={() => handleReferencePreviewEnter(item.inlineReference?.card ?? null)}
+                onmouseleave={() => handleReferencePreviewLeave(item.inlineReference?.card ?? null)}
+                onfocus={() => handleReferencePreviewEnter(item.inlineReference?.card ?? null)}
+                onblur={() => handleReferencePreviewLeave(item.inlineReference?.card ?? null)}
+              >
+                {item.inlineReference.label}
+              </span>
+              {item.inlineReference.suffix ?? ""}
+            {:else}
+              {item.message}
+            {/if}
+          </p>
 
           {#if item.namedCardSearch}
             <div class="guidance-search">
@@ -127,6 +200,64 @@
     top: calc(var(--hand-zone-height, 8rem) + var(--hand-guidance-clearance, 2rem));
   }
 
+  .guidance-pagination {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(130, 178, 235, 0.28);
+    background: rgba(7, 18, 33, 0.82);
+    backdrop-filter: blur(6px);
+    align-self: center;
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  .guidance-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 999px;
+    border: 1px solid rgba(130, 178, 235, 0.4);
+    background: rgba(17, 48, 81, 0.82);
+    color: #e8f1fc;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+  }
+
+  .guidance-page-btn:hover:not(:disabled) {
+    background: rgba(37, 76, 120, 0.98);
+    border-color: rgba(192, 226, 255, 0.88);
+    transform: translateY(-1px);
+  }
+
+  .guidance-page-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .guidance-page-indicator {
+    color: #e8f1fc;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    min-width: 2.5rem;
+    text-align: center;
+  }
+
+  .guidance-total-count {
+    color: rgba(200, 220, 248, 0.6);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+  }
+
   .guidance-pill {
     pointer-events: auto;
     display: grid;
@@ -159,7 +290,7 @@
     font-weight: 800;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
     transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
   }
 
@@ -173,6 +304,17 @@
     border-color: rgba(125, 211, 252, 0.58);
     background: linear-gradient(180deg, rgba(14, 116, 144, 0.92), rgba(8, 47, 73, 0.96));
     color: #f8fbff;
+  }
+
+  .guidance-toggle--icon-only {
+    width: 2.2rem;
+    min-width: 2.2rem;
+    min-height: 2.2rem;
+    justify-content: center;
+    padding: 0;
+    border-color: rgba(130, 178, 235, 0.36);
+    background: rgba(5, 14, 26, 0.92);
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
   .guidance-pill--has-search {
@@ -192,6 +334,23 @@
     line-height: 1.2;
     white-space: pre-line;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+
+  .guidance-message--with-inline-reference {
+    font-weight: 500;
+  }
+
+  .guidance-message-reference {
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
+    cursor: help;
+  }
+
+  .guidance-message-reference:focus-visible {
+    outline: 2px solid rgba(247, 220, 134, 0.9);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 
   .guidance-actions {
@@ -287,6 +446,11 @@
       min-height: 1.8rem;
       padding: 0.3rem 0.56rem;
       font-size: 0.62rem;
+    }
+
+    .guidance-toggle--icon-only {
+      min-width: 1.9rem;
+      min-height: 1.9rem;
     }
   }
 </style>

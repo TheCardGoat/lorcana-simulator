@@ -103,7 +103,9 @@ describe("Queen of Hearts - Unpredictable Bully", () => {
       // The triggered ability is in Player 1's bag (cross-player trigger does not auto-resolve)
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       // Resolve the bag effect explicitly as Player 1
-      expect(testEngine.asPlayerOne().resolveNextBag({})).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(queenOfHeartsUnpredictableBully, {}),
+      ).toBeSuccessfulCommand();
 
       // characterA (played by opponent) should have 1 damage counter
       expect(testEngine.asPlayerTwo().getDamage(characterA)).toBe(1);

@@ -46,10 +46,13 @@ export const jafarPowerhungryVizier: CharacterCard = {
       id: "1w6-1",
       name: "YOU WILL BE PAID WHEN THE TIME COMES",
       text: "YOU WILL BE PAID WHEN THE TIME COMES During your turn, whenever a card is put into your inkwell, deal 1 damage to chosen character.",
+      condition: {
+        type: "your-turn",
+      },
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "ink",
+        on: "CONTROLLER",
+        timing: "whenever",
       },
       type: "triggered",
     },

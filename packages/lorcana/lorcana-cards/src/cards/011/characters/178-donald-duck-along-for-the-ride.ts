@@ -31,6 +31,7 @@ export const donaldDuckAlongForTheRide: CharacterCard = {
   abilities: [
     {
       id: "s02-1",
+      name: "COMIN' THROUGH!",
       trigger: {
         event: "play",
         on: "SELF",

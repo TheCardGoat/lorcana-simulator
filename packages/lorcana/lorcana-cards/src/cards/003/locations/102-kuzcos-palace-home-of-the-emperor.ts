@@ -34,7 +34,7 @@ export const kuzcosPalaceHomeOfTheEmperor: LocationCard = {
       trigger: {
         event: "challenged-and-banished",
         on: "CHARACTERS_HERE",
-        timing: "when",
+        timing: "whenever",
       },
       effect: {
         target: {

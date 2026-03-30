@@ -34,7 +34,9 @@ describe("Judy Hopps - Uncovering Clues", () => {
     expect(testEngine.asPlayerOne().playCard(judyHoppsUncoveringClues)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(judyHoppsUncoveringClues),
+    ).toBeSuccessfulCommand();
 
     expect(
       testEngine.asPlayerOne().resolveNextPending({
@@ -57,7 +59,9 @@ describe("Judy Hopps - Uncovering Clues", () => {
     expect(testEngine.asPlayerOne().quest(judyHoppsUncoveringClues)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(judyHoppsUncoveringClues),
+    ).toBeSuccessfulCommand();
 
     expect(
       testEngine.asPlayerOne().resolveNextPending({

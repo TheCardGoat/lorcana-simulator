@@ -37,7 +37,7 @@ describe("Baymax - Giant Robot", () => {
       // Resolve the triggered ability bag if present
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
-        testEngine.asPlayerOne().resolveNextBag();
+        testEngine.asPlayerOne().resolvePendingByCard(baymaxGiantRobot);
       }
 
       const baymax = testEngine.asServer().getCard(baymaxId);

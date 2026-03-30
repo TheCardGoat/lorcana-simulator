@@ -46,7 +46,7 @@ describe("Chernabog - Unnatural Force", () => {
 
       const bagId = bagEffects[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(chernabogUnnaturalForce, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -76,7 +76,9 @@ describe("Chernabog - Unnatural Force", () => {
 
       const bagId = bagEffects[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(chernabogUnnaturalForce, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Character should still be in play
@@ -108,7 +110,9 @@ describe("Chernabog - Unnatural Force", () => {
 
       // Decline the optional shuffle
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(chernabogUnnaturalForce, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Opponent should not have gotten a chance to play from discard
@@ -164,7 +168,7 @@ describe("Chernabog - Unnatural Force", () => {
     const bagId = bagEffects[0]!.id;
     // Trying to target the protected character when bodyguard is exerted should fail
     // because Bodyguard forces targeting the bodyguard character
-    const result = testEngine.asPlayerOne().resolveBag(bagId, {
+    const result = testEngine.asPlayerOne().resolvePendingByCard(chernabogUnnaturalForce, {
       resolveOptional: true,
       targets: [protectedCharacter],
     });

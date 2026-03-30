@@ -38,7 +38,7 @@ describe("Scroop - Odious Mutineer", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scroopOdiousMutineer, {
           targets: [damagedTarget],
         }),
       ).toBeSuccessfulCommand();
@@ -63,7 +63,7 @@ describe("Scroop - Odious Mutineer", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scroopOdiousMutineer, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

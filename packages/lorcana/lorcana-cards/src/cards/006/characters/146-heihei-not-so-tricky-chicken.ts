@@ -79,6 +79,7 @@ export const heiheiNotsotrickyChicken: CharacterCard = {
         type: "gain-keyword",
       },
       id: "1qk-2",
+      name: "OUT TO LUNCH",
       text: "OUT TO LUNCH During your turn, this character gains Evasive.",
       type: "static",
     },

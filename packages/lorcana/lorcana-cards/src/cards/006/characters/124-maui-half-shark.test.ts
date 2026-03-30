@@ -58,7 +58,7 @@ describe("Maui - Half-Shark", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mauiHalfshark, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -91,7 +91,7 @@ describe("Maui - Half-Shark", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mauiHalfshark, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -139,7 +139,7 @@ describe("Maui - Half-Shark", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(mauiHalfshark)).toBeSuccessfulCommand();
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore + 1);
     });

@@ -12,6 +12,7 @@ type ContinuousEffectWriteContext = {
   G:
     | {
         continuousEffects?: ContinuousEffectState;
+        staticEffectsVersion?: number;
       }
     | undefined;
 };
@@ -112,7 +113,21 @@ export type AddStatModifierEffectInput = {
 const DEFAULT_CONTINUOUS_EFFECT_STATE: ContinuousEffectState = {
   nextSeq: 1,
   instances: [],
+  byTarget: {},
 };
+
+function rebuildByTarget(
+  instances: readonly StatModifierContinuousEffectInstance[],
+): Record<CardInstanceId, StatModifierContinuousEffectInstance[]> {
+  const byTarget: Record<CardInstanceId, StatModifierContinuousEffectInstance[]> = {};
+  for (const instance of instances) {
+    if (!byTarget[instance.targetId]) {
+      byTarget[instance.targetId] = [];
+    }
+    byTarget[instance.targetId].push(instance);
+  }
+  return byTarget;
+}
 
 function getOrCreateContinuousEffectState(
   state: ContinuousEffectWriteContext,
@@ -128,12 +143,17 @@ function getOrCreateContinuousEffectState(
     Number.isFinite(current.nextSeq) &&
     Array.isArray(current.instances)
   ) {
+    // Migrate in-flight states that predate the byTarget index.
+    if (!current.byTarget) {
+      current.byTarget = rebuildByTarget(current.instances);
+    }
     return current;
   }
 
   const initialized: ContinuousEffectState = {
     nextSeq: 1,
     instances: [],
+    byTarget: {},
   };
   state.G.continuousEffects = initialized;
   return initialized;
@@ -154,6 +174,10 @@ function getContinuousEffectState(state: ContinuousEffectReadContext): Continuou
     return {
       nextSeq: current.nextSeq,
       instances: [...current.instances],
+      byTarget: (current.byTarget ?? rebuildByTarget(current.instances)) as Record<
+        CardInstanceId,
+        StatModifierContinuousEffectInstance[]
+      >,
     };
   }
   return DEFAULT_CONTINUOUS_EFFECT_STATE;
@@ -286,6 +310,13 @@ export function addStatModifierEffect(
           instance.stat === input.stat
         ),
     );
+    // Keep byTarget in sync with the filtered instances.
+    const bucket = effects.byTarget[input.targetId];
+    if (bucket) {
+      effects.byTarget[input.targetId] = bucket.filter(
+        (instance) => !(instance.sourceId === input.sourceId && instance.stat === input.stat),
+      );
+    }
   }
 
   const effectId = createEffectId(effects.nextSeq);
@@ -307,6 +338,11 @@ export function addStatModifierEffect(
     nonStacking: input.nonStacking === true ? true : undefined,
   };
   effects.instances.push(created);
+  if (!effects.byTarget[created.targetId]) {
+    effects.byTarget[created.targetId] = [];
+  }
+  effects.byTarget[created.targetId].push(created);
+  if (state.G) state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
   return created;
 }
 
@@ -317,11 +353,9 @@ export function getActiveStatModifierTotal(
   getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
 ): number {
   const effects = getContinuousEffectState(state);
-  return effects.instances.reduce((total, instance) => {
-    if (instance.kind !== "stat-modifier") {
-      return total;
-    }
-    if (instance.targetId !== cardId || instance.stat !== stat) {
+  const candidates = effects.byTarget[cardId] ?? [];
+  return candidates.reduce((total, instance) => {
+    if (instance.stat !== stat) {
       return total;
     }
     if (!isStatModifierEffectActive(state, instance, getDefinitionByInstanceId)) {
@@ -336,6 +370,7 @@ export function cleanupExpiredEffects(
   currentTurn: number,
 ): void {
   const effects = getOrCreateContinuousEffectState(state);
+  const before = effects.instances.length;
   effects.instances = effects.instances.filter((instance) => {
     if (instance.kind !== "stat-modifier") {
       return true;
@@ -343,6 +378,10 @@ export function cleanupExpiredEffects(
 
     return !isEffectExpired(instance, currentTurn);
   });
+  effects.byTarget = rebuildByTarget(effects.instances);
+  if (state.G && effects.instances.length !== before) {
+    state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
+  }
 }
 
 /**
@@ -361,12 +400,15 @@ export function retargetContinuousEffects(
       instance.targetId = newTargetId;
     }
   }
+  effects.byTarget = rebuildByTarget(effects.instances);
+  if (state.G) state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
 }
 
 export function cleanupDanglingTargetEffects(
   state: ContinuousEffectWriteContext & Omit<ContinuousEffectReadContext, "G">,
 ): void {
   const effects = getOrCreateContinuousEffectState(state);
+  const before = effects.instances.length;
   effects.instances = effects.instances.filter((instance) => {
     if (instance.kind !== "stat-modifier") {
       return true;
@@ -374,4 +416,8 @@ export function cleanupDanglingTargetEffects(
 
     return isCardInPlay(state, instance.targetId);
   });
+  effects.byTarget = rebuildByTarget(effects.instances);
+  if (state.G && effects.instances.length !== before) {
+    state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
+  }
 }

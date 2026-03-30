@@ -1,5 +1,6 @@
-import type { CommandEnvelope, GameLogEntry, MoveInput } from "#core";
+import type { CommandEnvelope, MoveInput } from "#core";
 import type { EngineMoveHistoryEntry } from "./core/engine/contracts";
+import type { MoveLog } from "./types/move-log";
 
 export type MoveHistorySourceAuthority = "server" | "client";
 
@@ -23,12 +24,9 @@ export interface AcceptedMoveRecord {
 export interface EngineLogRecord {
   gameId: string;
   stateVersion: number;
-  seq: number;
-  sourceEventSeqs: number[];
-  defaultMessage?: GameLogEntry["defaultMessage"];
-  logEntry: GameLogEntry;
   timestamp: number;
   sourceAuthority: MoveHistorySourceAuthority;
+  log: MoveLog;
 }
 
 export function createSyntheticProcessedCommand(
@@ -75,19 +73,16 @@ export function createAcceptedMoveRecord(args: {
 export function createEngineLogRecord(args: {
   gameId: string;
   stateVersion: number;
-  logEntry: GameLogEntry;
+  log: MoveLog;
   sourceAuthority: MoveHistorySourceAuthority;
 }): EngineLogRecord {
-  const { gameId, logEntry, sourceAuthority, stateVersion } = args;
+  const { gameId, log, sourceAuthority, stateVersion } = args;
 
   return {
-    defaultMessage: logEntry.defaultMessage,
     gameId,
-    logEntry,
-    seq: logEntry.seq,
+    log,
     sourceAuthority,
-    sourceEventSeqs: [...logEntry.sourceEventSeqs],
     stateVersion,
-    timestamp: logEntry.timestamp,
+    timestamp: log.timestamp,
   };
 }

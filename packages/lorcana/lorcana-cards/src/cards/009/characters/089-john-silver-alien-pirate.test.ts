@@ -36,7 +36,7 @@ describe("John Silver - Alien Pirate (Set 9)", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(johnSilverAlienPirate, {
           targets: [opposingId],
         }),
       ).toBeSuccessfulCommand();
@@ -81,7 +81,7 @@ describe("John Silver - Alien Pirate (Set 9)", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(johnSilverAlienPirate, {
           targets: [opposingId],
         }),
       ).toBeSuccessfulCommand();

@@ -78,7 +78,9 @@ describe("Captain Hook - The Pirate King", () => {
 
     const bagEffect = testEngine.asPlayerOne().getBagEffects()[0];
     if (bagEffect) {
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(captainHookThePirateKing),
+      ).toBeSuccessfulCommand();
     }
 
     expect(testEngine.asPlayerOne().getCard(captainHookThePirateKing).strength).toBe(6);
@@ -124,7 +126,9 @@ describe("Captain Hook - The Pirate King", () => {
 
     const bagEffect = testEngine.asPlayerOne().getBagEffects()[0];
     if (bagEffect) {
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(captainHookThePirateKing),
+      ).toBeSuccessfulCommand();
     }
 
     expect(testEngine.asPlayerOne().getCard(captainHookThePirateKing).strength).toBe(4);

@@ -50,7 +50,7 @@ describe("Jasmine - Heir of Agrabah (set 009)", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(jasmineHeirOfAgrabah, {
           resolveOptional: true,
           targets: [allyId],
         }),
@@ -73,7 +73,7 @@ describe("Jasmine - Heir of Agrabah (set 009)", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(jasmineHeirOfAgrabah, {
           resolveOptional: true,
           targets: [allyId],
         }),
@@ -98,7 +98,7 @@ describe("Jasmine - Heir of Agrabah (set 009)", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(jasmineHeirOfAgrabah, {
             resolveOptional: true,
             targets: [allyId],
           }),
@@ -123,7 +123,7 @@ describe("Jasmine - Heir of Agrabah (set 009)", () => {
 
       const jasmineId = testEngine.findCardInstanceId(jasmineHeirOfAgrabah, "play", PLAYER_ONE);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(jasmineHeirOfAgrabah, {
           resolveOptional: true,
           targets: [jasmineId],
         }),

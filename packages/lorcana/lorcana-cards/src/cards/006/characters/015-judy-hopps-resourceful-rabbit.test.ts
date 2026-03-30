@@ -40,7 +40,10 @@ describe("Judy Hopps - Resourceful Rabbit", () => {
 
       // Accept the optional and choose the ally to ready
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [ally] }),
+        testEngine.asPlayerOne().resolvePendingByCard(judyHoppsResourcefulRabbit, {
+          resolveOptional: true,
+          targets: [ally],
+        }),
       ).toBeSuccessfulCommand();
 
       // Ally should now be readied
@@ -63,7 +66,9 @@ describe("Judy Hopps - Resourceful Rabbit", () => {
 
       // Decline the optional
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(judyHoppsResourcefulRabbit, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Ally should still be exerted

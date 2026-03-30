@@ -54,7 +54,9 @@ describe("Noi - Acrobatic Baby", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(noiAcrobaticBaby),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine
@@ -83,7 +85,9 @@ describe("Noi - Acrobatic Baby", () => {
       ).toBeSuccessfulCommand();
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(noiAcrobaticBaby),
+      ).toBeSuccessfulCommand();
 
       // Challenge with Noi - she should take no damage
       expect(
@@ -141,7 +145,9 @@ describe("Noi - Acrobatic Baby", () => {
       ).toBeSuccessfulCommand();
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(noiAcrobaticBaby),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine

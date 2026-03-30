@@ -27,7 +27,7 @@ describe("Kakamora - Pirate Pitcher", () => {
       expect(testEngine.asPlayerOne().playCard(kakamoraPiratePitcher)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(kakamoraPiratePitcher, {
           resolveOptional: true,
           targets: [pirateCharacter],
         }),
@@ -50,7 +50,7 @@ describe("Kakamora - Pirate Pitcher", () => {
       expect(testEngine.asPlayerOne().playCard(kakamoraPiratePitcher)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(kakamoraPiratePitcher, {
           resolveOptional: true,
           targets: [pirateCharacter],
         }),
@@ -84,7 +84,9 @@ describe("Kakamora - Pirate Pitcher", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kakamoraPiratePitcher, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Evasive not granted since the effect was declined

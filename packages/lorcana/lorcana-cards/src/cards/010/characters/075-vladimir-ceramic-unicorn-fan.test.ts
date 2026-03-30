@@ -65,7 +65,9 @@ describe("Vladimir - Ceramic Unicorn Fan", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(vladimirCeramicUnicornFan, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const ownItemId = testEngine.findCardInstanceId(ownItem, "play", PLAYER_ONE);
@@ -94,7 +96,9 @@ describe("Vladimir - Ceramic Unicorn Fan", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(vladimirCeramicUnicornFan, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const opponentItemId = testEngine.findCardInstanceId(opponentItem, "play", PLAYER_TWO);
@@ -119,7 +123,9 @@ describe("Vladimir - Ceramic Unicorn Fan", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(vladimirCeramicUnicornFan, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose to banish the second item
@@ -147,7 +153,9 @@ describe("Vladimir - Ceramic Unicorn Fan", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(vladimirCeramicUnicornFan, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Item should remain in play since ability was declined
@@ -184,7 +192,9 @@ describe("Vladimir - Ceramic Unicorn Fan", () => {
         const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
         // Accept the optional
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(vladimirCeramicUnicornFan, { resolveOptional: true }),
         ).toBeSuccessfulCommand();
       }
 

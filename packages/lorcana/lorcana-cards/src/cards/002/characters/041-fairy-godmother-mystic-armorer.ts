@@ -28,9 +28,9 @@ export const fairyGodmotherMysticArmorer: CharacterCard = {
       title: "Shift 2",
     },
     {
-      title: "FORGET THE COACH, HERE'S",
+      title: "FORGET THE COACH, HERE'S A SWORD",
       description:
-        'A SWORD Whenever this character quests, your characters gain Challenger +3 and "When this character is banished in a challenge, return this card to your hand" this turn. (They get +3 {S} while challenging.)',
+        'Whenever this character quests, your characters gain Challenger +3 and "When this character is banished in a challenge, return this card to your hand" this turn. (They get +3 {S} while challenging.)',
     },
   ],
   classifications: ["Floodborn", "Mentor", "Fairy"],

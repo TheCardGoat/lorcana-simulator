@@ -58,6 +58,7 @@ type ResolutionSelectionBuildArgs = ResolutionSelectionBuildBase & {
   effect: unknown;
   condition?: Condition;
   legalChoiceIndices?: number[];
+  originatesFromOptional?: boolean;
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -137,6 +138,14 @@ function normalizeCurrentSelection(
       (target): target is CardInstanceId | PlayerId =>
         typeof target === "string" && target.length > 0,
     );
+  }
+
+  if (
+    typeof resolutionInput.amount === "number" &&
+    Number.isFinite(resolutionInput.amount) &&
+    resolutionInput.amount >= 0
+  ) {
+    currentSelection.amount = Math.floor(resolutionInput.amount);
   }
 
   if (
@@ -342,6 +351,8 @@ function resolveOptionalChooserId(
 function buildChosenPlayerTargetSelectionContext(
   args: ResolutionSelectionBuildBase & {
     chooserId?: PlayerId;
+    originatesFromOptional?: boolean;
+    canDeclineSelection?: boolean;
   },
 ): TargetResolutionSelectionContext {
   return {
@@ -352,6 +363,8 @@ function buildChosenPlayerTargetSelectionContext(
     chooserId: args.chooserId ?? args.cardPlayed.playerId,
     currentSelection: normalizeCurrentSelection(args.resolutionInput),
     submitField: "targets",
+    originatesFromOptional: args.originatesFromOptional,
+    canDeclineSelection: args.canDeclineSelection,
     targetDsl: [{ selector: "chosen", count: 1 }],
     cardCandidateIds: [],
     playerCandidateIds: [...args.ctx.framework.state.playerIds],
@@ -514,6 +527,8 @@ function buildGenericTargetSelectionContext(
     effect: unknown;
     kind: "target-selection" | "discard-choice";
     ordered?: boolean;
+    originatesFromOptional?: boolean;
+    canDeclineSelection?: boolean;
   },
 ): TargetResolutionSelectionContext | undefined {
   const chooserScopedCtx: ResolutionSelectionRuntimeContext = {
@@ -634,6 +649,8 @@ function buildGenericTargetSelectionContext(
     chooserId: args.chooserId,
     currentSelection,
     submitField: "targets",
+    originatesFromOptional: args.originatesFromOptional,
+    canDeclineSelection: args.canDeclineSelection,
     targetDsl: [...analysis.targetDsl],
     cardCandidateIds: cardCandidates,
     playerCandidateIds: playerCandidates,
@@ -777,6 +794,10 @@ function getEligibleHandCardsForPlayCard(
 function buildPlayCardSelectionContext(
   args: ResolutionSelectionBuildArgs,
   effectRecord: Record<string, unknown>,
+  options?: {
+    originatesFromOptional?: boolean;
+    canDeclineSelection?: boolean;
+  },
 ): TargetResolutionSelectionContext | undefined {
   // Only build hand-picker selection context in the bag resolution path.
   // Direct play-card executions (action cards, sequence steps) use the existing
@@ -811,6 +832,8 @@ function buildPlayCardSelectionContext(
     chooserId: args.chooserId,
     currentSelection: normalizeCurrentSelection(args.resolutionInput),
     submitField: "targets",
+    originatesFromOptional: options?.originatesFromOptional,
+    canDeclineSelection: options?.canDeclineSelection,
     targetDsl: [],
     cardCandidateIds: eligibleCards,
     playerCandidateIds: [],
@@ -907,6 +930,8 @@ function buildImmediateSelectionContext(
         return buildChosenPlayerTargetSelectionContext({
           ...args,
           chooserId: args.chooserId,
+          originatesFromOptional: true,
+          canDeclineSelection: true,
         });
       }
     }
@@ -918,6 +943,24 @@ function buildImmediateSelectionContext(
       args.resolutionInput,
     );
     if (typeof args.resolutionInput.resolveOptional !== "boolean") {
+      const immediateContext = effectRecord.effect
+        ? buildImmediateSelectionContext({
+            ...args,
+            effect: effectRecord.effect,
+            chooserId,
+          })
+        : undefined;
+      if (
+        immediateContext &&
+        immediateContext.kind === "target-selection" &&
+        immediateContext.currentSelection.resolveOptional === undefined
+      ) {
+        return {
+          ...immediateContext,
+          originatesFromOptional: true,
+          canDeclineSelection: true,
+        };
+      }
       return buildOptionalSelectionContext({
         ...args,
         chooserId,
@@ -932,6 +975,7 @@ function buildImmediateSelectionContext(
           ...args,
           effect: effectRecord.effect,
           chooserId,
+          originatesFromOptional: true,
         })
       : undefined;
   }
@@ -946,6 +990,7 @@ function buildImmediateSelectionContext(
         return buildChosenPlayerTargetSelectionContext({
           ...args,
           chooserId: args.chooserId,
+          originatesFromOptional: args.originatesFromOptional,
         });
       }
     }
@@ -1000,6 +1045,19 @@ function buildImmediateSelectionContext(
     return undefined;
   }
 
+  if (effectRecord.chooser === "CHOSEN_PLAYER" || effectRecord.target === "CHOSEN_PLAYER") {
+    const selectedPlayers = resolveSelectedPlayerIds(
+      args.ctx.framework.state.playerIds,
+      getCombinedSelectionInput(args.resolutionInput),
+    );
+    if ((selectedPlayers?.length ?? 0) === 0) {
+      return buildChosenPlayerTargetSelectionContext({
+        ...args,
+        originatesFromOptional: args.originatesFromOptional,
+      });
+    }
+  }
+
   if (effectRecord.type === "scry") {
     const hasExplicitDestinations =
       Array.isArray(args.resolutionInput.destinations) &&
@@ -1014,19 +1072,9 @@ function buildImmediateSelectionContext(
   }
 
   if (effectRecord.type === "play-card") {
-    return buildPlayCardSelectionContext(args, effectRecord);
-  }
-
-  if (effectRecord.chooser === "CHOSEN_PLAYER" || effectRecord.target === "CHOSEN_PLAYER") {
-    const selectedPlayers = resolveSelectedPlayerIds(
-      args.ctx.framework.state.playerIds,
-      getCombinedSelectionInput(args.resolutionInput),
-    );
-    if ((selectedPlayers?.length ?? 0) === 0) {
-      return buildChosenPlayerTargetSelectionContext({
-        ...args,
-      });
-    }
+    return buildPlayCardSelectionContext(args, effectRecord, {
+      originatesFromOptional: args.originatesFromOptional,
+    });
   }
 
   const ordered = requiresTargetOrdering(
@@ -1049,6 +1097,7 @@ function buildImmediateSelectionContext(
       effectRecord,
       args.resolutionInput,
     ),
+    originatesFromOptional: args.originatesFromOptional,
   });
 }
 

@@ -52,7 +52,7 @@ describe("Tod - Playful Kit", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { choiceIndex: 0 }),
+          testEngine.asPlayerOne().resolvePendingByCard(todPlayfulKit, { choiceIndex: 0 }),
         ).toBeSuccessfulCommand();
       }
 
@@ -76,7 +76,7 @@ describe("Tod - Playful Kit", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { choiceIndex: 1 }),
+          testEngine.asPlayerOne().resolvePendingByCard(todPlayfulKit, { choiceIndex: 1 }),
         ).toBeSuccessfulCommand();
 
         // Resolve pending to choose target
@@ -108,7 +108,7 @@ describe("Tod - Playful Kit", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { choiceIndex: 1 });
+        testEngine.asPlayerOne().resolvePendingByCard(todPlayfulKit, { choiceIndex: 1 });
 
         const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
         if (pendingEffects.length > 0) {
@@ -131,7 +131,7 @@ describe("Tod - Playful Kit", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { choiceIndex: 1 });
+        testEngine.asPlayerOne().resolvePendingByCard(todPlayfulKit, { choiceIndex: 1 });
 
         const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
         if (pendingEffects.length > 0) {
@@ -159,7 +159,7 @@ describe("Tod - Playful Kit", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { choiceIndex: 1 });
+        testEngine.asPlayerOne().resolvePendingByCard(todPlayfulKit, { choiceIndex: 1 });
 
         const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
         if (pendingEffects.length > 0) {

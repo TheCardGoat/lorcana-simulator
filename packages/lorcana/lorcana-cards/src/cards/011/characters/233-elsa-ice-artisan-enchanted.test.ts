@@ -53,7 +53,7 @@ describe("Elsa - Ice Artisan (Enchanted)", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(elsaIceArtisanEnchanted, {
           resolveOptional: true,
           targets: [weakId],
         }),
@@ -78,7 +78,7 @@ describe("Elsa - Ice Artisan (Enchanted)", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(elsaIceArtisanEnchanted, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -121,7 +121,7 @@ describe("Elsa - Ice Artisan (Enchanted)", () => {
       // Resolve the ENDLESS WINTER trigger from location play
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(elsaIceArtisanEnchanted, {
           resolveOptional: true,
           targets: [weakId],
         }),
@@ -132,13 +132,15 @@ describe("Elsa - Ice Artisan (Enchanted)", () => {
   });
 
   describe("DISTANT CALL - While this character is at a location, she gets +3 lore", () => {
-    it("currently gets +3 lore even when not at a location", () => {
+    it("does not get +3 lore when not at a location", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [elsaIceArtisanEnchanted],
         deck: 5,
       });
 
-      expect(testEngine.asPlayerOne().getCardLore(elsaIceArtisanEnchanted)).toBe(4);
+      expect(testEngine.asPlayerOne().getCardLore(elsaIceArtisanEnchanted)).toBe(
+        elsaIceArtisanEnchanted.lore,
+      );
     });
 
     it("gets +3 lore when at a location", () => {

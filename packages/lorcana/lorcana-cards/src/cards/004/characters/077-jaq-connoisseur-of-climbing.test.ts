@@ -21,7 +21,7 @@ describe("Jaq - Connoisseur of Climbing", () => {
       // Resolve the triggered ability via bag
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(jaqConnoisseurOfClimbing),
       ).toBeSuccessfulCommand();
 
       // Choose the opposing character as target
@@ -48,7 +48,7 @@ describe("Jaq - Connoisseur of Climbing", () => {
       );
 
       testEngine.asPlayerOne().playCard(jaqConnoisseurOfClimbing);
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id);
+      testEngine.asPlayerOne().resolvePendingByCard(jaqConnoisseurOfClimbing);
       testEngine.asPlayerOne().resolveNextPending({ targets: [liloMakingAWish] });
 
       // Pass to opponent's turn (Reckless active)

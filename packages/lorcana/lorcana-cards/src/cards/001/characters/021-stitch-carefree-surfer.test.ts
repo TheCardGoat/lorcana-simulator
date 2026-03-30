@@ -21,7 +21,7 @@ describe("Stitch - Carefree Surfer", () => {
       noDrawEngine.asServer().manualMoveCard(minnieId, `discard:${PLAYER_ONE}` as ZoneId).success,
     ).toBe(true);
     expect(
-      noDrawEngine.asPlayerOne().resolveBag(noDrawEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      noDrawEngine.asPlayerOne().resolvePendingByCard(stitchCarefreeSurfer, {
         resolveOptional: true,
       }).success,
     ).toBe(true);

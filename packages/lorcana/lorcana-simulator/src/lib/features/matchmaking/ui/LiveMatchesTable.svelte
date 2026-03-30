@@ -2,6 +2,7 @@
   import { Badge } from '$lib/design-system/primitives/badge';
   import { Button } from '$lib/design-system/primitives/button';
   import { m } from "$lib/i18n/messages.js";
+  import { getInkSymbolUrl } from '$lib/features/simulator/model/asset-urls.js';
   import Eye from '@lucide/svelte/icons/eye';
   import type { LiveMatchesStore } from '../state/live-matches.svelte.js';
 
@@ -13,12 +14,27 @@
 
   const remaining = $derived(store.total - store.matches.length);
 
+  let now = $state(Date.now());
+  $effect(() => {
+    const interval = setInterval(() => { now = Date.now(); }, 10_000);
+    return () => clearInterval(interval);
+  });
+
   function handleShowMore(): void {
     store.showMore();
   }
 
   function formatScore(p1: number, p2: number): string {
     return `${p1}\u2013${p2}`;
+  }
+
+  function formatDuration(createdAt: string, currentTime: number): string {
+    const diffMs = currentTime - new Date(createdAt).getTime();
+    const minutes = Math.floor(diffMs / 60_000);
+    if (minutes < 1) return '<1m';
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours}h${minutes % 60}m`;
   }
 </script>
 
@@ -71,6 +87,12 @@
               {m['sim.matchmaking.liveGames.col.player2']({})}
             </th>
             <th class="pb-2 px-2 text-center">
+              {m['sim.matchmaking.liveGames.col.turn']({})}
+            </th>
+            <th class="pb-2 px-2 text-center">
+              {m['sim.matchmaking.liveGames.col.time']({})}
+            </th>
+            <th class="pb-2 px-2 text-center">
               {m['sim.matchmaking.liveGames.col.format']({})}
             </th>
             <th class="pb-2 pl-2 text-center">
@@ -81,16 +103,44 @@
         <tbody>
           {#each store.matches as match (match.matchId)}
             <tr
-              class="border-b border-white/5 transition-colors hover:bg-white/5"
+              class="border-b border-white/5 transition-colors hover:bg-white/5 {match.currentGameId ? 'cursor-pointer' : ''}"
+              onclick={() => { if (match.currentGameId) window.open(`/spectate/${match.currentGameId}`, '_blank'); }}
+              role={match.currentGameId ? 'link' : undefined}
             >
-              <td class="max-w-[7rem] truncate py-2 pr-2 font-medium text-slate-200">
-                {match.player1.displayName}
+              <td class="max-w-[9rem] py-2 pr-2 font-medium text-slate-200">
+                <div class="flex items-center gap-1.5 truncate">
+                  {#each match.player1Inks as ink}
+                    <img
+                      src={getInkSymbolUrl(ink)}
+                      alt={ink}
+                      title={ink}
+                      class="size-4 shrink-0"
+                    />
+                  {/each}
+                  <span class="truncate">{match.player1.displayName}</span>
+                </div>
               </td>
               <td class="whitespace-nowrap py-2 px-2 text-center font-mono text-xs text-slate-300">
                 {formatScore(match.player1Score, match.player2Score)}
               </td>
-              <td class="max-w-[7rem] truncate py-2 px-2 font-medium text-slate-200">
-                {match.player2.displayName}
+              <td class="max-w-[9rem] py-2 px-2 font-medium text-slate-200">
+                <div class="flex items-center gap-1.5 truncate">
+                  {#each match.player2Inks as ink}
+                    <img
+                      src={getInkSymbolUrl(ink)}
+                      alt={ink}
+                      title={ink}
+                      class="size-4 shrink-0"
+                    />
+                  {/each}
+                  <span class="truncate">{match.player2.displayName}</span>
+                </div>
+              </td>
+              <td class="whitespace-nowrap py-2 px-2 text-center font-mono text-xs text-slate-400">
+                {match.turnNumber || '\u2014'}
+              </td>
+              <td class="whitespace-nowrap py-2 px-2 text-center text-xs text-slate-400">
+                {formatDuration(match.createdAt, now)}
               </td>
               <td class="py-2 px-2 text-center">
                 <Badge
@@ -103,21 +153,10 @@
                 </Badge>
               </td>
               <td class="py-2 pl-2 text-center">
-                {#if match.currentGameId}
-                  <a
-                    href={`/spectate/${match.currentGameId}`}
-                    class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-sky-200 transition hover:bg-white/10 hover:text-white"
-                    aria-label={`Spectate ${match.player1.displayName} versus ${match.player2.displayName}`}
-                  >
-                    <Eye class="size-3.5" />
-                    <span class="tabular-nums">{match.spectatorCount}</span>
-                  </a>
-                {:else}
-                  <span class="inline-flex items-center gap-1 px-2 py-1 text-xs text-slate-500">
-                    <Eye class="size-3.5" />
-                    <span class="tabular-nums">{match.spectatorCount}</span>
-                  </span>
-                {/if}
+                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs {match.currentGameId ? 'text-sky-200' : 'text-slate-500'}">
+                  <Eye class="size-3.5" />
+                  <span class="tabular-nums">{match.spectatorCount}</span>
+                </span>
               </td>
             </tr>
           {/each}

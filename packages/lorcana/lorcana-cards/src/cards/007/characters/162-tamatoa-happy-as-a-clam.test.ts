@@ -21,7 +21,7 @@ describe("Tamatoa - Happy as a Clam", () => {
       const steelCoilId = testEngine.findCardInstanceId(steelCoil, "discard");
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(tamatoaHappyAsAClam, {
           targets: [sapphireCoilId, steelCoilId],
         }),
       ).toBeSuccessfulCommand();
@@ -45,7 +45,7 @@ describe("Tamatoa - Happy as a Clam", () => {
       const sapphireCoilId = testEngine.findCardInstanceId(sapphireCoil, "discard");
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(tamatoaHappyAsAClam, {
           targets: [sapphireCoilId],
         }),
       ).toBeSuccessfulCommand();
@@ -90,7 +90,7 @@ describe("Tamatoa - Happy as a Clam", () => {
 
       // Accept the optional effect and choose the item from hand
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tamatoaHappyAsAClam, {
           resolveOptional: true,
           targets: [sapphireCoil],
         }),
@@ -116,7 +116,7 @@ describe("Tamatoa - Happy as a Clam", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tamatoaHappyAsAClam, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

@@ -66,7 +66,7 @@ describe("Skull Rock - Isolated Fortress", () => {
     const bagCount = testEngine.asPlayerOne().getBagCount();
     if (bagCount > 0) {
       // If the trigger fired, resolving should produce no lore
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id);
+      testEngine.asPlayerOne().resolvePendingByCard(skullRockIsolatedFortress);
     }
 
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
@@ -88,9 +88,9 @@ describe("Skull Rock - Isolated Fortress", () => {
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(skullRockIsolatedFortress).success).toBe(
+      true,
+    );
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
   });
 });

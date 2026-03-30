@@ -33,6 +33,7 @@ export const stitchNaughtyExperiment: CharacterCard = {
   abilities: [
     {
       id: "1hh-1",
+      name: "I DARE YOU!",
       cost: {
         exert: true,
       },

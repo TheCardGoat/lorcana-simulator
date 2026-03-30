@@ -28,7 +28,7 @@ describe("Madam Mim - Fox", () => {
       expect(testEngine.asPlayerOne().playCard(madamMimFox)).toBeSuccessfulCommand();
 
       // The "or" trigger fires; choose option 0 (banish self)
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimFox);
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 0 });
 
       expect(testEngine.asPlayerOne().getCardZone(madamMimFox)).toBe("discard");
@@ -45,7 +45,7 @@ describe("Madam Mim - Fox", () => {
       expect(testEngine.asPlayerOne().playCard(madamMimFox)).toBeSuccessfulCommand();
 
       // The "or" trigger fires; choose option 1 (return another to hand)
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimFox);
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1, targets: [allyCharacter] });
 
       expect(testEngine.asPlayerOne().getCardZone(allyCharacter)).toBe("hand");

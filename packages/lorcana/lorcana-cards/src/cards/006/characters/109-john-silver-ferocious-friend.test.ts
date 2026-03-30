@@ -31,7 +31,9 @@ describe("John Silver - Ferocious Friend", () => {
 
       // Accept optional and target the ally
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [ally] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(johnSilverFerociousFriend, { targets: [ally] }),
       ).toBeSuccessfulCommand();
 
       // Ally should have 1 damage
@@ -61,7 +63,9 @@ describe("John Silver - Ferocious Friend", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(johnSilverFerociousFriend, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Ally should have no damage
@@ -86,7 +90,9 @@ describe("John Silver - Ferocious Friend", () => {
         // If engine generates a bag, resolve it with no targets (decline / auto-reject)
         const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(johnSilverFerociousFriend, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 

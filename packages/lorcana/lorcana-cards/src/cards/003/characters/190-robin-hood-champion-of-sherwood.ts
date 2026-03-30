@@ -56,9 +56,15 @@ export const robinHoodChampionOfSherwood: CharacterCard = {
       name: "SKILLED COMBATANT",
       text: "SKILLED COMBATANT During your turn, whenever this character banishes another character in a challenge, gain 2 lore.",
       trigger: {
-        event: "banish",
-        on: "OPPONENT_CHARACTERS",
+        event: "banish-in-challenge",
+        on: "SELF",
         timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
       },
       type: "triggered",
     },

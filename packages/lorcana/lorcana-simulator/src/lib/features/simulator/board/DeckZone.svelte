@@ -37,7 +37,7 @@
   data-board-anchor-id={createZoneAnchorId(playerSide, "deck")}
   onclick={onClick}
 >
-  <DeckStack {count} {ownerId} />
+  <DeckStack {count} {ownerId} {seat} />
   {#if revealedDeckCard}
     <div class="revealed-deck-card">
       <div class="revealed-deck-card__card">

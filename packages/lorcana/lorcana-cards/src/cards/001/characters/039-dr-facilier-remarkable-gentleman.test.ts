@@ -46,7 +46,9 @@ describe("Dr. Facilier - Remarkable Gentleman", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(drFacilierRemarkableGentleman),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({

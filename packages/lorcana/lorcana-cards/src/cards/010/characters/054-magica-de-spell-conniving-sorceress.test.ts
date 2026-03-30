@@ -39,7 +39,7 @@ describe("Magica De Spell - Conniving Sorceress", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicaDeSpellConnivingSorceress, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -76,7 +76,7 @@ describe("Magica De Spell - Conniving Sorceress", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicaDeSpellConnivingSorceress, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

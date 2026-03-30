@@ -94,7 +94,9 @@ describe("Maurice - World-Famous Inventor", () => {
       expect(testEngine.asPlayerOne().playCard(testItem)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(mauriceWorldfamousInventor),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, deck: 0, play: 2 });
     });
@@ -111,7 +113,9 @@ describe("Maurice - World-Famous Inventor", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mauriceWorldfamousInventor, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 1, play: 2 });

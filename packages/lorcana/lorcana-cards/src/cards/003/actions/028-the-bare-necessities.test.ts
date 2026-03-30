@@ -68,7 +68,9 @@ describe("The Bare Necessities", () => {
     ) {
       const p1Bags = testEngine.asPlayerOne().getBagEffects();
       if (p1Bags.length > 0) {
-        const result = testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true });
+        const result = testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theBareNecessities, { resolveOptional: true });
         if (!result.success) break;
         continue;
       }

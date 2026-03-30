@@ -30,7 +30,7 @@ describe("Blessed Bagpipes", () => {
     expect(testEngine.asPlayerOne().playCard(blessedBagpipes)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(blessedBagpipes, {
         resolveOptional: true,
         targets: [megaraSecretKeeper],
       }),
@@ -90,7 +90,7 @@ describe("Blessed Bagpipes", () => {
 
     expect(testEngine.asPlayerOne().playCard(blessedBagpipes)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(blessedBagpipes, {
         resolveOptional: true,
         targets: [megaraSecretKeeper],
       }),
@@ -112,8 +112,6 @@ describe("Blessed Bagpipes", () => {
         },
       },
     });
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(blessedBagpipes)).toBeSuccessfulCommand();
   });
 });

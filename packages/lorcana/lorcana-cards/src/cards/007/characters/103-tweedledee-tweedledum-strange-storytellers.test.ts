@@ -27,7 +27,7 @@ describe("Tweedledee & Tweedledum - Strange Storytellers", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tweedledeeTweedledumStrangeStorytellers, {
           resolveOptional: true,
           targets: [damagedTarget],
         }),
@@ -50,7 +50,7 @@ describe("Tweedledee & Tweedledum - Strange Storytellers", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tweedledeeTweedledumStrangeStorytellers, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -78,7 +78,7 @@ describe("Tweedledee & Tweedledum - Strange Storytellers", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tweedledeeTweedledumStrangeStorytellers, {
           resolveOptional: true,
           targets: [damagedTarget],
         }),

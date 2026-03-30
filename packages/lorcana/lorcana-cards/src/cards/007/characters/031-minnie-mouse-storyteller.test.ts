@@ -143,7 +143,9 @@ describe("Minnie Mouse - Storyteller", () => {
 
       // Choose the opposing character for the strength reduction
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(minnieMouseStoryteller, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       // Opponent loses strength equal to Minnie's lore (3)
@@ -176,7 +178,9 @@ describe("Minnie Mouse - Storyteller", () => {
 
       // Choose the opposing character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(minnieMouseStoryteller, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       // Verify reduction applied

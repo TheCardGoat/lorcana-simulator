@@ -27,7 +27,6 @@ import HandZone from "@/features/simulator/board/HandZone.svelte";
 import CardTargetDialog from "@/features/simulator/dialogs/CardTargetDialog.svelte";
 import DiscardPileDialog from "@/features/simulator/dialogs/DiscardPileDialog.svelte";
 import InkwellDialog from "@/features/simulator/dialogs/InkwellDialog.svelte";
-import SimulatorSupportDialog from "@/features/simulator/dialogs/SimulatorSupportDialog.svelte";
 import ScryResolutionOverlay from "@/features/simulator/board/ScryResolutionOverlay.svelte";
 import ChoiceResolutionOverlay from "@/features/simulator/board/ChoiceResolutionOverlay.svelte";
 import ResolutionTargetOverlay from "@/features/simulator/board/ResolutionTargetOverlay.svelte";
@@ -47,6 +46,7 @@ import CardEffectAnimationLayer from "./CardEffectAnimationLayer.svelte";
 import ChallengeAimOverlay from "@/features/simulator/board/ChallengeAimOverlay.svelte";
 import MobilePlayerMenubar from "@/features/simulator/panels/MobilePlayerMenubar.svelte";
 import SeatLane from "@/features/simulator/board/SeatLane.svelte";
+import TurnActionRail from "@/features/simulator/board/TurnActionRail.svelte";
 import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import { toggleHandTuckState } from "@/features/simulator/board/hand-tuck-state.js";
 import type { SimulatorHotkeyDescriptor } from "@/features/simulator/hotkeys/hotkey-bindings.js";
@@ -57,15 +57,27 @@ import {
 import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
 import { bugReportContextFromBoard } from "@/features/simulator/support/feedback-api.js";
 import type { SimulatorLayoutMode } from "@/features/simulator/model/layout-mode.svelte.js";
+import type {
+	ConfirmableDirectMoveCategoryId,
+	DirectMoveTriggerSource,
+} from "@/features/simulator/model/direct-action-state.js";
+import { getQuestAllSummary } from "@/features/simulator/model/turn-action-rail.js";
 
 interface PendingEffectsPopoverItem {
 	id: string;
 	kind: "bag" | "pending";
 	title: string;
+	summaryTitle?: string;
 	subtitle: string;
 	detail: string;
 	badge: string;
 	card: LorcanaCardSnapshot | null;
+	instanceReferences?: Array<{
+		id: string;
+		label: string;
+		cardId: string;
+		card: LorcanaCardSnapshot | null;
+	}>;
 	isActive?: boolean;
 	canResolve?: boolean;
 	canAccept?: boolean;
@@ -88,7 +100,17 @@ interface TabletopBoardProps {
 	pendingEffectsPopoverItems?: PendingEffectsPopoverItem[];
 	activePlayerGuidance?: ActivePlayerGuidanceItem[];
 	hotkeyDescriptors?: SimulatorHotkeyDescriptor[];
+	supportReminderText?: string | null;
+	onDismissSupportReminder?: () => void;
 	onOpenCompactPanels?: (tab?: "moves" | "log") => void;
+	pendingDirectMoveCategoryId?: ConfirmableDirectMoveCategoryId | null;
+	onConfirmableDirectMoveCategory?: (
+		categoryId: "pass-turn" | "quest-all" | "undo",
+		source?: DirectMoveTriggerSource,
+	) => void;
+	onOpenSupportDialog?: () => void;
+	onOpenFeedbackDialog?: () => void;
+	onOpenBugReportDialog?: () => void;
 }
 
 interface PointerPosition {
@@ -104,7 +126,14 @@ let {
 	pendingEffectsPopoverItems = [],
 	activePlayerGuidance = [],
 	hotkeyDescriptors = [],
+	supportReminderText = null,
+	onDismissSupportReminder,
 	onOpenCompactPanels,
+	pendingDirectMoveCategoryId = null,
+	onConfirmableDirectMoveCategory,
+	onOpenSupportDialog,
+	onOpenFeedbackDialog,
+	onOpenBugReportDialog,
 }: TabletopBoardProps = $props();
 
 const board = useLorcanaBoardPresenter();
@@ -123,7 +152,6 @@ let boardRef: HTMLElement | null = $state(null);
 let boardAnchorSnapshot: BoardAnchorSnapshot | null = $state(null);
 let challengePointerClientPosition: PointerPosition | null = $state(null);
 let pendingEffectsOpen = $state(false);
-let supportDialogOpen = $state(false);
 let inlineMoveChoices = $state<{
 	categoryId: ExecutableMovePresentationCategoryId;
 	label: string;
@@ -186,6 +214,28 @@ const topPlayerLabel = $derived(
 const bottomPlayerLabel = $derived(
 	hasOwnedView ? m["sim.player.you"]({}) : m["sim.player.side.playerOne"]({}),
 );
+const activeTurnTimer = $derived.by(() => {
+	if (topIsTurnPlayer) {
+		return topSummary?.timer;
+	}
+
+	if (bottomIsTurnPlayer) {
+		return bottomSummary?.timer;
+	}
+
+	return bottomSummary?.timer ?? topSummary?.timer;
+});
+const activeTurnTimerLabel = $derived.by(() => {
+	if (topIsTurnPlayer) {
+		return `${topPlayerLabel} Clock`;
+	}
+
+	if (bottomIsTurnPlayer) {
+		return `${bottomPlayerLabel} Clock`;
+	}
+
+	return `${bottomPlayerLabel} Clock`;
+});
 const moveCategoryCount = $derived(sidebar.moveCategoryCount);
 const moveCategorySummaries = $derived(sidebar.moveCategorySummaries);
 const moveLogEntries = $derived(sidebar.moveLogEntries);
@@ -198,6 +248,20 @@ const activeMobileMoveCategoryId = $derived(
 		: (inlineMoveChoices?.categoryId ?? null),
 );
 const pendingEffectsCount = $derived(pendingEffectsPopoverItems.length);
+const questAllSummary = $derived(
+	getQuestAllSummary(moveCategorySummaries, board.cardSnapshotsById),
+);
+const questAllLore = $derived(questAllSummary?.lore ?? null);
+const questAllCount = $derived(questAllSummary?.count ?? null);
+const canPassTurn = $derived(
+	moveCategorySummaries.some((summary) => summary.categoryId === "pass-turn"),
+);
+const canUndo = $derived(
+	moveCategorySummaries.some((summary) => summary.categoryId === "undo"),
+);
+const canQuestAll = $derived(
+	moveCategorySummaries.some((summary) => summary.categoryId === "quest-all"),
+);
 const targetSelectionState = $derived.by(() => {
 	if (
 		availableMovesSelectionState?.mode === "resolution-target" ||
@@ -504,7 +568,7 @@ function handleMobileReportPlayer(): void {
 }
 
 function handleAdvancePendingEffects(): void {
-	pendingEffectsOpen = !pendingEffectsOpen;
+	pendingEffectsOpen = true;
 }
 
 function openTargetSelectionDialog(): void {
@@ -528,6 +592,15 @@ function handleMobileMoveCategory(
 		moveCategorySummaries.find((entry) => entry.categoryId === categoryId) ??
 		null;
 	if (summary?.isDirect) {
+		if (
+			(categoryId === "pass-turn" || categoryId === "quest-all") &&
+			onConfirmableDirectMoveCategory
+		) {
+			inlineMoveChoices = null;
+			onConfirmableDirectMoveCategory(categoryId, "pointer");
+			return;
+		}
+
 		inlineMoveChoices = null;
 		sidebar.handleAvailableMoveClick(moves[0]);
 		return;
@@ -843,14 +916,13 @@ $effect(() => {
   onpointerdown={handleTabletopPointerDown}
   style:--quest-rotation-duration="{questRotationDurationMs}ms"
 >
-  {#if !scrySelectionState && !choiceSelectionState && !resolutionTargetOverlayState}
-    <PendingEffectsPopover
-      items={pendingEffectsPopoverItems}
-      bind:open={pendingEffectsOpen}
-      canOpenTargetModal={Boolean(genericTargetModalState)}
-      onOpenTargetModal={openTargetSelectionDialog}
-    />
-  {/if}
+  <PendingEffectsPopover
+    items={pendingEffectsPopoverItems}
+    bind:open={pendingEffectsOpen}
+    canOpenTargetModal={Boolean(genericTargetModalState)}
+    onOpenTargetModal={openTargetSelectionDialog}
+    initialDockPosition={isMobileLayout ? "top" : "middle"}
+  />
 
   {#if genericTargetModalState}
     <CardTargetDialog
@@ -882,6 +954,7 @@ $effect(() => {
       cardSnapshots={board.cardSnapshotsById}
       onSelectCard={sidebar.handleAvailableMovesSelectionCard}
       onSelectSlot={sidebar.selectResolutionTargetSlot}
+      onAmountChange={sidebar.updateResolutionSelectedAmount}
       onConfirm={sidebar.confirmActionSelection}
       onDismiss={sidebar.cancelActionSelectionSession}
     />
@@ -923,10 +996,10 @@ $effect(() => {
           logCount={moveLogEntries.length}
           selectedCard={selectedCard}
           selectedCardPlayable={selectedCardPlayable}
+          {supportReminderText}
           onOpenSettings={openPlayerSettings}
-          onOpenSupport={() => {
-            supportDialogOpen = true;
-          }}
+          onOpenSupport={onOpenSupportDialog}
+          onDismissSupportReminder={onDismissSupportReminder}
           onOpenLog={() => onOpenCompactPanels?.("log")}
           onOpenCardPreview={openCompactPreview}
           onReportPlayer={handleMobileReportPlayer}
@@ -1107,6 +1180,10 @@ $effect(() => {
           actionCount={moveCategoryCount}
           moveSummaries={moveCategorySummaries}
           activeMoveCategoryId={activeMobileMoveCategoryId}
+          timer={bottomSummary?.timer}
+          {questAllCount}
+          {questAllLore}
+          armedDirectCategoryId={pendingDirectMoveCategoryId}
           pendingCount={pendingEffectsCount}
           {hasPendingEffects}
           {pendingEffectsOpen}
@@ -1116,9 +1193,9 @@ $effect(() => {
           onExecuteMoveCategory={handleMobileMoveCategory}
           onOpenLog={() => onOpenCompactPanels?.("log")}
           onOpenSettings={openPlayerSettings}
-          onOpenSupport={() => {
-            supportDialogOpen = true;
-          }}
+          onOpenSupport={onOpenSupportDialog}
+          onOpenFeedback={onOpenFeedbackDialog}
+          onOpenBugReport={onOpenBugReportDialog}
           onConcede={handleMobileConcede}
           onOpenPendingEffects={handleAdvancePendingEffects}
           bugReportContext={bugReportContext}
@@ -1126,6 +1203,22 @@ $effect(() => {
       </div>
     {/if}
   </div>
+
+  {#if !isMobileLayout && hasOwnedView && bottomSummary}
+    <TurnActionRail
+      timer={activeTurnTimer}
+      timerLabel={activeTurnTimerLabel}
+      {questAllCount}
+      {questAllLore}
+      {canPassTurn}
+      {canUndo}
+      {canQuestAll}
+      armedCategoryId={pendingDirectMoveCategoryId}
+      onUndo={() => onConfirmableDirectMoveCategory?.("undo", "pointer")}
+      onPassTurn={() => onConfirmableDirectMoveCategory?.("pass-turn", "pointer")}
+      onQuestAll={() => onConfirmableDirectMoveCategory?.("quest-all", "pointer")}
+    />
+  {/if}
 
   <ActivePlayerGuidance
     items={activePlayerGuidance}
@@ -1150,8 +1243,6 @@ $effect(() => {
     viewerSide={ownerSide}
     target={board.inkwellTarget}
   />
-
-  <SimulatorSupportDialog bind:open={supportDialogOpen} gameContext={bugReportContext} />
 </div>
 
 <style>
@@ -1159,8 +1250,12 @@ $effect(() => {
     --hand-guidance-offset: 3rem;
     --hand-guidance-clearance: 1.65rem;
     --top-hand-screen-offset: -2rem;
-    --bottom-hand-screen-offset: 2rem;
+    --bottom-hand-screen-offset: 0rem;
     --hand-tuck-peek: 1.5rem;
+    --desktop-footer-gutter: 0px;
+    --desktop-footer-left-reserve: 0px;
+    --desktop-footer-right-reserve: 0px;
+    --desktop-hand-overscan: 0px;
     /* hand-zone-height = card height (122px / 0.9582) + hand container padding (0.75rem) */
     --hand-zone-height: calc(122px / 0.9582 + 0.75rem);
     --hand-tuck-distance: calc(var(--hand-zone-height) - var(--hand-tuck-peek));
@@ -1174,8 +1269,8 @@ $effect(() => {
     --mobile-menubar-height: 3.6rem;
     --mobile-hand-height: 4.6rem;
 
-          margin: 0;
-      padding: 0;
+    margin: 0;
+    padding: 0;
     container-type: size;
     position: relative;
     display: flex;
@@ -1244,7 +1339,9 @@ $effect(() => {
   }
 
   .chrome-slot--desktop.chrome-slot--bottom {
-    bottom: calc(0.45rem + env(safe-area-inset-bottom) - var(--bottom-hand-screen-offset));
+    bottom: calc(
+      0.45rem + env(safe-area-inset-bottom) - var(--bottom-hand-screen-offset) - var(--desktop-hand-overscan)
+    );
   }
 
   .chrome-slot--desktop.chrome-slot--top.chrome-slot--tucked {
@@ -1301,7 +1398,7 @@ $effect(() => {
   }
 
   .desktop-hand-toggle--bottom {
-    bottom: calc(env(safe-area-inset-bottom) + 0.35rem);
+    bottom: calc(0.65rem + env(safe-area-inset-bottom) + var(--hand-zone-height) - 1rem);
   }
 
   .desktop-hand-toggle--visible {
@@ -1401,7 +1498,7 @@ $effect(() => {
 
   .tabletop-container :global(.card-face.card-face--exerted),
   .tabletop-container :global(.card-back.card-back--exerted) {
-    transform: rotate(90deg) !important;
+    transform: rotate(20deg) scale(0.96) !important;
     transform-origin: center center !important;
   }
 
@@ -1495,15 +1592,23 @@ $effect(() => {
   }
 
   @media (min-width: 1240px) {
-    .tabletop-layout {
-      --sim-play-card-width: clamp(160px, min(24cqh, 20cqw), 220px);
-      --sim-hand-card-width: clamp(120px, min(18cqh, 13cqw), 170px);
-      --sim-side-zone-card-width: clamp(46px, min(8cqh, 5cqw), 72px);
+    .tabletop-container {
+      --desktop-footer-gutter: clamp(3.625rem, 6.25vh, 5rem);
+      --desktop-footer-left-reserve: clamp(10rem, 18vw, 12rem);
+      --desktop-footer-right-reserve: clamp(13rem, 22vw, 15rem);
+      --desktop-hand-overscan: calc(var(--hand-zone-height) * 0.16);
     }
 
-    /* use max clamp value (170px) as safe upper bound for hand height */
+    .tabletop-layout {
+      --sim-play-card-width: clamp(160px, min(24cqh, 20cqw), 220px);
+      --sim-hand-card-width: clamp(104px, min(15.5cqh, 11.5cqw), 146px);
+      --sim-side-zone-card-width: clamp(46px, min(8cqh, 5cqw), 72px);
+      padding-bottom: calc(var(--desktop-footer-gutter) + env(safe-area-inset-bottom));
+    }
+
+    /* use max clamp value (146px) as safe upper bound for hand height */
     .tabletop-container {
-      --hand-zone-height: calc(170px / 0.9582 + 0.75rem);
+      --hand-zone-height: calc(146px / 0.9582 + 0.75rem);
     }
 
     .chrome-slot--desktop.chrome-slot--top:hover + .desktop-hand-toggle--top,
@@ -1530,6 +1635,19 @@ $effect(() => {
     .desktop-hand-toggle--bottom:hover,
     .desktop-hand-toggle--bottom:focus-visible {
       transform: translate(-50%, 0.1rem);
+    }
+  }
+
+  @media (min-width: 1240px) and (max-width: 1439px) {
+    .tabletop-container {
+      --desktop-footer-left-reserve: clamp(9rem, 17vw, 10.5rem);
+      --desktop-footer-right-reserve: clamp(11.5rem, 21vw, 13.25rem);
+      --hand-zone-height: calc(136px / 0.9582 + 0.75rem);
+      --desktop-hand-overscan: calc(var(--hand-zone-height) * 0.18);
+    }
+
+    .tabletop-layout {
+      --sim-hand-card-width: clamp(98px, min(14.5cqh, 10.75cqw), 136px);
     }
   }
 

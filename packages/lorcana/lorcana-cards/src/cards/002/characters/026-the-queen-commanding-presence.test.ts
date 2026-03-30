@@ -41,7 +41,9 @@ describe("The Queen - Commanding Presence", () => {
       return;
     }
 
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(theQueenCommandingPresence),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().getCard(opposingTarget)?.strength).toBe(
       opposingTarget.strength,
     );

@@ -19,14 +19,48 @@ export const doYouWantToBuildASnowmanI18n: Record<Languages, I18nProperties> = {
   },
   de: {
     name: "Willst du einen Schneemann bauen?",
-    text: "Eine gegnerische Person deiner Wahl sagt JA! oder NEIN!: • JA! Du sammelst 3 Legenden. • NEIN! Die Person wählt einen ihrer Charaktere und legt diesen unter ihr Deck.",
+    text: [
+      {
+        title: "Eine gegnerische Person deiner Wahl sagt JA! oder NEIN!:",
+      },
+      {
+        title: "• JA!",
+        description: "Du sammelst 3 Legenden.",
+      },
+      {
+        title: "• NEIN! Die Person wählt einen ihrer Charaktere und legt diesen unter ihr Deck.",
+      },
+    ],
   },
   fr: {
     name: "Je voudrais un bonhomme de neige",
-    text: "Choisissez un adversaire qui choisit D'ACCORD! ou NON!: • D'ACCORD!: vous gagnez 3 éclats de Lore. • NON!: il choisit l'un de ses personnages et le place sous sa pioche.",
+    text: [
+      {
+        title: "Choisissez un adversaire qui choisit D'ACCORD! ou NON!:",
+      },
+      {
+        title: "• D'ACCORD!",
+        description: "vous gagnez 3 éclats de Lore.",
+      },
+      {
+        title: "• NON! il choisit l'un de ses personnages et le place sous sa pioche.",
+      },
+    ],
   },
   it: {
     name: "Sei Già in Piedi Oppure Dormi?",
-    text: "(Un personaggio con costo 3 o superiore può per cantare questa canzone gratis.) Un avversario a tua scelta sceglie tra SÌ! o NO!: • SÌ! Ottieni 3 leggenda. • NO! Quell'avversario sceglie un suo personaggio e mette quella carta in fondo al suo mazzo.",
+    text: [
+      {
+        title: "Un avversario a tua scelta sceglie tra SÌ! o NO!:",
+      },
+      {
+        title: "• SÌ!",
+        description: "Ottieni 3 leggenda.",
+      },
+      {
+        title:
+          "• NO! Quell'avversario sceglie un suo personaggio e mette quella carta in fondo al suo mazzo.",
+      },
+    ],
   },
 };

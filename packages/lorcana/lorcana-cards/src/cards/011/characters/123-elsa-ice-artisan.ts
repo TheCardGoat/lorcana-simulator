@@ -55,6 +55,13 @@ export const elsaIceArtisan: CharacterCard = {
           target: {
             cardTypes: ["character"],
             count: 1,
+            filter: [
+              {
+                comparison: "less-or-equal",
+                type: "strength-comparison",
+                value: 3,
+              },
+            ],
             owner: "any",
             selector: "chosen",
             zones: ["play"],
@@ -63,7 +70,39 @@ export const elsaIceArtisan: CharacterCard = {
         },
         type: "optional",
       },
-      name: "ENDLESS WINTER When you play this character and",
+      name: "ENDLESS WINTER",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+      text: "ENDLESS WINTER When you play this character and whenever you play a location, you may exert chosen character with 3 {S} or less.",
+    },
+    {
+      id: "vt4-3",
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          target: {
+            cardTypes: ["character"],
+            count: 1,
+            filter: [
+              {
+                comparison: "less-or-equal",
+                type: "strength-comparison",
+                value: 3,
+              },
+            ],
+            owner: "any",
+            selector: "chosen",
+            zones: ["play"],
+          },
+          type: "exert",
+        },
+        type: "optional",
+      },
+      name: "ENDLESS WINTER",
       trigger: {
         event: "play",
         on: {
@@ -76,7 +115,11 @@ export const elsaIceArtisan: CharacterCard = {
       text: "ENDLESS WINTER When you play this character and whenever you play a location, you may exert chosen character with 3 {S} or less.",
     },
     {
-      id: "vt4-3",
+      id: "vt4-4",
+      name: "DISTANT CALL",
+      condition: {
+        type: "at-location",
+      },
       effect: {
         modifier: 3,
         stat: "lore",

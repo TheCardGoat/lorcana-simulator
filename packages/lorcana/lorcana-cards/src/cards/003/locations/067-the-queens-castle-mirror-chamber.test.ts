@@ -36,7 +36,9 @@ describe("The Queen's Castle - Mirror Chamber", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(theQueensCastleMirrorChamber),
+    ).toBeSuccessfulCommand();
 
     // 2 draws from ability (one per character at location) + 1 start-of-turn draw = 3
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(

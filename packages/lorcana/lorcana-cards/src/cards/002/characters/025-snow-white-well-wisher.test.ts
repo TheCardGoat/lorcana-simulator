@@ -14,7 +14,7 @@ describe("Snow White - Well Wisher", () => {
     const gastonDiscardId = testEngine.findCardInstanceId(gastonBaritoneBully, "discard");
 
     testEngine.asPlayerOne().quest(snowWhiteId);
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(snowWhiteWellWisher);
 
     // Target (choose card from discard)
     let pendingChoice = testEngine.asPlayerOne().getPendingChoice();

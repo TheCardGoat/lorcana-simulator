@@ -55,7 +55,7 @@ describe("Donald Duck - Lively Pirate", () => {
       // Triggered ability should create a bag entry for player one (the controller of Donald)
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckLivelyPirate, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -96,7 +96,7 @@ describe("Donald Duck - Lively Pirate", () => {
       // The song should remain in discard after accepting the optional ability
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(donaldDuckLivelyPirate, {
             resolveOptional: true,
           }),
         ).toBeSuccessfulCommand();
@@ -128,7 +128,7 @@ describe("Donald Duck - Lively Pirate", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckLivelyPirate, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

@@ -74,7 +74,7 @@ describe("Mickey Mouse - Giant Mouse", () => {
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       if (bagEffects.length > 0) {
         for (const bagEffect of bagEffects) {
-          testEngine.asPlayerTwo().resolveBag(bagEffect.id);
+          testEngine.asPlayerTwo().resolvePendingByCard(mickeyMouseGiantMouse);
         }
       }
 
@@ -103,7 +103,7 @@ describe("Mickey Mouse - Giant Mouse", () => {
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       if (bagEffects.length > 0) {
         for (const bagEffect of bagEffects) {
-          testEngine.asPlayerTwo().resolveBag(bagEffect.id);
+          testEngine.asPlayerTwo().resolvePendingByCard(mickeyMouseGiantMouse);
         }
       }
 
@@ -135,7 +135,7 @@ describe("Mickey Mouse - Giant Mouse", () => {
     const bagEffects = testEngine.asPlayerTwo().getBagEffects();
     if (bagEffects.length > 0) {
       for (const bagEffect of bagEffects) {
-        testEngine.asPlayerTwo().resolveBag(bagEffect.id);
+        testEngine.asPlayerTwo().resolvePendingByCard(mickeyMouseGiantMouse);
       }
     }
 

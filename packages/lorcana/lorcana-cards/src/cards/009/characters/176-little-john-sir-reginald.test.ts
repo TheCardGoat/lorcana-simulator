@@ -46,7 +46,9 @@ describe("Little John - Sir Reginald", () => {
 
       expect(testEngine.asPlayerOne().playCard(littleJohnSirReginald)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ choiceIndex: 0, targets: [alliedHero] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(littleJohnSirReginald, { choiceIndex: 0, targets: [alliedHero] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().hasKeyword(alliedHero, "Resist")).toBe(true);
@@ -67,7 +69,10 @@ describe("Little John - Sir Reginald", () => {
 
       expect(testEngine.asPlayerOne().playCard(littleJohnSirReginald)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ choiceIndex: 1, targets: [opposingVillain] }),
+        testEngine.asPlayerOne().resolvePendingByCard(littleJohnSirReginald, {
+          choiceIndex: 1,
+          targets: [opposingVillain],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo()).toHaveDamage({ card: opposingVillain, value: 2 });
@@ -82,7 +87,10 @@ describe("Little John - Sir Reginald", () => {
 
       expect(testEngine.asPlayerOne().playCard(littleJohnSirReginald)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ choiceIndex: 1, targets: [alliedVillain] }),
+        testEngine.asPlayerOne().resolvePendingByCard(littleJohnSirReginald, {
+          choiceIndex: 1,
+          targets: [alliedVillain],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveDamage({ card: alliedVillain, value: 2 });
@@ -101,7 +109,9 @@ describe("Little John - Sir Reginald", () => {
 
       expect(testEngine.asPlayerOne().playCard(littleJohnSirReginald)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ choiceIndex: 0, targets: [opposingHero] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(littleJohnSirReginald, { choiceIndex: 0, targets: [opposingHero] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().hasKeyword(opposingHero, "Resist")).toBe(true);

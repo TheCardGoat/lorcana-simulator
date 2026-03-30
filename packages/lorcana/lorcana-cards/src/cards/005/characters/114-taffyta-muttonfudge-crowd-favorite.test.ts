@@ -35,7 +35,7 @@ describe("Taffyta Muttonfudge - Crowd Favorite", () => {
       // Resolve triggered ability (SHOWSTOPPER)
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+          testEngine.asPlayerOne().resolvePendingByCard(taffytaMuttonfudgeCrowdFavorite),
         ).toBeSuccessfulCommand();
       }
 
@@ -63,7 +63,7 @@ describe("Taffyta Muttonfudge - Crowd Favorite", () => {
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         const effects = testEngine.asPlayerOne().getBagEffects();
         if (effects.length > 0) {
-          testEngine.asPlayerOne().resolveBag(effects[0]!.id);
+          testEngine.asPlayerOne().resolvePendingByCard(taffytaMuttonfudgeCrowdFavorite);
         }
       }
 

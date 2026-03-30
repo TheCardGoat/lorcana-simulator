@@ -63,7 +63,9 @@ describe("Mrs. Potts - Enchanted Teapot", () => {
 
       // Accept the optional draw
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mrsPottsEnchantedTeapot, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Hand: was initialHandCount (including Mrs. Potts), -1 for playing Mrs. Potts, +1 draw
@@ -91,7 +93,9 @@ describe("Mrs. Potts - Enchanted Teapot", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mrsPottsEnchantedTeapot, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getZonesCardCount("player_one").deck).toBe(
@@ -115,7 +119,9 @@ describe("Mrs. Potts - Enchanted Teapot", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mrsPottsEnchantedTeapot, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Deck should be unchanged

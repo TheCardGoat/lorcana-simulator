@@ -74,7 +74,7 @@ describe("Scrooge McDuck - On the Right Track", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckOnTheRightTrack, {
           resolveOptional: true,
           targets: [characterWithCardUnder],
         }),
@@ -99,7 +99,7 @@ describe("Scrooge McDuck - On the Right Track", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckOnTheRightTrack, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -123,7 +123,7 @@ describe("Scrooge McDuck - On the Right Track", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckOnTheRightTrack, {
           resolveOptional: true,
           targets: [characterWithCardUnder],
         }),
@@ -139,7 +139,7 @@ describe("Scrooge McDuck - On the Right Track", () => {
       expect(targetCardAfter.lore).toBe(baseLore);
     });
 
-    it("regression: does NOT allow targeting characters WITHOUT cards under them", () => {
+    it("regression: still queues the trigger when no legal target exists", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         inkwell: scroogeMcduckOnTheRightTrack.cost,
         hand: [scroogeMcduckOnTheRightTrack],
@@ -152,8 +152,13 @@ describe("Scrooge McDuck - On the Right Track", () => {
         testEngine.asPlayerOne().playCard(scroogeMcduckOnTheRightTrack),
       ).toBeSuccessfulCommand();
 
-      // No valid targets (no character with cards under), so no bag effect should fire
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // The trigger still goes to the bag, but with no legal target it resolves as a no-op.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scroogeMcduckOnTheRightTrack, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
       const targetCard = testEngine.asPlayerOne().getCard(characterWithoutCardUnder);
       expect(targetCard.lore).toBe(baseLore);
     });
@@ -177,7 +182,7 @@ describe("Scrooge McDuck - On the Right Track", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckOnTheRightTrack, {
           resolveOptional: true,
           targets: [characterWithCardUnder],
         }),

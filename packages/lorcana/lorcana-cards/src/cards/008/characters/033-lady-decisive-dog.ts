@@ -70,6 +70,7 @@ export const ladyDecisiveDog: CharacterCard = {
         type: "modify-stat",
       },
       id: "4k5-2",
+      name: "TAKE THE LEAD",
       text: "TAKE THE LEAD While this character has 3 {S} or more, she gets +2 {L}.",
       type: "static",
     },

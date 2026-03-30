@@ -25,7 +25,7 @@ describe("Nana - Darling Family Pet", () => {
     testEngine.asPlayerOne().playCard(cinderellaId);
 
     // Should have trigger
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(nanaDarlingFamilyPet);
 
     // Target a character to heal (Gaston)
     let pendingChoice = testEngine.asPlayerOne().getPendingChoice();

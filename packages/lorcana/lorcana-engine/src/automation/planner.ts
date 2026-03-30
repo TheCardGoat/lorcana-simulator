@@ -24,6 +24,7 @@ import {
   getGrantedActivatedAbilities,
   toStaticAbilityState,
 } from "../runtime-moves/rules/static-ability-utils";
+import { buildRegistryFromMatchState } from "../runtime-moves/rules/move-registry-cache";
 import { cardHasName } from "../card-utils";
 import { analyzeEffectTargets } from "../targeting";
 import type {
@@ -35,18 +36,22 @@ import type {
   LorcanaProjectedBoardView,
   LorcanaProjectedCard,
   PendingActionEffect,
+  ResolutionSelectionContext,
 } from "../types";
 import { isClassification } from "../types";
 
 import { createAutomatedActionBoardSnapshot } from "./decision-trace";
+import { buildAutomatedActionDeckPlanningMetadata } from "./deck-profile";
+import { deckAwareLoreRaceAutomatedActionStrategy } from "./deck-aware-strategy";
 import {
-  defaultLoreRaceAutomatedActionStrategy,
-  summarizeDefaultLoreRaceCandidates,
-} from "./default-strategy";
+  type AutomatedActionTargetPriorityContext,
+  scoreAutomatedActionTargets,
+} from "./target-priority";
 import {
   DEFAULT_AUTOMATED_ACTION_MAX_EXECUTION_FAILURES,
   DEFAULT_AUTOMATED_ACTION_SEARCH_CAPS,
   type AutomatedActionAuthoritativeHints,
+  type AutomatedActionBlockedState,
   type AutomatedActionCandidate,
   type AutomatedActionCandidateSummary,
   type AutomatedActionCostSelections,
@@ -59,6 +64,7 @@ import {
   type AutomatedActionExecutionOptions,
   type AutomatedActionExecutionResult,
   type AutomatedActionFallback,
+  type AutomatedActionFamily,
   type AutomatedActionPlanningContext,
   type AutomatedActionResolutionShape,
   type AutomatedActionResolutionVariant,
@@ -73,6 +79,7 @@ type AutomatedActionPlannerAdapter = {
   board: LorcanaProjectedBoardView;
   concede(actorId: PlayerId): CommandResult;
   createErrorResult(error: string, errorCode: string): CommandResult;
+  createNoopResult(): CommandResult;
   executeCandidate(actorId: PlayerId, candidate: AutomatedActionCandidate): CommandResult;
   getDefinitionByInstanceId(cardId: CardInstanceId): LorcanaCardDefinition | undefined;
   passTurn(actorId: PlayerId): CommandResult;
@@ -93,7 +100,9 @@ type BagOrPendingEntry = {
     choiceIndex?: number;
     destinations?: AutomatedActionDestinationSelection[];
     eventSnapshot?: PendingActionEffect["resolutionInput"]["eventSnapshot"];
+    namedCard?: string;
     resolveOptional?: boolean;
+    selectionContext?: DeepReadonly<ResolutionSelectionContext>;
     targets?: readonly AutomatedActionTargetId[];
   };
   effect: Effect | undefined;
@@ -123,14 +132,18 @@ type ActionAbilityDefinition = Extract<
 type ResolutionVariantPart = {
   choiceIndex?: number;
   destinations?: AutomatedActionDestinationSelection[];
+  namedCard?: string;
   resolveOptional?: boolean;
   targets?: AutomatedActionTargetId[];
 };
 
 type PlannedAutomatedActions = {
+  actorDeckSignature?: string;
   boardSnapshot: AutomatedActionDecisionTrace["boardSnapshot"];
   enumeration: AutomatedActionEnumerationResult;
   gameSegment?: string;
+  informationPolicy: AutomatedActionDecisionTrace["informationPolicy"];
+  opponentKnowledgeSource: AutomatedActionDecisionTrace["opponentKnowledgeSource"];
   orderedCandidateSummaries: AutomatedActionCandidateSummary[];
   phase?: string;
   step?: string | null;
@@ -217,6 +230,21 @@ function stableSortIds(
   return [...ids].sort((left, right) => compareCardIds(board, left, right));
 }
 
+function compareTargetIds(
+  board: LorcanaProjectedBoardView,
+  left: AutomatedActionTargetId,
+  right: AutomatedActionTargetId,
+): number {
+  const leftCard = board.cards[String(left)];
+  const rightCard = board.cards[String(right)];
+
+  if (leftCard && rightCard) {
+    return compareCardIds(board, left as CardInstanceId, right as CardInstanceId);
+  }
+
+  return String(left).localeCompare(String(right));
+}
+
 function getAvailableInkForPlayer(board: LorcanaProjectedBoardView, playerId: PlayerId): number {
   return (board.players[playerId]?.inkwell ?? []).reduce((total, cardId) => {
     const card = getProjectedCard(board, String(cardId) as CardInstanceId);
@@ -250,6 +278,109 @@ function getFutureDrawScore(
   score += cost <= 2 ? 3 : cost <= 4 ? 1 : -Math.min(3, cost - 4);
   score += cost <= availableNextTurn ? 2 : 0;
   return score;
+}
+
+function buildTargetPriorityContext(args: {
+  adapter: AutomatedActionPlannerAdapter;
+  analysisPlayerId: PlayerId;
+}): AutomatedActionTargetPriorityContext {
+  const deckMetadata = buildAutomatedActionDeckPlanningMetadata({
+    actorId: args.analysisPlayerId,
+    authoritativeHints: args.adapter.authoritativeHints,
+    board: args.adapter.board,
+    staticResources: args.adapter.staticResources,
+  });
+
+  return {
+    actorId: args.analysisPlayerId,
+    board: args.adapter.board,
+    getCardDefinition: deckMetadata.getCardDefinition,
+    getCardRoles: deckMetadata.getCardRoles,
+    opponentId: deckMetadata.opponentId,
+  };
+}
+
+function prioritizeTargetIds(args: {
+  family: AutomatedActionFamily;
+  priorityContext: AutomatedActionTargetPriorityContext;
+  sourceCardId: CardInstanceId;
+  targets: readonly AutomatedActionTargetId[];
+}): AutomatedActionTargetId[] {
+  const sourceDefinitionId = args.priorityContext.getCardDefinition(args.sourceCardId)?.id;
+  const sourceRoles = args.priorityContext.getCardRoles(args.sourceCardId);
+  const scoreByTargetId = new Map<AutomatedActionTargetId, number>();
+
+  const getScore = (targetId: AutomatedActionTargetId): number => {
+    const existingScore = scoreByTargetId.get(targetId);
+    if (typeof existingScore === "number") {
+      return existingScore;
+    }
+
+    const score = scoreAutomatedActionTargets({
+      context: args.priorityContext,
+      family: args.family,
+      sourceDefinitionId,
+      sourceRoles,
+      targets: [targetId],
+    }).score;
+    scoreByTargetId.set(targetId, score);
+    return score;
+  };
+
+  return [...args.targets].sort((left, right) => {
+    const scoreOrder = getScore(right) - getScore(left);
+    if (scoreOrder !== 0) {
+      return scoreOrder;
+    }
+
+    return compareTargetIds(args.priorityContext.board, left, right);
+  });
+}
+
+function prioritizeTargetVariants(args: {
+  family: AutomatedActionFamily;
+  priorityContext: AutomatedActionTargetPriorityContext;
+  sourceCardId: CardInstanceId;
+  targetVariants: readonly AutomatedActionTargetId[][];
+}): AutomatedActionTargetId[][] {
+  const sourceDefinitionId = args.priorityContext.getCardDefinition(args.sourceCardId)?.id;
+  const sourceRoles = args.priorityContext.getCardRoles(args.sourceCardId);
+  const scoreByVariantKey = new Map<string, number>();
+
+  const getScore = (targets: readonly AutomatedActionTargetId[]): number => {
+    const key = targets.join("|");
+    const existingScore = scoreByVariantKey.get(key);
+    if (typeof existingScore === "number") {
+      return existingScore;
+    }
+
+    const score = scoreAutomatedActionTargets({
+      context: args.priorityContext,
+      family: args.family,
+      sourceDefinitionId,
+      sourceRoles,
+      targets,
+    }).score;
+    scoreByVariantKey.set(key, score);
+    return score;
+  };
+
+  return [...args.targetVariants].sort((left, right) => {
+    const scoreOrder = getScore(right) - getScore(left);
+    if (scoreOrder !== 0) {
+      return scoreOrder;
+    }
+
+    const sharedLength = Math.min(left.length, right.length);
+    for (let index = 0; index < sharedLength; index += 1) {
+      const targetOrder = compareTargetIds(args.priorityContext.board, left[index]!, right[index]!);
+      if (targetOrder !== 0) {
+        return targetOrder;
+      }
+    }
+
+    return left.length - right.length;
+  });
 }
 
 function getAcquisitionScore(
@@ -302,6 +433,101 @@ function compareCardsByAcquisitionValue(
   }
 
   return compareCardIds(board, left, right);
+}
+
+function countVisibleDefinitionsForPlayer(
+  adapter: AutomatedActionPlannerAdapter,
+  playerId: PlayerId,
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  const zones: Array<"hand" | "play" | "inkwell" | "discard"> = [
+    "hand",
+    "play",
+    "inkwell",
+    "discard",
+  ];
+
+  for (const zone of zones) {
+    for (const cardId of getPlayerZoneCardIds(adapter.board, playerId, zone)) {
+      const projectedCard = getProjectedCard(adapter.board, cardId);
+      const definitionId = projectedCard?.definitionId;
+      if (!definitionId) {
+        continue;
+      }
+
+      counts.set(definitionId, (counts.get(definitionId) ?? 0) + 1);
+    }
+  }
+
+  return counts;
+}
+
+function buildNamedCardCandidates(args: {
+  adapter: AutomatedActionPlannerAdapter;
+  analysisPlayerId: PlayerId;
+  searchCaps: AutomatedActionSearchCaps;
+}): string[] {
+  const { adapter, analysisPlayerId, searchCaps } = args;
+  const deckMetadata = buildAutomatedActionDeckPlanningMetadata({
+    actorId: analysisPlayerId,
+    authoritativeHints: adapter.authoritativeHints,
+    board: adapter.board,
+    staticResources: adapter.staticResources,
+  });
+  const deckProfile = deckMetadata.deckProfilesByPlayer[analysisPlayerId];
+  if (!deckProfile) {
+    return [];
+  }
+
+  const visibleDefinitionCounts = countVisibleDefinitionsForPlayer(adapter, analysisPlayerId);
+  const candidateLimit = Math.max(1, Math.min(searchCaps.choiceIndices, 4));
+  const rankedNames = deckProfile.cards
+    .map((card) => ({
+      cost: card.cost,
+      fullName: card.fullName,
+      lore: card.lore,
+      remainingCopies: Math.max(
+        0,
+        card.count - (visibleDefinitionCounts.get(card.definitionId) ?? 0),
+      ),
+      totalCopies: card.count,
+    }))
+    .filter((card) => card.remainingCopies > 0)
+    .sort((left, right) => {
+      if (left.remainingCopies !== right.remainingCopies) {
+        return right.remainingCopies - left.remainingCopies;
+      }
+      if (left.cost !== right.cost) {
+        return right.cost - left.cost;
+      }
+      if (left.lore !== right.lore) {
+        return right.lore - left.lore;
+      }
+      return left.fullName.localeCompare(right.fullName);
+    })
+    .slice(0, candidateLimit)
+    .map((card) => card.fullName);
+
+  if (rankedNames.length > 0) {
+    return rankedNames;
+  }
+
+  return deckProfile.cards
+    .slice()
+    .sort((left, right) => {
+      if (left.count !== right.count) {
+        return right.count - left.count;
+      }
+      if (left.cost !== right.cost) {
+        return right.cost - left.cost;
+      }
+      if (left.lore !== right.lore) {
+        return right.lore - left.lore;
+      }
+      return left.fullName.localeCompare(right.fullName);
+    })
+    .slice(0, candidateLimit)
+    .map((card) => card.fullName);
 }
 
 function normalizeScryFilters(filters: unknown): Record<string, unknown>[] {
@@ -559,9 +785,9 @@ function getCandidateKey(candidate: AutomatedActionCandidate): string {
     case "alterHand":
       return `alterHand:${candidate.plan}:${candidate.cardsToMulligan.join(",")}`;
     case "resolveBag":
-      return `resolveBag:${candidate.bagId}:${candidate.choiceIndex ?? ""}:${candidate.resolveOptional ?? ""}:${candidate.targets?.join(",") ?? ""}:${candidate.destinations?.map((destination) => `${destination.zone}:${destination.cards.join(",")}`).join("|") ?? ""}`;
+      return `resolveBag:${candidate.bagId}:${candidate.choiceIndex ?? ""}:${candidate.namedCard ?? ""}:${candidate.resolveOptional ?? ""}:${candidate.targets?.join(",") ?? ""}:${candidate.destinations?.map((destination) => `${destination.zone}:${destination.cards.join(",")}`).join("|") ?? ""}`;
     case "resolveEffect":
-      return `resolveEffect:${candidate.effectId}:${candidate.choiceIndex ?? ""}:${candidate.resolveOptional ?? ""}:${candidate.targets?.join(",") ?? ""}:${candidate.destinations?.map((destination) => `${destination.zone}:${destination.cards.join(",")}`).join("|") ?? ""}`;
+      return `resolveEffect:${candidate.effectId}:${candidate.choiceIndex ?? ""}:${candidate.namedCard ?? ""}:${candidate.resolveOptional ?? ""}:${candidate.targets?.join(",") ?? ""}:${candidate.destinations?.map((destination) => `${destination.zone}:${destination.cards.join(",")}`).join("|") ?? ""}`;
     case "putCardIntoInkwell":
       return `putCardIntoInkwell:${candidate.cardId}`;
     case "playCard":
@@ -978,6 +1204,7 @@ function buildTargetVariants(args: {
   adapter: AutomatedActionPlannerAdapter;
   analysisPlayerId: PlayerId;
   baseTargets?: readonly AutomatedActionTargetId[];
+  selectionContext?: DeepReadonly<ResolutionSelectionContext>;
   diagnostics: AutomatedActionDiagnostic[];
   effect: Effect | undefined;
   family: AutomatedActionCandidate["family"];
@@ -988,6 +1215,7 @@ function buildTargetVariants(args: {
     adapter,
     analysisPlayerId,
     baseTargets,
+    selectionContext,
     diagnostics,
     effect,
     family,
@@ -1001,6 +1229,88 @@ function buildTargetVariants(args: {
     return [[]];
   }
 
+  if (
+    selectionContext?.kind === "target-selection" ||
+    selectionContext?.kind === "discard-choice"
+  ) {
+    const rawPool = [
+      ...selectionContext.cardCandidateIds.map(
+        (cardId) => String(cardId) as AutomatedActionTargetId,
+      ),
+      ...selectionContext.playerCandidateIds.map(
+        (playerId) => String(playerId) as AutomatedActionTargetId,
+      ),
+    ];
+    const priorityContext = buildTargetPriorityContext({
+      adapter,
+      analysisPlayerId,
+    });
+    const pool =
+      rawPool.length > searchCaps.targetPool
+        ? prioritizeTargetIds({
+            family,
+            priorityContext,
+            sourceCardId,
+            targets: rawPool,
+          }).slice(0, searchCaps.targetPool)
+        : rawPool;
+    if (rawPool.length > searchCaps.targetPool) {
+      diagnostics.push({
+        kind: "overflow-skip",
+        family,
+        reason: "Target pool exceeded the search cap; keeping the highest-priority targets",
+        cap: searchCaps.targetPool,
+        actual: rawPool.length,
+        sourceCardId,
+      });
+    }
+
+    const minSelections = selectionContext.minSelections;
+    const { combinations, overflow } = enumerateBoundedCombinations(
+      pool,
+      minSelections,
+      Math.max(minSelections, selectionContext.maxSelections),
+      Number.MAX_SAFE_INTEGER,
+    );
+    if (overflow) {
+      diagnostics.push({
+        kind: "overflow-skip",
+        family,
+        reason: "Target combinations exceed the configured automation search cap",
+        cap: searchCaps.targetCombinationsPerFamily,
+        actual: searchCaps.targetCombinationsPerFamily + 1,
+        sourceCardId,
+      });
+      return null;
+    }
+
+    const prioritizedCombinations = prioritizeTargetVariants({
+      family,
+      priorityContext,
+      sourceCardId,
+      targetVariants: combinations,
+    });
+    if (prioritizedCombinations.length > searchCaps.targetCombinationsPerFamily) {
+      diagnostics.push({
+        kind: "overflow-skip",
+        family,
+        reason:
+          "Target combinations exceeded the search cap; keeping the highest-priority variants",
+        cap: searchCaps.targetCombinationsPerFamily,
+        actual: prioritizedCombinations.length,
+        sourceCardId,
+      });
+    }
+    const boundedCombinations = prioritizedCombinations.slice(
+      0,
+      searchCaps.targetCombinationsPerFamily,
+    );
+
+    if (pool.length === 0 || boundedCombinations.length > 0) {
+      return boundedCombinations.length > 0 ? boundedCombinations : [[]];
+    }
+  }
+
   const readContext = buildReadContext(adapter, analysisPlayerId);
   const analysis = analyzeEffectTargets(
     effect,
@@ -1012,23 +1322,35 @@ function buildTargetVariants(args: {
     return [[]];
   }
 
-  const pool = [
+  const rawPool = [
     ...analysis.cardCandidates.map((cardId) => String(cardId) as AutomatedActionTargetId),
     ...analysis.playerCandidates.map((playerId) => String(playerId) as AutomatedActionTargetId),
   ];
-  if (analysis.requiresExplicitSelection && pool.length === 0) {
+  if (analysis.requiresExplicitSelection && rawPool.length === 0) {
     return [[]];
   }
-  if (pool.length > searchCaps.targetPool) {
+  const priorityContext = buildTargetPriorityContext({
+    adapter,
+    analysisPlayerId,
+  });
+  const pool =
+    rawPool.length > searchCaps.targetPool
+      ? prioritizeTargetIds({
+          family,
+          priorityContext,
+          sourceCardId,
+          targets: rawPool,
+        }).slice(0, searchCaps.targetPool)
+      : rawPool;
+  if (rawPool.length > searchCaps.targetPool) {
     diagnostics.push({
       kind: "overflow-skip",
       family,
-      reason: "Target pool exceeds the configured automation search cap",
+      reason: "Target pool exceeded the search cap; keeping the highest-priority targets",
       cap: searchCaps.targetPool,
-      actual: pool.length,
+      actual: rawPool.length,
       sourceCardId,
     });
-    return null;
   }
 
   const minSelections = Math.max(
@@ -1039,7 +1361,7 @@ function buildTargetVariants(args: {
     pool,
     minSelections,
     Math.max(minSelections, analysis.maxSelections),
-    searchCaps.targetCombinationsPerFamily,
+    Number.MAX_SAFE_INTEGER,
   );
   if (overflow) {
     diagnostics.push({
@@ -1052,22 +1374,137 @@ function buildTargetVariants(args: {
     });
     return null;
   }
+  const prioritizedCombinations = prioritizeTargetVariants({
+    family,
+    priorityContext,
+    sourceCardId,
+    targetVariants: combinations,
+  });
+  if (prioritizedCombinations.length > searchCaps.targetCombinationsPerFamily) {
+    diagnostics.push({
+      kind: "overflow-skip",
+      family,
+      reason: "Target combinations exceeded the search cap; keeping the highest-priority variants",
+      cap: searchCaps.targetCombinationsPerFamily,
+      actual: prioritizedCombinations.length,
+      sourceCardId,
+    });
+  }
+  const boundedCombinations = prioritizedCombinations.slice(
+    0,
+    searchCaps.targetCombinationsPerFamily,
+  );
 
   // Pool has cards but fewer than minSelections (e.g. move-damage needs 2 targets but only 1 char exists).
   // Return [[]] so the parent optional-wrapping logic can generate a "decline" variant instead of producing
   // zero candidates and causing the AI to freeze.
-  if (analysis.requiresExplicitSelection && combinations.length === 0) {
+  if (analysis.requiresExplicitSelection && boundedCombinations.length === 0) {
     return [[]];
   }
 
   if (
     analysis.allowsDeferredResolutionWithoutInitialSelection &&
-    !combinations.some((combination) => combination.length === 0)
+    !boundedCombinations.some((combination) => combination.length === 0)
   ) {
-    combinations.unshift([]);
+    boundedCombinations.unshift([]);
   }
 
-  return combinations;
+  return boundedCombinations;
+}
+
+function expandOrderedTargetVariants(args: {
+  analysisPlayerId: PlayerId;
+  adapter: AutomatedActionPlannerAdapter;
+  diagnostics: AutomatedActionDiagnostic[];
+  effectId?: string;
+  family: AutomatedActionCandidate["family"];
+  bagId?: string;
+  searchCaps: AutomatedActionSearchCaps;
+  sourceCardId: CardInstanceId;
+  targetVariants: AutomatedActionTargetId[][];
+}): AutomatedActionTargetId[][] | null {
+  const {
+    adapter,
+    analysisPlayerId,
+    diagnostics,
+    effectId,
+    family,
+    bagId,
+    searchCaps,
+    sourceCardId,
+    targetVariants,
+  } = args;
+  const orderedVariants: AutomatedActionTargetId[][] = [];
+  const priorityContext = buildTargetPriorityContext({
+    adapter,
+    analysisPlayerId,
+  });
+
+  const pushPermutation = (targets: AutomatedActionTargetId[]): boolean => {
+    if (orderedVariants.length >= searchCaps.targetCombinationsPerFamily) {
+      diagnostics.push({
+        kind: "overflow-skip",
+        family,
+        reason: "Ordered target permutations exceed the configured automation search cap",
+        cap: searchCaps.targetCombinationsPerFamily,
+        actual: searchCaps.targetCombinationsPerFamily + 1,
+        sourceCardId,
+        bagId,
+        effectId,
+      });
+      return false;
+    }
+
+    orderedVariants.push(targets);
+    return true;
+  };
+
+  const enumeratePermutations = (
+    remaining: readonly AutomatedActionTargetId[],
+    current: AutomatedActionTargetId[],
+  ): boolean => {
+    if (remaining.length === 0) {
+      return pushPermutation(current);
+    }
+
+    const prioritizedRemaining = prioritizeTargetIds({
+      family,
+      priorityContext,
+      sourceCardId,
+      targets: remaining,
+    });
+
+    for (let index = 0; index < prioritizedRemaining.length; index += 1) {
+      const next = prioritizedRemaining[index];
+      if (!next) {
+        continue;
+      }
+
+      const nextRemaining = remaining.filter(
+        (targetId) => targetId !== next,
+      ) as AutomatedActionTargetId[];
+      if (!enumeratePermutations(nextRemaining, [...current, next])) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  for (const variant of targetVariants) {
+    if (variant.length <= 1) {
+      if (!pushPermutation([...variant])) {
+        return null;
+      }
+      continue;
+    }
+
+    if (!enumeratePermutations(variant, [])) {
+      return null;
+    }
+  }
+
+  return orderedVariants;
 }
 
 function buildResolutionVariants(args: {
@@ -1101,7 +1538,22 @@ function buildResolutionVariants(args: {
   }
 
   const shape = inspectResolutionShape(effect);
-  if (shape.requiresNamedCard) {
+  const namedCardValues =
+    typeof baseResolutionInput?.namedCard === "string" &&
+    baseResolutionInput.namedCard.trim().length > 0
+      ? [baseResolutionInput.namedCard.trim()]
+      : pendingKind === "name-card-selection"
+        ? buildNamedCardCandidates({
+            adapter,
+            analysisPlayerId,
+            searchCaps,
+          })
+        : [undefined];
+  if (
+    shape.requiresNamedCard &&
+    pendingKind === "name-card-selection" &&
+    namedCardValues.length === 0
+  ) {
     diagnostics.push({
       kind: "unsupported-shape",
       family,
@@ -1115,27 +1567,24 @@ function buildResolutionVariants(args: {
   const rawScryEffect = findAutomatableScryEffect(effect);
   // When the scry targets a non-controller player's deck (e.g. target: "EACH_OPPONENT")
   // or is chosen by a non-controller player (e.g. chooser: "OPPONENT"), the engine will
-  // create a pending effect for that player. The planner must not pre-plan destinations:
-  // it would read the wrong deck and bypass the pending effect for the opponent.
+  // create a pending effect for that player. The planner must not pre-plan destinations
+  // during bag/play enumeration: it would read the wrong deck and bypass the pending
+  // effect for the opponent.
+  //
+  // However, when the family is "resolveEffect", the delegation has already happened:
+  // the engine created a pending effect for the opponent, and the opponent's planner is
+  // now resolving it. In that case, the scry destinations should be planned normally
+  // from the opponent's perspective (analysisPlayerId is already set to the opponent).
   const scryDelegatesToOtherPlayer =
-    rawScryEffect != null && scryEffectDelegatesToOtherPlayer(rawScryEffect);
+    rawScryEffect != null &&
+    family !== "resolveEffect" &&
+    scryEffectDelegatesToOtherPlayer(rawScryEffect);
   const scryEffect = scryDelegatesToOtherPlayer ? undefined : rawScryEffect;
   if (shape.requiresDestinations && !scryEffect && !scryDelegatesToOtherPlayer) {
     diagnostics.push({
       kind: "unsupported-shape",
       family,
       reason: "Ordered destination selection is outside the v1 automation support matrix",
-      sourceCardId,
-      bagId,
-      effectId,
-    });
-    return null;
-  }
-  if (shape.requiresOrderedTargets) {
-    diagnostics.push({
-      kind: "unsupported-shape",
-      family,
-      reason: "Ordered target selection is outside the v1 automation support matrix",
       sourceCardId,
       bagId,
       effectId,
@@ -1169,6 +1618,7 @@ function buildResolutionVariants(args: {
     adapter,
     analysisPlayerId,
     baseTargets: baseResolutionInput?.targets,
+    selectionContext: baseResolutionInput?.selectionContext,
     diagnostics,
     effect,
     family,
@@ -1176,6 +1626,22 @@ function buildResolutionVariants(args: {
     searchCaps,
   });
   if (!targetVariants) {
+    return null;
+  }
+  const orderedTargetVariants = shape.requiresOrderedTargets
+    ? expandOrderedTargetVariants({
+        adapter,
+        analysisPlayerId,
+        diagnostics,
+        effectId,
+        family,
+        bagId,
+        searchCaps,
+        sourceCardId,
+        targetVariants,
+      })
+    : targetVariants;
+  if (!orderedTargetVariants) {
     return null;
   }
 
@@ -1227,19 +1693,29 @@ function buildResolutionVariants(args: {
 
   const groups = cartesianProduct<ResolutionVariantPart>(
     [
-      targetVariants.map((targets) => ({ targets })),
+      orderedTargetVariants.map((targets) => ({ targets })),
       choiceValues.map((choiceIndex) => ({ choiceIndex })),
+      namedCardValues.map((namedCard) => ({ namedCard })),
       optionalValues.map((resolveOptional) => ({ resolveOptional })),
     ],
-    searchCaps.targetCombinationsPerFamily * Math.max(1, choiceValues.length),
+    searchCaps.targetCombinationsPerFamily *
+      Math.max(1, choiceValues.length) *
+      Math.max(1, namedCardValues.length),
   );
   if (groups.overflow) {
     diagnostics.push({
       kind: "overflow-skip",
       family,
       reason: "Resolution variants exceed the configured automation search cap",
-      cap: searchCaps.targetCombinationsPerFamily * Math.max(1, choiceValues.length),
-      actual: searchCaps.targetCombinationsPerFamily * Math.max(1, choiceValues.length) + 1,
+      cap:
+        searchCaps.targetCombinationsPerFamily *
+        Math.max(1, choiceValues.length) *
+        Math.max(1, namedCardValues.length),
+      actual:
+        searchCaps.targetCombinationsPerFamily *
+          Math.max(1, choiceValues.length) *
+          Math.max(1, namedCardValues.length) +
+        1,
       sourceCardId,
       bagId,
       effectId,
@@ -1273,6 +1749,7 @@ function buildResolutionVariants(args: {
         (current, next) => ({
           ...current,
           ...(next.choiceIndex !== undefined ? { choiceIndex: next.choiceIndex } : {}),
+          ...(typeof next.namedCard === "string" ? { namedCard: next.namedCard } : {}),
           ...(typeof next.resolveOptional === "boolean"
             ? { resolveOptional: next.resolveOptional }
             : {}),
@@ -1307,6 +1784,7 @@ function extractBagEntry(entry: DeepReadonly<BagEffectEntry>): BagOrPendingEntry
           }))
         : undefined,
       eventSnapshot: entry.resolutionInput.eventSnapshot,
+      namedCard: entry.resolutionInput.namedCard,
       resolveOptional: entry.resolutionInput.resolveOptional,
       targets: Array.isArray(entry.resolutionInput.targets)
         ? [...entry.resolutionInput.targets]
@@ -1332,7 +1810,9 @@ function extractPendingEntry(entry: DeepReadonly<PendingActionEffect>): BagOrPen
           }))
         : undefined,
       eventSnapshot: entry.resolutionInput.eventSnapshot,
+      namedCard: entry.resolutionInput.namedCard,
       resolveOptional: entry.resolutionInput.resolveOptional,
+      selectionContext: entry.selectionContext,
       targets: Array.isArray(entry.resolutionInput.targets)
         ? [...entry.resolutionInput.targets]
         : typeof entry.resolutionInput.targets === "string"
@@ -1431,10 +1911,12 @@ function enumerateAlterHandCandidates(args: {
     return compareCardIds(adapter.board, left.cardId, right.cardId);
   });
 
-  while (hand.length - structuralMulligan.size < 2 && structuralMulligan.size > 0) {
-    const keeper = preferredKeepers.find((entry) => structuralMulligan.has(entry.cardId));
-    if (!keeper) {
+  for (const keeper of preferredKeepers) {
+    if (hand.length - structuralMulligan.size >= 2 || structuralMulligan.size === 0) {
       break;
+    }
+    if (!structuralMulligan.has(keeper.cardId)) {
+      continue;
     }
     structuralMulligan.delete(keeper.cardId);
   }
@@ -1499,16 +1981,6 @@ function enumerateResolveBagCandidates(args: {
   if (bagEntries.length === 0) {
     return;
   }
-  if (bagEntries.length > searchCaps.pendingItems) {
-    diagnostics.push({
-      kind: "overflow-skip",
-      family: "resolveBag",
-      reason: "Pending bag items exceed the configured automation search cap",
-      cap: searchCaps.pendingItems,
-      actual: bagEntries.length,
-    });
-    return;
-  }
 
   for (const bagEntry of bagEntries) {
     const extracted = extractBagEntry(bagEntry);
@@ -1533,6 +2005,7 @@ function enumerateResolveBagCandidates(args: {
         bagId: bagEntry.id,
         ...(typeof variant.choiceIndex === "number" ? { choiceIndex: variant.choiceIndex } : {}),
         ...(variant.destinations ? { destinations: variant.destinations } : {}),
+        ...(typeof variant.namedCard === "string" ? { namedCard: variant.namedCard } : {}),
         ...(typeof variant.resolveOptional === "boolean"
           ? { resolveOptional: variant.resolveOptional }
           : {}),
@@ -1579,33 +2052,13 @@ function enumerateResolveEffectCandidates(args: {
   if (pendingEffects.length === 0) {
     return;
   }
-  if (pendingEffects.length > searchCaps.pendingItems) {
-    diagnostics.push({
-      kind: "overflow-skip",
-      family: "resolveEffect",
-      reason: "Pending effects exceed the configured automation search cap",
-      cap: searchCaps.pendingItems,
-      actual: pendingEffects.length,
-    });
-    return;
-  }
 
   for (const pendingEffect of pendingEffects) {
-    if (pendingEffect.kind === "name-card-selection") {
-      diagnostics.push({
-        kind: "unsupported-shape",
-        family: "resolveEffect",
-        reason: "Name-a-card resolutions are outside the v1 automation support matrix",
-        sourceCardId: pendingEffect.sourceCardId,
-        effectId: pendingEffect.id,
-      });
-      continue;
-    }
-
     const extracted = extractPendingEntry(pendingEffect);
     const variants = buildResolutionVariants({
       adapter,
-      analysisPlayerId: pendingEffect.controllerId,
+      analysisPlayerId:
+        pendingEffect.kind === "name-card-selection" ? actorId : pendingEffect.controllerId,
       baseResolutionInput: extracted.baseResolutionInput,
       diagnostics,
       effect: extracted.effect,
@@ -1625,6 +2078,7 @@ function enumerateResolveEffectCandidates(args: {
         effectId: pendingEffect.id,
         ...(typeof variant.choiceIndex === "number" ? { choiceIndex: variant.choiceIndex } : {}),
         ...(variant.destinations ? { destinations: variant.destinations } : {}),
+        ...(typeof variant.namedCard === "string" ? { namedCard: variant.namedCard } : {}),
         ...(typeof variant.resolveOptional === "boolean"
           ? { resolveOptional: variant.resolveOptional }
           : {}),
@@ -1846,10 +2300,14 @@ function getActivatedAbilitiesForCard(
   const printedAbilities = (definition.abilities ?? []).filter(
     (ability): ability is ActivatedAbilityDefinition => ability.type === "activated",
   );
+  const registry = buildRegistryFromMatchState(adapter.state as LorcanaMatchState, (id) =>
+    adapter.getDefinitionByInstanceId(id),
+  );
   const grantedAbilities = getGrantedActivatedAbilities({
     state: toStaticAbilityState(adapter.state as LorcanaMatchState),
     cardId,
     getDefinitionByInstanceId: (candidateId) => adapter.getDefinitionByInstanceId(candidateId),
+    registry,
   }).map((entry) => entry.ability);
 
   return [...printedAbilities, ...grantedAbilities].map((ability, abilityIndex) => ({
@@ -2225,6 +2683,7 @@ function createBasicCandidateSummary(
 }
 
 function createTraceFromPlan(args: {
+  blocked?: AutomatedActionBlockedState;
   executionAttempts?: AutomatedActionExecutionAttempt[];
   fallbackTaken?: AutomatedActionFallback;
   finalResult?: CommandResult;
@@ -2233,6 +2692,7 @@ function createTraceFromPlan(args: {
   selectedCandidate?: AutomatedActionCandidate;
 }): AutomatedActionDecisionTrace {
   const {
+    blocked,
     executionAttempts = [],
     fallbackTaken,
     finalResult,
@@ -2246,7 +2706,9 @@ function createTraceFromPlan(args: {
 
   return {
     actorId: plan.enumeration.actorId,
+    ...(plan.actorDeckSignature ? { actorDeckSignature: plan.actorDeckSignature } : {}),
     boardSnapshot: plan.boardSnapshot,
+    ...(blocked ? { blocked } : {}),
     diagnostics: plan.enumeration.diagnostics,
     executionAttempts: executionAttempts.map(({ candidate, result }) => ({
       candidate:
@@ -2278,7 +2740,11 @@ function createTraceFromPlan(args: {
         }
       : {}),
     gameSegment: plan.gameSegment,
+    ...(plan.informationPolicy ? { informationPolicy: plan.informationPolicy } : {}),
     kind,
+    ...(plan.opponentKnowledgeSource
+      ? { opponentKnowledgeSource: plan.opponentKnowledgeSource }
+      : {}),
     orderedCandidates: plan.orderedCandidateSummaries,
     phase: plan.phase,
     ...(selectedSummary ? { selectedCandidate: selectedSummary } : {}),
@@ -2290,6 +2756,11 @@ function createTraceFromPlan(args: {
   };
 }
 
+function buildStrategyFallbackChain(strategy: AutomatedActionExecutionOptions["strategy"]) {
+  void strategy;
+  return [];
+}
+
 function planAutomatedActions(
   adapter: AutomatedActionPlannerAdapter,
   options: AutomatedActionEnumerationOptions = {},
@@ -2297,7 +2768,8 @@ function planAutomatedActions(
 ): PlannedAutomatedActions {
   const diagnostics = [...seedDiagnostics];
   const actorId = adapter.actorId;
-  const strategy = options.strategy ?? defaultLoreRaceAutomatedActionStrategy;
+  const strategy = options.strategy ?? deckAwareLoreRaceAutomatedActionStrategy;
+  const informationPolicy = strategy.informationPolicy ?? "oracle";
   const boardSnapshot = createAutomatedActionBoardSnapshot({
     board: adapter.board,
     state: adapter.state,
@@ -2313,6 +2785,8 @@ function planAutomatedActions(
       boardSnapshot,
       enumeration: summarizeDiagnostics({ actorId, candidates: [], diagnostics }),
       gameSegment: adapter.board.gameSegment,
+      informationPolicy,
+      opponentKnowledgeSource: "none",
       orderedCandidateSummaries: [],
       phase: adapter.board.phase,
       step: adapter.board.step,
@@ -2325,6 +2799,13 @@ function planAutomatedActions(
     actorId,
     authoritativeHints: adapter.authoritativeHints,
     board: adapter.board,
+    ...buildAutomatedActionDeckPlanningMetadata({
+      actorId,
+      authoritativeHints: adapter.authoritativeHints,
+      board: adapter.board,
+      informationPolicy,
+      staticResources: adapter.staticResources,
+    }),
     diagnostics: {
       push(diagnostic) {
         diagnostics.push(diagnostic);
@@ -2353,13 +2834,11 @@ function planAutomatedActions(
     ...new Map(candidates.map((candidate) => [getCandidateKey(candidate), candidate])).values(),
   ];
   const orderedCandidateSummaries =
-    strategy === defaultLoreRaceAutomatedActionStrategy
-      ? summarizeDefaultLoreRaceCandidates(planningContext, uniqueCandidates)
-      : strategy
-          .rankCandidates(planningContext, uniqueCandidates)
-          .map((candidate) => createBasicCandidateSummary(candidate));
+    strategy.summarizeCandidates(planningContext, uniqueCandidates) ??
+    uniqueCandidates.map((candidate) => createBasicCandidateSummary(candidate));
 
   return {
+    actorDeckSignature: planningContext.actorDeckProfile?.signature,
     boardSnapshot,
     enumeration: summarizeDiagnostics({
       actorId,
@@ -2367,6 +2846,8 @@ function planAutomatedActions(
       diagnostics,
     }),
     gameSegment: adapter.board.gameSegment,
+    informationPolicy: planningContext.informationPolicy,
+    opponentKnowledgeSource: planningContext.opponentKnowledgeSource,
     orderedCandidateSummaries,
     phase: adapter.board.phase,
     step: adapter.board.step,
@@ -2395,12 +2876,13 @@ export function takeAutomatedActionWithAdapter(
   options: AutomatedActionExecutionOptions = {},
   seedDiagnostics: AutomatedActionDiagnostic[] = [],
 ): AutomatedActionExecutionResult {
-  const plan = planAutomatedActions(adapter, options, seedDiagnostics);
-  const enumeration = plan.enumeration;
+  let plan = planAutomatedActions(adapter, options, seedDiagnostics);
+  let enumeration = plan.enumeration;
   const actorId = enumeration.actorId;
   if (!actorId) {
     const result = {
       actorId,
+      blocked: undefined,
       diagnostics: enumeration.diagnostics,
       executionAttempts: [],
       finalResult: adapter.createErrorResult(
@@ -2414,6 +2896,7 @@ export function takeAutomatedActionWithAdapter(
 
     options.traceSink?.push(
       createTraceFromPlan({
+        blocked: result.blocked,
         finalResult: result.finalResult,
         kind: "execution",
         plan,
@@ -2426,26 +2909,57 @@ export function takeAutomatedActionWithAdapter(
   const executionAttempts: AutomatedActionExecutionAttempt[] = [];
   const failureBudget =
     options.maxExecutionFailures ?? DEFAULT_AUTOMATED_ACTION_MAX_EXECUTION_FAILURES;
+  const attemptedCandidateKeys = new Set<string>();
   let failures = 0;
+  let blocked: AutomatedActionBlockedState | undefined;
   let selectedCandidate: AutomatedActionCandidate | undefined;
   let finalResult = adapter.createErrorResult(
     "No automated action candidates were available",
     "AUTOMATED_ACTION_NO_CANDIDATES",
   );
 
-  for (const candidate of enumeration.candidates) {
-    const result = adapter.executeCandidate(actorId, candidate);
-    executionAttempts.push({ candidate, result });
-    if (result.success) {
-      selectedCandidate = candidate;
+  const executePlan = (currentPlan: PlannedAutomatedActions): boolean => {
+    plan = currentPlan;
+    enumeration = currentPlan.enumeration;
+
+    for (const candidate of currentPlan.enumeration.candidates) {
+      const candidateKey = getCandidateKey(candidate);
+      if (attemptedCandidateKeys.has(candidateKey)) {
+        continue;
+      }
+
+      attemptedCandidateKeys.add(candidateKey);
+      const result = adapter.executeCandidate(actorId, candidate);
+      executionAttempts.push({ candidate, result });
+      if (result.success) {
+        selectedCandidate = candidate;
+        finalResult = result;
+        return true;
+      }
+
       finalResult = result;
-      break;
+      failures += 1;
+      if (failures >= failureBudget) {
+        return true;
+      }
     }
 
-    finalResult = result;
-    failures += 1;
-    if (failures >= failureBudget) {
-      break;
+    return false;
+  };
+
+  executePlan(plan);
+
+  if (!selectedCandidate && executionAttempts.length > 0 && failures < failureBudget) {
+    for (const strategy of buildStrategyFallbackChain(options.strategy)) {
+      const fallbackPlan = planAutomatedActions(adapter, { ...options, strategy }, seedDiagnostics);
+      const attemptsBeforeStrategy = executionAttempts.length;
+      if (executePlan(fallbackPlan)) {
+        break;
+      }
+
+      if (executionAttempts.length === attemptsBeforeStrategy) {
+        continue;
+      }
     }
   }
 
@@ -2456,14 +2970,18 @@ export function takeAutomatedActionWithAdapter(
       fallbackTaken = "passTurn";
       finalResult = passResult;
     } else {
-      const concedeResult = adapter.concede(actorId);
-      fallbackTaken = "concede";
-      finalResult = concedeResult;
+      blocked = {
+        reason: executionAttempts.length > 0 ? "execution-failures" : "no-candidates",
+        passTurnError: passResult.error,
+        passTurnErrorCode: passResult.errorCode,
+      };
+      finalResult = adapter.createNoopResult();
     }
   }
 
   const result = {
     actorId,
+    blocked,
     diagnostics: enumeration.diagnostics,
     executionAttempts,
     fallbackTaken,
@@ -2476,6 +2994,7 @@ export function takeAutomatedActionWithAdapter(
 
   options.traceSink?.push(
     createTraceFromPlan({
+      blocked,
       executionAttempts,
       fallbackTaken,
       finalResult,

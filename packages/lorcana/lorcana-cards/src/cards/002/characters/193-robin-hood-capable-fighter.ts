@@ -46,6 +46,7 @@ export const robinHoodCapableFighter: CharacterCard = {
         type: "deal-damage",
       },
       id: "qi2-1",
+      name: "SKIRMISH",
       text: "SKIRMISH {E} — Deal 1 damage to chosen character.",
       type: "activated",
     },

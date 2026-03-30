@@ -56,7 +56,9 @@ describe("Mad Hatter - Unruly Eccentric", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(madHatterUnrulyEccentric, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
@@ -89,7 +91,9 @@ describe("Mad Hatter - Unruly Eccentric", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(madHatterUnrulyEccentric, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
@@ -139,7 +143,9 @@ describe("Mad Hatter - Unruly Eccentric", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(madHatterUnrulyEccentric, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;

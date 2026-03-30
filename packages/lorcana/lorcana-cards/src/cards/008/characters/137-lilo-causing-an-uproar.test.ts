@@ -109,7 +109,7 @@ describe("Lilo - Causing an Uproar", () => {
 
       expect(testEngine.asPlayerOne().playCard(liloCausingAnUproar)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(liloCausingAnUproar, {
           targets: [exertedCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -128,7 +128,7 @@ describe("Lilo - Causing an Uproar", () => {
 
       expect(testEngine.asPlayerOne().playCard(liloCausingAnUproar)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(liloCausingAnUproar, {
           targets: [exertedCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -159,7 +159,7 @@ describe("Lilo - Causing an Uproar", () => {
 
       expect(testEngine.asPlayerOne().playCard(liloCausingAnUproar)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(liloCausingAnUproar, {
           targets: [readyCharacter],
         }),
       ).toBeSuccessfulCommand();

@@ -40,7 +40,9 @@ describe("Olaf - Recapping the Story", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [opposingCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(olafRecappingTheStory, { targets: [opposingCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(
@@ -65,7 +67,9 @@ describe("Olaf - Recapping the Story", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [opposingCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(olafRecappingTheStory, { targets: [opposingCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(
@@ -96,7 +100,9 @@ describe("Olaf - Recapping the Story", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [ownCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(olafRecappingTheStory, { targets: [ownCharacter] }),
       ).not.toBeSuccessfulCommand();
     });
   });

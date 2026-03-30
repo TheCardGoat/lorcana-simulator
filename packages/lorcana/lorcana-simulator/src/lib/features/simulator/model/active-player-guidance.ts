@@ -1,4 +1,5 @@
-import type { NamedCardSearchEntry } from "../panels/NamedCardSearchInput.svelte";
+import type { NamedCardSearchEntry } from "../panels/named-card-search.js";
+import type { LorcanaCardSnapshot } from "./contracts.js";
 
 export type GuidanceMode = "default" | "pregame" | "challenge";
 export type GuidanceAnchor = "top" | "bottom";
@@ -19,9 +20,17 @@ export interface NamedCardSearchState {
   onselect: (cardName: string, displayLabel: string) => void;
 }
 
+export interface GuidanceInlineReference {
+  label: string;
+  card: LorcanaCardSnapshot | null;
+  prefix?: string;
+  suffix?: string;
+}
+
 export interface ActivePlayerGuidanceItem {
   id: string;
   message: string;
+  inlineReference?: GuidanceInlineReference;
   actions: GuidanceAction[];
   mode: GuidanceMode;
   order: number;
@@ -31,6 +40,7 @@ export interface ActivePlayerGuidanceItem {
 export interface ActivePlayerGuidanceOverlayInput {
   id: string;
   message: string;
+  inlineReference?: GuidanceInlineReference;
   actions?: GuidanceAction[];
   mode?: GuidanceMode;
 }

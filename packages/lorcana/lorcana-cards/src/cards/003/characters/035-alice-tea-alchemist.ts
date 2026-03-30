@@ -30,6 +30,39 @@ export const aliceTeaAlchemist: CharacterCard = {
     },
   ],
   classifications: ["Dreamborn", "Hero", "Sorcerer"],
-  abilities: [],
+  abilities: [
+    {
+      id: "Vs7-1",
+      name: "CURIOUSER AND CURIOUSER",
+      type: "activated",
+      cost: {
+        exert: true,
+      },
+      text: "CURIOUSER AND CURIOUSER {E} — Exert chosen opposing character and all other opposing characters with the same name.",
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "exert",
+            target: "CHOSEN_OPPOSING_CHARACTER",
+          },
+          {
+            type: "exert",
+            target: {
+              selector: "all",
+              count: "all",
+              owner: "opponent",
+              zones: ["play"],
+              cardTypes: ["character"],
+              filter: {
+                sameNameAsChosenCard: true,
+                excludeChosenCard: true,
+              },
+            },
+          },
+        ],
+      },
+    },
+  ],
   i18n: aliceTeaAlchemistI18n,
 };

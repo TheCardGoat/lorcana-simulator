@@ -44,7 +44,7 @@ describe("The Sword of Hercules", () => {
     expect(testEngine.asPlayerOne().playCard(theSwordOfHercules)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(theSwordOfHercules, {
         targets: [deityTarget],
       }),
     ).toBeSuccessfulCommand();

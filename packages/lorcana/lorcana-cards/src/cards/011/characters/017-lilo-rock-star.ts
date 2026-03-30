@@ -48,13 +48,27 @@ export const liloRockStar: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
+          cardType: "character",
+          costRestriction: {
+            comparison: "less-or-equal",
+            value: 2,
+          },
+          filter: {
+            maxCost: 2,
+          },
           from: "discard",
           type: "play-card",
           cost: "free",
         },
         type: "optional",
       },
-      type: "action",
+      name: "I'LL COUNT YOU IN",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
       text: "I’LL COUNT YOU IN Whenever this character quests, you may play a character with cost 2 or less from your discard for free.",
     },
   ],

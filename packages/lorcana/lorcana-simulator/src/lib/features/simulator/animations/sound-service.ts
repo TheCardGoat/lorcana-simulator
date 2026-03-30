@@ -6,9 +6,11 @@ import type { OverlayAnnouncementKind } from "./overlay-announcement-animations.
 export type SoundEffectId =
   | "ink"
   | "play-character"
+  | "play-character-shift"
   | "play-item"
   | "play-location"
   | "play-action"
+  | "play-action-sing"
   | "move-to-location"
   | "quest"
   | "challenge"
@@ -84,9 +86,11 @@ const SAMPLE_RATE = 44100;
 const recipes: Record<SoundEffectId, SynthRecipe> = {
   ink: { duration: 0.2, render: synthInk },
   "play-character": { duration: 0.35, render: synthPlayCharacter },
+  "play-character-shift": { duration: 0.4, render: synthPlayCharacterShift },
   "play-item": { duration: 0.2, render: synthPlayItem },
   "play-location": { duration: 0.35, render: synthPlayLocation },
   "play-action": { duration: 0.3, render: synthPlayAction },
+  "play-action-sing": { duration: 0.5, render: synthPlayActionSing },
   "move-to-location": { duration: 0.25, render: synthMoveToLocation },
   quest: { duration: 0.45, render: synthQuest },
   challenge: { duration: 0.15, render: synthChallenge },
@@ -185,6 +189,8 @@ export function boardMoveVariantToSoundId(
       return "ink";
     case "play-character":
       return "play-character";
+    case "play-character-shift":
+      return "play-character-shift";
     case "play-item":
       return "play-item";
     case "play-location":
@@ -192,6 +198,8 @@ export function boardMoveVariantToSoundId(
     case "play-action":
     case "play-action-preview":
       return "play-action";
+    case "play-action-sing":
+      return "play-action-sing";
     case "move-to-location":
       return "move-to-location";
     case "banish":
@@ -251,6 +259,37 @@ function synthPlayCharacter(ctx: BaseAudioContext, dest: AudioNode, now: number)
   osc.stop(now + 0.3);
 }
 
+function synthPlayCharacterShift(ctx: BaseAudioContext, dest: AudioNode, now: number): void {
+  // Shimmering morph — two detuned oscillators sweeping in opposite directions
+  for (const dir of [1, -1]) {
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(dir === 1 ? 330 : 440, now);
+    osc.frequency.exponentialRampToValueAtTime(dir === 1 ? 440 : 330, now + 0.2);
+    osc.frequency.exponentialRampToValueAtTime(660, now + 0.35);
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.001, now);
+    env.gain.linearRampToValueAtTime(0.25, now + 0.02);
+    env.gain.setValueAtTime(0.25, now + 0.15);
+    env.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc.connect(env).connect(dest);
+    osc.start(now);
+    osc.stop(now + 0.35);
+  }
+  // Sparkle noise burst
+  const noise = ctx.createBufferSource();
+  noise.buffer = createNoiseBuffer(ctx, 0.12);
+  const filter = ctx.createBiquadFilter();
+  filter.type = "highpass";
+  filter.frequency.value = 5000;
+  const noiseEnv = ctx.createGain();
+  noiseEnv.gain.setValueAtTime(0.15, now + 0.08);
+  noiseEnv.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+  noise.connect(filter).connect(noiseEnv).connect(dest);
+  noise.start(now + 0.08);
+  noise.stop(now + 0.2);
+}
+
 function synthPlayItem(ctx: BaseAudioContext, dest: AudioNode, now: number): void {
   for (let i = 0; i < 2; i++) {
     const osc = ctx.createOscillator();
@@ -297,6 +336,34 @@ function synthPlayAction(ctx: BaseAudioContext, dest: AudioNode, now: number): v
   noise.connect(filter).connect(env).connect(dest);
   noise.start(now);
   noise.stop(now + 0.25);
+}
+
+function synthPlayActionSing(ctx: BaseAudioContext, dest: AudioNode, now: number): void {
+  // Musical ascending arpeggio — short melodic phrase (C5-E5-G5)
+  const notes = [523.25, 659.25, 783.99];
+  for (let i = 0; i < notes.length; i++) {
+    const t = now + i * 0.1;
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = notes[i];
+    // Add gentle vibrato
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 5;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 8;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.001, t);
+    env.gain.linearRampToValueAtTime(0.25, t + 0.02);
+    env.gain.setValueAtTime(0.25, t + 0.08);
+    env.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    osc.connect(env).connect(dest);
+    osc.start(t);
+    lfo.start(t);
+    osc.stop(t + 0.18);
+    lfo.stop(t + 0.18);
+  }
 }
 
 function synthMoveToLocation(ctx: BaseAudioContext, dest: AudioNode, now: number): void {

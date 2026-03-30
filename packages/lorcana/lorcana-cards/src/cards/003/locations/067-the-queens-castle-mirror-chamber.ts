@@ -32,6 +32,7 @@ export const theQueensCastleMirrorChamber: LocationCard = {
   abilities: [
     {
       id: "16x-1",
+      name: "USING THE MIRROR",
       trigger: {
         event: "start-turn",
         on: "YOU",

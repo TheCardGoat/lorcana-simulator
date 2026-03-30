@@ -33,6 +33,7 @@ export const liloBundledUp: CharacterCard = {
   abilities: [
     {
       id: "Vf6-1",
+      name: "EXTRA LAYERS",
       replaces: "damage-to-self",
       replacement: {
         appliesTo: "self",

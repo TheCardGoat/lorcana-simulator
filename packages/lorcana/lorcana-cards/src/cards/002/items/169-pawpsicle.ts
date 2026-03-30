@@ -60,6 +60,7 @@ export const pawpsicle: ItemCard = {
         upTo: true,
       },
       id: "s1u-2",
+      name: "THAT'S REDWOOD",
       text: "THAT'S REDWOOD Banish this item — Remove up to 2 damage from chosen character.",
       type: "activated",
     },

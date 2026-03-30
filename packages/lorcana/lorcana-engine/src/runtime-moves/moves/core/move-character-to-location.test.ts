@@ -33,16 +33,14 @@ describe("moveCharacterToLocation", () => {
     const moveEntry = testEngine
       .getServerEngine()
       .getRuntime()
-      .getGameLog()
-      .find((entry) => entry.defaultMessage?.key === "lorcana.move.moveCharacterToLocation");
+      .getMoveLogHistory()
+      .find((log) => log.type === "moveToLocation");
 
-    expect(moveEntry?.defaultMessage).toMatchObject({
-      key: "lorcana.move.moveCharacterToLocation",
-      values: {
-        playerId: "player_one",
-        characterId: travelerId,
-        locationId,
-      },
+    expect(moveEntry).toMatchObject({
+      type: "moveToLocation",
+      playerId: "player_one",
+      characterId: travelerId,
+      locationId,
     });
   });
 });

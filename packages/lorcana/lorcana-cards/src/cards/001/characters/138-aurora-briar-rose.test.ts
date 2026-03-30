@@ -38,7 +38,9 @@ describe("Aurora - Briar Rose", () => {
       expect(testEngine.asPlayerOne().playCard(auroraBriarRose)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(auroraBriarRose, { targets: [targetCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(targetCharacter)).toBe(baseStrength - 2);
@@ -59,7 +61,9 @@ describe("Aurora - Briar Rose", () => {
 
       expect(testEngine.asPlayerOne().playCard(auroraBriarRose)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(auroraBriarRose, { targets: [targetCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(targetCharacter)).toBe(baseStrength - 2);
@@ -81,7 +85,9 @@ describe("Aurora - Briar Rose", () => {
 
       expect(testEngine.asPlayerOne().playCard(auroraBriarRose)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(auroraBriarRose, { targets: [targetCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(targetCharacter)).toBe(baseStrength - 2);

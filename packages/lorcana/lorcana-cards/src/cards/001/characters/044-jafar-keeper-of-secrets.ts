@@ -41,6 +41,7 @@ export const jafarKeeperOfSecrets: CharacterCard = {
         type: "modify-stat",
       },
       id: "1u7-1",
+      name: "HIDDEN WONDERS",
       text: "HIDDEN WONDERS This character gets +1 {S} for each card in your hand.",
       type: "static",
     },

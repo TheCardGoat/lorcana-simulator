@@ -20,9 +20,7 @@ describe("Recovered Page", () => {
 
       expect(testEngine.asPlayerOne().playCard(recoveredPage)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(recoveredPage)).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           destinations: [

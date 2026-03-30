@@ -79,7 +79,7 @@ describe("Prince Phillip - Gallant Defender", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const bagEffect of bagEffects) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(princePhillipGallantDefender, {
             resolveOptional: true,
             targets: [aurora],
           }),
@@ -108,7 +108,7 @@ describe("Prince Phillip - Gallant Defender", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const bagEffect of bagEffects) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(princePhillipGallantDefender, {
             resolveOptional: true,
             targets: [aurora],
           }),
@@ -142,7 +142,7 @@ describe("Prince Phillip - Gallant Defender", () => {
 
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       for (const bagEffect of bagEffects) {
-        testEngine.asPlayerTwo().resolveBag(bagEffect.id, {
+        testEngine.asPlayerTwo().resolvePendingByCard(princePhillipGallantDefender, {
           resolveOptional: true,
           targets: [opponentTarget],
         });

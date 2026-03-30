@@ -26,7 +26,9 @@ describe("Lucky - Runt of the Litter", () => {
     expect(testEngine.asPlayerOne().quest(luckyRuntOfTheLitter)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(luckyRuntOfTheLitter),
+    ).toBeSuccessfulCommand();
 
     expect(
       testEngine.asPlayerOne().resolveNextPending({

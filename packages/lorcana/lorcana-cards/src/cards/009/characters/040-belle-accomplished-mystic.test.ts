@@ -23,7 +23,7 @@ describe("Belle - Accomplished Mystic", () => {
       // Resolve the optional triggered ability
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(belleAccomplishedMystic, {
           resolveOptional: true,
           targets: [simbaProtectiveCub, goofyKnightForADay],
         }),
@@ -49,7 +49,7 @@ describe("Belle - Accomplished Mystic", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(belleAccomplishedMystic, {
           resolveOptional: true,
           targets: [mickeyMouseTrueFriend, goofyKnightForADay],
         }),
@@ -75,7 +75,9 @@ describe("Belle - Accomplished Mystic", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(belleAccomplishedMystic, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain unchanged

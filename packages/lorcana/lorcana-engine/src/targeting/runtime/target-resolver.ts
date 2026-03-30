@@ -23,6 +23,7 @@ import {
   getEffectiveStrength,
   type DerivedStateContext,
 } from "../../rules/derived-state";
+import { getOrBuildMoveRegistry } from "../../runtime-moves/rules/move-registry-cache";
 import { hasTemporaryKeyword } from "../../runtime-moves/effects/temporary-effects";
 
 type FilterRecord = Record<string, unknown>;
@@ -93,6 +94,19 @@ type EffectTargetRuntimeContext =
   | EffectTargetEnumerationContext
   | EffectTargetExecutionContext;
 
+function getCardZoneKey(
+  ctx: EffectTargetRuntimeContext,
+  cardId: CardInstanceId,
+): string | undefined {
+  const directZoneKey = ctx.framework.zones.getCardZone?.(cardId);
+  if (typeof directZoneKey === "string") {
+    return directZoneKey;
+  }
+
+  const indexedZoneKey = ctx.framework.state._zonesPrivate?.cardIndex?.[cardId]?.zoneKey;
+  return typeof indexedZoneKey === "string" ? indexedZoneKey : undefined;
+}
+
 function normalizeFilterOperator(filter: FilterRecord, fallback = "equal"): string {
   return String(filter.comparison ?? filter.operator ?? filter.op ?? fallback);
 }
@@ -147,6 +161,9 @@ function resolveParentTargetComparisonValue(
     return undefined;
   }
 
+  const registry = getOrBuildMoveRegistry(
+    ctx as import("../../runtime-moves/rules/move-registry-cache").MoveRegistryCtx,
+  );
   switch (normalizeFilterType(filter)) {
     case "strength":
     case "strength-comparison":
@@ -156,6 +173,7 @@ function resolveParentTargetComparisonValue(
           getDerivedState(ctx),
           parentTargetId,
           (id) => ctx.cards.getDefinition(id) as any,
+          registry,
         );
       }
       if (typeof options?.eventSnapshot?.strengthBeforeBanish === "number") {
@@ -177,6 +195,7 @@ function resolveParentTargetComparisonValue(
             getDerivedState(ctx),
             parentTargetId,
             (id) => ctx.cards.getDefinition(id) as any,
+            registry,
           )
         : Number(parentDefinition.lore ?? 0);
     default:
@@ -479,11 +498,59 @@ export function passesFilter(
   },
 ): boolean {
   const strictUnknownFilters = options?.strictUnknownFilters === true;
+  const disableFilterRegistry =
+    (ctx as { disableFilterRegistry?: boolean }).disableFilterRegistry === true;
+  const getStrengthByInstanceId = (
+    ctx as {
+      getCardStrengthByInstanceId?: (cardId: CardInstanceId) => number;
+    }
+  ).getCardStrengthByInstanceId;
+  let filterRegistry: ReturnType<typeof getOrBuildMoveRegistry> | undefined;
+  const getFilterRegistry = () => {
+    if (disableFilterRegistry) {
+      return undefined;
+    }
+    filterRegistry ??= getOrBuildMoveRegistry(
+      ctx as import("../../runtime-moves/rules/move-registry-cache").MoveRegistryCtx,
+    );
+    return filterRegistry;
+  };
   const sourceCardId = options?.sourceCardId;
   const filterType = normalizeFilterType(filter);
   const cardMeta = ctx.cards.require(cardId).meta;
   const damage = Number(cardMeta?.damage ?? 0);
   const cardDefinition = getCardDefinition(ctx, cardId);
+  const chosenCardId = options?.eventSnapshot?.chosenCardId as CardInstanceId | undefined;
+  const chosenDefinition = chosenCardId ? getCardDefinition(ctx, chosenCardId) : undefined;
+
+  if (filter.sameNameAsSource === true) {
+    const sourceDefinition = sourceCardId ? getCardDefinition(ctx, sourceCardId) : undefined;
+    if (
+      !sourceDefinition?.name ||
+      !cardDefinition ||
+      cardDefinition.name !== sourceDefinition.name
+    ) {
+      return false;
+    }
+  }
+
+  if (filter.sameNameAsChosenCard === true) {
+    if (
+      !chosenDefinition?.name ||
+      !cardDefinition ||
+      cardDefinition.name !== chosenDefinition.name
+    ) {
+      return false;
+    }
+  }
+
+  if (filter.sameInstanceAsSource === true && sourceCardId && cardId !== sourceCardId) {
+    return false;
+  }
+
+  if (filter.excludeChosenCard === true && chosenCardId && cardId === chosenCardId) {
+    return false;
+  }
 
   switch (filterType) {
     case "and": {
@@ -664,6 +731,8 @@ export function passesFilter(
       if (filter.value === "source" && sourceCardId) {
         if (typeof options?.eventSnapshot?.strengthBeforeBanish === "number") {
           value = options.eventSnapshot.strengthBeforeBanish;
+        } else if (disableFilterRegistry && getStrengthByInstanceId) {
+          value = getStrengthByInstanceId(sourceCardId);
         } else {
           const sourceDef = getCardDefinition(ctx, sourceCardId);
           if (isCardStillInPlay(ctx, sourceCardId)) {
@@ -672,6 +741,7 @@ export function passesFilter(
               getDerivedState(ctx),
               sourceCardId,
               (id) => ctx.cards.getDefinition(id) as any,
+              getFilterRegistry(),
             );
           } else {
             value = Number(sourceDef?.strength ?? 0);
@@ -692,8 +762,13 @@ export function passesFilter(
         getDerivedState(ctx),
         cardId,
         (id) => ctx.cards.getDefinition(id) as any,
+        disableFilterRegistry ? undefined : getFilterRegistry(),
       );
-      return compareOperator(strength, operator, value);
+      const effectiveStrength =
+        disableFilterRegistry && getStrengthByInstanceId
+          ? getStrengthByInstanceId(cardId)
+          : strength;
+      return compareOperator(effectiveStrength, operator, value);
     }
 
     case "willpower":
@@ -734,6 +809,7 @@ export function passesFilter(
         getDerivedState(ctx),
         cardId,
         (id) => ctx.cards.getDefinition(id) as any,
+        getFilterRegistry(),
       );
       return compareOperator(loreValue, operator, value);
     }
@@ -1058,7 +1134,7 @@ function resolveCandidateTargetsInternal(
 
   if (typeof descriptor.reference === "string") {
     for (const cardId of resolveReferenceCandidates(cardPlayed, descriptor, queryContext, ctx.G)) {
-      if (typeof cardId === "string" && ctx.framework.zones.getCardZone(cardId) !== undefined) {
+      if (typeof cardId === "string" && getCardZoneKey(ctx, cardId) !== undefined) {
         candidates.add(cardId);
       }
     }
@@ -1066,7 +1142,7 @@ function resolveCandidateTargetsInternal(
     // When targeting SELF without explicit zone constraints, the source card may be in any zone
     // (e.g., already in discard after being banished). Add it directly, bypassing zone filtering.
     const selfCardId = queryContext?.sourceCardId ?? cardPlayed?.cardId;
-    if (selfCardId && ctx.framework.zones.getCardZone(selfCardId) !== undefined) {
+    if (selfCardId && getCardZoneKey(ctx, selfCardId) !== undefined) {
       candidates.add(selfCardId);
     }
   } else {
@@ -1086,6 +1162,16 @@ function resolveCandidateTargetsInternal(
   const cardTypeFilters: string[] =
     descriptor.cardTypes ?? (descriptor.cardType ? [descriptor.cardType] : []);
   let resolvedCandidates = [...candidates];
+  if (descriptor.zones?.length && typeof descriptor.reference === "string") {
+    resolvedCandidates = resolvedCandidates.filter((cardId) => {
+      const zoneKey = getCardZoneKey(ctx, cardId);
+      if (typeof zoneKey !== "string" || zoneKey.length === 0) {
+        return false;
+      }
+
+      return descriptor.zones?.includes(zoneKey.split(":")[0]!);
+    });
+  }
   if (queryContext?.sourceCardId && zones.includes("hand")) {
     resolvedCandidates = resolvedCandidates.filter(
       (cardId) => cardId !== queryContext.sourceCardId,
@@ -1240,9 +1326,6 @@ export function resolvePlayerTargets(
       break;
     case "opponent":
       candidates = opponents.length > 0 ? [opponents[0]!] : [];
-      break;
-    case "each-opponent":
-      candidates = [...opponents];
       break;
     case "each-player":
       candidates = [...ctx.framework.state.playerIds];

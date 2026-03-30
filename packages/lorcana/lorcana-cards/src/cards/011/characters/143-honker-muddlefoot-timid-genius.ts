@@ -32,6 +32,7 @@ export const honkerMuddlefootTimidGenius: CharacterCard = {
   abilities: [
     {
       id: "fcd-1",
+      name: "BE CAREFUL!",
       effect: {
         keyword: "Resist",
         target: "YOUR_CHARACTERS",

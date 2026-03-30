@@ -72,6 +72,7 @@ export const chiefBogoCommandingOfficer: CharacterCard = {
         ],
       },
       id: "17e-1",
+      name: "SENDING BACKUP",
       text: "SENDING BACKUP During an opponent's turn, whenever one of your characters with Bodyguard is banished, you may reveal the top card of your deck. If it's a character card with cost 5 or less, you may play that character for free. Otherwise, put it on the top of your deck.",
       trigger: {
         event: "banish",

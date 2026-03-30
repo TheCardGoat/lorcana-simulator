@@ -36,7 +36,7 @@ describe("Lady - Family Dog", () => {
 
       const bagId = bagEffects[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(ladyFamilyDog, {
           resolveOptional: true,
           targets: [cheapCharacter],
         }),
@@ -60,7 +60,7 @@ describe("Lady - Family Dog", () => {
 
       // Step 1: Accept the optional without providing targets — should advance (not execute)
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(ladyFamilyDog, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Bag should still be active (advanced, not resolved)
@@ -69,7 +69,7 @@ describe("Lady - Family Dog", () => {
 
       // Step 2: Now provide the target — should execute and play the card
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [cheapCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(ladyFamilyDog, { targets: [cheapCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("play");
@@ -87,7 +87,7 @@ describe("Lady - Family Dog", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         const bagId = bagEffects[0]!.id;
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(ladyFamilyDog, {
           resolveOptional: true,
           targets: [expensiveCharacter],
         });

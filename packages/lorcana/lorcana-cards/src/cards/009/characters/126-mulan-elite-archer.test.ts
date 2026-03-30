@@ -80,7 +80,7 @@ describe("Mulan - Elite Archer (Set 9)", () => {
       // Resolve the triggered ability bag if present
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
-        testEngine.asPlayerOne().resolveNextBag();
+        testEngine.asPlayerOne().resolvePendingByCard(mulanEliteArcher);
       }
 
       expect(testEngine.asPlayerOne().getCardStrength(mulanEliteArcher)).toBe(
@@ -127,7 +127,7 @@ describe("Mulan - Elite Archer (Set 9)", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mulanEliteArcher, {
           targets: [bystander1, bystander2],
         }),
       ).toBeSuccessfulCommand();

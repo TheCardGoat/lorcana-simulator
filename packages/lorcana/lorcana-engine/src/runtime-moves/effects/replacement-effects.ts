@@ -15,9 +15,90 @@ import {
   type ConditionEvaluationContext,
 } from "../../rules/condition-evaluator";
 import { createProjectionState, getEffectiveStrength } from "../../rules/derived-state";
+import { getOrBuildMoveRegistry } from "../rules/move-registry-cache";
 import { isEffectExpired, resolveEffectWindow } from "../../rules/effect-registry";
+import {
+  createStateScopedValueCache,
+  getOrBuildStateScopedValue,
+} from "../../core/runtime/state-scoped-value-cache";
 
 type ReplacementContext = Pick<PlayCardExecutionContext, "G" | "framework" | "cards">;
+const MAX_REPLACEMENT_PASSES = 100;
+
+type PrintedReplacementEntry = {
+  cardId: CardInstanceId;
+  controllerId: PlayerId;
+  ability: ReplacementAbilityDefinition;
+};
+
+const printedReplacementCache =
+  createStateScopedValueCache<Map<string, PrintedReplacementEntry[]>>();
+
+function getPrintedAbilityEventKinds(
+  ability: ReplacementAbilityDefinition,
+): ReplacementEvent["kind"][] {
+  if (ability.replaces === "lose-lore" && ability.replacement === "prevent") return ["lose-lore"];
+  if (ability.replaces === "discard" && ability.replacement === "prevent") return ["discard"];
+  const abilityKind = ability.replacement as ReplacementAbilityKind | undefined;
+  if (!abilityKind || typeof abilityKind !== "object") return [];
+  if (abilityKind.type === "prevent-remove-damage") return ["remove-damage"];
+  if (abilityKind.type === "redirect-damage" || abilityKind.type === "prevent-damage") {
+    return ["deal-damage", "challenge-damage"];
+  }
+  return [];
+}
+
+function buildPrintedReplacementIndex(
+  ctx: ReplacementContext,
+): Map<string, PrintedReplacementEntry[]> {
+  const stateID = (ctx.framework.state as { stateID?: number }).stateID;
+  if (typeof stateID !== "number" || !Number.isFinite(stateID)) {
+    return buildPrintedReplacementIndexFresh(ctx);
+  }
+  const matchID = (ctx.framework.state as { matchID?: string }).matchID ?? "__system__";
+  return getOrBuildStateScopedValue({
+    cache: printedReplacementCache,
+    stateID,
+    actorKey: matchID,
+    cardId: "__printed-replacement-index__",
+    build: () => buildPrintedReplacementIndexFresh(ctx),
+  });
+}
+
+function buildPrintedReplacementIndexFresh(
+  ctx: ReplacementContext,
+): Map<string, PrintedReplacementEntry[]> {
+  const index = new Map<string, PrintedReplacementEntry[]>();
+  for (const playerId of ctx.framework.state.playerIds) {
+    for (const rawCardId of ctx.framework.zones.getCards({ zone: "play", playerId })) {
+      const cardId = rawCardId as CardInstanceId;
+      const definition = ctx.cards.getDefinition(cardId) as
+        | { abilities?: ReplacementAbilityDefinition[] }
+        | undefined;
+      for (const ability of definition?.abilities ?? []) {
+        if (ability?.type !== "replacement") continue;
+        for (const eventKind of getPrintedAbilityEventKinds(ability)) {
+          if (!index.has(eventKind)) index.set(eventKind, []);
+          index.get(eventKind)!.push({ cardId, controllerId: playerId, ability });
+        }
+      }
+    }
+  }
+  return index;
+}
+
+function rebuildByEventKindIndex(
+  registrations: ReplacementContext["G"]["replacementEffects"]["registrations"],
+): Record<string, string[]> {
+  const index: Record<string, string[]> = {};
+  for (const registration of registrations) {
+    for (const kind of registration.replacement.eventKinds as string[]) {
+      if (!index[kind]) index[kind] = [];
+      index[kind].push(registration.id);
+    }
+  }
+  return index;
+}
 
 function ensureReplacementEffectsState(
   ctx: ReplacementContext,
@@ -29,7 +110,14 @@ function ensureReplacementEffectsState(
       usageLedger: {
         perTurn: {},
       },
+      byEventKind: {},
     };
+  }
+  // Migration guard for in-flight states that predate byEventKind.
+  if (!ctx.G.replacementEffects.byEventKind) {
+    ctx.G.replacementEffects.byEventKind = rebuildByEventKindIndex(
+      ctx.G.replacementEffects.registrations,
+    );
   }
 
   return ctx.G.replacementEffects;
@@ -162,6 +250,7 @@ function getCardStrength(ctx: ReplacementContext, cardId: CardInstanceId | undef
     createProjectionState(ctx.framework.state, ctx.G),
     cardId,
     (id) => ctx.cards.getDefinition(id) as any,
+    getOrBuildMoveRegistry(ctx),
   );
 }
 
@@ -457,6 +546,9 @@ function createRegisteredReplacementCandidate(
           replacementEffects.registrations = replacementEffects.registrations.filter(
             (entry) => entry.id !== registration.id,
           );
+          replacementEffects.byEventKind = rebuildByEventKindIndex(
+            replacementEffects.registrations,
+          );
         }
       },
       consumeSibling: () => {
@@ -464,6 +556,9 @@ function createRegisteredReplacementCandidate(
           const replacementEffects = ensureReplacementEffectsState(ctx);
           replacementEffects.registrations = replacementEffects.registrations.filter(
             (entry) => entry.id !== registration.id,
+          );
+          replacementEffects.byEventKind = rebuildByEventKindIndex(
+            replacementEffects.registrations,
           );
         }
       },
@@ -508,6 +603,9 @@ function createRegisteredReplacementCandidate(
           replacementEffects.registrations = replacementEffects.registrations.filter(
             (entry) => entry.id !== registration.id,
           );
+          replacementEffects.byEventKind = rebuildByEventKindIndex(
+            replacementEffects.registrations,
+          );
         }
       },
       consumeSibling: () => {
@@ -515,6 +613,9 @@ function createRegisteredReplacementCandidate(
           const replacementEffects = ensureReplacementEffectsState(ctx);
           replacementEffects.registrations = replacementEffects.registrations.filter(
             (entry) => entry.id !== registration.id,
+          );
+          replacementEffects.byEventKind = rebuildByEventKindIndex(
+            replacementEffects.registrations,
           );
         }
       },
@@ -539,8 +640,9 @@ export function registerReplacementEffect(
   });
 
   const replacementEffects = ensureReplacementEffectsState(ctx);
+  const newId = `replacement:${replacementEffects.nextSeq++}`;
   replacementEffects.registrations.push({
-    id: `replacement:${replacementEffects.nextSeq++}`,
+    id: newId,
     sourceId: cardPlayed.cardId,
     controllerId: cardPlayed.playerId,
     replacement,
@@ -549,6 +651,10 @@ export function registerReplacementEffect(
     startsAtTurn,
     expiresAtTurn,
   });
+  for (const kind of replacement.eventKinds as string[]) {
+    if (!replacementEffects.byEventKind[kind]) replacementEffects.byEventKind[kind] = [];
+    replacementEffects.byEventKind[kind].push(newId);
+  }
 }
 
 export function pruneExpiredReplacementEffects(
@@ -562,12 +668,14 @@ export function pruneExpiredReplacementEffects(
       usageLedger: {
         perTurn: {},
       },
+      byEventKind: {},
     };
   }
 
   G.replacementEffects.registrations = G.replacementEffects.registrations.filter(
     (entry) => !isEffectExpired(entry, currentTurn),
   );
+  G.replacementEffects.byEventKind = rebuildByEventKindIndex(G.replacementEffects.registrations);
 
   const nextLedger: Record<string, number> = {};
   for (const [key, value] of Object.entries(G.replacementEffects.usageLedger.perTurn)) {
@@ -590,10 +698,11 @@ export function applyReplacementEffects<TEvent extends ReplacementEvent>(
   },
 ): TEvent {
   const replacementEffects = ensureReplacementEffectsState(ctx);
+  const printedIndex = buildPrintedReplacementIndex(ctx);
   let currentEvent: TEvent = event;
   const appliedCandidates = new Set<string>();
 
-  while (true) {
+  for (let pass = 0; pass < MAX_REPLACEMENT_PASSES; pass += 1) {
     const selfCandidate =
       options?.selfReplacement &&
       options.cardPlayed &&
@@ -607,26 +716,18 @@ export function applyReplacementEffects<TEvent extends ReplacementEvent>(
         options.selfReplacementField ?? "amount",
       );
 
-    const printedCandidates = ctx.framework.state.playerIds.flatMap((playerId) => {
-      const playCards = ctx.framework.zones.getCards({
-        zone: "play",
-        playerId,
-      }) as CardInstanceId[];
-      return playCards.flatMap((cardId) => {
-        const definition = ctx.cards.getDefinition(cardId) as
-          | { abilities?: ReplacementAbilityDefinition[] }
-          | undefined;
-        return (definition?.abilities ?? [])
-          .filter(
-            (ability): ability is ReplacementAbilityDefinition => ability?.type === "replacement",
-          )
-          .map((ability) =>
-            createPrintedReplacementCandidate(ctx, cardId, playerId, ability, currentEvent),
-          )
-          .filter((candidate): candidate is ReplacementCandidate => Boolean(candidate));
-      });
-    });
-    const registeredCandidates = replacementEffects.registrations
+    const printedCandidates = (printedIndex.get(currentEvent.kind) ?? [])
+      .map(({ cardId, controllerId, ability }) =>
+        createPrintedReplacementCandidate(ctx, cardId, controllerId, ability, currentEvent),
+      )
+      .filter((candidate): candidate is ReplacementCandidate => Boolean(candidate));
+
+    const relevantRegistrationIds = replacementEffects.byEventKind[currentEvent.kind] ?? [];
+    const registeredCandidates = relevantRegistrationIds
+      .map((id) => replacementEffects.registrations.find((r) => r.id === id))
+      .filter((r): r is ReplacementContext["G"]["replacementEffects"]["registrations"][number] =>
+        Boolean(r),
+      )
       .map((registration) => createRegisteredReplacementCandidate(ctx, currentEvent, registration))
       .filter((candidate): candidate is ReplacementCandidate => Boolean(candidate));
 
@@ -652,4 +753,8 @@ export function applyReplacementEffects<TEvent extends ReplacementEvent>(
     chosen.consume();
     duplicateCandidates.forEach((candidate) => candidate.consumeSibling?.() ?? candidate.consume());
   }
+
+  throw new Error(
+    `Exceeded ${MAX_REPLACEMENT_PASSES} replacement passes while resolving event '${currentEvent.eventId}'.`,
+  );
 }

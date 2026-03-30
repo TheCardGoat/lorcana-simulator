@@ -78,4 +78,97 @@ describe("card tags", () => {
     expect(groups.statModifiers).toHaveLength(0);
     expect(groups.tags.map((tag) => tag.id)).toEqual(["damage", "exerted"]);
   });
+
+  it("hides stat badges when all stats match their base values", () => {
+    const groups = getLorcanaCardTagGroups(createCardSnapshot());
+
+    expect(groups.statBadges).toHaveLength(0);
+  });
+
+  it("shows all stat badges when any stat is modified", () => {
+    const groups = getLorcanaCardTagGroups(createCardSnapshot({ strength: 6 }));
+
+    expect(groups.statBadges.map((b) => b.id)).toEqual(["strength", "willpower", "lore"]);
+    expect(groups.statBadges.map((b) => b.currentValue)).toEqual([6, 3, 2]);
+    expect(groups.statBadges.map((b) => b.tone)).toEqual(["success", "neutral", "neutral"]);
+  });
+
+  it("colors stat badges based on modifier direction", () => {
+    const groups = getLorcanaCardTagGroups(
+      createCardSnapshot({
+        strength: 8,
+        willpower: 1,
+        loreValue: 3,
+      }),
+    );
+
+    expect(groups.statBadges.map((b) => b.tone)).toEqual(["success", "warning", "success"]);
+    expect(groups.statBadges.map((b) => b.currentValue)).toEqual([8, 1, 3]);
+  });
+
+  it("produces willpower and lore badges for locations (no strength) when modified", () => {
+    const groups = getLorcanaCardTagGroups(
+      createCardSnapshot({
+        cardType: "location",
+        strength: undefined,
+        baseStrength: undefined,
+        willpower: 7,
+        baseWillpower: 5,
+        loreValue: 1,
+        baseLoreValue: 1,
+      }),
+    );
+
+    expect(groups.statBadges.map((b) => b.id)).toEqual(["willpower", "lore"]);
+    expect(groups.statBadges.map((b) => b.currentValue)).toEqual([7, 1]);
+    expect(groups.statBadges.map((b) => b.tone)).toEqual(["success", "neutral"]);
+  });
+
+  it("always produces a lore badge for locations even without modifiers", () => {
+    const groups = getLorcanaCardTagGroups(
+      createCardSnapshot({
+        cardType: "location",
+        strength: undefined,
+        baseStrength: undefined,
+        willpower: 5,
+        baseWillpower: 5,
+        loreValue: 2,
+        baseLoreValue: 2,
+      }),
+    );
+
+    expect(groups.statBadges.map((b) => b.id)).toEqual(["lore"]);
+    expect(groups.statBadges.map((b) => b.currentValue)).toEqual([2]);
+    expect(groups.statBadges.map((b) => b.tone)).toEqual(["neutral"]);
+  });
+
+  it("produces no stat badges for items or actions", () => {
+    const itemGroups = getLorcanaCardTagGroups(createCardSnapshot({ cardType: "item" }));
+    expect(itemGroups.statBadges).toHaveLength(0);
+
+    const actionGroups = getLorcanaCardTagGroups(createCardSnapshot({ cardType: "action" }));
+    expect(actionGroups.statBadges).toHaveLength(0);
+  });
+
+  it("shows the Shift tag only while the card is in hand", () => {
+    const handGroups = getLorcanaCardTagGroups(
+      createCardSnapshot({
+        zoneId: "hand",
+        keywords: ["Shift"],
+        textEntries: [{ title: "Shift 4", description: "" }],
+      }),
+    );
+
+    const playGroups = getLorcanaCardTagGroups(
+      createCardSnapshot({
+        zoneId: "play",
+        keywords: ["Shift"],
+        textEntries: [{ title: "Shift 4", description: "" }],
+      }),
+    );
+
+    expect(handGroups.tags.map((tag) => tag.id)).toContain("shift");
+    expect(handGroups.tags.find((tag) => tag.id === "shift")?.label).toBe("Shift 4");
+    expect(playGroups.tags.map((tag) => tag.id)).not.toContain("shift");
+  });
 });

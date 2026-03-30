@@ -91,7 +91,7 @@ describe("Oswald - The Lucky Rabbit", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(oswaldTheLuckyRabbit, {
           resolveOptional: true,
           destinations: [{ zone: "play", cards: [mockItem] }],
         }),
@@ -129,7 +129,7 @@ describe("Oswald - The Lucky Rabbit", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(oswaldTheLuckyRabbit, {
           resolveOptional: true,
           destinations: [{ zone: "deck-bottom", cards: [mockItem] }],
         }),
@@ -164,7 +164,7 @@ describe("Oswald - The Lucky Rabbit", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(oswaldTheLuckyRabbit, {
           resolveOptional: true,
           destinations: [{ zone: "deck-bottom", cards: [mockCharacter] }],
         }),
@@ -200,7 +200,9 @@ describe("Oswald - The Lucky Rabbit", () => {
       // Decline the optional trigger
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(oswaldTheLuckyRabbit, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Item should still be in deck
@@ -270,7 +272,7 @@ describe("Oswald - The Lucky Rabbit", () => {
         const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
         // Even if the top card is an item, Oswald should not be able to play it
         // because of the Keep the Ancient Ways restriction
-        const result = testEngine.asPlayerTwo().resolveBag(bagEffect!.id, {
+        const result = testEngine.asPlayerTwo().resolvePendingByCard(oswaldTheLuckyRabbit, {
           resolveOptional: true,
           destinations: [{ zone: "play", cards: [mockItem] }],
         });

@@ -36,7 +36,7 @@ describe("Amethyst Coil", () => {
 
     expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(amethystCoil, {
         resolveOptional: true,
         targets: [damagedSource, opposingTarget],
       }),

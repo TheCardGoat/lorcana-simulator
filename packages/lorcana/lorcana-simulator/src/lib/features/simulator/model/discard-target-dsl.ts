@@ -2,6 +2,7 @@ import type {
   LorcanaCardSnapshot,
   LorcanaPlayerSide,
 } from "@/features/simulator/model/contracts.js";
+import type { CardSelectionFilter } from "@tcg/lorcana-types";
 import {
   type LorcanaCardTarget,
   type LorcanaContext,
@@ -36,8 +37,46 @@ type NumericLorcanaFilter =
   | Extract<LorcanaFilter, { type: "lore-value" }>
   | Extract<LorcanaFilter, { type: "move-cost" }>;
 
+function hasFilterType(
+  filter: LorcanaFilter | CardSelectionFilter,
+): filter is Extract<LorcanaFilter, { type: string }> {
+  return "type" in filter;
+}
+
+function matchesUntypedFilter(card: LorcanaCardSnapshot, filter: CardSelectionFilter): boolean {
+  if (typeof filter.classification === "string") {
+    if (!(card.classifications ?? []).includes(filter.classification)) {
+      return false;
+    }
+  }
+
+  if (typeof filter.name === "string") {
+    if ((card.label ?? "").toLowerCase() !== filter.name.toLowerCase()) {
+      return false;
+    }
+  }
+
+  if (typeof filter.cardType === "string") {
+    if (filter.cardType === "song") {
+      if (!(card.cardType === "action" && card.actionSubtype === "song")) {
+        return false;
+      }
+    } else if (card.cardType !== filter.cardType) {
+      return false;
+    }
+  }
+
+  if (typeof filter.maxCost === "number") {
+    if (typeof card.cost !== "number" || card.cost > filter.maxCost) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function isNumericFilterType(
-  type: LorcanaFilter["type"],
+  type: string,
 ): type is "strength" | "willpower" | "cost" | "lore-value" | "move-cost" {
   return (
     type === "strength" ||
@@ -49,7 +88,7 @@ function isNumericFilterType(
 }
 
 function isNumericFilter(filter: LorcanaFilter): filter is NumericLorcanaFilter {
-  return isNumericFilterType(filter.type);
+  return hasFilterType(filter) && isNumericFilterType(filter.type);
 }
 
 function isComparisonWithParentsTarget(
@@ -61,16 +100,36 @@ function isComparisonWithParentsTarget(
 function isNameFilterWithEquals(
   filter: LorcanaFilter,
 ): filter is Extract<LorcanaFilter, { type: "name"; equals: string }> {
-  return filter.type === "name" && "equals" in filter;
+  return hasFilterType(filter) && filter.type === "name" && "equals" in filter;
 }
 
 function isNameFilterWithContains(
   filter: LorcanaFilter,
 ): filter is Extract<LorcanaFilter, { type: "name"; contains: string }> {
-  return filter.type === "name" && "contains" in filter;
+  return hasFilterType(filter) && filter.type === "name" && "contains" in filter;
 }
 
 function isFilterSupported(filter: LorcanaFilter): boolean {
+  if (!hasFilterType(filter)) {
+    const selectionFilter = filter as CardSelectionFilter;
+    if (selectionFilter.sameNameAsChosenCard === true) {
+      return false;
+    }
+    if (selectionFilter.sameNameAsSource === true) {
+      return false;
+    }
+    if (selectionFilter.sameInstanceAsSource === true) {
+      return false;
+    }
+    if (selectionFilter.excludeChosenCard === true) {
+      return false;
+    }
+    if (typeof selectionFilter.maxCost === "object") {
+      return false;
+    }
+    return true;
+  }
+
   if (filter.type === "at-location") {
     return false;
   }
@@ -90,6 +149,17 @@ function collectUnsupportedFilters(
   unsupported: CardTargetUnsupportedFilter[],
 ): void {
   if (!filter) {
+    return;
+  }
+
+  if (!hasFilterType(filter)) {
+    if (!isFilterSupported(filter)) {
+      unsupported.push({
+        filter,
+        path,
+        reason: "Context-aware selection filters are not yet supported for target inspection.",
+      });
+    }
     return;
   }
 
@@ -145,7 +215,7 @@ function compareNumeric(actual: number | undefined, expected: number, comparison
 
 function resolveCardNumericValue(
   card: LorcanaCardSnapshot,
-  filterType: LorcanaFilter["type"],
+  filterType: NumericLorcanaFilter["type"],
 ): number | undefined {
   switch (filterType) {
     case "strength":
@@ -193,6 +263,13 @@ function evaluateSingleFilter(
   filter: LorcanaFilter,
   path: string,
 ): { matches: boolean; supported: boolean } {
+  if (!hasFilterType(filter)) {
+    return {
+      matches: matchesUntypedFilter(card, filter),
+      supported: isFilterSupported(filter),
+    };
+  }
+
   switch (filter.type) {
     case "and": {
       let hasSupportedFilters = false;
@@ -453,6 +530,26 @@ export function evaluateCardTargetMatches(
 }
 
 function describeFilter(filter: LorcanaFilter): string {
+  if (!hasFilterType(filter)) {
+    const selectionFilter = filter as CardSelectionFilter;
+    const parts: string[] = [];
+
+    if (typeof selectionFilter.cardType === "string") {
+      parts.push(`cardType=${selectionFilter.cardType}`);
+    }
+    if (typeof selectionFilter.classification === "string") {
+      parts.push(`classification=${selectionFilter.classification}`);
+    }
+    if (typeof selectionFilter.name === "string") {
+      parts.push(`name=${selectionFilter.name}`);
+    }
+    if (typeof selectionFilter.maxCost === "number") {
+      parts.push(`maxCost=${selectionFilter.maxCost}`);
+    }
+
+    return parts.length > 0 ? `selection(${parts.join(", ")})` : "selection-filter";
+  }
+
   if (filter.type === "and") {
     return `and(${filter.filters.map(describeFilter).join(", ")})`;
   }
@@ -506,6 +603,15 @@ function describeFilter(filter: LorcanaFilter): string {
 }
 
 function collectFilterBadges(filter: LorcanaFilter, path: string, badged: TargetBadge[]): void {
+  if (!hasFilterType(filter)) {
+    badged.push({
+      id: path,
+      label: `filter: ${describeFilter(filter)}`,
+      variant: "default",
+    });
+    return;
+  }
+
   if (filter.type === "and" || filter.type === "or") {
     filter.filters.forEach((child, childIndex) => {
       collectFilterBadges(child, `${path}.filters[${childIndex}]`, badged);

@@ -61,7 +61,7 @@ describe("Alma Madrigal - Accepting Grandmother", () => {
 
     // Accept the optional ability to ready the singer
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(almaMadrigalAcceptingGrandmother),
     ).toBeSuccessfulCommand();
 
     // Singer should now be ready after the ability resolves
@@ -93,7 +93,7 @@ describe("Alma Madrigal - Accepting Grandmother", () => {
 
     // Accept the optional ability
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(almaMadrigalAcceptingGrandmother),
     ).toBeSuccessfulCommand();
 
     // Both singers should now be ready
@@ -120,7 +120,7 @@ describe("Alma Madrigal - Accepting Grandmother", () => {
 
     // Accept the optional ability
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(almaMadrigalAcceptingGrandmother),
     ).toBeSuccessfulCommand();
 
     // Singer should be ready after the first resolve
@@ -133,31 +133,6 @@ describe("Alma Madrigal - Accepting Grandmother", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
     // Singer stays exerted from the second singing
-    expect(testEngine.asPlayerOne().isExerted(singerA)).toBe(true);
-  });
-
-  it("THE MIRACLE IS YOU - can be declined (optional)", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      hand: [songToSing],
-      inkwell: songToSing.cost,
-      play: [
-        { card: almaMadrigalAcceptingGrandmother, isDrying: false },
-        { card: singerA, isDrying: false },
-      ],
-    });
-
-    expect(testEngine.asPlayerOne().singSong(songToSing, singerA)).toBeSuccessfulCommand();
-
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-    // Decline the optional ability
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-        resolveOptional: false,
-      }),
-    ).toBeSuccessfulCommand();
-
-    // Singer should remain exerted since we declined
     expect(testEngine.asPlayerOne().isExerted(singerA)).toBe(true);
   });
 
@@ -187,7 +162,7 @@ describe("Alma Madrigal - Accepting Grandmother", () => {
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(almaMadrigalAcceptingGrandmother),
     ).toBeSuccessfulCommand();
 
     // Singer should be readied

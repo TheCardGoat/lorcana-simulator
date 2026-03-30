@@ -28,8 +28,8 @@ export const balooVonBruinwaldXiii: CharacterCard = {
       title: "Bodyguard",
     },
     {
-      title: "LET'S MAKE LIKE",
-      description: "A TREE When this character is banished, gain 2 lore.",
+      title: "LET'S MAKE LIKE A TREE",
+      description: "When this character is banished, gain 2 lore.",
     },
   ],
   classifications: ["Dreamborn", "Hero"],

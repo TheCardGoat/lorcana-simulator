@@ -2,7 +2,6 @@ import { getGameServerOrigin } from "$lib/config/public-url-config.js";
 
 export interface MatchmakingJoinParams {
   gameProfileId: string;
-  deckListId: string;
   format: string;
   mode: string;
   archetypeId?: string;

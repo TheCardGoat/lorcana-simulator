@@ -67,7 +67,7 @@ describe("Pete - Bad Guy", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(peteBadGuy)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(peteBadGuy)).toBe(strengthBefore + 2);
     });
@@ -89,7 +89,7 @@ describe("Pete - Bad Guy", () => {
       ).toBeSuccessfulCommand();
       const [bagEffect1] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect1).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect1!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(peteBadGuy)).toBeSuccessfulCommand();
 
       expect(
         testEngine
@@ -98,7 +98,7 @@ describe("Pete - Bad Guy", () => {
       ).toBeSuccessfulCommand();
       const [bagEffect2] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect2).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect2!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(peteBadGuy)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(peteBadGuy)).toBe(strengthBefore + 4);
     });
@@ -120,7 +120,7 @@ describe("Pete - Bad Guy", () => {
       ).toBeSuccessfulCommand();
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(peteBadGuy)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(peteBadGuy)).toBe(strengthBefore + 2);
 
@@ -160,7 +160,7 @@ describe("Pete - Bad Guy", () => {
           .playCard(testAction1, { preventAutoResolveTriggeredEffects: true }),
       ).toBeSuccessfulCommand();
       const [bagEffect1] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect1!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(peteBadGuy)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(peteBadGuy)).toBe(5);
       expect(testEngine.asPlayerOne().getCardLore(peteBadGuy)).toBe(2);
@@ -172,7 +172,7 @@ describe("Pete - Bad Guy", () => {
           .playCard(testAction2, { preventAutoResolveTriggeredEffects: true }),
       ).toBeSuccessfulCommand();
       const [bagEffect2] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect2!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(peteBadGuy)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(peteBadGuy)).toBe(7);
       expect(testEngine.asPlayerOne().getCardLore(peteBadGuy)).toBe(4); // 2 base + 2 from WHO'S NEXT?
@@ -193,7 +193,7 @@ describe("Pete - Bad Guy", () => {
           .playCard(testAction1, { preventAutoResolveTriggeredEffects: true }),
       ).toBeSuccessfulCommand();
       const [bagEffect1] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect1!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(peteBadGuy)).toBeSuccessfulCommand();
 
       expect(
         testEngine
@@ -201,7 +201,7 @@ describe("Pete - Bad Guy", () => {
           .playCard(testAction2, { preventAutoResolveTriggeredEffects: true }),
       ).toBeSuccessfulCommand();
       const [bagEffect2] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect2!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(peteBadGuy)).toBeSuccessfulCommand();
 
       // Strength is 7, lore is 4
       expect(testEngine.asPlayerOne().getCardStrength(peteBadGuy)).toBe(7);

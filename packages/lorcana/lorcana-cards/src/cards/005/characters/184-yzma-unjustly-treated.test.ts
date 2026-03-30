@@ -50,7 +50,7 @@ describe("Yzma - Unjustly Treated", () => {
       // I'M WARNING YOU! triggers as optional
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(yzmaUnjustlyTreated, {
           resolveOptional: true,
           targets: [extraTarget],
         }),
@@ -77,7 +77,9 @@ describe("Yzma - Unjustly Treated", () => {
 
       // Decline
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(yzmaUnjustlyTreated, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(extraTarget)).toBe(0);

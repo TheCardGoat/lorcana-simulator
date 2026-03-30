@@ -190,8 +190,8 @@ describe("challenge trigger windows", () => {
       testEngine
         .getServerEngine()
         .getRuntime()
-        .getGameLog()
-        .some((entry) => entry.defaultMessage?.key === "lorcana.move.challenge"),
+        .getMoveLogHistory()
+        .some((log) => log.type === "challenge"),
     ).toBe(true);
   });
 
@@ -270,7 +270,9 @@ describe("challenge trigger windows", () => {
     expect(testEngine.getAuthoritativeState().G.challengeState?.stage).toBe("post-damage");
 
     const [firstBagEffect] = testEngine.asPlayerTwo().getBagEffects();
-    expect(testEngine.asPlayerTwo().resolveBag(firstBagEffect!.id).success).toBe(true);
+    expect(testEngine.asPlayerTwo().resolvePendingByCard(firstBagEffect!.sourceId).success).toBe(
+      true,
+    );
 
     expect(testEngine.asPlayerOne().getCardZone(stickyAttacker)).toBe("discard");
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
@@ -278,7 +280,9 @@ describe("challenge trigger windows", () => {
     expect(testEngine.getAuthoritativeState().G.challengeState?.stage).toBe("post-damage");
 
     const [secondBagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(secondBagEffect!.id).success).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(secondBagEffect!.sourceId).success).toBe(
+      true,
+    );
 
     expect(testEngine.asPlayerOne().getCardZone(stickyAttacker)).toBe("hand");
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);

@@ -42,7 +42,7 @@ describe("Cursed Merfolk - Ursula's Handiwork", () => {
     expect(bagEffect).toBeDefined();
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(cursedMerfolkUrsulasHandiwork, {
         targets: [handCard],
       }),
     ).toBeSuccessfulCommand();
@@ -70,7 +70,7 @@ describe("Cursed Merfolk - Ursula's Handiwork", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(cursedMerfolkUrsulasHandiwork, {
         targets: [handCard],
       }),
     ).toBeSuccessfulCommand();
@@ -98,10 +98,42 @@ describe("Cursed Merfolk - Ursula's Handiwork", () => {
     ).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id).success).toBe(true);
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(cursedMerfolkUrsulasHandiwork).success,
+    ).toBe(true);
 
     expect(testEngine.asServer().getState().G.pendingEffects ?? []).toEqual([]);
     expect(testEngine.asServer().getState().G.challengeState).toBeUndefined();
     expect(testEngine.asPlayerOne().getCardZone(cursedMerfolkUrsulasHandiwork)).toBe("discard");
+  });
+
+  it("returns priority to the turn player after the opponent finishes the discard choice", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: attacker, isDrying: false }],
+        hand: [handCard],
+        deck: 1,
+      },
+      {
+        play: [{ card: cursedMerfolkUrsulasHandiwork, exerted: true }],
+        deck: 1,
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().challenge(attacker, cursedMerfolkUrsulasHandiwork),
+    ).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerTwo().resolvePendingByCard(cursedMerfolkUrsulasHandiwork),
+    ).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [handCard] }),
+    ).toBeSuccessfulCommand();
+
+    const board = testEngine.asServer().getBoard();
+    expect(String(board.turnPlayer)).toBe("player_one");
+    expect(String(board.priorityPlayer)).toBe("player_one");
+    expect(testEngine.asPlayerTwo().passTurn()).not.toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
   });
 });

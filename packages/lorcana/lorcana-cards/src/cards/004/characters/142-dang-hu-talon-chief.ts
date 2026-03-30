@@ -51,7 +51,7 @@ export const dangHuTalonChief: CharacterCard = {
         type: "gain-keyword",
       },
       id: "tq9-1",
-      name: "YOU BETTER TALK FAST Your other Villain",
+      name: "YOU BETTER TALK FAST",
       text: "YOU BETTER TALK FAST Your other Villain characters gain Support.",
       type: "static",
     },

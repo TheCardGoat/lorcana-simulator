@@ -48,7 +48,7 @@ describe("Bellwether - Assistant Mayor", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(bellwetherAssistantMayor, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -105,7 +105,7 @@ describe("Bellwether - Assistant Mayor", () => {
       // Resolve the trigger
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(bellwetherAssistantMayor, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),

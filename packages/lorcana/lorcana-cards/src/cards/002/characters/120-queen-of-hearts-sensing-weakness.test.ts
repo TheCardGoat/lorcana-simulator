@@ -56,7 +56,9 @@ describe("Queen of Hearts - Sensing Weakness", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(queenOfHeartsSensingWeakness, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", "player_one").count;
@@ -84,7 +86,9 @@ describe("Queen of Hearts - Sensing Weakness", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(queenOfHeartsSensingWeakness, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", "player_one").count;
@@ -113,7 +117,9 @@ describe("Queen of Hearts - Sensing Weakness", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(queenOfHeartsSensingWeakness, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", "player_one").count;
@@ -181,7 +187,9 @@ describe("Queen of Hearts - Sensing Weakness", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(queenOfHeartsSensingWeakness, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -189,7 +197,9 @@ describe("Queen of Hearts - Sensing Weakness", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(queenOfHeartsSensingWeakness, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", "player_one").count;

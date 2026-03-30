@@ -6,6 +6,9 @@
   import { IsMobile } from "$lib/hooks/is-mobile.svelte.js";
   import { m } from "$lib/i18n/messages.js";
   import { onDestroy, onMount } from "svelte";
+  import type { PageData } from "./$types";
+
+  let { data }: { data: PageData } = $props();
 
   const PAGE_TITLE = "Lorcana Simulator Matchmaking";
   const isMobile = new IsMobile();
@@ -55,5 +58,5 @@
       />
     </div>
   {/if}
-  <MatchmakingLobby />
+  <MatchmakingLobby initialContext={data.matchmakingContext} />
 </main>

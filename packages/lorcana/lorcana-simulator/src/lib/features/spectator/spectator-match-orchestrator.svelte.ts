@@ -6,7 +6,6 @@ import {
   type LorcanaClient,
   type LorcanaMatchState,
 } from "@tcg/lorcana-engine";
-import { applyPatches, type Patch } from "immer";
 import type { GatewayClientStore } from "../gateway/gateway-client.svelte.js";
 import type {
   LogCardReference,
@@ -32,8 +31,8 @@ export interface SpectatorRecentHistory {
     input?: unknown;
   }>;
   engineLogs: Array<{
-    defaultMessage?: { key?: string; values?: Record<string, unknown> };
-    sourceEventSeqs: number[];
+    stateVersion: number;
+    log: unknown;
   }>;
 }
 
@@ -121,6 +120,7 @@ export function createSpectatorHistoryEntries(args: {
     }
 
     const params = normalizePersistedMoveParams(move.input);
+    const matchingLog = args.engineLogs.find((entry) => entry.stateVersion === move.stateVersion);
 
     const entry: MoveLogEntrySnapshot = {
       id: `spectator-history-${move.stateVersion}-${index}-${move.moveId}`,
@@ -131,6 +131,7 @@ export function createSpectatorHistoryEntries(args: {
       title: "",
       playerId: move.actorId,
       params,
+      typedLogEntry: matchingLog?.log as MoveLogEntrySnapshot["typedLogEntry"],
     };
 
     const resolveCard = buildCardReferenceResolver(args.engine, args.cardsMaps);
@@ -147,6 +148,9 @@ function createLiveEntry(args: {
 }): MoveLogEntrySnapshot {
   const moveId = assertLorcanaSimulatorMoveId(args.acceptedMove.moveId);
   const params = normalizePersistedMoveParams(args.acceptedMove.input);
+  const matchingLog = args.engineLogs.find(
+    (entry) => entry.stateVersion === args.acceptedMove.stateVersion,
+  );
   const entry: MoveLogEntrySnapshot = {
     id: `spectator-live-${args.acceptedMove.turnNumber}-${args.acceptedMove.timestamp}-${moveId}`,
     timestamp: args.acceptedMove.timestamp,
@@ -156,6 +160,7 @@ function createLiveEntry(args: {
     title: "",
     playerId: args.acceptedMove.actorId,
     params,
+    typedLogEntry: matchingLog?.log as MoveLogEntrySnapshot["typedLogEntry"],
   };
 
   const resolveCard = buildCardReferenceResolver(args.engine, args.cardsMaps);
@@ -241,6 +246,36 @@ function resolveOwnerSide(
   return undefined;
 }
 
+/**
+ * Extract LorcanaMatchState and CardsMaps from either a direct LorcanaMatchState
+ * or a PracticeMatchSnapshot (client-authority games wrap state in engineSnapshot).
+ */
+export function extractMatchState(
+  raw: unknown,
+): { state: LorcanaMatchState; cardsMaps: CardsMaps } | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const obj = raw as Record<string, unknown>;
+
+  // Client-authority: PracticeMatchSnapshot = { engineSnapshot: { state, cardsMaps, ... } }
+  if ("engineSnapshot" in obj && obj.engineSnapshot && typeof obj.engineSnapshot === "object") {
+    const snap = obj.engineSnapshot as Record<string, unknown>;
+    if (snap.state && snap.cardsMaps) {
+      return {
+        state: snap.state as LorcanaMatchState,
+        cardsMaps: snap.cardsMaps as CardsMaps,
+      };
+    }
+  }
+
+  // Server-authority: direct LorcanaMatchState (has ctx.matchID)
+  if ("ctx" in obj && obj.ctx && typeof obj.ctx === "object") {
+    return { state: obj as unknown as LorcanaMatchState, cardsMaps: {} as CardsMaps };
+  }
+
+  return null;
+}
+
 export class SpectatorMatchOrchestrator {
   readonly readModel = new SpectatorReadModel();
   readonly #gateway: GatewayClientStore;
@@ -297,12 +332,21 @@ export class SpectatorMatchOrchestrator {
     patches: unknown[];
     acceptedMove?: SpectatorAcceptedMove;
     engineLogs?: SpectatorEngineLog[];
+    /** Full state snapshot, provided for client-authority games. */
+    state?: unknown;
   }): void {
-    const nextState = applyPatches(
-      structuredClone(this.#engine.getState()) as LorcanaMatchState,
-      msg.patches as Patch[],
-    );
-    this.#engine.loadState(nextState);
+    if (msg.state) {
+      const extracted = extractMatchState(msg.state);
+      if (extracted) {
+        this.#engine.loadState(extracted.state);
+      } else {
+        console.warn("[spectator] failed to extract state from state_update");
+      }
+    } else if (msg.patches.length > 0) {
+      console.warn(
+        "[spectator] received patch-only state update while browser patches are disabled",
+      );
+    }
 
     if (msg.acceptedMove && isLorcanaSimulatorMoveId(msg.acceptedMove.moveId)) {
       this.readModel.pushEntries([

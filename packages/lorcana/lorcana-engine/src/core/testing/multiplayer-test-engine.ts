@@ -293,8 +293,8 @@ export class MultiplayerTestEngine extends CoreTestEngine<
   async syncToStateID(targetStateID: number, options: SyncOptions = {}): Promise<void> {
     const timeoutMs = options.timeoutMs ?? 1000;
     const pollIntervalMs = options.pollIntervalMs ?? 10;
-    const startTime = Date.now();
-    while (Date.now() - startTime < timeoutMs) {
+    const deadline = Date.now() + timeoutMs;
+    for (; Date.now() < deadline; ) {
       const allSynced = Array.from(this.playerEngines.values()).every(
         (e) => e.getStateID() >= targetStateID,
       );

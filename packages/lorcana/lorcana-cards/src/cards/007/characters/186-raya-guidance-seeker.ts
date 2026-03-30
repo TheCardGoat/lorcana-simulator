@@ -41,10 +41,13 @@ export const rayaGuidanceSeeker: CharacterCard = {
       id: "1id-1",
       name: "A GREATER PURPOSE",
       text: "A GREATER PURPOSE During your turn, whenever a card is put into your inkwell, this character gains Resist +1 until the start of your next turn.",
+      condition: {
+        type: "your-turn",
+      },
       trigger: {
-        event: "play",
-        on: "SELF",
-        timing: "when",
+        event: "ink",
+        on: "CONTROLLER",
+        timing: "whenever",
       },
       type: "triggered",
     },

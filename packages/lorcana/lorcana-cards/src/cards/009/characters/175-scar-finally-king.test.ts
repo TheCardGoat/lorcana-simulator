@@ -111,7 +111,7 @@ describe("Scar - Finally King", () => {
 
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scarFinallyKing, {
           resolveOptional: true,
           targets: [allyCharacter],
         });
@@ -140,7 +140,7 @@ describe("Scar - Finally King", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(scarFinallyKing, {
           resolveOptional: true,
           targets: [allyCharacter],
         }),
@@ -171,7 +171,7 @@ describe("Scar - Finally King", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(scarFinallyKing, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(10);
@@ -194,7 +194,7 @@ describe("Scar - Finally King", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(scarFinallyKing, {
           resolveOptional: true,
           targets: [lowStrengthAlly],
         }),
@@ -226,7 +226,7 @@ describe("Scar - Finally King", () => {
       const scarId = testEngine.findCardInstanceId(scarFinallyKing, "play", PLAYER_ONE);
       testEngine.asServer().manualReadyCard(scarId);
 
-      testEngine.asPlayerOne().resolveNextBag({
+      testEngine.asPlayerOne().resolvePendingByCard(scarFinallyKing, {
         resolveOptional: true,
         targets: [allyCharacter],
       });
@@ -264,7 +264,7 @@ describe("Scar - Finally King", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(scarFinallyKingEnchanted, {
           resolveOptional: true,
           targets: [allyCharacter],
         }),

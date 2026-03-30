@@ -55,7 +55,7 @@ export const cogsworthGrandfatherClock: CharacterCard = {
         value: 1,
       },
       id: "184-3",
-      name: "UNWIND Your other",
+      name: "UNWIND",
       text: "UNWIND Your other characters gain Resist +1",
       type: "static",
     },

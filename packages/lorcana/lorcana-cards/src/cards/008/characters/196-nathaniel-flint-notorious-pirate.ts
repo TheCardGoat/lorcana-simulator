@@ -42,6 +42,7 @@ export const nathanielFlintNotoriousPirate: CharacterCard = {
         comparison: { operator: "gte", value: 1 },
       },
       id: "1ub-1",
+      name: "PREDATORY INSTINCT",
       text: "PREDATORY INSTINCT You can't play this character unless an opposing character was damaged this turn.",
       type: "static",
     },

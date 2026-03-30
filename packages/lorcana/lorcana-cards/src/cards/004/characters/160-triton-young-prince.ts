@@ -47,6 +47,7 @@ export const tritonYoungPrince: CharacterCard = {
         type: "gain-keyword",
       },
       id: "si2-1",
+      name: "SUPERIOR SWIMMER",
       text: "SUPERIOR SWIMMER During your turn, this character gains Evasive.",
       type: "static",
     },

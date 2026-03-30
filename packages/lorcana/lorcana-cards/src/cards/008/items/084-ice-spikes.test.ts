@@ -29,7 +29,7 @@ describe("Ice Spikes", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(iceSpikes)).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({
         targets: [opposingCharacter],

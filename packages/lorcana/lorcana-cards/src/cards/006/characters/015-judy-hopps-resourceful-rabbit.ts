@@ -52,6 +52,7 @@ export const judyHoppsResourcefulRabbit: CharacterCard = {
         type: "optional",
       },
       id: "1r5-2",
+      name: "NEED SOME HELP?",
       text: "NEED SOME HELP? At the end of your turn, you may ready another chosen character of yours.",
       trigger: {
         event: "end-turn",

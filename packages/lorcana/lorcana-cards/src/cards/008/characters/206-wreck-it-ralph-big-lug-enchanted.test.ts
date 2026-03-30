@@ -53,7 +53,7 @@ describe("Wreck-It Ralph - Big Lug (Enchanted)", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphBigLugEnchanted, {
           targets: [racerInDiscard],
         }),
       ).toBeSuccessfulCommand();
@@ -78,7 +78,9 @@ describe("Wreck-It Ralph - Big Lug (Enchanted)", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(wreckitRalphBigLugEnchanted, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(racerInDiscard)).toBe("discard");
@@ -145,7 +147,7 @@ describe("Wreck-It Ralph - Big Lug (Enchanted)", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphBigLugEnchanted, {
           targets: [racerInDiscard],
         }),
       ).toBeSuccessfulCommand();
@@ -168,7 +170,9 @@ describe("Wreck-It Ralph - Big Lug (Enchanted)", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(wreckitRalphBigLugEnchanted, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(racerInDiscard)).toBe("discard");

@@ -103,8 +103,9 @@ export class ManualInMemoryTransportScheduler implements InMemoryTransportSchedu
 
   advanceBy(durationMs: number): void {
     const targetTime = this.nowMs + Math.max(0, durationMs);
+    const maxTasksToProcess = Math.max(this.queue.length * 2, 1_000);
 
-    while (true) {
+    for (let processedTasks = 0; processedTasks < maxTasksToProcess; processedTasks += 1) {
       const nextEntry = this.queue.find((entry) => !entry.cancelled && entry.runAt <= targetTime);
       if (!nextEntry) {
         break;
@@ -113,6 +114,15 @@ export class ManualInMemoryTransportScheduler implements InMemoryTransportSchedu
       this.queue = this.queue.filter((entry) => entry !== nextEntry);
       this.nowMs = nextEntry.runAt;
       nextEntry.task();
+    }
+
+    const hasRemainingRunnableTask = this.queue.some(
+      (entry) => !entry.cancelled && entry.runAt <= targetTime,
+    );
+    if (hasRemainingRunnableTask) {
+      throw new Error(
+        `Exceeded ${maxTasksToProcess} scheduled tasks while advancing transport time to ${targetTime}ms.`,
+      );
     }
 
     this.nowMs = targetTime;

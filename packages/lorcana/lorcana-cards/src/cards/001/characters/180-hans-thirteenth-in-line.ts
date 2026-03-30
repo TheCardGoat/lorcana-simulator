@@ -24,9 +24,8 @@ export const hansThirteenthInLine: CharacterCard = {
   },
   text: [
     {
-      title: "STAGE",
-      description:
-        "A LITTLE ACCIDENT Whenever this character quests, you may deal 1 damage to chosen character.",
+      title: "STAGE A LITTLE ACCIDENT",
+      description: "Whenever this character quests, you may deal 1 damage to chosen character.",
     },
   ],
   classifications: ["Storyborn", "Villain", "Prince"],

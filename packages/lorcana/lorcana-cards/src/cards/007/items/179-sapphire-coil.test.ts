@@ -24,7 +24,7 @@ describe("Sapphire Coil", () => {
 
     expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(sapphireCoil, {
         resolveOptional: true,
         targets: [weakenedTarget],
       }),
@@ -49,7 +49,7 @@ describe("Sapphire Coil", () => {
 
     expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(sapphireCoil, {
         resolveOptional: true,
         targets: [weakenedTarget],
       }),

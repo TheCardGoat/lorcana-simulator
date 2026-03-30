@@ -24,8 +24,8 @@ export const merlinGoat: CharacterCard = {
   },
   text: [
     {
-      title: "HERE",
-      description: "I COME! When you play this character and when he leaves play, gain 1 lore.",
+      title: "HERE I COME!",
+      description: "When you play this character and when he leaves play, gain 1 lore.",
     },
   ],
   classifications: ["Storyborn", "Mentor", "Sorcerer"],

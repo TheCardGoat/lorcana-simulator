@@ -37,7 +37,9 @@ describe("Calhoun - Battle-Tested", () => {
 
       // Accept the optional triggered ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(calhounBattletested, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose and discard a card from hand
@@ -76,7 +78,9 @@ describe("Calhoun - Battle-Tested", () => {
 
       // Decline the optional triggered ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(calhounBattletested, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // The card should still be in hand
@@ -104,7 +108,9 @@ describe("Calhoun - Battle-Tested", () => {
       expect(testEngine.asPlayerOne().playCard(calhounBattletested)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(calhounBattletested, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(

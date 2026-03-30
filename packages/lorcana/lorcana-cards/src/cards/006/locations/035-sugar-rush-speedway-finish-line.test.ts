@@ -61,9 +61,9 @@ describe("Sugar Rush Speedway - Finish Line", () => {
       testEngine.asPlayerOne().moveCharacterToLocation(racer, sugarRushSpeedwayFinishLine).success,
     ).toBe(true);
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(sugarRushSpeedwayFinishLine).success).toBe(
+      true,
+    );
 
     expect(testEngine.asPlayerOne().getCardZone(sugarRushSpeedwayFinishLine)).toBe("discard");
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(3);

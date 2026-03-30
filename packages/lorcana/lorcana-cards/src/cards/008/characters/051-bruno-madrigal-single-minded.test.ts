@@ -28,7 +28,9 @@ describe("Bruno Madrigal - Single-Minded", () => {
       }),
     ).toBeSuccessfulCommand();
 
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(brunoMadrigalSingleminded),
+    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [opposingCharacter] }),
     ).toBeSuccessfulCommand();

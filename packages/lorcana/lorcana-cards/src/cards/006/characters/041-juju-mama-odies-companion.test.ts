@@ -22,7 +22,7 @@ describe("Juju - Mama Odie's Companion", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(jujuMamaOdiesCompanion, {
           targets: [simbaProtectiveCub, goofyKnightForADay],
         }),
       ).toBeSuccessfulCommand();
@@ -48,7 +48,7 @@ describe("Juju - Mama Odie's Companion", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(jujuMamaOdiesCompanion, {
           targets: [simbaProtectiveCub, goofyKnightForADay],
         }),
       ).toBeSuccessfulCommand();
@@ -74,7 +74,7 @@ describe("Juju - Mama Odie's Companion", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(jujuMamaOdiesCompanion, {
           targets: [simbaProtectiveCub, goofyKnightForADay],
         }),
       ).toBeSuccessfulCommand();

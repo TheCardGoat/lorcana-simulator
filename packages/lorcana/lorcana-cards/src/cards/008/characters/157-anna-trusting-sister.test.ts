@@ -42,7 +42,7 @@ describe("Anna - Trusting Sister", () => {
     // Resolve the bag effect (put top card into inkwell)
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
     for (const bagEffect of bagEffects) {
-      testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(annaTrustingSister, {
         resolveOptional: true,
       });
     }
@@ -72,7 +72,7 @@ describe("Anna - Trusting Sister", () => {
     // Resolve any bag effects
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
     for (const bagEffect of bagEffects) {
-      testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(annaTrustingSister, {
         resolveOptional: true,
       });
     }

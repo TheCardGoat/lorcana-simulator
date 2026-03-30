@@ -56,7 +56,7 @@ describe("Blue Fairy - Guiding Light", () => {
     expect(bagEffect).toBeDefined();
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(blueFairyGuidingLight, {
         resolveOptional: true,
         targets: [supportTarget],
       }),

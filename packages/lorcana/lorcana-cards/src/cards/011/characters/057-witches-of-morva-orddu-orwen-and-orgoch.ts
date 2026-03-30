@@ -24,9 +24,9 @@ export const witchesOfMorvaOrdduOrwenAndOrgoch: CharacterCard = {
   },
   text: [
     {
-      title: "QUITE",
+      title: "QUITE A BARGAIN",
       description:
-        "A BARGAIN When you play this character, you may return another chosen character of yours to your hand. If you do, gain 1 lore.",
+        "When you play this character, you may return another chosen character of yours to your hand. If you do, gain 1 lore.",
     },
   ],
   classifications: ["Storyborn", "Villain", "Sorcerer"],

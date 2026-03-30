@@ -5,12 +5,14 @@
  * for server-side game management.
  */
 
-import type { Patch } from "immer";
+import type { Patch } from "mutative";
 import type { MatchRuntime, MoveDefinition, MatchRuntimeConfig, SetupArgs } from "./match-runtime";
 import type { MatchState, CommandEnvelope, MoveInput } from "./types";
 import { createPlayerId, type PlayerId } from "../types";
+import { createRecordCardCatalog } from "./static-resources";
 import { filterMatchView } from "./view-filter";
 import type { LorcanaG } from "../../types/runtime-state";
+import { buildZoneRegistry } from "./zone-registry";
 
 // =============================================================================
 // Types
@@ -97,16 +99,23 @@ export class MultiplayerEngine {
         initialGameSegment: "main",
       },
       zones: {},
-      playerView: filterMatchView,
+      playerView: (state, roleCtx) =>
+        filterMatchView(state, roleCtx, buildZoneRegistry(config.zones, state.ctx.playerIds)),
       projectBoard: (state, roleCtx, _staticResources, _projectionCtx) =>
-        filterMatchView(state, roleCtx),
+        filterMatchView(state, roleCtx, buildZoneRegistry(config.zones, state.ctx.playerIds)),
       deriveRuntimeCard: () => ({}) as never,
     };
 
     // Create runtime with initial state - convert EnginePlayer to Player format
     const { MatchRuntime: RuntimeClass } = require("./match-runtime");
     const runtimePlayers = players.map((p) => ({ id: p.id as unknown as string, name: undefined }));
-    this.runtime = new RuntimeClass(config, { players: runtimePlayers, seed: options.seed });
+    this.runtime = new RuntimeClass(config, {
+      players: runtimePlayers,
+      seed: options.seed,
+      capturePatches: options.mode === "server",
+      cardsMaps: { cardInstances: {}, owners: {} },
+      cardCatalog: createRecordCardCatalog("multiplayer-engine:empty", {}),
+    });
   }
 
   // =============================================================================

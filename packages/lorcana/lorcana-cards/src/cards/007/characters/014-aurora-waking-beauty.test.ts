@@ -38,7 +38,7 @@ describe("Aurora - Waking Beauty", () => {
       testEngine.asPlayerOne().activateAbility(flowerId, { abilityIndex: 0, targets: [allyId] });
 
       // Resolve the SWEET DREAMS triggered ability
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(auroraWakingBeauty);
 
       // Aurora should be readied
       expect(testEngine.asPlayerOne().isExerted(auroraId)).toBe(false);
@@ -90,7 +90,7 @@ describe("Aurora - Waking Beauty", () => {
 
       // Heal the ally to trigger SWEET DREAMS
       testEngine.asPlayerOne().activateAbility(flowerId, { abilityIndex: 0, targets: [allyId] });
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(auroraWakingBeauty);
 
       // Verify restrictions exist
       expect(testEngine.hasRestriction(auroraWakingBeauty, "cant-quest-or-challenge")).toBe(true);

@@ -11,7 +11,10 @@
   } from "$lib/design-system/primitives/card";
   import { Select } from "$lib/design-system/primitives/select";
   import { Separator } from "$lib/design-system/primitives/separator";
-  import { AUTOMATED_ACTION_STRATEGIES } from "@tcg/lorcana-engine";
+  import {
+    AUTOMATED_ACTION_STRATEGIES,
+    getSafeAutomatedActionStrategyOption,
+  } from "@tcg/lorcana-engine";
   import { DECK_FIXTURES } from "../deck-fixtures/index.js";
   import {
     replaceDeckTextWithFixture,
@@ -88,6 +91,10 @@
 
   function updateStrategy(strategyId: string): void {
     persistConfig({ ...config, strategyId });
+  }
+
+  function getStrategyDescription(strategyId: string): string {
+    return getSafeAutomatedActionStrategyOption(strategyId).description;
   }
 
   function countDeckCards(deckText: string): number {
@@ -269,7 +276,7 @@
               {/each}
             </Select>
             <p class="text-sm leading-6 text-slate-400">
-              {AUTOMATED_ACTION_STRATEGIES.find((s) => s.id === config.strategyId)?.description}
+              {getStrategyDescription(config.strategyId)}
             </p>
           </div>
 

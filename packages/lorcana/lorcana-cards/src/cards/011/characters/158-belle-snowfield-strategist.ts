@@ -36,7 +36,12 @@ export const belleSnowfieldStrategist: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          source: "discard",
+          source: {
+            selector: "all",
+            count: 1,
+            reference: "trigger-subject",
+            zones: ["discard"],
+          },
           target: "CONTROLLER",
           type: "put-into-inkwell",
           exerted: true,
@@ -48,7 +53,7 @@ export const belleSnowfieldStrategist: CharacterCard = {
       trigger: {
         event: "banish",
         timing: "whenever",
-        on: "YOUR_OTHER_CHARACTERS",
+        on: "YOUR_CHARACTERS",
       },
       type: "triggered",
       text: "WINTER STOCKPILE Whenever one of your characters is banished, you may put that card from your discard into your inkwell facedown and exerted.",

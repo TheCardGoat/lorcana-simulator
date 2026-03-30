@@ -51,7 +51,9 @@ describe("Belle - Mechanic Extraordinaire (Enchanted)", () => {
       // Accept the optional triggered ability
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects).toHaveLength(1);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(belleMechanicExtraordinaireEnchanted),
+      ).toBeSuccessfulCommand();
 
       // Select targets for put-on-bottom
       expect(
@@ -83,7 +85,9 @@ describe("Belle - Mechanic Extraordinaire (Enchanted)", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects).toHaveLength(1);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(belleMechanicExtraordinaireEnchanted),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -113,7 +117,7 @@ describe("Belle - Mechanic Extraordinaire (Enchanted)", () => {
       expect(bagEffects).toHaveLength(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(belleMechanicExtraordinaireEnchanted, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -139,7 +143,9 @@ describe("Belle - Mechanic Extraordinaire (Enchanted)", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects).toHaveLength(1);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(belleMechanicExtraordinaireEnchanted),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({

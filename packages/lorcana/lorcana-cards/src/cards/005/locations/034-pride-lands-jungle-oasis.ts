@@ -84,6 +84,7 @@ export const prideLandsJungleOasis: LocationCard = {
         type: "optional",
       },
       id: "5wg-1",
+      name: "OUR HUMBLE HOME",
       text: "OUR HUMBLE HOME While you have 3 or more characters here, you may banish this location to play a character from your discard for free.",
       type: "activated",
     },

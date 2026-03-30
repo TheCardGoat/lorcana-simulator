@@ -1,8 +1,10 @@
-import type { EventCause, GameEvent, MatchState, ZoneRevealWindow } from "./types";
+import type { EventCause, GameEvent, MatchState, TCGCtx, ZoneRevealWindow } from "./types";
 import type { PlayerId } from "../types";
 import type { CardQueryAPI, RuntimeCardWithDefinition } from "./card-runtime";
 import type { BaseCardDefinition } from "./card-contracts";
 import { emitLorcanaDomainEvent } from "../../types";
+import type { ZoneRegistry } from "./zone-registry";
+import { resolveZoneIdFromRegistry } from "./zone-registry";
 
 // =============================================================================
 // Zone Operations API
@@ -68,6 +70,7 @@ export interface ZoneMutationAPI {
   ) => string;
   revealTop: (zone: ZoneRef, count: number, visibleTo: "all" | string[]) => string[];
   clearReveal: (revealId: string) => void;
+  clearRevealsByZone: (zone: ZoneRef) => void;
 }
 
 interface ZoneOperationsOptions {
@@ -80,7 +83,8 @@ interface ZoneOperationsOptions {
 // =============================================================================
 
 export function createZoneOperations(
-  draft: MatchState,
+  draft: { ctx: Pick<TCGCtx, "zones">; G: { staticEffectsVersion?: number } },
+  zoneRegistry: ZoneRegistry,
   emitEvent?: (event: GameEvent) => void,
   options?: ZoneOperationsOptions,
 ): ZoneOperationsAPI {
@@ -89,51 +93,11 @@ export function createZoneOperations(
   const random = options?.random ?? Math.random;
 
   function getZoneDef(zoneId: string) {
-    return zones.zoneDefs[zoneId];
+    return zoneRegistry[zoneId];
   }
 
   function resolveZoneId(zone: ZoneRef): string {
-    const zoneId = zone.zone;
-
-    if (zoneId.includes(":")) {
-      if (zone.playerId && !zoneId.endsWith(`:${zone.playerId}`)) {
-        throw new Error(`Zone player mismatch for ${zoneId}`);
-      }
-      if (!zones.zoneDefs[zoneId]) {
-        throw new Error(`Unknown zone: ${zoneId}`);
-      }
-      return zoneId;
-    }
-
-    if (zone.playerId) {
-      const scopedZoneId = `${zoneId}:${zone.playerId}`;
-      if (zones.zoneDefs[scopedZoneId]) {
-        return scopedZoneId;
-      }
-    }
-
-    const unscopedDef = zones.zoneDefs[zoneId];
-    if (!unscopedDef) {
-      throw new Error(`Unknown zone: ${zoneId}`);
-    }
-
-    if (unscopedDef.ownerScoped) {
-      const playerId = zone.playerId;
-      if (!playerId) {
-        throw new Error(`Owner-scoped zone requires player id: ${zoneId}`);
-      }
-
-      const hasPlayerCards = Object.values(zones.private.cardIndex).some((entry) => {
-        return entry?.ownerID === playerId || entry?.controllerID === playerId;
-      });
-      if (!hasPlayerCards) {
-        throw new Error(`Unknown zone: ${zoneId}`);
-      }
-
-      return zoneId;
-    }
-
-    return zoneId;
+    return resolveZoneIdFromRegistry(zone, zoneRegistry, zones.private.cardIndex);
   }
 
   function getZoneCards(zoneId: string): string[] {
@@ -248,6 +212,16 @@ export function createZoneOperations(
     moveCard(cardId: string, toZone: ZoneRef, options?: { index?: number; faceDown?: boolean }) {
       const resolvedToZone = resolveZoneId(toZone);
       const previous = setCardZone(cardId, resolvedToZone, options?.index);
+
+      // Invalidate the static-effect registry when cards enter or leave a play zone,
+      // since the set of in-play cards is the primary input to the registry build.
+      const fromIsPlay = previous.fromZone
+        ? previous.fromZone === "play" || previous.fromZone.startsWith("play:")
+        : false;
+      const toIsPlay = resolvedToZone === "play" || resolvedToZone.startsWith("play:");
+      if (fromIsPlay || toIsPlay) {
+        draft.G.staticEffectsVersion = (draft.G.staticEffectsVersion ?? 0) + 1;
+      }
 
       if (previous.fromZone) {
         emitEvent?.({
@@ -510,6 +484,17 @@ export function createZoneOperations(
       }
     },
 
+    clearRevealsByZone(zone: ZoneRef): void {
+      const zoneId = resolveZoneId(zone);
+      const zoneCardSet = new Set(getZoneCards(zoneId));
+      const toRemove = zones.reveals.active
+        .filter((r) => r.cardIDs.some((id) => zoneCardSet.has(id)))
+        .map((r) => r.revealID);
+      for (const revealId of toRemove) {
+        this.clearReveal(revealId);
+      }
+    },
+
     // -------------------------------------------------------------------------
     // Searching
     // -------------------------------------------------------------------------
@@ -650,6 +635,7 @@ export interface MulliganResult {
 
 export function performMulligan(
   draft: MatchState,
+  zoneRegistry: ZoneRegistry,
   playerId: string,
   handZoneId: string,
   deckZoneId: string,
@@ -668,7 +654,7 @@ export function performMulligan(
   );
 
   // Move hand to bottom of deck
-  const ops = createZoneOperations(draft, emitEvent);
+  const ops = createZoneOperations(draft, zoneRegistry, emitEvent);
   for (const cardId of playerHandCards) {
     ops.moveCard(cardId, { zone: deckZoneId, playerId }, { index: 0 });
   }

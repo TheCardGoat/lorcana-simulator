@@ -60,7 +60,7 @@ describe("Baloo - von Bruinwald XIII", () => {
         for (let i = 0; i < bagCount; i++) {
           const effects = testEngine.asPlayerOne().getBagEffects();
           if (effects.length > 0) {
-            testEngine.asPlayerOne().resolveBag(effects[0]!.id);
+            testEngine.asPlayerOne().resolvePendingByCard(balooVonBruinwaldXiii);
           }
         }
       }

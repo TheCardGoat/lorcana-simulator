@@ -62,7 +62,9 @@ describe("Goofy - Emerald Champion", () => {
       expect(testEngine.asPlayerOne().challenge(attacker, emeraldAlly)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
-      expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(goofyEmeraldChampion),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(emeraldAlly)).toBe("discard");
       expect(testEngine.asPlayerOne().getCardZone(attacker)).toBe("discard");

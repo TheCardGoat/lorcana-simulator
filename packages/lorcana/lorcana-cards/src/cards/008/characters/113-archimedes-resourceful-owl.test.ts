@@ -45,7 +45,9 @@ describe("Archimedes - Resourceful Owl", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [opponentItem] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(archimedesResourcefulOwl, { targets: [opponentItem] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(opponentItem)).toBe("discard");
@@ -67,7 +69,9 @@ describe("Archimedes - Resourceful Owl", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(archimedesResourcefulOwl, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(opponentItem)).toBe("play");
@@ -88,7 +92,9 @@ describe("Archimedes - Resourceful Owl", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [mockItem] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(archimedesResourcefulOwl, { targets: [mockItem] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(mockItem)).toBe("discard");
@@ -115,7 +121,9 @@ describe("Archimedes - Resourceful Owl", () => {
       const banishBag = bagEffects1[0];
       expect(banishBag).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(banishBag!.id, { targets: [opponentItem] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(archimedesResourcefulOwl, { targets: [opponentItem] }),
       ).toBeSuccessfulCommand();
 
       // Now "Now That's Not Bad" should have triggered since an item was banished
@@ -140,13 +148,17 @@ describe("Archimedes - Resourceful Owl", () => {
       // Accept banish item ability
       const [banishBag] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(banishBag!.id, { targets: [opponentItem] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(archimedesResourcefulOwl, { targets: [opponentItem] }),
       ).toBeSuccessfulCommand();
 
       // Accept draw+discard ability
       const [drawDiscardBag] = testEngine.asPlayerOne().getBagEffects();
       expect(drawDiscardBag).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(drawDiscardBag!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(archimedesResourcefulOwl),
+      ).toBeSuccessfulCommand();
 
       // Drew 1 card from deck (started at 3), then discarded 1 from hand
       // Deck should be 2, hand should be 0 (drew 1, discarded 1)
@@ -184,7 +196,9 @@ describe("Archimedes - Resourceful Owl", () => {
       );
       expect(banishBag).toBeDefined();
       expect(
-        testEngine.asPlayerTwo().resolveBag(banishBag!.id, { targets: [opponentItem] }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(secondArchimedes, { targets: [opponentItem] }),
       ).toBeSuccessfulCommand();
 
       // Player 1's Archimedes should NOT have triggered (not during player 1's turn)
@@ -213,14 +227,18 @@ describe("Archimedes - Resourceful Owl", () => {
       // Accept banish item
       const [banishBag] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(banishBag!.id, { targets: [opponentItem] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(archimedesResourcefulOwl, { targets: [opponentItem] }),
       ).toBeSuccessfulCommand();
 
       // Decline draw+discard
       const [drawDiscardBag] = testEngine.asPlayerOne().getBagEffects();
       expect(drawDiscardBag).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(drawDiscardBag!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(archimedesResourcefulOwl, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Deck should remain at 3 (no draw happened)

@@ -37,7 +37,7 @@ describe("Tinker Bell - Most Helpful", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tinkerBellMostHelpful, {
           targets: [pixieDustTarget],
         }),
       ).toBeSuccessfulCommand();
@@ -67,7 +67,7 @@ describe("Tinker Bell - Most Helpful", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tinkerBellMostHelpful, {
           targets: [pixieDustTarget],
         }),
       ).toBeSuccessfulCommand();
@@ -100,7 +100,7 @@ describe("Tinker Bell - Most Helpful", () => {
 
       // Target Tinker Bell herself
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tinkerBellMostHelpful, {
           targets: [tinkerBellMostHelpful],
         }),
       ).toBeSuccessfulCommand();

@@ -147,7 +147,9 @@ describe("Megara - Secret Keeper", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects).toHaveLength(1);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(megaraSecretKeeper),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerTwo().resolveNextPending({ targets: [opponentDiscardId] }),

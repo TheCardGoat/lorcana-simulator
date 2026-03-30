@@ -24,9 +24,9 @@ export const rooLittlestPirate: CharacterCard = {
   },
   text: [
     {
-      title: "I'M",
+      title: "I'M A PIRATE TOO!",
       description:
-        "A PIRATE TOO! When you play this character, you may give chosen character -2 {S} until the start of your next turn.",
+        "When you play this character, you may give chosen character -2 {S} until the start of your next turn.",
     },
   ],
   classifications: ["Dreamborn", "Ally", "Pirate"],

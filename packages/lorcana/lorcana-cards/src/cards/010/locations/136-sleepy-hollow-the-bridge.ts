@@ -69,7 +69,7 @@ export const sleepyHollowTheBridge: LocationCard = {
       text: "HEAD FOR THE BRIDGE! Whenever a character quests while here, you may banish this location to gain 2 lore and give them Evasive until the start of your next turn.",
       trigger: {
         event: "quest",
-        on: "CHARACTER_HERE",
+        on: "CHARACTERS_HERE",
         timing: "whenever",
       },
       type: "triggered",

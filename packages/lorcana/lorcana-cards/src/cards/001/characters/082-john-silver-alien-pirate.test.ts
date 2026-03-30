@@ -21,11 +21,9 @@ describe("John Silver - Alien Pirate", () => {
     expect(playTriggerEngine.asPlayerOne().playCard(johnSilverAlienPirate)).toBeSuccessfulCommand();
     expect(playTriggerEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      playTriggerEngine
-        .asPlayerOne()
-        .resolveBag(playTriggerEngine.asPlayerOne().getBagEffects()[0]!.id, {
-          targets: [simbaId],
-        }).success,
+      playTriggerEngine.asPlayerOne().resolvePendingByCard(johnSilverAlienPirate, {
+        targets: [simbaId],
+      }).success,
     ).toBe(true);
     expect(playTriggerEngine.asPlayerTwo().getCard(simbaProtectiveCub)?.hasReckless).toBe(false);
 
@@ -59,11 +57,9 @@ describe("John Silver - Alien Pirate", () => {
     expect(questTriggerEngine.asPlayerOne().quest(johnSilverAlienPirate)).toBeSuccessfulCommand();
     expect(questTriggerEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      questTriggerEngine
-        .asPlayerOne()
-        .resolveBag(questTriggerEngine.asPlayerOne().getBagEffects()[0]!.id, {
-          targets: [laterSimbaId],
-        }).success,
+      questTriggerEngine.asPlayerOne().resolvePendingByCard(johnSilverAlienPirate, {
+        targets: [laterSimbaId],
+      }).success,
     ).toBe(true);
     expect(questTriggerEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(questTriggerEngine.asPlayerTwo().getCard(simbaProtectiveCub)?.hasReckless).toBe(true);

@@ -47,6 +47,7 @@ export const jasmineFearlessPrincess: CharacterCard = {
         type: "gain-keyword",
       },
       id: "t89-1",
+      name: "TAKE THE LEAP",
       text: "TAKE THE LEAP During your turn, this character gains Evasive.",
       type: "static",
     },

@@ -32,7 +32,9 @@ describe("Jafar - High Sultan of Lorcana", () => {
       // Accept the optional ability (draw + discard sequence)
       // After accepting the optional, the engine draws 1 card, then suspends for discard choice
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jafarHighSultanOfLorcana, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // After accepting, the bag item is consumed. The discard choice is now a pending effect
@@ -83,7 +85,9 @@ describe("Jafar - High Sultan of Lorcana", () => {
 
       // Accept the optional
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jafarHighSultanOfLorcana, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Discard choice pending
@@ -124,7 +128,9 @@ describe("Jafar - High Sultan of Lorcana", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jafarHighSultanOfLorcana, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Nothing should happen

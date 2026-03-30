@@ -58,7 +58,9 @@ describe("Kuzco - Temporary Whale", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       // Accept the optional ability
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(kuzcoTemporaryWhale),
+      ).toBeSuccessfulCommand();
       // Select the target
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -94,7 +96,9 @@ describe("Kuzco - Temporary Whale", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       // Accept the optional ability
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(kuzcoTemporaryWhale),
+      ).toBeSuccessfulCommand();
       // Select the opponent's character as the target
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -131,7 +135,9 @@ describe("Kuzco - Temporary Whale", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(kuzcoTemporaryWhale),
+      ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           resolveOptional: true,
@@ -158,7 +164,9 @@ describe("Kuzco - Temporary Whale", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(kuzcoTemporaryWhale),
+      ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           resolveOptional: true,

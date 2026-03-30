@@ -42,7 +42,9 @@ describe("Elsa - Spirit of Winter (Enchanted)", () => {
 
       // Resolve the bag targeting one character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetOne] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(elsaSpiritOfWinterEnchanted, { targets: [targetOne] }),
       ).toBeSuccessfulCommand();
 
       // Target should now be exerted
@@ -85,7 +87,9 @@ describe("Elsa - Spirit of Winter (Enchanted)", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetOne, targetTwo] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(elsaSpiritOfWinterEnchanted, { targets: [targetOne, targetTwo] }),
       ).toBeSuccessfulCommand();
 
       // Both targets should be exerted

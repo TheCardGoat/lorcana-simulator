@@ -29,7 +29,7 @@ describe("Goofy - Marley's Clumsy Spirit", () => {
       // Resolve the triggered bag effect: accept the optional ready
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(goofyMarleysClumsySpirit, {
           resolveOptional: true,
           targets: [exertedAlly],
         }),
@@ -58,7 +58,7 @@ describe("Goofy - Marley's Clumsy Spirit", () => {
       // Decline the triggered bag effect
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(goofyMarleysClumsySpirit, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

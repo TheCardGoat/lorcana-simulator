@@ -49,7 +49,9 @@ describe("Stitch - Alien Buccaneer", () => {
 
       // Resolve the optional ability (accept)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(stitchAlienBuccaneer, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose the action card from discard
@@ -87,7 +89,9 @@ describe("Stitch - Alien Buccaneer", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(stitchAlienBuccaneer, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Action card should remain in discard

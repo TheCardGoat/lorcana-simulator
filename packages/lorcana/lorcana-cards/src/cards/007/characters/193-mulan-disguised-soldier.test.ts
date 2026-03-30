@@ -15,6 +15,28 @@ const discardFodder = createMockCharacter({
 });
 
 describe("Mulan - Disguised Soldier", () => {
+  it("can't decline the discard after accepting the optional draw effect", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [drawnCard],
+      hand: [mulanDisguisedSoldier, discardFodder],
+      inkwell: mulanDisguisedSoldier.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(mulanDisguisedSoldier)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(mulanDisguisedSoldier, {
+        resolveOptional: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
+    expect(testEngine.asPlayerOne().resolveNextPending({ resolveOptional: false }).success).toBe(
+      false,
+    );
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+    expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("hand");
+  });
+
   it("may draw a card, then choose and discard a card when played", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       deck: [drawnCard],
@@ -25,7 +47,7 @@ describe("Mulan - Disguised Soldier", () => {
     expect(testEngine.asPlayerOne().playCard(mulanDisguisedSoldier)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(mulanDisguisedSoldier, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();

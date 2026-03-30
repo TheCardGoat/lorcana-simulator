@@ -43,9 +43,7 @@ describe("Doc - Bold Knight", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine
-        .asPlayerOne()
-        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: true }),
+      testEngine.asPlayerOne().resolvePendingByCard(docBoldKnight, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
@@ -68,9 +66,7 @@ describe("Doc - Bold Knight", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine
-        .asPlayerOne()
-        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: true }),
+      testEngine.asPlayerOne().resolvePendingByCard(docBoldKnight, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
@@ -90,7 +86,7 @@ describe("Doc - Bold Knight", () => {
 
     expect(testEngine.asPlayerOne().playCard(ladyFamilyDog)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ targets: [docBoldKnight] }),
+      testEngine.asPlayerOne().resolvePendingByCard(ladyFamilyDog, { targets: [docBoldKnight] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
@@ -103,14 +99,74 @@ describe("Doc - Bold Knight", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine
-        .asPlayerOne()
-        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: true }),
+      testEngine.asPlayerOne().resolvePendingByCard(docBoldKnight, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
       expect.objectContaining({
         hand: 2,
+      }),
+    );
+  });
+
+  it("automation declines DRASTIC MEASURES when keeping a larger inkable hand is better", () => {
+    const largeInkableOne = createMockCharacter({
+      id: "doc-automation-large-inkable-1",
+      name: "Large Inkable 1",
+      cost: 1,
+    });
+    const largeInkableTwo = createMockCharacter({
+      id: "doc-automation-large-inkable-2",
+      name: "Large Inkable 2",
+      cost: 2,
+    });
+    const largeInkableThree = createMockCharacter({
+      id: "doc-automation-large-inkable-3",
+      name: "Large Inkable 3",
+      cost: 3,
+    });
+    const largeInkableFour = createMockCharacter({
+      id: "doc-automation-large-inkable-4",
+      name: "Large Inkable 4",
+      cost: 4,
+    });
+    const largeUninkable = createMockCharacter({
+      id: "doc-automation-large-uninkable",
+      name: "Large Uninkable",
+      cost: 5,
+      inkable: false,
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [
+        docBoldKnight,
+        largeInkableOne,
+        largeInkableTwo,
+        largeInkableThree,
+        largeInkableFour,
+        largeUninkable,
+      ],
+      inkwell: docBoldKnight.cost,
+      deck: [drawOne, drawTwo, drawThree],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(docBoldKnight)).toBeSuccessfulCommand();
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffect).toBeDefined();
+
+    const result = testEngine.asPlayerOne().takeAutomatedAction();
+
+    expect(result.selectedCandidate).toEqual({
+      family: "resolveBag",
+      bagId: bagEffect!.id,
+      resolveOptional: false,
+    });
+    expect(result.finalResult.success).toBe(true);
+    expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
+      expect.objectContaining({
+        hand: 5,
+        discard: 0,
+        play: 1,
       }),
     );
   });

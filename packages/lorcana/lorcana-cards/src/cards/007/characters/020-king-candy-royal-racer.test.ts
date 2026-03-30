@@ -87,7 +87,9 @@ describe("King Candy - Royal Racer", () => {
         (b) => (b.payload as { abilityName?: string }).abilityName === "SWEET REVENGE",
       );
       expect(sweetRevengeBag).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(sweetRevengeBag!.id, {})).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(kingCandyRoyalRacer, {}),
+      ).toBeSuccessfulCommand();
 
       // Opponent (player two) should now have a pending effect to choose and banish one of their characters
       expect(

@@ -39,7 +39,7 @@ describe("Beast - Relentless", () => {
       // Beast exerts to challenge, but the trigger should fire
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(beastRelentless, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Beast should be ready again after Second Wind resolves
@@ -71,7 +71,7 @@ describe("Beast - Relentless", () => {
       // Trigger should fire for Beast
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(beastRelentless, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Beast should be readied
@@ -101,7 +101,7 @@ describe("Beast - Relentless", () => {
       // Trigger should fire for Beast
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(beastRelentless, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Beast should be readied

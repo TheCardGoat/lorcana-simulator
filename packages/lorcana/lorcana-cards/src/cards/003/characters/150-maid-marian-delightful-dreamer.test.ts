@@ -60,7 +60,9 @@ describe("Maid Marian - Delightful Dreamer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [opposingCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maidMarianDelightfulDreamer, { targets: [opposingCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(strengthBefore - 2);
@@ -90,7 +92,9 @@ describe("Maid Marian - Delightful Dreamer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [ownCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maidMarianDelightfulDreamer, { targets: [ownCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(ownCharacter)).toBe(strengthBefore - 2);

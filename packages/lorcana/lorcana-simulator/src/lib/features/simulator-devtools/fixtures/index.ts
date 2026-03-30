@@ -15,6 +15,11 @@ import { challengeKeywordsFixture } from "./challenge-keywords.js";
 import { defensiveKeywordsFixture } from "./defensive-keywords.js";
 import { questKeywordsFixture } from "./quest-keywords.js";
 import { boostKeywordFixture } from "./boost-keyword.js";
+import { multipleTriggers } from "./multiple-triggers.js";
+import { discardEffectsFixture } from "./discard-effects.js";
+import { modalAbilitiesFixture } from "./modal-abilities.js";
+import { playerSelectionFixture } from "./player-selection.js";
+import { createFixtureRegistry } from "./registry.js";
 
 export const DEFAULT_LORCANA_FIXTURE_ID = "empty-board";
 
@@ -24,23 +29,34 @@ export const DEFAULT_LORCANA_FIXTURE_ID = "empty-board";
  * These fixtures use REAL card definitions from @tcg/lorcana-cards.
  * Each card has full abilities, stats, and effects - just like in production.
  */
-export const LORCANA_SIMULATOR_FIXTURES: Record<string, LorcanaSimulatorFixture> = {
-  [emptyBoardFixture.id]: emptyBoardFixture,
-  [openingHandFixture.id]: openingHandFixture,
-  [openingSkirmishFixture.id]: openingSkirmishFixture,
-  [boardPressureFixture.id]: boardPressureFixture,
-  [lateGameFixture.id]: lateGameFixture,
-  [preGameFixture.id]: preGameFixture,
-  [winStateFixture.id]: winStateFixture,
-  [cardStatesFixture.id]: cardStatesFixture,
-  [fullBoardAllCardTypes.id]: fullBoardAllCardTypes,
-  [lookAtTheTopFixture.id]: lookAtTheTopFixture,
-  [shiftFixture.id]: shiftFixture,
-  [challengeKeywordsFixture.id]: challengeKeywordsFixture,
-  [defensiveKeywordsFixture.id]: defensiveKeywordsFixture,
-  [questKeywordsFixture.id]: questKeywordsFixture,
-  [boostKeywordFixture.id]: boostKeywordFixture,
-};
+const fixtureRegistry = createFixtureRegistry(
+  [
+    emptyBoardFixture,
+    openingHandFixture,
+    openingSkirmishFixture,
+    boardPressureFixture,
+    lateGameFixture,
+    preGameFixture,
+    winStateFixture,
+    cardStatesFixture,
+    fullBoardAllCardTypes,
+    lookAtTheTopFixture,
+    shiftFixture,
+    challengeKeywordsFixture,
+    defensiveKeywordsFixture,
+    questKeywordsFixture,
+    boostKeywordFixture,
+    multipleTriggers,
+    discardEffectsFixture,
+    modalAbilitiesFixture,
+    playerSelectionFixture,
+  ] satisfies LorcanaSimulatorFixture[],
+  "general simulator fixtures",
+);
+
+export const LORCANA_SIMULATOR_FIXTURE_LIST = fixtureRegistry.list;
+export const LORCANA_SIMULATOR_FIXTURE_MAP = fixtureRegistry.byId;
+export const LORCANA_SIMULATOR_FIXTURES = fixtureRegistry.record;
 
 export const getLorcanaFixture = (fixtureId: string): LorcanaSimulatorFixture => {
   const fixture =

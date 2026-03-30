@@ -48,6 +48,7 @@ export const mushuFasttalkingDragon: CharacterCard = {
         type: "gain-keyword",
       },
       id: "17r-1",
+      name: "LET'S GET THIS SHOW ON THE ROAD",
       text: "LET'S GET THIS SHOW ON THE ROAD {E} — Chosen character gains Rush this turn.",
       type: "activated",
     },

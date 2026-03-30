@@ -24,10 +24,7 @@ export const princeJohnFraidycat: CharacterCard = {
   },
   text: [
     {
-      title: "HELP!",
-    },
-    {
-      title: "HELP!",
+      title: "HELP! HELP!",
       description: "Whenever an opponent plays a character, deal 1 damage to this character.",
     },
   ],

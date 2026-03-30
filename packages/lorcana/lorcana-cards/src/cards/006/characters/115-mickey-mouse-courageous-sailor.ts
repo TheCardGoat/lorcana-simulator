@@ -40,6 +40,7 @@ export const mickeyMouseCourageousSailor: CharacterCard = {
         type: "modify-stat",
       },
       id: "wqx-1",
+      name: "SOLID GROUND",
       text: "SOLID GROUND While this character is at a location, he gets +2 {S}.",
       type: "static",
     },

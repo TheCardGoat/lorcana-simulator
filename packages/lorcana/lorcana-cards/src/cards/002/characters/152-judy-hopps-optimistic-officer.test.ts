@@ -50,7 +50,7 @@ describe("Judy Hopps - Optimistic Officer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(judyHoppsOptimisticOfficer, {
           resolveOptional: true,
           targets: [ownItem],
         }),
@@ -76,7 +76,7 @@ describe("Judy Hopps - Optimistic Officer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(judyHoppsOptimisticOfficer, {
           resolveOptional: true,
           targets: [ownItem],
         }),
@@ -107,7 +107,7 @@ describe("Judy Hopps - Optimistic Officer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(judyHoppsOptimisticOfficer, {
           resolveOptional: true,
           targets: [opponentItem],
         }),
@@ -136,7 +136,9 @@ describe("Judy Hopps - Optimistic Officer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(judyHoppsOptimisticOfficer, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(ownItem)).toBe("play");

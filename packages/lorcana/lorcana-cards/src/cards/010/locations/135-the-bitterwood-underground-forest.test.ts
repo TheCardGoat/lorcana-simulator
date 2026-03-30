@@ -38,7 +38,7 @@ describe("The Bitterwood - Underground Forest", () => {
     ).toBe(true);
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
+      testEngine.asPlayerOne().resolvePendingByCard(theBitterwoodUndergroundForest).success,
     ).toBe(true);
     expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
   });
@@ -73,7 +73,7 @@ describe("The Bitterwood - Underground Forest", () => {
     ).toBe(true);
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
+      testEngine.asPlayerOne().resolvePendingByCard(theBitterwoodUndergroundForest).success,
     ).toBe(true);
     expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
 

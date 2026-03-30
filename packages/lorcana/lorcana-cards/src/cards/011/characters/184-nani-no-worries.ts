@@ -32,6 +32,7 @@ export const naniNoWorries: CharacterCard = {
   abilities: [
     {
       id: "1iz-1",
+      name: "TAKE IT EASY",
       condition: {
         type: "no-damage",
       },

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { agustinMadrigalClumsyDad, hiddenCoveTranquilHaven } from "@tcg/lorcana-cards/cards/004";
 import { moanaDeterminedExplorer } from "@tcg/lorcana-cards/cards/005";
-import { preGameFixture } from "@/features/simulator-devtools/fixtures/pre-game.js";
+import { getLorcanaFixture } from "@/features/simulator-devtools/fixtures/index.js";
 import {
   decodeInlineFixtureParam,
   deserializeInlineFixture,
@@ -49,6 +49,7 @@ describe("browser-fixture", () => {
   });
 
   it("preserves registered simulator fixture metadata when serialized", () => {
+    const preGameFixture = getLorcanaFixture("pre-game");
     const hydratedFixture = deserializeInlineFixture(serializeInlineFixture(preGameFixture));
 
     expect(hydratedFixture.id).toBe(preGameFixture.id);

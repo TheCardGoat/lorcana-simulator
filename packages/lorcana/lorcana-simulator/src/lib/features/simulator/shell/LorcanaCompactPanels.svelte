@@ -167,6 +167,7 @@
             onSelectOption={sidebar.handleAvailableMovesSelectionOption}
             onResolutionNamedCardQueryInput={sidebar.handleAvailableMovesNamedCardQueryInput}
             onSelectNamedCard={sidebar.handleAvailableMovesNamedCardSelection}
+            onResolutionAmountChange={sidebar.updateResolutionSelectedAmount}
             onAssignScryCard={sidebar.handleAvailableMovesScryAssignment}
             onReorderScryCard={sidebar.handleAvailableMovesScryReorder}
             onBackSelection={sidebar.backActionSelectionSession}
@@ -194,9 +195,11 @@
     <Dialog.Overlay />
     <Dialog.Content class="compact-concede-dialog" showCloseButton={false}>
       <Dialog.Header class="compact-concede-dialog__header">
-        <Dialog.Title class="compact-concede-dialog__title">Concede game?</Dialog.Title>
+        <Dialog.Title class="compact-concede-dialog__title">
+          {m["sim.sidebar.concedeDialog.title"]({})}
+        </Dialog.Title>
         <Dialog.Description class="compact-concede-dialog__description">
-          This will immediately end the current match for you.
+          {m["sim.sidebar.concedeDialog.description"]({})}
         </Dialog.Description>
       </Dialog.Header>
 
@@ -206,14 +209,14 @@
           class="compact-concede-dialog__button"
           onclick={closeConcedeDialog}
         >
-          Cancel
+          {m["sim.actions.cancel"]({})}
         </Button>
         <Button
           variant="destructive"
           class="compact-concede-dialog__button"
           onclick={confirmConcede}
         >
-          Concede
+          {m["sim.actions.label.concede"]({})}
         </Button>
       </Dialog.Footer>
     </Dialog.Content>

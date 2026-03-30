@@ -43,7 +43,9 @@ describe("Ariel - Adventurous Collector", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [chosenCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(arielAdventurousCollector, { targets: [chosenCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().hasKeyword(chosenCharacter, "Evasive")).toBe(true);

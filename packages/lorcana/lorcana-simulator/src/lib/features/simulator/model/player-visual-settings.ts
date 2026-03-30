@@ -1,3 +1,22 @@
+/**
+ * Player Visual Settings
+ *
+ * Per-player cosmetic settings (card back, playmat) used by the simulator.
+ *
+ * ## Data flow
+ * - **Storage**: Persisted in `users.settings.visualSettings` JSONB column (user-level, shared across games).
+ * - **Save**: `PUT /v1/users/me/visual-settings` (REST, uses authenticated userId).
+ * - **Load**: Included in the `game_joined` WebSocket message as `playerVisualSettings` map.
+ *
+ * ## Player ID mapping
+ * `LorcanaPlayerSettingsMap` is keyed by playerId, which can be:
+ * - A **userId** in practice matches (player1Id = userId).
+ * - A **gameProfileId** in ranked/matchmade matches (player1Id = gameProfileId).
+ *
+ * The server resolves both cases when building the map for `game_joined`.
+ * On the client side, the key always matches whatever the engine uses as owner IDs.
+ */
+
 import { buildSimulatorAssetUrl } from "$lib/config/public-url-config.js";
 
 export interface LorcanaPlayerVisualSettings {
@@ -23,7 +42,7 @@ export interface LorcanaResolvedPlayerVisualSettings {
   playmat: LorcanaResolvedPlaymat;
 }
 
-const CARD_BACK_PRESETS = {
+export const CARD_BACK_PRESETS = {
   default: {
     src: buildSimulatorAssetUrl("card-back/back-cosmos.webp"),
     artOnlySrc: buildSimulatorAssetUrl("card-back/back-cosmos-square.webp"),
@@ -66,7 +85,7 @@ const CARD_BACK_PRESETS = {
   },
 } as const satisfies Record<string, { src: string; artOnlySrc: string }>;
 
-const PLAYMAT_PRESETS = {
+export const PLAYMAT_PRESETS = {
   default: null,
   "005": buildSimulatorAssetUrl("playmats/005.webp"),
   "beast-001": buildSimulatorAssetUrl("playmats/beast-001.webp"),

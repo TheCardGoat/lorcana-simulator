@@ -67,7 +67,7 @@ export const amethystCoil: ItemCard = {
             whose: "your",
           },
         ],
-        timing: "when",
+        timing: "whenever",
       },
     },
   ],

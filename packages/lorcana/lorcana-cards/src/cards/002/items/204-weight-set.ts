@@ -42,6 +42,9 @@ export const weightSet: ItemCard = {
         },
         type: "optional",
       },
+      id: "X1T-1",
+      name: "TRAINING",
+      text: "TRAINING Whenever you play a character with 4 {S} or more, you may pay 1 {I} to draw a card.",
       trigger: {
         event: "play",
         on: {

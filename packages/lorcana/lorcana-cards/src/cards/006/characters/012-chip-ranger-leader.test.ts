@@ -43,7 +43,7 @@ describe("Chip - Ranger Leader", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(chipRangerLeader, {
           resolveOptional: true,
           targets: [supportTarget],
         }),

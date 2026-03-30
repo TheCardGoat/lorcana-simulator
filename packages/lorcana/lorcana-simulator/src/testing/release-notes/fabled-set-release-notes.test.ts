@@ -194,10 +194,13 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
           const result = testEngine.asPlayerOne().activateAbility(pongoId);
           if (result.success) {
             activationsSucceeded++;
-            // Resolve any pending bag effects from the reveal
-            const bagCount = testEngine.asPlayerOne().getBagCount();
-            if (bagCount > 0) {
-              testEngine.asPlayerOne().resolveNextBag();
+            // Twilight Bark creates a pending scry-selection effect (not a bag effect).
+            // Resolve it with empty destinations — remainder: true puts the revealed card to deck-bottom.
+            const pendingCount = testEngine.asPlayerOne().getPendingEffects().length;
+            if (pendingCount > 0) {
+              expect(
+                testEngine.asPlayerOne().resolveNextPending({ destinations: [] }),
+              ).toBeSuccessfulCommand();
             }
           }
         }
@@ -221,10 +224,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       const result1 = testEngine.asPlayerOne().activateAbility(pongoDeterminedFather);
       expect(result1.success).toBe(true);
 
-      // Resolve any pending effects
-      const bagCount = testEngine.asPlayerOne().getBagCount();
-      if (bagCount > 0) {
-        testEngine.asPlayerOne().resolveNextBag();
+      // Twilight Bark creates a pending scry-selection effect — resolve it before the next activation
+      if (testEngine.asPlayerOne().getPendingEffects().length > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveNextPending({ destinations: [] }),
+        ).toBeSuccessfulCommand();
       }
 
       // Try to use again in the same turn — should fail
@@ -247,10 +251,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       const result1 = testEngine.asPlayerOne().activateAbility(pongoDeterminedFather);
       expect(result1.success).toBe(true);
 
-      // Resolve any pending effects
-      const bagCount1 = testEngine.asPlayerOne().getBagCount();
-      if (bagCount1 > 0) {
-        testEngine.asPlayerOne().resolveNextBag();
+      // Twilight Bark creates a pending scry-selection effect — resolve it before the next activation
+      if (testEngine.asPlayerOne().getPendingEffects().length > 0) {
+        expect(
+          testEngine.asPlayerOne().resolveNextPending({ destinations: [] }),
+        ).toBeSuccessfulCommand();
       }
 
       // Try again — should fail (once per turn)
@@ -342,7 +347,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
 
       // Resolve targeting the READY opponent character — should be a valid target
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [genericCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            targets: [genericCharacter],
+          }),
       ).toBeSuccessfulCommand();
 
       // The character should still be ready — You're Too Late does NOT exert
@@ -366,7 +375,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
 
       // Target the exerted opponent character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [genericCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            targets: [genericCharacter],
+          }),
       ).toBeSuccessfulCommand();
 
       // The character is exerted
@@ -416,7 +429,9 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       expect(p2Bag.length).toBe(1);
 
       // P2 resolves the bag (no targets needed — P1 must choose which card to discard)
-      expect(testEngine.asPlayerTwo().resolveBag(p2Bag[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(p2Bag[0]!.sourceId),
+      ).toBeSuccessfulCommand();
 
       // Discard is chosen: P1 selects a card from their hand to discard
       const handCards = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).cards;
@@ -457,7 +472,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
 
       // Resolve Deep Freeze targeting both P2 characters
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [genericCharacter, cost3Character] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            targets: [genericCharacter, cost3Character],
+          }),
       ).toBeSuccessfulCommand();
 
       // Both characters should be exerted
@@ -492,7 +511,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
 
       // Resolve Deep Freeze targeting P2's character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [genericCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            targets: [genericCharacter],
+          }),
       ).toBeSuccessfulCommand();
 
       // Character should be exerted
@@ -530,7 +553,9 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       expect(testEngine.asPlayerOne().playCard(elsaSpiritOfWinter)).toBeSuccessfulCommand();
 
       // Resolve Deep Freeze targeting 0 characters
-      expect(testEngine.asPlayerOne().resolveNextBag({ targets: [] })).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(elsaSpiritOfWinter, { targets: [] }),
+      ).toBeSuccessfulCommand();
 
       // P2's character should NOT be exerted
       expect(testEngine.isExerted(genericCharacter)).toBe(false);
@@ -597,7 +622,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       // P1 declines optional draw
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          resolveOptional: false,
+        });
 
       // P2's choice is a pending effect (optional-selection) — P2 chooses independently
       // Capture P2's deck size before their choice
@@ -694,7 +723,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       // Guard Dog should trigger at start of turn — resolve it
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        testEngine.asPlayerOne().resolveNextBag({ amount: 3 });
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            amount: 3,
+          });
       }
 
       // Damage should be reduced by up to 3 (5 - 3 = 2)
@@ -722,7 +755,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       // Guard Dog triggers — choose to remove 0 damage
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        testEngine.asPlayerOne().resolveNextBag({ amount: 0 });
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            amount: 0,
+          });
       }
 
       // Damage should remain at 3
@@ -784,7 +821,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       // Now, Sing! triggers — pay 1 ink to draw
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true });
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: true,
+          });
       }
 
       // Shell Necklace should have drawn 1 additional card
@@ -826,7 +867,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       // QoH "Let the Game Begin" triggers — draw a card (optional)
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true });
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: true,
+          });
       }
 
       // After draw, hand has 2 cards → Jafar has 2 STR
@@ -935,7 +980,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       // Resolve: choose to use We Can Fix It (ready ALL princesses)
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true });
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: true,
+          });
       }
 
       // ALL princesses should now be ready
@@ -959,7 +1008,11 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       // Decline We Can Fix It
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: false,
+          });
       }
 
       // Princess should still be able to quest normally

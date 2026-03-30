@@ -65,7 +65,7 @@ describe("Rapunzel - Ethereal Protector", () => {
       expect(testEngine.asPlayerOne().quest(rapunzelEtherealProtector)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(rapunzelEtherealProtector, {
           targets: [opposingCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -116,7 +116,7 @@ describe("Rapunzel - Ethereal Protector", () => {
       );
 
       expect(testEngine.asPlayerOne().quest(rapunzelEtherealProtector)).toBeSuccessfulCommand();
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(rapunzelEtherealProtector, {
         targets: [opposingCharacter],
       });
 
@@ -158,7 +158,7 @@ describe("Rapunzel - Ethereal Protector", () => {
 
       expect(testEngine.asPlayerOne().quest(rapunzelEtherealProtector)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(rapunzelEtherealProtector, {
           targets: [opposingCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -195,7 +195,7 @@ describe("Rapunzel - Ethereal Protector", () => {
       expect(testEngine.asPlayerOne().quest(rapunzelEtherealProtector)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(rapunzelEtherealProtector, {
           targets: [opposingCharacter],
         }),
       ).toBeSuccessfulCommand();

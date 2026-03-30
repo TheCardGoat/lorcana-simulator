@@ -44,7 +44,7 @@ describe("Fairy Godmother's Wand", () => {
     expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(fairyGodmothersWand, {
         targets: [princessTarget],
       }),
     ).toBeSuccessfulCommand();
@@ -97,14 +97,14 @@ describe("Fairy Godmother's Wand", () => {
 
     // Targeting a non-Princess character should fail
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffectId, {
+      testEngine.asPlayerOne().resolvePendingByCard(fairyGodmothersWand, {
         targets: [nonPrincessTarget],
       }),
     ).not.toBeSuccessfulCommand();
 
     // Targeting a Princess character should succeed
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffectId, {
+      testEngine.asPlayerOne().resolvePendingByCard(fairyGodmothersWand, {
         targets: [princessTarget],
       }),
     ).toBeSuccessfulCommand();

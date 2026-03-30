@@ -2,30 +2,26 @@ import { describe, expect, it } from "bun:test";
 
 import { isScrolledNearBottom, shouldAutoScrollOnNewRows } from "./event-log-scroll.js";
 
-describe("event log scroll helpers", () => {
-  it("treats a viewport within the threshold as pinned to the bottom", () => {
+describe("event log scroll", () => {
+  it("treats nearby bottom positions as pinned", () => {
     expect(
       isScrolledNearBottom({
-        scrollHeight: 640,
-        scrollTop: 404,
-        clientHeight: 220,
+        scrollHeight: 1000,
+        scrollTop: 776,
+        clientHeight: 200,
       }),
     ).toBe(true);
   });
 
-  it("detects when the viewport has moved away from the bottom", () => {
-    expect(
-      isScrolledNearBottom({
-        scrollHeight: 640,
-        scrollTop: 320,
-        clientHeight: 220,
-      }),
-    ).toBe(false);
+  it("does not auto-scroll when the viewer is not pinned", () => {
+    expect(shouldAutoScrollOnNewRows(10, 9, false)).toBe(false);
   });
 
-  it("auto-scrolls only when new rows arrive and the log is pinned", () => {
-    expect(shouldAutoScrollOnNewRows(6, 5, true)).toBe(true);
-    expect(shouldAutoScrollOnNewRows(6, 6, true)).toBe(false);
-    expect(shouldAutoScrollOnNewRows(6, 5, false)).toBe(false);
+  it("auto-scrolls when a new row is added while pinned", () => {
+    expect(shouldAutoScrollOnNewRows(10, 9, true)).toBe(true);
+  });
+
+  it("does not require a new group to auto-scroll", () => {
+    expect(shouldAutoScrollOnNewRows(12, 11, true)).toBe(true);
   });
 });

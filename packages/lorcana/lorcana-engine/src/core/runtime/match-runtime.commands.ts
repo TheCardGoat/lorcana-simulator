@@ -4,7 +4,7 @@
  * Command execution logic — pure function, no class dependencies.
  */
 
-import { produce, type Patch } from "immer";
+import type { Draft, Patch } from "mutative";
 import type { GameEvent, MatchState, MoveInput } from "./types";
 import type {
   MatchRuntimeConfig,
@@ -21,6 +21,7 @@ import {
 } from "./match-runtime.utils";
 import type { MatchStaticResources } from "./static-resources";
 import type { BaseCardDefinition } from "./card-contracts";
+import { createRuntimeState, createRuntimeStateWithPatches } from "./mutative";
 import { expireReveals } from "./zone-operations";
 import type { LorcanaG } from "../../types/runtime-state";
 
@@ -49,6 +50,7 @@ export interface CommandExecutionContext {
   config: MatchRuntimeConfig;
   staticResources: MatchStaticResources;
   actorRole: RuntimeActorRole;
+  capturePatches: boolean;
   gameEnded: boolean;
   currentStateID: number;
 }
@@ -119,110 +121,116 @@ export function executeCommand(
   const endGameTracker = { ended: false, result: undefined as GameEndResult | undefined };
 
   try {
-    newState = produce(
-      ctx.state,
-      (draft) => {
-        const emitGameEvent = (event: GameEvent) => {
-          pendingGameEvents.push(event);
-        };
-        const moveLogSink = (entries: readonly ProjectedLogEntry[]) => {
-          moveLogEntries.push(...entries);
-        };
+    const applyCommandToDraft = (draft: Draft<MatchState>) => {
+      const emitGameEvent = (event: GameEvent) => {
+        pendingGameEvents.push(event);
+      };
+      const moveLogSink = (entries: readonly ProjectedLogEntry[]) => {
+        moveLogEntries.push(...entries);
+      };
 
-        const executionContext = buildExecutionContextFromUtils(
-          draft,
-          actingPlayerId,
-          commandInput,
-          ctx.config,
-          ctx.staticResources,
-          ctx.gameEnded,
-          emitGameEvent,
-          endGameTracker,
-          moveLogSink,
-        );
+      const executionContext = buildExecutionContextFromUtils(
+        draft,
+        actingPlayerId,
+        commandInput,
+        ctx.config,
+        ctx.staticResources,
+        ctx.gameEnded,
+        emitGameEvent,
+        endGameTracker,
+        moveLogSink,
+      );
 
-        // Step 5: Execute the move reducer
-        moveDef.execute(executionContext);
+      // Step 5: Execute the move reducer
+      moveDef.execute(executionContext);
 
-        // Step 7: Resolve flow events
-        resolveFlowTransitionsOnDraft(
-          draft,
-          ctx.config.flow,
-          (draftState, lifecycleGameEnded, lifecyclePlayerId) =>
-            buildLifecycleContextFromUtils(
-              draftState,
-              ctx.config,
-              ctx.staticResources,
-              lifecycleGameEnded,
-              emitGameEvent,
-              endGameTracker,
-              lifecyclePlayerId,
-              moveLogSink,
-              undefined, // runtimeCardCache
-              true, // useSnapshotForReads: lifecycle hooks only read — no Immer proxy overhead
-            ),
-        );
+      // Step 7: Resolve flow events
+      resolveFlowTransitionsOnDraft(
+        draft,
+        ctx.config.flow,
+        (draftState, lifecycleGameEnded, lifecyclePlayerId) =>
+          buildLifecycleContextFromUtils(
+            draftState,
+            ctx.config,
+            ctx.staticResources,
+            lifecycleGameEnded,
+            emitGameEvent,
+            endGameTracker,
+            lifecyclePlayerId,
+            moveLogSink,
+            undefined, // runtimeCardCache
+            true, // useSnapshotForReads: lifecycle hooks only read — no Mutative proxy overhead
+          ),
+      );
 
-        // Step 8: Update clocks for new waiting state
-        if (draft.ctx.time.mode !== "none") {
-          const priorityHolder = draft.ctx.priority.holder;
-          if (priorityHolder) {
-            draft.ctx.time.activePlayerID = priorityHolder;
-            draft.ctx.time.startedAtMs = timestamp;
-            draft.ctx.time.running = true;
-            draft.ctx.time.pausedReason = undefined;
-          }
+      // Step 8: Update clocks for new waiting state
+      if (draft.ctx.time.mode !== "none") {
+        const priorityHolder = draft.ctx.priority.holder;
+        if (priorityHolder) {
+          draft.ctx.time.activePlayerID = priorityHolder;
+          draft.ctx.time.startedAtMs = timestamp;
+          draft.ctx.time.running = true;
+          draft.ctx.time.pausedReason = undefined;
+        }
 
-          // Dynamic clock bonuses
-          if (draft.ctx.time.mode === "dynamic") {
-            const actorState = draft.ctx.time.players[actingPlayerId];
-            if (actorState) {
-              const cap = draft.ctx.time.config.reserveCapMs;
+        // Dynamic clock bonuses
+        if (draft.ctx.time.mode === "dynamic") {
+          const actorState = draft.ctx.time.players[actingPlayerId];
+          if (actorState) {
+            const cap = draft.ctx.time.config.reserveCapMs;
 
-              // Award per-action bonus for every action
-              const actionBonusMs = draft.ctx.time.config.perActionBonusMs;
-              actorState.actionBonusMsGranted += actionBonusMs;
+            // Award per-action bonus for every action
+            const actionBonusMs = draft.ctx.time.config.perActionBonusMs;
+            actorState.actionBonusMsGranted += actionBonusMs;
+            actorState.reserveMsRemaining = Math.min(
+              cap,
+              actorState.reserveMsRemaining + actionBonusMs,
+            );
+
+            // Award turn-pass bonus specifically for passTurn
+            if (command.move === "passTurn") {
+              const turnBonusMs = draft.ctx.time.config.perTurnPassBonusMs;
+              actorState.turnPassBonusMsGranted += turnBonusMs;
               actorState.reserveMsRemaining = Math.min(
                 cap,
-                actorState.reserveMsRemaining + actionBonusMs,
+                actorState.reserveMsRemaining + turnBonusMs,
               );
-
-              // Award turn-pass bonus specifically for passTurn
-              if (command.move === "passTurn") {
-                const turnBonusMs = draft.ctx.time.config.perTurnPassBonusMs;
-                actorState.turnPassBonusMsGranted += turnBonusMs;
-                actorState.reserveMsRemaining = Math.min(
-                  cap,
-                  actorState.reserveMsRemaining + turnBonusMs,
-                );
-              }
             }
           }
         }
+      }
 
-        // Step 9: Increment _stateID
-        draft.ctx._stateID++;
-        expireReveals(draft);
+      // Step 9: Increment _stateID
+      draft.ctx._stateID++;
+      expireReveals(draft);
 
-        // Check end game condition
-        const endResult = checkGameEndCondition(draft, ctx.config.flow);
-        if (endResult) {
-          endGameTracker.ended = true;
-          endGameTracker.result = endResult;
-          draft.ctx.status.gameEnded = true;
-          draft.ctx.status.winner = endResult.winner;
-          draft.ctx.status.reason = endResult.reason;
+      // Check end game condition
+      const endResult = checkGameEndCondition(draft, ctx.config.flow);
+      if (endResult) {
+        endGameTracker.ended = true;
+        endGameTracker.result = endResult;
+        draft.ctx.status.gameEnded = true;
+        draft.ctx.status.winner = endResult.winner;
+        draft.ctx.status.reason = endResult.reason;
 
-          if (draft.ctx.time.mode !== "none") {
-            draft.ctx.time.running = false;
-            draft.ctx.time.pausedReason = "GAME_ENDED";
-          }
+        if (draft.ctx.time.mode !== "none") {
+          draft.ctx.time.running = false;
+          draft.ctx.time.pausedReason = "GAME_ENDED";
         }
-      },
-      (p) => {
-        patches = p;
-      },
-    );
+      }
+    };
+
+    if (ctx.capturePatches) {
+      const [nextState, capturedPatches] = createRuntimeStateWithPatches(ctx.state, (draft) => {
+        applyCommandToDraft(draft);
+      });
+      newState = nextState;
+      patches = capturedPatches;
+    } else {
+      newState = createRuntimeState(ctx.state, (draft) => {
+        applyCommandToDraft(draft);
+      });
+    }
 
     pendingGameEvents.unshift({
       kind: "MOVE_EXECUTED",

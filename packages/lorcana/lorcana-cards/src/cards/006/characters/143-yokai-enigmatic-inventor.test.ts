@@ -23,7 +23,7 @@ describe("Yokai - Enigmatic Inventor", () => {
       // Accept the optional: return poohPirateShip to hand
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(yokaiEnigmaticInventor, {
           resolveOptional: true,
           targets: [poohPirateShip],
         }),
@@ -52,7 +52,7 @@ describe("Yokai - Enigmatic Inventor", () => {
       // Decline the optional
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(yokaiEnigmaticInventor, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -75,7 +75,7 @@ describe("Yokai - Enigmatic Inventor", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(yokaiEnigmaticInventor, {
           resolveOptional: true,
           targets: [poohPirateShip],
         }),

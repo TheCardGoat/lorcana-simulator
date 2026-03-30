@@ -51,6 +51,7 @@ export const cogsworthClimbingClock: CharacterCard = {
         },
       },
       id: "1th-1",
+      name: "STILL USEFUL",
       text: "STILL USEFUL While you have an item card in your discard, this character gets +2 {S}.",
       type: "static",
     },

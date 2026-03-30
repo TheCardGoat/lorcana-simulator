@@ -99,21 +99,25 @@
   {#each animations as animation (animation.id)}
     <div
       class="board-animation-impact"
+      class:board-animation-impact--draw={animation.variant === "draw"}
       class:board-animation-impact--ink={animation.variant === "ink-faceDown" || animation.variant === "ink-faceUp"}
       class:board-animation-impact--move-to-location={animation.variant === "move-to-location"}
-      class:board-animation-impact--play={animation.variant !== "ink-faceDown" && animation.variant !== "ink-faceUp" && animation.variant !== "move-to-location"}
+      class:board-animation-impact--play={animation.variant !== "draw" && animation.variant !== "ink-faceDown" && animation.variant !== "ink-faceUp" && animation.variant !== "move-to-location"}
       style={getImpactStyle(animation)}
     ></div>
 
     <div
       class="board-animation-actor"
       class:board-animation-actor--banish={animation.variant === "banish"}
+      class:board-animation-actor--draw={animation.variant === "draw"}
       class:board-animation-actor--ink-faceDown={animation.variant === "ink-faceDown"}
       class:board-animation-actor--ink-faceUp={animation.variant === "ink-faceUp"}
       class:board-animation-actor--play-character={animation.variant === "play-character"}
+      class:board-animation-actor--play-character-shift={animation.variant === "play-character-shift"}
       class:board-animation-actor--play-item={animation.variant === "play-item"}
       class:board-animation-actor--play-location={animation.variant === "play-location"}
       class:board-animation-actor--play-action={animation.variant === "play-action"}
+      class:board-animation-actor--play-action-sing={animation.variant === "play-action-sing"}
       class:board-animation-actor--move-to-location={animation.variant === "move-to-location"}
       class:board-animation-actor--play-action-preview={animation.variant === "play-action-preview"}
       style={getAnimationStyle(animation)}
@@ -169,6 +173,11 @@
     animation-timing-function: cubic-bezier(0.3, 0.0, 0.5, 1);
   }
 
+  .board-animation-actor--draw {
+    animation-name: board-animation-draw;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
   .board-animation-actor--ink-faceDown,
   .board-animation-actor--ink-faceUp {
     animation-name: board-animation-ink;
@@ -178,6 +187,11 @@
   .board-animation-actor--play-character {
     animation-name: board-animation-play-character;
     animation-timing-function: cubic-bezier(0.2, 0.85, 0.22, 1);
+  }
+
+  .board-animation-actor--play-character-shift {
+    animation-name: board-animation-play-character-shift;
+    animation-timing-function: cubic-bezier(0.16, 0.9, 0.22, 1);
   }
 
   .board-animation-actor--play-item {
@@ -193,6 +207,11 @@
   .board-animation-actor--play-action {
     animation-name: board-animation-play-action;
     animation-timing-function: cubic-bezier(0.18, 0.84, 0.2, 1);
+  }
+
+  .board-animation-actor--play-action-sing {
+    animation-name: board-animation-play-action-sing;
+    animation-timing-function: cubic-bezier(0.22, 0.88, 0.18, 1);
   }
 
   .board-animation-actor--move-to-location {
@@ -236,6 +255,14 @@
       inset 0 0 22px rgba(186, 230, 253, 0.12);
   }
 
+  .board-animation-impact--draw {
+    background:
+      radial-gradient(circle, rgba(255, 228, 138, 0.34) 0%, rgba(255, 228, 138, 0.14) 38%, transparent 76%);
+    box-shadow:
+      0 0 26px rgba(255, 212, 92, 0.28),
+      inset 0 0 20px rgba(255, 244, 196, 0.2);
+  }
+
   .board-animation-card-shell--play-action-preview {
     filter: drop-shadow(0 26px 36px rgba(5, 10, 18, 0.68)) drop-shadow(0 0 28px rgba(104, 225, 255, 0.34));
   }
@@ -257,6 +284,34 @@
       opacity: 0;
       transform: translate(var(--board-animation-dx), var(--board-animation-dy))
         rotate(6deg);
+    }
+  }
+
+  @keyframes board-animation-draw {
+    0% {
+      opacity: 0;
+      transform: translate(0px, 0px) scale(0.86) rotate(-5deg);
+      filter: brightness(1.1) saturate(1.1);
+    }
+    18% {
+      opacity: 1;
+    }
+    52% {
+      opacity: 1;
+      transform: translate(
+          calc(var(--board-animation-dx) * 0.62),
+          calc(var(--board-animation-dy) * 0.62 - 18px)
+        )
+        scale(1.02)
+        rotate(0deg);
+      filter: brightness(1.16) saturate(1.08);
+    }
+    100% {
+      opacity: 0.98;
+      transform: translate(var(--board-animation-dx), var(--board-animation-dy))
+        scale(1)
+        rotate(0deg);
+      filter: brightness(1) saturate(1);
     }
   }
 
@@ -310,6 +365,36 @@
       opacity: 0.98;
       transform: translate(var(--board-animation-dx), var(--board-animation-dy))
         rotate(0deg);
+    }
+  }
+
+  @keyframes board-animation-play-character-shift {
+    0% {
+      opacity: 0;
+      transform: translate(0px, 0px) scale(0.85) rotate(0deg);
+      filter: brightness(1.4) saturate(1.6);
+    }
+    12% {
+      opacity: 1;
+      filter: brightness(1.4) saturate(1.6);
+    }
+    30% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        scale(1.08) rotate(0deg);
+      filter: brightness(1.3) saturate(1.4);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        scale(1.08) rotate(0deg);
+      filter: brightness(1.15) saturate(1.2);
+    }
+    100% {
+      opacity: 0.98;
+      transform: translate(var(--board-animation-dx), var(--board-animation-dy))
+        scale(1) rotate(0deg);
+      filter: brightness(1) saturate(1);
     }
   }
 
@@ -394,6 +479,42 @@
       opacity: 0;
       transform: translate(var(--board-animation-dx), var(--board-animation-dy))
         rotate(3deg);
+    }
+  }
+
+  @keyframes board-animation-play-action-sing {
+    0% {
+      opacity: 0;
+      transform: translate(0px, 0px) rotate(-3deg) scale(0.9);
+      filter: brightness(1.2) hue-rotate(-10deg);
+    }
+    12% {
+      opacity: 1;
+    }
+    28% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        rotate(2deg) scale(1.06);
+      filter: brightness(1.15) hue-rotate(0deg);
+    }
+    42% {
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        rotate(-1deg) scale(1.04);
+    }
+    56% {
+      opacity: 1;
+      transform: translate(var(--board-animation-mid-dx), var(--board-animation-mid-dy))
+        rotate(1deg) scale(1.02);
+    }
+    78% {
+      opacity: 0.8;
+      filter: brightness(1) hue-rotate(0deg);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(var(--board-animation-dx), var(--board-animation-dy))
+        rotate(0deg) scale(0.96);
+      filter: brightness(0.9) hue-rotate(10deg);
     }
   }
 

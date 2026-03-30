@@ -79,7 +79,7 @@ describe("Eeyore - In the Way", () => {
       expect(testEngine.asPlayerOne().playCard(eeyoreInTheWay)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(eeyoreInTheWay, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -108,7 +108,7 @@ describe("Eeyore - In the Way", () => {
       expect(testEngine.asPlayerOne().playCard(eeyoreInTheWay)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(eeyoreInTheWay, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Opponent's character should not have the restriction

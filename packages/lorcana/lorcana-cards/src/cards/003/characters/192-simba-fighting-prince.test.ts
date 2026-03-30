@@ -55,7 +55,9 @@ describe("Simba - Fighting Prince", () => {
       // Accept optional, choose mode 0 (draw 2, then discard 2)
       // After accepting, draw 2 happens then discard selection is pending
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, choiceIndex: 0 }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(simbaFightingPrince, { resolveOptional: true, choiceIndex: 0 }),
       ).toBeSuccessfulCommand();
 
       // Now we need to discard 2 cards — pending effect
@@ -95,7 +97,7 @@ describe("Simba - Fighting Prince", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(simbaFightingPrince, {
           resolveOptional: true,
           choiceIndex: 1,
           targets: [targetCharacter],
@@ -123,7 +125,9 @@ describe("Simba - Fighting Prince", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(simbaFightingPrince, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveDamage({ card: targetCharacter, value: 0 });
@@ -155,7 +159,9 @@ describe("Simba - Fighting Prince", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(simbaFightingPrince, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
@@ -181,7 +187,7 @@ describe("Simba - Fighting Prince", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(simbaFightingPrince, {
           resolveOptional: true,
           choiceIndex: 1,
           targets: [targetCharacter],

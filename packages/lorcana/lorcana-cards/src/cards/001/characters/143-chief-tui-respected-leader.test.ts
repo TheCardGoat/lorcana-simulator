@@ -35,7 +35,7 @@ describe("Chief Tui - Respected Leader", () => {
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(bagEffect).toBeDefined();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(chiefTuiRespectedLeader, {
         resolveOptional: true,
         targets: [supportTarget],
       }),
@@ -61,7 +61,7 @@ describe("Chief Tui - Respected Leader", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(chiefTuiRespectedLeader, {
         resolveOptional: true,
         targets: [supportTarget],
       }),

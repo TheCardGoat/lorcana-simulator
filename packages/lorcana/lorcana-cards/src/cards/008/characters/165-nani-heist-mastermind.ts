@@ -54,6 +54,7 @@ export const naniHeistMastermind: CharacterCard = {
         value: 2,
       },
       id: "d2e-1",
+      name: "STICK TO THE PLAN",
       text: "STICK TO THE PLAN {E} — Another chosen character gains Resist +2 this turn.",
       type: "activated",
     },

@@ -51,7 +51,9 @@ describe("Daisy Duck - Multitalented Pirate", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { choiceIndex: 0 }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(daisyDuckMultitalentedPirate, { choiceIndex: 0 }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerTwo().resolveNextPending({
@@ -82,7 +84,9 @@ describe("Daisy Duck - Multitalented Pirate", () => {
       expect(testEngine.asPlayerOne().ink(firstInkCard)).toBeSuccessfulCommand();
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { choiceIndex: 0 }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(daisyDuckMultitalentedPirate, { choiceIndex: 0 }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerTwo().resolveNextPending({
@@ -98,7 +102,7 @@ describe("Daisy Duck - Multitalented Pirate", () => {
       expect(testEngine.asPlayerOne().playCard(tipoGrowingSon)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tipoGrowingSon, {
           targets: [secondInkCard],
         }),
       ).toBeSuccessfulCommand();

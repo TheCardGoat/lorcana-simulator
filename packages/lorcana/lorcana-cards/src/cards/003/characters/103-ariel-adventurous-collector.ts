@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { arielAdventurousCollectorI18n } from "./103-ariel-adventurous-collector.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const arielAdventurousCollector: CharacterCard = {
   id: "pA8",
@@ -34,6 +35,7 @@ export const arielAdventurousCollector: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Princess"],
   abilities: [
+    evasive,
     {
       effect: {
         keyword: "Evasive",
@@ -48,8 +50,8 @@ export const arielAdventurousCollector: CharacterCard = {
         type: "gain-keyword",
       },
       id: "1ws-1",
-      name: "Evasive INSPIRING VOICE",
-      text: "Evasive INSPIRING VOICE Whenever you play a song, chosen character of yours gains Evasive until the start of your next turn.",
+      name: "INSPIRING VOICE",
+      text: "INSPIRING VOICE Whenever you play a song, chosen character of yours gains Evasive until the start of your next turn.",
       trigger: {
         event: "play",
         on: {

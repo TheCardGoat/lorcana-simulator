@@ -63,7 +63,7 @@ describe("Prince Phillip - Swordsman of the Realm", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(princePhillipSwordsmanOfTheRealm, {
           targets: [dragonCharacter],
         }),
       ).toBeSuccessfulCommand();

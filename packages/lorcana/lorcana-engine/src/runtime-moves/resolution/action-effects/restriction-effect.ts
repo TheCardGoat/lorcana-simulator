@@ -65,6 +65,12 @@ export function resolveRestrictionEffect(
         restriction,
         expiresAtTurn,
         startsAtTurn,
+        {
+          type: "restriction",
+          sourceId: cardPlayed.cardId,
+          duration: String(effect.duration ?? ""),
+          ...(effect.linkedToSource === true ? { activeWhileSourceInPlay: true } : {}),
+        },
       );
     }
     ctx.G.temporaryPlayerRestrictions = nextState;
@@ -100,8 +106,9 @@ export function resolveRestrictionEffect(
       targetId,
       addTemporaryRestriction(currentMeta, restriction, expiresAtTurn, startsAtTurn, {
         type: "restriction",
-        sourceId: effect.linkedToSource ? cardPlayed.cardId : undefined,
+        sourceId: cardPlayed.cardId,
         activeWhileSourceInPlay: effect.linkedToSource === true,
+        duration: String(effect.duration ?? ""),
         condition: effect.condition as { type: string; [key: string]: unknown } | undefined,
       }),
     );

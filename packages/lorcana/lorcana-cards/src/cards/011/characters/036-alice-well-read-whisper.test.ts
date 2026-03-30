@@ -84,7 +84,7 @@ describe("Alice - Well-Read Whisper", () => {
       // Resolve the triggered ability if it requires resolution
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const effect of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(effect.id);
+        testEngine.asPlayerOne().resolvePendingByCard(aliceWellreadWhisper);
       }
 
       // Card should now be in hand
@@ -125,7 +125,7 @@ describe("Alice - Well-Read Whisper", () => {
       // Resolve the triggered ability if it requires resolution
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const effect of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(effect.id);
+        testEngine.asPlayerOne().resolvePendingByCard(aliceWellreadWhisper);
       }
 
       // Both cards should now be in hand

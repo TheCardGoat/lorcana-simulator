@@ -67,7 +67,6 @@ describe("chooseWhoGoesFirst", () => {
     expect(chooseResult.success).toBe(true);
 
     const runtime = engine.getServerEngine().getRuntime();
-    const gameLog = runtime.getGameLog();
 
     expect(engine.asLorcanaPlayerOne()).toHaveOpeningTurnPlayer(PLAYER_ONE);
     expect(engine.asLorcanaPlayerOne()).toHavePendingMulligan([PLAYER_ONE, PLAYER_TWO]);
@@ -85,20 +84,11 @@ describe("chooseWhoGoesFirst", () => {
       count: 7,
     });
 
-    expect(
-      gameLog.find(
-        (entry: { defaultMessage?: { key?: string } }) =>
-          entry.defaultMessage?.key === "lorcana.setup.firstPlayerChosen",
-      ),
-    ).toMatchObject({
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: {
-        key: "lorcana.setup.firstPlayerChosen",
-        values: {
-          chooser: PLAYER_ONE,
-          chosen: PLAYER_ONE,
-        },
-      },
+    const moveLogHistory = runtime.getMoveLogHistory();
+    expect(moveLogHistory.find((log) => log.type === "chooseFirstPlayer")).toMatchObject({
+      type: "chooseFirstPlayer",
+      playerId: PLAYER_ONE,
+      chosenPlayerId: PLAYER_ONE,
     });
   });
 

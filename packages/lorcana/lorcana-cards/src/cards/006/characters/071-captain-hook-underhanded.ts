@@ -41,6 +41,7 @@ export const captainHookUnderhanded: CharacterCard = {
         type: "restriction",
       },
       id: "i7x-1",
+      name: "INSPIRES DREAD",
       text: "INSPIRES DREAD While this character is exerted, opposing Pirate characters can't quest.",
       type: "static",
     },

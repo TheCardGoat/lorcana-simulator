@@ -45,6 +45,7 @@ export const cybugInvasiveEnemy: CharacterCard = {
         type: "modify-stat",
       },
       id: "1ls-1",
+      name: "HIVE MIND",
       text: "HIVE MIND This character gets +1 {S} for each other character you have in play.",
       type: "static",
     },

@@ -1,50 +1,16 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { ohanaMeansFamilyEnchantedI18n } from "./224-ohana-means-family-enchanted.i18n";
+import { ohanaMeansFamily } from "..";
 
 export const ohanaMeansFamilyEnchanted: ActionCard = {
+  ...ohanaMeansFamily,
   id: "4eH",
-  canonicalId: "ci_iVN",
   reprints: ["set11-032"],
-  cardType: "action",
-  name: "Ohana Means Family",
-  inkType: ["amber"],
-  franchise: "Lilo and Stitch",
   set: "011",
   cardNumber: 224,
   rarity: "enchanted",
   specialRarity: "enchanted",
-  cost: 3,
-  inkable: true,
   externalIds: {
     lorcast: "crd_87abaabc59344ef1bfed548f0b6753bf",
     tcgPlayer: 673068,
   },
-  text: "Remove all damage from chosen character of yours. Draw a card for each 1 damage removed this way.",
-  abilities: [
-    {
-      type: "action",
-      text: "Remove all damage from chosen character of yours. Draw a card for each 1 damage removed this way.",
-      effect: {
-        type: "sequence",
-        steps: [
-          {
-            type: "remove-damage",
-            amount: 99,
-            target: "CHOSEN_CHARACTER_OF_YOURS",
-          },
-          {
-            type: "draw",
-            amount: {
-              type: "for-each",
-              counter: {
-                type: "damage-removed",
-              },
-            },
-            target: "CONTROLLER",
-          },
-        ],
-      },
-    },
-  ],
-  i18n: ohanaMeansFamilyEnchantedI18n,
 };

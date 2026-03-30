@@ -144,6 +144,8 @@ export interface RemoveDamageEffect {
 export interface MoveDamageEffect {
   type: "move-damage";
   amount?: AmountExpr;
+  /** "up to" allows moving less than max */
+  upTo?: boolean;
   distribution?: "aggregate" | "from-each-source";
   from?: CharacterTarget;
   to?: CharacterTarget;

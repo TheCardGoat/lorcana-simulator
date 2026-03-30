@@ -38,23 +38,50 @@ export const hiroHamadaTeamLeader: CharacterCard = {
     {
       effect: {
         keyword: "Resist",
-        target: "CHOSEN_CHARACTER",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Inventor",
+            },
+          ],
+        },
         type: "gain-keyword",
         value: 1,
       },
       id: "1yr-1",
-      name: "I NEED TO UPGRADE ALL OF YOU Your other Inventor",
+      name: "I NEED TO UPGRADE ALL OF YOU",
       text: "I NEED TO UPGRADE ALL OF YOU Your other Inventor characters gain Resist +1.",
       type: "static",
     },
     {
+      cost: {
+        ink: 2,
+      },
       effect: {
-        target: "CHOSEN_CHARACTER",
-        type: "put-on-bottom",
+        amount: 1,
+        destinations: [
+          {
+            zone: "deck-top",
+            min: 0,
+            max: 1,
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+          },
+        ],
+        type: "scry",
       },
       id: "1yr-2",
       text: "SHAPE THE FUTURE 2 {I} - Look at the top card of your deck. Put it on either the top or the bottom of your deck.",
-      type: "action",
+      type: "activated",
     },
   ],
   i18n: hiroHamadaTeamLeaderI18n,

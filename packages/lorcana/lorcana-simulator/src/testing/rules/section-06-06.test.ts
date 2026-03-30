@@ -118,7 +118,9 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       ).toBe(true);
       const [microbotsTrigger] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(microbotsTrigger!.id, { targets: [lefouId] }).success,
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(microbotsTrigger!.sourceId, { targets: [lefouId] }).success,
       ).toBe(true);
       expect(testEngine.asPlayerTwo().getCardStrength(lefouBumbler)).toBe(-1);
 

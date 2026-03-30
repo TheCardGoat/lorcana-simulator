@@ -81,7 +81,7 @@ describe("Fairy Godmother - Magical Benefactor", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(fairyGodmotherMagicalBenefactor, {
           resolveOptional: true,
           targets: [simbaProtectiveCub],
         }),
@@ -127,7 +127,7 @@ describe("Fairy Godmother - Magical Benefactor", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(fairyGodmotherMagicalBenefactor, {
           resolveOptional: true,
           targets: [simbaProtectiveCub],
         }),
@@ -170,7 +170,7 @@ describe("Fairy Godmother - Magical Benefactor", () => {
 
       // P1 declines to banish (resolveOptional: false means "no")
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(fairyGodmotherMagicalBenefactor, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

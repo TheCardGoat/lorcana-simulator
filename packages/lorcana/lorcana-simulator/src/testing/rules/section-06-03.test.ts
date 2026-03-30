@@ -145,7 +145,9 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [arielOnHumanLegs] }).success,
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(bagEffect!.sourceId, { targets: [arielOnHumanLegs] }).success,
       ).toBe(true);
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerTwo().getDamage(arielOnHumanLegs)).toBe(3);

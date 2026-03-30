@@ -84,6 +84,10 @@ export type EngineActiveEffectProjection = {
   id: string;
   type: string;
   sourceId?: string;
+  targetCardId?: string;
+  targetPlayerId?: string;
+  startsAtTurn?: number;
+  expiresAtTurn?: number;
   payload: unknown;
 };
 

@@ -13,6 +13,8 @@ import {
   princePhillipDragonslayer,
   maleficentSorceress,
 } from "./fixture-cards.js";
+import { mulanDisguisedSoldier } from "@tcg/lorcana-cards/cards/007";
+import { jasmineResourcefulInfiltrator } from "@tcg/lorcana-cards/cards/008";
 
 export const cardStatesFixture: LorcanaSimulatorFixture = createFixture({
   id: "card-states",
@@ -21,7 +23,12 @@ export const cardStatesFixture: LorcanaSimulatorFixture = createFixture({
   playerOne: {
     deck: 40,
     discard: [],
-    hand: [mickeyMouseBraveLittleTailor, rapunzelGiftedWithHealing],
+    hand: [
+      mickeyMouseBraveLittleTailor,
+      rapunzelGiftedWithHealing,
+      mulanDisguisedSoldier,
+      jasmineResourcefulInfiltrator,
+    ],
     inkwell: 4,
     lore: 8,
     play: [

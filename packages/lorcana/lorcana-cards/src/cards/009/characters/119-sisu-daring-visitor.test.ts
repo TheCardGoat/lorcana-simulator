@@ -55,7 +55,9 @@ describe("Sisu - Daring Visitor (Set 9)", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [weakOpponent] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(sisuDaringVisitor, { targets: [weakOpponent] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(weakOpponent)).toBe("discard");
@@ -76,7 +78,9 @@ describe("Sisu - Daring Visitor (Set 9)", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [zeroStrengthOpponent] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(sisuDaringVisitor, { targets: [zeroStrengthOpponent] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(zeroStrengthOpponent)).toBe("discard");

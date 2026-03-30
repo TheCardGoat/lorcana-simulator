@@ -33,7 +33,9 @@ describe("The Queen - Crown of the Council", () => {
       expect(testEngine.asPlayerOne().playCard(theQueenCrownOfTheCouncil)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theQueenCrownOfTheCouncil),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -59,7 +61,9 @@ describe("The Queen - Crown of the Council", () => {
       expect(testEngine.asPlayerOne().playCard(theQueenCrownOfTheCouncil)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theQueenCrownOfTheCouncil),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({

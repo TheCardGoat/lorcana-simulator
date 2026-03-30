@@ -41,7 +41,7 @@ describe("Boomer - Has the Beak", () => {
 
       const bagId = bagEffects[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(boomerHasTheBeak, {
           resolveOptional: true,
           targets: [damagedCharacter],
         }),
@@ -69,7 +69,7 @@ describe("Boomer - Has the Beak", () => {
 
       const bagId = bagEffects[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(boomerHasTheBeak, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(damagedCharacter)).toBe(false);
@@ -87,7 +87,7 @@ describe("Boomer - Has the Beak", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(boomerHasTheBeak, {
           resolveOptional: true,
           targets: [damagedCharacter],
         }),

@@ -23,14 +23,14 @@ describe("Stitch - Rock Star (Set 9 reprint)", () => {
 
       // Play first cheap character
       expect(testEngine.asPlayerOne().playCard(stitchNewDog)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(stitchRockStar)).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(stitchNewDog)).toBe(true);
       expect(testEngine.asPlayerOne().getCardsInZone("deck", PLAYER_ONE).count).toBe(1);
 
       // Play second cheap character
       expect(testEngine.asPlayerOne().playCard(liloMakingAWish)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(stitchRockStar)).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(liloMakingAWish)).toBe(true);
       expect(testEngine.asPlayerOne().getCardsInZone("deck", PLAYER_ONE).count).toBe(0);
@@ -50,7 +50,7 @@ describe("Stitch - Rock Star (Set 9 reprint)", () => {
       // Play first cheap character, decline
       expect(testEngine.asPlayerOne().playCard(stitchNewDog)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(stitchRockStar, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(stitchNewDog)).toBe(false);
@@ -61,7 +61,7 @@ describe("Stitch - Rock Star (Set 9 reprint)", () => {
       // Play second cheap character, decline
       expect(testEngine.asPlayerOne().playCard(liloMakingAWish)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(stitchRockStar, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(liloMakingAWish)).toBe(false);
@@ -95,6 +95,11 @@ describe("Stitch - Rock Star (Set 9 reprint)", () => {
       },
       { deck: 2 },
     );
+    const stitchIds = testEngine
+      .getCardInstanceIdsInZone("play", PLAYER_ONE)
+      .filter((cardId) => testEngine.getCardDefinitionId(cardId) === stitchRockStar.id);
+    expect(stitchIds).toHaveLength(2);
+    const [firstStitchId, secondStitchId] = stitchIds;
 
     const initialDeckCount = testEngine.asPlayerOne().getZonesCardCount().deck;
 
@@ -107,7 +112,7 @@ describe("Stitch - Rock Star (Set 9 reprint)", () => {
 
     // Accept the first trigger by bag ID - exerts the cheap character and draws
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: true }),
+      testEngine.asPlayerOne().resolvePendingByCard(firstStitchId!, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     // The cheap character should now be exerted
@@ -116,7 +121,9 @@ describe("Stitch - Rock Star (Set 9 reprint)", () => {
     // The second trigger should fizzle or fail because the character is already exerted
     // (exert cost cannot be paid again)
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffects[1]!.id, { resolveOptional: true }),
+      testEngine.asPlayerOne().resolvePendingByCard(secondStitchId!, {
+        resolveOptional: true,
+      }),
     ).toBeSuccessfulCommand();
 
     // Only 1 card should have been drawn total (not 2)
@@ -142,11 +149,10 @@ describe("Stitch - Rock Star (Set 9 reprint)", () => {
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
       const initialDeckCount = testEngine.asPlayerOne().getZonesCardCount().deck;
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(bagEffect).toBeDefined();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(liloEscapeArtist, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();

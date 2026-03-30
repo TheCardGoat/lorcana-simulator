@@ -3,7 +3,11 @@ import {
   BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
   DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
 } from "@tcg/lorcana-engine";
-import { DECK_FIXTURES } from "../deck-fixtures/index.js";
+import {
+  amberSteelGoofyLilo,
+  steelSapphireAggressive,
+  steelSapphireMidrange,
+} from "../deck-fixtures/index.js";
 import {
   prepareAutomatedMatchSimulation,
   replaceDeckTextWithFixture,
@@ -30,10 +34,10 @@ class MemoryStorage implements AutomatedMatchStorage {
 
 function createConfig(): AutomatedMatchConfig {
   return {
-    playerOneDeckText: DECK_FIXTURES[0]!.cards,
-    playerTwoDeckText: DECK_FIXTURES[1]!.cards,
-    playerOneFixtureId: DECK_FIXTURES[0]!.id,
-    playerTwoFixtureId: DECK_FIXTURES[1]!.id,
+    playerOneDeckText: steelSapphireMidrange.cards,
+    playerTwoDeckText: steelSapphireAggressive.cards,
+    playerOneFixtureId: steelSapphireMidrange.id,
+    playerTwoFixtureId: steelSapphireAggressive.id,
     playerOneStrategyId: DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
     playerTwoStrategyId: BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
     seed: "ai-match:seed",
@@ -45,11 +49,11 @@ describe("automated match setup actions", () => {
     const nextConfig = replaceDeckTextWithFixture(
       createConfig(),
       "playerOne",
-      DECK_FIXTURES[2]!.id,
+      amberSteelGoofyLilo.id,
     );
 
-    expect(nextConfig.playerOneDeckText).toBe(DECK_FIXTURES[2]!.cards);
-    expect(nextConfig.playerOneFixtureId).toBe(DECK_FIXTURES[2]!.id);
+    expect(nextConfig.playerOneDeckText).toBe(amberSteelGoofyLilo.cards);
+    expect(nextConfig.playerOneFixtureId).toBe(amberSteelGoofyLilo.id);
   });
 
   it("clicking simulate with valid decks prepares a new seeded config and navigates", async () => {
@@ -64,7 +68,11 @@ describe("automated match setup actions", () => {
     });
 
     expect(result.nextConfig?.seed).not.toBe("ai-match:seed");
-    expect(result.errors).toEqual({});
+    expect(
+      Object.values(result.errors).filter(
+        (error): error is string => typeof error === "string" && error.trim().length > 0,
+      ),
+    ).toEqual([]);
     expect(navigate).toHaveBeenCalledWith("/sandbox/simulator/ai-match/viewer");
   });
 

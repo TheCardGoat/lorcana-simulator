@@ -24,9 +24,9 @@ export const gazelleAngelWithHorns: CharacterCard = {
   },
   text: [
     {
-      title: "YOU ARE",
+      title: "YOU ARE A REALLY HOT DANCER",
       description:
-        "A REALLY HOT DANCER When you play this character, chosen character gains Evasive until the start of your next turn.",
+        "When you play this character, chosen character gains Evasive until the start of your next turn.",
     },
   ],
   classifications: ["Dreamborn", "Ally"],

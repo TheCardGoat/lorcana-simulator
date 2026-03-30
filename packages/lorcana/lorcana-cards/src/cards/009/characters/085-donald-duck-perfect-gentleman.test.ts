@@ -37,7 +37,9 @@ describe("Donald Duck - Perfect Gentleman (Set 9)", () => {
 
       // P1 accepts their optional ALLOW ME draw
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(donaldDuckPerfectGentleman, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // P2 accepts their optional ALLOW ME draw via the pending effect
@@ -67,7 +69,9 @@ describe("Donald Duck - Perfect Gentleman (Set 9)", () => {
 
       // P1 declines their optional ALLOW ME draw
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(donaldDuckPerfectGentleman, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // P2 accepts their optional ALLOW ME draw independently
@@ -96,7 +100,9 @@ describe("Donald Duck - Perfect Gentleman (Set 9)", () => {
 
       // P1 accepts their optional ALLOW ME draw
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(donaldDuckPerfectGentleman, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // P2 declines their optional ALLOW ME draw independently

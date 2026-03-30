@@ -35,7 +35,9 @@ describe("Pinocchio - On the Run", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [yzmaWithoutBeautySleep] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(pinocchioOnTheRun, { targets: [yzmaWithoutBeautySleep] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(yzmaWithoutBeautySleep)).toBe("hand");
@@ -58,13 +60,15 @@ describe("Pinocchio - On the Run", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [theSorcerersSpellbook] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(pinocchioOnTheRun, { targets: [theSorcerersSpellbook] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(theSorcerersSpellbook)).toBe("hand");
     });
 
-    it("does not allow targeting a character with cost greater than 3", () => {
+    it("still queues the trigger when no valid target exists", () => {
       // arthurTrainedSwordsman has cost 4 — NOT a valid target
       // When no valid targets exist, the optional effect produces no bag and arthur stays in play
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
@@ -79,8 +83,14 @@ describe("Pinocchio - On the Run", () => {
 
       expect(testEngine.asPlayerOne().playCard(pinocchioOnTheRun)).toBeSuccessfulCommand();
 
-      // No valid targets exist: the optional ability auto-skips, producing no pending bag
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // The trigger still goes to the bag. With no legal choices at resolution,
+      // declining or accepting it should produce no effect.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(pinocchioOnTheRun, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
 
       // arthur remains in play untouched
       expect(testEngine.asPlayerOne().getCardZone(arthurTrainedSwordsman)).toBe("play");
@@ -101,7 +111,9 @@ describe("Pinocchio - On the Run", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(pinocchioOnTheRun, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // yzma should still be in play since we declined
@@ -126,7 +138,9 @@ describe("Pinocchio - On the Run", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [yzmaWithoutBeautySleep] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(pinocchioOnTheRun, { targets: [yzmaWithoutBeautySleep] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(yzmaWithoutBeautySleep)).toBe("hand");

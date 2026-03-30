@@ -24,9 +24,9 @@ export const jasmineHeirOfAgrabah: CharacterCard = {
   },
   text: [
     {
-      title: "I'M",
+      title: "I'M A FAST LEARNER",
       description:
-        "A FAST LEARNER When you play this character, remove up to 1 damage from chosen character of yours.",
+        "When you play this character, remove up to 1 damage from chosen character of yours.",
     },
   ],
   classifications: ["Storyborn", "Hero", "Princess"],

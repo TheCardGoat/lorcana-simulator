@@ -29,6 +29,7 @@ import {
 import { emitBeChosenEvents } from "../../effects/be-chosen";
 import { recordBanishedCharacterThisTurn } from "../../state/turn-metrics";
 import { getGrantedActivatedAbilities } from "../../rules/static-ability-utils";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
 import {
   evaluateCondition,
@@ -68,10 +69,12 @@ function getActivatedAbilitiesForCard(
   const printedAbilities = (cardDef.abilities ?? []).filter(
     (ability): ability is ActivatedAbilityDefinition => ability.type === "activated",
   );
+  const registry = getOrBuildMoveRegistry(ctx);
   const grantedAbilities = getGrantedActivatedAbilities({
     state: ctx.framework.state,
     cardId,
     getDefinitionByInstanceId: (instanceId) => getCardDefinitionFromContext(ctx, instanceId),
+    registry,
   }).map((entry) => entry.ability);
 
   return [...printedAbilities, ...grantedAbilities];

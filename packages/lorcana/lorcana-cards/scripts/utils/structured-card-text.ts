@@ -147,9 +147,7 @@ function splitNamedAbilitySegments(segment: string): string[] {
     }
 
     let titleEnd = cursor;
-    while (titleEnd < words.length && isLikelyAllCapsWord(words[titleEnd]!.part)) {
-      titleEnd++;
-    }
+    for (; titleEnd < words.length && isLikelyAllCapsWord(words[titleEnd]!.part); titleEnd += 1) {}
 
     if (titleEnd >= words.length) {
       continue;
@@ -196,9 +194,7 @@ function splitAtUppercaseRun(segment: string): CardTextEntry | null {
   }
 
   let titleEnd = 0;
-  while (titleEnd < words.length && isLikelyAllCapsWord(words[titleEnd]!)) {
-    titleEnd++;
-  }
+  for (; titleEnd < words.length && isLikelyAllCapsWord(words[titleEnd]!); titleEnd += 1) {}
 
   if (titleEnd <= 0 || titleEnd >= words.length) {
     return null;

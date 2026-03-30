@@ -60,7 +60,7 @@ export const steelCoil: ItemCard = {
             whose: "your",
           },
         ],
-        timing: "when",
+        timing: "whenever",
       },
       type: "triggered",
     },

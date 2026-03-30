@@ -16,7 +16,7 @@
   const sidebar = maybeUseLorcanaSidebarPresenter();
   const cardContext = maybeUseSimulatorCardContext();
 
-  const snapshot = $derived(sidebar?.cardSnapshotsById[cardId] ?? null);
+  const snapshot = $derived(sidebar?.resolveCardSnapshot(cardId) ?? null);
   const label = $derived(snapshot?.label ?? fallbackLabel ?? cardId);
   const inkType = $derived(snapshot?.inkType ?? fallbackInkType);
 

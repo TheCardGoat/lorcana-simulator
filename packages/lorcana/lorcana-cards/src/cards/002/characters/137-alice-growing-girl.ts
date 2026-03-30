@@ -29,8 +29,8 @@ export const aliceGrowingGirl: CharacterCard = {
         "Your other characters gain Support. (Whenever they quest, you may add their {S} to another chosen character's {S} this turn.)",
     },
     {
-      title: "WHAT DID",
-      description: "I DO? While this character has 10 {S} or more, she gets +4 {L}.",
+      title: "WHAT DID I DO?",
+      description: "While this character has 10 {S} or more, she gets +4 {L}.",
     },
   ],
   classifications: ["Dreamborn", "Hero"],

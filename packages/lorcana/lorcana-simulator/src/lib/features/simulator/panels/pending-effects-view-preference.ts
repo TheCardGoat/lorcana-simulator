@@ -1,6 +1,6 @@
 export type PendingEffectsViewMode = "compact" | "normal";
 
-export const DEFAULT_PENDING_EFFECTS_VIEW_MODE: PendingEffectsViewMode = "compact";
+export const DEFAULT_PENDING_EFFECTS_VIEW_MODE: PendingEffectsViewMode = "normal";
 export const PENDING_EFFECTS_VIEW_MODE_STORAGE_KEY = "lorcana.simulator.pendingEffectsViewMode";
 
 interface StorageReader {

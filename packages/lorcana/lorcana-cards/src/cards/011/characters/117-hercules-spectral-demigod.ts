@@ -37,6 +37,7 @@ export const herculesSpectralDemigod: CharacterCard = {
     boost(2),
     {
       id: "16g-2",
+      name: "SUPERHUMAN STRENGTH",
       effect: {
         modifier: 3,
         stat: "strength",

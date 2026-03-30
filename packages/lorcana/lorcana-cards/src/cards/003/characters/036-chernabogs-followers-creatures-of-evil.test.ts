@@ -15,7 +15,9 @@ describe("Chernabog's Followers - Creatures of Evil", () => {
       ).toBeSuccessfulCommand();
 
       // Accept the optional ability
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(chernabogsFollowersCreaturesOfEvil),
+      ).toBeSuccessfulCommand();
 
       // Character should be banished (moved to discard)
       expect(testEngine.asPlayerOne().getCardZone(chernabogsFollowersCreaturesOfEvil)).toBe(
@@ -40,7 +42,9 @@ describe("Chernabog's Followers - Creatures of Evil", () => {
       ).toBeSuccessfulCommand();
 
       // Decline the optional ability
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(chernabogsFollowersCreaturesOfEvil, { resolveOptional: false });
 
       // Character should still be in play
       expect(testEngine.asPlayerOne().getCardZone(chernabogsFollowersCreaturesOfEvil)).toBe("play");

@@ -1,35 +1,15 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mamaOdieVoiceOfWisdomI18n } from "./057-mama-odie-voice-of-wisdom.i18n";
+import { mamaOdieVoiceOfWisdom as canonicalMamaOdieVoiceOfWisdom } from "../../003";
 
 export const mamaOdieVoiceOfWisdom: CharacterCard = {
+  ...canonicalMamaOdieVoiceOfWisdom,
   id: "Udk",
-  canonicalId: "ci_7n1",
   reprints: ["set3-052", "set9-057"],
-  cardType: "character",
-  name: "Mama Odie",
-  version: "Voice of Wisdom",
-  inkType: ["amethyst"],
-  franchise: "Princess and the Frog",
   set: "009",
   cardNumber: 57,
   rarity: "uncommon",
-  cost: 6,
-  strength: 3,
-  willpower: 6,
-  lore: 2,
-  inkable: false,
   externalIds: {
     lorcast: "crd_262e1faa79d74ec38f16ba92a9981e54",
     tcgPlayer: 650001,
   },
-  text: [
-    {
-      title: "LISTEN TO YOUR MAMA NOW",
-      description:
-        "Whenever this character quests, you may move up to 2 damage counters from chosen character to chosen opposing character.",
-    },
-  ],
-  classifications: ["Dreamborn", "Ally", "Sorcerer"],
-  abilities: [],
-  i18n: mamaOdieVoiceOfWisdomI18n,
 };

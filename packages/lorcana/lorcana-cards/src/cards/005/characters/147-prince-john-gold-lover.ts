@@ -47,6 +47,7 @@ export const princeJohnGoldLover: CharacterCard = {
         type: "play-card",
       },
       id: "1b5-1",
+      name: "BEAUTIFUL, LOVELY TAXES",
       text: "BEAUTIFUL, LOVELY TAXES {E} — Play an item from your hand or discard with cost 5 or less for free, exerted.",
       type: "activated",
     },

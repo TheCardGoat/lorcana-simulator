@@ -39,7 +39,9 @@ describe("Hades - Lord of the Dead", () => {
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
       expect(testEngine.getLore(PLAYER_TWO)).toBe(1);
 
-      expect(testEngine.asPlayerTwo().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(hadesLordOfTheDead),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.getLore(PLAYER_TWO)).toBe(3);
     });

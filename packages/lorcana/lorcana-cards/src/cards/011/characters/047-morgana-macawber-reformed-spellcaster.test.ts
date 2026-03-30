@@ -68,7 +68,9 @@ describe("Morgana Macawber - Reformed Spellcaster", () => {
       // Optional triggered ability should be in the bag
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(morganaMacawberReformedSpellcaster, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain on Goofy since we declined
@@ -102,7 +104,9 @@ describe("Morgana Macawber - Reformed Spellcaster", () => {
       // Accept the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(morganaMacawberReformedSpellcaster, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose the target opposing character
@@ -140,7 +144,9 @@ describe("Morgana Macawber - Reformed Spellcaster", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(morganaMacawberReformedSpellcaster, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [targetId] }),
@@ -175,7 +181,9 @@ describe("Morgana Macawber - Reformed Spellcaster", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(morganaMacawberReformedSpellcaster, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [targetId] }),
@@ -216,7 +224,9 @@ describe("Morgana Macawber - Reformed Spellcaster", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(morganaMacawberReformedSpellcaster, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [targetId] }),
@@ -249,7 +259,9 @@ describe("Morgana Macawber - Reformed Spellcaster", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(morganaMacawberReformedSpellcaster, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [targetId] }),
@@ -293,7 +305,9 @@ describe("Morgana Macawber - Reformed Spellcaster", () => {
       // Accept the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(morganaMacawberReformedSpellcaster, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [targetId] }),

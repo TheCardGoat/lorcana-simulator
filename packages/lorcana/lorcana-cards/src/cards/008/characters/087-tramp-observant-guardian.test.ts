@@ -31,7 +31,7 @@ describe("Tramp - Observant Guardian", () => {
       expect(testEngine.asPlayerOne().playCard(trampObservantGuardian)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(trampObservantGuardian, {
           resolveOptional: true,
           targets: [wardTarget],
         }),
@@ -56,7 +56,7 @@ describe("Tramp - Observant Guardian", () => {
       expect(testEngine.asPlayerOne().playCard(trampObservantGuardian)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(trampObservantGuardian, {
           resolveOptional: true,
           targets: [wardTarget],
         }),

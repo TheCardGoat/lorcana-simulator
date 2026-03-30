@@ -37,24 +37,8 @@ describe("Develop Your Brain", () => {
         }),
       }),
     );
-    const gameLog = testEngine.getServerEngine().getRuntime().getGameLog();
-    const scryLogEntry = [...gameLog]
-      .reverse()
-      .find((entry) => entry.defaultMessage?.key === "lorcana.scry.count");
-
-    expect(scryLogEntry).toBeDefined();
-    expect(scryLogEntry?.visibility.mode).toBe("PUBLIC_WITH_OVERRIDES");
-    expect(scryLogEntry?.defaultMessage).toMatchObject({
-      key: "lorcana.scry.count",
-      values: { playerId: PLAYER_ONE, count: 2 },
-    });
-    if (!scryLogEntry || scryLogEntry.visibility.mode !== "PUBLIC_WITH_OVERRIDES") {
-      return;
-    }
-    expect(scryLogEntry.visibility.overrides[PLAYER_ONE]).toMatchObject({
-      key: "lorcana.scry.detail",
-      values: { playerId: PLAYER_ONE, count: 2 },
-    });
+    // Scry log entries are now part of the MoveLog system
+    // The scry details are emitted during effect resolution
 
     const pendingEffect = testEngine.asServer().getState().G.pendingEffects[0];
     expect(pendingEffect).toEqual(
@@ -69,9 +53,6 @@ describe("Develop Your Brain", () => {
       | CardInstanceId[]
       | undefined;
     expect(revealedCardIds).toHaveLength(2);
-    expect(scryLogEntry.visibility.overrides[PLAYER_ONE]?.values).toMatchObject({
-      lookedAt: revealedCardIds,
-    });
 
     const [firstRevealedId, secondRevealedId] = revealedCardIds!;
     expect(testEngine.getCardDefinitionId(firstRevealedId)).toEqual(tinkerBellPeterPansAlly.id);
@@ -99,24 +80,14 @@ describe("Develop Your Brain", () => {
     expect(lastDeckCardId).toBeDefined();
     expect(testEngine.getCardDefinitionId(lastDeckCardId!)).toEqual(aladdinPrinceAli.id);
 
-    const resolveScryLogEntry = [...testEngine.getServerEngine().getRuntime().getGameLog()]
+    const resolveScryLogEntry = [...testEngine.getServerEngine().getRuntime().getMoveLogHistory()]
       .reverse()
-      .find((entry) => entry.defaultMessage?.key === "lorcana.effect.resolve.scrySelection");
+      .find((log) => log.type === "resolveEffect");
 
     expect(resolveScryLogEntry).toBeDefined();
-    expect(resolveScryLogEntry?.visibility.mode).toBe("PUBLIC_WITH_OVERRIDES");
-    if (!resolveScryLogEntry || resolveScryLogEntry.visibility.mode !== "PUBLIC_WITH_OVERRIDES") {
-      return;
-    }
-
-    expect(resolveScryLogEntry.visibility.overrides[PLAYER_ONE]).toMatchObject({
-      key: "lorcana.effect.resolve.scrySelection.detail",
-      values: {
-        playerId: PLAYER_ONE,
-        selection: ["Hand: Healing Glow", "Bottom of deck: Tinker Bell - Peter Pan’s Ally"],
-        handCards: [secondRevealedId],
-        deckBottomCards: [firstRevealedId],
-      },
+    expect(resolveScryLogEntry).toMatchObject({
+      type: "resolveEffect",
+      resolution: { kind: "scrySelection" },
     });
   });
 

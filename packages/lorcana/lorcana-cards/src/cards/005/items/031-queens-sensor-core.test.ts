@@ -67,7 +67,9 @@ describe("Queen's Sensor Core", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(queensSensorCore),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
     });
@@ -90,7 +92,9 @@ describe("Queen's Sensor Core", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(queensSensorCore),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
     });

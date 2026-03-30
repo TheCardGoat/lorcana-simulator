@@ -40,9 +40,9 @@ describe("The Library - A Gift for Belle", () => {
     expect(testEngine.asPlayerTwo().challenge(invadingAttacker, libraryResident).success).toBe(
       true,
     );
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(theLibraryAGiftForBelle).success).toBe(
+      true,
+    );
 
     expect(testEngine.asPlayerOne().getCardZone(libraryResident)).toBe("discard");
     expect(testEngine.asPlayerOne().getCardZone(drawCard)).toBe("hand");

@@ -292,6 +292,7 @@ describe("AvailableMovesPanel interactions", () => {
       candidateEntries: [],
       activeSlotIndex: null,
       slots: [],
+      amountSelection: null,
       selectedTargetLabels: [],
       minimumSelections: 1,
       maximumSelections: 1,

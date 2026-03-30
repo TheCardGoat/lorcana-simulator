@@ -3,6 +3,7 @@ import type { StateScopedValueCache } from "../../core/runtime/state-scoped-valu
 import { getOrBuildStateScopedValue } from "../../core/runtime/state-scoped-value-cache";
 import { projectLorcanaCardDerived } from "../../projection/card-derived";
 import type { DerivedStateContext } from "../../rules/derived-state";
+import type { StaticEffectRegistry } from "../../rules/static-effect-registry";
 import type {
   LorcanaCardDefinition,
   LorcanaCardMeta,
@@ -20,7 +21,8 @@ export function getOrBuildDerivedLorcanaCardProjection(args: {
   controllerID?: PlayerId;
   zoneID?: string;
   actorPlayerId?: PlayerId;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  registry: StaticEffectRegistry | undefined;
 }): ProjectedLorcanaCardDerived {
   const buildProjection = () =>
     projectLorcanaCardDerived({
@@ -33,6 +35,7 @@ export function getOrBuildDerivedLorcanaCardProjection(args: {
       zoneID: args.zoneID,
       actorPlayerId: args.actorPlayerId,
       getDefinitionByInstanceId: args.getDefinitionByInstanceId,
+      registry: args.registry,
     });
 
   if (!args.runtimeCardCache || !args.cardInstanceId) {

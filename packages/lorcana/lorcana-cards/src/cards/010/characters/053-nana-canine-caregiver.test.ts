@@ -50,7 +50,7 @@ describe("Nana - Canine Caregiver", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(nanaCanineCaregiver, {
           resolveOptional: true,
           targets: [handFodder, cheapCharacter],
         }),
@@ -77,7 +77,7 @@ describe("Nana - Canine Caregiver", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(nanaCanineCaregiver, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -105,7 +105,7 @@ describe("Nana - Canine Caregiver", () => {
       // Accept the optional discard but there's no valid return target (cost > 2)
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(nanaCanineCaregiver, {
           resolveOptional: true,
           targets: [handFodder],
         }),
@@ -128,7 +128,7 @@ describe("Nana - Canine Caregiver", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(nanaCanineCaregiver, {
           resolveOptional: true,
           targets: [handFodder, cheapCharacter],
         }),

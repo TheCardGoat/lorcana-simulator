@@ -36,7 +36,7 @@ describe("B.E.N. - Eccentric Robot", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(benEccentricRobot, {
         resolveOptional: true,
         targets: [supportTarget],
       }),
@@ -58,7 +58,7 @@ describe("B.E.N. - Eccentric Robot", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(benEccentricRobot, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

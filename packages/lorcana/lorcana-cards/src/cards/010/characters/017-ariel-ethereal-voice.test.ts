@@ -59,7 +59,7 @@ describe("Ariel - Ethereal Voice", () => {
     expect(testEngine.asPlayerOne().playCard(firstSong)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(arielEtherealVoice, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();
@@ -97,7 +97,7 @@ describe("Ariel - Ethereal Voice", () => {
     expect(testEngine.asPlayerOne().playCard(firstSong)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(arielEtherealVoice, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

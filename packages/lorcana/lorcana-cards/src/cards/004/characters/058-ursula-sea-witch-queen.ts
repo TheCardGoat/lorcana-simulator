@@ -28,8 +28,8 @@ export const ursulaSeaWitchQueen: CharacterCard = {
       title: "Shift 5",
     },
     {
-      title: "NOW",
-      description: "I AM THE RULER! Whenever this character quests, exert chosen character.",
+      title: "NOW I AM THE RULER!",
+      description: "Whenever this character quests, exert chosen character.",
     },
     {
       title: "YOU'LL LISTEN TO ME!",

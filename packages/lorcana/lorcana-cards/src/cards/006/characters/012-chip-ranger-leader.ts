@@ -43,6 +43,7 @@ export const chipRangerLeader: CharacterCard = {
         type: "gain-keyword",
       },
       id: "1ue-1",
+      name: "THE VALUE OF FRIENDSHIP",
       text: "THE VALUE OF FRIENDSHIP While you have a character named Dale in play, this character gains Support.",
       type: "static",
     },

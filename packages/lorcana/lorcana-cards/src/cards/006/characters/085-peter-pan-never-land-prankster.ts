@@ -28,9 +28,9 @@ export const peterPanNeverLandPrankster: CharacterCard = {
       description: "This character enters play exerted.",
     },
     {
-      title: "CAN'T TAKE",
+      title: "CAN'T TAKE A JOKE?",
       description:
-        "A JOKE? While this character is exerted, each opposing player can't gain lore unless one of their characters has challenged this turn.",
+        "While this character is exerted, each opposing player can't gain lore unless one of their characters has challenged this turn.",
     },
   ],
   classifications: ["Storyborn", "Hero"],

@@ -46,7 +46,9 @@ describe("Sheriff of Nottingham - Corrupt Official", () => {
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
-      expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(sheriffOfNottinghamCorruptOfficial),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerTwo().resolveNextPending({
@@ -84,7 +86,9 @@ describe("Sheriff of Nottingham - Corrupt Official", () => {
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
       expect(
-        testEngine.asPlayerTwo().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(sheriffOfNottinghamCorruptOfficial, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(opposingCharacter)).toBe(0);

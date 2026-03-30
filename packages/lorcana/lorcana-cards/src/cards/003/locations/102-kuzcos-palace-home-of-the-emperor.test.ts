@@ -41,7 +41,9 @@ describe("Kuzco's Palace - Home of the Emperor", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(kuzcosPalaceHomeOfTheEmperor),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().getCardZone(palaceAttacker)).toBe("discard");
   });
 });

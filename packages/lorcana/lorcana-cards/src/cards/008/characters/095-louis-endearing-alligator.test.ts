@@ -46,7 +46,9 @@ describe("Louis - Endearing Alligator", () => {
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0];
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [opposingCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(louisEndearingAlligator, { targets: [opposingCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.hasKeyword(opposingCharacter, "Reckless")).toBe(false);
@@ -69,7 +71,7 @@ describe("Louis - Endearing Alligator", () => {
       );
 
       testEngine.asPlayerOne().playCard(louisEndearingAlligator);
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(louisEndearingAlligator, {
         targets: [opposingCharacter],
       });
 
@@ -99,7 +101,9 @@ describe("Louis - Endearing Alligator", () => {
 
       expect(testEngine.asPlayerOne().playCard(louisEndearingAlligator)).toBeSuccessfulCommand();
 
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(louisEndearingAlligator, { resolveOptional: false });
 
       expect(testEngine.hasKeyword(opposingCharacter, "Reckless")).toBe(false);
 
@@ -122,7 +126,7 @@ describe("Louis - Endearing Alligator", () => {
     );
 
     testEngine.asPlayerOne().playCard(louisEndearingAlligator);
-    testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+    testEngine.asPlayerOne().resolvePendingByCard(louisEndearingAlligator, {
       targets: [opposingCharacter],
     });
 

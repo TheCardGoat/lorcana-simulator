@@ -51,7 +51,11 @@ describe("Copper - Hound Pup", () => {
     expect(
       testEngine.asPlayerOne().playCardForPlayer(copperHoundPup, PLAYER_TWO),
     ).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().resolveOnlyBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(copperHoundPup, {
+        targets: [PLAYER_TWO],
+      }),
+    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(copperHoundPup)).toBe("play");
 
@@ -80,7 +84,11 @@ describe("Copper - Hound Pup", () => {
     expect(
       testEngine.asPlayerOne().playCardForPlayer(copperHoundPup, PLAYER_ONE),
     ).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().resolveOnlyBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(copperHoundPup, {
+        targets: [PLAYER_ONE],
+      }),
+    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(copperHoundPup)).toBe("play");
 

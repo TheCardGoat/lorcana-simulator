@@ -29,13 +29,6 @@ describe("card-runtime", () => {
       gameID: "lorcana",
       rulesetHash: "ruleset-1",
     });
-    ctx.zones.zoneDefs.deck = {
-      id: "deck",
-      name: "Deck",
-      visibility: "secret",
-      ordered: true,
-      ownerScoped: true,
-    };
     ctx.zones.public.zoneSummaries.deck = { revision: 0, count: 1 };
     ctx.zones.private.zoneCards.deck = ["c000001"];
     ctx.zones.private.cardIndex.c000001 = {
@@ -97,28 +90,6 @@ describe("card-runtime", () => {
       gameID: "lorcana",
       rulesetHash: "ruleset-2",
     });
-
-    ctx.zones.zoneDefs["hand:p1"] = {
-      id: "hand:p1",
-      name: "Hand p1",
-      visibility: "private",
-      ordered: false,
-      ownerScoped: true,
-    };
-    ctx.zones.zoneDefs["hand:p2"] = {
-      id: "hand:p2",
-      name: "Hand p2",
-      visibility: "private",
-      ordered: false,
-      ownerScoped: true,
-    };
-    ctx.zones.zoneDefs["play:p1"] = {
-      id: "play:p1",
-      name: "Play p1",
-      visibility: "public",
-      ordered: false,
-      ownerScoped: true,
-    };
 
     ctx.zones.private.zoneCards["hand:p1"] = ["c1", "c2"];
     ctx.zones.private.zoneCards["hand:p2"] = ["c3"];
@@ -231,13 +202,6 @@ describe("card-runtime", () => {
       rulesetHash: "ruleset-3",
     });
 
-    ctx.zones.zoneDefs["play:p1"] = {
-      id: "play:p1",
-      name: "Play p1",
-      visibility: "public",
-      ordered: false,
-      ownerScoped: true,
-    };
     ctx.zones.private.zoneCards["play:p1"] = ["c1"];
     ctx.zones.private.cardIndex.c1 = {
       zoneKey: "play:p1",
@@ -298,13 +262,6 @@ describe("card-runtime", () => {
     });
 
     ctx._stateID = 7;
-    ctx.zones.zoneDefs["play:p1"] = {
-      id: "play:p1",
-      name: "Play p1",
-      visibility: "public",
-      ordered: false,
-      ownerScoped: true,
-    };
     ctx.zones.private.zoneCards["play:p1"] = ["c1"];
     ctx.zones.private.cardIndex.c1 = {
       zoneKey: "play:p1",
@@ -405,13 +362,6 @@ describe("card-runtime", () => {
       rulesetHash: "ruleset-5",
     });
 
-    ctx.zones.zoneDefs["play:p1"] = {
-      id: "play:p1",
-      name: "Play p1",
-      visibility: "public",
-      ordered: false,
-      ownerScoped: true,
-    };
     ctx.zones.private.zoneCards["play:p1"] = ["c1"];
     ctx.zones.private.cardIndex.c1 = {
       zoneKey: "play:p1",

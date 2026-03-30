@@ -32,7 +32,7 @@ describe("Pluto - Rescue Dog", () => {
       // Optional triggered ability should be in the bag
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(plutoRescueDog, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose the damaged character as target for remove-damage
@@ -63,7 +63,7 @@ describe("Pluto - Rescue Dog", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(plutoRescueDog, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -92,7 +92,7 @@ describe("Pluto - Rescue Dog", () => {
       // Decline the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(plutoRescueDog, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain unchanged

@@ -32,7 +32,7 @@ export const sardineCan: ItemCard = {
         type: "gain-keyword",
       },
       id: "2oi-1",
-      name: "FLIGHT CABIN Your exerted",
+      name: "FLIGHT CABIN",
       text: "FLIGHT CABIN Your exerted characters gain Ward.",
       type: "static",
     },

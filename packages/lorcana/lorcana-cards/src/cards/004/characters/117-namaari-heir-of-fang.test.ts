@@ -57,7 +57,7 @@ describe("Namaari - Heir of Fang", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(namaariHeirOfFang, {
           targets: [otherTarget],
         }),
       ).toBeSuccessfulCommand();
@@ -87,7 +87,9 @@ describe("Namaari - Heir of Fang", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(namaariHeirOfFang, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Defender still took damage from the challenge, but otherTarget should not have

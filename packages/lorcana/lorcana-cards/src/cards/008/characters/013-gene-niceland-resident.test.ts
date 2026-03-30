@@ -24,7 +24,7 @@ describe("Gene - Niceland Resident", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
+      testEngine.asPlayerOne().resolvePendingByCard(geneNicelandResident, {
         resolveOptional: true,
         targets: [damagedCharacter],
       }),

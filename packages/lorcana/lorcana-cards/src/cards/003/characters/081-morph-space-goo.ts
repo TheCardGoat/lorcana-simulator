@@ -41,6 +41,7 @@ export const morphSpaceGoo: CharacterCard = {
         type: "optional",
       },
       id: "vo5-1",
+      name: "MIMICRY",
       text: "MIMICRY You may play any character with Shift on this character as if this character had any name.",
       type: "static",
     },

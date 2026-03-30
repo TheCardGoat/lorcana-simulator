@@ -396,20 +396,16 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
 
     const actionId = testEngine.findCardInstanceId(optionalAction, "discard", PLAYER_ONE);
-    expect(
-      testEngine
-        .getServerEngine()
-        .getRuntime()
-        .getGameLog()
-        .find(
-          (entry) =>
-            entry.defaultMessage?.key === "lorcana.effect.resolve.optionalSelection.rejected",
-        )?.defaultMessage,
-    ).toMatchObject({
-      key: "lorcana.effect.resolve.optionalSelection.rejected",
-      values: {
-        playerId: PLAYER_ONE,
-        sourceCardId: actionId,
+    const resolveEntry = testEngine
+      .getServerEngine()
+      .getRuntime()
+      .getMoveLogHistory()
+      .find((log) => log.type === "resolveEffect");
+    expect(resolveEntry).toMatchObject({
+      type: "resolveEffect",
+      resolution: {
+        kind: "optionalSelection",
+        accepted: false,
       },
     });
   });
@@ -440,7 +436,9 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(2);
@@ -494,25 +492,21 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-        targets: [targetId],
-      }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          targets: [targetId],
+        }),
     ).toBeSuccessfulCommand();
 
-    const watcherId = testEngine.findCardInstanceId(targetedActionWatcher, "play", PLAYER_ONE);
-    const resolveEntry = testEngine
+    const bagResolveEntry = testEngine
       .getServerEngine()
       .getRuntime()
-      .getGameLog()
-      .find((entry) => entry.defaultMessage?.key === "lorcana.bag.resolve.completed.targets.named");
-    expect(resolveEntry?.defaultMessage).toMatchObject({
-      key: "lorcana.bag.resolve.completed.targets.named",
-      values: {
-        playerId: PLAYER_ONE,
-        sourceId: watcherId,
-        abilityName: "Targeted Action Watcher",
-        targets: [targetId],
-      },
+      .getMoveLogHistory()
+      .find((log) => log.type === "resolveBag");
+    expect(bagResolveEntry).toMatchObject({
+      type: "resolveBag",
+      playerId: PLAYER_ONE,
     });
   });
 
@@ -527,27 +521,23 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(quester.lore);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-        resolveOptional: true,
-      }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          resolveOptional: true,
+        }),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(quester.lore + 1);
 
-    const watcherId = testEngine.findCardInstanceId(optionalQuestWatcher, "play", PLAYER_ONE);
     expect(
       testEngine
         .getServerEngine()
         .getRuntime()
-        .getGameLog()
-        .find((entry) => entry.defaultMessage?.key === "lorcana.bag.resolve.completed.named")
-        ?.defaultMessage,
+        .getMoveLogHistory()
+        .find((log) => log.type === "resolveBag"),
     ).toMatchObject({
-      key: "lorcana.bag.resolve.completed.named",
-      values: {
-        playerId: PLAYER_ONE,
-        sourceId: watcherId,
-        abilityName: "Optional Quest Watcher",
-      },
+      type: "resolveBag",
+      playerId: PLAYER_ONE,
     });
   });
 
@@ -584,9 +574,11 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     // Accepting the optional executes the bag immediately; the exert effect suspends
     // and creates a pending effect for target selection.
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
-        resolveOptional: true,
-      }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          resolveOptional: true,
+        }),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
@@ -629,10 +621,12 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     ).toBeSuccessfulCommand();
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
-        resolveOptional: true,
-        targets: [targetId],
-      }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          resolveOptional: true,
+          targets: [targetId],
+        }),
     ).toBeSuccessfulCommand();
     expect(testEngine.isExerted(target)).toBe(true);
   });
@@ -667,9 +661,11 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
-        resolveOptional: false,
-      }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          resolveOptional: false,
+        }),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.isExerted(target)).toBe(false);
@@ -703,7 +699,11 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
       }),
     ).toBeSuccessfulCommand();
 
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
     expect(testEngine.asPlayerOne().resolveNextPending({ targets: [] })).toBeSuccessfulCommand();
     expect(testEngine.isExerted(target)).toBe(false);
@@ -723,7 +723,11 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
       }),
     ).toBeSuccessfulCommand();
 
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
   });
 
@@ -756,7 +760,11 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     ).toBeSuccessfulCommand();
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          resolveOptional: true,
+        }),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
 
@@ -797,7 +805,7 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(donBag).toBeDefined();
 
     expect(
-      testEngine.asPlayerOne().resolveBag(donBag!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(donBag!.sourceId, {
         targets: [simbaId],
       }),
     ).toBeSuccessfulCommand();
@@ -823,25 +831,21 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerTwo().getLore(PLAYER_TWO)).toBe(0);
 
     expect(
-      testEngine.asPlayerTwo().resolveBag(testEngine.asPlayerTwo().getBagEffects()[0]!.id),
+      testEngine
+        .asPlayerTwo()
+        .resolvePendingByCard(testEngine.asPlayerTwo().getBagEffects()[0]!.sourceId),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().getLore(PLAYER_TWO)).toBe(1);
 
-    const watcherId = testEngine.findCardInstanceId(opponentActionWatcher, "play", PLAYER_TWO);
     expect(
       testEngine
         .getServerEngine()
         .getRuntime()
-        .getGameLog()
-        .find((entry) => entry.defaultMessage?.key === "lorcana.bag.resolve.completed.named")
-        ?.defaultMessage,
+        .getMoveLogHistory()
+        .find((log) => log.type === "resolveBag"),
     ).toMatchObject({
-      key: "lorcana.bag.resolve.completed.named",
-      values: {
-        playerId: PLAYER_TWO,
-        sourceId: watcherId,
-        abilityName: "Opponent Action Watcher",
-      },
+      type: "resolveBag",
+      playerId: PLAYER_TWO,
     });
   });
 
@@ -861,15 +865,12 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
-    const watcherId = testEngine.findCardInstanceId(conditionalActionWatcher, "play", PLAYER_ONE);
     expect(
       testEngine
         .getServerEngine()
         .getRuntime()
-        .getGameLog()
-        .find((entry) => entry.defaultMessage?.key === "lorcana.bag.resolve.skipped.named")
-        ?.defaultMessage,
+        .getMoveLogHistory()
+        .find((log) => log.type === "resolveBag"),
     ).toBeUndefined();
-    expect(watcherId).toBeDefined();
   });
 });

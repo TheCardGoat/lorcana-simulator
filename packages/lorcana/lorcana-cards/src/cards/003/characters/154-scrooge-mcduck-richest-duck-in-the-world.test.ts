@@ -104,7 +104,7 @@ describe("Scrooge McDuck - Richest Duck in the World", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckRichestDuckInTheWorld, {
           resolveOptional: true,
           targets: [cheapItemId],
         }),
@@ -135,7 +135,9 @@ describe("Scrooge McDuck - Richest Duck in the World", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scroogeMcduckRichestDuckInTheWorld, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(cheapItem)).toBe("hand");

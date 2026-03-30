@@ -21,7 +21,9 @@ describe("Beast - Tragic Hero", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
       const zonesBeforeResolvingTrigger = testEngine.asPlayerOne().getZonesCardCount();
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(beastTragicHero),
+      ).toBeSuccessfulCommand();
 
       const zones = testEngine.asPlayerOne().getZonesCardCount();
       expect(zones.deck).toBe(zonesBeforeResolvingTrigger.deck - 2);
@@ -40,7 +42,9 @@ describe("Beast - Tragic Hero", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
       const zonesBeforeResolvingTrigger = testEngine.asPlayerOne().getZonesCardCount();
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(beastTragicHero),
+      ).toBeSuccessfulCommand();
 
       const zones = testEngine.asPlayerOne().getZonesCardCount();
       expect(zones.deck).toBe(zonesBeforeResolvingTrigger.deck - 1);

@@ -37,6 +37,8 @@ export type LorcanaCardDerived = {
   lore: number;
   moveCost: number;
   playCost: number;
+  shiftInkCost?: number;
+  shiftPlayCost?: number;
   grantedAbilityTextEntries: Array<{
     title: string;
     description?: string;
@@ -107,6 +109,7 @@ export type LorcanaProjectedTimerView = {
 };
 
 export type LorcanaProjectedPendingEffect = EnginePendingEffectProjection & {
+  abilityIndex?: number;
   selectionContext?: ResolutionSelectionContext;
 };
 
@@ -116,6 +119,7 @@ export type LorcanaProjectedBagEffect = {
   controllerId: PlayerId;
   chooserId: PlayerId;
   sourceId?: string;
+  abilityIndex?: number;
   payload: unknown;
   selectionContext?: ResolutionSelectionContext;
 };
@@ -150,5 +154,6 @@ export type LorcanaProjectedBoardView = {
   pendingEffects: LorcanaProjectedPendingEffect[];
   pendingChoice?: LorcanaProjectedPendingChoice;
   bagEffects: LorcanaProjectedBagEffect[];
+  playerEffectSourceIds?: Record<string, string[]>;
   temporaryPlayerRestrictions?: Record<string, Record<string, number>>;
 };

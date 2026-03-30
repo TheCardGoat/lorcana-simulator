@@ -241,6 +241,7 @@ export function resolveDiscardEffect(
         sourceCardId: cardPlayed.cardId,
         controllerId: cardPlayed.playerId,
         chooserId: chooserId as PlayerId,
+        abilityIndex: options?.sourceAbilityIndex,
         cardPlayed,
         effect,
         continuation: options?.continuation,

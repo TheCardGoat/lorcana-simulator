@@ -1,5 +1,6 @@
 import type {
   AutomatedActionCandidate,
+  AutomatedActionCandidateHeuristic,
   AutomatedActionCandidateSummary,
   AutomatedActionPlanningContext,
 } from "../types";
@@ -32,17 +33,23 @@ export type DetailedCandidateSummary = AutomatedActionCandidateSummary & {
     inkDuplicateCount?: number;
     inkLore?: number;
     inkPrintedCost?: number;
+    inkUnplayable?: boolean;
     keepAllPreferred?: boolean;
     planOrder?: number;
     playCardComplexity?: number;
     playCardNetCost?: number;
     printedLore?: number;
+    resolveBenefitScore?: number;
+    resolveComplexity?: number;
+    resolveOptionalAccepted?: boolean;
+    resolvePolicyDecisionAligned?: boolean;
     simpleDevelopmentPlay?: boolean;
     selfFirst?: boolean;
   };
 };
 
 export type FamilyEvaluation = {
+  heuristics?: readonly AutomatedActionCandidateHeuristic[];
   ranking: Partial<DetailedCandidateSummary["ranking"]>;
 };
 

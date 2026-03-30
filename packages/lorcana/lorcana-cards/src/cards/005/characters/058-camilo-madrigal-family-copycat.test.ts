@@ -30,7 +30,9 @@ describe("Camilo Madrigal - Family Copycat", () => {
 
       // Resolve the optional triggered ability, choosing the other character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [otherCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(camiloMadrigalFamilyCopycat, { targets: [otherCharacter] }),
       ).toBeSuccessfulCommand();
 
       // Should gain Camilo's own lore (from questing) + other character's lore (from ability)
@@ -56,7 +58,7 @@ describe("Camilo Madrigal - Family Copycat", () => {
       // The optional ability bag may still be queued, but resolving should fizzle
       // since there are no valid targets for "another chosen character of yours"
       if (testEngine.asPlayerOne().getBagCount() > 0) {
-        testEngine.asPlayerOne().resolveNextBag();
+        testEngine.asPlayerOne().resolvePendingByCard(camiloMadrigalFamilyCopycat);
       }
 
       // Should only gain Camilo's own lore from questing
@@ -75,7 +77,9 @@ describe("Camilo Madrigal - Family Copycat", () => {
       expect(testEngine.asPlayerOne().quest(camiloMadrigalFamilyCopycat)).toBeSuccessfulCommand();
 
       // Decline the optional ability
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(camiloMadrigalFamilyCopycat, { resolveOptional: false });
 
       // Should only gain Camilo's own lore from questing
       expect(testEngine.getLore(PLAYER_ONE)).toBe(camiloMadrigalFamilyCopycat.lore);

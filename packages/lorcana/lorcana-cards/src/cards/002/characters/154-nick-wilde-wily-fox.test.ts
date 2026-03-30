@@ -36,7 +36,7 @@ describe("Nick Wilde - Wily Fox", () => {
     // The triggered ability should appear in the bag
     expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      testEngine.asPlayerOne().resolvePendingByCard(nickWildeWilyFox, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     // Choose the Pawpsicle from discard
@@ -92,7 +92,7 @@ describe("Nick Wilde - Wily Fox", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
     // Decline the optional ability
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      testEngine.asPlayerOne().resolvePendingByCard(nickWildeWilyFox, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     // Pawpsicle should remain in discard

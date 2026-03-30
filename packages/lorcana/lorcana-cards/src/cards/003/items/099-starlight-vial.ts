@@ -32,7 +32,7 @@ export const starlightVial: ItemCard = {
     {
       id: "0Az-1",
       name: "EFFICIENT ENERGY",
-      text: "{E} — You pay 2 {I} less for the next action you play this turn.",
+      text: "EFFICIENT ENERGY {E} — You pay 2 {I} less for the next action you play this turn.",
       type: "activated",
       cost: {
         exert: true,
@@ -47,8 +47,8 @@ export const starlightVial: ItemCard = {
     },
     {
       id: "0Az-2",
-      name: "TRAP",
-      text: "2 {I}, Banish this item — Draw 2 cards, then choose and discard a card.",
+      name: "TRAP 2",
+      text: "TRAP 2 {I}, Banish this item — Draw 2 cards, then choose and discard a card.",
       type: "activated",
       cost: {
         ink: 2,

@@ -49,7 +49,7 @@ describe("Jasmine - Royal Seafarer", () => {
 
       // Choose mode 0: exert chosen damaged character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(jasmineRoyalSeafarer, {
           choiceIndex: 0,
           targets: [damagedCharacter],
         }),
@@ -79,7 +79,7 @@ describe("Jasmine - Royal Seafarer", () => {
 
       // Choose mode 1: chosen opposing character gains Reckless during their next turn
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(jasmineRoyalSeafarer, {
           choiceIndex: 1,
           targets: [opposingCharacter],
         }),
@@ -122,7 +122,7 @@ describe("Jasmine - Royal Seafarer", () => {
 
       // Choose mode 1 instead
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(jasmineRoyalSeafarer, {
           choiceIndex: 1,
           targets: [opposingCharacter],
         }),

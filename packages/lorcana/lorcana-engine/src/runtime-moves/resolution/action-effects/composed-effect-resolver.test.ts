@@ -530,7 +530,7 @@ describe("resolveActionEffect", () => {
       {
         type: "put-on-bottom",
         ordering: "player-choice",
-        orderBy: "owner",
+        orderBy: "controller",
         target: {
           selector: "all",
           owner: "opponent",
@@ -544,12 +544,12 @@ describe("resolveActionEffect", () => {
     expect(result.status).toBe("suspended");
     expect(ctx.G.pendingEffects).toHaveLength(1);
     expect(ctx.G.pendingEffects?.[0]).toMatchObject({
-      chooserId: PLAYER_TWO,
+      chooserId: PLAYER_ONE,
       kind: "target-selection",
       selectionContext: {
         kind: "target-selection",
         ordered: true,
-        chooserId: PLAYER_TWO,
+        chooserId: PLAYER_ONE,
         cardCandidateIds: [firstTarget, secondTarget],
       },
     });
@@ -581,7 +581,7 @@ describe("resolveActionEffect", () => {
       {
         type: "put-on-bottom",
         ordering: "player-choice",
-        orderBy: "owner",
+        orderBy: "controller",
         target: {
           selector: "all",
           owner: "opponent",

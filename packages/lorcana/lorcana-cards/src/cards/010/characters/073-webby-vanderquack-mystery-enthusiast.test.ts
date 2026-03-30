@@ -37,7 +37,7 @@ describe("Webby Vanderquack - Mystery Enthusiast", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(webbyVanderquackMysteryEnthusiast, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -64,7 +64,7 @@ describe("Webby Vanderquack - Mystery Enthusiast", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(webbyVanderquackMysteryEnthusiast, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -94,7 +94,7 @@ describe("Webby Vanderquack - Mystery Enthusiast", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(webbyVanderquackMysteryEnthusiast, {
           targets: [webbyVanderquackMysteryEnthusiast],
         }),
       ).toBeSuccessfulCommand();
@@ -127,7 +127,7 @@ describe("Webby Vanderquack - Mystery Enthusiast", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(webbyVanderquackMysteryEnthusiast, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();

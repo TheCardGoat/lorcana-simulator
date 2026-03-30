@@ -49,7 +49,7 @@ describe("Scrooge McDuck - Reformed Ebenezer", () => {
     // Resolve the SPREADING JOY triggered ability via bag
     if (testEngine.asPlayerOne().getBagCount() > 0) {
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckReformedEbenezer),
       ).toBeSuccessfulCommand();
     }
 
@@ -87,7 +87,7 @@ describe("Scrooge McDuck - Reformed Ebenezer", () => {
     // Resolve the SPREADING JOY triggered ability
     if (testEngine.asPlayerOne().getBagCount() > 0) {
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckReformedEbenezer),
       ).toBeSuccessfulCommand();
     }
 

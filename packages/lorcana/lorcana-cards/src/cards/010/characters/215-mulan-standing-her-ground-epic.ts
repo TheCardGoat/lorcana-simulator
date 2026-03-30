@@ -1,36 +1,16 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mulanStandingHerGroundEpicI18n } from "./215-mulan-standing-her-ground-epic.i18n";
+import { mulanStandingHerGround } from "..";
 
 export const mulanStandingHerGroundEpic: CharacterCard = {
+  ...mulanStandingHerGround,
   id: "tWy",
-  canonicalId: "ci_71H",
   reprints: ["set10-126"],
-  cardType: "character",
-  name: "Mulan",
-  version: "Standing Her Ground",
-  inkType: ["ruby"],
-  franchise: "Mulan",
   set: "010",
   cardNumber: 215,
   rarity: "common",
   specialRarity: "epic",
-  cost: 3,
-  strength: 4,
-  willpower: 2,
-  lore: 1,
-  inkable: true,
   externalIds: {
     lorcast: "crd_082177dd6df34573a455c5f1b2ddad31",
     tcgPlayer: 660362,
   },
-  text: [
-    {
-      title: "FLOWING BLADE",
-      description:
-        "During your turn, if you've put a card under one of your characters or locations this turn, this character takes no damage from challenges.",
-    },
-  ],
-  classifications: ["Storyborn", "Hero", "Princess"],
-  abilities: [],
-  i18n: mulanStandingHerGroundEpicI18n,
 };

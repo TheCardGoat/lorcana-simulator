@@ -57,7 +57,7 @@ describe("Tamatoa - So Shiny!", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(tamatoaSoShiny, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const pendingChoice = testEngine.asPlayerOne().getPendingChoice();
@@ -84,7 +84,7 @@ describe("Tamatoa - So Shiny!", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(tamatoaSoShiny, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(itemA)).toBe("discard");
@@ -106,7 +106,7 @@ describe("Tamatoa - So Shiny!", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(tamatoaSoShiny, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const pendingChoice = testEngine.asPlayerOne().getPendingChoice();

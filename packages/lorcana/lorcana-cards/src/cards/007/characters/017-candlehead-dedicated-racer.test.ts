@@ -39,7 +39,9 @@ describe("Candlehead - Dedicated Racer", () => {
       // WINNING ISN'T EVERYTHING triggers as optional
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(candleheadDedicatedRacer, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [damagedAlly] }),
@@ -69,7 +71,9 @@ describe("Candlehead - Dedicated Racer", () => {
       // Decline the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(candleheadDedicatedRacer, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain unchanged
@@ -107,7 +111,9 @@ describe("Candlehead - Dedicated Racer", () => {
       // WINNING ISN'T EVERYTHING triggers
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(candleheadDedicatedRacer, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [damagedAlly] }),
@@ -120,7 +126,7 @@ describe("Candlehead - Dedicated Racer", () => {
       });
     });
 
-    it("does not trigger if no characters with damage exist (no valid targets)", () => {
+    it("still queues the trigger if no legal choices remain", () => {
       const healthyAlly = createMockCharacter({
         id: "candlehead-test-healthy-ally",
         name: "Healthy Ally",
@@ -142,16 +148,14 @@ describe("Candlehead - Dedicated Racer", () => {
 
       expect(testEngine.asPlayerOne().getCardZone(candleheadDedicatedRacer)).toBe("discard");
 
-      // The ability should still trigger (bag effect appears) because the target is "any" character,
-      // even if no character has damage. The remove-damage effect just won't do anything.
-      // However, if the engine skips bag entries when no valid targets exist, bag count would be 0.
-      // We check whichever behavior the engine has.
-      const bagCount = testEngine.asPlayerOne().getBagCount();
-      if (bagCount > 0) {
-        expect(
-          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
-        ).toBeSuccessfulCommand();
-      }
+      // The trigger still goes to the bag. There are no legal choices once it resolves,
+      // so declining it is the clean no-op path.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(candleheadDedicatedRacer, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
     });
   });
 });

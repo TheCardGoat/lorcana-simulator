@@ -1,15 +1,22 @@
 import enMessages from "../../messages/en.json";
-import {
-  m as generatedMessages,
-  "sim.matchmaking.archetype.intro" as simMatchmakingArchetypeIntroParaglide,
-  "sim.matchmaking.archetype.userMatches.title" as simMatchmakingArchetypeUserMatchesTitleParaglide,
-} from "$lib/paraglide/messages.js";
+import * as paraglideBarrel from "$lib/paraglide/messages.js";
+
+const generatedMessages = paraglideBarrel.m;
 
 export * from "$lib/paraglide/messages.js";
 
 /** Paraglide message id — keep in sync with `src/messages/en.json` fallback keys below. */
 const archetypeIntroKey = "sim.matchmaking.archetype.intro";
 const archetypeUserMatchesTitleKey = "sim.matchmaking.archetype.userMatches.title";
+
+// Access dot-separated message keys dynamically to avoid hard module-link
+// failures when the compiled paraglide barrel doesn't export them yet.
+const simMatchmakingArchetypeIntroParaglide = (paraglideBarrel as Record<string, unknown>)[
+  archetypeIntroKey
+];
+const simMatchmakingArchetypeUserMatchesTitleParaglide = (
+  paraglideBarrel as Record<string, unknown>
+)[archetypeUserMatchesTitleKey];
 
 type Locale = "en" | "de" | "it" | "es" | "pt-br";
 type LocalizedString = string;

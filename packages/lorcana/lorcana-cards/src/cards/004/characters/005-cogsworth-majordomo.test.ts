@@ -33,7 +33,9 @@ describe("Cogsworth - Majordomo", () => {
     }
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect.id, { targets: [chosenCharacter] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(cogsworthMajordomo, { targets: [chosenCharacter] }),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().getCardStrength(chosenCharacter)).toBe(2);
 

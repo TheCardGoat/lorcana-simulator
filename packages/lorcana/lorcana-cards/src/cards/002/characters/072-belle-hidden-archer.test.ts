@@ -89,10 +89,10 @@ describe("Belle - Hidden Archer", () => {
       if (p1BagCount + p2BagCount > 0) {
         // Resolve all bag effects
         for (const bagEffect of testEngine.asPlayerOne().getBagEffects()) {
-          testEngine.asPlayerOne().resolveBag(bagEffect.id);
+          testEngine.asPlayerOne().resolvePendingByCard(belleHiddenArcher);
         }
         for (const bagEffect of testEngine.asPlayerTwo().getBagEffects()) {
-          testEngine.asPlayerTwo().resolveBag(bagEffect.id);
+          testEngine.asPlayerTwo().resolvePendingByCard(belleHiddenArcher);
         }
       }
 
@@ -174,10 +174,10 @@ describe("Belle - Hidden Archer", () => {
       const p2BagCount = testEngine.asPlayerTwo().getBagCount();
       if (p1BagCount + p2BagCount > 0) {
         for (const bagEffect of testEngine.asPlayerOne().getBagEffects()) {
-          testEngine.asPlayerOne().resolveBag(bagEffect.id);
+          testEngine.asPlayerOne().resolvePendingByCard(belleHiddenArcher);
         }
         for (const bagEffect of testEngine.asPlayerTwo().getBagEffects()) {
-          testEngine.asPlayerTwo().resolveBag(bagEffect.id);
+          testEngine.asPlayerTwo().resolvePendingByCard(belleHiddenArcher);
         }
       }
 

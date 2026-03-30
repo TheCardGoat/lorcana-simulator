@@ -2,7 +2,7 @@
  * MatchRuntime Random API Factories
  */
 
-import type { Draft } from "immer";
+import type { Draft } from "mutative";
 import seedrandom from "seedrandom";
 import type { MatchState } from "./types";
 import type { RandomAPI } from "./match-runtime.types";

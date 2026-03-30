@@ -24,8 +24,8 @@ export const balooOlIronPaws: CharacterCard = {
   },
   text: [
     {
-      title: "FIGHT LIKE",
-      description: "A BEAR Your characters with 7 {S} or more can't be dealt damage.",
+      title: "FIGHT LIKE A BEAR",
+      description: "Your characters with 7 {S} or more can't be dealt damage.",
     },
   ],
   classifications: ["Storyborn", "Ally"],

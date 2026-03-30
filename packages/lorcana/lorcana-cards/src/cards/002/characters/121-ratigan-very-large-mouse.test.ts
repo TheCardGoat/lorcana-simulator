@@ -52,7 +52,9 @@ describe("Ratigan - Very Large Mouse", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [weakOpponent, allyToReady] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ratiganVeryLargeMouse, { targets: [weakOpponent, allyToReady] }),
       ).toBeSuccessfulCommand();
 
       // Opposing character should be exerted
@@ -80,7 +82,9 @@ describe("Ratigan - Very Large Mouse", () => {
       expect(testEngine.asPlayerOne().playCard(ratiganVeryLargeMouse)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [weakOpponent, allyToReady] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ratiganVeryLargeMouse, { targets: [weakOpponent, allyToReady] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.hasRestriction(allyToReady, "cant-quest")).toBe(true);
@@ -105,7 +109,9 @@ describe("Ratigan - Very Large Mouse", () => {
       // The sequence has no valid targets for any step, but a bag entry is still created.
       // Resolving it with no targets should auto-skip all steps.
       if (testEngine.asPlayerOne().getBagCount() > 0) {
-        expect(testEngine.asPlayerOne().resolveNextBag({ targets: [] })).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(ratiganVeryLargeMouse, { targets: [] }),
+        ).toBeSuccessfulCommand();
       }
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
@@ -128,7 +134,9 @@ describe("Ratigan - Very Large Mouse", () => {
       // No opposing target with strength <= 3, so the exert part has no valid targets.
       // Resolving with no targets should auto-skip all steps.
       if (testEngine.asPlayerOne().getBagCount() > 0) {
-        expect(testEngine.asPlayerOne().resolveNextBag({ targets: [] })).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(ratiganVeryLargeMouse, { targets: [] }),
+        ).toBeSuccessfulCommand();
       }
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });

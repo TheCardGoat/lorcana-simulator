@@ -1,1 +1,5 @@
-export const ssr = false;
+import type { PageLoad } from "./$types";
+
+export const load: PageLoad = ({ data }) => {
+  return { matchmakingContext: data.matchmakingContext };
+};

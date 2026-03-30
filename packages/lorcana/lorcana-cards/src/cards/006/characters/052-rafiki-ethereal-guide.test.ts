@@ -52,7 +52,9 @@ describe("Rafiki - Ethereal Guide", () => {
 
       // Accept the optional ability to draw a card
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rafikiEtherealGuide, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Player should have drawn 1 card
@@ -80,7 +82,9 @@ describe("Rafiki - Ethereal Guide", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rafikiEtherealGuide, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // No further effects

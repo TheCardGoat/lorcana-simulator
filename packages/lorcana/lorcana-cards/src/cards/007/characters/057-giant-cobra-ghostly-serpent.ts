@@ -51,9 +51,13 @@ export const giantCobraGhostlySerpent: CharacterCard = {
               type: "discard",
             },
             {
-              amount: 2,
-              target: "CONTROLLER",
-              type: "gain-lore",
+              type: "conditional",
+              condition: { type: "if-you-do" },
+              then: {
+                amount: 2,
+                target: "CONTROLLER",
+                type: "gain-lore",
+              },
             },
           ],
         },

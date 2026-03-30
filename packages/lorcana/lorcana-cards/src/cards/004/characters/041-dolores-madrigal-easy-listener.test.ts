@@ -37,7 +37,9 @@ describe("Dolores Madrigal - Easy Listener (set4-041)", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(doloresMadrigalEasyListener),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
       expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
@@ -64,7 +66,9 @@ describe("Dolores Madrigal - Easy Listener (set4-041)", () => {
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
         const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-        expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(doloresMadrigalEasyListener),
+        ).toBeSuccessfulCommand();
       }
 
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
@@ -90,7 +94,9 @@ describe("Dolores Madrigal - Easy Listener (set4-041)", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(doloresMadrigalEasyListener, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");

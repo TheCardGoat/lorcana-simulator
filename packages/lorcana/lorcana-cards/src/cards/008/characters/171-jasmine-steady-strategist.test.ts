@@ -33,7 +33,9 @@ describe("Jasmine - Steady Strategist", () => {
     expect(testEngine.asPlayerOne().quest(jasmineSteadyStrategist)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(jasmineSteadyStrategist),
+    ).toBeSuccessfulCommand();
 
     expect(
       testEngine.asPlayerOne().resolveNextPending({

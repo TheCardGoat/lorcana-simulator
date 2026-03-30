@@ -45,6 +45,11 @@ export const buckyNuttyRascal: CharacterCard = {
       trigger: {
         event: "banish",
         on: "SELF",
+        restrictions: [
+          {
+            type: "in-challenge",
+          },
+        ],
         timing: "when",
       },
       type: "triggered",

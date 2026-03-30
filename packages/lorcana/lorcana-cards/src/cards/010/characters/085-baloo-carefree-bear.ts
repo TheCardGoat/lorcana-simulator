@@ -28,8 +28,9 @@ export const balooCarefreeBear: CharacterCard = {
       title: "Shift 3 {I}",
     },
     {
-      title:
-        "ROLL WITH IT When you play this character, choose one:\n- Each player draws a card.\n- Each player chooses and discards a card.",
+      title: "ROLL WITH IT",
+      description:
+        "When you play this character, choose one:\n- Each player draws a card.\n- Each player chooses and discards a card.",
     },
   ],
   classifications: ["Floodborn", "Ally"],

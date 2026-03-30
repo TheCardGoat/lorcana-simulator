@@ -17,7 +17,9 @@ describe("Genie - Supportive Friend", () => {
       expect(testEngine.asPlayerOne().quest(genieSupportiveFriend)).toBeSuccessfulCommand();
 
       // Resolve the triggered ability bag, accepting the optional
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true });
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(genieSupportiveFriend, { resolveOptional: true });
 
       // Genie should no longer be in play (shuffled into deck)
       expect(testEngine.asPlayerOne().getCardZone(genieSupportiveFriend)).not.toBe("play");
@@ -47,7 +49,9 @@ describe("Genie - Supportive Friend", () => {
       expect(testEngine.asPlayerOne().quest(genieSupportiveFriend)).toBeSuccessfulCommand();
 
       // Resolve the triggered ability bag and decline the optional
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(genieSupportiveFriend, { resolveOptional: false });
 
       // Genie should remain in play
       expect(testEngine.asPlayerOne().getCardZone(genieSupportiveFriend)).toBe("play");

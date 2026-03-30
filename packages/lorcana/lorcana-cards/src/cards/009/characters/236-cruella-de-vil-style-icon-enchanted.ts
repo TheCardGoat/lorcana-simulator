@@ -1,110 +1,16 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { cruellaDeVilStyleIconEnchantedI18n } from "./236-cruella-de-vil-style-icon-enchanted.i18n";
+import { cruellaDeVilStyleIcon } from "..";
 
 export const cruellaDeVilStyleIconEnchanted: CharacterCard = {
+  ...cruellaDeVilStyleIcon,
   id: "63a",
-  canonicalId: "ci_J5u",
   reprints: ["set9-143"],
-  cardType: "character",
-  name: "Cruella De Vil",
-  version: "Style Icon",
-  inkType: ["sapphire"],
-  franchise: "101 Dalmatians",
   set: "009",
   cardNumber: 236,
   rarity: "enchanted",
   specialRarity: "enchanted",
-  cost: 3,
-  strength: 2,
-  willpower: 3,
-  lore: 1,
-  inkable: false,
   externalIds: {
     lorcast: "crd_f5d62175b09243eda1bf9f34ea01d884",
     tcgPlayer: 651120,
   },
-  text: [
-    {
-      title: "OUT OF SEASON",
-      description:
-        "Once during your turn, whenever a character with cost 2 or less is banished, put the top card of your deck into your inkwell facedown and exerted.",
-    },
-    {
-      title: "INSULTING REMARK",
-      description: "During your turn, each opposing character with cost 2 or less gets -1 {S}.",
-    },
-  ],
-  classifications: ["Storyborn", "Villain"],
-  abilities: [
-    {
-      condition: {
-        type: "turn",
-        whose: "your",
-      },
-      effect: {
-        exerted: true,
-        facedown: true,
-        source: "top-of-deck",
-        target: "CONTROLLER",
-        type: "put-into-inkwell",
-      },
-      id: "1r1-1",
-      name: "OUT OF SEASON",
-      text: "OUT OF SEASON Once during your turn, whenever a character with cost 2 or less is banished, put the top card of your deck into your inkwell facedown and exerted.",
-      trigger: {
-        event: "banish",
-        on: {
-          cardType: "character",
-          controller: "any",
-          filters: [
-            {
-              type: "cost-comparison",
-              comparison: "less-or-equal",
-              value: 2,
-            },
-          ],
-        },
-        restrictions: [
-          {
-            type: "once-per-turn",
-          },
-          {
-            type: "during-turn",
-            whose: "your",
-          },
-        ],
-        timing: "whenever",
-      },
-      type: "triggered",
-    },
-    {
-      condition: {
-        type: "turn",
-        whose: "your",
-      },
-      effect: {
-        modifier: -1,
-        stat: "strength",
-        target: {
-          selector: "all",
-          count: "all",
-          owner: "opponent",
-          zones: ["play"],
-          cardTypes: ["character"],
-          filter: [
-            {
-              type: "cost-comparison",
-              comparison: "less-or-equal",
-              value: 2,
-            },
-          ],
-        },
-        type: "modify-stat",
-      },
-      id: "1r1-2",
-      text: "INSULTING REMARK During your turn, each opposing character with cost 2 or less gets -1 {S}.",
-      type: "static",
-    },
-  ],
-  i18n: cruellaDeVilStyleIconEnchantedI18n,
 };

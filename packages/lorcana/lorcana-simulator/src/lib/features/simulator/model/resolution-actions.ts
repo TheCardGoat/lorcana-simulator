@@ -4,6 +4,7 @@ type ResolutionActionSourceItem = {
   id: string;
   kind?: "bag" | "pending";
   title: string;
+  summaryTitle?: string;
   isActive?: boolean;
   canResolve?: boolean;
   canAccept?: boolean;
@@ -42,7 +43,7 @@ export function buildResolutionActionViews(params: {
         actions.push({
           id: `${item.id}:resolve`,
           label: params.labels.resolveTriggeredAbility,
-          detail: item.title,
+          detail: item.summaryTitle ?? item.title,
           emphasis: true,
           onClick: item.onResolve,
         });
@@ -52,7 +53,7 @@ export function buildResolutionActionViews(params: {
         actions.push({
           id: `${item.id}:accept`,
           label: params.labels.acceptEffect,
-          detail: item.title,
+          detail: item.summaryTitle ?? item.title,
           emphasis: true,
           onClick: item.onAccept,
         });
@@ -62,7 +63,7 @@ export function buildResolutionActionViews(params: {
         actions.push({
           id: `${item.id}:reject`,
           label: params.labels.declineEffect,
-          detail: item.title,
+          detail: item.summaryTitle ?? item.title,
           onClick: item.onReject,
         });
       }
@@ -78,7 +79,7 @@ export function buildResolutionActionViews(params: {
       actions.push({
         id: `${item.id}:primary`,
         label: item.primaryActionLabel ?? params.labels.arrangeCards,
-        detail: item.title,
+        detail: item.summaryTitle ?? item.title,
         emphasis: true,
         onClick: item.onPrimaryAction,
       });
@@ -88,7 +89,7 @@ export function buildResolutionActionViews(params: {
       actions.push({
         id: `${item.id}:accept`,
         label: params.labels.acceptEffect,
-        detail: item.title,
+        detail: item.summaryTitle ?? item.title,
         emphasis: true,
         onClick: item.onAccept,
       });
@@ -98,7 +99,7 @@ export function buildResolutionActionViews(params: {
       actions.push({
         id: `${item.id}:reject`,
         label: params.labels.declineEffect,
-        detail: item.title,
+        detail: item.summaryTitle ?? item.title,
         onClick: item.onReject,
       });
     }
@@ -107,7 +108,7 @@ export function buildResolutionActionViews(params: {
       actions.push({
         id: `${item.id}:resolve`,
         label: params.labels.resolveEffect,
-        detail: item.title,
+        detail: item.summaryTitle ?? item.title,
         emphasis: true,
         onClick: item.onResolve,
       });

@@ -44,7 +44,7 @@ describe("Wreck-It Ralph - Ham Hands", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphHamHands, {
           resolveOptional: true,
           targets: [mockItem],
         }),
@@ -65,7 +65,7 @@ describe("Wreck-It Ralph - Ham Hands", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphHamHands, {
           resolveOptional: true,
           targets: [mockLocation],
         }),
@@ -85,7 +85,7 @@ describe("Wreck-It Ralph - Ham Hands", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphHamHands, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -110,7 +110,7 @@ describe("Wreck-It Ralph - Ham Hands", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphHamHands, {
           resolveOptional: true,
           targets: [mockItem],
         }),

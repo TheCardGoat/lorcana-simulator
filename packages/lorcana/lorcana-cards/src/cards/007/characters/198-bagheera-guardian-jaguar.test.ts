@@ -66,7 +66,9 @@ describe("Bagheera - Guardian Jaguar", () => {
       // YOU MUST BE BRAVE triggers (mandatory)
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(bagheeraGuardianJaguar, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Deal 2 damage to each opposing character (player two's characters)
@@ -138,7 +140,9 @@ describe("Bagheera - Guardian Jaguar", () => {
       // Resolve the triggered ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(bagheeraGuardianJaguar, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Opponent's character takes 2 damage
@@ -196,7 +200,9 @@ describe("Bagheera - Guardian Jaguar", () => {
       // Resolve the triggered ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(bagheeraGuardianJaguar, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // weakOpponent takes 2 from ability

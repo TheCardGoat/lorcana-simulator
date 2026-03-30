@@ -43,6 +43,7 @@ import {
   hasStaticCardRestriction,
   hasStaticPlayerRestriction,
 } from "../../rules/static-ability-utils";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import { recordCardDrawnThisTurn } from "../../state/turn-metrics";
 
 type PassTurnExecutionContext = Pick<
@@ -67,6 +68,7 @@ export const PASS_TURN_STACK_PENDING_ERROR_CODE = "PASS_TURN_STACK_PENDING";
 export const PASS_TURN_DECISION_PENDING_ERROR_CODE = "PASS_TURN_DECISION_PENDING";
 export const PASS_TURN_RECKLESS_CHALLENGE_REQUIRED_ERROR_CODE =
   "PASS_TURN_RECKLESS_CHALLENGE_REQUIRED";
+export const PASS_TURN_NOT_ACTIVE_PLAYER_ERROR_CODE = "PASS_TURN_NOT_ACTIVE_PLAYER";
 
 export type AdvanceTurnResult = {
   previousPlayer: PlayerId;
@@ -74,7 +76,46 @@ export type AdvanceTurnResult = {
   turnNumber: number;
 };
 
+function resolveTurnPlayer(ctx: PassTurnIntentContext): PlayerId | undefined {
+  // Keep this turn-owner derivation in sync with:
+  // - runtime-moves/resolution/resolve-bag.ts:resolveTurnPlayerFromCtx
+  // - runtime-moves/resolution/resolve-effect.ts:resolveTurnPlayerFromCtx
+  // - runtime-game/project-board.ts:resolveTurnPlayer
+  const otp = ctx.framework.state.status.otp as PlayerId | undefined;
+  if (!otp) {
+    return ctx.framework.state.currentPlayer as PlayerId | undefined;
+  }
+
+  const playerIds = ctx.framework.state.playerIds;
+  const turnsCompleted = (ctx.G.turnsCompletedByPlayer ?? {}) as Record<string, number>;
+  const totalCompletedTurns = Object.values(turnsCompleted).reduce(
+    (sum, count) => sum + (count ?? 0),
+    0,
+  );
+
+  if (totalCompletedTurns === 0) {
+    return otp;
+  }
+
+  const otpIndex = playerIds.findIndex((playerId) => playerId === otp);
+  if (otpIndex < 0 || playerIds.length === 0) {
+    return otp;
+  }
+
+  const offset = totalCompletedTurns % playerIds.length;
+  return playerIds[(otpIndex + offset) % playerIds.length] as PlayerId;
+}
+
 function getCheapPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null {
+  const activePlayer = resolveTurnPlayer(ctx);
+  if (!activePlayer || ctx.playerId !== activePlayer) {
+    return {
+      valid: false,
+      error: "Only the active player can pass the turn",
+      errorCode: PASS_TURN_NOT_ACTIVE_PLAYER_ERROR_CODE,
+    };
+  }
+
   if (
     ctx.G.pendingTurnTransition ||
     hasPendingBagItems(ctx) ||
@@ -112,6 +153,17 @@ function pruneExpiredTemporaryCardMeta(ctx: PassTurnExecutionContext, currentTur
   }
 }
 
+function clearHandRevealsForPlayer(ctx: PassTurnExecutionContext, playerId: PlayerId): void {
+  ctx.framework.zones.clearRevealsByZone({ zone: "hand", playerId });
+  const handCards = ctx.framework.zones.getCards({ zone: "hand", playerId }) as CardInstanceId[];
+  for (const cardId of handCards) {
+    const meta = (ctx.cards.require(cardId).meta ?? {}) as LorcanaCardMeta;
+    if (meta.revealed) {
+      ctx.cards.patchMeta(cardId, { revealed: undefined });
+    }
+  }
+}
+
 function clearActivatedAbilityUsageMeta(ctx: PassTurnExecutionContext, playerId: PlayerId): void {
   const cardsInPlay = ctx.framework.zones.getCards({ zone: "play", playerId }) as CardInstanceId[];
   for (const cardId of cardsInPlay) {
@@ -131,6 +183,7 @@ function readyCardsForPlayer(
   playerId: PlayerId,
   currentTurn: number,
 ): void {
+  const registry = getOrBuildMoveRegistry(ctx);
   const readyOnlyOneCharacter = hasTemporaryPlayerRestriction(
     ctx.G.temporaryPlayerRestrictions,
     playerId,
@@ -162,7 +215,7 @@ function readyCardsForPlayer(
           state: ctx.framework.state,
           cardId,
           restriction: "cant-ready-at-start-of-turn",
-          getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
+          registry,
         }) ||
         hasTemporaryRestriction(currentMeta, currentTurn, "doesnt-ready", {
           isSourceInPlay: (sourceId) => isCardStillInPlay(ctx, sourceId),
@@ -172,7 +225,7 @@ function readyCardsForPlayer(
           state: ctx.framework.state,
           cardId,
           restriction: "cant-ready",
-          getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
+          registry,
         });
       const exceedsReadyLimit =
         zone.zone === "play" && readyOnlyOneCharacter && charactersReadied >= 1;
@@ -240,11 +293,12 @@ function shouldSkipDrawStepForPlayer(
     return true;
   }
 
+  const registry = getOrBuildMoveRegistry(ctx);
   return hasStaticPlayerRestriction({
     state: ctx.framework.state,
     playerId,
     restriction: "skip-draw-step",
-    getDefinitionByInstanceId: (cardId) => ctx.cards.getDefinition(cardId),
+    registry,
   });
 }
 
@@ -306,6 +360,7 @@ export function advanceTurnToNextPlayer(ctx: PassTurnExecutionContext): AdvanceT
   pruneExpiredTriggerRegistrations(ctx.G, turnNumber);
   pruneExpiredReplacementEffects(ctx.G, turnNumber);
   clearActivatedAbilityUsageMeta(ctx, previousPlayer as PlayerId);
+  clearHandRevealsForPlayer(ctx, previousPlayer as PlayerId);
   ctx.G.temporaryPlayerRestrictions = pruneExpiredTemporaryPlayerRestrictions(
     ctx.G.temporaryPlayerRestrictions,
     turnNumber,
@@ -367,7 +422,8 @@ export function continuePendingTurnTransition(ctx: PassTurnExecutionContext): vo
     return;
   }
 
-  while (transitionState) {
+  const maxTransitionSteps = 10;
+  for (let step = 0; transitionState && step < maxTransitionSteps; step += 1) {
     switch (transitionState.stage) {
       case "end-of-turn": {
         ctx.framework.status.setPhase("end");
@@ -466,6 +522,12 @@ export function continuePendingTurnTransition(ctx: PassTurnExecutionContext): vo
       }
     }
   }
+
+  if (transitionState) {
+    throw new Error(
+      `Exceeded ${maxTransitionSteps} turn transition steps while resolving pending turn state '${transitionState.stage}'.`,
+    );
+  }
 }
 
 function getPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null {
@@ -474,6 +536,7 @@ function getPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null 
     return cheapFailure;
   }
 
+  const registry = getOrBuildMoveRegistry(ctx);
   const recklessAttackerCanChallenge = getEligibleChallengeAttackers(ctx).some((attackerId) => {
     const attackerDef = ctx.cards.getDefinition(attackerId);
     const hasStaticReckless = attackerDef ? hasKeyword(attackerDef, "Reckless") : false;
@@ -492,7 +555,7 @@ function getPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null 
           state: ctx.framework.state,
           playerId: controllerId,
           restriction: "cant-challenge",
-          getDefinitionByInstanceId: (instanceId) => ctx.cards.getDefinition(instanceId),
+          registry,
         }));
     if (controllerCantChallenge) {
       return false;

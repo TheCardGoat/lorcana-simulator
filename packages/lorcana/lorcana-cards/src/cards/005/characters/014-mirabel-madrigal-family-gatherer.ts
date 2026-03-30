@@ -43,6 +43,7 @@ export const mirabelMadrigalFamilyGatherer: CharacterCard = {
       },
       sourceZones: ["hand"],
       id: "1v7-1",
+      name: "NOT WITHOUT MY FAMILY",
       text: "NOT WITHOUT MY FAMILY You can't play this character unless you have 5 or more characters in play.",
       type: "static",
     },

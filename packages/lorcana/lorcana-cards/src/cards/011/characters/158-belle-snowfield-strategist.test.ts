@@ -1,12 +1,21 @@
 import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { belleSnowfieldStrategist } from "./158-belle-snowfield-strategist";
+import { galeWindSpirit } from "../../005/characters/042-gale-wind-spirit";
 
 const sacrificialCharacter = createMockCharacter({
   id: "belle-sacrifice",
   name: "Belle Sacrifice",
   cost: 2,
   strength: 2,
+  willpower: 1,
+});
+
+const extraDiscardCharacter = createMockCharacter({
+  id: "belle-extra-discard",
+  name: "Belle Extra Discard",
+  cost: 1,
+  strength: 1,
   willpower: 1,
 });
 
@@ -41,19 +50,14 @@ describe("Belle - Snowfield Strategist", () => {
     // Belle's WINTER STOCKPILE triggers - accept the optional ability
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(belleSnowfieldStrategist, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();
 
-    // Accepting creates a pending target selection for which discard card to put in inkwell
-    const sacrificialId = testEngine.findCardInstanceId(sacrificialCharacter, "discard", "p1");
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ targets: [sacrificialId] }),
-    ).toBeSuccessfulCommand();
-
     // The banished character should now be in the inkwell
     expect(testEngine.asPlayerOne().getCardZone(sacrificialCharacter)).toBe("inkwell");
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
 
     // It should be exerted and facedown
     const cardInstanceId = testEngine.findCardInstanceId(sacrificialCharacter, "inkwell", "p1");
@@ -65,10 +69,10 @@ describe("Belle - Snowfield Strategist", () => {
     ).toBe("faceDown");
   });
 
-  it("does not move the card when the optional ability is declined", () => {
+  it("does not put the card into the inkwell if it leaves the discard before WINTER STOCKPILE resolves", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
-        play: [belleSnowfieldStrategist, { card: sacrificialCharacter, exerted: true }],
+        play: [belleSnowfieldStrategist, { card: galeWindSpirit, exerted: true }],
         deck: 2,
       },
       {
@@ -79,63 +83,52 @@ describe("Belle - Snowfield Strategist", () => {
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
-    // Opponent challenges the sacrificial character to banish it
     expect(
-      testEngine.asPlayerTwo().challenge(opponentAttacker, sacrificialCharacter),
+      testEngine.asPlayerTwo().challenge(opponentAttacker, galeWindSpirit),
     ).toBeSuccessfulCommand();
 
-    // Belle's WINTER STOCKPILE triggers - decline the optional ability
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
+
+    expect(testEngine.asPlayerOne().resolvePendingByCard(galeWindSpirit)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardZone(galeWindSpirit)).toBe("hand");
+
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-        resolveOptional: false,
+      testEngine.asPlayerOne().resolvePendingByCard(belleSnowfieldStrategist, {
+        resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();
 
-    // The banished character should remain in the discard
-    expect(testEngine.asPlayerOne().getCardZone(sacrificialCharacter)).toBe("discard");
+    expect(testEngine.asPlayerOne().getCardZone(galeWindSpirit)).toBe("hand");
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
   });
 
-  it("does not trigger when an opponent's character is banished", () => {
-    const opponentCharacter = createMockCharacter({
-      id: "belle-opp-char",
-      name: "Opponent Character",
-      cost: 2,
-      strength: 1,
-      willpower: 1,
-    });
-
-    const playerAttacker = createMockCharacter({
-      id: "belle-player-attacker",
-      name: "Player Attacker",
-      cost: 3,
-      strength: 5,
-      willpower: 5,
-    });
-
+  it("tracks only the triggering card instance even when another discard card exists", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
-        play: [belleSnowfieldStrategist, playerAttacker],
+        play: [belleSnowfieldStrategist, { card: sacrificialCharacter, exerted: true }],
+        discard: [extraDiscardCharacter],
         deck: 2,
       },
       {
-        play: [{ card: opponentCharacter, exerted: true }],
+        play: [opponentAttacker],
         deck: 2,
       },
     );
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
-
-    // Opponent quests with their character (exerting it)
-    expect(testEngine.asPlayerTwo().quest(opponentCharacter)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
-
-    // Player one challenges opponent's exerted character to banish it
     expect(
-      testEngine.asPlayerOne().challenge(playerAttacker, opponentCharacter),
+      testEngine.asPlayerTwo().challenge(opponentAttacker, sacrificialCharacter),
     ).toBeSuccessfulCommand();
 
-    // No trigger should fire for Belle since it was an opponent's character
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(belleSnowfieldStrategist, {
+        resolveOptional: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(sacrificialCharacter)).toBe("inkwell");
+    expect(testEngine.asPlayerOne().getCardZone(extraDiscardCharacter)).toBe("discard");
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
   });
 });

@@ -3,22 +3,22 @@
   import { Button } from '$lib/design-system/primitives/button';
   import {
     Card,
-    CardAction,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
   } from '$lib/design-system/primitives/card';
+  import * as Accordion from '$lib/components/ui/accordion/index.js';
   import { m } from "$lib/i18n/messages.js";
   import { getGatewayWsUrl } from '$lib/config/public-url-config.js';
   import { Select } from '$lib/design-system/primitives/select';
-  import { Separator } from '$lib/design-system/primitives/separator';
   import * as Tooltip from '$lib/design-system/primitives/tooltip/index.js';
   import { cn } from '$lib/utils.js';
   import { DECK_FIXTURES } from '@/features/simulator-devtools/deck-fixtures/index.js';
   import { authSession } from '$lib/auth/session.svelte.js';
   import SignInDialog from './SignInDialog.svelte';
+  import CommunityRulesDialog from './CommunityRulesDialog.svelte';
+  import type { MatchmakingContext } from '@/features/matchmaking/api/player-context-api.js';
   import UserProfileMenu from './UserProfileMenu.svelte';
   import LogIn from '@lucide/svelte/icons/log-in';
   import LogOut from '@lucide/svelte/icons/log-out';
@@ -41,49 +41,14 @@
   import { LiveMatchesStore } from '@/features/matchmaking/state/live-matches.svelte.js';
   import LiveMatchesTable from './LiveMatchesTable.svelte';
   import { MatchmakingQueueStore } from '@/features/matchmaking/state/matchmaking-queue.svelte.js';
+  import { MatchmakingPlayerContextState } from '@/features/matchmaking/state/player-context.svelte.js';
+  import { fetchDeckListSnapshotByDeckListId } from '@/features/matchmaking/api/player-context-api.js';
+  import { getInkSymbolUrl } from '@/features/simulator/model/asset-urls.js';
+  import { LORCANA_INK_NAMES, type LorcanaInkName } from '@/features/simulator/model/lorcana-colors.js';
   import Timer from '@lucide/svelte/icons/timer';
   import CheckCircle from '@lucide/svelte/icons/check-circle-2';
   import AlertCircle from '@lucide/svelte/icons/alert-circle';
   import X from '@lucide/svelte/icons/x';
-
-  const MATCHMAKING_QUEUES = [
-    // {
-    //   id: "winterspell-bo1",
-    //   mode: "bo1",
-    //   format: "winterspell",
-    //   livePlayers: 126,
-    //   queuedPlayers: 8,
-    //   estimatedWait: "00:24",
-    //   featured: true,
-    // },
-    // {
-    //   id: "winterspell-bo3",
-    //   mode: "bo3",
-    //   format: "winterspell",
-    //   livePlayers: 64,
-    //   queuedPlayers: 3,
-    //   estimatedWait: "01:10",
-    //   featured: false,
-    // },
-    // {
-    //   id: "infinity-bo1",
-    //   mode: "bo1",
-    //   format: "infinity",
-    //   livePlayers: 88,
-    //   queuedPlayers: 5,
-    //   estimatedWait: "00:38",
-    //   featured: false,
-    // },
-    {
-      id: 'infinity-bo3',
-      mode: 'bo3',
-      format: 'infinity',
-      livePlayers: 41,
-      queuedPlayers: 2,
-      estimatedWait: '01:42',
-      featured: false,
-    },
-  ] as const;
 
   const BULLETIN_ITEMS = [
     'sim.matchmaking.bulletin.itemOne',
@@ -110,109 +75,25 @@
     'https://github.com/TheCardGoat/lorcana-engine/blob/main/DISCLAIMER.md';
   const COMMUNITY_DISCORD_URL = 'https://discord.gg/FxxWaJW2rP';
   const DISNEY_LORCANA_OFFICIAL_URL = 'https://www.disneylorcana.com';
-  const HERO_STAT_CARD_CLASS =
-    'rounded-[1.5rem] border border-white/12 bg-slate-950/78 p-4 shadow-[0_24px_48px_-36px_rgba(2,6,23,1)]';
 
-  type QueueId =
-    | 'winterspell-bo1'
-    | 'winterspell-bo3'
-    | 'infinity-bo1'
-    | 'infinity-bo3';
-  type QueueMode = 'bo1' | 'bo3';
-  type QueueFormat = 'winterspell' | 'infinity';
-  type MatchmakingQueue = {
-    id: QueueId;
-    mode: QueueMode;
-    format: QueueFormat;
-    livePlayers: number;
-    queuedPlayers: number;
-    estimatedWait: string;
-    featured: boolean;
-  };
-  interface DeckOption {
-    id: string;
-    name: string;
-    cardCount: number;
-  }
+  let { initialContext = null }: { initialContext?: MatchmakingContext | null } = $props();
 
-  function createDeckId(name: string, index: number): string {
-    const normalized = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-
-    return `${normalized.length > 0 ? normalized : 'deck'}-${index + 1}`;
-  }
-
-  function extractDeckCardCount(deckList: string): number {
-    return deckList
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
-      .reduce((total, line) => {
-        const quantityToken = line.split(/\s+/, 1)[0];
-        const quantity = Number.parseInt(quantityToken ?? '', 10);
-        return Number.isNaN(quantity) ? total + 1 : total + quantity;
-      }, 0);
-  }
-
-  function getQueueLabel(queueId: QueueId): string {
-    switch (queueId) {
-      case 'winterspell-bo1':
-        return m['sim.matchmaking.queue.winterspell-bo1.label']({});
-      case 'winterspell-bo3':
-        return m['sim.matchmaking.queue.winterspell-bo3.label']({});
-      case 'infinity-bo1':
-        return m['sim.matchmaking.queue.infinity-bo1.label']({});
-      case 'infinity-bo3':
-        return m['sim.matchmaking.queue.infinity-bo3.label']({});
-    }
-  }
-
-  function getQueueMode(queueId: QueueId): string {
-    switch (queueId) {
-      case 'winterspell-bo1':
-        return m['sim.matchmaking.queue.winterspell-bo1.mode']({});
-      case 'winterspell-bo3':
-        return m['sim.matchmaking.queue.winterspell-bo3.mode']({});
-      case 'infinity-bo1':
-        return m['sim.matchmaking.queue.infinity-bo1.mode']({});
-      case 'infinity-bo3':
-        return m['sim.matchmaking.queue.infinity-bo3.mode']({});
-    }
-  }
-
-  function getQueueDescription(queueId: QueueId): string {
-    switch (queueId) {
-      case 'winterspell-bo1':
-        return m['sim.matchmaking.queue.winterspell-bo1.description']({});
-      case 'winterspell-bo3':
-        return m['sim.matchmaking.queue.winterspell-bo3.description']({});
-      case 'infinity-bo1':
-        return m['sim.matchmaking.queue.infinity-bo1.description']({});
-      case 'infinity-bo3':
-        return m['sim.matchmaking.queue.infinity-bo3.description']({});
-    }
-  }
-
-  function getQueueFormatLabel(format: QueueFormat): string {
-    switch (format) {
-      case 'winterspell':
-        return m['sim.matchmaking.format.winterspell']({});
-      case 'infinity':
-        return m['sim.matchmaking.format.infinity']({});
-    }
-  }
-
-  const deckOptions: DeckOption[] = DECK_FIXTURES.map((deck, index) => ({
-    id: createDeckId(deck.name, index),
-    name: deck.name,
-    cardCount: extractDeckCardCount(deck.cards),
-  }));
-
-  let selectedQueueId = $state<MatchmakingQueue['id']>(MATCHMAKING_QUEUES[0].id);
-  let selectedDeckId = $state(deckOptions[0]?.id ?? '');
+  const playerContext = new MatchmakingPlayerContextState(initialContext ?? null);
   let signInDialogOpen = $state(false);
+  let showOnboardingDialog = $state(false);
+
+  $effect(() => {
+    if (playerContext.needsOnboarding) {
+      showOnboardingDialog = true;
+    }
+  });
+
+  async function handleOnboardAccept(): Promise<void> {
+    const success = await playerContext.onboard();
+    if (success) {
+      showOnboardingDialog = false;
+    }
+  }
 
   const GATEWAY_WS_URL = getGatewayWsUrl();
 
@@ -242,10 +123,8 @@
   );
 
   onMount(async () => {
-    // Check for existing session first
-    await authSession.fetchSession();
+    await playerContext.initialize();
 
-    // If authenticated, fetch a ticket before connecting and check queue status
     if (authSession.isAuthenticated) {
       const ticket = await fetchGatewayTicket();
       if (ticket) {
@@ -279,14 +158,45 @@
       requestMatchmakingPollIfQueued,
     );
     gateway.connect();
+    playerContext.reset();
   }
 
-  const selectedQueue = $derived(
-    MATCHMAKING_QUEUES.find((queue) => queue.id === selectedQueueId) ??
-      MATCHMAKING_QUEUES[0],
+  function colorMaskToInks(colorMask: number): LorcanaInkName[] {
+    return LORCANA_INK_NAMES.filter((_, index) => (colorMask & (1 << index)) !== 0);
+  }
+
+  function formatProfileName(displayName: string | null | undefined): string {
+    return displayName?.trim().length ? displayName : 'Unnamed profile';
+  }
+
+  function queueSnapshotDeck() {
+    const queuedDeckListId = queueStore.queuedDeckListId;
+    if (!queuedDeckListId) {
+      return null;
+    }
+
+    for (const profile of playerContext.profiles) {
+      const deck = profile.decks.find((item) => item.activeDeckListId === queuedDeckListId);
+      if (deck) {
+        return deck;
+      }
+    }
+
+    return null;
+  }
+
+  const activeProfile = $derived(playerContext.activeProfile);
+  const selectedDeck = $derived(playerContext.selectedDeck);
+  const queuedDeck = $derived(queueSnapshotDeck());
+  const queuedProfile = $derived(
+    playerContext.profiles.find((profile) => profile.gameProfileId === queueStore.queuedGameProfileId) ?? null,
   );
-  const selectedDeck = $derived(
-    deckOptions.find((deck) => deck.id === selectedDeckId) ?? null,
+  const selectionDisabled = $derived(
+    queueStore.status === 'queued' ||
+      queueStore.status === 'match_found' ||
+      playerContext.loading ||
+      playerContext.savingDeck ||
+      playerContext.savingProfile,
   );
   const totalLivePlayers = $derived(gateway.onlineCount);
 
@@ -296,7 +206,16 @@
 
   async function handleHeaderSignOut(): Promise<void> {
     await authSession.signOut();
+    playerContext.reset();
     reconnectGatewayAnonymous();
+  }
+
+  function handleProfileChange(gameProfileId: string): void {
+    void playerContext.setActiveProfile(gameProfileId);
+  }
+
+  function handleDeckChange(deckId: string): void {
+    void playerContext.setSelectedDeck(deckId);
   }
 
   const liveMatchesStore = new LiveMatchesStore();
@@ -329,18 +248,17 @@
       openSignInDialog();
       return;
     }
-    if (!selectedDeck) {
+    if (!selectedDeck || !activeProfile) {
       return;
     }
-    // Use gameProfileId from session user id as a placeholder until profiles are wired
-    const gameProfileId = authSession.user?.id ?? '';
+
     await queueStore.join({
-      gameProfileId,
-      deckListId: selectedDeckId,
+      gameProfileId: activeProfile.gameProfileId,
       format: selectedQueueFormat,
       mode: selectedQueueMode,
     });
     if (queueStore.status === 'queued') {
+      queueStore.captureQueuedDeck(selectedDeck.activeDeckListId);
       gateway.send({ type: 'matchmaking_poll' });
     }
   }
@@ -364,23 +282,20 @@
     practiceError = null;
 
     try {
-      const deckIndex = deckOptions.findIndex((d) => d.id === selectedDeckId);
-      const fixture = DECK_FIXTURES[deckIndex];
-      if (!fixture) {
-        practiceError = 'Selected deck not found.';
-        practiceLoading = false;
-        return;
-      }
-
-      const playerDeck = await deckTextToHistoricDeck(fixture.cards);
-      // Pick a different deck for the bot (next deck, wrapping around)
-      const botFixtureIndex = (deckIndex + 1) % DECK_FIXTURES.length;
+      const playerDeckSnapshot = await fetchDeckListSnapshotByDeckListId(selectedDeck.activeDeckListId);
+      const deckSeed = selectedDeck.deckId
+        .split('')
+        .reduce((total, character) => total + character.charCodeAt(0), 0);
+      const botFixtureIndex = deckSeed % DECK_FIXTURES.length;
       const botFixture = DECK_FIXTURES[botFixtureIndex];
+      if (!botFixture) {
+        throw new Error('Bot deck fixture not found.');
+      }
       const botDeck = await deckTextToHistoricDeck(botFixture.cards);
 
       const result = await createPracticeMatch({
         gameType: 'lorcana',
-        playerDeck,
+        playerDeck: playerDeckSnapshot.historicDeck,
         botDeck,
       });
 
@@ -390,9 +305,9 @@
         playerId: result.playerId,
         botPlayerId: result.botPlayerId,
         deckConfig: {
-          playerOneDeckText: fixture.cards,
+          playerOneDeckText: playerDeckSnapshot.deckText,
           playerTwoDeckText: botFixture.cards,
-          playerOneFixtureId: fixture.id,
+          playerOneFixtureId: selectedDeck.deckId,
           playerTwoFixtureId: botFixture.id,
           strategyId: DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
           seed: createAutomatedMatchSeed(),
@@ -624,6 +539,7 @@
     <div
       class="grid gap-4 px-4 sm:px-6 lg:px-8 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(18rem,1fr)_minmax(28rem,1.15fr)_minmax(18rem,1fr)]"
     >
+      <!-- LEFT COLUMN: Watch -->
       <aside class={cn(LANE_CLASS, 'xl:min-h-0')}>
         <div class={LANE_SCROLL_CLASS}>
           <Card class={SURFACE_CARD_CLASS}>
@@ -636,255 +552,371 @@
         </div>
       </aside>
 
+      <!-- CENTER COLUMN: Play -->
       <section class={cn(LANE_CLASS, 'xl:min-h-0')}>
         <div class={LANE_SCROLL_CLASS}>
-          <Card
-            class={cn(
-              SURFACE_CARD_CLASS,
-              'overflow-hidden border-amber-500/20',
-            )}
-          >
-            <CardHeader class="border-b border-white/10">
-              <div>
-                <!-- <p class={EYEBROW_CLASS}>
-                  {m['sim.matchmaking.practice.eyebrow']({})}
-                </p> -->
-                <CardTitle class="scroll-m-20 text-2xl tracking-tight">
-                  {m['sim.matchmaking.practice.title']({})}
-                </CardTitle>
-                <!-- <CardDescription class="mt-2 leading-7">
-                  {m['sim.matchmaking.practice.description']({})}
-                </CardDescription> -->
-              </div>
-              <!-- <CardAction>
-                <Badge
-                  variant="outline"
-                  class="border-amber-500/30 text-amber-200"
-                >
-                  {m['sim.matchmaking.practice.badge']({})}
-                </Badge>
-              </CardAction> -->
-            </CardHeader>
 
-            <CardContent class="space-y-6">
-              <div class="rounded-xl border border-sky-400/20 bg-sky-400/10 p-4 text-sm leading-6 text-slate-100">
-                <p class={cn(EYEBROW_CLASS, 'text-sky-100/80')}>
-                  {m['sim.matchmaking.practice.hybridRoomEyebrow']({})}
-                </p>
-                <p class="mt-2">
-                  {m['sim.matchmaking.practice.hybridRoomDescription']({})}
-                </p>
-              </div>
-
-              <div class="space-y-2">
-                <label
-                  class={cn(EYEBROW_CLASS, 'block')}
-                  for="practice-deck-select"
-                >
-                  {m['sim.matchmaking.deckSelect.label']({})}
-                </label>
-                <Select
-                  id="practice-deck-select"
-                  bind:value={selectedDeckId}
-                  disabled={deckOptions.length === 0}
-                  class="border-white/10 bg-white/5"
-                >
-                  {#if deckOptions.length === 0}
-                    <option value=""
-                      >{m['sim.matchmaking.deckSelect.none']({})}</option
-                    >
-                  {:else}
-                    {#each deckOptions as deck}
-                      <option value={deck.id}>{deck.name}</option>
-                    {/each}
-                  {/if}
-                </Select>
-              </div>
-
-              {#if selectedDeck}
+          <!-- Identity Bar -->
+          <Card class={cn(SURFACE_CARD_CLASS, 'overflow-hidden')}>
+            <CardContent class="space-y-4 pt-5">
+              {#if playerContext.error}
                 <div
-                  class="rounded-xl border border-white/10 bg-white/5 p-4"
-                  aria-live="polite"
+                  class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-200"
+                  role="alert"
                 >
-                  <p class={EYEBROW_CLASS}>
-                    {m['sim.matchmaking.selectedDeck.kicker']({})}
-                  </p>
-                  <h3
-                    class="mt-3 scroll-m-20 text-xl font-semibold tracking-tight"
-                  >
-                    {selectedDeck.name}
-                  </h3>
-                  <p class="text-muted-foreground mt-2 text-sm leading-6">
-                    {m['sim.matchmaking.selectedDeck.cardsLoaded']({
-                      count: selectedDeck.cardCount,
-                    })}
-                  </p>
+                  {playerContext.error}
                 </div>
               {/if}
 
-              <div class="space-y-3">
-                <Button
-                  class="h-11 w-full text-base"
-                  disabled={practiceLoading || !selectedDeck}
-                  onclick={startPracticeMatch}
-                >
-                  {#if practiceLoading}
-                    <Loader class="mr-2 size-5 animate-spin" />
-                    Creating match...
-                  {:else if !authSession.isAuthenticated}
-                    <LogIn class="mr-2 size-4" />
-                    {m['sim.matchmaking.practice.cta']({})}
+              {#if authSession.isAuthenticated}
+                <!-- Profile switcher -->
+                <div class="space-y-2">
+                  <p class={cn(EYEBROW_CLASS, 'block')}>
+                    {m['sim.matchmaking.profile.active']({})}
+                  </p>
+                  {#if playerContext.loading}
+                    <div class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+                      {m['sim.matchmaking.profile.loading']({})}
+                    </div>
+                  {:else if playerContext.profiles.length === 0}
+                    <div class="space-y-3">
+                      <div class="rounded-xl border border-dashed border-white/15 bg-white/5 px-4 py-3 text-sm text-slate-300">
+                        {m['sim.matchmaking.profile.setupPrompt']({})}
+                      </div>
+                      {#if playerContext.onboardingError}
+                        <div
+                          class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
+                          role="alert"
+                        >
+                          {playerContext.onboardingError}
+                        </div>
+                      {/if}
+                      <Button
+                        class="w-full"
+                        onclick={() => { showOnboardingDialog = true; }}
+                      >
+                        {m['sim.matchmaking.profile.setupButton']({})}
+                      </Button>
+                    </div>
+                  {:else if playerContext.profiles.length <= 5}
+                    <div class="grid gap-2 sm:grid-cols-2">
+                      {#each playerContext.profiles as profile}
+                        <button
+                          type="button"
+                          class={cn(
+                            'rounded-xl border px-4 py-3 text-left transition-colors',
+                            playerContext.activeGameProfileId === profile.gameProfileId
+                              ? 'border-sky-400/60 bg-sky-500/10 text-sky-50'
+                              : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10',
+                          )}
+                          disabled={selectionDisabled}
+                          aria-pressed={playerContext.activeGameProfileId === profile.gameProfileId}
+                          onclick={() => handleProfileChange(profile.gameProfileId)}
+                        >
+                          <p class="text-sm font-semibold">{formatProfileName(profile.displayName)}</p>
+                          <p class="mt-1 text-xs text-slate-400">
+                            {profile.decks.length === 1
+                              ? m['sim.matchmaking.profile.playableDeck.singular']({
+                                  count: profile.decks.length,
+                                })
+                              : m['sim.matchmaking.profile.playableDeck.plural']({
+                                  count: profile.decks.length,
+                                })}
+                          </p>
+                        </button>
+                      {/each}
+                    </div>
                   {:else}
-                    <Bot class="mr-2 size-5" />
-                    {m['sim.matchmaking.practice.cta']({})}
+                    <Select
+                      id="matchmaking-profile-select"
+                      value={playerContext.activeGameProfileId ?? ''}
+                      disabled={selectionDisabled}
+                      class="border-white/10 bg-white/5"
+                      onchange={(event) =>
+                        handleProfileChange((event.currentTarget as HTMLSelectElement).value)}
+                    >
+                      {#each playerContext.profiles as profile}
+                        <option value={profile.gameProfileId}>{formatProfileName(profile.displayName)}</option>
+                      {/each}
+                    </Select>
                   {/if}
-                </Button>
+                </div>
 
-                {#if practiceError}
-                  <div
-                    class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-200"
-                    role="alert"
+                <!-- Deck selector -->
+                <div class="space-y-2">
+                  <label
+                    class={cn(EYEBROW_CLASS, 'block')}
+                    for="play-deck-select"
                   >
-                    {practiceError}
+                    {m['sim.matchmaking.deckSelect.label']({})}
+                  </label>
+                  <Select
+                    id="play-deck-select"
+                    value={activeProfile?.selectedDeckId ?? ''}
+                    disabled={selectionDisabled || !activeProfile || activeProfile.decks.length === 0}
+                    class="border-white/10 bg-white/5"
+                    onchange={(event) =>
+                      handleDeckChange((event.currentTarget as HTMLSelectElement).value)}
+                  >
+                    {#if !activeProfile || activeProfile.decks.length === 0}
+                      <option value="">
+                        {m['sim.matchmaking.deckSelect.nonePlayable']({})}
+                      </option>
+                    {:else}
+                      <option value="" disabled={true}>
+                        {m['sim.matchmaking.deckSelect.placeholder']({})}
+                      </option>
+                      {#each activeProfile.decks as deck}
+                        <option value={deck.deckId}>{deck.deckName}</option>
+                      {/each}
+                    {/if}
+                  </Select>
+                </div>
+
+                <!-- Selected deck summary -->
+                {#if selectedDeck}
+                  <div
+                    class="rounded-xl border border-white/10 bg-white/5 p-4"
+                    aria-live="polite"
+                  >
+                    <div class="flex items-center gap-2">
+                      {#each colorMaskToInks(selectedDeck.colorMask) as ink}
+                        <img
+                          src={getInkSymbolUrl(ink)}
+                          alt={ink}
+                          class="size-5 rounded-full bg-black/20 object-contain"
+                        />
+                      {/each}
+                    </div>
+                    <h3
+                      class="mt-2 scroll-m-20 text-lg font-semibold tracking-tight"
+                    >
+                      {selectedDeck.deckName}
+                    </h3>
+                    <p class="text-muted-foreground mt-1 text-sm">
+                      {m['sim.matchmaking.selectedDeck.cardsLoaded']({
+                        count: selectedDeck.cardCount,
+                      })}
+                      {#if activeProfile}
+                        <span class="text-slate-500">·</span>
+                        {formatProfileName(activeProfile.displayName)}
+                      {/if}
+                    </p>
+                  </div>
+                {:else if activeProfile}
+                  <div class="rounded-xl border border-dashed border-white/15 bg-white/5 p-4 text-sm text-slate-300">
+                    {#if activeProfile.decks.length === 0}
+                      {m['sim.matchmaking.selectedDeck.empty.noDecks']({})}
+                    {:else}
+                      {m['sim.matchmaking.selectedDeck.empty.select']({})}
+                    {/if}
                   </div>
                 {/if}
-              </div>
+              {:else}
+                <div class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+                  {m['sim.matchmaking.profile.signInPrompt']({})}
+                </div>
+              {/if}
             </CardContent>
           </Card>
+
+          <!-- Practice & Queue Accordions -->
+          <Accordion.Root type="multiple" value={['practice', 'queue']}>
+            <!-- Practice Accordion -->
+            <Accordion.Item value="practice" class={cn(SURFACE_CARD_CLASS, 'rounded-xl border px-4')}>
+              <Accordion.Trigger class="text-base font-semibold tracking-tight text-white">
+                {m['sim.matchmaking.practice.title']({})}
+              </Accordion.Trigger>
+              <Accordion.Content>
+                <div class="space-y-4 pb-4">
+                  <div class="rounded-xl border border-sky-400/20 bg-sky-400/10 p-4 text-sm leading-6 text-slate-100">
+                    <p class={cn(EYEBROW_CLASS, 'text-sky-100/80')}>
+                      {m['sim.matchmaking.practice.hybridRoomEyebrow']({})}
+                    </p>
+                    <p class="mt-2">
+                      {m['sim.matchmaking.practice.hybridRoomDescription']({})}
+                    </p>
+                  </div>
+
+                  <Button
+                    class="h-11 w-full text-base"
+                    disabled={practiceLoading || !selectedDeck}
+                    onclick={startPracticeMatch}
+                  >
+                    {#if practiceLoading}
+                      <Loader class="mr-2 size-5 animate-spin" />
+                      {m['sim.matchmaking.practice.creatingMatch']({})}
+                    {:else if !authSession.isAuthenticated}
+                      <LogIn class="mr-2 size-4" />
+                      {m['sim.matchmaking.practice.cta']({})}
+                    {:else}
+                      <Bot class="mr-2 size-5" />
+                      {m['sim.matchmaking.practice.cta']({})}
+                    {/if}
+                  </Button>
+
+                  {#if practiceError}
+                    <div
+                      class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-200"
+                      role="alert"
+                    >
+                      {practiceError}
+                    </div>
+                  {/if}
+                </div>
+              </Accordion.Content>
+            </Accordion.Item>
+
+            <!-- Queue Accordion -->
+            <Accordion.Item value="queue" class={cn(SURFACE_CARD_CLASS, 'mt-4 rounded-xl border px-4')}>
+              <Accordion.Trigger class="text-base font-semibold tracking-tight text-white">
+                {m['sim.matchmaking.queue.title']({})}
+              </Accordion.Trigger>
+              <Accordion.Content>
+                <div class="space-y-4 pb-4">
+                  {#if queueStore.status === 'blocked'}
+                    <div
+                      class="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-6 text-amber-200"
+                      role="alert"
+                    >
+                      <div class="flex items-start gap-2">
+                        <AlertCircle class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                        <div>
+                          <p class="font-semibold text-amber-100">{m['sim.matchmaking.queue.blocked.activeMatch']({})}</p>
+                          <p class="mt-1 text-amber-200/80">{queueStore.blockReason}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                  {:else if queueStore.status === 'match_found'}
+                    <div class="flex flex-col items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center">
+                      <CheckCircle class="size-10 text-emerald-400" aria-hidden="true" />
+                      <p class="text-lg font-semibold text-emerald-100">{m['sim.matchmaking.queue.matchFound.title']({})}</p>
+                      <p class="text-sm text-emerald-200/80">{m['sim.matchmaking.queue.matchFound.subtitle']({})}</p>
+                    </div>
+
+                  {:else if queueStore.status === 'queued'}
+                    <div class="rounded-xl border border-sky-400/20 bg-sky-400/8 p-4">
+                      <div class="flex items-center gap-3">
+                        <Loader class="size-5 shrink-0 animate-spin text-sky-300" aria-hidden="true" />
+                        <div class="min-w-0 flex-1">
+                          <p class="text-sm font-semibold text-sky-100">{m['sim.matchmaking.queue.searching']({})}</p>
+                          <p class="text-muted-foreground mt-0.5 text-xs">
+                            {selectedQueueFormat} · Best of {selectedQueueMode}
+                            {#if queueStore.position}
+                              · #{queueStore.position} in queue
+                            {/if}
+                          </p>
+                          {#if queuedProfile || queuedDeck}
+                            <p class="mt-1 text-xs text-sky-100/80">
+                              {#if queuedProfile}
+                                {formatProfileName(queuedProfile.displayName)}
+                              {/if}
+                              {#if queuedProfile && queuedDeck}
+                                ·
+                              {/if}
+                              {#if queuedDeck}
+                                {queuedDeck.deckName}
+                              {/if}
+                            </p>
+                          {/if}
+                        </div>
+                      </div>
+                      <div class="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
+                        <div class="flex items-center gap-1.5">
+                          <Timer class="size-3.5" aria-hidden="true" />
+                          <span aria-live="polite">{m['sim.matchmaking.queue.elapsed']({ time: formatQueueTimeElapsed() })}</span>
+                        </div>
+                        <span aria-live="polite">{m['sim.matchmaking.queue.expiresIn']({ time: formatQueueTimeRemaining() })}</span>
+                      </div>
+                      <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10">
+                        <div
+                          class="h-full rounded-full bg-sky-400/60 transition-all duration-1000"
+                          style="width: {Math.max(0, Math.min(100, Math.round((queueStore.timeRemainingMs / 300_000) * 100)))}%"
+                        ></div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      class="h-10 w-full border-white/10 bg-transparent text-slate-200 hover:bg-white/5 hover:text-white"
+                      onclick={handleLeaveQueue}
+                    >
+                      <X class="mr-2 size-4" />
+                      {m['sim.matchmaking.queue.cancel']({})}
+                    </Button>
+
+                  {:else}
+                    <div class="space-y-3">
+                      <div class="space-y-1.5">
+                        <label class={cn(EYEBROW_CLASS, 'block')} for="queue-format-select">{m['sim.matchmaking.queue.format.label']({})}</label>
+                        <Select
+                          id="queue-format-select"
+                          bind:value={selectedQueueFormat}
+                          class="border-white/10 bg-white/5"
+                        >
+                          <option value="infinity">{m['sim.matchmaking.queue.format.infinity']({})}</option>
+                          <option value="cc-ROF">{m['sim.matchmaking.queue.format.ccROF']({})}</option>
+                        </Select>
+                      </div>
+                      <div class="space-y-1.5">
+                        <label class={cn(EYEBROW_CLASS, 'block')} for="queue-mode-select">{m['sim.matchmaking.queue.mode.label']({})}</label>
+                        <Select
+                          id="queue-mode-select"
+                          bind:value={selectedQueueMode}
+                          class="border-white/10 bg-white/5"
+                        >
+                          <option value="3">{m['sim.matchmaking.queue.mode.bo3']({})}</option>
+                          <option value="1">{m['sim.matchmaking.queue.mode.bo1']({})}</option>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {#if queueStore.error}
+                      <div
+                        class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
+                        role="alert"
+                      >
+                        {queueStore.error}
+                      </div>
+                    {/if}
+
+                    <Button
+                      class="h-11 w-full text-base"
+                      disabled={
+                        !selectedDeck ||
+                        !activeProfile ||
+                        selectionDisabled ||
+                        queueStore.status === 'checking'
+                      }
+                      onclick={handleJoinQueue}
+                    >
+                      {#if queueStore.status === 'checking'}
+                        <Loader class="mr-2 size-4 animate-spin" />
+                        {m['sim.matchmaking.queue.checkingStatus']({})}
+                      {:else if !authSession.isAuthenticated}
+                        <LogIn class="mr-2 size-4" />
+                        {m['sim.matchmaking.queue.signInToJoin']({})}
+                      {:else if playerContext.savingDeck || playerContext.savingProfile}
+                        <Loader class="mr-2 size-4 animate-spin" />
+                        {m['sim.matchmaking.queue.savingSelection']({})}
+                      {:else if !selectedDeck}
+                        {m['sim.matchmaking.queue.selectDeckFirst']({})}
+                      {:else}
+                        {m['sim.matchmaking.queue.findMatch']({})}
+                      {/if}
+                    </Button>
+                  {/if}
+                </div>
+              </Accordion.Content>
+            </Accordion.Item>
+          </Accordion.Root>
+
         </div>
       </section>
 
+      <!-- RIGHT COLUMN: News -->
       <aside class={cn(LANE_CLASS, 'xl:min-h-0')}>
         <div class={LANE_SCROLL_CLASS}>
-          <Card class={SURFACE_CARD_CLASS}>
-            <CardHeader>
-              <p class={EYEBROW_CLASS}>{m['sim.matchmaking.queue.eyebrow']({})}</p>
-              <CardTitle class="scroll-m-20 text-2xl tracking-tight">
-                {m['sim.matchmaking.queue.title']({})}
-              </CardTitle>
-            </CardHeader>
-            <CardContent class="space-y-4">
-
-              {#if queueStore.status === 'blocked'}
-                <!-- Active match guard -->
-                <div
-                  class="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-6 text-amber-200"
-                  role="alert"
-                >
-                  <div class="flex items-start gap-2">
-                    <AlertCircle class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                    <div>
-                      <p class="font-semibold text-amber-100">{m['sim.matchmaking.queue.blocked.activeMatch']({})}</p>
-                      <p class="mt-1 text-amber-200/80">{queueStore.blockReason}</p>
-                    </div>
-                  </div>
-                </div>
-
-              {:else if queueStore.status === 'match_found'}
-                <!-- Match found overlay -->
-                <div class="flex flex-col items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center">
-                  <CheckCircle class="size-10 text-emerald-400" aria-hidden="true" />
-                  <p class="text-lg font-semibold text-emerald-100">{m['sim.matchmaking.queue.matchFound.title']({})}</p>
-                  <p class="text-sm text-emerald-200/80">{m['sim.matchmaking.queue.matchFound.subtitle']({})}</p>
-                </div>
-
-              {:else if queueStore.status === 'queued'}
-                <!-- Waiting in queue -->
-                <div class="rounded-xl border border-sky-400/20 bg-sky-400/8 p-4">
-                  <div class="flex items-center gap-3">
-                    <Loader class="size-5 shrink-0 animate-spin text-sky-300" aria-hidden="true" />
-                    <div class="min-w-0 flex-1">
-                      <p class="text-sm font-semibold text-sky-100">{m['sim.matchmaking.queue.searching']({})}</p>
-                      <p class="text-muted-foreground mt-0.5 text-xs">
-                        {selectedQueueFormat} · Best of {selectedQueueMode}
-                        {#if queueStore.position}
-                          · #{queueStore.position} in queue
-                        {/if}
-                      </p>
-                    </div>
-                  </div>
-                  <div class="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
-                    <div class="flex items-center gap-1.5">
-                      <Timer class="size-3.5" aria-hidden="true" />
-                      <span aria-live="polite">{formatQueueTimeElapsed()} elapsed</span>
-                    </div>
-                    <span aria-live="polite">expires in {formatQueueTimeRemaining()}</span>
-                  </div>
-                  <!-- Progress bar showing time remaining -->
-                  <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10">
-                    <div
-                      class="h-full rounded-full bg-sky-400/60 transition-all duration-1000"
-                      style="width: {Math.max(0, Math.min(100, Math.round((queueStore.timeRemainingMs / 300_000) * 100)))}%"
-                    ></div>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  class="h-10 w-full border-white/10 bg-transparent text-slate-200 hover:bg-white/5 hover:text-white"
-                  onclick={handleLeaveQueue}
-                >
-                  <X class="mr-2 size-4" />
-                  {m['sim.matchmaking.queue.cancel']({})}
-                </Button>
-
-              {:else}
-                <!-- Idle — show join form -->
-                <div class="space-y-3">
-                  <div class="space-y-1.5">
-                    <label class={cn(EYEBROW_CLASS, 'block')} for="queue-format-select">{m['sim.matchmaking.queue.format.label']({})}</label>
-                    <Select
-                      id="queue-format-select"
-                      bind:value={selectedQueueFormat}
-                      class="border-white/10 bg-white/5"
-                    >
-                      <option value="infinity">{m['sim.matchmaking.queue.format.infinity']({})}</option>
-                      <option value="cc-ROF">{m['sim.matchmaking.queue.format.ccROF']({})}</option>
-                    </Select>
-                  </div>
-                  <div class="space-y-1.5">
-                    <label class={cn(EYEBROW_CLASS, 'block')} for="queue-mode-select">{m['sim.matchmaking.queue.mode.label']({})}</label>
-                    <Select
-                      id="queue-mode-select"
-                      bind:value={selectedQueueMode}
-                      class="border-white/10 bg-white/5"
-                    >
-                      <option value="3">{m['sim.matchmaking.queue.mode.bo3']({})}</option>
-                      <option value="1">{m['sim.matchmaking.queue.mode.bo1']({})}</option>
-                    </Select>
-                  </div>
-                </div>
-
-                {#if queueStore.error}
-                  <div
-                    class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
-                    role="alert"
-                  >
-                    {queueStore.error}
-                  </div>
-                {/if}
-
-                <Button
-                  class="h-11 w-full text-base"
-                  disabled={!selectedDeck || queueStore.status === 'checking'}
-                  onclick={handleJoinQueue}
-                >
-                  {#if queueStore.status === 'checking'}
-                    <Loader class="mr-2 size-4 animate-spin" />
-                    Checking status…
-                  {:else if !authSession.isAuthenticated}
-                    <LogIn class="mr-2 size-4" />
-                    Sign in to join queue
-                  {:else if !selectedDeck}
-                    Select a deck first
-                  {:else}
-                    Find a Match
-                  {/if}
-                </Button>
-              {/if}
-
-            </CardContent>
-          </Card>
-
           <Card class={SURFACE_CARD_CLASS}>
             <CardHeader>
               <p class={EYEBROW_CLASS}>
@@ -968,4 +1000,9 @@
   </div>
 
   <SignInDialog bind:open={signInDialogOpen} />
+  <CommunityRulesDialog
+    bind:open={showOnboardingDialog}
+    loading={playerContext.onboarding}
+    onAccept={handleOnboardAccept}
+  />
 </main>

@@ -1,107 +1,149 @@
-import { describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { render } from "svelte/server";
+import { readable } from "svelte/store";
 
-import EventLogPanel from "@/features/simulator/panels/EventLogPanel.svelte";
-import {
-  createCharacterCard,
-  createLogEntry,
-} from "@/features/simulator-devtools/test-data/factories.js";
+import { createLogEntry } from "@/features/simulator-devtools/test-data/factories.js";
+import LorcanaSimulatorSidebarRenderHarness from "./LorcanaSimulatorSidebarRenderHarness.svelte";
+import type { MoveCategorySummary } from "@/features/simulator/model/contracts.js";
 
-describe("EventLogPanel", () => {
-  it("renders the empty log state when no entries exist", () => {
-    const { body } = render(EventLogPanel, {
-      props: {
-        entries: [],
-      },
+type SidebarPresenterStub = {
+  boardSnapshot: { gameID: string } | null;
+  topSide: "playerOne" | "playerTwo";
+  bottomSide: "playerOne" | "playerTwo";
+  hasOwnedView: boolean;
+  headerPlayerData: {
+    lore: number;
+    deckCount: number;
+    handCount: number;
+    discardCount: number;
+    inkwellCount: number;
+    availableInk: number;
+    timer?: undefined;
+  } | null;
+  footerPlayerData: {
+    lore: number;
+    deckCount: number;
+    handCount: number;
+    discardCount: number;
+    inkwellCount: number;
+    availableInk: number;
+    timer?: undefined;
+  } | null;
+  moveLogEntries: ReturnType<typeof createLogEntry>[];
+  ownerSide: "playerOne" | "playerTwo" | null;
+  activeSide: "playerOne" | "playerTwo" | null;
+  showRawLogRegistryJson: boolean;
+  moveCategorySummaries: MoveCategorySummary[];
+  canConcede: boolean;
+  handleOpenPlayerSettings: () => void;
+  handleMobileConcede: () => void;
+};
+
+let mockSidebarPresenter: SidebarPresenterStub;
+
+mock.module("@/features/simulator/context/game-context.svelte.js", () => ({
+  useLorcanaSidebarPresenter: () => mockSidebarPresenter,
+  useLorcanaBoardPresenter: () => {
+    throw new Error("Board presenter not available in sidebar SSR tests");
+  },
+}));
+
+mock.module("@/features/simulator-devtools/vs-ai/context.js", () => ({
+  useHumanVsAiOrchestrator: () => readable(null),
+}));
+
+function createSidebarPresenterStub(
+  overrides: Partial<SidebarPresenterStub> = {},
+): SidebarPresenterStub {
+  return {
+    boardSnapshot: { gameID: "game-1" },
+    topSide: "playerTwo",
+    bottomSide: "playerOne",
+    hasOwnedView: true,
+    headerPlayerData: {
+      lore: 2,
+      deckCount: 48,
+      handCount: 5,
+      discardCount: 1,
+      inkwellCount: 3,
+      availableInk: 2,
+    },
+    footerPlayerData: {
+      lore: 7,
+      deckCount: 44,
+      handCount: 4,
+      discardCount: 2,
+      inkwellCount: 6,
+      availableInk: 4,
+    },
+    moveLogEntries: [],
+    ownerSide: "playerOne",
+    activeSide: "playerOne",
+    showRawLogRegistryJson: false,
+    moveCategorySummaries: [],
+    canConcede: false,
+    handleOpenPlayerSettings: () => {},
+    handleMobileConcede: () => {},
+    ...overrides,
+  };
+}
+
+describe("LorcanaSimulatorSidebar", () => {
+  beforeEach(() => {
+    mockSidebarPresenter = createSidebarPresenterStub();
+  });
+
+  it("renders player panels and move log entries in the sidebar", () => {
+    mockSidebarPresenter = createSidebarPresenterStub({
+      moveLogEntries: [
+        createLogEntry("Played Stitch", {
+          actorSide: "playerOne",
+          moveId: "playCard",
+          turnNumber: 3,
+        }),
+      ],
     });
+
+    const { body } = render(LorcanaSimulatorSidebarRenderHarness);
+
+    expect(body).toContain("Opponent");
+    expect(body).toContain("You");
+    expect(body).toContain("Event Log");
+    expect(body).toContain("Played Stitch");
+  });
+
+  it("renders the empty log state when no move log entries exist", () => {
+    const { body } = render(LorcanaSimulatorSidebarRenderHarness);
 
     expect(body).toContain("No moves recorded yet.");
   });
 
-  it("renders typed engine-backed rows with player chips and card tokens", () => {
-    const inkedCard = createCharacterCard("playerOne", "inkwell", {
-      id: "card-1",
-      name: "Mickey Mouse - Brave Little Tailor",
-      inkType: ["sapphire"],
-    });
-
-    const entry = createLogEntry("inked card", {
-      actorSide: "playerOne",
-      moveId: "putCardIntoInkwell",
-      typedLogEntry: {
-        type: "lorcana.card.inked",
-        values: {
+  it("renders raw log payloads when sidebar debug mode is enabled", () => {
+    mockSidebarPresenter = createSidebarPresenterStub({
+      showRawLogRegistryJson: true,
+      moveLogEntries: [
+        createLogEntry("Played Stitch", {
+          moveId: "playCard",
           playerId: "player_one",
-          cardId: inkedCard.cardId,
-        },
-        visibility: { mode: "PUBLIC" },
-        category: "action",
-      } as import("@tcg/lorcana-engine").LorcanaGameLogEntry,
-      playerId: "player_one",
-      params: { cardId: inkedCard.cardId },
-      turnNumber: 2,
+          params: { cardId: "card-1" },
+          turnNumber: 3,
+        }),
+      ],
     });
 
-    const { body } = render(EventLogPanel, {
-      props: {
-        entries: [entry],
-        viewerSide: "playerOne",
-      },
+    const { body } = render(LorcanaSimulatorSidebarRenderHarness);
+
+    expect(body).toContain('"moveId": "playCard"');
+    expect(body).toContain('"turnNumber": 3');
+  });
+
+  it("shows the readonly post-game lock state when actions are disabled", () => {
+    const { body } = render(LorcanaSimulatorSidebarRenderHarness, {
+      props: { readOnly: true },
     });
 
+    expect(body).toContain('aria-label="Undo unavailable"');
+    expect(body).toContain('aria-label="Concede unavailable"');
     expect(body).toContain("Event Log");
-    expect(body).toContain("Turn 2");
-    expect(body).toContain("You");
-    expect(body).toContain("into the inkwell");
-    // Card name is now resolved at render time via CardLogToken with live context;
-    // in SSR unit tests without full context, the fallback cardId appears instead.
-    expect(body).toContain(inkedCard.cardId);
-  });
-
-  it("renders raw log payloads when debug mode is enabled", () => {
-    const entry = createLogEntry("Played Stitch", {
-      moveId: "playCard",
-      playerId: "player_one",
-      params: { cardId: "card-1" },
-      turnNumber: 3,
-    });
-
-    const eventLog = render(EventLogPanel, {
-      props: {
-        showRawLogRegistryJson: true,
-        entries: [entry],
-      },
-    });
-
-    expect(eventLog.body).toContain('"moveId": "playCard"');
-    expect(eventLog.body).toContain('"turnNumber": 3');
-  });
-
-  it("shows turn separators when visible entries span multiple turns", () => {
-    const olderTurn = createLogEntry("Older turn", {
-      id: "older-turn",
-      turnNumber: 4,
-      moveId: "passTurn",
-    });
-    const newerTurn = createLogEntry("Newer turn", {
-      id: "newer-turn",
-      turnNumber: 5,
-      moveId: "passTurn",
-    });
-    const hiddenTurn = createLogEntry("Hidden turn", {
-      id: "hidden-turn",
-      turnNumber: 3,
-      moveId: "passTurn",
-    });
-
-    const { body } = render(EventLogPanel, {
-      props: {
-        entries: [hiddenTurn, olderTurn, newerTurn],
-      },
-    });
-
-    expect(body).toContain("Turn 5");
-    expect(body).toContain("Turn 4");
-    expect(body).not.toContain("Turn 3");
   });
 });

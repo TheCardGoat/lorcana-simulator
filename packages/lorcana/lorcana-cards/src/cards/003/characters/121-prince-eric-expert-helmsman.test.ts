@@ -67,7 +67,7 @@ describe("Prince Eric - Expert Helmsman", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(princeEricExpertHelmsman, {
           resolveOptional: true,
           targets: [targetCharacter],
         }),
@@ -99,7 +99,9 @@ describe("Prince Eric - Expert Helmsman", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(princeEricExpertHelmsman, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // The target character should still be in play
@@ -133,7 +135,7 @@ describe("Prince Eric - Expert Helmsman", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(princeEricExpertHelmsman, {
           resolveOptional: true,
           targets: [targetCharacter],
         }),
@@ -172,7 +174,7 @@ describe("Prince Eric - Expert Helmsman", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(princeEricExpertHelmsman, {
           resolveOptional: true,
           targets: [ownCharacter],
         }),

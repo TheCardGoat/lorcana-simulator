@@ -30,7 +30,7 @@ describe("Minnie Mouse - Compassionate Friend", () => {
 
       // Resolve the optional triggered ability - accept and target the wounded ally
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseCompassionateFriend, {
           resolveOptional: true,
           targets: [woundedAlly],
         }),
@@ -61,7 +61,9 @@ describe("Minnie Mouse - Compassionate Friend", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(minnieMouseCompassionateFriend, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain unchanged
@@ -82,7 +84,7 @@ describe("Minnie Mouse - Compassionate Friend", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseCompassionateFriend, {
           resolveOptional: true,
           targets: [woundedAlly],
         }),
@@ -114,7 +116,7 @@ describe("Minnie Mouse - Compassionate Friend", () => {
 
       // Resolve the ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseCompassionateFriend, {
           resolveOptional: true,
           targets: [woundedAlly],
         }),

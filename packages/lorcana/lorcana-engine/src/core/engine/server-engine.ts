@@ -94,6 +94,7 @@ export class ServerEngine implements GameEngine {
     this.runtime = new MatchRuntime(config.runtimeConfig, {
       players: config.players,
       seed: config.seed,
+      capturePatches: true,
       //TODO: We could pass both `cardsMaps` and `cardCatalog` from constructuror
       cardsMaps: createCardsMapsFromStaticResources(config.staticResources),
       cardCatalog: config.staticResources.cards,
@@ -325,7 +326,7 @@ export class ServerEngine implements GameEngine {
       preserveHistory: true,
       newStateID: nextStateID,
     });
-    const { gameEvents, logEntries } = this.runtime.appendSyntheticCommand(
+    const { gameEvents, moveLogs } = this.runtime.appendSyntheticCommand(
       undoCommand,
       playerId,
       timestamp,
@@ -363,10 +364,11 @@ export class ServerEngine implements GameEngine {
         state: restoredState,
         patches: [],
         gameEvents,
-        logEntries,
+        logEntries: [],
         processedCommand: undoCommand,
         animations: [],
         undoable: false,
+        moveLogs,
       },
       previousState,
       undoCommand,
@@ -574,11 +576,11 @@ export class ServerEngine implements GameEngine {
   }
 
   getUndoCheckpointSnapshot(): UndoCheckpoint | null {
-    return this.undoCheckpoint ? (structuredClone(this.undoCheckpoint) as UndoCheckpoint) : null;
+    return this.undoCheckpoint ?? null;
   }
 
   restoreUndoCheckpointSnapshot(checkpoint: UndoCheckpoint | null): void {
-    this.undoCheckpoint = checkpoint ? (structuredClone(checkpoint) as UndoCheckpoint) : null;
+    this.undoCheckpoint = checkpoint ?? null;
   }
 
   restoreAuthoritativeSnapshot(snapshot: {
@@ -594,9 +596,7 @@ export class ServerEngine implements GameEngine {
       },
     ];
     this.moveHistory = [];
-    this.undoCheckpoint = snapshot.undoCheckpoint
-      ? (structuredClone(snapshot.undoCheckpoint) as UndoCheckpoint)
-      : null;
+    this.undoCheckpoint = snapshot.undoCheckpoint ?? null;
 
     for (const connectedPlayerId of this.transports.keys()) {
       this.sendFullSync(connectedPlayerId);

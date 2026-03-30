@@ -25,7 +25,9 @@ describe("Gramma Tala - Keeper of Ancient Stories", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(grammaTalaKeeperOfAncientStories),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({

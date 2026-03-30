@@ -39,7 +39,9 @@ function playColdstoneWithDiscard(
   expect(testEngine.asPlayerOne().playCard(coldstoneReincarnatedCyborg)).toBeSuccessfulCommand();
 
   if (testEngine.asPlayerOne().getBagCount() > 0) {
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(coldstoneReincarnatedCyborg),
+    ).toBeSuccessfulCommand();
   }
 
   return testEngine;

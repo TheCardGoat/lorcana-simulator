@@ -35,7 +35,9 @@ describe("Dale - Mischievous Ranger", () => {
       expect(testEngine.asPlayerOne().playCard(daleMischievousRanger)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(daleMischievousRanger, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [chosenCharacterId] }),
@@ -68,7 +70,9 @@ describe("Dale - Mischievous Ranger", () => {
       expect(testEngine.asPlayerOne().playCard(daleMischievousRanger)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(daleMischievousRanger, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({

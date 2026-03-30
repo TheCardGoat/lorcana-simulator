@@ -33,7 +33,7 @@ describe("Fred - Mascot by Day", () => {
 
     const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
     expect(bagEffect).toBeDefined();
-    expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().resolvePendingByCard(fredMascotByDay)).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().getLore(PLAYER_TWO)).toBe(2);
   });

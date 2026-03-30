@@ -55,7 +55,7 @@ describe("Launchpad - Exceptional Pilot", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(launchpadExceptionalPilot, {
           resolveOptional: true,
           targets: [ownLocation],
         }),
@@ -84,7 +84,7 @@ describe("Launchpad - Exceptional Pilot", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(launchpadExceptionalPilot, {
           resolveOptional: true,
           targets: [opponentLocation],
         }),
@@ -111,7 +111,9 @@ describe("Launchpad - Exceptional Pilot", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(launchpadExceptionalPilot, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Location should remain in play
@@ -136,7 +138,7 @@ describe("Launchpad - Exceptional Pilot", () => {
 
       // Choose to banish only the second location
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(launchpadExceptionalPilot, {
           resolveOptional: true,
           targets: [secondLocation],
         }),
@@ -167,7 +169,9 @@ describe("Launchpad - Exceptional Pilot", () => {
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
         expect(
-          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(launchpadExceptionalPilot, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 

@@ -98,7 +98,7 @@ describe("Mickey Mouse - Bob Cratchit", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseBobCratchit, {
             targets: [allyId],
           }),
         ).toBeSuccessfulCommand();
@@ -142,7 +142,9 @@ describe("Mickey Mouse - Bob Cratchit", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(mickeyMouseBobCratchit, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 
@@ -180,7 +182,7 @@ describe("Mickey Mouse - Bob Cratchit", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects).toHaveLength(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseBobCratchit, {
           targets: [allyId],
         }),
       ).toBeSuccessfulCommand();

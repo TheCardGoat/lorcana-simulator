@@ -46,7 +46,9 @@ describe("Daisy Duck - Donald's Date", () => {
     expect(testEngine.asPlayerOne().quest(daisyDuckDonaldsDate)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(daisyDuckDonaldsDate),
+    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerTwo().resolveNextPending({
         destinations: [{ zone: "hand", cards: [topCharacter] }],
@@ -77,7 +79,9 @@ describe("Daisy Duck - Donald's Date", () => {
     expect(testEngine.asPlayerOne().quest(daisyDuckDonaldsDate)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(daisyDuckDonaldsDate),
+    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerTwo().resolveNextPending({ destinations: [] }),
     ).toBeSuccessfulCommand();
@@ -112,7 +116,9 @@ describe("Daisy Duck - Donald's Date", () => {
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().quest(daisyDuckDonaldsDate)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerTwo().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerTwo().resolvePendingByCard(daisyDuckDonaldsDate),
+    ).toBeSuccessfulCommand();
 
     // The pending effect should be assigned to Player One (the opponent), not Player Two
     const pending = testEngine.getAuthoritativeState().G.pendingEffects ?? [];

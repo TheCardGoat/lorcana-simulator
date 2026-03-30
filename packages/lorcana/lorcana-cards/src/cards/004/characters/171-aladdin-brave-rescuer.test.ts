@@ -91,7 +91,7 @@ describe("Aladdin - Brave Rescuer", () => {
 
       // Resolve the triggered ability - accept optional and target the item
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [mockItem] }),
+        testEngine.asPlayerOne().resolvePendingByCard(aladdinBraveRescuer, { targets: [mockItem] }),
       ).toBeSuccessfulCommand();
 
       // Item should be banished
@@ -116,7 +116,9 @@ describe("Aladdin - Brave Rescuer", () => {
       expect(testEngine.asPlayerOne().quest(aladdinBraveRescuer)).toBeSuccessfulCommand();
 
       // Decline the optional ability
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(aladdinBraveRescuer, { resolveOptional: false });
 
       // Item should still be in play
       expect(testEngine.asPlayerTwo().getCardZone(mockItem)).toBe("play");
@@ -140,7 +142,7 @@ describe("Aladdin - Brave Rescuer", () => {
       expect(testEngine.asPlayerOne().quest(aladdinBraveRescuer)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [ownItem] }),
+        testEngine.asPlayerOne().resolvePendingByCard(aladdinBraveRescuer, { targets: [ownItem] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(ownItem)).toBe("discard");

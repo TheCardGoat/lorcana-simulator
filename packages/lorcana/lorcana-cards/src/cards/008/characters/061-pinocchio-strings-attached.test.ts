@@ -32,7 +32,9 @@ describe("Pinocchio - Strings Attached", () => {
 
       // Accept the optional draw
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(pinocchioStringsAttached, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Should have drawn 1 card
@@ -54,7 +56,9 @@ describe("Pinocchio - Strings Attached", () => {
 
       // Decline the optional draw
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(pinocchioStringsAttached, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Hand should remain empty
@@ -76,7 +80,9 @@ describe("Pinocchio - Strings Attached", () => {
       // Resolve first trigger
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(pinocchioStringsAttached, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Drew 1 card
@@ -139,7 +145,9 @@ describe("Pinocchio - Strings Attached", () => {
       const bagCount = testEngine.asPlayerTwo().getBagCount();
       if (bagCount > 0) {
         expect(
-          testEngine.asPlayerTwo().resolveNextBag({ resolveOptional: true }),
+          testEngine
+            .asPlayerTwo()
+            .resolvePendingByCard(pinocchioStringsAttached, { resolveOptional: true }),
         ).toBeSuccessfulCommand();
 
         // Player two should have drawn 2 cards total (start-of-turn draw + GOT TO KEEP REAL QUIET draw)

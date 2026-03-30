@@ -17,7 +17,7 @@ describe("Sneezy - Very Allergic", () => {
 
     testEngine.asPlayerOne().playCard(sneezyId);
 
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(sneezyVeryAllergic, { resolveOptional: true });
 
     // Target a character
     let pendingChoice = testEngine.asPlayerOne().getPendingChoice();
@@ -41,7 +41,7 @@ describe("Sneezy - Very Allergic", () => {
 
     testEngine.asPlayerOne().playCard(bashfulId);
 
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(sneezyVeryAllergic, { resolveOptional: true });
 
     // Target a character
     let pendingChoice = testEngine.asPlayerOne().getPendingChoice();

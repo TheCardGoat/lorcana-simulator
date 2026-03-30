@@ -37,6 +37,9 @@ export const theQueenCommandingPresence: CharacterCard = {
   abilities: [
     shift(2),
     {
+      id: "A9v-2",
+      name: "WHO IS THE FAIREST?",
+      text: "WHO IS THE FAIREST? Whenever this character quests, chosen opposing character gets -4 {S} this turn and chosen character gets +4 {S} this turn.",
       effect: {
         steps: [
           {

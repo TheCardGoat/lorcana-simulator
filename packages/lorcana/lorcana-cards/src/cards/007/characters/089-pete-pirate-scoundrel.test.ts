@@ -30,7 +30,9 @@ describe("Pete - Pirate Scoundrel", () => {
 
       // Accept the optional trigger
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(petePirateScoundrel, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose the item to banish
@@ -85,7 +87,9 @@ describe("Pete - Pirate Scoundrel", () => {
 
       // Decline the optional trigger
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(petePirateScoundrel, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Item should still be in play

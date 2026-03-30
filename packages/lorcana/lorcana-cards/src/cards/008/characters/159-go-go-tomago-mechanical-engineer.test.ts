@@ -52,7 +52,9 @@ describe("Go Go Tomago - Mechanical Engineer", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(goGoTomagoMechanicalEngineer, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(deckCard)).toBe("inkwell");
@@ -71,7 +73,9 @@ describe("Go Go Tomago - Mechanical Engineer", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(goGoTomagoMechanicalEngineer, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(deckCard)).toBe("deck");
@@ -102,7 +106,9 @@ describe("Go Go Tomago - Mechanical Engineer", () => {
       expect(testEngine.asPlayerOne().playCard(floodbornCharacter)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(goGoTomagoMechanicalEngineer, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // The deck card should be in the inkwell, exerted

@@ -458,8 +458,8 @@ export const PLAYER_TARGET_EXPANSIONS: Record<string, PlayerTargetDSL> = {
   CONTROLLER: { selector: "you" },
   SELF: { selector: "you" },
   OPPONENT: { selector: "opponent" },
-  OPPONENTS: { selector: "each-opponent" },
-  EACH_OPPONENT: { selector: "each-opponent" },
+  OPPONENTS: { selector: "opponent" }, // Alias for OPPONENT — engine is 1v1 only
+  EACH_OPPONENT: { selector: "opponent" }, // Alias for OPPONENT — engine is 1v1 only
   EACH_PLAYER: { selector: "each-player" },
   ALL_PLAYERS: { selector: "each-player" },
   CHOSEN_PLAYER: { selector: "chosen" },

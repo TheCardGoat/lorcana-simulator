@@ -35,24 +35,69 @@ export const hiramFlavershamToymaker: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "all",
-            count: "all",
-            owner: "you",
-            zones: ["play"],
-            cardTypes: ["item"],
-          },
-          type: "banish",
+          type: "sequence",
+          steps: [
+            {
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["item"],
+              },
+              type: "banish",
+            },
+            {
+              amount: 2,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+          ],
         },
         type: "optional",
       },
       id: "slt-1",
-      name: "ARTIFICER When you play this character and",
+      name: "ARTIFICER",
       text: "ARTIFICER When you play this character and whenever he quests, you may banish one of your items to draw 2 cards.",
       trigger: {
         event: "play",
         on: "SELF",
         timing: "when",
+      },
+      type: "triggered",
+    },
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          type: "sequence",
+          steps: [
+            {
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["item"],
+              },
+              type: "banish",
+            },
+            {
+              amount: 2,
+              target: "CONTROLLER",
+              type: "draw",
+            },
+          ],
+        },
+        type: "optional",
+      },
+      id: "slt-2",
+      name: "ARTIFICER",
+      text: "ARTIFICER When you play this character and whenever he quests, you may banish one of your items to draw 2 cards.",
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
       },
       type: "triggered",
     },

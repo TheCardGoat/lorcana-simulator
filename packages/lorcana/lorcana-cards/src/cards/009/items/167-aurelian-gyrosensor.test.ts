@@ -34,7 +34,7 @@ describe("Aurelian Gyrosensor", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      testEngine.asPlayerOne().resolvePendingByCard(aurelianGyrosensor, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().activateAbility(heartOfTeFiti)).toBeSuccessfulCommand();
@@ -53,7 +53,9 @@ describe("Aurelian Gyrosensor", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(aurelianGyrosensor),
+    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({
         resolveOptional: true,

@@ -24,7 +24,7 @@ describe("James - Role Model", () => {
 
     // Resolve the optional trigger by accepting it
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      testEngine.asPlayerOne().resolvePendingByCard(jamesRoleModel, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     // James should now be in the inkwell
@@ -58,7 +58,7 @@ describe("James - Role Model", () => {
 
     // Decline the optional trigger
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      testEngine.asPlayerOne().resolvePendingByCard(jamesRoleModel, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     // James should remain in discard (not moved to inkwell)

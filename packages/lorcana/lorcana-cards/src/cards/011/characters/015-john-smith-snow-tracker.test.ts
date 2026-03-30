@@ -33,7 +33,7 @@ describe("John Smith - Snow Tracker", () => {
       // Resolve the FOLLOW THE TRACKS bag effect
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+          testEngine.asPlayerOne().resolvePendingByCard(johnSmithSnowTracker),
         ).toBeSuccessfulCommand();
       }
 
@@ -57,7 +57,7 @@ describe("John Smith - Snow Tracker", () => {
 
       // No bag effect should be created (character is not exerted)
       if (testEngine.asPlayerOne().getBagCount() > 0) {
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id);
+        testEngine.asPlayerOne().resolvePendingByCard(johnSmithSnowTracker);
       }
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(loreBefore);
@@ -86,7 +86,7 @@ describe("John Smith - Snow Tracker", () => {
 
       // Resolve any pending bag effects
       if (testEngine.asPlayerOne().getBagCount() > 0) {
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id);
+        testEngine.asPlayerOne().resolvePendingByCard(johnSmithSnowTracker);
       }
 
       // Should not gain lore because John Smith challenged this turn
@@ -116,7 +116,7 @@ describe("John Smith - Snow Tracker", () => {
 
       // Resolve any pending bag effects
       if (testEngine.asPlayerOne().getBagCount() > 0) {
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id);
+        testEngine.asPlayerOne().resolvePendingByCard(johnSmithSnowTracker);
       }
 
       // Should not gain lore because another character challenged this turn

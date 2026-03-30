@@ -37,7 +37,7 @@ describe("Darkwing Duck - Dashing Gadgeteer", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(darkwingDuckDashingGadgeteer, {
         resolveOptional: true,
         targets: [bottomItem],
       }),
@@ -58,7 +58,7 @@ describe("Darkwing Duck - Dashing Gadgeteer", () => {
     expect(testEngine.asPlayerOne().quest(darkwingDuckDashingGadgeteer)).toBeSuccessfulCommand();
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(darkwingDuckDashingGadgeteer, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

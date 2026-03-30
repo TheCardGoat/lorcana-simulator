@@ -40,7 +40,7 @@ describe("Castle of the Horned King - Bastion of Evil", () => {
     expect(testEngine.asPlayerOne().getCard(testItem).exerted).toBe(true);
     expect(testEngine.asPlayerOne().quest(gloomQuester)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
+      testEngine.asPlayerOne().resolvePendingByCard(castleOfTheHornedKingBastionOfEvil).success,
     ).toBe(true);
     expect(testEngine.asPlayerOne().resolveNextPending({ targets: [testItem] }).success).toBe(true);
     expect(testEngine.asPlayerOne().getCard(testItem).exerted).toBe(false);
@@ -60,7 +60,7 @@ describe("Castle of the Horned King - Bastion of Evil", () => {
     // First quest triggers the ability
     expect(testEngine.asPlayerOne().quest(gloomQuester)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
+      testEngine.asPlayerOne().resolvePendingByCard(castleOfTheHornedKingBastionOfEvil).success,
     ).toBe(true);
     expect(testEngine.asPlayerOne().resolveNextPending({ targets: [testItem] }).success).toBe(true);
     expect(testEngine.asPlayerOne().getCard(testItem).exerted).toBe(false);

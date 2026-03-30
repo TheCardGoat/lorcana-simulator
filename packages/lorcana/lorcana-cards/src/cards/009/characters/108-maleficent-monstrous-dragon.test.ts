@@ -60,9 +60,10 @@ describe("Maleficent - Monstrous Dragon (Set 9)", () => {
       expect(testEngine.asPlayerOne().playCard(maleficentMonstrousDragon)).toBeSuccessfulCommand();
 
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ resolveOptional: true, targets: [targetCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentMonstrousDragon, {
+          resolveOptional: true,
+          targets: [targetCharacter],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(targetCharacter)).toBe("discard");
@@ -84,9 +85,10 @@ describe("Maleficent - Monstrous Dragon (Set 9)", () => {
       expect(testEngine.asPlayerOne().playCard(maleficentMonstrousDragon)).toBeSuccessfulCommand();
 
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ resolveOptional: true, targets: [anotherCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentMonstrousDragon, {
+          resolveOptional: true,
+          targets: [anotherCharacter],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(anotherCharacter)).toBe("discard");
@@ -108,7 +110,9 @@ describe("Maleficent - Monstrous Dragon (Set 9)", () => {
       expect(testEngine.asPlayerOne().playCard(maleficentMonstrousDragon)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maleficentMonstrousDragon, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Character should still be in play
@@ -131,9 +135,10 @@ describe("Maleficent - Monstrous Dragon (Set 9)", () => {
       expect(testEngine.asPlayerOne().playCard(maleficentMonstrousDragon)).toBeSuccessfulCommand();
 
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ resolveOptional: true, targets: [targetCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentMonstrousDragon, {
+          resolveOptional: true,
+          targets: [targetCharacter],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(maleficentMonstrousDragon)).toBe("play");

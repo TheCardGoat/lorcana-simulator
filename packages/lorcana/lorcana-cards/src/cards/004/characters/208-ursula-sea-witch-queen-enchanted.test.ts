@@ -57,7 +57,7 @@ describe("Ursula - Sea Witch Queen (Enchanted)", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(ursulaSeaWitchQueenEnchanted, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -84,7 +84,7 @@ describe("Ursula - Sea Witch Queen (Enchanted)", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(ursulaSeaWitchQueenEnchanted, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();

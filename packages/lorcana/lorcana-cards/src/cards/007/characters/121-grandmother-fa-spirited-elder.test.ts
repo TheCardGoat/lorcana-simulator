@@ -25,7 +25,7 @@ describe("Grandmother Fa - Spirited Elder", () => {
       expect(testEngine.asPlayerOne().quest(grandmotherFaSpiritedElder)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(grandmotherFaSpiritedElder, {
           resolveOptional: true,
           targets: [friendlyTarget],
         }),
@@ -47,7 +47,9 @@ describe("Grandmother Fa - Spirited Elder", () => {
 
       expect(testEngine.asPlayerOne().quest(grandmotherFaSpiritedElder)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(grandmotherFaSpiritedElder, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCard(friendlyTarget)?.strength).toBe(

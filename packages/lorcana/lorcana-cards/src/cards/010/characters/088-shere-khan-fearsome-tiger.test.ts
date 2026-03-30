@@ -52,7 +52,7 @@ describe("Shere Khan - Fearsome Tiger", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(shereKhanFearsomeTiger, {
           targets: [akelaForestRunner],
         }),
       ).toBeSuccessfulCommand();
@@ -89,7 +89,9 @@ describe("Shere Khan - Fearsome Tiger", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
 
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(shereKhanFearsomeTiger),
+      ).toBeSuccessfulCommand();
 
       const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
       if (pendingEffects.length > 0) {

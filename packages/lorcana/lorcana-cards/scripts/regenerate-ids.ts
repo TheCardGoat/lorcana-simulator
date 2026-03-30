@@ -25,12 +25,18 @@ function randomId(): string {
 }
 
 function nextUniqueId(used: Set<string>): string {
-  let id: string;
-  do {
-    id = randomId();
-  } while (used.has(id));
-  used.add(id);
-  return id;
+  const maxAttempts = 1_000;
+
+  for (let attempts = 0; attempts < maxAttempts; attempts += 1) {
+    const id = randomId();
+    if (used.has(id)) {
+      continue;
+    }
+    used.add(id);
+    return id;
+  }
+
+  throw new Error(`Unable to generate a unique id after ${maxAttempts} attempts.`);
 }
 
 /** Match a line containing id: "..." — capture leading whitespace and the quoted value */
@@ -45,14 +51,17 @@ function findCardIdLine(
 ): { fullLine: string; indent: string; value: string } | null {
   let best: { fullLine: string; indent: string; value: string } | null = null;
   let minIndent = Number.POSITIVE_INFINITY;
-  let m: RegExpExecArray | null;
   ID_LINE_RE.lastIndex = 0;
-  while ((m = ID_LINE_RE.exec(content)) !== null) {
-    const indent = m[1]!;
-    const value = m[2]!;
+  for (const match of content.matchAll(ID_LINE_RE)) {
+    const fullLine = match[0];
+    if (!fullLine) {
+      continue;
+    }
+    const indent = match[1]!;
+    const value = match[2]!;
     if (indent.length < minIndent) {
       minIndent = indent.length;
-      best = { fullLine: m[0]!, indent, value };
+      best = { fullLine, indent, value };
     }
   }
   return best;

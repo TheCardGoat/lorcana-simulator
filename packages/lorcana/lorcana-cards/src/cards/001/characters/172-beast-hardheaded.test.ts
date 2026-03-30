@@ -20,7 +20,7 @@ describe("Beast - Hardheaded", () => {
       expect(testEngine.asPlayerOne().playCard(beastHardheaded)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(beastHardheaded, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [targetItem] }),
@@ -39,7 +39,7 @@ describe("Beast - Hardheaded", () => {
       expect(testEngine.asPlayerOne().playCard(beastHardheaded)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(beastHardheaded, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(targetItem)).toBe("play");

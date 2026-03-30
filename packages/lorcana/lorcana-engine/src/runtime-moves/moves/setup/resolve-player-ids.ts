@@ -3,13 +3,14 @@ import { createPlayerId, type PlayerId } from "#core";
 type PlayerIdSource = {
   playerIds?: readonly PlayerId[] | null;
   _zonesPrivate?: {
+    zoneCards?: Record<string, unknown>;
     cardIndex?: Record<string, { ownerID?: string }>;
   };
   /** @deprecated Use _zonesPrivate instead */
   ctx?: {
     zones?: {
-      zoneDefs?: Record<string, { ownerScoped?: boolean }>;
       private?: {
+        zoneCards?: Record<string, unknown>;
         cardIndex?: Record<string, { ownerID?: string }>;
       };
     };
@@ -23,13 +24,9 @@ export function resolveRuntimePlayerIds(source: PlayerIdSource): PlayerId[] {
 
   const playerIds: PlayerId[] = [];
   const seen = new Set<string>();
-  const zoneDefs = source.ctx?.zones?.zoneDefs ?? {};
+  const zoneCards = source._zonesPrivate?.zoneCards ?? source.ctx?.zones?.private?.zoneCards ?? {};
 
-  for (const [zoneId, zoneDef] of Object.entries(zoneDefs)) {
-    if (!zoneDef?.ownerScoped) {
-      continue;
-    }
-
+  for (const zoneId of Object.keys(zoneCards)) {
     const separatorIndex = zoneId.indexOf(":");
     if (separatorIndex <= 0 || separatorIndex >= zoneId.length - 1) {
       continue;

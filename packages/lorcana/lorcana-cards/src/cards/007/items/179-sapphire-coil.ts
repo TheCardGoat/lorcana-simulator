@@ -57,7 +57,7 @@ export const sapphireCoil: ItemCard = {
             whose: "your",
           },
         ],
-        timing: "when",
+        timing: "whenever",
       },
     },
   ],

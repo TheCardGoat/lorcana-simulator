@@ -41,6 +41,7 @@ export type ResolutionSelectionRevealedCard = {
 
 export type ResolutionSelectionCurrentSelection = Partial<{
   targets: Array<CardInstanceId | PlayerId>;
+  amount: number;
   choiceIndex: number;
   resolveOptional: boolean;
   namedCard: string;
@@ -87,6 +88,8 @@ export type ResolutionSelectionDestinationRule = {
 export type TargetResolutionSelectionContext = ResolutionSelectionContextBase & {
   kind: "target-selection" | "discard-choice";
   submitField: "targets";
+  originatesFromOptional?: boolean;
+  canDeclineSelection?: boolean;
   targetDsl: LorcanaTargetDSL[];
   cardCandidateIds: CardInstanceId[];
   playerCandidateIds: PlayerId[];

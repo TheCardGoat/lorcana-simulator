@@ -33,7 +33,7 @@ describe("Mirabel Madrigal - Curious Child", () => {
 
       // Accept the optional ability and reveal the song
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(mirabelMadrigalCuriousChild, {
           resolveOptional: true,
           targets: [testSong],
         }),
@@ -59,7 +59,9 @@ describe("Mirabel Madrigal - Curious Child", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mirabelMadrigalCuriousChild, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore);
@@ -83,7 +85,9 @@ describe("Mirabel Madrigal - Curious Child", () => {
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
         expect(
-          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(mirabelMadrigalCuriousChild, { resolveOptional: true }),
         ).toBeSuccessfulCommand();
       }
 

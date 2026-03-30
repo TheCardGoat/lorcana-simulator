@@ -28,12 +28,12 @@
       <div class="flex items-center justify-between gap-3">
         <h2 class="text-lg font-semibold text-white sm:text-xl">Direct Links</h2>
         <span class="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-300">
-          {data.routeLinks.length} routes
+          {data.staticRouteLinks.length} routes
         </span>
       </div>
 
       <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {#each data.routeLinks as route}
+        {#each data.staticRouteLinks as route}
           <a
             href={route.href}
             class="group rounded-2xl border border-slate-800 bg-slate-900/80 p-4 transition hover:border-cyan-400/60 hover:bg-slate-900"
@@ -49,6 +49,56 @@
           </a>
         {/each}
       </div>
+    </section>
+
+    <section class="space-y-4">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-white sm:text-xl">Fixture Routes</h2>
+        <span class="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-300">
+          {data.generalFixtureRouteLinks.length} fixtures
+        </span>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {#each data.generalFixtureRouteLinks as route}
+          <a
+            href={route.href}
+            class="group rounded-2xl border border-slate-800 bg-slate-900/80 p-4 transition hover:border-cyan-400/60 hover:bg-slate-900"
+          >
+            <div class="space-y-2">
+              <div class="flex items-start justify-between gap-3">
+                <h3 class="text-base font-semibold text-white">{route.label}</h3>
+                <span class="text-cyan-300 transition group-hover:translate-x-0.5">-></span>
+              </div>
+              <p class="text-sm text-slate-300">{route.description}</p>
+              <p class="font-mono text-xs text-slate-400">{route.href}</p>
+            </div>
+          </a>
+        {/each}
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-white sm:text-xl">Regression Reports</h2>
+        <span class="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-300">
+          {data.regressionFixtureCount} saved
+        </span>
+      </div>
+
+      <a
+        href={data.regressionRouteLink.href}
+        class="group block rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-5 transition hover:border-cyan-300/60 hover:bg-cyan-500/15"
+      >
+        <div class="space-y-2">
+          <div class="flex items-start justify-between gap-3">
+            <h3 class="text-base font-semibold text-white">{data.regressionRouteLink.label}</h3>
+            <span class="text-cyan-300 transition group-hover:translate-x-0.5">-></span>
+          </div>
+          <p class="text-sm text-slate-200">{data.regressionRouteLink.description}</p>
+          <p class="font-mono text-xs text-cyan-100/80">{data.regressionRouteLink.href}</p>
+        </div>
+      </a>
     </section>
 
     <section class="space-y-4">

@@ -38,7 +38,7 @@ describe("The Nokk - Mythical Spirit", () => {
       // Optional triggered ability fires
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(theNokkMythicalSpirit, {
           resolveOptional: true,
           targets: [damagedFriendly, opposingCharacter],
         }),
@@ -66,7 +66,9 @@ describe("The Nokk - Mythical Spirit", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theNokkMythicalSpirit, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage unchanged
@@ -91,7 +93,7 @@ describe("The Nokk - Mythical Spirit", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(theNokkMythicalSpirit, {
           resolveOptional: true,
           targets: [damagedFriendly, opposingCharacter],
         }),

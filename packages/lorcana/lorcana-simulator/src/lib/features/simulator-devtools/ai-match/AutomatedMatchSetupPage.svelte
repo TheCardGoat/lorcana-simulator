@@ -11,7 +11,10 @@ import {
 } from "$lib/design-system/primitives/card";
 import { Select } from "$lib/design-system/primitives/select";
 import { Separator } from "$lib/design-system/primitives/separator";
-import { AUTOMATED_ACTION_STRATEGIES } from "@tcg/lorcana-engine";
+import {
+	AUTOMATED_ACTION_STRATEGIES,
+	getSafeAutomatedActionStrategyOption,
+} from "@tcg/lorcana-engine";
 import { DECK_FIXTURES } from "../deck-fixtures/index.js";
 import {
 	loadAutomatedMatchConfig,
@@ -105,6 +108,10 @@ function updateStrategy(side: "playerOne" | "playerTwo", strategyId: string): vo
 					playerTwoStrategyId: strategyId,
 				},
 	);
+}
+
+function getStrategyDescription(strategyId: string): string {
+	return getSafeAutomatedActionStrategyOption(strategyId).description;
 }
 
 function countDeckCards(deckText: string): number {
@@ -278,7 +285,7 @@ async function simulateMatch(): Promise<void> {
               {/each}
             </Select>
             <p class="text-sm leading-6 text-slate-400">
-              {AUTOMATED_ACTION_STRATEGIES.find((strategyOption) => strategyOption.id === config.playerOneStrategyId)?.description}
+              {getStrategyDescription(config.playerOneStrategyId)}
             </p>
           </div>
 
@@ -297,7 +304,7 @@ async function simulateMatch(): Promise<void> {
               {/each}
             </Select>
             <p class="text-sm leading-6 text-slate-400">
-              {AUTOMATED_ACTION_STRATEGIES.find((strategyOption) => strategyOption.id === config.playerTwoStrategyId)?.description}
+              {getStrategyDescription(config.playerTwoStrategyId)}
             </p>
           </div>
 

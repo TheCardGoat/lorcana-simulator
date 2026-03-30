@@ -19,6 +19,7 @@ import type { ActivePlayerGuidanceController } from "@/features/simulator/model/
 import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import NamedCardSearchInput from "@/features/simulator/panels/NamedCardSearchInput.svelte";
 import CardTextToken from "@/features/simulator/panels/CardTextToken.svelte";
+import ResolutionAmountControls from "@/features/simulator/panels/ResolutionAmountControls.svelte";
 import HotkeyDisplay from "@/features/simulator/hotkeys/HotkeyDisplay.svelte";
 import { getFixedMoveCategoryHotkey } from "@/features/simulator/hotkeys/hotkey-bindings.js";
 
@@ -54,6 +55,7 @@ interface AvailableMovesPanelProps {
 	onSelectOption?: (moveId: string) => boolean;
 	onResolutionNamedCardQueryInput?: (query: string) => void;
 	onSelectNamedCard?: (cardName: string) => boolean;
+	onResolutionAmountChange?: (value: number) => boolean;
 	onAssignScryCard?: (cardId: string, destinationId: string) => boolean;
 	onReorderScryCard?: (
 		destinationId: string,
@@ -87,6 +89,7 @@ let {
 	onSelectOption,
 	onResolutionNamedCardQueryInput,
 	onSelectNamedCard,
+	onResolutionAmountChange,
 	onAssignScryCard,
 	onReorderScryCard,
 	onBackSelection,
@@ -653,7 +656,7 @@ onDestroy(() => {
                         </div>
                         {#if destination.orderingEnabled}
                           <p class="move-detail">
-                            Position {index + 1} of {destination.cards.length}
+                            {m['sim.actions.reorder.position']({ current: index + 1, total: destination.cards.length })}
                           </p>
                         {/if}
                       </div>
@@ -783,13 +786,37 @@ onDestroy(() => {
         {/if}
       {/if}
 
+      {#if selectionState.mode === "resolution-target" && selectionState.amountSelection}
+        <ResolutionAmountControls
+          selection={selectionState.amountSelection}
+          onChange={(value) => {
+            onResolutionAmountChange?.(value);
+          }}
+        />
+      {/if}
+
       <div class="selection-actions">
-        <button type="button" class="selection-action-button" onclick={() => onCancelSelection?.()}>
-          {m["sim.actions.cancel"]({})}
-          {#if hotkeyMode !== "off"}
-            <HotkeyDisplay hotkey={getSelectionActionHotkey("cancel")} />
-          {/if}
-        </button>
+        {#if selectionState.canCancel}
+          <button
+            type="button"
+            class="selection-action-button"
+            onclick={() => onCancelSelection?.()}
+          >
+            {m["sim.actions.cancel"]({})}
+            {#if hotkeyMode !== "off"}
+              <HotkeyDisplay hotkey={getSelectionActionHotkey("cancel")} />
+            {/if}
+          </button>
+        {/if}
+        {#if selectionState.canDecline}
+          <button
+            type="button"
+            class="selection-action-button"
+            onclick={() => onSelectOption?.("reject")}
+          >
+            {selectionState.declineLabel ?? m["sim.actions.label.declineEffect"]({})}
+          </button>
+        {/if}
         {#if selectionState.canConfirm}
           <button
             type="button"

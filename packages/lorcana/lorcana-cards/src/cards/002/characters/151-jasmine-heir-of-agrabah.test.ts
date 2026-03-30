@@ -24,7 +24,7 @@ describe("Jasmine - Heir of Agrabah", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id);
+        testEngine.asPlayerOne().resolvePendingByCard(jasmineHeirOfAgrabah);
         testEngine.asPlayerOne().resolveNextPending({ targets: [damagedAlly] });
       }
 

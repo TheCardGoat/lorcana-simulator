@@ -54,7 +54,12 @@
   <!-- Top card (opponent or local depending on attacker) -->
   <div class="card-slot">
     {#if topCard}
-      <LorcanaCard card={topCard} size="small" isBanishedPreview={topCardBanished} />
+      <LorcanaCard
+        card={topCard}
+        size="small"
+        isExerted={false}
+        isBanishedPreview={topCardBanished}
+      />
     {:else}
       <div class="card-placeholder"></div>
     {/if}
@@ -117,7 +122,12 @@
   <!-- Bottom card -->
   <div class="card-slot">
     {#if bottomCard}
-      <LorcanaCard card={bottomCard} size="small" isBanishedPreview={bottomCardBanished} />
+      <LorcanaCard
+        card={bottomCard}
+        size="small"
+        isExerted={false}
+        isBanishedPreview={bottomCardBanished}
+      />
     {:else}
       <div class="card-placeholder"></div>
     {/if}
@@ -131,7 +141,7 @@
   .challenge-result-panel {
     position: fixed;
     right: 1.5rem;
-    bottom: 1.5rem;
+    top: 50%;
     z-index: 50;
     pointer-events: none;
     display: flex;
@@ -149,19 +159,19 @@
   @keyframes challenge-result-panel-lifecycle {
     0% {
       opacity: 0;
-      transform: translateX(120%);
+      transform: translate3d(120%, -50%, 0);
     }
     8% {
       opacity: 1;
-      transform: translateX(0);
+      transform: translate3d(0, -50%, 0);
     }
-    80% {
+    88% {
       opacity: 1;
-      transform: translateX(0);
+      transform: translate3d(0, -50%, 0);
     }
     100% {
       opacity: 0;
-      transform: translateX(0);
+      transform: translate3d(0, -50%, 0);
     }
   }
 

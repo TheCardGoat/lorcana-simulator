@@ -108,7 +108,7 @@ describe("Kronk - Laid Back", () => {
       if (bagCount > 0) {
         const bagEffects = testEngine.asPlayerTwo().getBagEffects();
         for (const bagEffect of bagEffects) {
-          testEngine.asPlayerTwo().resolveBag(bagEffect.id);
+          testEngine.asPlayerTwo().resolvePendingByCard(kronkLaidBack);
         }
       }
 

@@ -115,7 +115,7 @@ describe("Honey Lemon - Costumed Catalyst", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(honeyLemonCostumedCatalyst, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -144,7 +144,7 @@ describe("Honey Lemon - Costumed Catalyst", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(honeyLemonCostumedCatalyst, {
           resolveOptional: true,
           targets: [targetToReturn],
         }),
@@ -175,7 +175,9 @@ describe("Honey Lemon - Costumed Catalyst", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(honeyLemonCostumedCatalyst, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(opponentCharacter)).toBe("play");
@@ -200,7 +202,9 @@ describe("Honey Lemon - Costumed Catalyst", () => {
       // without letting the player choose a target — opponent character remains in play
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const bag of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(bag.id, { resolveOptional: false });
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(honeyLemonCostumedCatalyst, { resolveOptional: false });
       }
 
       expect(testEngine.asPlayerTwo().getCardZone(opponentCharacter)).toBe("play");

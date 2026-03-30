@@ -53,7 +53,9 @@ describe("Basil - Disguised Detective", () => {
 
       // Accept the optional ability (pay 1 ink)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(basilDisguisedDetective, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Player one resolves the target selection
@@ -89,7 +91,9 @@ describe("Basil - Disguised Detective", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(basilDisguisedDetective, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // No further effects

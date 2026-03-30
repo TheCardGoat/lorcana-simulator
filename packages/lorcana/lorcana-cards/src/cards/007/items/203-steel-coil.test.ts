@@ -30,7 +30,7 @@ describe("Steel Coil", () => {
 
     expect(testEngine.asPlayerOne().ink(inkCard)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(steelCoil, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();

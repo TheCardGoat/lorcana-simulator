@@ -35,7 +35,9 @@ describe("Ursula - Sea Witch", () => {
 
       // Resolve the triggered ability targeting the opponent's character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ursulaSeaWitch, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       // Pass player one's turn to advance to player two's turn
@@ -62,7 +64,9 @@ describe("Ursula - Sea Witch", () => {
 
       // Resolve targeting the READY character — should still be valid
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ursulaSeaWitch, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       // The character is still ready (You're Too Late doesn't exert)
@@ -85,7 +89,9 @@ describe("Ursula - Sea Witch", () => {
 
       expect(testEngine.asPlayerOne().quest(ursulaSeaWitch)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ursulaSeaWitch, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(ursulaSeaWitch.lore);

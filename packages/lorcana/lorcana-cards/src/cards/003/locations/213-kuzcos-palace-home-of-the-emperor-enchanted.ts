@@ -1,53 +1,16 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { kuzcosPalaceHomeOfTheEmperorEnchantedI18n } from "./213-kuzcos-palace-home-of-the-emperor-enchanted.i18n";
+import { kuzcosPalaceHomeOfTheEmperor } from "..";
 
 export const kuzcosPalaceHomeOfTheEmperorEnchanted: LocationCard = {
+  ...kuzcosPalaceHomeOfTheEmperor,
   id: "YPI",
-  canonicalId: "ci_vRE",
   reprints: ["set3-102"],
-  cardType: "location",
-  name: "Kuzco's Palace",
-  version: "Home of the Emperor",
-  inkType: ["emerald"],
-  franchise: "Emperors New Groove",
   set: "003",
   cardNumber: 213,
   rarity: "enchanted",
   specialRarity: "enchanted",
-  cost: 3,
-  willpower: 7,
-  moveCost: 3,
-  lore: 1,
-  inkable: true,
   externalIds: {
     lorcast: "crd_a1af7dad15b64d31a696f7bbb49bfe92",
     tcgPlayer: 539165,
   },
-  text: [
-    {
-      title: "CITY WALLS",
-      description:
-        "Whenever a character is challenged and banished while here, banish the challenging character.",
-    },
-  ],
-  abilities: [
-    {
-      trigger: {
-        event: "challenged-and-banished",
-        on: "CHARACTERS_HERE",
-        timing: "when",
-      },
-      effect: {
-        target: {
-          ref: "attacker",
-        },
-        type: "banish",
-      },
-      id: "aae-1",
-      name: "CITY WALLS",
-      text: "CITY WALLS Whenever a character is challenged and banished while here, banish the challenging character.",
-      type: "triggered",
-    },
-  ],
-  i18n: kuzcosPalaceHomeOfTheEmperorEnchantedI18n,
 };

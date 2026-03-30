@@ -34,7 +34,7 @@ describe("John Silver - Ship's Cook", () => {
       // Resolve by choosing target character
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(johnSilverShipsCook, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -68,7 +68,7 @@ describe("John Silver - Ship's Cook", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(johnSilverShipsCook, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -117,7 +117,7 @@ describe("John Silver - Ship's Cook", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(johnSilverShipsCook, {
           targets: [ownCharacter],
         }),
       ).toBeSuccessfulCommand();

@@ -65,7 +65,9 @@ describe("Bellwether - Master Manipulator", () => {
       const bagCount = testEngine.asPlayerTwo().getBagCount();
       if (bagCount > 0) {
         const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
-        expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(bellwetherMasterManipulator),
+        ).toBeSuccessfulCommand();
       }
 
       // Bellwether should be banished
@@ -104,7 +106,9 @@ describe("Bellwether - Master Manipulator", () => {
       const bagCount = testEngine.asPlayerTwo().getBagCount();
       if (bagCount > 0) {
         const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
-        expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(bellwetherMasterManipulator),
+        ).toBeSuccessfulCommand();
       }
 
       expect(testEngine.asPlayerTwo().getCardZone(bellwetherMasterManipulator)).toBe("discard");
@@ -142,7 +146,9 @@ describe("Bellwether - Master Manipulator", () => {
       const bagCount = testEngine.asPlayerTwo().getBagCount();
       if (bagCount > 0) {
         const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
-        expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(bellwetherMasterManipulator),
+        ).toBeSuccessfulCommand();
       }
 
       expect(testEngine.asPlayerTwo().getCardZone(bellwetherMasterManipulator)).toBe("discard");
@@ -214,7 +220,9 @@ describe("Bellwether - Master Manipulator", () => {
       const bagCount = testEngine.asPlayerTwo().getBagCount();
       if (bagCount > 0) {
         const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
-        expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(bellwetherMasterManipulator),
+        ).toBeSuccessfulCommand();
       }
 
       expect(testEngine.asPlayerTwo().getCardZone(bellwetherMasterManipulator)).toBe("discard");

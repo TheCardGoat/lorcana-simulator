@@ -36,7 +36,7 @@ describe("Tadashi Hamada - Gifted Roboticist", () => {
 
       // Accept the optional: put top deck card into inkwell
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({
+        testEngine.asPlayerTwo().resolvePendingByCard(tadashiHamadaGiftedRoboticist, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -69,7 +69,7 @@ describe("Tadashi Hamada - Gifted Roboticist", () => {
 
       // Decline the optional
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({
+        testEngine.asPlayerTwo().resolvePendingByCard(tadashiHamadaGiftedRoboticist, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -133,7 +133,7 @@ describe("Tadashi Hamada - Gifted Roboticist", () => {
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({
+        testEngine.asPlayerTwo().resolvePendingByCard(tadashiHamadaGiftedRoboticist, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

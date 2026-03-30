@@ -38,6 +38,7 @@ export const chifuImperialAdvisor: CharacterCard = {
         type: "modify-stat",
       },
       id: "m5z-1",
+      name: "OVERLY CAUTIOUS",
       text: "OVERLY CAUTIOUS While this character has no damage, he gets +2 {L}.",
       type: "static",
     },

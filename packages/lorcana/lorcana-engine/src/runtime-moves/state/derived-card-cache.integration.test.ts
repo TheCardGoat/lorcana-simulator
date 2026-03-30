@@ -52,7 +52,7 @@ describe("derived-card-cache integration", () => {
     );
 
     try {
-      const state = structuredClone(testEngine.getAuthoritativeState()) as LorcanaMatchState;
+      const state = testEngine.getAuthoritativeState() as LorcanaMatchState;
       const staticResources = testEngine.getServerEngine().staticResources;
       const runtimeCardCache = createStateScopedValueCache<ProjectedLorcanaCardDerived>();
       const cardId = testEngine.findCardInstanceId(triggerWatcher, "play", "player_one");

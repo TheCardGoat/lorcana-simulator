@@ -43,9 +43,10 @@ describe("Go Go Tomago - Darting Dynamo", () => {
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine
-        .asPlayerOne()
-        .resolveNextBag({ resolveOptional: true, targets: [damagedOpponent] }),
+      testEngine.asPlayerOne().resolvePendingByCard(goGoTomagoDartingDynamo, {
+        resolveOptional: true,
+        targets: [damagedOpponent],
+      }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.getLore(PLAYER_ONE)).toBe(3);
@@ -69,9 +70,10 @@ describe("Go Go Tomago - Darting Dynamo", () => {
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine
-        .asPlayerOne()
-        .resolveNextBag({ resolveOptional: true, targets: [undamagedOpponent] }),
+      testEngine.asPlayerOne().resolvePendingByCard(goGoTomagoDartingDynamo, {
+        resolveOptional: true,
+        targets: [undamagedOpponent],
+      }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
@@ -94,7 +96,9 @@ describe("Go Go Tomago - Darting Dynamo", () => {
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(goGoTomagoDartingDynamo, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
@@ -117,9 +121,10 @@ describe("Go Go Tomago - Darting Dynamo", () => {
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine
-        .asPlayerOne()
-        .resolveNextBag({ resolveOptional: true, targets: [damagedOpponent] }),
+      testEngine.asPlayerOne().resolvePendingByCard(goGoTomagoDartingDynamo, {
+        resolveOptional: true,
+        targets: [damagedOpponent],
+      }),
     ).toBeSuccessfulCommand();
 
     // No ink available to pay, no lore gained

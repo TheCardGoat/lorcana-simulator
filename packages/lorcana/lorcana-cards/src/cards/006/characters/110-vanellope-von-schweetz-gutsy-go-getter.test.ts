@@ -62,7 +62,9 @@ describe("Vanellope Von Schweetz - Gutsy Go-Getter", () => {
       // The trigger should fire and auto-resolve (draw + lore gain)
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(vanellopeVonSchweetzGutsyGogetter),
+        ).toBeSuccessfulCommand();
       }
 
       // Should have gained 1 lore

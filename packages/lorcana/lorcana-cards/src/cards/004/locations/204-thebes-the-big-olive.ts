@@ -36,6 +36,7 @@ export const thebesTheBigOlive: LocationCard = {
         type: "gain-lore",
       },
       id: "niw-1",
+      name: "IF YOU CAN MAKE IT HERE...",
       text: "IF YOU CAN MAKE IT HERE... During your turn, whenever a character banishes another character in a challenge while here, gain 2 lore.",
       trigger: {
         event: "banish-in-challenge",

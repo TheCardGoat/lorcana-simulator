@@ -12,6 +12,9 @@ export interface LiveMatchEntry {
   player2: LiveMatchPlayer;
   player1Score: number;
   player2Score: number;
+  player1Inks: string[];
+  player2Inks: string[];
+  turnNumber: number;
   format: "best_of_1" | "best_of_3";
   matchType: string;
   createdAt: string;
@@ -33,7 +36,8 @@ export async function fetchLiveMatches(limit = 25): Promise<LiveMatchListRespons
   });
 
   if (!res.ok) {
-    throw new Error(`Failed to fetch live matches: ${res.status}`);
+    const body = await res.text().catch(() => "(unreadable body)");
+    throw new Error(`Failed to fetch live matches: ${res.status} — ${body}`);
   }
 
   return res.json() as Promise<LiveMatchListResponse>;

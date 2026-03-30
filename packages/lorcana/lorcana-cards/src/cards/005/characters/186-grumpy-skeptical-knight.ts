@@ -60,6 +60,7 @@ export const grumpySkepticalKnight: CharacterCard = {
         value: 2,
       },
       id: "pqh-1",
+      name: "BOON OF RESILIENCE",
       text: "BOON OF RESILIENCE While one of your Knight characters is at a location, that character gains Resist +2.",
     },
     {
@@ -73,6 +74,7 @@ export const grumpySkepticalKnight: CharacterCard = {
         type: "gain-keyword",
       },
       id: "pqh-2",
+      name: "BURST OF SPEED",
       text: "BURST OF SPEED During your turn, this character gains Evasive.",
       type: "static",
     },

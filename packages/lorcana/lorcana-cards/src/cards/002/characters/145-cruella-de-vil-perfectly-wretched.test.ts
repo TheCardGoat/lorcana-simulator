@@ -33,7 +33,9 @@ describe("Cruella De Vil - Perfectly Wretched", () => {
       return;
     }
 
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(cruellaDeVilPerfectlyWretched),
+    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [opposingTarget] }),
     ).toBeSuccessfulCommand();

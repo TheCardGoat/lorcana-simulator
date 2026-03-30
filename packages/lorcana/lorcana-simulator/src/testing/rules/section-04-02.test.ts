@@ -178,21 +178,14 @@ describe("#### 4. TURN ACTIONS", () => {
       expect(testEngine.isCardVisible(inkableCard, PLAYER_ONE)).toBe(false);
       expect(testEngine.isCardVisible(inkableCard, PLAYER_TWO)).toBe(false);
 
-      const gameLog = testEngine.getServerEngine().getRuntime().getGameLog();
+      const moveLogHistory = testEngine.getServerEngine().getRuntime().getMoveLogHistory();
 
-      const inkLogEntry = [...gameLog]
-        .reverse()
-        .find((entry) => entry.defaultMessage?.key === "lorcana.card.inked");
+      const inkLogEntry = [...moveLogHistory].reverse().find((log) => log.type === "inkCard");
 
       expect(inkLogEntry).toMatchObject({
-        visibility: { mode: "PUBLIC" },
-        defaultMessage: {
-          key: "lorcana.card.inked",
-          values: {
-            playerId: PLAYER_ONE,
-            cardId: expect.any(String),
-          },
-        },
+        type: "inkCard",
+        playerId: PLAYER_ONE,
+        cardId: expect.any(String),
       });
     });
   });

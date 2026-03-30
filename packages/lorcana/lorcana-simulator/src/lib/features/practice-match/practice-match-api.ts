@@ -2,7 +2,7 @@ import { resolveLorcanaDeckListText } from "@tcg/lorcana-cards";
 import { getGameServerOrigin } from "$lib/config/public-url-config.js";
 import type { PracticeMatchCreationResponse } from "./types.js";
 
-interface HistoricDeckEntry {
+export interface HistoricDeckEntry {
   cardPublicId: string;
   quantity: number;
 }

@@ -24,10 +24,7 @@ export const flashRecordsSpecialist: CharacterCard = {
   },
   text: [
     {
-      title: "HOLD...",
-    },
-    {
-      title: "YOUR HORSES",
+      title: "HOLD... YOUR HORSES",
       description: "This character enters play exerted.",
     },
     {

@@ -22,11 +22,20 @@ import {
   getEffectiveWillpower,
   type DerivedStateContext,
 } from "./derived-state";
+import type { StaticEffectRegistry } from "./static-effect-registry";
 import { compareOperator } from "./operator-utils";
 import type { ZoneRuntimeState } from "../core/runtime/types";
 import { normalizeSelectedTargets, resolveTargetQuery } from "../targeting/runtime";
 import { didLastEffectPerform } from "../runtime-moves/resolution/action-effects/event-snapshot-utils";
 import { getCombinedSelectionInput } from "../runtime-moves/resolution/action-effects/selection-state";
+
+export interface PlayZoneCardTypeCache {
+  charactersByPlayer: Map<PlayerId, CardInstanceId[]>;
+  itemsByPlayer: Map<PlayerId, CardInstanceId[]>;
+  locationsByPlayer: Map<PlayerId, CardInstanceId[]>;
+  damagedCharacterCountByPlayer: Map<PlayerId, number>;
+  exertedCharacterCountByPlayer: Map<PlayerId, number>;
+}
 
 export interface ConditionEvaluationContext {
   framework: {
@@ -50,10 +59,14 @@ export interface ConditionEvaluationContext {
   G: DeepReadonly<LorcanaG>;
   playerId: PlayerId;
   sourceCardId?: CardInstanceId;
+  getCardStrengthByInstanceId?: (cardId: CardInstanceId) => number;
+  zoneTypeCache?: PlayZoneCardTypeCache;
+  disableFilterRegistry?: boolean;
 
   // Optional action-specific context
   cardPlayed?: CardPlayedPayload;
   resolutionInput?: ActionResolutionInput;
+  registry?: StaticEffectRegistry;
 }
 
 function buildDerivedStateFromConditionCtx(ctx: ConditionEvaluationContext): DerivedStateContext {
@@ -102,6 +115,7 @@ function resolveComparisonValue(value: ComparisonValue, ctx: ConditionEvaluation
         derivedState,
         ctx.sourceCardId,
         ctx.cards.getDefinition,
+        ctx.registry,
       );
     }
   }
@@ -203,6 +217,7 @@ function getCardNumericAttribute(
         buildDerivedStateFromConditionCtx(ctx),
         cardId,
         ctx.cards.getDefinition,
+        ctx.registry,
       );
     }
     case "willpower": {
@@ -217,6 +232,7 @@ function getCardNumericAttribute(
         buildDerivedStateFromConditionCtx(ctx),
         cardId,
         ctx.cards.getDefinition,
+        ctx.registry,
       );
     case "damage":
       return Number(ctx.cards.require(cardId).meta?.damage ?? 0);
@@ -465,6 +481,15 @@ function countCardsOfTypeInPlay(
   playerId: PlayerId,
   expectedType: "character" | "item" | "location",
 ): number {
+  if (ctx.zoneTypeCache) {
+    const map =
+      expectedType === "character"
+        ? ctx.zoneTypeCache.charactersByPlayer
+        : expectedType === "item"
+          ? ctx.zoneTypeCache.itemsByPlayer
+          : ctx.zoneTypeCache.locationsByPlayer;
+    return map.get(playerId)?.length ?? 0;
+  }
   return ctx.framework.zones
     .getCards({ zone: "play", playerId })
     .filter(
@@ -487,7 +512,11 @@ export interface DamagedCharactersContext {
 export function countDamagedCharactersInPlay(
   ctx: DamagedCharactersContext,
   playerId: PlayerId,
+  zoneTypeCache?: PlayZoneCardTypeCache,
 ): number {
+  if (zoneTypeCache) {
+    return zoneTypeCache.damagedCharacterCountByPlayer.get(playerId) ?? 0;
+  }
   return ctx.framework.zones.getCards({ zone: "play", playerId }).filter((cardId) => {
     if (ctx.cards.getDefinition(cardId as CardInstanceId)?.cardType !== "character") {
       return false;
@@ -498,6 +527,9 @@ export function countDamagedCharactersInPlay(
 }
 
 function countExertedCharactersInPlay(ctx: ConditionEvaluationContext, playerId: PlayerId): number {
+  if (ctx.zoneTypeCache) {
+    return ctx.zoneTypeCache.exertedCharacterCountByPlayer.get(playerId) ?? 0;
+  }
   return ctx.framework.zones.getCards({ zone: "play", playerId }).filter((cardId) => {
     if (ctx.cards.getDefinition(cardId as CardInstanceId)?.cardType !== "character") {
       return false;
@@ -505,6 +537,60 @@ function countExertedCharactersInPlay(ctx: ConditionEvaluationContext, playerId:
 
     return ctx.cards.require(cardId as CardInstanceId).meta?.state === "exerted";
   }).length;
+}
+
+export function buildPlayZoneCardTypeCache(ctx: {
+  framework: {
+    zones: { getCards: (query: { zone: string; playerId: PlayerId }) => readonly string[] };
+    state: { playerIds: readonly PlayerId[] };
+  };
+  cards: {
+    getDefinition: (cardId: CardInstanceId) => { cardType?: string } | undefined;
+    require: (cardId: CardInstanceId) => { meta?: Record<string, unknown> };
+  };
+}): PlayZoneCardTypeCache {
+  const charactersByPlayer = new Map<PlayerId, CardInstanceId[]>();
+  const itemsByPlayer = new Map<PlayerId, CardInstanceId[]>();
+  const locationsByPlayer = new Map<PlayerId, CardInstanceId[]>();
+  const damagedCharacterCountByPlayer = new Map<PlayerId, number>();
+  const exertedCharacterCountByPlayer = new Map<PlayerId, number>();
+
+  for (const playerId of ctx.framework.state.playerIds) {
+    const chars: CardInstanceId[] = [];
+    const items: CardInstanceId[] = [];
+    const locs: CardInstanceId[] = [];
+    let damagedCount = 0;
+    let exertedCount = 0;
+
+    for (const rawCardId of ctx.framework.zones.getCards({ zone: "play", playerId })) {
+      const cardId = rawCardId as CardInstanceId;
+      const cardType = ctx.cards.getDefinition(cardId)?.cardType;
+      if (cardType === "character") {
+        chars.push(cardId);
+        const meta = ctx.cards.require(cardId).meta;
+        if (Number(meta?.damage ?? 0) > 0) damagedCount++;
+        if (meta?.state === "exerted") exertedCount++;
+      } else if (cardType === "item") {
+        items.push(cardId);
+      } else if (cardType === "location") {
+        locs.push(cardId);
+      }
+    }
+
+    charactersByPlayer.set(playerId, chars);
+    itemsByPlayer.set(playerId, items);
+    locationsByPlayer.set(playerId, locs);
+    damagedCharacterCountByPlayer.set(playerId, damagedCount);
+    exertedCharacterCountByPlayer.set(playerId, exertedCount);
+  }
+
+  return {
+    charactersByPlayer,
+    itemsByPlayer,
+    locationsByPlayer,
+    damagedCharacterCountByPlayer,
+    exertedCharacterCountByPlayer,
+  };
 }
 
 function evaluateLegacyCardTypeCountCondition(
@@ -1046,15 +1132,24 @@ export function evaluateCondition(
       let statValue: number;
       switch (condition.stat) {
         case "strength":
-          statValue = getEffectiveStrength(
+          statValue = ctx.getCardStrengthByInstanceId
+            ? ctx.getCardStrengthByInstanceId(targetId)
+            : getEffectiveStrength(
+                definition,
+                derivedState,
+                targetId,
+                ctx.cards.getDefinition,
+                ctx.registry,
+              );
+          break;
+        case "lore":
+          statValue = getEffectiveLore(
             definition,
             derivedState,
             targetId,
             ctx.cards.getDefinition,
+            ctx.registry,
           );
-          break;
-        case "lore":
-          statValue = getEffectiveLore(definition, derivedState, targetId, ctx.cards.getDefinition);
           break;
         case "willpower":
           statValue = getEffectiveWillpower(
@@ -1062,6 +1157,7 @@ export function evaluateCondition(
             derivedState,
             targetId,
             ctx.cards.getDefinition,
+            ctx.registry,
           );
           break;
         default:

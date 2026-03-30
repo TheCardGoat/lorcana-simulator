@@ -54,7 +54,9 @@ describe("Anna - Heir to Arendelle", () => {
 
       // Resolve the triggered ability targeting the opponent's character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(annaHeirToArendelle, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       // The opponent character should have the cant-ready restriction

@@ -86,7 +86,9 @@ describe("Jasmine - Desert Warrior", () => {
       // chooses the discard for the resulting pending effect.
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects).toHaveLength(1);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(jasmineDesertWarrior),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerTwo().resolveNextPending({ targets: [opponentDiscardId] }),

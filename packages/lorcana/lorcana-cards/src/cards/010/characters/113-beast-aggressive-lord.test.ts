@@ -68,7 +68,9 @@ describe("Beast - Aggressive Lord", () => {
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
         const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-        expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(beastAggressiveLord),
+        ).toBeSuccessfulCommand();
       }
 
       expect(testEngine.getLore(PLAYER_TWO)).toBe(2);

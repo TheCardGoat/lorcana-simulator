@@ -24,9 +24,9 @@ export const nickWildeSoggyFox: CharacterCard = {
   },
   text: [
     {
-      title: "NICE TO HAVE",
+      title: "NICE TO HAVE A PARTNER",
       description:
-        "A PARTNER While you have another character with Support in play, this character gets +2 {S}.",
+        "While you have another character with Support in play, this character gets +2 {S}.",
     },
   ],
   classifications: ["Storyborn", "Ally"],

@@ -60,7 +60,7 @@ describe("Seven Dwarfs' Mine - Secure Fortress", () => {
         .success,
     ).toBe(true);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
+      testEngine.asPlayerOne().resolvePendingByCard(sevenDwarfsMineSecureFortress).success,
     ).toBe(true);
     expect(testEngine.asPlayerOne().resolveNextPending({ targets: [targetDummy] }).success).toBe(
       true,
@@ -88,7 +88,7 @@ describe("Seven Dwarfs' Mine - Secure Fortress", () => {
         .moveCharacterToLocation(nonKnightCharacter, sevenDwarfsMineSecureFortress).success,
     ).toBe(true);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
+      testEngine.asPlayerOne().resolvePendingByCard(sevenDwarfsMineSecureFortress).success,
     ).toBe(true);
     expect(testEngine.asPlayerOne().resolveNextPending({ targets: [targetDummy] }).success).toBe(
       true,
@@ -114,7 +114,7 @@ describe("Seven Dwarfs' Mine - Secure Fortress", () => {
         .success,
     ).toBe(true);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
+      testEngine.asPlayerOne().resolvePendingByCard(sevenDwarfsMineSecureFortress).success,
     ).toBe(true);
     expect(testEngine.asPlayerOne().resolveNextPending({ targets: [targetDummy] }).success).toBe(
       true,
@@ -149,7 +149,7 @@ describe("Seven Dwarfs' Mine - Secure Fortress", () => {
         .success,
     ).toBe(true);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(sevenDwarfsMineSecureFortress, {
         resolveOptional: false,
       }).success,
     ).toBe(true);

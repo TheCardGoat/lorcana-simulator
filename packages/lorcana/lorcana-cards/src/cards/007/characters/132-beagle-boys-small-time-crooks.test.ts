@@ -30,7 +30,7 @@ describe("Beagle Boys - Small-Time Crooks", () => {
 
     const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
     expect(
-      testEngine.asPlayerOne().resolveBag(bagId, {
+      testEngine.asPlayerOne().resolvePendingByCard(beagleBoysSmalltimeCrooks, {
         targets: [targetCharacter],
       }),
     ).toBeSuccessfulCommand();
@@ -62,7 +62,7 @@ describe("Beagle Boys - Small-Time Crooks", () => {
 
     const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
     expect(
-      testEngine.asPlayerOne().resolveBag(bagId, {
+      testEngine.asPlayerOne().resolvePendingByCard(beagleBoysSmalltimeCrooks, {
         targets: [targetCharacter],
       }),
     ).toBeSuccessfulCommand();
@@ -94,7 +94,7 @@ describe("Beagle Boys - Small-Time Crooks", () => {
 
     const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
     expect(
-      testEngine.asPlayerOne().resolveBag(bagId, {
+      testEngine.asPlayerOne().resolvePendingByCard(beagleBoysSmalltimeCrooks, {
         targets: [targetCharacter],
       }),
     ).toBeSuccessfulCommand();
@@ -120,7 +120,7 @@ describe("Beagle Boys - Small-Time Crooks", () => {
 
     const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
     expect(
-      testEngine.asPlayerOne().resolveBag(bagId, {
+      testEngine.asPlayerOne().resolvePendingByCard(beagleBoysSmalltimeCrooks, {
         targets: [targetCharacter],
       }),
     ).toBeSuccessfulCommand();

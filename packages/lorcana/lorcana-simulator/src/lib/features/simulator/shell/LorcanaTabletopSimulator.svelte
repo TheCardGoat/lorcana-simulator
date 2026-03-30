@@ -29,6 +29,17 @@
 
   import LorcanaSimulatorSidebar from "./LorcanaSimulatorSidebar.svelte";
   import LorcanaCompactPanels from "./LorcanaCompactPanels.svelte";
+  import PlayerSettingsDialog from "@/features/simulator/dialogs/PlayerSettingsDialog.svelte";
+  import SimulatorSupportDialog from "@/features/simulator/dialogs/SimulatorSupportDialog.svelte";
+  import SimulatorFeedbackDialog from "@/features/simulator/support/SimulatorFeedbackDialog.svelte";
+  import SimulatorBugReportDialog from "@/features/simulator/support/SimulatorBugReportDialog.svelte";
+  import {
+    dismissSupportReminderForAWeek,
+    resolveSupportReminderState,
+  } from "@/features/simulator/support/support-reminder-state.svelte.js";
+  import {
+    SIMULATOR_SUPPORT_REMINDER_VARIANTS,
+  } from "@/features/simulator/support/support-reminder-copy.js";
   import { setSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
   import { setLorcanaSimulatorDndContext } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
   import { GlobalCardPreview, TabletopBoard } from "@/features/simulator/index.js";
@@ -50,6 +61,13 @@
   } from "@/features/simulator/post-game/modal-state.js";
   import { buildPostGameSummary } from "@/features/simulator/post-game/summary.js";
   import type { HotkeyMode } from "@/features/simulator/context/game-context.svelte.js";
+  import {
+    clearPendingDirectMoveIfUnavailable,
+    isConfirmableDirectMoveCategoryId,
+    togglePendingDirectMove,
+    type PendingDirectMove,
+  } from "@/features/simulator/model/direct-action-state.js";
+  import { bugReportContextFromBoard } from "@/features/simulator/support/feedback-api.js";
 
   interface LorcanaTabletopSimulatorProps {
     engine: LorcanaEngineBase;
@@ -60,6 +78,7 @@
     postGameGameId?: string | null;
     onReturnToMatchmaking?: (() => void | Promise<void>) | null;
     viewerMode?: "player" | "spectator";
+    isAuthenticated?: boolean;
   }
 
   let {
@@ -70,6 +89,7 @@
     postGameGameId = null,
     onReturnToMatchmaking = null,
     viewerMode = "player",
+    isAuthenticated = false,
   }: LorcanaTabletopSimulatorProps = $props();
   let sidebarOpen = $state(true);
 
@@ -97,6 +117,7 @@
   const dndContext = setLorcanaSimulatorDndContext();
 
   const boardSnapshot = $derived(game.boardSnapshot());
+  const bugReportContext = $derived(bugReportContextFromBoard(boardSnapshot));
   const moveLogEntries = $derived(game.moveLogEntries());
   const ownerSide = $derived(game.ownerSide());
   const pendingMoveError = $derived(sidebar.pendingMoveError);
@@ -110,6 +131,7 @@
   const compactActionCount = $derived(isPostGame ? 0 : sidebar.moveCategoryCount);
   const moveCategorySummaries = $derived(sidebar.moveCategorySummaries);
   const availableMovesSelectionState = $derived(sidebar.availableMovesSelectionState);
+  const showRawLogRegistryJson = $derived(sidebar.showRawLogRegistryJson);
   const topSide = $derived(sidebar.topSide);
   const bottomSide = $derived(sidebar.bottomSide);
   const pendingEffectsPopoverItems = $derived.by(() =>
@@ -173,12 +195,26 @@
   let postGameModalState = $state(createInitialPostGameModalState());
   let postGameDialogOpen = $state(false);
   let hotkeysDialogOpen = $state(false);
-  let pendingDirectMove = $state<{
-    id: string;
-    label: string;
-    categoryId: "pass-turn" | "undo" | "quest-all";
-    execute: () => void;
-  } | null>(null);
+  let pendingDirectMove = $state<PendingDirectMove | null>(null);
+  let supportDialogOpen = $state(false);
+  let feedbackDialogOpen = $state(false);
+  let bugReportDialogOpen = $state(false);
+  let supportReminderVisible = $state(false);
+  let supportReminderVariantIndex = $state<number | null>(null);
+  const supportReminderText = $derived(
+    supportReminderVisible && supportReminderVariantIndex !== null
+      ? SIMULATOR_SUPPORT_REMINDER_VARIANTS[supportReminderVariantIndex] ?? null
+      : null,
+  );
+
+  $effect(() => {
+    const nextReminderState = resolveSupportReminderState({
+      variantCount: SIMULATOR_SUPPORT_REMINDER_VARIANTS.length,
+    });
+
+    supportReminderVisible = nextReminderState.visible;
+    supportReminderVariantIndex = nextReminderState.variantIndex;
+  });
 
   $effect(() => {
     const nextEngine = engine;
@@ -267,18 +303,10 @@
   });
 
   $effect(() => {
-    if (!pendingDirectMove) {
-      return;
-    }
-
-    const queuedMove = pendingDirectMove;
-    const directMoveAvailable = moveCategorySummaries.some(
-      (summary) => summary.categoryId === queuedMove.categoryId,
+    pendingDirectMove = clearPendingDirectMoveIfUnavailable(
+      pendingDirectMove,
+      new Set(moveCategorySummaries.map((summary) => summary.categoryId)),
     );
-
-    if (!directMoveAvailable) {
-      pendingDirectMove = null;
-    }
   });
 
   const hotkeyDescriptors = $derived.by(() =>
@@ -357,16 +385,44 @@
     await onReturnToMatchmaking?.();
   }
 
-  function queueDirectMoveConfirmation(
+  function queueDirectMoveConfirmation(pendingMove: PendingDirectMove): void {
+    pendingDirectMove = pendingMove;
+    if (pendingMove.source === "keyboard") {
+      toast.info(m["sim.actions.confirmMoveLabel"]({ label: pendingMove.label }), {
+        description: m["sim.actions.confirmMoveHotkeyHint"]({}),
+      });
+    }
+  }
+
+  function handleConfirmableDirectMoveCategory(
     categoryId: "pass-turn" | "undo" | "quest-all",
-    label: string,
-    execute: () => void,
-    id: string,
+    source: "keyboard" | "pointer" = "pointer",
   ): void {
-    pendingDirectMove = { id, label, categoryId, execute };
-    toast.info(m["sim.actions.confirmMoveLabel"]({ label }), {
-      description: m["sim.actions.confirmMoveHotkeyHint"]({}),
-    });
+    const summary = moveCategorySummaries.find((candidate) => candidate.categoryId === categoryId);
+    if (!summary) {
+      return;
+    }
+
+    const moves = sidebar.expandCategoryMoves(summary.categoryId);
+    const move = moves[0];
+    if (!move) {
+      return;
+    }
+
+    const execute = () => {
+      sidebar.handleAvailableMoveClick(move);
+    };
+    const result = togglePendingDirectMove(pendingDirectMove, move, execute, source);
+
+    if (result.shouldExecuteImmediately) {
+      pendingDirectMove = null;
+      execute();
+      return;
+    }
+
+    if (result.nextPendingDirectMove) {
+      queueDirectMoveConfirmation(result.nextPendingDirectMove);
+    }
   }
 
   function handleMoveCategoryHotkey(categoryId: ExecutableMovePresentationCategoryId): void {
@@ -386,20 +442,8 @@
         return;
       }
 
-      if (summary.categoryId === "undo" || summary.categoryId === "pass-turn" || summary.categoryId === "quest-all") {
-        if (pendingDirectMove?.id === move.id) {
-          // Second press of the same move — confirm immediately
-          const pending = pendingDirectMove;
-          pendingDirectMove = null;
-          pending.execute();
-          return;
-        }
-        queueDirectMoveConfirmation(
-          summary.categoryId,
-          move.label,
-          () => sidebar.handleAvailableMoveClick(move),
-          move.id,
-        );
+      if (isConfirmableDirectMoveCategoryId(summary.categoryId)) {
+        handleConfirmableDirectMoveCategory(summary.categoryId, "keyboard");
         return;
       }
 
@@ -440,6 +484,20 @@
 
     sidebar.confirmActionSelection();
   }
+
+  function openSupportDialog(): void {
+    supportDialogOpen = true;
+  }
+
+  function openFeedbackDialog(): void {
+    supportDialogOpen = false;
+    feedbackDialogOpen = true;
+  }
+
+  function openBugReportDialog(): void {
+    supportDialogOpen = false;
+    bugReportDialogOpen = true;
+  }
 </script>
 
 <DragDropProvider
@@ -456,9 +514,19 @@
       {#if !isCompactLayout}
         <LorcanaSimulatorSidebar
           readOnly={readOnlyMode}
+          {supportReminderText}
+          onDismissSupportReminder={() => {
+            dismissSupportReminderForAWeek();
+            supportReminderVisible = false;
+          }}
+          pendingDirectMoveCategoryId={pendingDirectMove?.categoryId ?? null}
+          onTriggerUndo={() => {
+            handleConfirmableDirectMoveCategory("undo", "pointer");
+          }}
           onOpenHotkeys={() => {
             hotkeysDialogOpen = true;
           }}
+          onOpenSupport={openSupportDialog}
         />
       {/if}
 
@@ -474,7 +542,17 @@
               {compactActionCount}
               {pendingEffectsPopoverItems}
               {activePlayerGuidance}
+              {supportReminderText}
+              onDismissSupportReminder={() => {
+                dismissSupportReminderForAWeek();
+                supportReminderVisible = false;
+              }}
               hotkeyDescriptors={visibleHotkeyDescriptors}
+              pendingDirectMoveCategoryId={pendingDirectMove?.categoryId ?? null}
+              onConfirmableDirectMoveCategory={handleConfirmableDirectMoveCategory}
+              onOpenSupportDialog={openSupportDialog}
+              onOpenFeedbackDialog={openFeedbackDialog}
+              onOpenBugReportDialog={openBugReportDialog}
             />
           {:else}
             <div class="loading">{m["sim.tabletop.loading"]({})}</div>
@@ -489,8 +567,18 @@
               {compactActionCount}
               {pendingEffectsPopoverItems}
               {activePlayerGuidance}
+              {supportReminderText}
+              onDismissSupportReminder={() => {
+                dismissSupportReminderForAWeek();
+                supportReminderVisible = false;
+              }}
               onOpenCompactPanels={openCompactPanels}
               hotkeyDescriptors={visibleHotkeyDescriptors}
+              pendingDirectMoveCategoryId={pendingDirectMove?.categoryId ?? null}
+              onConfirmableDirectMoveCategory={handleConfirmableDirectMoveCategory}
+              onOpenSupportDialog={openSupportDialog}
+              onOpenFeedbackDialog={openFeedbackDialog}
+              onOpenBugReportDialog={openBugReportDialog}
             />
           {:else}
             <div class="loading">{m["sim.tabletop.loading"]({})}</div>
@@ -528,6 +616,43 @@
         bind:open={hotkeysDialogOpen}
         descriptors={visibleHotkeyDescriptors.filter((descriptor) => descriptor.enabled)}
       />
+      <PlayerSettingsDialog
+        bind:open={sidebar.isPlayerSettingsOpen}
+        selectedLocale={sidebar.selectedLocale}
+        {showRawLogRegistryJson}
+        skipActionConfirmation={sidebar.skipActionConfirmation}
+        hotkeyMode={sidebar.hotkeyMode}
+        cardPreviewMode={sidebar.cardPreviewMode}
+        onLocaleSelection={sidebar.handleLocaleSelection}
+        onToggleRawLogRegistryJson={sidebar.handleRawLogRegistryToggle}
+        onToggleSkipActionConfirmation={sidebar.handleSkipActionConfirmationToggle}
+        onHotkeyModeChange={sidebar.handleHotkeyModeChange}
+        onCardPreviewModeChange={sidebar.handleCardPreviewModeChange}
+        primaryClickAction={sidebar.primaryClickAction}
+        onPrimaryClickActionChange={sidebar.handlePrimaryClickActionChange}
+        animationSpeed={sidebar.animationSpeed}
+        onAnimationSpeedChange={sidebar.handleAnimationSpeedChange}
+        soundVolume={sidebar.soundVolume}
+        onSoundVolumeChange={sidebar.handleSoundVolumeChange}
+        accessibleMobileControls={sidebar.accessibleMobileControls}
+        onToggleAccessibleMobileControls={sidebar.handleAccessibleMobileControlsToggle}
+        selectedCardBack={sidebar.selectedCardBack}
+        selectedPlaymat={sidebar.selectedPlaymat}
+        onCardBackChange={sidebar.handleCardBackChange}
+        onPlaymatChange={sidebar.handlePlaymatChange}
+        onOpenFeedback={openFeedbackDialog}
+        onOpenBugReport={openBugReportDialog}
+        onOpenHotkeys={() => {
+          hotkeysDialogOpen = true;
+        }}
+      />
+      <SimulatorSupportDialog
+        bind:open={supportDialogOpen}
+        onOpenFeedback={openFeedbackDialog}
+        onOpenBugReport={openBugReportDialog}
+      />
+      <SimulatorFeedbackDialog bind:open={feedbackDialogOpen} />
+      <SimulatorBugReportDialog bind:open={bugReportDialogOpen} gameContext={bugReportContext} />
       {#if isCompactLayout}
         <LorcanaCompactPanels
           bind:open={compactPanelsOpen}
@@ -541,6 +666,7 @@
           bind:open={postGameDialogOpen}
           gameId={postGameGameId}
           summary={postGameSummary}
+          {isAuthenticated}
           onReturnToMatchmaking={handleReturnToMatchmaking}
         />
 
@@ -626,7 +752,7 @@
     position: absolute;
     right: 1rem;
     bottom: calc(1rem + env(safe-area-inset-bottom));
-    z-index: 30;
+    z-index: 60;
     display: flex;
     justify-content: flex-end;
     pointer-events: none;
@@ -651,6 +777,7 @@
     .post-game-launcher {
       right: 0.75rem;
       left: 0.75rem;
+      bottom: calc(4.75rem + env(safe-area-inset-bottom));
       justify-content: stretch;
     }
 

@@ -57,7 +57,7 @@ describe("Rolly - Chubby Puppy", () => {
       expect(testEngine.asPlayerOne().playCard(rollyChubbyPuppy)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(rollyChubbyPuppy, {
           resolveOptional: true,
           targets: [characterInDiscard],
         }),
@@ -78,7 +78,7 @@ describe("Rolly - Chubby Puppy", () => {
       expect(testEngine.asPlayerOne().playCard(rollyChubbyPuppy)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(rollyChubbyPuppy, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(characterInDiscard)).toBe("discard");
@@ -95,7 +95,7 @@ describe("Rolly - Chubby Puppy", () => {
       expect(testEngine.asPlayerOne().playCard(rollyChubbyPuppy)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(rollyChubbyPuppy, {
           resolveOptional: true,
           targets: [anotherCharacterInDiscard],
         }),
@@ -118,7 +118,7 @@ describe("Rolly - Chubby Puppy", () => {
       expect(testEngine.asPlayerOne().playCard(rollyChubbyPuppy)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(rollyChubbyPuppy, {
           resolveOptional: true,
           targets: [characterInDiscard],
         }),
@@ -144,7 +144,9 @@ describe("Rolly - Chubby Puppy", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(rollyChubbyPuppy, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 

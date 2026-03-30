@@ -34,8 +34,11 @@ export const elsaConcernedSister: CharacterCard = {
     {
       id: "1tp-1",
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 2,
+        cardType: "location",
+        duration: "next-play-this-turn",
+        target: "CONTROLLER",
+        type: "cost-reduction",
       },
       name: "CLEAR THE WAY",
       trigger: {

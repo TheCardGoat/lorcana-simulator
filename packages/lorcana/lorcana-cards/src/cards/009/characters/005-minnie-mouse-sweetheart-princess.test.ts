@@ -91,7 +91,7 @@ describe("Minnie Mouse - Sweetheart Princess", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseSweetheartPrincess, {
           resolveOptional: true,
           targets: [strongExertedCharacter],
         }),
@@ -115,7 +115,7 @@ describe("Minnie Mouse - Sweetheart Princess", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseSweetheartPrincess, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -149,7 +149,7 @@ describe("Minnie Mouse - Sweetheart Princess", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseSweetheartPrincess, {
           resolveOptional: true,
           targets: [strongExertedCharacter],
         }),

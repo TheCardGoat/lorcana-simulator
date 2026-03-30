@@ -13,9 +13,7 @@ describe("Madam Mim - Snake", () => {
     const targetId = testEngine.findCardInstanceId(mickeyMouseTrueFriend, "play", "player_one");
 
     expect(testEngine.asPlayerOne().playCard(madamMimSnake)).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(madamMimSnake)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1 }).success).toBe(true);
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [targetId] }),

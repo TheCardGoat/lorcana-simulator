@@ -23,9 +23,9 @@ export const donaldDuckGhostHunter: CharacterCard = {
   },
   text: [
     {
-      title: "RAISE",
+      title: "RAISE A RUCKUS",
       description:
-        "A RUCKUS When you play this character, chosen Detective character gains Challenger +2 this turn. (They get +2 {S} while challenging.)",
+        "When you play this character, chosen Detective character gains Challenger +2 this turn. (They get +2 {S} while challenging.)",
     },
   ],
   classifications: ["Dreamborn", "Hero", "Detective"],

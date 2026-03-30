@@ -67,7 +67,9 @@ describe("Kronk - Head of Security", () => {
       // Resolve the bag effect: choose to play cheapCharacter for free
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [cheapCharacterId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kronkHeadOfSecurity, { targets: [cheapCharacterId] }),
       ).toBeSuccessfulCommand();
 
       // cheapCharacter is now in play (played for free)
@@ -107,7 +109,7 @@ describe("Kronk - Head of Security", () => {
         // Attempting to resolve with the expensive character should fail
         const result = testEngine
           .asPlayerOne()
-          .resolveBag(bagEffect!.id, { targets: [expensiveCharacterId] });
+          .resolvePendingByCard(kronkHeadOfSecurity, { targets: [expensiveCharacterId] });
         // Either fails or the expensive character remains in hand (auto-resolved with no valid target)
         expect(testEngine.asPlayerOne().getCardZone(expensiveCharacter)).toBe("hand");
       } else {

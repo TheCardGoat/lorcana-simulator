@@ -12,6 +12,10 @@
 		timeoutCount?: number;
 		/** Whether the player is in negative time */
 		isInNegativeTime?: boolean;
+		/** Visual presentation variant for timer chrome */
+		variant?: "inline" | "rail";
+		/** Optional visible label for rail presentation */
+		label?: string;
 	}
 
 	let {
@@ -21,6 +25,8 @@
 		startedAtMs,
 		timeoutCount = 0,
 		isInNegativeTime = false,
+		variant = "inline",
+		label = "Clock",
 	}: PlayerTimerProps = $props();
 
 	let displayMs = $state(0);
@@ -76,15 +82,21 @@
 <div
 	class="player-timer {urgencyClass}"
 	class:player-timer--active={isActive && isRunning}
+	class:player-timer--rail={variant === "rail"}
 	role="timer"
 	aria-label="Player time remaining: {formattedTime}"
 >
-	<span class="timer-value">{formattedTime}</span>
-	{#if timeoutCount > 0}
-		<span class="timeout-badge" title="Timeouts: {timeoutCount}">
-			{timeoutCount}
-		</span>
+	{#if variant === "rail"}
+		<span class="timer-label">{label}</span>
 	{/if}
+	<div class="timer-main">
+		<span class="timer-value">{formattedTime}</span>
+		{#if timeoutCount > 0}
+			<span class="timeout-badge" title="Timeouts: {timeoutCount}">
+				{timeoutCount}
+			</span>
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -99,7 +111,8 @@
 		font-variant-numeric: tabular-nums;
 		transition:
 			background 200ms ease,
-			border-color 200ms ease;
+			border-color 200ms ease,
+			box-shadow 200ms ease;
 	}
 
 	.player-timer--active {
@@ -107,11 +120,54 @@
 		background: rgba(15, 23, 42, 0.9);
 	}
 
+	.player-timer--rail {
+		width: 100%;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.2rem;
+		padding: 0.55rem 0.7rem;
+		border-radius: 0.85rem;
+		border-color: rgba(125, 211, 252, 0.18);
+		background:
+			linear-gradient(180deg, rgba(10, 20, 36, 0.96), rgba(8, 15, 27, 0.96));
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.05),
+			0 12px 28px rgba(2, 6, 23, 0.28);
+	}
+
+	.player-timer--rail.player-timer--active {
+		border-color: rgba(125, 211, 252, 0.4);
+		box-shadow:
+			0 0 0 1px rgba(56, 189, 248, 0.18),
+			0 16px 32px rgba(2, 6, 23, 0.34),
+			inset 0 1px 0 rgba(255, 255, 255, 0.06);
+	}
+
+	.timer-label {
+		font-size: 0.64rem;
+		font-weight: 800;
+		line-height: 1;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: rgba(186, 230, 253, 0.72);
+	}
+
+	.timer-main {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
 	.timer-value {
 		font-size: 0.82rem;
 		font-weight: 700;
 		color: #e2e8f0;
 		line-height: 1;
+	}
+
+	.player-timer--rail .timer-value {
+		font-size: 1.1rem;
+		font-weight: 800;
 	}
 
 	.timer--warning .timer-value {

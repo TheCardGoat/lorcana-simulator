@@ -22,7 +22,7 @@ describe("Tinker Bell - Very Clever Fairy", () => {
 
       // Resolve Benja's optional banish ability (accept it)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolveOnlyBag({ resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose the dinglehopper as the item to banish
@@ -36,7 +36,9 @@ describe("Tinker Bell - Very Clever Fairy", () => {
       // Tinker Bell's "I CAN USE THAT" should have triggered — accept it
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(tinkerBellVeryCleverFairy, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Dinglehopper should now be in the inkwell
@@ -62,7 +64,7 @@ describe("Tinker Bell - Very Clever Fairy", () => {
 
       // Resolve Benja's optional banish ability (accept)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolveOnlyBag({ resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose the dinglehopper
@@ -76,7 +78,9 @@ describe("Tinker Bell - Very Clever Fairy", () => {
       // Tinker Bell's trigger fires — decline
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(tinkerBellVeryCleverFairy, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Dinglehopper stays in discard
@@ -107,7 +111,7 @@ describe("Tinker Bell - Very Clever Fairy", () => {
 
       // Resolve Benja's optional banish (accept)
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerTwo().resolveOnlyBag({ resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose the dinglehopper (player two's item)

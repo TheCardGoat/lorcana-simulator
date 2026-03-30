@@ -1,28 +1,15 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { theQueenRegalMonarchI18n } from "./007-the-queen-regal-monarch.i18n";
+import { theQueenRegalMonarch as canonicalTheQueenRegalMonarch } from "../../002";
 
 export const theQueenRegalMonarch: CharacterCard = {
+  ...canonicalTheQueenRegalMonarch,
   id: "DZ8",
-  canonicalId: "ci_RBq",
   reprints: ["set2-027", "set9-007"],
-  cardType: "character",
-  name: "The Queen",
-  version: "Regal Monarch",
-  inkType: ["amber"],
-  franchise: "Snow White",
   set: "009",
   cardNumber: 7,
   rarity: "common",
-  cost: 1,
-  strength: 2,
-  willpower: 2,
-  lore: 1,
-  inkable: true,
-  vanilla: true,
   externalIds: {
     lorcast: "crd_94ecd20c33354dabb0cc32b7133133a9",
     tcgPlayer: 649956,
   },
-  classifications: ["Storyborn", "Villain", "Queen"],
-  i18n: theQueenRegalMonarchI18n,
 };

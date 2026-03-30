@@ -54,7 +54,7 @@ describe("Tramp - Dapper Rascal", () => {
 
       // Accept the optional draw
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(trampDapperRascal, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Player one should have drawn 1 card
@@ -88,7 +88,9 @@ describe("Tramp - Dapper Rascal", () => {
 
       // Decline the optional draw
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(trampDapperRascal, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Hand size should be unchanged
@@ -156,7 +158,9 @@ describe("Tramp - Dapper Rascal", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       // Resolve the bag entry so player two gets priority back
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(trampDapperRascal, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Opponent challenges second ally - triggers PLAY IT COOL again

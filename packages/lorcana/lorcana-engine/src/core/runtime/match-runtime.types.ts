@@ -4,7 +4,7 @@
  * All type definitions for the match runtime module.
  */
 
-import type { Draft } from "immer";
+import type { Draft } from "mutative";
 import type {
   MatchState,
   GameEvent,
@@ -67,11 +67,10 @@ interface MatchRuntimeConfigCore {
     staticResources: MatchStaticResources,
     projectionCtx?: RuntimeBoardProjectionContext,
   ) => FilteredMatchView;
-  logProjector?: LogProjector;
   deriveRuntimeCard: RuntimeCardDeriver;
   // TODO: Setup should also include ctx
   setup: (args: SetupArgs) => LorcanaG;
-  /** Optional one-time hook to populate zones (e.g. put all instances into deck). Runs after setup, inside Immer produce. */
+  /** Optional one-time hook to populate zones (e.g. put all instances into deck). Runs after setup, inside Mutative create. */
   boardSetup?: (draft: Draft<MatchState>, ctx: BoardSetupContext) => void;
   derivePacketAnimations?: (context: PacketAnimationContext) => readonly PacketAnimation[];
 }
@@ -290,6 +289,7 @@ export interface MatchRuntimeInit {
   players: Player[];
   cardsMaps: CardsMaps;
   cardCatalog: CardCatalog;
+  capturePatches?: boolean;
   seed?: string;
   matchID?: string;
   gameID?: string;
@@ -404,17 +404,20 @@ export interface CommandSuccess<T> {
   success: true;
   stateID: number;
   state: MatchState;
-  patches: import("immer").Patch[];
+  patches: import("mutative").Patch[];
   gameEvents: PublishedGameEvent[];
   logEntries: GameLogEntry[];
   processedCommand: CommandEnvelope;
   animations: PacketAnimation[];
   undoable: boolean;
+  /** Unified move log entries produced by this command. */
+  moveLogs?: import("../../types/move-log").MoveLog[];
 }
 
 export interface RuntimeSnapshot {
   publishedGameEventsLength: number;
   gameLogLength: number;
+  moveLogHistoryLength: number;
   nextGameEventSeq: number;
   nextGameLogSeq: number;
   gameEnded: boolean;

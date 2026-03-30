@@ -28,11 +28,33 @@ function getLineNumber(content: string, index: number): number {
   return content.slice(0, index).split("\n").length;
 }
 
+function stripBraces(content: string): string {
+  let previous = "";
+  let result = content;
+  const maxPasses = Math.max(content.length, 1);
+
+  for (let pass = 0; pass < maxPasses && previous !== result; pass += 1) {
+    previous = result;
+    result = result.replace(/\{[^{}]*\}/g, "");
+  }
+
+  if (previous !== result) {
+    throw new Error(
+      `Exceeded ${maxPasses} brace-stripping passes while normalizing localized copy.`,
+    );
+  }
+  return result;
+}
+
 function stripScriptAndStyle(content: string): string {
   return content
     .replace(/<script[\s\S]*?<\/script>/g, "")
     .replace(/<style[\s\S]*?<\/style>/g, "")
-    .replace(/<!--[\s\S]*?-->/g, "");
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/\{#[^}]*\}/g, "")
+    .replace(/\{:[^}]*\}/g, "")
+    .replace(/\{\/[^}]*\}/g, "")
+    .replace(/\{@[^}]*\}/g, "");
 }
 
 const violations: string[] = [];
@@ -40,7 +62,7 @@ const violations: string[] = [];
 for (const filePath of GUARDED_FILES) {
   const file = new URL(`../${filePath}`, import.meta.url);
   const content = await readFile(file, "utf8");
-  const markupContent = stripScriptAndStyle(content);
+  const markupContent = stripBraces(stripScriptAndStyle(content));
 
   for (const match of markupContent.matchAll(DIRECT_TEXT_PATTERN)) {
     const text = match[1]?.trim() ?? "";

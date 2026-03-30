@@ -79,7 +79,9 @@ describe("Darkwing Duck - Darkwarrior", () => {
     const [banishBag] = testEngine.asPlayerOne().getBagEffects();
     expect(banishBag).toBeDefined();
     expect(
-      testEngine.asPlayerOne().resolveBag(banishBag!.id, { targets: [opponentItem] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(archimedesResourcefulOwl, { targets: [opponentItem] }),
     ).toBeSuccessfulCommand();
 
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
@@ -87,7 +89,9 @@ describe("Darkwing Duck - Darkwarrior", () => {
       (bag) => (bag.payload as { abilityId?: string }).abilityId === "l0p-2",
     );
     expect(darkwingBag).toBeDefined();
-    expect(testEngine.asPlayerOne().resolveBag(darkwingBag!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(darkwingDuckDarkwarrior),
+    ).toBeSuccessfulCommand();
 
     const drawDiscardBag = testEngine
       .asPlayerOne()
@@ -95,7 +99,9 @@ describe("Darkwing Duck - Darkwarrior", () => {
       .find((bag) => (bag.payload as { abilityId?: string }).abilityId === "3sv-2");
     expect(drawDiscardBag).toBeDefined();
     expect(
-      testEngine.asPlayerOne().resolveBag(drawDiscardBag!.id, { resolveOptional: false }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(archimedesResourcefulOwl, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().getCardZone(opponentItem)).toBe("discard");

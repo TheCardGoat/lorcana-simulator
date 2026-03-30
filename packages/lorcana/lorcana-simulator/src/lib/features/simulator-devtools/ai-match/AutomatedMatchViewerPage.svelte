@@ -13,7 +13,7 @@
     LorcanaTabletopSimulator,
     type LorcanaSimulatorReadModel,
   } from "$lib";
-  import { getAutomatedActionStrategyOption, type LorcanaServer } from "@tcg/lorcana-engine";
+  import { createPlayerId, type LorcanaServer } from "@tcg/lorcana-engine";
   import { onMount } from "svelte";
   import {
     AutomatedMatchPlaybackController,
@@ -23,6 +23,7 @@
     type AutomatedMatchStatusSnapshot,
   } from "./index.js";
   import { createAutomatedMatchSeed } from "./config.js";
+  import { buildPresentedDecisionTrace } from "./decision-trace-presentation.js";
 
   interface AutomatedMatchViewerPageProps {
     onNavigateToSetup?: (path: string) => Promise<void> | void;
@@ -50,12 +51,15 @@
     mode: "idle",
     speedMs: SPEED_OPTIONS[1]!.value,
   });
+  const decisionPresentation = $derived(buildPresentedDecisionTrace(playbackSnapshot.lastTrace));
   let statusSnapshot = $state<AutomatedMatchStatusSnapshot>({
     actionsExecuted: 0,
     turnNumber: 0,
   });
   let playerOneStrategyLabel = $state("Player one strategy");
   let playerTwoStrategyLabel = $state("Player two strategy");
+  const playerOneId = createPlayerId("player_one");
+  const playerTwoId = createPlayerId("player_two");
 
   interface OverlayDragState {
     originX: number;
@@ -76,11 +80,9 @@
     playbackSnapshot = controller.getPlaybackState();
     statusSnapshot = controller.getStatusSnapshot();
     playerOneStrategyLabel =
-      getAutomatedActionStrategyOption(controller.getConfig().playerOneStrategyId)?.label ??
-      "Player one strategy";
+      controller.getResolvedStrategyOption(playerOneId)?.label ?? "Player one strategy";
     playerTwoStrategyLabel =
-      getAutomatedActionStrategyOption(controller.getConfig().playerTwoStrategyId)?.label ??
-      "Player two strategy";
+      controller.getResolvedStrategyOption(playerTwoId)?.label ?? "Player two strategy";
   }
 
   onMount(() => {
@@ -118,20 +120,6 @@
     }
 
     return "Unknown";
-  }
-
-  function describeLastDecision(playbackState: AutomatedMatchPlaybackState): string {
-    const trace = playbackState.lastTrace;
-    if (!trace) {
-      return "No automated decision has been taken yet.";
-    }
-
-    const candidateLabel =
-      trace.selectedCandidate?.stableKey ?? trace.orderedCandidates[0]?.stableKey ?? "No candidate";
-    const diagnosticCount = trace.diagnostics.length;
-    const fallbackLabel = trace.fallbackTaken ? `Fallback: ${trace.fallbackTaken}.` : "";
-
-    return `${candidateLabel}. ${diagnosticCount} diagnostics. ${fallbackLabel}`.trim();
   }
 
   function playbackLabel(mode: AutomatedMatchPlaybackState["mode"]): string {
@@ -309,6 +297,105 @@
         {#if playbackSnapshot.error}
           <div class="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-sm text-rose-100">
             {playbackSnapshot.error}
+          </div>
+        {/if}
+        {#if decisionPresentation}
+          <div class="grid gap-3 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)]">
+            <Card class="border-white/10 bg-black/20 text-slate-100 shadow-none">
+              <CardHeader class="gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <CardTitle class="text-base">Last decision</CardTitle>
+                  {#if decisionPresentation.selectedCandidate}
+                    <Badge variant="secondary" class="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-slate-200">
+                      {decisionPresentation.selectedCandidate.family}
+                    </Badge>
+                  {/if}
+                  <Badge variant="secondary" class="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-slate-200">
+                    {decisionPresentation.diagnosticCount} diagnostics
+                  </Badge>
+                  {#if decisionPresentation.fallbackTaken}
+                    <Badge variant="secondary" class="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-amber-100">
+                      Fallback: {decisionPresentation.fallbackTaken}
+                    </Badge>
+                  {/if}
+                </div>
+                <CardDescription class="text-slate-300">
+                  {#if playbackSnapshot.lastTrace?.actorId}
+                    {playerLabel(playbackSnapshot.lastTrace.actorId)}
+                  {:else}
+                    Unknown actor
+                  {/if}
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent class="space-y-4">
+                {#if decisionPresentation.selectedCandidate}
+                  <div class="space-y-3">
+                    <div class="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+                      <p class="text-sm font-semibold text-slate-100">
+                        {decisionPresentation.selectedCandidate.stableKey}
+                      </p>
+                      {#if decisionPresentation.selectedCandidate.policyMatched}
+                        <p class="mt-2 text-sm text-slate-300">
+                          {decisionPresentation.selectedCandidate.policyDecision}
+                        </p>
+                        {#if decisionPresentation.selectedCandidate.policyReason}
+                          <p class="mt-1 text-sm text-slate-400">
+                            {decisionPresentation.selectedCandidate.policyReason}
+                          </p>
+                        {/if}
+                      {/if}
+                    </div>
+
+                    <div class="grid gap-2 sm:grid-cols-2">
+                      {#each decisionPresentation.selectedCandidate.fields as field}
+                        <div class="rounded-2xl border border-white/10 bg-white/[0.035] px-3 py-2">
+                          <p class="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                            {field.label}
+                          </p>
+                          <p class="mt-1 text-sm text-slate-100">{field.value}</p>
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
+                {:else}
+                  <p class="text-sm text-slate-300">No selected candidate was recorded for the last decision.</p>
+                {/if}
+              </CardContent>
+            </Card>
+
+            <Card class="border-white/10 bg-black/20 text-slate-100 shadow-none">
+              <CardHeader>
+                <CardTitle class="text-base">Top candidates</CardTitle>
+                <CardDescription class="text-slate-300">
+                  Ranked options from the last automation trace.
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent class="space-y-3">
+                {#each decisionPresentation.topCandidates as candidate, index}
+                  <div class="rounded-2xl border border-white/10 bg-white/[0.035] px-3 py-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary" class="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-slate-200">
+                        #{index + 1}
+                      </Badge>
+                      <Badge variant="secondary" class="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-slate-200">
+                        {candidate.family}
+                      </Badge>
+                    </div>
+                    <p class="mt-2 text-sm font-semibold text-slate-100">{candidate.stableKey}</p>
+                    <div class="mt-3 space-y-2">
+                      {#each candidate.fields as field}
+                        <div class="flex items-start justify-between gap-3 text-sm">
+                          <span class="text-slate-400">{field.label}</span>
+                          <span class="text-right text-slate-100">{field.value}</span>
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
+                {/each}
+              </CardContent>
+            </Card>
           </div>
         {/if}
       </div>

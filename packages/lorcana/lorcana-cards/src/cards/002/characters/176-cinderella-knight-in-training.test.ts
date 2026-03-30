@@ -25,7 +25,9 @@ describe("Cinderella - Knight in Training", () => {
     expect(testEngine.asPlayerOne().playCard(cinderellaKnightInTraining)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(cinderellaKnightInTraining, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");

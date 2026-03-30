@@ -27,7 +27,7 @@ describe("Bolt - Dependable Friend", () => {
     expect(bagEffect).toBeDefined();
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(boltDependableFriend, {
         resolveOptional: true,
         targets: [supportTarget],
       }),

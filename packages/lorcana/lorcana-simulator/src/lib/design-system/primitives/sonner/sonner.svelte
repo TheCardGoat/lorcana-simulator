@@ -4,34 +4,61 @@
 	import Loader2Icon from "@lucide/svelte/icons/loader-2";
 	import OctagonXIcon from "@lucide/svelte/icons/octagon-x";
 	import TriangleAlertIcon from "@lucide/svelte/icons/triangle-alert";
+	import { onMount, type Component } from "svelte";
 
-	import { Toaster as Sonner, type ToasterProps as SonnerProps } from "svelte-sonner";
-	import { mode } from "mode-watcher";
+	type SonnerTheme = "light" | "dark" | "system";
 
-	let { ...restProps }: SonnerProps = $props();
+	let { ...restProps }: Record<string, unknown> = $props();
+	let SonnerComponent = $state<Component<Record<string, unknown>> | null>(null);
+	let theme = $state<SonnerTheme>("light");
+
+	onMount(() => {
+		void import("svelte-sonner").then((module) => {
+			SonnerComponent = module.Toaster as Component<Record<string, unknown>>;
+		});
+
+		if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+			return;
+		}
+
+		const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+		const syncTheme = () => {
+			theme = document.documentElement.classList.contains("dark") || mediaQuery.matches ? "dark" : "light";
+		};
+
+		syncTheme();
+		mediaQuery.addEventListener("change", syncTheme);
+
+		return () => {
+			mediaQuery.removeEventListener("change", syncTheme);
+		};
+	});
 </script>
 
-<Sonner
-	theme={mode.current}
-	class="toaster group"
-	style="--normal-bg: rgba(7, 18, 31, 0.96); --normal-text: #e5edf7; --normal-border: rgba(108, 145, 192, 0.3);"
-	{...restProps}
-	>{#snippet loadingIcon()}
-		<Loader2Icon class="size-4 animate-spin" />
-	{/snippet}
-	{#snippet successIcon()}
-		<CircleCheckIcon class="size-4" />
-	{/snippet}
-	{#snippet errorIcon()}
-		<OctagonXIcon class="size-4" />
-	{/snippet}
-	{#snippet infoIcon()}
-		<InfoIcon class="size-4" />
-	{/snippet}
-	{#snippet warningIcon()}
-		<TriangleAlertIcon class="size-4" />
-	{/snippet}
-</Sonner>
+{#if SonnerComponent}
+	<SonnerComponent
+		{theme}
+		class="toaster group"
+		style="--normal-bg: rgba(7, 18, 31, 0.96); --normal-text: #e5edf7; --normal-border: rgba(108, 145, 192, 0.3);"
+		{...restProps}
+		>{#snippet loadingIcon()}
+			<Loader2Icon class="size-4 animate-spin" />
+		{/snippet}
+		{#snippet successIcon()}
+			<CircleCheckIcon class="size-4" />
+		{/snippet}
+		{#snippet errorIcon()}
+			<OctagonXIcon class="size-4" />
+		{/snippet}
+		{#snippet infoIcon()}
+			<InfoIcon class="size-4" />
+		{/snippet}
+		{#snippet warningIcon()}
+			<TriangleAlertIcon class="size-4" />
+		{/snippet}
+	</SonnerComponent>
+{/if}
 
 <style>
 	:global(.toaster [data-sonner-toaster]) {

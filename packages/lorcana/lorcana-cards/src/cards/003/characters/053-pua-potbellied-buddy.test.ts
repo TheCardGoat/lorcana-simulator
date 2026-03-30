@@ -42,7 +42,7 @@ describe("Pua - Potbellied Buddy", () => {
       expect(testEngine.asPlayerOne().getCardZone(puaPotbelliedBuddy)).not.toBe("play");
 
       // Resolve the optional triggered ability - accept shuffling Pua into deck
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true });
+      testEngine.asPlayerOne().resolvePendingByCard(puaPotbelliedBuddy, { resolveOptional: true });
 
       // Pua should be in the deck (shuffled in)
       expect(testEngine.asPlayerOne().getCardZone(puaPotbelliedBuddy)).not.toBe("discard");
@@ -78,7 +78,7 @@ describe("Pua - Potbellied Buddy", () => {
       expect(testEngine.asPlayerOne().getCardZone(puaPotbelliedBuddy)).toBe("discard");
 
       // Resolve the optional triggered ability - decline
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngine.asPlayerOne().resolvePendingByCard(puaPotbelliedBuddy, { resolveOptional: false });
 
       // Pua should remain in discard
       expect(testEngine.asPlayerOne().getCardZone(puaPotbelliedBuddy)).toBe("discard");
@@ -108,7 +108,7 @@ describe("Pua - Potbellied Buddy", () => {
       expect(testEngine.asPlayerOne().getCardZone(puaPotbelliedBuddy)).not.toBe("play");
 
       // Resolve the optional triggered ability - accept
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true });
+      testEngine.asPlayerOne().resolvePendingByCard(puaPotbelliedBuddy, { resolveOptional: true });
 
       // Deck count should increase by 1
       const deckAfter = testEngine.asPlayerOne().getZonesCardCount().deck;

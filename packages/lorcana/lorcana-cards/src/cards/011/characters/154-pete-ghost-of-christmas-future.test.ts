@@ -111,7 +111,9 @@ describe("Pete - Ghost of Christmas Future", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
 
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(peteGhostOfChristmasFuture),
+      ).toBeSuccessfulCommand();
 
       // Resolve the scry - put the looked-at card into hand
       expect(
@@ -155,7 +157,9 @@ describe("Pete - Ghost of Christmas Future", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
 
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(peteGhostOfChristmasFuture),
+      ).toBeSuccessfulCommand();
 
       // Resolve the scry - put one card in hand, the other goes to bottom via remainder
       expect(

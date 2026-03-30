@@ -76,7 +76,7 @@ describe('Flotsam - Ursula\'s "Baby"', () => {
 
       if (testEngine.asPlayerTwo().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerTwo().resolveBag(testEngine.asPlayerTwo().getBagEffects()[0]!.id),
+          testEngine.asPlayerTwo().resolvePendingByCard(flotsamUrsulasBaby),
         ).toBeSuccessfulCommand();
       }
 
@@ -132,7 +132,7 @@ describe('Flotsam - Ursula\'s "Baby"', () => {
 
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+          testEngine.asPlayerOne().resolvePendingByCard(flotsamUrsulasBaby),
         ).toBeSuccessfulCommand();
       }
 

@@ -43,9 +43,19 @@ export interface LorcanaCardStatModifier extends LorcanaCardTag {
   iconUrl: string;
 }
 
+export interface LorcanaCardStatBadge {
+  id: string;
+  stat: "strength" | "willpower" | "lore";
+  currentValue: number;
+  iconUrl: string;
+  tone: "neutral" | "success" | "warning";
+  label: string;
+}
+
 export interface LorcanaCardTagGroups {
   tags: LorcanaCardTag[];
   statModifiers: LorcanaCardStatModifier[];
+  statBadges: LorcanaCardStatBadge[];
 }
 
 const INTEGER_PATTERN = /(\d+)/;
@@ -98,6 +108,19 @@ function getAtLocationTooltip(card: LorcanaCardSnapshot): string {
   }
 
   return m["sim.card.tags.atLocation.tooltip"]({});
+}
+
+function getActiveStatEffectTooltip(
+  card: LorcanaCardSnapshot,
+  stat: "strength" | "willpower" | "lore",
+  fallback: string,
+): string {
+  const relatedEffects = (card.activeEffects ?? []).filter((effect) => effect.stat === stat);
+  if (relatedEffects.length === 0) {
+    return fallback;
+  }
+
+  return relatedEffects.map((effect) => effect.description).join("; ");
 }
 
 function buildLorcanaCardTagGroups(card: LorcanaCardSnapshot): LorcanaCardTagGroups & {
@@ -161,10 +184,14 @@ function buildLorcanaCardTagGroups(card: LorcanaCardSnapshot): LorcanaCardTagGro
         amount: signedCopy.amount,
         sign: signedCopy.sign,
       }),
-      tooltip: m["sim.card.tags.loreDelta.tooltip"]({
-        amount: signedCopy.amount,
-        sign: signedCopy.sign,
-      }),
+      tooltip: getActiveStatEffectTooltip(
+        card,
+        "lore",
+        m["sim.card.tags.loreDelta.tooltip"]({
+          amount: signedCopy.amount,
+          sign: signedCopy.sign,
+        }),
+      ),
       icon: StarIcon,
       iconUrl: getLoreIconUrl(),
       tone: loreDelta > 0 ? "success" : "warning",
@@ -182,10 +209,14 @@ function buildLorcanaCardTagGroups(card: LorcanaCardSnapshot): LorcanaCardTagGro
         amount: signedCopy.amount,
         sign: signedCopy.sign,
       }),
-      tooltip: m["sim.card.tags.strengthDelta.tooltip"]({
-        amount: signedCopy.amount,
-        sign: signedCopy.sign,
-      }),
+      tooltip: getActiveStatEffectTooltip(
+        card,
+        "strength",
+        m["sim.card.tags.strengthDelta.tooltip"]({
+          amount: signedCopy.amount,
+          sign: signedCopy.sign,
+        }),
+      ),
       icon: SwordsIcon,
       iconUrl: getStatSmallIconUrl("strength"),
       tone: strengthDelta > 0 ? "success" : "warning",
@@ -203,15 +234,72 @@ function buildLorcanaCardTagGroups(card: LorcanaCardSnapshot): LorcanaCardTagGro
         amount: signedCopy.amount,
         sign: signedCopy.sign,
       }),
-      tooltip: m["sim.card.tags.willpowerDelta.tooltip"]({
-        amount: signedCopy.amount,
-        sign: signedCopy.sign,
-      }),
+      tooltip: getActiveStatEffectTooltip(
+        card,
+        "willpower",
+        m["sim.card.tags.willpowerDelta.tooltip"]({
+          amount: signedCopy.amount,
+          sign: signedCopy.sign,
+        }),
+      ),
       icon: HeartIcon,
       iconUrl: getStatSmallIconUrl("defense"),
       tone: willpowerDelta > 0 ? "success" : "warning",
       value: willpowerDelta,
       signedValue: `${signedCopy.sign}${signedCopy.amount}`,
+    });
+  }
+
+  const statBadges: LorcanaCardStatBadge[] = [];
+  const hasAnyStatDelta = strengthDelta !== 0 || willpowerDelta !== 0 || loreDelta !== 0;
+
+  if (hasAnyStatDelta && (card.cardType === "character" || card.cardType === "location")) {
+    if (typeof card.strength === "number" && card.cardType === "character") {
+      statBadges.push({
+        id: "strength",
+        stat: "strength",
+        currentValue: card.strength,
+        iconUrl: getStatSmallIconUrl("strength"),
+        tone: strengthDelta > 0 ? "success" : strengthDelta < 0 ? "warning" : "neutral",
+        label: `Strength ${card.strength}`,
+      });
+    }
+
+    if (typeof card.willpower === "number") {
+      statBadges.push({
+        id: "willpower",
+        stat: "willpower",
+        currentValue: card.willpower,
+        iconUrl: getStatSmallIconUrl("defense"),
+        tone: willpowerDelta > 0 ? "success" : willpowerDelta < 0 ? "warning" : "neutral",
+        label: `Willpower ${card.willpower}`,
+      });
+    }
+
+    if (typeof card.loreValue === "number") {
+      statBadges.push({
+        id: "lore",
+        stat: "lore",
+        currentValue: card.loreValue,
+        iconUrl: getLoreIconUrl(),
+        tone: loreDelta > 0 ? "success" : loreDelta < 0 ? "warning" : "neutral",
+        label: `Lore ${card.loreValue}`,
+      });
+    }
+  }
+
+  if (
+    card.cardType === "location" &&
+    typeof card.loreValue === "number" &&
+    !statBadges.some((badge) => badge.id === "lore")
+  ) {
+    statBadges.push({
+      id: "lore",
+      stat: "lore",
+      currentValue: card.loreValue,
+      iconUrl: getLoreIconUrl(),
+      tone: loreDelta > 0 ? "success" : loreDelta < 0 ? "warning" : "neutral",
+      label: `Lore ${card.loreValue}`,
     });
   }
 
@@ -368,7 +456,7 @@ function buildLorcanaCardTagGroups(card: LorcanaCardSnapshot): LorcanaCardTagGro
 
   pushTag(
     postStatTags,
-    hasKeyword(card, "Shift")
+    card.zoneId === "hand" && hasKeyword(card, "Shift")
       ? {
           id: "shift",
           label: shiftValue
@@ -496,13 +584,14 @@ function buildLorcanaCardTagGroups(card: LorcanaCardSnapshot): LorcanaCardTagGro
   return {
     tags,
     statModifiers,
+    statBadges,
     orderedTags: [...preStatTags, ...statModifiers, ...postStatTags],
   };
 }
 
 export function getLorcanaCardTagGroups(card: LorcanaCardSnapshot): LorcanaCardTagGroups {
-  const { tags, statModifiers } = buildLorcanaCardTagGroups(card);
-  return { tags, statModifiers };
+  const { tags, statModifiers, statBadges } = buildLorcanaCardTagGroups(card);
+  return { tags, statModifiers, statBadges };
 }
 
 export function getLorcanaCardTags(card: LorcanaCardSnapshot): LorcanaCardTag[] {

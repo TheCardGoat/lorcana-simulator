@@ -103,10 +103,9 @@ describe("Owl Island - Secluded Entrance", () => {
 
     expect(testEngine.asPlayerOne().playCard(cheapActionOne)).toBeSuccessfulCommand();
     if (testEngine.asPlayerOne().getBagCount() > 0) {
-      expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id)
-          .success,
-      ).toBe(true);
+      expect(testEngine.asPlayerOne().resolvePendingByCard(owlIslandSecludedEntrance).success).toBe(
+        true,
+      );
     }
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
     expect(testEngine.asPlayerOne().playCard(cheapActionTwo)).toBeSuccessfulCommand();

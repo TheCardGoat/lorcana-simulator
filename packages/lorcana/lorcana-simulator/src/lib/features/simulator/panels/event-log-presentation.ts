@@ -37,7 +37,7 @@ export type EventLogRow =
 
 export function filterEntriesToLastTurns(
   entries: MoveLogEntrySnapshot[],
-  turnCount = 2,
+  turnCount = 4,
 ): MoveLogEntrySnapshot[] {
   if (entries.length === 0 || turnCount <= 0) {
     return [];

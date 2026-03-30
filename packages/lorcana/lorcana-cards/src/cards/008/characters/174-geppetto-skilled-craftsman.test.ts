@@ -41,7 +41,7 @@ describe("Geppetto - Skilled Craftsman", () => {
     const itemBId = testEngine.findCardInstanceId(itemB, "hand", PLAYER_ONE);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(geppettoSkilledCraftsman, {
         resolveOptional: true,
         targets: [itemAId, itemBId],
       }),
@@ -62,7 +62,7 @@ describe("Geppetto - Skilled Craftsman", () => {
 
     expect(testEngine.asPlayerOne().quest(geppettoSkilledCraftsman)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(geppettoSkilledCraftsman, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

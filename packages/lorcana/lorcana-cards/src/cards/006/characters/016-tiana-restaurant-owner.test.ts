@@ -56,7 +56,9 @@ describe("Tiana - Restaurant Owner", () => {
       // Resolve Tiana's triggered ability from the bag (owned by player one)
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(tianaRestaurantOwner),
+        ).toBeSuccessfulCommand();
       }
 
       // Attacker should have -3 strength applied (4 - 3 = 1)

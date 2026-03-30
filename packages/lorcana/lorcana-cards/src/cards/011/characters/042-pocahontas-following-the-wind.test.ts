@@ -55,7 +55,9 @@ describe("Pocahontas - Following the Wind", () => {
 
       // Resolve the triggered ability, targeting the exerted ally
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [exertedCharacterLore2] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(pocahontasFollowingTheWind, { targets: [exertedCharacterLore2] }),
       ).toBeSuccessfulCommand();
 
       // Should gain Pocahontas's own lore (from questing) + exerted ally's lore
@@ -82,7 +84,9 @@ describe("Pocahontas - Following the Wind", () => {
 
       // Resolve the triggered ability, targeting the exerted opposing character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [exertedOpponentCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(pocahontasFollowingTheWind, {
+          targets: [exertedOpponentCharacter],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(

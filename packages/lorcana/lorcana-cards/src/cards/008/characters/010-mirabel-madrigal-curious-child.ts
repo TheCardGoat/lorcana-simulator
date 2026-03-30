@@ -24,9 +24,9 @@ export const mirabelMadrigalCuriousChild: CharacterCard = {
   },
   text: [
     {
-      title: "YOU ARE",
+      title: "YOU ARE A WONDER",
       description:
-        "A WONDER When you play this character, you may reveal a song card in your hand to gain 1 lore.",
+        "When you play this character, you may reveal a song card in your hand to gain 1 lore.",
     },
   ],
   classifications: ["Storyborn", "Hero", "Madrigal"],
@@ -48,11 +48,20 @@ export const mirabelMadrigalCuriousChild: CharacterCard = {
               },
             },
             {
-              type: "reveal",
-            },
-            {
-              type: "gain-lore",
-              amount: 1,
+              type: "conditional",
+              condition: { type: "if-you-do" },
+              then: {
+                type: "sequence",
+                steps: [
+                  {
+                    type: "reveal",
+                  },
+                  {
+                    type: "gain-lore",
+                    amount: 1,
+                  },
+                ],
+              },
             },
           ],
         },

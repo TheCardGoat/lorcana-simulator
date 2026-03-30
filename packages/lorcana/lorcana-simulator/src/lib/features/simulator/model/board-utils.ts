@@ -1,8 +1,11 @@
 import { type MatchStaticResources } from "@tcg/lorcana-engine";
 import type { LorcanaCard, LorcanaCardDefinition } from "@tcg/lorcana-engine";
+import type { Languages } from "@tcg/lorcana-types";
 import type { LorcanaProjectedBoardView } from "@tcg/lorcana-engine";
 import { m } from "$lib/i18n/messages.js";
+import { getLocale } from "$lib/paraglide/runtime.js";
 import type {
+  LorcanaActiveEffectSummary,
   LorcanaCardTextEntrySnapshot,
   LorcanaCardSnapshot,
   LorcanaPlayerSide,
@@ -31,6 +34,23 @@ interface AuthoritativeCardStateView {
 }
 
 type LocalizedCardTextSource = string | Array<{ title: string; description?: string }>;
+
+const CARD_I18N_LOCALE_BY_UI_LOCALE: Partial<Record<string, Languages>> = {
+  en: "en",
+  de: "de",
+  it: "it",
+  fr: "fr",
+  es: "en",
+  "pt-br": "en",
+};
+
+function resolveCardI18nLocale(): Languages {
+  try {
+    return CARD_I18N_LOCALE_BY_UI_LOCALE[getLocale()] ?? "en";
+  } catch {
+    return "en";
+  }
+}
 
 function flattenCardText(text?: LocalizedCardTextSource): string | undefined {
   if (!text) {
@@ -69,6 +89,21 @@ function projectCardTextEntries(
     .filter((entry): entry is LorcanaCardTextEntrySnapshot => entry !== null);
 
   return entries.length > 0 ? entries : undefined;
+}
+
+function getLocalizedChoiceOptionTexts(definition: LorcanaCardDefinition): string[] | undefined {
+  const locale = resolveCardI18nLocale();
+  const localized = definition.i18n?.[locale]?.optionTexts;
+  if (localized && localized.length > 0) {
+    return localized;
+  }
+
+  const english = definition.i18n?.en?.optionTexts;
+  if (english && english.length > 0) {
+    return english;
+  }
+
+  return undefined;
 }
 
 function mergeTextEntries(
@@ -178,6 +213,397 @@ function buildGrantSources(
   return sources;
 }
 
+function formatSignedAmount(value: number): string {
+  return `${value >= 0 ? "+" : ""}${value}`;
+}
+
+function formatStatLabel(stat: string): string {
+  return `${stat.charAt(0).toUpperCase()}${stat.slice(1)}`;
+}
+
+function formatKeywordLabel(keyword: string, value?: number): string {
+  if (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value > 0 &&
+    (keyword === "Resist" ||
+      keyword === "Challenger" ||
+      keyword === "Singer" ||
+      keyword === "Boost")
+  ) {
+    return `${keyword} +${value}`;
+  }
+
+  return keyword;
+}
+
+function formatRestrictionLabel(restriction: string): string {
+  switch (restriction) {
+    case "cant-ready":
+      return "Can't ready";
+    case "cant-challenge":
+      return "Can't challenge";
+    case "cant-quest":
+      return "Can't quest";
+    case "cant-quest-or-challenge":
+      return "Can't quest or challenge";
+    case "cant-play-actions":
+      return "Can't play actions";
+    case "cant-play-items":
+      return "Can't play items";
+    case "cant-sing":
+      return "Can't sing";
+    default:
+      return restriction
+        .split("-")
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join(" ");
+  }
+}
+
+function getEffectPriorityFromLabel(label: string): number {
+  if (/^[+-]\d+\s+(Strength|Willpower|Lore)$/i.test(label)) {
+    return 0;
+  }
+  if (/^(Strength|Willpower|Lore)\s+[+-]?\d+/i.test(label)) {
+    return 0;
+  }
+  if (label.startsWith("Can't ")) {
+    return 1;
+  }
+  if (
+    /^(Ward|Evasive|Bodyguard|Support|Reckless|Vanish|Rush|Alert|Resist|Challenger|Singer|Sing Together|Boost|Shift)/i.test(
+      label,
+    )
+  ) {
+    return 2;
+  }
+  if (label.startsWith("Cost ")) {
+    return 4;
+  }
+  return 3;
+}
+
+function formatEffectDuration(
+  effect: LorcanaProjectedBoardView["activeEffects"][number],
+): string | undefined {
+  const payload = effect.payload;
+  const rawDuration =
+    payload &&
+    typeof payload === "object" &&
+    "duration" in payload &&
+    typeof payload.duration === "string" &&
+    payload.duration.trim().length > 0
+      ? payload.duration.trim()
+      : undefined;
+
+  switch (rawDuration) {
+    case "this-turn":
+      return "This turn";
+    case "until-start-of-next-turn":
+      return "Until the start of next turn";
+    case "until-end-of-turn":
+      return "Until end of turn";
+    case "while-in-play":
+      return "While the source remains in play";
+    case "next-play-this-turn":
+      return "For the next play this turn";
+    default:
+      if (typeof effect.expiresAtTurn === "number") {
+        return `Active through turn ${effect.expiresAtTurn}`;
+      }
+      return undefined;
+  }
+}
+
+function getSourceDetails(
+  board: LorcanaProjectedBoardView,
+  staticResources: MatchStaticResources,
+  sourceId: string | undefined,
+): Omit<
+  LorcanaActiveEffectSummary,
+  | "id"
+  | "type"
+  | "label"
+  | "description"
+  | "priority"
+  | "targetCardId"
+  | "targetPlayerId"
+  | "stat"
+  | "amount"
+  | "keyword"
+  | "restriction"
+  | "abilityTitle"
+  | "startsAtTurn"
+  | "expiresAtTurn"
+> {
+  if (!sourceId) {
+    return {};
+  }
+
+  const projectedSource = board.cards[sourceId];
+  const sourceDefinition = getCardDefinition(
+    staticResources,
+    sourceId,
+    projectedSource?.definitionId,
+  );
+  return {
+    sourceCardId: sourceId,
+    sourceLabel:
+      projectedSource?.fullName ?? getCardDisplayName(undefined, sourceDefinition) ?? sourceId,
+    sourceSet: sourceDefinition?.set,
+    sourceCardNumber: sourceDefinition?.cardNumber,
+    sourceInkType: sourceDefinition?.inkType,
+  };
+}
+
+function createEffectDescription(args: {
+  label: string;
+  sourceLabel?: string;
+  duration?: string;
+}): string {
+  const segments = [args.label];
+  if (args.sourceLabel) {
+    segments.push(`From ${args.sourceLabel}`);
+  }
+  if (args.duration) {
+    segments.push(args.duration);
+  }
+  return segments.join(" · ");
+}
+
+function summarizeProjectedActiveEffect(args: {
+  board: LorcanaProjectedBoardView;
+  staticResources: MatchStaticResources;
+  effect: LorcanaProjectedBoardView["activeEffects"][number];
+}): LorcanaActiveEffectSummary | null {
+  const { board, staticResources, effect } = args;
+  const payload = effect.payload;
+  const sourceDetails = getSourceDetails(board, staticResources, effect.sourceId);
+  const duration = formatEffectDuration(effect);
+
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  if (
+    effect.type === "stat-modifier" &&
+    "stat" in payload &&
+    typeof payload.stat === "string" &&
+    "modifier" in payload &&
+    typeof payload.modifier === "number"
+  ) {
+    const label = `${formatStatLabel(payload.stat)} ${formatSignedAmount(payload.modifier)}`;
+    return {
+      id: effect.id,
+      type: effect.type,
+      label,
+      description: createEffectDescription({
+        label,
+        sourceLabel: sourceDetails.sourceLabel,
+        duration,
+      }),
+      priority: 0,
+      ...sourceDetails,
+      targetCardId: effect.targetCardId,
+      targetPlayerId: effect.targetPlayerId,
+      stat:
+        payload.stat === "strength" || payload.stat === "willpower" || payload.stat === "lore"
+          ? payload.stat
+          : undefined,
+      amount: payload.modifier,
+      startsAtTurn: effect.startsAtTurn,
+      expiresAtTurn: effect.expiresAtTurn,
+    };
+  }
+
+  if (
+    effect.type === "temporary-keyword" &&
+    "keyword" in payload &&
+    typeof payload.keyword === "string"
+  ) {
+    const value =
+      "value" in payload && typeof payload.value === "number" ? payload.value : undefined;
+    const label = formatKeywordLabel(payload.keyword, value);
+    return {
+      id: effect.id,
+      type: effect.type,
+      label,
+      description: createEffectDescription({
+        label,
+        sourceLabel: sourceDetails.sourceLabel,
+        duration,
+      }),
+      priority: 2,
+      ...sourceDetails,
+      targetCardId: effect.targetCardId,
+      keyword: payload.keyword,
+      amount: value,
+      startsAtTurn: effect.startsAtTurn,
+      expiresAtTurn: effect.expiresAtTurn,
+    };
+  }
+
+  if (
+    effect.type === "temporary-restriction" &&
+    "restriction" in payload &&
+    typeof payload.restriction === "string"
+  ) {
+    const label = formatRestrictionLabel(payload.restriction);
+    return {
+      id: effect.id,
+      type: effect.type,
+      label,
+      description: createEffectDescription({
+        label,
+        sourceLabel: sourceDetails.sourceLabel,
+        duration,
+      }),
+      priority: 1,
+      ...sourceDetails,
+      targetCardId: effect.targetCardId,
+      restriction: payload.restriction,
+      startsAtTurn: effect.startsAtTurn,
+      expiresAtTurn: effect.expiresAtTurn,
+    };
+  }
+
+  if (
+    effect.type === "temporary-ability" &&
+    "ability" in payload &&
+    typeof payload.ability === "string"
+  ) {
+    const abilityTitle =
+      "abilityName" in payload && typeof payload.abilityName === "string"
+        ? payload.abilityName
+        : payload.ability;
+    const label = abilityTitle || "Granted ability";
+    return {
+      id: effect.id,
+      type: effect.type,
+      label,
+      description: createEffectDescription({
+        label,
+        sourceLabel: sourceDetails.sourceLabel,
+        duration,
+      }),
+      priority: 3,
+      ...sourceDetails,
+      targetCardId: effect.targetCardId,
+      abilityTitle,
+      startsAtTurn: effect.startsAtTurn,
+      expiresAtTurn: effect.expiresAtTurn,
+    };
+  }
+
+  if (
+    effect.type === "player-cost-reduction" &&
+    "amount" in payload &&
+    typeof payload.amount === "number"
+  ) {
+    const cardType =
+      "cardType" in payload && typeof payload.cardType === "string" ? payload.cardType : "card";
+    const label = `Cost -${payload.amount}`;
+    return {
+      id: effect.id,
+      type: effect.type,
+      label,
+      description: createEffectDescription({
+        label: `Next ${cardType} costs ${payload.amount} less`,
+        sourceLabel: sourceDetails.sourceLabel,
+        duration,
+      }),
+      priority: 4,
+      ...sourceDetails,
+      targetPlayerId: effect.targetPlayerId,
+      amount: payload.amount,
+      startsAtTurn: effect.startsAtTurn,
+      expiresAtTurn: effect.expiresAtTurn,
+    };
+  }
+
+  if (
+    effect.type === "player-restriction" &&
+    "restriction" in payload &&
+    typeof payload.restriction === "string"
+  ) {
+    const label = formatRestrictionLabel(payload.restriction);
+    return {
+      id: effect.id,
+      type: effect.type,
+      label,
+      description: createEffectDescription({
+        label,
+        sourceLabel: sourceDetails.sourceLabel,
+        duration,
+      }),
+      priority: 4,
+      ...sourceDetails,
+      targetPlayerId: effect.targetPlayerId,
+      restriction: payload.restriction,
+      startsAtTurn: effect.startsAtTurn,
+      expiresAtTurn: effect.expiresAtTurn,
+    };
+  }
+
+  return null;
+}
+
+function summarizeGrantEffects(card: LorcanaCardSnapshot): LorcanaActiveEffectSummary[] {
+  return (card.grantSources ?? []).flatMap((source) =>
+    source.grants.map((grant) => ({
+      id: `grant:${card.cardId}:${source.sourceCardId}:${grant}`,
+      type: "grant",
+      label: grant,
+      description: createEffectDescription({
+        label: grant,
+        sourceLabel: source.sourceLabel,
+      }),
+      priority: getEffectPriorityFromLabel(grant),
+      sourceCardId: source.sourceCardId,
+      sourceLabel: source.sourceLabel,
+      sourceSet: source.sourceSet,
+      sourceCardNumber: source.sourceCardNumber,
+      sourceInkType: source.sourceInkType,
+      targetCardId: card.cardId,
+      stat: /^[+-]\d+\s+(Strength|Willpower|Lore)$/i.test(grant)
+        ? ({
+            Strength: "strength",
+            Willpower: "willpower",
+            Lore: "lore",
+          }[grant.replace(/^[+-]\d+\s+/i, "") as "Strength" | "Willpower" | "Lore"] as
+            | "strength"
+            | "willpower"
+            | "lore"
+            | undefined)
+        : undefined,
+    })),
+  );
+}
+
+function dedupeAndSortEffects(
+  effects: LorcanaActiveEffectSummary[],
+): LorcanaActiveEffectSummary[] | undefined {
+  if (effects.length === 0) {
+    return undefined;
+  }
+
+  const deduped = new Map<string, LorcanaActiveEffectSummary>();
+  for (const effect of effects) {
+    const key = `${effect.type}:${effect.label}:${effect.sourceCardId ?? "none"}`;
+    if (!deduped.has(key)) {
+      deduped.set(key, effect);
+    }
+  }
+
+  return [...deduped.values()].sort((left, right) => {
+    if (left.priority !== right.priority) {
+      return left.priority - right.priority;
+    }
+    return left.label.localeCompare(right.label);
+  });
+}
+
 function getHiddenCardLabel(zoneId: LorcanaZoneId): string {
   return zoneId === "deck" ? m["sim.card.hiddenDeck"]({}) : m["sim.card.hidden"]({});
 }
@@ -268,10 +694,14 @@ function buildSupplementalCardSnapshot(args: {
     actionSubtype:
       definition.cardType === "action" ? (definition.actionSubtype ?? undefined) : undefined,
     cost: definition.cost,
+    playCost: definition.cost,
+    shiftInkCost: undefined,
+    shiftPlayCost: undefined,
     inkType: definition.inkType,
     inkable: definition.inkable,
     text: flattenCardText(cardText),
     textEntries: projectCardTextEntries(cardText),
+    choiceOptionTexts: getLocalizedChoiceOptionTexts(definition),
     strength: definition.cardType === "character" ? definition.strength : undefined,
     baseStrength: definition.cardType === "character" ? definition.strength : undefined,
     willpower:
@@ -411,6 +841,9 @@ export function buildCardSnapshotMap(
       classifications:
         definition?.cardType === "character" ? definition.classifications : undefined,
       cost: definition?.cost,
+      playCost: projectedCard.playCost ?? definition?.cost,
+      shiftInkCost: projectedCard.shiftInkCost,
+      shiftPlayCost: projectedCard.shiftPlayCost,
       damage: projectedCard.damage ?? 0,
       definitionId:
         projectedCard.definitionId ??
@@ -447,12 +880,40 @@ export function buildCardSnapshotMap(
         projectCardTextEntries(cardText),
         projectedCard.grantedAbilityTextEntries,
       ),
+      choiceOptionTexts: definition ? getLocalizedChoiceOptionTexts(definition) : undefined,
       willpower:
         definition?.cardType === "character" || definition?.cardType === "location"
           ? projectedCard.willpower
           : undefined,
       zoneId,
     };
+  }
+
+  const cardEffectsById = new Map<string, LorcanaActiveEffectSummary[]>();
+  for (const effect of board.activeEffects ?? []) {
+    if (!effect.targetCardId) {
+      continue;
+    }
+
+    const summary = summarizeProjectedActiveEffect({
+      board,
+      staticResources,
+      effect,
+    });
+    if (!summary) {
+      continue;
+    }
+
+    const targetEffects = cardEffectsById.get(effect.targetCardId) ?? [];
+    targetEffects.push(summary);
+    cardEffectsById.set(effect.targetCardId, targetEffects);
+  }
+
+  for (const card of Object.values(snapshots)) {
+    card.activeEffects = dedupeAndSortEffects([
+      ...(cardEffectsById.get(card.cardId) ?? []),
+      ...summarizeGrantEffects(card),
+    ]);
   }
 
   return snapshots;

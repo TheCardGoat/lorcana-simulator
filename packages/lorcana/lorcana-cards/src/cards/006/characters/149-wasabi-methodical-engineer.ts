@@ -82,6 +82,7 @@ export const wasabiMethodicalEngineer: CharacterCard = {
         type: "gain-keyword",
       },
       id: "l5t-2",
+      name: "QUICK REFLEXES",
       text: "QUICK REFLEXES During your turn, this character gains Evasive.",
       type: "static",
     },

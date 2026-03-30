@@ -56,7 +56,9 @@ describe("#### 7. ZONES", () => {
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
       const goodJobId = testEngine.findCardInstanceId(goodJob, "hand", "player_one");
-      expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(bagEffect!.sourceId),
+      ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           targets: [goodJobId],

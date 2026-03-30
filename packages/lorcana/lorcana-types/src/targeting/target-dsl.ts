@@ -159,8 +159,7 @@ export interface TargetDSL<TFilter = unknown, TContext extends BaseContext = Bas
  */
 export type PlayerTargetScope =
   | "you" // The controller
-  | "opponent" // Single opponent
-  | "each-opponent" // All opponents (multiplayer)
+  | "opponent" // The opponent (engine is 1v1 only)
   | "each-player" // All players including self
   | "chosen" // Player chooses a player
   | "challenging-player"; // The player who initiated the challenge (attacker's controller)

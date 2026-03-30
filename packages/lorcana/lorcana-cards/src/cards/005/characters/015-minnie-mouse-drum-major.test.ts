@@ -81,7 +81,7 @@ describe("Minnie Mouse - Drum Major", () => {
 
       // Accept the optional search
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseDrumMajor, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -113,7 +113,7 @@ describe("Minnie Mouse - Drum Major", () => {
 
       // Decline the optional search
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseDrumMajor, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

@@ -32,7 +32,7 @@ describe("Gaston - Frightful Bully", () => {
     expect(testEngine.asPlayerOne().quest(gastonFrightfulBully)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(gastonFrightfulBully, {
         targets: [opposingCharacter],
       }),
     ).toBeSuccessfulCommand();
@@ -89,7 +89,7 @@ describe("Gaston - Frightful Bully", () => {
 
     expect(testEngine.asPlayerOne().quest(gastonFrightfulBully)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(gastonFrightfulBully, {
         targets: [opposingCharacter],
       }),
     ).toBeSuccessfulCommand();

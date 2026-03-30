@@ -47,7 +47,9 @@ describe("Dumptruck - Karnage's Second Mate", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [target] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(dumptruckKarnagesSecondMate, { targets: [target] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(target)).toBe(1);

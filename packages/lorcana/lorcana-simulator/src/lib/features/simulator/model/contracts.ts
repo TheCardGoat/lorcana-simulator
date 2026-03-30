@@ -1,4 +1,4 @@
-import type { EnginePacketUpdate, LorcanaGameLogEntry } from "@tcg/lorcana-engine";
+import type { EnginePacketUpdate, LorcanaGameLogEntry, MoveLog } from "@tcg/lorcana-engine";
 import type {
   LorcanaProjectedBoardView,
   LorcanaCardTarget,
@@ -60,6 +60,28 @@ export interface LorcanaCardTextEntrySnapshot {
   description?: string;
 }
 
+export interface LorcanaActiveEffectSummary {
+  id: string;
+  type: string;
+  label: string;
+  description: string;
+  priority: number;
+  sourceCardId?: string;
+  sourceLabel?: string;
+  sourceSet?: string;
+  sourceCardNumber?: number;
+  sourceInkType?: string[];
+  targetCardId?: string;
+  targetPlayerId?: string;
+  stat?: "strength" | "willpower" | "lore";
+  amount?: number;
+  keyword?: string;
+  restriction?: string;
+  abilityTitle?: string;
+  startsAtTurn?: number;
+  expiresAtTurn?: number;
+}
+
 export interface LogCardReference {
   cardId: string;
   definitionId: string;
@@ -86,10 +108,15 @@ export interface LorcanaCardSnapshot {
   cardType?: "character" | "action" | "item" | "location";
   actionSubtype?: string;
   cost?: number;
+  playCost?: number;
+  shiftInkCost?: number;
+  shiftPlayCost?: number;
   inkType?: string[];
   inkable?: boolean;
   text?: string;
   textEntries?: LorcanaCardTextEntrySnapshot[];
+  /** Localized option labels for cards with a ChoiceEffect (index-parallel to ChoiceEffect.options) */
+  choiceOptionTexts?: string[];
   strength?: number;
   baseStrength?: number;
   willpower?: number;
@@ -113,6 +140,7 @@ export interface LorcanaCardSnapshot {
   cardsUnderCount?: number;
   playedViaShift?: boolean;
   facePresentation: CardFacePresentation;
+  activeEffects?: LorcanaActiveEffectSummary[];
 
   // Grant source indicators (cards granting abilities/keywords to this card)
   grantSources?: Array<{
@@ -222,6 +250,8 @@ interface AvailableMovesSelectionBase {
   message: string;
   canBack: boolean;
   canCancel: boolean;
+  canDecline?: boolean;
+  declineLabel?: string;
   canConfirm: boolean;
 }
 
@@ -251,6 +281,7 @@ export interface ResolutionTargetAvailableMovesSelectionState extends AvailableM
   candidateEntries: AvailableMovesSelectionEntry[];
   activeSlotIndex: number | null;
   slots: ResolutionTargetSelectionSlotState[];
+  amountSelection: ResolutionAmountSelectionState | null;
   selectedTargetLabels: string[];
   minimumSelections: number;
   maximumSelections: number;
@@ -264,6 +295,13 @@ export interface ResolutionTargetSelectionSlotState {
   targetLabel: string | null;
   targetCardId: string | null;
   locked: boolean;
+}
+
+export interface ResolutionAmountSelectionState {
+  label: string;
+  min: number;
+  max: number;
+  value: number;
 }
 
 export interface ResolutionChoiceAvailableMovesSelectionState extends AvailableMovesSelectionBase {
@@ -338,6 +376,9 @@ export type ExecutableMovePresentation =
       categoryId: ExecutableMovePresentationCategoryId;
       categoryLabel: string;
       optionLabel: string;
+      selectionMode?: "singTogether";
+      candidateCards?: Array<{ cardId: string; value: number }>;
+      requiredValue?: number;
     };
 
 export type CardActionCategoryId =
@@ -391,7 +432,7 @@ export interface MoveLogEntrySnapshot {
   moveId: LorcanaSimulatorMoveId;
   actorSide?: LorcanaPlayerSide;
   title: string;
-  typedLogEntry?: LorcanaGameLogEntry;
+  typedLogEntry?: LorcanaGameLogEntry | MoveLog;
   playerId?: string;
   params?: SimulatorSerializedObject;
 }
@@ -432,6 +473,8 @@ export interface LorcanaPlayerSummary {
   discardCount: number;
   inkwellCount: number;
   availableInk: number | null;
+  activeEffects?: LorcanaActiveEffectSummary[];
+  effectSourceCardIds?: string[];
   timer?: LorcanaPlayerTimerSummary;
 }
 

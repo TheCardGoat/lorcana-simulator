@@ -33,6 +33,7 @@ export const magicaDeSpellCruelSorceress: CharacterCard = {
   abilities: [
     {
       id: "8Yk-1",
+      name: "PLAYING WITH POWER",
       type: "replacement",
       replaces: "discard",
       condition: {

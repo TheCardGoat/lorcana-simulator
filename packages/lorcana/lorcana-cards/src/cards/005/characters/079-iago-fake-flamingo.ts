@@ -38,8 +38,11 @@ export const iagoFakeFlamingo: CharacterCard = {
     evasive,
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 2,
+        cardType: "action",
+        duration: "next-play-this-turn",
+        target: "CONTROLLER",
+        type: "cost-reduction",
       },
       id: "1y2-2",
       name: "IN DISGUISE",

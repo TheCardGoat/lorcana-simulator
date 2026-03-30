@@ -19,6 +19,7 @@ import {
 } from "../effects/triggered-abilities";
 import { advanceTurnToNextPlayer } from "../moves/turn/pass-turn";
 import { createProjectionState, getEffectiveStrength } from "../../rules/derived-state";
+import { getOrBuildMoveRegistry } from "../rules/move-registry-cache";
 import { moveCardOutOfPlayWithStack } from "../state/shift-stack";
 import { isDiscardZoneKey, recordDiscardExitThisTurn } from "../state/turn-metrics";
 import { validateCardExists } from "../shared/validation-helpers";
@@ -229,11 +230,13 @@ export const manualSetDamage: LorcanaMoveDefinition<"manualSetDamage"> = {
 
       if (ownerId) {
         const derivedState = createProjectionState(ctx.framework.state, ctx.G);
+        const manualRegistry = getOrBuildMoveRegistry(ctx);
         const strengthBeforeBanish = getEffectiveStrength(
           ctx.cards.getDefinition(cardId),
           derivedState,
           cardId,
           (id) => ctx.cards.getDefinition(id),
+          manualRegistry,
         );
         const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId);
         moveCardOutOfPlayWithStack(ctx, cardId, {

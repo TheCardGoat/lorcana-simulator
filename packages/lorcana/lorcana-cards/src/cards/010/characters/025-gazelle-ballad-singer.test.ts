@@ -50,7 +50,9 @@ describe("Gazelle - Ballad Singer", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(gazelleBalladSinger, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -72,7 +74,9 @@ describe("Gazelle - Ballad Singer", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(gazelleBalladSinger, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Song stays in discard

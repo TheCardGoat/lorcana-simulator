@@ -42,6 +42,7 @@ export const happyLivelyKnight: CharacterCard = {
         type: "gain-keyword",
       },
       id: "g6u-1",
+      name: "BURST OF SPEED",
       text: "BURST OF SPEED During your turn, this character gains Evasive.",
       type: "static",
     },

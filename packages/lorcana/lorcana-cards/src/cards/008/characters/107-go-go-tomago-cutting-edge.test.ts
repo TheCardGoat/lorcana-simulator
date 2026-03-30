@@ -48,7 +48,7 @@ describe("Go Go Tomago - Cutting Edge", () => {
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(goGoTomagoCuttingEdge, {
         resolveOptional: true,
         targets: [opposingCharacter],
       }),
@@ -70,7 +70,9 @@ describe("Go Go Tomago - Cutting Edge", () => {
 
     expect(testEngine.asPlayerOne().playCard(goGoTomagoCuttingEdge)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(goGoTomagoCuttingEdge),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().getCardZone(opposingCharacter)).toBe("play");
     expect(testEngine.asPlayerOne().getCardZone(goGoTomagoCuttingEdge)).toBe("play");
   });

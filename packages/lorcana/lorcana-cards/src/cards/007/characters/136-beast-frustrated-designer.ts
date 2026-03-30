@@ -42,6 +42,7 @@ export const beastFrustratedDesigner: CharacterCard = {
         type: "deal-damage",
       },
       id: "1u2-1",
+      name: "I'VE HAD IT!",
       text: "I'VE HAD IT! {E}, 2 {I}, Banish 2 of your items — Deal 5 damage to chosen character.",
       type: "activated",
     },

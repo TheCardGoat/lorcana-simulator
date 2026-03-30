@@ -140,4 +140,27 @@ describe("buildResolutionActionViews", () => {
     expect(actions.map((action) => action.label)).toEqual(["Resolve effect"]);
     expect(actions[0]?.detail).toBe("Maleficent - Sorceress");
   });
+
+  it("prefers the summary title when a pending effect is instance-bound", () => {
+    const onAccept = mock(() => {});
+
+    const actions = buildResolutionActionViews({
+      items: [
+        createItem({
+          id: "pending:instance-bound",
+          isActive: true,
+          canAccept: true,
+          summaryTitle:
+            "Resolving Belle - Snowfield Strategist: ICE ARCHERY targeting Belle - Accomplished Mystic.",
+          onAccept,
+        }),
+      ],
+      labels,
+    });
+
+    expect(actions).toHaveLength(1);
+    expect(actions[0]?.detail).toBe(
+      "Resolving Belle - Snowfield Strategist: ICE ARCHERY targeting Belle - Accomplished Mystic.",
+    );
+  });
 });

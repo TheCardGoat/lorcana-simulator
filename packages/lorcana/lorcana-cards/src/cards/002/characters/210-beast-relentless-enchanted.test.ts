@@ -54,7 +54,9 @@ describe("Beast - Relentless (Enchanted)", () => {
       // Beast should be exerted after challenging, but the damage trigger fires
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(beastRelentlessEnchanted, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(beastRelentlessEnchanted)).toBe(false);
@@ -75,7 +77,9 @@ describe("Beast - Relentless (Enchanted)", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(beastRelentlessEnchanted, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(beastRelentlessEnchanted)).toBe(false);
@@ -101,7 +105,9 @@ describe("Beast - Relentless (Enchanted)", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(beastRelentlessEnchanted, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(beastRelentlessEnchanted)).toBe(false);
@@ -168,7 +174,9 @@ describe("Beast - Relentless (Enchanted)", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(beastRelentlessEnchanted, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(beastRelentlessEnchanted)).toBe(true);

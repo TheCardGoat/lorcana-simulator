@@ -43,7 +43,9 @@ describe("Jetsam - Opportunistic Eel", () => {
 
       const targetId = testEngine.findCardInstanceId(tankCharacter, "play", "player_two");
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jetsamOpportunisticEel, { targets: [targetId] }),
       ).toBeSuccessfulCommand();
 
       // Should have dealt 3 additional damage (1 pre-damage + 3 from ability = 4)
@@ -72,7 +74,9 @@ describe("Jetsam - Opportunistic Eel", () => {
 
       const targetId = testEngine.findCardInstanceId(tankCharacter, "play", "player_two");
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jetsamOpportunisticEel, { targets: [targetId] }),
       ).toBeSuccessfulCommand();
 
       // Should have dealt 3 additional damage (2 + 3 = 5, survives with 6 willpower)
@@ -161,7 +165,9 @@ describe("Jetsam - Opportunistic Eel", () => {
       // Choose tank character (6 willpower, won't die)
       const tankId = testEngine.findCardInstanceId(tankCharacter, "play", "player_two");
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [tankId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jetsamOpportunisticEel, { targets: [tankId] }),
       ).toBeSuccessfulCommand();
 
       // Only the chosen target should take additional damage
@@ -212,7 +218,9 @@ describe("Jetsam - Opportunistic Eel", () => {
 
       const targetId = testEngine.findCardInstanceId(fragileCharacter, "play", "player_two");
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jetsamOpportunisticEel, { targets: [targetId] }),
       ).toBeSuccessfulCommand();
 
       // Should be banished (1 + 3 = 4 damage on 3 willpower)
@@ -261,7 +269,9 @@ describe("Jetsam - Opportunistic Eel", () => {
 
       const targetId = testEngine.findCardInstanceId(tankCharacter, "play", "player_two");
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jetsamOpportunisticEel, { targets: [targetId] }),
       ).toBeSuccessfulCommand();
 
       // Should have exactly 4 total damage (1 + 3)

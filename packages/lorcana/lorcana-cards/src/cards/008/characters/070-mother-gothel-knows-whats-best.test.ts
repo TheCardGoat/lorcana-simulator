@@ -71,7 +71,7 @@ describe("Mother Gothel - Knows What's Best", () => {
       // Accept the optional and target the ally
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelKnowsWhatsBest, {
           resolveOptional: true,
           targets: [allyInstanceId],
         }),
@@ -111,7 +111,7 @@ describe("Mother Gothel - Knows What's Best", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelKnowsWhatsBest, {
           resolveOptional: true,
           targets: [allyInstanceId],
         }),
@@ -133,7 +133,7 @@ describe("Mother Gothel - Knows What's Best", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelKnowsWhatsBest, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -168,7 +168,7 @@ describe("Mother Gothel - Knows What's Best", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelKnowsWhatsBest, {
           resolveOptional: true,
           targets: [allyInstanceId],
         }),
@@ -202,7 +202,7 @@ describe("Mother Gothel - Knows What's Best", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelKnowsWhatsBest, {
           resolveOptional: true,
           targets: [allyInstanceId],
         }),

@@ -44,7 +44,7 @@ function resolveMiloBag(
   const bagCount = testEngine.asPlayerTwo().getBagCount();
   if (bagCount > 0) {
     const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
-    testEngine.asPlayerTwo().resolveBag(bagEffect!.id, {});
+    testEngine.asPlayerTwo().resolvePendingByCard(miloThatchKingOfAtlantis, {});
   }
 }
 

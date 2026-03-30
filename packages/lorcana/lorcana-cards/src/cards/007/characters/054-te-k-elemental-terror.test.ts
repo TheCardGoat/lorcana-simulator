@@ -76,11 +76,13 @@ describe("Te Kā - Elemental Terror", () => {
 
       // Resolve the exert bag — choose opponentCharA
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharA] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(exerterCharacter, { targets: [opponentCharA] }),
       ).toBeSuccessfulCommand();
 
       // opponentCharA is now exerted during player one's turn
-      // ANCIENT RAGE should have triggered and banished opponentCharA
+      // ANCIENT RAGE auto-resolved: banished opponentCharA
       expect(testEngine.asPlayerOne().getCardZone(opponentCharA)).toBe("discard");
 
       // opponentCharB should still be in play

@@ -38,6 +38,7 @@ export const gigiBestInSnow: CharacterCard = {
     alert,
     {
       id: "5r3-2",
+      name: "SO PRETTY",
       condition: {
         type: "no-damage",
       },

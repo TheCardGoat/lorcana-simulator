@@ -68,7 +68,9 @@ describe("Minnie Mouse - Quick-Thinking Inventor", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(minnieMouseQuickthinkingInventor, { targets: [targetCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(targetCharacter)).toBe(2);
@@ -91,7 +93,9 @@ describe("Minnie Mouse - Quick-Thinking Inventor", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(minnieMouseQuickthinkingInventor, { targets: [targetCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(targetCharacter)).toBe(2);
@@ -114,7 +118,9 @@ describe("Minnie Mouse - Quick-Thinking Inventor", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(minnieMouseQuickthinkingInventor, { targets: [targetCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(targetCharacter)).toBe(2);

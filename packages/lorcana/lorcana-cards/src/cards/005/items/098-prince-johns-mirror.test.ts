@@ -92,7 +92,9 @@ describe("Prince John's Mirror", () => {
       // P2 resolves the triggered ability from the bag (P2 is the mirror controller)
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(princeJohnsMirror),
+      ).toBeSuccessfulCommand();
 
       // After the bag resolves, P1 (target of discard) must choose which cards to discard
       // P1 has 5 cards; needs to discard 2 (5-3=2)
@@ -153,7 +155,9 @@ describe("Prince John's Mirror", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(princeJohnsMirror),
+      ).toBeSuccessfulCommand();
 
       // P2 (target of discard) chooses which 2 cards to discard (5 - 3 = 2)
       const handCard4Id = testEngine.findCardInstanceId(handCard4, "hand", "player_two");
@@ -199,7 +203,9 @@ describe("Prince John's Mirror", () => {
 
       // P1 resolves the trigger
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(princeJohnsMirror),
+      ).toBeSuccessfulCommand();
 
       // P2 (the opponent) chooses which cards to discard
       const handCard4Id = testEngine.findCardInstanceId(handCard4, "hand", "player_two");

@@ -27,7 +27,7 @@ describe("Tod - Knows All the Tricks", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(todKnowsAllTheTricks, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -56,7 +56,7 @@ describe("Tod - Knows All the Tricks", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(todKnowsAllTheTricks, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -88,7 +88,7 @@ describe("Tod - Knows All the Tricks", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(todKnowsAllTheTricks, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -117,7 +117,9 @@ describe("Tod - Knows All the Tricks", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       const bagId1 = testEngine.asPlayerOne().getBagEffects()[0]!.id;
-      expect(testEngine.asPlayerOne().resolveBag(bagId1)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(todKnowsAllTheTricks),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().isExerted(todKnowsAllTheTricks)).toBe(false);
 
       // Exert Tod again via quest
@@ -134,7 +136,9 @@ describe("Tod - Knows All the Tricks", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       const bagId2 = testEngine.asPlayerOne().getBagEffects()[0]!.id;
-      expect(testEngine.asPlayerOne().resolveBag(bagId2)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(todKnowsAllTheTricks),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().isExerted(todKnowsAllTheTricks)).toBe(false);
     });
 
@@ -157,7 +161,9 @@ describe("Tod - Knows All the Tricks", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       const bagId1 = testEngine.asPlayerOne().getBagEffects()[0]!.id;
-      expect(testEngine.asPlayerOne().resolveBag(bagId1)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(todKnowsAllTheTricks),
+      ).toBeSuccessfulCommand();
 
       // Second trigger: play another Distract targeting Tod
       expect(
@@ -167,7 +173,9 @@ describe("Tod - Knows All the Tricks", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       const bagId2 = testEngine.asPlayerOne().getBagEffects()[0]!.id;
-      expect(testEngine.asPlayerOne().resolveBag(bagId2)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(todKnowsAllTheTricks),
+      ).toBeSuccessfulCommand();
 
       // Third action: should NOT trigger IMPRESSIVE LEAPS (limit reached)
       expect(

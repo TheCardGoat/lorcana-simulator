@@ -39,7 +39,9 @@ describe("Olaf - Carrot Enthusiast", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(olafCarrotEnthusiast, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // After resolving, each other character should have +1 strength (Olaf's strength is 1)
@@ -62,7 +64,9 @@ describe("Olaf - Carrot Enthusiast", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(olafCarrotEnthusiast, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Strength should remain at base
@@ -80,7 +84,9 @@ describe("Olaf - Carrot Enthusiast", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(olafCarrotEnthusiast, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Bonus active
@@ -104,7 +110,9 @@ describe("Olaf - Carrot Enthusiast", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(olafCarrotEnthusiast, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Olaf should still have his base strength

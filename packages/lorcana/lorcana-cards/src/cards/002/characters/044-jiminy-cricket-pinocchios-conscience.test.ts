@@ -34,7 +34,7 @@ describe("Jiminy Cricket - Pinocchio's Conscience", () => {
       testEngine.asPlayerOne().playCard(jiminyCricketPinocchiosConscience),
     ).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(jiminyCricketPinocchiosConscience),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");

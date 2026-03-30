@@ -5,8 +5,10 @@
     LorcanaTableSeat,
     LorcanaZoneId,
   } from "@/features/simulator/model/contracts.js";
+  import type { SimulatorLayoutMode } from "@/features/simulator/model/layout-mode.svelte.js";
   import { m } from "$lib/i18n/messages.js";
   import { EmptyState, DropIndicator } from "@/design-system/simulator/display/index.js";
+  import ZoneCounter from "@/design-system/simulator/display/ZoneCounter.svelte";
   import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
   import HotkeyCardBadge from "@/features/simulator/hotkeys/HotkeyCardBadge.svelte";
   import { buildOrderedPlayZoneEntries } from "@/features/simulator/hotkeys/board-order.js";
@@ -39,6 +41,7 @@
   }
 
   interface BoardZoneProps {
+    layoutMode?: SimulatorLayoutMode;
     zoneId: LorcanaZoneId;
     playerSide: LorcanaPlayerSide;
     seat: LorcanaTableSeat;
@@ -49,6 +52,7 @@
   }
 
   let {
+    layoutMode = "desktop",
     zoneId,
     playerSide,
     seat,
@@ -84,22 +88,6 @@
     },
   });
 
-  function isValidTarget(cardId: string): boolean {
-    const dropState = dnd.getCardDropState(cardId);
-    return (
-      sidebar.getActionSessionCardState(cardId).isSelectable ||
-      dropState === "preview" ||
-      dropState === "valid"
-    );
-  }
-
-  function isInvalidTarget(cardId: string): boolean {
-    return (
-      sidebar.getActionSessionCardState(cardId).isInvalidTarget ||
-      dnd.getCardDropState(cardId) === "invalid"
-    );
-  }
-
   const zoneLabel = $derived(label || m["sim.zone.play"]({}));
   const playerLabel = $derived(
     playerSide === "playerOne"
@@ -115,6 +103,7 @@
   class:board-zone--drop-valid={dropState === "valid"}
   class:board-zone--drop-invalid={dropState === "invalid"}
   class:board-zone--challenge-mode={challengeMode && isOpponent}
+  data-layout-mode={layoutMode}
   data-player-seat={seat}
   data-player-side={playerSide}
   data-zone-id={zoneId}
@@ -123,68 +112,67 @@
   aria-label={m["sim.playZone.aria"]({ label: zoneLabel, player: playerLabel })}
   {@attach droppable.attach}
 >
-  <div class="play-counter" aria-label={`${cards.length} cards in ${zoneLabel}`}>
-    <span class="play-counter-value">{cards.length}</span>
-  </div>
+  <ZoneCounter
+    count={cards.length}
+    corner={seat === "bottom" ? "bottom-right" : "top-right"}
+    ariaLabel={`${cards.length} cards in ${zoneLabel}`}
+  />
 
-  <div class="cards-container" data-board-scroll-sync>
-    {#if cards.length === 0}
-      <EmptyState />
-    {:else}
-      <div class="cards-content">
-        <div class="cards-grid">
-          {#each playEntries as entry (entry.card.cardId)}
-            {#if entry.association}
-              <PlayZoneLocationEntry
-                card={entry.card}
-                association={entry.association}
-                {seat}
-                {playerSide}
-                {zoneId}
-                {isMasked}
-                {isValidTarget}
-                {isInvalidTarget}
-                hotkey={hotkeyBindings.get(entry.card.cardId)}
-              />
-            {:else}
-              {@const draggable = dnd.createOptionalDraggable({ card: entry.card })}
-              <div
-                class="card-slot"
-                data-card-id={entry.card.cardId}
-                data-card-drop-id={entry.card.cardId}
-                data-player-seat={seat}
-                data-player-side={playerSide}
-                data-player-id={entry.card.ownerId}
-                data-zone-id={entry.card.zoneId}
-                data-board-anchor-id={createCardAnchorId(playerSide, zoneId, entry.card.cardId)}
-                {@attach draggable.attach}
-              >
-                {#if hotkeyBindings.has(entry.card.cardId)}
-                  <HotkeyCardBadge hotkey={hotkeyBindings.get(entry.card.cardId)!} />
-                {/if}
-                <LorcanaCard
+  <div class="cards-container">
+    <div class="cards-scroll-area" data-board-scroll-sync>
+      {#if cards.length === 0}
+        <EmptyState />
+      {:else}
+        <div class="cards-content">
+          <div class="cards-grid">
+            {#each playEntries as entry (entry.card.cardId)}
+              {#if entry.association}
+                <PlayZoneLocationEntry
                   card={entry.card}
-                  useContainerSize
-                  imageFormat="art_and_name"
-                  hoverShowActions
-                  isSelected={
-                    sidebar.getActionSessionCardState(entry.card.cardId).isSelected ||
-                    simulatorCardContext.previewCard?.cardId === entry.card.cardId
-                  }
-                  isMasked={isMasked}
-                  isPlayable={isValidTarget(entry.card.cardId)}
-                  isInvalidTarget={isInvalidTarget(entry.card.cardId)}
-                  isBanishedPreview={sidebar.getChallengePreviewCardState(entry.card.cardId).wouldBeBanished}
-                  isExerted={entry.card.readyState === "exerted"}
-                  isDrying={entry.card.isDrying ?? false}
-                  damage={entry.card.damage ?? 0}
+                  association={entry.association}
+                  {seat}
+                  {playerSide}
+                  {zoneId}
+                  {isMasked}
+                  hotkey={hotkeyBindings.get(entry.card.cardId)}
                 />
-              </div>
-            {/if}
-          {/each}
+              {:else}
+                <div
+                  class="card-slot"
+                  data-card-id={entry.card.cardId}
+                  data-player-seat={seat}
+                  data-player-side={playerSide}
+                  data-player-id={entry.card.ownerId}
+                  data-zone-id={entry.card.zoneId}
+                  data-board-anchor-id={createCardAnchorId(playerSide, zoneId, entry.card.cardId)}
+                >
+                  {#if hotkeyBindings.has(entry.card.cardId)}
+                    <HotkeyCardBadge hotkey={hotkeyBindings.get(entry.card.cardId)!} />
+                  {/if}
+                  <LorcanaCard
+                    card={entry.card}
+                    useContainerSize
+                    imageFormat="art_and_name"
+                    hoverShowActions
+                    isSelected={
+                      sidebar.getActionSessionCardState(entry.card.cardId).isSelected ||
+                      simulatorCardContext.previewCard?.cardId === entry.card.cardId
+                    }
+                    isMasked={isMasked}
+                    isPlayable={sidebar.getActionSessionCardState(entry.card.cardId).isSelectable}
+                    isInvalidTarget={sidebar.getActionSessionCardState(entry.card.cardId).isInvalidTarget}
+                    isBanishedPreview={sidebar.getChallengePreviewCardState(entry.card.cardId).wouldBeBanished}
+                    isExerted={entry.card.readyState === "exerted"}
+                    isDrying={entry.card.isDrying ?? false}
+                    damage={entry.card.damage ?? 0}
+                  />
+                </div>
+              {/if}
+            {/each}
+          </div>
         </div>
-      </div>
-    {/if}
+      {/if}
+    </div>
   </div>
 
   {#if dropState === "valid" || dropState === "invalid"}
@@ -199,13 +187,10 @@
     --card-aspect: 0.9582;
     --play-zone-padding: 0.5rem;
     --play-grid-gap: 0.5rem;
+    --play-card-effect-bleed: 1rem;
     --play-scrollbar-size: 10px;
     --play-scrollbar-thumb: rgba(143, 211, 255, 0.65);
     --play-scrollbar-track: rgba(7, 18, 31, 0.36);
-    --play-counter-size: 28px;
-    --play-counter-offset: -6px;
-    --play-counter-translate-x: 50%;
-    --play-counter-translate-y: -50%;
     --zone-card-width:
       min(
         var(--sim-play-card-width, 180px),
@@ -265,37 +250,25 @@
     box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.28);
   }
 
-  .play-counter {
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--play-counter-size);
-    height: var(--play-counter-size);
-    border: 1px solid rgba(191, 219, 254, 0.32);
-    border-radius: 999px;
-    background: linear-gradient(135deg, rgba(22, 49, 82, 0.98) 0%, rgba(16, 35, 61, 0.98) 100%);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-    transform: translate(var(--play-counter-translate-x), var(--play-counter-translate-y));
-    pointer-events: none;
-  }
-
-  .play-counter-value {
-    color: #e2e8f0;
-    font-size: 0.7rem;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-  }
-
   .cards-container {
     flex: 1;
     display: flex;
     align-items: stretch;
     justify-content: center;
     min-height: 0;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .cards-scroll-area {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    min-height: 0;
+    min-width: 0;
+    margin: calc(var(--play-card-effect-bleed) * -1);
+    padding: var(--play-card-effect-bleed);
     overflow-x: hidden;
     overflow-y: scroll;
     scrollbar-gutter: stable;
@@ -303,16 +276,16 @@
     scrollbar-color: var(--play-scrollbar-thumb) var(--play-scrollbar-track);
   }
 
-  .cards-container::-webkit-scrollbar {
+  .cards-scroll-area::-webkit-scrollbar {
     width: var(--play-scrollbar-size);
   }
 
-  .cards-container::-webkit-scrollbar-track {
+  .cards-scroll-area::-webkit-scrollbar-track {
     background: var(--play-scrollbar-track);
     border-radius: 999px;
   }
 
-  .cards-container::-webkit-scrollbar-thumb {
+  .cards-scroll-area::-webkit-scrollbar-thumb {
     background: var(--play-scrollbar-thumb);
     border-radius: 999px;
     border: 2px solid transparent;
@@ -358,8 +331,6 @@
   /* Responsive via container queries */
   @container play-zone (max-width: 400px) {
     .board-zone {
-      --play-counter-size: 24px;
-      --play-counter-offset: -4px;
       --play-grid-gap: 0.5rem;
     }
 
@@ -425,6 +396,35 @@
 
     .cards-grid {
       padding: 0.35rem;
+    }
+
+    .board-zone[data-layout-mode="mobile"] {
+      --zone-card-width: clamp(92px, 28vw, 136px);
+      --zone-card-height: calc(var(--zone-card-width) / var(--card-aspect));
+    }
+
+    .board-zone[data-layout-mode="mobile"] .cards-scroll-area {
+      justify-content: flex-start;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-gutter: auto;
+    }
+
+    .board-zone[data-layout-mode="mobile"] .cards-content {
+      flex: 0 0 auto;
+      width: max-content;
+      min-width: 100%;
+      min-height: 0;
+    }
+
+    .board-zone[data-layout-mode="mobile"] .cards-grid {
+      grid-auto-flow: column;
+      grid-auto-columns: var(--zone-card-width);
+      grid-template-columns: none;
+      justify-content: flex-start;
+      width: max-content;
+      min-width: 100%;
+      padding: 0.35rem 0.4rem;
     }
   }
 </style>

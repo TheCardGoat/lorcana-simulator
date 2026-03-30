@@ -10,13 +10,14 @@
     PrimaryClickAction,
   } from "@/features/simulator/context/game-context.svelte.js";
   import SimulatorSupportActions from "@/features/simulator/support/SimulatorSupportActions.svelte";
-  import type { BugReportContext } from "@/features/simulator/support/feedback-api.js";
+  import PlaymatPicker from "./PlaymatPicker.svelte";
+  import CardSleevePicker from "./CardSleevePicker.svelte";
 
   type SupportedLocale = (typeof locales)[number];
+  type SettingsTab = "gameplay" | "playmats" | "sleeves";
 
   interface PlayerSettingsDialogProps {
     open?: boolean;
-    bugReportContext?: BugReportContext;
     selectedLocale: SupportedLocale;
     showRawLogRegistryJson?: boolean;
     skipActionConfirmation?: boolean;
@@ -36,11 +37,16 @@
     onSoundVolumeChange?: (volume: number) => void;
     accessibleMobileControls?: boolean;
     onToggleAccessibleMobileControls?: (enabled: boolean) => void;
+    selectedCardBack?: string;
+    selectedPlaymat?: string;
+    onCardBackChange?: (id: string) => void;
+    onPlaymatChange?: (id: string) => void;
+    onOpenFeedback?: () => void;
+    onOpenBugReport?: () => void;
   }
 
   let {
     open = $bindable(false),
-    bugReportContext,
     selectedLocale,
     showRawLogRegistryJson = false,
     skipActionConfirmation = false,
@@ -60,7 +66,15 @@
     onSoundVolumeChange,
     accessibleMobileControls = false,
     onToggleAccessibleMobileControls,
+    selectedCardBack = "default",
+    selectedPlaymat = "default",
+    onCardBackChange,
+    onPlaymatChange,
+    onOpenFeedback,
+    onOpenBugReport,
   }: PlayerSettingsDialogProps = $props();
+
+  let activeTab = $state<SettingsTab>("gameplay");
 
   function getLocaleLabel(locale: SupportedLocale): string {
     return {
@@ -180,7 +194,38 @@
         </Dialog.Description>
       </Dialog.Header>
 
+      <div class="player-settings-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          class="player-settings-tab"
+          aria-selected={activeTab === "gameplay"}
+          onclick={() => (activeTab = "gameplay")}
+        >
+          {m["sim.settings.tab.gameplay"]({})}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="player-settings-tab"
+          aria-selected={activeTab === "playmats"}
+          onclick={() => (activeTab = "playmats")}
+        >
+          {m["sim.settings.tab.playmats"]({})}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="player-settings-tab"
+          aria-selected={activeTab === "sleeves"}
+          onclick={() => (activeTab = "sleeves")}
+        >
+          {m["sim.settings.tab.sleeves"]({})}
+        </button>
+      </div>
+
       <div class="player-settings-scroll">
+      {#if activeTab === "gameplay"}
       <div class="grid gap-4">
         <div class="grid gap-1.5">
           <label class="text-xs font-medium uppercase tracking-widest text-slate-400" for="player-language-select">
@@ -353,9 +398,23 @@
             <p class="player-settings-support-title">{m["sim.support.title"]({})}</p>
             <p class="player-settings-help">{m["sim.support.description"]({})}</p>
           </div>
-          <SimulatorSupportActions gameContext={bugReportContext} />
+          <SimulatorSupportActions
+            onOpenBugReport={onOpenBugReport}
+            onOpenFeedback={onOpenFeedback}
+          />
         </div>
       </div>
+      {:else if activeTab === "playmats"}
+        <PlaymatPicker
+          {selectedPlaymat}
+          onSelect={(id) => onPlaymatChange?.(id)}
+        />
+      {:else if activeTab === "sleeves"}
+        <CardSleevePicker
+          {selectedCardBack}
+          onSelect={(id) => onCardBackChange?.(id)}
+        />
+      {/if}
       </div>
 
       <Dialog.Footer class="shrink-0">
@@ -380,7 +439,7 @@
     display: flex !important;
     flex-direction: column;
     gap: 1rem;
-    max-width: min(92vw, 420px) !important;
+    max-width: min(92vw, 560px) !important;
     max-height: min(92dvh, calc(100vh - 1.5rem));
     overflow: hidden;
     border-radius: 0.95rem;
@@ -533,5 +592,39 @@
     font-size: 0.85rem;
     font-variant-numeric: tabular-nums;
     color: #e5edf7;
+  }
+
+  .player-settings-tabs {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 1px solid rgba(108, 145, 192, 0.25);
+    padding-bottom: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .player-settings-tab {
+    flex: 1;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.4rem 0.4rem 0 0;
+    border: none;
+    background: transparent;
+    color: #9fb2c9;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+
+  .player-settings-tab:hover {
+    color: #e5edf7;
+    background: rgba(14, 25, 40, 0.6);
+  }
+
+  .player-settings-tab[aria-selected="true"] {
+    color: #e5edf7;
+    background: rgba(21, 48, 77, 0.6);
+    border-bottom: 2px solid rgba(125, 211, 252, 0.7);
   }
 </style>

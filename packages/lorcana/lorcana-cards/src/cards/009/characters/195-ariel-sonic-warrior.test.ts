@@ -39,7 +39,7 @@ describe("Ariel - Sonic Warrior", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(arielSonicWarrior, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -91,7 +91,7 @@ describe("Ariel - Sonic Warrior", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(arielSonicWarrior, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();

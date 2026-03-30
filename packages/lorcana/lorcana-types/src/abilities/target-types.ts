@@ -21,6 +21,7 @@
  */
 
 import type { InkType } from "../cards/ink-types";
+import type { CardSelectionFilter } from "../expressions";
 import type { TargetDSL } from "../targeting/target-dsl";
 
 // ============================================================================
@@ -719,7 +720,10 @@ export type CharacterFilter =
  * Base properties shared by all character query variants
  * Extended from generic TargetDSL
  */
-export type CharacterQueryBase = TargetDSL<CharacterFilter[], LorcanaContext> & {
+export type CharacterQueryBase = TargetDSL<
+  CharacterFilter[] | CardSelectionFilter,
+  LorcanaContext
+> & {
   reference?: TargetReference;
   /** Multiple filter criteria (plural alias for filter) */
   filters?: CharacterFilter[];

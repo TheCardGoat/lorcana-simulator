@@ -52,7 +52,7 @@ describe("Peter Pan - Shadow Catcher", () => {
 
       // Resolve the triggered ability - choose opponent character to exert
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(peterPanShadowCatcher, {
           targets: [opponentCharacter],
         }),
       ).toBeSuccessfulCommand();

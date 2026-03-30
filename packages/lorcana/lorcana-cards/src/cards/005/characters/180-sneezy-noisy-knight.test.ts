@@ -42,7 +42,9 @@ describe("Sneezy - Noisy Knight", () => {
       expect(testEngine.asPlayerOne().playCard(sneezyNoisyKnight)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [knightCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(sneezyNoisyKnight, { targets: [knightCharacter] }),
       ).toBeSuccessfulCommand();
 
       // Knight should have Challenger +2 keyword
@@ -65,7 +67,9 @@ describe("Sneezy - Noisy Knight", () => {
 
       expect(testEngine.asPlayerOne().playCard(sneezyNoisyKnight)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [knightCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(sneezyNoisyKnight, { targets: [knightCharacter] }),
       ).toBeSuccessfulCommand();
 
       // Pass turn to expire the effects
@@ -90,7 +94,9 @@ describe("Sneezy - Noisy Knight", () => {
       expect(testEngine.asPlayerOne().playCard(sneezyNoisyKnight)).toBeSuccessfulCommand();
 
       // Attempting to target non-Knight character should fail
-      const result = testEngine.asPlayerOne().resolveNextBag({ targets: [nonKnightCharacter] });
+      const result = testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(sneezyNoisyKnight, { targets: [nonKnightCharacter] });
       expect(result.success).toBe(false);
     });
   });

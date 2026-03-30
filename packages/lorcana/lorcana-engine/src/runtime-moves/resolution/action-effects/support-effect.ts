@@ -7,6 +7,7 @@ import {
   cleanupExpiredEffects,
 } from "../../effects/continuous-effects";
 import { createProjectionState, getEffectiveStrength } from "../../../rules/derived-state";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
 import { resolveEffectTargets } from "../../../targeting/runtime";
@@ -35,11 +36,13 @@ export function resolveSupportEffect(
     return;
   }
 
+  const registry = getOrBuildMoveRegistry(ctx);
   const supportAmount = getEffectiveStrength(
     ctx.cards.getDefinition(cardPlayed.cardId) as any,
     createProjectionState(ctx.framework.state, ctx.G),
     cardPlayed.cardId,
     (id) => ctx.cards.getDefinition(id) as any,
+    registry,
   );
   if (!Number.isFinite(supportAmount) || supportAmount <= 0) {
     markLastEffectPerformed(resolutionInput.eventSnapshot, false);

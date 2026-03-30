@@ -33,7 +33,7 @@ describe("Megara - Pulling the Strings", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(megaraPullingTheStrings, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -58,7 +58,7 @@ describe("Megara - Pulling the Strings", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(megaraPullingTheStrings, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -85,7 +85,7 @@ describe("Megara - Pulling the Strings", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(megaraPullingTheStrings, {
           targets: [megaraPullingTheStrings],
         }),
       ).toBeSuccessfulCommand();
@@ -115,7 +115,7 @@ describe("Megara - Pulling the Strings", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(megaraPullingTheStrings, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();

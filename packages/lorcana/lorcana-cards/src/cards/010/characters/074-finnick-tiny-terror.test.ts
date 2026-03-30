@@ -69,7 +69,7 @@ describe("Finnick - Tiny Terror", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(finnickTinyTerror, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -103,7 +103,7 @@ describe("Finnick - Tiny Terror", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(finnickTinyTerror, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -141,7 +141,7 @@ describe("Finnick - Tiny Terror", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(finnickTinyTerror, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -168,7 +168,7 @@ describe("Finnick - Tiny Terror", () => {
       if (bagEffect) {
         // Accept the optional — pay 2 ink
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(finnickTinyTerror, {
             resolveOptional: true,
           }),
         ).toBeSuccessfulCommand();
@@ -211,7 +211,7 @@ describe("Finnick - Tiny Terror", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(finnickTinyTerror, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -247,7 +247,7 @@ describe("Finnick - Tiny Terror", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       if (bagEffect) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(finnickTinyTerror, {
             resolveOptional: true,
           }),
         ).toBeSuccessfulCommand();

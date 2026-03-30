@@ -46,7 +46,9 @@ describe("Maximus - Relentless Pursuer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [opposingCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maximusRelentlessPursuer, { targets: [opposingCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -92,7 +94,9 @@ describe("Maximus - Relentless Pursuer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [opposingCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maximusRelentlessPursuer, { targets: [opposingCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(strengthBefore - 2);
@@ -120,7 +124,9 @@ describe("Maximus - Relentless Pursuer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [ownCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maximusRelentlessPursuer, { targets: [ownCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(ownCharacter)).toBe(strengthBefore - 2);

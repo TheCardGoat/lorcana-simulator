@@ -54,6 +54,7 @@ export const sevenDwarfsMineSecureFortress: LocationCard = {
         type: "optional",
       },
       id: "135-1",
+      name: "MOUNTAIN DEFENSE",
       text: "MOUNTAIN DEFENSE During your turn, the first time you move a character here, you may deal 1 damage to chosen character. If the moved character is a Knight, deal 2 damage instead.",
       trigger: {
         event: "move",

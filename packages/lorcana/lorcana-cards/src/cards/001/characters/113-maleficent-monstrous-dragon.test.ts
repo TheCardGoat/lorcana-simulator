@@ -28,7 +28,7 @@ describe("Maleficent - Monstrous Dragon", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentMonstrousDragon),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -54,7 +54,9 @@ describe("Maleficent - Monstrous Dragon", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maleficentMonstrousDragon, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(targetCharacter)).toBe("play");
@@ -74,7 +76,7 @@ describe("Maleficent - Monstrous Dragon", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentMonstrousDragon),
       ).toBeSuccessfulCommand();
 
       expect(

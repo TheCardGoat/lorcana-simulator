@@ -41,7 +41,10 @@ describe("Winnie the Pooh - Having a Think", () => {
       const handCardId = testEngine.findCardInstanceId(handCard, "hand", "player_one");
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [handCardId] }),
+        testEngine.asPlayerOne().resolvePendingByCard(winnieThePoohHavingAThink, {
+          resolveOptional: true,
+          targets: [handCardId],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
@@ -62,7 +65,9 @@ describe("Winnie the Pooh - Having a Think", () => {
       expect(testEngine.asPlayerOne().quest(winnieThePoohHavingAThink)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(winnieThePoohHavingAThink, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({

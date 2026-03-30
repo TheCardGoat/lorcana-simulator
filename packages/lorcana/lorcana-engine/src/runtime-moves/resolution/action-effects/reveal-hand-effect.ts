@@ -3,6 +3,7 @@ import type { RevealHandEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
+import { getEffectTargetSelectionInput } from "./selection-state";
 
 export function isRevealHandEffect(effect: unknown): effect is RevealHandEffect {
   return (
@@ -23,7 +24,7 @@ export function resolveRevealHandEffect(
     ctx,
     cardPlayed,
     effect.target,
-    resolutionInput.targets,
+    getEffectTargetSelectionInput(effect.target, resolutionInput),
   );
   if (targetPlayers.length === 0) {
     return;

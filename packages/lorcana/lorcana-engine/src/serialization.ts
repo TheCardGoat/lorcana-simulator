@@ -31,7 +31,7 @@ export interface LorcanaServerAuthoritativeSnapshot {
  * Only works in server mode.
  */
 export function getLorcanaServerAuthoritativeState(engine: LorcanaServer): LorcanaMatchState {
-  return structuredClone(engine.getState()) as LorcanaMatchState;
+  return engine.getState() as LorcanaMatchState;
 }
 
 export function getLorcanaServerAuthoritativeSnapshot(
@@ -40,7 +40,7 @@ export function getLorcanaServerAuthoritativeSnapshot(
 ): LorcanaServerAuthoritativeSnapshot {
   return {
     state: getLorcanaServerAuthoritativeState(engine),
-    cardsMaps: structuredClone(cardsMaps) as CardsMaps,
+    cardsMaps,
     undoCheckpoint: engine.getUndoCheckpointSnapshot(),
   };
 }

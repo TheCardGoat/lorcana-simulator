@@ -1,4 +1,8 @@
-import Root, { type SelectProps } from "./select.svelte";
+import type { WithElementRef } from "$lib/utils";
+import type { HTMLSelectAttributes } from "svelte/elements";
+import Root from "./select.svelte";
+
+type SelectProps = WithElementRef<HTMLSelectAttributes>;
 
 export {
   Root,

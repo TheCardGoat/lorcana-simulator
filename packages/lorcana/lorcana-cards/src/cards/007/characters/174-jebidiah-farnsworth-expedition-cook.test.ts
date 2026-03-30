@@ -55,7 +55,7 @@ describe("Jebidiah Farnsworth - Expedition Cook", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(jebidiahFarnsworthExpeditionCook, {
           resolveOptional: true,
           targets: [resistTarget],
         }),
@@ -83,7 +83,7 @@ describe("Jebidiah Farnsworth - Expedition Cook", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(jebidiahFarnsworthExpeditionCook, {
           resolveOptional: true,
           targets: [resistTarget],
         }),
@@ -119,7 +119,7 @@ describe("Jebidiah Farnsworth - Expedition Cook", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(jebidiahFarnsworthExpeditionCook, {
           resolveOptional: true,
           targets: [resistTarget],
         }),
@@ -160,7 +160,9 @@ describe("Jebidiah Farnsworth - Expedition Cook", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jebidiahFarnsworthExpeditionCook, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Resist not granted since the effect was declined

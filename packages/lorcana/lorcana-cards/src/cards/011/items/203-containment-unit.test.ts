@@ -59,7 +59,7 @@ describe("Containment Unit", () => {
 
       expect(testEngine.asPlayerOne().playCard(containmentUnit)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(containmentUnit),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [containedCharacter] }),
@@ -86,7 +86,7 @@ describe("Containment Unit", () => {
 
       expect(testEngine.asPlayerOne().playCard(containmentUnit)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(containmentUnit),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [containedCharacter] }),
@@ -112,7 +112,7 @@ describe("Containment Unit", () => {
 
       expect(testEngine.asPlayerOne().playCard(containmentUnit)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(containmentUnit),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [containedCharacter] }),
@@ -144,7 +144,7 @@ describe("Containment Unit", () => {
 
       expect(testEngine.asPlayerOne().playCard(containmentUnit)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(containmentUnit),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [containedCharacter] }),
@@ -171,7 +171,7 @@ describe("Containment Unit", () => {
 
       expect(testEngine.asPlayerOne().playCard(containmentUnit)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(containmentUnit),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [containedCharacter] }),
@@ -196,7 +196,7 @@ describe("Containment Unit", () => {
 
       expect(testEngine.asPlayerOne().playCard(containmentUnit)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(containmentUnit),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [playerCharacter] }),
@@ -228,7 +228,7 @@ describe("Containment Unit", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(containmentUnit),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 0 }),
@@ -256,7 +256,7 @@ describe("Containment Unit", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(containmentUnit),
       ).toBeSuccessfulCommand();
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1 });
 
@@ -277,7 +277,7 @@ describe("Containment Unit", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(containmentUnit),
       ).toBeSuccessfulCommand();
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 0 });
 

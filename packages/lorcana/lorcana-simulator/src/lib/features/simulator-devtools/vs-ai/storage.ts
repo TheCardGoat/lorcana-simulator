@@ -1,4 +1,5 @@
 import { createDefaultAutomatedMatchConfig } from "../ai-match/config.js";
+import { getSafeAutomatedActionStrategyOption } from "@tcg/lorcana-engine";
 import type { HumanVsAiMatchConfig } from "./types.js";
 
 export type HumanVsAiStorage = Pick<Storage, "getItem" | "removeItem" | "setItem">;
@@ -34,7 +35,7 @@ function normalizeStoredConfig(value: StoredHumanVsAiConfig): HumanVsAiMatchConf
     playerTwoDeckText,
     playerOneFixtureId: value.playerOneFixtureId?.trim() || undefined,
     playerTwoFixtureId: value.playerTwoFixtureId?.trim() || undefined,
-    strategyId,
+    strategyId: getSafeAutomatedActionStrategyOption(strategyId).id,
     seed,
   };
 }

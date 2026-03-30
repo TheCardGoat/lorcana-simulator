@@ -24,9 +24,9 @@ export const nickWildeWilyFox: CharacterCard = {
   },
   text: [
     {
-      title: "IT'S CALLED",
+      title: "IT'S CALLED A HUSTLE",
       description:
-        "A HUSTLE When you play this character, you may return an item card named Pawpsicle from your discard to your hand.",
+        "When you play this character, you may return an item card named Pawpsicle from your discard to your hand.",
     },
   ],
   classifications: ["Storyborn", "Ally"],

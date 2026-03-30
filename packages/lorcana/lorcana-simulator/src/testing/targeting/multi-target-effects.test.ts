@@ -46,7 +46,7 @@ describe("Multi Target Effects", () => {
       }
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(bagEffect.sourceId, {
           targets: [powerlineWorldsGreatestRockStar, minnieMouseAlwaysClassy],
         }),
       ).toBeSuccessfulCommand();

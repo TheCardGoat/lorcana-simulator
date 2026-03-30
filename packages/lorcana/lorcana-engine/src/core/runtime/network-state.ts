@@ -1,11 +1,6 @@
 import type { BaseCardDefinition } from "./card-contracts";
 import type { LorcanaG } from "../../types/runtime-state";
-import type {
-  MatchRuntimeConfig,
-  Player,
-  ZoneConfig,
-  ZoneDefinitions,
-} from "./match-runtime.types";
+import type { MatchRuntimeConfig, Player, ZoneDefinitions } from "./match-runtime.types";
 import {
   createInitialTCGCtx,
   type CtxPriority,
@@ -23,6 +18,7 @@ import type {
   ZoneRuntimeDef,
 } from "./types";
 import type { MatchStaticResources } from "./static-resources";
+import { buildZoneRegistry, zoneOwnerFromKey } from "./zone-registry";
 
 import type { MoveRecord } from "./match-runtime.types";
 
@@ -131,7 +127,7 @@ function getNormalizationBaseline(
     return existing;
   }
 
-  const zoneDefs = buildZoneDefsFromConfig(runtimeConfig.zones, matchData.playerIds);
+  const zoneDefs = buildZoneRegistry(runtimeConfig.zones, matchData.playerIds);
   const ctxDefaults = createInitialTCGCtx({
     matchID: message.matchID,
     gameID: matchData.gameID,
@@ -140,7 +136,6 @@ function getNormalizationBaseline(
     statusConfig: extractInitialStatusConfig(runtimeConfig),
   });
   ctxDefaults.playerIds = [...matchData.playerIds] as PlayerId[];
-  ctxDefaults.zones.zoneDefs = zoneDefs;
 
   const baseline: NormalizationBaseline = {
     ctxDefaults,
@@ -184,29 +179,7 @@ export function buildZoneDefsFromConfig(
   zones: ZoneDefinitions,
   playerIds: readonly string[],
 ): Record<string, ZoneRuntimeDef> {
-  const zoneDefs: Record<string, ZoneRuntimeDef> = {};
-
-  for (const [zoneId, zoneDef] of Object.entries(zones)) {
-    zoneDefs[zoneId] = { ...(zoneDef as ZoneConfig) };
-
-    if (!zoneDef.ownerScoped) {
-      continue;
-    }
-
-    for (const playerId of playerIds) {
-      zoneDefs[`${zoneId}:${playerId}`] = {
-        ...zoneDef,
-        id: `${zoneId}:${playerId}`,
-      };
-    }
-  }
-
-  return zoneDefs;
-}
-
-function zoneOwnerFromKey(zoneKey: string): string | undefined {
-  const parts = zoneKey.split(":");
-  return parts.length > 1 ? parts[parts.length - 1] : undefined;
+  return buildZoneRegistry(zones, playerIds);
 }
 
 function getStaticInstanceRecords(
@@ -394,13 +367,13 @@ function buildDefaultGameState(
 
 export function compactCoreNetworkView(
   state: FilteredMatchView,
+  zoneRegistry: Record<string, ZoneRuntimeDef>,
   _staticResources?: MatchStaticResources,
 ): CompactMatchView {
-  const zoneDefs = state.ctx.zones.zoneDefs;
   const zoneSummaries: Record<string, PublicZoneSummary> = {};
 
   for (const [zoneId, summary] of Object.entries(state.ctx.zones.public.zoneSummaries)) {
-    const zoneDef = zoneDefs[zoneId];
+    const zoneDef = zoneRegistry[zoneId];
     if (zoneDef?.ownerScoped && !zoneId.includes(":")) {
       continue;
     }
@@ -516,8 +489,7 @@ export function normalizeNetworkView(
     isRecord(state) &&
     isRecord((state as { ctx?: unknown }).ctx) &&
     typeof (state as { ctx: { _stateID?: unknown } }).ctx._stateID === "number" &&
-    isRecord((state as { ctx: { zones?: unknown } }).ctx.zones) &&
-    isRecord((state as { ctx: { zones: { zoneDefs?: unknown } } }).ctx.zones.zoneDefs)
+    isRecord((state as { ctx: { zones?: unknown } }).ctx.zones)
   ) {
     return state as FilteredMatchView;
   }
@@ -544,7 +516,6 @@ export function normalizeNetworkView(
     },
     zones: {
       ...baseline.ctxDefaults.zones,
-      zoneDefs,
       public: {
         zoneSummaries: Object.fromEntries(
           Object.entries(baseline.zoneSummaries).map(([zoneId, summary]) => [

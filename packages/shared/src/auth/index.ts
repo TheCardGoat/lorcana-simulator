@@ -1,4 +1,12 @@
 /**
  * Auth module exports
  */
-export type { AuthSession, AuthUser, SessionResult } from "./types";
+export type {
+  AuthSession,
+  AuthUser,
+  LorcanitoUserSettings,
+  SessionResult,
+  SubscriptionTier,
+  UserRole,
+} from "./types";
+export { hasSubscriptionTier, isAdmin, isDonor, isModerator } from "./types";

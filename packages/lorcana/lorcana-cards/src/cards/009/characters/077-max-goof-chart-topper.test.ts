@@ -82,7 +82,9 @@ describe("Max Goof - Chart Topper", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(songCard)).toBe("deck");
@@ -107,7 +109,9 @@ describe("Max Goof - Chart Topper", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(songCard)).toBe("discard");
@@ -131,7 +135,9 @@ describe("Max Goof - Chart Topper", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(expensiveSongCard)).toBe("discard");
@@ -155,7 +161,9 @@ describe("Max Goof - Chart Topper", () => {
       // Accept the optional - the song should be played automatically
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // The song should have been played (moved from discard to deck via replacement effect)
@@ -182,7 +190,9 @@ describe("Max Goof - Chart Topper", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const loreAfter = testEngine.asPlayerOne().getLore("player_one");

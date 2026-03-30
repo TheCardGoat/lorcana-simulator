@@ -39,7 +39,7 @@ export type TurnActionInkState = {
 
 type TurnActionInkAllowanceArgs = {
   state: DeepReadonly<TurnActionInkState>;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
   playerId?: string;
 };
 

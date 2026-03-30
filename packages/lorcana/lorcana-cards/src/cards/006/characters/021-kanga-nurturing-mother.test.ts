@@ -48,7 +48,7 @@ describe("Kanga - Nurturing Mother", () => {
 
       // Accept and target the ally
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [ally] }),
+        testEngine.asPlayerOne().resolvePendingByCard(kangaNurturingMother, { targets: [ally] }),
       ).toBeSuccessfulCommand();
 
       // Pass to opponent's turn
@@ -74,7 +74,7 @@ describe("Kanga - Nurturing Mother", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [ally] }),
+        testEngine.asPlayerOne().resolvePendingByCard(kangaNurturingMother, { targets: [ally] }),
       ).toBeSuccessfulCommand();
 
       // Pass to opponent's turn - restriction still active
@@ -110,7 +110,9 @@ describe("Kanga - Nurturing Mother", () => {
 
       // Target Kanga herself
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [kangaNurturingMother] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kangaNurturingMother, { targets: [kangaNurturingMother] }),
       ).toBeSuccessfulCommand();
 
       // Pass to opponent's turn
@@ -153,7 +155,9 @@ describe("Kanga - Nurturing Mother", () => {
       expect(bagEffect).toBeDefined();
 
       // Try to target the opponent's character - should fail
-      const result = testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [opponent] });
+      const result = testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(kangaNurturingMother, { targets: [opponent] });
       // Either fails or the opponent is not protected
       if (result.success) {
         // If somehow allowed, the opponent's character should still be challengeable

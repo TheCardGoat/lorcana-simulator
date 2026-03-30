@@ -41,7 +41,9 @@ describe("Fangmeyer - Icy Officer", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(fangmeyerIcyOfficer, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // McHorn should remain in discard
@@ -62,7 +64,7 @@ describe("Fangmeyer - Icy Officer", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(fangmeyerIcyOfficer, {
           targets: [mchornIcecoldOfficer],
         }),
       ).toBeSuccessfulCommand();
@@ -82,7 +84,7 @@ describe("Fangmeyer - Icy Officer", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(fangmeyerIcyOfficer, {
           targets: [mchornIcecoldOfficer],
         }),
       ).toBeSuccessfulCommand();
@@ -134,7 +136,7 @@ describe("Fangmeyer - Icy Officer", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(fangmeyerIcyOfficer, {
           targets: [mchornIcecoldOfficer],
         }),
       ).toBeSuccessfulCommand();

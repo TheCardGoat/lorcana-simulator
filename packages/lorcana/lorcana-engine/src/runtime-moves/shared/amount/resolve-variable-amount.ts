@@ -17,6 +17,7 @@ import {
   getEffectiveStrength,
   type DerivedStateContext,
 } from "../../../rules/derived-state";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import {
   normalizeTargetDescriptor,
   passesFilter,
@@ -103,6 +104,7 @@ function getCardLoreValue(
     getDerivedState(context),
     cardId,
     (id) => context.ctx.cards.getDefinition(id) as any,
+    getOrBuildMoveRegistry(context.ctx),
   );
 }
 
@@ -112,6 +114,7 @@ function getCardStrength(context: VariableAmountResolutionContext, cardId: CardI
     getDerivedState(context),
     cardId,
     (id) => context.ctx.cards.getDefinition(id) as any,
+    getOrBuildMoveRegistry(context.ctx),
   );
 }
 

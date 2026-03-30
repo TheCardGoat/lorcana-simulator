@@ -47,6 +47,7 @@ export const mamaOdieVoiceOfWisdom: CharacterCard = {
         effect: {
           type: "move-damage",
           amount: 2,
+          upTo: true,
           from: "CHOSEN_CHARACTER",
           to: "CHOSEN_OPPOSING_CHARACTER",
         },

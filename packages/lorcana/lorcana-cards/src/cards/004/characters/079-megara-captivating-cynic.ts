@@ -32,6 +32,9 @@ export const megaraCaptivatingCynic: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      id: "2qv-1",
+      name: "SHADY DEAL",
+      text: "SHADY DEAL When you play this character, choose and discard a card or banish this character.",
       type: "triggered",
       trigger: {
         event: "play",
