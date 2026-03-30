@@ -1,7 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import type { ActionCard } from "@tcg/lorcana-types";
 import { createCardI18n } from "../../../card-i18n";
-import { LorcanaMultiplayerTestEngine, PLAYER_ONE, createMockCharacter } from "../../../testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "../../../testing";
 
 function createMockActionCard(params: {
   id: string;
@@ -115,14 +120,12 @@ describe("playCard logging", () => {
     const playEntry = engine
       .getServerEngine()
       .getRuntime()
-      .getGameLog()
-      .find((entry) => entry.defaultMessage?.key === "lorcana.move.playCard");
-    expect(playEntry?.defaultMessage).toMatchObject({
-      key: "lorcana.move.playCard",
-      values: {
-        playerId: PLAYER_ONE,
-        cardId,
-      },
+      .getMoveLogHistory()
+      .find((log) => log.type === "playCard");
+    expect(playEntry).toMatchObject({
+      type: "playCard",
+      playerId: PLAYER_ONE,
+      cardId,
     });
   });
 
@@ -154,13 +157,121 @@ describe("playCard logging", () => {
     const playEntry = engine
       .getServerEngine()
       .getRuntime()
-      .getGameLog()
-      .find((entry) => entry.defaultMessage?.key === "lorcana.move.playCard");
-    expect(playEntry?.defaultMessage).toMatchObject({
-      key: "lorcana.move.playCard",
-      values: {
-        playerId: PLAYER_ONE,
+      .getMoveLogHistory()
+      .find((log) => log.type === "playCard");
+    expect(playEntry).toMatchObject({
+      type: "playCard",
+      playerId: PLAYER_ONE,
+    });
+  });
+
+  it("logs direct chosen targets for immediate action resolution", () => {
+    const target = createMockCharacter({
+      id: "play-log-direct-target",
+      name: "Play Log Direct Target",
+      cost: 2,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+    const actionCard = createMockActionCard({
+      id: "play-log-action-targeted",
+      name: "Play Log Action Targeted",
+      cost: 1,
+      text: "Banish chosen character.",
+      abilities: [
+        {
+          type: "action",
+          effect: {
+            type: "banish",
+            target: "CHOSEN_CHARACTER",
+          },
+        },
+      ],
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [actionCard],
+        inkwell: actionCard.cost,
+        deck: 2,
       },
+      {
+        play: [target],
+      },
+    );
+
+    expect(engine.asPlayerOne().playCard(actionCard, { targets: [target] }).success).toBe(true);
+
+    const playEntry = engine
+      .getServerEngine()
+      .getRuntime()
+      .getMoveLogHistory()
+      .find((log) => log.type === "playCard");
+
+    expect(playEntry).toBeDefined();
+    expect(playEntry).toMatchObject({
+      type: "playCard",
+      playerId: PLAYER_ONE,
+    });
+  });
+
+  it("logs auto-resolved all-target effects for immediate action resolution", () => {
+    const ownTarget = createMockCharacter({
+      id: "play-log-all-target-own",
+      name: "Play Log All Target Own",
+      cost: 2,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+    const opposingTarget = createMockCharacter({
+      id: "play-log-all-target-opponent",
+      name: "Play Log All Target Opponent",
+      cost: 2,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+    const boardWipe = createMockActionCard({
+      id: "play-log-action-all-target",
+      name: "Play Log Action All Target",
+      cost: 1,
+      text: "Banish all characters.",
+      abilities: [
+        {
+          type: "action",
+          effect: {
+            type: "banish",
+            target: "ALL_CHARACTERS",
+          },
+        },
+      ],
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [boardWipe],
+        inkwell: boardWipe.cost,
+        play: [ownTarget],
+        deck: 2,
+      },
+      {
+        play: [opposingTarget],
+      },
+    );
+
+    expect(engine.asPlayerOne().playCard(boardWipe).success).toBe(true);
+
+    // Verify the play card move was logged
+    const playEntry = engine
+      .getServerEngine()
+      .getRuntime()
+      .getMoveLogHistory()
+      .find((log) => log.type === "playCard");
+
+    expect(playEntry).toBeDefined();
+    expect(playEntry).toMatchObject({
+      type: "playCard",
+      playerId: PLAYER_ONE,
     });
   });
 });

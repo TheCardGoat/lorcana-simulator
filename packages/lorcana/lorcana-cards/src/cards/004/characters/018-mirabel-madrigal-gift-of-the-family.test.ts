@@ -33,6 +33,30 @@ const nonMadrigalCharacter = createMockCharacter({
 });
 
 describe("Mirabel Madrigal - Gift of the Family", () => {
+  const resolveMirabelQuestBags = (
+    testEngine: ReturnType<typeof LorcanaMultiplayerTestEngine.createWithFixture>,
+    supportTarget: typeof madrigalAlly | typeof madrigalAlly2 | typeof nonMadrigalCharacter,
+  ) => {
+    while (testEngine.asPlayerOne().getBagCount() > 0) {
+      const [bag] = testEngine.asPlayerOne().getBagEffects();
+      const abilityName = (bag?.payload as { abilityName?: string } | undefined)?.abilityName;
+      if (abilityName === "Support") {
+        const canChooseSupportTarget =
+          testEngine.asPlayerOne().getCardZone(supportTarget) === "play" &&
+          supportTarget !== mirabelMadrigalGiftOfTheFamily;
+
+        expect(
+          testEngine
+            .asPlayerOne()
+            .resolveBag(bag!.id, canChooseSupportTarget ? { targets: [supportTarget] } : {}),
+        ).toBeSuccessfulCommand();
+        continue;
+      }
+
+      expect(testEngine.asPlayerOne().resolveBag(bag!.id)).toBeSuccessfulCommand();
+    }
+  };
+
   describe("Support keyword", () => {
     it("should have Support", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
@@ -67,11 +91,7 @@ describe("Mirabel Madrigal - Gift of the Family", () => {
         testEngine.asPlayerOne().quest(mirabelMadrigalGiftOfTheFamily),
       ).toBeSuccessfulCommand();
 
-      // Resolve the triggered ability bags
-      const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      for (const bag of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(bag.id);
-      }
+      resolveMirabelQuestBags(testEngine, nonMadrigalCharacter);
 
       // Madrigal ally should have +1 lore
       expect(testEngine.asPlayerOne().getCard(madrigalAlly).lore).toBe(madrigalAlly.lore + 1);
@@ -97,11 +117,7 @@ describe("Mirabel Madrigal - Gift of the Family", () => {
         testEngine.asPlayerOne().quest(mirabelMadrigalGiftOfTheFamily),
       ).toBeSuccessfulCommand();
 
-      // Resolve the triggered ability bags
-      const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      for (const bag of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(bag.id);
-      }
+      resolveMirabelQuestBags(testEngine, madrigalAlly);
 
       // Both Madrigal allies should have +1 lore
       expect(testEngine.asPlayerOne().getCard(madrigalAlly).lore).toBe(madrigalAlly.lore + 1);
@@ -119,11 +135,7 @@ describe("Mirabel Madrigal - Gift of the Family", () => {
         testEngine.asPlayerOne().quest(mirabelMadrigalGiftOfTheFamily),
       ).toBeSuccessfulCommand();
 
-      // Resolve any triggered ability bags
-      const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      for (const bag of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(bag.id);
-      }
+      resolveMirabelQuestBags(testEngine, mirabelMadrigalGiftOfTheFamily);
 
       // Mirabel should NOT have +1 lore (excludeSelf)
       expect(testEngine.asPlayerOne().getCard(mirabelMadrigalGiftOfTheFamily).lore).toBe(
@@ -142,14 +154,7 @@ describe("Mirabel Madrigal - Gift of the Family", () => {
         testEngine.asPlayerOne().quest(mirabelMadrigalGiftOfTheFamily),
       ).toBeSuccessfulCommand();
 
-      // Resolve the triggered ability bags (Support + SAVING THE MIRACLE)
-      // Decline Support to keep things simple; SAVING THE MIRACLE auto-resolves
-      const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      for (const bag of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(bag.id, {
-          resolveOptional: false,
-        });
-      }
+      resolveMirabelQuestBags(testEngine, madrigalAlly);
 
       // Madrigal ally should have +1 lore during this turn
       expect(testEngine.asPlayerOne().getCard(madrigalAlly).lore).toBe(madrigalAlly.lore + 1);

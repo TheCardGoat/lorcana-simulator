@@ -39,7 +39,9 @@ describe("Robin Hood - Sharpshooter", () => {
       expect(testEngine.asPlayerOne().quest(robinHoodSharpshooter)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(robinHoodSharpshooter),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -66,7 +68,9 @@ describe("Robin Hood - Sharpshooter", () => {
       expect(testEngine.asPlayerOne().quest(robinHoodSharpshooter)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(robinHoodSharpshooter),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({

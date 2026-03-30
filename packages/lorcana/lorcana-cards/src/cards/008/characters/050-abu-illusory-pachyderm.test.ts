@@ -46,7 +46,9 @@ describe("Abu - Illusory Pachyderm", () => {
 
       // Resolve the triggered ability targeting the opponent's character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(abuIllusoryPachyderm, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       // Should gain Abu's own lore (from questing) + opponent character's lore (from ability)

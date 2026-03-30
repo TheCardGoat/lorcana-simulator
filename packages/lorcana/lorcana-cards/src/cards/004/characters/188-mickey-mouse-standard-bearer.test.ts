@@ -54,7 +54,7 @@ describe("Mickey Mouse - Standard Bearer", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseStandardBearer, {
           resolveOptional: true,
           targets: [chosenCharacter],
         }),
@@ -84,7 +84,7 @@ describe("Mickey Mouse - Standard Bearer", () => {
       expect(testEngine.asPlayerOne().playCard(mickeyMouseStandardBearer)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseStandardBearer, {
           resolveOptional: true,
           targets: [chosenCharacter],
         }),
@@ -111,7 +111,7 @@ describe("Mickey Mouse - Standard Bearer", () => {
       expect(testEngine.asPlayerOne().playCard(mickeyMouseStandardBearer)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseStandardBearer, {
           resolveOptional: true,
           targets: [chosenCharacter],
         }),
@@ -150,7 +150,7 @@ describe("Mickey Mouse - Standard Bearer", () => {
 
       // Mickey can target himself
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseStandardBearer, {
           resolveOptional: true,
           targets: [mickeyMouseStandardBearer],
         }),
@@ -189,7 +189,7 @@ describe("Mickey Mouse - Standard Bearer", () => {
 
       // The effect targets "any" character, so opponent character is valid
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseStandardBearer, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),

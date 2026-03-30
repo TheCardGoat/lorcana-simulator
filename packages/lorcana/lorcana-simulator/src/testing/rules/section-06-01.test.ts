@@ -81,7 +81,8 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       expect(
         challengedEngine
           .asPlayerTwo()
-          .resolveBag(challengedEngine.asPlayerTwo().getBagEffects()[0]!.id).success,
+          .resolvePendingByCard(challengedEngine.asPlayerTwo().getBagEffects()[0]!.sourceId)
+          .success,
       ).toBe(true);
       expect(
         challengedEngine.asPlayerOne().resolveNextPending({
@@ -160,7 +161,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       expect(queenEngine.asPlayerOne().quest(theQueenCommandingPresence)).toBeSuccessfulCommand();
       const [bagEffect] = queenEngine.asPlayerOne().getBagEffects();
       expect(
-        queenEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        queenEngine.asPlayerOne().resolvePendingByCard(bagEffect!.sourceId, {
           targets: [minnieMouseAlwaysClassy, minnieMouseAlwaysClassy],
         }).success,
       ).toBe(true);
@@ -217,9 +218,9 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
           ifYouDoEngine.asPlayerOne().playCard(judyHoppsOptimisticOfficer),
         ).toBeSuccessfulCommand();
 
-        const bagId = ifYouDoEngine.asPlayerOne().getBagEffects()[0]!.id;
+        const bagEffect = ifYouDoEngine.asPlayerOne().getBagEffects()[0]!;
         expect(
-          ifYouDoEngine.asPlayerOne().resolveBag(bagId, {
+          ifYouDoEngine.asPlayerOne().resolvePendingByCard(bagEffect.sourceId, {
             resolveOptional: false,
             targets: [ifYouDoEngine.findCardInstanceId(pawpsicle, "play", PLAYER_ONE)],
           }).success,
@@ -236,9 +237,9 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
 
         expect(toEngine.asPlayerOne().quest(arthurWizardsApprentice)).toBeSuccessfulCommand();
         expect(toEngine.asPlayerOne().getBagCount()).toBe(1);
-        const bagId1 = toEngine.asPlayerOne().getBagEffects()[0]!.id;
+        const bagEffect = toEngine.asPlayerOne().getBagEffects()[0]!;
         expect(
-          toEngine.asPlayerOne().resolveBag(bagId1, {
+          toEngine.asPlayerOne().resolvePendingByCard(bagEffect.sourceId, {
             resolveOptional: false,
             targets: [toEngine.findCardInstanceId(arthurWizardsApprentice, "play", PLAYER_ONE)],
           }),
@@ -369,6 +370,39 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       expect(delayedTriggerEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
     });
 
+    it("6.1.7.a. Players can still decline an optional free-play effect after reaching its target selection step.", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [
+          prideLandsJungleOasis,
+          { card: minnieMouseAlwaysClassy, atLocation: prideLandsJungleOasis },
+          { card: cursedMerfolkUrsulasHandiwork, atLocation: prideLandsJungleOasis },
+          { card: hueySavvyNephew, atLocation: prideLandsJungleOasis },
+        ],
+        discard: [donaldDuckPieSlinger],
+      });
+      const donaldInDiscardId = testEngine.findCardInstanceId(
+        donaldDuckPieSlinger,
+        "discard",
+        PLAYER_ONE,
+      );
+
+      expect(testEngine.asPlayerOne().activateAbility(prideLandsJungleOasis).success).toBe(true);
+      expect(testEngine.asPlayerOne().getCardZone(donaldDuckPieSlinger)).toBe("discard");
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+
+      expect(testEngine.asPlayerOne().resolveNextPending({ resolveOptional: false }).success).toBe(
+        true,
+      );
+
+      expect(testEngine.asPlayerOne().getCardZone(donaldDuckPieSlinger)).toBe("discard");
+      expect(testEngine.asPlayerOne().getCardZone(prideLandsJungleOasis)).toBe("play");
+      expect(testEngine.asServer().getState().G.pendingEffects).toHaveLength(0);
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+
+      // Sanity-check the target would have been legal if the player had followed through.
+      expect(donaldInDiscardId).toBeDefined();
+    });
+
     it.skip('6.1.7.1. Source-material gap: no current exported real card in lorcana-cards says "use an ability for free."', () => {
       // 6.1.7.1. If an ability or effect instructs a player to use an ability "for free," the player ignores all costs needed to use the ability except for {E}.
     });
@@ -393,9 +427,11 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       ).toBe(true);
       expect(drawAllEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        drawAllEngine.asPlayerOne().resolveBag(drawAllEngine.asPlayerOne().getBagEffects()[0]!.id, {
-          resolveOptional: true,
-        }).success,
+        drawAllEngine
+          .asPlayerOne()
+          .resolvePendingByCard(drawAllEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: true,
+          }).success,
       ).toBe(true);
       expect(drawAllEngine.asPlayerOne().getZonesCardCount().hand).toBe(2);
 
@@ -418,7 +454,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       expect(
         drawNoneEngine
           .asPlayerOne()
-          .resolveBag(drawNoneEngine.asPlayerOne().getBagEffects()[0]!.id, {
+          .resolvePendingByCard(drawNoneEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
             resolveOptional: false,
           }).success,
       ).toBe(true);
@@ -441,7 +477,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(bagEffect!.sourceId, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -482,7 +518,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
 
       const [firstBag, secondBag] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(firstBag!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(firstBag!.sourceId, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -494,7 +530,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
 
       expect(
         // The second trigger should resolve with invalid target, resulting in no effect
-        testEngine.asPlayerOne().resolveBag(secondBag!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(secondBag!.sourceId, {
           resolveOptional: true,
         }).success,
       ).toBe(true);
@@ -717,14 +753,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
 
         expect(exertedEngine.asPlayerOne().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
         expect(exertedEngine.asPlayerOne().getBagCount()).toBe(2);
-        // DON"T EVER USE WHILE LOOPS
-        // while (exertedEngine.asPlayerOne().getBagCount() > 0) {
-        //   expect(
-        //     exertedEngine
-        //       .asPlayerOne()
-        //       .resolveBag(exertedEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-        //   ).toBe(true);
-        // }
+        // Resolve pending bag effects via bounded bag draining if this sequence needs to be re-enabled.
         expect(exertedEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(2);
 
         const readyEngine = LorcanaMultiplayerTestEngine.createWithFixture({

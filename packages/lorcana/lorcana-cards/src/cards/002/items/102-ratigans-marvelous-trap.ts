@@ -20,13 +20,7 @@ export const ratigansMarvelousTrap: ItemCard = {
   },
   text: [
     {
-      title: "SNAP!",
-    },
-    {
-      title: "BOOM!",
-    },
-    {
-      title: "TWANG!",
+      title: "SNAP! BOOM! TWANG!",
       description: "Banish this item — Each opponent loses 2 lore.",
     },
   ],

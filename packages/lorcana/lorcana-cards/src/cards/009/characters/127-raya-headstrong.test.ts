@@ -88,7 +88,7 @@ describe("Raya - Headstrong (set 009)", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(rayaHeadstrong, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Raya should now be readied
@@ -112,7 +112,7 @@ describe("Raya - Headstrong (set 009)", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(rayaHeadstrong, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Raya is ready but cannot quest this turn
@@ -137,7 +137,7 @@ describe("Raya - Headstrong (set 009)", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(rayaHeadstrong, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCard(rayaHeadstrong).hasQuestRestriction).toBe(true);
@@ -169,7 +169,7 @@ describe("Raya - Headstrong (set 009)", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(rayaHeadstrong, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Raya stays exerted since the optional was declined

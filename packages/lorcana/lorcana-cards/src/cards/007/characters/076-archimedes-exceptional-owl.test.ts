@@ -28,7 +28,7 @@ describe("Archimedes - Exceptional Owl", () => {
       // Archimedes' controller (player one) should have a bag effect to optionally draw
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(archimedesExceptionalOwl, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -58,7 +58,7 @@ describe("Archimedes - Exceptional Owl", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(archimedesExceptionalOwl, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

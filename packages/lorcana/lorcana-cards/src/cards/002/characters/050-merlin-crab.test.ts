@@ -39,7 +39,7 @@ describe("Merlin - Crab", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects).toHaveLength(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { targets: [targetCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(merlinCrab, { targets: [targetCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().hasKeyword(targetCharacter, "Challenger")).toBe(true);
@@ -64,7 +64,7 @@ describe("Merlin - Crab", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects).toHaveLength(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { targets: [opponentCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(merlinCrab, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().hasKeyword(opponentCharacter, "Challenger")).toBe(true);
@@ -96,7 +96,7 @@ describe("Merlin - Crab", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects).toHaveLength(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { targets: [opponentCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(merlinCrab, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().hasKeyword(opponentCharacter, "Challenger")).toBe(true);
@@ -124,7 +124,7 @@ describe("Merlin - Crab", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { targets: [targetCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(merlinCrab, { targets: [targetCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().hasKeyword(targetCharacter, "Challenger")).toBe(true);

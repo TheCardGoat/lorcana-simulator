@@ -38,7 +38,7 @@ describe("Rapunzel - High Climber", () => {
       expect(testEngine.asPlayerOne().quest(rapunzelHighClimber)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(rapunzelHighClimber, {
           targets: [opposingCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -61,7 +61,7 @@ describe("Rapunzel - High Climber", () => {
       expect(testEngine.asPlayerOne().quest(rapunzelHighClimber)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(rapunzelHighClimber, {
           targets: [opposingCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -87,7 +87,7 @@ describe("Rapunzel - High Climber", () => {
       expect(testEngine.asPlayerOne().quest(rapunzelHighClimber)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(rapunzelHighClimber, {
           targets: [opposingCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -114,7 +114,7 @@ describe("Rapunzel - High Climber", () => {
       expect(testEngine.asPlayerOne().quest(rapunzelHighClimber)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(rapunzelHighClimber, {
           targets: [opposingCharacter],
         }),
       ).toBeSuccessfulCommand();

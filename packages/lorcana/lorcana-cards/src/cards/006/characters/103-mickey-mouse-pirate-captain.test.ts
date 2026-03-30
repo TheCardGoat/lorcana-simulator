@@ -32,7 +32,9 @@ describe("Mickey Mouse - Pirate Captain", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [pirateCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mickeyMousePirateCaptain, { targets: [pirateCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(pirateCharacter)).toBe(

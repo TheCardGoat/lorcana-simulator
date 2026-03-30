@@ -42,7 +42,7 @@ describe("Fidget - Sneaky Bat", () => {
 
       const allyId = testEngine.findCardInstanceId(anotherCharacter, "play", PLAYER_ONE);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(fidgetSneakyBat, {
           targets: [allyId],
         }),
       ).toBeSuccessfulCommand();
@@ -66,7 +66,7 @@ describe("Fidget - Sneaky Bat", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       const allyId = testEngine.findCardInstanceId(anotherCharacter, "play", PLAYER_ONE);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(fidgetSneakyBat, {
           targets: [allyId],
         }),
       ).toBeSuccessfulCommand();

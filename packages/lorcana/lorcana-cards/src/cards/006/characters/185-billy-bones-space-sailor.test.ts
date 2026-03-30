@@ -42,7 +42,7 @@ describe("Billy Bones - Space Sailor", () => {
     expect(testEngine.asPlayerOne().getCardZone(billyBonesSpaceSailor)).toBe("discard");
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
+      testEngine.asPlayerOne().resolvePendingByCard(billyBonesSpaceSailor, {
         resolveOptional: true,
         targets: [mockLocation],
       }),

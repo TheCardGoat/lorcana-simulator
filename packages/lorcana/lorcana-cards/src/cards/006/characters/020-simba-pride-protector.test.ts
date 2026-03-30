@@ -58,7 +58,7 @@ describe("Simba - Pride Protector", () => {
 
       // Resolve the bag effect (accept the optional ability)
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(simbaPrideProtector, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -91,7 +91,7 @@ describe("Simba - Pride Protector", () => {
         // Resolve it - the conditional check should fail since Simba is not exerted
         testEngine
           .asPlayerOne()
-          .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: true });
+          .resolvePendingByCard(simbaPrideProtector, { resolveOptional: true });
       }
 
       // Ally should still be exerted (ability didn't ready it because condition failed)
@@ -129,9 +129,7 @@ describe("Simba - Pride Protector", () => {
 
       // Resolve the bag effect - secondary condition "if this character is exerted"
       // is now false, so the ability should resolve with no effect
-      testEngine
-        .asPlayerOne()
-        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: true });
+      testEngine.asPlayerOne().resolvePendingByCard(simbaPrideProtector, { resolveOptional: true });
 
       // Ally should still be exerted (ability had no effect)
       expect(testEngine.asPlayerOne().isExerted(allyCharacter)).toBe(true);
@@ -165,7 +163,7 @@ describe("Simba - Pride Protector", () => {
       // Resolve the optional ability (accept)
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(simbaPrideProtector, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();

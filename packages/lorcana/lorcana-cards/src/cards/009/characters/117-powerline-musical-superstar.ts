@@ -50,6 +50,7 @@ export const powerlineMusicalSuperstar: CharacterCard = {
         type: "conditional",
       },
       id: "yez-1",
+      name: "ELECTRIC MOVE",
       text: "ELECTRIC MOVE If you've played a song this turn, this character gains Rush this turn.",
       type: "action",
     },

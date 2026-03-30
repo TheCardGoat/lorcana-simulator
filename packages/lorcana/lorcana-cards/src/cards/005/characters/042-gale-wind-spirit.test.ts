@@ -28,7 +28,7 @@ describe("Gale - Wind Spirit", () => {
 
     // RECURRING GUST fires as player two's bag effect — resolve it
     const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
-    expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().resolvePendingByCard(galeWindSpirit)).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().getCardZone(galeWindSpirit)).toBe("hand");
   });

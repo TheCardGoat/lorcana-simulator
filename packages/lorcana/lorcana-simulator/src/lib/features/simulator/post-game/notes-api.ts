@@ -1,16 +1,41 @@
 import { getApiOrigin } from "$lib/config/public-url-config.js";
+import type {
+  AcceptedMoveRecord,
+  EngineLogRecord,
+  LorcanaProjectedBoardView,
+} from "@tcg/lorcana-engine";
 
-export interface PostGameServerSummary {
-  kind: "placeholder";
-  message: string;
-  generatedAt: string | null;
+export interface PostGamePlayerIdentity {
+  id: string;
+  side: "playerOne" | "playerTwo";
+  displayName: string | null;
+  username: string | null;
+  mmr: number | null;
+}
+
+export interface PostGameCanonicalData {
+  source: "redis" | "persisted_replay";
+  gameId: string;
+  matchId: string;
+  status: "completed" | "abandoned";
+  winnerId: string | null;
+  reason: string | null;
+  createdAt: string;
+  completedAt: string;
+  durationMs: number;
+  authority: "server" | "client" | null;
+  matchType: "ranked" | "casual" | "practice_vs_bot" | null;
+  players: [PostGamePlayerIdentity, PostGamePlayerIdentity];
+  board: LorcanaProjectedBoardView;
+  acceptedMoves: AcceptedMoveRecord[];
+  engineLogs: EngineLogRecord[];
 }
 
 export interface PostGameRecordEnvelope {
   gameId: string;
   matchId: string | null;
   note: string;
-  serverSummary: PostGameServerSummary;
+  postGame: PostGameCanonicalData | null;
 }
 
 export interface SavePostGameNoteParams {
@@ -38,12 +63,40 @@ function parseErrorMessage(payload: unknown): string | null {
   return null;
 }
 
-function isPostGameServerSummary(value: unknown): value is PostGameServerSummary {
+function isPostGamePlayerIdentity(value: unknown): value is PostGamePlayerIdentity {
   return (
     isRecord(value) &&
-    value.kind === "placeholder" &&
-    typeof value.message === "string" &&
-    (typeof value.generatedAt === "string" || value.generatedAt === null)
+    typeof value.id === "string" &&
+    (value.side === "playerOne" || value.side === "playerTwo") &&
+    (typeof value.displayName === "string" || value.displayName === null) &&
+    (typeof value.username === "string" || value.username === null) &&
+    (typeof value.mmr === "number" || value.mmr === null)
+  );
+}
+
+function isPostGameCanonicalData(value: unknown): value is PostGameCanonicalData {
+  return (
+    isRecord(value) &&
+    (value.source === "redis" || value.source === "persisted_replay") &&
+    typeof value.gameId === "string" &&
+    typeof value.matchId === "string" &&
+    (value.status === "completed" || value.status === "abandoned") &&
+    (typeof value.winnerId === "string" || value.winnerId === null) &&
+    (typeof value.reason === "string" || value.reason === null) &&
+    typeof value.createdAt === "string" &&
+    typeof value.completedAt === "string" &&
+    typeof value.durationMs === "number" &&
+    (value.authority === "server" || value.authority === "client" || value.authority === null) &&
+    (value.matchType === "ranked" ||
+      value.matchType === "casual" ||
+      value.matchType === "practice_vs_bot" ||
+      value.matchType === null) &&
+    Array.isArray(value.players) &&
+    value.players.length === 2 &&
+    value.players.every(isPostGamePlayerIdentity) &&
+    isRecord(value.board) &&
+    Array.isArray(value.acceptedMoves) &&
+    Array.isArray(value.engineLogs)
   );
 }
 
@@ -53,7 +106,7 @@ function parsePostGameRecordEnvelope(payload: unknown): PostGameRecordEnvelope {
     typeof payload.gameId !== "string" ||
     (typeof payload.matchId !== "string" && payload.matchId !== null) ||
     typeof payload.note !== "string" ||
-    !isPostGameServerSummary(payload.serverSummary)
+    !(payload.postGame === null || isPostGameCanonicalData(payload.postGame))
   ) {
     throw new Error("Received an invalid post-game record payload from the API.");
   }
@@ -62,7 +115,7 @@ function parsePostGameRecordEnvelope(payload: unknown): PostGameRecordEnvelope {
     gameId: payload.gameId,
     matchId: payload.matchId,
     note: payload.note,
-    serverSummary: payload.serverSummary,
+    postGame: payload.postGame,
   };
 }
 

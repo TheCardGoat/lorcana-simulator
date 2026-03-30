@@ -41,6 +41,7 @@ export const miloThatchSpiritedScholar: CharacterCard = {
         type: "modify-stat",
       },
       id: "1cr-1",
+      name: "I'M YOUR MAN!",
       text: "I'M YOUR MAN! While this character is at a location, he gets +2 {S}.",
       type: "static",
     },

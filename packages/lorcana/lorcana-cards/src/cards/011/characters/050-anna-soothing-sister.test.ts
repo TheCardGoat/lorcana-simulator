@@ -29,7 +29,7 @@ describe("Anna - Soothing Sister", () => {
 
       // Resolve WARM HEART: choose Moana from discard
       const moanaId = testEngine.findCardInstanceId(moanaOfMotunui, "discard", PLAYER_ONE);
-      const resolveResult = testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+      const resolveResult = testEngine.asPlayerOne().resolvePendingByCard(annaSoothingSister, {
         resolveOptional: true,
         targets: [moanaId],
       });
@@ -69,7 +69,7 @@ describe("Anna - Soothing Sister", () => {
         PLAYER_ONE,
       );
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(annaSoothingSister, {
           resolveOptional: true,
           targets: [flynnId],
         }),
@@ -95,7 +95,7 @@ describe("Anna - Soothing Sister", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(annaSoothingSister, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

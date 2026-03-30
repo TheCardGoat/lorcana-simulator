@@ -69,7 +69,7 @@ describe("Under the Sea", () => {
     expect(testEngine.asPlayerTwo().getCardZone(tinkerBellPeterPansAlly)).toBe("play");
   });
 
-  it("suspends for opponent ordering when multiple qualifying characters are present", () => {
+  it("suspends for the player who played the song when multiple qualifying characters are present", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [underTheSea],
@@ -82,19 +82,20 @@ describe("Under the Sea", () => {
 
     expect(testEngine.asPlayerOne().playCard(underTheSea)).toBeSuccessfulCommand();
 
-    // Both qualify, ordering should be suspended until the opponent (owner) provides an order
     const weakAId = testEngine.findCardInstanceId(weakCharacterA, "play", PLAYER_TWO);
     const weakBId = testEngine.findCardInstanceId(weakCharacterB, "play", PLAYER_TWO);
 
-    // The opponent resolves the ordering: A goes to bottom first, then B (so B ends up on top of the two)
     expect(
-      testEngine.asPlayerTwo().resolveNextPending({ targets: [weakCharacterA, weakCharacterB] }),
+      testEngine.asPlayerOne().resolveNextPending({ targets: [weakCharacterA, weakCharacterB] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().getCardZone(weakCharacterA)).toBe("deck");
     expect(testEngine.asPlayerTwo().getCardZone(weakCharacterB)).toBe("deck");
-    // Verify both are no longer in play
     expect(weakAId).toBeDefined();
     expect(weakBId).toBeDefined();
+    expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_TWO).slice(0, 2)).toEqual([
+      weakCharacterA.id,
+      weakCharacterB.id,
+    ]);
   });
 });

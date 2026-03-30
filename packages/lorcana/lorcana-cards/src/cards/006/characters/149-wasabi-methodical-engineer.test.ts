@@ -50,7 +50,7 @@ describe("Wasabi - Methodical Engineer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(wasabiMethodicalEngineer, {
           resolveOptional: true,
           targets: [ownItem],
         }),
@@ -73,7 +73,7 @@ describe("Wasabi - Methodical Engineer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(wasabiMethodicalEngineer, {
           resolveOptional: true,
           targets: [ownItem],
         }),
@@ -97,7 +97,7 @@ describe("Wasabi - Methodical Engineer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(wasabiMethodicalEngineer, {
           resolveOptional: true,
           targets: [opponentItem],
         }),
@@ -121,7 +121,9 @@ describe("Wasabi - Methodical Engineer", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(wasabiMethodicalEngineer, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(ownItem)).toBe("play");

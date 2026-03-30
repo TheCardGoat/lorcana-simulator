@@ -34,7 +34,7 @@
   let scrollElement = $state<HTMLDivElement | null>(null);
   let isPinnedToBottom = $state(true);
   let hasInitializedScroll = $state(false);
-  let previousGroupCount = $state(0);
+  let previousRowCount = $state(0);
   const browser = typeof window !== "undefined";
 
   const visibleEntries = $derived(filterEntriesToLastTurns(entries));
@@ -62,13 +62,13 @@
 
   $effect(() => {
     if (!browser || !scrollElement) {
-      previousGroupCount = groups.length;
+      previousRowCount = rows.length;
       return;
     }
 
     if (!hasInitializedScroll) {
       hasInitializedScroll = true;
-      previousGroupCount = groups.length;
+      previousRowCount = rows.length;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (!scrollElement || groups.length === 0) {
@@ -84,12 +84,12 @@
       return;
     }
 
-    if (!shouldAutoScrollOnNewRows(groups.length, previousGroupCount, isPinnedToBottom)) {
-      previousGroupCount = groups.length;
+    if (!shouldAutoScrollOnNewRows(rows.length, previousRowCount, isPinnedToBottom)) {
+      previousRowCount = rows.length;
       return;
     }
 
-    previousGroupCount = groups.length;
+    previousRowCount = rows.length;
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {

@@ -223,11 +223,9 @@ export class WebSocketTransport implements Transport {
   }
 
   private flushPendingMessages(): void {
-    while (this.pendingMessages.length > 0) {
-      const message = this.pendingMessages.shift();
-      if (message) {
-        this.send(message);
-      }
+    const pendingMessages = this.pendingMessages.splice(0);
+    for (const message of pendingMessages) {
+      this.send(message);
     }
   }
 }

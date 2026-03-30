@@ -53,6 +53,7 @@ export const liShangNewlyPromoted: CharacterCard = {
         type: "modify-stat",
       },
       id: "1s1-2",
+      name: "BIG RESPONSIBILITY",
       text: "BIG RESPONSIBILITY While this character is damaged, he gets +2 {S}.",
       type: "static",
     },

@@ -41,6 +41,7 @@ export const sisuEmboldenedWarrior: CharacterCard = {
         type: "modify-stat",
       },
       id: "1df-1",
+      name: "SURGE OF POWER",
       text: "SURGE OF POWER This character gets +1 {S} for each card in opponents' hands.",
       type: "static",
     },

@@ -58,7 +58,9 @@ describe("King Candy - Sugar Rush Nightmare", () => {
       // A NEW ROSTER triggers as optional
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kingCandySugarRushNightmare, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [candleheadDedicatedRacer] }),
@@ -85,7 +87,9 @@ describe("King Candy - Sugar Rush Nightmare", () => {
       // Decline the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kingCandySugarRushNightmare, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Candlehead should remain in discard
@@ -107,7 +111,9 @@ describe("King Candy - Sugar Rush Nightmare", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kingCandySugarRushNightmare, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Target the Racer character (non-racer is in discard but not a valid candidate)
@@ -169,7 +175,9 @@ describe("King Candy - Sugar Rush Nightmare", () => {
       // A NEW ROSTER should trigger
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(kingCandySugarRushNightmare, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerTwo().resolveNextPending({ targets: [candleheadDedicatedRacer] }),

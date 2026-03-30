@@ -32,6 +32,7 @@ export const diabloObedientRaven: CharacterCard = {
   abilities: [
     {
       id: "1vn-1",
+      name: "FLY, MY PET!",
       effect: {
         chooser: "CONTROLLER",
         effect: {
@@ -41,7 +42,12 @@ export const diabloObedientRaven: CharacterCard = {
         },
         type: "optional",
       },
-      type: "action",
+      trigger: {
+        event: "banish",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
       text: "FLY, MY PET! When this character is banished, you may draw a card.",
     },
   ],

@@ -32,7 +32,9 @@ describe("Yen Sid - Powerful Sorcerer", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: true }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(yenSidPowerfulSorcerer, { resolveOptional: true }),
         ).toBeSuccessfulCommand();
       }
 
@@ -52,7 +54,9 @@ describe("Yen Sid - Powerful Sorcerer", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const bagEffect of bagEffects) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect.id, { resolveOptional: true }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(yenSidPowerfulSorcerer, { resolveOptional: true }),
         ).toBeSuccessfulCommand();
       }
 
@@ -73,7 +77,9 @@ describe("Yen Sid - Powerful Sorcerer", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(yenSidPowerfulSorcerer, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toBe(0);

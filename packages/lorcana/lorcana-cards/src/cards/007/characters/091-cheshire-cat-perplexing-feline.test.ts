@@ -47,7 +47,9 @@ describe("Cheshire Cat - Perplexing Feline", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(cheshireCatPerplexingFeline, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [damagedOpponent] }),
@@ -69,7 +71,9 @@ describe("Cheshire Cat - Perplexing Feline", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(cheshireCatPerplexingFeline, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [ownDamagedCharacter] }),
@@ -95,7 +99,9 @@ describe("Cheshire Cat - Perplexing Feline", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(cheshireCatPerplexingFeline, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain at 1 (pre-existing only)

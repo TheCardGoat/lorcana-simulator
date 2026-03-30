@@ -90,7 +90,9 @@ describe("Scar - Eerily Prepared", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scarEerilyPrepared, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       const opponentStrengthAfter = testEngine.asPlayerTwo().getCard(opponentCharacter).strength;
@@ -127,7 +129,9 @@ describe("Scar - Eerily Prepared", () => {
       expect(testEngine.getCardsUnder(scarEerilyPrepared)).toHaveLength(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [anotherOpponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scarEerilyPrepared, { targets: [anotherOpponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       const targetStrength = testEngine.asPlayerTwo().getCard(anotherOpponentCharacter).strength;
@@ -157,7 +161,9 @@ describe("Scar - Eerily Prepared", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scarEerilyPrepared, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCard(opponentCharacter).strength).toBe(0);
@@ -196,7 +202,9 @@ describe("Scar - Eerily Prepared", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [weakOpponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scarEerilyPrepared, { targets: [weakOpponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCard(weakOpponentCharacter).strength).toBe(-3);

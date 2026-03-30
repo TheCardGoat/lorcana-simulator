@@ -127,7 +127,9 @@ describe("Merlin - Completing His Research", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       if (bagEffect) {
-        expect(testEngine.asPlayerOne().resolveBag(bagEffect.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(merlinCompletingHisResearch),
+        ).toBeSuccessfulCommand();
       }
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;

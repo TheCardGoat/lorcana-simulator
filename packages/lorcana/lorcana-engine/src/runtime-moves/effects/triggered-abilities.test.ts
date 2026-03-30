@@ -148,6 +148,60 @@ const printedPlayWatcher = createMockCharacter({
   ],
 });
 
+const indexedPlayTrigger = createMockCharacter({
+  id: "indexed-play-trigger",
+  name: "Indexed Play Trigger",
+  cost: 2,
+  lore: 1,
+  abilities: [
+    {
+      id: "indexed-play-trigger-0",
+      name: "Backup Trigger",
+      text: "Whenever one of your characters quests, gain 1 lore.",
+      type: "triggered",
+      trigger: {
+        event: "quest",
+        on: "YOUR_CHARACTERS",
+        timing: "whenever",
+      },
+      effect: {
+        amount: 1,
+        target: "CONTROLLER",
+        type: "gain-lore",
+      },
+    },
+    {
+      id: "indexed-play-trigger-1",
+      name: "Localized Trigger",
+      text: "When you play this character, you may give another chosen character Resist +1 until the start of your next turn.",
+      type: "triggered",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "gain-keyword",
+          keyword: "Resist",
+          value: 1,
+          duration: "until-start-of-next-turn",
+          target: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["character"],
+            excludeSelf: true,
+          },
+        },
+      },
+    },
+  ],
+});
+
 const triggeredTestLocation = createMockLocation({
   id: "triggered-test-location",
   name: "Triggered Test Location",
@@ -511,7 +565,9 @@ describe("triggered abilities", () => {
     expect(floatingQuestLoreTwoBag).toBeDefined();
     expect(floatingQuestLoreOneBag).toBeDefined();
 
-    expect(testEngine.asPlayerOne().resolveBag(floatingQuestLoreTwoBag!.id).success).toBe(true);
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(floatingQuestLoreTwoBag!.sourceId).success,
+    ).toBe(true);
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(quester.lore + 3);
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.asPlayerOne().getLore(PLAYER_TWO)).toBe(0);
@@ -593,8 +649,45 @@ describe("triggered abilities", () => {
     expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
 
     const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
-    expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(bagEffect?.abilityIndex).toBe(0);
+    expect(
+      testEngine.asPlayerTwo().resolvePendingByCard(bagEffect!.sourceId),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().getLore(PLAYER_TWO)).toBe(1);
+  });
+
+  it("preserves printed trigger abilityIndex from bag resolution into pending effects", () => {
+    const otherTarget = createMockCharacter({
+      id: "indexed-play-target",
+      name: "Indexed Play Target",
+      cost: 2,
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [indexedPlayTrigger],
+        inkwell: indexedPlayTrigger.cost,
+        play: [otherTarget],
+        deck: 1,
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(indexedPlayTrigger).success).toBe(true);
+
+    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffect?.abilityIndex).toBe(1);
+
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(bagEffect!.sourceId, {
+        resolveOptional: true,
+      }).success,
+    ).toBe(true);
+
+    const [pendingEffect] = testEngine.asPlayerOne().getPendingEffects();
+    expect(pendingEffect?.abilityIndex).toBe(1);
+    expect(pendingEffect?.selectionContext?.kind).toBe("target-selection");
   });
 
   it("matches trigger subject keyword queries against temporary keywords", () => {

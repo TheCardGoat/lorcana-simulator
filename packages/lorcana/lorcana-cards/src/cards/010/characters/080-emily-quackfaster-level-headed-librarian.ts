@@ -30,6 +30,39 @@ export const emilyQuackfasterLevelheadedLibrarian: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "Gtk-1",
+      name: "RECOMMENDED READING",
+      text: "RECOMMENDED READING When you play this character, you may put the top card of your deck facedown under one of your characters or locations with Boost.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          source: "top-of-deck",
+          type: "put-under",
+          under: {
+            cardTypes: ["character", "location"],
+            count: 1,
+            owner: "you",
+            selector: "chosen",
+            zones: ["play"],
+            filter: [
+              {
+                keyword: "Boost",
+                type: "has-keyword",
+              },
+            ],
+          },
+        },
+        type: "optional",
+      },
+      type: "triggered",
+    },
+  ],
   i18n: emilyQuackfasterLevelheadedLibrarianI18n,
 };

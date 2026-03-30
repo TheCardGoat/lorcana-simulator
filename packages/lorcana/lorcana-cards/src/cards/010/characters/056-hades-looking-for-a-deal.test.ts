@@ -24,7 +24,7 @@ describe("Hades - Looking for a Deal", () => {
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
     expect(bagEffects).toHaveLength(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(hadesLookingForADeal, {
         resolveOptional: true,
         targets: [chosenId],
       }),
@@ -56,7 +56,7 @@ describe("Hades - Looking for a Deal", () => {
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
     expect(bagEffects).toHaveLength(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(hadesLookingForADeal, {
         resolveOptional: true,
         targets: [chosenId],
       }),
@@ -88,7 +88,7 @@ describe("Hades - Looking for a Deal", () => {
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
     expect(bagEffects).toHaveLength(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(hadesLookingForADeal, {
         resolveOptional: true,
         targets: [wardedId],
       }).success,

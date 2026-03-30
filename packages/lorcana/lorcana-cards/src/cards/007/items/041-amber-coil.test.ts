@@ -27,7 +27,7 @@ describe("Amber Coil", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(amberCoil)).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({
         resolveOptional: true,
@@ -51,7 +51,7 @@ describe("Amber Coil", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      testEngine.asPlayerOne().resolvePendingByCard(amberCoil, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne()).toHaveDamage({ card: damagedTarget, value: 2 });

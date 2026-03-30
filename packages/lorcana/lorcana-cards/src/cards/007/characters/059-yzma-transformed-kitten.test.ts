@@ -55,7 +55,9 @@ describe("Yzma - Transformed Kitten", () => {
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(yzmaTransformedKitten, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(yzmaTransformedKitten)).toBe("hand");

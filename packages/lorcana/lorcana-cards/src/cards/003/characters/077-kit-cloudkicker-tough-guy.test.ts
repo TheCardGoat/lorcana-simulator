@@ -29,7 +29,9 @@ describe("Kit Cloudkicker - Tough Guy", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kitCloudkickerToughGuy, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -55,7 +57,9 @@ describe("Kit Cloudkicker - Tough Guy", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kitCloudkickerToughGuy, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(weakOpponentCharacter)).toBe("play");

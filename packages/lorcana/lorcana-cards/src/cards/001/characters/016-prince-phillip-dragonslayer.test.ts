@@ -69,7 +69,9 @@ describe("Prince Phillip - Dragonslayer", () => {
 
       // Accept the optional ability to banish the challenged character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(princePhillipDragonslayer, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(strongDefender)).toBe("discard");
@@ -96,7 +98,9 @@ describe("Prince Phillip - Dragonslayer", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(princePhillipDragonslayer, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Challenged character should still be in play

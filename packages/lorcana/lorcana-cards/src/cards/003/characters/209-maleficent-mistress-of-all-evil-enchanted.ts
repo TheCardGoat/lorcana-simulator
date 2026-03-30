@@ -1,61 +1,16 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { maleficentMistressOfAllEvilEnchantedI18n } from "./209-maleficent-mistress-of-all-evil-enchanted.i18n";
+import { maleficentMistressOfAllEvil } from "..";
 
 export const maleficentMistressOfAllEvilEnchanted: CharacterCard = {
+  ...maleficentMistressOfAllEvil,
   id: "4EI",
-  canonicalId: "ci_FwY",
   reprints: ["set3-051"],
-  cardType: "character",
-  name: "Maleficent",
-  version: "Mistress of All Evil",
-  inkType: ["amethyst"],
-  franchise: "Sleeping Beauty",
   set: "003",
   cardNumber: 209,
   rarity: "enchanted",
   specialRarity: "enchanted",
-  cost: 5,
-  strength: 2,
-  willpower: 3,
-  lore: 2,
-  inkable: true,
   externalIds: {
     lorcast: "crd_40690491af114f2e810a6fd1c6ddcafa",
     tcgPlayer: 539159,
   },
-  text: [
-    {
-      title: "DARK KNOWLEDGE",
-      description: "Whenever this character quests, you may draw a card.",
-    },
-    {
-      title: "DIVINATION",
-      description:
-        "During your turn, whenever you draw a card, you may move 1 damage counter from chosen character to chosen opposing character.",
-    },
-  ],
-  classifications: ["Storyborn", "Villain", "Sorcerer"],
-  abilities: [
-    {
-      effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
-        },
-        type: "optional",
-      },
-      id: "277-1",
-      name: "DARK KNOWLEDGE",
-      text: "DARK KNOWLEDGE Whenever this character quests, you may draw a card DIVINATION During your turn, whenever you draw a card, you may move 1 damage counter from chosen character to chosen opposing character.",
-      trigger: {
-        event: "quest",
-        on: "SELF",
-        timing: "whenever",
-      },
-      type: "triggered",
-    },
-  ],
-  i18n: maleficentMistressOfAllEvilEnchantedI18n,
 };

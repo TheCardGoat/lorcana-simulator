@@ -22,7 +22,7 @@ describe("Belle - Untrained Mystic", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(belleUntrainedMystic, {
           resolveOptional: true,
           targets: [simbaProtectiveCub, goofyKnightForADay],
         }),
@@ -49,7 +49,9 @@ describe("Belle - Untrained Mystic", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(belleUntrainedMystic, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(simbaProtectiveCub)).toBe(2);
@@ -72,7 +74,7 @@ describe("Belle - Untrained Mystic", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(belleUntrainedMystic, {
           resolveOptional: true,
           targets: [simbaProtectiveCub, goofyKnightForADay],
         }),

@@ -13,7 +13,7 @@ describe("Megara - Captivating Cynic", () => {
 
     expect(testEngine.asPlayerOne().playCard(megaraCaptivatingCynic)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(megaraCaptivatingCynic),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 0 }).success).toBe(true);
     expect(
@@ -32,7 +32,7 @@ describe("Megara - Captivating Cynic", () => {
 
     expect(testEngine.asPlayerOne().playCard(megaraCaptivatingCynic)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(megaraCaptivatingCynic),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1 }).success).toBe(true);
 

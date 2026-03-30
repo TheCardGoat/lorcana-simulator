@@ -52,7 +52,7 @@ export const yzmaUnjustlyTreated: CharacterCard = {
       text: "I'M WARNING YOU! During your turn, whenever one of your characters banishes a character in a challenge, you may deal 1 damage to chosen character.",
       trigger: {
         event: "banish-in-challenge",
-        on: "YOUR_OTHER_CHARACTERS",
+        on: "YOUR_CHARACTERS",
         timing: "whenever",
         restrictions: [
           {

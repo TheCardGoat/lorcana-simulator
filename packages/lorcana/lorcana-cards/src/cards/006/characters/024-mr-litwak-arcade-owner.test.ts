@@ -44,7 +44,9 @@ describe("Mr. Litwak - Arcade Owner", () => {
       // Trigger should fire - accept the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mrLitwakArcadeOwner, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Mr. Litwak should be readied
@@ -69,7 +71,9 @@ describe("Mr. Litwak - Arcade Owner", () => {
       // Decline the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mrLitwakArcadeOwner, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Mr. Litwak should still be exerted
@@ -92,7 +96,9 @@ describe("Mr. Litwak - Arcade Owner", () => {
       expect(testEngine.asPlayerOne().playCard(anotherCharacter)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mrLitwakArcadeOwner, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Mr. Litwak should have a quest restriction
@@ -117,7 +123,9 @@ describe("Mr. Litwak - Arcade Owner", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mrLitwakArcadeOwner, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCard(mrLitwakArcadeOwner).exerted).toBe(false);

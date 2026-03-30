@@ -9,6 +9,8 @@ import type {
   TimeQueryAPI,
   ZoneQueryAPI,
 } from "#core";
+import { buildZoneRegistry } from "../../../core/runtime/zone-registry";
+import { lorcanaRuntimeZones } from "../../../zones";
 
 export type ValidationContextFor<TMove> = TMove extends {
   validate?: (context: infer TContext) => unknown;
@@ -158,17 +160,18 @@ function createCardQueryAPI(
   return api as unknown as CardQueryAPI;
 }
 
-function resolveZoneId(state: DeepReadonly<MatchState>, zoneRef: ZoneRef): string {
+function resolveZoneId(
+  state: DeepReadonly<MatchState>,
+  zoneRegistry: ReturnType<typeof buildZoneRegistry>,
+  zoneRef: ZoneRef,
+): string {
   if (zoneRef.zone.includes(":")) {
     return zoneRef.zone;
   }
 
   if (zoneRef.playerId) {
     const scopedZoneId = `${zoneRef.zone}:${zoneRef.playerId}`;
-    if (
-      scopedZoneId in state.ctx.zones.private.zoneCards ||
-      scopedZoneId in state.ctx.zones.zoneDefs
-    ) {
+    if (scopedZoneId in state.ctx.zones.private.zoneCards || scopedZoneId in zoneRegistry) {
       return scopedZoneId;
     }
   }
@@ -198,8 +201,9 @@ function createRuntimeCardView(
 }
 
 function createZoneQueryAPI(state: DeepReadonly<MatchState>): ZoneQueryAPI {
+  const zoneRegistry = buildZoneRegistry(lorcanaRuntimeZones, state.ctx.playerIds);
   const getCards = (zoneRef: ZoneRef): string[] => {
-    const zoneId = resolveZoneId(state, zoneRef);
+    const zoneId = resolveZoneId(state, zoneRegistry, zoneRef);
     return [...(state.ctx.zones.private.zoneCards[zoneId] ?? [])];
   };
 
@@ -232,16 +236,16 @@ function createZoneQueryAPI(state: DeepReadonly<MatchState>): ZoneQueryAPI {
     getCardOwner: (cardId) => state.ctx.zones.private.cardIndex[cardId]?.ownerID,
     getCardController: (cardId) => state.ctx.zones.private.cardIndex[cardId]?.controllerID,
     isOrdered: (zoneRef) => {
-      const zoneId = resolveZoneId(state, zoneRef);
-      return state.ctx.zones.zoneDefs[zoneId]?.ordered ?? true;
+      const zoneId = resolveZoneId(state, zoneRegistry, zoneRef);
+      return zoneRegistry[zoneId]?.ordered ?? true;
     },
     isOwnerScoped: (zoneRef) => {
-      const zoneId = resolveZoneId(state, zoneRef);
-      return state.ctx.zones.zoneDefs[zoneId]?.ownerScoped ?? false;
+      const zoneId = resolveZoneId(state, zoneRegistry, zoneRef);
+      return zoneRegistry[zoneId]?.ownerScoped ?? false;
     },
     getVisibility: (zoneRef) => {
-      const zoneId = resolveZoneId(state, zoneRef);
-      return state.ctx.zones.zoneDefs[zoneId]?.visibility ?? "private";
+      const zoneId = resolveZoneId(state, zoneRegistry, zoneRef);
+      return zoneRegistry[zoneId]?.visibility ?? "private";
     },
   };
 }

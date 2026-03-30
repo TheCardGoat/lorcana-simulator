@@ -16,6 +16,8 @@ export class MatchmakingQueueStore {
   timeRemainingMs: number = $state(0);
   /** Current position in queue (1-based). */
   position: number | null = $state(null);
+  queuedGameProfileId: string | null = $state(null);
+  queuedDeckListId: string | null = $state(null);
   matchId: string | null = $state(null);
   gameId: string | null = $state(null);
   blockReason: string | null = $state(null);
@@ -35,6 +37,8 @@ export class MatchmakingQueueStore {
         this.queuedAt = result.entry.queuedAt;
         this.expiresAt = result.entry.expiresAt;
         this.position = result.position ?? null;
+        this.queuedGameProfileId = result.entry.gameProfileId;
+        this.queuedDeckListId = result.entry.deckListId;
         this.status = "queued";
         this.startTimer();
       } else {
@@ -55,6 +59,7 @@ export class MatchmakingQueueStore {
       const entry = await joinMatchmakingQueue(params);
       this.queuedAt = entry.queuedAt;
       this.expiresAt = entry.expiresAt;
+      this.queuedGameProfileId = params.gameProfileId;
       this.status = "queued";
       this.startTimer();
     } catch (err) {
@@ -139,6 +144,10 @@ export class MatchmakingQueueStore {
     this.stopTimer();
   }
 
+  captureQueuedDeck(deckListId: string): void {
+    this.queuedDeckListId = deckListId;
+  }
+
   private startTimer(): void {
     this.stopTimer();
     this.updateTimeRemaining();
@@ -173,6 +182,8 @@ export class MatchmakingQueueStore {
     this.expiresAt = null;
     this.timeRemainingMs = 0;
     this.position = null;
+    this.queuedGameProfileId = null;
+    this.queuedDeckListId = null;
     this.matchId = null;
     this.gameId = null;
     this.blockReason = null;

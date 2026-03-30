@@ -20,7 +20,7 @@ describe("Gantu - Hamsterviel's Accomplice", () => {
     // The on-play trigger creates a bag effect for discarding
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(gantuHamstervielsAccomplice),
     ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({

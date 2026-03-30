@@ -83,6 +83,7 @@ export const captainHooksRapier: ItemCard = {
         value: 1,
       },
       id: "1wl-2",
+      name: "LET'S HAVE AT IT!",
       text: "LET'S HAVE AT IT! Your characters named Captain Hook gain Challenger +1.",
       type: "static",
     },

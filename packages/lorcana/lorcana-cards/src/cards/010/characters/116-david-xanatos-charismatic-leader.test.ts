@@ -68,7 +68,7 @@ describe("David Xanatos - Charismatic Leader", () => {
 
     expect(testEngine.asPlayerOne().quest(davidXanatosCharismaticLeader)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
+      testEngine.asPlayerOne().resolvePendingByCard(davidXanatosCharismaticLeader, {
         targets: [rushTarget],
       }),
     ).toBeSuccessfulCommand();

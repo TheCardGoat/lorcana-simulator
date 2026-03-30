@@ -27,7 +27,7 @@ describe("Madam Mim - Rhino", () => {
 
       expect(testEngine.asPlayerOne().playCard(madamMimRhino)).toBeSuccessfulCommand();
 
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimRhino);
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 0 });
 
       expect(testEngine.asPlayerOne().getCardZone(madamMimRhino)).toBe("discard");
@@ -42,7 +42,7 @@ describe("Madam Mim - Rhino", () => {
 
       expect(testEngine.asPlayerOne().playCard(madamMimRhino)).toBeSuccessfulCommand();
 
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimRhino);
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1, targets: [otherCharacter] });
 
       expect(testEngine.asPlayerOne().getCardZone(otherCharacter)).toBe("hand");
@@ -67,7 +67,7 @@ describe("Madam Mim - Rhino", () => {
         }),
       ).toBeSuccessfulCommand();
 
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimRhino);
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1, targets: [otherCharacter] });
 
       expect(testEngine.asPlayerOne().getCardZone(otherCharacter)).toBe("hand");

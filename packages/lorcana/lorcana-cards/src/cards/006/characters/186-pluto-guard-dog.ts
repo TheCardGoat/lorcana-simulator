@@ -42,6 +42,7 @@ export const plutoGuardDog: CharacterCard = {
         type: "modify-stat",
       },
       id: "173-2",
+      name: "BRAVO",
       text: "BRAVO While this character has no damage, he gets +4 {S}.",
       type: "static",
     },

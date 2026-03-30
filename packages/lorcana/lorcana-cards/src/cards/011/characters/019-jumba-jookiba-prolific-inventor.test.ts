@@ -154,7 +154,9 @@ describe("Jumba Jookiba - Prolific Inventor", () => {
       // I AM HELPING triggers as optional
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jumbaJookibaProlificInventor, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [damagedTarget] }),
@@ -177,7 +179,9 @@ describe("Jumba Jookiba - Prolific Inventor", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jumbaJookibaProlificInventor, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage unchanged
@@ -194,7 +198,9 @@ describe("Jumba Jookiba - Prolific Inventor", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jumbaJookibaProlificInventor, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [jumbaJookibaProlificInventor] }),
@@ -215,7 +221,9 @@ describe("Jumba Jookiba - Prolific Inventor", () => {
       expect(testEngine.asPlayerOne().quest(jumbaJookibaProlificInventor)).toBeSuccessfulCommand();
 
       // Decline optional
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(jumbaJookibaProlificInventor, { resolveOptional: false });
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(jumbaJookibaProlificInventor.lore);
     });

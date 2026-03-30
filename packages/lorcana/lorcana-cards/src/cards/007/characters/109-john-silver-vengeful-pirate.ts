@@ -25,9 +25,9 @@ export const johnSilverVengefulPirate: CharacterCard = {
   },
   text: [
     {
-      title: "DRAWN TO",
+      title: "DRAWN TO A FIGHT",
       description:
-        "A FIGHT If an opposing character was damaged this turn, you pay 2 {I} less to play this character.",
+        "If an opposing character was damaged this turn, you pay 2 {I} less to play this character.",
     },
     {
       title: "Resist +1",

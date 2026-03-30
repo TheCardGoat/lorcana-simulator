@@ -158,16 +158,28 @@ test.describe("Sing Together", () => {
     const board = await pom.getBoard(PLAYER_ONE_VIEW);
     const arielId = findCardIdByLabel(board, PLAYER_ONE_ID, "play", "Ariel - Spectacular Singer");
     const shantiId = findCardIdByLabel(board, PLAYER_ONE_ID, "play", "Shanti - Village Girl");
-    const songId = findCardIdByLabel(board, PLAYER_ONE_ID, "hand", "I2I");
     const previousStateId = board.stateID;
 
-    // Use playCard with singTogether cost type
-    const result = await pom.execute(PLAYER_ONE_VIEW, "playCard", {
-      cardId: songId,
-      cost: "singTogether",
-      singers: [arielId, shantiId],
-    });
-    expect(result.success).toBe(true);
+    const panel = page.locator('section[aria-labelledby="available-moves-panel-title"]');
+    await panel.getByRole("button", { name: "Sing" }).click();
+    await expect(panel.getByText("Select a card to play.")).toBeVisible();
+
+    await panel.getByRole("button", { name: "I2I" }).click();
+    await expect(
+      panel.getByText("Choose any number of ready characters to sing I2I. Selected 0/9."),
+    ).toBeVisible();
+
+    await panel.getByRole("button", { name: "Ariel - Spectacular Singer" }).click();
+    await expect(
+      panel.getByText("Choose any number of ready characters to sing I2I. Selected 5/9."),
+    ).toBeVisible();
+
+    await panel.getByRole("button", { name: "Shanti - Village Girl" }).click();
+    await expect(
+      panel.getByText("Choose any number of ready characters to sing I2I. Selected 10/9."),
+    ).toBeVisible();
+
+    await panel.getByRole("button", { name: "Confirm Sing" }).click();
     await pom.waitForStateChange(previousStateId, PLAYER_ONE_VIEW);
 
     // I2I readies singers when 2+ characters sang it, so they should NOT be exerted

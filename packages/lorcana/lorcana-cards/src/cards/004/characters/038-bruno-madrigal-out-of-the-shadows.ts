@@ -33,12 +33,16 @@ export const brunoMadrigalOutOfTheShadows: CharacterCard = {
   abilities: [
     {
       effect: {
-        chooser: "CONTROLLER",
-        effect: {
-          target: "SELF",
-          type: "return-to-hand",
+        ability: "return-to-hand-when-banished",
+        duration: "this-turn",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
         },
-        type: "optional",
+        type: "grant-ability",
       },
       id: "1qi-1",
       name: "IT WAS YOUR VISION",

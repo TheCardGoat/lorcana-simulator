@@ -54,7 +54,7 @@ describe("Antonio Madrigal - Friend to All", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
+      testEngine.asPlayerOne().resolvePendingByCard(antonioMadrigalFriendToAll, {
         resolveOptional: true,
         // search-deck auto-selects a matching card from the deck
       }),
@@ -95,7 +95,7 @@ describe("Antonio Madrigal - Friend to All", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
+      testEngine.asPlayerOne().resolvePendingByCard(antonioMadrigalFriendToAll, {
         resolveOptional: true,
         // search-deck auto-selects a matching card from the deck
       }),
@@ -120,7 +120,9 @@ describe("Antonio Madrigal - Friend to All", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(antonioMadrigalFriendToAll, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     // Card should still be in deck

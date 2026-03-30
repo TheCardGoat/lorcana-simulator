@@ -11,12 +11,14 @@ import type {
   LorcanaCardSnapshot,
   ResolutionTargetAvailableMovesSelectionState,
 } from "@/features/simulator/model/contracts.js";
+import ResolutionAmountControls from "@/features/simulator/panels/ResolutionAmountControls.svelte";
 
 interface ResolutionTargetOverlayProps {
   selectionState: ResolutionTargetAvailableMovesSelectionState;
   cardSnapshots?: Record<string, LorcanaCardSnapshot>;
   onSelectCard?: (cardId: string) => boolean;
   onSelectSlot?: (slotIndex: number) => boolean;
+  onAmountChange?: (value: number) => boolean;
   onConfirm?: () => boolean;
   onDismiss?: () => void;
 }
@@ -26,6 +28,7 @@ let {
   cardSnapshots = {},
   onSelectCard,
   onSelectSlot,
+  onAmountChange,
   onConfirm,
   onDismiss,
 }: ResolutionTargetOverlayProps = $props();
@@ -220,6 +223,15 @@ function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
       {/each}
     </div>
   </section>
+
+  {#if selectionState.amountSelection}
+    <ResolutionAmountControls
+      selection={selectionState.amountSelection}
+      onChange={(value) => {
+        onAmountChange?.(value);
+      }}
+    />
+  {/if}
 
   <footer class="target-overlay__footer">
     <button type="button" class="target-overlay__button target-overlay__button--ghost" onclick={onDismiss}>

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import type { LorcanaLogMessageKey } from "@tcg/lorcana-engine";
+import {
+  type CardInstanceId,
+  type LorcanaLogMessageKey,
+  type MoveLog,
+  type PlayerId,
+} from "@tcg/lorcana-engine";
 
 import type {
   MoveLogEntrySnapshot,
@@ -17,6 +22,14 @@ type FormatCase = {
   values: SimulatorSerializedObject;
   expected: string;
 };
+
+function createPrivateField<T>(value: T, visibleTo: string[]) {
+  return {
+    __private: true as const,
+    value,
+    visibleTo,
+  };
+}
 
 const FORMAT_CASES = {
   "lorcana.setup.firstPlayerChosen": {
@@ -262,6 +275,103 @@ const FORMAT_CASES = {
     },
     expected: "You chose option 2 for Mickey Mouse - Detective.",
   },
+  "lorcana.bag.resolve.cancelled": {
+    moveId: "resolveBag",
+    values: { playerId: "player_one", sourceId: "card-primary", cause: "no-valid-targets" },
+    expected: "Effect from Ariel - On Human Legs cancelled (no-valid-targets).",
+  },
+  "lorcana.bag.resolve.cancelled.named": {
+    moveId: "resolveBag",
+    values: {
+      playerId: "player_one",
+      sourceId: "card-primary",
+      abilityName: "Rush",
+      cause: "no-valid-targets",
+    },
+    expected: "Rush from Ariel - On Human Legs cancelled (no-valid-targets).",
+  },
+  "lorcana.effect.cancelled": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", sourceCardId: "card-primary", cause: "no-valid-targets" },
+    expected: "Effect from Ariel - On Human Legs cancelled (no-valid-targets).",
+  },
+  "lorcana.outcome.combatDamage": {
+    moveId: "challenge",
+    values: {
+      playerId: "player_one",
+      attackerId: "card-primary",
+      defenderId: "card-secondary",
+      attackerDamage: 3,
+      defenderDamage: 2,
+    },
+    expected:
+      "Ariel - On Human Legs dealt 3 damage to Mickey Mouse - Detective. Mickey Mouse - Detective dealt 2 damage to Ariel - On Human Legs.",
+  },
+  "lorcana.outcome.effectDamage": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      sourceId: "card-primary",
+      targetId: "card-secondary",
+      amount: 4,
+    },
+    expected: "Ariel - On Human Legs dealt 4 damage to Mickey Mouse - Detective.",
+  },
+  "lorcana.outcome.cardBanished": {
+    moveId: "challenge",
+    values: { playerId: "player_one", cardId: "card-primary" },
+    expected: "Ariel - On Human Legs was banished.",
+  },
+  "lorcana.outcome.cardsDrawn": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", amount: 3 },
+    expected: "Drew 3 card(s).",
+  },
+  "lorcana.outcome.cardsDrawn.detail": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", amount: 2, cardIds: ["card-primary", "card-secondary"] },
+    expected: "Drew 2 card(s): Ariel - On Human Legs, Mickey Mouse - Detective.",
+  },
+  "lorcana.outcome.cardReturnedToHand": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", cardId: "card-primary" },
+    expected: "Ariel - On Human Legs returned to hand.",
+  },
+  "lorcana.outcome.loreGained": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", amount: 2 },
+    expected: "You gained 2 lore.",
+  },
+  "lorcana.outcome.loreLost": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", amount: 1 },
+    expected: "You lost 1 lore.",
+  },
+  "lorcana.outcome.cardExerted": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", cardId: "card-primary" },
+    expected: "Ariel - On Human Legs was exerted.",
+  },
+  "lorcana.outcome.cardReadied": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", cardId: "card-primary" },
+    expected: "Ariel - On Human Legs was readied.",
+  },
+  "lorcana.outcome.cardsMilled": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", amount: 3 },
+    expected: "Milled 3 card(s).",
+  },
+  "lorcana.move.playCard.shift": {
+    moveId: "playCard",
+    values: { playerId: "player_one", cardId: "card-primary", shiftTargetId: "card-secondary" },
+    expected: "Played Ariel - On Human Legs by shifting onto Mickey Mouse - Detective.",
+  },
+  "lorcana.move.playCard.sing": {
+    moveId: "playCard",
+    values: { playerId: "player_one", cardId: "card-primary", singerIds: ["card-secondary"] },
+    expected: "Played Ariel - On Human Legs by singing with Mickey Mouse - Detective.",
+  },
 } satisfies Record<LorcanaLogMessageKey, FormatCase>;
 
 const FALLBACK_CASES = {
@@ -323,6 +433,21 @@ function createTypedEntry(key: LorcanaLogMessageKey, formatCase: FormatCase): Mo
   });
 }
 
+function createFlatEntry(
+  moveLog: MoveLog,
+  options: Partial<MoveLogEntrySnapshot> = {},
+): MoveLogEntrySnapshot {
+  return createLogEntry(`flat ${moveLog.type}`, {
+    actorSide: "playerOne",
+    id: `flat-${moveLog.type}`,
+    moveId: (options.moveId ?? "playCard") as MoveLogEntrySnapshot["moveId"],
+    typedLogEntry: moveLog,
+    playerId: String(moveLog.playerId),
+    turnNumber: 7,
+    ...options,
+  });
+}
+
 function createTestResolver() {
   const primaryCard = createLogCardReference("playerOne", {
     id: "card-primary",
@@ -371,7 +496,7 @@ describe("event log presentation", () => {
       createLogEntry("Turn 3", { id: "t3", turnNumber: 3 }),
     ];
 
-    expect(filterEntriesToLastTurns(entries).map((entry) => entry.id)).toEqual(["t2", "t3"]);
+    expect(filterEntriesToLastTurns(entries, 2).map((entry) => entry.id)).toEqual(["t2", "t3"]);
   });
 
   const fallbackCases = Object.entries(FALLBACK_CASES) as Array<
@@ -398,4 +523,83 @@ describe("event log presentation", () => {
       expect(flattenRowText(entry).length).toBeGreaterThan(0);
     });
   }
+
+  it("formats flat persisted play-card logs with card detail", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "playCard",
+        playerId: playerOneId,
+        timestamp: 123,
+        cardId: primaryCardId,
+      },
+      { moveId: "playCard" },
+    );
+
+    expect(flattenRowText(entry)).toBe("Played Ariel - On Human Legs.");
+  });
+
+  it("formats flat persisted challenge logs with combat outcomes", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "challenge",
+        playerId: playerOneId,
+        timestamp: 123,
+        attackerId: primaryCardId,
+        defenderId: secondaryCardId,
+        damage: { attacker: 3, defender: 2 },
+        banished: [secondaryCardId],
+      },
+      { moveId: "challenge" },
+    );
+
+    expect(flattenRowText(entry)).toBe(
+      "Challenged Mickey Mouse - Detective with Ariel - On Human Legs. Ariel - On Human Legs dealt 3 damage to Mickey Mouse - Detective. Mickey Mouse - Detective dealt 2 damage to Ariel - On Human Legs. Mickey Mouse - Detective was banished.",
+    );
+  });
+
+  it("formats flat persisted alter-hand logs with scoped mulligan detail", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "alterHand",
+        playerId: playerOneId,
+        timestamp: 123,
+        count: 2,
+        mulliganed: createPrivateField([primaryCardId, secondaryCardId], [playerOneId]),
+        drawn: createPrivateField([secondaryCardId, primaryCardId], [playerOneId]),
+      },
+      { moveId: "alterHand" },
+    );
+
+    expect(flattenRowText(entry)).toBe(
+      "Altered 2 cards: Ariel - On Human Legs, Mickey Mouse - Detective. Drew Mickey Mouse - Detective, Ariel - On Human Legs.",
+    );
+  });
+
+  it("does not render unsafe mulligan params when scoped detail is unavailable", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "alterHand",
+        playerId: playerOneId,
+        timestamp: 123,
+        count: 2,
+      },
+      {
+        moveId: "alterHand",
+        params: { cardsToMulligan: [primaryCardId, secondaryCardId] },
+      },
+    );
+
+    expect(flattenRowText(entry)).toBe("Altered 2 cards.");
+  });
 });

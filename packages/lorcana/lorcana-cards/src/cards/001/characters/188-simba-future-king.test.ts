@@ -32,7 +32,7 @@ describe("Simba - Future King", () => {
 
       // Accept the optional ability (draw a card)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(simbaFutureKing, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // After drawing, hand should have discardFodder + drawnCard = 2 cards

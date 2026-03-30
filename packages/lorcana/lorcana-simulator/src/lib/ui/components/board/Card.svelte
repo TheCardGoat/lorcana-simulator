@@ -5,7 +5,7 @@ import { cn } from "../../utils";
 type CardAspectRatio = "2.5/3.5" | "5/7" | "63/88" | string;
 
 interface CardProps {
-	/** Whether the card is tapped/exhausted (90-degree rotation) */
+	/** Whether the card is tapped/exhausted (35-degree rotation) */
 	tapped?: boolean;
 	/** Whether the card is face-down */
 	faceDown?: boolean;
@@ -47,7 +47,7 @@ const {
 <!--
   Card: Visual card component with states
   - Proper aspect ratio enforcement
-  - Tapped/exhausted state (90-degree rotation)
+  - Tapped/exhausted state (35-degree rotation)
   - Face-down state
   - Hover and selection effects
 -->
@@ -59,7 +59,7 @@ const {
     "bg-base-100 border border-base-300",
     hoverable && "hover:-translate-y-2 hover:scale-105 hover:shadow-xl hover:z-10",
     selected && "ring-2 ring-primary ring-offset-2 ring-offset-base-100 z-20",
-    tapped && "rotate-90 origin-center",
+    tapped && "origin-center rotate-[35deg] scale-[0.96]",
     draggable && "cursor-grab active:cursor-grabbing",
     className
   )}
@@ -124,7 +124,7 @@ const {
     }
 
     .card-component[data-tapped="true"]:active {
-      transform: rotate(90deg) scale(0.95);
+      transform: rotate(20deg) scale(0.92);
     }
   }
 </style>

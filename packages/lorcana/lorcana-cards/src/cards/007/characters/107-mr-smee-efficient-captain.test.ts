@@ -52,7 +52,9 @@ describe("Mr. Smee - Efficient Captain", () => {
 
       // Accept the optional trigger
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mrSmeeEfficientCaptain, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose the pirate character as the target to ready

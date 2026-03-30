@@ -73,7 +73,7 @@ describe("Rapunzel - Ready for Adventure", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const bagEffect of bagEffects) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(rapunzelReadyForAdventure, {
             resolveOptional: true,
             targets: [moana],
           }),
@@ -108,7 +108,7 @@ describe("Rapunzel - Ready for Adventure", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const bagEffect of bagEffects) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(rapunzelReadyForAdventure, {
             resolveOptional: true,
             targets: [moana],
           }),
@@ -151,7 +151,7 @@ describe("Rapunzel - Ready for Adventure", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const bagEffect of bagEffects) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(rapunzelReadyForAdventure, {
             resolveOptional: true,
             targets: [moana],
           }),
@@ -202,7 +202,7 @@ describe("Rapunzel - Ready for Adventure", () => {
       expect(testEngine.asPlayerTwo().quest(heihei)).toBeSuccessfulCommand();
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       for (const bagEffect of bagEffects) {
-        testEngine.asPlayerTwo().resolveBag(bagEffect.id, {
+        testEngine.asPlayerTwo().resolvePendingByCard(rapunzelReadyForAdventure, {
           resolveOptional: true,
           targets: [moana],
         });
@@ -264,7 +264,7 @@ describe("regression: ACT OF KINDNESS prevents Support damage on opponent's turn
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
     for (const bagEffect of bagEffects) {
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(rapunzelReadyForAdventure, {
           resolveOptional: true,
           targets: [supportTarget],
         }),

@@ -51,13 +51,24 @@ export type MoveOptionTarget = {
   cardId: CardInstanceId;
 };
 
+export type MoveOptionSingTogetherSinger = {
+  cardId: CardInstanceId;
+  value: number;
+};
+
+export type MoveOptionSingTogether = {
+  kind: "singTogether";
+  requiredTotal: number;
+  singers: MoveOptionSingTogetherSinger[];
+};
+
 export type MoveOptionAbility = {
   kind: "ability";
   abilityIndex: number;
   abilityLabel: string;
 };
 
-export type MoveOption = MoveOptionTarget | MoveOptionAbility;
+export type MoveOption = MoveOptionTarget | MoveOptionAbility | MoveOptionSingTogether;
 
 // ============================================================================
 // Layer 3: Valid Targets for Effect Resolution

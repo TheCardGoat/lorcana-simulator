@@ -36,6 +36,17 @@ describe("public-url-config", () => {
     });
   });
 
+  it("accepts bare hostnames by normalizing them to https urls", () => {
+    publicEnv.PUBLIC_API_URL = "new-api.lorcanito.com";
+    publicEnv.PUBLIC_GAME_SERVER_URL = "new-game-server.lorcanito.com/v1";
+
+    expect(getPublicUrlConfig()).toMatchObject({
+      apiOrigin: "https://new-api.lorcanito.com",
+      gameServerOrigin: "https://new-game-server.lorcanito.com",
+      gatewayWsUrl: "wss://new-game-server.lorcanito.com/v1/gateway/ws",
+    });
+  });
+
   it("accepts an explicit websocket gateway url", () => {
     publicEnv.PUBLIC_GATEWAY_WS_URL = "wss://gateway.example.com/socket";
 

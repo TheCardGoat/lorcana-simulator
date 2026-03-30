@@ -176,7 +176,9 @@ describe("John Silver - Vengeful Pirate", () => {
 
       // Accept the optional trigger
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(johnSilverVengefulPirate, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose opponent character as target
@@ -229,7 +231,9 @@ describe("John Silver - Vengeful Pirate", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(johnSilverVengefulPirate, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(

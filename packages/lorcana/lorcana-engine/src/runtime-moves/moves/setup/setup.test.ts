@@ -178,19 +178,14 @@ describe("chooseFirstPlayer", () => {
     const chooseFirstResult = engine.asLorcanaPlayerOne().chooseFirstPlayer(PLAYER_ONE);
     expect(chooseFirstResult.success).toBe(true);
 
-    const logs = runtime.getGameLog();
-    const entry = logs.find(
-      (logEntry: { defaultMessage?: { key?: string } }) =>
-        logEntry.defaultMessage?.key === "lorcana.setup.firstPlayerChosen",
-    );
+    const moveLogHistory = runtime.getMoveLogHistory();
+    const entry = moveLogHistory.find((log) => log.type === "chooseFirstPlayer");
 
     expect(entry).toBeDefined();
     expect(entry).toMatchObject({
-      visibility: { mode: "PUBLIC" },
-      defaultMessage: {
-        key: "lorcana.setup.firstPlayerChosen",
-        values: { chooser: PLAYER_ONE, chosen: PLAYER_ONE },
-      },
+      type: "chooseFirstPlayer",
+      playerId: PLAYER_ONE,
+      chosenPlayerId: PLAYER_ONE,
     });
   });
 

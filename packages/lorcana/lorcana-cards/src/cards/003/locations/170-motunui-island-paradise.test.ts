@@ -41,7 +41,9 @@ describe("Motunui - Island Paradise", () => {
     expect(testEngine.asPlayerOne().getCardZone(motunuiResident)).toBe("discard");
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(motunuiIslandParadise),
+    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(motunuiResident)).toBe("inkwell");
     expect(

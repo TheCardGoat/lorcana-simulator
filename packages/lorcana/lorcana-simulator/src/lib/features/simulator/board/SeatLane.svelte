@@ -4,6 +4,7 @@ import type {
 	LorcanaTableSeat,
 } from "@/features/simulator/model/contracts.js";
 import type { SimulatorLayoutMode } from "@/features/simulator/model/layout-mode.svelte.js";
+import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import PlayZone from "./PlayZone.svelte";
 import InkwellZone from "@/features/simulator/board/InkwellZone.svelte";
 import ItemZone from "./ItemZone.svelte";
@@ -44,11 +45,34 @@ let {
 
 const board = useLorcanaBoardPresenter();
 const ownerId = $derived(board.getOwnerIdForSide(playerSide));
+const boardSummary = $derived(board.getPlayerSummary(playerSide));
 const visualSettings = $derived(board.getPlayerVisualSettings(playerSide));
 const hasItemsInPlay = $derived.by(() =>
 	board
 		.getZoneCards(playerSide, "play")
 		.some((card) => card.cardType === "item"),
+);
+const effectSourceCards = $derived.by(() => {
+	const sourceIds = boardSummary?.effectSourceCardIds ?? [];
+	const cardSnapshotsById = board.cardSnapshotsById;
+	return sourceIds
+		.map((sourceId) => cardSnapshotsById[sourceId] ?? null)
+		.filter((card): card is NonNullable<typeof card> => card !== null);
+});
+const playerActiveEffects = $derived(boardSummary?.activeEffects ?? []);
+const playerEffectAriaLabel = $derived(
+  playerActiveEffects.length > 0
+    ? `Active player effects: ${playerActiveEffects.map((effect) => effect.label).join(", ")}`
+    : "",
+);
+const hasFallbackEffectLabel = $derived(
+  effectSourceCards.length === 0 && playerActiveEffects.length > 0,
+);
+const fallbackEffectLabel = $derived(playerActiveEffects[0]?.label ?? "");
+const hiddenFallbackEffectCount = $derived(Math.max(0, playerActiveEffects.length - 1));
+const visibleEffectSourceCards = $derived(effectSourceCards.slice(0, 3));
+const hiddenEffectSourceCount = $derived(
+	Math.max(0, effectSourceCards.length - visibleEffectSourceCards.length),
 );
 </script>
 
@@ -62,20 +86,108 @@ const hasItemsInPlay = $derived.by(() =>
   data-layout-mode={layoutMode}
 >
   <div
-    class="seat-badges"
-    class:seat-badges--top={seatPosition === "top"}
-    class:seat-badges--bottom={seatPosition === "bottom"}
+    class="seat-corner-stack"
+    class:seat-corner-stack--top={seatPosition === "top"}
+    class:seat-corner-stack--bottom={seatPosition === "bottom"}
   >
-    <span
-      class="seat-chip seat-chip--lore"
-      data-board-anchor-id={createLoreBadgeAnchorId(playerSide)}
-      aria-label={`Lore: ${lore}`}
-    >Lore: {lore}</span>
-    {#if isTurnPlayer}
-      <span class="seat-chip seat-chip--turn">Turn</span>
+    {#if seatPosition === "top" && (visibleEffectSourceCards.length > 0 || hasFallbackEffectLabel)}
+      <div
+        class="seat-effect-strip"
+        aria-label={playerEffectAriaLabel}
+      >
+        {#each visibleEffectSourceCards as effectCard, index (effectCard.cardId)}
+          <div
+            class="seat-effect-card"
+            style={`--effect-card-offset:${index}`}
+            title={playerActiveEffects
+              .filter((effect) => effect.sourceCardId === effectCard.cardId)
+              .map((effect) => effect.description)
+              .join("; ") || effectCard.label}
+          >
+            <LorcanaCard
+              card={effectCard}
+              size="micro"
+              imageFormat="art_only"
+              isExerted={effectCard.readyState === "exerted"}
+              isMasked={effectCard.isMasked}
+            />
+          </div>
+        {/each}
+        {#if hiddenEffectSourceCount > 0}
+          <div
+            class="seat-effect-overflow"
+            title={`${hiddenEffectSourceCount} additional active player effect source${hiddenEffectSourceCount === 1 ? "" : "s"}`}
+          >
+            +{hiddenEffectSourceCount}
+          </div>
+        {/if}
+        {#if hasFallbackEffectLabel}
+          <div class="seat-effect-pill" title={playerActiveEffects.map((effect) => effect.description).join("; ")}>
+            <span>{fallbackEffectLabel}</span>
+            {#if hiddenFallbackEffectCount > 0}
+              <span class="seat-effect-pill__count">+{hiddenFallbackEffectCount}</span>
+            {/if}
+          </div>
+        {/if}
+      </div>
     {/if}
-    {#if hasPriority && !isTurnPlayer}
-      <span class="seat-chip seat-chip--priority">Priority</span>
+
+    <div class="seat-badges">
+      {#if seatPosition === "top" || seatPosition === "bottom"}
+        <span
+          class="seat-chip seat-chip--lore"
+          data-board-anchor-id={createLoreBadgeAnchorId(playerSide)}
+          aria-label={`Lore: ${lore}`}
+        >Lore: {lore}</span>
+      {/if}
+      {#if isTurnPlayer}
+        <span class="seat-chip seat-chip--turn">Turn</span>
+      {/if}
+      {#if hasPriority && !isTurnPlayer}
+        <span class="seat-chip seat-chip--priority">Priority</span>
+      {/if}
+    </div>
+
+    {#if seatPosition === "bottom" && (visibleEffectSourceCards.length > 0 || hasFallbackEffectLabel)}
+      <div
+        class="seat-effect-strip"
+        aria-label={playerEffectAriaLabel}
+      >
+        {#each visibleEffectSourceCards as effectCard, index (effectCard.cardId)}
+          <div
+            class="seat-effect-card"
+            style={`--effect-card-offset:${index}`}
+            title={playerActiveEffects
+              .filter((effect) => effect.sourceCardId === effectCard.cardId)
+              .map((effect) => effect.description)
+              .join("; ") || effectCard.label}
+          >
+            <LorcanaCard
+              card={effectCard}
+              size="micro"
+              imageFormat="art_only"
+              isExerted={effectCard.readyState === "exerted"}
+              isMasked={effectCard.isMasked}
+            />
+          </div>
+        {/each}
+        {#if hiddenEffectSourceCount > 0}
+          <div
+            class="seat-effect-overflow"
+            title={`${hiddenEffectSourceCount} additional active player effect source${hiddenEffectSourceCount === 1 ? "" : "s"}`}
+          >
+            +{hiddenEffectSourceCount}
+          </div>
+        {/if}
+        {#if hasFallbackEffectLabel}
+          <div class="seat-effect-pill" title={playerActiveEffects.map((effect) => effect.description).join("; ")}>
+            <span>{fallbackEffectLabel}</span>
+            {#if hiddenFallbackEffectCount > 0}
+              <span class="seat-effect-pill__count">+{hiddenFallbackEffectCount}</span>
+            {/if}
+          </div>
+        {/if}
+      </div>
     {/if}
   </div>
 
@@ -135,6 +247,7 @@ const hasItemsInPlay = $derived.by(() =>
 
   <div class="seat-lane__section seat-lane__section--play">
     <PlayZone
+      {layoutMode}
       zoneId="play"
       {playerSide}
       {seat}
@@ -187,22 +300,30 @@ const hasItemsInPlay = $derived.by(() =>
     order: 2;
   }
 
-  .seat-badges {
+  .seat-corner-stack {
     position: absolute;
-    left: 0.42rem;
     z-index: 5;
     display: flex;
-    align-items: center;
-    gap: 0.35rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.28rem;
     pointer-events: none;
   }
 
-  .seat-badges--top {
+  .seat-corner-stack--top {
+    left: 0.42rem;
     bottom: 0.42rem;
   }
 
-  .seat-badges--bottom {
+  .seat-corner-stack--bottom {
+    left: 0.42rem;
     top: 0.42rem;
+  }
+
+  .seat-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
   }
 
   .seat-playmat {
@@ -321,6 +442,60 @@ const hasItemsInPlay = $derived.by(() =>
     border-color: rgba(155, 221, 255, 0.78);
     background: linear-gradient(180deg, rgba(32, 103, 155, 0.96) 0%, rgba(16, 66, 110, 0.96) 100%);
     color: #ebf8ff;
+  }
+
+  .seat-effect-strip {
+    display: flex;
+    align-items: center;
+    min-height: 1.35rem;
+  }
+
+  .seat-effect-card {
+    position: relative;
+    width: 1.15rem;
+    height: 1.35rem;
+    margin-left: calc(var(--effect-card-offset) * -0.35rem);
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+  }
+
+  .seat-effect-card :global(.lorcana-card) {
+    border-radius: 0.18rem;
+    overflow: hidden;
+  }
+
+  .seat-effect-overflow {
+    margin-left: 0.2rem;
+    padding: 0.1rem 0.26rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.34);
+    background: rgba(15, 23, 42, 0.88);
+    color: #cbd5e1;
+    font-size: 0.58rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .seat-effect-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.22rem;
+    margin-left: 0.28rem;
+    max-width: 7.2rem;
+    padding: 0.14rem 0.38rem;
+    border-radius: 999px;
+    border: 1px solid rgba(125, 211, 252, 0.3);
+    background: rgba(3, 105, 161, 0.22);
+    color: #e0f2fe;
+    font-size: 0.58rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .seat-effect-pill__count {
+    color: rgba(191, 219, 254, 0.92);
   }
 
   .seat-lane--priority :global(.board-zone) {
@@ -454,7 +629,11 @@ const hasItemsInPlay = $derived.by(() =>
     min-width: 0;
   }
 
-  .bar-zone-shell :global(.inkwell-container),
+  .bar-zone-shell :global(
+      .inkwell-container:not(.inkwell-container--drop-preview):not(.inkwell-container--drop-valid):not(
+          .inkwell-container--drop-invalid
+        )
+    ),
   .bar-zone-shell :global(.item-zone) {
     width: 100%;
     height: 100%;

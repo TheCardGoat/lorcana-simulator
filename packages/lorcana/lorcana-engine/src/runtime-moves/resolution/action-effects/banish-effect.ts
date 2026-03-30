@@ -11,10 +11,12 @@ import { recordBanishedCharacterThisTurn } from "../../state/turn-metrics";
 import {
   emitTriggeredLorcanaEvent,
   snapshotTriggeredCandidatesForCard,
+  snapshotBoardTriggerCandidates,
 } from "../../effects/triggered-abilities";
 import { createProjectionState, getEffectiveStrength } from "../../../rules/derived-state";
 import { projectLorcanaCardDerived } from "../../../projection/card-derived";
 import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 
 type ResolvedBanishEffectInput = {
   eventSnapshot?: DynamicAmountEventSnapshot;
@@ -37,8 +39,15 @@ export function resolveBanishEffect(
   resolvedInput: ResolvedBanishEffectInput,
 ): void {
   const derivedState = createProjectionState(ctx.framework.state, ctx.G);
+  const registry = getOrBuildMoveRegistry(ctx);
   let banishedAny = false;
   let banishedCount = 0;
+
+  // Snapshot all board-level trigger candidates BEFORE any cards are moved.
+  // This ensures observer triggers (e.g. "whenever one of your other characters
+  // is banished") are captured while the observers are still in play.
+  const boardCandidatesSnapshot =
+    resolvedInput.targets.length > 1 ? snapshotBoardTriggerCandidates(ctx) : undefined;
 
   for (const targetId of resolvedInput.targets) {
     const ownerId = ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined;
@@ -73,6 +82,7 @@ export function resolveBanishEffect(
           zoneID: ctx.framework.zones.getCardZone(targetId),
           actorPlayerId: cardPlayed.playerId,
           getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
+          registry,
         })
       : undefined;
     const classificationsBeforeBanish = projected?.classifications?.filter(isClassification);
@@ -84,6 +94,7 @@ export function resolveBanishEffect(
             derivedState,
             targetId,
             (id) => ctx.cards.getDefinition(id) as any,
+            registry,
           )
         : undefined;
 
@@ -110,7 +121,10 @@ export function resolveBanishEffect(
       resolvedInput.eventSnapshot.keywordsBeforeBanish = [...keywordsBeforeBanish];
     }
 
-    const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, targetId);
+    const cardTriggerCandidates = snapshotTriggeredCandidatesForCard(ctx, targetId);
+    const triggerCandidates = boardCandidatesSnapshot
+      ? [...cardTriggerCandidates, ...boardCandidatesSnapshot]
+      : cardTriggerCandidates;
     const charsAtLocation =
       targetDefAsLorcana?.cardType === "location"
         ? getCharacterIdsAtLocation(ctx, targetId)

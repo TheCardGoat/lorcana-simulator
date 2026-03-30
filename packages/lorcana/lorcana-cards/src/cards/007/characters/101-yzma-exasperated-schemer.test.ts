@@ -25,7 +25,7 @@ describe("Yzma - Exasperated Schemer", () => {
     expect(testEngine.asPlayerOne().playCard(yzmaExasperatedSchemer)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(yzmaExasperatedSchemer, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();

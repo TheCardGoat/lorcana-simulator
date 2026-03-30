@@ -94,6 +94,8 @@ export interface ContinuousEffectState {
   /** Monotonic sequence for deterministic effect IDs */
   nextSeq: number;
   instances: ContinuousEffectInstance[];
+  /** Secondary index: stat-modifier instances keyed by target card for O(1) lookup */
+  byTarget: Record<CardInstanceId, StatModifierContinuousEffectInstance[]>;
 }
 
 /**
@@ -137,6 +139,7 @@ export interface TurnMetadata {
 
 export interface PendingCostReduction {
   amount: number;
+  sourceId?: CardInstanceId;
   cardType?: "character" | "item" | "location" | "action" | "song";
   classification?: Classification | Classification[] | readonly Classification[];
   expiresAtTurn: number;
@@ -167,6 +170,7 @@ export interface TemporaryRestrictionPayload {
   type: string;
   sourceId?: CardInstanceId;
   activeWhileSourceInPlay?: boolean;
+  duration?: unknown;
   /**
    * A condition that must be met for the restriction to be active.
    * When present, the restriction is only enforced while the condition evaluates to true.
@@ -180,6 +184,14 @@ export interface TemporaryKeywordPayload {
   type: string;
   sourceId?: CardInstanceId;
   activeWhileSourceInPlay?: boolean;
+  duration?: unknown;
+}
+
+export interface TemporaryPlayerRestrictionPayload {
+  type: string;
+  sourceId?: CardInstanceId;
+  activeWhileSourceInPlay?: boolean;
+  duration?: unknown;
 }
 
 export type BufferedTriggeredEvent =
@@ -250,6 +262,7 @@ export interface BagEffectEntry {
   type: "bag-effect";
   kind: "triggered-ability";
   abilityId: string;
+  abilityIndex?: number;
   abilityKey: string;
   abilityName?: string;
   controllerId: PlayerId;
@@ -284,6 +297,7 @@ export interface TriggerRegistrationAbility {
 
 export interface TriggeredEventCandidate {
   abilityId: string;
+  abilityIndex?: number;
   controllerId: PlayerId;
   sourceId: CardInstanceId;
   cardPlayed: CardPlayedPayload;
@@ -308,6 +322,7 @@ export type TriggerRegistrationLifecycle =
 export interface TriggerRegistration {
   id: string;
   abilityId: string;
+  abilityIndex?: number;
   sourceId: CardInstanceId;
   controllerId: PlayerId;
   cardPlayed: CardPlayedPayload;
@@ -363,6 +378,8 @@ export interface ReplacementEffectsState {
   nextSeq: number;
   registrations: ReplacementRegistration[];
   usageLedger: ReplacementUsageLedger;
+  /** Secondary index: registration IDs keyed by event kind for O(1) lookup */
+  byEventKind: Record<string, string[]>;
 }
 
 export type PendingTurnTransitionStage = "end-of-turn" | "advance-turn" | "start-of-turn";
@@ -379,6 +396,7 @@ export interface PendingTurnTransitionState {
 export interface TemporaryPlayerRestrictionsState {
   restrictionsByPlayer: Record<PlayerId, Record<string, number>>;
   startsByPlayer: Record<PlayerId, Record<string, number>>;
+  payloadsByPlayer?: Record<PlayerId, Record<string, TemporaryPlayerRestrictionPayload>>;
 }
 
 export type PendingActionEffectKind =
@@ -421,6 +439,7 @@ export interface PendingActionEffect {
   id: string;
   type: "action-effect";
   kind: PendingActionEffectKind;
+  abilityIndex?: number;
   sourceId: CardInstanceId;
   sourceCardId: CardInstanceId;
   controllerId: PlayerId;
@@ -541,6 +560,15 @@ export interface LorcanaG {
 
   /** Challenge state (only during challenge) */
   challengeState?: ChallengeState;
+
+  /**
+   * Monotonically increasing counter incremented whenever state that affects
+   * static ability evaluation changes (cards entering/leaving play, keyword grants,
+   * ability grants, continuous effects, card damage/location/exert state).
+   * Used by move-registry-cache to skip O(N) registry rebuilds for commands
+   * that don't touch static ability inputs (e.g. drawing a card, gaining lore).
+   */
+  staticEffectsVersion: number;
 }
 
 /**
@@ -596,10 +624,12 @@ export function createInitialLorcanaG(player1Id: PlayerId, player2Id: PlayerId):
     continuousEffects: {
       nextSeq: 1,
       instances: [],
+      byTarget: {},
     },
     temporaryPlayerRestrictions: {
       restrictionsByPlayer: {},
       startsByPlayer: {},
+      payloadsByPlayer: {},
     },
     replacementEffects: {
       nextSeq: 1,
@@ -607,7 +637,9 @@ export function createInitialLorcanaG(player1Id: PlayerId, player2Id: PlayerId):
       usageLedger: {
         perTurn: {},
       },
+      byEventKind: {},
     },
+    staticEffectsVersion: 0,
   };
 }
 

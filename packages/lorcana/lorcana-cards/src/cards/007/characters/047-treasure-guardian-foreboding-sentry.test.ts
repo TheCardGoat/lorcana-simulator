@@ -52,7 +52,9 @@ describe("Treasure Guardian - Foreboding Sentry", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(treasureGuardianForebodingSentry, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Hand should now have 1 card (deckCard was drawn)
@@ -74,7 +76,9 @@ describe("Treasure Guardian - Foreboding Sentry", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(treasureGuardianForebodingSentry, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Hand should be empty (no draw happened)

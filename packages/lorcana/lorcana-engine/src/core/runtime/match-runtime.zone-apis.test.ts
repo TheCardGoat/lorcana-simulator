@@ -1,10 +1,31 @@
 import { describe, it, expect } from "bun:test";
-import { createZoneQueryAPI } from "./match-runtime.zone-apis";
+import { createZoneQueryAPI as createRawZoneQueryAPI } from "./match-runtime.zone-apis";
 import { createInitialTCGCtx } from "./types";
 import type { MatchState, ZoneRuntimeDef } from "./types";
 import type { CardQueryAPI } from "./card-runtime";
 import type { BaseCardDefinition } from "./card-contracts";
 import { createPlayerId } from "../types";
+
+const testZoneDefs: Record<string, ZoneRuntimeDef> = {
+  play: {
+    id: "play",
+    name: "Play Area",
+    visibility: "public",
+    ordered: true,
+    ownerScoped: false,
+  },
+  hand: {
+    id: "hand",
+    name: "Hand",
+    visibility: "private",
+    ordered: false,
+    ownerScoped: true,
+  },
+};
+
+function createZoneQueryAPI(state: MatchState, cardsApi: CardQueryAPI) {
+  return createRawZoneQueryAPI(state, cardsApi, { ...testZoneDefs });
+}
 
 function createTestState() {
   const ctx = createInitialTCGCtx({
@@ -13,23 +34,6 @@ function createTestState() {
     rulesetHash: "ruleset-v1",
   });
 
-  const play: ZoneRuntimeDef = {
-    id: "play",
-    name: "Play Area",
-    visibility: "public",
-    ordered: true,
-    ownerScoped: false,
-  };
-
-  const hand: ZoneRuntimeDef = {
-    id: "hand",
-    name: "Hand",
-    visibility: "private",
-    ordered: false,
-    ownerScoped: true,
-  };
-
-  ctx.zones.zoneDefs = { play, hand };
   ctx.zones.public.zoneSummaries = {
     play: { revision: 0, count: 2 },
     hand: { revision: 0, count: 1 },

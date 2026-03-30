@@ -84,7 +84,7 @@ describe("Tramp - Enterprising Dog (Enchanted)", () => {
       // After playing, there are 3 other characters in play (otherOne, otherTwo, target)
       // so the chosen character gets +3 strength
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(trampEnterprisingDogEnchanted, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -109,7 +109,7 @@ describe("Tramp - Enterprising Dog (Enchanted)", () => {
       // After playing, there is 1 other character in play (target)
       // so the chosen character gets +1 strength
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(trampEnterprisingDogEnchanted, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();

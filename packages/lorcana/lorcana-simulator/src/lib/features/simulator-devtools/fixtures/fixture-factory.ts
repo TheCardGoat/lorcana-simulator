@@ -56,7 +56,7 @@ const ALL_LORCANA_CARDS: LorcanaCard[] = [
   ...all009Cards,
   ...all010Cards,
   ...all011Cards,
-];
+].filter((card) => card?.name != null);
 
 function isStringDeck(deck: TestInitialState["deck"] | string | undefined): deck is string {
   return typeof deck === "string";

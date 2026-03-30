@@ -133,7 +133,7 @@ describe("Tinker Bell - Giant Fairy (Enchanted)", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tinkerBellGiantFairyEnchanted, {
           resolveOptional: true,
           targets: [bystander],
         }),
@@ -175,7 +175,9 @@ describe("Tinker Bell - Giant Fairy (Enchanted)", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(tinkerBellGiantFairyEnchanted, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(bystander)).toBe(0);

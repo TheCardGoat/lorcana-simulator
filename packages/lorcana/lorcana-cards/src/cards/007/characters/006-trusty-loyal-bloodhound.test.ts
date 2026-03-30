@@ -40,7 +40,7 @@ describe("Trusty - Loyal Bloodhound", () => {
     expect(bagEffect).toBeDefined();
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(trustyLoyalBloodhound, {
         resolveOptional: true,
         targets: [supportTarget],
       }),

@@ -12,11 +12,12 @@ import type {
   TCGCtx,
   ZoneRuntimeState,
   FilteredMatchView,
+  FilteredTCGCtx,
   ViewRoleContext,
   Role,
   ZoneRevealWindow,
 } from "./types";
-import { applyPatches, type Patch } from "immer";
+import type { ZoneRegistry } from "./zone-registry";
 
 // =============================================================================
 // Main Filter Entry Point
@@ -28,13 +29,17 @@ import { applyPatches, type Patch } from "immer";
  * This is the core filtering function that ensures hidden information
  * is never leaked to unauthorized clients.
  */
-export function filterMatchView(state: MatchState, roleCtx: ViewRoleContext): FilteredMatchView {
+export function filterMatchView(
+  state: MatchState,
+  roleCtx: ViewRoleContext,
+  zoneRegistry: ZoneRegistry,
+): FilteredMatchView {
   const { role, playerID } = roleCtx;
 
   // Filter ctx based on role
-  const filteredCtx: TCGCtx = {
+  const filteredCtx: FilteredTCGCtx = {
     ...state.ctx,
-    zones: filterZones(state.ctx.zones, role, playerID),
+    zones: filterZones(state.ctx.zones, zoneRegistry, role, playerID),
     random: filterRandom(state.ctx.random),
     // Server-only fields are removed or sanitized
   };
@@ -52,8 +57,12 @@ export function filterMatchView(state: MatchState, roleCtx: ViewRoleContext): Fi
 // Zone Filtering
 // =============================================================================
 
-function filterZones(zones: ZoneRuntimeState, role: Role, playerID?: string): ZoneRuntimeState {
-  const filteredZoneDefs = { ...zones.zoneDefs };
+function filterZones(
+  zones: ZoneRuntimeState,
+  zoneRegistry: ZoneRegistry,
+  role: Role,
+  playerID?: string,
+): FilteredTCGCtx["zones"] {
   const filteredPublic = { ...zones.public };
   const filteredReveals = filterReveals(zones.reveals.active, role, playerID);
 
@@ -61,7 +70,7 @@ function filterZones(zones: ZoneRuntimeState, role: Role, playerID?: string): Zo
   // Players start with public zone cards visible to them
   let filteredPrivate: ZoneRuntimeState["private"] =
     role === "player"
-      ? filterPublicZoneCards(zones)
+      ? filterPublicZoneCards(zones, zoneRegistry)
       : { zoneCards: {}, cardIndex: {}, cardMeta: {} };
 
   if (role === "judge") {
@@ -71,7 +80,7 @@ function filterZones(zones: ZoneRuntimeState, role: Role, playerID?: string): Zo
     // Player sees their own private zones
     filteredPrivate = mergePrivateViews(
       filteredPrivate,
-      filterPrivateZonesForPlayer(zones, playerID),
+      filterPrivateZonesForPlayer(zones, zoneRegistry, playerID),
     );
   }
   // Spectators never see private zone contents
@@ -80,7 +89,6 @@ function filterZones(zones: ZoneRuntimeState, role: Role, playerID?: string): Zo
   addVisibleReveals(filteredPrivate, zones, filteredReveals);
 
   return {
-    zoneDefs: filteredZoneDefs,
     public: filteredPublic,
     private: filteredPrivate,
     reveals: {
@@ -100,6 +108,7 @@ function filterZones(zones: ZoneRuntimeState, role: Role, playerID?: string): Zo
  */
 function filterPrivateZonesForPlayer(
   zones: ZoneRuntimeState,
+  zoneRegistry: ZoneRegistry,
   playerID: string,
 ): ZoneRuntimeState["private"] {
   const filteredZoneCards: Record<string, string[]> = {};
@@ -107,7 +116,7 @@ function filterPrivateZonesForPlayer(
   const filteredCardMeta: ZoneRuntimeState["private"]["cardMeta"] = {};
 
   for (const [zoneId, cardIds] of Object.entries(zones.private.zoneCards)) {
-    const zoneDef = zones.zoneDefs[zoneId];
+    const zoneDef = zoneRegistry[zoneId];
     if (!zoneDef) continue;
 
     if (zoneDef.visibility === "public") {
@@ -174,13 +183,16 @@ function filterPrivateZonesForPlayer(
   };
 }
 
-function filterPublicZoneCards(zones: ZoneRuntimeState): ZoneRuntimeState["private"] {
+function filterPublicZoneCards(
+  zones: ZoneRuntimeState,
+  zoneRegistry: ZoneRegistry,
+): ZoneRuntimeState["private"] {
   const filteredZoneCards: Record<string, string[]> = {};
   const filteredCardIndex: ZoneRuntimeState["private"]["cardIndex"] = {};
   const filteredCardMeta: ZoneRuntimeState["private"]["cardMeta"] = {};
 
   for (const [zoneId, cardIds] of Object.entries(zones.private.zoneCards)) {
-    const zoneDef = zones.zoneDefs[zoneId];
+    const zoneDef = zoneRegistry[zoneId];
     if (!zoneDef || zoneDef.visibility !== "public") {
       continue;
     }
@@ -279,13 +291,14 @@ function filterRandom(random: TCGCtx["random"]): TCGCtx["random"] {
  */
 export function getPublicZoneSummary(
   zones: ZoneRuntimeState,
+  zoneRegistry: ZoneRegistry,
   zoneId: string,
 ): {
   count: number;
   revision: number;
   topCardID?: string;
 } {
-  const zoneDef = zones.zoneDefs[zoneId];
+  const zoneDef = zoneRegistry[zoneId];
   const summary = zones.public.zoneSummaries[zoneId];
 
   if (!zoneDef || !summary) {
@@ -306,60 +319,6 @@ export function getPublicZoneSummary(
 // =============================================================================
 // Patch Filtering
 // =============================================================================
-
-/**
- * Filter patches to remove secret information
- *
- * Patches that modify secret zones must be filtered or removed.
- */
-export function filterPatches(
-  patches: Patch[],
-  state: MatchState,
-  roleCtx: ViewRoleContext,
-): Patch[] {
-  const { role } = roleCtx;
-
-  if (role === "judge") {
-    return patches; // Judge sees all
-  }
-
-  return patches.filter((patch: unknown) => {
-    const path = normalizePatchPath((patch as { path?: unknown }).path);
-    if (path === null) {
-      return false;
-    }
-
-    if (isRngPath(path)) {
-      return false;
-    }
-
-    const privatePath = ["ctx", "zones", "private"];
-    const isPrivatePath =
-      path.length >= privatePath.length &&
-      privatePath.every((segment, index) => path[index] === segment);
-    if (!isPrivatePath) {
-      return true;
-    }
-
-    return canViewPrivatePatch(patch, path, state, roleCtx);
-  });
-}
-
-/**
- * Safely validate that a patch set can be applied to a given state.
- * Returns false when any patch cannot resolve against the state.
- */
-export function canApplyPatchesToState(state: unknown, patches: unknown[]): boolean {
-  if (!Array.isArray(patches) || patches.length === 0) {
-    return true;
-  }
-  try {
-    applyPatches(state as unknown as Record<string, unknown>, patches as Patch[]);
-    return true;
-  } catch (_error) {
-    return false;
-  }
-}
 
 function normalizePatchPath(path: unknown): string[] | null {
   if (path == null) {
@@ -446,6 +405,7 @@ function canViewPrivatePatch(
   pointerSegments: string[],
   state: MatchState,
   roleCtx: ViewRoleContext,
+  zoneRegistry: ZoneRegistry,
 ): boolean {
   const { role, playerID } = roleCtx;
 
@@ -460,7 +420,7 @@ function canViewPrivatePatch(
       return false;
     }
 
-    const zoneDef = state.ctx.zones.zoneDefs[zoneKey];
+    const zoneDef = zoneRegistry[zoneKey];
     if (!zoneDef) {
       return false;
     }
@@ -515,7 +475,7 @@ function canViewPrivatePatch(
       return role === "judge";
     }
 
-    const zoneDef = state.ctx.zones.zoneDefs[indexEntry.zoneKey];
+    const zoneDef = zoneRegistry[indexEntry.zoneKey];
     if (!zoneDef) {
       return role === "judge";
     }
@@ -559,13 +519,14 @@ export function verifyNoSecretLeakage(
   originalState: MatchState,
   filteredState: FilteredMatchView,
   roleCtx: ViewRoleContext,
+  zoneRegistry: ZoneRegistry,
 ): { valid: true } | { valid: false; violations: string[] } {
   const violations: string[] = [];
   const { role, playerID } = roleCtx;
 
   // Check 1: Opponent hand card IDs should not appear
   if (role === "player" && playerID) {
-    for (const [zoneId, zoneDef] of Object.entries(originalState.ctx.zones.zoneDefs)) {
+    for (const [zoneId, zoneDef] of Object.entries(zoneRegistry)) {
       if (zoneDef.visibility === "private" && zoneDef.ownerScoped) {
         const originalCards = originalState.ctx.zones.private.zoneCards[zoneId] || [];
         const opponentCards = originalCards.filter((cardId) => {
@@ -592,7 +553,7 @@ export function verifyNoSecretLeakage(
   }
 
   // Check 2: Secret deck order should not appear
-  for (const [zoneId, zoneDef] of Object.entries(originalState.ctx.zones.zoneDefs)) {
+  for (const [zoneId, zoneDef] of Object.entries(zoneRegistry)) {
     if (zoneDef.visibility === "secret") {
       const filteredCards = (filteredState.ctx.zones as ZoneRuntimeState).private?.zoneCards[
         zoneId

@@ -15,7 +15,9 @@ describe("Snow White - Lost in the Forest", () => {
 
     expect(testEngine.asPlayerOne().playCard(snowWhiteLostInTheForest)).toBeSuccessfulCommand();
 
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(snowWhiteLostInTheForest),
+    ).toBeSuccessfulCommand();
 
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [gastonId] }),
@@ -40,7 +42,9 @@ describe("Snow White - Lost in the Forest", () => {
     expect(bagEffect).toBeDefined();
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(snowWhiteLostInTheForest, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     // Damage is unchanged because the player declined the optional

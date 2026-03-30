@@ -57,7 +57,7 @@ describe("The Headless Horseman - Terror of Sleepy Hollow", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(theHeadlessHorsemanTerrorOfSleepyHollow),
       ).toBeSuccessfulCommand();
 
       expect(

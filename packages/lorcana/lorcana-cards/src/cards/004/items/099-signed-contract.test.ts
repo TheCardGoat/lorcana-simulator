@@ -46,7 +46,7 @@ describe("Signed Contract", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(signedContract)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
     });
@@ -70,7 +70,7 @@ describe("Signed Contract", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(signedContract, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");

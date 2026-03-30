@@ -24,9 +24,9 @@ export const trampObservantGuardian: CharacterCard = {
   },
   text: [
     {
-      title: "HOW DO",
+      title: "HOW DO I GET IN?",
       description:
-        "I GET IN? When you play this character, chosen character gains Ward until the start of your next turn.",
+        "When you play this character, chosen character gains Ward until the start of your next turn.",
     },
   ],
   classifications: ["Storyborn", "Hero"],

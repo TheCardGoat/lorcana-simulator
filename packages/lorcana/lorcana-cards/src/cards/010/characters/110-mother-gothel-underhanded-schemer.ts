@@ -46,6 +46,7 @@ export const motherGothelUnderhandedSchemer: CharacterCard = {
         type: "modify-stat",
       },
       id: "1au-1",
+      name: "SOMEBODY'S GOT TO USE IT",
       text: "SOMEBODY'S GOT TO USE IT If a character was banished this turn, this character gets +2 {S}.",
       type: "static",
     },

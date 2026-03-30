@@ -41,7 +41,9 @@ describe("Baymax - Upgraded Robot", () => {
     expect(testEngine.asPlayerOne().playCard(baymaxUpgradedRobot)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(baymaxUpgradedRobot),
+    ).toBeSuccessfulCommand();
 
     expect(
       testEngine.asPlayerOne().resolveNextPending({

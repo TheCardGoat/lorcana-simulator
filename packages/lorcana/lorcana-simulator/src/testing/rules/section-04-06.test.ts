@@ -257,7 +257,9 @@ describe("#### 4. TURN ACTIONS", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerTwo().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(bagEffect!.sourceId),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(2);
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
@@ -313,8 +315,9 @@ describe("#### 4. TURN ACTIONS", () => {
 
         // player two resolves the bag, targeting marshmallowPersistentGuardian
         expect(
-          testEngine.asPlayerTwo().resolveBag(testEngine.asPlayerTwo().getBagEffects()[0]!.id)
-            .success,
+          testEngine
+            .asPlayerTwo()
+            .resolvePendingByCard(testEngine.asPlayerTwo().getBagEffects()[0]!.sourceId).success,
         ).toBe(true);
 
         // Marshmallow’s ability is in the bag, PLAYER_ONE should have the priority
@@ -325,9 +328,11 @@ describe("#### 4. TURN ACTIONS", () => {
 
         // player one resolves the bag, moving marshmallow to hand
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-            resolveOptional: true,
-          }).success,
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+              resolveOptional: true,
+            }).success,
         ).toBe(true);
         expect(testEngine.asPlayerOne().getCardZone(marshmallowPersistentGuardian)).toBe("hand");
 

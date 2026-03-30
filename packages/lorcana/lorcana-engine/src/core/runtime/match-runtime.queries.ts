@@ -8,14 +8,17 @@ import type {
   FilteredMatchView,
   RuntimeFlowDefinition,
   MoveRecord,
+  ZoneDefinitions,
 } from "./match-runtime.types";
 import type { MatchStaticResources } from "./static-resources";
 import { filterMatchView } from "./view-filter";
+import { buildZoneRegistry } from "./zone-registry";
 
 export interface QueryContext<Moves extends MoveRecord = MoveRecord> {
   state: MatchState;
   config: {
     moves: Moves;
+    zones?: ZoneDefinitions;
     flow?: RuntimeFlowDefinition;
     playerView?: (state: MatchState, roleCtx: ViewRoleContext) => FilteredMatchView;
   };
@@ -37,5 +40,9 @@ export function getFilteredView(ctx: QueryContext, roleCtx: ViewRoleContext): Fi
   if (ctx.config.playerView) {
     return ctx.config.playerView(ctx.state, roleCtx);
   }
-  return filterMatchView(ctx.state, roleCtx);
+  return filterMatchView(
+    ctx.state,
+    roleCtx,
+    buildZoneRegistry(ctx.config.zones ?? {}, ctx.state.ctx.playerIds),
+  );
 }

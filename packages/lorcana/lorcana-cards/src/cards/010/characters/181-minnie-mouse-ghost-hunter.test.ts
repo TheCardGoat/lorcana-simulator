@@ -24,7 +24,9 @@ describe("Minnie Mouse - Ghost Hunter", () => {
       expect(testEngine.asPlayerOne().playCard(minnieMouseGhostHunter)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseGhostHunter),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [donaldDuckGhostHunter] }),
@@ -45,7 +47,9 @@ describe("Minnie Mouse - Ghost Hunter", () => {
       expect(testEngine.asPlayerOne().playCard(minnieMouseGhostHunter)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseGhostHunter),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [minnieMouseGhostHunter] }),
@@ -67,7 +71,9 @@ describe("Minnie Mouse - Ghost Hunter", () => {
       expect(testEngine.asPlayerOne().playCard(minnieMouseGhostHunter)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseGhostHunter),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [donaldDuckGhostHunter] }),
@@ -93,7 +99,9 @@ describe("Minnie Mouse - Ghost Hunter", () => {
       expect(testEngine.asPlayerOne().playCard(minnieMouseGhostHunter)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseGhostHunter),
+      ).toBeSuccessfulCommand();
 
       // The non-detective should not be a valid target, so targeting it should fail
       const result = testEngine

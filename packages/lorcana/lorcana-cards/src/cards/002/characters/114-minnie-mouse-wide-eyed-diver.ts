@@ -65,7 +65,7 @@ export const minnieMouseWideeyedDiver: CharacterCard = {
           controller: "you",
           cardType: "action",
         },
-        timing: "when",
+        timing: "whenever",
       },
       type: "triggered",
     },

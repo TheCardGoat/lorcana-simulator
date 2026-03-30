@@ -58,9 +58,9 @@ describe("Perilous Maze - Watery Labyrinth", () => {
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().challenge(mazeAttacker, mazeResident)).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(perilousMazeWateryLabyrinth).success).toBe(
+      true,
+    );
     expect(testEngine.asPlayerTwo().resolveNextPending({ targets: [discardFodder] }).success).toBe(
       true,
     );

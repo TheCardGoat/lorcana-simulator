@@ -45,7 +45,7 @@ describe("Magic Broom - Swift Cleaner", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicBroomSwiftCleaner, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -85,7 +85,7 @@ describe("Magic Broom - Swift Cleaner", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicBroomSwiftCleaner, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -116,7 +116,9 @@ describe("Magic Broom - Swift Cleaner", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(magicBroomSwiftCleaner, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(magicBroomBucketBrigade)).toBe("discard");
@@ -143,7 +145,7 @@ describe("Magic Broom - Swift Cleaner", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicBroomSwiftCleaner, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();

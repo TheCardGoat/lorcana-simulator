@@ -46,6 +46,7 @@ export const rhinoPowerHamster: CharacterCard = {
         value: 2,
       },
       id: "g5c-2",
+      name: "EPIC BALL OF AWESOME",
       text: "EPIC BALL OF AWESOME While this character has no damage, he gains Resist +2.",
       type: "static",
     },

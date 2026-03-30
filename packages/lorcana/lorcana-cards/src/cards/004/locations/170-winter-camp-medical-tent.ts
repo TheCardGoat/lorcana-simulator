@@ -82,7 +82,7 @@ export const winterCampMedicalTent: LocationCard = {
       text: "HELP THE WOUNDED Whenever a character quests while here, remove up to 2 damage from them. If they're a Hero character, remove up to 4 damage instead.",
       trigger: {
         event: "quest",
-        on: "CHARACTER_HERE",
+        on: "CHARACTERS_HERE",
         timing: "whenever",
       },
       type: "triggered",

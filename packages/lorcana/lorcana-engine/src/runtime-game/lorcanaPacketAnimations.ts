@@ -19,16 +19,19 @@ function parseZoneId(zoneId?: string): LorcanaBoardZoneId | null {
 
 function resolvePlayVariant(
   definition?: LorcanaCardDefinition,
+  costType?: string,
 ): LorcanaBoardMoveAnimationVariant | null {
   switch (definition?.cardType) {
     case "character":
-      return "play-character";
+      return costType === "shift" ? "play-character-shift" : "play-character";
     case "item":
       return "play-item";
     case "location":
       return "play-location";
     case "action":
-      return "play-action";
+      return costType === "sing" || costType === "singTogether"
+        ? "play-action-sing"
+        : "play-action";
     default:
       return null;
   }
@@ -74,13 +77,19 @@ function findCardZone(
 
 export type LorcanaBoardMoveAnimationVariant =
   | "banish"
+  | "draw"
   | "ink-faceDown"
   | "ink-faceUp"
   | "move-to-location"
+  | "play-action"
+  | "play-action-sing"
   | "play-character"
+  | "play-character-shift"
   | "play-item"
-  | "play-location"
-  | "play-action";
+  | "play-location";
+
+export type LorcanaBoardMoveAnimationPlayback = "parallel" | "serial";
+export type LorcanaBoardMoveAnimationPhase = "cause" | "consequence";
 
 type CardActionPlayerAnimationPayload = {
   cardId: string;
@@ -92,7 +101,10 @@ type LorcanaBoardMoveAnimationPayload = {
   actorSide: "playerOne" | "playerTwo";
   cardId: string;
   destinationZoneId: LorcanaBoardZoneId;
+  groupId: string;
   impactAt: "destination" | "via";
+  phase: LorcanaBoardMoveAnimationPhase;
+  playback: LorcanaBoardMoveAnimationPlayback;
   renderFace: "faceUp" | "faceDown";
   sourceZoneId: LorcanaBoardZoneId;
   variant: LorcanaBoardMoveAnimationVariant;
@@ -257,13 +269,79 @@ function detectBanishAnimations(
             actorSide,
             cardId,
             destinationZoneId: "discard",
+            groupId: commandId,
             impactAt: "destination",
+            phase: "consequence",
+            playback: "parallel",
             renderFace: "faceUp",
             sourceZoneId: "play",
             variant: "banish",
           },
         });
       }
+    }
+  }
+
+  return animations;
+}
+
+function detectDrawAnimations(
+  context: PacketAnimationContext,
+  commandId: string,
+): LorcanaPacketAnimation[] {
+  const previousZoneCards = context.previousState.ctx.zones.private.zoneCards;
+  const nextZoneCards = context.nextState.ctx.zones.private.zoneCards;
+  const playerIds = context.nextState.ctx.playerIds;
+  const animations: LorcanaPacketAnimation[] = [];
+
+  for (const playerId of playerIds) {
+    const deckKey = `deck:${playerId}`;
+    const handKey = `hand:${playerId}`;
+    const previousDeck = previousZoneCards[deckKey];
+    const nextDeck = nextZoneCards[deckKey];
+    const previousHand = previousZoneCards[handKey];
+    const nextHand = nextZoneCards[handKey];
+
+    if (
+      !Array.isArray(previousDeck) ||
+      !Array.isArray(nextDeck) ||
+      !Array.isArray(previousHand) ||
+      !Array.isArray(nextHand)
+    ) {
+      continue;
+    }
+
+    const previousDeckSet = new Set(previousDeck);
+    const previousHandSet = new Set(previousHand);
+    const actorSide: "playerOne" | "playerTwo" =
+      playerIds[0] === playerId ? "playerOne" : "playerTwo";
+
+    for (const cardId of nextHand) {
+      if (
+        previousHandSet.has(cardId) ||
+        !previousDeckSet.has(cardId) ||
+        nextDeck.includes(cardId)
+      ) {
+        continue;
+      }
+
+      animations.push({
+        id: `${commandId}:draw:${cardId}`,
+        kind: "lorcana.boardMove",
+        payload: {
+          actorPlayerId: playerId,
+          actorSide,
+          cardId,
+          destinationZoneId: "hand",
+          groupId: commandId,
+          impactAt: "destination",
+          phase: "consequence",
+          playback: "serial",
+          renderFace: "faceDown",
+          sourceZoneId: "deck",
+          variant: "draw",
+        },
+      });
     }
   }
 
@@ -465,7 +543,10 @@ export function deriveLorcanaPacketAnimations(
           actorSide,
           cardId,
           destinationZoneId: "inkwell",
+          groupId: command.commandID,
           impactAt: "destination",
+          phase: "cause",
+          playback: "serial",
           renderFace,
           sourceZoneId,
           variant: renderFace === "faceUp" ? "ink-faceUp" : "ink-faceDown",
@@ -489,13 +570,15 @@ export function deriveLorcanaPacketAnimations(
       return [];
     }
 
-    const variant = resolvePlayVariant(cardDefinition as LorcanaCardDefinition);
+    const costType = (command.input.args as { cost?: string }).cost;
+    const variant = resolvePlayVariant(cardDefinition as LorcanaCardDefinition, costType);
     if (!variant) {
       return [];
     }
 
     const animations: LorcanaPacketAnimation[] = [];
-    const destinationZoneId: LorcanaBoardZoneId = variant === "play-action" ? "discard" : "play";
+    const isActionPlay = variant === "play-action" || variant === "play-action-sing";
+    const destinationZoneId: LorcanaBoardZoneId = isActionPlay ? "discard" : "play";
 
     animations.push({
       id: `${command.commandID}:play:${cardPlayedId}`,
@@ -505,7 +588,10 @@ export function deriveLorcanaPacketAnimations(
         actorSide,
         cardId: cardPlayedId,
         destinationZoneId,
+        groupId: command.commandID,
         impactAt: "via",
+        phase: "cause",
+        playback: "serial",
         renderFace: "faceUp",
         sourceZoneId: "hand",
         variant,
@@ -514,7 +600,7 @@ export function deriveLorcanaPacketAnimations(
     });
 
     // Keep play.action packet for action card spell effect overlay
-    if (variant === "play-action") {
+    if (isActionPlay) {
       animations.push({
         id: `${command.commandID}:play-action-effect:${cardPlayedId}`,
         kind: "play.action",
@@ -524,6 +610,9 @@ export function deriveLorcanaPacketAnimations(
         },
       });
     }
+
+    animations.push(...detectDrawAnimations(context, command.commandID));
+    animations.push(...detectBanishAnimations(context, command.commandID));
 
     return animations;
   }
@@ -546,7 +635,10 @@ export function deriveLorcanaPacketAnimations(
           actorSide,
           cardId: characterId,
           destinationZoneId: "play",
+          groupId: command.commandID,
           impactAt: "destination",
+          phase: "cause",
+          playback: "serial",
           renderFace: "faceUp",
           sourceZoneId: "play",
           variant: "move-to-location",
@@ -574,6 +666,7 @@ export function deriveLorcanaPacketAnimations(
           turnNumber,
         },
       },
+      ...detectDrawAnimations(context, command.commandID),
     ];
   }
 
@@ -612,6 +705,7 @@ export function deriveLorcanaPacketAnimations(
           effectKind: "activate-ability",
         },
       },
+      ...detectDrawAnimations(context, command.commandID),
       ...detectBanishAnimations(context, command.commandID),
     ];
   }
@@ -647,6 +741,7 @@ export function deriveLorcanaPacketAnimations(
           effectKind: "resolve-effect",
         },
       },
+      ...detectDrawAnimations(context, command.commandID),
       ...detectBanishAnimations(context, command.commandID),
     ];
     if (bagTargetSides.length > 0) {
@@ -690,6 +785,7 @@ export function deriveLorcanaPacketAnimations(
           effectKind: "resolve-effect",
         },
       },
+      ...detectDrawAnimations(context, command.commandID),
       ...detectBanishAnimations(context, command.commandID),
     ];
     if (effectTargetSides.length > 0) {
@@ -750,7 +846,10 @@ export function deriveLorcanaPacketAnimations(
           actorSide,
           cardId: songId,
           destinationZoneId: "discard",
+          groupId: command.commandID,
           impactAt: "via",
+          phase: "cause",
+          playback: "serial",
           renderFace: "faceUp",
           sourceZoneId: "hand",
           variant: "play-action",
@@ -789,7 +888,10 @@ export function deriveLorcanaPacketAnimations(
         actorSide,
         cardId: songId,
         destinationZoneId: "discard",
+        groupId: command.commandID,
         impactAt: "via",
+        phase: "cause",
+        playback: "serial",
         renderFace: "faceUp",
         sourceZoneId: "hand",
         variant: "play-action",

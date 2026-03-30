@@ -41,7 +41,7 @@ describe("Nani - Stage Manager", () => {
     expect(testEngine.asPlayerOne().playCard(naniStageManager)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(naniStageManager)).toBeSuccessfulCommand();
 
     expect(
       testEngine.asPlayerOne().resolveNextPending({
@@ -65,7 +65,7 @@ describe("Nani - Stage Manager", () => {
     expect(testEngine.asPlayerOne().playCard(naniStageManager)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(naniStageManager)).toBeSuccessfulCommand();
 
     expect(
       testEngine.asPlayerOne().resolveNextPending({
@@ -92,7 +92,7 @@ describe("Nani - Stage Manager", () => {
     expect(testEngine.asPlayerOne().playCard(naniStageManager)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(naniStageManager)).toBeSuccessfulCommand();
 
     // Only cheapCharacter (cost 2) can go to hand, not the expensive ones
     expect(

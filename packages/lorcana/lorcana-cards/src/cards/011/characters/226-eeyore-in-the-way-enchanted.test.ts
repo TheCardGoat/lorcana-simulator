@@ -131,7 +131,9 @@ describe("Eeyore - In the Way (Enchanted)", () => {
 
       // Resolve the triggered ability targeting the opponent's character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(eeyoreInTheWayEnchanted, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       // The opponent character should have the cant-ready restriction
@@ -163,7 +165,9 @@ describe("Eeyore - In the Way (Enchanted)", () => {
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
         expect(
-          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(eeyoreInTheWayEnchanted, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 

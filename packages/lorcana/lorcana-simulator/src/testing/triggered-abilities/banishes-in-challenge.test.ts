@@ -46,9 +46,11 @@ describe("PUNY PIRATE! - During your turn, whenever this character banishes anot
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
-        targets: [liloMakingAWish],
-      }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          targets: [liloMakingAWish],
+        }),
     ).toBeSuccessfulCommand();
 
     // Lilo (1wp) should be banished by 2 damage
@@ -78,9 +80,11 @@ describe("PUNY PIRATE! - During your turn, whenever this character banishes anot
 
     expect(
       // Banish by an effect
-      testEngine.asPlayerOne().resolveNextBag({
-        targets: [liloMakingAWish],
-      }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          targets: [liloMakingAWish],
+        }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCard(liloMakingAWish).zone).toEqual("discard");

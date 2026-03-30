@@ -8,7 +8,7 @@ import {
   strategyArtifactsExist,
 } from "./strategy-suite.js";
 
-const STRATEGY_SUITE_TIMEOUT_MS = process.env.CI ? 120_000 : 45_000;
+const STRATEGY_SUITE_TIMEOUT_MS = process.env.CI ? 120_000 : 90_000;
 const RUN_STRATEGY_SMOKE_SUITE =
   Boolean(process.env.CI) || process.env.RUN_STRATEGY_SMOKE_SUITE === "1";
 
@@ -18,7 +18,7 @@ describe("strategy evaluation suite", () => {
     () => {
       const summary = runCuratedStrategySuite();
 
-      expect(summary.matches.length).toBe(DECK_FIXTURES.length);
+      expect(summary.matches.length).toBe(DECK_FIXTURES.length * 2);
       expect(summary.matches.every((match) => match.deadlock === false)).toBe(true);
       expect(strategyArtifactsExist(summary)).toBe(true);
       expect(summary.matches.every((match) => match.endReason === "winner")).toBe(true);

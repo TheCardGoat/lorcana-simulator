@@ -34,14 +34,19 @@ export const jollyRogerHooksShip: LocationCard = {
   ],
   abilities: [
     {
+      id: "UV5-1",
+      name: "LOOK ALIVE, YOU SWABS!",
       effect: {
         keyword: "Rush",
         target: "CHARACTERS_HERE",
         type: "gain-keyword",
       },
+      text: "LOOK ALIVE, YOU SWABS! Characters gain Rush while here.",
       type: "static",
     },
     {
+      id: "UV5-2",
+      name: "ALL HANDS ON DECK!",
       effect: {
         filter: {
           classification: "Pirate",
@@ -50,6 +55,7 @@ export const jollyRogerHooksShip: LocationCard = {
         reduction: "free",
         type: "move-cost-reduction",
       },
+      text: "ALL HANDS ON DECK! Your Pirate characters may move here for free.",
       type: "static",
     },
   ],

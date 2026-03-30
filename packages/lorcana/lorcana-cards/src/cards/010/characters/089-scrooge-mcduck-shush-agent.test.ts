@@ -39,7 +39,9 @@ describe("Scrooge McDuck - S.H.U.S.H. Agent", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scroogeMcduckShushAgent, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
@@ -87,7 +89,9 @@ describe("Scrooge McDuck - S.H.U.S.H. Agent", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckShushAgent),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(scroogeMcduckShushAgent)).toBe("hand");
       expect(testEngine.asPlayerTwo().getCardZone(strongAttacker)).toBe("play");

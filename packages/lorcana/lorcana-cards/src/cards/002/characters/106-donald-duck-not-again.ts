@@ -44,6 +44,7 @@ export const donaldDuckNotAgain: CharacterCard = {
         type: "modify-stat",
       },
       id: "1mm-2",
+      name: "PHOOEY!",
       text: "PHOOEY! This character gets +1 {L} for each 1 damage on him.",
       type: "static",
     },

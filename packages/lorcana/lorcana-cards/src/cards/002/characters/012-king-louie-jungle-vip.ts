@@ -48,7 +48,7 @@ export const kingLouieJungleVip: CharacterCard = {
       trigger: {
         event: "banish",
         on: "OTHER_CHARACTERS",
-        timing: "when",
+        timing: "whenever",
       },
       type: "triggered",
     },

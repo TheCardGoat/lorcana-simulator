@@ -45,7 +45,7 @@ describe("The Twins - Lost Boys", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(theTwinsLostBoys, {
           resolveOptional: true,
           targets: [targetCharacter],
         }),
@@ -90,7 +90,9 @@ describe("The Twins - Lost Boys", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       // Decline the optional ability
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theTwinsLostBoys),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(0);
     });

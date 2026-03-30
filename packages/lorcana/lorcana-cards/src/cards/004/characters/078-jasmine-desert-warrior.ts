@@ -39,7 +39,7 @@ export const jasmineDesertWarrior: CharacterCard = {
         type: "discard",
       },
       id: "160-1",
-      name: "CUNNING MANEUVER When you play this character and",
+      name: "CUNNING MANEUVER",
       text: "CUNNING MANEUVER When you play this character and whenever she's challenged, each opponent chooses and discards a card.",
       trigger: {
         event: "play",

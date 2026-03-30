@@ -1,27 +1,57 @@
 <script lang="ts">
-  import { LoaderCircle, NotebookPen, ScrollText, Trophy } from "@lucide/svelte";
+  import {
+    ChevronDown,
+    Download,
+    LoaderCircle,
+    Lock,
+    NotebookPen,
+    Save,
+    ScrollText,
+    Trophy,
+  } from "@lucide/svelte";
   import { m } from "$lib/i18n/messages.js";
   import { Badge } from "$lib/design-system/primitives/badge";
   import { Button } from "$lib/design-system/primitives/button";
   import * as Dialog from "$lib/design-system/primitives/dialog";
+  import PostGameTimelineSection from "./PostGameTimelineSection.svelte";
   import {
     fetchPostGameRecord,
     savePostGameNote,
     type PostGameRecordEnvelope,
   } from "./notes-api.js";
+  import {
+    clearRequestedPostGameRecord,
+    createInitialPostGameRecordRequestState,
+    markPostGameRecordLoaded,
+    markPostGameRecordRequested,
+    resetPostGameRecordRequestStateForGame,
+    shouldAutoLoadPostGameRecord,
+  } from "./record-request-state.js";
+  import { buildPostGameSummaryFromCanonical } from "./summary.js";
   import type {
     PostGameNoteState,
     PostGameSectionId,
     PostGameSummary,
   } from "./types.js";
+  import { downloadReplayZip } from "@/features/replay/download-replay.js";
+  import {
+    isReplayStoreAvailable,
+    saveReplayFromApi,
+    isReplaySaved,
+  } from "@/features/replay/replay-store.js";
+  import { fetchReplayBlob, decompressReplayBlob } from "@/features/replay/fetch-replay.js";
 
   interface PostGameSummaryDialogProps {
     open?: boolean;
     gameId: string;
     summary: PostGameSummary;
     onReturnToMatchmaking: () => void | Promise<void>;
+    isAuthenticated?: boolean;
     loadRecord?: (gameId: string) => Promise<PostGameRecordEnvelope>;
     saveNote?: (params: { gameId: string; note: string }) => Promise<PostGameRecordEnvelope>;
+    initialSection?: PostGameSectionId;
+    defaultExpandedTurnNumbers?: number[];
+    defaultTechnicalTurnNumbers?: number[];
   }
 
   let {
@@ -29,12 +59,16 @@
     gameId,
     summary,
     onReturnToMatchmaking,
+    isAuthenticated = false,
     loadRecord = fetchPostGameRecord,
     saveNote = savePostGameNote,
+    initialSection = "overview",
+    defaultExpandedTurnNumbers = [],
+    defaultTechnicalTurnNumbers = [],
   }: PostGameSummaryDialogProps = $props();
 
   let activeSection = $state<PostGameSectionId>("overview");
-  let loadedGameId = $state<string | null>(null);
+  let recordRequestState = $state(createInitialPostGameRecordRequestState());
   let noteState = $state<PostGameNoteState>({
     value: "",
     lastSavedValue: "",
@@ -45,6 +79,14 @@
   });
   let record = $state<PostGameRecordEnvelope | null>(null);
   let leavingMatch = $state(false);
+  let replayDownloading = $state(false);
+  let replaySaving = $state(false);
+  let replaySaved = $state(false);
+
+  const canSaveReplay = isReplayStoreAvailable();
+  const effectiveSummary = $derived.by(() =>
+    record?.postGame ? buildPostGameSummaryFromCanonical(record.postGame, summary.outcome.viewerSide) : summary,
+  );
 
   const sectionButtons = [
     {
@@ -53,8 +95,8 @@
       icon: Trophy,
     },
     {
-      id: "forensics",
-      label: m["sim.postGame.section.forensics"]({}),
+      id: "timeline",
+      label: m["sim.postGame.section.timeline"]({}),
       icon: ScrollText,
     },
     {
@@ -65,7 +107,7 @@
   ] satisfies Array<{ id: PostGameSectionId; label: string; icon: typeof Trophy }>;
 
   const viewerResultLabel = $derived.by(() => {
-    switch (summary.outcome.viewerResult) {
+    switch (effectiveSummary.outcome.viewerResult) {
       case "victory":
         return m["sim.postGame.result.victory"]({});
       case "defeat":
@@ -77,8 +119,21 @@
     }
   });
 
-  const winnerLabel = $derived(getSideLabel(summary.outcome.winnerSide));
-  const loserLabel = $derived(getSideLabel(summary.outcome.loserSide));
+  const winnerLabel = $derived(getSideLabel(effectiveSummary.outcome.winnerSide));
+  const loserLabel = $derived(getSideLabel(effectiveSummary.outcome.loserSide));
+  const outcomeHighlight = $derived(
+    effectiveSummary.highlights.find((highlight) => highlight.id === "highlight:outcome") ?? null,
+  );
+  const recordedSpanMs = $derived.by(() => {
+    const firstTurn = effectiveSummary.turns[0];
+    const lastTurn = effectiveSummary.turns.at(-1);
+
+    if (!firstTurn || !lastTurn) {
+      return 0;
+    }
+
+    return Math.max(0, lastTurn.endedAt - firstTurn.startedAt);
+  });
   const noteDirty = $derived(
     noteState.loaded && noteState.value.trim() !== noteState.lastSavedValue.trim(),
   );
@@ -102,20 +157,51 @@
   });
 
   $effect(() => {
+    if (!open || !gameId || !canSaveReplay) {
+      replaySaved = false;
+      return;
+    }
+
+    const requestGameId = gameId;
+    let cancelled = false;
+
+    isReplaySaved(requestGameId)
+      .then((saved) => {
+        if (!cancelled && open && gameId === requestGameId) {
+          replaySaved = saved;
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error("[PostGame] Failed to check replay saved state:", error);
+          replaySaved = false;
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  });
+
+  $effect(() => {
     if (!open) {
       return;
     }
 
-    activeSection = "overview";
+    activeSection = initialSection;
   });
 
   $effect(() => {
     const nextGameId = gameId;
-    if (loadedGameId === nextGameId) {
+    const nextRequestState = resetPostGameRecordRequestStateForGame(recordRequestState, nextGameId);
+    if (
+      nextRequestState.requestedGameId === recordRequestState.requestedGameId &&
+      nextRequestState.loadedGameId === recordRequestState.loadedGameId
+    ) {
       return;
     }
 
-    loadedGameId = null;
+    recordRequestState = nextRequestState;
     record = null;
     noteState = {
       value: "",
@@ -128,10 +214,18 @@
   });
 
   $effect(() => {
-    if (!open || noteState.loaded || noteState.isLoading || loadedGameId === gameId) {
+    if (
+      !shouldAutoLoadPostGameRecord({
+        open,
+        gameId,
+        requestState: recordRequestState,
+        isLoading: noteState.isLoading,
+      })
+    ) {
       return;
     }
 
+    recordRequestState = markPostGameRecordRequested(recordRequestState, gameId);
     noteState = {
       ...noteState,
       isLoading: true,
@@ -140,55 +234,84 @@
 
     void loadRecord(gameId)
       .then((nextRecord) => {
-        loadedGameId = gameId;
+        recordRequestState = markPostGameRecordLoaded(recordRequestState, gameId);
         record = nextRecord;
-        noteState = {
-          value: nextRecord.note,
-          lastSavedValue: nextRecord.note,
-          isLoading: false,
-          isSaving: false,
-          loaded: true,
-          error: null,
-        };
+        noteState = isAuthenticated
+          ? {
+              value: nextRecord.note,
+              lastSavedValue: nextRecord.note,
+              isLoading: false,
+              isSaving: false,
+              loaded: true,
+              error: null,
+            }
+          : {
+              ...noteState,
+              isLoading: false,
+            };
       })
       .catch((error: unknown) => {
-        noteState = {
-          ...noteState,
-          isLoading: false,
-          loaded: true,
-          error:
-            error instanceof Error
-              ? error.message
-              : m["sim.postGame.notes.loadError"]({}),
-        };
+        noteState = isAuthenticated
+          ? {
+              ...noteState,
+              isLoading: false,
+              loaded: true,
+              error:
+                error instanceof Error
+                  ? error.message
+                  : m["sim.postGame.notes.loadError"]({}),
+            }
+          : {
+              ...noteState,
+              isLoading: false,
+            };
       });
   });
 
-  function getSideLabel(side: typeof summary.outcome.winnerSide): string {
-    if (!side) {
-      return m["sim.postGame.result.unknownPlayer"]({});
+  $effect(() => {
+    if (open) {
+      return;
     }
 
-    if (summary.outcome.viewerSide && side === summary.outcome.viewerSide) {
-      return m["sim.player.you"]({});
+    const nextRequestState = clearRequestedPostGameRecord(recordRequestState);
+    if (
+      nextRequestState.requestedGameId === recordRequestState.requestedGameId &&
+      nextRequestState.loadedGameId === recordRequestState.loadedGameId
+    ) {
+      return;
     }
 
-    if (summary.outcome.viewerSide && side !== summary.outcome.viewerSide) {
-      return m["sim.player.opponent"]({});
-    }
+    recordRequestState = nextRequestState;
+  });
 
-    return side === "playerOne"
-      ? m["sim.player.side.playerOne"]({})
-      : m["sim.player.side.playerTwo"]({});
+  async function handleDownloadReplay(): Promise<void> {
+    if (replayDownloading) return;
+    replayDownloading = true;
+
+    try {
+      await downloadReplayZip(gameId);
+    } catch (error) {
+      console.error("[PostGame] Failed to download replay:", error);
+    } finally {
+      replayDownloading = false;
+    }
   }
 
-  function formatClock(timestamp: number): string {
-    const date = new Date(timestamp);
-    return new Intl.DateTimeFormat(undefined, {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    }).format(date);
+  async function handleSaveReplay(): Promise<void> {
+    if (replaySaving || replaySaved) return;
+    replaySaving = true;
+
+    try {
+      await saveReplayFromApi(gameId, fetchReplayBlob, async (compressed) => {
+        const data = await decompressReplayBlob(compressed);
+        return data;
+      });
+      replaySaved = true;
+    } catch (error) {
+      console.error("[PostGame] Failed to save replay:", error);
+    } finally {
+      replaySaving = false;
+    }
   }
 
   async function handleSaveNotes(): Promise<void> {
@@ -237,6 +360,64 @@
       leavingMatch = false;
     }
   }
+
+  function getSideLabel(side: typeof summary.outcome.winnerSide): string {
+    if (!side) {
+      return m["sim.postGame.result.unknownPlayer"]({});
+    }
+
+    if (effectiveSummary.outcome.viewerSide && side === effectiveSummary.outcome.viewerSide) {
+      return m["sim.player.you"]({});
+    }
+
+    if (effectiveSummary.outcome.viewerSide && side !== effectiveSummary.outcome.viewerSide) {
+      return m["sim.player.opponent"]({});
+    }
+
+    return side === "playerOne"
+      ? m["sim.player.side.playerOne"]({})
+      : m["sim.player.side.playerTwo"]({});
+  }
+
+  function formatDuration(durationMs: number): string {
+    const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  }
+
+  function actorToneFromSide(side: typeof summary.outcome.winnerSide) {
+    if (!side) {
+      return "system" as const;
+    }
+
+    if (effectiveSummary.outcome.viewerSide && side === effectiveSummary.outcome.viewerSide) {
+      return "self" as const;
+    }
+
+    if (effectiveSummary.outcome.viewerSide && side !== effectiveSummary.outcome.viewerSide) {
+      return "opponent" as const;
+    }
+
+    return side;
+  }
+
+  function groupActorTextClasses(tone: ReturnType<typeof actorToneFromSide>): string {
+    switch (tone) {
+      case "self":
+        return "post-game-actor--self";
+      case "opponent":
+        return "post-game-actor--opponent";
+      case "playerOne":
+        return "post-game-actor--player-one";
+      case "playerTwo":
+        return "post-game-actor--player-two";
+      case "system":
+        return "post-game-actor--system";
+    }
+  }
+
 </script>
 
 <Dialog.Root bind:open>
@@ -252,12 +433,17 @@
         <div class="post-game-header__eyebrow">
           <Badge variant="outline" class="post-game-result-badge">{viewerResultLabel}</Badge>
           <span class="post-game-header__turn">
-            {m["sim.postGame.turn"]({ turn: summary.outcome.finalTurnNumber })}
+            {m["sim.postGame.turn"]({ turn: effectiveSummary.outcome.finalTurnNumber })}
+          </span>
+          <span class="post-game-header__turn">
+            {m["sim.postGame.overview.loggedActions"]({ count: effectiveSummary.totalLogEntries })}
           </span>
         </div>
-        <h2 class="post-game-header__title">{m["sim.postGame.title"]({})}</h2>
+        <h2 class="post-game-header__title">
+          {outcomeHighlight?.title ?? m["sim.postGame.title"]({})}
+        </h2>
         <p class="post-game-header__summary">
-          {#if summary.outcome.winnerSide && summary.outcome.loserSide}
+          {#if effectiveSummary.outcome.winnerSide && effectiveSummary.outcome.loserSide}
             {winnerLabel}
             {m["sim.postGame.summary.defeated"]({ loser: loserLabel })}
           {:else}
@@ -265,8 +451,23 @@
           {/if}
         </p>
         <p class="post-game-header__reason">
-          {summary.outcome.reason ?? m["sim.postGame.reason.none"]({})}
+          {effectiveSummary.outcome.reason ?? outcomeHighlight?.detail ?? m["sim.postGame.reason.none"]({})}
         </p>
+
+        <div class="post-game-facts">
+          <div class="post-game-fact">
+            <span>{m["sim.postGame.metric.turns"]({})}</span>
+            <strong>{effectiveSummary.outcome.finalTurnNumber}</strong>
+          </div>
+          <div class="post-game-fact">
+            <span>{m["sim.postGame.timeline.duration.label"]({})}</span>
+            <strong>{formatDuration(recordedSpanMs)}</strong>
+          </div>
+          <div class="post-game-fact">
+            <span>{m["sim.postGame.timeline.actionsLabel"]({})}</span>
+            <strong>{effectiveSummary.totalLogEntries}</strong>
+          </div>
+        </div>
       </header>
 
       <nav class="post-game-sections" aria-label={m["sim.postGame.section.aria"]({})}>
@@ -288,7 +489,7 @@
         {#if activeSection === "overview"}
           <section class="post-game-panel">
             <div class="post-game-scoreboard">
-              {#each [summary.players.playerOne, summary.players.playerTwo] as player (player.side)}
+              {#each [effectiveSummary.players.playerOne, effectiveSummary.players.playerTwo] as player (player.side)}
                 <article class="post-game-scorecard">
                   <div class="post-game-scorecard__header">
                     <div>
@@ -298,7 +499,7 @@
                         <span>{m["sim.lore.label"]({})}</span>
                       </h3>
                     </div>
-                    {#if summary.outcome.winnerSide === player.side}
+                    {#if effectiveSummary.outcome.winnerSide === player.side}
                       <Badge class="post-game-scorecard__winner">
                         {m["sim.postGame.winner"]({})}
                       </Badge>
@@ -315,39 +516,48 @@
                   </dl>
 
                   <dl class="post-game-counters">
-                    <div><dt>{m["sim.postGame.counter.played"]({})}</dt><dd>{summary.countersBySide[player.side].cardsPlayed}</dd></div>
-                    <div><dt>{m["sim.postGame.counter.inked"]({})}</dt><dd>{summary.countersBySide[player.side].inked}</dd></div>
-                    <div><dt>{m["sim.postGame.counter.quests"]({})}</dt><dd>{summary.countersBySide[player.side].quests}</dd></div>
-                    <div><dt>{m["sim.postGame.counter.challenges"]({})}</dt><dd>{summary.countersBySide[player.side].challengeInitiations}</dd></div>
-                    <div><dt>{m["sim.postGame.counter.moves"]({})}</dt><dd>{summary.countersBySide[player.side].movesToLocations}</dd></div>
-                    <div><dt>{m["sim.postGame.counter.abilities"]({})}</dt><dd>{summary.countersBySide[player.side].abilityActivations}</dd></div>
-                    <div><dt>{m["sim.postGame.counter.effects"]({})}</dt><dd>{summary.countersBySide[player.side].effectResolutions}</dd></div>
-                    <div><dt>{m["sim.postGame.counter.passes"]({})}</dt><dd>{summary.countersBySide[player.side].passes}</dd></div>
+                    <div><dt>{m["sim.postGame.counter.played"]({})}</dt><dd>{effectiveSummary.countersBySide[player.side].cardsPlayed}</dd></div>
+                    <div><dt>{m["sim.postGame.counter.inked"]({})}</dt><dd>{effectiveSummary.countersBySide[player.side].inked}</dd></div>
+                    <div><dt>{m["sim.postGame.counter.quests"]({})}</dt><dd>{effectiveSummary.countersBySide[player.side].quests}</dd></div>
+                    <div><dt>{m["sim.postGame.counter.challenges"]({})}</dt><dd>{effectiveSummary.countersBySide[player.side].challengeInitiations}</dd></div>
+                    <div><dt>{m["sim.postGame.counter.moves"]({})}</dt><dd>{effectiveSummary.countersBySide[player.side].movesToLocations}</dd></div>
+                    <div><dt>{m["sim.postGame.counter.abilities"]({})}</dt><dd>{effectiveSummary.countersBySide[player.side].abilityActivations}</dd></div>
+                    <div><dt>{m["sim.postGame.counter.effects"]({})}</dt><dd>{effectiveSummary.countersBySide[player.side].effectResolutions}</dd></div>
+                    <div><dt>{m["sim.postGame.counter.passes"]({})}</dt><dd>{effectiveSummary.countersBySide[player.side].passes}</dd></div>
                   </dl>
                 </article>
               {/each}
             </div>
 
             <div class="post-game-overview-grid">
-              <section class="post-game-card">
+              <section class="post-game-card post-game-card--wide">
                 <header>
                   <h3>{m["sim.postGame.highlights.title"]({})}</h3>
                   <p>{m["sim.postGame.highlights.description"]({})}</p>
                 </header>
                 <div class="post-game-highlight-list">
-                  {#each summary.highlights as highlight (highlight.id)}
-                    <article class="post-game-highlight" class:post-game-highlight--emphasis={highlight.emphasis}>
-                      <div class="post-game-highlight__meta">
-                        {#if highlight.turnNumber}
-                          <Badge variant="outline">
-                            {m["sim.postGame.turnShort"]({ turn: highlight.turnNumber })}
-                          </Badge>
-                        {/if}
-                      </div>
-                      <h4>{highlight.title}</h4>
-                      <p>{highlight.detail}</p>
-                    </article>
-                  {/each}
+                  {#if effectiveSummary.highlights.length === 0}
+                    <p class="post-game-empty-state">{m["sim.postGame.empty.highlights"]({})}</p>
+                  {:else}
+                    {#each effectiveSummary.highlights as highlight (highlight.id)}
+                      <article class="post-game-highlight" class:post-game-highlight--emphasis={highlight.emphasis}>
+                        <div class="post-game-highlight__meta">
+                          {#if highlight.turnNumber}
+                            <Badge variant="outline">
+                              {m["sim.postGame.turnShort"]({ turn: highlight.turnNumber })}
+                            </Badge>
+                          {/if}
+                          {#if highlight.actorSide}
+                            <span class={`post-game-inline-chip ${groupActorTextClasses(actorToneFromSide(highlight.actorSide))}`}>
+                              {getSideLabel(highlight.actorSide)}
+                            </span>
+                          {/if}
+                        </div>
+                        <h4>{highlight.title}</h4>
+                        <p>{highlight.detail}</p>
+                      </article>
+                    {/each}
+                  {/if}
                 </div>
               </section>
 
@@ -357,15 +567,19 @@
                   <p>{m["sim.postGame.spotlights.loreDescription"]({})}</p>
                 </header>
                 <div class="post-game-spotlight-list">
-                  {#each summary.topLoreContributors as spotlight (spotlight.id)}
-                    <article class="post-game-spotlight">
-                      <div>
-                        <h4>{spotlight.label}</h4>
-                        <p>{getSideLabel(spotlight.ownerSide)}</p>
-                      </div>
-                      <strong>{spotlight.value}</strong>
-                    </article>
-                  {/each}
+                  {#if effectiveSummary.topLoreContributors.length === 0}
+                    <p class="post-game-empty-state">{m["sim.postGame.empty.lore"]({})}</p>
+                  {:else}
+                    {#each effectiveSummary.topLoreContributors as spotlight (spotlight.id)}
+                      <article class="post-game-spotlight">
+                        <div>
+                          <h4>{spotlight.label}</h4>
+                          <p>{getSideLabel(spotlight.ownerSide)}</p>
+                        </div>
+                        <strong>{spotlight.value}</strong>
+                      </article>
+                    {/each}
+                  {/if}
                 </div>
               </section>
 
@@ -375,7 +589,7 @@
                   <p>{m["sim.postGame.spotlights.playedDescription"]({})}</p>
                 </header>
                 <div class="post-game-spotlight-list">
-                  {#each summary.mostPlayedCards as spotlight (spotlight.id)}
+                  {#each effectiveSummary.mostPlayedCards as spotlight (spotlight.id)}
                     <article class="post-game-spotlight">
                       <div>
                         <h4>{spotlight.label}</h4>
@@ -389,67 +603,57 @@
 
               <section class="post-game-card">
                 <header>
+                  <h3>{m["sim.postGame.spotlights.challenges"]({})}</h3>
+                  <p>{m["sim.postGame.spotlights.challengesDescription"]({})}</p>
+                </header>
+                <div class="post-game-spotlight-list">
+                  {#if effectiveSummary.mostInvolvedChallengeCards.length === 0}
+                    <p class="post-game-empty-state">{m["sim.postGame.empty.challenges"]({})}</p>
+                  {:else}
+                    {#each effectiveSummary.mostInvolvedChallengeCards as spotlight (spotlight.id)}
+                      <article class="post-game-spotlight">
+                        <div>
+                          <h4>{spotlight.label}</h4>
+                          <p>{getSideLabel(spotlight.ownerSide)}</p>
+                        </div>
+                        <strong>{spotlight.value}</strong>
+                      </article>
+                    {/each}
+                  {/if}
+                </div>
+              </section>
+
+              <section class="post-game-card">
+                <header>
                   <h3>{m["sim.postGame.spotlights.abilities"]({})}</h3>
                   <p>{m["sim.postGame.spotlights.abilitiesDescription"]({})}</p>
                 </header>
                 <div class="post-game-spotlight-list">
-                  {#each summary.mostTriggeredAbilities as spotlight (spotlight.id)}
-                    <article class="post-game-spotlight">
-                      <div>
-                        <h4>{spotlight.label}</h4>
-                        <p>{spotlight.cardLabel ?? getSideLabel(spotlight.ownerSide)}</p>
-                      </div>
-                      <strong>{spotlight.count}</strong>
-                    </article>
-                  {/each}
+                  {#if effectiveSummary.mostTriggeredAbilities.length === 0}
+                    <p class="post-game-empty-state">{m["sim.postGame.empty.abilities"]({})}</p>
+                  {:else}
+                    {#each effectiveSummary.mostTriggeredAbilities as spotlight (spotlight.id)}
+                      <article class="post-game-spotlight">
+                        <div>
+                          <h4>{spotlight.label}</h4>
+                          <p>{spotlight.cardLabel ?? getSideLabel(spotlight.ownerSide)}</p>
+                        </div>
+                        <strong>{spotlight.count}</strong>
+                      </article>
+                    {/each}
+                  {/if}
                 </div>
               </section>
             </div>
           </section>
-        {:else if activeSection === "forensics"}
-          <section class="post-game-panel">
-            <header class="post-game-panel__header">
-              <div>
-                <h3>{m["sim.postGame.forensics.title"]({})}</h3>
-                <p>{m["sim.postGame.forensics.description"]({ entries: summary.totalLogEntries })}</p>
-              </div>
-            </header>
-
-            <div class="post-game-forensics">
-              {#each summary.forensics as entry (entry.id)}
-                <article class="post-game-forensics__entry">
-                  <div class="post-game-forensics__meta">
-                    <Badge variant="outline">
-                      {m["sim.postGame.turnShort"]({ turn: entry.turnNumber })}
-                    </Badge>
-                    <span>{getSideLabel(entry.actorSide)}</span>
-                    <span>{formatClock(entry.timestamp)}</span>
-                    <span>{entry.moveId}</span>
-                  </div>
-                  <p class="post-game-forensics__text">{entry.text}</p>
-
-                  {#if entry.typedMessages.length > 0}
-                    <div class="post-game-forensics__typed">
-                      {#each entry.typedMessages as message (`${entry.id}:${message.key}`)}
-                        <div class="post-game-forensics__typed-message">
-                          <code>{message.key}</code>
-                          <span>{message.text}</span>
-                        </div>
-                      {/each}
-                    </div>
-                  {/if}
-
-                  {#if entry.cardReferences.length > 0}
-                    <div class="post-game-forensics__cards">
-                      {#each entry.cardReferences as card (`${entry.id}:${card.cardId}`)}
-                        <Badge variant="outline">{card.label}</Badge>
-                      {/each}
-                    </div>
-                  {/if}
-                </article>
-              {/each}
-            </div>
-          </section>
+        {:else if activeSection === "timeline"}
+          <PostGameTimelineSection
+            turns={effectiveSummary.turns}
+            totalLogEntries={effectiveSummary.totalLogEntries}
+            viewerSide={effectiveSummary.outcome.viewerSide}
+            initialExpandedTurnNumbers={defaultExpandedTurnNumbers}
+            defaultTechnicalTurnNumbers={defaultTechnicalTurnNumbers}
+          />
         {:else}
           <section class="post-game-panel">
             <header class="post-game-panel__header">
@@ -462,39 +666,50 @@
               {/if}
             </header>
 
-            {#if record}
-              <div class="post-game-server-placeholder">
-                <h4>{m["sim.postGame.serverSummary.title"]({})}</h4>
-                <p>{record.serverSummary.message}</p>
+            {#if !isAuthenticated}
+              <div class="post-game-notes-locked">
+                <Lock class="size-5 text-slate-400" />
+                <h4>{m["sim.postGame.notes.authRequired"]({})}</h4>
+                <p>{m["sim.postGame.notes.authRequiredDetail"]({})}</p>
+              </div>
+              <div class="post-game-notes__actions">
+                <Button
+                  variant="outline"
+                  onclick={() => {
+                    activeSection = "overview";
+                  }}
+                >
+                  {m["sim.postGame.notes.backToOverview"]({})}
+                </Button>
+              </div>
+            {:else}
+              <label class="post-game-notes__label" for="post-game-notes">
+                {m["sim.postGame.notes.fieldLabel"]({})}
+              </label>
+              <textarea
+                id="post-game-notes"
+                class="post-game-notes__textarea"
+                bind:value={noteState.value}
+                rows="10"
+                placeholder={m["sim.postGame.notes.placeholder"]({})}
+              ></textarea>
+              <p class="post-game-notes__status" class:post-game-notes__status--error={Boolean(noteState.error)}>
+                {noteStatus}
+              </p>
+              <div class="post-game-notes__actions">
+                <Button
+                  variant="outline"
+                  onclick={() => {
+                    activeSection = "overview";
+                  }}
+                >
+                  {m["sim.postGame.notes.backToOverview"]({})}
+                </Button>
+                <Button onclick={handleSaveNotes} disabled={noteState.isSaving || noteState.isLoading}>
+                  {m["sim.postGame.notes.save"]({})}
+                </Button>
               </div>
             {/if}
-
-            <label class="post-game-notes__label" for="post-game-notes">
-              {m["sim.postGame.notes.fieldLabel"]({})}
-            </label>
-            <textarea
-              id="post-game-notes"
-              class="post-game-notes__textarea"
-              bind:value={noteState.value}
-              rows="10"
-              placeholder={m["sim.postGame.notes.placeholder"]({})}
-            ></textarea>
-            <p class="post-game-notes__status" class:post-game-notes__status--error={Boolean(noteState.error)}>
-              {noteStatus}
-            </p>
-            <div class="post-game-notes__actions">
-              <Button
-                variant="outline"
-                onclick={() => {
-                  activeSection = "overview";
-                }}
-              >
-                {m["sim.postGame.notes.backToOverview"]({})}
-              </Button>
-              <Button onclick={handleSaveNotes} disabled={noteState.isSaving || noteState.isLoading}>
-                {m["sim.postGame.notes.save"]({})}
-              </Button>
-            </div>
           </section>
         {/if}
       </div>
@@ -503,6 +718,24 @@
         <Button variant="outline" onclick={() => (open = false)}>
           {m["sim.postGame.close"]({})}
         </Button>
+        <Button variant="outline" onclick={handleDownloadReplay} disabled={replayDownloading}>
+          <Download class="mr-1.5 size-3.5" />
+          {replayDownloading
+            ? m["sim.postGame.replay.downloading"]({})
+            : m["sim.postGame.replay.download"]({})}
+        </Button>
+        {#if canSaveReplay}
+          <Button variant="outline" onclick={handleSaveReplay} disabled={replaySaving || replaySaved}>
+            <Save class="mr-1.5 size-3.5" />
+            {#if replaySaved}
+              {m["sim.postGame.replay.saved"]({})}
+            {:else if replaySaving}
+              {m["sim.postGame.replay.saving"]({})}
+            {:else}
+              {m["sim.postGame.replay.save"]({})}
+            {/if}
+          </Button>
+        {/if}
         <Button variant="secondary" onclick={() => (activeSection = "notes")}>
           {m["sim.postGame.notes.open"]({})}
         </Button>
@@ -525,7 +758,7 @@
   :global(.post-game-dialog) {
     width: min(94vw, 74rem);
     max-width: 74rem;
-    height: min(88vh, 54rem);
+    height: min(92vh, 58rem);
     padding: 0;
     display: flex;
     flex-direction: column;
@@ -539,8 +772,14 @@
     box-shadow: 0 32px 100px rgba(2, 6, 23, 0.6);
   }
 
+  .post-game-empty-state {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
   .post-game-header {
-    padding: 1.1rem 1rem 0.95rem;
+    padding: 1rem 1rem 1.05rem;
     background:
       radial-gradient(circle at top left, rgba(14, 165, 233, 0.18), transparent 42%),
       linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.74));
@@ -569,21 +808,50 @@
 
   .post-game-header__title {
     margin: 0.55rem 0 0;
-    font-size: clamp(1.3rem, 2vw, 1.9rem);
+    font-size: clamp(1.4rem, 2.8vw, 2.2rem);
     font-weight: 800;
     color: #f8fafc;
   }
 
   .post-game-header__summary {
     margin: 0.3rem 0 0;
-    font-size: 0.96rem;
-    color: rgba(226, 232, 240, 0.9);
+    font-size: 1rem;
+    color: rgba(226, 232, 240, 0.92);
   }
 
   .post-game-header__reason {
     margin: 0.35rem 0 0;
     color: rgba(148, 163, 184, 0.95);
     line-height: 1.5;
+  }
+
+  .post-game-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: 0.95rem;
+  }
+
+  .post-game-fact {
+    padding: 0.75rem 0.85rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(51, 65, 85, 0.62);
+    background: rgba(2, 6, 23, 0.36);
+  }
+
+  .post-game-fact span {
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.88);
+  }
+
+  .post-game-fact strong {
+    display: block;
+    margin-top: 0.18rem;
+    font-size: 1.05rem;
+    color: #f8fafc;
   }
 
   .post-game-sections {
@@ -651,8 +919,9 @@
 
   .post-game-scorecard,
   .post-game-card,
+  .post-game-turn,
   .post-game-server-placeholder,
-  .post-game-forensics__entry {
+  .post-game-empty-card {
     border: 1px solid rgba(51, 65, 85, 0.85);
     background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.94));
     border-radius: 1.1rem;
@@ -737,6 +1006,10 @@
     padding: 1rem;
   }
 
+  .post-game-card--wide {
+    grid-column: 1 / -1;
+  }
+
   .post-game-card header h3 {
     margin: 0;
     font-size: 0.96rem;
@@ -750,15 +1023,14 @@
   }
 
   .post-game-highlight-list,
-  .post-game-spotlight-list,
-  .post-game-forensics {
+  .post-game-spotlight-list {
     display: grid;
     gap: 0.65rem;
     margin-top: 0.9rem;
   }
 
   .post-game-highlight {
-    padding: 0.85rem;
+    padding: 0.9rem;
     border-radius: 1rem;
     background: rgba(15, 23, 42, 0.72);
     border: 1px solid rgba(51, 65, 85, 0.42);
@@ -777,8 +1049,7 @@
 
   .post-game-highlight p,
   .post-game-spotlight p,
-  .post-game-server-placeholder p,
-  .post-game-forensics__text {
+  .post-game-server-placeholder p {
     margin: 0.28rem 0 0;
     line-height: 1.5;
     color: rgba(226, 232, 240, 0.88);
@@ -788,6 +1059,7 @@
     display: flex;
     gap: 0.45rem;
     flex-wrap: wrap;
+    align-items: center;
   }
 
   .post-game-spotlight {
@@ -813,45 +1085,47 @@
     color: #f8fafc;
   }
 
-  .post-game-forensics__entry {
-    padding: 0.95rem;
-  }
-
-  .post-game-forensics__meta,
-  .post-game-forensics__cards {
-    display: flex;
-    gap: 0.45rem;
-    flex-wrap: wrap;
+  .post-game-inline-chip {
+    display: inline-flex;
     align-items: center;
-  }
-
-  .post-game-forensics__meta {
-    color: rgba(148, 163, 184, 0.92);
-    font-size: 0.78rem;
-  }
-
-  .post-game-forensics__typed {
-    margin-top: 0.75rem;
-    display: grid;
-    gap: 0.45rem;
-  }
-
-  .post-game-forensics__typed-message {
-    display: grid;
-    gap: 0.22rem;
-    padding: 0.75rem;
-    border-radius: 0.95rem;
-    background: rgba(2, 6, 23, 0.54);
-    border: 1px solid rgba(51, 65, 85, 0.48);
-  }
-
-  .post-game-forensics__typed-message code {
+    gap: 0.35rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
     font-size: 0.72rem;
-    color: #bae6fd;
+    font-weight: 700;
   }
 
-  .post-game-forensics__cards {
-    margin-top: 0.75rem;
+  .post-game-inline-chip {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .post-game-notes-locked {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 2.5rem 1.5rem;
+    border-radius: 1.1rem;
+    border: 1px dashed rgba(71, 85, 105, 0.7);
+    background: rgba(15, 23, 42, 0.52);
+    text-align: center;
+  }
+
+  .post-game-notes-locked h4 {
+    margin: 0;
+    font-size: 0.96rem;
+    font-weight: 700;
+    color: #e2e8f0;
+  }
+
+  .post-game-notes-locked p {
+    margin: 0;
+    max-width: 28rem;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    color: rgba(148, 163, 184, 0.92);
   }
 
   .post-game-server-placeholder {
@@ -907,21 +1181,104 @@
     background: rgba(2, 6, 23, 0.96);
   }
 
+  .post-game-actor--self {
+    border-color: rgba(52, 211, 153, 0.45);
+    background: rgba(16, 185, 129, 0.12);
+    color: #d1fae5;
+  }
+
+  .post-game-actor--opponent {
+    border-color: rgba(251, 113, 133, 0.45);
+    background: rgba(244, 63, 94, 0.12);
+    color: #ffe4e6;
+  }
+
+  .post-game-actor--player-one {
+    border-color: rgba(56, 189, 248, 0.45);
+    background: rgba(14, 165, 233, 0.12);
+    color: #e0f2fe;
+  }
+
+  .post-game-actor--player-two {
+    border-color: rgba(251, 191, 36, 0.45);
+    background: rgba(245, 158, 11, 0.12);
+    color: #fef3c7;
+  }
+
+  .post-game-actor--system {
+    border-color: rgba(148, 163, 184, 0.35);
+    background: rgba(100, 116, 139, 0.12);
+    color: #e2e8f0;
+  }
+
   @media (max-width: 900px) {
     :global(.post-game-dialog) {
-      width: min(96vw, 44rem);
-      height: min(92vh, 56rem);
+      width: min(96vw, 46rem);
+      height: min(95vh, 60rem);
     }
 
     .post-game-scoreboard,
     .post-game-overview-grid,
     .post-game-metrics,
-    .post-game-counters {
+    .post-game-counters,
+    .post-game-facts {
       grid-template-columns: 1fr;
     }
   }
 
   @media (max-width: 640px) {
+    :global(.post-game-dialog) {
+      width: 100vw;
+      max-width: 100vw;
+      height: 100dvh;
+      border-radius: 0;
+    }
+
+    .post-game-header {
+      padding-top: calc(0.75rem + env(safe-area-inset-top));
+      padding-bottom: 0.7rem;
+    }
+
+    .post-game-header__eyebrow {
+      gap: 0.4rem;
+    }
+
+    .post-game-header__title {
+      margin-top: 0.4rem;
+      font-size: clamp(1.1rem, 5.6vw, 1.45rem);
+      line-height: 1.12;
+    }
+
+    .post-game-header__summary {
+      margin-top: 0.2rem;
+      font-size: 0.88rem;
+    }
+
+    .post-game-header__reason {
+      margin-top: 0.2rem;
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
+    .post-game-facts {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.45rem;
+      margin-top: 0.65rem;
+    }
+
+    .post-game-fact {
+      padding: 0.5rem 0.45rem;
+      border-radius: 0.75rem;
+    }
+
+    .post-game-fact span {
+      font-size: 0.58rem;
+    }
+
+    .post-game-fact strong {
+      font-size: 0.88rem;
+    }
+
     .post-game-header,
     .post-game-sections,
     .post-game-body,
@@ -932,16 +1289,33 @@
 
     .post-game-sections {
       gap: 0.45rem;
+      padding-top: 0.65rem;
+      padding-bottom: 0.65rem;
     }
 
     .post-game-sections__button {
-      min-height: 2.45rem;
-      font-size: 0.74rem;
+      min-height: 2.2rem;
+      font-size: 0.7rem;
+      gap: 0.3rem;
+    }
+
+    .post-game-body {
+      padding-bottom: 0.7rem;
+    }
+
+    .post-game-panel {
+      padding-top: 0.75rem;
     }
 
     .post-game-notes__actions,
     :global(.post-game-footer) {
       justify-content: stretch;
+    }
+
+    :global(.post-game-footer) {
+      gap: 0.45rem;
+      padding-top: 0.65rem;
+      padding-bottom: calc(0.65rem + env(safe-area-inset-bottom));
     }
 
     .post-game-notes__actions :global([data-slot="button"]),

@@ -42,7 +42,7 @@ function resolveOnlyBagEffect(
 ): void {
   const [bagEffect] = player.getBagEffects();
   expect(bagEffect).toBeDefined();
-  expect(player.resolveBag(bagEffect!.id, params)).toBeSuccessfulCommand();
+  expect(player.resolvePendingByCard(bagEffect!.sourceId, params)).toBeSuccessfulCommand();
 }
 
 function getPendingChoicePlayerId(testEngine: LorcanaMultiplayerTestEngine): string | undefined {

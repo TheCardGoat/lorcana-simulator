@@ -38,7 +38,7 @@ export const mickeyMouseSnowboardAce: CharacterCard = {
         target: "EACH_OPPONENT",
         type: "discard",
       },
-      name: "SLIPPERY SLOPE When you play this character and",
+      name: "SLIPPERY SLOPE",
       trigger: {
         event: "play",
         on: "SELF",
@@ -55,7 +55,7 @@ export const mickeyMouseSnowboardAce: CharacterCard = {
         target: "EACH_OPPONENT",
         type: "discard",
       },
-      name: "SLIPPERY SLOPE When you play this character and",
+      name: "SLIPPERY SLOPE",
       trigger: {
         event: "leave-play",
         on: "SELF",

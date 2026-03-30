@@ -19,7 +19,7 @@ describe("Winnie the Pooh - Hungry Bear (Epic)", () => {
     // Resolve the triggered ability via bag
     expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(winnieThePoohHungryBearEpic, {
         targets: [potOfHoney],
       }),
     ).toBeSuccessfulCommand();
@@ -41,7 +41,7 @@ describe("Winnie the Pooh - Hungry Bear (Epic)", () => {
     // Resolve the triggered ability
     expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(winnieThePoohHungryBearEpic, {
         targets: [snowFort],
       }),
     ).toBeSuccessfulCommand();

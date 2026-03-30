@@ -26,7 +26,7 @@ describe("Darkwing's Chair Set", () => {
     expect(testEngine.asPlayerOne().playCard(darkwingsChairSet)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(darkwingsChairSet),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(secretInk)).toBe("inkwell");
@@ -43,7 +43,7 @@ describe("Darkwing's Chair Set", () => {
     expect(testEngine.asPlayerOne().playCard(darkwingsChairSet)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(darkwingsChairSet, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

@@ -47,10 +47,32 @@ export const sneezyVeryAllergic: CharacterCard = {
       text: "AH-CHOO! Whenever you play this character or another Seven Dwarfs character, you may give chosen character -1 {S} this turn.",
       trigger: {
         event: "play",
+        on: "SELF",
+        timing: "whenever",
+      },
+      type: "triggered",
+    },
+    {
+      effect: {
+        type: "optional",
+        effect: {
+          type: "modify-stat",
+          stat: "strength",
+          modifier: -1,
+          target: "CHOSEN_CHARACTER",
+          duration: "this-turn",
+        },
+      },
+      id: "1g9-2",
+      name: "AH-CHOO!",
+      text: "AH-CHOO! Whenever you play this character or another Seven Dwarfs character, you may give chosen character -1 {S} this turn.",
+      trigger: {
+        event: "play",
         on: {
           controller: "you",
           cardType: "character",
           classification: "Seven Dwarfs",
+          excludeSelf: true,
         },
         timing: "whenever",
       },

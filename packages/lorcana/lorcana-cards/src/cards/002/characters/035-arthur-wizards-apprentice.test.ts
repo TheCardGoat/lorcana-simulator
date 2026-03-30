@@ -24,7 +24,7 @@ describe("Arthur - Wizard's Apprentice", () => {
 
       expect(testEngine.asPlayerOne().quest(arthurWizardsApprentice)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(arthurWizardsApprentice),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -49,7 +49,7 @@ describe("Arthur - Wizard's Apprentice", () => {
 
       expect(testEngine.asPlayerOne().quest(arthurWizardsApprentice)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(arthurWizardsApprentice, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -67,7 +67,7 @@ describe("Arthur - Wizard's Apprentice", () => {
 
       expect(testEngine.asPlayerOne().quest(arthurWizardsApprentice)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(arthurWizardsApprentice),
       ).toBeSuccessfulCommand();
 
       // Only 1 lore from quest

@@ -57,7 +57,9 @@ describe("Kuzco - Impulsive Llama", () => {
       // The triggered ability is in the bag - player one resolves it
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(kuzcoImpulsiveLlama),
+      ).toBeSuccessfulCommand();
 
       // Opponent must choose one character to put on the bottom of their deck
       expect(testEngine.asPlayerTwo()).toHavePendingEffectCount(1);
@@ -92,7 +94,9 @@ describe("Kuzco - Impulsive Llama", () => {
 
       // Resolve the bag (triggered ability)
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(kuzcoImpulsiveLlama),
+      ).toBeSuccessfulCommand();
 
       // Resolve the mandatory put-on-bottom choice
       expect(
@@ -132,7 +136,9 @@ describe("Kuzco - Impulsive Llama", () => {
 
       // Resolve the bag (triggered ability)
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(kuzcoImpulsiveLlama),
+      ).toBeSuccessfulCommand();
 
       // Resolve the mandatory put-on-bottom choice
       expect(
@@ -177,7 +183,9 @@ describe("Kuzco - Impulsive Llama", () => {
     expect(testEngine.asPlayerOne().playCard(kuzcoImpulsiveLlama)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(kuzcoImpulsiveLlama),
+    ).toBeSuccessfulCommand();
 
     // Opponent chooses their own character
     expect(
@@ -208,7 +216,9 @@ describe("Kuzco - Impulsive Llama", () => {
     expect(testEngine.asPlayerOne().playCard(kuzcoImpulsiveLlama)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(kuzcoImpulsiveLlama),
+    ).toBeSuccessfulCommand();
 
     // The put-on-bottom should be mandatory when opponent has characters
     expect(testEngine.asPlayerTwo()).toHavePendingEffectCount(1);
@@ -257,7 +267,9 @@ describe("Kuzco - Impulsive Llama", () => {
 
     // Resolve the triggered ability
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(kuzcoImpulsiveLlama),
+    ).toBeSuccessfulCommand();
 
     // Opponent must choose their Ward character (it's their only one)
     // Ward should not prevent self-targeting

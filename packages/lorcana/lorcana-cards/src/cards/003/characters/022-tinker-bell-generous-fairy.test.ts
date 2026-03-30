@@ -41,7 +41,9 @@ describe("Tinker Bell - Generous Fairy (Set 3)", () => {
     expect(testEngine.asPlayerOne().playCard(tinkerBellGenerousFairy)).toBeSuccessfulCommand();
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(tinkerBellGenerousFairy),
+    ).toBeSuccessfulCommand();
 
     expect(
       testEngine.asPlayerOne().resolveNextPending({

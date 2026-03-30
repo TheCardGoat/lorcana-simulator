@@ -5,10 +5,11 @@
 	import { authSession } from "$lib/auth/session.svelte.js";
 
 	let { open = $bindable(false) }: { open: boolean } = $props();
+	let joinDiscordServer = $state(true);
 
 	async function handleDiscordSignIn() {
 		try {
-			await authSession.signInWithDiscord();
+			await authSession.signInWithDiscord({ joinGuild: joinDiscordServer });
 		} catch (error) {
 			console.error("Discord sign-in failed:", error);
 		}
@@ -64,6 +65,26 @@
 					</a>
 					{m["sim.auth.signIn.termsOutro"]({})}
 				</p>
+
+				<label
+					class="border-border/70 bg-muted/20 flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 text-left"
+					for="discord-server-opt-in"
+				>
+					<input
+						id="discord-server-opt-in"
+						bind:checked={joinDiscordServer}
+						class="mt-1 size-4 rounded border-white/20 bg-transparent accent-[#5865F2]"
+						type="checkbox"
+					/>
+					<span class="space-y-1">
+						<span class="text-sm font-medium">
+							{m["sim.auth.signIn.joinDiscordLabel"]({})}
+						</span>
+						<span class="text-muted-foreground block text-xs leading-5">
+							{m["sim.auth.signIn.joinDiscordDescription"]({})}
+						</span>
+					</span>
+				</label>
 			</div>
 		</Dialog.Content>
 	</Dialog.Portal>

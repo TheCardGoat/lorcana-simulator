@@ -30,7 +30,10 @@ describe("Sven - Reindeer Steed", () => {
 
       // Accept the optional ability and provide the target in the same call
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [exertedAlly] }),
+        testEngine.asPlayerOne().resolvePendingByCard(svenReindeerSteed, {
+          resolveOptional: true,
+          targets: [exertedAlly],
+        }),
       ).toBeSuccessfulCommand();
 
       // The ally should now be readied
@@ -48,7 +51,10 @@ describe("Sven - Reindeer Steed", () => {
       expect(testEngine.asPlayerOne().playCard(svenReindeerSteed)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [exertedAlly] }),
+        testEngine.asPlayerOne().resolvePendingByCard(svenReindeerSteed, {
+          resolveOptional: true,
+          targets: [exertedAlly],
+        }),
       ).toBeSuccessfulCommand();
 
       // The ally should be ready but have cant-quest-or-challenge restriction
@@ -68,7 +74,9 @@ describe("Sven - Reindeer Steed", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(svenReindeerSteed, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // The ally should still be exerted
@@ -89,7 +97,10 @@ describe("Sven - Reindeer Steed", () => {
       expect(testEngine.asPlayerOne().playCard(svenReindeerSteed)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [exertedAlly] }),
+        testEngine.asPlayerOne().resolvePendingByCard(svenReindeerSteed, {
+          resolveOptional: true,
+          targets: [exertedAlly],
+        }),
       ).toBeSuccessfulCommand();
 
       // Restriction should exist this turn

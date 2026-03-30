@@ -36,7 +36,7 @@ describe("March Hare - Hare-Brained Eccentric", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(marchHareHarebrainedEccentric, {
           resolveOptional: true,
           targets: [damagedCharacter],
         }),

@@ -37,9 +37,10 @@ describe("Hades - Fast Talker", () => {
       expect(testEngine.asPlayerOne().playCard(hadesFastTalker)).toBeSuccessfulCommand();
 
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ resolveOptional: true, targets: [damagedAlly, banishableOpponent] }),
+        testEngine.asPlayerOne().resolvePendingByCard(hadesFastTalker, {
+          resolveOptional: true,
+          targets: [damagedAlly, banishableOpponent],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardByInstance(damagedAlly).damage).toBe(2);
@@ -63,7 +64,7 @@ describe("Hades - Fast Talker", () => {
       expect(testEngine.asPlayerOne().playCard(hadesFastTalker)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(hadesFastTalker, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardByInstance(damagedAlly).damage).toBe(0);

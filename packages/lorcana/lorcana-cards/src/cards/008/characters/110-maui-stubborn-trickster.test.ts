@@ -131,7 +131,9 @@ describe("Maui - Stubborn Trickster", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
-      expect(testEngine.asPlayerTwo().resolveNextBag({ choiceIndex: 0 })).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(mauiStubbornTrickster, { choiceIndex: 0 }),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(opposingCharacter1)).toBe(2);
       expect(testEngine.asPlayerOne().getDamage(opposingCharacter2)).toBe(2);
@@ -157,7 +159,9 @@ describe("Maui - Stubborn Trickster", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
-      expect(testEngine.asPlayerTwo().resolveNextBag({ choiceIndex: 1 })).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(mauiStubbornTrickster, { choiceIndex: 1 }),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(opposingItem1)).toBe("discard");
       expect(testEngine.asPlayerOne().getCardZone(opposingItem2)).toBe("discard");
@@ -183,7 +187,9 @@ describe("Maui - Stubborn Trickster", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
-      expect(testEngine.asPlayerTwo().resolveNextBag({ choiceIndex: 2 })).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(mauiStubbornTrickster, { choiceIndex: 2 }),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(opposingLocation1)).toBe("discard");
       expect(testEngine.asPlayerOne().getCardZone(opposingLocation2)).toBe("discard");

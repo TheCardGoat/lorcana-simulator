@@ -45,7 +45,9 @@ describe("Baloo - Carefree Bear", () => {
       expect(testEngine.asPlayerOne().playCard(balooCarefreeBear)).toBeSuccessfulCommand();
 
       // Choose mode 0: Each player draws a card
-      expect(testEngine.asPlayerOne().resolveNextBag({ choiceIndex: 0 })).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(balooCarefreeBear, { choiceIndex: 0 }),
+      ).toBeSuccessfulCommand();
 
       // Both players should have drawn a card
       expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
@@ -66,7 +68,9 @@ describe("Baloo - Carefree Bear", () => {
       expect(testEngine.asPlayerOne().playCard(balooCarefreeBear)).toBeSuccessfulCommand();
 
       // Choose mode 1: Each player chooses and discards a card
-      expect(testEngine.asPlayerOne().resolveNextBag({ choiceIndex: 1 })).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(balooCarefreeBear, { choiceIndex: 1 }),
+      ).toBeSuccessfulCommand();
 
       // Player one should choose and discard a card from hand
       expect(

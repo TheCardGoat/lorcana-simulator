@@ -44,7 +44,7 @@ describe("Owl - Pirate Lookout", () => {
       // Resolve the triggered ability, choosing the opposing character
       const oppCharId = testEngine.findCardInstanceId(opponentCharacter, "play", "player_two");
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [oppCharId] }),
+        testEngine.asPlayerOne().resolvePendingByCard(owlPirateLookout, { targets: [oppCharId] }),
       ).toBeSuccessfulCommand();
 
       // Opposing character should have -1 strength
@@ -70,7 +70,7 @@ describe("Owl - Pirate Lookout", () => {
 
       const oppCharId = testEngine.findCardInstanceId(opponentCharacter, "play", "player_two");
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [oppCharId] }),
+        testEngine.asPlayerOne().resolvePendingByCard(owlPirateLookout, { targets: [oppCharId] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(opponentCharacter)).toBe(initialStrength - 1);

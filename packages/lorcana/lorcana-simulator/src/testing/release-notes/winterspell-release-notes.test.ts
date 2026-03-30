@@ -302,7 +302,7 @@ describe("Winterspell Set Release Notes", () => {
           PLAYER_ONE,
         );
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(bagEffects[0]!.sourceId, {
             resolveOptional: true,
             targets: [flynnId],
           }),
@@ -362,7 +362,9 @@ describe("Winterspell Set Release Notes", () => {
           expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
           // Resolve Willow's start-of-turn triggered cost reduction
-          expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+          expect(
+            testEngine.asPlayerOne().resolvePendingByCard(grandmotherWillowAncientAdvisor),
+          ).toBeSuccessfulCommand();
 
           // Now cheapCharacter should cost 2 (3 - 1 discount)
           expect(testEngine.asPlayerOne().canPlayCard(cheapCharacter)).toBe(true);
@@ -487,7 +489,7 @@ describe("Winterspell Set Release Notes", () => {
           const bagEffects = testEngine.asPlayerOne().getBagEffects();
           if (bagEffects.length > 0) {
             expect(
-              testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+              testEngine.asPlayerOne().resolvePendingByCard(bagEffects[0]!.sourceId, {
                 targets: [allyId],
               }),
             ).toBeSuccessfulCommand();

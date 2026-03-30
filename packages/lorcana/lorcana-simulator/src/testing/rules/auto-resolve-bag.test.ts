@@ -264,9 +264,11 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerTwo().getCard(simbaProtectiveCub)?.hasReckless).toBe(false);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-        targets: [simbaId],
-      }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          targets: [simbaId],
+        }),
     ).toBeSuccessfulCommand();
   });
 
@@ -291,9 +293,11 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(quester.lore);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-        resolveOptional: true,
-      }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          resolveOptional: true,
+        }),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(quester.lore + 1);
   });
@@ -329,7 +333,7 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(donBag).toBeDefined();
 
     expect(
-      testEngine.asPlayerOne().resolveBag(donBag!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(donBag!.sourceId, {
         targets: [simbaId],
       }),
     ).toBeSuccessfulCommand();
@@ -355,7 +359,9 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerTwo().getLore(PLAYER_TWO)).toBe(0);
 
     expect(
-      testEngine.asPlayerTwo().resolveBag(testEngine.asPlayerTwo().getBagEffects()[0]!.id),
+      testEngine
+        .asPlayerTwo()
+        .resolvePendingByCard(testEngine.asPlayerTwo().getBagEffects()[0]!.sourceId),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().getLore(PLAYER_TWO)).toBe(1);
   });

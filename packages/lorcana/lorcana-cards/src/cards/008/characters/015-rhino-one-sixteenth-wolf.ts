@@ -35,7 +35,7 @@ export const rhinoOnesixteenthWolf: CharacterCard = {
       effect: {
         modifier: -1,
         stat: "strength",
-        target: "CHOSEN_CHARACTER",
+        target: "CHOSEN_OPPOSING_CHARACTER",
         type: "modify-stat",
         duration: "until-start-of-next-turn",
       },

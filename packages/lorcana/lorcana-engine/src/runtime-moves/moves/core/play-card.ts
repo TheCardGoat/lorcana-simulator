@@ -32,6 +32,8 @@ import {
   flattenNormalizedTargetSelection,
   normalizeTargetDescriptor,
   resolveCandidateTargets,
+  resolveEffectTargets,
+  resolveTargetPlayerIds,
   validateAndNormalizeTargetSelection,
   type ActionTargetResolutionContext,
   type ActionSelectionZone,
@@ -94,6 +96,9 @@ import {
   hasOpponentStaticPlayRestriction,
   hasStaticCardRestriction,
 } from "../../rules/static-ability-utils";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
+import { buildStaticEffectRegistry } from "../../../rules/static-effect-registry";
+import type { StaticEffectRegistry } from "../../../rules/static-effect-registry";
 import { retargetContinuousEffects } from "../../effects/continuous-effects";
 
 function validateInitialActionTargetSelection(
@@ -122,6 +127,160 @@ function validateInitialActionTargetSelection(
     },
     context,
   );
+}
+
+function appendUniqueLogTargets(
+  targets: Array<CardInstanceId | PlayerId>,
+  nextTargets: readonly (CardInstanceId | PlayerId)[] | undefined,
+): void {
+  if (!nextTargets || nextTargets.length === 0) {
+    return;
+  }
+
+  const seen = new Set(targets);
+  for (const targetId of nextTargets) {
+    if (seen.has(targetId)) {
+      continue;
+    }
+
+    seen.add(targetId);
+    targets.push(targetId);
+  }
+}
+
+function getSelectedPlayerTargets(
+  ctx: Pick<PlayCardExecutionContext, "framework">,
+  resolutionInput: Pick<ActionResolutionInput, "targets">,
+): PlayerId[] | undefined {
+  const playerIds = new Set(ctx.framework.state.playerIds as PlayerId[]);
+  const rawTargets = Array.isArray(resolutionInput.targets)
+    ? resolutionInput.targets
+    : resolutionInput.targets !== undefined
+      ? [resolutionInput.targets]
+      : [];
+  const selectedPlayerTargets = rawTargets.filter(
+    (targetId): targetId is PlayerId =>
+      typeof targetId === "string" && playerIds.has(targetId as PlayerId),
+  );
+
+  return selectedPlayerTargets.length > 0 ? selectedPlayerTargets : undefined;
+}
+
+function collectImmediateActionLogTargetsForEffect(
+  effect: unknown,
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  resolutionInput: ActionResolutionInput,
+): Array<CardInstanceId | PlayerId> {
+  if (!effect || typeof effect !== "object") {
+    return [];
+  }
+
+  const effectRecord = effect as Record<string, unknown>;
+  const effectType = effectRecord.type;
+
+  if (effectType === "sequence") {
+    const sequenceSteps = Array.isArray(effectRecord.steps)
+      ? effectRecord.steps
+      : Array.isArray(effectRecord.effects)
+        ? effectRecord.effects
+        : [];
+    return sequenceSteps.flatMap((step) =>
+      collectImmediateActionLogTargetsForEffect(step, ctx, cardPlayed, resolutionInput),
+    );
+  }
+
+  if (effectType === "choice" || effectType === "or") {
+    const options = Array.isArray(effectRecord.options)
+      ? effectRecord.options
+      : Array.isArray(effectRecord.choices)
+        ? effectRecord.choices
+        : [];
+    if (
+      typeof resolutionInput.choiceIndex !== "number" ||
+      resolutionInput.choiceIndex < 0 ||
+      resolutionInput.choiceIndex >= options.length
+    ) {
+      return [];
+    }
+
+    return collectImmediateActionLogTargetsForEffect(
+      options[resolutionInput.choiceIndex],
+      ctx,
+      cardPlayed,
+      resolutionInput,
+    );
+  }
+
+  if (effectType === "optional") {
+    if (resolutionInput.resolveOptional !== true) {
+      return [];
+    }
+
+    return collectImmediateActionLogTargetsForEffect(
+      effectRecord.effect,
+      ctx,
+      cardPlayed,
+      resolutionInput,
+    );
+  }
+
+  if (effectType === "for-each") {
+    return collectImmediateActionLogTargetsForEffect(
+      effectRecord.effect,
+      ctx,
+      cardPlayed,
+      resolutionInput,
+    );
+  }
+
+  if (!("target" in effectRecord)) {
+    return [];
+  }
+
+  const logTargets: Array<CardInstanceId | PlayerId> = [];
+  appendUniqueLogTargets(
+    logTargets,
+    resolveEffectTargets(
+      ctx,
+      cardPlayed,
+      effectRecord.target,
+      resolutionInput.targets,
+      resolutionInput.eventSnapshot,
+    ),
+  );
+  appendUniqueLogTargets(
+    logTargets,
+    resolveTargetPlayerIds(ctx, effectRecord.target, {
+      controllerId: cardPlayed.playerId,
+      selectedPlayerIds: getSelectedPlayerTargets(ctx, resolutionInput),
+      sourceCardId: cardPlayed.cardId,
+    }),
+  );
+
+  return logTargets;
+}
+
+function collectImmediateActionLogTargets(
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  actionCard: Extract<LorcanaCard, { cardType: "action" }>,
+  resolutionInput: ActionResolutionInput,
+): Array<CardInstanceId | PlayerId> {
+  const targets: Array<CardInstanceId | PlayerId> = [];
+
+  for (const ability of actionCard.abilities ?? []) {
+    if (ability.type !== "action") {
+      continue;
+    }
+
+    appendUniqueLogTargets(
+      targets,
+      collectImmediateActionLogTargetsForEffect(ability.effect, ctx, cardPlayed, resolutionInput),
+    );
+  }
+
+  return targets;
 }
 
 /**
@@ -182,6 +341,10 @@ function entersPlayExerted(
   };
   const getDefinitionByInstanceId = (instanceId: string) =>
     ctx.cards.getDefinition(instanceId) as LorcanaCard | undefined;
+  const registry = buildStaticEffectRegistry(
+    createProjectionState(ctx.framework.state, ctx.G),
+    getDefinitionByInstanceId,
+  );
 
   // Check the card's own static self-restriction (e.g., "this character enters play exerted")
   const selfRestricted = (cardDef.abilities ?? []).some((ability) => {
@@ -213,7 +376,7 @@ function entersPlayExerted(
     state: staticAbilityState,
     cardId,
     restriction: "enters-play-exerted",
-    getDefinitionByInstanceId,
+    registry,
   });
 }
 
@@ -484,6 +647,7 @@ function computeCostReduction(
   cardId: CardInstanceId,
   cardDef: LorcanaCard,
   currentTurn: number,
+  registry: StaticEffectRegistry,
   playMethod?: "shift" | "standard",
 ): CostReductionApplication {
   return getAppliedCostReductions({
@@ -495,14 +659,19 @@ function computeCostReduction(
     actorPlayerId: playerId,
     getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id) as LorcanaCard | undefined,
     playMethod,
+    registry,
   });
 }
 
-function computeCostIncrease(ctx: StaticCostReductionContext, cardDef: LorcanaCard): number {
+function computeCostIncrease(
+  ctx: StaticCostReductionContext,
+  cardDef: LorcanaCard,
+  registry: StaticEffectRegistry,
+): number {
   return getStaticCostIncreaseAmount({
     definition: cardDef,
     state: createProjectionState(ctx.framework.state, ctx.G),
-    getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id) as LorcanaCard | undefined,
+    registry,
   });
 }
 
@@ -630,13 +799,14 @@ function getPlayRestrictionError(
     };
     const getDefinitionByInstanceId = (instanceId: string) =>
       ctx.cards.getDefinition(instanceId) as LorcanaCard | undefined;
+    const registry = getOrBuildMoveRegistry(ctx);
 
     if (
       hasOpponentStaticPlayRestriction({
         state: staticAbilityState,
         playerId,
         restriction: "cant-play-actions",
-        getDefinitionByInstanceId,
+        registry,
       })
     ) {
       return {
@@ -768,6 +938,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
 
     const currentPlayer = ctx.framework.state.currentPlayer!;
     const isPreflight = ctx.validationMode === "preflight";
+    const registry = getOrBuildMoveRegistry(ctx);
 
     // Check card is in hand, or can be played from under an item this turn.
     const handCards = ctx.framework.zones.getCards({
@@ -847,9 +1018,10 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       cardId,
       cardDef,
       currentTurn,
+      registry,
       params.cost === "standard" || params.cost === "shift" ? params.cost : undefined,
     );
-    const costIncrease = computeCostIncrease(ctx, cardDef);
+    const costIncrease = computeCostIncrease(ctx, cardDef, registry);
     const reducedCardCost = Math.max(
       0,
       cardDef.cost - costReduction.reductionAmount + costIncrease,
@@ -914,6 +1086,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             cardId,
             cardDef,
             currentTurn,
+            registry,
             "shift",
           );
           const costValidation = validateBasicCost(
@@ -977,7 +1150,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             state: ctx.framework.state as Parameters<typeof hasStaticCardRestriction>[0]["state"],
             cardId: singer,
             restriction: "cant-sing",
-            getDefinitionByInstanceId: (cardId) => getCardDefinitionFromContext(ctx, cardId),
+            registry,
           }) ||
           hasTemporaryRestriction(
             ctx.cards.require(singer).meta as Parameters<typeof hasTemporaryRestriction>[0],
@@ -1010,6 +1183,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           singerDef,
           getDefinitionByInstanceId: (cardId) => getCardDefinitionFromContext(ctx, cardId),
           G: ctx.G,
+          registry,
         });
         if (singerThreshold == null || singerThreshold < cardDef.cost) {
           return fail(
@@ -1065,7 +1239,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
               state: ctx.framework.state as Parameters<typeof hasStaticCardRestriction>[0]["state"],
               cardId: singer,
               restriction: "cant-sing",
-              getDefinitionByInstanceId: (cardId) => getCardDefinitionFromContext(ctx, cardId),
+              registry,
             }) ||
             hasTemporaryRestriction(
               ctx.cards.require(singer).meta as Parameters<typeof hasTemporaryRestriction>[0],
@@ -1086,6 +1260,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             singerDef,
             getDefinitionByInstanceId: (cardId) => getCardDefinitionFromContext(ctx, cardId),
             G: ctx.G,
+            registry,
           });
           if (singerThreshold == null) {
             return fail(`Singer ${singer} has no sing threshold`, "INVALID_SINGER", cardDef);
@@ -1401,6 +1576,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
     const cardName = formatLorcanaCardName(cardDef) ?? "Unknown Card";
     const currentTurn = ctx.framework.state.status.turn ?? 1;
     const playMethod = cost === "standard" || cost === "shift" ? cost : undefined;
+    const executeRegistry = getOrBuildMoveRegistry(ctx);
     const computedCostReduction = computeCostReduction(
       ctx,
       ctx.G.turnMetadata,
@@ -1408,6 +1584,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       cardId,
       cardDef,
       currentTurn,
+      executeRegistry,
       playMethod,
     );
     const standardCostReduction =
@@ -1420,6 +1597,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             cardId,
             cardDef,
             currentTurn,
+            executeRegistry,
             "standard",
           );
     const costReduction = computedCostReduction;
@@ -1496,6 +1674,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             cardId,
             cardDef,
             currentTurn,
+            executeRegistry,
             "shift",
           );
           const payResult = payBasicCost(
@@ -1651,15 +1830,37 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       },
     });
     ctx.framework.log(
-      createLorcanaLogProjection(
-        "lorcana.move.playCard",
-        {
-          playerId: currentPlayer,
-          cardId,
-        },
-        { mode: "PUBLIC" },
-        "action",
-      ),
+      cost === "shift" && shiftTargetId
+        ? createLorcanaLogProjection(
+            "lorcana.move.playCard.shift",
+            {
+              playerId: currentPlayer,
+              cardId,
+              shiftTargetId,
+            },
+            { mode: "PUBLIC" },
+            "action",
+          )
+        : singerIds && singerIds.length > 0
+          ? createLorcanaLogProjection(
+              "lorcana.move.playCard.sing",
+              {
+                playerId: currentPlayer,
+                cardId,
+                singerIds,
+              },
+              { mode: "PUBLIC" },
+              "action",
+            )
+          : createLorcanaLogProjection(
+              "lorcana.move.playCard",
+              {
+                playerId: currentPlayer,
+                cardId,
+              },
+              { mode: "PUBLIC" },
+              "action",
+            ),
     );
 
     if (cardDef.cardType === "action") {
@@ -1739,6 +1940,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             playerId: currentPlayer,
             subjectCardId: singerId,
             triggerSourceCardId: cardId,
+            triggerCandidates: snapshotTriggeredCandidatesForCard(ctx, singerId),
           }),
         );
       }
@@ -1752,7 +1954,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           ? "Song effect begins resolution"
           : "Action effect begins resolution",
       });
-      resolveActionCardEffects(ctx, cardPlayedPayload, cardDef, {
+      const actionResolutionInput = {
         targets: flattenNormalizedTargetSelection(normalizedSelection.selection),
         amount: params.amount as ActionResolutionInput["amount"],
         namedCard: typeof params.namedCard === "string" ? params.namedCard.trim() : undefined,
@@ -1765,7 +1967,28 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           autoExertBodyguardOnNestedPlay: params.resolveOptional === true,
         },
         resolveOptional: params.resolveOptional,
-      });
+      } satisfies ActionResolutionInput;
+      const immediateLogTargets = collectImmediateActionLogTargets(
+        ctx,
+        cardPlayedPayload,
+        cardDef,
+        actionResolutionInput,
+      );
+      if (immediateLogTargets.length > 0) {
+        ctx.framework.log(
+          createLorcanaLogProjection(
+            "lorcana.effect.resolve.targetSelection",
+            {
+              playerId: currentPlayer,
+              sourceCardId: cardId,
+              targets: immediateLogTargets,
+            },
+            { mode: "PUBLIC" },
+            "action",
+          ),
+        );
+      }
+      resolveActionCardEffects(ctx, cardPlayedPayload, cardDef, actionResolutionInput);
       if (hasPendingActionEffectResolution(ctx)) {
         traceLorcanaRuntimeStep({
           kind: "effect.resolution.suspended",
@@ -1919,6 +2142,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             playerId: currentPlayer,
             subjectCardId: singerId,
             triggerSourceCardId: cardId,
+            triggerCandidates: snapshotTriggeredCandidatesForCard(ctx, singerId),
           }),
         );
       }
@@ -1958,6 +2182,8 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       isReadyAndNotDrying(ctx.cards.require(cardId).meta),
     );
 
+    const availableRegistry = getOrBuildMoveRegistry(ctx);
+
     for (const handCardId of handCards) {
       const cardDef = getCardDefinitionForEnumeration(handCardId, ctx);
       if (!cardDef) {
@@ -1972,9 +2198,10 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         handCardId as CardInstanceId,
         cardDef,
         currentTurn,
+        availableRegistry,
         "standard",
       );
-      const costIncrease = computeCostIncrease(ctx, cardDef);
+      const costIncrease = computeCostIncrease(ctx, cardDef, availableRegistry);
       const reducedCardCost = Math.max(
         0,
         cardDef.cost - standardCostReduction.reductionAmount + costIncrease,
@@ -1991,6 +2218,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         handCardId as CardInstanceId,
         cardDef,
         currentTurn,
+        availableRegistry,
         "shift",
       );
       const shiftRules = getShiftRules(cardDef);
@@ -2039,7 +2267,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             state: ctx.framework.state as Parameters<typeof hasStaticCardRestriction>[0]["state"],
             cardId: candidateId,
             restriction: "cant-sing",
-            getDefinitionByInstanceId: (cardId) => getCardDefinitionForEnumeration(cardId, ctx),
+            registry: availableRegistry,
           }) ||
           hasTemporaryRestriction(
             ctx.cards.require(candidateId).meta as Parameters<typeof hasTemporaryRestriction>[0],
@@ -2056,6 +2284,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           singerDef,
           getDefinitionByInstanceId: (cardId) => getCardDefinitionForEnumeration(cardId, ctx),
           G: ctx.G,
+          registry: availableRegistry,
         });
         return singerThreshold != null && singerThreshold >= cardDef.cost;
       });

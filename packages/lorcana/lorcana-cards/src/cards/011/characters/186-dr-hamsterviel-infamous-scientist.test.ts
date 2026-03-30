@@ -133,7 +133,7 @@ describe("Dr. Hamsterviel - Infamous Scientist", () => {
 
     const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
     expect(
-      testEngine.asPlayerOne().resolveBag(bagId, {
+      testEngine.asPlayerOne().resolvePendingByCard(drHamstervielInfamousScientist, {
         targets: [opponentCharacter],
       }),
     ).toBeSuccessfulCommand();

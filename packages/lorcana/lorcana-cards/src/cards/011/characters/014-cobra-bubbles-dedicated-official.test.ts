@@ -38,7 +38,7 @@ describe("Cobra Bubbles - Dedicated Official", () => {
     expect(testEngine.asPlayerOne().quest(cobraBubblesDedicatedOfficial)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(cobraBubblesDedicatedOfficial, {
         targets: [opposingCharacter],
       }),
     ).toBeSuccessfulCommand();

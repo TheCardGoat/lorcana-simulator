@@ -69,11 +69,10 @@ describe("Keep the Ancient Ways", () => {
     // Opponent quests with Tamatoa, which triggers "I'M BEAUTIFUL, BABY!" (play item for free)
     expect(testEngine.asPlayerTwo().quest(tamatoaHappyAsAClam)).toBeSuccessfulCommand();
 
-    const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
-    expect(bagEffect).toBeDefined();
+    expect(testEngine.asPlayerTwo().getBagEffects()).toHaveLength(1);
 
     expect(
-      testEngine.asPlayerTwo().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerTwo().resolvePendingByCard(tamatoaHappyAsAClam, {
         resolveOptional: true,
         targets: [sapphireCoil],
       }),

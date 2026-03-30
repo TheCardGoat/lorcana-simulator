@@ -34,5 +34,21 @@
   "lorcana.effect.resolve.scrySelection.detail": "Terminou de ordenar as cartas de {sourceCardId}: {selection}.",
   "lorcana.effect.resolve.revealTopCard": "{playerId} revelou {revealedCardId} do deck de {targetPlayerId}.",
   "lorcana.effect.resolve.revealTopCard.autoBottom": "Revelado {revealedCardId} — colocado no fundo do deck de {targetPlayerId}.",
-  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} escolheu a opcao {choiceIndex} para {revealedCardId}."
+  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} escolheu a opcao {choiceIndex} para {revealedCardId}.",
+  "lorcana.bag.resolve.cancelled": "Efeito de {sourceId} cancelado ({cause}).",
+  "lorcana.bag.resolve.cancelled.named": "{abilityName} de {sourceId} cancelado ({cause}).",
+  "lorcana.effect.cancelled": "Efeito de {sourceCardId} cancelado ({cause}).",
+  "lorcana.outcome.combatDamage": "{attackerId} causou {attackerDamage} de dano a {defenderId}. {defenderId} causou {defenderDamage} de dano a {attackerId}.",
+  "lorcana.outcome.effectDamage": "{sourceId} causou {amount} de dano a {targetId}.",
+  "lorcana.outcome.cardBanished": "{cardId} foi banido.",
+  "lorcana.outcome.cardsDrawn": "Comprou {amount} carta(s).",
+  "lorcana.outcome.cardsDrawn.detail": "Comprou {amount} carta(s): {cardIds}.",
+  "lorcana.outcome.cardReturnedToHand": "{cardId} voltou para a mao.",
+  "lorcana.outcome.loreGained": "{playerId} ganhou {amount} lore.",
+  "lorcana.outcome.loreLost": "{playerId} perdeu {amount} lore.",
+  "lorcana.outcome.cardExerted": "{cardId} foi virado.",
+  "lorcana.outcome.cardReadied": "{cardId} foi desvirado.",
+  "lorcana.outcome.cardsMilled": "Descartou {amount} carta(s) do deck.",
+  "lorcana.move.playCard.shift": "Jogou {cardId} mudando sobre {shiftTargetId}.",
+  "lorcana.move.playCard.sing": "Jogou {cardId} cantando com {singerIds}."
 }

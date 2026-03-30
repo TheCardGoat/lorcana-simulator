@@ -40,7 +40,9 @@ describe("Mickey Mouse - Wayward Sorcerer", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mickeyMouseWaywardSorcerer, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(magicBroomBucketBrigade)).toBe("hand");
@@ -67,7 +69,9 @@ describe("Mickey Mouse - Wayward Sorcerer", () => {
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
       expect(
-        testEngine.asPlayerTwo().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(mickeyMouseWaywardSorcerer, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(magicBroomBucketBrigade)).toBe("hand");
@@ -94,7 +98,9 @@ describe("Mickey Mouse - Wayward Sorcerer", () => {
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
       expect(
-        testEngine.asPlayerTwo().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(mickeyMouseWaywardSorcerer, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(magicBroomBucketBrigade)).toBe("discard");

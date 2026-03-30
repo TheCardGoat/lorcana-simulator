@@ -24,7 +24,9 @@ describe("Gazelle - Angel with Horns", () => {
 
       // Resolve the bag effect
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(gazelleAngelWithHorns),
+      ).toBeSuccessfulCommand();
 
       // Choose the target character
       expect(
@@ -47,7 +49,7 @@ describe("Gazelle - Angel with Horns", () => {
       );
 
       testEngine.asPlayerOne().playCard(gazelleAngelWithHorns);
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(gazelleAngelWithHorns);
       testEngine.asPlayerOne().resolveNextPending({ targets: [targetCharacter] });
 
       expect(testEngine.asPlayerOne().hasKeyword(targetCharacter, "Evasive")).toBe(true);

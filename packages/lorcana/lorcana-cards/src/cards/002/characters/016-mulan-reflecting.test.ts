@@ -20,7 +20,7 @@ describe("Mulan - Reflecting", () => {
     testEngine.asPlayerOne().quest(mulanId);
 
     // Resolve the triggered ability bag
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(mulanReflecting);
 
     // Resolve the scry — choose to play the song for free
     testEngine.asPlayerOne().resolveNextPending({
@@ -58,7 +58,7 @@ describe("Mulan - Reflecting", () => {
     testEngine.asPlayerOne().quest(mulanId);
 
     // Resolve triggers
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(mulanReflecting);
 
     // Non-song doesn't match the play filter — resolve scry with no selection
     testEngine.asPlayerOne().resolveNextPending({ destinations: [] });

@@ -24,9 +24,9 @@ export const belleStrangeButSpecial: CharacterCard = {
   },
   text: [
     {
-      title: "READ",
+      title: "READ A BOOK",
       description:
-        "A BOOK During your turn, you may put an additional card from your hand into your inkwell facedown.",
+        "During your turn, you may put an additional card from your hand into your inkwell facedown.",
     },
     {
       title: "MY FAVORITE PART!",

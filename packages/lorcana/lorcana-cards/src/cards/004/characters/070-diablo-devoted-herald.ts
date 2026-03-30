@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { diabloDevotedHeraldI18n } from "./070-diablo-devoted-herald.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const diabloDevotedHerald: CharacterCard = {
   id: "Mnw",
@@ -37,6 +38,50 @@ export const diabloDevotedHerald: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      id: "mnw-1",
+      keyword: "Shift",
+      type: "keyword",
+      shiftTarget: "Diablo",
+      cost: {
+        discardCards: 1,
+        discardChosen: true,
+        discardCardType: "action",
+      },
+      text: "Shift: Discard an action card",
+    },
+    evasive,
+    {
+      id: "mnw-2",
+      name: "CIRCLE FAR AND WIDE",
+      type: "triggered",
+      condition: {
+        target: "SELF",
+        type: "exerted",
+      },
+      trigger: {
+        event: "draw",
+        on: "OPPONENT",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "opponent",
+          },
+        ],
+      },
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          amount: 1,
+          target: "CONTROLLER",
+          type: "draw",
+        },
+        type: "optional",
+      },
+      text: "CIRCLE FAR AND WIDE During each opponent's turn, whenever they draw a card while this character is exerted, you may draw a card.",
+    },
+  ],
   i18n: diabloDevotedHeraldI18n,
 };

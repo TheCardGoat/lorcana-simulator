@@ -24,9 +24,9 @@ export const trampStreetsmartDog: CharacterCard = {
   },
   text: [
     {
-      title: "NOW IT'S",
+      title: "NOW IT'S A PARTY",
       description:
-        "A PARTY For each character you have in play, you pay 1 {I} less to play this character.",
+        "For each character you have in play, you pay 1 {I} less to play this character.",
     },
     {
       title: "HOW'S PICKINGS?",

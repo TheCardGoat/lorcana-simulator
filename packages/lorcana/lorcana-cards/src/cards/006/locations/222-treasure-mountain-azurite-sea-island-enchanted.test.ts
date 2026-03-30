@@ -32,7 +32,7 @@ describe("Treasure Mountain - Azurite Sea Island (Enchanted)", () => {
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(treasureMountainAzuriteSeaIslandEnchanted, {
         targets: [treasureMountainAzuriteSeaIslandEnchanted],
       }).success,
     ).toBe(true);
@@ -60,7 +60,7 @@ describe("Treasure Mountain - Azurite Sea Island (Enchanted)", () => {
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(treasureMountainAzuriteSeaIslandEnchanted, {
         targets: [mountainResidentOne],
       }).success,
     ).toBe(true);
@@ -85,7 +85,7 @@ describe("Treasure Mountain - Azurite Sea Island (Enchanted)", () => {
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(treasureMountainAzuriteSeaIslandEnchanted, {
         targets: [mountainResidentOne],
       }).success,
     ).toBe(true);

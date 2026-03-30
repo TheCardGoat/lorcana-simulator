@@ -75,7 +75,7 @@ describe("Genie - Powers Unleashed", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(geniePowersUnleashed, {
           resolveOptional: true,
           targets: [cheapAction],
         }),
@@ -103,7 +103,7 @@ describe("Genie - Powers Unleashed", () => {
       if (bagCount > 0) {
         const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
         // Attempting to target an expensive action should fail or be rejected
-        const result = testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        const result = testEngine.asPlayerOne().resolvePendingByCard(geniePowersUnleashed, {
           resolveOptional: true,
           targets: [expensiveAction],
         });
@@ -132,7 +132,9 @@ describe("Genie - Powers Unleashed", () => {
         const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
         // Decline the optional
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(geniePowersUnleashed, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 
@@ -154,7 +156,9 @@ describe("Genie - Powers Unleashed", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(geniePowersUnleashed, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Action should still be in hand

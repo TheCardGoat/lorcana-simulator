@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import type { LorcanaProjectedBagEffect } from "@tcg/lorcana-engine";
 import { taranPigKeeper } from "./015-taran-pig-keeper";
 import { henWenPropheticPig } from "./138-hen-wen-prophetic-pig";
 
@@ -14,6 +15,30 @@ const otherCharacterInDiscard = createMockCharacter({
   name: "Some Other Character",
   cost: 2,
 });
+
+function hasAbilityName(bagEffect: LorcanaProjectedBagEffect, abilityName: string): boolean {
+  const payload = bagEffect.payload;
+  if (typeof payload !== "object" || payload === null || !("abilityName" in payload)) {
+    return false;
+  }
+
+  return payload.abilityName === abilityName;
+}
+
+function resolveRemainingBagEffects(
+  player: ReturnType<LorcanaMultiplayerTestEngine["asPlayerOne"]>,
+  opts: Parameters<ReturnType<LorcanaMultiplayerTestEngine["asPlayerOne"]>["resolveBag"]>[1],
+): void {
+  const maxIterations = player.getBagCount() + 10;
+
+  for (let iteration = 0; iteration < maxIterations && player.getBagCount() > 0; iteration += 1) {
+    const bagEffect = player.getBagEffects()[0];
+    expect(bagEffect).toBeDefined();
+    expect(player.resolveBag(bagEffect!.id, opts)).toBeSuccessfulCommand();
+  }
+
+  expect(player.getBagCount()).toBe(0);
+}
 
 describe("Taran - Pig Keeper", () => {
   it("has Support keyword", () => {
@@ -36,26 +61,23 @@ describe("Taran - Pig Keeper", () => {
       expect(testEngine.asPlayerOne().quest(taranPigKeeper)).toBeSuccessfulCommand();
 
       // Questing with Support creates bag entries: Support trigger + FOLLOW THE PIG trigger
-      // Find the FOLLOW THE PIG bag effect (the return-from-discard one)
-      const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      expect(bagEffects.length).toBeGreaterThanOrEqual(1);
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
+      const followThePig = testEngine
+        .asPlayerOne()
+        .getBagEffects()
+        .find((bagEffect) => hasAbilityName(bagEffect, "FOLLOW THE PIG"));
+      expect(followThePig).toBeDefined();
 
-      // Resolve all bag effects. The FOLLOW THE PIG effect is the one that
-      // requires resolveOptional, while Support may auto-resolve or also need resolution.
-      for (const bagEffect of bagEffects) {
-        expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect.id, { resolveOptional: true }),
-        ).toBeSuccessfulCommand();
-      }
+      expect(
+        testEngine.asPlayerOne().resolveBag(followThePig!.id, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
-      // After resolution, Hen Wen should be in hand
-      const pendingChoice = testEngine.asPlayerOne().getPendingChoice();
-      if (pendingChoice) {
-        const henWenId = testEngine.findCardInstanceId(henWenPropheticPig, "discard");
-        expect(
-          testEngine.asPlayerOne().resolveNextPending({ targets: [henWenId] }),
-        ).toBeSuccessfulCommand();
-      }
+      const henWenId = testEngine.findCardInstanceId(henWenPropheticPig, "discard");
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [henWenId] }),
+      ).toBeSuccessfulCommand();
+
+      resolveRemainingBagEffects(testEngine.asPlayerOne(), { resolveOptional: false });
 
       expect(testEngine.asPlayerOne().getCardZone(henWenPropheticPig)).toBe("hand");
     });
@@ -69,13 +91,17 @@ describe("Taran - Pig Keeper", () => {
 
       expect(testEngine.asPlayerOne().quest(taranPigKeeper)).toBeSuccessfulCommand();
 
-      const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      expect(bagEffects.length).toBeGreaterThanOrEqual(1);
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
+      const followThePig = testEngine
+        .asPlayerOne()
+        .getBagEffects()
+        .find((bagEffect) => hasAbilityName(bagEffect, "FOLLOW THE PIG"));
+      expect(followThePig).toBeDefined();
+      expect(
+        testEngine.asPlayerOne().resolveBag(followThePig!.id, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
 
-      // Decline all optional bag effects
-      for (const bagEffect of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, { resolveOptional: false });
-      }
+      resolveRemainingBagEffects(testEngine.asPlayerOne(), { resolveOptional: false });
 
       expect(testEngine.asPlayerOne().getCardZone(henWenPropheticPig)).toBe("discard");
     });
@@ -110,21 +136,22 @@ describe("Taran - Pig Keeper", () => {
 
       expect(testEngine.asPlayerOne().quest(taranPigKeeper)).toBeSuccessfulCommand();
 
-      const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      expect(bagEffects.length).toBeGreaterThanOrEqual(1);
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
+      const followThePig = testEngine
+        .asPlayerOne()
+        .getBagEffects()
+        .find((bagEffect) => hasAbilityName(bagEffect, "FOLLOW THE PIG"));
+      expect(followThePig).toBeDefined();
+      expect(
+        testEngine.asPlayerOne().resolveBag(followThePig!.id, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
-      // Resolve all bag effects, accepting the optional ones
-      for (const bagEffect of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, { resolveOptional: true });
-      }
+      const henWenId = testEngine.findCardInstanceId(henWenOtherVersion, "discard");
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [henWenId] }),
+      ).toBeSuccessfulCommand();
 
-      const pendingChoice = testEngine.asPlayerOne().getPendingChoice();
-      if (pendingChoice) {
-        const henWenId = testEngine.findCardInstanceId(henWenOtherVersion, "discard");
-        expect(
-          testEngine.asPlayerOne().resolveNextPending({ targets: [henWenId] }),
-        ).toBeSuccessfulCommand();
-      }
+      resolveRemainingBagEffects(testEngine.asPlayerOne(), { resolveOptional: false });
 
       expect(testEngine.asPlayerOne().getCardZone(henWenOtherVersion)).toBe("hand");
     });

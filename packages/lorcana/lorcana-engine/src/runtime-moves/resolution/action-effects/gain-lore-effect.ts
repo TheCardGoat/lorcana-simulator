@@ -7,6 +7,7 @@ import { resolveCurrentTurnPlayerId } from "../../../targeting/runtime";
 import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
 import { hasOpponentStaticPlayRestriction } from "../../rules/static-ability-utils";
 import { hasTemporaryPlayerRestriction } from "../../effects/temporary-effects";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 
 type ResolvedGainLoreEffectInput = {
   gainAmount?: number;
@@ -82,20 +83,13 @@ function isPlayerBlockedFromGainingLore(
     return true;
   }
 
-  const staticAbilityState = {
-    priority: ctx.framework.state.priority,
-    status: ctx.framework.state.status,
-    _zonesPrivate: ctx.framework.state._zonesPrivate,
-    _zonesPublic: ctx.framework.state._zonesPublic,
-    G: ctx.G,
-  };
-  const getDefinitionByInstanceId = (instanceId: string) => ctx.cards.getDefinition(instanceId);
+  const registry = getOrBuildMoveRegistry(ctx);
 
   return hasOpponentStaticPlayRestriction({
-    state: staticAbilityState,
+    state: ctx.framework.state,
     playerId,
     restriction: "cant-gain-lore",
-    getDefinitionByInstanceId,
+    registry,
   });
 }
 

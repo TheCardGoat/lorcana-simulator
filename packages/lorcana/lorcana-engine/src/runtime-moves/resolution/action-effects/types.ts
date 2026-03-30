@@ -47,6 +47,7 @@ type ActionResolutionResult = ResolvedActionEffect | SuspendedActionEffect;
 type ActionEffectResolutionOptions = {
   allowPromptForExistingChosenTargets?: boolean;
   continuation?: PendingActionEffectContinuation;
+  sourceAbilityIndex?: number;
 };
 
 export type {

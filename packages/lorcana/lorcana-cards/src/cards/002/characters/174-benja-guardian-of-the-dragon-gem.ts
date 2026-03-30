@@ -24,8 +24,8 @@ export const benjaGuardianOfTheDragonGem: CharacterCard = {
   },
   text: [
     {
-      title: "WE HAVE",
-      description: "A CHOICE When you play this character, you may banish chosen item.",
+      title: "WE HAVE A CHOICE",
+      description: "When you play this character, you may banish chosen item.",
     },
   ],
   classifications: ["Storyborn", "Mentor", "King"],

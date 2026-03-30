@@ -33,7 +33,9 @@ describe("The Muses - Proclaimers of Heroes", () => {
       expect(testEngine.asPlayerOne().playCard(grabYourSword)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theMusesProclaimersOfHeroes),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [targetId] }),
@@ -81,7 +83,9 @@ describe("The Muses - Proclaimers of Heroes", () => {
       expect(testEngine.asPlayerOne().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theMusesProclaimersOfHeroes),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [opponentTargetId] }),
@@ -107,7 +111,9 @@ describe("The Muses - Proclaimers of Heroes", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theMusesProclaimersOfHeroes, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(targetId)).toBe("play");
@@ -124,7 +130,9 @@ describe("The Muses - Proclaimers of Heroes", () => {
       expect(testEngine.asPlayerOne().playCard(grabYourSword)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theMusesProclaimersOfHeroes),
+      ).toBeSuccessfulCommand();
 
       // Goofy has strength 10 — targeting him should have no effect
       testEngine.asPlayerOne().resolveNextPending({ targets: [goofyId] });
@@ -175,7 +183,9 @@ describe("The Muses - Proclaimers of Heroes", () => {
       // Now the action has fully resolved, the trigger is processed into the bag
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeTruthy();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theMusesProclaimersOfHeroes),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [liloId] }),

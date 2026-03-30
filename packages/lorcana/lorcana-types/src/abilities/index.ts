@@ -25,7 +25,6 @@ export type {
   SimpleKeywordAbility,
   SimpleKeywordType,
   StaticAbility,
-  StaticAffects,
   // Other ability types
   TriggeredAbility,
   ValueKeywordAbility,

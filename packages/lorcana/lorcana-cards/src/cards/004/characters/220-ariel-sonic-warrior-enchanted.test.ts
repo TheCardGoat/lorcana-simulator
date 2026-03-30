@@ -50,7 +50,7 @@ describe("Ariel - Sonic Warrior (Enchanted)", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(arielSonicWarriorEnchanted, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -75,7 +75,7 @@ describe("Ariel - Sonic Warrior (Enchanted)", () => {
       expect(testEngine.asPlayerOne().playCard(testSong)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(arielSonicWarriorEnchanted, {
           targets: [toughCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -101,7 +101,7 @@ describe("Ariel - Sonic Warrior (Enchanted)", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(arielSonicWarriorEnchanted, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

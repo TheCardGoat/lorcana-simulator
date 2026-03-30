@@ -35,7 +35,9 @@ describe("Rama - Vigilant Father", () => {
 
       // Accept the optional ability (ready Rama)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ramaVigilantFather, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Rama should now be ready
@@ -102,7 +104,9 @@ describe("Rama - Vigilant Father", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ramaVigilantFather, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Rama should still be exerted

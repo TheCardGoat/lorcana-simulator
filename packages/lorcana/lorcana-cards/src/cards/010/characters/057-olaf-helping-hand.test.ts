@@ -69,7 +69,7 @@ describe("Olaf - Helping Hand", () => {
       // Accept the optional ability and choose allyCharacterA to return to hand
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(olafHelpingHand, {
           resolveOptional: true,
           targets: [allyCharacterA],
         }),
@@ -95,7 +95,7 @@ describe("Olaf - Helping Hand", () => {
       // Decline the optional ability
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(olafHelpingHand, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -121,7 +121,7 @@ describe("Olaf - Helping Hand", () => {
       // Accept and choose allyCharacterB to return to hand
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(olafHelpingHand, {
           resolveOptional: true,
           targets: [allyCharacterB],
         }),

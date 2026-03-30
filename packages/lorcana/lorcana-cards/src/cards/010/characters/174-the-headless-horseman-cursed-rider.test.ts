@@ -62,7 +62,9 @@ describe("The Headless Horseman - Cursed Rider", () => {
       // No action cards are in the deck so the conditional skips deal-damage.
       const targetId = testEngine.findCardInstanceId(bigTarget, "play", PLAYER_TWO);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theHeadlessHorsemanCursedRider, { targets: [targetId] }),
       ).toBeSuccessfulCommand();
 
       // After drawing 3 and discarding 3:
@@ -100,7 +102,9 @@ describe("The Headless Horseman - Cursed Rider", () => {
       // Passing the target to resolveNextBag lets the sequence run (draw, discard, count)
       // and then applies deal-damage to the chosen character.
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theHeadlessHorsemanCursedRider, { targets: [targetId] }),
       ).toBeSuccessfulCommand();
 
       // 1 action card discarded = 2 damage
@@ -126,7 +130,9 @@ describe("The Headless Horseman - Cursed Rider", () => {
 
       const targetId = testEngine.findCardInstanceId(bigTarget, "play", PLAYER_TWO);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theHeadlessHorsemanCursedRider, { targets: [targetId] }),
       ).toBeSuccessfulCommand();
 
       // 3 action cards * 2 damage = 6 damage (should banish bigTarget with willpower 12? No, 6 < 12)
@@ -153,7 +159,9 @@ describe("The Headless Horseman - Cursed Rider", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theHeadlessHorsemanCursedRider, { targets: [targetId] }),
       ).toBeSuccessfulCommand();
 
       // 6 action cards * 2 damage = 12 damage → banishes bigTarget (willpower 12)
@@ -191,7 +199,9 @@ describe("The Headless Horseman - Cursed Rider", () => {
 
       const targetId = testEngine.findCardInstanceId(bigTarget, "play", PLAYER_TWO);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theHeadlessHorsemanCursedRider, { targets: [targetId] }),
       ).toBeSuccessfulCommand();
 
       // Own character should not be damaged

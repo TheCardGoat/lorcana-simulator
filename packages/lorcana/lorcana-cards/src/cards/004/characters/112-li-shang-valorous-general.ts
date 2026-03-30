@@ -33,6 +33,43 @@ export const liShangValorousGeneral: CharacterCard = {
     },
   ],
   classifications: ["Floodborn", "Hero"],
-  abilities: [],
+  abilities: [
+    {
+      id: "4HP-1",
+      type: "keyword",
+      keyword: "Shift",
+      cost: {
+        discardCards: 1,
+        discardCardType: "character",
+      },
+      shiftTarget: "Li Shang",
+      text: "Shift: Discard a character card (You may discard a character card to play this on top of one of your characters named Li Shang.)",
+    },
+    {
+      id: "4HP-2",
+      name: "LEAD THE CHARGE",
+      type: "static",
+      effect: {
+        type: "modify-stat",
+        stat: "lore",
+        modifier: 1,
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "strength-comparison",
+              comparison: "greater-or-equal",
+              value: 4,
+            },
+          ],
+        },
+      },
+      text: "LEAD THE CHARGE Your characters with 4 {S} or more get +1 {L}.",
+    },
+  ],
   i18n: liShangValorousGeneralI18n,
 };

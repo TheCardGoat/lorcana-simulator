@@ -20,9 +20,9 @@ export const transportPod: ItemCard = {
   },
   text: [
     {
-      title: "GIVE 'EM",
+      title: "GIVE 'EM A SHOW",
       description:
-        "A SHOW At the start of your turn, you may move a character of yours to a location for free.",
+        "At the start of your turn, you may move a character of yours to a location for free.",
     },
   ],
   abilities: [

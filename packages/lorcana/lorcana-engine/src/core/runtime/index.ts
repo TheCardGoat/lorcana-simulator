@@ -127,6 +127,10 @@ export type {
 } from "./match-runtime";
 export { MatchRuntime } from "./match-runtime";
 
+// Private field utilities for field-level privacy
+export type { PrivateField } from "./private-field";
+export { privateField, stripPrivateFields } from "./private-field";
+
 // Static resources / runtime card resolution
 export type {
   CardCatalog,

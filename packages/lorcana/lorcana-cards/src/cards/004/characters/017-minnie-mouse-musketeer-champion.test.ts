@@ -62,7 +62,9 @@ describe("Minnie Mouse - Musketeer Champion", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [strongOpponent] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(minnieMouseMusketeerChampion, { targets: [strongOpponent] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(strongOpponent)).toBe("discard");
@@ -85,7 +87,9 @@ describe("Minnie Mouse - Musketeer Champion", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [veryStrongOpponent] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(minnieMouseMusketeerChampion, { targets: [veryStrongOpponent] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(veryStrongOpponent)).toBe("discard");

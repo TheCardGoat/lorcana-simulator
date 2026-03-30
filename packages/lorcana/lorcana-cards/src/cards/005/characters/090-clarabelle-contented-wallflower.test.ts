@@ -31,7 +31,9 @@ describe("Clarabelle - Contented Wallflower", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       // Resolve the optional ability (accept it)
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(clarabelleContentedWallflower),
+      ).toBeSuccessfulCommand();
 
       // Should have drawn a card
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
@@ -57,7 +59,9 @@ describe("Clarabelle - Contented Wallflower", () => {
       // Decline the optional ability
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(clarabelleContentedWallflower, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Should NOT have drawn a card

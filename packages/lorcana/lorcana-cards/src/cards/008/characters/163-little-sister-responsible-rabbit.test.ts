@@ -33,7 +33,9 @@ describe("Little Sister - Responsible Rabbit", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(littleSisterResponsibleRabbit),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -69,7 +71,9 @@ describe("Little Sister - Responsible Rabbit", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(littleSisterResponsibleRabbit, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       const charId = testEngine.findCardInstanceId(damagedCharacter, "play", PLAYER_ONE);
@@ -93,7 +97,9 @@ describe("Little Sister - Responsible Rabbit", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(littleSisterResponsibleRabbit),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({

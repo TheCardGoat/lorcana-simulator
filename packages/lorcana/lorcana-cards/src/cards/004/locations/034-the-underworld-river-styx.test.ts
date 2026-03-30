@@ -26,9 +26,9 @@ describe("The Underworld - River Styx", () => {
 
     expect(testEngine.asPlayerOne().quest(styxQuester)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(theUnderworldRiverStyx).success).toBe(
+      true,
+    );
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [discardedSoulId] }),
     ).toBeSuccessfulCommand();

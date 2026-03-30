@@ -1,8 +1,8 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { cursedMerfolkUrsulasHandiwork as ogCursedMerfolkUrsulasHandiwork } from "../../003";
+import { cursedMerfolkUrsulasHandiwork as canonicalCursedMerfolkUrsulasHandiwork } from "../../003";
 
 export const cursedMerfolkUrsulasHandiwork: CharacterCard = {
-  ...ogCursedMerfolkUrsulasHandiwork,
+  ...canonicalCursedMerfolkUrsulasHandiwork,
   id: "38g",
   reprints: ["set3-070", "set9-071"],
   externalIds: {

@@ -28,9 +28,9 @@ export const basilGreatMouseDetective: CharacterCard = {
       title: "Shift 5",
     },
     {
-      title: "THERE'S ALWAYS",
+      title: "THERE'S ALWAYS A CHANCE",
       description:
-        "A CHANCE If you used Shift to play this character, you may draw 2 cards when he enters play.",
+        "If you used Shift to play this character, you may draw 2 cards when he enters play.",
     },
   ],
   classifications: ["Floodborn", "Hero", "Detective"],

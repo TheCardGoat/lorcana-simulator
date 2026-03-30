@@ -94,11 +94,13 @@ describe("Invalid Target Resolution", () => {
       expect(testEngine.asPlayerOne().quest(madameMedusaDiamondLover)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
-          resolveOptional: true,
-          targets: [madameMedusaDiamondLover],
-          playerTargets: PLAYER_TWO,
-        }).success,
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: true,
+            targets: [madameMedusaDiamondLover],
+            playerTargets: PLAYER_TWO,
+          }).success,
       ).toBe(false);
       expect(testEngine.asPlayerOne().getCardByInstance(madameMedusaDiamondLover).damage).toBe(0);
     });
@@ -114,8 +116,17 @@ describe("Invalid Target Resolution", () => {
       expect(
         testEngine.asPlayerOne().quest(tweedledeeTweedledumStrangeStorytellers),
       ).toBeSuccessfulCommand();
+      // CR 6.2.3: trigger enters the bag even when no valid targets exist
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      // Declining the optional resolves it with no effect
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: false,
+          }),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
       expect(testEngine.asPlayerOne().getCardZone(undamagedTarget)).toBe("play");
     });
 
@@ -133,8 +144,17 @@ describe("Invalid Target Resolution", () => {
       );
 
       expect(testEngine.asPlayerOne().playCard(scroopOdiousMutineer)).toBeSuccessfulCommand();
+      // CR 6.2.3: trigger enters the bag even when no valid targets exist
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      // Declining the optional resolves it with no effect
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: false,
+          }),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
       expect(testEngine.asPlayerTwo().getCardZone(undamagedTarget)).toBe("play");
     });
 
@@ -183,8 +203,17 @@ describe("Invalid Target Resolution", () => {
       });
 
       expect(testEngine.asPlayerOne().playCard(tiggerBouncingAllTheWay)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
-      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+      // CR 6.2.3: trigger enters the bag even when no valid targets exist
+      expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
+      // Declining the optional resolves it with no effect
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: false,
+          }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne().getCardZone(expensiveCharacter)).toBe("play");
     });
   });
@@ -198,7 +227,9 @@ describe("Invalid Target Resolution", () => {
       });
 
       expect(testEngine.asPlayerOne().playCard(wreckitRalphBackSeatDriver)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphBackSeatDriver),
+      ).toBeSuccessfulCommand();
 
       const resolution = testEngine
         .asPlayerOne()
@@ -219,7 +250,9 @@ describe("Invalid Target Resolution", () => {
 
       expect(testEngine.asPlayerOne().playCard(donaldDuckGhostHunter)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId),
       ).toBeSuccessfulCommand();
 
       const resolution = testEngine

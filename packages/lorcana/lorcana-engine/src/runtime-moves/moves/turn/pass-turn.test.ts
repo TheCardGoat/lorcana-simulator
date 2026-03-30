@@ -108,12 +108,8 @@ describe("passTurn", () => {
       engine
         .getServerEngine()
         .getRuntime()
-        .getGameLog()
-        .some(
-          (entry) =>
-            entry.defaultMessage?.key === "lorcana.move.passTurn" &&
-            entry.defaultMessage.values?.playerId === PLAYER_ONE,
-        ),
+        .getMoveLogHistory()
+        .some((log) => log.type === "passTurn" && log.playerId === PLAYER_ONE),
     ).toBe(true);
   });
 
@@ -243,5 +239,17 @@ describe("passTurn", () => {
 
     const result = executeMoveAsPlayer(engine, "passTurn", {});
     expectFailureCode(result, "PASS_TURN_RECKLESS_CHALLENGE_REQUIRED");
+  });
+
+  it("rejects passTurn from a non-active player", () => {
+    engine = LorcanaMultiplayerTestEngine.createWithFixture({ deck: 1 }, { deck: 1 });
+    const state = engine.getServerEngine().getState();
+    (state.ctx.priority as unknown as { holder: PlayerId }).holder = PLAYER_TWO;
+
+    const result = engine.asLorcanaPlayerTwo().passTurn();
+
+    expectFailureCode(result, "PASS_TURN_NOT_ACTIVE_PLAYER");
+    expect(engine.getTurnNumber()).toBe(1);
+    expect(engine.asServer().getBoard().turnPlayer).toBe(PLAYER_ONE);
   });
 });

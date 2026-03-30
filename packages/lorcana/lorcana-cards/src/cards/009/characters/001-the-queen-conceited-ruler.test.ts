@@ -81,7 +81,7 @@ describe("The Queen - Conceited Ruler", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(theQueenConceitedRuler, {
           resolveOptional: true,
           targets: [princessCard],
         }),
@@ -120,7 +120,7 @@ describe("The Queen - Conceited Ruler", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(theQueenConceitedRuler, {
           resolveOptional: true,
           targets: [queenCard],
         }),
@@ -157,7 +157,9 @@ describe("The Queen - Conceited Ruler", () => {
 
       // Decline the optional
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theQueenConceitedRuler, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Princess stays in hand, characterInDiscard stays in discard

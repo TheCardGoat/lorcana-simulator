@@ -18,13 +18,17 @@ mkdir -p "$LOCK_DIR"
 wait_for_owner() {
   local owner_pid="$1"
   echo "tests already running (pid: $owner_pid) — waiting for result..."
-  local elapsed=0
-  while kill -0 "$owner_pid" 2>/dev/null; do
+  for ((elapsed = 3; elapsed <= 300; elapsed += 3)); do
+    if ! kill -0 "$owner_pid" 2>/dev/null; then
+      break
+    fi
     sleep 3
-    elapsed=$((elapsed + 3))
     [ $((elapsed % 15)) -eq 0 ] && echo "still waiting (${elapsed}s)..."
-    [ "$elapsed" -ge 300 ] && { echo "timed out waiting after 300s" >&2; exit 1; }
   done
+  if kill -0 "$owner_pid" 2>/dev/null; then
+    echo "timed out waiting after 300s" >&2
+    exit 1
+  fi
   if [ -f "$RESULT_FILE" ]; then
     result=$(cat "$RESULT_FILE")
     echo "reusing completed test result: exit $result"
@@ -82,10 +86,8 @@ exit_code=0
 
 # Heartbeat: print progress every 15s while any shard is still running
 (
-  elapsed=0
-  while true; do
+  for ((elapsed = 15; ; elapsed += 15)); do
     sleep 15
-    elapsed=$((elapsed + 15))
     running=0
     for pid in "${pids[@]}"; do
       kill -0 "$pid" 2>/dev/null && running=$((running + 1))

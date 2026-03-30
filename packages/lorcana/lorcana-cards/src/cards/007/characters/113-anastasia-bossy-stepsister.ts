@@ -24,9 +24,9 @@ export const anastasiaBossyStepsister: CharacterCard = {
   },
   text: [
     {
-      title: "OH,",
+      title: "OH, I HATE THIS!",
       description:
-        "I HATE THIS! Whenever this character is challenged, the challenging player chooses and discards a card.",
+        "Whenever this character is challenged, the challenging player chooses and discards a card.",
     },
   ],
   classifications: ["Storyborn", "Ally"],

@@ -24,6 +24,7 @@ import {
   hasStaticCardRestriction,
   hasStaticSelfRestriction,
 } from "../../rules/static-ability-utils";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 
 type MoveExecutionContext = Parameters<
   LorcanaMoveDefinition<"moveCharacterToLocation">["execute"]
@@ -36,7 +37,7 @@ type MoveEnumerationContext = Parameters<
 >[0];
 type MoveReadableContext = Pick<
   MoveExecutionContext | MoveValidationContext | MoveEnumerationContext,
-  "framework" | "cards"
+  "framework" | "cards" | "G"
 >;
 
 type StaticMoveCostReductionEffect = {
@@ -222,6 +223,8 @@ function validateMoveCharacterToLocation(
     };
   }
 
+  const registry = getOrBuildMoveRegistry(ctx);
+
   if (
     hasStaticSelfRestriction({
       state: ctx.framework.state,
@@ -242,7 +245,7 @@ function validateMoveCharacterToLocation(
       state: ctx.framework.state,
       cardId: characterId,
       restriction: "cant-move",
-      getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+      registry,
     })
   ) {
     return {

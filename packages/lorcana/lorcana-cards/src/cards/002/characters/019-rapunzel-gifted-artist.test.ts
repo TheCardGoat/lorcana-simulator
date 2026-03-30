@@ -28,7 +28,7 @@ describe("Rapunzel - Gifted Artist", () => {
     expect(testEngine.asServer().getCard(gastonId).damage).toBe(0);
 
     // Resolve triggers (Rapunzel's draw)
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(rapunzelGiftedArtist);
 
     // Should have drawn a card
     const handSizeAfter = testEngine.getCardInstanceIdsInZone("hand", "player_one").length;

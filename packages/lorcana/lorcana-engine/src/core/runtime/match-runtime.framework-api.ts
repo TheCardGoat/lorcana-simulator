@@ -1,4 +1,4 @@
-import type { Draft } from "immer";
+import type { Draft } from "mutative";
 import type { MatchState } from "./types";
 import type { CardQueryAPI } from "./card-runtime";
 import type {
@@ -25,7 +25,19 @@ export function createCardRuntimeAPI(
   return {
     ...cardsApi,
     setMeta: (cardId, meta) => {
+      const old = (draft.ctx.zones.private.cardMeta[cardId] ?? {}) as Record<string, unknown>;
       draft.ctx.zones.private.cardMeta[cardId] = meta;
+
+      // Invalidate the static-effect registry when static-ability-relevant meta changes.
+      const next = meta as Record<string, unknown>;
+      const STATIC_SIMPLE = ["state", "damage", "atLocationId", "isDrying"];
+      const allKeys = new Set([...Object.keys(old), ...Object.keys(next)]);
+      const changed =
+        STATIC_SIMPLE.some((k) => old[k] !== next[k]) ||
+        [...allKeys].some((k) => k.startsWith("temporary") && old[k] !== next[k]);
+      if (changed) {
+        draft.G.staticEffectsVersion = (draft.G.staticEffectsVersion ?? 0) + 1;
+      }
     },
     patchMeta: (cardId, patch) => {
       const current = (draft.ctx.zones.private.cardMeta[cardId] ?? {}) as BaseCardMeta;
@@ -34,6 +46,19 @@ export function createCardRuntimeAPI(
         ...(patch as Record<string, unknown>),
       } as BaseCardMeta;
       draft.ctx.zones.private.cardMeta[cardId] = next;
+
+      // Invalidate the static-effect registry when meta fields that affect static
+      // ability conditions change (ready state, damage, location, or any temporary effect).
+      const p = patch as Record<string, unknown>;
+      if (
+        "state" in p ||
+        "damage" in p ||
+        "atLocationId" in p ||
+        "isDrying" in p ||
+        Object.keys(p).some((k) => k.startsWith("temporary"))
+      ) {
+        draft.G.staticEffectsVersion = (draft.G.staticEffectsVersion ?? 0) + 1;
+      }
 
       return next;
     },

@@ -63,4 +63,23 @@ describe("automated match storage", () => {
     expect(readStoredAutomatedMatchConfig(storage)).toBeNull();
     expect(loadAutomatedMatchConfig(storage).playerOneDeckText).toBe(DECK_FIXTURES[0]?.cards);
   });
+
+  it("falls back removed strategy ids to the current default", () => {
+    const storage = new MemoryStorage();
+    storage.setItem(
+      AUTOMATED_MATCH_STORAGE_KEY,
+      JSON.stringify({
+        playerOneDeckText: "1 Sail The Azurite Sea",
+        playerTwoDeckText: "1 Grab Your Bow",
+        playerOneStrategyId: "default-lore-race",
+        playerTwoStrategyId: BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+        seed: "ai-match:stale-strategy",
+      }),
+    );
+
+    expect(loadAutomatedMatchConfig(storage)).toMatchObject({
+      playerOneStrategyId: DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+      playerTwoStrategyId: BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+    });
+  });
 });

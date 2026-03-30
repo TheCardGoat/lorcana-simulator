@@ -42,7 +42,7 @@ describe("Pete - Steamboat Rival", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(peteSteamboatRival, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),

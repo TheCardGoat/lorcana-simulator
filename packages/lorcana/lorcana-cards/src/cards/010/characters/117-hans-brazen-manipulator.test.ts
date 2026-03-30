@@ -106,7 +106,7 @@ describe("Hans - Brazen Manipulator", () => {
       // Resolve any bag effects from the start-of-turn trigger
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const bagEffect of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(bagEffect.id);
+        testEngine.asPlayerOne().resolvePendingByCard(hansBrazenManipulator);
       }
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(2);

@@ -46,7 +46,9 @@ describe("Dopey - Knight Apprentice", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(dopeyKnightApprentice, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -72,7 +74,9 @@ describe("Dopey - Knight Apprentice", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(dopeyKnightApprentice, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(0);

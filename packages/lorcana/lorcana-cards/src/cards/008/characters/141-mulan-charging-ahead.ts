@@ -51,6 +51,7 @@ export const mulanChargingAhead: CharacterCard = {
         type: "gain-keyword",
       },
       id: "17c-2",
+      name: "BURST OF SPEED",
       text: "BURST OF SPEED During your turn, this character gains Evasive.",
       type: "static",
     },

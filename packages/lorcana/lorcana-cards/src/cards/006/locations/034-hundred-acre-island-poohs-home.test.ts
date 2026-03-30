@@ -42,9 +42,9 @@ describe("Hundred Acre Island - Pooh's Home", () => {
       testEngine.asPlayerTwo().challenge(islandAttacker, islandResident),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(hundredAcreIslandPoohsHome).success).toBe(
+      true,
+    );
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
   });
 });

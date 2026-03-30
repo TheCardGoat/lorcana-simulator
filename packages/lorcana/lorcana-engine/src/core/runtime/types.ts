@@ -48,9 +48,7 @@ export type TCGCtx = {
   _stateID: number; // monotonically increasing state version
   /** Canonical ordered list of player IDs for this match. */
   playerIds: PlayerId[];
-
   zones: ZoneRuntimeState;
-
   status: CtxStatus;
   priority: CtxPriority;
   time: TimeContext;
@@ -98,7 +96,6 @@ export type CtxPriority = {
 // =============================================================================
 
 export type ZoneRuntimeState = {
-  zoneDefs: Record<ZoneId, ZoneRuntimeDef>;
   public: {
     zoneSummaries: Record<ZoneId, PublicZoneSummary>;
   };
@@ -575,9 +572,11 @@ export type FilteredTCGCtx = Omit<TCGCtx, "zones" | "random"> & {
 };
 
 export type FilteredZoneRuntimeState = {
-  zoneDefs: Record<string, ZoneRuntimeDef>;
   public: {
     zoneSummaries: Record<string, PublicZoneSummary>;
+  };
+  reveals: {
+    active: ZoneRevealWindow[];
   };
   private?: {
     // only present for authorized views
@@ -659,7 +658,6 @@ export function createInitialTCGCtx(params: CreateInitialTCGCtxParams): TCGCtx {
       stackDepth: 0,
     },
     zones: {
-      zoneDefs: {},
       public: {
         zoneSummaries: {},
       },

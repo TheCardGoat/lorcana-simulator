@@ -34,7 +34,7 @@ describe("Moana - Kakamora Leader", () => {
 
     // Accept optional ability and choose characters to move + location
     expect(
-      testEngine.asPlayerOne().resolveNextBag({
+      testEngine.asPlayerOne().resolvePendingByCard(moanaKakamoraLeader, {
         resolveOptional: true,
         targets: [
           kakamoraLongrangeSpecialist,
@@ -80,7 +80,9 @@ describe("Moana - Kakamora Leader", () => {
 
     // Decline the optional ability
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(moanaKakamoraLeader, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.getLore(PLAYER_ONE)).toBe(0);

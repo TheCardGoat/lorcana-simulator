@@ -33,9 +33,7 @@ describe("Flotilla - Coconut Armada", () => {
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(flotillaCoconutArmada).success).toBe(true);
 
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
     expect(testEngine.asPlayerTwo().getLore(PLAYER_TWO)).toBe(0);

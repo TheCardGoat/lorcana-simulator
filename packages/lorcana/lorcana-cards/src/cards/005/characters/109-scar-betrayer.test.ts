@@ -46,7 +46,7 @@ describe("Scar - Betrayer", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scarBetrayer, {
           resolveOptional: true,
           targets: [mockMufasa],
         }),
@@ -67,7 +67,7 @@ describe("Scar - Betrayer", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scarBetrayer, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -91,7 +91,7 @@ describe("Scar - Betrayer", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scarBetrayer, {
           resolveOptional: true,
           targets: [mockMufasa],
         }),
@@ -112,7 +112,7 @@ describe("Scar - Betrayer", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(scarBetrayer, {
           resolveOptional: true,
           targets: [mockMufasa],
         }),

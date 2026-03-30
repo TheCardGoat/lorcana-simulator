@@ -31,6 +31,7 @@ function createSelectionState(
     candidateEntries: [],
     activeSlotIndex: null,
     slots: [],
+    amountSelection: null,
     selectedTargetLabels: [],
     minimumSelections: 1,
     maximumSelections: 1,

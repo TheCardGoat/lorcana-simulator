@@ -43,6 +43,7 @@ type PendingActionEffectParams = {
   sourceCardId: CardInstanceId;
   controllerId: PlayerId;
   chooserId: PlayerId;
+  abilityIndex?: number;
   cardPlayed: CardPlayedPayload;
   effect: unknown;
   continuation?: PendingActionEffectContinuation;
@@ -191,6 +192,7 @@ export function createPendingActionEffect(
     id: pendingEffectId,
     type: "action-effect",
     kind: params.kind,
+    abilityIndex: params.abilityIndex,
     sourceId: params.sourceCardId,
     sourceCardId: params.sourceCardId,
     controllerId: params.controllerId,

@@ -4,6 +4,7 @@ import type { LorcanaCardDefinition } from "@tcg/lorcana-types";
 import type { LorcanaG } from "../../types";
 import { projectLorcanaCardDerived } from "../../projection/card-derived";
 import { createProjectionState } from "../../rules/derived-state";
+import { getOrBuildMoveRegistry } from "../rules/move-registry-cache";
 
 type BanishSnapshotContext = {
   G: LorcanaG;
@@ -36,6 +37,7 @@ export function getKeywordsBeforeBanish(
     return undefined;
   }
 
+  const snapshotRegistry = getOrBuildMoveRegistry(ctx);
   const projected = projectLorcanaCardDerived({
     definition,
     meta: ctx.cards.require(cardId).meta ?? {},
@@ -46,6 +48,7 @@ export function getKeywordsBeforeBanish(
     zoneID: ctx.framework.zones.getCardZone(cardId),
     actorPlayerId,
     getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
+    registry: snapshotRegistry,
   });
 
   const keywords = projected.keywords?.filter(

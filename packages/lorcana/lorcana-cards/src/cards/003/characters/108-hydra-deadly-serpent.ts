@@ -30,6 +30,31 @@ export const hydraDeadlySerpent: CharacterCard = {
     },
   ],
   classifications: ["Storyborn"],
-  abilities: [],
+  abilities: [
+    {
+      id: "dZ8-1",
+      name: "WATCH THE TEETH",
+      text: "WATCH THE TEETH Whenever this character is dealt damage, deal that much damage to chosen opposing character.",
+      trigger: {
+        event: "damage",
+        on: "SELF",
+        timing: "whenever",
+      },
+      effect: {
+        amount: {
+          type: "trigger-amount",
+        },
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          owner: "opponent",
+          selector: "chosen",
+          zones: ["play"],
+        },
+        type: "deal-damage",
+      },
+      type: "triggered",
+    },
+  ],
   i18n: hydraDeadlySerpentI18n,
 };

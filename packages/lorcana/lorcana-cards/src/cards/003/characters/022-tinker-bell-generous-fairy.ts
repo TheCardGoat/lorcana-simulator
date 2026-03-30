@@ -24,9 +24,9 @@ export const tinkerBellGenerousFairy: CharacterCard = {
   },
   text: [
     {
-      title: "MAKE",
+      title: "MAKE A NEW FRIEND",
       description:
-        "A NEW FRIEND When you play this character, look at the top 4 cards of your deck. You may reveal a character card and put it into your hand. Put the rest on the bottom of your deck in any order.",
+        "When you play this character, look at the top 4 cards of your deck. You may reveal a character card and put it into your hand. Put the rest on the bottom of your deck in any order.",
     },
   ],
   classifications: ["Storyborn", "Ally", "Fairy"],

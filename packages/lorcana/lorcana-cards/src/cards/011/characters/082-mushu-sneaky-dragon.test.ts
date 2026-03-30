@@ -46,7 +46,9 @@ describe("Mushu - Sneaky Dragon", () => {
 
       const bagId = bagEffects[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [toughTarget] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mushuSneakyDragon, { targets: [toughTarget] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(toughTarget)).toBe(2);
@@ -64,7 +66,9 @@ describe("Mushu - Sneaky Dragon", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [toughTarget] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mushuSneakyDragon, { targets: [toughTarget] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(toughTarget)).toBe(2);
@@ -86,7 +90,9 @@ describe("Mushu - Sneaky Dragon", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [toughTarget] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mushuSneakyDragon, { targets: [toughTarget] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(toughTarget)).toBe(2);
@@ -108,7 +114,9 @@ describe("Mushu - Sneaky Dragon", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [fragileTarget] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mushuSneakyDragon, { targets: [fragileTarget] }),
       ).toBeSuccessfulCommand();
 
       // 2 damage on 2 willpower = banished
@@ -158,7 +166,9 @@ describe("Mushu - Sneaky Dragon", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [toughTarget] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mushuSneakyDragon, { targets: [toughTarget] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(toughTarget)).toBe(2);

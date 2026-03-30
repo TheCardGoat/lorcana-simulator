@@ -23,9 +23,10 @@ describe("Hades - Ruthless Tyrant", () => {
 
       expect(testEngine.asPlayerOne().playCard(hadesRuthlessTyrant)).toBeSuccessfulCommand();
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ resolveOptional: true, targets: [alliedCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(hadesRuthlessTyrant, {
+          resolveOptional: true,
+          targets: [alliedCharacter],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardByInstance(alliedCharacter).damage).toBe(2);
@@ -41,9 +42,10 @@ describe("Hades - Ruthless Tyrant", () => {
 
       expect(testEngine.asPlayerOne().quest(hadesRuthlessTyrant)).toBeSuccessfulCommand();
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ resolveOptional: true, targets: [alliedCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(hadesRuthlessTyrant, {
+          resolveOptional: true,
+          targets: [alliedCharacter],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardByInstance(alliedCharacter).damage).toBe(2);

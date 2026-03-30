@@ -46,7 +46,9 @@ describe("Donald Duck - Fred Honeywell", () => {
       // WELL WISHES triggers: player two may draw 1 card
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       if (bagEffects.length > 0) {
-        expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(donaldDuckFredHoneywell),
+        ).toBeSuccessfulCommand();
       }
 
       const handAfter = testEngine.asPlayerTwo().getCardsInZone("hand", PLAYER_TWO).count;
@@ -93,7 +95,9 @@ describe("Donald Duck - Fred Honeywell", () => {
       // WELL WISHES triggers: player two may draw 2 cards
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       if (bagEffects.length > 0) {
-        expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(donaldDuckFredHoneywell),
+        ).toBeSuccessfulCommand();
       }
 
       const handAfter = testEngine.asPlayerTwo().getCardsInZone("hand", PLAYER_TWO).count;
@@ -248,7 +252,9 @@ describe("Donald Duck - Fred Honeywell", () => {
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id, { resolveOptional: false }),
+          testEngine
+            .asPlayerTwo()
+            .resolvePendingByCard(donaldDuckFredHoneywell, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 
@@ -282,7 +288,9 @@ describe("Donald Duck - Fred Honeywell", () => {
       // SPIRIT OF GIVING then optionally puts another card under her
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(donaldDuckFredHoneywell),
+        ).toBeSuccessfulCommand();
       }
 
       // Should have at least 2 cards under Ursula (1 from Boost + 1 from SPIRIT OF GIVING)
@@ -312,7 +320,9 @@ describe("Donald Duck - Fred Honeywell", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(donaldDuckFredHoneywell, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 

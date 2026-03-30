@@ -18,7 +18,9 @@ describe("Pascal - Inquisitive Pet", () => {
       expect(testEngine.asPlayerOne().playCard(pascalInquisitivePet)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(pascalInquisitivePet),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({

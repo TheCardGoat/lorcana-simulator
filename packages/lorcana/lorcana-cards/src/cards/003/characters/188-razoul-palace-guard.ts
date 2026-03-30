@@ -41,6 +41,7 @@ export const razoulPalaceGuard: CharacterCard = {
         type: "modify-stat",
       },
       id: "1xc-1",
+      name: "LOOKY HERE",
       text: "LOOKY HERE While this character has no damage, he gets +2 {S}.",
       type: "static",
     },

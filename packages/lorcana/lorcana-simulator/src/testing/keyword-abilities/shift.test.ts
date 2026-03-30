@@ -1,11 +1,20 @@
 import { describe, expect, it } from "bun:test";
 import { PLAYER_ONE, LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
-import { fireTheCannons, mickeyMouseTrueFriend, workTogether } from "@tcg/lorcana-cards/cards/001";
+import {
+  fireTheCannons,
+  liloMakingAWish,
+  mickeyMouseTrueFriend,
+  stitchRockStar,
+  workTogether,
+} from "@tcg/lorcana-cards/cards/001";
 import { beastForbiddingRecluse, beastTragicHero } from "@tcg/lorcana-cards/cards/002";
 import { hiddenCoveTranquilHaven } from "@tcg/lorcana-cards/cards/004";
 import { baymaxGiantRobot, thunderboltWonderDog } from "@tcg/lorcana-cards/cards/007";
 import { dalmatianPuppyTailWagger } from "@tcg/lorcana-cards/cards/008";
 import { mickeyMouseBraveLittlePrince } from "@tcg/lorcana-cards/cards/009";
+import { stitchNaughtyExperiment } from "@tcg/lorcana-cards/cards/011";
+import { plutoFriendlyPooch } from "@tcg/lorcana-cards/cards/003";
+import { naniCaringSister } from "@tcg/lorcana-cards/cards/006";
 
 describe("Shift - Shift N (You may pay N {I} to play this on top of one of your characters named [Name].)", () => {
   it("Shift inherits exerted state, dry state, and damage", () => {
@@ -178,5 +187,50 @@ describe("Shift - Shift N (You may pay N {I} to play this on top of one of your 
 
     expect(String(testEngine.asPlayerOne().getCardLocationId(beastTragicHero))).toBe(hiddenCoveId);
     expect(testEngine.asPlayerOne().getCardLocationId(beastForbiddingRecluse)).toBe(undefined);
+  });
+
+  it("Cost reduction reduces shift's cost", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [stitchRockStar, naniCaringSister, liloMakingAWish],
+      inkwell: 3, // Stitch shift cost is 4
+      play: [stitchNaughtyExperiment, plutoFriendlyPooch],
+    });
+
+    expect(testEngine.asPlayerOne().getCard(stitchRockStar).shiftInkCost).toBe(4);
+    expect(testEngine.asPlayerOne().getCard(stitchRockStar).shiftPlayCost).toBe(4);
+    const shiftTarget = testEngine.findCardInstanceId(stitchNaughtyExperiment, "play", PLAYER_ONE);
+
+    expect(
+      testEngine.asPlayerOne().playCard(stitchRockStar, {
+        cost: { cost: "shift", shiftTarget },
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        success: false,
+        errorCode: "INSUFFICIENT_INK",
+      }),
+    );
+
+    expect(testEngine.asPlayerOne().activateAbility(plutoFriendlyPooch).success).toBe(true);
+    expect(testEngine.asPlayerOne().getCard(stitchRockStar).shiftInkCost).toBe(4);
+    expect(testEngine.asPlayerOne().getCard(stitchRockStar).shiftPlayCost).toBe(3);
+
+    expect(
+      testEngine.asPlayerOne().playCard(stitchRockStar, {
+        cost: { cost: "shift", shiftTarget },
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        success: true,
+      }),
+    );
+
+    // Pluto's one-shot reduction was consumed by the Shift play, so Lilo stays at printed cost 1.
+    expect(testEngine.asPlayerOne().getCard(liloMakingAWish).playCost).toBe(1);
+    expect(testEngine.asPlayerOne().canPlayCard(liloMakingAWish)).toBe(false);
+
+    expect(testEngine.asPlayerOne().ink(naniCaringSister).success).toBe(true);
+    expect(testEngine.asPlayerOne().canPlayCard(liloMakingAWish)).toBe(true);
+    expect(testEngine.asPlayerOne().playCard(liloMakingAWish)).toBeSuccessfulCommand();
   });
 });

@@ -16,7 +16,9 @@ describe("Donald Duck - Ghost Hunter", () => {
       expect(testEngine.asPlayerOne().playCard(donaldDuckGhostHunter)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckGhostHunter),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [goofyGhostHunter] }),
@@ -38,7 +40,9 @@ describe("Donald Duck - Ghost Hunter", () => {
       expect(testEngine.asPlayerOne().playCard(donaldDuckGhostHunter)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckGhostHunter),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [donaldDuckGhostHunter] }),
@@ -61,7 +65,9 @@ describe("Donald Duck - Ghost Hunter", () => {
       expect(testEngine.asPlayerOne().playCard(donaldDuckGhostHunter)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckGhostHunter),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [goofyGhostHunter] }),
@@ -87,7 +93,9 @@ describe("Donald Duck - Ghost Hunter", () => {
       expect(testEngine.asPlayerOne().playCard(donaldDuckGhostHunter)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckGhostHunter),
+      ).toBeSuccessfulCommand();
 
       // Target only one detective
       expect(

@@ -46,9 +46,9 @@ describe("Mystical Tree - Mama Odie's Home", () => {
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(mysticalTreeMamaOdiesHome).success).toBe(
+      true,
+    );
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [damagedResident, opposingTarget] })
         .success,
@@ -75,12 +75,12 @@ describe("Mystical Tree - Mama Odie's Home", () => {
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
-    expect(
-      testEngine
-        .asPlayerOne()
-        .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, { resolveOptional: false })
-        .success,
-    ).toBe(true);
+    const loreBag = testEngine
+      .asPlayerOne()
+      .getBagEffects()
+      .find((bag) => (bag.payload as { abilityId?: string }).abilityId === "4wd-2");
+    expect(loreBag).toBeDefined();
+    expect(testEngine.asPlayerOne().resolveBag(loreBag!.id).success).toBe(true);
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
   });
 });

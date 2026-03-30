@@ -28,9 +28,9 @@ export const jimHawkinsHonorablePirate: CharacterCard = {
       title: "Bodyguard",
     },
     {
-      title: "HIRE",
+      title: "HIRE A CREW",
       description:
-        "A CREW When you play this character, look at the top 4 cards of your deck. You may reveal any number of Pirate character cards and put them into your hand. Put the rest on the bottom of your deck in any order.",
+        "When you play this character, look at the top 4 cards of your deck. You may reveal any number of Pirate character cards and put them into your hand. Put the rest on the bottom of your deck in any order.",
     },
   ],
   classifications: ["Dreamborn", "Hero", "Pirate", "Captain"],

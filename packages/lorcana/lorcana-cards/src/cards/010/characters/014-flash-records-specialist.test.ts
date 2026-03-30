@@ -51,7 +51,9 @@ describe("Flash - Records Specialist", () => {
 
       // Accept optional and target the detective
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [detectiveCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(flashRecordsSpecialist, { targets: [detectiveCharacter] }),
       ).toBeSuccessfulCommand();
 
       // Detective should have +2 strength this turn
@@ -71,7 +73,9 @@ describe("Flash - Records Specialist", () => {
       expect(testEngine.asPlayerOne().quest(flashRecordsSpecialist)).toBeSuccessfulCommand();
 
       // Decline the optional ability
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(flashRecordsSpecialist, { resolveOptional: false });
 
       // Detective should still have original strength
       expect(testEngine.asPlayerOne().getCardStrength(detectiveCharacter)).toBe(originalStrength);
@@ -90,7 +94,9 @@ describe("Flash - Records Specialist", () => {
       expect(testEngine.asPlayerOne().quest(flashRecordsSpecialist)).toBeSuccessfulCommand();
 
       // Attempting to target non-detective should fail
-      const result = testEngine.asPlayerOne().resolveNextBag({ targets: [nonDetectiveCharacter] });
+      const result = testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(flashRecordsSpecialist, { targets: [nonDetectiveCharacter] });
       expect(result.success).toBe(false);
     });
   });

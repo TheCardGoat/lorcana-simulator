@@ -15,19 +15,17 @@ describe("concede", () => {
     const concedeEntry = engine
       .getServerEngine()
       .getRuntime()
-      .getGameLog()
-      .find((entry) => entry.defaultMessage?.key === "lorcana.move.concede");
-    expect(concedeEntry?.defaultMessage).toMatchObject({
-      key: "lorcana.move.concede",
-      values: {
-        playerId: PLAYER_ONE,
-      },
+      .getMoveLogHistory()
+      .find((log) => log.type === "concede");
+    expect(concedeEntry).toMatchObject({
+      type: "concede",
+      playerId: PLAYER_ONE,
     });
   });
 
   it("allows conceding while a pending effect is waiting on a non-priority chooser", () => {
     const engine = LorcanaMultiplayerTestEngine.createWithFixture({ deck: 1 }, { deck: 2 });
-    const state = structuredClone(engine.asServer().getState()) as LorcanaMatchState;
+    const state = engine.asServer().getState() as LorcanaMatchState;
     const sourceId = "pending-concede-source" as CardInstanceId;
 
     state.ctx.priority.holder = PLAYER_ONE;

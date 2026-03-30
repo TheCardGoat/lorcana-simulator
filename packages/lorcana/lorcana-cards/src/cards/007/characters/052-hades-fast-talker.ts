@@ -24,9 +24,9 @@ export const hadesFastTalker: CharacterCard = {
   },
   text: [
     {
-      title: "FOR JUST",
+      title: "FOR JUST A LITTLE PAIN",
       description:
-        "A LITTLE PAIN When you play this character, you may deal 2 damage to another chosen character of yours to banish chosen character with cost 3 or less.",
+        "When you play this character, you may deal 2 damage to another chosen character of yours to banish chosen character with cost 3 or less.",
     },
   ],
   classifications: ["Storyborn", "Villain", "Deity"],

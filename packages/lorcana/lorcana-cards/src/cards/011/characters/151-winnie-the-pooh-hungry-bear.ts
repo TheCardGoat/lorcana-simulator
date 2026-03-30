@@ -24,9 +24,9 @@ export const winnieThePoohHungryBear: CharacterCard = {
   },
   text: [
     {
-      title: "LOOKING FOR",
+      title: "LOOKING FOR A MORSEL",
       description:
-        "A MORSEL When you play this character, you may return an item card from your discard to your hand.",
+        "When you play this character, you may return an item card from your discard to your hand.",
     },
   ],
   classifications: ["Storyborn", "Hero"],

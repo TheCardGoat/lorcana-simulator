@@ -4,16 +4,22 @@
  * Factory functions for creating zone-related runtime API objects.
  */
 
-import type { MatchState } from "./types";
+import type { TCGCtx } from "./types";
 import type { ZoneQueryAPI, ZoneRef } from "./zone-operations";
 import type { CardQueryAPI } from "./card-runtime";
 import type { BaseCardDefinition } from "./card-contracts";
+import type { ZoneRegistry } from "./zone-registry";
+import { resolveZoneIdFromRegistry } from "./zone-registry";
 
 // =============================================================================
 // Zone Operations (Read-only for validation)
 // =============================================================================
 
-export function createZoneQueryAPI(state: MatchState, cardsApi: CardQueryAPI): ZoneQueryAPI {
+export function createZoneQueryAPI(
+  state: { ctx: Pick<TCGCtx, "zones"> },
+  cardsApi: CardQueryAPI,
+  zoneRegistry: ZoneRegistry,
+): ZoneQueryAPI {
   const getFallbackCardView = (cardId: string) => {
     const indexEntry = state.ctx.zones.private.cardIndex[cardId];
     return (
@@ -31,45 +37,7 @@ export function createZoneQueryAPI(state: MatchState, cardsApi: CardQueryAPI): Z
   };
 
   function resolveZoneId(zone: ZoneRef): string {
-    const zoneId = zone.zone;
-
-    if (zoneId.includes(":")) {
-      if (zone.playerId && !zoneId.endsWith(`:${zone.playerId}`)) {
-        throw new Error(`Zone player mismatch for ${zoneId}`);
-      }
-      if (!state.ctx.zones.zoneDefs[zoneId]) {
-        throw new Error(`Unknown zone: ${zoneId}`);
-      }
-      return zoneId;
-    }
-
-    if (zone.playerId) {
-      const scopedZoneId = `${zoneId}:${zone.playerId}`;
-      if (state.ctx.zones.zoneDefs[scopedZoneId]) {
-        return scopedZoneId;
-      }
-    }
-
-    const unscopedZoneDef = state.ctx.zones.zoneDefs[zoneId];
-    if (!unscopedZoneDef) {
-      throw new Error(`Unknown zone: ${zoneId}`);
-    }
-    if (unscopedZoneDef.ownerScoped) {
-      if (!zone.playerId) {
-        throw new Error(`Owner-scoped zone requires player id: ${zoneId}`);
-      }
-
-      const hasPlayerCards = Object.values(state.ctx.zones.private.cardIndex).some((entry) => {
-        return entry?.ownerID === zone.playerId || entry?.controllerID === zone.playerId;
-      });
-      if (!hasPlayerCards) {
-        throw new Error(`Unknown zone: ${zoneId}`);
-      }
-
-      return zoneId;
-    }
-
-    return zoneId;
+    return resolveZoneIdFromRegistry(zone, zoneRegistry, state.ctx.zones.private.cardIndex);
   }
 
   return {
@@ -112,15 +80,15 @@ export function createZoneQueryAPI(state: MatchState, cardsApi: CardQueryAPI): Z
     getCardController: (cardId) => state.ctx.zones.private.cardIndex[cardId]?.controllerID,
     isOrdered: (zone) => {
       const zoneId = resolveZoneId(zone);
-      return state.ctx.zones.zoneDefs[zoneId]?.ordered ?? true;
+      return zoneRegistry[zoneId]?.ordered ?? true;
     },
     isOwnerScoped: (zone) => {
       const zoneId = resolveZoneId(zone);
-      return state.ctx.zones.zoneDefs[zoneId]?.ownerScoped ?? false;
+      return zoneRegistry[zoneId]?.ownerScoped ?? false;
     },
     getVisibility: (zone) => {
       const zoneId = resolveZoneId(zone);
-      return state.ctx.zones.zoneDefs[zoneId]?.visibility ?? "private";
+      return zoneRegistry[zoneId]?.visibility ?? "private";
     },
   };
 }

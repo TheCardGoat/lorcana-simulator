@@ -63,7 +63,7 @@ describe("Olaf - Snowman of Action", () => {
       // Resolve the triggered CHAOTIC COLLISION bag effect
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+          testEngine.asPlayerOne().resolvePendingByCard(olafSnowmanOfAction),
         ).toBeSuccessfulCommand();
       }
 
@@ -94,7 +94,7 @@ describe("Olaf - Snowman of Action", () => {
       // Resolve the triggered CHAOTIC COLLISION bag effect
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+          testEngine.asPlayerOne().resolvePendingByCard(olafSnowmanOfAction),
         ).toBeSuccessfulCommand();
       }
 

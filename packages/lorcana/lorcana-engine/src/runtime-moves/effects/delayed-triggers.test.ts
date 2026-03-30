@@ -241,7 +241,9 @@ describe("delayed triggers", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     const [startTurnBag] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(startTurnBag!.id).success).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(startTurnBag!.sourceId).success).toBe(
+      true,
+    );
     expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(2);
 
     expect(testEngine.asPlayerOne().passTurn().success).toBe(true);
@@ -306,7 +308,7 @@ describe("delayed triggers", () => {
     );
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(bagEffect!.sourceId, {
         targets: [chosenTargetId],
       }).success,
     ).toBe(true);

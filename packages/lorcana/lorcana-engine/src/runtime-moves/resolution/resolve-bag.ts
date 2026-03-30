@@ -1,7 +1,7 @@
 import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
 import type { PendingActionResolutionInput } from "../../types";
 import { createLorcanaLogProjection, type LorcanaMoveDefinition } from "../../types";
-import type { LogTargetId } from "../../types/log-messages";
+import type { LogTargetId, ResolveBagCancelledCause } from "../../types/log-messages";
 import { continuePendingChallengeResolution } from "../moves/core/challenge";
 import { continuePendingTurnTransition } from "../moves/turn/pass-turn";
 import { resolveActionEffect } from "./action-effects/composed-effect-resolver";
@@ -49,7 +49,7 @@ type ResolveBagChooserContext = Pick<
   "cards" | "framework" | "playerId"
 >;
 
-type ResolveBagStatus = "completed" | "pending" | "skipped";
+type ResolveBagStatus = "completed" | "pending" | "skipped" | "cancelled";
 
 function toLogTargetId(value: string): LogTargetId {
   return value as LogTargetId;
@@ -76,6 +76,7 @@ function logResolveBagMessage(
   bagEffect: NonNullable<ReturnType<typeof getBagEffect>>,
   resolutionInput: ActionResolutionInput,
   status: ResolveBagStatus,
+  cause?: ResolveBagCancelledCause,
 ): void {
   const common = {
     playerId: bagEffect.controllerId,
@@ -163,6 +164,28 @@ function logResolveBagMessage(
         return createLorcanaLogProjection(
           "lorcana.bag.resolve.skipped",
           common,
+          visibility,
+          category,
+        );
+      case "cancelled":
+        if (abilityName) {
+          return createLorcanaLogProjection(
+            "lorcana.bag.resolve.cancelled.named",
+            {
+              ...common,
+              abilityName,
+              cause: cause!,
+            },
+            visibility,
+            category,
+          );
+        }
+        return createLorcanaLogProjection(
+          "lorcana.bag.resolve.cancelled",
+          {
+            ...common,
+            cause: cause!,
+          },
           visibility,
           category,
         );
@@ -697,7 +720,7 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
           cardName: sourceCardName,
           message: "Bag effect skipped because its condition was not met",
         });
-        logResolveBagMessage(ctx, bagEffect, resolutionInput, "skipped");
+        logResolveBagMessage(ctx, bagEffect, resolutionInput, "cancelled", "condition-not-met");
         flushTriggeredEventsToBag(ctx);
       } else {
         traceLorcanaRuntimeStep({
@@ -716,6 +739,7 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
           resolutionInput,
           {
             allowPromptForExistingChosenTargets: true,
+            sourceAbilityIndex: bagEffect.abilityIndex,
           },
         );
         if (result.status === "suspended") {
@@ -740,10 +764,46 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
           cardName: sourceCardName,
           message: "Effect resolution completes",
         });
-        logResolveBagMessage(ctx, bagEffect, resolutionInput, "completed");
+        const wasAutoRejectedForNoTargets = (() => {
+          if (allTargets.length > 0) return false;
+          const targetAnalysis = analyzeEffectTargets(
+            bagEffect.effect,
+            bagEffect.controllerId,
+            ctx,
+            bagEffect.sourceId as CardInstanceId,
+          );
+          const availability = analyzeTargetSelectionAvailabilityFromAnalysis(
+            bagEffect.effect,
+            targetAnalysis,
+          );
+          if (availability.shouldAutoRejectForNoValidTargets) return true;
+          const effectRecord = bagEffect.effect as unknown as Record<string, unknown> | null;
+          const firstStepEffect =
+            effectRecord?.type === "sequence"
+              ? ((effectRecord.steps as unknown[] | undefined)?.[0] ?? null)
+              : null;
+          if (firstStepEffect != null) {
+            const stepAnalysis = analyzeEffectTargets(
+              firstStepEffect,
+              bagEffect.controllerId,
+              ctx,
+              bagEffect.sourceId as CardInstanceId,
+            );
+            return analyzeTargetSelectionAvailabilityFromAnalysis(firstStepEffect, stepAnalysis)
+              .shouldAutoRejectForNoValidTargets;
+          }
+          return false;
+        })();
+        logResolveBagMessage(
+          ctx,
+          bagEffect,
+          resolutionInput,
+          wasAutoRejectedForNoTargets ? "cancelled" : "completed",
+          wasAutoRejectedForNoTargets ? "no-valid-targets" : undefined,
+        );
       }
     } else {
-      logResolveBagMessage(ctx, bagEffect, resolutionInput, "skipped");
+      logResolveBagMessage(ctx, bagEffect, resolutionInput, "cancelled", "restriction");
     }
 
     flushTriggeredEventsToBag(ctx);

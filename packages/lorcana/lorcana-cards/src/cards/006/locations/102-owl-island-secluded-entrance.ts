@@ -108,7 +108,7 @@ export const owlIslandSecludedEntrance: LocationCard = {
           controller: "you",
           cardType: "action",
         },
-        timing: "when",
+        timing: "whenever",
       },
       type: "triggered",
     },

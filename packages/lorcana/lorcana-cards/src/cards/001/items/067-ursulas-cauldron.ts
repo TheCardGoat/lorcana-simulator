@@ -48,6 +48,7 @@ export const ursulasCauldron: ItemCard = {
         type: "scry",
       },
       id: "1ad-1",
+      name: "PEER INTO THE DEPTHS",
       text: "PEER INTO THE DEPTHS {E} — Look at the top 2 cards of your deck. Put one on the top of your deck and the other on the bottom.",
       type: "activated",
     },

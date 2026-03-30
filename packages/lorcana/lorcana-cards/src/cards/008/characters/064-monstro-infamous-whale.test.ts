@@ -112,7 +112,9 @@ describe("Regression Tests", () => {
     // Player one plays Elsa, targeting Monstro with DEEP FREEZE
     expect(testEngine.asPlayerOne().playCard(elsaSpiritOfWinter)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ targets: [monstroInfamousWhale] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(elsaSpiritOfWinter, { targets: [monstroInfamousWhale] }),
     ).toBeSuccessfulCommand();
 
     // Monstro should be exerted and have cant-ready restriction

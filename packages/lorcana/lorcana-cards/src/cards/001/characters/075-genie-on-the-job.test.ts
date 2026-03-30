@@ -36,7 +36,9 @@ describe("Genie - On the Job", () => {
 
     expect(testEngine.asPlayerOne().playCard(genieOnTheJob)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [opposingTarget] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(genieOnTheJob, { resolveOptional: true, targets: [opposingTarget] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardsInZone("play", PLAYER_TWO).count).toBe(0);
@@ -52,7 +54,9 @@ describe("Genie - On the Job", () => {
 
     expect(testEngine.asPlayerOne().playCard(genieOnTheJob)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [ownTarget] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(genieOnTheJob, { resolveOptional: true, targets: [ownTarget] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(ownTarget)).toBe("hand");
@@ -71,7 +75,7 @@ describe("Genie - On the Job", () => {
 
     expect(testEngine.asPlayerOne().playCard(genieOnTheJob)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      testEngine.asPlayerOne().resolvePendingByCard(genieOnTheJob, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardsInZone("play", PLAYER_TWO).count).toBe(1);

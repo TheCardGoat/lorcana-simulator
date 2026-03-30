@@ -33,8 +33,11 @@ export const hueyReliableLeader: CharacterCard = {
   abilities: [
     {
       effect: {
-        from: "hand",
-        type: "play-card",
+        amount: 1,
+        cardType: "character",
+        duration: "next-play-this-turn",
+        target: "CONTROLLER",
+        type: "cost-reduction",
       },
       id: "1g4-1",
       name: "I KNOW THE WAY",

@@ -34,7 +34,9 @@ describe("Queen of Hearts - Capricious Monarch", () => {
 
       // Accept the optional: ready the Queen
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(queenOfHeartsCapriciousMonarch, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Queen should now be readied
@@ -63,7 +65,9 @@ describe("Queen of Hearts - Capricious Monarch", () => {
 
       // Decline the optional
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(queenOfHeartsCapriciousMonarch, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Queen should remain exerted
@@ -97,7 +101,9 @@ describe("Queen of Hearts - Capricious Monarch", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(queenOfHeartsCapriciousMonarch, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().isExerted(queenOfHeartsCapriciousMonarch)).toBe(false);

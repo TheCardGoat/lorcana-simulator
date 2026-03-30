@@ -14,7 +14,7 @@ describe("Coconut Basket", () => {
     expect(testEngine.asPlayerOne().playCard(peterPanNeverLanding)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(coconutBasket, {
         targets: [mauiHeroToAll],
       }),
     ).toBeSuccessfulCommand();
@@ -24,7 +24,7 @@ describe("Coconut Basket", () => {
     expect(testEngine.asPlayerOne().playCard(mickeyMouseBraveLittleTailor)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(coconutBasket, {
         targets: [mauiHeroToAll],
       }),
     ).toBeSuccessfulCommand();
@@ -59,7 +59,7 @@ describe("Coconut Basket", () => {
     expect(testEngine.asPlayerOne().playCard(peterPanNeverLanding)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(coconutBasket, {
         targets: [mauiHeroToAll],
       }),
     ).toBeSuccessfulCommand();
@@ -78,12 +78,10 @@ describe("Coconut Basket", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     // Targeting an undamaged character should be valid with "up to 2"
-    const result = testEngine
-      .asPlayerOne()
-      .resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-        resolveOptional: true,
-        targets: [mauiHeroToAll],
-      });
+    const result = testEngine.asPlayerOne().resolvePendingByCard(coconutBasket, {
+      resolveOptional: true,
+      targets: [mauiHeroToAll],
+    });
     expect(result).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getDamage(mauiHeroToAll)).toBe(0);
   });

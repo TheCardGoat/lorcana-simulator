@@ -49,7 +49,9 @@ describe("Yzma - Scary Beyond All Reason", () => {
 
     expect(testEngine.asPlayerOne().playCard(yzmaScaryBeyondAllReason)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(yzmaScaryBeyondAllReason),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().resolveNextPending({ targets: [opponentTarget] }).success).toBe(
       true,
     );

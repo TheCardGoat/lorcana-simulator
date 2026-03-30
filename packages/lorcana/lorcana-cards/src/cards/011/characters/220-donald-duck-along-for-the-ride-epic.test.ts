@@ -44,7 +44,7 @@ describe("Donald Duck - Along for the Ride (Epic)", () => {
 
     const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
     expect(
-      testEngine.asPlayerOne().resolveBag(bagId, {
+      testEngine.asPlayerOne().resolvePendingByCard(donaldDuckAlongForTheRideEpic, {
         resolveOptional: true,
         targets: [ownItem],
       }),
@@ -69,7 +69,7 @@ describe("Donald Duck - Along for the Ride (Epic)", () => {
 
     const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
     expect(
-      testEngine.asPlayerOne().resolveBag(bagId, {
+      testEngine.asPlayerOne().resolvePendingByCard(donaldDuckAlongForTheRideEpic, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();
@@ -97,7 +97,7 @@ describe("Donald Duck - Along for the Ride (Epic)", () => {
 
     const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
     expect(
-      testEngine.asPlayerOne().resolveBag(bagId, {
+      testEngine.asPlayerOne().resolvePendingByCard(donaldDuckAlongForTheRideEpic, {
         resolveOptional: true,
         targets: [opponentItem],
       }),

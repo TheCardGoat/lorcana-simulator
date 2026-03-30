@@ -43,7 +43,7 @@ export const duckburgFunsosFunzone: LocationCard = {
       text: "WHERE FUN IS IN THE ZONE Whenever a character quests while here, you pay 2 less for the next character you play this turn.",
       trigger: {
         event: "quest",
-        on: "CHARACTER_HERE",
+        on: "CHARACTERS_HERE",
         timing: "whenever",
       },
       type: "triggered",

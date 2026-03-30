@@ -15,6 +15,7 @@ import {
 import { comparePlayCard, evaluatePlayCard } from "./families/play-card";
 import { comparePutInk, evaluatePutInk } from "./families/put-ink";
 import { compareQuest, evaluateQuest } from "./families/quest";
+import { compareResolution, evaluateResolution } from "./families/resolve";
 import type {
   DetailedCandidateSummary,
   FamilyEvaluation,
@@ -53,24 +54,27 @@ function evaluateFamily(
   context: AutomatedActionPlanningContext,
   candidate: AutomatedActionCandidate,
   preferences: LoreRaceHeuristicPreferences,
-): FamilyEvaluation["ranking"] {
+): FamilyEvaluation {
   switch (candidate.family) {
     case "chooseWhoGoesFirst":
-      return evaluateChooseWhoGoesFirst(context, candidate, preferences).ranking;
+      return evaluateChooseWhoGoesFirst(context, candidate, preferences);
     case "alterHand":
-      return evaluateAlterHand(context, candidate, preferences).ranking;
+      return evaluateAlterHand(context, candidate, preferences);
     case "quest":
-      return evaluateQuest(context, candidate, preferences).ranking;
+      return evaluateQuest(context, candidate, preferences);
     case "playCard":
-      return evaluatePlayCard(context, candidate, preferences).ranking;
+      return evaluatePlayCard(context, candidate, preferences);
     case "activateAbility":
-      return evaluateActivateAbility(context, candidate, preferences).ranking;
+      return evaluateActivateAbility(context, candidate, preferences);
     case "putCardIntoInkwell":
-      return evaluatePutInk(context, candidate, preferences).ranking;
+      return evaluatePutInk(context, candidate, preferences);
     case "challenge":
-      return evaluateChallenge(context, candidate, preferences).ranking;
+      return evaluateChallenge(context, candidate, preferences);
+    case "resolveBag":
+    case "resolveEffect":
+      return evaluateResolution(context, candidate, preferences);
     default:
-      return {};
+      return { ranking: {} };
   }
 }
 
@@ -80,7 +84,8 @@ function buildDetailedCandidateSummary(
   preferences: LoreRaceHeuristicPreferences,
 ): DetailedCandidateSummary {
   const stableKey = getStableKey(context, candidate);
-  const familyRanking = evaluateFamily(context, candidate, preferences);
+  const familyEvaluation = evaluateFamily(context, candidate, preferences);
+  const familyRanking = familyEvaluation.ranking;
   const familyOrder = getFamilyOrder(
     candidate.family,
     familyRanking.challengePriorityBoost === true,
@@ -129,7 +134,22 @@ function buildDetailedCandidateSummary(
     heuristics.push(createHeuristic("asc", "abilityComplexity", ranking.abilityComplexity ?? 0));
   }
 
+  if (candidate.family === "resolveBag" || candidate.family === "resolveEffect") {
+    heuristics.push(
+      createHeuristic("desc", "resolveBenefitScore", ranking.resolveBenefitScore ?? 0),
+    );
+    heuristics.push(
+      createHeuristic(
+        "preferTrue",
+        "resolveOptionalAccepted",
+        ranking.resolveOptionalAccepted ?? false,
+      ),
+    );
+    heuristics.push(createHeuristic("asc", "resolveComplexity", ranking.resolveComplexity ?? 0));
+  }
+
   if (candidate.family === "putCardIntoInkwell") {
+    heuristics.push(createHeuristic("preferTrue", "inkUnplayable", ranking.inkUnplayable ?? false));
     heuristics.push(createHeuristic("desc", "inkDuplicateCount", ranking.inkDuplicateCount ?? 0));
     heuristics.push(
       createHeuristic(
@@ -189,7 +209,7 @@ function buildDetailedCandidateSummary(
   return {
     candidate,
     family: candidate.family,
-    heuristics,
+    heuristics: [...heuristics, ...(familyEvaluation.heuristics ?? [])],
     ranking,
     stableKey,
   };
@@ -240,6 +260,21 @@ function compareDetailedCandidateSummaries(
     }
   }
 
+  if (
+    (left.family === "resolveBag" || left.family === "resolveEffect") &&
+    left.family === right.family
+  ) {
+    const resolutionOrder = compareResolution(
+      left.candidate,
+      left.ranking,
+      right.candidate,
+      right.ranking,
+    );
+    if (resolutionOrder !== 0) {
+      return resolutionOrder;
+    }
+  }
+
   if (left.family === "putCardIntoInkwell" && right.family === "putCardIntoInkwell") {
     const inkOrder = comparePutInk(left.ranking, right.ranking, preferences);
     if (inkOrder !== 0) {
@@ -276,8 +311,8 @@ export function createLoreRaceAutomatedActionStrategy(
 ): AutomatedActionStrategy {
   return {
     name,
-    rankCandidates(context, candidates) {
-      return summarize(context, candidates).map(({ candidate }) => candidate);
+    summarizeCandidates(context, candidates) {
+      return summarize(context, candidates);
     },
   };
 }

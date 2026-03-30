@@ -23,7 +23,7 @@ describe("Belle - Untrained Mystic", () => {
       // Resolve the optional triggered ability
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(belleUntrainedMystic, {
           resolveOptional: true,
           targets: [simbaProtectiveCub, goofyKnightForADay],
         }),
@@ -50,7 +50,9 @@ describe("Belle - Untrained Mystic", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(belleUntrainedMystic, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain unchanged

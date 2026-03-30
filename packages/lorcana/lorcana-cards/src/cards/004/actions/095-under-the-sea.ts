@@ -34,11 +34,13 @@ export const underTheSea: ActionCard = {
   abilities: [
     singTogether(8),
     {
+      name: "ACTION",
+      text: "Put all opposing characters with 2 {S} or less on the bottom of their players' decks in any order.",
       type: "action",
       effect: {
         type: "put-on-bottom",
         ordering: "player-choice",
-        orderBy: "owner",
+        orderBy: "controller",
         target: {
           selector: "all",
           count: "all",

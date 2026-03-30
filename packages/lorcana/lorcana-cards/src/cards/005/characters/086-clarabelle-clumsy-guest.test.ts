@@ -27,7 +27,7 @@ describe("Clarabelle - Clumsy Guest", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(clarabelleClumsyGuest, {
           targets: [chosenItem],
         }),
       ).toBeSuccessfulCommand();
@@ -52,7 +52,7 @@ describe("Clarabelle - Clumsy Guest", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(clarabelleClumsyGuest, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

@@ -34,7 +34,7 @@ describe("Magica De Spell - Shadow Form", () => {
       expect(testEngine.asPlayerOne().playCard(magicaDeSpellShadowForm)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(magicaDeSpellShadowForm),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -59,7 +59,7 @@ describe("Magica De Spell - Shadow Form", () => {
       expect(testEngine.asPlayerOne().playCard(magicaDeSpellShadowForm)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(magicaDeSpellShadowForm, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

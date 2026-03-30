@@ -13,7 +13,7 @@ function createTestContext(args?: {
   zoneCards?: Record<string, CardInstanceId[]>;
 }): PlayCardExecutionContext {
   const definitions = args?.definitions ?? {};
-  const cardMeta = structuredClone(args?.cardMeta ?? {});
+  const cardMeta = args?.cardMeta ?? {};
   const zoneCards = args?.zoneCards ?? {};
   const cardIndex: Record<string, { ownerID: PlayerId; controllerID: PlayerId; zoneKey: string }> =
     {};

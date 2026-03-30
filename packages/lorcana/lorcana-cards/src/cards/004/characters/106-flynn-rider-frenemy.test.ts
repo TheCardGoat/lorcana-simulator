@@ -53,7 +53,9 @@ describe("Flynn Rider - Frenemy", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(flynnRiderFrenemy),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(3);
       expect(testEngine.asPlayerOne().getLore(PLAYER_TWO)).toBe(0);
@@ -76,7 +78,9 @@ describe("Flynn Rider - Frenemy", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(flynnRiderFrenemy),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
       expect(testEngine.asPlayerOne().getLore(PLAYER_TWO)).toBe(0);
@@ -98,7 +102,9 @@ describe("Flynn Rider - Frenemy", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(flynnRiderFrenemy),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(3);
     });

@@ -250,19 +250,24 @@ import type { AutomatedActionStrategy } from "./types";
 
 export const myStrategy: AutomatedActionStrategy = {
   name: "my-strategy",
-  rankCandidates(_context, candidates) {
-    return [...candidates];
+  summarizeCandidates(_context, candidates) {
+    return candidates.map((candidate, index) => ({
+      candidate,
+      family: candidate.family,
+      heuristics: [],
+      stableKey: `${candidate.family}-${index}`,
+    }));
   },
 };
 ```
 
-That example does nothing yet. It just returns the candidates unchanged.
+That example does nothing yet. It just returns the candidates unchanged with empty heuristics.
 
 To make it useful:
 
 1. Copy the candidate array.
 2. Sort it in a deterministic way.
-3. Return the sorted list.
+3. Return ordered candidate summaries with stable keys and heuristics.
 
 Practical tips:
 

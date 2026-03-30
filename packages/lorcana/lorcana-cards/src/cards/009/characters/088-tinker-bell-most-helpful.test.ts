@@ -53,7 +53,7 @@ describe("Tinker Bell - Most Helpful", () => {
 
       const targetId = testEngine.findCardInstanceId(target, "play", PLAYER_ONE);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tinkerBellMostHelpful, {
           targets: [targetId],
         }),
       ).toBeSuccessfulCommand();
@@ -83,7 +83,7 @@ describe("Tinker Bell - Most Helpful", () => {
 
       const targetId = testEngine.findCardInstanceId(opponentCharacter, "play", PLAYER_TWO);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tinkerBellMostHelpful, {
           targets: [targetId],
         }),
       ).toBeSuccessfulCommand();
@@ -109,7 +109,7 @@ describe("Tinker Bell - Most Helpful", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       const targetId = testEngine.findCardInstanceId(target, "play", PLAYER_ONE);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tinkerBellMostHelpful, {
           targets: [targetId],
         }),
       ).toBeSuccessfulCommand();
@@ -139,7 +139,7 @@ describe("Tinker Bell - Most Helpful", () => {
       // Choose Tinker Bell herself — she already has native Evasive, so it remains true
       const tinkerBellId = testEngine.findCardInstanceId(tinkerBellMostHelpful, "play", PLAYER_ONE);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tinkerBellMostHelpful, {
           targets: [tinkerBellId],
         }),
       ).toBeSuccessfulCommand();

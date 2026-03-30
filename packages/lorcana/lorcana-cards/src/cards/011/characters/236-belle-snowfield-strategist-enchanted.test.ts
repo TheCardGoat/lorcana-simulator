@@ -41,19 +41,14 @@ describe("Belle - Snowfield Strategist Enchanted", () => {
     // Belle's WINTER STOCKPILE triggers - accept the optional ability
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(belleSnowfieldStrategistEnchanted, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();
 
-    // Accepting creates a pending target selection for which discard card to put in inkwell
-    const sacrificialId = testEngine.findCardInstanceId(sacrificialCharacter, "discard", "p1");
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ targets: [sacrificialId] }),
-    ).toBeSuccessfulCommand();
-
     // The banished character should now be in the inkwell
     expect(testEngine.asPlayerOne().getCardZone(sacrificialCharacter)).toBe("inkwell");
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
 
     // It should be exerted and facedown
     const cardInstanceId = testEngine.findCardInstanceId(sacrificialCharacter, "inkwell", "p1");
@@ -87,7 +82,7 @@ describe("Belle - Snowfield Strategist Enchanted", () => {
     // Belle's WINTER STOCKPILE triggers - decline the optional ability
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(belleSnowfieldStrategistEnchanted, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

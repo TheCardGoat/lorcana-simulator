@@ -33,6 +33,42 @@ export const chiefBogoCallingTheShots: CharacterCard = {
     },
   ],
   classifications: ["Storyborn"],
-  abilities: [],
+  abilities: [
+    {
+      id: "A6f-1",
+      name: "MY JURISDICTION",
+      type: "static",
+      condition: {
+        type: "during-turn",
+        whose: "your",
+      },
+      effect: {
+        type: "restriction",
+        restriction: "cant-be-dealt-damage",
+        target: "SELF",
+      },
+      text: "MY JURISDICTION During your turn, this character can't be dealt damage.",
+    },
+    {
+      id: "A6f-2",
+      name: "DEPUTIZE",
+      type: "static",
+      effect: {
+        type: "property-modification",
+        property: "classification",
+        operation: "add",
+        value: "Detective",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+        },
+      },
+      text: "DEPUTIZE Your other characters gain the Detective classification.",
+    },
+  ],
   i18n: chiefBogoCallingTheShotsI18n,
 };

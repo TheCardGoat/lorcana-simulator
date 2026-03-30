@@ -79,7 +79,7 @@ describe("Magic Broom - Dancing Duster", () => {
       expect(testEngine.asPlayerOne().playCard(magicBroomDancingDuster)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicBroomDancingDuster, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -106,7 +106,7 @@ describe("Magic Broom - Dancing Duster", () => {
       expect(testEngine.asPlayerOne().playCard(magicBroomDancingDuster)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicBroomDancingDuster, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -137,7 +137,7 @@ describe("Magic Broom - Dancing Duster", () => {
       expect(testEngine.asPlayerOne().playCard(magicBroomDancingDuster)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicBroomDancingDuster, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -168,7 +168,9 @@ describe("Magic Broom - Dancing Duster", () => {
       expect(testEngine.asPlayerOne().playCard(magicBroomDancingDuster)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(magicBroomDancingDuster, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(opponentCharacter)).toBe(false);

@@ -2,13 +2,13 @@
  * MatchRuntime Priority Pass Processing
  */
 
-import { produce } from "immer";
 import type {
   ChessClockPlayerState,
   DynamicClockPlayerState,
   GameEvent,
   MatchState,
 } from "./types";
+import { createRuntimeState } from "./mutative";
 import { expireReveals } from "./zone-operations";
 
 export interface PriorityPassContext {
@@ -31,7 +31,7 @@ export function executePriorityPass(
 ): { result: InternalPriorityPassSuccess; newState: MatchState } {
   let newState = ctx.state;
 
-  newState = produce(ctx.state, (draft) => {
+  newState = createRuntimeState(ctx.state, (draft) => {
     // Settle clocks for the passing player
     if (draft.ctx.time.mode !== "none") {
       const time = draft.ctx.time;

@@ -97,7 +97,9 @@ describe("Fix-It Felix Jr. - Pint-Sized Hero", () => {
       // Calhoun-like's trigger should appear in the bag
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(calhounLikeAttacker, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose to return the Racer from discard
@@ -114,7 +116,9 @@ describe("Fix-It Felix Jr. - Pint-Sized Hero", () => {
       // Felix's LET'S GET TO WORK should trigger from the return-from-discard event
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(fixitFelixJrPintsizedHero, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose the exerted Racer in play to ready
@@ -156,7 +160,9 @@ describe("Fix-It Felix Jr. - Pint-Sized Hero", () => {
       // Resolve Calhoun-like's bag - return the Racer from discard
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(calhounLikeAttacker, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const pendingChoice = testEngine.asPlayerOne().getPendingChoice();
@@ -172,7 +178,9 @@ describe("Fix-It Felix Jr. - Pint-Sized Hero", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(fixitFelixJrPintsizedHero, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // The Racer in play should remain exerted
@@ -236,7 +244,9 @@ describe("Fix-It Felix Jr. - Pint-Sized Hero", () => {
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
         expect(
-          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(attackerWithNonRacerReturn, { resolveOptional: true }),
         ).toBeSuccessfulCommand();
 
         const pendingChoice = testEngine.asPlayerOne().getPendingChoice();
@@ -279,7 +289,9 @@ describe("Fix-It Felix Jr. - Pint-Sized Hero", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(calhounLikeAttacker, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const pendingChoice = testEngine.asPlayerOne().getPendingChoice();
@@ -291,7 +303,9 @@ describe("Fix-It Felix Jr. - Pint-Sized Hero", () => {
 
       // Resolve Felix's trigger - ready the racer
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(fixitFelixJrPintsizedHero, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [racerInPlayId] }),

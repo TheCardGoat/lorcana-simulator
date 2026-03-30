@@ -24,9 +24,9 @@ export const theMatchmakerUnforgivingExpert: CharacterCard = {
   },
   text: [
     {
-      title: "YOU ARE",
+      title: "YOU ARE A DISGRACE!",
       description:
-        "A DISGRACE! Whenever this character challenges another character, each opponent loses 1 lore.",
+        "Whenever this character challenges another character, each opponent loses 1 lore.",
     },
   ],
   classifications: ["Storyborn"],

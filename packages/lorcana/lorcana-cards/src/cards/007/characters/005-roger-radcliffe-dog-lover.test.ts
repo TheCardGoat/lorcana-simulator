@@ -62,7 +62,9 @@ describe("Roger Radcliffe - Dog Lover [Set 007]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rogerRadcliffeDogLover, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asServer().getCard(woundedPuppyId)?.damage).toBe(1);
@@ -82,7 +84,9 @@ describe("Roger Radcliffe - Dog Lover [Set 007]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rogerRadcliffeDogLover, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asServer().getCard(woundedPuppyId)?.damage).toBe(2);
@@ -100,7 +104,9 @@ describe("Roger Radcliffe - Dog Lover [Set 007]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rogerRadcliffeDogLover, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asServer().getCard(woundedPuppyId)?.damage).toBe(0);
@@ -123,7 +129,9 @@ describe("Roger Radcliffe - Dog Lover [Set 007]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rogerRadcliffeDogLover, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asServer().getCard(opponentPuppyId)?.damage).toBe(2);

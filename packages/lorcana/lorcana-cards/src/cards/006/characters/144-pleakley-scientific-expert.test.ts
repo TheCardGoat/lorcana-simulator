@@ -21,7 +21,7 @@ describe("Pleakley - Scientific Expert", () => {
     expect(testEngine.asPlayerOne().playCard(pleakleyScientificExpert)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(pleakleyScientificExpert),
     ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({
@@ -54,7 +54,7 @@ describe("Pleakley - Scientific Expert", () => {
     // Resolve it - pick the researcher
     const researcherId = testEngine.findCardInstanceId(friendlyResearcher, "play", "p1");
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(pleakleyScientificExpert),
     ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({
@@ -105,7 +105,7 @@ describe("Pleakley - Scientific Expert", () => {
   //   expect(testEngine.asPlayerOne().playCard(pleakleyScientificExpert)).toBeSuccessfulCommand();
   //   expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
   //   expect(
-  //     testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+  //     testEngine.asPlayerOne().resolvePendingByCard(pleakleyScientificExpert),
   //   ).toBeSuccessfulCommand();
   //   expect(
   //     testEngine.asPlayerOne().resolveNextPending({
@@ -142,7 +142,7 @@ describe("Pleakley - Scientific Expert", () => {
     expect(testEngine.asPlayerOne().playCard(pleakleyScientificExpert)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(pleakleyScientificExpert),
     ).toBeSuccessfulCommand();
 
     // Attempting to target opponent's character should fail

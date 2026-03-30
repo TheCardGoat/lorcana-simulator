@@ -32,6 +32,7 @@ export const sarabiProtectingThePride: CharacterCard = {
   abilities: [
     {
       id: "m08-1",
+      name: "FEARSOME SNARL",
       type: "activated",
       cost: {
         exert: true,

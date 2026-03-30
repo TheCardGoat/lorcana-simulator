@@ -58,7 +58,9 @@ describe("Donald Duck - Sleepwalker (Set 9)", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
 
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckSleepwalker),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(donaldDuckSleepwalker)).toBe(
         strengthBefore + 2,
@@ -81,7 +83,9 @@ describe("Donald Duck - Sleepwalker (Set 9)", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckSleepwalker),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(donaldDuckSleepwalker)).toBe(
         strengthBefore + 2,
@@ -110,7 +114,9 @@ describe("Donald Duck - Sleepwalker (Set 9)", () => {
 
       const [bagEffect1] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect1).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect1!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckSleepwalker),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine
@@ -120,7 +126,9 @@ describe("Donald Duck - Sleepwalker (Set 9)", () => {
 
       const [bagEffect2] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect2).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect2!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckSleepwalker),
+      ).toBeSuccessfulCommand();
 
       // Should have +4 strength (2 per action, 2 actions played)
       expect(testEngine.asPlayerOne().getCardStrength(donaldDuckSleepwalker)).toBe(

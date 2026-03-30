@@ -6,11 +6,10 @@
  * Implements server-authoritative passive time management.
  * Clocks only change on server transitions, not via continuous ticking.
  *
- * NOTE: All functions in this module use Immer's `produce()` for immutability.
- * They can be called safely from outside a produce() block.
+ * NOTE: All functions in this module use Mutative's `create()` for immutability.
+ * They can be called safely from outside a create() block.
  */
 
-import { produce } from "immer";
 import type {
   MatchState,
   ChessClockContext,
@@ -22,6 +21,7 @@ import type {
   DynamicClockPlayerState,
   ChessClockPlayerState,
 } from "./types";
+import { createRuntimeState } from "./mutative";
 
 export const DEFAULT_DYNAMIC_CLOCK_CONFIG: DynamicClockConfig = {
   initialReserveMs: 150_000,
@@ -42,7 +42,7 @@ export const DEFAULT_DYNAMIC_CLOCK_CONFIG: DynamicClockConfig = {
  * This is the core of passive time management - clocks are only updated
  * when relevant transitions occur (command receipt, priority changes, etc.)
  *
- * Uses Immer's produce() for immutability - safe to call from anywhere.
+ * Uses Mutative's create() for immutability - safe to call from anywhere.
  */
 export function settleClocks(state: MatchState, now: number): MatchState {
   const time = state.ctx.time;
@@ -54,7 +54,7 @@ export function settleClocks(state: MatchState, now: number): MatchState {
 
   const elapsedMs = now - time.startedAtMs;
 
-  return produce(state, (draft) => {
+  return createRuntimeState(state, (draft) => {
     if (time.mode === "chess") {
       settleChessClockDraft(
         draft as MatchState & { ctx: { time: ChessClockContext } },
@@ -113,7 +113,7 @@ function settleChessClockDraft(
  * - If player acts within the window: no reserve consumed
  * - If player acts after the window: only overage burns reserve
  *
- * This function mutates the draft directly within an Immer produce() callback.
+ * This function mutates the draft directly within a Mutative create() callback.
  */
 function settlePriorityClockDraft(
   draft: MatchState & { ctx: { time: PriorityClockContext } },
@@ -185,10 +185,10 @@ function settleDynamicClockDraft(
  * Grant priority to a player
  *
  * Opens a new priority window for the player.
- * Uses Immer's produce() for immutability - safe to call from anywhere.
+ * Uses Mutative's create() for immutability - safe to call from anywhere.
  */
 export function grantPriority(state: MatchState, playerId: string, now: number): MatchState {
-  return produce(state, (draft) => {
+  return createRuntimeState(state, (draft) => {
     draft.ctx.priority.holder = playerId;
     draft.ctx.priority.windowOpen = true;
     draft.ctx.priority.passSequence = [];
@@ -219,10 +219,10 @@ export function grantPriority(state: MatchState, playerId: string, now: number):
  * Pass priority
  *
  * Records the pass in the pass sequence.
- * Uses Immer's produce() for immutability - safe to call from anywhere.
+ * Uses Mutative's create() for immutability - safe to call from anywhere.
  */
 export function passPriority(state: MatchState, playerId: string): MatchState {
-  return produce(state, (draft) => {
+  return createRuntimeState(state, (draft) => {
     // Add to pass sequence if not already in it
     if (!draft.ctx.priority.passSequence.includes(playerId)) {
       draft.ctx.priority.passSequence.push(playerId);
@@ -240,16 +240,16 @@ export function passPriority(state: MatchState, playerId: string): MatchState {
 
 /**
  * Pause the clock
- * Uses Immer's produce() for immutability - safe to call from anywhere.
+ * Uses Mutative's create() for immutability - safe to call from anywhere.
  */
 export function pauseClock(state: MatchState, reason: ClockPauseReason, now: number): MatchState {
   const time = state.ctx.time;
   if (time.mode === "none") return state;
 
-  // Settle any elapsed time first (settleClocks already uses produce internally)
+  // Settle any elapsed time first (settleClocks already uses create internally)
   const settledState = settleClocks(state, now);
 
-  return produce(settledState, (draft) => {
+  return createRuntimeState(settledState, (draft) => {
     const draftTime = draft.ctx.time as
       | ChessClockContext
       | PriorityClockContext
@@ -261,13 +261,13 @@ export function pauseClock(state: MatchState, reason: ClockPauseReason, now: num
 
 /**
  * Resume the clock
- * Uses Immer's produce() for immutability - safe to call from anywhere.
+ * Uses Mutative's create() for immutability - safe to call from anywhere.
  */
 export function resumeClock(state: MatchState, activePlayerId: string, now: number): MatchState {
   const time = state.ctx.time;
   if (time.mode === "none") return state;
 
-  return produce(state, (draft) => {
+  return createRuntimeState(state, (draft) => {
     const draftTime = draft.ctx.time as
       | ChessClockContext
       | PriorityClockContext
@@ -289,7 +289,7 @@ export function resumeClock(state: MatchState, activePlayerId: string, now: numb
  * Award per-move bonus to a player
  *
  * Called when a player successfully makes a move or pass in priority mode.
- * Uses Immer's produce() for immutability - safe to call from anywhere.
+ * Uses Mutative's create() for immutability - safe to call from anywhere.
  */
 export function awardMoveBonus(
   state: MatchState & { ctx: { time: PriorityClockContext } },
@@ -299,7 +299,7 @@ export function awardMoveBonus(
   if (!playerState) return state;
 
   const bonusMs = state.ctx.time.config.perMoveBonusMs;
-  return produce(state, (draft) => {
+  return createRuntimeState(state, (draft) => {
     const draftPlayerState = draft.ctx.time.players[playerId];
     if (draftPlayerState) {
       draftPlayerState.moveBonusMsGranted += bonusMs;
@@ -326,7 +326,7 @@ export function awardDynamicActionBonus(
 
   const bonusMs = state.ctx.time.config.perActionBonusMs;
   const cap = state.ctx.time.config.reserveCapMs;
-  return produce(state, (draft) => {
+  return createRuntimeState(state, (draft) => {
     const draftPlayerState = draft.ctx.time.players[playerId] as DynamicClockPlayerState;
     if (draftPlayerState) {
       draftPlayerState.actionBonusMsGranted += bonusMs;
@@ -352,7 +352,7 @@ export function awardDynamicTurnPassBonus(
 
   const bonusMs = state.ctx.time.config.perTurnPassBonusMs;
   const cap = state.ctx.time.config.reserveCapMs;
-  return produce(state, (draft) => {
+  return createRuntimeState(state, (draft) => {
     const draftPlayerState = draft.ctx.time.players[playerId] as DynamicClockPlayerState;
     if (draftPlayerState) {
       draftPlayerState.turnPassBonusMsGranted += bonusMs;
@@ -399,7 +399,7 @@ export function checkPriorityTimeout(
  * Handle window expiry in priority mode
  *
  * Default policy: auto-pass-if-legal-else-forfeit
- * Uses Immer's produce() for immutability - safe to call from anywhere.
+ * Uses Mutative's create() for immutability - safe to call from anywhere.
  */
 export function handleWindowExpiry(
   state: MatchState,
@@ -411,7 +411,7 @@ export function handleWindowExpiry(
     return { action: "auto-pass", state: newState };
   } else {
     // Forfeit the game
-    const newState = produce(state, (draft) => {
+    const newState = createRuntimeState(state, (draft) => {
       draft.ctx.status.gameEnded = true;
       draft.ctx.status.reason = "forfeit-window-expired";
       if (draft.ctx.time.mode !== "none") {
@@ -425,10 +425,10 @@ export function handleWindowExpiry(
 
 /**
  * Handle reserve expiry (loss on time)
- * Uses Immer's produce() for immutability - safe to call from anywhere.
+ * Uses Mutative's create() for immutability - safe to call from anywhere.
  */
 export function handleReserveExpiry(state: MatchState, playerId: string): MatchState {
-  return produce(state, (draft) => {
+  return createRuntimeState(state, (draft) => {
     draft.ctx.status.gameEnded = true;
     draft.ctx.status.winner = getOpponentId(state, playerId);
     draft.ctx.status.reason = "loss-on-time";
@@ -477,7 +477,7 @@ export function resetPlayerTimeAfterSkip(state: MatchState, playerId: string): M
   const resetMs =
     time.mode === "chess" ? time.config.resetTimeOnSkipMs : time.config.resetTimeOnSkipMs;
 
-  return produce(state, (draft) => {
+  return createRuntimeState(state, (draft) => {
     const draftTime = draft.ctx.time as ChessClockContext | DynamicClockContext;
     const playerState = draftTime.players[playerId] as
       | ChessClockPlayerState

@@ -86,7 +86,9 @@ describe("Kuzco - Temperamental Emperor", () => {
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
       expect(
-        testEngine.asPlayerTwo().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(kuzcoTemperamentalEmperor, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(strongAttacker)).toBe("discard");
@@ -110,7 +112,9 @@ describe("Kuzco - Temperamental Emperor", () => {
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
       expect(
-        testEngine.asPlayerTwo().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(kuzcoTemperamentalEmperor, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(strongAttacker)).toBe("play");

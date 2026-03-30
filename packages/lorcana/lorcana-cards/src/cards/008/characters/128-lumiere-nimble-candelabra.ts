@@ -32,6 +32,7 @@ export const lumiereNimbleCandelabra: CharacterCard = {
   abilities: [
     {
       id: "1k4-1",
+      name: "QUICK-STEP",
       type: "static",
       condition: {
         type: "target-query",

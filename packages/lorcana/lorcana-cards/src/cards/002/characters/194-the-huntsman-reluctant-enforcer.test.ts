@@ -28,7 +28,9 @@ describe("The Huntsman - Reluctant Enforcer", () => {
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(theHuntsmanReluctantEnforcer, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");

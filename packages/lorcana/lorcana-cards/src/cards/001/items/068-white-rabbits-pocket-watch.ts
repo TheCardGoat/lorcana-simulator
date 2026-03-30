@@ -45,7 +45,7 @@ export const whiteRabbitsPocketWatch: ItemCard = {
       },
       id: "ecf-1",
       name: "I'M LATE!",
-      text: "I'M LATE! {E}, 1 {I} — Chosen character gains Rush this turn.",
+      text: "I'M LATE!, 1 {I} — Chosen character gains Rush this turn.",
       type: "activated",
     },
   ],

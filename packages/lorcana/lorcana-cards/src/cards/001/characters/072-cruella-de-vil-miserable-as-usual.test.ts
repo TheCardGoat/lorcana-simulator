@@ -36,7 +36,7 @@ describe("Cruella De Vil - Miserable as Usual", () => {
 
     const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
     expect(
-      testEngine.asPlayerTwo().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerTwo().resolvePendingByCard(cruellaDeVilMiserableAsUsual, {
         resolveOptional: true,
         targets: [challenger],
       }),
@@ -71,7 +71,7 @@ describe("Cruella De Vil - Miserable as Usual", () => {
 
     const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
     expect(
-      testEngine.asPlayerTwo().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerTwo().resolvePendingByCard(cruellaDeVilMiserableAsUsual, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

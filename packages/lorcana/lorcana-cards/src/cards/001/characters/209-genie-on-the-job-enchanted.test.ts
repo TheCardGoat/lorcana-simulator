@@ -27,7 +27,9 @@ describe("Genie - On the Job - Enchanted", () => {
     );
 
     expect(testEngine.asPlayerOne().playCard(genieOnTheJobEnchanted)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(genieOnTheJobEnchanted),
+    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({
         resolveOptional: true,

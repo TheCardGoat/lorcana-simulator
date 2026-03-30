@@ -2,6 +2,10 @@ import {
   type CardInstanceId,
   type LorcanaLogMessage,
   type LorcanaLogMessageKey,
+  type LorcanaLogMessageMap,
+  type MoveLog,
+  type MoveOutcomes,
+  type PlayerId,
 } from "@tcg/lorcana-engine";
 import { getLorcanaLogTemplate, type LorcanaLogLocale } from "@tcg/lorcana-engine/i18n";
 import { m } from "$lib/i18n/messages.js";
@@ -59,6 +63,27 @@ const ENGINE_LOG_LOCALE_BY_SIMULATOR_LOCALE: Record<LorcanaSimulatorLocale, Lorc
   "pt-br": "pt-br",
 };
 
+/** Maps new MoveLog.type values to UI markers */
+const MOVE_LOG_TYPE_TO_MARKER: Record<string, EventLogMarkerId> = {
+  playCard: "play",
+  shiftCard: "play",
+  singCard: "play",
+  challenge: "challenge",
+  quest: "quest",
+  questWithAll: "quest",
+  inkCard: "ink",
+  activateAbility: "ability",
+  moveToLocation: "move",
+  passTurn: "pass",
+  concede: "pass",
+  alterHand: "setup",
+  chooseFirstPlayer: "setup",
+  resolveBag: "ability",
+  resolveEffect: "ability",
+  turnStart: "turn",
+  gameEnd: "turn",
+};
+
 const MARKER_BY_LOG_KEY: Record<LorcanaLogMessageKey, EventLogMarkerId> = {
   "lorcana.setup.firstPlayerChosen": "setup",
   "lorcana.setup.mulligan.count": "setup",
@@ -95,6 +120,22 @@ const MARKER_BY_LOG_KEY: Record<LorcanaLogMessageKey, EventLogMarkerId> = {
   "lorcana.effect.resolve.revealTopCard": "ability",
   "lorcana.effect.resolve.revealTopCard.autoBottom": "ability",
   "lorcana.effect.resolve.choiceSelection.withReveal": "ability",
+  "lorcana.bag.resolve.cancelled": "ability",
+  "lorcana.bag.resolve.cancelled.named": "ability",
+  "lorcana.effect.cancelled": "ability",
+  "lorcana.outcome.combatDamage": "challenge",
+  "lorcana.outcome.effectDamage": "challenge",
+  "lorcana.outcome.cardBanished": "challenge",
+  "lorcana.outcome.cardsDrawn": "ability",
+  "lorcana.outcome.cardsDrawn.detail": "ability",
+  "lorcana.outcome.cardReturnedToHand": "ability",
+  "lorcana.outcome.loreGained": "quest",
+  "lorcana.outcome.loreLost": "quest",
+  "lorcana.outcome.cardExerted": "ability",
+  "lorcana.outcome.cardReadied": "ability",
+  "lorcana.outcome.cardsMilled": "ability",
+  "lorcana.move.playCard.shift": "play",
+  "lorcana.move.playCard.sing": "play",
 };
 
 const PLAYER_VALUE_KEYS = new Set([
@@ -115,10 +156,19 @@ const CARD_VALUE_KEYS = new Set([
   "sourceCardId",
   "sourceId",
   "shiftTargetId",
+  "targetId",
 ]);
 const CARD_LIST_VALUE_KEYS = new Set(["cardIds", "drawn", "lookedAt", "mulliganed", "singerIds"]);
 const TARGET_VALUE_KEYS = new Set(["targets"]);
-const STAT_VALUE_KEYS = new Set(["choiceIndex", "count", "inkPaid", "loreGained"]);
+const STAT_VALUE_KEYS = new Set([
+  "amount",
+  "attackerDamage",
+  "choiceIndex",
+  "count",
+  "defenderDamage",
+  "inkPaid",
+  "loreGained",
+]);
 
 // =============================================================================
 // Public API
@@ -140,9 +190,40 @@ export function formatEventLogBody(
   }
 
   const typed = entry.typedLogEntry;
+  const typedRaw = typed as Record<string, unknown>;
+
+  // MoveLog entries have flat fields instead of nested { type, values }.
+  // Detect by checking for the .values property.
+  if (!("values" in typedRaw) || typedRaw.values === undefined) {
+    const moveLog = typed as MoveLog;
+    const moveType = String(moveLog.type ?? "move");
+    const marker = MOVE_LOG_TYPE_TO_MARKER[moveType] ?? "move";
+    let segments = renderFlatMoveLog(entry, moveLog, viewerSide, locale, resolveCard);
+
+    if (resolveCard) {
+      segments = segments.map((segment) =>
+        segment.kind === "card"
+          ? {
+              ...segment,
+              fallbackLabel: resolveCard(segment.cardId)?.label ?? segment.fallbackLabel,
+            }
+          : segment,
+      );
+    }
+
+    const text = segments.length > 0 ? flattenEventLogSegments(segments) : entry.title || moveType;
+    return {
+      marker,
+      segments: segments.length > 0 ? segments : [{ kind: "text", text }],
+      source: "typed",
+      text,
+    };
+  }
+
+  const typedMessageEntry = typed as Extract<typeof typed, { values: unknown }>;
   const message = {
-    key: typed.type,
-    values: typed.values,
+    key: typedMessageEntry.type,
+    values: typedMessageEntry.values,
   } as LorcanaLogMessage;
   let segments = renderTypedLogMessage(entry, message, viewerSide, locale, resolveCard);
 
@@ -155,11 +236,502 @@ export function formatEventLogBody(
   }
 
   return {
-    marker: MARKER_BY_LOG_KEY[typed.type],
+    marker: MARKER_BY_LOG_KEY[typedMessageEntry.type],
     segments,
     source: "typed",
     text: flattenEventLogSegments(segments),
   };
+}
+
+function renderFlatMoveLog(
+  entry: MoveLogEntrySnapshot,
+  moveLog: MoveLog,
+  viewerSide?: LorcanaPlayerSide | null,
+  locale?: LorcanaSimulatorLocale,
+  resolveCard?: CardReferenceResolver,
+): EventLogSegment[] {
+  const messages = buildMessagesFromMoveLog(moveLog);
+  if (messages.length > 0) {
+    return joinSegments(
+      messages.map((message) =>
+        renderTypedLogMessage(entry, message, viewerSide, locale, resolveCard),
+      ),
+      " ",
+    );
+  }
+
+  switch (moveLog.type) {
+    case "turnStart":
+      return [
+        { kind: "text", text: "Turn " },
+        { kind: "stat", text: String(moveLog.turn) },
+        { kind: "text", text: " started." },
+      ];
+    case "gameEnd": {
+      const segments: EventLogSegment[] = [{ kind: "text", text: "Game ended" }];
+      if (moveLog.winnerId) {
+        segments.push({ kind: "text", text: ". Winner: " });
+        segments.push(playerSegmentForPlayerId(entry, moveLog.winnerId, viewerSide, locale));
+      }
+      segments.push({ kind: "text", text: "." });
+      return segments;
+    }
+    default:
+      return entry.title ? [{ kind: "text", text: entry.title }] : [];
+  }
+}
+
+function buildMessagesFromMoveLog(moveLog: MoveLog): LorcanaLogMessage[] {
+  const messages: LorcanaLogMessage[] = [];
+
+  switch (moveLog.type) {
+    case "playCard":
+      messages.push(
+        createLogMessage("lorcana.move.playCard", {
+          playerId: moveLog.playerId,
+          cardId: moveLog.cardId,
+        }),
+      );
+      appendOutcomeMessages(messages, moveLog.playerId, moveLog.outcomes);
+      break;
+    case "shiftCard":
+      messages.push(
+        createLogMessage("lorcana.move.playCard.shift", {
+          playerId: moveLog.playerId,
+          cardId: moveLog.cardId,
+          shiftTargetId: moveLog.shiftTargetId,
+        }),
+      );
+      appendOutcomeMessages(messages, moveLog.playerId, moveLog.outcomes);
+      break;
+    case "singCard":
+      messages.push(
+        createLogMessage("lorcana.move.playCard.sing", {
+          playerId: moveLog.playerId,
+          cardId: moveLog.cardId,
+          singerIds: moveLog.singerIds,
+        }),
+      );
+      appendOutcomeMessages(messages, moveLog.playerId, moveLog.outcomes);
+      break;
+    case "challenge":
+      messages.push(
+        createLogMessage("lorcana.move.challenge", {
+          playerId: moveLog.playerId,
+          attackerId: moveLog.attackerId,
+          defenderId: moveLog.defenderId,
+        }),
+      );
+      if (moveLog.damage.attacker > 0 || moveLog.damage.defender > 0) {
+        messages.push(
+          createLogMessage("lorcana.outcome.combatDamage", {
+            playerId: moveLog.playerId,
+            attackerId: moveLog.attackerId,
+            defenderId: moveLog.defenderId,
+            attackerDamage: moveLog.damage.attacker,
+            defenderDamage: moveLog.damage.defender,
+          }),
+        );
+      }
+      for (const cardId of moveLog.banished) {
+        messages.push(
+          createLogMessage("lorcana.outcome.cardBanished", {
+            playerId: moveLog.playerId,
+            cardId,
+          }),
+        );
+      }
+      appendOutcomeMessages(messages, moveLog.playerId, moveLog.outcomes, {
+        skipCombatDamage: true,
+        skipBanished: true,
+      });
+      break;
+    case "quest":
+      messages.push(
+        createLogMessage("lorcana.move.quest", {
+          playerId: moveLog.playerId,
+          cardId: moveLog.cardId,
+          loreGained: moveLog.loreGained,
+        }),
+      );
+      appendOutcomeMessages(messages, moveLog.playerId, moveLog.outcomes);
+      break;
+    case "questWithAll":
+      messages.push(
+        createLogMessage("lorcana.move.questWithAll", {
+          playerId: moveLog.playerId,
+          cardIds: moveLog.cardIds,
+          loreGained: moveLog.totalLore,
+          count: moveLog.cardIds.length,
+        }),
+      );
+      appendOutcomeMessages(messages, moveLog.playerId, moveLog.outcomes);
+      break;
+    case "inkCard":
+      messages.push(
+        createLogMessage("lorcana.card.inked", {
+          playerId: moveLog.playerId,
+          cardId: moveLog.cardId,
+        }),
+      );
+      break;
+    case "activateAbility":
+      messages.push(
+        moveLog.abilityName
+          ? createLogMessage("lorcana.ability.activated.named", {
+              playerId: moveLog.playerId,
+              cardId: moveLog.cardId,
+              abilityName: moveLog.abilityName,
+            })
+          : createLogMessage("lorcana.ability.activated", {
+              playerId: moveLog.playerId,
+              cardId: moveLog.cardId,
+            }),
+      );
+      appendOutcomeMessages(messages, moveLog.playerId, moveLog.outcomes);
+      break;
+    case "moveToLocation":
+      messages.push(
+        createLogMessage("lorcana.move.moveCharacterToLocation", {
+          playerId: moveLog.playerId,
+          characterId: moveLog.characterId,
+          locationId: moveLog.locationId,
+        }),
+      );
+      break;
+    case "passTurn":
+      messages.push(createLogMessage("lorcana.move.passTurn", { playerId: moveLog.playerId }));
+      break;
+    case "concede":
+      messages.push(createLogMessage("lorcana.move.concede", { playerId: moveLog.playerId }));
+      break;
+    case "alterHand":
+      messages.push(
+        moveLog.mulliganed || moveLog.drawn
+          ? createLogMessage("lorcana.setup.mulligan.detail", {
+              playerId: moveLog.playerId,
+              count: moveLog.count,
+              mulliganed: unwrapPrivateField(moveLog.mulliganed) ?? [],
+              drawn: unwrapPrivateField(moveLog.drawn) ?? [],
+            })
+          : createLogMessage("lorcana.setup.mulligan.count", {
+              playerId: moveLog.playerId,
+              count: moveLog.count,
+            }),
+      );
+      break;
+    case "chooseFirstPlayer":
+      messages.push(
+        createLogMessage("lorcana.setup.firstPlayerChosen", {
+          chooser: moveLog.playerId,
+          chosen: moveLog.chosenPlayerId,
+        }),
+      );
+      break;
+    case "resolveBag":
+      messages.push(...buildResolveBagMessages(moveLog));
+      appendOutcomeMessages(messages, moveLog.playerId, moveLog.outcomes);
+      break;
+    case "resolveEffect":
+      messages.push(...buildResolveEffectMessages(moveLog));
+      appendOutcomeMessages(messages, moveLog.playerId, moveLog.outcomes);
+      break;
+    case "turnStart":
+    case "gameEnd":
+      break;
+  }
+
+  return messages;
+}
+
+function appendOutcomeMessages(
+  messages: LorcanaLogMessage[],
+  actorPlayerId: PlayerId,
+  outcomes?: MoveOutcomes,
+  options: { skipCombatDamage?: boolean; skipBanished?: boolean } = {},
+): void {
+  if (!outcomes) {
+    return;
+  }
+
+  if (outcomes.cardsDrawn) {
+    const drawnCards = unwrapPrivateField(outcomes.cardsDrawn.detail);
+    messages.push(
+      drawnCards && drawnCards.length > 0
+        ? createLogMessage("lorcana.outcome.cardsDrawn.detail", {
+            playerId: actorPlayerId,
+            amount: outcomes.cardsDrawn.amount,
+            cardIds: drawnCards,
+          })
+        : createLogMessage("lorcana.outcome.cardsDrawn", {
+            playerId: actorPlayerId,
+            amount: outcomes.cardsDrawn.amount,
+          }),
+    );
+  }
+
+  if (!options.skipBanished) {
+    for (const cardId of outcomes.cardsBanished ?? []) {
+      messages.push(
+        createLogMessage("lorcana.outcome.cardBanished", { playerId: actorPlayerId, cardId }),
+      );
+    }
+  }
+
+  for (const damage of outcomes.damageDealt ?? []) {
+    if (damage.kind === "combat") {
+      if (options.skipCombatDamage) {
+        continue;
+      }
+
+      messages.push(
+        createLogMessage("lorcana.outcome.combatDamage", {
+          playerId: actorPlayerId,
+          attackerId: damage.sourceId,
+          defenderId: damage.targetId,
+          attackerDamage: damage.amount,
+          defenderDamage: 0,
+        }),
+      );
+      continue;
+    }
+
+    messages.push(
+      createLogMessage("lorcana.outcome.effectDamage", {
+        playerId: actorPlayerId,
+        sourceId: damage.sourceId,
+        targetId: damage.targetId,
+        amount: damage.amount,
+      }),
+    );
+  }
+
+  if (outcomes.loreChanged) {
+    messages.push(
+      outcomes.loreChanged.operation === "add"
+        ? createLogMessage("lorcana.outcome.loreGained", {
+            playerId: outcomes.loreChanged.playerId,
+            amount: outcomes.loreChanged.amount,
+          })
+        : createLogMessage("lorcana.outcome.loreLost", {
+            playerId: outcomes.loreChanged.playerId,
+            amount: outcomes.loreChanged.amount,
+          }),
+    );
+  }
+
+  for (const cardId of outcomes.cardsExerted ?? []) {
+    messages.push(
+      createLogMessage("lorcana.outcome.cardExerted", { playerId: actorPlayerId, cardId }),
+    );
+  }
+
+  for (const cardId of outcomes.cardsReadied ?? []) {
+    messages.push(
+      createLogMessage("lorcana.outcome.cardReadied", { playerId: actorPlayerId, cardId }),
+    );
+  }
+
+  if (outcomes.cardsMilled) {
+    messages.push(
+      createLogMessage("lorcana.outcome.cardsMilled", {
+        playerId: outcomes.cardsMilled.playerId,
+        amount: outcomes.cardsMilled.amount,
+      }),
+    );
+  }
+
+  for (const cardId of outcomes.cardsReturnedToHand ?? []) {
+    messages.push(
+      createLogMessage("lorcana.outcome.cardReturnedToHand", {
+        playerId: actorPlayerId,
+        cardId,
+      }),
+    );
+  }
+}
+
+function buildResolveBagMessages(
+  moveLog: Extract<MoveLog, { type: "resolveBag" }>,
+): LorcanaLogMessage[] {
+  const messages: LorcanaLogMessage[] = [];
+  const commonValues = {
+    playerId: moveLog.playerId,
+    sourceId: moveLog.sourceCardId,
+  };
+
+  switch (moveLog.status) {
+    case "completed":
+      if (moveLog.resolution?.kind === "targets") {
+        messages.push(
+          moveLog.abilityName
+            ? createLogMessage("lorcana.bag.resolve.completed.targets.named", {
+                ...commonValues,
+                abilityName: moveLog.abilityName,
+                targets: moveLog.resolution.targets,
+              })
+            : createLogMessage("lorcana.bag.resolve.completed.targets", {
+                ...commonValues,
+                targets: moveLog.resolution.targets,
+              }),
+        );
+      } else {
+        messages.push(
+          moveLog.abilityName
+            ? createLogMessage("lorcana.bag.resolve.completed.named", {
+                ...commonValues,
+                abilityName: moveLog.abilityName,
+              })
+            : createLogMessage("lorcana.bag.resolve.completed", commonValues),
+        );
+      }
+      break;
+    case "skipped":
+      messages.push(
+        moveLog.abilityName
+          ? createLogMessage("lorcana.bag.resolve.skipped.named", {
+              ...commonValues,
+              abilityName: moveLog.abilityName,
+            })
+          : createLogMessage("lorcana.bag.resolve.skipped", commonValues),
+      );
+      break;
+    case "pending":
+      messages.push(
+        moveLog.abilityName
+          ? createLogMessage("lorcana.bag.resolve.pending.named", {
+              ...commonValues,
+              abilityName: moveLog.abilityName,
+            })
+          : createLogMessage("lorcana.bag.resolve.pending", commonValues),
+      );
+      break;
+    case "cancelled":
+      messages.push(
+        moveLog.abilityName
+          ? createLogMessage("lorcana.bag.resolve.cancelled.named", {
+              ...commonValues,
+              abilityName: moveLog.abilityName,
+              cause: moveLog.cancelReason ?? "restriction",
+            })
+          : createLogMessage("lorcana.bag.resolve.cancelled", {
+              ...commonValues,
+              cause: moveLog.cancelReason ?? "restriction",
+            }),
+      );
+      break;
+  }
+
+  return messages;
+}
+
+function buildResolveEffectMessages(
+  moveLog: Extract<MoveLog, { type: "resolveEffect" }>,
+): LorcanaLogMessage[] {
+  const commonValues = {
+    playerId: moveLog.playerId,
+    sourceCardId: moveLog.sourceCardId,
+  };
+
+  switch (moveLog.resolution.kind) {
+    case "targetSelection":
+      return [
+        createLogMessage("lorcana.effect.resolve.targetSelection", {
+          ...commonValues,
+          targets: moveLog.resolution.targets,
+        }),
+      ];
+    case "discardChoice":
+      return [
+        createLogMessage("lorcana.effect.resolve.discardChoice", {
+          ...commonValues,
+          targets: moveLog.resolution.discarded,
+        }),
+      ];
+    case "choiceSelection":
+      return moveLog.resolution.revealedCardId
+        ? [
+            createLogMessage("lorcana.effect.resolve.choiceSelection.withReveal", {
+              ...commonValues,
+              revealedCardId: moveLog.resolution.revealedCardId,
+              choiceIndex: moveLog.resolution.choiceIndex,
+            }),
+          ]
+        : [
+            createLogMessage("lorcana.effect.resolve.choiceSelection", {
+              ...commonValues,
+              choiceIndex: moveLog.resolution.choiceIndex,
+            }),
+          ];
+    case "optionalSelection":
+      return [
+        createLogMessage(
+          moveLog.resolution.accepted
+            ? "lorcana.effect.resolve.optionalSelection.accepted"
+            : "lorcana.effect.resolve.optionalSelection.rejected",
+          commonValues,
+        ),
+      ];
+    case "nameCardSelection":
+      return [
+        createLogMessage("lorcana.effect.resolve.nameCardSelection", {
+          ...commonValues,
+          namedCard: moveLog.resolution.namedCard,
+        }),
+      ];
+    case "scrySelection":
+      return unwrapPrivateField(moveLog.resolution.detail)?.length
+        ? [
+            createLogMessage("lorcana.effect.resolve.scrySelection.detail", {
+              ...commonValues,
+              selection: [],
+              destinations: unwrapPrivateField(moveLog.resolution.detail) ?? [],
+            }),
+          ]
+        : [createLogMessage("lorcana.effect.resolve.scrySelection", commonValues)];
+    case "revealTopCard":
+      return [
+        createLogMessage(
+          moveLog.resolution.destination === "deck-bottom"
+            ? "lorcana.effect.resolve.revealTopCard.autoBottom"
+            : "lorcana.effect.resolve.revealTopCard",
+          {
+            ...commonValues,
+            targetPlayerId: moveLog.resolution.targetPlayerId,
+            revealedCardId: moveLog.resolution.cardId,
+          },
+        ),
+      ];
+    case "cancelled":
+      return [
+        createLogMessage("lorcana.effect.cancelled", {
+          ...commonValues,
+          cause: "no-valid-targets",
+        }),
+      ];
+  }
+}
+
+function createLogMessage<TKey extends LorcanaLogMessageKey>(
+  key: TKey,
+  values: LorcanaLogMessageMap[TKey],
+): LorcanaLogMessage<TKey> {
+  return {
+    key,
+    values,
+  } as LorcanaLogMessage<TKey>;
+}
+
+function unwrapPrivateField<T>(value: T | { value: T } | undefined): T | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  if (typeof value === "object" && "value" in value) {
+    return value.value;
+  }
+
+  return value;
 }
 
 export function flattenEventLogSegments(segments: readonly EventLogSegment[]): string {

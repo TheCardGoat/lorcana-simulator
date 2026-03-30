@@ -1,5 +1,6 @@
 import type { FilteredMatchView, MatchState } from "../runtime";
 import type { ZoneConfig } from "../runtime/match-runtime.types";
+import type { ZoneRegistry } from "../runtime/zone-registry";
 import type {
   EngineActiveEffectProjection,
   EngineActorContext,
@@ -43,6 +44,19 @@ type ProjectionGameShape = {
   turnMetadata?: {
     pendingCostReductionsByPlayer?: Partial<Record<string, readonly unknown[]>>;
   };
+  temporaryPlayerRestrictions?: {
+    restrictionsByPlayer?: Partial<Record<string, Record<string, number>>>;
+    startsByPlayer?: Partial<Record<string, Record<string, number>>>;
+    payloadsByPlayer?: Partial<
+      Record<
+        string,
+        Record<
+          string,
+          { type?: string; sourceId?: string; duration?: string; activeWhileSourceInPlay?: boolean }
+        >
+      >
+    >;
+  };
 };
 type ProjectionStackStorage = {
   _stackStorage?: {
@@ -55,6 +69,12 @@ type EffectDescriptor = {
   type?: string;
   sourceId?: string;
   sourceCardId?: string;
+  targetId?: string;
+  targetCardId?: string;
+  targetPlayerId?: string;
+  createdAtTurn?: number;
+  startsAtTurn?: number;
+  expiresAtTurn?: number;
 };
 type PendingChoicePayload = NonNullable<MatchState["ctx"]["priority"]["pendingChoice"]>;
 
@@ -73,6 +93,84 @@ function toEffectDescriptor(value: unknown): EffectDescriptor | undefined {
     return undefined;
   }
   return value as EffectDescriptor;
+}
+
+function normalizeNumberMap(raw: unknown): Record<string, number> {
+  if (!isRecord(raw)) {
+    return {};
+  }
+
+  const normalized: Record<string, number> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      normalized[key] = value;
+    }
+  }
+
+  return normalized;
+}
+
+function normalizePayloadMap<T extends { type?: string }>(raw: unknown): Record<string, T> {
+  if (!isRecord(raw)) {
+    return {};
+  }
+
+  const normalized: Record<string, T> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (isRecord(value) && typeof value.type === "string" && value.type.trim().length > 0) {
+      normalized[key] = value as T;
+    }
+  }
+
+  return normalized;
+}
+
+function isCardInPlay(state: ProjectableState, cardId: string): boolean {
+  const { cardIndex } = getStateZones(state);
+  const zoneKey = cardIndex[cardId]?.zoneKey;
+  return typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"));
+}
+
+function isCardAtLocation(state: ProjectableState, cardId: string): boolean {
+  const { cardMeta } = getStateZones(state);
+  return typeof cardMeta[cardId]?.atLocationId === "string";
+}
+
+function isEffectWindowActive(
+  startsAtTurn: number,
+  expiresAtTurn: number,
+  currentTurn: number,
+): boolean {
+  return currentTurn >= startsAtTurn && currentTurn <= expiresAtTurn;
+}
+
+function isTemporaryKeywordActive(
+  state: ProjectableState,
+  sourceId: string | undefined,
+  activeWhileSourceInPlay: boolean | undefined,
+): boolean {
+  if (!activeWhileSourceInPlay || !sourceId) {
+    return true;
+  }
+
+  return isCardInPlay(state, sourceId);
+}
+
+function isTemporaryRestrictionConditionActive(
+  state: ProjectableState,
+  cardId: string,
+  rawCondition: unknown,
+): boolean {
+  if (!isRecord(rawCondition)) {
+    return true;
+  }
+
+  const conditionType = rawCondition.type;
+  if (conditionType === "not" && isRecord(rawCondition.condition)) {
+    return !(rawCondition.condition.type === "at-location" && isCardAtLocation(state, cardId));
+  }
+
+  return true;
 }
 
 function toZoneConfig(zoneId: string, zoneDef?: ProjectionZoneDefs[string]): ZoneConfig {
@@ -98,20 +196,17 @@ function toZoneConfig(zoneId: string, zoneDef?: ProjectionZoneDefs[string]): Zon
 }
 
 function getStateZones(state: ProjectableState): {
-  zoneDefs: ProjectionZoneDefs;
   zoneSummaries: ProjectionZoneSummaries;
   zoneCards: ProjectionPrivateZones["zoneCards"];
   cardIndex: ProjectionPrivateZones["cardIndex"];
   cardMeta: ProjectionPrivateZones["cardMeta"];
 } {
   const zones = state.ctx.zones as {
-    zoneDefs: ProjectionZoneDefs;
     public: { zoneSummaries: ProjectionZoneSummaries };
     private?: ProjectionPrivateZones;
   };
   const privateZones = zones.private ?? EMPTY_PRIVATE_ZONES;
   return {
-    zoneDefs: zones.zoneDefs,
     zoneSummaries: zones.public.zoneSummaries,
     zoneCards: privateZones.zoneCards,
     cardIndex: privateZones.cardIndex,
@@ -121,9 +216,11 @@ function getStateZones(state: ProjectableState): {
 
 export function buildEngineBoardProjection(
   state: ProjectableState,
+  zoneRegistry: ZoneRegistry,
   options?: { resolveDefinitionId?: (cardId: string) => string | undefined },
 ): EngineBoardProjection {
-  const { zoneDefs, zoneSummaries, zoneCards, cardIndex, cardMeta } = getStateZones(state);
+  const { zoneSummaries, zoneCards, cardIndex, cardMeta } = getStateZones(state);
+  const zoneDefs = zoneRegistry as ProjectionZoneDefs;
   const board: EngineBoardProjection = { cards: {}, zones: {} };
   const zoneIds = new Set<string>([
     ...Object.keys(zoneDefs),
@@ -220,6 +317,8 @@ function effectTypeFromRecord(record: EffectDescriptor | undefined, fallback: st
 
 export function extractActiveEffects(state: ProjectableState): EngineActiveEffectProjection[] {
   const game = state.G as LorcanaG & ProjectionGameShape;
+  const currentTurn = state.ctx.status.turn ?? 1;
+  const { cardMeta } = getStateZones(state);
 
   const effects: EngineActiveEffectProjection[] = [];
   const continuousInstances = game.continuousEffects?.instances ?? [];
@@ -231,6 +330,20 @@ export function extractActiveEffects(state: ProjectableState): EngineActiveEffec
       id: effectIdFromRecord(effectRecord, `continuous:${index}`),
       type: effectTypeFromRecord(effectRecord, "continuous"),
       sourceId: typeof effectRecord?.sourceId === "string" ? effectRecord.sourceId : undefined,
+      targetCardId:
+        typeof effectRecord?.targetCardId === "string"
+          ? effectRecord.targetCardId
+          : typeof effectRecord?.targetId === "string"
+            ? effectRecord.targetId
+            : undefined,
+      startsAtTurn:
+        typeof effectRecord?.startsAtTurn === "number"
+          ? effectRecord.startsAtTurn
+          : typeof effectRecord?.createdAtTurn === "number"
+            ? effectRecord.createdAtTurn
+            : undefined,
+      expiresAtTurn:
+        typeof effectRecord?.expiresAtTurn === "number" ? effectRecord.expiresAtTurn : undefined,
       payload: effect,
     });
   }
@@ -243,8 +356,230 @@ export function extractActiveEffects(state: ProjectableState): EngineActiveEffec
       id: effectIdFromRecord(effectRecord, `active:${index}`),
       type: effectTypeFromRecord(effectRecord, "active"),
       sourceId: typeof effectRecord?.sourceId === "string" ? effectRecord.sourceId : undefined,
+      targetCardId:
+        typeof effectRecord?.targetCardId === "string"
+          ? effectRecord.targetCardId
+          : typeof effectRecord?.targetId === "string"
+            ? effectRecord.targetId
+            : undefined,
+      targetPlayerId:
+        typeof effectRecord?.targetPlayerId === "string" ? effectRecord.targetPlayerId : undefined,
+      startsAtTurn:
+        typeof effectRecord?.startsAtTurn === "number"
+          ? effectRecord.startsAtTurn
+          : typeof effectRecord?.createdAtTurn === "number"
+            ? effectRecord.createdAtTurn
+            : undefined,
+      expiresAtTurn:
+        typeof effectRecord?.expiresAtTurn === "number" ? effectRecord.expiresAtTurn : undefined,
       payload: effect,
     });
+  }
+
+  for (const [cardId, meta] of Object.entries(cardMeta)) {
+    const temporaryKeywords = normalizeNumberMap(meta.temporaryKeywords);
+    const temporaryKeywordStarts = normalizeNumberMap(meta.temporaryKeywordStarts);
+    const temporaryKeywordValues = normalizeNumberMap(meta.temporaryKeywordValues);
+    const temporaryKeywordPayloads = normalizePayloadMap<{
+      type?: string;
+      sourceId?: string;
+      duration?: string;
+      activeWhileSourceInPlay?: boolean;
+    }>(meta.temporaryKeywordPayloads);
+
+    for (const [keyword, expiresAtTurn] of Object.entries(temporaryKeywords)) {
+      const startsAtTurn = temporaryKeywordStarts[keyword] ?? 1;
+      const payload = temporaryKeywordPayloads[keyword];
+      if (!isEffectWindowActive(startsAtTurn, expiresAtTurn, currentTurn)) {
+        continue;
+      }
+      if (!isTemporaryKeywordActive(state, payload?.sourceId, payload?.activeWhileSourceInPlay)) {
+        continue;
+      }
+
+      effects.push({
+        id: `temporary-keyword:${cardId}:${keyword}`,
+        type: "temporary-keyword",
+        sourceId: payload?.sourceId,
+        targetCardId: cardId,
+        startsAtTurn,
+        expiresAtTurn,
+        payload: {
+          kind: "temporary-keyword",
+          keyword,
+          value: temporaryKeywordValues[keyword],
+          sourceId: payload?.sourceId,
+          duration: payload?.duration,
+          activeWhileSourceInPlay: payload?.activeWhileSourceInPlay,
+          targetCardId: cardId,
+        },
+      });
+    }
+
+    const temporaryAbilities = normalizeNumberMap(meta.temporaryAbilities);
+    const temporaryAbilityStarts = normalizeNumberMap(meta.temporaryAbilityStarts);
+    const temporaryAbilityPayloads = normalizePayloadMap<{
+      type?: string;
+      name?: string;
+      text?: string;
+      sourceId?: string;
+      duration?: string;
+    }>(meta.temporaryAbilityPayloads);
+
+    for (const [ability, expiresAtTurn] of Object.entries(temporaryAbilities)) {
+      const startsAtTurn = temporaryAbilityStarts[ability] ?? 1;
+      const payload = temporaryAbilityPayloads[ability];
+      if (!isEffectWindowActive(startsAtTurn, expiresAtTurn, currentTurn)) {
+        continue;
+      }
+
+      effects.push({
+        id: `temporary-ability:${cardId}:${ability}`,
+        type: "temporary-ability",
+        sourceId: payload?.sourceId,
+        targetCardId: cardId,
+        startsAtTurn,
+        expiresAtTurn,
+        payload: {
+          kind: "temporary-ability",
+          ability,
+          abilityName: payload?.name,
+          abilityText: payload?.text,
+          sourceId: payload?.sourceId,
+          duration: payload?.duration,
+          targetCardId: cardId,
+        },
+      });
+    }
+
+    const temporaryRestrictions = normalizeNumberMap(meta.temporaryRestrictions);
+    const temporaryRestrictionStarts = normalizeNumberMap(meta.temporaryRestrictionStarts);
+    const temporaryRestrictionPayloads = normalizePayloadMap<{
+      type?: string;
+      sourceId?: string;
+      duration?: string;
+      activeWhileSourceInPlay?: boolean;
+      condition?: unknown;
+    }>(meta.temporaryRestrictionPayloads);
+
+    for (const [restriction, expiresAtTurn] of Object.entries(temporaryRestrictions)) {
+      const startsAtTurn = temporaryRestrictionStarts[restriction] ?? 1;
+      const payload = temporaryRestrictionPayloads[restriction];
+      if (!isEffectWindowActive(startsAtTurn, expiresAtTurn, currentTurn)) {
+        continue;
+      }
+      if (
+        !isTemporaryKeywordActive(state, payload?.sourceId, payload?.activeWhileSourceInPlay) ||
+        !isTemporaryRestrictionConditionActive(state, cardId, payload?.condition)
+      ) {
+        continue;
+      }
+
+      effects.push({
+        id: `temporary-restriction:${cardId}:${restriction}`,
+        type: "temporary-restriction",
+        sourceId: payload?.sourceId,
+        targetCardId: cardId,
+        startsAtTurn,
+        expiresAtTurn,
+        payload: {
+          kind: "temporary-restriction",
+          restriction,
+          sourceId: payload?.sourceId,
+          duration: payload?.duration,
+          activeWhileSourceInPlay: payload?.activeWhileSourceInPlay,
+          targetCardId: cardId,
+        },
+      });
+    }
+  }
+
+  const reductionsByPlayer = game.turnMetadata?.pendingCostReductionsByPlayer ?? {};
+  for (const [playerId, entries] of Object.entries(reductionsByPlayer)) {
+    if (!Array.isArray(entries)) {
+      continue;
+    }
+
+    for (let index = 0; index < entries.length; index += 1) {
+      const entry = entries[index];
+      if (!isRecord(entry)) {
+        continue;
+      }
+
+      const amount = typeof entry.amount === "number" ? entry.amount : undefined;
+      const expiresAtTurn =
+        typeof entry.expiresAtTurn === "number" ? entry.expiresAtTurn : undefined;
+      if (
+        typeof amount !== "number" ||
+        typeof expiresAtTurn !== "number" ||
+        expiresAtTurn < currentTurn
+      ) {
+        continue;
+      }
+
+      effects.push({
+        id:
+          typeof entry.id === "string"
+            ? entry.id
+            : `player-cost-reduction:${playerId}:${index}:${String(entry.sourceId ?? "unknown")}`,
+        type: "player-cost-reduction",
+        sourceId: typeof entry.sourceId === "string" ? entry.sourceId : undefined,
+        targetPlayerId: playerId,
+        expiresAtTurn,
+        payload: {
+          kind: "player-cost-reduction",
+          amount,
+          cardType: typeof entry.cardType === "string" ? entry.cardType : undefined,
+          classification: entry.classification,
+          consumeOnUse: entry.consumeOnUse === true,
+          expiresAtTurn,
+          sourceId: typeof entry.sourceId === "string" ? entry.sourceId : undefined,
+          targetPlayerId: playerId,
+        },
+      });
+    }
+  }
+
+  const temporaryPlayerRestrictions = game.temporaryPlayerRestrictions;
+  const playerRestrictionsByPlayer = temporaryPlayerRestrictions?.restrictionsByPlayer ?? {};
+  const playerRestrictionStartsByPlayer = temporaryPlayerRestrictions?.startsByPlayer ?? {};
+  const playerRestrictionPayloadsByPlayer = temporaryPlayerRestrictions?.payloadsByPlayer ?? {};
+  for (const [playerId, restrictions] of Object.entries(playerRestrictionsByPlayer)) {
+    const starts = normalizeNumberMap(playerRestrictionStartsByPlayer[playerId]);
+    const payloads = normalizePayloadMap<{
+      type?: string;
+      sourceId?: string;
+      duration?: string;
+      activeWhileSourceInPlay?: boolean;
+    }>(playerRestrictionPayloadsByPlayer[playerId]);
+
+    for (const [restriction, expiresAtTurn] of Object.entries(normalizeNumberMap(restrictions))) {
+      const startsAtTurn = starts[restriction] ?? 1;
+      const payload = payloads[restriction];
+      if (!isEffectWindowActive(startsAtTurn, expiresAtTurn, currentTurn)) {
+        continue;
+      }
+      if (!isTemporaryKeywordActive(state, payload?.sourceId, payload?.activeWhileSourceInPlay)) {
+        continue;
+      }
+
+      effects.push({
+        id: `player-restriction:${playerId}:${restriction}`,
+        type: "player-restriction",
+        sourceId: payload?.sourceId,
+        targetPlayerId: playerId,
+        startsAtTurn,
+        expiresAtTurn,
+        payload: {
+          kind: "player-restriction",
+          restriction,
+          sourceId: payload?.sourceId,
+          duration: payload?.duration,
+          activeWhileSourceInPlay: payload?.activeWhileSourceInPlay,
+          targetPlayerId: playerId,
+        },
+      });
+    }
   }
 
   return effects;
@@ -292,31 +627,13 @@ export function extractPendingEffects(state: ProjectableState): EnginePendingEff
     });
   }
 
-  const pendingCostReductionsByPlayer = game.turnMetadata?.pendingCostReductionsByPlayer;
-  if (pendingCostReductionsByPlayer) {
-    for (const [playerId, rawEntries] of Object.entries(pendingCostReductionsByPlayer)) {
-      if (!Array.isArray(rawEntries)) {
-        continue;
-      }
-      for (let index = 0; index < rawEntries.length; index++) {
-        const entry = rawEntries[index];
-        pendingEffects.push({
-          id: `pending-cost:${playerId}:${index}`,
-          type: "cost-reduction",
-          source: "game",
-          sourceId: playerId,
-          payload: entry as unknown,
-        });
-      }
-    }
-  }
-
   return pendingEffects;
 }
 
 export function buildEngineProjectionSnapshot(
   state: ProjectableState,
   actorContext: EngineActorContext,
+  zoneRegistry: ZoneRegistry,
   options?: { resolveDefinitionId?: (cardId: string) => string | undefined },
 ): EngineProjectionSnapshot {
   return {
@@ -324,6 +641,6 @@ export function buildEngineProjectionSnapshot(
     actor: actorContext,
     activeEffects: extractActiveEffects(state),
     pendingEffects: extractPendingEffects(state),
-    board: buildEngineBoardProjection(state, options),
+    board: buildEngineBoardProjection(state, zoneRegistry, options),
   };
 }

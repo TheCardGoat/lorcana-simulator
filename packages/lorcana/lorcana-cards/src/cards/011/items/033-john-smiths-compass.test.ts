@@ -75,7 +75,7 @@ describe("John Smith's Compass", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       // Resolve YOUR PATH and send card to bottom
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolvePendingEffect(johnSmithsCompass, {
@@ -108,7 +108,7 @@ describe("John Smith's Compass", () => {
       // Only YOUR PATH fires - SPINNING ARROW's turn-metric condition (challenges >= 1) is false
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolvePendingEffect(johnSmithsCompass, {
@@ -139,7 +139,7 @@ describe("John Smith's Compass", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolvePendingEffect(johnSmithsCompass, {
@@ -170,7 +170,7 @@ describe("John Smith's Compass", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolvePendingEffect(johnSmithsCompass, {

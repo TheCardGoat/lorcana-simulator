@@ -28,7 +28,9 @@ describe("Cheshire Cat - Not All There", () => {
       if (bagCount > 0) {
         // If the ability goes into the bag, resolve it
         const bagEffects = testEngine.asPlayerTwo().getBagEffects();
-        expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(cheshireCatNotAllThere),
+        ).toBeSuccessfulCommand();
       }
 
       // Cheshire Cat should be in player two's discard

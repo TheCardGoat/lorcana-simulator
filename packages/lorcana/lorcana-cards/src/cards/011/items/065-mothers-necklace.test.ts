@@ -38,9 +38,7 @@ describe("Mother's Necklace", () => {
     expect(testEngine.asPlayerOne().hasKeyword(necklaceBearer, "Evasive")).toBe(false);
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(mothersNecklace)).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [necklaceBearer] }),
     ).toBeSuccessfulCommand();
@@ -75,7 +73,7 @@ describe("Mother's Necklace", () => {
     if (bagCount > 0) {
       // Resolve it - the conditional should fail since a challenge was made
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(mothersNecklace),
       ).toBeSuccessfulCommand();
     }
 
@@ -104,9 +102,7 @@ describe("Mother's Necklace", () => {
 
     // Pass turn without challenging - PRECIOUS GIFT triggers
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(mothersNecklace)).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [necklaceBearer] }),
     ).toBeSuccessfulCommand();

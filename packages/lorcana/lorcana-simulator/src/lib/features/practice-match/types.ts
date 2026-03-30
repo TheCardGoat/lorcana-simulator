@@ -19,6 +19,8 @@ export interface PracticeMatchSession {
   playerId: string;
   botPlayerId: string;
   deckConfig: HumanVsAiMatchConfig;
+  /** Pre-issued WebSocket ticket (e.g. from quick-match API for guest users). */
+  wsTicket?: string;
 }
 
 export interface PracticeMatchSnapshot {

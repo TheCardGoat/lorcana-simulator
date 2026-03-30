@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import type { LorcanaProjectedBoardView } from "@tcg/lorcana-engine";
+import { m } from "$lib/i18n/messages.js";
 import type {
   MoveLogEntrySnapshot,
   SimulatorSerializedObject,
@@ -8,7 +9,7 @@ import {
   createCardSnapshot,
   createLogEntry,
 } from "@/features/simulator-devtools/test-data/factories.js";
-import { buildPostGameSummary } from "./summary.js";
+import { buildPostGameSummary, buildPostGameSummaryFromCanonical } from "./summary.js";
 
 function createBoard(): LorcanaProjectedBoardView {
   return {
@@ -112,7 +113,7 @@ function createTypedLogEntry(
 }
 
 describe("buildPostGameSummary", () => {
-  it("parses the full log into counters, highlights, spotlights, and forensics", () => {
+  it("parses the full log into counters, highlights, spotlights, and timeline turns", () => {
     const ariel = createCardSnapshot("playerOne", "play", {
       id: "card-ariel",
       name: "Ariel - On Human Legs",
@@ -134,14 +135,24 @@ describe("buildPostGameSummary", () => {
     });
 
     const entries: MoveLogEntrySnapshot[] = [
-      createTypedLogEntry("chooseWhoGoesFirst", "lorcana.setup.firstPlayerChosen", {
-        chooser: "player_one",
-        chosen: "player_two",
-      }),
-      createTypedLogEntry("alterHand", "lorcana.setup.mulligan.count", {
-        playerId: "player_one",
-        count: 2,
-      }),
+      createTypedLogEntry(
+        "chooseWhoGoesFirst",
+        "lorcana.setup.firstPlayerChosen",
+        {
+          chooser: "player_one",
+          chosen: "player_two",
+        },
+        { timestamp: 1_000 },
+      ),
+      createTypedLogEntry(
+        "alterHand",
+        "lorcana.setup.mulligan.count",
+        {
+          playerId: "player_one",
+          count: 2,
+        },
+        { timestamp: 3_000 },
+      ),
       createTypedLogEntry(
         "playCard",
         "lorcana.move.playCard",
@@ -151,6 +162,7 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 2,
+          timestamp: 5_000,
         },
       ),
       createTypedLogEntry(
@@ -162,6 +174,7 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 2,
+          timestamp: 8_000,
         },
       ),
       createTypedLogEntry(
@@ -174,6 +187,7 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 3,
+          timestamp: 12_000,
         },
       ),
       createTypedLogEntry(
@@ -186,6 +200,7 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 4,
+          timestamp: 15_000,
         },
       ),
       createTypedLogEntry(
@@ -198,6 +213,7 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 4,
+          timestamp: 17_300,
         },
       ),
       createTypedLogEntry(
@@ -210,6 +226,7 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 5,
+          timestamp: 20_000,
         },
       ),
       createTypedLogEntry(
@@ -223,18 +240,36 @@ describe("buildPostGameSummary", () => {
         },
         {
           turnNumber: 5,
+          timestamp: 24_500,
         },
       ),
-      createTypedLogEntry("passTurn", "lorcana.move.passTurn", {
-        playerId: "player_one",
-      }),
-      createTypedLogEntry("concede", "lorcana.move.concede", {
-        playerId: "player_one",
-      }),
+      createTypedLogEntry(
+        "passTurn",
+        "lorcana.move.passTurn",
+        {
+          playerId: "player_one",
+        },
+        {
+          turnNumber: 6,
+          timestamp: 28_000,
+        },
+      ),
+      createTypedLogEntry(
+        "concede",
+        "lorcana.move.concede",
+        {
+          playerId: "player_one",
+        },
+        {
+          turnNumber: 6,
+          timestamp: 30_000,
+        },
+      ),
       createLogEntry("Judge note", {
         moveId: "passTurn",
         actorSide: "playerTwo",
         turnNumber: 6,
+        timestamp: 31_500,
       }),
     ];
 
@@ -245,7 +280,8 @@ describe("buildPostGameSummary", () => {
     });
 
     expect(summary.totalLogEntries).toBe(entries.length);
-    expect(summary.forensics).toHaveLength(entries.length);
+    expect(summary.timeline).toHaveLength(entries.length);
+    expect(summary.turns).toHaveLength(6);
     expect(summary.outcome.winnerSide).toBe("playerTwo");
     expect(summary.outcome.viewerResult).toBe("defeat");
     expect(summary.players.playerOne.availableInk).toBe(2);
@@ -270,16 +306,108 @@ describe("buildPostGameSummary", () => {
       true,
     );
 
-    expect(summary.highlights.some((highlight) => highlight.title === "Match slipped away")).toBe(
-      true,
-    );
     expect(
-      summary.highlights.some((highlight) => highlight.title === "The game ended by concession"),
+      summary.highlights.some(
+        (highlight) => highlight.title === m["sim.postGame.highlight.outcome.defeat.title"]({}),
+      ),
+    ).toBe(true);
+    expect(
+      summary.highlights.some(
+        (highlight) => highlight.title === m["sim.postGame.highlight.concede.title"]({}),
+      ),
     ).toBe(true);
 
-    expect(summary.forensics[0]?.typedMessages).toHaveLength(1);
-    expect(summary.forensics[0]?.typedMessages[0]?.text.length).toBeGreaterThan(0);
-    expect(summary.forensics.at(-1)?.typedMessages).toHaveLength(0);
-    expect(summary.forensics.at(-1)?.text.length).toBeGreaterThan(0);
+    expect(summary.timeline[0]?.typedMessages).toHaveLength(1);
+    expect(summary.timeline[0]?.typedMessages[0]?.text.length).toBeGreaterThan(0);
+    expect(summary.timeline.at(-1)?.typedMessages).toHaveLength(0);
+    expect(summary.timeline.at(-1)?.text.length).toBeGreaterThan(0);
+    expect(summary.timeline[2]?.moveCategoryId).toBe("play-card");
+    expect(summary.timeline[2]?.text).toContain("Ariel - On Human Legs");
+    expect(summary.timeline[2]?.segments.some((segment) => segment.kind === "card")).toBe(true);
+    expect(summary.turns[1]?.durationMs).toBe(3_000);
+    expect(summary.turns[3]?.durationMs).toBe(2_300);
+    expect(summary.turns[5]?.moveCount).toBe(3);
+  });
+
+  it("rebuilds the modal summary from canonical API payloads without raw move ids", () => {
+    const board = {
+      ...createBoard(),
+      reason: null,
+    };
+    const summary = buildPostGameSummaryFromCanonical(
+      {
+        source: "redis",
+        gameId: "game-1",
+        matchId: "match-1",
+        status: "completed",
+        winnerId: "player_two",
+        reason: "Reached 20 lore",
+        createdAt: new Date(0).toISOString(),
+        completedAt: new Date(30_000).toISOString(),
+        durationMs: 30_000,
+        authority: "client",
+        matchType: "practice_vs_bot",
+        players: [
+          {
+            id: "player_one",
+            side: "playerOne",
+            displayName: "You",
+            username: null,
+            mmr: null,
+          },
+          {
+            id: "player_two",
+            side: "playerTwo",
+            displayName: "Bot",
+            username: null,
+            mmr: null,
+          },
+        ],
+        board,
+        acceptedMoves: [
+          {
+            gameId: "game-1",
+            stateVersion: 1,
+            turnNumber: 3,
+            actorId: "player_one",
+            moveId: "questWithAll",
+            input: { args: {} },
+            processedCommand: {
+              commandID: "cmd-1",
+              input: { args: {} },
+              move: "questWithAll",
+            },
+            timestamp: 12_000,
+            sourceAuthority: "client",
+          },
+          {
+            gameId: "game-1",
+            stateVersion: 2,
+            turnNumber: 4,
+            actorId: "player_two",
+            moveId: "putCardIntoInkwell",
+            input: { args: { cardId: "card-mickey" } },
+            processedCommand: {
+              commandID: "cmd-2",
+              input: { args: { cardId: "card-mickey" } },
+              move: "putCardIntoInkwell",
+            },
+            timestamp: 15_000,
+            sourceAuthority: "client",
+          },
+        ],
+        engineLogs: [],
+      },
+      "playerOne",
+    );
+
+    expect(summary.timeline).toHaveLength(2);
+    expect(summary.timeline[0]?.text).toBe(m["sim.postGame.fallback.questWithAll"]({}));
+    expect(summary.timeline[1]?.text).toBe(
+      m["sim.postGame.fallback.inkCard.named"]({
+        card: "Mickey Mouse - Detective",
+      }),
+    );
+    expect(summary.highlights[0]?.detail).toBe("Reached 20 lore");
   });
 });

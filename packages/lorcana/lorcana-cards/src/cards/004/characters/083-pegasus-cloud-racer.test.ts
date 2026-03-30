@@ -63,7 +63,7 @@ describe("Pegasus - Cloud Racer", () => {
       // Resolve the triggered ability bag if present
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
-        testEngine.asPlayerOne().resolveNextBag();
+        testEngine.asPlayerOne().resolvePendingByCard(pegasusCloudRacer);
       }
 
       // All characters should now have Evasive
@@ -157,7 +157,7 @@ describe("Pegasus - Cloud Racer", () => {
       // Resolve bag if present
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
-        testEngine.asPlayerOne().resolveNextBag();
+        testEngine.asPlayerOne().resolvePendingByCard(pegasusCloudRacer);
       }
 
       // Characters should now have Evasive

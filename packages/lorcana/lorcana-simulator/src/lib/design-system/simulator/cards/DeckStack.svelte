@@ -1,5 +1,6 @@
 <script lang="ts">
   import CardBack from "./CardBack.svelte";
+  import ZoneCounter from "../display/ZoneCounter.svelte";
 
   const ART_ONLY_ASPECT_RATIO = 734 / 602;
 
@@ -7,9 +8,10 @@
     count?: number;
     showCount?: boolean;
     ownerId?: string | null;
+    seat?: "top" | "bottom";
   }
 
-  let { count, showCount = true, ownerId = null }: DeckStackProps = $props();
+  let { count, showCount = true, ownerId = null, seat = "top" }: DeckStackProps = $props();
 
 </script>
 
@@ -48,9 +50,7 @@
     />
   </div>
   {#if showCount && count !== undefined}
-    <span class="absolute z-10 text-xs font-extrabold text-slate-200 bg-black/60 px-2 py-[0.2rem] rounded-full min-w-6 text-center">
-      {count}
-    </span>
+    <ZoneCounter count={count} corner={seat === "bottom" ? "bottom-right" : "top-right"} />
   {/if}
 </div>
 

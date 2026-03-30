@@ -138,6 +138,20 @@ describe("MobilePlayerMenubar rendering", () => {
     expect(body).toContain("Open event log");
   });
 
+  it("renders the top-bar support control when a support callback is provided", async () => {
+    const { default: MobilePlayerMenubar } =
+      await import("@/features/simulator/panels/MobilePlayerMenubar.svelte");
+    const { body } = render(MobilePlayerMenubar, {
+      props: {
+        seat: "top",
+        player,
+        onOpenSupport: () => {},
+      },
+    });
+
+    expect(body).toContain("Open bug report and feedback options");
+  });
+
   it("does not render the bottom-bar event log control", async () => {
     const { default: MobilePlayerMenubar } =
       await import("@/features/simulator/panels/MobilePlayerMenubar.svelte");

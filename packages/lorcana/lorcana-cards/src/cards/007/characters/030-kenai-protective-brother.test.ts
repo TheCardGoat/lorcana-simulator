@@ -35,7 +35,7 @@ describe("Kenai - Protective Brother", () => {
 
       // Accept the optional and choose the damaged ally to ready and heal
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(kenaiProtectiveBrother, {
           resolveOptional: true,
           targets: [damagedAlly],
         }),
@@ -89,7 +89,9 @@ describe("Kenai - Protective Brother", () => {
 
       // Decline the optional
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kenaiProtectiveBrother, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Ally should still be exerted with damage

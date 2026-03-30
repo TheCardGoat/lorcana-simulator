@@ -58,7 +58,9 @@ describe("Webby Vanderquack - Junior Prospector", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       // Accept the optional ability
-      expect(testEngine.asPlayerOne().resolveNextBag({})).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(webbyVanderquackJuniorProspector, {}),
+      ).toBeSuccessfulCommand();
 
       // The inkwell should have grown by 1 (the top card of deck moved there)
       expect(testEngine.asPlayerOne().getZonesCardCount().inkwell).toBe(4);
@@ -129,7 +131,9 @@ describe("Webby Vanderquack - Junior Prospector", () => {
         testEngine.asPlayerOne().quest(webbyVanderquackJuniorProspector),
       ).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().resolveNextBag({})).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(webbyVanderquackJuniorProspector, {}),
+      ).toBeSuccessfulCommand();
 
       // Inkwell gained 1 card
       expect(testEngine.asPlayerOne().getZonesCardCount().inkwell).toBe(inkwellBefore + 1);

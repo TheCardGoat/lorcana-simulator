@@ -14,11 +14,16 @@ import type {
   AutomatedActionFallback,
   AutomatedActionSearchCaps,
   AutomatedActionStrategy,
+  StrategyInformationPolicy,
   PlayerId,
 } from "@tcg/lorcana-engine";
 import {
   AUTOMATED_ACTION_STRATEGIES,
+  BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID,
+  BEST_DECK_AWARE_ORACLE_LORE_RACE_STRATEGY_ID,
   DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+  buildBestAiMatchupWeightReport,
+  buildBestAiMatchupWeightReportMarkdown,
   computeAutomatedActionStateFingerprint,
 } from "@tcg/lorcana-engine";
 import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
@@ -34,6 +39,7 @@ import { configureStrategySuiteLogging } from "./configure-strategy-logging.js";
 import {
   createRepeatedStateDeadlockTracker,
   resolveRepeatedStateDeadlockByConceding,
+  STRATEGY_ACTION_LIMIT,
   resolveStrategyMatchEndReason,
   type StrategyMatchEndReason,
 } from "./deadlock.js";
@@ -92,6 +98,7 @@ export type StrategyLabOptions = {
   crossDeckGameCount?: number;
   deckIds?: string[];
   gameCount?: number;
+  includeSameStrategyMirrors?: boolean;
   matchMode?: StrategyLabMatchMode;
   mirrorGameCount?: number;
   preset?: StrategyBenchmarkPreset;
@@ -419,10 +426,11 @@ type StrategyTriageSignal = {
 };
 type StrategyBenchmarkPresetConfig = {
   artifactSegment: string[];
-  deckIds: string[];
   matchMode: StrategyLabMatchMode;
-  mirrorGameCount: number;
   crossDeckGameCount: number;
+  deckIds: string[];
+  includeSameStrategyMirrors: boolean;
+  mirrorGameCount: number;
 };
 
 const STRATEGY_ARTIFACT_ROOT = resolve(
@@ -445,22 +453,25 @@ const STRATEGY_TRIAGE_LABELS: Record<StrategyLabTriageCategory, string> = {
 const STRATEGY_PRESET_CONFIGS: Record<StrategyBenchmarkPreset, StrategyBenchmarkPresetConfig> = {
   candidate: {
     artifactSegment: ["presets", "candidate"],
-    crossDeckGameCount: 20,
-    deckIds: [...CORE_STRATEGY_BENCHMARK_DECK_IDS],
+    crossDeckGameCount: 2,
+    deckIds: [...FULL_STRATEGY_REGRESSION_DECK_IDS],
+    includeSameStrategyMirrors: true,
     matchMode: "both",
-    mirrorGameCount: 50,
+    mirrorGameCount: 2,
   },
   promotion: {
     artifactSegment: ["presets", "promotion"],
-    crossDeckGameCount: 20,
+    crossDeckGameCount: 5,
     deckIds: [...FULL_STRATEGY_REGRESSION_DECK_IDS],
+    includeSameStrategyMirrors: true,
     matchMode: "both",
-    mirrorGameCount: 100,
+    mirrorGameCount: 5,
   },
   quick: {
     artifactSegment: ["presets", "quick"],
     crossDeckGameCount: 0,
     deckIds: [...CORE_STRATEGY_BENCHMARK_DECK_IDS],
+    includeSameStrategyMirrors: false,
     matchMode: "mirror",
     mirrorGameCount: 20,
   },
@@ -559,6 +570,8 @@ function resolveStrategyLabPresetOptions(options: StrategyLabOptions = {}): Stra
     ...options,
     crossDeckGameCount: options.crossDeckGameCount ?? config.crossDeckGameCount,
     deckIds: options.deckIds && options.deckIds.length > 0 ? options.deckIds : config.deckIds,
+    includeSameStrategyMirrors:
+      options.includeSameStrategyMirrors ?? config.includeSameStrategyMirrors,
     matchMode: options.matchMode ?? config.matchMode,
     mirrorGameCount: options.mirrorGameCount ?? config.mirrorGameCount,
   };
@@ -676,7 +689,7 @@ function normalizeStrategyDeck(input: StrategyDeckMatchInput): StrategyDeck {
     fixture: input.fixture,
     id: input.id ?? input.fixture.id,
     strategy: input.strategy,
-    strategyId: input.strategyId ?? input.strategy?.name ?? "default-lore-race",
+    strategyId: input.strategyId ?? input.strategy?.name ?? DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
   };
 }
 
@@ -684,7 +697,7 @@ function buildSelectedStrategyOptions(
   strategyIds: readonly string[] = [],
 ): AutomatedActionStrategyOption[] {
   if (strategyIds.length === 0) {
-    return [...AUTOMATED_ACTION_STRATEGIES];
+    return AUTOMATED_ACTION_STRATEGIES.filter((option) => option.testOnly !== true);
   }
 
   return AUTOMATED_ACTION_STRATEGIES.filter((option) => strategyIds.includes(option.id));
@@ -736,10 +749,11 @@ export function buildStrategyLabMatchDefinitions(
   const gameCounts = resolveStrategyLabGameCounts(resolvedOptions);
 
   if ((matchMode === "mirror" || matchMode === "both") && gameCounts.mirror > 0) {
+    const includeSameStrategyMirrors = resolvedOptions.includeSameStrategyMirrors === true;
     for (const deck of selectedDecks) {
       for (const playerOneStrategy of strategyOptions) {
         for (const playerTwoStrategy of strategyOptions) {
-          if (playerOneStrategy.id === playerTwoStrategy.id) {
+          if (!includeSameStrategyMirrors && playerOneStrategy.id === playerTwoStrategy.id) {
             continue;
           }
 
@@ -979,9 +993,18 @@ function resolveStrategyCardName(
   return card.version ? `${card.name} - ${card.version}` : card.name;
 }
 
-function resolveStrategyPlayerId(playerId: string | undefined): PlayerId | undefined {
+function resolveStrategyPlayerSlot(playerId: string | undefined): StrategyPlayerSlot | undefined {
   if (playerId === "player_one" || playerId === "player_two") {
-    return playerId as PlayerId;
+    return playerId;
+  }
+
+  return undefined;
+}
+
+function resolveStrategyPlayerId(playerId: string | undefined): PlayerId | undefined {
+  const slot = resolveStrategyPlayerSlot(playerId);
+  if (slot) {
+    return slot as PlayerId;
   }
 
   return undefined;
@@ -1150,8 +1173,17 @@ function formatGameLogEntry(args: {
   entry: StrategyGameLogEntry;
   match: StrategyMatchDefinition;
   nextExecutionTraceIndex: number;
+  runningLore: StrategyLoreTotals;
 }): { line: string; nextMoveHistoryCursor: number } {
-  const { engine, entry, executionTraces, finalLoreTotals, match, nextExecutionTraceIndex } = args;
+  const {
+    engine,
+    entry,
+    executionTraces,
+    finalLoreTotals,
+    match,
+    nextExecutionTraceIndex,
+    runningLore,
+  } = args;
   const prefix = `[seq:${entry.seq}] [${entry.category}] [${formatVisibility(entry)}]`;
   const message = entry.defaultMessage;
 
@@ -1207,6 +1239,55 @@ function formatGameLogEntry(args: {
 
       return {
         line: `${prefix} ${actorLabel}: executed ${move}`,
+        nextMoveHistoryCursor: nextExecutionTraceIndex,
+      };
+    }
+
+    case "lorcana.move.quest": {
+      const playerId =
+        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
+      const cardId = typeof message.values.cardId === "string" ? message.values.cardId : undefined;
+      const loreGained =
+        typeof message.values.loreGained === "number" ? message.values.loreGained : 0;
+      const actorLabel = resolveStrategyPlayerLabel(playerId, match);
+      const resolvedPlayerSlot = resolveStrategyPlayerSlot(playerId);
+      const cardName = resolveStrategyCardName(engine, cardId) ?? cardId ?? "unknown-card";
+
+      if (resolvedPlayerSlot) {
+        const afterLore = runningLore[resolvedPlayerSlot] + loreGained;
+        runningLore[resolvedPlayerSlot] = afterLore;
+        return {
+          line: `${prefix} ${actorLabel}: Quested with ${cardName} for ${loreGained} lore (total: ${afterLore})`,
+          nextMoveHistoryCursor: nextExecutionTraceIndex,
+        };
+      }
+
+      return {
+        line: `${prefix} ${actorLabel}: Quested with ${cardName} for ${loreGained} lore`,
+        nextMoveHistoryCursor: nextExecutionTraceIndex,
+      };
+    }
+
+    case "lorcana.move.questWithAll": {
+      const playerId =
+        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
+      const count = typeof message.values.count === "number" ? message.values.count : 0;
+      const loreGained =
+        typeof message.values.loreGained === "number" ? message.values.loreGained : 0;
+      const actorLabel = resolveStrategyPlayerLabel(playerId, match);
+      const resolvedPlayerSlot = resolveStrategyPlayerSlot(playerId);
+
+      if (resolvedPlayerSlot) {
+        const afterLore = runningLore[resolvedPlayerSlot] + loreGained;
+        runningLore[resolvedPlayerSlot] = afterLore;
+        return {
+          line: `${prefix} ${actorLabel}: Quested with ${count} character${count === 1 ? "" : "s"} for ${loreGained} lore (total: ${afterLore})`,
+          nextMoveHistoryCursor: nextExecutionTraceIndex,
+        };
+      }
+
+      return {
+        line: `${prefix} ${actorLabel}: Quested with ${count} character${count === 1 ? "" : "s"} for ${loreGained} lore`,
         nextMoveHistoryCursor: nextExecutionTraceIndex,
       };
     }
@@ -1361,29 +1442,74 @@ function formatGameLogEntry(args: {
 
 function buildGameLogTranscript(
   engine: LorcanaMultiplayerTestEngine,
-  decisionEntries: readonly StrategyDecisionLogEntry[],
-  finalLoreTotals: StrategyLoreTotals,
+  _decisionEntries: readonly StrategyDecisionLogEntry[],
+  _finalLoreTotals: StrategyLoreTotals,
   match: StrategyMatchDefinition,
 ): string[] {
-  const executionTraces = getExecutionTraces(decisionEntries);
-  let moveHistoryCursor = 0;
+  const moveLogHistory = engine.asServer().getRuntime().getMoveLogHistory();
+  const runningLore: StrategyLoreTotals = { player_one: 0, player_two: 0 };
 
-  return engine
-    .asServer()
-    .getRuntime()
-    .getGameLog()
-    .map((entry) => {
-      const formatted = formatGameLogEntry({
-        executionTraces,
-        finalLoreTotals,
-        engine,
-        entry,
-        match,
-        nextExecutionTraceIndex: moveHistoryCursor,
-      });
-      moveHistoryCursor = formatted.nextMoveHistoryCursor;
-      return formatted.line;
-    });
+  return moveLogHistory.map((entry) => {
+    const actorLabel = resolveStrategyPlayerLabel(entry.playerId, match);
+    const slot = resolveStrategyPlayerSlot(entry.playerId);
+
+    switch (entry.type) {
+      case "quest": {
+        const cardName = resolveStrategyCardName(engine, entry.cardId) ?? entry.cardId;
+        if (slot) {
+          const afterLore = runningLore[slot] + entry.loreGained;
+          runningLore[slot] = afterLore;
+          return `${actorLabel}: Quested with ${cardName} for ${entry.loreGained} lore (total: ${afterLore})`;
+        }
+        return `${actorLabel}: Quested with ${cardName} for ${entry.loreGained} lore`;
+      }
+      case "questWithAll": {
+        const count = entry.cardIds.length;
+        if (slot) {
+          const afterLore = runningLore[slot] + entry.totalLore;
+          runningLore[slot] = afterLore;
+          return `${actorLabel}: Quested with ${count} character${count === 1 ? "" : "s"} for ${entry.totalLore} lore (total: ${afterLore})`;
+        }
+        return `${actorLabel}: Quested with ${count} character${count === 1 ? "" : "s"} for ${entry.totalLore} lore`;
+      }
+      case "inkCard": {
+        const cardName = resolveStrategyCardName(engine, entry.cardId) ?? entry.cardId;
+        return `${actorLabel}: Inked ${cardName}`;
+      }
+      case "playCard": {
+        const cardName = resolveStrategyCardName(engine, entry.cardId) ?? entry.cardId;
+        return `${actorLabel}: Played ${cardName}`;
+      }
+      case "challenge": {
+        const attackerName = resolveStrategyCardName(engine, entry.attackerId) ?? entry.attackerId;
+        const defenderName = resolveStrategyCardName(engine, entry.defenderId) ?? entry.defenderId;
+        return `${actorLabel}: ${attackerName} challenged ${defenderName}`;
+      }
+      case "turnStart":
+        return `Turn ${entry.turn} started for ${resolveStrategyPlayerLabel(entry.activePlayerId, match)}`;
+      case "gameEnd":
+        return `Game ended. Winner: ${resolveStrategyPlayerLabel(entry.winnerId, match)}. Reason: ${entry.reason}`;
+      case "passTurn":
+        return `${actorLabel}: Passed turn`;
+      case "concede":
+        return `${actorLabel}: Conceded`;
+      case "chooseFirstPlayer":
+        return `${actorLabel}: Chose ${resolveStrategyPlayerLabel(entry.chosenPlayerId, match)} to start`;
+      case "alterHand":
+        return `${actorLabel}: Mulliganed ${entry.count} card${entry.count === 1 ? "" : "s"}`;
+      case "activateAbility": {
+        const cardName = resolveStrategyCardName(engine, entry.cardId) ?? entry.cardId;
+        return `${actorLabel}: Activated ${entry.abilityName ? `${cardName} (${entry.abilityName})` : cardName}`;
+      }
+      case "shiftCard":
+      case "singCard": {
+        const cardName = resolveStrategyCardName(engine, entry.cardId) ?? entry.cardId;
+        return `${actorLabel}: ${entry.type === "shiftCard" ? "Shifted" : "Sang"} ${cardName}`;
+      }
+      default:
+        return `${actorLabel}: ${entry.type}`;
+    }
+  });
 }
 
 function createMatchFixture(match: StrategyMatchDefinition) {
@@ -1463,8 +1589,9 @@ function runStrategyMatch(
   };
 
   let endReason: StrategyMatchEndReason | undefined;
+  const maxSteps = (options.actionLimit ?? STRATEGY_ACTION_LIMIT) + 2;
 
-  while (!endReason) {
+  for (let step = 0; step < maxSteps && !endReason; step += 1) {
     const server = engine.asServer();
     const winner = server.getWinner();
 
@@ -1490,6 +1617,14 @@ function runStrategyMatch(
       traceSink,
     });
     actionCount += 1;
+
+    if (result.fallbackTaken === "concede" || server.getWinner()) {
+      if (result.fallbackTaken === "concede") {
+        deadlockConcedeCount += 1;
+      }
+      pendingDeadlock = false;
+      continue;
+    }
 
     const observation = repeatedStateTracker.observe({
       actorId: result.actorId,
@@ -1529,7 +1664,7 @@ function runStrategyMatch(
     endReason: endReason ?? "winner",
     fallbackCounts: countFallbacks(decisionEntries),
     ...(finalState.ctx.status.reason ? { gameEndReason: finalState.ctx.status.reason } : {}),
-    ...(gameLogTranscript ? { gameLogTranscript } : {}),
+    ...(options.includeGameLogTranscript ? { gameLogTranscript: gameLogTranscript ?? [] } : {}),
     loreTotals,
     matchId: match.id,
     outcome: endReason === "winner" ? "winner" : "terminated",
@@ -2651,6 +2786,36 @@ function writeStrategyRunArtifacts(summary: StrategySuiteRunSummary): StrategyLa
   writeFileSync(
     join(summary.artifactRoot, "benchmark-summary.md"),
     buildBenchmarkSummaryMarkdown(report),
+    "utf8",
+  );
+  const matchupWeightStrategies = summary.strategyIds.reduce<
+    Array<{ informationPolicy: StrategyInformationPolicy; strategyId: string }>
+  >((entries, strategyId) => {
+    if (strategyId === BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID) {
+      entries.push({
+        informationPolicy: "fair",
+        strategyId,
+      });
+    } else if (strategyId === BEST_DECK_AWARE_ORACLE_LORE_RACE_STRATEGY_ID) {
+      entries.push({
+        informationPolicy: "oracle",
+        strategyId,
+      });
+    }
+
+    return entries;
+  }, []);
+  const matchupWeightReport = buildBestAiMatchupWeightReport({
+    strategies: matchupWeightStrategies,
+  });
+  writeFileSync(
+    join(summary.artifactRoot, "matchup-weight-report.json"),
+    `${JSON.stringify(matchupWeightReport, null, 2)}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    join(summary.artifactRoot, "matchup-weight-report.md"),
+    buildBestAiMatchupWeightReportMarkdown(matchupWeightReport),
     "utf8",
   );
 

@@ -64,6 +64,7 @@ export const ursulasGardenFullOfTheUnfortunate: LocationCard = {
         type: "modify-stat",
       },
       id: "1h6-1",
+      name: "ABANDON HOPE",
       text: "ABANDON HOPE While you have an exerted character here, opposing characters get -1 {L}.",
       type: "static",
     },

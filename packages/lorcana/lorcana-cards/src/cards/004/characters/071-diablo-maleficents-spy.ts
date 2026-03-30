@@ -29,6 +29,26 @@ export const diabloMaleficentsSpy: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  abilities: [],
+  abilities: [
+    {
+      effect: {
+        chooser: "CONTROLLER",
+        effect: {
+          target: "EACH_OPPONENT",
+          type: "reveal-hand",
+        },
+        type: "optional",
+      },
+      id: "hgt-1",
+      name: "SCOUT AHEAD",
+      text: "SCOUT AHEAD When you play this character, you may look at each opponent's hand.",
+      trigger: {
+        event: "play",
+        on: "SELF",
+        timing: "when",
+      },
+      type: "triggered",
+    },
+  ],
   i18n: diabloMaleficentsSpyI18n,
 };

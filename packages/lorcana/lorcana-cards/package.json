@@ -91,6 +91,7 @@
     "generate-cards:all": "bun scripts/generate-cards-all.ts",
     "generate-legacy-card-map": "bun scripts/generate-legacy-card-map.ts",
     "embed-card-i18n": "bun scripts/embed-card-i18n.ts",
+    "smoke-test:abilities": "bun scripts/smoke-test-card-abilities.ts",
     "generate:all": "bun run generate-cards:all",
     "generate-localization": "bun scripts/generate-localization.ts",
     "update-translations": "bun run fetch:all-locales && bun run generate-localization"

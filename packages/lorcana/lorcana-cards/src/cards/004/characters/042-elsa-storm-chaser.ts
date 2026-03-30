@@ -49,6 +49,7 @@ export const elsaStormChaser: CharacterCard = {
         value: 2,
       },
       id: "ih5-1",
+      name: "TEMPEST",
       text: "TEMPEST {E} — Chosen character gains Challenger +2 and Rush this turn.",
       type: "activated",
     },

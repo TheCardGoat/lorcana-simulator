@@ -37,7 +37,7 @@ describe("Madame Medusa - The Boss", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(madameMedusaTheBoss),
       ).toBeSuccessfulCommand();
 
       expect(

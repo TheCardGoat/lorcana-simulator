@@ -75,7 +75,9 @@ describe("Robin Hood - Sharpshooter: MY GREATEST PERFORMANCE - Whenever this cha
 
     // Attempting to resolve Aurelian's trigger should fail while Dragon Fire is pending
     expect(
-      testEngine.asPlayerOne().resolveBag(aurelianBagEffects[0]!.id, { resolveOptional: true }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(aurelianBagEffects[0]!.sourceId, { resolveOptional: true }),
     ).not.toBeSuccessfulCommand();
 
     // Step 4: Resolve Dragon Fire — target Daisy Duck for banish

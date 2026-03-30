@@ -37,6 +37,7 @@ export const kronkLaidBack: CharacterCard = {
     ward,
     {
       id: "im-lovin-this",
+      name: "I'M LOVIN' THIS",
       type: "replacement",
       replaces: "discard",
       replacement: "prevent",

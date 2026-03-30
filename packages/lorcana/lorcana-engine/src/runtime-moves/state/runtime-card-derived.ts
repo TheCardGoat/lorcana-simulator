@@ -10,6 +10,8 @@ import type { LorcanaCardDerived } from "../../types/projected-board";
 import type { PlayerId } from "#core";
 import type { StateScopedValueCache } from "../../core/runtime/state-scoped-value-cache";
 import { getOrBuildDerivedLorcanaCardProjection } from "./derived-card-cache";
+import type { StaticEffectRegistry } from "../../rules/static-effect-registry";
+import { buildStaticEffectRegistry } from "../../rules/static-effect-registry";
 
 export const INKWELL_CANDIDATE_QUERY_DSL = {
   selector: "chosen",
@@ -25,8 +27,18 @@ export {
 } from "./turn-action-ink";
 export type { TurnActionInkState as TurnActionInkContext } from "./turn-action-ink";
 
-export function createLorcanaRuntimeCardDeriver(): RuntimeCardDeriver {
+export function createLorcanaRuntimeCardDeriver(
+  registry?: StaticEffectRegistry,
+): RuntimeCardDeriver {
   return ({ card, state, actorPlayerId, staticResources, runtimeCardCache }) => {
+    const getDefinitionByInstanceId = (
+      instanceId: CardInstanceId,
+    ): LorcanaCardDefinition | undefined => {
+      const definitionId = staticResources.instances.get(instanceId)?.definitionId;
+      return definitionId ? staticResources.cards.get(definitionId) : undefined;
+    };
+    const effectiveRegistry =
+      registry ?? buildStaticEffectRegistry(state, getDefinitionByInstanceId);
     const projected = getOrBuildDerivedLorcanaCardProjection({
       runtimeCardCache: runtimeCardCache as
         | StateScopedValueCache<ProjectedLorcanaCardDerived>
@@ -40,12 +52,8 @@ export function createLorcanaRuntimeCardDeriver(): RuntimeCardDeriver {
       controllerID: card.controllerID as PlayerId,
       zoneID: card.zoneID,
       actorPlayerId: actorPlayerId as PlayerId | undefined,
-      getDefinitionByInstanceId: (
-        instanceId: CardInstanceId,
-      ): LorcanaCardDefinition | undefined => {
-        const definitionId = staticResources.instances.get(instanceId)?.definitionId;
-        return definitionId ? staticResources.cards.get(definitionId) : undefined;
-      },
+      getDefinitionByInstanceId,
+      registry: effectiveRegistry,
     });
 
     // Apply defaults to produce required LorcanaCardDerived (all fields present)
@@ -54,6 +62,8 @@ export function createLorcanaRuntimeCardDeriver(): RuntimeCardDeriver {
       willpower: projected.willpower ?? 0,
       lore: projected.lore ?? 0,
       playCost: projected.playCost ?? 0,
+      shiftInkCost: projected.shiftInkCost,
+      shiftPlayCost: projected.shiftPlayCost,
       moveCost: projected.moveCost ?? 0,
       damage: projected.damage ?? 0,
       exerted: projected.exerted ?? false,

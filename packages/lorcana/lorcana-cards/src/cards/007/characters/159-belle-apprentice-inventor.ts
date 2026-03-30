@@ -24,9 +24,9 @@ export const belleApprenticeInventor: CharacterCard = {
   },
   text: [
     {
-      title: "WHAT",
+      title: "WHAT A MESS",
       description:
-        "A MESS During your turn, you may banish chosen item of yours to play this character for free.",
+        "During your turn, you may banish chosen item of yours to play this character for free.",
     },
   ],
   classifications: ["Storyborn", "Hero", "Princess", "Inventor"],

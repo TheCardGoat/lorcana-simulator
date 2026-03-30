@@ -36,6 +36,7 @@ export const tianasPalaceJazzRestaurant: LocationCard = {
         type: "restriction",
       },
       id: "1hy-1",
+      name: "NIGHT OUT",
       text: "NIGHT OUT Characters can't be challenged while here.",
       type: "static",
     },

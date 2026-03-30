@@ -37,6 +37,9 @@ import {
 } from "../runtime-moves/state/runtime-card-derived";
 import { getOrBuildDerivedLorcanaCardProjection } from "../runtime-moves/state/derived-card-cache";
 import type { StateScopedValueCache } from "../core/runtime/state-scoped-value-cache";
+import { buildStaticEffectRegistry } from "../rules/static-effect-registry";
+import { buildZoneRegistry } from "../core/runtime/zone-registry";
+import { lorcanaRuntimeZones } from "../zones";
 
 export type LorcanaBoardProjection = EngineBoardProjection;
 
@@ -110,10 +113,18 @@ function createSelectionRuntimeContext(
     gameID: state.ctx.gameID,
     gameEnded: state.ctx.status.gameEnded,
   };
+  const selectionGetDefn = (instanceId: string) => {
+    const record = staticResources.instances.get(instanceId);
+    const defId = record?.definitionId;
+    return defId
+      ? (staticResources.cards.get(defId) as LorcanaCardDefinition | undefined)
+      : undefined;
+  };
+  const selectionRegistry = buildStaticEffectRegistry(state, selectionGetDefn);
   const rawCards = createCardQueryAPIForState(
     state,
     staticResources,
-    createLorcanaRuntimeCardDeriver(),
+    createLorcanaRuntimeCardDeriver(selectionRegistry),
     actorPlayerId,
     runtimeCardCache,
   );
@@ -159,7 +170,11 @@ function createSelectionRuntimeContext(
         projectRuntimeCard(runtimeCard as RuntimeCardWithDefinition, projector),
       ),
   };
-  const zones = createZoneQueryAPI(state, rawCards);
+  const zones = createZoneQueryAPI(
+    state,
+    rawCards,
+    buildZoneRegistry(lorcanaRuntimeZones, state.ctx.playerIds),
+  );
   const time = createTimeQueryAPI(state);
   const framework: ResolutionSelectionRuntimeContext["framework"] = {
     state: frameworkState,
@@ -204,6 +219,8 @@ function buildVisibleCard(args: {
     willpower: runtimeCard.willpower,
     lore: runtimeCard.lore,
     playCost: runtimeCard.playCost,
+    shiftInkCost: runtimeCard.shiftInkCost,
+    shiftPlayCost: runtimeCard.shiftPlayCost,
     moveCost: runtimeCard.moveCost,
     damage: runtimeCard.damage,
     exerted: runtimeCard.exerted,
@@ -237,6 +254,7 @@ function buildHiddenCard(args: {
   rawBoard: LorcanaBoardProjection;
   staticResources: MatchStaticResources;
   runtimeCardCache?: StateScopedValueCache<ProjectedLorcanaCardDerived>;
+  registry: ReturnType<typeof buildStaticEffectRegistry>;
 }): LorcanaProjectedCard {
   const {
     state,
@@ -247,6 +265,7 @@ function buildHiddenCard(args: {
     rawBoard,
     staticResources,
     runtimeCardCache,
+    registry,
   } = args;
   const meta = rawCardId
     ? (rawBoard.cards[rawCardId]?.meta as LorcanaCardMeta | undefined)
@@ -263,6 +282,7 @@ function buildHiddenCard(args: {
         zoneID: rawBoard.cards[rawCardId]?.zoneId,
         getDefinitionByInstanceId: (instanceId) =>
           getDefinitionForInstance(staticResources, instanceId).definition,
+        registry,
       })
     : createDefaultProjectedLorcanaCardDerived();
 
@@ -430,9 +450,19 @@ function projectPlayerBoard(args: {
   cards: Record<string, LorcanaProjectedCard>;
   rawCards: ReturnType<typeof createCardQueryAPIForState>;
   runtimeCardCache?: StateScopedValueCache<ProjectedLorcanaCardDerived>;
+  registry: ReturnType<typeof buildStaticEffectRegistry>;
 }): LorcanaProjectedPlayerBoard {
-  const { state, rawBoard, staticResources, roleCtx, playerId, cards, rawCards, runtimeCardCache } =
-    args;
+  const {
+    state,
+    rawBoard,
+    staticResources,
+    roleCtx,
+    playerId,
+    cards,
+    rawCards,
+    runtimeCardCache,
+    registry,
+  } = args;
   const actorPlayerId =
     roleCtx.role === "player" ? (roleCtx.playerID as PlayerId | undefined) : undefined;
   const registerCard = (projectedCard: LorcanaProjectedCard): LorcanaProjectedCardId => {
@@ -499,6 +529,7 @@ function projectPlayerBoard(args: {
         rawBoard,
         staticResources,
         runtimeCardCache,
+        registry,
       }),
     );
   });
@@ -537,6 +568,7 @@ function projectPlayerBoard(args: {
         rawBoard,
         staticResources,
         runtimeCardCache,
+        registry,
       }),
     );
   });
@@ -598,6 +630,43 @@ function projectPlayerBoard(args: {
   };
 }
 
+function projectPlayerEffectSourceIds(
+  state: LorcanaMatchState,
+): Record<PlayerId, string[]> | undefined {
+  const pendingByPlayer = state.G.turnMetadata?.pendingCostReductionsByPlayer;
+  if (!pendingByPlayer || typeof pendingByPlayer !== "object") {
+    return undefined;
+  }
+
+  const projected: Partial<Record<PlayerId, string[]>> = {};
+
+  for (const [playerId, rawEntries] of Object.entries(pendingByPlayer) as [PlayerId, unknown][]) {
+    if (!Array.isArray(rawEntries) || rawEntries.length === 0) {
+      continue;
+    }
+
+    const sourceIds = [
+      ...new Set(
+        rawEntries
+          .map((entry) =>
+            entry &&
+            typeof entry === "object" &&
+            typeof (entry as { sourceId?: unknown }).sourceId === "string"
+              ? (entry as { sourceId: string }).sourceId
+              : null,
+          )
+          .filter((sourceId): sourceId is string => sourceId !== null),
+      ),
+    ];
+
+    if (sourceIds.length > 0) {
+      projected[playerId] = sourceIds;
+    }
+  }
+
+  return Object.keys(projected).length > 0 ? (projected as Record<PlayerId, string[]>) : undefined;
+}
+
 export function projectLorcanaBoardView(
   state: LorcanaMatchState,
   roleCtx: ViewRoleContext,
@@ -607,10 +676,29 @@ export function projectLorcanaBoardView(
   const runtimeCardCache = projectionCtx?.runtimeCardCache as
     | StateScopedValueCache<ProjectedLorcanaCardDerived>
     | undefined;
+
+  // Build the static effect registry ONCE for this board projection.
+  // All per-card derived-state calls below use it instead of re-scanning all cards.
+  const getDefinitionByInstanceId = (instanceId: string) => {
+    const definitionId = staticResources.instances.get(instanceId)?.definitionId;
+    return definitionId
+      ? (staticResources.cards.get(definitionId) as LorcanaCardDefinition | undefined)
+      : undefined;
+  };
+  const derivedStateCtx = {
+    ctx: {
+      priority: state.ctx.priority,
+      status: state.ctx.status,
+      zones: { private: state.ctx.zones.private },
+    },
+    G: state.G,
+  };
+  const registry = buildStaticEffectRegistry(derivedStateCtx, getDefinitionByInstanceId);
+
   const rawCards = createCardQueryAPIForState(
     state,
     staticResources,
-    createLorcanaRuntimeCardDeriver(),
+    createLorcanaRuntimeCardDeriver(registry),
     roleCtx.role === "player" ? (roleCtx.playerID as PlayerId | undefined) : undefined,
     runtimeCardCache,
   );
@@ -626,6 +714,7 @@ export function projectLorcanaBoardView(
       role: roleCtx.role,
       playerId: roleCtx.role === "player" ? roleCtx.playerID : undefined,
     },
+    buildZoneRegistry(lorcanaRuntimeZones, state.ctx.playerIds),
     {
       resolveDefinitionId: (cardId) => staticResources.instances.get(cardId)?.definitionId,
     },
@@ -647,6 +736,7 @@ export function projectLorcanaBoardView(
         cards,
         rawCards,
         runtimeCardCache,
+        registry,
       }),
     ]),
   );
@@ -675,6 +765,14 @@ export function projectLorcanaBoardView(
       .filter((pendingEffect) => pendingEffect.source !== "priority")
       .map((pendingEffect) => ({
         ...pendingEffect,
+        abilityIndex:
+          pendingEffect.source === "game" &&
+          pendingEffect.payload &&
+          typeof pendingEffect.payload === "object" &&
+          "abilityIndex" in pendingEffect.payload &&
+          typeof pendingEffect.payload.abilityIndex === "number"
+            ? pendingEffect.payload.abilityIndex
+            : undefined,
         selectionContext:
           pendingEffect.source === "game" &&
           pendingEffect.payload &&
@@ -700,6 +798,7 @@ export function projectLorcanaBoardView(
       controllerId: entry.controllerId,
       chooserId: entry.chooserId,
       sourceId: entry.sourceId,
+      abilityIndex: entry.abilityIndex,
       payload: entry,
       selectionContext: buildResolutionSelectionContext({
         origin: "bag",
@@ -713,6 +812,7 @@ export function projectLorcanaBoardView(
         ctx: selectionRuntimeContext,
       }),
     })),
+    playerEffectSourceIds: projectPlayerEffectSourceIds(state),
     temporaryPlayerRestrictions:
       state.G.temporaryPlayerRestrictions?.restrictionsByPlayer ?? undefined,
     cards,

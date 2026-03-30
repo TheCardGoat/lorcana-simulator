@@ -34,7 +34,7 @@ describe("Gaston - Frightful Bully - Epic", () => {
     expect(testEngine.asPlayerOne().quest(gastonFrightfulBullyEpic)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(gastonFrightfulBullyEpic, {
         targets: [opposingCharacter],
       }),
     ).toBeSuccessfulCommand();

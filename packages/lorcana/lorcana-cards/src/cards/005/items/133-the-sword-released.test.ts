@@ -56,7 +56,9 @@ describe("The Sword Released", () => {
       // Trigger fires at the start of P1's turn — bag queued for P1
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theSwordReleased),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_TWO)).toBe(2);
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
@@ -82,7 +84,9 @@ describe("The Sword Released", () => {
       // Trigger fires unconditionally; condition is checked at resolution time
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theSwordReleased),
+      ).toBeSuccessfulCommand();
 
       // Condition failed (P1 char strength 5 < opponent strength 6) — no lore change
       expect(testEngine.asPlayerOne().getLore(PLAYER_TWO)).toBe(3);
@@ -109,7 +113,9 @@ describe("The Sword Released", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theSwordReleased),
+      ).toBeSuccessfulCommand();
 
       // P2 lost 0 lore (was already at 0), so P1 gains 0
       expect(testEngine.asPlayerOne().getLore(PLAYER_TWO)).toBe(0);
@@ -136,7 +142,9 @@ describe("The Sword Released", () => {
       // Trigger fires; condition checked at resolution — requireLeftNonEmpty: true fails
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theSwordReleased),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_TWO)).toBe(2);
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
@@ -161,7 +169,9 @@ describe("The Sword Released", () => {
       // Right side empty → condition passes per ifRightEmpty: "pass"
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theSwordReleased),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_TWO)).toBe(1);
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);

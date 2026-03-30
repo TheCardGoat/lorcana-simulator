@@ -44,7 +44,7 @@ describe("Pepa Madrigal - Weather Maker", () => {
       expect(testEngine.asPlayerOne().playCard(pepaMadrigalWeatherMaker)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(pepaMadrigalWeatherMaker, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -70,7 +70,7 @@ describe("Pepa Madrigal - Weather Maker", () => {
       expect(testEngine.asPlayerOne().playCard(pepaMadrigalWeatherMaker)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(pepaMadrigalWeatherMaker, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -101,7 +101,7 @@ describe("Pepa Madrigal - Weather Maker", () => {
       expect(testEngine.asPlayerOne().playCard(pepaMadrigalWeatherMaker)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(pepaMadrigalWeatherMaker, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -132,7 +132,9 @@ describe("Pepa Madrigal - Weather Maker", () => {
       expect(testEngine.asPlayerOne().playCard(pepaMadrigalWeatherMaker)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(pepaMadrigalWeatherMaker, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.isExerted(opponentCharacter)).toBe(false);
@@ -168,7 +170,7 @@ describe("Pepa Madrigal - Weather Maker", () => {
       expect(testEngine.asPlayerOne().playCard(pepaMadrigalWeatherMaker)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(pepaMadrigalWeatherMaker, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),

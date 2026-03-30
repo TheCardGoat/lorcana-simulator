@@ -34,7 +34,7 @@ describe("Signed Contract", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(signedContract)).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(signedContractDraw)).toBe("hand");
   });

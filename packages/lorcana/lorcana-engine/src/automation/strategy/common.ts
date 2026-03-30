@@ -140,9 +140,9 @@ export function getFamilyOrder(
     resolveEffect: 2,
     resolveBag: 3,
     quest: 4,
+    putCardIntoInkwell: 4.5,
     playCard: 5,
     activateAbility: 6,
-    putCardIntoInkwell: 7,
     moveCharacterToLocation: 8,
     challenge: 9,
   };

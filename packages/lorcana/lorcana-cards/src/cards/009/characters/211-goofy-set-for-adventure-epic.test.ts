@@ -50,7 +50,7 @@ describe("Goofy - Set for Adventure (Epic)", () => {
     expect(playerOne.getBagCount()).toBe(1);
 
     expect(
-      playerOne.resolveBag(playerOne.getBagEffects()[0]!.id, { resolveOptional: true }),
+      playerOne.resolvePendingByCard(goofySetForAdventureEpic, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
     expect(playerOne.resolveNextPending({ targets: [travelBuddy] })).toBeSuccessfulCommand();
 

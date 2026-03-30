@@ -39,7 +39,7 @@ describe("Dumbo - The Flying Elephant (set9-046)", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(dumboTheFlyingElephant, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -64,7 +64,7 @@ describe("Dumbo - The Flying Elephant (set9-046)", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(dumboTheFlyingElephant, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();

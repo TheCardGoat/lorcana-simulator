@@ -26,7 +26,9 @@ describe("Arthur - King Victorious (Enchanted)", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [targetCharacter] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(arthurKingVictoriousEnchanted, { targets: [targetCharacter] }),
     ).toBeSuccessfulCommand();
 
     // Should gain Challenger +2
@@ -56,7 +58,9 @@ describe("Arthur - King Victorious (Enchanted)", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [targetCharacter] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(arthurKingVictoriousEnchanted, { targets: [targetCharacter] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();

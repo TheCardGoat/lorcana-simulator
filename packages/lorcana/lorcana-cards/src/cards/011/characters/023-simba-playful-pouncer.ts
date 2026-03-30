@@ -24,9 +24,9 @@ export const simbaPlayfulPouncer: CharacterCard = {
   },
   text: [
     {
-      title: "YOU DON'T STAND",
+      title: "YOU DON'T STAND A CHANCE",
       description:
-        "A CHANCE When you play this character, chosen opposing character gets -2 {S} until the start of your next turn.",
+        "When you play this character, chosen opposing character gets -2 {S} until the start of your next turn.",
     },
   ],
   classifications: ["Storyborn", "Hero", "Prince"],

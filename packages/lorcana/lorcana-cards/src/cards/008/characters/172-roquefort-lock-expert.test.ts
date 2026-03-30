@@ -22,7 +22,7 @@ describe("Roquefort - Lock Expert", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(roquefortLockExpert, {
           resolveOptional: true,
           targets: [itemId],
         }),
@@ -50,7 +50,7 @@ describe("Roquefort - Lock Expert", () => {
       expect(testEngine.asPlayerOne().quest(roquefortLockExpert)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(roquefortLockExpert, {
           resolveOptional: true,
           targets: [itemId],
         }),
@@ -75,7 +75,7 @@ describe("Roquefort - Lock Expert", () => {
       expect(testEngine.asPlayerOne().quest(roquefortLockExpert)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(roquefortLockExpert, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

@@ -31,7 +31,7 @@ describe("Fergus McDuck - Scrooge's Father", () => {
       expect(testEngine.asPlayerOne().playCard(fergusMcduckScroogesFather)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(fergusMcduckScroogesFather, {
           resolveOptional: true,
           targets: [wardTarget],
         }),
@@ -56,7 +56,7 @@ describe("Fergus McDuck - Scrooge's Father", () => {
       expect(testEngine.asPlayerOne().playCard(fergusMcduckScroogesFather)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(fergusMcduckScroogesFather, {
           resolveOptional: true,
           targets: [wardTarget],
         }),

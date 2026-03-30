@@ -41,6 +41,7 @@ export const ratiganRagingRat: CharacterCard = {
         type: "modify-stat",
       },
       id: "1g7-1",
+      name: "NOTHING CAN STAND IN MY WAY",
       text: "NOTHING CAN STAND IN MY WAY While this character has damage, he gets +2 {S}.",
       type: "static",
     },

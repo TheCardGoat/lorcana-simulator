@@ -49,7 +49,7 @@ describe("Jock - Attentive Uncle", () => {
       // Resolve any pending bag effects
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const effect of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(effect.id);
+        testEngine.asPlayerOne().resolvePendingByCard(jockAttentiveUncle);
       }
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore + 2);
@@ -69,7 +69,7 @@ describe("Jock - Attentive Uncle", () => {
       // Resolve any pending bag effects
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const effect of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(effect.id);
+        testEngine.asPlayerOne().resolvePendingByCard(jockAttentiveUncle);
       }
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore);
@@ -87,7 +87,7 @@ describe("Jock - Attentive Uncle", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       for (const effect of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(effect.id);
+        testEngine.asPlayerOne().resolvePendingByCard(jockAttentiveUncle);
       }
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore);

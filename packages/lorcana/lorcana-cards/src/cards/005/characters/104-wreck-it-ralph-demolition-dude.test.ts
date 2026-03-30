@@ -16,7 +16,9 @@ describe("Wreck-It Ralph - Demolition Dude", () => {
       testEngine.asServer().manualReadyCard(ralphId);
 
       if (testEngine.asPlayerOne().getBagCount() > 0) {
-        expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphDemolitionDude),
+        ).toBeSuccessfulCommand();
       }
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(initialLore + 3);
@@ -34,7 +36,9 @@ describe("Wreck-It Ralph - Demolition Dude", () => {
       testEngine.asServer().manualReadyCard(ralphId);
 
       if (testEngine.asPlayerOne().getBagCount() > 0) {
-        expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphDemolitionDude),
+        ).toBeSuccessfulCommand();
       }
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(initialLore);
@@ -52,7 +56,9 @@ describe("Wreck-It Ralph - Demolition Dude", () => {
       testEngine.asServer().manualReadyCard(ralphId);
 
       if (testEngine.asPlayerOne().getBagCount() > 0) {
-        expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphDemolitionDude),
+        ).toBeSuccessfulCommand();
       }
 
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(initialLore + 1);
@@ -72,7 +78,9 @@ describe("Wreck-It Ralph - Demolition Dude", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
       if (testEngine.asPlayerTwo().getBagCount() > 0) {
-        expect(testEngine.asPlayerTwo().resolveNextBag()).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(wreckitRalphDemolitionDude),
+        ).toBeSuccessfulCommand();
       }
 
       expect(testEngine.asPlayerTwo().getLore("player_two" as typeof PLAYER_ONE)).toBe(

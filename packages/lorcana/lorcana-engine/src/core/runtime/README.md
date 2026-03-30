@@ -35,7 +35,7 @@ This replaces the current split where framework internals (`InternalState`) live
   - [x] `log` (log sequencing)
   - [x] `authz` (authorization)
 - [x] `MatchRuntime` class with command pipeline
-- [x] Deterministic reducer using Immer
+- [x] Deterministic reducer using Mutative
 - [x] Patch generation for sync
 - [x] Domain event emission
 - [x] Game end detection
@@ -319,7 +319,7 @@ Per `MATCH_RUNTIME.md`, each command flows through:
 2. **\_stateID stale check** - Reject outdated commands
 3. **tickClocks(now)** - Settle passive time
 4. **Move legality validation** - Check conditions
-5. **Reducer execution** - Execute move via Immer
+5. **Reducer execution** - Execute move via Mutative
 6. **Queue events** - Domain events, history
 7. **Resolve flow** - Phase transitions
 8. **Update clocks** - Set waiting state

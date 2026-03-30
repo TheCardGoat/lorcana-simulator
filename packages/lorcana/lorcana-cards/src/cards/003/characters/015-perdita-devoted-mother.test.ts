@@ -36,7 +36,7 @@ describe("Perdita - Devoted Mother", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(perditaDevotedMother, {
           targets: [cheapCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -58,7 +58,9 @@ describe("Perdita - Devoted Mother", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(perditaDevotedMother, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("discard");
@@ -104,7 +106,7 @@ describe("Perdita - Devoted Mother", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(perditaDevotedMother, {
           targets: [cheapCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -125,7 +127,9 @@ describe("Perdita - Devoted Mother", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(perditaDevotedMother, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("discard");

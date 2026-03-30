@@ -46,15 +46,32 @@ async function fetchSession(): Promise<void> {
  * state and redirects the browser there after the callback — it must be an absolute URL on
  * the simulator origin, not a bare path (which would resolve on the API host).
  */
-async function signInWithDiscord(callbackPath = "/matchmaking"): Promise<void> {
+interface DiscordSignInOptions {
+  callbackPath?: string;
+  joinGuild?: boolean;
+}
+
+async function signInWithDiscord(options: DiscordSignInOptions = {}): Promise<void> {
+  const { callbackPath = "/matchmaking", joinGuild = false } = options;
   const path = callbackPath.startsWith("/") ? callbackPath : `/${callbackPath}`;
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const callbackURL = origin ? `${origin}${path}` : path;
+
+  if (typeof window === "undefined") {
+    throw new Error("signInWithDiscord must be called in the browser");
+  }
+
+  const callbackURL = new URL(path, window.location.origin);
+
+  if (joinGuild) {
+    const joinGuildNonce = window.crypto.randomUUID();
+    window.sessionStorage.setItem("discord-join-guild-nonce", joinGuildNonce);
+    callbackURL.searchParams.set("join_guild", "true");
+    callbackURL.searchParams.set("join_guild_nonce", joinGuildNonce);
+  }
 
   await authClient.signIn.social({
     provider: "discord",
-    callbackURL,
-    scopes: ["identify", "email"],
+    callbackURL: callbackURL.toString(),
+    scopes: joinGuild ? ["identify", "email", "guilds.join"] : ["identify", "email"],
   });
 }
 

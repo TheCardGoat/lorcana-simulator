@@ -38,7 +38,9 @@ describe("Elsa - Ice Maker (Epic)", () => {
 
       // Resolve the bag — accept optional (yes, exert chosen character)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(elsaIceMakerEpic, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       // The chosen character should now be exerted
@@ -74,7 +76,9 @@ describe("Elsa - Ice Maker (Epic)", () => {
 
       // Resolve the bag — accept optional (yes, exert chosen character)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(elsaIceMakerEpic, { targets: [opponentCharacter] }),
       ).toBeSuccessfulCommand();
 
       // The chosen character should now be exerted

@@ -32,6 +32,7 @@ export const theQueenWickedAndVain: CharacterCard = {
   abilities: [
     {
       id: "2kk-1",
+      name: "I SUMMON THEE",
       cost: {
         exert: true,
       },

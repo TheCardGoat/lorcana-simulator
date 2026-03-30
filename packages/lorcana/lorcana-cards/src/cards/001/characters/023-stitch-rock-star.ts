@@ -56,9 +56,13 @@ export const stitchRockStar: CharacterCard = {
               },
             },
             {
-              amount: 1,
-              target: "CONTROLLER",
-              type: "draw",
+              type: "conditional",
+              condition: { type: "if-you-do" },
+              ifTrue: {
+                amount: 1,
+                target: "CONTROLLER",
+                type: "draw",
+              },
             },
           ],
         },

@@ -13,7 +13,12 @@ import { getTotalKeyword, hasKeyword } from "../../card-utils";
 import { projectLorcanaCardDerived } from "../../projection/card-derived";
 import { createProjectionState } from "../../rules/derived-state";
 import { resolveCandidateTargets } from "../../targeting/runtime";
-import type { ChallengeState, LorcanaCardMeta, LorcanaRuntimeMoveInputs } from "../../types";
+import type {
+  ChallengeState,
+  LorcanaCardDefinition,
+  LorcanaCardMeta,
+  LorcanaRuntimeMoveInputs,
+} from "../../types";
 import type { LorcanaCardDerived } from "../../types/projected-board";
 type LorcanaRuntimeCard = RuntimeCardWithDefinition & LorcanaCardDerived;
 import {
@@ -23,6 +28,7 @@ import {
   getStaticChallengeLimit,
   isCardInPlay,
   evaluateStaticCondition,
+  hasStaticSelfRestriction,
 } from "./static-ability-utils";
 import {
   getTemporaryAbilityPayload,
@@ -30,6 +36,9 @@ import {
   hasTemporaryPlayerRestriction,
   hasTemporaryRestriction,
 } from "../effects/temporary-effects";
+import { getOrBuildMoveRegistry } from "./move-registry-cache";
+import { buildStaticEffectRegistry } from "../../rules/static-effect-registry";
+import type { StaticEffectRegistry } from "../../rules/static-effect-registry";
 
 export const CHALLENGE_DEFENDER_TARGET_DSL = {
   selector: "chosen",
@@ -101,13 +110,29 @@ function hasKeywordIncludingTemporary(
   ctx: ChallengeCardStateContext,
   cardId: CardInstanceId,
   keyword: string,
+  registry: StaticEffectRegistry,
 ): boolean {
   const runtimeCard = getCardsApi(ctx).require(cardId);
-  return runtimeCard.keywords?.includes(keyword) ?? false;
+  const derived = projectLorcanaCardDerived({
+    definition: runtimeCard.definition as LorcanaCardDefinition,
+    meta: runtimeCard.meta as LorcanaCardMeta,
+    state: createProjectionState(ctx.framework.state, ctx.G),
+    cardInstanceId: cardId,
+    ownerID: runtimeCard.ownerID as PlayerId,
+    controllerID: runtimeCard.controllerID as PlayerId,
+    zoneID: runtimeCard.zoneID,
+    getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+    registry,
+  });
+  return derived.keywords?.includes(keyword) ?? false;
 }
 
-function hasRushForChallenge(ctx: ChallengeAnyContext, cardId: CardInstanceId): boolean {
-  return hasKeywordIncludingTemporary(ctx, cardId, "Rush");
+function hasRushForChallenge(
+  ctx: ChallengeAnyContext,
+  cardId: CardInstanceId,
+  registry: StaticEffectRegistry,
+): boolean {
+  return hasKeywordIncludingTemporary(ctx, cardId, "Rush", registry);
 }
 
 function canChallengeReadyCharacters(
@@ -376,10 +401,14 @@ function cantBeChallenged(
   return false;
 }
 
-function canChallengeEvasive(ctx: ChallengeAnyContext, attackerId: CardInstanceId): boolean {
+function canChallengeEvasive(
+  ctx: ChallengeAnyContext,
+  attackerId: CardInstanceId,
+  registry: StaticEffectRegistry,
+): boolean {
   return (
-    hasKeywordIncludingTemporary(ctx, attackerId, "Evasive") ||
-    hasKeywordIncludingTemporary(ctx, attackerId, "Alert")
+    hasKeywordIncludingTemporary(ctx, attackerId, "Evasive", registry) ||
+    hasKeywordIncludingTemporary(ctx, attackerId, "Alert", registry)
   );
 }
 
@@ -396,6 +425,7 @@ function isChallengeReadyAttacker(ctx: ChallengeAnyContext, attackerId: CardInst
 
   const currentTurn = getCurrentTurn(ctx);
   const controllerId = getCardsApi(ctx).require(attackerId).controllerID as PlayerId | undefined;
+  const registry = getOrBuildMoveRegistry(ctx);
 
   if (
     controllerId &&
@@ -418,11 +448,22 @@ function isChallengeReadyAttacker(ctx: ChallengeAnyContext, attackerId: CardInst
   }
 
   if (
+    hasStaticSelfRestriction({
+      state: ctx.framework.state,
+      cardId: attackerId,
+      restriction: "cant-challenge",
+      getDefinitionByInstanceId: (instanceId) => getCardsApi(ctx).getDefinition(instanceId),
+    })
+  ) {
+    return false;
+  }
+
+  if (
     hasStaticCardRestriction({
       state: ctx.framework.state,
       cardId: attackerId,
       restriction: "cant-challenge",
-      getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+      registry,
     })
   ) {
     return false;
@@ -434,13 +475,13 @@ function isChallengeReadyAttacker(ctx: ChallengeAnyContext, attackerId: CardInst
       state: ctx.framework.state,
       playerId: controllerId,
       restriction: "cant-challenge",
-      getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+      registry,
     })
   ) {
     return false;
   }
 
-  if (attackerMeta.isDrying === true && !hasRushForChallenge(ctx, attackerId)) {
+  if (attackerMeta.isDrying === true && !hasRushForChallenge(ctx, attackerId, registry)) {
     return false;
   }
 
@@ -452,9 +493,9 @@ function isChallengeReadyAttacker(ctx: ChallengeAnyContext, attackerId: CardInst
 }
 
 function hasExceededChallengeLimit(ctx: ChallengeAnyContext, attackerId: CardInstanceId): boolean {
+  const registry = getOrBuildMoveRegistry(ctx);
   const challengeLimit = getStaticChallengeLimit({
-    state: ctx.framework.state,
-    getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+    registry,
   });
   if (challengeLimit === null) {
     return false;
@@ -520,6 +561,7 @@ function getBodyguardCandidatesForOwner(
   ctx: ChallengeIntentContext,
   attackerId: CardInstanceId,
   ownerId: PlayerId,
+  registry: StaticEffectRegistry,
 ): CardInstanceId[] {
   return getOpposingCardsInPlay(ctx).filter((candidateId) => {
     const runtimeCard = getCardsApi(ctx).get(candidateId);
@@ -537,7 +579,7 @@ function getBodyguardCandidatesForOwner(
       return false;
     }
 
-    if (!hasKeywordIncludingTemporary(ctx, candidateId, "Bodyguard")) {
+    if (!hasKeywordIncludingTemporary(ctx, candidateId, "Bodyguard", registry)) {
       return false;
     }
 
@@ -546,8 +588,8 @@ function getBodyguardCandidatesForOwner(
     }
 
     if (
-      hasKeywordIncludingTemporary(ctx, candidateId, "Evasive") &&
-      !canChallengeEvasive(ctx, attackerId)
+      hasKeywordIncludingTemporary(ctx, candidateId, "Evasive", registry) &&
+      !canChallengeEvasive(ctx, attackerId, registry)
     ) {
       return false;
     }
@@ -560,8 +602,9 @@ function hasMandatoryBodyguardTarget(
   ctx: ChallengeIntentContext,
   attackerId: CardInstanceId,
   defenderOwnerId: PlayerId,
+  registry: StaticEffectRegistry,
 ): boolean {
-  return getBodyguardCandidatesForOwner(ctx, attackerId, defenderOwnerId).length > 0;
+  return getBodyguardCandidatesForOwner(ctx, attackerId, defenderOwnerId, registry).length > 0;
 }
 
 function violatesBodyguardIfAbleRestriction(
@@ -570,18 +613,23 @@ function violatesBodyguardIfAbleRestriction(
   defenderDef: CharacterCard | LocationCard,
   defenderId: CardInstanceId,
   defenderOwnerId: PlayerId,
+  registry: StaticEffectRegistry,
 ): boolean {
-  if (isCharacterCard(defenderDef) && hasKeywordIncludingTemporary(ctx, defenderId, "Bodyguard")) {
+  if (
+    isCharacterCard(defenderDef) &&
+    hasKeywordIncludingTemporary(ctx, defenderId, "Bodyguard", registry)
+  ) {
     return false;
   }
 
-  return hasMandatoryBodyguardTarget(ctx, attackerId, defenderOwnerId);
+  return hasMandatoryBodyguardTarget(ctx, attackerId, defenderOwnerId, registry);
 }
 
 function isLegalDefenderForAttacker(
   ctx: ChallengeIntentContext,
   attackerId: CardInstanceId,
   defenderId: CardInstanceId,
+  registry: StaticEffectRegistry,
 ): boolean {
   const attackerDef = getCardDefinition(ctx, attackerId);
   if (!attackerDef || !isCharacterCard(attackerDef)) {
@@ -608,7 +656,14 @@ function isLegalDefenderForAttacker(
 
   const defenderOwnerId = defenderRuntime.ownerID as PlayerId;
   if (
-    violatesBodyguardIfAbleRestriction(ctx, attackerId, defenderDef, defenderId, defenderOwnerId)
+    violatesBodyguardIfAbleRestriction(
+      ctx,
+      attackerId,
+      defenderDef,
+      defenderId,
+      defenderOwnerId,
+      registry,
+    )
   ) {
     return false;
   }
@@ -624,8 +679,8 @@ function isLegalDefenderForAttacker(
   }
 
   if (
-    hasKeywordIncludingTemporary(ctx, defenderId, "Evasive") &&
-    !canChallengeEvasive(ctx, attackerId)
+    hasKeywordIncludingTemporary(ctx, defenderId, "Evasive", registry) &&
+    !canChallengeEvasive(ctx, attackerId, registry)
   ) {
     return false;
   }
@@ -637,12 +692,13 @@ export function getLegalChallengeDefendersForAttacker(
   ctx: ChallengeIntentContext,
   attackerId: CardInstanceId,
 ): CardInstanceId[] {
+  const registry = getOrBuildMoveRegistry(ctx);
   return getOpposingCardsInPlay(ctx)
     .filter((cardId) => {
       const runtimeCard = getCardsApi(ctx).get(cardId);
       return Boolean(runtimeCard && isInPlayZone(runtimeCard.zoneID));
     })
-    .filter((defenderId) => isLegalDefenderForAttacker(ctx, attackerId, defenderId));
+    .filter((defenderId) => isLegalDefenderForAttacker(ctx, attackerId, defenderId, registry));
 }
 
 export function getEligibleChallengeAttackers(ctx: ChallengeIntentContext): CardInstanceId[] {
@@ -693,6 +749,7 @@ export function validateChallengeAction(ctx: ChallengeValidationContext): Runtim
   const attackerControllerId = getCardsApi(ctx).require(attackerId).controllerID as
     | PlayerId
     | undefined;
+  const registry = getOrBuildMoveRegistry(ctx);
   if (
     attackerControllerId &&
     hasTemporaryPlayerRestriction(
@@ -714,11 +771,22 @@ export function validateChallengeAction(ctx: ChallengeValidationContext): Runtim
   }
 
   if (
+    hasStaticSelfRestriction({
+      state: ctx.framework.state,
+      cardId: attackerId,
+      restriction: "cant-challenge",
+      getDefinitionByInstanceId: (instanceId) => getCardsApi(ctx).getDefinition(instanceId),
+    })
+  ) {
+    return createFailure("Attacker cannot challenge", "ATTACKER_CANT_CHALLENGE");
+  }
+
+  if (
     hasStaticCardRestriction({
       state: ctx.framework.state,
       cardId: attackerId,
       restriction: "cant-challenge",
-      getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+      registry,
     })
   ) {
     return createFailure("Attacker cannot challenge", "ATTACKER_CANT_CHALLENGE");
@@ -730,13 +798,13 @@ export function validateChallengeAction(ctx: ChallengeValidationContext): Runtim
       state: ctx.framework.state,
       playerId: attackerControllerId,
       restriction: "cant-challenge",
-      getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+      registry,
     })
   ) {
     return createFailure("Attacker cannot challenge", "ATTACKER_CANT_CHALLENGE");
   }
 
-  if (attackerMeta.isDrying === true && !hasRushForChallenge(ctx, attackerId)) {
+  if (attackerMeta.isDrying === true && !hasRushForChallenge(ctx, attackerId, registry)) {
     return createFailure("Attacker is drying and does not have Rush", "ATTACKER_DRYING");
   }
 
@@ -784,8 +852,8 @@ export function validateChallengeAction(ctx: ChallengeValidationContext): Runtim
   }
 
   if (
-    hasKeywordIncludingTemporary(ctx, defenderId, "Evasive") &&
-    !canChallengeEvasive(ctx, attackerId)
+    hasKeywordIncludingTemporary(ctx, defenderId, "Evasive", registry) &&
+    !canChallengeEvasive(ctx, attackerId, registry)
   ) {
     return createFailure(
       "Defender has Evasive and attacker cannot challenge Evasive characters",
@@ -795,7 +863,14 @@ export function validateChallengeAction(ctx: ChallengeValidationContext): Runtim
 
   const defenderOwnerId = defenderRuntime.ownerID as PlayerId;
   if (
-    violatesBodyguardIfAbleRestriction(ctx, attackerId, defenderDef, defenderId, defenderOwnerId)
+    violatesBodyguardIfAbleRestriction(
+      ctx,
+      attackerId,
+      defenderDef,
+      defenderId,
+      defenderOwnerId,
+      registry,
+    )
   ) {
     return createFailure(
       "A Bodyguard character must be challenged if able",
@@ -832,7 +907,8 @@ function resolveChallengeStrength(
   ctx: ChallengeCardStateContext,
   card: RuntimeLorcanaCardWithDerived,
   challenging: boolean,
-  challengeContext?: { attackerId: CardInstanceId; defenderId: CardInstanceId },
+  challengeContext: { attackerId: CardInstanceId; defenderId: CardInstanceId },
+  registry: import("../../rules/static-effect-registry").StaticEffectRegistry,
 ): number {
   const cardDef = card.definition;
   if (!isCharacterCard(cardDef)) {
@@ -866,6 +942,7 @@ function resolveChallengeStrength(
     controllerID: card.controllerID as PlayerId,
     zoneID: card.zoneID,
     getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+    registry,
   });
   const challengerBonus = challenging ? (derived.keywordValues?.challenger ?? 0) : 0;
 
@@ -884,6 +961,7 @@ function reduceDamageByResist(
   targetId: CardInstanceId,
   targetDef: CharacterCard | LocationCard,
   incomingDamage: number,
+  registry: import("../../rules/static-effect-registry").StaticEffectRegistry,
 ): number {
   const dynamic = resolveDynamicCombatModifierTODO(targetId);
   const runtimeCard = getCardsApi(ctx).require(targetId);
@@ -896,6 +974,7 @@ function reduceDamageByResist(
     controllerID: runtimeCard.controllerID as PlayerId,
     zoneID: runtimeCard.zoneID,
     getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
+    registry,
   });
   const resistValue = (derived.keywordValues?.resist ?? 0) + dynamic.damageReduction;
 
@@ -908,9 +987,10 @@ export function finalizeChallengeDamageAmount(
   targetId: CardInstanceId,
   targetDef: CharacterCard | LocationCard,
   incomingDamage: number,
-  opponentCardId?: CardInstanceId,
+  opponentCardId: CardInstanceId | undefined,
+  registry: import("../../rules/static-effect-registry").StaticEffectRegistry,
 ): number {
-  const reduced = reduceDamageByResist(ctx, targetId, targetDef, incomingDamage);
+  const reduced = reduceDamageByResist(ctx, targetId, targetDef, incomingDamage, registry);
   if (takesNoDamageFromChallenges(ctx, targetId, opponentCardId)) {
     return 0;
   }
@@ -965,9 +1045,34 @@ export function computeChallengeDamageResult(
   }
 
   const challengeContext = { attackerId, defenderId };
-  const attackerStrength = resolveChallengeStrength(ctx, attackerRuntime, true, challengeContext);
+  // Build a challenge-aware registry so "in-challenge" static conditions resolve correctly.
+  const attackerIndexEntry = ctx.framework.state._zonesPrivate?.cardIndex?.[attackerId];
+  const defenderIndexEntry = ctx.framework.state._zonesPrivate?.cardIndex?.[defenderId];
+  const syntheticChallengeStateForRegistry: ChallengeState = {
+    attacker: attackerId,
+    defender: defenderId,
+    attackerOwnerId: (attackerIndexEntry?.controllerID ??
+      attackerIndexEntry?.ownerID ??
+      "") as PlayerId,
+    defenderOwnerId: (defenderIndexEntry?.controllerID ??
+      defenderIndexEntry?.ownerID ??
+      "") as PlayerId,
+    stage: "damage",
+  };
+  const syntheticGForRegistry = { ...ctx.G, challengeState: syntheticChallengeStateForRegistry };
+  const registry = buildStaticEffectRegistry(
+    createProjectionState(ctx.framework.state, syntheticGForRegistry),
+    (instanceId) => getCardDefinition(ctx, instanceId),
+  );
+  const attackerStrength = resolveChallengeStrength(
+    ctx,
+    attackerRuntime,
+    true,
+    challengeContext,
+    registry,
+  );
   const defenderStrength = isCharacterCard(defenderDef)
-    ? resolveChallengeStrength(ctx, defenderRuntime, false, challengeContext)
+    ? resolveChallengeStrength(ctx, defenderRuntime, false, challengeContext, registry)
     : 0;
 
   const rawAttackerToDefenderDamage = attackerStrength;
@@ -977,9 +1082,18 @@ export function computeChallengeDamageResult(
     defenderId,
     defenderDef,
     rawAttackerToDefenderDamage,
+    undefined,
+    registry,
   );
   const defenderToAttackerDamage = isCharacterCard(defenderDef)
-    ? finalizeChallengeDamageAmount(ctx, attackerId, attackerDef, rawDefenderToAttackerDamage)
+    ? finalizeChallengeDamageAmount(
+        ctx,
+        attackerId,
+        attackerDef,
+        rawDefenderToAttackerDamage,
+        undefined,
+        registry,
+      )
     : 0;
 
   const attackerNextDamage = attackerCurrentDamage + defenderToAttackerDamage;

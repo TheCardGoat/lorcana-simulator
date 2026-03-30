@@ -25,10 +25,12 @@ describe("Anna - Soothing Sister (Enchanted)", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       const moanaId = testEngine.findCardInstanceId(moanaOfMotunui, "discard", PLAYER_ONE);
-      const resolveResult = testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
-        resolveOptional: true,
-        targets: [moanaId],
-      });
+      const resolveResult = testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(annaSoothingSisterEnchanted, {
+          resolveOptional: true,
+          targets: [moanaId],
+        });
       expect(resolveResult).toBeSuccessfulCommand();
 
       const loreAfterResolve = testEngine.getLore(PLAYER_ONE);
@@ -59,7 +61,7 @@ describe("Anna - Soothing Sister (Enchanted)", () => {
         PLAYER_ONE,
       );
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(annaSoothingSisterEnchanted, {
           resolveOptional: true,
           targets: [flynnId],
         }),
@@ -87,7 +89,9 @@ describe("Anna - Soothing Sister (Enchanted)", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(annaSoothingSisterEnchanted, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Only quest lore, no bonus

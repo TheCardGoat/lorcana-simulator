@@ -35,7 +35,7 @@ describe("Mirabel Madrigal - Prophecy Finder", () => {
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(bagEffect).toBeDefined();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(mirabelMadrigalProphecyFinder, {
         resolveOptional: true,
         targets: [supportTarget],
       }),
@@ -61,7 +61,7 @@ describe("Mirabel Madrigal - Prophecy Finder", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(mirabelMadrigalProphecyFinder, {
         resolveOptional: true,
         targets: [supportTarget],
       }),

@@ -45,7 +45,7 @@ describe("Julieta Madrigal - Excellent Cook [Set 009]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(julietaMadrigalExcellentCook, {
           resolveOptional: true,
           targets: [woundedAllyId],
         }),
@@ -71,7 +71,7 @@ describe("Julieta Madrigal - Excellent Cook [Set 009]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(julietaMadrigalExcellentCook, {
           resolveOptional: true,
           targets: [woundedAllyId],
         }),
@@ -82,7 +82,9 @@ describe("Julieta Madrigal - Excellent Cook [Set 009]", () => {
       if (remainingBags.length > 0) {
         const drawBagId = remainingBags[0]!.id;
         expect(
-          testEngine.asPlayerOne().resolveBag(drawBagId, { resolveOptional: true }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(julietaMadrigalExcellentCook, { resolveOptional: true }),
         ).toBeSuccessfulCommand();
       }
 
@@ -107,7 +109,9 @@ describe("Julieta Madrigal - Excellent Cook [Set 009]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(julietaMadrigalExcellentCook, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage unchanged
@@ -135,7 +139,7 @@ describe("Julieta Madrigal - Excellent Cook [Set 009]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(julietaMadrigalExcellentCook, {
           resolveOptional: true,
           targets: [woundedAllyId],
         }),

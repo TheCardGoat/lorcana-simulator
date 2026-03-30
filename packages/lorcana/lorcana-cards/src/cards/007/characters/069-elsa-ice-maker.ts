@@ -40,14 +40,41 @@ export const elsaIceMaker: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "any",
-            zones: ["play"],
-            cardTypes: ["character"],
-          },
-          type: "exert",
+          type: "sequence",
+          effects: [
+            {
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "any",
+                zones: ["play"],
+                cardTypes: ["character"],
+              },
+              type: "exert",
+            },
+            {
+              type: "conditional",
+              condition: {
+                type: "and",
+                conditions: [
+                  { type: "if-you-do" },
+                  { type: "has-named-character", name: "Anna", controller: "you" },
+                ],
+              },
+              ifTrue: {
+                type: "restriction",
+                restriction: "cant-ready",
+                duration: "their-next-turn",
+                target: {
+                  selector: "chosen",
+                  count: 1,
+                  owner: "any",
+                  zones: ["play"],
+                  cardTypes: ["character"],
+                },
+              },
+            },
+          ],
         },
         type: "optional",
       },

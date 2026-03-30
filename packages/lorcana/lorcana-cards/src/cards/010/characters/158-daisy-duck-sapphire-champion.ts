@@ -42,7 +42,7 @@ export const daisyDuckSapphireChampion: CharacterCard = {
         value: 1,
       },
       id: "107-1",
-      name: "STAND FAST Your other Sapphire",
+      name: "STAND FAST",
       text: "STAND FAST Your other Sapphire characters gain Resist +1.",
       type: "static",
     },

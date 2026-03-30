@@ -357,23 +357,7 @@ export interface StaticAbility {
    * Printed static abilities default to ["play"] when omitted.
    */
   sourceZones?: ("play" | "hand" | "discard" | "inkwell")[];
-
-  /**
-   * What this ability affects
-   * Helps with optimization - engine knows what to recalculate
-   */
-  affects?: StaticAffects;
 }
-
-/**
- * What a static ability affects (for optimization)
- */
-export type StaticAffects =
-  | { type: "self" }
-  | { type: "characters"; target: CharacterTarget }
-  | { type: "items" }
-  | { type: "locations" }
-  | { type: "all" };
 
 // ============================================================================
 // Action Abilities
@@ -737,7 +721,7 @@ export function activated(
  */
 export function staticAbility(
   effect: StaticEffect,
-  options?: { name?: string; condition?: Condition; affects?: StaticAffects },
+  options?: { name?: string; condition?: Condition },
 ): StaticAbility {
   return {
     effect,

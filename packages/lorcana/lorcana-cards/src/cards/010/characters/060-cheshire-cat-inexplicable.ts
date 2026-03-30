@@ -51,6 +51,7 @@ export const cheshireCatInexplicable: CharacterCard = {
         effect: {
           type: "move-damage",
           amount: 2,
+          upTo: true,
           from: {
             selector: "chosen",
             count: 1,

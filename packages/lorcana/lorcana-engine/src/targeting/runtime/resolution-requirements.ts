@@ -172,7 +172,7 @@ function analyzeAmountSelectionRequirement(
   analysis: MutableResolutionRequirementAnalysis,
   record: RecordLike,
 ): void {
-  if (record.type === "remove-damage" && record.upTo === true) {
+  if ((record.type === "remove-damage" || record.type === "move-damage") && record.upTo === true) {
     analysis.requiresAmountSelection = true;
   }
 }

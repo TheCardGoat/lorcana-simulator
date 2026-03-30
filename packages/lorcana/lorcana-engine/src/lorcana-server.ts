@@ -32,15 +32,21 @@ import type {
   LorcanaUndoCheckpointSnapshot,
 } from "./serialization";
 import { resolveServerCurrentActor } from "./automation/actor-resolution";
+import { createAutomatedActionRepeatedStateTracker } from "./automation/deadlock";
+import { computeAutomatedActionStateFingerprint } from "./automation/decision-trace";
 import {
   enumerateAutomatedActionsWithAdapter,
   takeAutomatedActionWithAdapter,
 } from "./automation/planner";
+import { buildAutomatedActionDeckPlanningMetadata } from "./automation/deck-profile";
+import { resolveAutomatedActionStrategyOption } from "./automation/strategy-registry";
 import type {
   AutomatedActionEnumerationOptions,
   AutomatedActionEnumerationResult,
   AutomatedActionExecutionOptions,
   AutomatedActionExecutionResult,
+  AutomatedActionTraceSink,
+  AutomatedActionStrategyOption,
 } from "./automation";
 import { lorcanaRuntimeConfig } from "./runtime-game";
 import { type LorcanaCardsMaps } from "./engine-initialization";
@@ -70,6 +76,7 @@ export type LorcanaEngineInit = {
 
 export class LorcanaServer extends LorcanaEngineBase {
   engine: ServerEngine;
+  #automatedActionBlockedStateTracker = createAutomatedActionRepeatedStateTracker();
 
   constructor(init: LorcanaEngineInit) {
     super(init);
@@ -113,6 +120,10 @@ export class LorcanaServer extends LorcanaEngineBase {
     return this.engine.getRuntime().getGameLog();
   }
 
+  getMoveLogHistory() {
+    return this.engine.getRuntime().getMoveLogHistory();
+  }
+
   canUndo(playerId: string): boolean {
     return this.engine.canUndo(playerId);
   }
@@ -122,8 +133,8 @@ export class LorcanaServer extends LorcanaEngineBase {
     return checkpoint
       ? ({
           ...checkpoint,
-          state: structuredClone(checkpoint.state) as LorcanaMatchState,
-          runtimeSnapshot: structuredClone(checkpoint.runtimeSnapshot),
+          state: checkpoint.state,
+          runtimeSnapshot: checkpoint.runtimeSnapshot,
         } satisfies LorcanaUndoCheckpointSnapshot)
       : undefined;
   }
@@ -135,12 +146,13 @@ export class LorcanaServer extends LorcanaEngineBase {
         ? {
             undoCheckpoint: {
               ...snapshot.undoCheckpoint,
-              state: structuredClone(snapshot.undoCheckpoint.state) as LorcanaMatchState,
-              runtimeSnapshot: structuredClone(snapshot.undoCheckpoint.runtimeSnapshot),
+              state: snapshot.undoCheckpoint.state,
+              runtimeSnapshot: snapshot.undoCheckpoint.runtimeSnapshot,
             },
           }
         : {}),
     });
+    this.#automatedActionBlockedStateTracker.clear();
   }
 
   override undo(playerId: string, prevStateID?: number): CommandResult {
@@ -161,16 +173,17 @@ export class LorcanaServer extends LorcanaEngineBase {
     return {
       success: true,
       stateID: this.getStateID(),
-      state: structuredClone(this.engine.getState()) as LorcanaMatchState,
+      state: this.engine.getState() as LorcanaMatchState,
       patches: [],
       gameEvents: runtime.getPublishedGameEvents().slice(previousGameEventCount),
-      logEntries: runtime.getGameLog().slice(previousLogCount),
+      logEntries: [],
       processedCommand: {
         commandID: `undo-${playerId}-${Date.now()}`,
         move: "undo",
       },
       animations: [],
       undoable: false,
+      moveLogs: runtime.getMoveLogHistory().slice(previousLogCount),
     };
   }
 
@@ -198,10 +211,10 @@ export class LorcanaServer extends LorcanaEngineBase {
     const commandResult: CommandResult = {
       success: true,
       stateID: this.getStateID(),
-      state: structuredClone(this.engine.getState()) as LorcanaMatchState,
+      state: this.engine.getState() as LorcanaMatchState,
       patches: [],
       gameEvents: runtime.getPublishedGameEvents().slice(previousGameEventCount),
-      logEntries: runtime.getGameLog().slice(previousLogCount),
+      logEntries: [],
       processedCommand: {
         ...commandEnvelope,
         commandID: `server-${ctx.playerId}-${moveId}-${Date.now()}`,
@@ -210,6 +223,7 @@ export class LorcanaServer extends LorcanaEngineBase {
       },
       animations: [],
       undoable: false,
+      moveLogs: runtime.getMoveLogHistory().slice(previousLogCount),
     };
 
     return commandResult;
@@ -244,6 +258,24 @@ export class LorcanaServer extends LorcanaEngineBase {
 
   protected loadStateViaEngine(state: LorcanaMatchState): void {
     this.engine.getRuntime().loadState(state);
+    this.#automatedActionBlockedStateTracker.clear();
+  }
+
+  public resolveAutomatedActionStrategyForPlayer(
+    strategyId: string,
+    playerId: PlayerId,
+  ): AutomatedActionStrategyOption | undefined {
+    const board = this.getAutomatedPlanningBoardForPlayer(playerId);
+    const { actorDeckProfile } = buildAutomatedActionDeckPlanningMetadata({
+      actorId: playerId,
+      board,
+      staticResources: this.getResolvedStaticResources(),
+    });
+
+    return resolveAutomatedActionStrategyOption({
+      actorColorPairId: actorDeckProfile?.colorPairId,
+      strategyId,
+    });
   }
 
   public enumerateAutomatedActionsForCurrentActor(
@@ -263,12 +295,8 @@ export class LorcanaServer extends LorcanaEngineBase {
         authoritativeHints: actorId
           ? {
               actorBoard: board,
-              bagItems: structuredClone(
-                state.G.triggeredAbilities.bag.items ?? [],
-              ) as BagEffectEntry[],
-              pendingEffects: structuredClone(
-                state.G.pendingEffects ?? [],
-              ) as PendingActionEffect[],
+              bagItems: state.G.triggeredAbilities.bag.items ?? ([] as BagEffectEntry[]),
+              pendingEffects: state.G.pendingEffects ?? ([] as PendingActionEffect[]),
               state,
             }
           : undefined,
@@ -281,6 +309,7 @@ export class LorcanaServer extends LorcanaEngineBase {
             },
           }),
         createErrorResult: (error, errorCode) => this.createErrorResult(error, errorCode),
+        createNoopResult: () => this.createNoopResult(),
         executeCandidate: (resolvedActorId, candidate) =>
           this.executeAutomatedActionCandidate(resolvedActorId, candidate),
         getDefinitionByInstanceId: (cardId) =>
@@ -303,25 +332,28 @@ export class LorcanaServer extends LorcanaEngineBase {
     options: AutomatedActionExecutionOptions = {},
   ): AutomatedActionExecutionResult {
     const state = this.getState();
+    const stateFingerprint = computeAutomatedActionStateFingerprint(state);
     const actorResolution = resolveServerCurrentActor({
       state,
       staticResources: this.getResolvedStaticResources(),
     });
     const actorId = actorResolution.actorId;
     const board = actorId ? this.getAutomatedPlanningBoardForPlayer(actorId) : this.getBoard();
+    let latestTrace: Parameters<AutomatedActionTraceSink["push"]>[0] | undefined;
+    const traceSink: AutomatedActionTraceSink = {
+      push(trace) {
+        latestTrace = trace;
+      },
+    };
 
-    return takeAutomatedActionWithAdapter(
+    let result = takeAutomatedActionWithAdapter(
       {
         actorId,
         authoritativeHints: actorId
           ? {
               actorBoard: board,
-              bagItems: structuredClone(
-                state.G.triggeredAbilities.bag.items ?? [],
-              ) as BagEffectEntry[],
-              pendingEffects: structuredClone(
-                state.G.pendingEffects ?? [],
-              ) as PendingActionEffect[],
+              bagItems: state.G.triggeredAbilities.bag.items ?? ([] as BagEffectEntry[]),
+              pendingEffects: state.G.pendingEffects ?? ([] as PendingActionEffect[]),
               state,
             }
           : undefined,
@@ -334,6 +366,7 @@ export class LorcanaServer extends LorcanaEngineBase {
             },
           }),
         createErrorResult: (error, errorCode) => this.createErrorResult(error, errorCode),
+        createNoopResult: () => this.createNoopResult(),
         executeCandidate: (resolvedActorId, candidate) =>
           this.executeAutomatedActionCandidate(resolvedActorId, candidate),
         getDefinitionByInstanceId: (cardId) =>
@@ -347,9 +380,54 @@ export class LorcanaServer extends LorcanaEngineBase {
         validateCandidate: (resolvedActorId, candidate) =>
           this.validateAutomatedActionCandidate(resolvedActorId, candidate),
       },
-      options,
+      {
+        ...options,
+        traceSink,
+      },
       [actorResolution],
     );
+
+    if (result.finalResult.success && result.blocked) {
+      const observation = this.#automatedActionBlockedStateTracker.observe({
+        actorId: result.actorId,
+        stateFingerprint,
+      });
+
+      if (observation.repeatedStateDeadlock && result.actorId) {
+        const concedeResult = this.executeMoveInputForPlayer("concede", result.actorId, {
+          args: {
+            playerId: result.actorId,
+          },
+        });
+
+        result = {
+          ...result,
+          fallbackTaken: "concede",
+          finalResult: concedeResult,
+        };
+      }
+    }
+
+    if (latestTrace) {
+      options.traceSink?.push({
+        ...latestTrace,
+        ...(result.blocked ? { blocked: result.blocked } : {}),
+        ...(result.fallbackTaken ? { fallbackTaken: result.fallbackTaken } : {}),
+        finalResult: result.finalResult.success
+          ? {
+              stateId: result.finalResult.stateID,
+              success: true,
+            }
+          : {
+              error: result.finalResult.error,
+              errorCode: result.finalResult.errorCode,
+              stateId: result.finalResult.currentStateID,
+              success: false,
+            },
+      });
+    }
+
+    return result;
   }
 }
 

@@ -52,6 +52,7 @@ export const flynnRiderHisOwnBiggestFan: CharacterCard = {
         type: "modify-stat",
       },
       id: "11r-3",
+      name: "ONE LAST, BIG SCORE",
       text: "ONE LAST, BIG SCORE This character gets -1 {L} for each card in your opponents' hands.",
       type: "static",
     },

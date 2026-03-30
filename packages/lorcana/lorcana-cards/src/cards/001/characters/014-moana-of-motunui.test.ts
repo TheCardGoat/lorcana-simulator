@@ -45,7 +45,7 @@ describe("Moana - Of Motunui", () => {
 
       // Optional triggered ability - accept it
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(moanaOfMotunui, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Both princess allies should be readied
@@ -69,7 +69,7 @@ describe("Moana - Of Motunui", () => {
       expect(testEngine.asPlayerOne().quest(moanaOfMotunui)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(moanaOfMotunui, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Princess ally should be readied
@@ -91,7 +91,7 @@ describe("Moana - Of Motunui", () => {
       expect(testEngine.asPlayerOne().quest(moanaOfMotunui)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(moanaOfMotunui, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Princess ally should be readied
@@ -115,7 +115,7 @@ describe("Moana - Of Motunui", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(moanaOfMotunui, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Princess ally should remain exerted

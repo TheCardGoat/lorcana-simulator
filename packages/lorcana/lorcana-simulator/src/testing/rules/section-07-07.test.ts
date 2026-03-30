@@ -86,7 +86,9 @@ describe("#### 7. ZONES", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(bagEffect!.sourceId),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne().getCard(minnieMouseStoryteller).lore).toBe(
         minnieMouseStoryteller.lore + 1,

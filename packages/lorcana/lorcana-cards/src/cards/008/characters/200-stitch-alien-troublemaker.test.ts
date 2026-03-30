@@ -49,7 +49,7 @@ describe("Stitch - Alien Troublemaker", () => {
 
     // Accept the optional: draw a card and gain 1 lore
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(stitchAlienTroublemaker, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();
@@ -79,7 +79,7 @@ describe("Stitch - Alien Troublemaker", () => {
 
     // Decline the optional
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(stitchAlienTroublemaker, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

@@ -47,6 +47,7 @@ export const helgaSinclairToughAsNails: CharacterCard = {
         type: "gain-keyword",
       },
       id: "1ld-2",
+      name: "QUICK REFLEXES",
       text: "QUICK REFLEXES During your turn, this character gains Evasive.",
       type: "static",
     },

@@ -41,6 +41,7 @@ export const adorabeezleWinterpopIceRocketRacer: CharacterCard = {
         type: "modify-stat",
       },
       id: "zbp-1",
+      name: "KEEP DRIVING",
       text: "KEEP DRIVING While this character has damage, she gets +1 {L}.",
       type: "static",
     },

@@ -28,9 +28,7 @@ describe("Casa Madrigal - Casita", () => {
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(casaMadrigalCasita).success).toBe(true);
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
   });
 

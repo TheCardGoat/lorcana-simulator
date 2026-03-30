@@ -42,7 +42,9 @@ describe("Thaddeus E. Klang - Metallic Leader", () => {
       expect(testEngine.asPlayerOne().quest(thaddeusEKlangMetallicLeader).success).toBe(true);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(thaddeusEKlangMetallicLeader, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -90,7 +92,9 @@ describe("Thaddeus E. Klang - Metallic Leader", () => {
       expect(testEngine.asPlayerOne().quest(thaddeusEKlangMetallicLeader).success).toBe(true);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(thaddeusEKlangMetallicLeader, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardByInstance(targetCharacter).damage).toBe(0);

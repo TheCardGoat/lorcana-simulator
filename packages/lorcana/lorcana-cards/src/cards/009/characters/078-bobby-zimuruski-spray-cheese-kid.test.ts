@@ -25,7 +25,7 @@ describe("Bobby Zimuruski - Spray Cheese Kid", () => {
     expect(testEngine.asPlayerOne().playCard(bobbyZimuruskiSprayCheeseKid)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(bobbyZimuruskiSprayCheeseKid, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();

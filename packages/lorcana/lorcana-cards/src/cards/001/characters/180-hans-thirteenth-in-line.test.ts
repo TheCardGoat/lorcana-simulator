@@ -49,7 +49,7 @@ describe("Hans - Thirteenth in Line", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(hansThirteenthInLine, {
           resolveOptional: true,
           targets: [targetCharacter],
         }),
@@ -72,7 +72,7 @@ describe("Hans - Thirteenth in Line", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(hansThirteenthInLine, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -99,7 +99,7 @@ describe("Hans - Thirteenth in Line", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(hansThirteenthInLine, {
           resolveOptional: true,
           targets: [opponentCharacter],
         }),
@@ -119,7 +119,9 @@ describe("Hans - Thirteenth in Line", () => {
       expect(testEngine.asPlayerOne().quest(hansThirteenthInLine)).toBeSuccessfulCommand();
 
       // Resolve optional bag
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(hansThirteenthInLine, { resolveOptional: false });
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(hansThirteenthInLine.lore);
     });

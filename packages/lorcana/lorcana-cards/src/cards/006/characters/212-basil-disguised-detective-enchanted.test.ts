@@ -51,7 +51,9 @@ describe("Basil - Disguised Detective (Enchanted)", () => {
 
       // Accept the optional ability (pay 1 ink)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(basilDisguisedDetectiveEnchanted, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Player one targets the opponent's card, then opponent chooses
@@ -90,7 +92,9 @@ describe("Basil - Disguised Detective (Enchanted)", () => {
 
       // Decline
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(basilDisguisedDetectiveEnchanted, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Opponent's card stays in hand

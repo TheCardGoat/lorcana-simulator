@@ -61,7 +61,7 @@ describe("Bruno Madrigal - Singing Seer", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(brunoMadrigalSingingSeer, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();

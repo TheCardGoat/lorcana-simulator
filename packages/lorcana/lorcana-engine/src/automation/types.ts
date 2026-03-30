@@ -4,6 +4,7 @@ import type { DeepReadonly, CardInstanceId, CommandResult, PlayerId } from "#cor
 import type { ChallengePreviewResult, PlayCardCostInput } from "../lorcana-engine-base";
 import type {
   BagEffectEntry,
+  LorcanaCardDefinition,
   LorcanaMatchState,
   LorcanaProjectedBoardView,
   PendingActionEffect,
@@ -26,7 +27,6 @@ export interface AutomatedActionSearchCaps {
   targetCombinationsPerFamily: number;
   choiceIndices: number;
   singerCombinations: number;
-  pendingItems: number;
 }
 
 export const DEFAULT_AUTOMATED_ACTION_SEARCH_CAPS: AutomatedActionSearchCaps = {
@@ -34,7 +34,6 @@ export const DEFAULT_AUTOMATED_ACTION_SEARCH_CAPS: AutomatedActionSearchCaps = {
   targetCombinationsPerFamily: 16,
   choiceIndices: 8,
   singerCombinations: 16,
-  pendingItems: 8,
 };
 
 export const DEFAULT_AUTOMATED_ACTION_MAX_EXECUTION_FAILURES = 3;
@@ -68,6 +67,7 @@ export type AutomatedActionCandidate =
       bagId: string;
       choiceIndex?: number;
       destinations?: AutomatedActionDestinationSelection[];
+      namedCard?: string;
       resolveOptional?: boolean;
       targets?: AutomatedActionTargetId[];
     }
@@ -76,6 +76,7 @@ export type AutomatedActionCandidate =
       effectId: string;
       choiceIndex?: number;
       destinations?: AutomatedActionDestinationSelection[];
+      namedCard?: string;
       resolveOptional?: boolean;
       targets?: AutomatedActionTargetId[];
     }
@@ -163,28 +164,124 @@ export interface AutomatedActionDiagnosticSink {
 
 export interface AutomatedActionAuthoritativeHints {
   actorBoard: LorcanaProjectedBoardView;
-  bagItems: readonly BagEffectEntry[];
-  pendingEffects: readonly PendingActionEffect[];
+  bagItems: readonly DeepReadonly<BagEffectEntry>[];
+  pendingEffects: readonly DeepReadonly<PendingActionEffect>[];
   state: DeepReadonly<LorcanaMatchState>;
+}
+
+export type AutomatedActionTurnBucket = "opening" | "mid" | "late";
+
+export type StrategyInformationPolicy = "fair" | "oracle";
+
+export type AutomatedActionOpponentKnowledgeSource = "none" | "public-zones" | "full-deck";
+
+export type StrategyAxis = "mulligan" | "ink" | "play" | "challenge" | "target";
+
+export type AutomatedActionStrategyTag =
+  | "core"
+  | "engine"
+  | "silver-bullet"
+  | "situational"
+  | "expendable"
+  | "dead";
+
+export type AutomatedActionDeckRoleTag =
+  | "mulliganKeep"
+  | "inkAvoid"
+  | "earlyPlay"
+  | "latePlay"
+  | "mustAnswerThreat"
+  | "removal"
+  | "sweeper"
+  | "ramp"
+  | "drawEngine"
+  | "tempoThreat"
+  | "evasiveThreat"
+  | "synergyAnchor";
+
+export type AutomatedActionDeckArchetype = "aggressive" | "midrange" | "control";
+
+export interface AutomatedActionDeckCardProfile {
+  cardType: NonNullable<LorcanaCardDefinition["cardType"]>;
+  cost: number;
+  count: number;
+  definitionId: string;
+  fullName: string;
+  inkable: boolean;
+  inkTypes: readonly string[];
+  lore: number;
+  roles: readonly AutomatedActionDeckRoleTag[];
+}
+
+export interface AutomatedActionDeckCurveProfile {
+  high: number;
+  low: number;
+  mid: number;
+}
+
+export interface AutomatedActionDeckTypeProfile {
+  action: number;
+  character: number;
+  item: number;
+  location: number;
+}
+
+export interface AutomatedActionDeckProfile {
+  archetype: AutomatedActionDeckArchetype;
+  cards: readonly AutomatedActionDeckCardProfile[];
+  colorPairId: string;
+  colors: readonly string[];
+  curve: AutomatedActionDeckCurveProfile;
+  inkableCount: number;
+  playerId: PlayerId;
+  roleCounts: Readonly<Partial<Record<AutomatedActionDeckRoleTag, number>>>;
+  signature: string;
+  typeCounts: AutomatedActionDeckTypeProfile;
+  uninkableCount: number;
+}
+
+export interface AutomatedActionMatchupProfile {
+  actorArchetype: AutomatedActionDeckArchetype;
+  actorColorPairId: string;
+  opponentArchetype: AutomatedActionDeckArchetype;
+  opponentColorPairId: string;
+  pairId: string;
 }
 
 export interface AutomatedActionPlanningContext {
   actorId: PlayerId;
+  actorDeckProfile?: AutomatedActionDeckProfile;
   authoritativeHints?: AutomatedActionAuthoritativeHints;
   board: LorcanaProjectedBoardView;
+  deckProfilesByPlayer: Readonly<Partial<Record<PlayerId, AutomatedActionDeckProfile>>>;
   diagnostics: AutomatedActionDiagnosticSink;
   gameSegment?: string;
+  getCardDefinition(cardId: CardInstanceId): LorcanaCardDefinition | undefined;
+  getCardRoles(cardId: CardInstanceId): readonly AutomatedActionDeckRoleTag[];
+  getDefinitionRoles(definitionId: string): readonly AutomatedActionDeckRoleTag[];
+  informationPolicy: StrategyInformationPolicy;
   phase?: string;
+  matchupProfile?: AutomatedActionMatchupProfile;
+  opponentKnowledgeSource: AutomatedActionOpponentKnowledgeSource;
+  opponentDeckProfile?: AutomatedActionDeckProfile;
+  opponentId?: PlayerId;
+  resolveCandidateSourceCardId(candidate: AutomatedActionCandidate): CardInstanceId | undefined;
+  resolveCandidateSourceDefinitionId(candidate: AutomatedActionCandidate): string | undefined;
+  resolveCandidateSourceRoles(
+    candidate: AutomatedActionCandidate,
+  ): readonly AutomatedActionDeckRoleTag[];
   step?: string | null;
+  turnBucket: AutomatedActionTurnBucket;
   turnNumber: number;
 }
 
 export interface AutomatedActionStrategy {
+  informationPolicy?: StrategyInformationPolicy;
   name: string;
-  rankCandidates(
+  summarizeCandidates(
     context: AutomatedActionPlanningContext,
     candidates: readonly AutomatedActionCandidate[],
-  ): AutomatedActionCandidate[];
+  ): AutomatedActionCandidateSummary[];
 }
 
 export type AutomatedActionTraceHeuristicValue = boolean | number | string;
@@ -195,10 +292,26 @@ export interface AutomatedActionCandidateHeuristic {
   value: AutomatedActionTraceHeuristicValue;
 }
 
+export interface AutomatedActionCandidateContributor {
+  axis?: StrategyAxis;
+  key: string;
+  reason?: string;
+  ruleId?: string;
+  source: "opening" | "family" | "role" | "target" | "card-profile" | "card-rule" | "generic";
+  strategyTags?: readonly AutomatedActionStrategyTag[];
+  value: number;
+}
+
 export interface AutomatedActionCandidateSummary {
+  actorDeckSignature?: string;
   candidate: AutomatedActionCandidate;
+  contributors?: readonly AutomatedActionCandidateContributor[];
   family: AutomatedActionFamily;
   heuristics: readonly AutomatedActionCandidateHeuristic[];
+  informationPolicy?: StrategyInformationPolicy;
+  matchedRuleIds?: readonly string[];
+  opponentKnowledgeSource?: AutomatedActionOpponentKnowledgeSource;
+  sourceDefinitionId?: string;
   stableKey: string;
 }
 
@@ -229,13 +342,17 @@ export interface AutomatedActionDecisionTraceFinalResult {
 
 export interface AutomatedActionDecisionTrace {
   actorId?: PlayerId;
+  actorDeckSignature?: string;
   boardSnapshot: AutomatedActionBoardSnapshot;
+  blocked?: AutomatedActionBlockedState;
   diagnostics: AutomatedActionDiagnostic[];
   executionAttempts: AutomatedActionDecisionTraceExecutionAttempt[];
   fallbackTaken?: AutomatedActionFallback;
   finalResult?: AutomatedActionDecisionTraceFinalResult;
   gameSegment?: string;
+  informationPolicy?: StrategyInformationPolicy;
   kind: "enumeration" | "execution";
+  opponentKnowledgeSource?: AutomatedActionOpponentKnowledgeSource;
   orderedCandidates: AutomatedActionCandidateSummary[];
   phase?: string;
   selectedCandidate?: AutomatedActionCandidateSummary;
@@ -279,8 +396,15 @@ export interface AutomatedActionExecutionAttempt {
 
 export type AutomatedActionFallback = "passTurn" | "concede";
 
+export interface AutomatedActionBlockedState {
+  reason: "execution-failures" | "no-candidates";
+  passTurnError: string;
+  passTurnErrorCode: string;
+}
+
 export interface AutomatedActionExecutionResult {
   actorId?: PlayerId;
+  blocked?: AutomatedActionBlockedState;
   diagnostics: AutomatedActionDiagnostic[];
   executionAttempts: AutomatedActionExecutionAttempt[];
   fallbackTaken?: AutomatedActionFallback;
@@ -306,6 +430,7 @@ export type AutomatedActionResolutionShape = {
 export type AutomatedActionResolutionVariant = {
   choiceIndex?: number;
   destinations?: AutomatedActionDestinationSelection[];
+  namedCard?: string;
   resolveOptional?: boolean;
   targets?: AutomatedActionTargetId[];
 };

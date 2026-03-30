@@ -6,6 +6,7 @@
   import {createCardAnchorId, createZoneAnchorId} from "@/features/simulator/animations/board-move-animations.js";
   import {useLorcanaBoardPresenter} from "@/features/simulator/context/game-context.svelte.js";
   import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+  import ZoneCounter from "@/design-system/simulator/display/ZoneCounter.svelte";
 
   interface DiscardZoneProps {
     isOpponent: boolean;
@@ -25,18 +26,19 @@
 </script>
 
 <HoverCard.Root openDelay={300}>
-<HoverCard.Trigger class="block">
+<HoverCard.Trigger class="discard-zone-trigger">
 <button
   type="button"
   class={cn(
     "discard-zone",
-    "flex flex-col items-center gap-1 p-2 rounded-lg cursor-pointer transition-all duration-150",
+    "flex h-full w-full flex-col items-center justify-center gap-1 overflow-hidden rounded-lg p-2 transition-all duration-150",
     "border-2",
+    "cursor-pointer",
     isOpponent ? "bg-zone-opponent-bg border-zone-opponent-border" : "bg-zone-bg border-zone-border",
     !topCard && "bg-zone-bg/40 border-zone-border/50",
     topCard && "hover:-translate-y-0.5 hover:shadow-lg",
   )}
-  style="min-width: var(--zone-card-width, 50px); min-height: var(--zone-card-height, 70px);"
+  style="width: 100%; height: 100%; min-width: var(--zone-card-width, 50px); min-height: var(--zone-card-height, 70px);"
   data-player-seat={seat}
   data-zone-id="discard"
   data-board-anchor-id={createZoneAnchorId(playerSide, "discard")}
@@ -44,9 +46,11 @@
   onclick={onClick}
 >
   {#if topCard}
-      <span class="absolute z-20 text-xs font-extrabold text-slate-200 bg-black/60 px-2 py-[0.2rem] rounded-full min-w-6 text-center">
-        {cards.length || 0}
-      </span>
+    <ZoneCounter
+      count={cards.length || 0}
+      corner={seat === "bottom" ? "bottom-right" : "top-right"}
+      ariaLabel={`${cards.length || 0} cards in discard`}
+    />
     <div
       data-card-id={topCard.cardId}
       data-player-seat={seat}
@@ -65,13 +69,22 @@
 
 
   {:else}
-    <div class="w-full h-full flex items-center justify-center border-2 border-dashed border-sky-500/20">
+    <div
+      class={cn(
+        "flex h-full w-full items-center justify-center rounded-[inherit] border border-dashed",
+        "bg-[radial-gradient(circle_at_center,_rgba(56,189,248,0.12),_transparent_68%)]",
+        isOpponent
+          ? "border-sky-300/20 text-sky-100/45"
+          : "border-sky-400/30 text-sky-200/55",
+      )}
+    >
       <svg
-        class="w-5 h-5 text-sky-500/30"
+        class="h-6 w-6"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        stroke-width="2"
+        stroke-width="1.8"
+        aria-hidden="true"
       >
         <rect x="3" y="5" width="18" height="14" rx="2" />
         <path d="M3 10h18" />
@@ -102,9 +115,15 @@
 </HoverCard.Root>
 
 <style>
+  .discard-zone-trigger {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
   .discard-zone {
     position: relative;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
   }

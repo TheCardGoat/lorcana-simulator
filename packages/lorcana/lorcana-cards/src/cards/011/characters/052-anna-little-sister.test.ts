@@ -33,7 +33,7 @@ describe("Anna - Little Sister", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(annaLittleSister, {
           resolveOptional: true,
           targets: [discardId],
         }),
@@ -63,7 +63,7 @@ describe("Anna - Little Sister", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(annaLittleSister, {
           resolveOptional: true,
           targets: [opponentDiscardId],
         }),
@@ -85,7 +85,7 @@ describe("Anna - Little Sister", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(annaLittleSister, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

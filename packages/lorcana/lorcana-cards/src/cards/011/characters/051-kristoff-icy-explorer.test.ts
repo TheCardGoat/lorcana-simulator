@@ -63,7 +63,7 @@ describe("Kristoff - Icy Explorer", () => {
 
       // Accept the optional ability and target the discard card
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(kristoffIcyExplorer, {
           resolveOptional: true,
           targets: [discardId],
         }),
@@ -101,7 +101,7 @@ describe("Kristoff - Icy Explorer", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(kristoffIcyExplorer, {
           resolveOptional: true,
           targets: [opponentDiscardId],
         }),
@@ -133,7 +133,9 @@ describe("Kristoff - Icy Explorer", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kristoffIcyExplorer, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Card should still be in discard
@@ -162,7 +164,7 @@ describe("Kristoff - Icy Explorer", () => {
 
       // Resolve HIDDEN DEPTHS - move card from discard to deck
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(kristoffIcyExplorer, {
           resolveOptional: true,
           targets: [discardId],
         }),
@@ -295,9 +297,8 @@ describe("Kristoff - Icy Explorer", () => {
 
     // LOOK INTO YOUR PAST triggers - accept it to move a card from discard to inkwell
     expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
-    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(jiminyCricketGhostOfChristmasPast, {
         resolveOptional: true,
         targets: [discardFodder],
       }),

@@ -38,7 +38,7 @@ describe("Goofy - Set for Adventure", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(goofySetForAdventure),
     ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({
@@ -93,7 +93,9 @@ describe("Goofy - Set for Adventure", () => {
       .getBagEffects()
       .find((b) => (b.payload as { abilityId?: string })?.abilityId === "1yc-1");
     if (goofyBag) {
-      expect(testEngine.asPlayerOne().resolveBag(goofyBag.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(goofySetForAdventure),
+      ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({
           resolveOptional: true,

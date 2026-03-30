@@ -62,7 +62,9 @@ describe("Flynn Rider - Charming Rogue", () => {
 
       // Resolve the bag effect (owned by Flynn's controller, player two)
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
-      expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(flynnRiderCharmingRogue),
+      ).toBeSuccessfulCommand();
 
       // The challenging player (player one) must choose a card to discard
       expect(testEngine.asPlayerOne().respondWith(handCardId)).toBeSuccessfulCommand();
@@ -161,7 +163,9 @@ describe("Flynn Rider - Charming Rogue", () => {
       const p2BagCount = testEngine.asPlayerTwo().getBagCount();
       if (p2BagCount > 0) {
         const bagEffects = testEngine.asPlayerTwo().getBagEffects();
-        expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerTwo().resolvePendingByCard(flynnRiderCharmingRogue),
+        ).toBeSuccessfulCommand();
       }
 
       // Should resolve cleanly even with 0 cards

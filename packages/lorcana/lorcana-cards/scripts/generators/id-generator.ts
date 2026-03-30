@@ -37,6 +37,20 @@ function generateRandomShortId(): string {
   return result;
 }
 
+function generateUniqueShortId(usedIds: Set<string>, printingId: string): string {
+  const maxAttempts = 1000;
+  let shortId = generateRandomShortId();
+
+  for (let attempts = 0; usedIds.has(shortId); attempts += 1) {
+    if (attempts >= maxAttempts) {
+      throw new Error(`Too many collisions for printing: ${printingId}`);
+    }
+    shortId = generateRandomShortId();
+  }
+
+  return shortId;
+}
+
 /**
  * Assign one unique 3-char id per printing. Reuses existing card .id from
  * existingCanonicalCards when valid (exactly 3 chars) and not yet in usedIds;
@@ -66,16 +80,7 @@ export function assignPrintingIds(
     if (valid && !usedIds.has(existingId)) {
       shortId = existingId;
     } else {
-      let attempts = 0;
-      const maxAttempts = 1000;
-      shortId = generateRandomShortId();
-      while (usedIds.has(shortId)) {
-        shortId = generateRandomShortId();
-        attempts++;
-        if (attempts >= maxAttempts) {
-          throw new Error(`Too many collisions for printing: ${printingId}`);
-        }
-      }
+      shortId = generateUniqueShortId(usedIds, printingId);
     }
     usedIds.add(shortId);
     byPrintingId[printingId] = shortId;
@@ -197,16 +202,7 @@ export function extendWithPrintingIds(
       usedShortIds.add(canonicalShortId);
       continue;
     }
-    let shortId = generateRandomShortId();
-    let attempts = 0;
-    const maxAttempts = 1000;
-    while (usedShortIds.has(shortId)) {
-      shortId = generateRandomShortId();
-      attempts++;
-      if (attempts >= maxAttempts) {
-        throw new Error(`Too many collisions for printing: ${printingId}`);
-      }
-    }
+    const shortId = generateUniqueShortId(usedShortIds, printingId);
     usedShortIds.add(shortId);
     byPrintingId[printingId] = shortId;
   }

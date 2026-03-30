@@ -43,7 +43,11 @@ describe("Baloo - Carefree Bear (Enchanted)", () => {
       expect(testEngine.asPlayerOne().playCard(balooCarefreeBearEnchanted)).toBeSuccessfulCommand();
 
       // Choose mode 0: Each player draws a card
-      expect(testEngine.asPlayerOne().resolveNextBag({ choiceIndex: 0 })).toBeSuccessfulCommand();
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(balooCarefreeBearEnchanted, { choiceIndex: 0 }),
+      ).toBeSuccessfulCommand();
 
       // Player one: played 1 card from hand, drew 1 = 1 in hand, 9 in deck
       expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
@@ -76,7 +80,11 @@ describe("Baloo - Carefree Bear (Enchanted)", () => {
       expect(testEngine.asPlayerOne().playCard(balooCarefreeBearEnchanted)).toBeSuccessfulCommand();
 
       // Choose mode 1: Each player chooses and discards a card
-      expect(testEngine.asPlayerOne().resolveNextBag({ choiceIndex: 1 })).toBeSuccessfulCommand();
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(balooCarefreeBearEnchanted, { choiceIndex: 1 }),
+      ).toBeSuccessfulCommand();
 
       // Player one must choose a card to discard
       const handCardId = testEngine.findCardInstanceId(handCard, "hand", "p1");

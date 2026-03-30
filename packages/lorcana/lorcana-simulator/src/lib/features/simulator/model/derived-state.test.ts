@@ -8,6 +8,7 @@ import {
 
 import {
   buildExecutableMoves,
+  buildMoveCategorySummaries,
   expandCardActionCategoryMoves,
   expandCardMoves,
   expandCategoryMoves,
@@ -80,6 +81,28 @@ const cards = {
     label: "Target B",
     ownerId: "player_two",
     ownerSide: "playerTwo",
+    zoneId: "play",
+    cardType: "character",
+    facePresentation: "faceUp",
+  },
+  singerA: {
+    cardId: "singerA",
+    definitionId: "def-singerA",
+    isMasked: false,
+    label: "Singer A",
+    ownerId: "player_one",
+    ownerSide: "playerOne",
+    zoneId: "play",
+    cardType: "character",
+    facePresentation: "faceUp",
+  },
+  singerB: {
+    cardId: "singerB",
+    definitionId: "def-singerB",
+    isMasked: false,
+    label: "Singer B",
+    ownerId: "player_one",
+    ownerSide: "playerOne",
     zoneId: "play",
     cardType: "character",
     facePresentation: "faceUp",
@@ -160,6 +183,48 @@ describe("buildExecutableMoves", () => {
       },
       label: "Smash",
     });
+  });
+
+  it("builds a sing-together selection move from singCard options", () => {
+    const engine = createStubEngine({
+      moveOptions: {
+        smash: [
+          {
+            kind: "singTogether",
+            requiredTotal: 8,
+            singers: [
+              { cardId: toCardInstanceId("singerA"), value: 5 },
+              { cardId: toCardInstanceId("singerB"), value: 3 },
+            ],
+          },
+        ],
+      },
+    });
+
+    const entries = buildExecutableMoves(
+      engine,
+      cards,
+      [createAvailableMove("singCard", ["smash"])],
+      [],
+    );
+
+    expect(entries).toEqual([
+      expect.objectContaining({
+        id: "singCard:smash:singTogether",
+        moveId: "playCard",
+        params: { cardId: "smash", cost: "singTogether" },
+        presentation: expect.objectContaining({
+          categoryId: "sing-card",
+          optionLabel: "Sing Together",
+          selectionMode: "singTogether",
+          requiredValue: 8,
+          candidateCards: [
+            { cardId: "singerA", value: 5 },
+            { cardId: "singerB", value: 3 },
+          ],
+        }),
+      }),
+    ]);
   });
 
   it("expands bodyguard character play into ready and exerted variants", () => {
@@ -286,5 +351,30 @@ describe("buildExecutableMoves", () => {
       params: { attackerId: "smash", defenderId: "targetA" },
     });
     expect(callLog).toEqual(["challenge:smash"]);
+  });
+});
+
+describe("buildMoveCategorySummaries", () => {
+  it("includes quest-all when exactly one character can quest", () => {
+    const engine = createStubEngine({});
+
+    const summaries = buildMoveCategorySummaries(
+      engine,
+      [createAvailableMove("quest", ["singerA"]), createAvailableMove("questWithAll", [])],
+      [],
+    );
+
+    expect(summaries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          categoryId: "quest",
+          sourceCardIds: ["singerA"],
+        }),
+        expect.objectContaining({
+          categoryId: "quest-all",
+          isDirect: true,
+        }),
+      ]),
+    );
   });
 });

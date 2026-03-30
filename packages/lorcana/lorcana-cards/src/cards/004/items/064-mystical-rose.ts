@@ -63,6 +63,7 @@ export const mysticalRose: ItemCard = {
             then: {
               type: "move-damage",
               amount: 3,
+              upTo: true,
               from: {
                 selector: "chosen",
                 count: 1,

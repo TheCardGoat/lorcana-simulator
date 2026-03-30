@@ -61,7 +61,9 @@ describe("Prince Naveen - Ukulele Player", () => {
       // Resolve with the cheap song (cost 4, within ≤6 limit)
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [cheapSongId] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(princeNaveenUkulelePlayer, { targets: [cheapSongId] }),
       ).toBeSuccessfulCommand();
 
       // Song was played for free and goes to discard
@@ -85,7 +87,7 @@ describe("Prince Naveen - Ukulele Player", () => {
         const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
         const result = testEngine
           .asPlayerOne()
-          .resolveBag(bagEffect!.id, { targets: [expensiveSongId] });
+          .resolvePendingByCard(princeNaveenUkulelePlayer, { targets: [expensiveSongId] });
         // Either fails or auto-resolves with no valid target
         expect(testEngine.asPlayerOne().getCardZone(expensiveSong)).toBe("hand");
       } else {
@@ -106,7 +108,9 @@ describe("Prince Naveen - Ukulele Player", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(princeNaveenUkulelePlayer, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Song stays in hand (ability was skipped)
@@ -149,7 +153,9 @@ describe("Prince Naveen - Ukulele Player (Regressions)", () => {
     const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
 
     // Resolve the bag effect — the cant-play-actions restriction should prevent playing the song
-    testEngine.asPlayerTwo().resolveBag(bagEffect!.id, { targets: [cheapSongId] });
+    testEngine
+      .asPlayerTwo()
+      .resolvePendingByCard(princeNaveenUkulelePlayer, { targets: [cheapSongId] });
 
     // Song stays in hand because cant-play-actions blocks it
     expect(testEngine.asPlayerTwo().getCardZone(cheapSong)).toBe("hand");

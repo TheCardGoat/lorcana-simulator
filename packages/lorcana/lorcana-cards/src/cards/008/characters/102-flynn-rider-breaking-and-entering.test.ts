@@ -46,7 +46,9 @@ describe("Flynn Rider - Breaking and Entering", () => {
 
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       expect(bagEffects).toHaveLength(1);
-      expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(flynnRiderBreakingAndEntering),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().respondWithChoice(0)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().respondWith(discardCard)).toBeSuccessfulCommand();
 
@@ -73,7 +75,9 @@ describe("Flynn Rider - Breaking and Entering", () => {
 
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       expect(bagEffects).toHaveLength(1);
-      expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(flynnRiderBreakingAndEntering),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().respondWithChoice(1)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(discardCard)).toBe("hand");
@@ -98,7 +102,9 @@ describe("Flynn Rider - Breaking and Entering", () => {
 
       const bagEffects = testEngine.asPlayerTwo().getBagEffects();
       expect(bagEffects).toHaveLength(1);
-      expect(testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(flynnRiderBreakingAndEntering),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().respondWithChoice(1)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getLore(PLAYER_TWO)).toBe(2);

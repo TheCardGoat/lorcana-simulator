@@ -47,6 +47,7 @@ export const rapunzelSunshine: CharacterCard = {
         upTo: true,
       },
       id: "zai-1",
+      name: "MAGIC HAIR",
       text: "MAGIC HAIR {E} — Remove up to 2 damage from chosen character.",
       type: "activated",
     },

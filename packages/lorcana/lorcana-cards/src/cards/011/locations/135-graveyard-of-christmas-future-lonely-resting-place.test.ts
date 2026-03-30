@@ -75,7 +75,7 @@ describe("Graveyard of Christmas Future - Lonely Resting Place", () => {
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(graveyardOfChristmasFutureLonelyRestingPlace, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();
@@ -103,7 +103,7 @@ describe("Graveyard of Christmas Future - Lonely Resting Place", () => {
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(graveyardOfChristmasFutureLonelyRestingPlace, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

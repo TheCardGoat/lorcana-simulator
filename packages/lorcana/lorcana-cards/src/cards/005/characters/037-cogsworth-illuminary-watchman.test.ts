@@ -29,7 +29,7 @@ describe("Cogsworth - Illuminary Watchman", () => {
     }
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(cogsworthIlluminaryWatchman, {
         targets: [targetCharacter],
       }),
     ).toBeSuccessfulCommand();

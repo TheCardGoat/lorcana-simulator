@@ -7,9 +7,11 @@ import type {
 import { m } from "$lib/i18n/messages.js";
 import { useLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
 import LoreBadge from "@/design-system/simulator/display/LoreBadge.svelte";
+import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+import SimulatorSupportReminder from "@/features/simulator/support/SimulatorSupportReminder.svelte";
 import {
 	Settings,
-	CircleHelp,
+	Bug,
 	Trash2,
 	Layers,
 	Hand,
@@ -34,6 +36,8 @@ interface PlayerInfoProps {
 	onSettingsClick?: () => void;
 	showSupport?: boolean;
 	onSupportClick?: () => void;
+	supportReminderText?: string | null;
+	onDismissSupportReminder?: () => void;
 	/** Timer state for this player. Omit if untimed. */
 	timer?: LorcanaPlayerTimerSummary;
 	children?: Snippet;
@@ -55,6 +59,8 @@ let {
 	onSettingsClick,
 	showSupport = false,
 	onSupportClick,
+	supportReminderText = null,
+	onDismissSupportReminder,
 	timer,
 	children,
 }: PlayerInfoProps = $props();
@@ -80,6 +86,28 @@ const summaryInkwellCount = $derived(
 );
 const summaryAvailableInk = $derived(
 	boardSummary?.availableInk ?? availableInk,
+);
+const effectSourceCards = $derived.by(() => {
+	const sourceIds = boardSummary?.effectSourceCardIds ?? [];
+	const cardSnapshotsById = board?.cardSnapshotsById;
+	return sourceIds
+		.map((sourceId) => cardSnapshotsById?.[sourceId] ?? null)
+		.filter((card): card is NonNullable<typeof card> => card !== null);
+});
+const playerActiveEffects = $derived(boardSummary?.activeEffects ?? []);
+const playerEffectAriaLabel = $derived(
+  playerActiveEffects.length > 0
+    ? `Active player effects: ${playerActiveEffects.map((effect) => effect.label).join(", ")}`
+    : "",
+);
+const hasFallbackEffectLabel = $derived(
+  effectSourceCards.length === 0 && playerActiveEffects.length > 0,
+);
+const fallbackEffectLabel = $derived(playerActiveEffects[0]?.label ?? "");
+const hiddenFallbackEffectCount = $derived(Math.max(0, playerActiveEffects.length - 1));
+const visibleEffectSourceCards = $derived(effectSourceCards.slice(0, 3));
+const hiddenEffectSourceCount = $derived(
+	Math.max(0, effectSourceCards.length - visibleEffectSourceCards.length),
 );
 const hasRevealedInkwellCards = $derived(inkwellCards.length > 0);
 const displayInkwellCount = $derived(
@@ -136,6 +164,47 @@ function handleSupportClick() {
   <div class="player-header">
     <div class="lore-status">
       <LoreBadge value={displayLore} max={20} size="small" variant={isOpponent ? "losing" : "default"} />
+      {#if visibleEffectSourceCards.length > 0 || hasFallbackEffectLabel}
+        <div
+          class="player-effect-strip"
+          aria-label={playerEffectAriaLabel}
+        >
+          {#each visibleEffectSourceCards as effectCard, index (effectCard.cardId)}
+            <div
+              class="player-effect-card"
+              style={`--effect-card-offset:${index}`}
+              title={playerActiveEffects
+                .filter((effect) => effect.sourceCardId === effectCard.cardId)
+                .map((effect) => effect.description)
+                .join("; ") || effectCard.label}
+            >
+              <LorcanaCard
+                card={effectCard}
+                size="micro"
+                imageFormat="art_only"
+                isExerted={effectCard.readyState === "exerted"}
+                isMasked={effectCard.isMasked}
+              />
+            </div>
+          {/each}
+          {#if hiddenEffectSourceCount > 0}
+            <div
+              class="player-effect-overflow"
+              title={`${hiddenEffectSourceCount} additional active player effect source${hiddenEffectSourceCount === 1 ? "" : "s"}`}
+            >
+              +{hiddenEffectSourceCount}
+            </div>
+          {/if}
+          {#if hasFallbackEffectLabel}
+            <div class="player-effect-pill" title={playerActiveEffects.map((effect) => effect.description).join("; ")}>
+              <span>{fallbackEffectLabel}</span>
+              {#if hiddenFallbackEffectCount > 0}
+                <span class="player-effect-pill__count">+{hiddenFallbackEffectCount}</span>
+              {/if}
+            </div>
+          {/if}
+        </div>
+      {/if}
       <span
               class="status-indicator"
               class:status-indicator--active={isActive}
@@ -162,6 +231,14 @@ function handleSupportClick() {
 
     {#if showSettings || showSupport}
       <div class="player-quick-actions">
+        {#if supportReminderText && showSupport}
+          <SimulatorSupportReminder
+            surface="sidebar"
+            text={supportReminderText}
+            onOpen={handleSupportClick}
+            onDismiss={onDismissSupportReminder}
+          />
+        {/if}
         {#if showSupport}
           <button
             type="button"
@@ -169,7 +246,7 @@ function handleSupportClick() {
             aria-label={m["sim.player.support.openAria"]({})}
             onclick={handleSupportClick}
           >
-            <CircleHelp />
+            <Bug />
           </button>
         {/if}
         {#if showSettings}
@@ -288,9 +365,65 @@ function handleSupportClick() {
   .lore-status {
     position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.16rem;
     flex-shrink: 0;
+  }
+
+  .player-effect-strip {
+    display: flex;
+    align-items: center;
+    min-height: 1.35rem;
+  }
+
+  .player-effect-card {
+    position: relative;
+    width: 1.15rem;
+    height: 1.35rem;
+    margin-left: calc(var(--effect-card-offset) * -0.35rem);
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+  }
+
+  .player-effect-card :global(.lorcana-card) {
+    border-radius: 0.18rem;
+    overflow: hidden;
+  }
+
+  .player-effect-overflow {
+    margin-left: 0.2rem;
+    padding: 0.1rem 0.26rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.34);
+    background: rgba(15, 23, 42, 0.88);
+    color: #cbd5e1;
+    font-size: 0.58rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .player-effect-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.22rem;
+    margin-left: 0.28rem;
+    max-width: 6.8rem;
+    padding: 0.14rem 0.36rem;
+    border-radius: 999px;
+    border: 1px solid rgba(125, 211, 252, 0.3);
+    background: rgba(3, 105, 161, 0.22);
+    color: #e0f2fe;
+    font-size: 0.56rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .player-effect-pill__count {
+    color: rgba(191, 219, 254, 0.92);
   }
 
   .status-indicator {

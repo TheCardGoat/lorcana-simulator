@@ -37,7 +37,9 @@ describe("Scar - Heartless Hunter", () => {
 
     expect(testEngine.asPlayerOne().playCard(scarHeartlessHunter)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ targets: [ownCharId, opposingCharId] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(scarHeartlessHunter, { targets: [ownCharId, opposingCharId] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getDamage(ownCharacter)).toBe(2);
@@ -61,7 +63,9 @@ describe("Scar - Heartless Hunter", () => {
 
     expect(testEngine.asPlayerOne().playCard(scarHeartlessHunter)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ targets: [tianaId, opposingCharId] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(scarHeartlessHunter, { targets: [tianaId, opposingCharId] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getDamage(tianaCelebratingPrincess)).toBe(0);

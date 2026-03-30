@@ -21,7 +21,7 @@ describe("Tipo - Growing Son", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(tipoGrowingSon, {
         resolveOptional: true,
         targets: [detectiveId],
       }),
@@ -58,7 +58,7 @@ describe("Tipo - Growing Son", () => {
     // Accept the optional effect — the bag executes immediately and a pending effect
     // is created for the target selection (which card to put into inkwell).
     expect(
-      testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: true }),
+      testEngine.asPlayerOne().resolvePendingByCard(tipoGrowingSon, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     // Bag should be resolved; a pending effect is waiting for the target selection.
@@ -92,7 +92,7 @@ describe("Tipo - Growing Son", () => {
 
     // Decline the optional effect
     expect(
-      testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+      testEngine.asPlayerOne().resolvePendingByCard(tipoGrowingSon, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     // Bag should be empty - effect was declined

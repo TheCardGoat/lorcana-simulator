@@ -24,8 +24,8 @@ export const kuzcoWantedLlama: CharacterCard = {
   },
   text: [
     {
-      title: "OK, WHERE AM",
-      description: "I? When this character is banished, you may draw a card.",
+      title: "OK, WHERE AM I?",
+      description: "When this character is banished, you may draw a card.",
     },
   ],
   classifications: ["Storyborn", "King"],

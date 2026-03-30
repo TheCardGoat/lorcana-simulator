@@ -49,7 +49,7 @@ describe("Queen of Hearts - Quick-Tempered", () => {
 
       // Resolve the triggered ability with the damaged opponent as target
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(queenOfHeartsQuicktempered, {
           targets: [damagedOpponent],
         }),
       ).toBeSuccessfulCommand();
@@ -79,7 +79,7 @@ describe("Queen of Hearts - Quick-Tempered", () => {
 
       // Attempt to target an undamaged character — should fail
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(queenOfHeartsQuicktempered, {
           targets: [undamagedOpponent],
         }).success,
       ).toBe(false);
@@ -136,7 +136,7 @@ describe("Queen of Hearts - Quick-Tempered", () => {
 
       // Resolve targeting the opponent's damaged character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(queenOfHeartsQuicktempered, {
           targets: [damagedOpponent],
         }),
       ).toBeSuccessfulCommand();

@@ -61,6 +61,8 @@ export const nextStopOlympus: ActionCard = {
       },
     },
     {
+      name: "ACTION",
+      text: "Ready chosen character. They can't quest for the rest of this turn. The next time they challenge another character this turn, gain 1 lore.",
       type: "action",
       effect: {
         steps: [

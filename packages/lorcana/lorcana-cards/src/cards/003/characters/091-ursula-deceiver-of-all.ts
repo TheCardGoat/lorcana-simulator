@@ -24,9 +24,9 @@ export const ursulaDeceiverOfAll: CharacterCard = {
   },
   text: [
     {
-      title: "WHAT",
+      title: "WHAT A DEAL",
       description:
-        "A DEAL Whenever this character sings a song, you may play that song again from your discard for free, then put it on the bottom of your deck.",
+        "Whenever this character sings a song, you may play that song again from your discard for free, then put it on the bottom of your deck.",
     },
   ],
   classifications: ["Dreamborn", "Villain", "Sorcerer"],
@@ -66,6 +66,9 @@ export const ursulaDeceiverOfAll: CharacterCard = {
         on: "SELF",
         timing: "whenever",
       },
+      id: "vf1-1",
+      name: "WHAT A DEAL",
+      text: "WHAT A DEAL Whenever this character sings a song, you may play that song again from your discard for free, then put it on the bottom of your deck.",
       type: "triggered",
     },
   ],

@@ -1,5 +1,7 @@
 <script lang="ts">
 import type { Snippet } from "svelte";
+import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
+import ChevronUpIcon from "@lucide/svelte/icons/chevron-up";
 import type {
 	CardActionView,
 	LorcanaCardSnapshot,
@@ -43,7 +45,7 @@ let {
 }: CardHoverCardContentProps = $props();
 
 interface RenderableRulesEntry extends LorcanaCardTextEntrySnapshot {
-	kind: "keyword" | "ability";
+	kind: "keyword" | "ability" | "body";
 	textEntryIndex: number;
 }
 
@@ -226,6 +228,10 @@ const hasCharacterStats = $derived(
 			card.willpower !== undefined ||
 			card.loreValue !== undefined),
 );
+const hasLocationStats = $derived(
+	card.cardType === "location" &&
+		(card.willpower !== undefined || card.loreValue !== undefined),
+);
 const isSongCard = $derived(
   card.cardType === "action" && card.actionSubtype === "song",
 );
@@ -238,8 +244,12 @@ const textEntries = $derived(
 					return entries;
 				}
 
-				const kind = isKeywordTitle(title) ? "keyword" : "ability";
 				const description = entry.description?.trim();
+				const kind = isKeywordTitle(title)
+					? "keyword"
+					: !description && card.cardType === "action"
+						? "body"
+						: "ability";
 				entries.push({
 					title,
 					...(description ? { description } : {}),
@@ -344,7 +354,16 @@ const cardTextLines = $derived(
 				.filter((line) => line.text.length > 0)
 		: [],
 );
-const hasActions = $derived(enabledNonAbilityActions.length > 0);
+const hasActions = $derived(
+	enabledNonAbilityActions.length > 0 || disabledNonAbilityActions.length > 0,
+);
+const hasCollapsedActions = $derived(disabledNonAbilityActions.length > 0);
+const activeEffects = $derived(card.activeEffects ?? []);
+const collapsedActionLabel = $derived(
+	disabledNonAbilityActions.length === 1
+		? "1 unavailable action"
+		: `${disabledNonAbilityActions.length} unavailable actions`,
+);
 const resolvedLocationOccupants = $derived.by(() => {
 	if (card.cardType !== "location") {
 		return [];
@@ -370,6 +389,7 @@ const hasTextBoxContent = $derived(
 	hasStructuredText || Boolean(cardText),
 );
 const cardTags = $derived(getLorcanaCardTags(card));
+let inactiveActionsCollapsed = $state(true);
 
 function handleLocationOccupantEnter(occupant: LorcanaCardSnapshot): void {
 	simulatorCardContext?.setExternalPreviewCard(occupant);
@@ -397,7 +417,7 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
   <div class="name-banner">
     <div class="cost-icon-element">
       <img src={getInkableIconUrl(card.inkable)} alt="" class="ink-bg" />
-      <span class="cost-value">{card.cost ?? 0}</span>
+      <span class="cost-value">{card.playCost ?? card.cost ?? 0}</span>
     </div>
     <span class="card-name">
       {#if card.label.includes(" - ")}
@@ -452,6 +472,37 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
           <div class="stat-wrapper">
             <div class="stat-box stat-lore">
               <img src={getLoreIconUrl()} alt="lore" class="stat-icon" />
+              <span class="stat-value">{card.loreValue}</span>
+            </div>
+            {#if statModifierSources.get("lore")}
+              <span class="stat-modifier-source">Granted by {statModifierSources.get("lore")}</span>
+            {/if}
+          </div>
+        {/if}
+      </div>
+    </div>
+  {:else if hasLocationStats}
+    <div class="meta-row">
+      <div class="type-line type-line--compact">
+        <span class="card-type">{getTypeLineLabel(card)}</span>
+      </div>
+
+      <div class="stats-row stats-row--compact">
+        {#if card.willpower !== undefined}
+          <div class="stat-wrapper">
+            <div class="stat-box stat-willpower">
+              <img src={getStatSmallIconUrl("defense")} alt="Willpower" class="stat-icon" />
+              <span class="stat-value">{effectiveWillpower}</span>
+            </div>
+            {#if statModifierSources.get("willpower")}
+              <span class="stat-modifier-source">Granted by {statModifierSources.get("willpower")}</span>
+            {/if}
+          </div>
+        {/if}
+        {#if card.loreValue !== undefined}
+          <div class="stat-wrapper">
+            <div class="stat-box stat-lore">
+              <img src={getLoreIconUrl()} alt="Lore" class="stat-icon" />
               <span class="stat-value">{card.loreValue}</span>
             </div>
             {#if statModifierSources.get("lore")}
@@ -587,7 +638,7 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
               {/if}
             </button>
           {:else}
-            <p class="rules-entry rules-entry--{entry.kind}">
+            <p class:rules-entry={entry.kind !== "body"} class={`rules-entry--${entry.kind}`}>
               {#if entry.kind === "ability"}
                 <span class="ability-title">
                   {#each tokenizeTextWithSymbols(entry.title) as token, tokenIndex (`${token.type}-${token.value}-${tokenIndex}`)}
@@ -602,7 +653,7 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
                     {/if}
                   {/each}
                 </span>
-              {:else}
+              {:else if entry.kind === "keyword"}
                 <span class="keyword-title">
                   {#each tokenizeTextWithSymbols(entry.title) as token, tokenIndex (`${token.type}-${token.value}-${tokenIndex}`)}
                     {#if token.type === "symbol"}
@@ -610,6 +661,20 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
                         src={`${TEXT_SYMBOL_BASE_URL}/${token.value}`}
                         alt=""
                         class="inline-symbol inline-symbol--title"
+                      />
+                    {:else}
+                      {token.value}
+                    {/if}
+                  {/each}
+                </span>
+              {:else}
+                <span class="ability-text">
+                  {#each tokenizeTextWithSymbols(entry.title) as token, tokenIndex (`${token.type}-${token.value}-${tokenIndex}`)}
+                    {#if token.type === "symbol"}
+                      <img
+                        src={`${TEXT_SYMBOL_BASE_URL}/${token.value}`}
+                        alt=""
+                        class="inline-symbol inline-symbol--body"
                       />
                     {:else}
                       {token.value}
@@ -661,38 +726,116 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
     </div>
   {/if}
 
-  {#if hasActions}
-    <div class="action-chip-section" data-testid="card-hover-action-chip-section">
-      <div class="action-chip-row">
-        {#each enabledNonAbilityActions as action (action.id)}
-          {@const ActionIcon = getCardActionCategoryIcon(action.categoryId)}
-          <button
-            type="button"
-            class="action-chip"
-            onclick={() => onAction?.(action)}
-            aria-label={action.detail ? `${action.label}: ${action.detail}` : action.label}
-            title={action.detail ?? action.label}
-            data-testid={`card-hover-action-chip-${action.categoryId}`}
-          >
-            <span class="action-chip__icon-shell" data-action-icon={action.categoryId} aria-hidden="true">
-              <ActionIcon class="action-chip__icon" />
-            </span>
-            <span class="action-chip__content">
-              <span class="action-chip__label">{action.label}</span>
-              {#if action.detail}
-                <span class="action-chip__detail">{action.detail}</span>
-              {/if}
-            </span>
-          </button>
-        {/each}
-
-      </div>
-    </div>
-  {/if}
-
   {#if cardTags.length > 0}
     <div class="tag-section">
       <CardTagStrip tags={cardTags} />
+    </div>
+  {/if}
+
+  {#if activeEffects.length > 0}
+    <section class="active-effects-section" data-testid="card-hover-active-effects">
+      <div class="active-effects-header">
+        <span class="active-effects-title">Active effects</span>
+        <span class="active-effects-count">{activeEffects.length}</span>
+      </div>
+
+      <div class="active-effects-list">
+        {#each activeEffects as effect (effect.id)}
+          <article class="active-effect-entry">
+            <div class="active-effect-entry__topline">
+              <span class="active-effect-entry__label">{effect.label}</span>
+              {#if effect.sourceLabel}
+                <span class="active-effect-entry__source">{effect.sourceLabel}</span>
+              {/if}
+            </div>
+            <p class="active-effect-entry__description">{effect.description}</p>
+          </article>
+        {/each}
+      </div>
+    </section>
+  {/if}
+
+  {#if hasActions}
+    <div class="action-chip-section" data-testid="card-hover-action-chip-section">
+      {#if hasCollapsedActions}
+        <div class="action-collapse">
+          <button
+            type="button"
+            class="action-collapse__toggle"
+            aria-expanded={!inactiveActionsCollapsed}
+            aria-controls="card-hover-inactive-actions"
+            onclick={() => {
+              inactiveActionsCollapsed = !inactiveActionsCollapsed;
+            }}
+          >
+            <span class="action-collapse__copy">
+              <span class="action-collapse__label">Unavailable Actions</span>
+              <span class="action-collapse__count">{collapsedActionLabel}</span>
+            </span>
+            {#if inactiveActionsCollapsed}
+              <ChevronDownIcon class="action-collapse__chevron" aria-hidden="true" />
+            {:else}
+              <ChevronUpIcon class="action-collapse__chevron" aria-hidden="true" />
+            {/if}
+          </button>
+
+          {#if !inactiveActionsCollapsed}
+            <div
+              id="card-hover-inactive-actions"
+              class="action-chip-row action-chip-row--collapsed action-chip-row--disabled"
+              data-testid="card-hover-inactive-actions"
+            >
+              {#each disabledNonAbilityActions as action (action.id)}
+                {@const ActionIcon = getCardActionCategoryIcon(action.categoryId)}
+                <button
+                  type="button"
+                  class="action-chip action-chip--disabled action-chip--compact"
+                  disabled
+                  aria-label={action.reason ? `${action.label}: ${action.reason}` : action.label}
+                  title={action.reason ?? action.label}
+                  data-testid={`card-hover-action-chip-${action.categoryId}-disabled`}
+                >
+                  <span class="action-chip__icon-shell" data-action-icon={action.categoryId} aria-hidden="true">
+                    <ActionIcon class="action-chip__icon" />
+                  </span>
+                  <span class="action-chip__content">
+                    <span class="action-chip__label">{action.label}</span>
+                    {#if action.reason}
+                      <span class="action-chip__detail">{action.reason}</span>
+                    {/if}
+                  </span>
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/if}
+
+      {#if enabledNonAbilityActions.length > 0}
+        <div class="action-chip-row">
+          {#each enabledNonAbilityActions as action (action.id)}
+            {@const ActionIcon = getCardActionCategoryIcon(action.categoryId)}
+            <button
+              type="button"
+              class="action-chip"
+              onclick={() => onAction?.(action)}
+              aria-label={action.detail ? `${action.label}: ${action.detail}` : action.label}
+              title={action.detail ?? action.label}
+              data-testid={`card-hover-action-chip-${action.categoryId}`}
+            >
+              <span class="action-chip__icon-shell" data-action-icon={action.categoryId} aria-hidden="true">
+                <ActionIcon class="action-chip__icon" />
+              </span>
+              <span class="action-chip__content">
+                <span class="action-chip__label">{action.label}</span>
+                {#if action.detail}
+                  <span class="action-chip__detail">{action.detail}</span>
+                {/if}
+              </span>
+            </button>
+          {/each}
+        </div>
+      {/if}
     </div>
   {/if}
 </div>
@@ -743,6 +886,81 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 
+  .active-effects-section {
+    padding-top: 2px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .active-effects-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .active-effects-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(226, 232, 240, 0.9);
+  }
+
+  .active-effects-count {
+    display: inline-flex;
+    min-width: 1.4rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.6);
+    padding: 0.1rem 0.45rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: rgba(191, 219, 254, 0.9);
+  }
+
+  .active-effects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .active-effect-entry {
+    border-radius: 0.9rem;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.38) 0%, rgba(15, 23, 42, 0.38) 100%);
+    padding: 0.55rem 0.7rem;
+  }
+
+  .active-effect-entry__topline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.35rem 0.75rem;
+  }
+
+  .active-effect-entry__label {
+    font-size: 0.83rem;
+    font-weight: 700;
+    color: rgba(248, 250, 252, 0.96);
+  }
+
+  .active-effect-entry__source {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(var(--ink-rgb), 0.95);
+  }
+
+  .active-effect-entry__description {
+    margin: 0.2rem 0 0;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: rgba(203, 213, 225, 0.84);
+  }
+
   .action-chip-section {
     padding-top: 2px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -752,6 +970,77 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
     display: flex;
     flex-wrap: wrap;
     gap: 0.45rem;
+  }
+
+  .action-chip-row--collapsed {
+    margin-top: 0.4rem;
+  }
+
+  .action-chip-row--disabled {
+    gap: 0.35rem;
+  }
+
+  .action-collapse {
+    margin-bottom: 0.5rem;
+  }
+
+  .action-collapse__toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.48rem 0.7rem;
+    border-radius: 0.85rem;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background:
+      linear-gradient(180deg, rgba(30, 41, 59, 0.46) 0%, rgba(15, 23, 42, 0.46) 100%);
+    color: rgba(226, 232, 240, 0.84);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    transition:
+      border-color 140ms ease,
+      background 140ms ease,
+      transform 140ms ease;
+  }
+
+  .action-collapse__toggle:hover,
+  .action-collapse__toggle:focus-visible {
+    border-color: rgba(148, 163, 184, 0.24);
+    background:
+      linear-gradient(180deg, rgba(51, 65, 85, 0.56) 0%, rgba(15, 23, 42, 0.56) 100%);
+  }
+
+  .action-collapse__toggle:focus-visible {
+    outline: 2px solid rgba(var(--ink-rgb), 0.45);
+    outline-offset: 2px;
+  }
+
+  .action-collapse__copy {
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.45rem;
+  }
+
+  .action-collapse__label {
+    font-size: 0.69rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .action-collapse__count {
+    font-size: 0.68rem;
+    line-height: 1.15;
+    color: rgba(191, 219, 254, 0.72);
+  }
+
+  .action-collapse__chevron {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex-shrink: 0;
+    color: rgba(226, 232, 240, 0.68);
   }
 
   .context-banner {
@@ -1449,11 +1738,17 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
 
   .action-chip--disabled {
     cursor: not-allowed;
-    opacity: 0.78;
-    border-color: rgba(115, 124, 144, 0.28);
+    opacity: 0.72;
+    border-color: rgba(115, 124, 144, 0.18);
     background:
-      linear-gradient(180deg, rgba(92, 100, 118, 0.18) 0%, rgba(62, 67, 83, 0.12) 100%),
-      rgba(15, 22, 36, 0.72);
+      linear-gradient(180deg, rgba(92, 100, 118, 0.12) 0%, rgba(62, 67, 83, 0.08) 100%),
+      rgba(15, 22, 36, 0.58);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .action-chip--compact {
+    gap: 0.38rem;
+    padding: 0.28rem 0.5rem 0.28rem 0.34rem;
   }
 
   .action-chip__icon-shell {
@@ -1492,6 +1787,31 @@ function handleLocationOccupantLeave(occupant: LorcanaCardSnapshot): void {
     font-size: 0.66rem;
     line-height: 1.2;
     color: rgba(227, 237, 252, 0.78);
+  }
+
+  .action-chip--compact .action-chip__icon-shell {
+    width: 1.45rem;
+    height: 1.45rem;
+    background: rgba(8, 12, 22, 0.24);
+  }
+
+  .action-chip--compact .action-chip__icon {
+    width: 0.82rem;
+    height: 0.82rem;
+  }
+
+  .action-chip--compact .action-chip__content {
+    gap: 0.28rem;
+  }
+
+  .action-chip--compact .action-chip__label {
+    font-size: 0.71rem;
+    color: rgba(248, 251, 255, 0.86);
+  }
+
+  .action-chip--compact .action-chip__detail {
+    font-size: 0.61rem;
+    color: rgba(203, 213, 225, 0.7);
   }
 
   .ability-title {

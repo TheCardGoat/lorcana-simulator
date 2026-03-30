@@ -50,7 +50,7 @@
   "dependencies": {
     "@logtape/logtape": "^2.0.4",
     "@tcg/lorcana-types": "workspace:*",
-    "immer": "11.0.1",
+    "mutative": "^1.1.0",
     "nanoid": "^5.0.0",
     "seedrandom": "^3.0.5",
     "zod": "^4.3.5"

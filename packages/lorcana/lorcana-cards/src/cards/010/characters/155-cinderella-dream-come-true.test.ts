@@ -43,7 +43,7 @@ describe("Cinderella - Dream Come True", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(cinderellaDreamComeTrue, {
           resolveOptional: true,
           targets: [inkFodder],
         }),
@@ -164,7 +164,7 @@ describe("Cinderella - Dream Come True", () => {
     );
     expect(cinderellaBag).toBeDefined();
     expect(
-      testEngine.asPlayerOne().resolveBag(cinderellaBag!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(cinderellaDreamComeTrue, {
         resolveOptional: true,
         targets: [inkFodder],
       }),

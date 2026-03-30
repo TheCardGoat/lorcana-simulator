@@ -38,7 +38,7 @@ describe("Duckworth - Ghost Butler", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(duckworthGhostButler, {
           resolveOptional: true,
           targets: [megaraSecretKeeper],
         }),
@@ -89,7 +89,7 @@ describe("Duckworth - Ghost Butler", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(duckworthGhostButler, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

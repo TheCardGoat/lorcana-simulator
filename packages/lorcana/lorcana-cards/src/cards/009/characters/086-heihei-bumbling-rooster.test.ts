@@ -43,7 +43,9 @@ describe("Heihei - Bumbling Rooster (Set 9)", () => {
       expect(testEngine.asPlayerOne().playCard(heiheiBumblingRooster)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(heiheiBumblingRooster, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Inkwell should have one more card
@@ -70,7 +72,9 @@ describe("Heihei - Bumbling Rooster (Set 9)", () => {
       const inkwellBefore = testEngine.getCardInstanceIdsInZone("inkwell", "player_one");
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(heiheiBumblingRooster, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const inkwellAfter = testEngine.getCardInstanceIdsInZone("inkwell", "player_one");
@@ -102,7 +106,9 @@ describe("Heihei - Bumbling Rooster (Set 9)", () => {
 
       if (testEngine.asPlayerOne().getBagCount() > 0) {
         expect(
-          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(heiheiBumblingRooster, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 

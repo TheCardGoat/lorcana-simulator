@@ -24,8 +24,8 @@ export const theLibraryAGiftForBelle: LocationCard = {
   },
   text: [
     {
-      title: "LOST IN",
-      description: "A BOOK Whenever a character is banished while here, you may draw a card.",
+      title: "LOST IN A BOOK",
+      description: "Whenever a character is banished while here, you may draw a card.",
     },
   ],
   abilities: [

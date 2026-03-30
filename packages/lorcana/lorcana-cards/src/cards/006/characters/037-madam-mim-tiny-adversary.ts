@@ -50,7 +50,7 @@ export const madamMimTinyAdversary: CharacterCard = {
         value: 1,
       },
       id: "jgv-2",
-      name: "ZIM ZABBERIM ZIM Your other",
+      name: "ZIM ZABBERIM ZIM",
       text: "ZIM ZABBERIM ZIM Your other characters gain Challenger +1.",
       type: "static",
     },

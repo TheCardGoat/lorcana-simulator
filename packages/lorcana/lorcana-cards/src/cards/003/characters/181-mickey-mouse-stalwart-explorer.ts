@@ -23,8 +23,8 @@ export const mickeyMouseStalwartExplorer: CharacterCard = {
   },
   text: [
     {
-      title: "LET'S TAKE",
-      description: "A LOOK This character gets +1 {S} for each location you have in play.",
+      title: "LET'S TAKE A LOOK",
+      description: "This character gets +1 {S} for each location you have in play.",
     },
   ],
   classifications: ["Dreamborn", "Hero"],
@@ -42,6 +42,7 @@ export const mickeyMouseStalwartExplorer: CharacterCard = {
         type: "modify-stat",
       },
       id: "j8w-1",
+      name: "LET'S TAKE A LOOK",
       text: "LET'S TAKE A LOOK This character gets +1 {S} for each location you have in play.",
       type: "static",
     },

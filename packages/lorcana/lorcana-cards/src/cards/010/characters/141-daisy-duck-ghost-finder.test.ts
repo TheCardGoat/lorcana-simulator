@@ -39,7 +39,7 @@ describe("Daisy Duck - Ghost Finder", () => {
     expect(bagEffect).toBeDefined();
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(daisyDuckGhostFinder, {
         resolveOptional: true,
         targets: [supportTarget],
       }),

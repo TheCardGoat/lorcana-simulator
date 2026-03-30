@@ -49,7 +49,9 @@ describe("Donald Duck - Musketeer Soldier", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [allyCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(donaldDuckMusketeerSoldier, { targets: [allyCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardLore(allyCharacter)).toBe(initialLore + 1);
@@ -74,7 +76,9 @@ describe("Donald Duck - Musketeer Soldier", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [allyCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(donaldDuckMusketeerSoldier, { targets: [allyCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardLore(allyCharacter)).toBe(initialLore + 1);
@@ -98,7 +102,9 @@ describe("Donald Duck - Musketeer Soldier", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { targets: [donaldDuckMusketeerSoldier] }),
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckMusketeerSoldier, {
+          targets: [donaldDuckMusketeerSoldier],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardLore(donaldDuckMusketeerSoldier)).toBe(

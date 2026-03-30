@@ -25,7 +25,9 @@ describe("Elsa - Exploring the Unknown (Epic)", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(elsaExploringTheUnknownEpic),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, deck: 0 });
@@ -47,7 +49,9 @@ describe("Elsa - Exploring the Unknown (Epic)", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(elsaExploringTheUnknownEpic, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");

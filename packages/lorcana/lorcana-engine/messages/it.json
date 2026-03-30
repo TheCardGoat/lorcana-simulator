@@ -34,5 +34,21 @@
   "lorcana.effect.resolve.scrySelection.detail": "Ha finito di ordinare le carte per {sourceCardId}: {selection}.",
   "lorcana.effect.resolve.revealTopCard": "{playerId} ha rivelato {revealedCardId} dal mazzo di {targetPlayerId}.",
   "lorcana.effect.resolve.revealTopCard.autoBottom": "Rivelato {revealedCardId} — messo in fondo al mazzo di {targetPlayerId}.",
-  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} ha scelto l'opzione {choiceIndex} per {revealedCardId}."
+  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} ha scelto l'opzione {choiceIndex} per {revealedCardId}.",
+  "lorcana.bag.resolve.cancelled": "Effetto di {sourceId} annullato ({cause}).",
+  "lorcana.bag.resolve.cancelled.named": "{abilityName} di {sourceId} annullato ({cause}).",
+  "lorcana.effect.cancelled": "Effetto di {sourceCardId} annullato ({cause}).",
+  "lorcana.outcome.combatDamage": "{attackerId} ha inflitto {attackerDamage} danni a {defenderId}. {defenderId} ha inflitto {defenderDamage} danni a {attackerId}.",
+  "lorcana.outcome.effectDamage": "{sourceId} ha inflitto {amount} danni a {targetId}.",
+  "lorcana.outcome.cardBanished": "{cardId} e stato bandito.",
+  "lorcana.outcome.cardsDrawn": "Ha pescato {amount} carta/e.",
+  "lorcana.outcome.cardsDrawn.detail": "Ha pescato {amount} carta/e: {cardIds}.",
+  "lorcana.outcome.cardReturnedToHand": "{cardId} e tornato in mano.",
+  "lorcana.outcome.loreGained": "{playerId} ha guadagnato {amount} lore.",
+  "lorcana.outcome.loreLost": "{playerId} ha perso {amount} lore.",
+  "lorcana.outcome.cardExerted": "{cardId} e stato girato.",
+  "lorcana.outcome.cardReadied": "{cardId} e stato raddrizzato.",
+  "lorcana.outcome.cardsMilled": "Ha scartato {amount} carta/e dal mazzo.",
+  "lorcana.move.playCard.shift": "Ha giocato {cardId} trasformando su {shiftTargetId}.",
+  "lorcana.move.playCard.sing": "Ha giocato {cardId} cantando con {singerIds}."
 }

@@ -1,7 +1,9 @@
 import {
   type AcceptedMoveRecord,
-  getAutomatedActionStrategyOption,
   computeAutomatedActionStateFingerprint,
+  createPlayerId,
+  getAutomatedActionStrategyOption,
+  getSafeAutomatedActionStrategyOption,
   type AutomatedActionExecutionResult,
   type AutomatedActionStrategyOption,
   type AutomatedActionTraceSink,
@@ -38,6 +40,9 @@ import type {
 } from "./types.js";
 
 const DEFAULT_AUTOMATED_MATCH_SPEED_MS = 800;
+const PLAYER_ONE_ID = createPlayerId("player_one");
+const PLAYER_TWO_ID = createPlayerId("player_two");
+
 export interface AutomatedMatchPlaybackServer {
   concede(playerId: PlayerId): { error?: string; success: boolean };
   enumerateAutomatedActionsForCurrentActor(args?: {
@@ -49,10 +54,15 @@ export interface AutomatedMatchPlaybackServer {
   getGameLog(): GameLogEntry[];
   getGameSegment(): string | undefined;
   getMoveHistory(limit?: number): EngineMoveHistoryEntry[];
+  getMoveLogHistory(): import("@tcg/lorcana-engine").MoveLog[];
   getState(): DeepReadonly<LorcanaMatchState>;
   getStateID(): number;
   getTurnNumber(): number;
   getWinner(): PlayerId | undefined;
+  resolveAutomatedActionStrategyForPlayer(
+    strategyId: string,
+    playerId: PlayerId,
+  ): AutomatedActionStrategyOption | undefined;
   takeAutomatedActionForCurrentActor(args: {
     strategy: AutomatedActionStrategyOption["strategy"];
     traceSink?: AutomatedActionTraceSink;
@@ -171,33 +181,7 @@ function normalizePersistedMoveParams(
   return args as SimulatorSerializedObject;
 }
 
-function getDefaultMessageKey(
-  defaultMessage?: EngineLogRecord["defaultMessage"],
-): string | undefined {
-  if (!defaultMessage || typeof defaultMessage !== "object" || !("key" in defaultMessage)) {
-    return undefined;
-  }
-
-  return typeof defaultMessage.key === "string" ? defaultMessage.key : undefined;
-}
-
-function getDefaultMessageMoveId(
-  defaultMessage?: EngineLogRecord["defaultMessage"],
-): string | undefined {
-  if (
-    !defaultMessage ||
-    typeof defaultMessage !== "object" ||
-    !("values" in defaultMessage) ||
-    !defaultMessage.values ||
-    typeof defaultMessage.values !== "object" ||
-    Array.isArray(defaultMessage.values)
-  ) {
-    return undefined;
-  }
-
-  const move = (defaultMessage.values as Record<string, unknown>).move;
-  return typeof move === "string" ? move : undefined;
-}
+// Legacy helpers removed — EngineLogRecord now uses .log: MoveLog directly
 
 export function createPersistedMoveLogEntries(args: {
   acceptedMoves: AcceptedMoveRecord[];
@@ -205,30 +189,17 @@ export function createPersistedMoveLogEntries(args: {
   resolveActorSide?: (actorId: string) => LorcanaPlayerSide | undefined;
 }): MoveLogEntrySnapshot[] {
   const { acceptedMoves, engineLogs, resolveActorSide } = args;
-  const moveExecutedLogs = engineLogs.filter(
-    (record) => getDefaultMessageKey(record.defaultMessage) === "move.executed",
-  );
-  let moveExecutedCursor = 0;
 
   return acceptedMoves.flatMap((acceptedMove, index) => {
     if (!isLorcanaSimulatorMoveId(acceptedMove.moveId)) {
       return [];
     }
 
-    let matchingMoveLog = moveExecutedLogs
-      .slice(moveExecutedCursor)
-      .find((record) => getDefaultMessageMoveId(record.defaultMessage) === acceptedMove.moveId);
-
-    if (!matchingMoveLog && moveExecutedCursor < moveExecutedLogs.length) {
-      matchingMoveLog = moveExecutedLogs[moveExecutedCursor];
-    }
-
-    if (matchingMoveLog) {
-      const matchingIndex = moveExecutedLogs.findIndex(
-        (record) => record.seq === matchingMoveLog?.seq,
-      );
-      moveExecutedCursor = matchingIndex >= 0 ? matchingIndex + 1 : moveExecutedCursor + 1;
-    }
+    // Each EngineLogRecord now contains a single MoveLog.
+    // Correlate by stateVersion.
+    const matchingLog = engineLogs.find(
+      (record) => record.stateVersion === acceptedMove.stateVersion,
+    );
 
     const entry: MoveLogEntrySnapshot = {
       actorSide: resolveActorSide?.(acceptedMove.actorId),
@@ -239,6 +210,7 @@ export function createPersistedMoveLogEntries(args: {
       timestamp: acceptedMove.timestamp,
       title: "",
       turnNumber: acceptedMove.turnNumber,
+      typedLogEntry: matchingLog?.log as MoveLogEntrySnapshot["typedLogEntry"],
     };
 
     const presentation = formatEventLogBody(entry);
@@ -333,7 +305,9 @@ export class AutomatedMatchPlaybackController<
   ) => AutomatedMatchPlaybackSession<TEngine, TReadModel>;
   #listeners = new Set<() => void>();
   #playbackState: AutomatedMatchPlaybackState;
+  #playerOneRequestedStrategyId: string;
   #playerOneStrategyOption: AutomatedActionStrategyOption;
+  #playerTwoRequestedStrategyId: string;
   #playerTwoStrategyOption: AutomatedActionStrategyOption;
   #repeatTracker = createRepeatedStateDeadlockTracker();
   #session: AutomatedMatchPlaybackSession<TEngine, TReadModel>;
@@ -345,22 +319,17 @@ export class AutomatedMatchPlaybackController<
     config: AutomatedMatchConfig,
     dependencies: AutomatedMatchPlaybackControllerDependencies<TEngine, TReadModel> = {},
   ) {
-    const playerOneStrategyOption = getAutomatedActionStrategyOption(config.playerOneStrategyId);
-    if (!playerOneStrategyOption) {
-      throw new Error(
-        `Unknown automated match player one strategy "${config.playerOneStrategyId}".`,
-      );
-    }
-
-    const playerTwoStrategyOption = getAutomatedActionStrategyOption(config.playerTwoStrategyId);
-    if (!playerTwoStrategyOption) {
-      throw new Error(
-        `Unknown automated match player two strategy "${config.playerTwoStrategyId}".`,
-      );
-    }
+    const playerOneStrategyOption = getSafeAutomatedActionStrategyOption(
+      config.playerOneStrategyId,
+    );
+    const playerTwoStrategyOption = getSafeAutomatedActionStrategyOption(
+      config.playerTwoStrategyId,
+    );
 
     this.#config = config;
+    this.#playerOneRequestedStrategyId = config.playerOneStrategyId;
     this.#playerOneStrategyOption = playerOneStrategyOption;
+    this.#playerTwoRequestedStrategyId = config.playerTwoStrategyId;
     this.#playerTwoStrategyOption = playerTwoStrategyOption;
     this.#createSession =
       dependencies.createSession ??
@@ -374,6 +343,7 @@ export class AutomatedMatchPlaybackController<
       speedMs: DEFAULT_AUTOMATED_MATCH_SPEED_MS,
     };
     this.#session = this.#createSession(this.#config);
+    this.#refreshResolvedStrategyOptions();
     this.#syncTerminalState();
   }
 
@@ -447,6 +417,7 @@ export class AutomatedMatchPlaybackController<
     this.#clearTimer();
     this.#session.dispose();
     this.#session = this.#createSession(this.#config);
+    this.#refreshResolvedStrategyOptions();
     this.#sessionRevision += 1;
     this.#repeatTracker = createRepeatedStateDeadlockTracker();
     this.#actionCount = 0;
@@ -484,6 +455,10 @@ export class AutomatedMatchPlaybackController<
     };
   }
 
+  getResolvedStrategyOption(playerId: PlayerId): AutomatedActionStrategyOption | undefined {
+    return this.#resolveStrategyOptionForActor(playerId);
+  }
+
   #resolveStrategyOptionForActor(
     actorId: PlayerId | undefined,
   ): AutomatedActionStrategyOption | undefined {
@@ -496,6 +471,19 @@ export class AutomatedMatchPlaybackController<
     }
 
     return undefined;
+  }
+
+  #refreshResolvedStrategyOptions(): void {
+    this.#playerOneStrategyOption =
+      this.#session.server.resolveAutomatedActionStrategyForPlayer(
+        this.#playerOneRequestedStrategyId,
+        PLAYER_ONE_ID,
+      ) ?? this.#playerOneStrategyOption;
+    this.#playerTwoStrategyOption =
+      this.#session.server.resolveAutomatedActionStrategyForPlayer(
+        this.#playerTwoRequestedStrategyId,
+        PLAYER_TWO_ID,
+      ) ?? this.#playerTwoStrategyOption;
   }
 
   #clearTimer(): void {
@@ -561,6 +549,19 @@ export class AutomatedMatchPlaybackController<
         mode: "error",
         speedMs: this.#playbackState.speedMs,
       });
+      return result;
+    }
+
+    if (result.fallbackTaken === "concede" || this.#session.server.getWinner()) {
+      const nextWinner = this.#session.server.getWinner();
+      this.#setPlaybackState({
+        error: undefined,
+        lastResult: result,
+        lastTrace: latestTrace,
+        mode: nextWinner ? "complete" : this.#playbackState.mode,
+        speedMs: this.#playbackState.speedMs,
+      });
+      this.#syncTerminalState();
       return result;
     }
 

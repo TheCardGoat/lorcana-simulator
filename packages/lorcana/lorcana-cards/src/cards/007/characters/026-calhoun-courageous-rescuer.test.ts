@@ -45,7 +45,7 @@ describe("Calhoun - Courageous Rescuer", () => {
     // Triggered ability should create a bag entry
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(calhounCourageousRescuer, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();
@@ -81,7 +81,7 @@ describe("Calhoun - Courageous Rescuer", () => {
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(calhounCourageousRescuer, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();

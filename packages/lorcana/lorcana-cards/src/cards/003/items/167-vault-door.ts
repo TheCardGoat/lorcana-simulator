@@ -56,6 +56,7 @@ export const vaultDoor: ItemCard = {
         value: 1,
       },
       id: "1nn-2",
+      name: "SEALED AWAY",
       text: "SEALED AWAY Your characters at locations gain Resist +1.",
       type: "static",
     },

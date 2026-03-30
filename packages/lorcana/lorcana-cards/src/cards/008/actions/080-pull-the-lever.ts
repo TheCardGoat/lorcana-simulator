@@ -25,6 +25,7 @@ export const pullTheLever: ActionCard = {
       text: "Choose one:\n- Draw 2 cards.\n- Each opponent chooses and discards a card.",
       effect: {
         type: "choice",
+        optionLabels: ["Draw 2 cards.", "Each opponent chooses and discards a card."],
         options: [
           {
             type: "draw",

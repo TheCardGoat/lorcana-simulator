@@ -106,6 +106,7 @@ export type {
   TemporaryGrantedAbilityPayload,
   TemporaryRestrictionPayload,
   TemporaryKeywordPayload,
+  TemporaryPlayerRestrictionPayload,
   TemporaryPlayerRestrictionsState,
   TurnMetadata,
 } from "./runtime-state";
@@ -220,11 +221,40 @@ export {
   LORCANA_LOG_TRANSLATION_VALUE_KEYS,
 } from "./log-messages";
 
+// MOVE LOG (new unified type system)
+export type {
+  MoveLog,
+  MoveLogType,
+  MoveLogBase,
+  MoveOutcomes,
+  DamageEntry,
+  PlayCardLog,
+  ShiftCardLog,
+  SingCardLog,
+  ChallengeLog,
+  QuestLog,
+  QuestWithAllLog,
+  InkCardLog,
+  ActivateAbilityLog,
+  MoveToLocationLog,
+  PassTurnLog,
+  ConcedeLog,
+  AlterHandLog,
+  ChooseFirstPlayerLog,
+  ResolveBagLog,
+  ResolveEffectLog,
+  EffectResolution,
+  BagResolution,
+  TurnStartLog,
+  GameEndLog,
+} from "./move-log";
+
 export type {
   AutomatedActionAmount,
   AutomatedActionAuthoritativeHints,
   AutomatedActionBoardSnapshot,
   AutomatedActionCandidate,
+  AutomatedActionCandidateContributor,
   AutomatedActionCandidateHeuristic,
   AutomatedActionCandidateSummary,
   AutomatedActionCostSelections,
@@ -241,14 +271,18 @@ export type {
   AutomatedActionExecutionResult,
   AutomatedActionFamily,
   AutomatedActionFallback,
+  AutomatedActionOpponentKnowledgeSource,
   AutomatedActionPlanningContext,
   AutomatedActionResolutionShape,
   AutomatedActionResolutionVariant,
   AutomatedActionSearchCaps,
   AutomatedActionStrategy,
+  AutomatedActionStrategyTag,
   AutomatedActionTargetId,
   AutomatedActionTraceHeuristicValue,
   AutomatedActionTraceSink,
+  StrategyAxis,
+  StrategyInformationPolicy,
 } from "../automation/types";
 
 export {

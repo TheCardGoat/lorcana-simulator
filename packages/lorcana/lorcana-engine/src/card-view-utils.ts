@@ -7,6 +7,7 @@ import type {
 } from "./types";
 import type { LorcanaCardDerived } from "./types/projected-board";
 import { projectLorcanaCardDerived } from "./projection/card-derived";
+import { buildRegistryFromMatchState } from "./runtime-moves/rules/move-registry-cache";
 
 /**
  * Build a runtime card view for a Lorcana card instance.
@@ -23,7 +24,7 @@ export function buildLorcanaRuntimeCardView(args: {
   zoneIndex?: number;
   getState: () => LorcanaMatchState;
   actorPlayerId?: string;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
 }): RuntimeCardWithDefinition {
   const {
     cardInstanceId,
@@ -42,6 +43,7 @@ export function buildLorcanaRuntimeCardView(args: {
   const meta: LorcanaCardMeta =
     (state.ctx?.zones?.private?.cardMeta?.[cardInstanceId] as LorcanaCardMeta) ?? {};
 
+  const registry = buildRegistryFromMatchState(state, getDefinitionByInstanceId);
   const projected = projectLorcanaCardDerived({
     definition,
     meta,
@@ -52,6 +54,7 @@ export function buildLorcanaRuntimeCardView(args: {
     zoneID,
     actorPlayerId: actorPlayerId as PlayerId | undefined,
     getDefinitionByInstanceId,
+    registry,
   });
 
   return {
@@ -60,6 +63,8 @@ export function buildLorcanaRuntimeCardView(args: {
     willpower: projected.willpower ?? 0,
     lore: projected.lore ?? 0,
     playCost: projected.playCost ?? 0,
+    shiftInkCost: projected.shiftInkCost,
+    shiftPlayCost: projected.shiftPlayCost,
     moveCost: projected.moveCost ?? 0,
     damage: projected.damage ?? 0,
     exerted: projected.exerted ?? false,

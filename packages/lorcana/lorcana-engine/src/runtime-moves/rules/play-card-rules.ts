@@ -9,6 +9,7 @@ import {
   getStaticPropertyModifierTotal,
   matchesStaticAbilityTarget,
 } from "./static-ability-utils";
+import type { StaticEffectRegistry } from "../../rules/static-effect-registry";
 
 const INKWELL_ZONE_PREFIX = "inkwell:";
 const SHIFT_LABEL_PATTERN = /\b(?:([A-Za-z][A-Za-z' -]+)\s+)?Shift\s+(\d+)\b/i;
@@ -477,8 +478,9 @@ export function getSingerThresholdForInstance(args: {
   singerDef: LorcanaCardDefinition | undefined;
   getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
   G?: { continuousEffects?: unknown };
+  registry?: StaticEffectRegistry;
 }): number | null {
-  const { framework, singerId, singerDef, getDefinitionByInstanceId, G } = args;
+  const { framework, singerId, singerDef, getDefinitionByInstanceId, G, registry } = args;
   const baseThreshold = getSingerThreshold(singerDef);
   if (baseThreshold == null) {
     return null;
@@ -556,6 +558,7 @@ export function getSingerThresholdForInstance(args: {
     cardId: singerId,
     property: "singer-threshold",
     getDefinitionByInstanceId,
+    registry,
   });
 
   const continuousModifier = G

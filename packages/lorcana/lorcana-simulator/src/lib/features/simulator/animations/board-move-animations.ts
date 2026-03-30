@@ -19,14 +19,20 @@ const DEBUG_BOARD_ANIMATIONS = false;
 
 export type BoardMoveAnimationVariant =
   | "banish"
+  | "draw"
   | "ink-faceDown"
   | "ink-faceUp"
   | "move-to-location"
   | "play-character"
+  | "play-character-shift"
   | "play-item"
   | "play-location"
   | "play-action"
+  | "play-action-sing"
   | "play-action-preview";
+
+export type BoardMoveAnimationPlayback = "parallel" | "serial";
+export type BoardMoveAnimationPhase = "cause" | "consequence";
 
 export type SimulatorDebugAnimationPlayer = "player_one" | "player_two";
 
@@ -72,9 +78,12 @@ export interface QueuedBoardMoveAnimation {
   destination: AnchorReference;
   destinationZoneId: LorcanaZoneId;
   durationMs: number;
+  groupId: string;
   id: string;
   impactAt: "destination" | "via";
   moveLogId: string;
+  phase: BoardMoveAnimationPhase;
+  playback: BoardMoveAnimationPlayback;
   renderFace: CardFacePresentation;
   source: AnchorReference;
   variant: BoardMoveAnimationVariant;
@@ -82,13 +91,17 @@ export interface QueuedBoardMoveAnimation {
 }
 
 export interface ResolvedBoardMoveAnimation {
+  actorSide: LorcanaPlayerSide;
   card: LorcanaCardSnapshot;
   destinationRect: BoardLocalRect;
   destinationZoneId: LorcanaZoneId;
   durationMs: number;
+  groupId: string;
   id: string;
   impactAt: "destination" | "via";
   impactRect: BoardLocalRect;
+  phase: BoardMoveAnimationPhase;
+  playback: BoardMoveAnimationPlayback;
   renderFace: CardFacePresentation;
   sourceRect: BoardLocalRect;
   variant: BoardMoveAnimationVariant;
@@ -103,14 +116,17 @@ type CardLocation = {
 
 export const VARIANT_DURATION_MS: Record<BoardMoveAnimationVariant, number> = {
   banish: 700,
-  "ink-faceDown": 1600,
-  "ink-faceUp": 1600,
+  draw: 650,
+  "ink-faceDown": 1000,
+  "ink-faceUp": 1000,
   "move-to-location": 800,
   "play-action": 2200,
   "play-action-preview": 2000,
-  "play-character": 2000,
-  "play-item": 1800,
-  "play-location": 1800,
+  "play-action-sing": 2400,
+  "play-character": 1250,
+  "play-character-shift": 1150,
+  "play-item": 1150,
+  "play-location": 1150,
 };
 
 export function getAnimationSpeedMultiplier(speed: "fast" | "normal" | "slow"): number {
@@ -133,7 +149,10 @@ type BoardMovePacketPayload = {
   actorSide: LorcanaPlayerSide;
   cardId: string;
   destinationZoneId: LorcanaZoneId;
+  groupId: string;
   impactAt: "destination" | "via";
+  phase: BoardMoveAnimationPhase;
+  playback: BoardMoveAnimationPlayback;
   renderFace: CardFacePresentation;
   sourceZoneId: LorcanaZoneId;
   variant: BoardMoveAnimationVariant;
@@ -154,6 +173,10 @@ export function createCardAnchorId(
 
 export function createSeatHandAnchorId(side: LorcanaPlayerSide): string {
   return `seat-hand:${side}`;
+}
+
+export function createInkwellEntryAnchorId(side: LorcanaPlayerSide): string {
+  return `inkwell-entry:${side}`;
 }
 
 export function measureBoardAnchorRect(
@@ -310,8 +333,11 @@ export function deriveQueuedBoardMoveAnimationsFromPacket(
       typeof payload.cardId !== "string" ||
       typeof payload.sourceZoneId !== "string" ||
       typeof payload.destinationZoneId !== "string" ||
+      typeof payload.groupId !== "string" ||
       typeof payload.variant !== "string" ||
       (payload.impactAt !== "destination" && payload.impactAt !== "via") ||
+      (payload.phase !== "cause" && payload.phase !== "consequence") ||
+      (payload.playback !== "parallel" && payload.playback !== "serial") ||
       (payload.renderFace !== "faceDown" && payload.renderFace !== "faceUp") ||
       (payload.actorSide !== "playerOne" && payload.actorSide !== "playerTwo")
     ) {
@@ -323,7 +349,6 @@ export function deriveQueuedBoardMoveAnimationsFromPacket(
       continue;
     }
 
-    const previousLocation = findCardLocation(previousSnapshot, payload.cardId, resolveCard);
     queued.push({
       actorSide: payload.actorSide,
       card: nextLocation.card,
@@ -336,11 +361,19 @@ export function deriveQueuedBoardMoveAnimationsFromPacket(
           : buildCardDestination(nextLocation),
       destinationZoneId: payload.destinationZoneId,
       durationMs: Math.round(VARIANT_DURATION_MS[payload.variant] * durationMultiplier),
+      groupId: payload.groupId,
       id: animation.id,
       impactAt: payload.impactAt,
       moveLogId: packet.processedCommand.commandID,
-      renderFace: payload.renderFace,
-      source: buildSourceAnchor(previousLocation, payload.actorSide),
+      phase: payload.phase,
+      playback: payload.playback,
+      renderFace:
+        payload.variant === "draw"
+          ? nextLocation.card.isMasked
+            ? "faceDown"
+            : "faceUp"
+          : payload.renderFace,
+      source: buildPacketSourceAnchor(payload.actorSide, payload.sourceZoneId, payload.cardId),
       variant: payload.variant,
       via: payload.viaAnchorId
         ? { primaryId: payload.viaAnchorId }
@@ -424,13 +457,17 @@ export function resolveQueuedBoardMoveAnimation(
   }
 
   return {
+    actorSide: animation.actorSide,
     card: animation.card,
     destinationRect: toLocalRect(destinationRect, boardRect),
     destinationZoneId: animation.destinationZoneId,
     durationMs: animation.durationMs,
+    groupId: animation.groupId,
     id: animation.id,
     impactAt: animation.impactAt,
     impactRect,
+    phase: animation.phase,
+    playback: animation.playback,
     renderFace: animation.renderFace,
     sourceRect: toLocalRect(sourceRect, boardRect),
     variant: animation.variant,
@@ -464,9 +501,12 @@ function deriveInkAnimation(
     destination: buildCardDestination(nextLocation),
     destinationZoneId: "inkwell",
     durationMs: VARIANT_DURATION_MS[variant],
+    groupId: entry.id,
     id: `${entry.id}:ink:${cardId}`,
     impactAt: "destination",
     moveLogId: entry.id,
+    phase: "cause",
+    playback: "serial",
     renderFace,
     source: buildSourceAnchor(previousLocation, actorSide),
     variant,
@@ -506,9 +546,12 @@ function derivePlayAnimation(
     destination,
     destinationZoneId: nextLocation.zoneId,
     durationMs: VARIANT_DURATION_MS[variant],
+    groupId: entry.id,
     id: `${entry.id}:play:${cardId}`,
     impactAt: "via",
     moveLogId: entry.id,
+    phase: "cause",
+    playback: "serial",
     renderFace: "faceUp",
     source: buildSourceAnchor(previousLocation, actorSide),
     variant,
@@ -564,9 +607,50 @@ function buildSourceAnchor(
 }
 
 function buildCardDestination(location: CardLocation): AnchorReference {
+  if (location.zoneId === "hand") {
+    return {
+      primaryId: createCardAnchorId(location.side, location.zoneId, location.card.cardId),
+      fallbackId: createSeatHandAnchorId(location.side),
+    };
+  }
+
+  if (location.zoneId === "inkwell") {
+    return {
+      primaryId: createCardAnchorId(location.side, location.zoneId, location.card.cardId),
+      // Newly inked cards are hidden from the settled zone while in flight, so the
+      // card-specific anchor often does not exist yet. Fall back to the fixed
+      // leftmost inkwell entry slot instead of the full zone rect.
+      fallbackId: createInkwellEntryAnchorId(location.side),
+    };
+  }
+
   return {
     primaryId: createCardAnchorId(location.side, location.zoneId, location.card.cardId),
     fallbackId: createZoneAnchorId(location.side, location.zoneId),
+  };
+}
+
+function buildPacketSourceAnchor(
+  actorSide: LorcanaPlayerSide,
+  sourceZoneId: LorcanaZoneId,
+  cardId: string,
+): AnchorReference {
+  if (sourceZoneId === "deck") {
+    return {
+      primaryId: createZoneAnchorId(actorSide, "deck"),
+    };
+  }
+
+  if (sourceZoneId === "hand") {
+    return {
+      primaryId: createCardAnchorId(actorSide, "hand", cardId),
+      fallbackId: createSeatHandAnchorId(actorSide),
+    };
+  }
+
+  return {
+    primaryId: createCardAnchorId(actorSide, sourceZoneId, cardId),
+    fallbackId: createZoneAnchorId(actorSide, sourceZoneId),
   };
 }
 
@@ -583,6 +667,20 @@ function findCardLocation(
       if (card) {
         return { card, side, zoneId };
       }
+    }
+  }
+
+  // Fallback: search the projected cards map directly. This catches cards in zones
+  // that getZoneCardIds does not enumerate (e.g. limbo, deck) but that are still
+  // present in the board projection. Without this, action cards with pending effect
+  // resolution (which sit in limbo) silently lose their play animation.
+  const projectedCard = snapshot.cards[cardId];
+  if (projectedCard) {
+    const card = resolveCard(cardId);
+    if (card) {
+      const side = getSideForOwnerId(snapshot, projectedCard.ownerId) ?? "playerOne";
+      const zoneId = projectedCard.zone ?? "limbo";
+      return { card, side, zoneId };
     }
   }
 

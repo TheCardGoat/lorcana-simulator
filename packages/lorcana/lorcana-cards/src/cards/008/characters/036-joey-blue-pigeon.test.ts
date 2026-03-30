@@ -23,7 +23,7 @@ describe("Joey - Blue Pigeon", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(joeyBluePigeon, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Both Bodyguard characters should have 1 damage removed
@@ -52,7 +52,7 @@ describe("Joey - Blue Pigeon", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(joeyBluePigeon, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should be unchanged
@@ -78,7 +78,7 @@ describe("Joey - Blue Pigeon", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(joeyBluePigeon, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Only Bodyguard character receives healing

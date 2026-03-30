@@ -32,6 +32,7 @@ export const pegNaturalPerformer: CharacterCard = {
   abilities: [
     {
       id: "wsf-1",
+      name: "CAPTIVE AUDIENCE",
       cost: {
         exert: true,
       },

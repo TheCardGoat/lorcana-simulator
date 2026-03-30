@@ -2,13 +2,13 @@ import { readFile, readdir, stat } from "node:fs/promises";
 import { join, extname } from "node:path";
 
 const BASE_LOCALE = "en" as const;
-const MESSAGE_KEY_PATTERN = /m\["([a-zA-Z][a-zA-Z0-9_.]*?)"]/g;
-const IGNORED_KEYS = new Set(["sim._"]);
+const MESSAGE_KEY_PATTERN = /m\[['"]([a-zA-Z][a-zA-Z0-9_.]*?)['"]]/g;
+const IGNORED_KEYS = new Set(["sim._", "mode"]);
 
 type Catalog = Record<string, string>;
 
 async function loadCatalog(): Promise<Catalog> {
-  const file = new URL(`../messages/${BASE_LOCALE}.json`, import.meta.url);
+  const file = new URL(`../src/messages/${BASE_LOCALE}.json`, import.meta.url);
   const raw = await readFile(file, "utf8");
   return JSON.parse(raw) as Catalog;
 }

@@ -52,6 +52,7 @@ export const belleAccomplishedMystic: CharacterCard = {
         effect: {
           type: "move-damage",
           amount: 3,
+          upTo: true,
           from: "CHOSEN_CHARACTER",
           to: "CHOSEN_OPPOSING_CHARACTER",
         },

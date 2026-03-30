@@ -34,7 +34,7 @@ describe("Bambi - Little Prince", () => {
         for (let i = 0; i < bagCount; i++) {
           const effects = testEngine.asPlayerOne().getBagEffects();
           if (effects.length > 0) {
-            testEngine.asPlayerOne().resolveBag(effects[0]!.id);
+            testEngine.asPlayerOne().resolvePendingByCard(bambiLittlePrince);
           }
         }
       }
@@ -70,7 +70,9 @@ describe("Bambi - Little Prince", () => {
 
       const bashfulEffect = bagEffects[0];
       expect(bashfulEffect).toBeDefined();
-      expect(testEngine.asPlayerOne().resolveBag(bashfulEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(bambiLittlePrince),
+      ).toBeSuccessfulCommand();
 
       // Bambi should be back in player 1's hand
       expect(testEngine.asPlayerOne().getCardZone(bambiLittlePrince)).toBe("hand");
@@ -100,7 +102,7 @@ describe("Bambi - Little Prince", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       // None of these should be KIND OF BASHFUL return-to-hand for Bambi
       for (const effect of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(effect.id);
+        testEngine.asPlayerOne().resolvePendingByCard(bambiLittlePrince);
       }
 
       // Bambi should still be in play
@@ -132,7 +134,7 @@ describe("Bambi - Little Prince", () => {
       // Resolve KIND OF BASHFUL
       const bashfulEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bashfulEffects.length).toBeGreaterThanOrEqual(1);
-      testEngine.asPlayerOne().resolveBag(bashfulEffects[0]!.id);
+      testEngine.asPlayerOne().resolvePendingByCard(bambiLittlePrince);
 
       expect(testEngine.asPlayerOne().getCardZone(bambiLittlePrince)).toBe("hand");
 
@@ -145,7 +147,7 @@ describe("Bambi - Little Prince", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         for (const effect of bagEffects) {
-          testEngine.asPlayerOne().resolveBag(effect.id);
+          testEngine.asPlayerOne().resolvePendingByCard(bambiLittlePrince);
         }
       }
 

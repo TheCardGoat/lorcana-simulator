@@ -76,9 +76,8 @@ export function resolveMoveDamageEffect(
   }
 
   const effectAmount = resolveEffectAmount(effect);
-  // Support "up to" semantics: if the player selected a specific amount,
-  // use it (capped by the effect's maximum).
   const selectedAmount =
+    effect.upTo === true &&
     typeof resolutionInput.amount === "number" &&
     Number.isFinite(resolutionInput.amount) &&
     resolutionInput.amount >= 0

@@ -1,12 +1,6 @@
 <script lang="ts">
   import { m } from "$lib/i18n/messages.js";
-
-  export interface NamedCardSearchEntry {
-    id: string;
-    label: string;
-    name: string;
-    selected?: boolean;
-  }
+  import type { NamedCardSearchEntry } from "./named-card-search.js";
 
   interface NamedCardSearchInputProps {
     query: string;

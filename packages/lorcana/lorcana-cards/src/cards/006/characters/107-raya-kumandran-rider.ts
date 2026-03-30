@@ -35,16 +35,49 @@ export const rayaKumandranRider: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          duration: "this-turn",
-          restriction: "cant-quest",
-          target: "SELF",
-          type: "restriction",
+          type: "sequence",
+          steps: [
+            {
+              target: {
+                selector: "chosen",
+                count: 1,
+                owner: "you",
+                zones: ["play"],
+                cardTypes: ["character"],
+                excludeSelf: true,
+              },
+              type: "ready",
+            },
+            {
+              duration: "this-turn",
+              restriction: "cant-quest",
+              target: {
+                reference: "selected-first",
+              },
+              type: "restriction",
+            },
+          ],
         },
         type: "optional",
       },
       id: "1dx-1",
+      name: "COME ON, LET'S DO THIS",
       text: "COME ON, LET'S DO THIS Once during your turn, whenever a card is put into your inkwell, you may ready another chosen character of yours. They can't quest for the rest of this turn.",
-      type: "action",
+      trigger: {
+        event: "ink",
+        on: "CONTROLLER",
+        timing: "whenever",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+          {
+            type: "once-per-turn",
+          },
+        ],
+      },
+      type: "triggered",
     },
   ],
   i18n: rayaKumandranRiderI18n,

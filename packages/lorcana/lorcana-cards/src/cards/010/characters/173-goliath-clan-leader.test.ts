@@ -23,7 +23,7 @@ describe.skip("Goliath - Clan Leader", () => {
 
       // Resolve the bag — player chooses which cards to discard (need to go from 4 to 2)
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(goliathClanLeader, {
           targets: [filler1, filler2],
         }),
       ).toBeSuccessfulCommand();
@@ -48,7 +48,7 @@ describe.skip("Goliath - Clan Leader", () => {
       // Resolve the bag effect — draw-until-hand-size triggers
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(goliathClanLeader),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 2 });
@@ -96,7 +96,7 @@ describe.skip("Goliath - Clan Leader", () => {
 
       // Resolve the bag — player two chooses which cards to discard (need to go from 4 to 2)
       expect(
-        testEngine.asPlayerTwo().resolveBag(testEngine.asPlayerTwo().getBagEffects()[0]!.id, {
+        testEngine.asPlayerTwo().resolvePendingByCard(goliathClanLeader, {
           targets: [filler3, filler4],
         }),
       ).toBeSuccessfulCommand();
@@ -118,7 +118,7 @@ describe.skip("Goliath - Clan Leader", () => {
 
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerTwo().resolveBag(testEngine.asPlayerTwo().getBagEffects()[0]!.id),
+        testEngine.asPlayerTwo().resolvePendingByCard(goliathClanLeader),
       ).toBeSuccessfulCommand();
 
       // P2 drew up to 2 via DUSK TO DAWN, then drew 1 more at start of their turn → 3
@@ -172,14 +172,14 @@ describe.skip("Goliath - Clan Leader", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(goliathClanLeader),
       ).toBeSuccessfulCommand();
 
       // P2 passes turn → DUSK TO DAWN fires again (P1 still has 2 cards — no-op)
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(goliathClanLeader),
       ).toBeSuccessfulCommand();
 
       // P1's new turn: ready step happens BEFORE draw step
@@ -201,19 +201,9 @@ describe.skip("Goliath - Clan Leader", () => {
 
       // Pass p1 turn — DUSK TO DAWN fires (exactly 2, no change)
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
-      // DON"T EVER USE WHILE LOOPS
-      //
-      // while (testEngine.asPlayerOne().getBagCount() > 0) {
-      //   testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id);
-      // }
 
       // P2 passes — DUSK TO DAWN fires for p2's end (p1 still has 2)
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
-      // DON"T EVER USE WHILE LOOPS
-      //
-      // while (testEngine.asPlayerOne().getBagCount() > 0) {
-      //   testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id);
-      // }
 
       // P1's turn starts: draws 1 card → hand = 3, STONE BY DAY activates
       // Goliath should NOT have readied

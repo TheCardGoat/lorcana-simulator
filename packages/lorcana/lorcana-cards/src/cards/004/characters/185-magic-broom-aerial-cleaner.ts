@@ -24,9 +24,9 @@ export const magicBroomAerialCleaner: CharacterCard = {
   },
   text: [
     {
-      title: "WINGED FOR",
+      title: "WINGED FOR A DAY",
       description:
-        "A DAY During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
+        "During your turn, this character gains Evasive. (They can challenge characters with Evasive.)",
     },
   ],
   classifications: ["Dreamborn", "Broom"],
@@ -42,6 +42,7 @@ export const magicBroomAerialCleaner: CharacterCard = {
         type: "gain-keyword",
       },
       id: "1wc-1",
+      name: "WINGED FOR A DAY",
       text: "WINGED FOR A DAY During your turn, this character gains Evasive.",
       type: "static",
     },

@@ -67,7 +67,7 @@ describe("Tramp - Enterprising Dog", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(trampEnterprisingDog, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -91,7 +91,7 @@ describe("Tramp - Enterprising Dog", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(trampEnterprisingDog, {
             targets: [trampEnterprisingDog],
           }),
         ).toBeSuccessfulCommand();
@@ -119,7 +119,7 @@ describe("Tramp - Enterprising Dog", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(trampEnterprisingDog, {
           targets: [targetCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -149,9 +149,8 @@ describe("Tramp - Enterprising Dog", () => {
       // First Tramp: 2 other characters in play (allyOne + allyTwo), so +2 strength to target
       expect(testEngine.asPlayerOne().playCard(trampEnterprisingDog)).toBeSuccessfulCommand();
 
-      const [firstBagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(firstBagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(trampEnterprisingDog, {
           targets: [allyOne],
         }),
       ).toBeSuccessfulCommand();
@@ -164,9 +163,8 @@ describe("Tramp - Enterprising Dog", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      const secondBagEffect = testEngine.asPlayerOne().getBagEffects()[0];
       expect(
-        testEngine.asPlayerOne().resolveBag(secondBagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(trampEnterprisingDogEnchanted, {
           targets: [allyOne],
         }),
       ).toBeSuccessfulCommand();

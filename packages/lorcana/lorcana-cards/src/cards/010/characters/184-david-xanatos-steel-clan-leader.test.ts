@@ -34,7 +34,9 @@ describe("David Xanatos - Steel Clan Leader", () => {
 
     expect(testEngine.asPlayerOne().playCard(davidXanatosSteelClanLeader)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(davidXanatosSteelClanLeader, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [discardFodder] }),
@@ -62,7 +64,9 @@ describe("David Xanatos - Steel Clan Leader", () => {
 
     expect(testEngine.asPlayerOne().playCard(davidXanatosSteelClanLeader)).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(davidXanatosSteelClanLeader, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("hand");

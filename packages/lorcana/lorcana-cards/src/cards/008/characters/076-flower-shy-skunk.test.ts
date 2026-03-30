@@ -27,7 +27,7 @@ describe("Flower - Shy Skunk", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(flowerShySkunk)).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({
         destinations: [

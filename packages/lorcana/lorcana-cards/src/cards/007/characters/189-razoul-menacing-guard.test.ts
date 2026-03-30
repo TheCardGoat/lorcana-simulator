@@ -48,7 +48,7 @@ describe("Razoul - Menacing Guard", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [testItem] }),
+        testEngine.asPlayerOne().resolvePendingByCard(razoulMenacingGuard, { targets: [testItem] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(testItem)).toBe("discard");

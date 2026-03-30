@@ -45,7 +45,7 @@ describe("Julieta Madrigal - Excellent Cook [Set 004]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(julietaMadrigalExcellentCook, {
           resolveOptional: true,
           targets: [woundedAllyId],
         }),
@@ -71,7 +71,7 @@ describe("Julieta Madrigal - Excellent Cook [Set 004]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(julietaMadrigalExcellentCook, {
           resolveOptional: true,
           targets: [woundedAllyId],
         }),
@@ -98,7 +98,9 @@ describe("Julieta Madrigal - Excellent Cook [Set 004]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(julietaMadrigalExcellentCook, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage unchanged
@@ -126,7 +128,7 @@ describe("Julieta Madrigal - Excellent Cook [Set 004]", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(julietaMadrigalExcellentCook, {
           resolveOptional: true,
           targets: [woundedAllyId],
         }),

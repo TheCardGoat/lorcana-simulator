@@ -22,7 +22,7 @@ describe("Elsa's Ice Palace - Place of Solitude", () => {
         .success,
     ).toBe(true);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
+      testEngine.asPlayerOne().resolvePendingByCard(elsasIcePalacePlaceOfSolitude).success,
     ).toBe(true);
     expect(
       testEngine

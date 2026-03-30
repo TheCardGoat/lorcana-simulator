@@ -29,7 +29,7 @@ describe("Magica De Spell - The Midas Touch", () => {
       expect(testEngine.asPlayerOne().quest(magicaDeSpellTheMidasTouch)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicaDeSpellTheMidasTouch, {
           targets: [cheapItem],
         }),
       ).toBeSuccessfulCommand();
@@ -50,7 +50,7 @@ describe("Magica De Spell - The Midas Touch", () => {
 
       const bagEffect = bagEffects[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(magicaDeSpellTheMidasTouch, {
           targets: [expensiveItem],
         }),
       ).toBeSuccessfulCommand();
@@ -71,7 +71,7 @@ describe("Magica De Spell - The Midas Touch", () => {
 
       const bagEffect = bagEffects[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(magicaDeSpellTheMidasTouch, {
           targets: [cheapItem],
         }),
       ).toBeSuccessfulCommand();

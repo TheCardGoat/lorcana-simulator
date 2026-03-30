@@ -35,14 +35,19 @@ export const rlsLegacySolarGalleon: LocationCard = {
   ],
   abilities: [
     {
+      id: "Lt1-1",
+      name: "THIS IS OUR SHIP",
       effect: {
         keyword: "Evasive",
         target: "CHARACTERS_HERE",
         type: "gain-keyword",
       },
+      text: "THIS IS OUR SHIP Characters gain Evasive while here.",
       type: "static",
     },
     {
+      id: "Lt1-2",
+      name: "HEAVE TOGETHER NOW",
       type: "static",
       condition: {
         type: "target-query",
@@ -70,6 +75,7 @@ export const rlsLegacySolarGalleon: LocationCard = {
         reduction: 2,
         type: "move-cost-reduction",
       },
+      text: "HEAVE TOGETHER NOW If you have a character here, you pay 2 {I} less to move a character of yours here.",
     },
   ],
   i18n: rlsLegacySolarGalleonI18n,

@@ -31,7 +31,7 @@ describe("Moana - Chosen by the Ocean", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(moanaChosenByTheOcean),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -56,7 +56,7 @@ describe("Moana - Chosen by the Ocean", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(moanaChosenByTheOcean),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -99,7 +99,7 @@ describe("Moana - Chosen by the Ocean", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(moanaChosenByTheOcean),
       ).toBeSuccessfulCommand();
 
       // Targeting the non-Te Kā character should fail
@@ -122,7 +122,9 @@ describe("Moana - Chosen by the Ocean", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(moanaChosenByTheOcean, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(teKTheBurningOne)).toBe("play");

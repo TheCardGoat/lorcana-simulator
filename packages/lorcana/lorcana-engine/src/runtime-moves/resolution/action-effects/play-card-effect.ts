@@ -36,6 +36,10 @@ import {
   evaluateStaticCondition,
   hasStaticCardRestriction,
 } from "../../rules/static-ability-utils";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
+import { buildStaticEffectRegistry } from "../../../rules/static-effect-registry";
+import type { StaticEffectRegistry } from "../../../rules/static-effect-registry";
+import { createProjectionState } from "../../../rules/derived-state";
 import {
   clearCurrentSelectionTargets,
   getCombinedSelectionInput,
@@ -508,6 +512,7 @@ function cardEntersPlayExerted(
   cardId: CardInstanceId,
   definition: CardDefinitionLike,
   playerId: PlayerId,
+  registry: StaticEffectRegistry,
 ): boolean {
   const state = {
     priority: ctx.framework.state.priority,
@@ -550,11 +555,15 @@ function cardEntersPlayExerted(
     return true;
   }
 
+  const freshRegistry = buildStaticEffectRegistry(
+    createProjectionState(ctx.framework.state, ctx.G),
+    getDefinitionByInstanceId,
+  );
   return hasStaticCardRestriction({
     state,
     cardId,
     restriction: "enters-play-exerted",
-    getDefinitionByInstanceId,
+    registry: freshRegistry,
   });
 }
 
@@ -585,6 +594,7 @@ export function resolvePlayCardEffect(
     return;
   }
 
+  const registry = getOrBuildMoveRegistry(ctx);
   const currentSelectedTargets = normalizeSelectedTargets(
     getCurrentSelectionInput(resolutionInput),
   );
@@ -741,7 +751,7 @@ export function resolvePlayCardEffect(
       chosenCardId,
       definition,
       effect.entersExerted === true ||
-        cardEntersPlayExerted(ctx, chosenCardId, definition, playerId as PlayerId) ||
+        cardEntersPlayExerted(ctx, chosenCardId, definition, playerId as PlayerId, registry) ||
         (cardType === "character" &&
           resolutionInput.eventSnapshot?.autoExertBodyguardOnNestedPlay === true &&
           hasBodyguardKeyword(definition)),

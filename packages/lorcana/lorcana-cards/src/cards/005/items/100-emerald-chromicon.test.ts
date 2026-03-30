@@ -100,7 +100,7 @@ describe("Emerald Chromicon", () => {
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(emeraldChromicon, {
         resolveOptional: true,
         targets: [retreatingTarget],
       }),
@@ -148,7 +148,7 @@ describe("Emerald Chromicon", () => {
 
     // Decline the optional ability
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(emeraldChromicon, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();
@@ -218,8 +218,9 @@ describe("Emerald Chromicon", () => {
 
     // The bouncer's ETB trigger is in the bag for player two to resolve
     expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
+    const [bouncerBag] = testEngine.asPlayerTwo().getBagEffects();
     expect(
-      testEngine.asPlayerTwo().resolveBag(testEngine.asPlayerTwo().getBagEffects()[0]!.id, {
+      testEngine.asPlayerTwo().resolveBag(bouncerBag!.id, {
         targets: [bounceTarget],
       }),
     ).toBeSuccessfulCommand();
@@ -363,7 +364,7 @@ describe("Emerald Chromicon", () => {
     // Accept the optional trigger - but there's no valid target
     // The ability should still resolve without error, it just has no effect
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(emeraldChromicon, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();

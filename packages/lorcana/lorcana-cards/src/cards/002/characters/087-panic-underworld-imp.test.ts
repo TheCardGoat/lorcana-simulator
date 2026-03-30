@@ -30,7 +30,9 @@ describe("Panic - Underworld Imp", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [painUnderworldImp] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(panicUnderworldImp, { targets: [painUnderworldImp] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(painUnderworldImp)).toBe(strengthBefore + 4);
@@ -52,7 +54,9 @@ describe("Panic - Underworld Imp", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [genericAlly] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(panicUnderworldImp, { targets: [genericAlly] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(genericAlly)).toBe(strengthBefore + 2);
@@ -77,7 +81,9 @@ describe("Panic - Underworld Imp", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [painUnderworldImp] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(panicUnderworldImp, { targets: [painUnderworldImp] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(painUnderworldImp)).toBe(strengthBefore + 4);

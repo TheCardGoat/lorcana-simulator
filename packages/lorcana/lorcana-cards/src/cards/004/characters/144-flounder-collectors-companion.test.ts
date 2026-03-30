@@ -27,7 +27,7 @@ describe("Flounder - Collector's Companion", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(flounderCollectorsCompanion, {
         resolveOptional: true,
         targets: [supportTarget],
       }),

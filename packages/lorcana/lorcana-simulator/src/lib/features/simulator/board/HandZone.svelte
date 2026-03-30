@@ -55,7 +55,7 @@
   const ownerId = $derived(board.getOwnerIdForSide(playerSide));
   const selectedCardIds = $derived(board.selectedCardIds);
   const playableCardIds = $derived(board.playableHandCardIds);
-  const droppable = createOptionalDroppable({
+  const handDroppable = createOptionalDroppable({
     zone: "hand",
     get player() {
       return playerSide;
@@ -64,8 +64,10 @@
       return isOpponent;
     },
   });
-  const dropState = $derived(dnd.getZoneDropState("hand", playerSide));
-  const showReturnToHandTarget = $derived(!isOpponent && dnd.isDraggingHandCard);
+  const handDropState = $derived(dnd.getZoneDropState("hand", playerSide));
+  const playDropState = $derived(dnd.getZoneDropState("play", playerSide));
+  const inkwellDropState = $derived(dnd.getZoneDropState("inkwell", playerSide));
+  const showDragTargets = $derived(!isOpponent && dnd.isDraggingHandCard);
   let handContainerEl = $state<HTMLDivElement | null>(null);
   let hiddenCardsToLeft = $state(0);
   let hiddenCardsToRight = $state(0);
@@ -209,8 +211,7 @@
 <div
   class="hand-zone"
   class:hand-zone--player-two={playerSide === "playerTwo"}
-  class:hand-zone--return-target-visible={showReturnToHandTarget}
-  class:hand-zone--drop-hover={dropState === "valid"}
+  class:hand-zone--drop-hover={handDropState === "valid"}
   class:hand-zone--tucked={isTucked}
   data-layout-mode={layoutMode}
   data-player-seat={seat}
@@ -243,16 +244,39 @@
     </button>
   {/if}
 
-  {#if showReturnToHandTarget}
-    <div
-      class="hand-return-target"
-      class:hand-return-target--hover={dropState === "valid"}
-      data-player-side={playerSide}
-      data-zone-id="hand"
-      aria-hidden="true"
-      {@attach droppable.attach}
-    >
-      <span class="hand-return-target__label">{m["sim.hand.returnToHand"]({})}</span>
+  {#if showDragTargets}
+    <div class="hand-drag-targets" aria-hidden="true">
+      <div
+        class="hand-drag-target hand-drag-target--inkwell"
+        class:hand-drag-target--preview={inkwellDropState === "preview"}
+        class:hand-drag-target--valid={inkwellDropState === "valid"}
+        class:hand-drag-target--invalid={inkwellDropState === "invalid"}
+        data-player-side={playerSide}
+        data-zone-id="inkwell"
+      >
+        <span class="hand-drag-target__label">{m["sim.zone.inkwell"]({})}</span>
+      </div>
+
+      <div
+        class="hand-drag-target hand-drag-target--return"
+        class:hand-drag-target--valid={handDropState === "valid"}
+        data-player-side={playerSide}
+        data-zone-id="hand"
+        {@attach handDroppable.attach}
+      >
+        <span class="hand-drag-target__label">{m["sim.hand.returnToHand"]({})}</span>
+      </div>
+
+      <div
+        class="hand-drag-target hand-drag-target--play"
+        class:hand-drag-target--preview={playDropState === "preview"}
+        class:hand-drag-target--valid={playDropState === "valid"}
+        class:hand-drag-target--invalid={playDropState === "invalid"}
+        data-player-side={playerSide}
+        data-zone-id="play"
+      >
+        <span class="hand-drag-target__label">{m["sim.zone.play"]({})}</span>
+      </div>
     </div>
   {/if}
 
@@ -457,13 +481,29 @@
     transition: outline 180ms ease, background 180ms ease;
   }
 
-  .hand-return-target {
+  .hand-drag-targets {
     position: absolute;
     top: -0.55rem;
     bottom: -0.2rem;
-    left: 50%;
-    width: clamp(10rem, 25vw, 18rem);
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
+    padding-inline: clamp(0.25rem, 1.5vw, 1rem);
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: clamp(0.45rem, 1.8vw, 1rem);
+    pointer-events: none;
+    z-index: 120;
+  }
+
+  .hand-zone--player-two .hand-drag-targets {
+    top: -0.2rem;
+    bottom: -0.55rem;
+  }
+
+  .hand-drag-target {
+    flex: 0 1 clamp(6.75rem, 20vw, 12rem);
+    min-width: 0;
     border: 2px dashed rgba(124, 176, 255, 0.5);
     border-radius: 18px;
     background:
@@ -476,20 +516,38 @@
     align-items: center;
     justify-content: center;
     pointer-events: auto;
-    z-index: 120;
     transition:
       border-color 180ms ease,
       background 180ms ease,
       box-shadow 180ms ease,
-      transform 180ms ease;
+      transform 180ms ease,
+      flex-basis 180ms ease;
   }
 
-  .hand-zone--player-two .hand-return-target {
-    top: -0.2rem;
-    bottom: -0.55rem;
+  .hand-drag-target--return {
+    flex-basis: clamp(8.5rem, 24vw, 15.5rem);
   }
 
-  .hand-return-target--hover {
+  .hand-drag-target--inkwell {
+    border-color: rgba(180, 140, 230, 0.54);
+    background:
+      linear-gradient(180deg, rgba(119, 62, 204, 0.2), rgba(62, 28, 105, 0.08)),
+      rgba(22, 14, 39, 0.2);
+  }
+
+  .hand-drag-target--play {
+    border-color: rgba(94, 234, 212, 0.5);
+    background:
+      linear-gradient(180deg, rgba(20, 83, 45, 0.18), rgba(6, 78, 59, 0.08)),
+      rgba(9, 28, 26, 0.18);
+  }
+
+  .hand-drag-target--preview {
+    border-style: solid;
+    transform: translateY(-1px);
+  }
+
+  .hand-drag-target--valid {
     border-color: rgba(147, 197, 253, 0.92);
     background:
       linear-gradient(180deg, rgba(96, 165, 250, 0.24), rgba(30, 64, 175, 0.12)),
@@ -497,10 +555,20 @@
     box-shadow:
       0 0 0 1px rgba(191, 219, 254, 0.12) inset,
       0 0 22px rgba(96, 165, 250, 0.22);
-    transform: translateX(-50%) scale(1.01);
+    transform: translateY(-1px) scale(1.01);
   }
 
-  .hand-return-target__label {
+  .hand-drag-target--invalid {
+    border-color: rgba(248, 113, 113, 0.9);
+    background:
+      linear-gradient(180deg, rgba(185, 28, 28, 0.22), rgba(127, 29, 29, 0.12)),
+      rgba(33, 16, 22, 0.22);
+    box-shadow:
+      0 0 0 1px rgba(254, 202, 202, 0.1) inset,
+      0 0 22px rgba(248, 113, 113, 0.2);
+  }
+
+  .hand-drag-target__label {
     pointer-events: none;
     color: rgba(226, 232, 240, 0.88);
     font-size: 0.72rem;
@@ -520,6 +588,7 @@
     align-items: flex-end;
     justify-content: center;
     width: 100%;
+    max-width: 100%;
     min-height: var(--hand-container-height);
     position: relative;
     pointer-events: none;
@@ -671,21 +740,31 @@
     width: 100%;
   }
 
-  .hand-zone[data-layout-mode="mobile"] .hand-return-target {
+  .hand-zone[data-layout-mode="mobile"] .hand-drag-targets {
     top: -0.3rem;
     bottom: -0.45rem;
-    width: clamp(8.5rem, 42vw, 13rem);
+    gap: 0.35rem;
+    padding-inline: 0.1rem;
+  }
+
+  .hand-zone[data-layout-mode="mobile"] .hand-drag-target {
+    flex-basis: clamp(5.25rem, 24vw, 7rem);
     border-radius: 14px;
   }
 
-  .hand-zone--player-two[data-layout-mode="mobile"] .hand-return-target {
+  .hand-zone[data-layout-mode="mobile"] .hand-drag-target--return {
+    flex-basis: clamp(7rem, 34vw, 9rem);
+  }
+
+  .hand-zone--player-two[data-layout-mode="mobile"] .hand-drag-targets {
     top: -0.1rem;
     bottom: -0.45rem;
   }
 
-  .hand-zone[data-layout-mode="mobile"] .hand-return-target__label {
+  .hand-zone[data-layout-mode="mobile"] .hand-drag-target__label {
     font-size: 0.62rem;
     letter-spacing: 0.05em;
+    padding-inline: 0.32rem;
   }
 
   .hand-zone[data-layout-mode="mobile"] .mobile-hand-scroll-button {
@@ -794,6 +873,13 @@
 
   .hand-zone[data-layout-mode="mobile"] .hand-container::-webkit-scrollbar {
     display: none;
+  }
+
+  .hand-zone[data-layout-mode="desktop"][data-player-seat="bottom"] .hand-container {
+    max-width: calc(
+      100% - var(--desktop-footer-left-reserve, 0px) - var(--desktop-footer-right-reserve, 0px)
+    );
+    margin-inline: auto;
   }
 
   .hand-zone--player-two[data-layout-mode="mobile"] {

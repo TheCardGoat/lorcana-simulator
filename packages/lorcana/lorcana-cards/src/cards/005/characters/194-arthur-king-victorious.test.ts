@@ -37,7 +37,9 @@ describe("Arthur - King Victorious", () => {
       expect(testEngine.asPlayerOne().playCard(arthurKingVictorious)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [allyCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(arthurKingVictorious, { targets: [allyCharacter] }),
       ).toBeSuccessfulCommand();
 
       // Ally should have Challenger keyword
@@ -66,7 +68,9 @@ describe("Arthur - King Victorious", () => {
 
       expect(testEngine.asPlayerOne().playCard(arthurKingVictorious)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [allyCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(arthurKingVictorious, { targets: [allyCharacter] }),
       ).toBeSuccessfulCommand();
 
       // Pass turn to expire the effects

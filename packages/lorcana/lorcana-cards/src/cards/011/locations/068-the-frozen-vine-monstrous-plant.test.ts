@@ -36,7 +36,7 @@ describe("The Frozen Vine - Monstrous Plant", () => {
       testEngine.asPlayerTwo().challenge(locationAttacker, theFrozenVineMonstrousPlant),
     ).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(theFrozenVineMonstrousPlant),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(theFrozenVineMonstrousPlant)).toBe("hand");

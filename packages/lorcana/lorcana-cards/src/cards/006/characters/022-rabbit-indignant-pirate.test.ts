@@ -32,7 +32,9 @@ describe("Rabbit - Indignant Pirate", () => {
       // Optional triggered ability should be in the bag
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rabbitIndignantPirate, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose the damaged character as target for remove-damage
@@ -61,7 +63,9 @@ describe("Rabbit - Indignant Pirate", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rabbitIndignantPirate, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // No targets with damage; the effect resolves with no change
@@ -86,7 +90,9 @@ describe("Rabbit - Indignant Pirate", () => {
       // Decline the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rabbitIndignantPirate, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain unchanged

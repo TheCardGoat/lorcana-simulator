@@ -26,12 +26,8 @@ describe("Goofy - Musketeer Swordsman", () => {
       expect(testEngine.asPlayerOne().isExerted(goofyMusketeerSwordsman)).toBe(true);
 
       expect(testEngine.asPlayerOne().playCard(donaldDuckMusketeerSoldier)).toBeSuccessfulCommand();
-      const goofyBagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
-      expect(testEngine.asPlayerOne().resolveBag(goofyBagId)).toBeSuccessfulCommand();
-      const donaldBagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
-      expect(
-        testEngine.asPlayerOne().resolveBag(donaldBagId, { targets: [goofyMusketeerSwordsman] }),
-      ).toBeSuccessfulCommand();
+      const [goofyBag] = testEngine.asPlayerOne().getBagEffects();
+      expect(testEngine.asPlayerOne().resolveBag(goofyBag!.id)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().isExerted(goofyMusketeerSwordsman)).toBe(false);
       expect(testEngine.hasRestriction(goofyMusketeerSwordsman, "cant-quest")).toBe(true);

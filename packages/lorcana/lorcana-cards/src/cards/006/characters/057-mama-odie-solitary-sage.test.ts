@@ -67,7 +67,7 @@ describe("Mama Odie - Solitary Sage", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mamaOdieSolitarySage, {
           resolveOptional: true,
           targets: [damagedAlly, opposingCharacter],
         }),
@@ -97,7 +97,7 @@ describe("Mama Odie - Solitary Sage", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mamaOdieSolitarySage, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -126,7 +126,7 @@ describe("Mama Odie - Solitary Sage", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mamaOdieSolitarySage, {
           resolveOptional: true,
           targets: [damagedAlly, opposingCharacter],
         }),
@@ -156,7 +156,7 @@ describe("Mama Odie - Solitary Sage", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mamaOdieSolitarySage, {
           resolveOptional: true,
           targets: [mamaOdieSolitarySage, opposingCharacter],
         }),

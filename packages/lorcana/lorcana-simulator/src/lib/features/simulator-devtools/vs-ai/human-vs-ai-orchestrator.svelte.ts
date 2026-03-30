@@ -1,6 +1,8 @@
 import {
   getAutomatedActionStrategyOption,
+  getSafeAutomatedActionStrategyOption,
   computeAutomatedActionStateFingerprint,
+  createPlayerId,
   loadLorcanaServerAuthoritativeSnapshot,
   type AutomatedActionExecutionResult,
   type AutomatedActionStrategyOption,
@@ -34,10 +36,19 @@ import {
 } from "./types.js";
 import { resolveHumanVsAiMode } from "./mode-resolution.js";
 
+/**
+ * Optional callback invoked after each engine state change.
+ * Used by the quick-match route to push state to the gateway for replay capture.
+ */
+export type HumanVsAiStateChangeCallback = (orchestrator: HumanVsAiOrchestrator) => void;
+
+const HUMAN_VS_AI_AUTOMATION_PLAYER_ID = createPlayerId("player_two");
+
 export class HumanVsAiOrchestrator {
   #session: AutomatedMatchPlaybackSession<LorcanaServer, LorcanaSimulatorReadModel>;
   #testEngine: LorcanaMultiplayerTestEngine;
   #cardsMaps: CardsMaps;
+  #requestedStrategyId: string;
   #strategyOption: AutomatedActionStrategyOption;
   #deadlockTracker = createRepeatedStateDeadlockTracker();
   #timer: ReturnType<typeof setTimeout> | null = null;
@@ -45,6 +56,7 @@ export class HumanVsAiOrchestrator {
   #listeners = new Set<() => void>();
   #stateUnsubscribe: (() => void) | null = null;
   #gameId: string;
+  #onStateChange: HumanVsAiStateChangeCallback | null = null;
 
   sessionRevision = $state(0);
   state = $state<HumanVsAiOrchestratorState>({
@@ -57,12 +69,14 @@ export class HumanVsAiOrchestrator {
     turnNumber: 0,
   });
 
-  constructor(config: HumanVsAiMatchConfig) {
-    const strategyOption = getAutomatedActionStrategyOption(config.strategyId);
-    if (!strategyOption) {
-      throw new Error(`Unknown strategy "${config.strategyId}".`);
-    }
+  constructor(
+    config: HumanVsAiMatchConfig,
+    options?: { onStateChange?: HumanVsAiStateChangeCallback },
+  ) {
+    this.#onStateChange = options?.onStateChange ?? null;
+    const strategyOption = getSafeAutomatedActionStrategyOption(config.strategyId);
 
+    this.#requestedStrategyId = config.strategyId;
     this.#strategyOption = strategyOption;
     this.#gameId = config.seed;
 
@@ -96,13 +110,14 @@ export class HumanVsAiOrchestrator {
       readModel: readModel as unknown as LorcanaSimulatorReadModel,
       server: server as AutomatedMatchPlaybackServer,
     };
+    this.#refreshResolvedStrategyOption();
 
     this.state = {
       mode: "waiting-for-human",
       aiPlayMode: "auto",
       aiSpeed: "balanced",
-      strategyId: config.strategyId,
-      strategyLabel: strategyOption.label,
+      strategyId: this.#strategyOption.id,
+      strategyLabel: this.#strategyOption.label,
       currentPerspective: "playerOne",
       turnNumber: this.#session.server.getTurnNumber(),
     };
@@ -125,6 +140,7 @@ export class HumanVsAiOrchestrator {
     this.#testEngine.loadState(state as any);
     // Bump session revision to force simulator UI re-mount with the restored state
     this.sessionRevision += 1;
+    this.#refreshResolvedStrategyOption();
     this.#syncMode();
     this.#notify();
   }
@@ -136,6 +152,7 @@ export class HumanVsAiOrchestrator {
       this.server as LorcanaServer,
     );
     this.sessionRevision += 1;
+    this.#refreshResolvedStrategyOption();
     this.#syncMode();
     this.#notify();
   }
@@ -201,11 +218,13 @@ export class HumanVsAiOrchestrator {
     const option = getAutomatedActionStrategyOption(strategyId);
     if (!option) return;
 
+    this.#requestedStrategyId = strategyId;
     this.#strategyOption = option;
+    this.#refreshResolvedStrategyOption();
     this.state = {
       ...this.state,
-      strategyId,
-      strategyLabel: option.label,
+      strategyId: this.#strategyOption.id,
+      strategyLabel: this.#strategyOption.label,
     };
     this.#notify();
   }
@@ -248,8 +267,17 @@ export class HumanVsAiOrchestrator {
       this.#stateUnsubscribe = readModel.subscribeStateUpdates(() => {
         this.#syncMode();
         this.#notify();
+        this.#onStateChange?.(this);
       });
     }
+  }
+
+  #refreshResolvedStrategyOption(): void {
+    this.#strategyOption =
+      this.#session.server.resolveAutomatedActionStrategyForPlayer(
+        this.#requestedStrategyId,
+        HUMAN_VS_AI_AUTOMATION_PLAYER_ID,
+      ) ?? this.#strategyOption;
   }
 
   #syncMode(): void {
@@ -312,6 +340,14 @@ export class HumanVsAiOrchestrator {
         mode: "error",
         error: result.finalResult.error ?? "AI action failed.",
       };
+      return;
+    }
+
+    if (result.fallbackTaken === "concede" || this.#session.server.getWinner()) {
+      const winnerAfterAction = this.#session.server.getWinner();
+      if (winnerAfterAction) {
+        this.state = { ...this.state, mode: "complete", winner: winnerAfterAction };
+      }
       return;
     }
 

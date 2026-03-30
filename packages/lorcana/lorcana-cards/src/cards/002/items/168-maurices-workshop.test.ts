@@ -15,7 +15,7 @@ describe("Maurice's Workshop - LOOKING FOR THIS?", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().resolvePendingByCard(mauricesWorkshop)).toBeSuccessfulCommand();
 
     // Drew 1 card from the default 10-card deck
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(
@@ -35,7 +35,7 @@ describe("Maurice's Workshop - LOOKING FOR THIS?", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+      testEngine.asPlayerOne().resolvePendingByCard(mauricesWorkshop, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getZonesCardCount()).toEqual(

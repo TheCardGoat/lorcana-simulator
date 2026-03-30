@@ -70,7 +70,7 @@ describe("Record Player", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [strengthTarget] }),
+        testEngine.asPlayerOne().resolvePendingByCard(recordPlayer, { targets: [strengthTarget] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(strengthTarget)).toBe(baseStrength - 2);
@@ -94,7 +94,7 @@ describe("Record Player", () => {
       expect(testEngine.asPlayerOne().playCard(songCostThree)).toBeSuccessfulCommand();
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [strengthTarget] }),
+        testEngine.asPlayerOne().resolvePendingByCard(recordPlayer, { targets: [strengthTarget] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(strengthTarget)).toBe(baseStrength - 2);

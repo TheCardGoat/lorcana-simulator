@@ -34,7 +34,9 @@ describe("Beast - Forbidding Recluse", () => {
       expect(testEngine.asPlayerOne().playCard(beastForbiddingRecluse)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(beastForbiddingRecluse, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [opponentCharacter] }),
@@ -53,7 +55,9 @@ describe("Beast - Forbidding Recluse", () => {
       expect(testEngine.asPlayerOne().playCard(beastForbiddingRecluse)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(beastForbiddingRecluse, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [ownCharacter] }),
@@ -76,7 +80,9 @@ describe("Beast - Forbidding Recluse", () => {
       expect(testEngine.asPlayerOne().playCard(beastForbiddingRecluse)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(beastForbiddingRecluse, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(opponentCharacter)).toBe(0);

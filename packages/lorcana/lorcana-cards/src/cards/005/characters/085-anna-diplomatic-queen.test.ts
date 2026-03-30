@@ -37,7 +37,9 @@ describe("Anna - Diplomatic Queen", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(annaDiplomaticQueen, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // No further pending effects
@@ -64,7 +66,9 @@ describe("Anna - Diplomatic Queen", () => {
       );
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, choiceIndex: 0 }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(annaDiplomaticQueen, { resolveOptional: true, choiceIndex: 0 }),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -95,7 +99,9 @@ describe("Anna - Diplomatic Queen", () => {
       expect(testEngine.asPlayerOne().playCard(annaDiplomaticQueen)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, choiceIndex: 1 }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(annaDiplomaticQueen, { resolveOptional: true, choiceIndex: 1 }),
       ).toBeSuccessfulCommand();
 
       // Choose the target character
@@ -127,7 +133,9 @@ describe("Anna - Diplomatic Queen", () => {
       expect(testEngine.asPlayerOne().playCard(annaDiplomaticQueen)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, choiceIndex: 2 }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(annaDiplomaticQueen, { resolveOptional: true, choiceIndex: 2 }),
       ).toBeSuccessfulCommand();
 
       // Choose the damaged target character
@@ -154,7 +162,9 @@ describe("Anna - Diplomatic Queen", () => {
       expect(testEngine.asPlayerOne().playCard(annaDiplomaticQueen)).toBeSuccessfulCommand();
 
       // Accept the optional ability - should fail or be auto-resolved since we can't pay
-      const bagResult = testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true });
+      const bagResult = testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(annaDiplomaticQueen, { resolveOptional: true });
 
       // If the engine accepts the optional but fails to pay cost, the bag should clear
       // Either way, the opponent's hand card should NOT be discarded

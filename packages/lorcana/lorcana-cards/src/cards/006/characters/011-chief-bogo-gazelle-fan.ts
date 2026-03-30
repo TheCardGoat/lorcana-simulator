@@ -30,6 +30,24 @@ export const chiefBogoGazelleFan: CharacterCard = {
     },
   ],
   classifications: ["Storyborn"],
-  abilities: [],
+  abilities: [
+    {
+      condition: {
+        controller: "you",
+        name: "Gazelle",
+        type: "has-named-character",
+      },
+      effect: {
+        keyword: "Singer",
+        target: "SELF",
+        type: "gain-keyword",
+        value: 6,
+      },
+      id: "1ud-1",
+      name: "YOU LIKE GAZELLE TOO?",
+      text: "YOU LIKE GAZELLE TOO? While you have a character named Gazelle in play, this character gains Singer 6.",
+      type: "static",
+    },
+  ],
   i18n: chiefBogoGazelleFanI18n,
 };

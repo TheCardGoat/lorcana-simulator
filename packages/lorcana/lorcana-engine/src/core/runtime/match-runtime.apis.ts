@@ -4,7 +4,7 @@
  * Factory functions for creating runtime API objects.
  */
 
-import type { Draft } from "immer";
+import type { Draft } from "mutative";
 import type { FilteredMatchView, GameEvent, MatchState } from "./types";
 import type { EventAPI, GameEndResult } from "./match-runtime.types";
 import type { CardQueryAPI, RuntimeCardDeriver } from "./card-runtime";

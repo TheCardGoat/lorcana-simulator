@@ -55,7 +55,7 @@ describe("Raya - Infiltration Expert", () => {
       expect(testEngine.asPlayerOne().quest(rayaInfiltrationExpert)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(rayaInfiltrationExpert, {
           resolveOptional: true,
           targets: [exertedAlly],
         }),
@@ -81,7 +81,7 @@ describe("Raya - Infiltration Expert", () => {
       expect(testEngine.asPlayerOne().quest(rayaInfiltrationExpert)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(rayaInfiltrationExpert, {
           resolveOptional: true,
           targets: [exertedAlly],
         }),
@@ -105,7 +105,9 @@ describe("Raya - Infiltration Expert", () => {
       expect(testEngine.asPlayerOne().quest(rayaInfiltrationExpert)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rayaInfiltrationExpert, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().isExerted(exertedAlly)).toBe(true);
@@ -123,7 +125,7 @@ describe("Raya - Infiltration Expert", () => {
       expect(testEngine.asPlayerOne().quest(rayaInfiltrationExpert)).toBeSuccessfulCommand();
 
       // Raya is exerted after questing; trying to target herself should fail
-      const result = testEngine.asPlayerOne().resolveNextBag({
+      const result = testEngine.asPlayerOne().resolvePendingByCard(rayaInfiltrationExpert, {
         resolveOptional: true,
         targets: [rayaInfiltrationExpert],
       });
@@ -148,7 +150,7 @@ describe("Raya - Infiltration Expert", () => {
       // With no ink, accepting should not ready the ally
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(rayaInfiltrationExpert, {
           resolveOptional: true,
           targets: [exertedAlly],
         });

@@ -42,7 +42,7 @@ describe("Stitch - Rock Star", () => {
       expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("play");
 
       // Resolve the triggered ability from the bag (auto-accepts optional)
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().resolvePendingByCard(stitchRockStar)).toBeSuccessfulCommand();
 
       // The played character should be exerted
       expect(testEngine.isExerted(cheapCharacter)).toBe(true);
@@ -70,7 +70,7 @@ describe("Stitch - Rock Star", () => {
 
       // Resolve the bag and decline the optional
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(stitchRockStar, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // The played character should still be ready

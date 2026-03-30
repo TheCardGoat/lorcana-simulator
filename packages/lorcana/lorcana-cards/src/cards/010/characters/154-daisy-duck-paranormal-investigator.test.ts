@@ -57,7 +57,9 @@ describe.skip("Daisy Duck - Paranormal Investigator", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(bagEffect).toBeDefined();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(daisyDuckParanormalInvestigator),
+    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(opponentInkwellCardId)).toBe("inkwell");
     expect(testEngine.asServer().getCard(opponentInkwellCardId)).toEqual(
@@ -97,7 +99,9 @@ describe.skip("Daisy Duck - Paranormal Investigator", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(bagEffect).toBeDefined();
-    expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(daisyDuckParanormalInvestigator),
+    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(opponentInkwellCardId)).toBe("inkwell");
     expect(testEngine.asServer().getCard(opponentInkwellCardId)).toEqual(

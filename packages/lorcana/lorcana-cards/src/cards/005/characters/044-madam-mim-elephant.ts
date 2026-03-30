@@ -104,6 +104,7 @@ export const madamMimElephant: CharacterCard = {
         effect: {
           type: "move-damage",
           amount: 2,
+          upTo: true,
           from: {
             ref: "self",
           },

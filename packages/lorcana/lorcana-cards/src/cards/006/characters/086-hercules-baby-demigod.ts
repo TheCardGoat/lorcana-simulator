@@ -36,20 +36,17 @@ export const herculesBabyDemigod: CharacterCard = {
   abilities: [
     ward,
     {
+      cost: {
+        ink: 3,
+      },
       effect: {
         amount: 1,
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
-        },
+        target: "CHOSEN_DAMAGED_CHARACTER",
         type: "deal-damage",
       },
       id: "844-2",
       text: "STRONG LIKE HIS DAD 3 {I} - Deal 1 damage to chosen damaged character.",
-      type: "action",
+      type: "activated",
     },
   ],
   i18n: herculesBabyDemigodI18n,

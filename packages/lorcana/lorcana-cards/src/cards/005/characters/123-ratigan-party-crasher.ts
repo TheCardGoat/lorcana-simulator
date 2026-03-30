@@ -55,7 +55,7 @@ export const ratiganPartyCrasher: CharacterCard = {
         type: "modify-stat",
       },
       id: "1b4-3",
-      name: "DELIGHTFULLY WICKED Your damaged",
+      name: "DELIGHTFULLY WICKED",
       text: "DELIGHTFULLY WICKED Your damaged characters get +2 {S}.",
       type: "static",
     },

@@ -72,7 +72,9 @@ describe("Alice - Clumsy as Can Be", () => {
       // Resolve the bag if needed
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
-        expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(aliceClumsyAsCanBe),
+        ).toBeSuccessfulCommand();
       }
 
       // Each OTHER character should have 1 damage
@@ -105,7 +107,9 @@ describe("Alice - Clumsy as Can Be", () => {
       // Resolve the bag if needed
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
-        expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(aliceClumsyAsCanBe),
+        ).toBeSuccessfulCommand();
       }
 
       // Opponent character should have 1 damage

@@ -47,7 +47,7 @@ export const mrLitwakArcadeOwner: CharacterCard = {
       trigger: {
         event: "play",
         on: "YOUR_OTHER_CHARACTERS",
-        timing: "when",
+        timing: "whenever",
         restrictions: [{ type: "once-per-turn" }, { type: "during-turn", whose: "your" }],
       },
       type: "triggered",

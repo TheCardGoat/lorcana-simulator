@@ -26,7 +26,7 @@ describe("Goofy - Expert Shipwright", () => {
     expect(testEngine.asPlayerOne().quest(goofyExpertShipwright)).toBeSuccessfulCommand();
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(goofyExpertShipwright, {
         targets: [protectedAlly],
       }),
     ).toBeSuccessfulCommand();

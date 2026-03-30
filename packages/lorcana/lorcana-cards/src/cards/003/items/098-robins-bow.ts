@@ -52,6 +52,7 @@ export const robinsBow: ItemCard = {
         type: "deal-damage",
       },
       id: "1mp-1",
+      name: "FOREST'S GIFT",
       text: "FOREST'S GIFT {E} — Deal 1 damage to chosen damaged character or location.",
       type: "activated",
     },

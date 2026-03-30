@@ -5,16 +5,80 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { produce } from "immer";
+import { create } from "mutative";
 import { createPlayerId } from "../types";
 import {
-  createZoneOperations,
-  performMulligan,
+  createZoneOperations as createRawZoneOperations,
+  performMulligan as performRawMulligan,
   expireReveals,
   type MulliganResult,
 } from "./zone-operations";
 import { createInitialTCGCtx } from "./types";
-import type { MatchState, ZoneRuntimeDef } from "./types";
+import type { GameEvent, MatchState, ZoneRuntimeDef } from "./types";
+
+const testZoneDefs: Record<string, ZoneRuntimeDef> = {
+  deck: {
+    id: "deck",
+    name: "Deck",
+    visibility: "secret",
+    ordered: true,
+    ownerScoped: true,
+  },
+  hand: {
+    id: "hand",
+    name: "Hand",
+    visibility: "private",
+    ordered: false,
+    ownerScoped: true,
+  },
+  play: {
+    id: "play",
+    name: "Play Area",
+    visibility: "public",
+    ordered: true,
+    ownerScoped: false,
+  },
+  discard: {
+    id: "discard",
+    name: "Discard",
+    visibility: "public",
+    ordered: true,
+    ownerScoped: false,
+  },
+};
+
+function createTestZoneRegistry() {
+  return { ...testZoneDefs };
+}
+
+function createZoneOperations(
+  state: Parameters<typeof createRawZoneOperations>[0],
+  emitEvent?: Parameters<typeof createRawZoneOperations>[2],
+  options?: Parameters<typeof createRawZoneOperations>[3],
+) {
+  return createRawZoneOperations(state, createTestZoneRegistry(), emitEvent, options);
+}
+
+function performMulligan(
+  draft: Parameters<typeof performRawMulligan>[0],
+  playerId: string,
+  handZoneId: string,
+  deckZoneId: string,
+  handSize: number,
+  remainingMulligans: number,
+  emitEvent?: (event: GameEvent) => void,
+) {
+  return performRawMulligan(
+    draft,
+    createTestZoneRegistry(),
+    playerId,
+    handZoneId,
+    deckZoneId,
+    handSize,
+    remainingMulligans,
+    emitEvent,
+  );
+}
 
 function createTestState() {
   const ctx = createInitialTCGCtx({
@@ -23,40 +87,6 @@ function createTestState() {
     rulesetHash: "ruleset-v1",
   });
 
-  // Define zones
-  const deck: ZoneRuntimeDef = {
-    id: "deck",
-    name: "Deck",
-    visibility: "secret",
-    ordered: true,
-    ownerScoped: true,
-  };
-
-  const hand: ZoneRuntimeDef = {
-    id: "hand",
-    name: "Hand",
-    visibility: "private",
-    ordered: false,
-    ownerScoped: true,
-  };
-
-  const play: ZoneRuntimeDef = {
-    id: "play",
-    name: "Play Area",
-    visibility: "public",
-    ordered: true,
-    ownerScoped: false,
-  };
-
-  const discard: ZoneRuntimeDef = {
-    id: "discard",
-    name: "Discard",
-    visibility: "public",
-    ordered: true,
-    ownerScoped: false,
-  };
-
-  ctx.zones.zoneDefs = { deck, hand, play, discard };
   ctx.zones.public.zoneSummaries = {
     deck: { revision: 0, count: 0 },
     hand: { revision: 0, count: 0 },
@@ -94,7 +124,7 @@ describe("Zone Operations", () => {
     it("should move card between zones", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         ops.moveCard("card-1", { zone: "hand", playerId: "p1" });
       });
@@ -108,7 +138,7 @@ describe("Zone Operations", () => {
       const state = createTestState();
       state.ctx.zones.private.cardMeta["card-1"] = { tapped: true, damage: 2 };
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         ops.moveCard("card-1", { zone: "play" });
       });
@@ -119,7 +149,7 @@ describe("Zone Operations", () => {
     it("should update zone summaries", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         ops.moveCard("card-1", { zone: "hand", playerId: "p1" });
       });
@@ -132,7 +162,7 @@ describe("Zone Operations", () => {
     it("should insert at specific index for ordered zones", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         ops.moveCard("card-1", { zone: "play" }, { index: 0 });
         ops.moveCard("card-2", { zone: "play" }, { index: 0 });
@@ -146,7 +176,7 @@ describe("Zone Operations", () => {
     it("should move multiple cards at once", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         ops.moveCards(["card-1", "card-2", "card-3"], { zone: "hand", playerId: "p1" });
       });
@@ -160,7 +190,7 @@ describe("Zone Operations", () => {
     it("should draw cards from deck to hand", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         const drawn = ops.drawCards({
           from: { zone: "deck", playerId: "p1" },
@@ -177,7 +207,7 @@ describe("Zone Operations", () => {
     it("should respect player ownership when drawing", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         const drawn = ops.drawCards({
           from: { zone: "deck", playerId: "p1" },
@@ -200,7 +230,7 @@ describe("Zone Operations", () => {
       state.ctx.zones.private.zoneCards.deck = ["card-1", "card-2", "card-3"];
       state.ctx.zones.public.zoneSummaries.deck.count = 3;
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         const drawn = ops.drawCards({
           from: { zone: "deck", playerId: "p1" },
@@ -216,7 +246,7 @@ describe("Zone Operations", () => {
     it("should draw zero cards when count is zero", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         const drawn = ops.drawCards({
           from: { zone: "deck", playerId: "p1" },
@@ -244,7 +274,7 @@ describe("Zone Operations", () => {
       };
       state.ctx.zones.public.zoneSummaries.deck.count = 41;
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         const drawn = ops.drawCards({
           from: { zone: "deck", playerId: "p1" },
@@ -265,7 +295,7 @@ describe("Zone Operations", () => {
     it("should draw specific card from deck", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         const success = ops.drawSpecificCard(
           "card-5",
@@ -281,7 +311,7 @@ describe("Zone Operations", () => {
     it("should return false if card not in zone", () => {
       const state = createTestState();
 
-      produce(state, (draft) => {
+      create(state, (draft) => {
         const ops = createZoneOperations(draft);
         const success = ops.drawSpecificCard(
           "nonexistent",
@@ -298,7 +328,7 @@ describe("Zone Operations", () => {
       const events: import("./types").GameEvent[] = [];
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft, (event) => events.push(event));
         const milled = ops.mill(
           { zone: "deck", playerId: "p1" },
@@ -323,7 +353,7 @@ describe("Zone Operations", () => {
     it("should respect owner-scoped filtering when playerId is supplied", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         const milled = ops.mill(
           { zone: "deck", playerId: "p2" },
@@ -343,7 +373,7 @@ describe("Zone Operations", () => {
       const state = createTestState();
       const originalOrder = [...state.ctx.zones.private.zoneCards.deck];
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         ops.shuffle({ zone: "deck", playerId: "p1" });
       });
@@ -356,7 +386,7 @@ describe("Zone Operations", () => {
     it("should shuffle only owned cards for owner-scoped zones", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         ops.shuffle({ zone: "deck", playerId: "p1" });
       });
@@ -373,7 +403,7 @@ describe("Zone Operations", () => {
     it("should create reveal window for all", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         ops.reveal(["card-1", "card-2"], "all");
       });
@@ -387,7 +417,7 @@ describe("Zone Operations", () => {
       const state = createTestState();
       let revealIds: string[] = [];
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         revealIds = [ops.reveal(["card-1"], "all"), ops.reveal(["card-2"], ["p1"])];
       });
@@ -399,7 +429,7 @@ describe("Zone Operations", () => {
     it("should create reveal window for specific players", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         ops.reveal(["card-1"], ["p1"]);
       });
@@ -410,7 +440,7 @@ describe("Zone Operations", () => {
     it("should create reveal with expiration", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         ops.reveal(["card-1"], "all", { stateID: 10 });
       });
@@ -423,7 +453,7 @@ describe("Zone Operations", () => {
     it("should reveal top cards of zone", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         const revealed = ops.revealTop({ zone: "deck", playerId: "p1" }, 3, "all");
         expect(revealed).toHaveLength(3);
@@ -437,7 +467,7 @@ describe("Zone Operations", () => {
     it("should remove reveal window", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         const revealId = ops.reveal(["card-1"], "all");
         ops.clearReveal(revealId);
@@ -455,7 +485,7 @@ describe("Zone Operations", () => {
       state.ctx.zones.private.cardMeta["card-3"] = { type: "creature", cost: 3 };
 
       let results: string[] = [];
-      produce(state, (draft) => {
+      create(state, (draft) => {
         const ops = createZoneOperations(draft);
         results = ops.search(
           { zone: "deck", playerId: "p1" },
@@ -474,7 +504,7 @@ describe("Zone Operations", () => {
       const state = createTestState();
 
       let results: string[] = [];
-      produce(state, (draft) => {
+      create(state, (draft) => {
         const ops = createZoneOperations(draft);
         results = ops.searchAndPick({ zone: "deck", playerId: "p1" }, 5);
       });
@@ -488,7 +518,7 @@ describe("Zone Operations", () => {
       state.ctx.zones.private.cardMeta["card-2"] = { rarity: "common" };
 
       let results: string[] = [];
-      produce(state, (draft) => {
+      create(state, (draft) => {
         const ops = createZoneOperations(draft);
         results = ops.searchAndPick(
           { zone: "deck", playerId: "p1" },
@@ -506,7 +536,7 @@ describe("Zone Operations", () => {
     it("should reveal top cards to specific player", () => {
       const state = createTestState();
 
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         const ops = createZoneOperations(draft);
         const looked = ops.lookAtTop({ zone: "deck", playerId: "p1" }, 3, "p1");
         expect(looked).toHaveLength(3);
@@ -606,6 +636,28 @@ describe("Zone Operations", () => {
     });
   });
 
+  describe("clearRevealsByZone", () => {
+    it("should clear reveals whose cards are in the target zone and leave others untouched", () => {
+      const state = createTestState();
+
+      const result = create(state, (draft) => {
+        const ops = createZoneOperations(draft);
+        // Move card-1 to p1's hand; card-2 stays in deck
+        ops.moveCard("card-1", { zone: "hand", playerId: "p1" });
+        // Set up two reveals: one for the hand card, one for a deck card
+        draft.ctx.zones.reveals.active = [
+          { revealID: "hand-reveal", cardIDs: ["card-1"], visibleTo: "all" },
+          { revealID: "deck-reveal", cardIDs: ["card-2"], visibleTo: "all" },
+        ];
+        ops.clearRevealsByZone({ zone: "hand", playerId: "p1" });
+      });
+
+      const revealIds = result.ctx.zones.reveals.active.map((r) => r.revealID);
+      expect(revealIds).not.toContain("hand-reveal");
+      expect(revealIds).toContain("deck-reveal");
+    });
+  });
+
   describe("performMulligan", () => {
     it("should mulligan hand and draw new cards", () => {
       const state = createTestState();
@@ -620,7 +672,7 @@ describe("Zone Operations", () => {
       state.ctx.zones.public.zoneSummaries.deck.count = 33;
 
       let mulliganResult: MulliganResult | undefined;
-      const newState = produce(state, (draft) => {
+      const newState = create(state, (draft) => {
         mulliganResult = performMulligan(draft, "p1", "hand", "deck", 7, 1);
         expect(mulliganResult.success).toBe(true);
         expect(mulliganResult.mulliganedCards).toHaveLength(7);
@@ -635,7 +687,7 @@ describe("Zone Operations", () => {
       const state = createTestState();
 
       let mulliganResult: MulliganResult | undefined;
-      produce(state, (draft) => {
+      create(state, (draft) => {
         mulliganResult = performMulligan(draft, "p1", "hand", "deck", 7, 0);
       });
 

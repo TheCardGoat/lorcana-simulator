@@ -69,7 +69,11 @@ export function resolveGrantAbilityEffect(
     const currentMeta = (ctx.cards.require(targetId).meta ?? {}) as LorcanaCardMeta;
     ctx.cards.patchMeta(
       targetId,
-      addTemporaryAbility(currentMeta, ability, expiresAtTurn, startsAtTurn, structuredAbility),
+      addTemporaryAbility(currentMeta, ability, expiresAtTurn, startsAtTurn, {
+        ...(structuredAbility ?? { type: ability }),
+        sourceId: cardPlayed.cardId,
+        duration: effect.duration,
+      }),
     );
   }
 }

@@ -43,7 +43,7 @@ describe("Monsieur D'Arque - Despicable Proprietor", () => {
 
       // Accept the optional ability and target the item
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(monsieurDarqueDespicableProprietor, {
           resolveOptional: true,
           targets: [allyItem],
         }),
@@ -76,7 +76,9 @@ describe("Monsieur D'Arque - Despicable Proprietor", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(monsieurDarqueDespicableProprietor, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Item should still be in play
@@ -86,7 +88,7 @@ describe("Monsieur D'Arque - Despicable Proprietor", () => {
       expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(handBefore);
     });
 
-    it("does NOT trigger when no item is in play to banish", () => {
+    it("still queues the trigger when no legal item can be chosen", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
           play: [{ card: monsieurDarqueDespicableProprietor, isDrying: false }],
@@ -101,9 +103,14 @@ describe("Monsieur D'Arque - Despicable Proprietor", () => {
         testEngine.asPlayerOne().quest(monsieurDarqueDespicableProprietor),
       ).toBeSuccessfulCommand();
 
-      // No bag effect should be present if there are no items to banish
-      // (optional with no valid targets should not fire)
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // The trigger still goes to the bag. With no legal item to banish,
+      // declining it leaves the game state unchanged.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(monsieurDarqueDespicableProprietor, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
     });
 
     it("triggers on every quest, not just the first", () => {
@@ -127,7 +134,10 @@ describe("Monsieur D'Arque - Despicable Proprietor", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [allyItem] }),
+        testEngine.asPlayerOne().resolvePendingByCard(monsieurDarqueDespicableProprietor, {
+          resolveOptional: true,
+          targets: [allyItem],
+        }),
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getCardZone(allyItem)).toBe("discard");
 
@@ -141,7 +151,10 @@ describe("Monsieur D'Arque - Despicable Proprietor", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [allyItem2] }),
+        testEngine.asPlayerOne().resolvePendingByCard(monsieurDarqueDespicableProprietor, {
+          resolveOptional: true,
+          targets: [allyItem2],
+        }),
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getCardZone(allyItem2)).toBe("discard");
     });

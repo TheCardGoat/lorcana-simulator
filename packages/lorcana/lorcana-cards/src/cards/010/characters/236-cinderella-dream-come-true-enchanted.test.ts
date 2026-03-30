@@ -41,7 +41,9 @@ describe("Cinderella - Dream Come True (Enchanted)", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects).toHaveLength(1);
 
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(cinderellaDreamComeTrueEnchanted),
+      ).toBeSuccessfulCommand();
 
       // Accepting creates a pending target selection: which hand card to put in inkwell
       const inkFodderId = testEngine.findCardInstanceId(inkFodder, "hand", "p1");
@@ -76,7 +78,9 @@ describe("Cinderella - Dream Come True (Enchanted)", () => {
       expect(bagEffects).toHaveLength(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(cinderellaDreamComeTrueEnchanted, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(inkFodder)).toBe("hand");

@@ -167,13 +167,17 @@ describe("#### 3. TURN STRUCTURE", () => {
       expect(bagEffects.length).toBe(3);
       expect(testEngine.asServer().getCurrentPhase()).toBe("beginning");
 
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(pachaEmperorsGuide, { bagIndex: 0 }),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
       expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
 
       expect(testEngine.asServer().getCurrentPhase()).toBe("beginning");
 
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[1]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(pachaEmperorsGuide),
+      ).toBeSuccessfulCommand();
       // After resolving 2nd effect, the last mandatory no-target effect auto-resolves
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(3);
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);

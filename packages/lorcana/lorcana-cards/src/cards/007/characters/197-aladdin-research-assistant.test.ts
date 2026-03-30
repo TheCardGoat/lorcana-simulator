@@ -66,7 +66,7 @@ describe("Aladdin - Research Assistant", () => {
 
       // Accept the optional effect and choose the Ally character
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(aladdinResearchAssistant, {
           resolveOptional: true,
           targets: [allyCharacterCost3],
         }),
@@ -95,7 +95,7 @@ describe("Aladdin - Research Assistant", () => {
       if (bagCount > 0) {
         const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(aladdinResearchAssistant, {
             resolveOptional: true,
             targets: [allyCharacterCost4],
           }),
@@ -121,7 +121,9 @@ describe("Aladdin - Research Assistant", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(aladdinResearchAssistant, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Non-Ally should still be in hand
@@ -142,7 +144,7 @@ describe("Aladdin - Research Assistant", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(aladdinResearchAssistant, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

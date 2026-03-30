@@ -41,7 +41,7 @@ describe("Panic - High-Strung Imp", () => {
 
       // Accept and provide both targets: source character and opposing character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(panicHighstrungImp, {
           resolveOptional: true,
           targets: [damagedAllyCharacter, opponentTarget],
         }),
@@ -72,7 +72,9 @@ describe("Panic - High-Strung Imp", () => {
       // Decline the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(panicHighstrungImp, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain unchanged
@@ -98,7 +100,7 @@ describe("Panic - High-Strung Imp", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(panicHighstrungImp, {
           resolveOptional: true,
           targets: [damagedAllyCharacter, opponentTarget],
         }),

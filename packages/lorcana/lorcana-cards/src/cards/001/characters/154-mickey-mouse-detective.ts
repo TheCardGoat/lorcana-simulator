@@ -23,9 +23,9 @@ export const mickeyMouseDetective: CharacterCard = {
   },
   text: [
     {
-      title: "GET",
+      title: "GET A CLUE",
       description:
-        "A CLUE When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
+        "When you play this character, you may put the top card of your deck into your inkwell facedown and exerted.",
     },
   ],
   classifications: ["Dreamborn", "Hero", "Detective"],

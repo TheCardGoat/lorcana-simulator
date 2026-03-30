@@ -46,7 +46,7 @@ export const davidXanatosCharismaticLeader: CharacterCard = {
       text: "LEARN FROM EVERYTHING During your turn, whenever one of your characters is banished, draw a card.",
       trigger: {
         event: "banish",
-        on: "YOUR_OTHER_CHARACTERS",
+        on: "YOUR_CHARACTERS",
         timing: "whenever",
         restrictions: [
           {

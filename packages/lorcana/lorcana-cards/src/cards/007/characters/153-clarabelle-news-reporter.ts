@@ -66,6 +66,7 @@ export const clarabelleNewsReporter: CharacterCard = {
         type: "modify-stat",
       },
       id: "1r6-2",
+      name: "BREAKING STORY",
       text: "BREAKING STORY Your other characters with Support get +1 {S}.",
       type: "static",
     },

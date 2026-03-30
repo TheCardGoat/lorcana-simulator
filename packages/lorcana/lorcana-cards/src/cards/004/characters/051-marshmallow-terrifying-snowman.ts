@@ -41,6 +41,7 @@ export const marshmallowTerrifyingSnowman: CharacterCard = {
         type: "modify-stat",
       },
       id: "1fi-1",
+      name: "BEHEMOTH",
       text: "BEHEMOTH This character gets +1 {S} for each card in your hand.",
       type: "static",
     },

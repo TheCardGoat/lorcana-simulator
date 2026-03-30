@@ -9,6 +9,7 @@ import type { PendingActionEffect, PendingActionResolutionInput } from "../../ty
 import type { LogTargetId, ScryDestinationEntry } from "../../types/log-messages";
 import { resolveActionEffect } from "./action-effects/composed-effect-resolver";
 import { isScryEffect, validateScrySelection } from "./action-effects/scry-effect";
+import { buildResolutionSelectionContext } from "./action-effects/selection-context";
 import { resolveRecordedVanishTargets } from "./action-effects/vanish";
 import {
   clearPendingActionChoice,
@@ -847,11 +848,15 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
         pendingEffect.continuation.stagedSequence.remainingSteps;
 
       if (nextStep) {
+        const nextResolutionInput = {
+          ...clearCurrentSelectionTargets(pendingEffect.resolutionInput),
+        };
         const stagedPendingEffect = createPendingActionEffect(ctx, {
           kind: "target-selection",
           sourceCardId: pendingEffect.sourceCardId,
           controllerId: pendingEffect.controllerId,
           chooserId: pendingEffect.chooserId,
+          abilityIndex: pendingEffect.abilityIndex,
           cardPlayed: pendingEffect.cardPlayed,
           effect: nextStep,
           continuation: {
@@ -865,9 +870,18 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
               remainingSteps,
             },
           },
-          resolutionInput: {
-            ...clearCurrentSelectionTargets(pendingEffect.resolutionInput),
-          },
+          resolutionInput: nextResolutionInput,
+          selectionContext: buildResolutionSelectionContext({
+            origin: "pending-effect",
+            requestId: pendingEffect.id,
+            sourceCardId: pendingEffect.sourceCardId,
+            chooserId: pendingEffect.chooserId,
+            cardPlayed: pendingEffect.cardPlayed,
+            effect: nextStep,
+            resolutionInput: nextResolutionInput,
+            ctx,
+            originatesFromOptional: resolutionInput.resolveOptional === true,
+          }),
         });
         enqueuePendingActionEffect(ctx, stagedPendingEffect);
         logResolveEffectMessage(ctx, pendingEffect, resolutionInput);
@@ -901,6 +915,7 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
       resolutionInput,
       {
         allowPromptForExistingChosenTargets: true,
+        sourceAbilityIndex: pendingEffect.abilityIndex,
         continuation: replayStagedSequence
           ? {
               ...(pendingEffect.continuation?.remainingEffects
@@ -912,6 +927,20 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
       },
     );
     logResolveEffectMessage(ctx, pendingEffect, resolutionInput);
+    if (didResolveTargetSelectionWithoutTargets) {
+      ctx.framework.log(
+        createLorcanaLogProjection(
+          "lorcana.effect.cancelled",
+          {
+            playerId: pendingEffect.chooserId,
+            sourceCardId: pendingEffect.sourceCardId,
+            cause: "no-valid-targets",
+          },
+          { mode: "PUBLIC" },
+          "action",
+        ),
+      );
+    }
 
     if (result.status === "suspended") {
       traceLorcanaRuntimeStep({
@@ -945,6 +974,7 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
       } else if (ctx.G.challengeState && !hasPendingBagItems(ctx)) {
         continuePendingChallengeResolution(ctx);
       }
+      restorePriorityToTurnPlayer(ctx);
       return;
     }
 
@@ -958,6 +988,7 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
       buildContinuationResolutionInput(pendingEffect, resolutionInput),
       {
         allowPromptForExistingChosenTargets: true,
+        sourceAbilityIndex: pendingEffect.abilityIndex,
       },
     );
     if (continuationResult.status === "suspended") {
@@ -991,6 +1022,7 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
     } else if (ctx.G.challengeState && !hasPendingBagItems(ctx)) {
       continuePendingChallengeResolution(ctx);
     }
+    restorePriorityToTurnPlayer(ctx);
   },
 
   available: (ctx) => {
@@ -1016,4 +1048,57 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
 
 function assertNever(value: never): never {
   throw new Error(`Unhandled pending action effect kind: ${String(value)}`);
+}
+
+function restorePriorityToTurnPlayer(ctx: ResolveEffectExecutionContext): void {
+  if (
+    hasPendingBagItems(ctx) ||
+    ctx.framework.state.priority.pendingChoice ||
+    (ctx.G.pendingEffects?.length ?? 0) > 0 ||
+    ctx.G.pendingTurnTransition ||
+    ctx.G.challengeState
+  ) {
+    return;
+  }
+
+  const turnPlayer = resolveTurnPlayerFromCtx(ctx);
+  if (!turnPlayer || ctx.framework.state.currentPlayer === turnPlayer) {
+    return;
+  }
+
+  if (typeof ctx.framework.priority?.setHolder === "function") {
+    ctx.framework.priority.setHolder(turnPlayer);
+  } else {
+    (ctx.framework.state.priority as { holder?: PlayerId }).holder = turnPlayer;
+  }
+}
+
+function resolveTurnPlayerFromCtx(ctx: ResolveEffectExecutionContext): PlayerId | undefined {
+  // Keep this turn-owner derivation in sync with:
+  // - runtime-moves/moves/turn/pass-turn.ts:resolveTurnPlayer
+  // - runtime-moves/resolution/resolve-bag.ts:resolveTurnPlayerFromCtx
+  // - runtime-game/project-board.ts:resolveTurnPlayer
+  const otp = ctx.framework.state.status.otp as PlayerId | undefined;
+  if (!otp) {
+    return ctx.framework.state.currentPlayer as PlayerId | undefined;
+  }
+
+  const playerIds = ctx.framework.state.playerIds;
+  const turnsCompleted = (ctx.G.turnsCompletedByPlayer ?? {}) as Record<string, number>;
+  const totalCompletedTurns = Object.values(turnsCompleted).reduce(
+    (sum, count) => sum + (count ?? 0),
+    0,
+  );
+
+  if (totalCompletedTurns === 0) {
+    return otp;
+  }
+
+  const otpIndex = playerIds.findIndex((p) => p === otp);
+  if (otpIndex < 0 || playerIds.length === 0) {
+    return otp;
+  }
+
+  const offset = totalCompletedTurns % playerIds.length;
+  return playerIds[(otpIndex + offset) % playerIds.length] as PlayerId;
 }

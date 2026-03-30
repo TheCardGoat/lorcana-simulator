@@ -39,9 +39,10 @@ describe("Giant Cobra - Ghostly Serpent", () => {
 
       // Accept the optional triggered ability and provide the card to discard
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ resolveOptional: true, targets: [discardFodder] }),
+        testEngine.asPlayerOne().resolvePendingByCard(giantCobraGhostlySerpent, {
+          resolveOptional: true,
+          targets: [discardFodder],
+        }),
       ).toBeSuccessfulCommand();
 
       // The discarded card should be in the discard pile
@@ -62,7 +63,9 @@ describe("Giant Cobra - Ghostly Serpent", () => {
 
       // Decline the optional triggered ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(giantCobraGhostlySerpent, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // The card should still be in hand
@@ -87,7 +90,9 @@ describe("Giant Cobra - Ghostly Serpent", () => {
       if (bagCount > 0) {
         // If the bag fires, accepting it should still not grant lore without a discard target
         expect(
-          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(giantCobraGhostlySerpent, { resolveOptional: true }),
         ).toBeSuccessfulCommand();
       }
 

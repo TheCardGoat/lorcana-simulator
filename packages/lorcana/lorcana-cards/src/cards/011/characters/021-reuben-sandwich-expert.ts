@@ -33,6 +33,7 @@ export const reubenSandwichExpert: CharacterCard = {
   abilities: [
     {
       id: "1uo-1",
+      name: "LUNCH SPECIAL",
       type: "activated",
       cost: {
         exert: true,

@@ -44,7 +44,7 @@ describe("Tigger - Bouncing All the Way", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tiggerBouncingAllTheWay, {
           resolveOptional: true,
           targets: [cheapCharacter],
         }),
@@ -67,7 +67,7 @@ describe("Tigger - Bouncing All the Way", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tiggerBouncingAllTheWay, {
           resolveOptional: true,
           targets: [cheapItem],
         }),
@@ -91,7 +91,7 @@ describe("Tigger - Bouncing All the Way", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tiggerBouncingAllTheWay, {
           resolveOptional: true,
           targets: [cheapLocation],
         }),
@@ -123,7 +123,7 @@ describe("Tigger - Bouncing All the Way", () => {
       expect(opponentCharId).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tiggerBouncingAllTheWay, {
           resolveOptional: true,
           targets: [opponentCharId!],
         }),
@@ -146,7 +146,9 @@ describe("Tigger - Bouncing All the Way", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(tiggerBouncingAllTheWay, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(cheapCharacter)).toBe("play");

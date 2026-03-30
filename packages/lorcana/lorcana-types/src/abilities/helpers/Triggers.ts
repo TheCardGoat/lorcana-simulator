@@ -12,7 +12,12 @@
  * ```
  */
 
-import type { Trigger, TriggerSubject, TriggerTiming } from "../trigger-types";
+import type {
+  ChallengeTriggerContext,
+  Trigger,
+  TriggerSubject,
+  TriggerTiming,
+} from "../trigger-types";
 
 export const Triggers = {
   /**
@@ -45,8 +50,13 @@ export const Triggers = {
   /**
    * "When this character is banished in a challenge"
    */
-  BanishInChallenge: (params: { timing: TriggerTiming; on: TriggerSubject }): Trigger => ({
+  BanishInChallenge: (params: {
+    timing: TriggerTiming;
+    on: TriggerSubject;
+    challengeContext?: ChallengeTriggerContext;
+  }): Trigger => ({
     event: "banish-in-challenge",
+    challengeContext: params.challengeContext ?? { role: "either" },
     ...params,
   }),
 
@@ -151,6 +161,7 @@ export const Triggers = {
     event: "challenge",
     on: "SELF",
     timing: "whenever",
+    challengeContext: { role: "attacker" },
   }),
 
   /**
@@ -160,6 +171,7 @@ export const Triggers = {
     event: "challenged",
     on: "SELF",
     timing: "whenever",
+    challengeContext: { role: "defender" },
   }),
 
   /**
@@ -169,5 +181,6 @@ export const Triggers = {
     event: "challenged-and-banished",
     on,
     timing: "when",
+    challengeContext: { role: "defender" },
   }),
 };

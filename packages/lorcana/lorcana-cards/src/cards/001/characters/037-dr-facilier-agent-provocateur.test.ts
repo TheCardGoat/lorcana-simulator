@@ -30,7 +30,9 @@ describe("Dr. Facilier - Agent Provocateur", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(drFacilierAgentProvocateur, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(heiheiBoatSnack)).toBe("hand");
@@ -60,7 +62,9 @@ describe("Dr. Facilier - Agent Provocateur", () => {
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
       expect(
-        testEngine.asPlayerTwo().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(drFacilierAgentProvocateur, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(heiheiBoatSnack)).toBe("hand");
@@ -87,7 +91,9 @@ describe("Dr. Facilier - Agent Provocateur", () => {
 
       const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
       expect(
-        testEngine.asPlayerTwo().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(drFacilierAgentProvocateur, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(heiheiBoatSnack)).toBe("discard");

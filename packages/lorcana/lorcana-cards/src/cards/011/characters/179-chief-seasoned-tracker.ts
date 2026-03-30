@@ -33,6 +33,7 @@ export const chiefSeasonedTracker: CharacterCard = {
   abilities: [
     {
       id: "1cy-1",
+      name: "GOOD RIDDANCE",
       cost: {
         exert: true,
       },

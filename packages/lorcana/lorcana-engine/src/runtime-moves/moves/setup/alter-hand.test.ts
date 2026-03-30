@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { type CardInstanceId, createPlayerId } from "#core";
+import { type CardInstanceId, createPlayerId, stripPrivateFields } from "#core";
 import {
   CANONICAL_PLAYER_ONE,
   CANONICAL_PLAYER_TWO,
@@ -125,39 +125,22 @@ describe("alterHand", () => {
     const result = engine.asLorcanaPlayerOne().mulligan(cardsToMulligan);
     expect(result.success).toBe(true);
 
-    const gameLog = engine.getServerEngine().getRuntime().getGameLog();
-    const mulliganEntry = [...gameLog]
-      .reverse()
-      .find((entry) => entry.defaultMessage?.key === "lorcana.setup.mulligan.count");
+    const moveLogHistory = engine.getServerEngine().getRuntime().getMoveLogHistory();
+    const mulliganEntry = [...moveLogHistory].reverse().find((log) => log.type === "alterHand");
 
     expect(mulliganEntry).toBeDefined();
-    expect(mulliganEntry?.visibility.mode).toBe("PUBLIC_WITH_OVERRIDES");
-    expect(mulliganEntry?.defaultMessage).toMatchObject({
-      key: "lorcana.setup.mulligan.count",
-      values: { playerId: PLAYER_ONE, count: 2 },
+    expect(mulliganEntry).toMatchObject({
+      type: "alterHand",
+      playerId: PLAYER_ONE,
+      count: 2,
     });
-
-    if (!mulliganEntry || mulliganEntry.visibility.mode !== "PUBLIC_WITH_OVERRIDES") {
-      return;
-    }
-
-    const privateOverride = mulliganEntry.visibility.overrides[PLAYER_ONE];
-    expect(privateOverride).toBeDefined();
-    if (!privateOverride) {
-      return;
-    }
-    expect(privateOverride).toMatchObject({
-      key: "lorcana.setup.mulligan.detail",
-      values: { playerId: PLAYER_ONE, count: 2 },
+    expect(stripPrivateFields(mulliganEntry, PLAYER_ONE)).toMatchObject({
+      mulliganed: cardsToMulligan,
     });
-    const detailValues = privateOverride.values as unknown as {
-      mulliganed: string[];
-      drawn: string[];
-    };
-    expect(detailValues.mulliganed).toHaveLength(2);
-    expect(detailValues.drawn).toHaveLength(2);
-    expect(detailValues.mulliganed.every((name) => name.trim().length > 0)).toBe(true);
-    expect(detailValues.drawn.every((name) => name.trim().length > 0)).toBe(true);
+    expect(stripPrivateFields(mulliganEntry, PLAYER_TWO)).toMatchObject({
+      mulliganed: undefined,
+      drawn: undefined,
+    });
   });
 
   it("draws mulligan replacements from the top of deck", () => {

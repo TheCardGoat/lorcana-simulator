@@ -21,7 +21,9 @@ describe("Wreck-It Ralph - Back Seat Driver", () => {
 
     expect(testEngine.asPlayerOne().playCard(wreckitRalphBackSeatDriver)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphBackSeatDriver),
+    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [racerCharacter] }),
     ).toBeSuccessfulCommand();
@@ -39,7 +41,9 @@ describe("Wreck-It Ralph - Back Seat Driver", () => {
     });
 
     expect(testEngine.asPlayerOne().playCard(wreckitRalphBackSeatDriver)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(wreckitRalphBackSeatDriver),
+    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [racerCharacter] }),
     ).toBeSuccessfulCommand();

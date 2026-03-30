@@ -2,7 +2,6 @@ import { describe, expect, it } from "bun:test";
 import {
   LorcanaMultiplayerTestEngine,
   PLAYER_ONE,
-  PLAYER_TWO,
   createMockCharacter,
   createMockItem,
 } from "@tcg/lorcana-engine/testing";
@@ -32,7 +31,7 @@ const testItem = createMockItem({
 });
 
 describe("Grandmother Willow - Ancient Advisor", () => {
-  it("requires activating SMOOTH THE WAY before the next character gets the discount", () => {
+  it("reduces the cost of the next character you play after Grandmother Willow enters play", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [grandmotherWillowAncientAdvisor, discountedCharacter],
       inkwell: 4,
@@ -42,49 +41,55 @@ describe("Grandmother Willow - Ancient Advisor", () => {
     expect(
       testEngine.asPlayerOne().playCard(grandmotherWillowAncientAdvisor),
     ).toBeSuccessfulCommand();
-
-    expect(testEngine.asPlayerOne().canPlayCard(discountedCharacter)).toBe(false);
-
-    expect(
-      testEngine.asPlayerOne().activateAbility(grandmotherWillowAncientAdvisor),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+    expect(testEngine.asPlayerOne().getBoard().playerEffectSourceIds?.[PLAYER_ONE]).toContain(
+      testEngine.findCardInstanceId(grandmotherWillowAncientAdvisor, "play"),
+    );
 
     expect(testEngine.asPlayerOne().canPlayCard(discountedCharacter)).toBe(true);
     expect(testEngine.asPlayerOne().playCard(discountedCharacter)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().getBoard().playerEffectSourceIds?.[PLAYER_ONE] ?? [],
+    ).toHaveLength(0);
   });
 
-  it("can only activate SMOOTH THE WAY once each turn", () => {
+  it("adds a start-of-turn bag effect that discounts only the first character you play that turn", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       play: [grandmotherWillowAncientAdvisor],
+      hand: [discountedCharacter, secondCharacter],
+      inkwell: 4,
       deck: 2,
     });
-
-    expect(
-      testEngine.asPlayerOne().activateAbility(grandmotherWillowAncientAdvisor),
-    ).toBeSuccessfulCommand();
-    const secondActivation = testEngine
-      .asPlayerOne()
-      .activateAbility(grandmotherWillowAncientAdvisor);
-    expect(secondActivation.success).toBe(false);
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
     expect(
-      testEngine.asPlayerOne().activateAbility(grandmotherWillowAncientAdvisor),
+      testEngine.asPlayerOne().resolvePendingByCard(grandmotherWillowAncientAdvisor),
     ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+    expect(testEngine.asPlayerOne().getBoard().playerEffectSourceIds?.[PLAYER_ONE]).toContain(
+      testEngine.findCardInstanceId(grandmotherWillowAncientAdvisor, "play"),
+    );
+
+    expect(testEngine.asPlayerOne().canPlayCard(discountedCharacter)).toBe(true);
+    expect(testEngine.asPlayerOne().playCard(discountedCharacter)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().canPlayCard(secondCharacter)).toBe(false);
   });
 
   it("keeps the discount for the next character even if you play a non-character first", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      hand: [testItem, discountedCharacter, secondCharacter],
-      inkwell: 4,
-      play: [grandmotherWillowAncientAdvisor],
+      hand: [grandmotherWillowAncientAdvisor, testItem, discountedCharacter, secondCharacter],
+      inkwell: 6,
       deck: 2,
     });
 
     expect(
-      testEngine.asPlayerOne().activateAbility(grandmotherWillowAncientAdvisor),
+      testEngine.asPlayerOne().playCard(grandmotherWillowAncientAdvisor),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().playCard(testItem)).toBeSuccessfulCommand();
@@ -95,7 +100,7 @@ describe("Grandmother Willow - Ancient Advisor", () => {
     expect(testEngine.asPlayerOne().canPlayCard(secondCharacter)).toBe(false);
   });
 
-  it("regression: cost reduction does not persist after Grandmother Willow is bounced to hand", () => {
+  it("regression: no start-of-turn bag effect is created after Grandmother Willow is bounced to hand", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         play: [grandmotherWillowAncientAdvisor],
@@ -110,14 +115,6 @@ describe("Grandmother Willow - Ancient Advisor", () => {
       },
     );
 
-    // Activate SMOOTH THE WAY for cost reduction
-    expect(
-      testEngine.asPlayerOne().activateAbility(grandmotherWillowAncientAdvisor),
-    ).toBeSuccessfulCommand();
-
-    // Character should be playable with discount (3 - 1 = 2 ink needed)
-    expect(testEngine.asPlayerOne().canPlayCard(discountedCharacter)).toBe(true);
-
     // Pass to P2, who returns Grandmother Willow to hand
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(
@@ -128,8 +125,7 @@ describe("Grandmother Willow - Ancient Advisor", () => {
     // Pass back to P1
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-    // On P1's new turn, the cost reduction from Grandmother Willow should NOT persist
-    // since she's no longer in play
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
     expect(testEngine.asPlayerOne().canPlayCard(discountedCharacter)).toBe(false);
   });
 });

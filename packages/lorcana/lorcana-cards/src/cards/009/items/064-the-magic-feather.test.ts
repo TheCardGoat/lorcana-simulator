@@ -35,7 +35,7 @@ describe("The Magic Feather", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(theMagicFeather, {
         targets: [chosenCharacter],
       }),
     ).toBeSuccessfulCommand();
@@ -54,7 +54,7 @@ describe("The Magic Feather", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(theMagicFeather, {
         targets: [chosenCharacter],
       }),
     ).toBeSuccessfulCommand();

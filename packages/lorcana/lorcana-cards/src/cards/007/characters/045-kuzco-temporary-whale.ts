@@ -24,9 +24,9 @@ export const kuzcoTemporaryWhale: CharacterCard = {
   },
   text: [
     {
-      title: "DON'T YOU SAY",
+      title: "DON'T YOU SAY A WORD",
       description:
-        "A WORD Once during your turn, whenever a card is put into your inkwell, you may return chosen character, item, or location with cost 2 or less to their player's hand, then that player draws a card.",
+        "Once during your turn, whenever a card is put into your inkwell, you may return chosen character, item, or location with cost 2 or less to their player's hand, then that player draws a card.",
     },
   ],
   classifications: ["Storyborn", "King"],

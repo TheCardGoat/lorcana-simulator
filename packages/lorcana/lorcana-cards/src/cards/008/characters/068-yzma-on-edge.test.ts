@@ -22,7 +22,7 @@ describe("Yzma - On Edge", () => {
     expect(testEngine.asPlayerOne().playCard(yzmaOnEdge)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      testEngine.asPlayerOne().resolvePendingByCard(yzmaOnEdge, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(wrongLever)).toBe("hand");

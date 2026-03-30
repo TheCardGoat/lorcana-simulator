@@ -62,7 +62,9 @@ describe("The Horned King - Wicked Ruler", () => {
 
     // Resolve optional ability (choose to return ally to hand)
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(theHornedKingWickedRuler, { resolveOptional: true }),
     ).toBeSuccessfulCommand();
 
     // Fragile ally should now be in hand
@@ -103,7 +105,9 @@ describe("The Horned King - Wicked Ruler", () => {
 
     // Skip the optional ability
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(theHornedKingWickedRuler, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     // Ally stays in discard, hand card unchanged

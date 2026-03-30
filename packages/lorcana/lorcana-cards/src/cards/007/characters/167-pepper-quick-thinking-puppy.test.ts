@@ -29,7 +29,9 @@ describe("Pepper - Quick-Thinking Puppy", () => {
       // Pepper's trigger should fire - player two resolves optional ability
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(pepperQuickthinkingPuppy, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Freckles should now be in inkwell, Pepper stays in play
@@ -60,7 +62,9 @@ describe("Pepper - Quick-Thinking Puppy", () => {
       // Pepper's trigger should fire - player two resolves optional ability
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(pepperQuickthinkingPuppy, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Pepper should now be in inkwell

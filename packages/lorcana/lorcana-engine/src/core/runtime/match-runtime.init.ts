@@ -4,16 +4,12 @@
  * Factory functions for creating initial match state.
  */
 
-import { produce } from "immer";
 import type { MatchState } from "./types";
 import { createInitialTCGCtx, type InitialStatusConfig } from "./types";
-import type {
-  MatchRuntimeConfig,
-  Player,
-  ZoneDefinitions,
-  RuntimeFlowDefinition,
-} from "./match-runtime.types";
+import type { MatchRuntimeConfig, Player, RuntimeFlowDefinition } from "./match-runtime.types";
 import type { MatchStaticResources } from "./static-resources";
+import { createRuntimeState } from "./mutative";
+import { buildZoneRegistry, initializeZoneStateFromRegistry } from "./zone-registry";
 
 type PlayerId = string;
 
@@ -57,14 +53,15 @@ export function initializeMatchState(ctx: MatchInitContext): {
     players,
   });
 
-  // Initialize zone definitions if provided
-  // TODO: Not sure why we need this for
   if (ctx.config.zones) {
-    initializeZones(
-      tcgCtx.zones.zoneDefs,
+    const zoneRegistry = buildZoneRegistry(
+      ctx.config.zones,
+      players.map((player) => player.id),
+    );
+    initializeZoneStateFromRegistry(
       tcgCtx.zones.public.zoneSummaries,
       tcgCtx.zones.private.zoneCards,
-      ctx.config.zones,
+      zoneRegistry,
     );
   }
 
@@ -79,7 +76,7 @@ export function initializeMatchState(ctx: MatchInitContext): {
   let state: MatchState = { G: gameState, ctx: tcgCtx };
 
   if (ctx.config.boardSetup) {
-    state = produce(state, (draft) => {
+    state = createRuntimeState(state, (draft) => {
       ctx.config.boardSetup!(draft, {
         players,
         staticResources,
@@ -96,23 +93,6 @@ export function initializeMatchState(ctx: MatchInitContext): {
     board,
     staticResources,
   };
-}
-
-// =============================================================================
-// Zone Initialization
-// =============================================================================
-
-function initializeZones(
-  zoneDefs: Record<string, unknown>,
-  zoneSummaries: Record<string, unknown>,
-  zoneCards: Record<string, unknown>,
-  definitions: ZoneDefinitions,
-): void {
-  for (const [zoneId, zoneDef] of Object.entries(definitions)) {
-    zoneDefs[zoneId] = zoneDef;
-    zoneSummaries[zoneId] = { revision: 0, count: 0 };
-    zoneCards[zoneId] = [];
-  }
 }
 
 // =============================================================================

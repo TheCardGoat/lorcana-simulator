@@ -8,6 +8,59 @@ import { theReturnOfHercules } from "./118-the-return-of-hercules";
 import { waterHasMemory } from "./177-water-has-memory";
 
 describe("Water Has Memory", () => {
+  it("creates a chosen-player prompt before opening the scry selection", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [waterHasMemory],
+        inkwell: waterHasMemory.cost,
+        deck: [simbaProtectiveCub],
+      },
+      {
+        deck: [doubleTrouble, allIsFound, theReturnOfHercules, showMeMore, mickeyMouseTrueFriend],
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(waterHasMemory)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+    const [chosenPlayerPrompt] = testEngine.asPlayerOne().getPendingEffects();
+    expect(chosenPlayerPrompt?.selectionContext).toMatchObject({
+      kind: "target-selection",
+      playerCandidateIds: expect.arrayContaining([PLAYER_ONE, PLAYER_TWO]),
+    });
+
+    expect(
+      testEngine.asPlayerOne().resolveEffect(chosenPlayerPrompt!.id, {
+        targets: [PLAYER_TWO],
+      }),
+    ).toBeSuccessfulCommand();
+
+    const [scryPrompt] = testEngine.asPlayerOne().getPendingEffects();
+    expect(scryPrompt?.selectionContext).toMatchObject({
+      kind: "scry-selection",
+      chooserId: PLAYER_ONE,
+    });
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        destinations: [
+          {
+            zone: "deck-top",
+            cards: [mickeyMouseTrueFriend],
+          },
+          {
+            zone: "deck-bottom",
+            cards: [allIsFound, theReturnOfHercules, showMeMore],
+          },
+        ],
+      }),
+    ).toBeSuccessfulCommand();
+
+    const p2Deck = testEngine.getCardDefinitionIdsInZone("deck", PLAYER_TWO);
+    expect(p2Deck.at(-1)).toBe(mickeyMouseTrueFriend.id);
+    expect(p2Deck).toContain(doubleTrouble.id);
+  });
+
   it("reorders the chosen player's looked-at cards while leaving untouched cards in place", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {

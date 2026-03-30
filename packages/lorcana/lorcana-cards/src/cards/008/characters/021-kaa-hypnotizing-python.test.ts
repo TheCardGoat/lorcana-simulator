@@ -40,7 +40,7 @@ describe("Kaa - Hypnotizing Python", () => {
 
       const targetId = testEngine.findCardInstanceId(opposingCharacter, "play", PLAYER_TWO);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(kaaHypnotizingPython, {
           targets: [targetId],
         }),
       ).toBeSuccessfulCommand();
@@ -67,7 +67,7 @@ describe("Kaa - Hypnotizing Python", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       const targetId = testEngine.findCardInstanceId(opposingCharacter, "play", PLAYER_TWO);
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(kaaHypnotizingPython, {
           targets: [targetId],
         }),
       ).toBeSuccessfulCommand();

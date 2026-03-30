@@ -30,7 +30,7 @@ describe("Captain Hook - Captain of the Jolly Roger", () => {
       // Triggered ability should create a bag entry
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(captainHookCaptainOfTheJollyRoger, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -61,7 +61,7 @@ describe("Captain Hook - Captain of the Jolly Roger", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(captainHookCaptainOfTheJollyRoger, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -85,7 +85,7 @@ describe("Captain Hook - Captain of the Jolly Roger", () => {
       // but there should be no valid targets to return
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(captainHookCaptainOfTheJollyRoger, {
           resolveOptional: true,
         });
       }
@@ -108,7 +108,7 @@ describe("Captain Hook - Captain of the Jolly Roger", () => {
       // With no valid targets, the bag entry may or may not appear
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(captainHookCaptainOfTheJollyRoger, {
           resolveOptional: false,
         });
       }

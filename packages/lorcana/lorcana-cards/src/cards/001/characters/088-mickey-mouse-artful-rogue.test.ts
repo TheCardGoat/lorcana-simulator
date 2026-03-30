@@ -50,7 +50,7 @@ describe("Mickey Mouse - Artful Rogue", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseArtfulRogue, {
           targets: [opposingInstanceId],
         }),
       ).toBeSuccessfulCommand();
@@ -87,7 +87,7 @@ describe("Mickey Mouse - Artful Rogue", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseArtfulRogue, {
           targets: [opposingInstanceId],
         }),
       ).toBeSuccessfulCommand();

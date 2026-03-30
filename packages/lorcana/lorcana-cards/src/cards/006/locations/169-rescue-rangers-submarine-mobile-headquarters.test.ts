@@ -33,7 +33,8 @@ describe("Rescue Rangers Submarine - Mobile Headquarters", () => {
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
+      testEngine.asPlayerOne().resolvePendingByCard(rescueRangersSubmarineMobileHeadquarters)
+        .success,
     ).toBe(true);
 
     expect(testEngine.asPlayerOne().getCardZone(topDeckCard)).toBe("inkwell");

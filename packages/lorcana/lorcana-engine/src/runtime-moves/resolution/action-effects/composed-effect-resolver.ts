@@ -332,6 +332,13 @@ function hasSatisfiedChosenTargetContext(
   }
 
   const selectionInput = getCombinedSelectionInput(resolutionInput);
+  if (effectTarget === "CHOSEN_PLAYER") {
+    return (
+      (resolveSelectedPlayerIdsFromTargets(ctx.framework.state.playerIds, selectionInput)?.length ??
+        0) > 0
+    );
+  }
+
   return (
     (resolveEffectTargets(
       ctx,
@@ -596,7 +603,7 @@ function resolveChosenTargetAssignments(
         : undefined;
     const assignedTargets: Array<CardInstanceId | PlayerId> = [];
 
-    while (cursor < availableTargets.length && assignedTargets.length < max) {
+    for (; cursor < availableTargets.length && assignedTargets.length < max; cursor += 1) {
       const candidateTarget = availableTargets[cursor];
       if (!candidateTarget) {
         break;
@@ -607,16 +614,15 @@ function resolveChosenTargetAssignments(
         (cardCandidateIds.has(candidateTarget as CardInstanceId) ||
           playerCandidateIds.has(candidateTarget as PlayerId));
       if (!isCandidate) {
-        cursor += 1;
         continue;
       }
 
       assignedTargets.push(candidateTarget);
       consumedTargets.push(candidateTarget);
-      cursor += 1;
 
-      const remainingTargets = availableTargets.length - cursor;
+      const remainingTargets = availableTargets.length - (cursor + 1);
       if (assignedTargets.length >= min && remainingTargets <= remainingMinimum) {
+        cursor += 1;
         break;
       }
     }
@@ -849,7 +855,7 @@ function maybeSuspendForChosenTargets(
     effectRecord.type === "optional" ||
     effectRecord.type === "or" ||
     effectRecord.type === "sequence" ||
-    effectRecord.type === "scry"
+    (effectRecord.type === "scry" && effectRecord.target !== "CHOSEN_PLAYER")
   ) {
     return undefined;
   }
@@ -884,6 +890,7 @@ function maybeSuspendForChosenTargets(
     sourceCardId: cardPlayed.cardId,
     controllerId: cardPlayed.playerId,
     chooserId: selectionContext.chooserId,
+    abilityIndex: options?.sourceAbilityIndex,
     cardPlayed,
     effect,
     continuation: options?.continuation,
@@ -955,6 +962,7 @@ function maybeSuspendForChosenPlayerSelection(
     sourceCardId: cardPlayed.cardId,
     controllerId: cardPlayed.playerId,
     chooserId: getCurrentActionActorId(ctx, cardPlayed),
+    abilityIndex: options?.sourceAbilityIndex,
     cardPlayed,
     effect,
     continuation: options?.continuation,
@@ -1057,6 +1065,7 @@ function maybeSuspendForTargetOrdering(
     sourceCardId: cardPlayed.cardId,
     controllerId: cardPlayed.playerId,
     chooserId,
+    abilityIndex: options?.sourceAbilityIndex,
     cardPlayed,
     effect,
     continuation: options?.continuation,
@@ -1094,6 +1103,7 @@ function maybeSuspendForNamedCardSelection(
     sourceCardId: cardPlayed.cardId,
     controllerId: cardPlayed.playerId,
     chooserId: getCurrentActionActorId(ctx, cardPlayed),
+    abilityIndex: options?.sourceAbilityIndex,
     cardPlayed,
     effect,
     continuation: options?.continuation,
@@ -1435,6 +1445,17 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       });
       if (result.status === "suspended") {
         const selectionContext = result.pendingEffect.selectionContext;
+        if (
+          selectionContext &&
+          resolutionInput.resolveOptional === true &&
+          (selectionContext.kind === "target-selection" ||
+            selectionContext.kind === "discard-choice")
+        ) {
+          result.pendingEffect.selectionContext = {
+            ...selectionContext,
+            originatesFromOptional: true,
+          };
+        }
         const isTargetSelection =
           selectionContext?.kind === "target-selection" ||
           selectionContext?.kind === "discard-choice";
@@ -1498,6 +1519,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         sourceCardId: cardPlayed.cardId,
         controllerId: cardPlayed.playerId,
         chooserId,
+        abilityIndex: options?.sourceAbilityIndex,
         cardPlayed,
         effect,
         continuation: options?.continuation,
@@ -1558,6 +1580,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         sourceCardId: cardPlayed.cardId,
         controllerId: cardPlayed.playerId,
         chooserId,
+        abilityIndex: options?.sourceAbilityIndex,
         cardPlayed,
         effect,
         continuation: options?.continuation,
@@ -1639,6 +1662,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         sourceCardId: cardPlayed.cardId,
         controllerId: cardPlayed.playerId,
         chooserId,
+        abilityIndex: options?.sourceAbilityIndex,
         cardPlayed,
         effect,
         continuation: options?.continuation,
@@ -1971,6 +1995,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
           sourceCardId: cardPlayed.cardId,
           controllerId: cardPlayed.playerId,
           chooserId,
+          abilityIndex: options?.sourceAbilityIndex,
           cardPlayed,
           effect,
           continuation: options?.continuation,
@@ -2026,6 +2051,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
             sourceCardId: cardPlayed.cardId,
             controllerId: cardPlayed.playerId,
             chooserId,
+            abilityIndex: options?.sourceAbilityIndex,
             cardPlayed,
             effect: scryEffect,
             resolutionInput: {

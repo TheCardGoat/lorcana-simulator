@@ -79,7 +79,7 @@ describe("Ariel - Adventurous Collector Enchanted", () => {
       expect(bagEffects).toHaveLength(1);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(arielAdventurousCollectorEnchanted, {
           targets: [friendlyCharacter],
         }),
       ).toBeSuccessfulCommand();
@@ -105,7 +105,7 @@ describe("Ariel - Adventurous Collector Enchanted", () => {
 
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(arielAdventurousCollectorEnchanted, {
           targets: [friendlyCharacter],
         }),
       ).toBeSuccessfulCommand();

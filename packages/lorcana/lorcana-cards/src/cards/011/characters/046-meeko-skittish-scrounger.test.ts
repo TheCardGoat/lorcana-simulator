@@ -13,7 +13,7 @@ describe("Meeko - Skittish Scrounger", () => {
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(meekoSkittishScrounger),
     ).toBeSuccessfulCommand();
 
     const result = testEngine.asPlayerOne().respondWithChoice(0) as CommandFailure;
@@ -37,7 +37,7 @@ describe("Meeko - Skittish Scrounger", () => {
     // Resolve the bag effect
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(meekoSkittishScrounger),
     ).toBeSuccessfulCommand();
 
     // Try to choose discard option but it should fail (no cards)

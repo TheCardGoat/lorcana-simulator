@@ -78,7 +78,9 @@ describe("Nibs - Lost Boy", () => {
 
       // Mandatory triggered ability queued in bag for defender
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(testEngine.asPlayerOne().resolveNextBag({})).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(nibsLostBoy, {}),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(nibsLostBoy)).toBe("hand");
       expect(testEngine.asPlayerTwo()).toHaveDamage({

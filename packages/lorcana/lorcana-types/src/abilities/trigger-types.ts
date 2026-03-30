@@ -222,6 +222,12 @@ export interface ChallengeTriggerContext {
 export interface ChallengeTrigger extends BaseTrigger {
   event: "challenge" | "challenged" | "challenged-and-banished" | "banish-in-challenge";
 
+  /**
+   * Challenge context - which role in the challenge triggers this
+   * Required for all challenge-related triggers
+   */
+  challengeContext: ChallengeTriggerContext;
+
   /** Filter/context for the defender in the challenge */
   defender?: {
     filters?: CharacterFilter[];
@@ -339,12 +345,6 @@ export interface BaseTrigger {
   restrictions?: TriggerRestriction[];
 
   /**
-   * Challenge context - alternative to defender/attacker for challenge events
-   * Used by parser for simpler challenge-related triggers
-   */
-  challengeContext?: ChallengeTriggerContext;
-
-  /**
    * Condition that must be true for the trigger to fire
    * Used by parser for conditional triggers
    */
@@ -420,6 +420,7 @@ export const COMMON_TRIGGERS = {
     event: "challenge",
     on: "SELF",
     timing: "whenever",
+    challengeContext: { role: "attacker" },
   } as const satisfies Trigger,
 
   /** "Whenever this character is challenged" */
@@ -427,6 +428,7 @@ export const COMMON_TRIGGERS = {
     event: "challenged",
     on: "SELF",
     timing: "whenever",
+    challengeContext: { role: "defender" },
   } as const satisfies Trigger,
 
   /** "When this character is banished" */
@@ -441,6 +443,7 @@ export const COMMON_TRIGGERS = {
     event: "banish-in-challenge",
     on: "SELF",
     timing: "when",
+    challengeContext: { role: "either" },
   } as const satisfies Trigger,
 
   /** "At the start of your turn" */

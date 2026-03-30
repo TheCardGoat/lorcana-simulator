@@ -69,6 +69,7 @@ export const scroogeMcduckEbenezerScrooge: CharacterCard = {
     },
     {
       id: "12w-2",
+      name: "FORECLOSURE",
       condition: {
         type: "target-query",
         query: {

@@ -50,7 +50,7 @@ describe("Aladdin - Vigilant Guard", () => {
 
       // Accept the optional effect
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(aladdinVigilantGuard, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -86,7 +86,7 @@ describe("Aladdin - Vigilant Guard", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(aladdinVigilantGuard, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

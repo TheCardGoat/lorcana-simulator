@@ -158,17 +158,7 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
           testEngine.asPlayerOne().challenge(strongAttacker, fillerCharacter),
         ).toBeSuccessfulCommand();
 
-        // DON"T EVER USE WHILE LOOPS
-        //
-        // Resolve Hades' trigger
-        // while (testEngine.asPlayerTwo().getBagCount() > 0) {
-        //   const bagEffects = testEngine.asPlayerTwo().getBagEffects();
-        //   testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id);
-        // }
-        // while (testEngine.asPlayerOne().getBagCount() > 0) {
-        //   const bagEffects = testEngine.asPlayerOne().getBagEffects();
-        //   testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id);
-        // }
+        // Resolve Hades' trigger via bounded bag draining if this assertion ever needs to inspect it.
 
         // Hades should have gained 2 lore (one other character banished on opponent's turn)
         expect(testEngine.getLore(PLAYER_TWO)).toBe(loreBefore + 2);
@@ -277,7 +267,7 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
         const bagCount = testEngine.asPlayerOne().getBagCount();
         if (bagCount > 0) {
           const bagEffects = testEngine.asPlayerOne().getBagEffects();
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(bagEffects[0]!.sourceId, {
             resolveOptional: true,
             targets: [strongAttacker],
           });
@@ -342,22 +332,13 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
         // Resolve the bag effect: target the resist character
         if (testEngine.asPlayerOne().getBagCount() > 0) {
           const bagEffects = testEngine.asPlayerOne().getBagEffects();
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(bagEffects[0]!.sourceId, {
             resolveOptional: true,
             targets: [resistCharacter],
           });
         }
 
-        //     // DON"T EVER USE WHILE LOOPS
-        //
-        // Resolve any remaining pending effects
-        // while (testEngine.asPlayerOne().getBagCount() > 0) {
-        //   const bagEffects = testEngine.asPlayerOne().getBagEffects();
-        //   testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
-        //     resolveOptional: true,
-        //     targets: [resistCharacter],
-        //   });
-        // }
+        // Resolve any remaining pending effects via bounded bag draining if this block is re-enabled.
 
         // Resist +1 blocks the 1 damage → "if you do" fails → character stays exerted
         expect(testEngine.asPlayerOne().getDamage(resistCharacter)).toBe(0);
@@ -413,7 +394,9 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
         // Resolve the bag effect (accept the optional ability)
         const bagEffects = testEngine.asPlayerOne().getBagEffects();
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: true }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(bagEffects[0]!.sourceId, { resolveOptional: true }),
         ).toBeSuccessfulCommand();
 
         // ALL other characters should be readied - no picking and choosing
@@ -450,7 +433,9 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
 
         // Resolve the bag effect - secondary condition fails
         const bagEffects = testEngine.asPlayerOne().getBagEffects();
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: true });
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(bagEffects[0]!.sourceId, { resolveOptional: true });
 
         // Filler should still be exerted (ability had no effect)
         expect(testEngine.asPlayerOne().isExerted(fillerCharacter)).toBe(true);
@@ -493,17 +478,14 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
           testEngine.asPlayerOne().challenge(strongAttacker, tadashiHamadaGiftedRoboticist),
         ).toBeSuccessfulCommand();
 
-        //     // DON"T EVER USE WHILE LOOPS
-        //
-        // Resolve Tadashi's trigger
-        // while (testEngine.asPlayerTwo().getBagCount() > 0) {
-        //   const bagEffects = testEngine.asPlayerTwo().getBagEffects();
-        //   testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id, { resolveOptional: true });
-        // }
-        // while (testEngine.asPlayerOne().getBagCount() > 0) {
-        //   const bagEffects = testEngine.asPlayerOne().getBagEffects();
-        //   testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: true });
-        // }
+        // P2 resolves Tadashi's "SOMEONE HAS TO HELP" trigger:
+        // - Decline the optional (don't put top of deck to inkwell)
+        // - The mandatory "put this card into inkwell" executes automatically in the same resolution
+        expect(
+          testEngine
+            .asPlayerTwo()
+            .resolvePendingByCard(tadashiHamadaGiftedRoboticist, { resolveOptional: false }),
+        ).toBeSuccessfulCommand();
 
         // Tadashi should be in inkwell (mandatory second clause)
         expect(testEngine.asPlayerTwo().getCardZone(tadashiHamadaGiftedRoboticist)).toBe("inkwell");
@@ -539,22 +521,13 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
         expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
         const bagEffects = testEngine.asPlayerOne().getBagEffects();
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(bagEffects[0]!.sourceId, {
             resolveOptional: true,
             targets: [opponentItem],
           }),
         ).toBeSuccessfulCommand();
 
-        //     // DON"T EVER USE WHILE LOOPS
-        //
-        // Resolve any pending target selection
-        // while (testEngine.asPlayerOne().getBagCount() > 0) {
-        //   const remaining = testEngine.asPlayerOne().getBagEffects();
-        //   testEngine.asPlayerOne().resolveBag(remaining[0]!.id, {
-        //     resolveOptional: true,
-        //     targets: [opponentItem],
-        //   });
-        // }
+        // Resolve any pending target selection via bounded bag draining if this block is re-enabled.
 
         // Opponent's item should be banished
         expect(testEngine.asPlayerTwo().getCardZone(opponentItem)).toBe("discard");
@@ -664,7 +637,9 @@ describe("Azurite Sea Set Notes (Unofficial - LorcanaJudges.com)", () => {
         // Resolve Inspired Tech
         expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId),
         ).toBeSuccessfulCommand();
         expect(
           testEngine.asPlayerOne().resolveNextPending({

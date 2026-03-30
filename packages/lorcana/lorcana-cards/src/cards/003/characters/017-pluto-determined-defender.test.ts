@@ -35,7 +35,9 @@ describe("Pluto - Determined Defender", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(plutoDeterminedDefender),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(plutoDeterminedDefender)).toBe(0);
     });
@@ -51,7 +53,9 @@ describe("Pluto - Determined Defender", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(plutoDeterminedDefender),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(plutoDeterminedDefender)).toBe(2);
     });

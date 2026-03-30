@@ -28,10 +28,7 @@ export const scroopOdiousMutineer: CharacterCard = {
       title: "Evasive",
     },
     {
-      title: "DO SAY HELLO TO MR.",
-    },
-    {
-      title: "ARROW",
+      title: "DO SAY HELLO TO MR. ARROW",
       description:
         "When you play this character, you may pay 3 {I} to banish chosen damaged character.",
     },

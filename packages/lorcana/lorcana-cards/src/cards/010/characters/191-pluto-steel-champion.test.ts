@@ -50,7 +50,7 @@ describe("Pluto - Steel Champion", () => {
     // Resolve bag effects if needed
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
     for (const bagEffect of bagEffects) {
-      testEngine.asPlayerOne().resolveBag(bagEffect.id);
+      testEngine.asPlayerOne().resolvePendingByCard(plutoSteelChampion);
     }
 
     expect(testEngine.getLore(PLAYER_ONE)).toBe(2);
@@ -78,7 +78,7 @@ describe("Pluto - Steel Champion", () => {
     // Pluto should NOT gain lore when he himself banishes (trigger is on OTHER characters)
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
     for (const bagEffect of bagEffects) {
-      testEngine.asPlayerOne().resolveBag(bagEffect.id);
+      testEngine.asPlayerOne().resolvePendingByCard(plutoSteelChampion);
     }
 
     expect(testEngine.getLore(PLAYER_ONE)).toBe(0);

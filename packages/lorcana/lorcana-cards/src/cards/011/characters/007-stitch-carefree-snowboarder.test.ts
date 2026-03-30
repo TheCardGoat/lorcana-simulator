@@ -32,7 +32,7 @@ describe("Stitch - Carefree Snowboarder", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       for (const effect of bagEffects) {
-        testEngine.asPlayerOne().resolveBag(effect.id);
+        testEngine.asPlayerOne().resolvePendingByCard(stitchCarefreeSnowboarder);
       }
 
       const handAfter = testEngine.asPlayerOne().getZonesCardCount().hand;
@@ -59,7 +59,9 @@ describe("Stitch - Carefree Snowboarder", () => {
       // Decline the optional draw effect
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(stitchCarefreeSnowboarder, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getZonesCardCount().hand;

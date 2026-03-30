@@ -79,7 +79,7 @@ describe("Pyros - Lava Titan", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(pyrosLavaTitan, {
           resolveOptional: true,
           targets: [exertedAlly],
         }),
@@ -107,7 +107,7 @@ describe("Pyros - Lava Titan", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(pyrosLavaTitan, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // The ally should still be exerted
@@ -175,7 +175,7 @@ describe("Pyros - Lava Titan", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(pyrosLavaTitan, {
           resolveOptional: true,
           targets: [pyrosLavaTitan],
         }),

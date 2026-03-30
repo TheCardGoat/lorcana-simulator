@@ -16,7 +16,7 @@ function createTestContext(args?: {
   };
 } {
   const definitions = args?.definitions ?? {};
-  const zoneCards = structuredClone(args?.zoneCards ?? {});
+  const zoneCards = args?.zoneCards ?? {};
   const cardIndex: Record<string, { ownerID: PlayerId; zoneKey: string }> = {};
 
   for (const [zoneKey, cards] of Object.entries(zoneCards)) {

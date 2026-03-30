@@ -43,7 +43,9 @@ describe("Wreck-It Ralph - Ham Hands (Enchanted)", () => {
 
       // Resolve the triggered ability — accept and target the item
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetItem] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(wreckitRalphHamHandsEnchanted, { targets: [targetItem] }),
       ).toBeSuccessfulCommand();
 
       // Item should be banished
@@ -69,7 +71,9 @@ describe("Wreck-It Ralph - Ham Hands (Enchanted)", () => {
 
       // Resolve the triggered ability — accept and target the location
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [targetLocation] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(wreckitRalphHamHandsEnchanted, { targets: [targetLocation] }),
       ).toBeSuccessfulCommand();
 
       // Location should be banished
@@ -88,7 +92,9 @@ describe("Wreck-It Ralph - Ham Hands (Enchanted)", () => {
       expect(testEngine.asPlayerOne().quest(wreckitRalphHamHandsEnchanted)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [ownItem] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(wreckitRalphHamHandsEnchanted, { targets: [ownItem] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(ownItem)).toBe("discard");
@@ -110,7 +116,9 @@ describe("Wreck-It Ralph - Ham Hands (Enchanted)", () => {
       expect(testEngine.asPlayerOne().quest(wreckitRalphHamHandsEnchanted)).toBeSuccessfulCommand();
 
       // Decline the optional ability
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(wreckitRalphHamHandsEnchanted, { resolveOptional: false });
 
       // Item should still be in play
       expect(testEngine.asPlayerTwo().getCardZone(targetItem)).toBe("play");
@@ -130,7 +138,9 @@ describe("Wreck-It Ralph - Ham Hands (Enchanted)", () => {
       // The optional ability may still be queued; resolve or decline it
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(wreckitRalphHamHandsEnchanted, { resolveOptional: false });
       }
 
       // Only quest lore gained
@@ -152,7 +162,9 @@ describe("Wreck-It Ralph - Ham Hands (Enchanted)", () => {
       expect(
         testEngineAccepted.asPlayerOne().quest(wreckitRalphHamHandsEnchanted),
       ).toBeSuccessfulCommand();
-      testEngineAccepted.asPlayerOne().resolveNextBag({ targets: [targetItem] });
+      testEngineAccepted
+        .asPlayerOne()
+        .resolvePendingByCard(wreckitRalphHamHandsEnchanted, { targets: [targetItem] });
 
       // Quest lore (3) + 2 bonus lore
       expect(testEngineAccepted.getLore(PLAYER_ONE)).toBe(wreckitRalphHamHandsEnchanted.lore + 2);
@@ -171,7 +183,9 @@ describe("Wreck-It Ralph - Ham Hands (Enchanted)", () => {
       expect(
         testEngineDeclined.asPlayerOne().quest(wreckitRalphHamHandsEnchanted),
       ).toBeSuccessfulCommand();
-      testEngineDeclined.asPlayerOne().resolveNextBag({ resolveOptional: false });
+      testEngineDeclined
+        .asPlayerOne()
+        .resolvePendingByCard(wreckitRalphHamHandsEnchanted, { resolveOptional: false });
 
       // Only quest lore (3), no bonus
       expect(testEngineDeclined.getLore(PLAYER_ONE)).toBe(wreckitRalphHamHandsEnchanted.lore);

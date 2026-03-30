@@ -179,6 +179,8 @@ export interface I18nProperties {
   name: string;
   version?: string;
   text?: CardText;
+  /** Localized labels for each choice option, index-parallel to ChoiceEffect.options */
+  optionTexts?: string[];
 }
 
 /**

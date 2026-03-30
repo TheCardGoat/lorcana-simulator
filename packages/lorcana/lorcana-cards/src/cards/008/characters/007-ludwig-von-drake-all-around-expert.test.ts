@@ -93,7 +93,9 @@ describe("Ludwig Von Drake - All-Around Expert", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ludwigVonDrakeAllaroundExpert, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(ludwigVonDrakeAllaroundExpert)).toBe("inkwell");
@@ -121,7 +123,9 @@ describe("Ludwig Von Drake - All-Around Expert", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ludwigVonDrakeAllaroundExpert, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(ludwigVonDrakeAllaroundExpert)).toBe("discard");

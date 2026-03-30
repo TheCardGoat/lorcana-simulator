@@ -6,21 +6,14 @@
     SIMULATOR_SUPPORT_ACTIONS,
     type SimulatorSupportActionId,
   } from "@/features/simulator/support/support-links.js";
-  import SimulatorFeedbackDialog from "@/features/simulator/support/SimulatorFeedbackDialog.svelte";
-  import SimulatorBugReportDialog from "@/features/simulator/support/SimulatorBugReportDialog.svelte";
-  import type { BugReportContext } from "@/features/simulator/support/feedback-api.js";
 
   interface SimulatorSupportActionsProps {
     surface?: "dialog" | "sheet";
-    gameContext?: BugReportContext;
-    onReportBug?: () => void;
-    onShareFeedback?: () => void;
+    onOpenBugReport?: () => void;
+    onOpenFeedback?: () => void;
   }
 
-  let { surface = "dialog", gameContext, onReportBug, onShareFeedback }: SimulatorSupportActionsProps = $props();
-
-  let feedbackOpen = $state(false);
-  let bugReportOpen = $state(false);
+  let { surface = "dialog", onOpenBugReport, onOpenFeedback }: SimulatorSupportActionsProps = $props();
 
   const actionIcons = {
     reportBug: BugIcon,
@@ -29,17 +22,9 @@
 
   function handleActionClick(actionId: SimulatorSupportActionId): void {
     if (actionId === "reportBug") {
-      if (onReportBug) {
-        onReportBug();
-      } else {
-        bugReportOpen = true;
-      }
+      onOpenBugReport?.();
     } else {
-      if (onShareFeedback) {
-        onShareFeedback();
-      } else {
-        feedbackOpen = true;
-      }
+      onOpenFeedback?.();
     }
   }
 </script>
@@ -60,11 +45,6 @@
     </button>
   {/each}
 </div>
-
-{#if !onReportBug && !onShareFeedback}
-  <SimulatorFeedbackDialog bind:open={feedbackOpen} />
-  <SimulatorBugReportDialog bind:open={bugReportOpen} {gameContext} />
-{/if}
 
 <style>
   .support-actions {

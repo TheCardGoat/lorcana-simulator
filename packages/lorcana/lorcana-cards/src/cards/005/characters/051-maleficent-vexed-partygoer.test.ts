@@ -85,7 +85,7 @@ describe("Maleficent - Vexed Partygoer", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentVexedPartygoer, {
           resolveOptional: true,
           targets: [handFodder, cheapCharacter],
         }),
@@ -106,7 +106,7 @@ describe("Maleficent - Vexed Partygoer", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentVexedPartygoer, {
           resolveOptional: true,
           targets: [handFodder, cheapCharacter],
         }),
@@ -133,7 +133,7 @@ describe("Maleficent - Vexed Partygoer", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentVexedPartygoer, {
           resolveOptional: true,
           targets: [handFodder, cheapItem],
         }),
@@ -160,7 +160,7 @@ describe("Maleficent - Vexed Partygoer", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentVexedPartygoer, {
           resolveOptional: true,
           targets: [handFodder, cheapLocation],
         }),
@@ -187,7 +187,7 @@ describe("Maleficent - Vexed Partygoer", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(maleficentVexedPartygoer, {
           resolveOptional: true,
           targets: [handFodder],
         }),

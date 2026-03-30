@@ -14,7 +14,9 @@ describe("Genie - Supportive Friend - Set 009", () => {
     const loreBefore = testEngine.asPlayerOne().getLore(PLAYER_ONE);
 
     expect(testEngine.asPlayerOne().quest(genieSupportiveFriend)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(genieSupportiveFriend),
+    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(genieSupportiveFriend)).not.toBe("play");
     expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(handBefore + 3);

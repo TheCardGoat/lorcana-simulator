@@ -28,9 +28,9 @@ export const tukTukLivelyPartner: CharacterCard = {
       title: "Evasive",
     },
     {
-      title: "ON",
+      title: "ON A ROLL",
       description:
-        "A ROLL When you play this character, you may move him and one of your other characters to the same location for free. The other character gets +2 {S} this turn.",
+        "When you play this character, you may move him and one of your other characters to the same location for free. The other character gets +2 {S} this turn.",
     },
   ],
   classifications: ["Storyborn", "Ally"],

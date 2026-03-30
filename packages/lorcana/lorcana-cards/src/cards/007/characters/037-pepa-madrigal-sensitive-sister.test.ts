@@ -63,7 +63,7 @@ describe("Pepa Madrigal - Sensitive Sister", () => {
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+          testEngine.asPlayerOne().resolvePendingByCard(pepaMadrigalSensitiveSister),
         ).toBeSuccessfulCommand();
       }
 
@@ -108,7 +108,7 @@ describe("Pepa Madrigal - Sensitive Sister", () => {
       for (let i = 0; i < bagCount; i++) {
         const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
         if (bagEffect) {
-          testEngine.asPlayerOne().resolveBag(bagEffect.id);
+          testEngine.asPlayerOne().resolvePendingByCard(pepaMadrigalSensitiveSister);
         }
       }
 

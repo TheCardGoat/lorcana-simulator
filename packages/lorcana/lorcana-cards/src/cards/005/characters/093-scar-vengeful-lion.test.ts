@@ -56,7 +56,7 @@ describe("Scar - Vengeful Lion", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(scarVengefulLion, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
@@ -134,7 +134,7 @@ describe("Scar - Vengeful Lion", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects.length).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(scarVengefulLion, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;

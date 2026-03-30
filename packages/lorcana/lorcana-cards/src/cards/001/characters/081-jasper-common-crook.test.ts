@@ -22,7 +22,7 @@ describe("Jasper - Common Crook", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(jasperCommonCrook, {
         targets: [simbaId],
       }),
     ).toBeSuccessfulCommand();

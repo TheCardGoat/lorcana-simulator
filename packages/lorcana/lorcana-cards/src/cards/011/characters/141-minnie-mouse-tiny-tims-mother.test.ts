@@ -36,7 +36,7 @@ describe("Minnie Mouse - Tiny Tim's Mother", () => {
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(bagEffect).toBeDefined();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(minnieMouseTinyTimsMother, {
         resolveOptional: true,
         targets: [supportTarget],
       }),
@@ -62,7 +62,7 @@ describe("Minnie Mouse - Tiny Tim's Mother", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(minnieMouseTinyTimsMother, {
         resolveOptional: true,
         targets: [supportTarget],
       }),

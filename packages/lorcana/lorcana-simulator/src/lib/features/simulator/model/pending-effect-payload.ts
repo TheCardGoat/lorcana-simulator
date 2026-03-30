@@ -52,6 +52,9 @@ export interface PendingEffectPayloadMeta {
   kind?: string;
   sourceId?: string;
   sourceCardId?: string;
+  chooserId?: string;
+  controllerId?: string;
+  abilityIndex?: number;
   effectType?: string;
 }
 
@@ -59,7 +62,30 @@ export interface BagEffectPayloadMeta {
   kind?: string;
   sourceId?: string;
   sourceCardId?: string;
+  chooserId?: string;
+  controllerId?: string;
+  abilityIndex?: number;
   effectType?: string;
+}
+
+export type EffectInstanceReferenceKind =
+  | "self"
+  | "source"
+  | "trigger-source"
+  | "trigger-subject"
+  | "attacker"
+  | "defender"
+  | "previous-target"
+  | "selected-first"
+  | "selected-all"
+  | "revealed-first"
+  | "revealed-all"
+  | "chosen-or-source"
+  | "singers";
+
+export interface EffectInstanceReferenceMeta {
+  kind: EffectInstanceReferenceKind;
+  cardIds: string[];
 }
 
 export interface ScryDestinationRuleView {
@@ -100,6 +126,9 @@ export function getPendingEffectPayloadMeta(payload: unknown): PendingEffectPayl
     kind: getRecordString(payloadRecord, "kind"),
     sourceId: getRecordString(payloadRecord, "sourceId"),
     sourceCardId: getRecordString(payloadRecord, "sourceCardId"),
+    chooserId: getRecordString(payloadRecord, "chooserId"),
+    controllerId: getRecordString(payloadRecord, "controllerId"),
+    abilityIndex: getRecordNumber(payloadRecord, "abilityIndex"),
     effectType: getRecordString(effectRecord, "type"),
   };
 }
@@ -112,8 +141,163 @@ export function getBagEffectPayloadMeta(payload: unknown): BagEffectPayloadMeta 
     kind: getRecordString(payloadRecord, "kind"),
     sourceId: getRecordString(payloadRecord, "sourceId"),
     sourceCardId: getRecordString(payloadRecord, "sourceCardId"),
+    chooserId: getRecordString(payloadRecord, "chooserId"),
+    controllerId: getRecordString(payloadRecord, "controllerId"),
+    abilityIndex: getRecordNumber(payloadRecord, "abilityIndex"),
     effectType: getRecordString(effectRecord, "type"),
   };
+}
+
+const EFFECT_INSTANCE_REFERENCE_KINDS = new Set<EffectInstanceReferenceKind>([
+  "self",
+  "source",
+  "trigger-source",
+  "trigger-subject",
+  "attacker",
+  "defender",
+  "previous-target",
+  "selected-first",
+  "selected-all",
+  "revealed-first",
+  "revealed-all",
+  "chosen-or-source",
+  "singers",
+]);
+
+function getCardIdList(record: Record<string, unknown> | null, key: string): string[] {
+  const value = record?.[key];
+  if (typeof value === "string" && value.length > 0) {
+    return [value];
+  }
+
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((entry): entry is string => typeof entry === "string" && entry.length > 0);
+}
+
+function getSelectionCardIds(resolutionInput: Record<string, unknown> | null): string[] {
+  return [
+    ...getCardIdList(resolutionInput, "currentTargets"),
+    ...getCardIdList(resolutionInput, "targets"),
+    ...getCardIdList(resolutionInput, "contextTargets"),
+  ];
+}
+
+function resolveEffectInstanceReferenceCardIds(
+  kind: EffectInstanceReferenceKind,
+  payloadRecord: Record<string, unknown> | null,
+): string[] {
+  const resolutionInput = asRecord(payloadRecord?.resolutionInput);
+  const eventSnapshot = asRecord(resolutionInput?.eventSnapshot);
+  const sourceCardId =
+    getRecordString(payloadRecord, "sourceCardId") ?? getRecordString(payloadRecord, "sourceId");
+  const selectedCardIds = getSelectionCardIds(resolutionInput);
+
+  switch (kind) {
+    case "self":
+    case "source":
+      return sourceCardId ? [sourceCardId] : [];
+    case "trigger-source":
+      return getCardIdList(eventSnapshot, "triggerSourceCardId");
+    case "trigger-subject":
+      return getCardIdList(eventSnapshot, "subjectCardId");
+    case "attacker":
+      return getCardIdList(eventSnapshot, "attackerId");
+    case "defender":
+      return getCardIdList(eventSnapshot, "defenderId");
+    case "previous-target":
+    case "selected-first":
+      return selectedCardIds[0] ? [selectedCardIds[0]] : [];
+    case "selected-all":
+      return selectedCardIds;
+    case "revealed-first": {
+      const revealedCardIds = getCardIdList(eventSnapshot, "revealedCardIds");
+      return revealedCardIds[0] ? [revealedCardIds[0]] : [];
+    }
+    case "revealed-all":
+      return getCardIdList(eventSnapshot, "revealedCardIds");
+    case "chosen-or-source": {
+      const chosenCardId = getRecordString(eventSnapshot, "chosenCardId");
+      return chosenCardId ? [chosenCardId] : sourceCardId ? [sourceCardId] : [];
+    }
+    case "singers": {
+      const cardPlayed = asRecord(payloadRecord?.cardPlayed);
+      return getCardIdList(cardPlayed, "singerIds");
+    }
+  }
+}
+
+function collectEffectInstanceReferenceKinds(
+  value: unknown,
+  collected: Set<EffectInstanceReferenceKind>,
+  visited: Set<unknown>,
+): void {
+  if (!value || typeof value !== "object") {
+    return;
+  }
+
+  if (visited.has(value)) {
+    return;
+  }
+  visited.add(value);
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      collectEffectInstanceReferenceKinds(entry, collected, visited);
+    }
+    return;
+  }
+
+  const record = value as Record<string, unknown>;
+  const directReference = record.reference;
+  if (
+    typeof directReference === "string" &&
+    EFFECT_INSTANCE_REFERENCE_KINDS.has(directReference as EffectInstanceReferenceKind)
+  ) {
+    collected.add(directReference as EffectInstanceReferenceKind);
+  }
+
+  const legacyReference = record.ref;
+  if (
+    typeof legacyReference === "string" &&
+    EFFECT_INSTANCE_REFERENCE_KINDS.has(legacyReference as EffectInstanceReferenceKind)
+  ) {
+    collected.add(legacyReference as EffectInstanceReferenceKind);
+  }
+
+  const targetReference = record.targetRef;
+  if (
+    typeof targetReference === "string" &&
+    EFFECT_INSTANCE_REFERENCE_KINDS.has(targetReference as EffectInstanceReferenceKind)
+  ) {
+    collected.add(targetReference as EffectInstanceReferenceKind);
+  }
+
+  for (const entry of Object.values(record)) {
+    collectEffectInstanceReferenceKinds(entry, collected, visited);
+  }
+}
+
+export function getResolutionEffectInstanceReferences(
+  payload: unknown,
+): EffectInstanceReferenceMeta[] {
+  const payloadRecord = asRecord(payload);
+  const effectRecord = asRecord(payloadRecord?.effect);
+  if (!effectRecord) {
+    return [];
+  }
+
+  const referenceKinds = new Set<EffectInstanceReferenceKind>();
+  collectEffectInstanceReferenceKinds(effectRecord, referenceKinds, new Set<unknown>());
+
+  return [...referenceKinds]
+    .map<EffectInstanceReferenceMeta | null>((kind) => {
+      const cardIds = [...new Set(resolveEffectInstanceReferenceCardIds(kind, payloadRecord))];
+      return cardIds.length > 0 ? { kind, cardIds } : null;
+    })
+    .filter((entry): entry is EffectInstanceReferenceMeta => entry !== null);
 }
 
 export function parseScryPendingEffect(

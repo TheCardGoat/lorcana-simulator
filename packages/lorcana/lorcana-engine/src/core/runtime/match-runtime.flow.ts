@@ -4,7 +4,7 @@
  * Flow and phase transition helpers.
  */
 
-import type { Draft } from "immer";
+import type { Draft } from "mutative";
 import type { MatchState } from "./types";
 import type {
   RuntimeFlowDefinition,

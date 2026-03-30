@@ -72,7 +72,9 @@ describe("Gyro Gearloose - Eccentric Inventor", () => {
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ targets: [opposingCharacter] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(gyroGearlooseEccentricInventor, { targets: [opposingCharacter] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(

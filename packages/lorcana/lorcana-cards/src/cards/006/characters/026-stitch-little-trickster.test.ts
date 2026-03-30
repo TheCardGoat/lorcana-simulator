@@ -91,7 +91,9 @@ describe("Stitch - Little Trickster", () => {
 
       // Resolve the "READY FOR ACTION" triggered ability (optional, decline it)
       if (testEngine.asPlayerOne().getBagCount() > 0) {
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false });
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(stitchLittleTrickster, { resolveOptional: false });
       }
 
       // The shifter (Alien Buccaneer) should inherit the +2 strength buff from Little Trickster

@@ -41,6 +41,7 @@ export const lawrenceJealousManservant: CharacterCard = {
         type: "modify-stat",
       },
       id: "1rx-1",
+      name: "PAYBACK",
       text: "PAYBACK While this character has no damage, he gets +4 {S}.",
       type: "static",
     },

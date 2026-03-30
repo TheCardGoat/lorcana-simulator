@@ -24,7 +24,9 @@ describe("Chip - Friend Indeed", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [targetCharacter] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(chipFriendIndeed, { targets: [targetCharacter] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardLore(targetCharacter)).toBe(targetCharacter.lore + 1);
@@ -47,7 +49,9 @@ describe("Chip - Friend Indeed", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [targetCharacter] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(chipFriendIndeed, { targets: [targetCharacter] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardLore(targetCharacter)).toBe(targetCharacter.lore + 1);

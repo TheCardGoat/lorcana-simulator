@@ -49,7 +49,7 @@ describe("Simba - Son of Mufasa", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(simbaSonOfMufasa, {
           resolveOptional: true,
           targets: [mockItem],
         }),
@@ -70,7 +70,7 @@ describe("Simba - Son of Mufasa", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(simbaSonOfMufasa, {
           resolveOptional: true,
           targets: [mockLocation],
         }),
@@ -91,7 +91,7 @@ describe("Simba - Son of Mufasa", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(simbaSonOfMufasa, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -115,7 +115,7 @@ describe("Simba - Son of Mufasa", () => {
 
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(simbaSonOfMufasa, {
           resolveOptional: true,
           targets: [mockItem],
         }),
@@ -141,7 +141,7 @@ describe("Simba - Son of Mufasa", () => {
       const bagEffect = testEngine.asPlayerOne().getBagEffects()[0]!;
       // Should be able to target the location
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(simbaSonOfMufasa, {
           resolveOptional: true,
           targets: [mockLocation],
         }),

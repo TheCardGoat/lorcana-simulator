@@ -23,7 +23,16 @@ export const taranMagicallyArmed: CharacterCard = {
     lorcast: "crd_b0231e5ba8c34691ac5bf29e6fc96c46",
     tcgPlayer: 673420,
   },
-  text: "Rush WEAKEN THE CAULDRON When you play this character, put up to 2 cards from chosen player's discard on the bottom of their deck in any order.",
+  text: [
+    {
+      title: "Rush",
+    },
+    {
+      title: "WEAKEN THE CAULDRON",
+      description:
+        "When you play this character, put up to 2 cards from chosen player's discard on the bottom of their deck in any order.",
+    },
+  ],
   classifications: ["Storyborn", "Hero"],
   abilities: [
     rush,

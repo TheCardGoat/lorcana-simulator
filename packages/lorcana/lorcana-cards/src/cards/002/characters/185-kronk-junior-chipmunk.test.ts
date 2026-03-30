@@ -61,7 +61,7 @@ describe("Kronk - Junior Chipmunk", () => {
 
       // Accept the optional and deal 2 damage to target
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(kronkJuniorChipmunk, {
           resolveOptional: true,
           targets: [targetCharacter],
         }),
@@ -117,7 +117,9 @@ describe("Kronk - Junior Chipmunk", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kronkJuniorChipmunk, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveDamage({ card: targetCharacter, value: 0 });

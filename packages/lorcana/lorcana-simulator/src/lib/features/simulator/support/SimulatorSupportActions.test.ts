@@ -10,4 +10,16 @@ describe("SimulatorSupportActions", () => {
     expect(body).toContain("Report a bug");
     expect(body).toContain("Share feedback");
   });
+
+  it("still renders when shell-owned callbacks are provided", () => {
+    const { body } = render(SimulatorSupportActions, {
+      props: {
+        onOpenBugReport: () => {},
+        onOpenFeedback: () => {},
+      },
+    });
+
+    expect(body).toContain("Report a bug");
+    expect(body).toContain("Share feedback");
+  });
 });

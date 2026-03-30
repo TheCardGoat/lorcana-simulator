@@ -254,10 +254,12 @@ describe("#### 4. TURN ACTIONS", () => {
         );
         expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
         expect(
-          testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-            resolveOptional: true,
-            targets: [gastonArrogantHunter],
-          }).success,
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+              resolveOptional: true,
+              targets: [gastonArrogantHunter],
+            }).success,
         ).toBe(true);
 
         expect(testEngine.asPlayerOne().getCard(lefouBumbler).playCost).toBe(lefouBumbler.cost - 1);

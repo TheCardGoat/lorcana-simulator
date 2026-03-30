@@ -49,7 +49,7 @@ describe("Mama Odie - Voice of Wisdom", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mamaOdieVoiceOfWisdom, {
           resolveOptional: true,
           targets: [damagedAlly, opposingCharacter],
         }),
@@ -75,7 +75,7 @@ describe("Mama Odie - Voice of Wisdom", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mamaOdieVoiceOfWisdom, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -100,7 +100,7 @@ describe("Mama Odie - Voice of Wisdom", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mamaOdieVoiceOfWisdom, {
           resolveOptional: true,
           targets: [mamaOdieVoiceOfWisdom, opposingCharacter],
         }),
@@ -126,7 +126,7 @@ describe("Mama Odie - Voice of Wisdom", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(mamaOdieVoiceOfWisdom, {
           resolveOptional: true,
           targets: [damagedAlly, opposingCharacter],
         }),

@@ -48,7 +48,9 @@ describe("Sven - Keen-Eyed Reindeer", () => {
 
       // Triggered ability should create a bag entry
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(svenKeeneyedReindeer),
+      ).toBeSuccessfulCommand();
 
       // Choose the opposing character to receive -3 strength
       expect(
@@ -72,7 +74,9 @@ describe("Sven - Keen-Eyed Reindeer", () => {
       expect(testEngine.asPlayerOne().playCard(svenKeeneyedReindeer)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(svenKeeneyedReindeer),
+      ).toBeSuccessfulCommand();
 
       // Target own character
       expect(
@@ -101,7 +105,9 @@ describe("Sven - Keen-Eyed Reindeer", () => {
       expect(testEngine.asPlayerOne().playCard(svenKeeneyedReindeer)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(svenKeeneyedReindeer),
+      ).toBeSuccessfulCommand();
 
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [opponentCharacter] }),

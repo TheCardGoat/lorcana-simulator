@@ -20,7 +20,7 @@ describe("Madam Mim - Elephant", () => {
 
       expect(testEngine.asPlayerOne().playCard(madamMimElephant)).toBeSuccessfulCommand();
 
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimElephant);
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 0 });
 
       expect(testEngine.asPlayerOne().getCardZone(madamMimElephant)).toBe("discard");
@@ -36,7 +36,7 @@ describe("Madam Mim - Elephant", () => {
 
       expect(testEngine.asPlayerOne().playCard(madamMimElephant)).toBeSuccessfulCommand();
 
-      testEngine.asPlayerOne().resolveNextBag();
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimElephant);
       testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1, targets: [allyCharacter] });
 
       expect(testEngine.asPlayerOne().getCardZone(allyCharacter)).toBe("hand");
@@ -59,7 +59,7 @@ describe("Madam Mim - Elephant", () => {
 
       expect(testEngine.asPlayerTwo().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({
+        testEngine.asPlayerTwo().resolvePendingByCard(madamMimElephant, {
           resolveOptional: true,
           targets: [goofyKnightForADay],
         }),
@@ -83,7 +83,7 @@ describe("Madam Mim - Elephant", () => {
 
       expect(testEngine.asPlayerTwo().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({
+        testEngine.asPlayerTwo().resolvePendingByCard(madamMimElephant, {
           resolveOptional: true,
           targets: [goofyKnightForADay],
         }),
@@ -107,7 +107,7 @@ describe("Madam Mim - Elephant", () => {
 
       expect(testEngine.asPlayerTwo().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({
+        testEngine.asPlayerTwo().resolvePendingByCard(madamMimElephant, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -129,7 +129,9 @@ describe("Madam Mim - Elephant", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getBagCount()).toBeGreaterThan(0);
-      expect(testEngine.asPlayerTwo().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(madamMimElephant),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(madamMimElephant)).toBe(0);
       expect(testEngine.asPlayerOne().getDamage(goofyKnightForADay)).toBe(0);
@@ -163,7 +165,7 @@ describe("Madam Mim - Elephant", () => {
     // A LITTLE GAME triggers - must choose between banish self or return another character
     // Since there's no other character to return, the second option has no valid targets
     // So she must banish herself
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(madamMimElephant);
     testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 0 });
 
     expect(testEngine.asPlayerOne().getCardZone(madamMimElephant)).toBe("discard");

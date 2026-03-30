@@ -41,6 +41,7 @@ export const mickeyMouseTrumpeter: CharacterCard = {
         type: "play-card",
       },
       id: "6jz-1",
+      name: "SOUND THE CALL",
       text: "SOUND THE CALL {E}, 2 {I} — Play a character for free.",
       type: "activated",
     },

@@ -89,7 +89,9 @@ describe("Mickey Mouse - Snowboard Ace", () => {
       // (Mickey's controller), so player_one resolves the bag.
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffects).toHaveLength(1);
-      expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseSnowboardAce),
+      ).toBeSuccessfulCommand();
 
       // Player two (opponent of Mickey's controller) must choose a card to discard
       expect(

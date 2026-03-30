@@ -18,7 +18,7 @@ describe("Friar Tuck - Priest of Nottingham", () => {
     expect(testEngine.asPlayerOne().playCard(friarTuckPriestOfNottingham)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(friarTuckPriestOfNottingham),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().respondWith(liloGalacticHero)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().respondWith(stitchNewDog)).toBeSuccessfulCommand();
@@ -41,7 +41,7 @@ describe("Friar Tuck - Priest of Nottingham", () => {
     expect(testEngine.asPlayerOne().playCard(friarTuckPriestOfNottingham)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(friarTuckPriestOfNottingham),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().respondWith(stitchNewDog)).toBeSuccessfulCommand();
 

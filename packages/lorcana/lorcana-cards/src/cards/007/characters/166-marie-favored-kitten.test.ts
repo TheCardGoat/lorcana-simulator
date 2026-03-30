@@ -34,7 +34,9 @@ describe("Marie - Favored Kitten", () => {
     }
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect.id, { targets: [chosenCharacter] }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(marieFavoredKitten, { targets: [chosenCharacter] }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().getCardStrength(chosenCharacter)).toBe(2);
@@ -66,7 +68,7 @@ describe("Marie - Favored Kitten", () => {
     }
 
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect.id, { resolveOptional: false }),
+      testEngine.asPlayerOne().resolvePendingByCard(marieFavoredKitten, { resolveOptional: false }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().getCardStrength(chosenCharacter)).toBe(4);

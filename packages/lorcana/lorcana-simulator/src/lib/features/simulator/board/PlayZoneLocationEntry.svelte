@@ -11,10 +11,6 @@
   import { useLorcanaSidebarPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
   import {
-    createOptionalDroppable,
-    useLorcanaSimulatorDndContext,
-  } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
-  import {
     handlePlayZoneLocationEntryDirectSelection,
     isPlayZoneLocationEntryDirectSelectionMode,
   } from "./play-zone-location-entry-interactions.js";
@@ -34,8 +30,6 @@
     playerSide: LorcanaPlayerSide;
     zoneId: LorcanaZoneId;
     isMasked: boolean;
-    isValidTarget: (cardId: string) => boolean;
-    isInvalidTarget: (cardId: string) => boolean;
     hotkey?: string;
   }
 
@@ -46,33 +40,14 @@
     playerSide,
     zoneId,
     isMasked,
-    isValidTarget,
-    isInvalidTarget,
     hotkey,
   }: PlayZoneLocationEntryProps = $props();
 
   const sidebar = useLorcanaSidebarPresenter();
   const simulatorCardContext = useSimulatorCardContext();
-  const dnd = useLorcanaSimulatorDndContext();
   const isDirectSelectionMode = $derived(
     isPlayZoneLocationEntryDirectSelectionMode(sidebar.actionSelectionSession),
   );
-  const dropState = $derived(
-    association.role === "location"
-      ? dnd.getLocationDropState(card.cardId, playerSide)
-      : dnd.getCardDropState(card.cardId),
-  );
-  const locationDroppable = createOptionalDroppable({
-    get locationId() {
-      return card.cardId;
-    },
-    get player() {
-      return playerSide;
-    },
-    get disabled() {
-      return association.role !== "location";
-    },
-  });
 
   function handleDirectCardSelection(selectedCard: LorcanaCardSnapshot, event: MouseEvent): void {
     handlePlayZoneLocationEntryDirectSelection({
@@ -89,11 +64,7 @@
     class="card-slot card-slot--location-related card-slot--location-anchor"
     class:card-slot--cluster-start={association.isClusterStart}
     class:card-slot--cluster-end={association.isClusterEnd}
-    class:card-slot--drop-preview={dropState === "preview"}
-    class:card-slot--drop-valid={dropState === "valid"}
-    class:card-slot--drop-invalid={dropState === "invalid"}
     data-card-id={card.cardId}
-    data-card-drop-id={card.cardId}
     data-player-seat={seat}
     data-player-side={playerSide}
     data-player-id={card.ownerId}
@@ -101,7 +72,6 @@
     data-location-cluster-id={association.clusterId}
     data-location-cluster-role={association.role}
     data-board-anchor-id={createCardAnchorId(playerSide, zoneId, card.cardId)}
-    {@attach locationDroppable.attach}
   >
     {#if hotkey}
       <HotkeyCardBadge {hotkey} />
@@ -119,12 +89,8 @@
             simulatorCardContext.previewCard?.cardId === card.cardId
           }
           {isMasked}
-          isPlayable={
-            sidebar.getActionSessionCardState(card.cardId).isSelectable || isValidTarget(card.cardId)
-          }
-          isInvalidTarget={
-            sidebar.getActionSessionCardState(card.cardId).isInvalidTarget || isInvalidTarget(card.cardId)
-          }
+          isPlayable={sidebar.getActionSessionCardState(card.cardId).isSelectable}
+          isInvalidTarget={sidebar.getActionSessionCardState(card.cardId).isInvalidTarget}
           isBanishedPreview={sidebar.getChallengePreviewCardState(card.cardId).wouldBeBanished}
           isDrying={card.isDrying ?? false}
           damage={card.damage ?? 0}
@@ -133,19 +99,11 @@
     </div>
   </div>
 {:else}
-  {@const occupantDraggable = dnd.createOptionalDraggable({
-    card,
-    disabled: isDirectSelectionMode,
-  })}
   <div
     class="card-slot card-slot--location-related card-slot--location-occupant"
     class:card-slot--cluster-start={association.isClusterStart}
     class:card-slot--cluster-end={association.isClusterEnd}
-    class:card-slot--drop-preview={dropState === "preview"}
-    class:card-slot--drop-valid={dropState === "valid"}
-    class:card-slot--drop-invalid={dropState === "invalid"}
     data-card-id={card.cardId}
-    data-card-drop-id={card.cardId}
     data-player-seat={seat}
     data-player-side={playerSide}
     data-player-id={card.ownerId}
@@ -153,7 +111,6 @@
     data-location-cluster-id={association.clusterId}
     data-location-cluster-role={association.role}
     data-board-anchor-id={createCardAnchorId(playerSide, zoneId, card.cardId)}
-    {@attach occupantDraggable.attach}
   >
     {#if hotkey}
       <HotkeyCardBadge {hotkey} />
@@ -169,12 +126,8 @@
         simulatorCardContext.previewCard?.cardId === card.cardId
       }
       {isMasked}
-      isPlayable={
-        sidebar.getActionSessionCardState(card.cardId).isSelectable || isValidTarget(card.cardId)
-      }
-      isInvalidTarget={
-        sidebar.getActionSessionCardState(card.cardId).isInvalidTarget || isInvalidTarget(card.cardId)
-      }
+      isPlayable={sidebar.getActionSessionCardState(card.cardId).isSelectable}
+      isInvalidTarget={sidebar.getActionSessionCardState(card.cardId).isInvalidTarget}
       isBanishedPreview={sidebar.getChallengePreviewCardState(card.cardId).wouldBeBanished}
       isExerted={card.readyState === "exerted"}
       isDrying={card.isDrying ?? false}
@@ -218,27 +171,6 @@
     border-top-right-radius: 0.45rem;
     border-bottom-right-radius: 0.45rem;
     right: -0.4rem;
-  }
-
-  .card-slot--location-related.card-slot--drop-valid::before {
-    border-color: rgba(56, 189, 139, 0.54);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.04),
-      0 0 0 1px rgba(56, 189, 139, 0.22);
-  }
-
-  .card-slot--location-related.card-slot--drop-preview::before {
-    border-color: rgba(96, 165, 250, 0.42);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.04),
-      0 0 0 1px rgba(96, 165, 250, 0.14);
-  }
-
-  .card-slot--location-related.card-slot--drop-invalid::before {
-    border-color: rgba(248, 113, 113, 0.48);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.04),
-      0 0 0 1px rgba(248, 113, 113, 0.16);
   }
 
   .location-card-shell {

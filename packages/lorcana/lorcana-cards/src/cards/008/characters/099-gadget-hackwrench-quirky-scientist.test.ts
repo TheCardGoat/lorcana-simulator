@@ -25,7 +25,9 @@ describe("Gadget Hackwrench - Quirky Scientist", () => {
       testEngine.asPlayerOne().playCard(gadgetHackwrenchQuirkyScientist),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(gadgetHackwrenchQuirkyScientist),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
   });
 

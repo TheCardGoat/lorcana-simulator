@@ -10,6 +10,11 @@ const config = {
   kit: {
     // Use the Node adapter for Railway/server deployment targets.
     adapter: adapter(),
+    paths: {
+      // Keep app.html static assets root-relative so nested routes don't
+      // request favicons/manifests from their own URL segment.
+      relative: false,
+    },
     alias: {
       "@": "./src/lib",
     },

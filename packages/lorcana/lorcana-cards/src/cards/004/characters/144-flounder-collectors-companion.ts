@@ -27,9 +27,9 @@ export const flounderCollectorsCompanion: CharacterCard = {
       title: "Support",
     },
     {
-      title: "I'M NOT",
+      title: "I'M NOT A GUPPY",
       description:
-        "A GUPPY If you have a character named Ariel in play, you pay 1 {I} less to play this character.",
+        "If you have a character named Ariel in play, you pay 1 {I} less to play this character.",
     },
   ],
   classifications: ["Storyborn", "Ally"],

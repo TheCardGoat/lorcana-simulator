@@ -50,7 +50,7 @@ describe("Maurice - Unconventional Inventor", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(mauriceUnconventionalInventor, {
           resolveOptional: true,
           targets: [mauricesMachine],
         }),
@@ -79,7 +79,7 @@ describe("Maurice - Unconventional Inventor", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(mauriceUnconventionalInventor, {
           resolveOptional: true,
           targets: [otherItem],
         }),
@@ -108,7 +108,7 @@ describe("Maurice - Unconventional Inventor", () => {
 
       const bagId = testEngine.asPlayerOne().getBagEffects()[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(mauriceUnconventionalInventor, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

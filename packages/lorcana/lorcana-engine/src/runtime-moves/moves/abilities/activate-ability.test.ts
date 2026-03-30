@@ -212,11 +212,7 @@ describe("activateAbility", () => {
             event.data?.abilityName === "I SUMMON THEE",
         ),
     ).toBe(true);
-    expect(
-      runtime
-        .getGameLog()
-        .some((entry) => entry.defaultMessage?.key === "lorcana.ability.activated.named"),
-    ).toBe(true);
+    expect(runtime.getMoveLogHistory().some((log) => log.type === "activateAbility")).toBe(true);
   });
 
   it("fails cleanly when ability lookup misses on a multi-ability card", () => {
@@ -489,7 +485,9 @@ describe("activateAbility", () => {
     expect(playerOne.getBagCount()).toBe(1);
 
     const [bagEffect] = playerOne.getBagEffects();
-    expect(playerOne.resolveBag(bagEffect!.id, { targets: [arielOnHumanLegs] }).success).toBe(true);
+    expect(
+      playerOne.resolvePendingByCard(bagEffect!.sourceId, { targets: [arielOnHumanLegs] }).success,
+    ).toBe(true);
     expect(playerTwo.getDamage(arielOnHumanLegs)).toBe(3);
   });
 

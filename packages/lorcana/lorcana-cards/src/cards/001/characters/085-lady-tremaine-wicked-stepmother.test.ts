@@ -31,7 +31,9 @@ describe("Lady Tremaine - Wicked Stepmother", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ladyTremaineWickedStepmother, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const pendingChoice = testEngine.asPlayerOne().getPendingChoice();
@@ -60,7 +62,9 @@ describe("Lady Tremaine - Wicked Stepmother", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ladyTremaineWickedStepmother, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(actionCardInDiscard)).toBe("discard");
@@ -96,7 +100,9 @@ describe("Lady Tremaine - Wicked Stepmother", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ladyTremaineWickedStepmother, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Can pick only 1 action card to return

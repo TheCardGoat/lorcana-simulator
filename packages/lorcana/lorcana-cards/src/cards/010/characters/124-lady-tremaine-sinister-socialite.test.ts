@@ -88,7 +88,9 @@ describe("Lady Tremaine - Sinister Socialite", () => {
       // Accept the optional - play action from discard for free
       // resolvePlayCardEffect auto-selects the only eligible card without a pending selection
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ladyTremaineSinisterSocialite, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // After being played, the action card should be on the bottom of deck (not in discard)
@@ -116,7 +118,9 @@ describe("Lady Tremaine - Sinister Socialite", () => {
 
       // Decline the optional
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ladyTremaineSinisterSocialite, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Action card should remain in discard
@@ -145,7 +149,9 @@ describe("Lady Tremaine - Sinister Socialite", () => {
       const bagCount = testEngine.asPlayerOne().getBagCount();
       if (bagCount > 0) {
         expect(
-          testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(ladyTremaineSinisterSocialite, { resolveOptional: true }),
         ).toBeSuccessfulCommand();
       }
 

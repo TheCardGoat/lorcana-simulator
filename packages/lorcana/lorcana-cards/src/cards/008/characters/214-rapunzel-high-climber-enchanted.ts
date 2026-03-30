@@ -1,59 +1,16 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { rapunzelHighClimberEnchantedI18n } from "./214-rapunzel-high-climber-enchanted.i18n";
-import { evasive } from "../../../helpers/abilities/evasive";
+import { rapunzelHighClimber } from "..";
 
 export const rapunzelHighClimberEnchanted: CharacterCard = {
+  ...rapunzelHighClimber,
   id: "3c0",
-  canonicalId: "ci_jRy",
   reprints: ["set8-101"],
-  cardType: "character",
-  name: "Rapunzel",
-  version: "High Climber",
-  inkType: ["emerald"],
-  franchise: "Tangled",
   set: "008",
   cardNumber: 214,
   rarity: "enchanted",
   specialRarity: "enchanted",
-  cost: 5,
-  strength: 2,
-  willpower: 5,
-  lore: 2,
-  inkable: true,
   externalIds: {
     lorcast: "crd_cf079ada81bd48cdb9290647f227982c",
     tcgPlayer: 633103,
   },
-  text: [
-    {
-      title: "Evasive",
-    },
-    {
-      title: "WRAPPED UP",
-      description:
-        "Whenever this character quests, chosen opposing character can't quest during their next turn.",
-    },
-  ],
-  classifications: ["Dreamborn", "Hero", "Princess"],
-  abilities: [
-    evasive,
-    {
-      effect: {
-        duration: "until-start-of-next-turn",
-        restriction: "cant-quest",
-        target: "CHOSEN_OPPOSING_CHARACTER",
-        type: "restriction",
-      },
-      id: "1ob-2",
-      name: "WRAPPED UP",
-      text: "WRAPPED UP Whenever this character quests, chosen opposing character can't quest during their next turn.",
-      trigger: {
-        event: "quest",
-        on: "SELF",
-        timing: "whenever",
-      },
-      type: "triggered",
-    },
-  ],
-  i18n: rapunzelHighClimberEnchantedI18n,
 };

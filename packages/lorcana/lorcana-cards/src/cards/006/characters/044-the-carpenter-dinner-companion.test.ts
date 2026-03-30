@@ -55,9 +55,10 @@ describe("The Carpenter - Dinner Companion", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ resolveOptional: true, targets: [targetCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(theCarpenterDinnerCompanion, {
+          resolveOptional: true,
+          targets: [targetCharacter],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().isExerted(targetCharacter)).toBe(true);
@@ -80,7 +81,9 @@ describe("The Carpenter - Dinner Companion", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(theCarpenterDinnerCompanion, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().isExerted(targetCharacter)).toBe(false);
@@ -107,9 +110,10 @@ describe("The Carpenter - Dinner Companion", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ resolveOptional: true, targets: [allyCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(theCarpenterDinnerCompanion, {
+          resolveOptional: true,
+          targets: [allyCharacter],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().isExerted(allyCharacter)).toBe(true);

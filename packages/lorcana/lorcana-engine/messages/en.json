@@ -34,5 +34,21 @@
   "lorcana.effect.resolve.scrySelection.detail": "Finished ordering cards for {sourceCardId}: {selection}.",
   "lorcana.effect.resolve.revealTopCard": "{playerId} revealed {revealedCardId} from {targetPlayerId}'s deck.",
   "lorcana.effect.resolve.revealTopCard.autoBottom": "Revealed {revealedCardId} — put on the bottom of {targetPlayerId}'s deck.",
-  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} chose option {choiceIndex} for {revealedCardId}."
+  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} chose option {choiceIndex} for {revealedCardId}.",
+  "lorcana.bag.resolve.cancelled": "Effect from {sourceId} cancelled ({cause}).",
+  "lorcana.bag.resolve.cancelled.named": "{abilityName} from {sourceId} cancelled ({cause}).",
+  "lorcana.effect.cancelled": "Effect from {sourceCardId} cancelled ({cause}).",
+  "lorcana.outcome.combatDamage": "{attackerId} dealt {attackerDamage} damage to {defenderId}. {defenderId} dealt {defenderDamage} damage to {attackerId}.",
+  "lorcana.outcome.effectDamage": "{sourceId} dealt {amount} damage to {targetId}.",
+  "lorcana.outcome.cardBanished": "{cardId} was banished.",
+  "lorcana.outcome.cardsDrawn": "Drew {amount} card(s).",
+  "lorcana.outcome.cardsDrawn.detail": "Drew {amount} card(s): {cardIds}.",
+  "lorcana.outcome.cardReturnedToHand": "{cardId} returned to hand.",
+  "lorcana.outcome.loreGained": "{playerId} gained {amount} lore.",
+  "lorcana.outcome.loreLost": "{playerId} lost {amount} lore.",
+  "lorcana.outcome.cardExerted": "{cardId} was exerted.",
+  "lorcana.outcome.cardReadied": "{cardId} was readied.",
+  "lorcana.outcome.cardsMilled": "Milled {amount} card(s).",
+  "lorcana.move.playCard.shift": "Played {cardId} by shifting onto {shiftTargetId}.",
+  "lorcana.move.playCard.sing": "Played {cardId} by singing with {singerIds}."
 }

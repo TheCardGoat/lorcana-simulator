@@ -150,7 +150,9 @@ describe("Tinker Bell - Giant Fairy (Set 9)", () => {
       // Resolve the optional effect by accepting it and targeting the bystander
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [bystander] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(tinkerBellGiantFairy, { targets: [bystander] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(bystander)).toBe(2);
@@ -190,7 +192,9 @@ describe("Tinker Bell - Giant Fairy (Set 9)", () => {
       // Decline the optional effect
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(tinkerBellGiantFairy, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(bystander)).toBe(0);

@@ -23,7 +23,9 @@ describe("Mickey Mouse - Detective", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mickeyMouseDetective, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const inkwellAfter = testEngine.asPlayerOne().getCardsInZone("inkwell", PLAYER_ONE).count;
@@ -52,7 +54,9 @@ describe("Mickey Mouse - Detective", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mickeyMouseDetective, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       const inkwellAfter = testEngine.asPlayerOne().getCardsInZone("inkwell", PLAYER_ONE).count;
@@ -78,7 +82,9 @@ describe("Mickey Mouse - Detective", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mickeyMouseDetective, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       const inkwellCards = testEngine.asPlayerOne().getCardsInZone("inkwell", PLAYER_ONE).cards;

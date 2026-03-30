@@ -46,6 +46,7 @@ export const munchingsAndCrunchings: ItemCard = {
         upTo: true,
       },
       id: "16w-1",
+      name: "WHAT A JUICY APPLE",
       text: "WHAT A JUICY APPLE {E} — Remove up to 2 damage from chosen character.",
       type: "activated",
     },

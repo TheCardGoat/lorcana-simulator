@@ -26,7 +26,7 @@ describe("Lilo - Escape Artist", () => {
       liloEscapeArtist.cost,
     );
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(liloEscapeArtist, {
         resolveOptional: true,
       }).success,
     ).toBe(true);
@@ -160,7 +160,7 @@ describe("Lilo - Escape Artist", () => {
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(liloEscapeArtist, {
         resolveOptional: true,
       }).success,
     ).toBe(true);

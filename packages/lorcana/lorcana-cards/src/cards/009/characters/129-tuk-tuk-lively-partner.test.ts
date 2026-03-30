@@ -48,7 +48,7 @@ describe("Tuk Tuk - Lively Partner (Set 9)", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tukTukLivelyPartner, {
           targets: [otherCharacter, testLocation],
         }),
       ).toBeSuccessfulCommand();
@@ -88,7 +88,7 @@ describe("Tuk Tuk - Lively Partner (Set 9)", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(tukTukLivelyPartner, {
           targets: [otherCharacter, testLocation],
         }),
       ).toBeSuccessfulCommand();
@@ -120,7 +120,9 @@ describe("Tuk Tuk - Lively Partner (Set 9)", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(bagEffect).toBeDefined();
 
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(tukTukLivelyPartner),
+      ).toBeSuccessfulCommand();
 
       // Nobody should be at the location
       expect(testEngine.asPlayerOne().getCard(tukTukLivelyPartner).atLocationId).toBeUndefined();
@@ -145,7 +147,7 @@ describe("Tuk Tuk - Lively Partner (Set 9)", () => {
       if (!bagEffect) return;
 
       // Try to move the other character (already at testLocation) to testLocation
-      const result = testEngine.asPlayerOne().resolveBag(bagEffect.id, {
+      const result = testEngine.asPlayerOne().resolvePendingByCard(tukTukLivelyPartner, {
         targets: [otherCharacter, testLocation],
       });
 

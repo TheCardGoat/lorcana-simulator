@@ -36,9 +36,10 @@ describe("Dormouse - Easily Agitated", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ resolveOptional: true, targets: [targetCharacter] }),
+        testEngine.asPlayerOne().resolvePendingByCard(dormouseEasilyAgitated, {
+          resolveOptional: true,
+          targets: [targetCharacter],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asServer().getCard(targetId).damage).toBe(1);
@@ -63,7 +64,9 @@ describe("Dormouse - Easily Agitated", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(dormouseEasilyAgitated, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asServer().getCard(targetId).damage).toBe(0);

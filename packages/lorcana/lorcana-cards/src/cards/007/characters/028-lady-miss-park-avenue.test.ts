@@ -59,7 +59,7 @@ describe("Lady - Miss Park Avenue", () => {
 
       // Accept the optional triggered ability and choose both discard characters
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(ladyMissParkAvenue, {
           resolveOptional: true,
           targets: [discardCharOne, discardCharTwo],
         }),
@@ -81,7 +81,7 @@ describe("Lady - Miss Park Avenue", () => {
 
       // Accept the optional triggered ability but choose only 1 character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(ladyMissParkAvenue, {
           resolveOptional: true,
           targets: [discardCharOne],
         }),
@@ -102,7 +102,9 @@ describe("Lady - Miss Park Avenue", () => {
       expect(testEngine.asPlayerOne().playCard(ladyMissParkAvenue)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ladyMissParkAvenue, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(discardCharOne)).toBe("discard");
@@ -121,7 +123,7 @@ describe("Lady - Miss Park Avenue", () => {
 
       // Accept the optional triggered ability and choose only the eligible card
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(ladyMissParkAvenue, {
           resolveOptional: true,
           targets: [discardCharOne],
         }),
@@ -143,7 +145,7 @@ describe("Lady - Miss Park Avenue", () => {
       expect(testEngine.asPlayerOne().playCard(ladyMissParkAvenue)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(ladyMissParkAvenue, {
           resolveOptional: true,
           targets: [discardCharOne],
         }),
@@ -168,7 +170,7 @@ describe("Lady - Miss Park Avenue", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(ladyMissParkAvenue, {
           resolveOptional: true,
           targets: [discardCharOne],
         }),
@@ -188,7 +190,7 @@ describe("Lady - Miss Park Avenue", () => {
       expect(testEngine.asPlayerOne().playCard(ladyMissParkAvenue)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(ladyMissParkAvenue, {
           resolveOptional: true,
           targets: [discardCharOne, discardCharTwo],
         }),

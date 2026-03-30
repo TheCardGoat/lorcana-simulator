@@ -26,7 +26,9 @@ describe("Yelana - Northuldra Leader", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [allyCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(yelanaNorthuldraLeader, { targets: [allyCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().hasKeyword(allyCharacter, "Challenger")).toBe(true);
@@ -45,7 +47,9 @@ describe("Yelana - Northuldra Leader", () => {
 
       expect(testEngine.asPlayerOne().playCard(yelanaNorthuldraLeader)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [allyCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(yelanaNorthuldraLeader, { targets: [allyCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().hasKeyword(allyCharacter, "Challenger")).toBe(true);

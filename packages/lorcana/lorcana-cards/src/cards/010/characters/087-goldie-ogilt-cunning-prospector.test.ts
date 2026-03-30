@@ -112,7 +112,7 @@ describe("Goldie O'Gilt - Cunning Prospector", () => {
       const locationId = testEngine.findCardInstanceId(mockLocation, "discard", PLAYER_TWO);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(goldieOgiltCunningProspector, {
           resolveOptional: true,
           targets: [locationId],
         }),
@@ -143,7 +143,7 @@ describe("Goldie O'Gilt - Cunning Prospector", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(goldieOgiltCunningProspector, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -173,7 +173,7 @@ describe("Goldie O'Gilt - Cunning Prospector", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+          testEngine.asPlayerOne().resolvePendingByCard(goldieOgiltCunningProspector, {
             resolveOptional: true,
           }),
         ).toBeSuccessfulCommand();
@@ -201,7 +201,7 @@ describe("Goldie O'Gilt - Cunning Prospector", () => {
       const locationId = testEngine.findCardInstanceId(mockLocationB, "discard", PLAYER_ONE);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(goldieOgiltCunningProspector, {
           resolveOptional: true,
           targets: [locationId],
         }),

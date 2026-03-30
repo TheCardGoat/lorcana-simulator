@@ -4,8 +4,13 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "bun:test";
 import {
   AGGRESSIVE_BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+  BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID,
+  BEST_DECK_AWARE_ORACLE_LORE_RACE_STRATEGY_ID,
   BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+  CHALLENGE_ONLY_TEST_STRATEGY_ID,
+  DECK_AWARE_LORE_RACE_STRATEGY_ID,
   DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+  QUEST_ONLY_TEST_STRATEGY_ID,
   type PlayerId,
 } from "@tcg/lorcana-engine";
 import { DECK_FIXTURES } from "../../lib/features/simulator-devtools/deck-fixtures/index.js";
@@ -321,10 +326,10 @@ describe("strategy lab match definitions", () => {
       strategyIds: [DEFAULT_AUTOMATED_ACTION_STRATEGY_ID, BOARD_CONTROL_LORE_RACE_STRATEGY_ID],
     });
 
-    expect(config.mirrorGameCount).toBe(50);
-    expect(config.crossDeckGameCount).toBe(20);
-    expect(matches.filter((match) => match.playerOne.id === match.playerTwo.id)).toHaveLength(200);
-    expect(matches.filter((match) => match.playerOne.id !== match.playerTwo.id)).toHaveLength(80);
+    expect(config.mirrorGameCount).toBe(2);
+    expect(config.crossDeckGameCount).toBe(2);
+    expect(matches.filter((match) => match.playerOne.id === match.playerTwo.id)).toHaveLength(16);
+    expect(matches.filter((match) => match.playerOne.id !== match.playerTwo.id)).toHaveLength(8);
   });
 
   it("accepts the aggressive board-control strategy id in lab match generation", () => {
@@ -352,12 +357,52 @@ describe("strategy lab match definitions", () => {
       ),
     ).toBe(true);
   });
+
+  it("excludes test-only strategies from default lab generation", () => {
+    const deck = DECK_FIXTURES[0];
+    if (!deck) {
+      throw new Error("Expected at least one deck fixture.");
+    }
+
+    const matches = buildStrategyLabMatchDefinitions({
+      deckIds: [deck.id],
+      gameCount: 1,
+      matchMode: "mirror",
+    });
+
+    const strategyIds = new Set(
+      matches.flatMap((match) => [match.playerOne.strategyId, match.playerTwo.strategyId]),
+    );
+
+    expect(strategyIds.has(QUEST_ONLY_TEST_STRATEGY_ID)).toBe(false);
+    expect(strategyIds.has(CHALLENGE_ONLY_TEST_STRATEGY_ID)).toBe(false);
+  });
+
+  it("includes test-only strategies when explicitly requested by id", () => {
+    const deck = DECK_FIXTURES[0];
+    if (!deck) {
+      throw new Error("Expected at least one deck fixture.");
+    }
+
+    const matches = buildStrategyLabMatchDefinitions({
+      deckIds: [deck.id],
+      gameCount: 1,
+      matchMode: "mirror",
+      strategyIds: [QUEST_ONLY_TEST_STRATEGY_ID, CHALLENGE_ONLY_TEST_STRATEGY_ID],
+    });
+
+    expect(matches).toHaveLength(2);
+    expect(
+      new Set(matches.flatMap((match) => [match.playerOne.strategyId, match.playerTwo.strategyId])),
+    ).toEqual(new Set([QUEST_ONLY_TEST_STRATEGY_ID, CHALLENGE_ONLY_TEST_STRATEGY_ID]));
+  });
 });
 
 describe("strategy candidate manifests", () => {
   it("exposes the aggressive board-control candidate manifest", () => {
     const manifests = getStrategyCandidateManifests([
       BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+      DECK_AWARE_LORE_RACE_STRATEGY_ID,
       AGGRESSIVE_BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
     ]);
 
@@ -365,6 +410,7 @@ describe("strategy candidate manifests", () => {
       BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
       AGGRESSIVE_BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
     ]);
+    expect(manifests[0]?.parentStrategyId).toBe(DEFAULT_AUTOMATED_ACTION_STRATEGY_ID);
     expect(manifests[1]?.parentStrategyId).toBe(BOARD_CONTROL_LORE_RACE_STRATEGY_ID);
   });
 });
@@ -535,13 +581,19 @@ describe("strategy lab artifact writing", () => {
       const runSummaryPath = join(summary.artifactRoot, "run-summary.json");
       const benchmarkJsonPath = join(summary.artifactRoot, "benchmark-summary.json");
       const benchmarkMarkdownPath = join(summary.artifactRoot, "benchmark-summary.md");
+      const matchupWeightJsonPath = join(summary.artifactRoot, "matchup-weight-report.json");
+      const matchupWeightMarkdownPath = join(summary.artifactRoot, "matchup-weight-report.md");
 
       expect(existsSync(runSummaryPath)).toBe(true);
       expect(existsSync(benchmarkJsonPath)).toBe(true);
       expect(existsSync(benchmarkMarkdownPath)).toBe(true);
+      expect(existsSync(matchupWeightJsonPath)).toBe(true);
+      expect(existsSync(matchupWeightMarkdownPath)).toBe(true);
 
       const persistedReport = JSON.parse(readFileSync(benchmarkJsonPath, "utf8"));
       const persistedMarkdown = readFileSync(benchmarkMarkdownPath, "utf8");
+      const persistedMatchupWeightReport = JSON.parse(readFileSync(matchupWeightJsonPath, "utf8"));
+      const persistedMatchupWeightMarkdown = readFileSync(matchupWeightMarkdownPath, "utf8");
 
       expect(summary.deckIds).toEqual([deck.id]);
       expect(summary.gameCount).toBe(1);
@@ -562,6 +614,56 @@ describe("strategy lab artifact writing", () => {
       expect(persistedMarkdown).toContain("# Strategy Lab Benchmark Summary");
       expect(persistedMarkdown).toContain("## Candidate Scorecards");
       expect(persistedMarkdown).toContain("## Top Strategies");
+      expect(persistedMatchupWeightReport.strategies).toEqual([]);
+      expect(persistedMatchupWeightMarkdown).toContain("# Matchup Weight Report");
+    },
+    { timeout: 20000 },
+  );
+
+  it(
+    "writes non-empty matchup weight reports for the best-ai candidate strategies",
+    () => {
+      const deck = DECK_FIXTURES[0];
+      if (!deck) {
+        throw new Error("Expected at least one deck fixture.");
+      }
+
+      const artifactRoot = mkdtempSync(join(tmpdir(), "strategy-lab-best-ai-report-"));
+      createdDirs.push(artifactRoot);
+
+      const summary = runStrategyLab({
+        artifactRoot,
+        deckIds: [deck.id],
+        gameCount: 1,
+        includeSameStrategyMirrors: true,
+        matchMode: "mirror",
+        strategyIds: [
+          BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID,
+          BEST_DECK_AWARE_ORACLE_LORE_RACE_STRATEGY_ID,
+        ],
+      });
+      const matchupWeightJsonPath = join(summary.artifactRoot, "matchup-weight-report.json");
+      const matchupWeightMarkdownPath = join(summary.artifactRoot, "matchup-weight-report.md");
+      const persistedMatchupWeightReport = JSON.parse(readFileSync(matchupWeightJsonPath, "utf8"));
+      const persistedMatchupWeightMarkdown = readFileSync(matchupWeightMarkdownPath, "utf8");
+
+      expect(summary.strategyIds).toEqual([
+        BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID,
+        BEST_DECK_AWARE_ORACLE_LORE_RACE_STRATEGY_ID,
+      ]);
+      expect(persistedMatchupWeightReport.strategies).toHaveLength(2);
+      expect(persistedMatchupWeightReport.strategies[0]?.matchups).toHaveLength(64);
+      expect(
+        persistedMatchupWeightReport.strategies.some(
+          (strategy: { strategyId: string }) =>
+            strategy.strategyId === BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID,
+        ),
+      ).toBe(true);
+      expect(persistedMatchupWeightMarkdown).toContain(BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID);
+      expect(persistedMatchupWeightMarkdown).toContain(
+        BEST_DECK_AWARE_ORACLE_LORE_RACE_STRATEGY_ID,
+      );
+      expect(persistedMatchupWeightMarkdown).toContain("Grab Your Bow");
     },
     { timeout: 20000 },
   );

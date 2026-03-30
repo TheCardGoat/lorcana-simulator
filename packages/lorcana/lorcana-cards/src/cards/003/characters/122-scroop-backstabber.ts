@@ -41,6 +41,7 @@ export const scroopBackstabber: CharacterCard = {
         type: "modify-stat",
       },
       id: "58w-1",
+      name: "BRUTE",
       text: "BRUTE While this character has damage, he gets +3 {S}.",
       type: "static",
     },

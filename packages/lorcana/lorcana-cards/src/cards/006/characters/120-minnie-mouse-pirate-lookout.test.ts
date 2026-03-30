@@ -68,7 +68,9 @@ describe("Minnie Mouse - Pirate Lookout", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       // Accept the optional ability
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMousePirateLookout),
+      ).toBeSuccessfulCommand();
       // Choose a location card from discard
       expect(
         testEngine.asPlayerOne().resolveNextPending({
@@ -105,7 +107,9 @@ describe("Minnie Mouse - Pirate Lookout", () => {
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(minnieMousePirateLookout, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Location stays in discard

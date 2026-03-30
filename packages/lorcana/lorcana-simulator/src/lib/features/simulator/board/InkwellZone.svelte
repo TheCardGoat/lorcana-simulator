@@ -8,6 +8,7 @@ import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import InkwellReminder from "@/features/simulator/board/InkwellReminder.svelte";
 import {
 	createCardAnchorId,
+	createInkwellEntryAnchorId,
 	createZoneAnchorId,
 } from "@/features/simulator/animations/board-move-animations.js";
 import { useLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
@@ -153,6 +154,11 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
       data-board-scroll-sync
       onclick={onClick}
     >
+      <div
+        class="inkwell-entry-anchor"
+        data-board-anchor-id={createInkwellEntryAnchorId(playerSide)}
+        aria-hidden="true"
+      ></div>
       <!-- Revealed view from snapshot cards -->
       <div  class="ink-cards-revealed">
         {#if showInkwellReminder}
@@ -205,6 +211,11 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
       data-board-scroll-sync
       onclick={onClick}
     >
+      <div
+        class="inkwell-entry-anchor"
+        data-board-anchor-id={createInkwellEntryAnchorId(playerSide)}
+        aria-hidden="true"
+      ></div>
       <!-- Normal view: show card backs in horizontal layout -->
       <div  class="ink-cards-stack">
         {#if showInkwellReminder}
@@ -299,12 +310,21 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
   }
 
   .inkwell-container--drop-preview {
-    background: rgba(91, 33, 182, 0.08);
+    --ink-border: rgba(180, 140, 230, 0.72);
+    background:
+      linear-gradient(180deg, rgba(119, 62, 204, 0.18), rgba(62, 28, 105, 0.1)),
+      rgba(22, 14, 39, 0.2);
     border-style: solid;
+    box-shadow:
+      0 0 18px rgba(180, 140, 230, 0.22),
+      inset 0 0 16px rgba(180, 140, 230, 0.1);
   }
 
   .inkwell-container--drop-valid {
     --ink-border: rgba(56, 189, 139, 0.7);
+    background:
+      linear-gradient(180deg, rgba(34, 197, 94, 0.18), rgba(6, 95, 70, 0.1)),
+      rgba(8, 26, 22, 0.22);
     box-shadow:
       0 0 20px rgba(56, 189, 139, 0.28),
       inset 0 0 20px rgba(56, 189, 139, 0.15);
@@ -313,6 +333,9 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
 
   .inkwell-container--drop-invalid {
     --ink-border: rgba(248, 113, 113, 0.7);
+    background:
+      linear-gradient(180deg, rgba(220, 38, 38, 0.18), rgba(127, 29, 29, 0.1)),
+      rgba(33, 16, 22, 0.22);
     box-shadow:
       0 0 20px rgba(248, 113, 113, 0.28),
       inset 0 0 20px rgba(248, 113, 113, 0.15);
@@ -374,6 +397,16 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
     overflow-y: hidden;
     scrollbar-width: thin;
     scrollbar-color: rgba(180, 160, 220, 0.55) rgba(0, 0, 0, 0.18);
+  }
+
+  .inkwell-entry-anchor {
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: var(--ink-card-width);
+    height: var(--ink-card-height);
+    pointer-events: none;
+    opacity: 0;
   }
 
   .inkwell-cards::-webkit-scrollbar {

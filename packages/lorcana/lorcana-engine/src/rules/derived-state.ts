@@ -1,5 +1,6 @@
 import type { CardInstanceId, DeepReadonly, PlayerId, FrameworkStateSnapshot } from "#core";
 import type { ModifyStatEffect, StatFloorEffect } from "@tcg/lorcana-types";
+import type { MaterializedStaticEffect, StaticEffectRegistry } from "./static-effect-registry";
 import { cardHasName, getKeywordValue as getBaseKeywordValue } from "../card-utils";
 export { cardHasName };
 import type { PlayCardExecutionContext } from "../runtime-moves/resolution/action-effects/types";
@@ -8,7 +9,6 @@ import { resolveVariableAmount } from "../runtime-moves/shared/amount/resolve-va
 import {
   evaluateStaticCondition as _evaluateStaticCondition,
   getSelfStaticCostReductionAmount as _getSelfStaticCostReductionAmount,
-  hasStaticCardRestriction as _hasStaticCardRestriction,
   hasStaticSelfRestriction as _hasStaticSelfRestriction,
   isCardInPlay as _isCardInPlay,
   matchesStaticAbilityTarget as _matchesStaticAbilityTarget,
@@ -20,7 +20,13 @@ import {
   hasTemporaryKeyword,
   hasTemporaryRestriction,
 } from "../runtime-moves/effects/temporary-effects";
-import type { Classification, LorcanaCardDefinition, LorcanaCardMeta, LorcanaG } from "../types";
+import type {
+  Classification,
+  LorcanaCardDefinition,
+  LorcanaCardMeta,
+  LorcanaG,
+  LorcanaMatchState,
+} from "../types";
 
 export type DerivedStateContext = {
   readonly ctx: {
@@ -52,8 +58,20 @@ export type DerivedStateContext = {
         readonly continuousEffects?: LorcanaG["continuousEffects"];
         readonly turnMetadata?: Partial<LorcanaG["turnMetadata"]>;
         readonly challengeState?: LorcanaG["challengeState"];
+        readonly staticEffectsVersion?: LorcanaG["staticEffectsVersion"];
       }>
     | undefined;
+};
+
+/**
+ * The flattened shape of DerivedStateContext consumed by StaticAbilityState-accepting
+ * functions in static-ability-utils.ts. Named explicitly to avoid TS7056.
+ */
+export type FlatDerivedState = {
+  priority: DerivedStateContext["ctx"]["priority"];
+  status: DerivedStateContext["ctx"]["status"];
+  _zonesPrivate: NonNullable<DerivedStateContext["ctx"]["zones"]>["private"];
+  G: DerivedStateContext["G"];
 };
 
 /**
@@ -78,7 +96,7 @@ export function createProjectionState(
  * Flattens a DerivedStateContext into the shape expected by StaticAbilityState
  * (i.e. the FrameworkStateSnapshot-like flat layout with priority, status, _zonesPrivate).
  */
-function flattenDerivedState(state: DerivedStateContext) {
+export function flattenDerivedState(state: DerivedStateContext): FlatDerivedState {
   return {
     priority: state.ctx.priority,
     status: state.ctx.status,
@@ -151,6 +169,24 @@ function normalizeNumber(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
+// Inline registry accessors — avoids circular runtime import from static-effect-registry.ts
+// (that module imports helpers from this module, so we import only its types)
+function registryEffectsForCard(
+  registry: StaticEffectRegistry,
+  cardId: CardInstanceId,
+  kind: MaterializedStaticEffect["kind"],
+): MaterializedStaticEffect[] {
+  return (registry.byTarget.get(cardId) ?? []).filter((e) => e.kind === kind);
+}
+
+function registryEffectsForPlayer(
+  registry: StaticEffectRegistry,
+  playerId: PlayerId,
+  kind: MaterializedStaticEffect["kind"],
+): MaterializedStaticEffect[] {
+  return (registry.byPlayer.get(playerId) ?? []).filter((e) => e.kind === kind);
+}
+
 function toProjectionCardMeta(
   meta: DeepReadonly<LorcanaCardMeta> | undefined,
 ): LorcanaCardMeta | undefined {
@@ -168,13 +204,13 @@ function toProjectionCardMeta(
 function getDerivedStrengthForStaticCondition(args: {
   state: DerivedStateContext;
   actorPlayerId?: PlayerId;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
 }): (cardId: CardInstanceId) => number {
   const { state, getDefinitionByInstanceId } = args;
 
   return (cardId: CardInstanceId) => {
     const definition = getDefinitionByInstanceId?.(cardId);
-    return deriveStrength(definition, state, cardId, getDefinitionByInstanceId);
+    return deriveStrength(definition, state, cardId, getDefinitionByInstanceId, undefined);
   };
 }
 
@@ -213,7 +249,7 @@ function createProjectionAmountContext(args: {
   };
 }
 
-function getProjectionPlayerIds(state: DerivedStateContext): PlayerId[] {
+export function getProjectionPlayerIds(state: DerivedStateContext): PlayerId[] {
   const playerIds = new Set<PlayerId>();
 
   for (const playerId of (state.ctx as { playerIds?: PlayerId[] }).playerIds ?? []) {
@@ -247,7 +283,7 @@ function getProjectionPlayerIds(state: DerivedStateContext): PlayerId[] {
   return [...playerIds];
 }
 
-function resolveStaticStatModifierAmount(args: {
+export function resolveStaticStatModifierAmount(args: {
   state: DerivedStateContext;
   effect: ModifyStatEffect;
   sourceId: CardInstanceId;
@@ -282,7 +318,7 @@ function resolveStaticStatModifierAmount(args: {
   return normalizeNumber(resolved.value);
 }
 
-function resolveStaticStatFloorMinimum(args: {
+export function resolveStaticStatFloorMinimum(args: {
   definition: LorcanaCardDefinition | undefined;
   effect: StatFloorEffect;
 }): number {
@@ -303,7 +339,7 @@ function resolveStaticStatFloorMinimum(args: {
   return normalizeNumber(effect.minimum);
 }
 
-function matchesLegacyStaticStatTarget(args: {
+export function matchesLegacyStaticStatTarget(args: {
   state: DerivedStateContext;
   target: unknown;
   sourceId: CardInstanceId;
@@ -345,373 +381,58 @@ function getStaticStatModifierTotal(args: {
   state: DerivedStateContext;
   cardInstanceId?: CardInstanceId;
   stat: "strength" | "willpower" | "lore";
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  registry: StaticEffectRegistry;
 }): number {
-  const { state, cardInstanceId, stat, getDefinitionByInstanceId } = args;
-  if (!cardInstanceId || !getDefinitionByInstanceId) {
+  const { cardInstanceId, stat, registry } = args;
+  if (!cardInstanceId) {
     return 0;
   }
 
-  if (!isCardInPlay(state, cardInstanceId)) {
-    return 0;
-  }
-
-  const cardIndex = state.ctx.zones?.private?.cardIndex;
-  if (!cardIndex) {
-    return 0;
-  }
-
-  let total = 0;
-  const getCardStrengthByInstanceId = getDerivedStrengthForStaticCondition({
-    state,
-    getDefinitionByInstanceId,
-  });
-
-  for (const sourceId of Object.keys(cardIndex) as CardInstanceId[]) {
-    if (!isCardInPlay(state, sourceId)) {
-      continue;
-    }
-
-    const sourceDefinition = getDefinitionByInstanceId(sourceId);
-    if (!sourceDefinition) {
-      continue;
-    }
-
-    for (const ability of sourceDefinition.abilities ?? []) {
-      if (ability.type !== "static") {
-        continue;
-      }
-
-      // Unwrap conditional effects to find modify-stat inside
-      let modifyStatEffect: ModifyStatEffect | undefined;
-      let extraCondition: Parameters<typeof evaluateStaticCondition>[0]["condition"];
-
-      if (ability.effect?.type === "modify-stat") {
-        modifyStatEffect = ability.effect as ModifyStatEffect;
-      } else if (
-        ability.effect?.type === "conditional" &&
-        (ability.effect as { then?: { type?: string } }).then?.type === "modify-stat"
-      ) {
-        const conditional = ability.effect as {
-          condition?: Parameters<typeof evaluateStaticCondition>[0]["condition"];
-          then: ModifyStatEffect;
-        };
-        modifyStatEffect = conditional.then;
-        extraCondition = conditional.condition;
-      }
-
-      if (!modifyStatEffect) {
-        continue;
-      }
-
-      if (modifyStatEffect.stat !== stat) {
-        continue;
-      }
-
-      const controllerId = state.ctx.zones?.private?.cardIndex?.[sourceId]?.controllerID as
-        | PlayerId
-        | undefined;
-
-      if (
-        !evaluateStaticCondition({
-          condition: ability.condition,
-          state,
-          controllerId,
-          sourceId,
-          getDefinitionByInstanceId,
-          getCardStrengthByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      // Evaluate the condition from the conditional wrapper
-      if (
-        extraCondition &&
-        !evaluateStaticCondition({
-          condition: extraCondition,
-          state,
-          controllerId,
-          sourceId,
-          getDefinitionByInstanceId,
-          getCardStrengthByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      if (
-        !matchesStaticAbilityTarget({
-          state,
-          target: modifyStatEffect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          controllerId,
-          getDefinitionByInstanceId,
-        }) &&
-        !matchesLegacyStaticStatTarget({
-          state,
-          target: modifyStatEffect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          getDefinitionByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      total += resolveStaticStatModifierAmount({
-        state,
-        effect: modifyStatEffect,
-        sourceId,
-        targetId: cardInstanceId,
-        controllerId,
-        getDefinitionByInstanceId,
-      });
-    }
-  }
-
-  return total;
+  return registryEffectsForCard(registry, cardInstanceId, "modify-stat")
+    .filter((e) => e.payload.stat === stat)
+    .reduce((sum, e) => sum + (e.payload.modifier as number), 0);
 }
 
 export function getStaticStatModifierSources(args: {
   state: DerivedStateContext;
   cardInstanceId?: CardInstanceId;
   stat: "strength" | "willpower" | "lore";
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  registry: StaticEffectRegistry | undefined;
 }): Array<{
   stat: string;
   amount: number;
   sourceId: CardInstanceId;
   sourceDefinitionId?: string;
 }> {
-  const { state, cardInstanceId, stat, getDefinitionByInstanceId } = args;
-  if (!cardInstanceId || !getDefinitionByInstanceId || !isCardInPlay(state, cardInstanceId)) {
+  const { cardInstanceId, stat, registry } = args;
+  if (!cardInstanceId || !registry) {
     return [];
   }
 
-  const cardIndex = state.ctx.zones?.private?.cardIndex;
-  if (!cardIndex) {
-    return [];
-  }
-
-  const sources: Array<{
-    stat: string;
-    amount: number;
-    sourceId: CardInstanceId;
-    sourceDefinitionId?: string;
-  }> = [];
-  const getCardStrengthByInstanceId = getDerivedStrengthForStaticCondition({
-    state,
-    getDefinitionByInstanceId,
-  });
-
-  for (const sourceId of Object.keys(cardIndex) as CardInstanceId[]) {
-    if (!isCardInPlay(state, sourceId)) {
-      continue;
-    }
-
-    const sourceDefinition = getDefinitionByInstanceId(sourceId);
-    if (!sourceDefinition) {
-      continue;
-    }
-
-    for (const ability of sourceDefinition.abilities ?? []) {
-      if (ability.type !== "static") {
-        continue;
-      }
-
-      // Unwrap conditional effects to find modify-stat inside
-      let modifyStatEffect: ModifyStatEffect | undefined;
-      let extraCondition: Parameters<typeof evaluateStaticCondition>[0]["condition"];
-
-      if (ability.effect?.type === "modify-stat") {
-        modifyStatEffect = ability.effect as ModifyStatEffect;
-      } else if (
-        ability.effect?.type === "conditional" &&
-        (ability.effect as { then?: { type?: string } }).then?.type === "modify-stat"
-      ) {
-        const conditional = ability.effect as {
-          condition?: Parameters<typeof evaluateStaticCondition>[0]["condition"];
-          then: ModifyStatEffect;
-        };
-        modifyStatEffect = conditional.then;
-        extraCondition = conditional.condition;
-      }
-
-      if (!modifyStatEffect) {
-        continue;
-      }
-
-      if (modifyStatEffect.stat !== stat) {
-        continue;
-      }
-
-      const controllerId = state.ctx.zones?.private?.cardIndex?.[sourceId]?.controllerID as
-        | PlayerId
-        | undefined;
-
-      if (
-        !evaluateStaticCondition({
-          condition: ability.condition,
-          state,
-          controllerId,
-          sourceId,
-          getDefinitionByInstanceId,
-          getCardStrengthByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      if (
-        extraCondition &&
-        !evaluateStaticCondition({
-          condition: extraCondition,
-          state,
-          controllerId,
-          sourceId,
-          getDefinitionByInstanceId,
-          getCardStrengthByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      if (
-        !matchesStaticAbilityTarget({
-          state,
-          target: modifyStatEffect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          controllerId,
-          getDefinitionByInstanceId,
-        }) &&
-        !matchesLegacyStaticStatTarget({
-          state,
-          target: modifyStatEffect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          getDefinitionByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      const amount = resolveStaticStatModifierAmount({
-        state,
-        effect: modifyStatEffect,
-        sourceId,
-        targetId: cardInstanceId,
-        controllerId,
-        getDefinitionByInstanceId,
-      });
-
-      if (amount !== 0) {
-        sources.push({
-          stat,
-          amount,
-          sourceId,
-          sourceDefinitionId: sourceDefinition.id,
-        });
-      }
-    }
-  }
-
-  return sources;
+  return registryEffectsForCard(registry, cardInstanceId, "modify-stat")
+    .filter((e) => e.payload.stat === stat && (e.payload.modifier as number) !== 0)
+    .map((e) => ({
+      stat,
+      amount: e.payload.modifier as number,
+      sourceId: e.sourceId,
+      sourceDefinitionId: e.sourceDefinitionId,
+    }));
 }
 
 function getStaticStatFloor(args: {
-  state: DerivedStateContext;
   cardInstanceId?: CardInstanceId;
   stat: "strength" | "willpower" | "lore";
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  registry: StaticEffectRegistry;
 }): number | undefined {
-  const { state, cardInstanceId, stat, getDefinitionByInstanceId } = args;
-  if (!cardInstanceId || !getDefinitionByInstanceId) {
+  const { cardInstanceId, stat, registry } = args;
+  if (!cardInstanceId) {
     return undefined;
   }
 
-  if (!isCardInPlay(state, cardInstanceId)) {
-    return undefined;
-  }
-
-  const cardIndex = state.ctx.zones?.private?.cardIndex;
-  if (!cardIndex) {
-    return undefined;
-  }
-
-  const targetDefinition = getDefinitionByInstanceId(cardInstanceId);
-  let minimum: number | undefined;
-  const getCardStrengthByInstanceId = getDerivedStrengthForStaticCondition({
-    state,
-    getDefinitionByInstanceId,
-  });
-
-  for (const sourceId of Object.keys(cardIndex) as CardInstanceId[]) {
-    if (!isCardInPlay(state, sourceId)) {
-      continue;
-    }
-
-    const sourceDefinition = getDefinitionByInstanceId(sourceId);
-    if (!sourceDefinition) {
-      continue;
-    }
-
-    for (const ability of sourceDefinition.abilities ?? []) {
-      if (ability.type !== "static" || ability.effect?.type !== "stat-floor") {
-        continue;
-      }
-
-      if (ability.effect.stat !== stat) {
-        continue;
-      }
-
-      const controllerId = state.ctx.zones?.private?.cardIndex?.[sourceId]?.controllerID as
-        | PlayerId
-        | undefined;
-      if (
-        !evaluateStaticCondition({
-          condition: ability.condition,
-          state,
-          controllerId,
-          sourceId,
-          getDefinitionByInstanceId,
-          getCardStrengthByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      if (
-        !matchesStaticAbilityTarget({
-          state,
-          target: ability.effect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          controllerId,
-          getDefinitionByInstanceId,
-        }) &&
-        !matchesLegacyStaticStatTarget({
-          state,
-          target: ability.effect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          getDefinitionByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      const floor = resolveStaticStatFloorMinimum({
-        definition: targetDefinition,
-        effect: ability.effect,
-      });
-      minimum = minimum === undefined ? floor : Math.max(minimum, floor);
-    }
-  }
-
-  return minimum;
+  const floors = registryEffectsForCard(registry, cardInstanceId, "stat-floor")
+    .filter((e) => e.payload.stat === stat)
+    .map((e) => e.payload.floor as number);
+  return floors.length > 0 ? Math.max(...floors) : undefined;
 }
 
 function applyStaticStatFloor(value: number, floor: number | undefined): number {
@@ -729,19 +450,21 @@ export function clampCharacteristicForRules(value: number): number {
 export function getEffectiveLore(
   definition: LorcanaCardDefinition | undefined,
   state: DerivedStateContext,
-  cardInstanceId?: CardInstanceId,
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  cardInstanceId: CardInstanceId,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
 ): number {
   return clampCharacteristicForRules(
-    deriveLore(definition, state, cardInstanceId, getDefinitionByInstanceId),
+    deriveLore(definition, state, cardInstanceId, getDefinitionByInstanceId, registry),
   );
 }
 
 export function deriveLore(
   definition: LorcanaCardDefinition | undefined,
   state: DerivedStateContext,
-  cardInstanceId?: CardInstanceId,
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  cardInstanceId: CardInstanceId | undefined,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
 ): number {
   const baseLore = normalizeNumber(definition?.lore);
 
@@ -751,20 +474,23 @@ export function deriveLore(
 
   const modifier =
     getActiveStatModifierTotal(state, cardInstanceId, "lore", getDefinitionByInstanceId) +
-    getStaticStatModifierTotal({
-      state,
-      cardInstanceId,
-      stat: "lore",
-      getDefinitionByInstanceId,
-    });
+    (registry
+      ? getStaticStatModifierTotal({
+          state,
+          cardInstanceId,
+          stat: "lore",
+          registry,
+        })
+      : 0);
   return applyStaticStatFloor(
     baseLore + modifier,
-    getStaticStatFloor({
-      state,
-      cardInstanceId,
-      stat: "lore",
-      getDefinitionByInstanceId,
-    }),
+    registry
+      ? getStaticStatFloor({
+          cardInstanceId,
+          stat: "lore",
+          registry,
+        })
+      : undefined,
   );
 }
 
@@ -774,7 +500,7 @@ export function deriveCanBePutInInkwell(args: {
   zoneID?: string;
   state: DerivedStateContext;
   actorPlayerId?: PlayerId;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
 }): boolean {
   const { definition, ownerID, zoneID, state, actorPlayerId, getDefinitionByInstanceId } = args;
   if (!definition || !ownerID || !zoneID || !actorPlayerId) {
@@ -910,19 +636,21 @@ export function deriveCanBePutInInkwell(args: {
 export function getEffectiveStrength(
   definition: LorcanaCardDefinition | undefined,
   state: DerivedStateContext,
-  cardInstanceId?: CardInstanceId,
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  cardInstanceId: CardInstanceId,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
 ): number {
   return clampCharacteristicForRules(
-    deriveStrength(definition, state, cardInstanceId, getDefinitionByInstanceId),
+    deriveStrength(definition, state, cardInstanceId, getDefinitionByInstanceId, registry),
   );
 }
 
 export function deriveStrength(
   definition: LorcanaCardDefinition | undefined,
   state: DerivedStateContext,
-  cardInstanceId?: CardInstanceId,
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  cardInstanceId: CardInstanceId | undefined,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
 ): number {
   if (!definition || definition.cardType !== "character" || !cardInstanceId) {
     return 0;
@@ -931,39 +659,44 @@ export function deriveStrength(
   const baseStrength = normalizeNumber(definition.strength);
   const modifier =
     getActiveStatModifierTotal(state, cardInstanceId, "strength", getDefinitionByInstanceId) +
-    getStaticStatModifierTotal({
-      state,
-      cardInstanceId,
-      stat: "strength",
-      getDefinitionByInstanceId,
-    });
+    (registry
+      ? getStaticStatModifierTotal({
+          state,
+          cardInstanceId,
+          stat: "strength",
+          registry,
+        })
+      : 0);
   return applyStaticStatFloor(
     baseStrength + modifier,
-    getStaticStatFloor({
-      state,
-      cardInstanceId,
-      stat: "strength",
-      getDefinitionByInstanceId,
-    }),
+    registry
+      ? getStaticStatFloor({
+          cardInstanceId,
+          stat: "strength",
+          registry,
+        })
+      : undefined,
   );
 }
 
 export function getEffectiveWillpower(
   definition: LorcanaCardDefinition | undefined,
   state: DerivedStateContext,
-  cardInstanceId?: CardInstanceId,
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  cardInstanceId: CardInstanceId,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
 ): number {
   return clampCharacteristicForRules(
-    deriveWillpower(definition, state, cardInstanceId, getDefinitionByInstanceId),
+    deriveWillpower(definition, state, cardInstanceId, getDefinitionByInstanceId, registry),
   );
 }
 
 export function deriveWillpower(
   definition: LorcanaCardDefinition | undefined,
   state: DerivedStateContext,
-  cardInstanceId?: CardInstanceId,
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  cardInstanceId: CardInstanceId | undefined,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
 ): number {
   if (!definition || !cardInstanceId) {
     return 0;
@@ -976,20 +709,23 @@ export function deriveWillpower(
   const baseWillpower = normalizeNumber(definition.willpower);
   const modifier =
     getActiveStatModifierTotal(state, cardInstanceId, "willpower", getDefinitionByInstanceId) +
-    getStaticStatModifierTotal({
-      state,
-      cardInstanceId,
-      stat: "willpower",
-      getDefinitionByInstanceId,
-    });
+    (registry
+      ? getStaticStatModifierTotal({
+          state,
+          cardInstanceId,
+          stat: "willpower",
+          registry,
+        })
+      : 0);
   const derivedWillpower = applyStaticStatFloor(
     baseWillpower + modifier,
-    getStaticStatFloor({
-      state,
-      cardInstanceId,
-      stat: "willpower",
-      getDefinitionByInstanceId,
-    }),
+    registry
+      ? getStaticStatFloor({
+          cardInstanceId,
+          stat: "willpower",
+          registry,
+        })
+      : undefined,
   );
 
   return definition.cardType === "location" ? Math.max(0, derivedWillpower) : derivedWillpower;
@@ -997,6 +733,7 @@ export function deriveWillpower(
 
 export type PendingCostReduction = {
   amount: number;
+  sourceId?: CardInstanceId;
   cardType?: "character" | "item" | "location" | "action" | "song";
   classification?: Classification | Classification[] | readonly Classification[];
   expiresAtTurn: number;
@@ -1090,104 +827,63 @@ function getStaticCostReductionAmount(args: {
   state: DerivedStateContext;
   playerId: PlayerId;
   definition: LorcanaCardDefinition;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
   playMethod?: "shift" | "standard";
+  registry: StaticEffectRegistry;
 }): number {
-  const { state, playerId, definition, getDefinitionByInstanceId, playMethod } = args;
-  if (!getDefinitionByInstanceId) {
-    return 0;
-  }
+  const { state, playerId, definition, getDefinitionByInstanceId, playMethod, registry } = args;
 
-  const getCardStrengthByInstanceId = getDerivedStrengthForStaticCondition({
-    state,
-    actorPlayerId: playerId,
-    getDefinitionByInstanceId,
-  });
+  const effects = registryEffectsForPlayer(registry, playerId, "cost-reduction");
   let total = 0;
-
-  for (const cardId of Object.keys(state.ctx.zones?.private?.cardIndex ?? {}) as CardInstanceId[]) {
-    if (!isCardInPlay(state, cardId)) {
+  const baseCost = Number(definition.cost ?? 0);
+  for (const e of effects) {
+    const payload = e.payload as {
+      rawAmount?: unknown;
+      rawReduction?: { ink?: unknown };
+      cardType?: unknown;
+      classification?: unknown;
+      cardName?: string;
+      playMethod?: string;
+    };
+    const effectPlayMethod = payload.playMethod;
+    if (effectPlayMethod !== undefined && (!playMethod || playMethod !== effectPlayMethod))
       continue;
-    }
-
-    const controllerId = state.ctx.zones?.private?.cardIndex?.[cardId]?.controllerID as
-      | PlayerId
-      | undefined;
-    if (controllerId !== playerId) {
+    if (
+      !matchesCostReductionCardType(
+        definition,
+        payload.cardType as PendingCostReduction["cardType"],
+      )
+    )
       continue;
-    }
-
-    const sourceDefinition = getDefinitionByInstanceId(cardId);
-    if (!sourceDefinition) {
+    if (
+      !matchesCostReductionClassification(
+        definition,
+        payload.classification as PendingCostReduction["classification"],
+      )
+    )
       continue;
-    }
+    if (payload.cardName && !matchesCostReductionName(definition, payload.cardName)) continue;
 
-    for (const ability of sourceDefinition.abilities ?? []) {
-      if (ability.type !== "static" || ability.effect?.type !== "cost-reduction") {
-        continue;
-      }
-
-      const activeSourceZones = ability.sourceZones ?? ["play"];
-      if (!activeSourceZones.includes("play")) {
-        continue;
-      }
-
-      // If the effect is restricted to a specific play method, skip when the
-      // current play method does not match (or when no play method is provided
-      // and the effect requires a specific one).
-      const effectPlayMethod = (ability.effect as { playMethod?: string }).playMethod;
-      if (effectPlayMethod !== undefined) {
-        if (!playMethod || playMethod !== effectPlayMethod) {
-          continue;
-        }
-      }
-
-      if (!matchesCostReductionCardType(definition, ability.effect.cardType)) {
-        continue;
-      }
-
-      if (!matchesCostReductionClassification(definition, ability.effect.classification)) {
-        continue;
-      }
-
-      if (ability.effect.cardName && definition.name !== ability.effect.cardName) {
-        continue;
-      }
-
-      if (
-        !evaluateStaticCondition({
-          condition: ability.condition,
-          state,
-          controllerId: playerId,
-          sourceId: cardId,
-          getDefinitionByInstanceId,
-          getCardStrengthByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      const baseCost = Number(definition.cost ?? 0);
-      const amount =
-        ability.effect.amount === "full" || ability.effect.reduction?.ink === "full"
-          ? baseCost
-          : typeof ability.effect.amount === "number"
-            ? ability.effect.amount
-            : typeof ability.effect.amount === "object"
-              ? resolveStaticVariableAmount({
-                  amount: ability.effect.amount,
-                  state,
-                  controllerId: playerId,
-                  sourceId: cardId,
-                  getDefinitionByInstanceId,
-                })
-              : typeof ability.effect.reduction?.ink === "number"
-                ? ability.effect.reduction.ink
-                : 0;
-      total += Math.max(0, amount);
-    }
+    const rawAmount = payload.rawAmount;
+    const rawReduction = payload.rawReduction;
+    const amount =
+      rawAmount === "full" || rawReduction?.ink === "full"
+        ? baseCost
+        : typeof rawAmount === "number"
+          ? (rawAmount as number)
+          : typeof rawAmount === "object" && rawAmount !== null
+            ? resolveStaticVariableAmount({
+                amount: rawAmount as Parameters<typeof resolveStaticVariableAmount>[0]["amount"],
+                state,
+                controllerId: playerId,
+                sourceId: e.sourceId,
+                getDefinitionByInstanceId,
+              })
+            : typeof rawReduction?.ink === "number"
+              ? (rawReduction.ink as number)
+              : 0;
+    total += Math.max(0, amount);
   }
-
   return total;
 }
 
@@ -1198,57 +894,31 @@ function getStaticCostReductionAmount(args: {
 export function getStaticCostIncreaseAmount(args: {
   state: DerivedStateContext;
   definition: LorcanaCardDefinition;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  registry: StaticEffectRegistry | undefined;
 }): number {
-  const { state, definition, getDefinitionByInstanceId } = args;
-  if (!getDefinitionByInstanceId) {
+  const { definition, registry } = args;
+
+  if (!registry) {
     return 0;
   }
 
+  const isSong =
+    definition.cardType === "action" &&
+    "actionSubtype" in definition &&
+    definition.actionSubtype === "song";
   let total = 0;
-
-  for (const cardId of Object.keys(state.ctx.zones?.private?.cardIndex ?? {}) as CardInstanceId[]) {
-    if (!isCardInPlay(state, cardId)) {
-      continue;
+  for (const e of registry.global.filter((g) => g.kind === "cost-increase")) {
+    const cardTypes = e.payload.cardType;
+    if (cardTypes !== undefined) {
+      const types = Array.isArray(cardTypes) ? (cardTypes as string[]) : [cardTypes as string];
+      const matches = types.some((t) => {
+        if (t === "song") return isSong;
+        return definition.cardType === t;
+      });
+      if (!matches) continue;
     }
-
-    const sourceDefinition = getDefinitionByInstanceId(cardId);
-    if (!sourceDefinition) {
-      continue;
-    }
-
-    for (const ability of sourceDefinition.abilities ?? []) {
-      if (ability.type !== "static" || ability.effect?.type !== "cost-increase") {
-        continue;
-      }
-
-      const activeSourceZones = ability.sourceZones ?? ["play"];
-      if (!activeSourceZones.includes("play")) {
-        continue;
-      }
-
-      const increaseEffect = ability.effect;
-      const cardTypes = increaseEffect.cardType;
-      if (cardTypes !== undefined) {
-        const types = Array.isArray(cardTypes) ? cardTypes : [cardTypes];
-        const isSong =
-          definition.cardType === "action" &&
-          "actionSubtype" in definition &&
-          definition.actionSubtype === "song";
-        const matches = types.some((t) => {
-          if (t === "song") return isSong;
-          return definition.cardType === t;
-        });
-        if (!matches) {
-          continue;
-        }
-      }
-
-      const amount = typeof increaseEffect.amount === "number" ? increaseEffect.amount : 0;
-      total += Math.max(0, amount);
-    }
+    total += Math.max(0, e.payload.amount as number);
   }
-
   return total;
 }
 
@@ -1264,8 +934,9 @@ export function getAppliedCostReductions(args: {
   ownerID?: PlayerId;
   zoneID?: string;
   actorPlayerId?: PlayerId;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
   playMethod?: "shift" | "standard";
+  registry: StaticEffectRegistry | undefined;
 }): CostReductionApplication {
   const {
     definition,
@@ -1276,6 +947,7 @@ export function getAppliedCostReductions(args: {
     actorPlayerId,
     getDefinitionByInstanceId,
     playMethod,
+    registry,
   } = args;
 
   if (!definition) {
@@ -1308,13 +980,16 @@ export function getAppliedCostReductions(args: {
     }
   });
 
-  const staticReduction = getStaticCostReductionAmount({
-    state,
-    playerId: actorPlayerId,
-    definition,
-    getDefinitionByInstanceId,
-    playMethod,
-  });
+  const staticReduction = registry
+    ? getStaticCostReductionAmount({
+        state,
+        playerId: actorPlayerId,
+        definition,
+        getDefinitionByInstanceId,
+        playMethod,
+        registry,
+      })
+    : 0;
   const getCardStrengthByInstanceId = getDerivedStrengthForStaticCondition({
     state,
     actorPlayerId,
@@ -1343,8 +1018,9 @@ export function derivePlayCost(args: {
   ownerID?: PlayerId;
   zoneID?: string;
   actorPlayerId?: PlayerId;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
   playMethod?: "shift" | "standard";
+  registry: StaticEffectRegistry | undefined;
 }): number {
   const { definition } = args;
   const baseCost = normalizeNumber(definition?.cost);
@@ -1352,10 +1028,12 @@ export function derivePlayCost(args: {
     return baseCost;
   }
 
+  const { state, registry } = args;
   const application = getAppliedCostReductions(args);
   const increaseAmount = getStaticCostIncreaseAmount({
-    ...args,
+    state,
     definition,
+    registry,
   });
   return Math.max(0, baseCost - application.reductionAmount + increaseAmount);
 }
@@ -1397,7 +1075,7 @@ export function getActiveStaticSelfKeywordGrants(args: {
   controllerId?: PlayerId;
   zoneID?: string;
   cardInstanceId?: CardInstanceId;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
 }): { keywords: string[]; values: Record<string, number> } {
   const { definition, state, controllerId, zoneID, cardInstanceId, getDefinitionByInstanceId } =
     args;
@@ -1475,111 +1153,26 @@ export function getActiveStaticKeywordGrants(args: {
   controllerId?: PlayerId;
   zoneID?: string;
   cardInstanceId?: CardInstanceId;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  registry: StaticEffectRegistry | undefined;
 }): { keywords: string[]; values: Record<string, number> } {
-  const { definition, state, controllerId, zoneID, cardInstanceId, getDefinitionByInstanceId } =
-    args;
+  const { zoneID, cardInstanceId, registry } = args;
   const normalizedZone = zoneID?.split(":")[0];
-  if (!definition || normalizedZone !== "play" || !cardInstanceId || !getDefinitionByInstanceId) {
-    return { keywords: [], values: {} };
-  }
 
+  if (!registry || !cardInstanceId || normalizedZone !== "play")
+    return { keywords: [], values: {} };
+  const effects = registryEffectsForCard(registry, cardInstanceId, "gain-keyword").filter(
+    (e) => !e.payload.selfGrant,
+  );
   const keywords: string[] = [];
   const values: Record<string, number> = {};
-  const getCardStrengthByInstanceId = getDerivedStrengthForStaticCondition({
-    state,
-    actorPlayerId: controllerId,
-    getDefinitionByInstanceId,
-  });
-
-  for (const sourceId of Object.keys(
-    state.ctx.zones?.private?.cardIndex ?? {},
-  ) as CardInstanceId[]) {
-    if (!isCardInPlay(state, sourceId)) {
-      continue;
-    }
-
-    const sourceDefinition = getDefinitionByInstanceId(sourceId);
-    if (!sourceDefinition) {
-      continue;
-    }
-
-    const sourceControllerId = state.ctx.zones?.private?.cardIndex?.[sourceId]?.controllerID as
-      | PlayerId
-      | undefined;
-
-    for (const ability of sourceDefinition.abilities ?? []) {
-      if (ability.type !== "static" || ability.effect?.type !== "gain-keyword") {
-        continue;
-      }
-
-      if (ability.effect.target === "SELF") {
-        continue;
-      }
-
-      if (
-        !evaluateStaticCondition({
-          condition: ability.condition,
-          state,
-          controllerId: sourceControllerId ?? controllerId,
-          sourceId,
-          getDefinitionByInstanceId,
-          getCardStrengthByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      if (
-        !matchesStaticAbilityTarget({
-          state,
-          target: ability.effect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          controllerId: sourceControllerId,
-          getDefinitionByInstanceId,
-        }) &&
-        !matchesLegacyStaticStatTarget({
-          state,
-          target: ability.effect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          getDefinitionByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      const keyword =
-        typeof ability.effect.keyword === "string" && ability.effect.keyword.trim().length > 0
-          ? ability.effect.keyword.trim()
-          : undefined;
-      if (!keyword) {
-        continue;
-      }
-
-      keywords.push(keyword);
-      if (typeof ability.effect.value === "number" && Number.isFinite(ability.effect.value)) {
-        const amount = ability.effect.value;
-        if (amount > 0) {
-          values[keyword] = (values[keyword] ?? 0) + amount;
-        }
-      } else if (typeof ability.effect.value === "object" && ability.effect.value !== null) {
-        const resolvedAmount = resolveStaticVariableAmount({
-          amount: ability.effect.value,
-          state,
-          controllerId: sourceControllerId ?? controllerId,
-          sourceId,
-          getDefinitionByInstanceId,
-        });
-        if (resolvedAmount > 0) {
-          values[keyword] = (values[keyword] ?? 0) + resolvedAmount;
-        }
-      }
+  for (const e of effects) {
+    const kw = e.payload.keyword as string;
+    keywords.push(kw);
+    if (typeof e.payload.value === "number" && (e.payload.value as number) > 0) {
+      values[kw] = (values[kw] ?? 0) + (e.payload.value as number);
     }
   }
-
-  keywords.sort((left, right) => left.localeCompare(right));
+  keywords.sort((a, b) => a.localeCompare(b));
   return { keywords, values };
 }
 
@@ -1589,87 +1182,16 @@ export function getActiveStaticKeywordLosses(args: {
   controllerId?: PlayerId;
   zoneID?: string;
   cardInstanceId?: CardInstanceId;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  registry: StaticEffectRegistry | undefined;
 }): string[] {
-  const { definition, state, controllerId, zoneID, cardInstanceId, getDefinitionByInstanceId } =
-    args;
+  const { zoneID, cardInstanceId, registry } = args;
   const normalizedZone = zoneID?.split(":")[0];
-  if (!definition || normalizedZone !== "play" || !cardInstanceId || !getDefinitionByInstanceId) {
-    return [];
-  }
 
-  const keywords = new Set<string>();
-  const getCardStrengthByInstanceId = getDerivedStrengthForStaticCondition({
-    state,
-    actorPlayerId: controllerId,
-    getDefinitionByInstanceId,
-  });
-
-  for (const sourceId of Object.keys(
-    state.ctx.zones?.private?.cardIndex ?? {},
-  ) as CardInstanceId[]) {
-    if (!isCardInPlay(state, sourceId)) {
-      continue;
-    }
-
-    const sourceDefinition = getDefinitionByInstanceId(sourceId);
-    if (!sourceDefinition) {
-      continue;
-    }
-
-    const sourceControllerId = state.ctx.zones?.private?.cardIndex?.[sourceId]?.controllerID as
-      | PlayerId
-      | undefined;
-
-    for (const ability of sourceDefinition.abilities ?? []) {
-      if (ability.type !== "static" || ability.effect?.type !== "lose-keyword") {
-        continue;
-      }
-
-      if (
-        !evaluateStaticCondition({
-          condition: ability.condition,
-          state,
-          controllerId: sourceControllerId ?? controllerId,
-          sourceId,
-          getDefinitionByInstanceId,
-          getCardStrengthByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      if (
-        !matchesStaticAbilityTarget({
-          state,
-          target: ability.effect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          controllerId: sourceControllerId,
-          getDefinitionByInstanceId,
-        }) &&
-        !matchesLegacyStaticStatTarget({
-          state,
-          target: ability.effect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          getDefinitionByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      const keyword =
-        typeof ability.effect.keyword === "string" && ability.effect.keyword.trim().length > 0
-          ? ability.effect.keyword.trim()
-          : undefined;
-      if (keyword) {
-        keywords.add(keyword);
-      }
-    }
-  }
-
-  return [...keywords].sort((left, right) => left.localeCompare(right));
+  if (!registry || !cardInstanceId || normalizedZone !== "play") return [];
+  const kws = registryEffectsForCard(registry, cardInstanceId, "lose-keyword").map(
+    (e) => e.payload.keyword as string,
+  );
+  return [...new Set(kws)].sort((a, b) => a.localeCompare(b));
 }
 
 export function getActiveStaticKeywordGrantSources(args: {
@@ -1678,99 +1200,23 @@ export function getActiveStaticKeywordGrantSources(args: {
   controllerId?: PlayerId;
   zoneID?: string;
   cardInstanceId?: CardInstanceId;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  registry: StaticEffectRegistry | undefined;
 }): Array<{
   keyword: string;
   sourceId: CardInstanceId;
   sourceDefinitionId?: string;
 }> {
-  const { definition, state, controllerId, zoneID, cardInstanceId, getDefinitionByInstanceId } =
-    args;
+  const { zoneID, cardInstanceId, registry } = args;
   const normalizedZone = zoneID?.split(":")[0];
-  if (!definition || normalizedZone !== "play" || !cardInstanceId || !getDefinitionByInstanceId) {
-    return [];
-  }
 
-  const sources: Array<{
-    keyword: string;
-    sourceId: CardInstanceId;
-    sourceDefinitionId?: string;
-  }> = [];
-
-  for (const sourceId of Object.keys(
-    state.ctx.zones?.private?.cardIndex ?? {},
-  ) as CardInstanceId[]) {
-    if (sourceId === cardInstanceId || !isCardInPlay(state, sourceId)) {
-      continue;
-    }
-
-    const sourceDefinition = getDefinitionByInstanceId(sourceId);
-    if (!sourceDefinition) {
-      continue;
-    }
-
-    const sourceControllerId = state.ctx.zones?.private?.cardIndex?.[sourceId]?.controllerID as
-      | PlayerId
-      | undefined;
-
-    for (const ability of sourceDefinition.abilities ?? []) {
-      if (ability.type !== "static" || ability.effect?.type !== "gain-keyword") {
-        continue;
-      }
-
-      if (ability.effect.target === "SELF") {
-        continue;
-      }
-
-      if (
-        !evaluateStaticCondition({
-          condition: ability.condition,
-          state,
-          controllerId: sourceControllerId ?? controllerId,
-          sourceId,
-          getDefinitionByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      if (
-        !matchesStaticAbilityTarget({
-          state,
-          target: ability.effect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          controllerId: sourceControllerId,
-          getDefinitionByInstanceId,
-        }) &&
-        !matchesLegacyStaticStatTarget({
-          state,
-          target: ability.effect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          getDefinitionByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      const keyword =
-        typeof ability.effect.keyword === "string" && ability.effect.keyword.trim().length > 0
-          ? ability.effect.keyword.trim()
-          : undefined;
-      if (!keyword) {
-        continue;
-      }
-
-      sources.push({
-        keyword,
-        sourceId,
-        sourceDefinitionId: sourceDefinition.id,
-      });
-    }
-  }
-
-  return sources;
+  if (!registry || !cardInstanceId || normalizedZone !== "play") return [];
+  return registryEffectsForCard(registry, cardInstanceId, "gain-keyword")
+    .filter((e) => !e.payload.selfGrant && e.sourceId !== cardInstanceId)
+    .map((e) => ({
+      keyword: e.payload.keyword as string,
+      sourceId: e.sourceId,
+      sourceDefinitionId: e.sourceDefinitionId,
+    }));
 }
 
 export function getActiveStaticClassificationGrants(args: {
@@ -1779,98 +1225,24 @@ export function getActiveStaticClassificationGrants(args: {
   controllerId?: PlayerId;
   zoneID?: string;
   cardInstanceId?: CardInstanceId;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  registry: StaticEffectRegistry | undefined;
 }): string[] {
-  const { definition, state, controllerId, zoneID, cardInstanceId, getDefinitionByInstanceId } =
-    args;
+  const { state, zoneID, cardInstanceId, registry } = args;
   const normalizedZone = zoneID?.split(":")[0];
-  if (!definition || normalizedZone !== "play" || !cardInstanceId || !getDefinitionByInstanceId) {
-    return [];
-  }
 
-  const getCardStrengthByInstanceId = getDerivedStrengthForStaticCondition({
-    state,
-    actorPlayerId: controllerId,
-    getDefinitionByInstanceId,
-  });
-  const classifications: string[] = [];
+  if (!registry || !cardInstanceId || normalizedZone !== "play") return [];
   const activeTemporaryClassifications = getActiveTemporaryMap(
     state.ctx.zones?.private?.cardMeta?.[cardInstanceId]?.temporaryClassifications,
     state.ctx.zones?.private?.cardMeta?.[cardInstanceId]?.temporaryClassificationStarts,
     state.ctx.status?.turn ?? 1,
   );
-  if (activeTemporaryClassifications) {
-    classifications.push(...Object.keys(activeTemporaryClassifications));
-  }
-
-  for (const sourceId of Object.keys(
-    state.ctx.zones?.private?.cardIndex ?? {},
-  ) as CardInstanceId[]) {
-    if (!isCardInPlay(state, sourceId)) {
-      continue;
-    }
-
-    const sourceDefinition = getDefinitionByInstanceId(sourceId);
-    if (!sourceDefinition) {
-      continue;
-    }
-
-    const sourceControllerId = state.ctx.zones?.private?.cardIndex?.[sourceId]?.controllerID as
-      | PlayerId
-      | undefined;
-
-    for (const ability of sourceDefinition.abilities ?? []) {
-      if (ability.type !== "static" || ability.effect?.type !== "property-modification") {
-        continue;
-      }
-      if (ability.effect.property !== "classification" || ability.effect.operation !== "add") {
-        continue;
-      }
-
-      if (
-        !evaluateStaticCondition({
-          condition: ability.condition,
-          state,
-          controllerId: sourceControllerId ?? controllerId,
-          sourceId,
-          getDefinitionByInstanceId,
-          getCardStrengthByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      if (
-        !matchesStaticAbilityTarget({
-          state,
-          target: ability.effect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          controllerId: sourceControllerId,
-          getDefinitionByInstanceId,
-        }) &&
-        !matchesLegacyStaticStatTarget({
-          state,
-          target: ability.effect.target,
-          sourceId,
-          targetCardId: cardInstanceId,
-          getDefinitionByInstanceId,
-        })
-      ) {
-        continue;
-      }
-
-      const classification =
-        typeof ability.effect.value === "string" && ability.effect.value.trim().length > 0
-          ? ability.effect.value.trim()
-          : undefined;
-      if (classification) {
-        classifications.push(classification);
-      }
-    }
-  }
-
-  return [...new Set(classifications)].sort((left, right) => left.localeCompare(right));
+  const tempClassifications = activeTemporaryClassifications
+    ? Object.keys(activeTemporaryClassifications)
+    : [];
+  const staticGrants = registryEffectsForCard(registry, cardInstanceId, "grant-classification").map(
+    (e) => e.payload.classification as string,
+  );
+  return [...new Set([...tempClassifications, ...staticGrants])].sort((a, b) => a.localeCompare(b));
 }
 
 export function getActiveTemporaryMap(
@@ -1900,8 +1272,8 @@ export function getDerivedHasQuestRestriction(
   meta: LorcanaCardMeta | undefined,
   currentTurn: number,
   state: DerivedStateContext,
-  cardInstanceId?: CardInstanceId,
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  cardInstanceId: CardInstanceId | undefined,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
 ): boolean {
   if (
     hasTemporaryRestriction(meta, currentTurn, "cant-quest", {
@@ -1911,7 +1283,7 @@ export function getDerivedHasQuestRestriction(
     return true;
   }
 
-  if (cardInstanceId && getDefinitionByInstanceId) {
+  if (cardInstanceId) {
     if (
       hasStaticSelfRestriction({
         state,
@@ -1922,13 +1294,6 @@ export function getDerivedHasQuestRestriction(
     ) {
       return true;
     }
-
-    return _hasStaticCardRestriction({
-      state: flattenDerivedState(state),
-      cardId: cardInstanceId,
-      restriction: "cant-quest",
-      getDefinitionByInstanceId,
-    });
   }
 
   return false;

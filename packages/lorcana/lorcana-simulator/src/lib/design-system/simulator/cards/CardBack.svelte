@@ -98,7 +98,7 @@
     border: 2px solid rgba(100, 150, 200, 0.3);
     background: radial-gradient(circle at 50% 50%, #1e4a6e 0%, #0f2847 60%, #061220 100%);
     transform-origin: center center;
-    transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+    transition: transform 150ms ease-out, box-shadow 150ms ease-out, filter 150ms ease-out;
   }
 
   .card-back__image {
@@ -107,6 +107,15 @@
 
   .card-back--playable {
     box-shadow: 0 0 18px rgba(250, 204, 21, 0.38);
+  }
+
+  .card-back--exerted {
+    transform: rotate(20deg) scale(0.96);
+    border-color: rgba(245, 158, 11, 0.45);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(245, 158, 11, 0.14),
+      inset 0 -8px 16px rgba(245, 158, 11, 0.18);
   }
 
   .playable-indicator {

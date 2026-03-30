@@ -39,7 +39,9 @@ describe("Zeus - Mr. Lightning Bolts", () => {
       if (!bagEffect) return;
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect.id, { targets: [herculesClumsyKid] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(zeusMrLightningBolts, { targets: [herculesClumsyKid] }),
       ).toBeSuccessfulCommand();
 
       // After resolving with Hercules (strength 3), Zeus should have 0 + 3 = 3 strength

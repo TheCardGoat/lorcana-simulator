@@ -105,7 +105,7 @@ describe("Belle - Mechanic Extraordinaire", () => {
       const itemCId = testEngine.findCardInstanceId(itemC, "discard", PLAYER_ONE);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(belleMechanicExtraordinaire, {
           resolveOptional: true,
           targets: [itemAId, itemBId, itemCId],
         }),
@@ -134,7 +134,7 @@ describe("Belle - Mechanic Extraordinaire", () => {
 
       // Accept the optional
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(belleMechanicExtraordinaire, {
           resolveOptional: true,
         }),
       ).toBeSuccessfulCommand();
@@ -167,7 +167,7 @@ describe("Belle - Mechanic Extraordinaire", () => {
       const itemBId = testEngine.findCardInstanceId(itemB, "discard", PLAYER_ONE);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(belleMechanicExtraordinaire, {
           resolveOptional: true,
           targets: [itemAId, itemBId],
         }),
@@ -194,7 +194,7 @@ describe("Belle - Mechanic Extraordinaire", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(belleMechanicExtraordinaire, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

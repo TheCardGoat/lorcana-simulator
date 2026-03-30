@@ -24,9 +24,9 @@ export const mulanDisguisedSoldier: CharacterCard = {
   },
   text: [
     {
-      title: "WHERE DO",
+      title: "WHERE DO I SIGN IN?",
       description:
-        "I SIGN IN? When you play this character, you may draw a card, then choose and discard a card.",
+        "When you play this character, you may draw a card, then choose and discard a card.",
     },
   ],
   classifications: ["Storyborn", "Hero", "Princess"],

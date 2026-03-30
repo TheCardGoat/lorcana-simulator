@@ -86,7 +86,9 @@ describe("Minnie Mouse - Amethyst Champion", () => {
 
       // Accept the optional draw trigger
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(minnieMouseAmethystChampion, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Verify we drew a card
@@ -112,7 +114,9 @@ describe("Minnie Mouse - Amethyst Champion", () => {
 
       // Decline the optional draw trigger
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(minnieMouseAmethystChampion, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // No card drawn

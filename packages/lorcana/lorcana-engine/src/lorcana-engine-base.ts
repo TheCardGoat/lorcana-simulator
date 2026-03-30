@@ -30,12 +30,14 @@ import type {
   AvailableMove,
   AvailableMoveId,
   MoveOption,
+  MoveOptionSingTogether,
   EffectTargetInfo,
 } from "./available-moves";
 import type { CommandFailure } from "#core";
 import { hasShift, isSong } from "./card-utils";
 import {
   getShiftRules,
+  getSingTogetherThreshold,
   getSingerThresholdForInstance,
   isSongCard,
   resolveShiftTargetCandidates,
@@ -74,8 +76,10 @@ import {
 import { type PlayCardCostInput, normalizePlayCardCost } from "./lorcana-engine-normalization";
 import {
   getGrantedActivatedAbilities,
+  hasStaticCardRestriction,
   toStaticAbilityState,
 } from "./runtime-moves/rules/static-ability-utils";
+import { buildRegistryFromMatchState } from "./runtime-moves/rules/move-registry-cache";
 import { buildValidationContext } from "./core/runtime/match-runtime.utils";
 import { lorcanaRuntimeConfig } from "./runtime-game";
 import {
@@ -108,6 +112,11 @@ import type { DynamicAmountEventSnapshot } from "./types/domain-events";
 import { getLogger } from "@logtape/logtape";
 
 export const logger = getLogger(["lorcana-engine", "lorcana-engine-base"]);
+
+type SongPlayOptions = {
+  singleSingerIds: CardInstanceId[];
+  singTogetherOption: MoveOptionSingTogether | null;
+};
 
 /**
  * Checks whether an effect record is an "or"-type effect (has options or choices array).
@@ -198,6 +207,7 @@ export type ResolutionExecutionOptions = {
   resolveOptional?: boolean;
   choiceIndex?: number;
   destinations?: PlayCardDestinationInput[];
+  bagIndex?: number;
 };
 export type PlayCardExecutionOptions = ResolutionExecutionOptions & {
   cost?: PlayCardCostInput;
@@ -449,11 +459,9 @@ export abstract class LorcanaEngineBase {
     initialResult: CommandResult,
   ): CommandResult {
     let currentResult = initialResult;
-    let attempts = 0;
     const maxAutoResolveAttempts = 25;
 
-    while (attempts < maxAutoResolveAttempts) {
-      attempts += 1;
+    for (let attempts = 0; attempts < maxAutoResolveAttempts; attempts += 1) {
       const state = this.getState();
       const validationContext = buildValidationContext(
         state as LorcanaMatchState,
@@ -642,6 +650,7 @@ export abstract class LorcanaEngineBase {
             },
           }),
         createErrorResult: (error, errorCode) => this.createErrorResult(error, errorCode),
+        createNoopResult: () => this.createNoopResult(),
         executeCandidate: (resolvedActorId, candidate) =>
           this.executeAutomatedActionCandidate(resolvedActorId, candidate),
         getDefinitionByInstanceId: (cardId) =>
@@ -679,6 +688,7 @@ export abstract class LorcanaEngineBase {
             },
           }),
         createErrorResult: (error, errorCode) => this.createErrorResult(error, errorCode),
+        createNoopResult: () => this.createNoopResult(),
         executeCandidate: (resolvedActorId, candidate) =>
           this.executeAutomatedActionCandidate(resolvedActorId, candidate),
         getDefinitionByInstanceId: (cardId) =>
@@ -803,7 +813,7 @@ export abstract class LorcanaEngineBase {
     return {
       success: true,
       stateID: this.getStateID(),
-      state: structuredClone(this.getState()) as LorcanaMatchState,
+      state: this.getState() as LorcanaMatchState,
       patches: [],
       gameEvents: [],
       logEntries: [],
@@ -813,6 +823,7 @@ export abstract class LorcanaEngineBase {
       },
       animations: [],
       undoable: false,
+      moveLogs: [],
     };
   }
 
@@ -1682,7 +1693,13 @@ export abstract class LorcanaEngineBase {
     return this.resolveEffect(matchingPendingEffects[0]!.id, opts);
   }
 
-  resolvePendingByCard(card: CardInput, opts: ResolutionExecutionOptions = {}): CommandResult {
+  resolvePendingByCard(card?: CardInput, opts: ResolutionExecutionOptions = {}): CommandResult {
+    if (card === undefined) {
+      return this.createErrorResult(
+        "Undefined is not accepted for this card.",
+        "RESOLVE_PENDING_EFFECT_UNAVAILABLE",
+      );
+    }
     const resolvedCardId = this.resolveCardId(card);
     if (!resolvedCardId) {
       return this.createErrorResult(
@@ -1713,11 +1730,13 @@ export abstract class LorcanaEngineBase {
       );
     }
 
-    if (matchingBagEffects.length > 1) {
+    if (matchingBagEffects.length > 1 && typeof opts.bagIndex !== "number") {
       return this.createErrorResult(
         "Multiple bag items match this card; resolve by bag id instead.",
         "RESOLVE_PENDING_EFFECT_AMBIGUOUS",
       );
+    } else if (typeof opts.bagIndex === "number") {
+      return this.resolveBag(matchingBagEffects[opts.bagIndex]!.id, opts);
     }
 
     return this.resolveBag(matchingBagEffects[0]!.id, opts);
@@ -1781,7 +1800,7 @@ export abstract class LorcanaEngineBase {
     let resolvedTargets: CardInstanceId[] | undefined;
     if (opts.targets !== undefined) {
       try {
-        resolvedTargets = this.resolveCardInputs(opts.targets);
+        resolvedTargets = this.resolveSelectionTargets(opts.targets);
       } catch (error) {
         return this.createErrorResult(
           error instanceof Error ? error.message : "Failed to resolve resolveBag targets",
@@ -1887,12 +1906,14 @@ export abstract class LorcanaEngineBase {
 
   resolveAllBagEffects(opts: ResolutionExecutionOptions & { maxIterations?: number } = {}): void {
     const maxIterations = opts.maxIterations ?? 50;
-    let iterations = 0;
-    while (this.getBagCount() > 0 && iterations < maxIterations) {
+    for (
+      let iterations = 0;
+      iterations < maxIterations && this.getBagCount() > 0;
+      iterations += 1
+    ) {
       const bagEffects = this.getBagEffects();
       if (bagEffects.length === 0) break;
       this.resolveBag(bagEffects[0]!.id, opts);
-      iterations++;
     }
   }
 
@@ -1998,7 +2019,7 @@ export abstract class LorcanaEngineBase {
     let resolvedTargets: CardInstanceId[] | undefined;
     if (opts.targets !== undefined) {
       try {
-        resolvedTargets = this.resolveCardInputs(opts.targets);
+        resolvedTargets = this.resolveSelectionTargets(opts.targets);
       } catch {
         return false;
       }
@@ -2057,8 +2078,11 @@ export abstract class LorcanaEngineBase {
       const cardDef = this.getCardDefinitionByInstanceId(playableCardId) as LorcanaCard;
       if (isSongCard(cardDef)) {
         const playerId = this.getScopedPlayerId() ?? String(this.getActivePlayer() ?? "");
-        const singers = this.getAvailableSingersForSong(playableCardId, playerId);
-        if (singers.length > 0) {
+        const songPlayOptions = this.getSongPlayOptions(playableCardId, playerId);
+        if (
+          songPlayOptions.singleSingerIds.length > 0 ||
+          songPlayOptions.singTogetherOption !== null
+        ) {
           return true;
         }
       }
@@ -2069,6 +2093,24 @@ export abstract class LorcanaEngineBase {
 
   protected resolveCardInputs(inputs: CardInput[]): CardInstanceId[] {
     return inputs.map((input) => this.requireCardId(input));
+  }
+
+  private resolveSelectionTargets(inputs: readonly (CardInput | PlayerId)[]): CardInstanceId[] {
+    const knownPlayerIds = new Set(this.getBoard().playerOrder);
+    const cardInputs: CardInput[] = [];
+    const selectedPlayerIds: CardInstanceId[] = [];
+
+    for (const input of inputs) {
+      if (typeof input === "string" && knownPlayerIds.has(input as PlayerId)) {
+        selectedPlayerIds.push(input as CardInstanceId);
+        continue;
+      }
+
+      cardInputs.push(input);
+    }
+
+    const resolvedCardIds = cardInputs.length > 0 ? this.resolveCardInputs(cardInputs) : [];
+    return [...resolvedCardIds, ...selectedPlayerIds];
   }
 
   private resolvePlayableCardId(
@@ -2121,6 +2163,24 @@ export abstract class LorcanaEngineBase {
     };
   }
 
+  protected createNoopResult(commandId = `automated-noop-${Date.now()}`): CommandResult {
+    return {
+      success: true,
+      stateID: this.getStateID(),
+      state: this.getState() as MatchState,
+      patches: [],
+      gameEvents: [],
+      logEntries: [],
+      processedCommand: {
+        commandID: commandId,
+        move: "automatedNoop",
+      },
+      animations: [],
+      undoable: false,
+      moveLogs: [],
+    };
+  }
+
   getCardZone(card: CardInput): string | undefined {
     const cardInstanceId = this.resolveCardId(card);
     if (!cardInstanceId) {
@@ -2140,7 +2200,10 @@ export abstract class LorcanaEngineBase {
     return zoneKey.includes(":") ? zoneKey.split(":", 1)[0] : zoneKey;
   }
 
-  getCard(card: CardInput): LorcanaProjectedCard {
+  getCard(card?: CardInput): LorcanaProjectedCard {
+    if (!card) {
+      return FALLBACK_LORCANA_PROJECTED_CARD;
+    }
     const cardInstanceId = this.resolveCardId(card);
     if (!cardInstanceId) {
       return FALLBACK_LORCANA_PROJECTED_CARD;
@@ -2161,10 +2224,14 @@ export abstract class LorcanaEngineBase {
     const printedAbilities = (definition.abilities ?? []).filter(
       (entry): entry is ActivatedAbilityDefinition => entry.type === "activated",
     );
+    const registry = buildRegistryFromMatchState(this.getAuthoritativeState(), (id) =>
+      this.getCardDefinitionByInstanceId(id),
+    );
     const grantedAbilities = getGrantedActivatedAbilities({
       state: toStaticAbilityState(this.getAuthoritativeState()),
       cardId,
       getDefinitionByInstanceId: (instanceId) => this.getCardDefinitionByInstanceId(instanceId),
+      registry,
     }).map((entry) => entry.ability);
     const activatedAbilities = [...printedAbilities, ...grantedAbilities].map(
       (entry, abilityIndex) => ({
@@ -2219,10 +2286,14 @@ export abstract class LorcanaEngineBase {
     const printedAbilities = (definition.abilities ?? []).filter(
       (entry): entry is ActivatedAbilityDefinition => entry.type === "activated",
     );
+    const registry = buildRegistryFromMatchState(this.getAuthoritativeState(), (id) =>
+      this.getCardDefinitionByInstanceId(id),
+    );
     const grantedAbilities = getGrantedActivatedAbilities({
       state: toStaticAbilityState(this.getAuthoritativeState()),
       cardId,
       getDefinitionByInstanceId: (instanceId) => this.getCardDefinitionByInstanceId(instanceId),
+      registry,
     }).map((entry) => entry.ability);
     const activatedAbilities = [...printedAbilities, ...grantedAbilities].map(
       (entry, resolvedAbilityIndex) => ({
@@ -2971,15 +3042,15 @@ export abstract class LorcanaEngineBase {
       const cardDef = this.getCardDefinitionByInstanceId(cardId) as LorcanaCard;
       if (isSongCard(cardDef)) {
         const resolvedPlayerId = String(playerId);
-        const singers = this.getAvailableSingersForSong(cardId, resolvedPlayerId);
-        if (singers.length > 0) {
+        const songPlayOptions = this.getSongPlayOptions(cardId, resolvedPlayerId);
+        if (songPlayOptions.singleSingerIds.length > 0) {
           return this.playCardByInstance(
             resolvedPlayerId,
             cardId,
             "sing",
             {
               ...costParams,
-              singer: singers[0]!,
+              singer: songPlayOptions.singleSingerIds[0]!,
             },
             undefined,
             {
@@ -3498,9 +3569,11 @@ export abstract class LorcanaEngineBase {
 
           // Check sing — songs can be sung by characters
           if (isSongCard(card)) {
-            // We check if ANY singer could sing this song
-            const singerCandidates = this.getAvailableSingersForSong(id, clientPlayerId);
-            if (singerCandidates.length > 0) {
+            const songPlayOptions = this.getSongPlayOptions(id, clientPlayerId);
+            if (
+              songPlayOptions.singleSingerIds.length > 0 ||
+              songPlayOptions.singTogetherOption !== null
+            ) {
               singCardIds.push(id);
             }
           }
@@ -3617,6 +3690,9 @@ export abstract class LorcanaEngineBase {
 
       if (moveId === "activateAbility") {
         const activatableCardIds: CardInstanceId[] = [];
+        const activateRegistry = buildRegistryFromMatchState(this.getAuthoritativeState(), (id) =>
+          this.getCardDefinitionByInstanceId(id),
+        );
         for (const cardId of playerBoard.play) {
           const id = cardId as CardInstanceId;
           const definition = this.getCardDefinitionByInstanceId(id);
@@ -3628,6 +3704,7 @@ export abstract class LorcanaEngineBase {
             cardId: id,
             getDefinitionByInstanceId: (instanceId) =>
               this.getCardDefinitionByInstanceId(instanceId),
+            registry: activateRegistry,
           }).length;
           const totalAbilities = abilityEntryCount + grantedCount;
 
@@ -3747,10 +3824,15 @@ export abstract class LorcanaEngineBase {
         const printedAbilities = (definition.abilities ?? []).filter(
           (a: { type: string }) => a.type === "activated",
         );
+        const moveOptionsRegistry = buildRegistryFromMatchState(
+          this.getAuthoritativeState(),
+          (id) => this.getCardDefinitionByInstanceId(id),
+        );
         const grantedAbilities = getGrantedActivatedAbilities({
           state: toStaticAbilityState(this.getAuthoritativeState()),
           cardId,
           getDefinitionByInstanceId: (instanceId) => this.getCardDefinitionByInstanceId(instanceId),
+          registry: moveOptionsRegistry,
         }).map((entry) => entry.ability);
         const allAbilities = [...printedAbilities, ...grantedAbilities];
 
@@ -3773,10 +3855,14 @@ export abstract class LorcanaEngineBase {
       }
 
       case "singCard": {
-        return this.getAvailableSingersForSong(cardId, clientPlayerId).map((singerId) => ({
-          kind: "card" as const,
-          cardId: singerId,
-        }));
+        const songPlayOptions = this.getSongPlayOptions(cardId, clientPlayerId);
+        return [
+          ...songPlayOptions.singleSingerIds.map((singerId) => ({
+            kind: "card" as const,
+            cardId: singerId,
+          })),
+          ...(songPlayOptions.singTogetherOption ? [songPlayOptions.singTogetherOption] : []),
+        ];
       }
 
       case "shiftCard": {
@@ -3858,20 +3944,100 @@ export abstract class LorcanaEngineBase {
     songCardId: CardInstanceId,
     playerId: string,
   ): CardInstanceId[] {
-    const playerBoard = this.getBoard().players[playerId];
-    if (!playerBoard) return [];
+    return this.getSongPlayOptions(songCardId, playerId).singleSingerIds;
+  }
 
-    const singers: CardInstanceId[] = [];
+  private getSongPlayOptions(songCardId: CardInstanceId, playerId: string): SongPlayOptions {
+    const playerBoard = this.getBoard().players[playerId];
+    if (!playerBoard) {
+      return { singleSingerIds: [], singTogetherOption: null };
+    }
+
+    const songDefinition = this.getCardDefinitionByInstanceId(songCardId) as
+      | LorcanaCard
+      | undefined;
+    if (!isSongCard(songDefinition)) {
+      return { singleSingerIds: [], singTogetherOption: null };
+    }
+
+    const singTogetherThreshold = getSingTogetherThreshold(songDefinition);
+    const staticAbilityState = toStaticAbilityState(this.getAuthoritativeState());
+    const songPlayRegistry = buildRegistryFromMatchState(this.getAuthoritativeState(), (id) =>
+      this.getCardDefinitionByInstanceId(id),
+    );
+    const singleSingerIds: CardInstanceId[] = [];
+    const singTogetherSingers: MoveOptionSingTogether["singers"] = [];
+
     for (const candidateId of playerBoard.play) {
       const id = candidateId as CardInstanceId;
+      const candidateDefinition = this.getCardDefinitionByInstanceId(id) as LorcanaCard | undefined;
+      if (candidateDefinition?.cardType !== "character") {
+        continue;
+      }
+
       if (
         this.canPlayCard(songCardId, {
           cost: { cost: "sing", singer: id },
         })
       ) {
-        singers.push(id);
+        singleSingerIds.push(id);
       }
+
+      if (singTogetherThreshold == null) {
+        continue;
+      }
+
+      if (this.isExerted(id) || this.isDrying(id)) {
+        continue;
+      }
+
+      if (
+        hasStaticCardRestriction({
+          state: staticAbilityState,
+          cardId: id,
+          restriction: "cant-sing",
+          registry: songPlayRegistry,
+        }) ||
+        this.hasTemporaryRestriction(id, "cant-sing")
+      ) {
+        continue;
+      }
+
+      const singerValue = getSingerThresholdForInstance({
+        framework: {
+          state: this.getAuthoritativeState(),
+        } as Parameters<typeof getSingerThresholdForInstance>[0]["framework"],
+        singerId: id,
+        singerDef: candidateDefinition,
+        getDefinitionByInstanceId: (cardInstanceId) =>
+          this.getCardDefinitionByInstanceId(cardInstanceId) as LorcanaCard | undefined,
+        G: this.getState().G,
+      });
+      if (singerValue == null) {
+        continue;
+      }
+
+      singTogetherSingers.push({
+        cardId: id,
+        value: singerValue,
+      });
     }
-    return singers;
+
+    const singTogetherTotal = singTogetherSingers.reduce(
+      (total, singer) => total + singer.value,
+      0,
+    );
+
+    return {
+      singleSingerIds,
+      singTogetherOption:
+        singTogetherThreshold != null && singTogetherTotal >= singTogetherThreshold
+          ? {
+              kind: "singTogether",
+              requiredTotal: singTogetherThreshold,
+              singers: singTogetherSingers,
+            }
+          : null,
+    };
   }
 }

@@ -32,7 +32,7 @@ describe("Penny - Bolt's Person", () => {
       // Optional triggered ability should be in the bag
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(pennyBoltsPerson, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Choose the damaged character as target for remove-damage
@@ -65,7 +65,7 @@ describe("Penny - Bolt's Person", () => {
       // Decline the optional ability
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(pennyBoltsPerson, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Damage should remain unchanged
@@ -93,7 +93,7 @@ describe("Penny - Bolt's Person", () => {
       expect(testEngine.asPlayerOne().playCard(pennyBoltsPerson)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(pennyBoltsPerson, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(

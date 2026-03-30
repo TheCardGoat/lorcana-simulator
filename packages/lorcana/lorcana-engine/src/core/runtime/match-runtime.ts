@@ -2,7 +2,6 @@
  * MatchRuntime - Deterministic State Transition Engine
  */
 
-import { enablePatches, setAutoFreeze } from "immer";
 import type {
   CommandEnvelope,
   GameEvent,
@@ -11,6 +10,7 @@ import type {
   MoveInput,
   PublishedGameEvent,
 } from "./types";
+import type { MoveLog } from "../../types/move-log";
 import { settleClocks, grantPriority } from "./time-control";
 import {
   createMatchStaticResourcesFromCardsMaps,
@@ -53,9 +53,6 @@ import {
 } from "./state-scoped-value-cache";
 
 const logger = getLogger(["core-engine", "match-runtime"]);
-
-enablePatches();
-setAutoFreeze(true);
 
 export type {
   MatchRuntimeConfig,
@@ -109,8 +106,10 @@ export type {
 export class MatchRuntime {
   private config: MatchRuntimeConfig;
   private staticResources: MatchStaticResources;
+  private capturePatches: boolean;
   private publishedGameEvents: PublishedGameEvent[] = [];
   private gameLog: GameLogEntry[] = [];
+  private moveLogHistory: MoveLog[] = [];
   private nextGameEventSeq = 0;
   private nextGameLogSeq = 0;
   private gameEnded = false;
@@ -124,7 +123,7 @@ export class MatchRuntime {
 
   constructor(config: MatchRuntimeConfig, init: MatchRuntimeInit) {
     this.config = config;
-    // this.cardsMaps = deepFreeze(init.cardsMaps);
+    this.capturePatches = init.capturePatches ?? false;
     this.staticResources = createMatchStaticResourcesFromCardsMaps(
       init.cardsMaps,
       init.cardCatalog,
@@ -168,6 +167,7 @@ export class MatchRuntime {
       : undefined;
     this.publishedGameEvents = [];
     this.gameLog = [];
+    this.moveLogHistory = [];
     this.nextGameEventSeq = 0;
     this.nextGameLogSeq = 0;
   }
@@ -191,6 +191,7 @@ export class MatchRuntime {
       config: this.config as unknown as MatchRuntimeConfig,
       staticResources: this.staticResources,
       actorRole,
+      capturePatches: this.capturePatches,
       gameEnded: this.gameEnded,
       currentStateID: this.state.ctx._stateID,
     });
@@ -214,15 +215,10 @@ export class MatchRuntime {
       publishedGameEvents,
       state: execResult.newState,
       moveLogEntries,
-      nextGameLogSeq: this.nextGameLogSeq,
-      logProjector: this.config.logProjector,
     });
 
-    const logEntries = projectedLogResult.logEntries;
-    this.nextGameLogSeq = projectedLogResult.nextGameLogSeq;
-
     this.publishedGameEvents.push(...publishedGameEvents);
-    this.gameLog.push(...logEntries);
+    this.moveLogHistory.push(...projectedLogResult.moveLogs);
 
     if (execResult.gameEnded) {
       this.gameEnded = true;
@@ -235,10 +231,11 @@ export class MatchRuntime {
       state: execResult.result.state,
       patches: execResult.result.patches,
       gameEvents: publishedGameEvents,
-      logEntries,
+      logEntries: [],
       processedCommand: command,
       animations: [],
       undoable: execResult.result.undoable,
+      moveLogs: projectedLogResult.moveLogs,
     };
   }
 
@@ -262,14 +259,10 @@ export class MatchRuntime {
     const projectedLogResult = projectGameLog({
       publishedGameEvents: gameEvents,
       state: passResult.newState,
-      nextGameLogSeq: this.nextGameLogSeq,
-      logProjector: this.config.logProjector,
     });
-    const logEntries = projectedLogResult.logEntries;
-    this.nextGameLogSeq = projectedLogResult.nextGameLogSeq;
 
     this.publishedGameEvents.push(...gameEvents);
-    this.gameLog.push(...logEntries);
+    this.moveLogHistory.push(...projectedLogResult.moveLogs);
 
     return {
       success: true,
@@ -277,13 +270,14 @@ export class MatchRuntime {
       state: passResult.result.state,
       patches: passResult.result.patches,
       gameEvents,
-      logEntries,
+      logEntries: [],
       processedCommand: {
         commandID: `priority-pass-${timestamp}`,
         move: "__priorityPass",
       },
       animations: [],
       undoable: false,
+      moveLogs: projectedLogResult.moveLogs,
     };
   }
 
@@ -310,6 +304,10 @@ export class MatchRuntime {
   }
   getGameLog(): GameLogEntry[] {
     return [...this.gameLog];
+  }
+
+  getMoveLogHistory(): MoveLog[] {
+    return [...this.moveLogHistory];
   }
 
   getRuntimeConfig(): MatchRuntimeConfig {
@@ -452,6 +450,7 @@ export class MatchRuntime {
     return {
       publishedGameEventsLength: this.publishedGameEvents.length,
       gameLogLength: this.gameLog.length,
+      moveLogHistoryLength: this.moveLogHistory.length,
       nextGameEventSeq: this.nextGameEventSeq,
       nextGameLogSeq: this.nextGameLogSeq,
       gameEnded: this.gameEnded,
@@ -477,6 +476,7 @@ export class MatchRuntime {
     if (!options?.preserveHistory) {
       this.publishedGameEvents.length = snapshot.publishedGameEventsLength;
       this.gameLog.length = snapshot.gameLogLength;
+      this.moveLogHistory.length = snapshot.moveLogHistoryLength;
       this.nextGameEventSeq = snapshot.nextGameEventSeq;
       this.nextGameLogSeq = snapshot.nextGameLogSeq;
     }
@@ -490,7 +490,7 @@ export class MatchRuntime {
     timestamp: number,
   ): {
     gameEvents: PublishedGameEvent[];
-    logEntries: GameLogEntry[];
+    moveLogs: MoveLog[];
   } {
     const gameEvents = this.publishGameEvents(
       [
@@ -509,17 +509,14 @@ export class MatchRuntime {
     const projectedLogResult = projectGameLog({
       publishedGameEvents: gameEvents,
       state: this.state,
-      nextGameLogSeq: this.nextGameLogSeq,
-      logProjector: this.config.logProjector,
     });
 
-    this.nextGameLogSeq = projectedLogResult.nextGameLogSeq;
     this.publishedGameEvents.push(...gameEvents);
-    this.gameLog.push(...projectedLogResult.logEntries);
+    this.moveLogHistory.push(...projectedLogResult.moveLogs);
 
     return {
       gameEvents,
-      logEntries: projectedLogResult.logEntries,
+      moveLogs: projectedLogResult.moveLogs,
     };
   }
 

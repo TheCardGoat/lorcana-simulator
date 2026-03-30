@@ -44,7 +44,7 @@ describe("Madame Medusa - Diamond Lover", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(madameMedusaDiamondLover, {
           ...resolveSearchTheSwamp(alliedCharacter, PLAYER_TWO),
         }),
       ).toBeSuccessfulCommand();
@@ -64,7 +64,12 @@ describe("Madame Medusa - Diamond Lover", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag(resolveSearchTheSwamp(alliedCharacter, PLAYER_ONE)),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(
+            madameMedusaDiamondLover,
+            resolveSearchTheSwamp(alliedCharacter, PLAYER_ONE),
+          ),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardByInstance(alliedCharacter).damage).toBe(2);
@@ -87,7 +92,9 @@ describe("Madame Medusa - Diamond Lover", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(madameMedusaDiamondLover, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardByInstance(alliedCharacter).damage).toBe(0);
@@ -108,7 +115,12 @@ describe("Madame Medusa - Diamond Lover", () => {
 
       expect(testEngine.asPlayerOne().quest(madameMedusaDiamondLover)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag(resolveSearchTheSwamp(alliedCharacter, PLAYER_TWO)),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(
+            madameMedusaDiamondLover,
+            resolveSearchTheSwamp(alliedCharacter, PLAYER_TWO),
+          ),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardByInstance(alliedCharacter).damage).toBe(2);
@@ -119,7 +131,12 @@ describe("Madame Medusa - Diamond Lover", () => {
 
       expect(testEngine.asPlayerOne().quest(madameMedusaDiamondLover)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag(resolveSearchTheSwamp(alliedCharacter, PLAYER_TWO)),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(
+            madameMedusaDiamondLover,
+            resolveSearchTheSwamp(alliedCharacter, PLAYER_TWO),
+          ),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardByInstance(alliedCharacter).damage).toBe(4);

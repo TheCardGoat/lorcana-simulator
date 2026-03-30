@@ -30,6 +30,8 @@ import type {
 } from "@/features/simulator/model/contracts.js";
 
 const CAUSE_PHASE_BUFFER_MS = 150;
+const PARALLEL_DISCARD_FAN_OUT_STEP_PX = 18;
+const PARALLEL_DISCARD_FAN_OUT_RISE_PX = 10;
 
 export interface BoardAnimationPlaceholder {
   id: string;
@@ -55,6 +57,63 @@ export interface QueuedAnimationBatch {
   overlays: ResolvedOverlayAnnouncement[];
   playerEffects: QueuedPlayerEffectAnimation[];
   sourceAnchors: BoardAnchorSnapshot | null;
+}
+
+function applyParallelDiscardFanOut(
+  animations: ResolvedBoardMoveAnimation[],
+): ResolvedBoardMoveAnimation[] {
+  const groups = new Map<string, number[]>();
+
+  animations.forEach((animation, index) => {
+    if (animation.playback !== "parallel" || animation.destinationZoneId !== "discard") {
+      return;
+    }
+
+    const key = `${animation.groupId}:${animation.actorSide}:${animation.destinationZoneId}`;
+    const indices = groups.get(key) ?? [];
+    indices.push(index);
+    groups.set(key, indices);
+  });
+
+  if (groups.size === 0) {
+    return animations;
+  }
+
+  const adjusted = [...animations];
+
+  for (const indices of groups.values()) {
+    const count = indices.length;
+    if (count <= 1) {
+      continue;
+    }
+
+    indices.forEach((animationIndex, position) => {
+      const animation = adjusted[animationIndex];
+      const spreadOrigin = position - (count - 1) / 2;
+      const xOffset = spreadOrigin * PARALLEL_DISCARD_FAN_OUT_STEP_PX;
+      const yOffset = Math.abs(spreadOrigin) * PARALLEL_DISCARD_FAN_OUT_RISE_PX;
+
+      adjusted[animationIndex] = {
+        ...animation,
+        destinationRect: {
+          ...animation.destinationRect,
+          x: animation.destinationRect.x + xOffset,
+          y: animation.destinationRect.y - yOffset,
+          centerX: animation.destinationRect.centerX + xOffset,
+          centerY: animation.destinationRect.centerY - yOffset,
+        },
+        impactRect: {
+          ...animation.impactRect,
+          x: animation.impactRect.x + xOffset,
+          y: animation.impactRect.y - yOffset,
+          centerX: animation.impactRect.centerX + xOffset,
+          centerY: animation.impactRect.centerY - yOffset,
+        },
+      };
+    });
+  }
+
+  return adjusted;
 }
 
 /**
@@ -96,6 +155,37 @@ export class AnimationOrchestrator {
   ingest(batch: QueuedAnimationBatch): void {
     this.cancel();
     this.#pendingBatch = batch;
+    console.info("[simulator][animations][orchestrator][ingest]", {
+      boardMoves: batch.boardMoves.map((animation) => ({
+        id: animation.id,
+        cardId: animation.card.cardId,
+        variant: animation.variant,
+      })),
+      quests: batch.quests.map((animation) => ({
+        id: animation.id,
+        cardId: animation.cardId,
+      })),
+      challenges: batch.challenges.map((animation) => ({
+        id: animation.id,
+        attackerId: animation.attackerId,
+        defenderId: animation.defenderId,
+      })),
+      cardEffects: batch.cardEffects.map((animation) => ({
+        id: animation.id,
+        cardId: animation.cardId,
+        effectKind: animation.effectKind,
+      })),
+      overlays: batch.overlays.map((animation) => ({
+        id: animation.id,
+        kind: animation.kind,
+      })),
+      playerEffects: batch.playerEffects.map((animation) => ({
+        id: animation.id,
+        actorSide: animation.actorSide,
+        targetSides: [...animation.targetSides],
+      })),
+      hasSourceAnchors: batch.sourceAnchors !== null,
+    });
 
     // Animations that don't need anchor resolution fire immediately
     if (batch.overlays.length > 0) {
@@ -120,6 +210,10 @@ export class AnimationOrchestrator {
   resolveAnchors(nextAnchors: BoardAnchorSnapshot): void {
     const batch = this.#pendingBatch;
     if (!batch) {
+      console.info("[simulator][animations][orchestrator][resolveAnchors]", {
+        status: "skipped",
+        reason: "no-pending-batch",
+      });
       return;
     }
     this.#pendingBatch = null;
@@ -127,9 +221,12 @@ export class AnimationOrchestrator {
     const sourceAnchors = batch.sourceAnchors;
 
     // Resolve all anchor-dependent animation types
-    const resolvedBoardMoves = batch.boardMoves
-      .map((a) => resolveQueuedBoardMoveAnimation(a, sourceAnchors, nextAnchors))
-      .filter((a): a is ResolvedBoardMoveAnimation => a !== null);
+    const resolvedBoardMoves = applyParallelDiscardFanOut(
+      batch.boardMoves
+        .map((a) => resolveQueuedBoardMoveAnimation(a, sourceAnchors, nextAnchors))
+        .filter((a): a is ResolvedBoardMoveAnimation => a !== null),
+    );
+    this.#releaseUnresolvedBoardMoves(batch.boardMoves, resolvedBoardMoves);
 
     const resolvedQuests = batch.quests
       .map((a) => resolveQueuedQuestAnimation(a, null, nextAnchors))
@@ -142,6 +239,37 @@ export class AnimationOrchestrator {
     const resolvedCardEffects = batch.cardEffects
       .map((a) => resolveQueuedCardEffectAnimation(a, sourceAnchors, nextAnchors))
       .filter((a): a is ResolvedCardEffectAnimation => a !== null);
+
+    console.info("[simulator][animations][orchestrator][resolveAnchors]", {
+      status: "resolved",
+      queued: {
+        boardMoves: batch.boardMoves.length,
+        quests: batch.quests.length,
+        challenges: batch.challenges.length,
+        cardEffects: batch.cardEffects.length,
+      },
+      resolved: {
+        boardMoves: resolvedBoardMoves.map((animation) => ({
+          id: animation.id,
+          cardId: animation.card.cardId,
+          variant: animation.variant,
+        })),
+        quests: resolvedQuests.map((animation) => ({
+          id: animation.id,
+          cardId: animation.cardId,
+        })),
+        challenges: resolvedChallenges.map((animation) => ({
+          id: animation.id,
+          attackerId: animation.attackerId,
+          defenderId: animation.defenderId,
+        })),
+        cardEffects: resolvedCardEffects.map((animation) => ({
+          id: animation.id,
+          cardId: animation.cardId,
+          effectKind: animation.effectKind,
+        })),
+      },
+    });
 
     const hasCauseAnimations =
       resolvedQuests.length > 0 || resolvedChallenges.length > 0 || resolvedCardEffects.length > 0;
@@ -251,6 +379,30 @@ export class AnimationOrchestrator {
       ids.add(anim.card.cardId);
     }
     this.#inFlightCardIds = ids;
+  }
+
+  #releaseUnresolvedBoardMoves(
+    queuedAnimations: QueuedBoardMoveAnimation[],
+    resolvedAnimations: ResolvedBoardMoveAnimation[],
+  ): void {
+    const resolvedIds = new Set(resolvedAnimations.map((animation) => animation.id));
+    const unresolvedCardIds = queuedAnimations
+      .filter((animation) => !resolvedIds.has(animation.id))
+      .map((animation) => animation.card.cardId);
+
+    if (unresolvedCardIds.length === 0) {
+      return;
+    }
+
+    const ids = new Set(this.#inFlightCardIds);
+    for (const cardId of unresolvedCardIds) {
+      ids.delete(cardId);
+    }
+    this.#inFlightCardIds = ids;
+
+    console.info("[simulator][animations][orchestrator][unresolved-board-moves]", {
+      releasedCardIds: unresolvedCardIds,
+    });
   }
 
   /**

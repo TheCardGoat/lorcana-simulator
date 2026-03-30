@@ -51,7 +51,9 @@ describe("John Silver - Stern Captain", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(johnSilverSternCaptain),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(readyOpponent)).toBe(1);
       expect(testEngine.asPlayerTwo().getDamage(anotherReadyOpponent)).toBe(1);
@@ -66,7 +68,9 @@ describe("John Silver - Stern Captain", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(johnSilverSternCaptain),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(readyOpponent)).toBe(1);
     });
@@ -87,7 +91,9 @@ describe("John Silver - Stern Captain", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(johnSilverSternCaptain),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(ownCharacter)).toBe(0);
       expect(testEngine.asPlayerTwo().getDamage(readyOpponent)).toBe(1);
@@ -103,7 +109,9 @@ describe("John Silver - Stern Captain", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
       // At start of player two's turn, John Silver should trigger
-      expect(testEngine.asPlayerTwo().resolveNextBag()).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(johnSilverSternCaptain),
+      ).toBeSuccessfulCommand();
 
       // Player one's readyOpponent should take 1 damage
       expect(testEngine.asPlayerOne().getDamage(readyOpponent)).toBe(1);

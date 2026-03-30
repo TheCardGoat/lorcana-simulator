@@ -50,7 +50,9 @@ describe("Elsa - Spirit of Winter", () => {
 
       // Resolve the triggered ability targeting 1 opponent character
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacterOne] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(elsaSpiritOfWinter, { targets: [opponentCharacterOne] }),
       ).toBeSuccessfulCommand();
 
       // Character should be exerted
@@ -86,7 +88,7 @@ describe("Elsa - Spirit of Winter", () => {
 
       // Resolve the triggered ability targeting both opponent characters
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(elsaSpiritOfWinter, {
           targets: [opponentCharacterOne, opponentCharacterTwo],
         }),
       ).toBeSuccessfulCommand();
@@ -127,7 +129,9 @@ describe("Elsa - Spirit of Winter", () => {
       expect(testEngine.asPlayerOne().playCard(elsaSpiritOfWinter)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opponentCharacterOne] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(elsaSpiritOfWinter, { targets: [opponentCharacterOne] }),
       ).toBeSuccessfulCommand();
 
       // Pass to P2's turn — now the restriction is active (their-next-turn = turn 2)
@@ -159,7 +163,9 @@ describe("Elsa - Spirit of Winter", () => {
       expect(testEngine.asPlayerOne().playCard(elsaSpiritOfWinter)).toBeSuccessfulCommand();
 
       // Resolve bag with no targets (choose 0)
-      expect(testEngine.asPlayerOne().resolveNextBag({ targets: [] })).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(elsaSpiritOfWinter, { targets: [] }),
+      ).toBeSuccessfulCommand();
 
       // Character should not be exerted
       expect(testEngine.asPlayerTwo().isExerted(opponentCharacterOne)).toBe(false);

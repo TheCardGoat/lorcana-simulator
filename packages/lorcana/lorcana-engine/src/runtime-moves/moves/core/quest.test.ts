@@ -69,15 +69,12 @@ describe("quest", () => {
     const questEntry = engine
       .getServerEngine()
       .getRuntime()
-      .getGameLog()
-      .find((entry) => entry.defaultMessage?.key === "lorcana.move.questWithAll");
-    expect(questEntry?.defaultMessage).toMatchObject({
-      key: "lorcana.move.questWithAll",
-      values: {
-        playerId: PLAYER_ONE,
-        loreGained: 2,
-        count: 1,
-      },
+      .getMoveLogHistory()
+      .find((log) => log.type === "questWithAll");
+    expect(questEntry).toMatchObject({
+      type: "questWithAll",
+      playerId: PLAYER_ONE,
+      totalLore: 2,
     });
   });
 
@@ -132,14 +129,12 @@ describe("quest", () => {
     const questEntry = engine
       .getServerEngine()
       .getRuntime()
-      .getGameLog()
-      .find((entry) => entry.defaultMessage?.key === "lorcana.move.quest");
-    expect(questEntry?.defaultMessage).toMatchObject({
-      key: "lorcana.move.quest",
-      values: {
-        playerId: PLAYER_ONE,
-        loreGained: 0,
-      },
+      .getMoveLogHistory()
+      .find((log) => log.type === "quest");
+    expect(questEntry).toMatchObject({
+      type: "quest",
+      playerId: PLAYER_ONE,
+      loreGained: 0,
     });
   });
 

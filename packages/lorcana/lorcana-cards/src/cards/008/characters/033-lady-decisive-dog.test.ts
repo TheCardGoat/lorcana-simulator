@@ -6,6 +6,8 @@ import {
 } from "@tcg/lorcana-engine/testing";
 import { ladyMissParkAvenue } from "../../007/characters/028-lady-miss-park-avenue";
 import { ladyDecisiveDog } from "./033-lady-decisive-dog";
+import { liloMakingAWish } from "../../001";
+import { stitchCarefreeSnowboarder } from "../../011";
 
 const cheapCharacter = createMockCharacter({
   id: "lady-test-char-a",
@@ -49,6 +51,21 @@ describe("Lady - Decisive Dog", () => {
       expect(testEngine.asPlayerOne().playCard(cheapCharacter)).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(ladyDecisiveDog)).toBe(1);
+    });
+
+    it("does NOT trigger when Lady herself is played (she is not yet in play)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [ladyDecisiveDog, liloMakingAWish, stitchCarefreeSnowboarder],
+        inkwell: ladyDecisiveDog.cost + liloMakingAWish.cost + stitchCarefreeSnowboarder.cost,
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(liloMakingAWish)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().playCard(stitchCarefreeSnowboarder)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().playCard(ladyDecisiveDog)).toBeSuccessfulCommand();
+
+      // Base strength is 0 — her own play must not trigger PACK OF HER OWN
+      expect(testEngine.asPlayerOne().getCardStrength(ladyDecisiveDog)).toBe(0);
     });
 
     it("stacks: gains +3 strength when 3 characters are played", () => {

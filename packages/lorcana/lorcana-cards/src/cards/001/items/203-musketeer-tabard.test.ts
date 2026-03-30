@@ -24,7 +24,7 @@ describe("Musketeer Tabard", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(musketeerTabard, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();
@@ -80,7 +80,7 @@ describe("Musketeer Tabard", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(musketeerTabard, {
         resolveOptional: true,
       }),
     ).toBeSuccessfulCommand();

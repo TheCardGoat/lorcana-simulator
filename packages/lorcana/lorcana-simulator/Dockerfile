@@ -18,6 +18,8 @@ FROM node:25-alpine AS runtime
 WORKDIR /app
 
 COPY --from=build /app/packages/lorcana/lorcana-simulator/build ./build
+# Runtime currently depends on workspace-installed packages from adapter-node output.
+COPY --from=build /app/node_modules ./node_modules
 
 ENV NODE_ENV=production
 

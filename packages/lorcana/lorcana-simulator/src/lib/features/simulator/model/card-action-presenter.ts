@@ -84,6 +84,21 @@ function getPlayActionDetail(
   }
 
   if (params.cost === "shift") {
+    if (
+      typeof card.shiftInkCost === "number" &&
+      Number.isFinite(card.shiftInkCost) &&
+      typeof card.shiftPlayCost === "number" &&
+      Number.isFinite(card.shiftPlayCost)
+    ) {
+      return card.shiftPlayCost === card.shiftInkCost
+        ? `${card.shiftInkCost} ink`
+        : `Pay ${card.shiftPlayCost} ink (${card.shiftInkCost} base)`;
+    }
+
+    if (typeof card.shiftInkCost === "number" && Number.isFinite(card.shiftInkCost)) {
+      return `${card.shiftInkCost} ink`;
+    }
+
     return "Shift";
   }
 
@@ -93,6 +108,10 @@ function getPlayActionDetail(
 
   if (params.cost === "singTogether") {
     return "Sing Together";
+  }
+
+  if (typeof card.playCost === "number") {
+    return `${card.playCost} ink`;
   }
 
   if (typeof card.cost === "number") {
@@ -111,7 +130,10 @@ function buildEnabledCategoryAction(
     categoryId === "quest" && typeof card.loreValue === "number"
       ? `${m["sim.actions.label.quest"]({})} for ${card.loreValue} lore`
       : (moves[0]?.presentation.categoryLabel ?? categoryId);
-  const detail = categoryId === "play-card" ? getPlayActionDetail(card, moves[0]!) : undefined;
+  const detail =
+    categoryId === "play-card" || categoryId === "shift-card"
+      ? getPlayActionDetail(card, moves[0]!)
+      : undefined;
   const interaction =
     categoryId === "challenge" || categoryId === "move-to-location"
       ? "expand-on-click"
@@ -143,9 +165,11 @@ function buildBlockedAction(
           ? m["sim.actions.label.moveToLocation"]({})
           : categoryId === "play-card"
             ? m["sim.actions.label.playCard"]({})
-            : categoryId === "ink-card"
-              ? m["sim.actions.label.inkCard"]({})
-              : m["sim.actions.label.activateAbility"]({});
+            : categoryId === "shift-card"
+              ? m["sim.actions.label.shiftCard"]({})
+              : categoryId === "ink-card"
+                ? m["sim.actions.label.inkCard"]({})
+                : m["sim.actions.label.activateAbility"]({});
 
   return {
     id: `disabled:${categoryId}:${card.cardId}`,
@@ -207,6 +231,10 @@ function getMoveBlockedReason(card: LorcanaCardSnapshot): string {
   return "No legal locations to move to right now.";
 }
 
+function getShiftBlockedReason(_card: LorcanaCardSnapshot): string {
+  return "This card cannot be shifted right now.";
+}
+
 export function getCardActionSourceCardId(move: ExecutableMoveEntry): string | null {
   return getSourceCardId(move);
 }
@@ -266,6 +294,15 @@ export function buildCardActionViews(options: {
 
     if (categoryId === "play-card" && card.zoneId === "hand") {
       actions.push(buildBlockedAction(card, categoryId, "This card cannot be played right now."));
+      continue;
+    }
+
+    if (
+      categoryId === "shift-card" &&
+      card.zoneId === "hand" &&
+      typeof card.shiftInkCost === "number"
+    ) {
+      actions.push(buildBlockedAction(card, categoryId, getShiftBlockedReason(card)));
       continue;
     }
 

@@ -13,11 +13,14 @@ import {
   recordDamagedCharacterThisTurn,
 } from "../../state/turn-metrics";
 import { hasStaticCardRestriction } from "../../rules/static-ability-utils";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
 import {
   emitTriggeredLorcanaEvent,
   snapshotTriggeredCandidatesForCard,
+  snapshotBoardTriggerCandidates,
 } from "../../effects/triggered-abilities";
+import type { TriggeredEventCandidate } from "../../../types/runtime-state";
 
 type ResolvedDealDamageEffectInput = {
   eventSnapshot?: DynamicAmountEventSnapshot;
@@ -34,7 +37,11 @@ export function isDealDamageEffect(effect: unknown): effect is DealDamageEffect 
   );
 }
 
-function getResistValue(ctx: PlayCardExecutionContext, targetId: CardInstanceId): number {
+function getResistValue(
+  ctx: PlayCardExecutionContext,
+  targetId: CardInstanceId,
+  registry?: import("../../../rules/static-effect-registry").StaticEffectRegistry,
+): number {
   const runtimeCard = ctx.cards.require(targetId);
   const definition = runtimeCard.definition as { cardType?: string } | undefined;
   const cardType = definition?.cardType;
@@ -51,6 +58,7 @@ function getResistValue(ctx: PlayCardExecutionContext, targetId: CardInstanceId)
     controllerID: runtimeCard.controllerID as import("#core").PlayerId | undefined,
     zoneID: runtimeCard.zoneID,
     getDefinitionByInstanceId: (cardId) => ctx.cards.getDefinition(cardId),
+    registry,
   });
 
   return Math.max(0, derived.keywordValues?.resist ?? 0);
@@ -59,6 +67,8 @@ function getResistValue(ctx: PlayCardExecutionContext, targetId: CardInstanceId)
 type ApplyDamageOptions = {
   applyResist: boolean;
   checkDamageRestriction?: boolean;
+  boardCandidatesSnapshot?: TriggeredEventCandidate[];
+  registry?: import("../../../rules/static-effect-registry").StaticEffectRegistry;
 };
 
 function applyDamage(
@@ -87,7 +97,7 @@ function applyDamage(
         state: ctx.framework.state as Parameters<typeof hasStaticCardRestriction>[0]["state"],
         cardId: targetId,
         restriction: "cant-be-dealt-damage",
-        getDefinitionByInstanceId: (cardId) => ctx.cards.getDefinition(cardId),
+        registry: options.registry!,
       });
       if (hasDamageRestriction) {
         continue;
@@ -97,7 +107,7 @@ function applyDamage(
     const meta = ctx.cards.require(targetId).meta ?? {};
     const currentDamage = Number(meta.damage ?? 0);
     const appliedDamage = options.applyResist
-      ? Math.max(0, amount - getResistValue(ctx, targetId))
+      ? Math.max(0, amount - getResistValue(ctx, targetId, options.registry))
       : amount;
     if (appliedDamage <= 0) {
       effectLogger.warn(`Target ${targetId} took no damage after reduction`);
@@ -151,7 +161,10 @@ function applyDamage(
         continue;
       }
 
-      const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, targetId);
+      const cardTriggerCandidates = snapshotTriggeredCandidatesForCard(ctx, targetId);
+      const triggerCandidates = options.boardCandidatesSnapshot
+        ? [...cardTriggerCandidates, ...options.boardCandidatesSnapshot]
+        : cardTriggerCandidates;
       const charsAtLocation =
         targetDefinition?.cardType === "location"
           ? getCharacterIdsAtLocation(ctx, targetId)
@@ -199,9 +212,17 @@ export function resolveDealDamageEffect(
   _effect: DealDamageEffect,
   resolvedInput: ResolvedDealDamageEffectInput,
 ): void {
+  // Snapshot board trigger candidates before dealing damage so observer triggers
+  // (e.g. "whenever one of your other characters is banished") are captured
+  // while the observers are still in play.
+  const boardCandidatesSnapshot =
+    resolvedInput.targets.length > 1 ? snapshotBoardTriggerCandidates(ctx) : undefined;
+  const registry = getOrBuildMoveRegistry(ctx);
   const dealtAnyDamage = applyDamage(ctx, cardPlayed, resolvedInput, {
     applyResist: true,
     checkDamageRestriction: true,
+    boardCandidatesSnapshot,
+    registry,
   });
   markLastEffectPerformed(resolvedInput.eventSnapshot, dealtAnyDamage);
 }
@@ -211,5 +232,10 @@ export function resolvePutDamageLikeEffect(
   cardPlayed: CardPlayedPayload,
   resolvedInput: ResolvedDealDamageEffectInput,
 ): void {
-  applyDamage(ctx, cardPlayed, resolvedInput, { applyResist: false });
+  const boardCandidatesSnapshot =
+    resolvedInput.targets.length > 1 ? snapshotBoardTriggerCandidates(ctx) : undefined;
+  applyDamage(ctx, cardPlayed, resolvedInput, {
+    applyResist: false,
+    boardCandidatesSnapshot,
+  });
 }

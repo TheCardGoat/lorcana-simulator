@@ -68,7 +68,9 @@ describe("Prince John - Greediest of All", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(princeJohnGreediestOfAll, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Should draw exactly 1 card (1 card was discarded)
@@ -150,7 +152,9 @@ describe("Prince John - Greediest of All", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(princeJohnGreediestOfAll, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Should draw 2 cards (one for each card discarded)
@@ -196,7 +200,9 @@ describe("Prince John - Greediest of All", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(princeJohnGreediestOfAll, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // No cards drawn — declined the optional

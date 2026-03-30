@@ -58,6 +58,8 @@ import {
 } from "../fallback-card-definition";
 import { LorcanaEngineBase } from "../lorcana-engine-base";
 import { recomputeLoreToWin } from "../runtime-moves/effects/win-condition-effects";
+import { buildZoneRegistry } from "../core/runtime/zone-registry";
+import { lorcanaRuntimeZones } from "../zones";
 
 type CardRef = CardInput;
 
@@ -455,7 +457,6 @@ export class LorcanaMultiplayerTestEngine {
     options: LorcanaFixtureInitOptions,
     bundle: FixtureSeedBundle = buildFixtureSeedBundle(playerOneState, playerTwoState),
   ): void {
-    // Clone so we can mutate; runtime state may be frozen (e.g. when createWithFixture skips initialize)
     const state = structuredClone(this.getAuthoritativeState()) as LorcanaMatchState;
 
     this.instanceIdToDefinitionId = new Map(
@@ -576,7 +577,7 @@ export class LorcanaMultiplayerTestEngine {
         const modifier = Math.trunc(fixtureState.lore) - baseLore;
         if (modifier !== 0) {
           const nextSeq = state.G.continuousEffects.nextSeq++;
-          state.G.continuousEffects.instances.push({
+          const effectInstance = {
             id: `ce_${nextSeq}`,
             kind: "stat-modifier",
             sourceId: cardId as CardInstanceId,
@@ -586,7 +587,11 @@ export class LorcanaMultiplayerTestEngine {
             duration: "until-start-of-next-turn",
             createdAtTurn: state.ctx.status.turn ?? 1,
             expiresAtTurn: Number.MAX_SAFE_INTEGER,
-          });
+          } as const;
+          state.G.continuousEffects.instances.push(effectInstance);
+          state.G.continuousEffects.byTarget[cardId as CardInstanceId] ??= [];
+          state.G.continuousEffects.byTarget[cardId as CardInstanceId].push(effectInstance);
+          state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
         }
       }
     }
@@ -635,6 +640,7 @@ export class LorcanaMultiplayerTestEngine {
    * @internal Used by serialization helpers; prefer restoreEngineFromState() for external use
    */
   loadState(state: MatchState): void {
+    state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
     // Access the server engine's runtime and load the state
     const serverEngine = this.getServerEngine();
     const runtime = serverEngine.getRuntime();
@@ -656,13 +662,6 @@ export class LorcanaMultiplayerTestEngine {
     for (const player of TEST_PLAYERS) {
       for (const baseZoneId of baseZoneIds) {
         const zoneKey = `${baseZoneId}:${player.id}`;
-        const baseDef = state.ctx.zones.zoneDefs[baseZoneId];
-        if (baseDef) {
-          state.ctx.zones.zoneDefs[zoneKey] = {
-            ...baseDef,
-            id: zoneKey,
-          };
-        }
         state.ctx.zones.public.zoneSummaries[zoneKey] = {
           revision: 0,
           count: 0,
@@ -721,8 +720,9 @@ export class LorcanaMultiplayerTestEngine {
    * Refresh zone summaries after state changes.
    */
   private refreshZoneSummaries(state: LorcanaMatchState): void {
+    const zoneRegistry = buildZoneRegistry(lorcanaRuntimeZones, state.ctx.playerIds);
     for (const [zoneKey, cards] of Object.entries(state.ctx.zones.private.zoneCards)) {
-      const zoneDef = state.ctx.zones.zoneDefs[zoneKey];
+      const zoneDef = zoneRegistry[zoneKey];
       if (!state.ctx.zones.public.zoneSummaries[zoneKey]) {
         state.ctx.zones.public.zoneSummaries[zoneKey] = {
           revision: 0,
@@ -856,7 +856,7 @@ export class LorcanaMultiplayerTestEngine {
       return;
     }
 
-    const state = structuredClone(this.asServer().getState()) as LorcanaMatchState;
+    const state = this.asServer().getState() as LorcanaMatchState;
     const cardIndex = state.ctx.zones.private.cardIndex;
     const cardMeta = state.ctx.zones.private.cardMeta;
     const childIndexEntry = cardIndex[childId];

@@ -36,7 +36,7 @@ describe("Kuzco - Wanted Llama", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(kuzcoWantedLlama, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length).toBe(
@@ -61,7 +61,7 @@ describe("Kuzco - Wanted Llama", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(kuzcoWantedLlama, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length).toBe(handCountBefore);

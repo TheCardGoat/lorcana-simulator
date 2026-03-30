@@ -34,9 +34,9 @@ describe("Zootopia - Police Headquarters", () => {
         .asPlayerOne()
         .moveCharacterToLocation(zootopiaDetective, zootopiaPoliceHeadquarters).success,
     ).toBe(true);
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(zootopiaPoliceHeadquarters).success).toBe(
+      true,
+    );
     expect(testEngine.asPlayerOne().resolveNextPending({ targets: [zootopiaClue] }).success).toBe(
       true,
     );
@@ -57,9 +57,9 @@ describe("Zootopia - Police Headquarters", () => {
         .asPlayerOne()
         .moveCharacterToLocation(zootopiaDetective, zootopiaPoliceHeadquarters).success,
     ).toBe(true);
-    expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id).success,
-    ).toBe(true);
+    expect(testEngine.asPlayerOne().resolvePendingByCard(zootopiaPoliceHeadquarters).success).toBe(
+      true,
+    );
     expect(testEngine.asPlayerOne().resolveNextPending({ targets: [zootopiaClue] }).success).toBe(
       true,
     );

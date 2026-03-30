@@ -20,7 +20,7 @@ describe("Max Goof - Rebellious Teen", () => {
       // Resolve the triggered ability via bag
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(maxGoofRebelliousTeen, {
           targets: [trialsAndTribulations],
         }),
       ).toBeSuccessfulCommand();
@@ -44,7 +44,7 @@ describe("Max Goof - Rebellious Teen", () => {
       // Resolve the triggered ability via bag
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(maxGoofRebelliousTeen, {
           targets: [motherKnowsBest],
         }),
       ).toBeSuccessfulCommand();

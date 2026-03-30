@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
 import { mamaOdieMysticalMaven } from "./151-mama-odie-mystical-maven";
 import { theBareNecessities } from "../actions/028-the-bare-necessities";
 
@@ -26,11 +30,13 @@ describe("Mama Odie - Mystical Maven", () => {
 
       expect(testEngine.asPlayerOne().playCard(mamaOdieMysticalMaven)).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().playCard(theBareNecessities)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().playCardForPlayer(theBareNecessities, PLAYER_TWO),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(mamaOdieMysticalMaven),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(topDeckCard)).toBe("inkwell");
     });
@@ -49,12 +55,14 @@ describe("Mama Odie - Mystical Maven", () => {
       );
 
       expect(testEngine.asPlayerOne().playCard(mamaOdieMysticalMaven)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().playCard(theBareNecessities)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { resolveOptional: false }),
+        testEngine.asPlayerOne().playCardForPlayer(theBareNecessities, PLAYER_TWO),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mamaOdieMysticalMaven, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(topDeckCard)).toBe("deck");

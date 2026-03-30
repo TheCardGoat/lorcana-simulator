@@ -67,7 +67,9 @@ describe("Jim Hawkins - Rigging Specialist", () => {
         testEngine.asPlayerOne().playCard(jimHawkinsRiggingSpecialist),
       ).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jimHawkinsRiggingSpecialist, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [targetCharacter] }),
@@ -91,7 +93,9 @@ describe("Jim Hawkins - Rigging Specialist", () => {
         testEngine.asPlayerOne().playCard(jimHawkinsRiggingSpecialist),
       ).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jimHawkinsRiggingSpecialist, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolveNextPending({ targets: [targetLocation] }),
@@ -115,7 +119,9 @@ describe("Jim Hawkins - Rigging Specialist", () => {
         testEngine.asPlayerOne().playCard(jimHawkinsRiggingSpecialist),
       ).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jimHawkinsRiggingSpecialist, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(0);

@@ -104,7 +104,9 @@ describe("Lilo - Best Explorer Ever", () => {
       expect(testEngine.asPlayerOne().quest(liloBestExplorerEver)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [alienCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(liloBestExplorerEver, { targets: [alienCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().hasKeyword(alienCharacter, "Challenger")).toBe(true);
@@ -120,7 +122,9 @@ describe("Lilo - Best Explorer Ever", () => {
 
       expect(testEngine.asPlayerOne().quest(liloBestExplorerEver)).toBeSuccessfulCommand();
 
-      const result = testEngine.asPlayerOne().resolveNextBag({ targets: [nonAlienCharacter] });
+      const result = testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(liloBestExplorerEver, { targets: [nonAlienCharacter] });
       expect(result.success).toBe(false);
     });
 
@@ -135,7 +139,9 @@ describe("Lilo - Best Explorer Ever", () => {
 
       expect(testEngine.asPlayerOne().quest(liloBestExplorerEver)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [alienCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(liloBestExplorerEver, { targets: [alienCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().hasKeyword(alienCharacter, "Challenger")).toBe(true);
@@ -159,7 +165,9 @@ describe("Lilo - Best Explorer Ever", () => {
 
       expect(testEngine.asPlayerOne().quest(liloBestExplorerEver)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [alienCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(liloBestExplorerEver, { targets: [alienCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getKeywordValue(alienCharacter, "Challenger")).toBe(2);
@@ -171,7 +179,9 @@ describe("Lilo - Best Explorer Ever", () => {
 
       expect(testEngine.asPlayerOne().quest(liloBestExplorerEver)).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [alienCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(liloBestExplorerEver, { targets: [alienCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().hasKeyword(alienCharacter, "Challenger")).toBe(true);

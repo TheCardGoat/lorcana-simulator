@@ -4,7 +4,6 @@ import {
   getLorcanaServerAuthoritativeSnapshot,
   type CardsMaps,
   type EngineMoveHistoryEntry,
-  type GameLogEntry,
   type LorcanaServer,
 } from "@tcg/lorcana-engine";
 import { HumanVsAiOrchestrator } from "../simulator-devtools/vs-ai/human-vs-ai-orchestrator.svelte.js";
@@ -58,7 +57,7 @@ export class PracticeMatchOrchestrator {
       this.#restoreState(options.restoredSnapshot);
       this.#hydrateRecentHistory(options.restoredRecentHistory);
       this.#persistedMoveCount = this.#getAcceptedMoveHistory().length;
-      this.#persistedLogCount = this.#getGameLog().length;
+      this.#persistedLogCount = this.#getMoveLogHistory().length;
     } else {
       // Fresh match — extract cardsMaps from the orchestrator's engine
       this.#cardsMaps = this.orchestrator.cardsMaps;
@@ -125,12 +124,12 @@ export class PracticeMatchOrchestrator {
       }),
     );
     const latestStateVersion = acceptedMoveRecords.at(-1)?.stateVersion ?? this.#version;
-    const engineLogRecords = this.#getGameLog()
+    const engineLogRecords = this.#getMoveLogHistory()
       .slice(this.#persistedLogCount)
       .map((entry) =>
         createEngineLogRecord({
           gameId: this.#gameId,
-          logEntry: entry,
+          log: entry,
           sourceAuthority: "client",
           stateVersion: latestStateVersion,
         }),
@@ -169,8 +168,8 @@ export class PracticeMatchOrchestrator {
     return this.orchestrator.server.getMoveHistory();
   }
 
-  #getGameLog(): GameLogEntry[] {
-    return this.orchestrator.server.getGameLog();
+  #getMoveLogHistory(): import("@tcg/lorcana-engine").MoveLog[] {
+    return this.orchestrator.server.getMoveLogHistory();
   }
 
   #resolveActorId(playerId?: string): string {

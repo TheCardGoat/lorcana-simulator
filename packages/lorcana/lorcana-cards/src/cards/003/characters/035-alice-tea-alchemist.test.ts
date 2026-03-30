@@ -1,37 +1,44 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   MadamMimFox,
-//   MerlinCrab,
-//   MerlinGoat,
-// } from "@lorcanito/lorcana-engine/cards/002/characters/characters";
-// Import { aliceTeaAlchemist } from "@lorcanito/lorcana-engine/cards/003/characters/characters";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Alice - Tea Alchemist", () => {
-//   It("**CURIOUSER AND CURIOUSER** {E} – Exert chosen opposing character and all other opposing characters with the same name.", () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: aliceTeaAlchemist.cost,
-//         Play: [aliceTeaAlchemist],
-//       },
-//       {
-//         Play: [merlinCrab, merlinGoat, madamMimFox],
-//       },
-//     );
-//
-//     Const cardUnderTest = testEngine.getCardModel(aliceTeaAlchemist);
-//
-//     TestEngine.activateCard(cardUnderTest);
-//     TestEngine.resolveTopOfStack({ targets: [merlinCrab] });
-//
-//     Expect(testEngine.getCardModel(merlinCrab).exerted).toBe(true);
-//     Expect(testEngine.getCardModel(merlinGoat).exerted).toBe(true);
-//     Expect(testEngine.getCardModel(madamMimFox).exerted).toBe(false);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { aliceTeaAlchemist } from "./035-alice-tea-alchemist";
+
+const chosenMerlin = createMockCharacter({
+  id: "alice-chosen-merlin",
+  name: "Merlin",
+  cost: 2,
+});
+
+const otherMerlin = createMockCharacter({
+  id: "alice-other-merlin",
+  name: "Merlin",
+  cost: 3,
+});
+
+const madamMim = createMockCharacter({
+  id: "alice-madam-mim",
+  name: "Madam Mim",
+  cost: 2,
+});
+
+describe("Alice - Tea Alchemist", () => {
+  it("exerts the chosen opposing character and all other opposing characters with the same name", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: aliceTeaAlchemist, isDrying: false }],
+      },
+      {
+        play: [chosenMerlin, otherMerlin, madamMim],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(aliceTeaAlchemist, {
+        targets: [chosenMerlin],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.isExerted(chosenMerlin)).toBe(true);
+    expect(testEngine.isExerted(otherMerlin)).toBe(true);
+    expect(testEngine.isExerted(madamMim)).toBe(false);
+  });
+});

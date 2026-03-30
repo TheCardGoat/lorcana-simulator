@@ -39,7 +39,7 @@ describe("Pinocchio - Talkative Puppet", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(pinocchioTalkativePuppet, {
           resolveOptional: true,
           targets: [opponentCharA],
         }),
@@ -68,7 +68,7 @@ describe("Pinocchio - Talkative Puppet", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(pinocchioTalkativePuppet, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();
@@ -96,7 +96,7 @@ describe("Pinocchio - Talkative Puppet", () => {
       expect(bagEffects.length).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerTwo().resolveBag(bagEffects[0]!.id, {
+        testEngine.asPlayerTwo().resolvePendingByCard(pinocchioTalkativePuppet, {
           resolveOptional: true,
           targets: [opponentCharA],
         }),

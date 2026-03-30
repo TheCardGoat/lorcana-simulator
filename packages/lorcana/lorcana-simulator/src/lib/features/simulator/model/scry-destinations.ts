@@ -1,4 +1,4 @@
-import type { CardFilter, ScryCardOrdering } from "@tcg/lorcana-types";
+import type { CardFilter, CardSelectionFilter, ScryCardOrdering } from "@tcg/lorcana-types";
 import type { ResolutionSelectionDestinationRule } from "@tcg/lorcana-engine";
 import type { LorcanaCardSnapshot } from "./contracts.js";
 
@@ -7,6 +7,12 @@ export interface ScryCardMatchInput {
   actionSubtype?: LorcanaCardSnapshot["actionSubtype"];
   cost?: LorcanaCardSnapshot["cost"];
   classifications?: LorcanaCardSnapshot["classifications"];
+}
+
+type TypedCardFilter = Exclude<CardFilter, CardSelectionFilter>;
+
+function hasFilterType(filter: CardFilter): filter is TypedCardFilter {
+  return "type" in filter;
 }
 
 function evaluateNumericComparison(value: number, comparison: string, threshold: number): boolean {
@@ -40,6 +46,45 @@ function evaluateNumericComparison(value: number, comparison: string, threshold:
 }
 
 function matchesSingleFilter(card: ScryCardMatchInput, filter: CardFilter): boolean {
+  if (!hasFilterType(filter)) {
+    if ("cardType" in filter && typeof filter.cardType === "string") {
+      if (filter.cardType === "song") {
+        if (!(card.cardType === "action" && card.actionSubtype === "song")) {
+          return false;
+        }
+      } else if (card.cardType !== filter.cardType) {
+        return false;
+      }
+    }
+
+    if ("classification" in filter && typeof filter.classification === "string") {
+      if (!(card.classifications ?? []).includes(filter.classification)) {
+        return false;
+      }
+    }
+
+    if ("maxCost" in filter && typeof filter.maxCost === "number") {
+      if (typeof card.cost !== "number" || card.cost > filter.maxCost) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  const filterType = filter.type as string;
+  if (filterType === "card-type") {
+    const typedFilter = filter as { cardType?: ScryCardMatchInput["cardType"] };
+    return card.cardType === typedFilter.cardType;
+  }
+
+  if (filterType === "classification") {
+    const typedFilter = filter as { classification?: string };
+    return typeof typedFilter.classification === "string"
+      ? (card.classifications ?? []).includes(typedFilter.classification)
+      : true;
+  }
+
   switch (filter.type) {
     case "and":
       return filter.filters.every((entry) => matchesSingleFilter(card, entry));
@@ -47,15 +92,11 @@ function matchesSingleFilter(card: ScryCardMatchInput, filter: CardFilter): bool
       return filter.filters.some((entry) => matchesSingleFilter(card, entry));
     case "not":
       return !matchesSingleFilter(card, filter.filter);
-    case "card-type":
-      return card.cardType === filter.cardType;
     case "cost":
     case "cost-comparison":
       return typeof filter.value === "number"
         ? evaluateNumericComparison(card.cost ?? 0, filter.comparison, filter.value)
         : false;
-    case "classification":
-      return (card.classifications ?? []).includes(filter.classification);
     case "song":
       return card.cardType === "action" && card.actionSubtype === "song";
     default:

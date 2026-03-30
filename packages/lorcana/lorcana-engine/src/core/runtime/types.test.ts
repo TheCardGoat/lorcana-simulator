@@ -80,7 +80,6 @@ describe("Runtime Types", () => {
         rulesetHash: "ruleset-v1",
       });
 
-      expect(ctx.zones.zoneDefs).toEqual({});
       expect(ctx.zones.public.zoneSummaries).toEqual({});
       expect(ctx.zones.private.zoneCards).toEqual({});
       expect(ctx.zones.private.cardIndex).toEqual({});

@@ -38,7 +38,9 @@ describe("Ursula - Power Hungry", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(ursulaPowerHungry),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getLore(PLAYER_TWO)).toBe(2);
     });
 
@@ -63,7 +65,7 @@ describe("Ursula - Power Hungry", () => {
 
       // Resolve bag and accept the optional draw (resolveOptional defaults to true)
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(ursulaPowerHungry, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // P2 lost 1 lore (from 3 to 2)
@@ -90,7 +92,9 @@ describe("Ursula - Power Hungry", () => {
 
       // Resolve bag and decline the optional draw
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ursulaPowerHungry, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // P2 still loses 1 lore (lose-lore is not optional)
@@ -117,7 +121,7 @@ describe("Ursula - Power Hungry", () => {
       expect(testEngine.asPlayerOne().playCard(ursulaPowerHungry)).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(ursulaPowerHungry, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // P2 lore cannot go below 0

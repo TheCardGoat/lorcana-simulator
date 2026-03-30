@@ -34,7 +34,9 @@ describe("Rapunzel - Creative Captor", () => {
       expect(testEngine.asPlayerOne().playCard(rapunzelCreativeCaptor)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [opposingCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rapunzelCreativeCaptor, { targets: [opposingCharacter] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(
@@ -64,7 +66,9 @@ describe("Rapunzel - Creative Captor", () => {
 
       // Attempting to target own character should fail
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ targets: [ownCharacter] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(rapunzelCreativeCaptor, { targets: [ownCharacter] }),
       ).not.toBeSuccessfulCommand();
     });
 

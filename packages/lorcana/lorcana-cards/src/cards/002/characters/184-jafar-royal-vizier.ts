@@ -42,6 +42,7 @@ export const jafarRoyalVizier: CharacterCard = {
         type: "gain-keyword",
       },
       id: "1gq-1",
+      name: "I DON'T TRUST HIM, SIRE",
       text: "I DON'T TRUST HIM, SIRE During your turn, this character gains Evasive.",
       type: "static",
     },

@@ -24,9 +24,9 @@ export const mauriceWorldfamousInventor: CharacterCard = {
   },
   text: [
     {
-      title: "GIVE IT",
+      title: "GIVE IT A TRY",
       description:
-        "A TRY Whenever this character quests, you pay 2 {I} less for the next item you play this turn.",
+        "Whenever this character quests, you pay 2 {I} less for the next item you play this turn.",
     },
     {
       title: "IT WORKS!",

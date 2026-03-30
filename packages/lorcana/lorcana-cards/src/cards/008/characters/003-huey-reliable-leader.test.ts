@@ -24,7 +24,7 @@ const secondCharacter = createMockCharacter({
   lore: 1,
 });
 
-describe.skip("Huey - Reliable Leader", () => {
+describe("Huey - Reliable Leader", () => {
   describe("I KNOW THE WAY — Whenever this character quests, you pay 1 {I} less for the next character you play this turn.", () => {
     it("reduces cost by 1 for the next character played after questing", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({

@@ -12,8 +12,17 @@ import type { LorcanaCard, LocationCard } from "@tcg/lorcana-types";
 import { createCardI18n } from "../../card-i18n";
 import { createMockCharacter } from "../../testing";
 import { createInitialLorcanaG, type LorcanaCardMeta, type LorcanaG } from "../../types";
+import type { StatModifierContinuousEffectInstance } from "../../types";
 import type { LorcanaCardDerived } from "../../types/projected-board";
 import { createLorcanaRuntimeCardDeriver } from "./runtime-card-derived";
+import type { StaticEffectRegistry } from "../../rules/static-effect-registry";
+
+const EMPTY_REGISTRY: StaticEffectRegistry = {
+  byTarget: new Map(),
+  byPlayer: new Map(),
+  global: [],
+  bySource: new Map(),
+};
 
 const PLAYER_ONE = createPlayerId("p1");
 const PLAYER_TWO = createPlayerId("p2");
@@ -91,7 +100,7 @@ describe("runtime-card-derived", () => {
     });
     const state = buildState();
     const staticResources = buildStaticResources(card);
-    const deriver = createLorcanaRuntimeCardDeriver();
+    const deriver = createLorcanaRuntimeCardDeriver(EMPTY_REGISTRY);
 
     const legalCard = buildRuntimeCard(card);
     const legal = deriveLorcana(deriver, {
@@ -165,7 +174,7 @@ describe("runtime-card-derived", () => {
     });
     const state = buildState();
     const runtimeCard = buildRuntimeCard(card);
-    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(EMPTY_REGISTRY), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -198,7 +207,7 @@ describe("runtime-card-derived", () => {
     };
     const state = buildState();
     const runtimeCard = buildRuntimeCard(card);
-    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(EMPTY_REGISTRY), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -208,6 +217,49 @@ describe("runtime-card-derived", () => {
 
     expect(derived.fullName).toBe("Keyword Character - Bold Striker");
     expect(derived.keywords).toEqual(["Rush"]);
+  });
+
+  it("derives printed and payable Shift costs from current state", () => {
+    const card: LorcanaCard = {
+      ...createMockCharacter({
+        id: "shift-derived-character",
+        name: "Shifted Hero",
+        cost: 6,
+        strength: 4,
+        willpower: 5,
+        lore: 2,
+      }),
+      abilities: [
+        {
+          id: "shift-derived-character-shift",
+          type: "keyword",
+          keyword: "Shift",
+          text: "Shift 4",
+          cost: { ink: 4 },
+        },
+      ],
+    };
+    const state = buildState();
+    state.G.turnMetadata.pendingCostReductionsByPlayer[PLAYER_ONE] = [
+      {
+        amount: 1,
+        cardType: "character",
+        expiresAtTurn: state.ctx.status.turn ?? 1,
+        consumeOnUse: true,
+      },
+    ];
+    const runtimeCard = buildRuntimeCard(card);
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(EMPTY_REGISTRY), {
+      cardId: runtimeCard.instanceId,
+      card: runtimeCard,
+      actorPlayerId: PLAYER_ONE,
+      state,
+      staticResources: buildStaticResources(card),
+    });
+
+    expect(derived.shiftInkCost).toBe(4);
+    expect(derived.shiftPlayCost).toBe(3);
+    expect(derived.playCost).toBe(5);
   });
 
   it("applies active continuous modifiers to character strength and willpower", () => {
@@ -229,33 +281,33 @@ describe("runtime-card-derived", () => {
       ownerID: PLAYER_ONE,
       controllerID: PLAYER_ONE,
     };
-    state.G.continuousEffects.instances.push(
-      {
-        id: "ce_1",
-        kind: "stat-modifier",
-        sourceId: createCardId("effect-source-1"),
-        targetId: CARD_ONE,
-        stat: "strength",
-        modifier: 2,
-        duration: "this-turn",
-        createdAtTurn: 1,
-        expiresAtTurn: 1,
-      },
-      {
-        id: "ce_2",
-        kind: "stat-modifier",
-        sourceId: createCardId("effect-source-2"),
-        targetId: CARD_ONE,
-        stat: "willpower",
-        modifier: -3,
-        duration: "this-turn",
-        createdAtTurn: 1,
-        expiresAtTurn: 1,
-      },
-    );
+    const ce1: StatModifierContinuousEffectInstance = {
+      id: "ce_1",
+      kind: "stat-modifier",
+      sourceId: createCardId("effect-source-1"),
+      targetId: CARD_ONE,
+      stat: "strength",
+      modifier: 2,
+      duration: "this-turn",
+      createdAtTurn: 1,
+      expiresAtTurn: 1,
+    };
+    const ce2: StatModifierContinuousEffectInstance = {
+      id: "ce_2",
+      kind: "stat-modifier",
+      sourceId: createCardId("effect-source-2"),
+      targetId: CARD_ONE,
+      stat: "willpower",
+      modifier: -3,
+      duration: "this-turn",
+      createdAtTurn: 1,
+      expiresAtTurn: 1,
+    };
+    state.G.continuousEffects.instances.push(ce1, ce2);
+    state.G.continuousEffects.byTarget[CARD_ONE] = [ce1, ce2];
 
     const runtimeCard = buildRuntimeCard(card, { zoneID: playZone });
-    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(EMPTY_REGISTRY), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -286,7 +338,7 @@ describe("runtime-card-derived", () => {
 
     const state = buildState();
     const runtimeCard = buildRuntimeCard(locationCard);
-    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(EMPTY_REGISTRY), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -326,7 +378,7 @@ describe("runtime-card-derived", () => {
       ownerID: PLAYER_ONE,
       controllerID: PLAYER_ONE,
     };
-    state.G.continuousEffects.instances.push({
+    const ce3: StatModifierContinuousEffectInstance = {
       id: "ce_3",
       kind: "stat-modifier",
       sourceId: createCardId("effect-source-3"),
@@ -336,10 +388,12 @@ describe("runtime-card-derived", () => {
       duration: "this-turn",
       createdAtTurn: 1,
       expiresAtTurn: 1,
-    });
+    };
+    state.G.continuousEffects.instances.push(ce3);
+    state.G.continuousEffects.byTarget[CARD_ONE] = [ce3];
 
     const runtimeCard = buildRuntimeCard(locationCard, { zoneID: playZone });
-    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(EMPTY_REGISTRY), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -372,7 +426,7 @@ describe("runtime-card-derived", () => {
 
     const state = buildState();
     const runtimeCard = buildRuntimeCard(locationNoWillpower);
-    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(EMPTY_REGISTRY), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,
@@ -401,7 +455,7 @@ describe("runtime-card-derived", () => {
 
     const state = buildState();
     const runtimeCard = buildRuntimeCard(actionCard);
-    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(), {
+    const derived = deriveLorcana(createLorcanaRuntimeCardDeriver(EMPTY_REGISTRY), {
       cardId: runtimeCard.instanceId,
       card: runtimeCard,
       actorPlayerId: PLAYER_ONE,

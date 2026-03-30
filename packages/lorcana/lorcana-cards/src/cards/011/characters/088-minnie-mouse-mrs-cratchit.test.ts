@@ -40,7 +40,9 @@ describe("Minnie Mouse - Mrs. Cratchit", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         // Accept the optional ability
-        expect(testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id)).toBeSuccessfulCommand();
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(minnieMouseMrsCratchit),
+        ).toBeSuccessfulCommand();
         // Select Simba as the target
         const pendingEffect = testEngine.asPlayerOne().getPendingEffects();
         if (pendingEffect.length > 0) {
@@ -78,7 +80,9 @@ describe("Minnie Mouse - Mrs. Cratchit", () => {
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
       if (bagEffects.length > 0) {
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(minnieMouseMrsCratchit, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 
@@ -105,7 +109,9 @@ describe("Minnie Mouse - Mrs. Cratchit", () => {
       if (bagEffects.length > 0) {
         // Decline the optional - no valid targets for Boost characters/locations
         expect(
-          testEngine.asPlayerOne().resolveBag(bagEffects[0]!.id, { resolveOptional: false }),
+          testEngine
+            .asPlayerOne()
+            .resolvePendingByCard(minnieMouseMrsCratchit, { resolveOptional: false }),
         ).toBeSuccessfulCommand();
       }
 

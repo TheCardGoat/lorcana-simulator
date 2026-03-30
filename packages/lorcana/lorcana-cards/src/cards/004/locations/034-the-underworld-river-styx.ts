@@ -24,9 +24,9 @@ export const theUnderworldRiverStyx: LocationCard = {
   },
   text: [
     {
-      title: "SAVE",
+      title: "SAVE A SOUL",
       description:
-        "A SOUL Whenever a character quests while here, you may pay 3 {I} to return a character card from your discard to your hand.",
+        "Whenever a character quests while here, you may pay 3 {I} to return a character card from your discard to your hand.",
     },
   ],
   abilities: [
@@ -51,7 +51,7 @@ export const theUnderworldRiverStyx: LocationCard = {
       text: "SAVE A SOUL Whenever a character quests while here, you may pay 3 {I} to return a character card from your discard to your hand.",
       trigger: {
         event: "quest",
-        on: "CHARACTER_HERE",
+        on: "CHARACTERS_HERE",
         timing: "whenever",
       },
       type: "triggered",

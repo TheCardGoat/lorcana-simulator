@@ -24,7 +24,7 @@ describe("Witches of Morva - Orddu, Orwen, and Orgoch", () => {
       testEngine.asPlayerOne().playCard(witchesOfMorvaOrdduOrwenAndOrgoch),
     ).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(witchesOfMorvaOrdduOrwenAndOrgoch),
     ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({
@@ -49,7 +49,7 @@ describe("Witches of Morva - Orddu, Orwen, and Orgoch", () => {
       testEngine.asPlayerOne().playCard(witchesOfMorvaOrdduOrwenAndOrgoch),
     ).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(witchesOfMorvaOrdduOrwenAndOrgoch, {
         resolveOptional: false,
       }),
     ).toBeSuccessfulCommand();
@@ -69,7 +69,7 @@ describe("Witches of Morva - Orddu, Orwen, and Orgoch", () => {
       testEngine.asPlayerOne().playCard(witchesOfMorvaOrdduOrwenAndOrgoch),
     ).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine.asPlayerOne().resolvePendingByCard(witchesOfMorvaOrdduOrwenAndOrgoch),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getLore("player_one")).toBe(0);

@@ -132,7 +132,7 @@ describe("Cruella De Vil - Style Icon", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
-        testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+        testEngine.asPlayerOne().resolvePendingByCard(cruellaDeVilStyleIcon),
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getCardZone(deckCardOne)).toBe("inkwell");
 

@@ -2,6 +2,7 @@ import type { MatchState, PlayerId, RuntimeFlowDefinition, RuntimeLifecycleConte
 import type { LorcanaG } from "../types";
 import { hasTemporaryRestriction } from "../runtime-moves/effects/temporary-effects";
 import { hasStaticCardRestriction } from "../runtime-moves/rules/static-ability-utils";
+import { getOrBuildMoveRegistry } from "../runtime-moves/rules/move-registry-cache";
 
 function canAutoAdvanceBeginningPhase(state: MatchState): boolean {
   return (
@@ -123,6 +124,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
                         (zoneKey === "play" || zoneKey.startsWith("play:"))
                       );
                     })();
+                  const registry = getOrBuildMoveRegistry(ctx);
                   const cantReady =
                     hasTemporaryRestriction(card.meta, currentTurn, "cant-ready", {
                       isSourceInPlay: (sourceId) => {
@@ -138,13 +140,13 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
                       state: ctx.framework.state,
                       cardId: cardId as never,
                       restriction: "cant-ready-at-start-of-turn",
-                      getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
+                      registry,
                     }) ||
                     hasStaticCardRestriction({
                       state: ctx.framework.state,
                       cardId: cardId as never,
                       restriction: "cant-ready",
-                      getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
+                      registry,
                     }) ||
                     hasTemporaryRestriction(card.meta, currentTurn, "doesnt-ready", {
                       isSourceInPlay: (sourceId) => {

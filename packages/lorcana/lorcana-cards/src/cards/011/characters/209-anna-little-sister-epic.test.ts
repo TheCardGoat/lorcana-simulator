@@ -35,7 +35,7 @@ describe("Anna - Little Sister (Epic)", () => {
       // Accept the optional ability and choose the card from discard
       const fodderId = testEngine.findCardInstanceId(discardFodder, "discard", PLAYER_ONE);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(annaLittleSisterEpic, {
           resolveOptional: true,
           targets: [fodderId],
         }),
@@ -67,7 +67,7 @@ describe("Anna - Little Sister (Epic)", () => {
       // Accept the optional ability and choose the card from opponent's discard
       const fodderId = testEngine.findCardInstanceId(discardFodder, "discard", PLAYER_TWO);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(annaLittleSisterEpic, {
           resolveOptional: true,
           targets: [fodderId],
         }),
@@ -90,7 +90,9 @@ describe("Anna - Little Sister (Epic)", () => {
 
       // Decline the optional ability
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(annaLittleSisterEpic, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       // Card should still be in discard

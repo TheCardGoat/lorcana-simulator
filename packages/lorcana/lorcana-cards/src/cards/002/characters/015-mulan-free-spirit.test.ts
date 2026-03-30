@@ -33,7 +33,7 @@ describe("Mulan - Free Spirit", () => {
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(bagEffect).toBeDefined();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(mulanFreeSpirit, {
         resolveOptional: true,
         targets: [supportTarget],
       }),
@@ -59,7 +59,7 @@ describe("Mulan - Free Spirit", () => {
 
     const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(mulanFreeSpirit, {
         resolveOptional: true,
         targets: [supportTarget],
       }),

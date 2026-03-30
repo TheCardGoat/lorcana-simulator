@@ -31,9 +31,10 @@ describe("Prince Achmed - Rival Suitor", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveNextBag({ resolveOptional: true, targets: [charlotteLaBouffMardiGrasPrincess] }),
+        testEngine.asPlayerOne().resolvePendingByCard(princeAchmedRivalSuitor, {
+          resolveOptional: true,
+          targets: [charlotteLaBouffMardiGrasPrincess],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().isExerted(charlotteLaBouffMardiGrasPrincess)).toBe(true);
@@ -55,9 +56,10 @@ describe("Prince Achmed - Rival Suitor", () => {
       expect(testEngine.asPlayerOne().playCard(princeAchmedRivalSuitor)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
-      const result = testEngine
-        .asPlayerOne()
-        .resolveNextBag({ resolveOptional: true, targets: [nonPrincessCharacter] });
+      const result = testEngine.asPlayerOne().resolvePendingByCard(princeAchmedRivalSuitor, {
+        resolveOptional: true,
+        targets: [nonPrincessCharacter],
+      });
 
       expect(result.success).toBe(false);
       expect(testEngine.asPlayerTwo().isExerted(nonPrincessCharacter)).toBe(false);
@@ -80,7 +82,9 @@ describe("Prince Achmed - Rival Suitor", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(princeAchmedRivalSuitor, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().isExerted(charlotteLaBouffMardiGrasPrincess)).toBe(false);

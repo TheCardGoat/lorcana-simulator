@@ -58,6 +58,7 @@ export const cinderellaGentleAndKind: CharacterCard = {
         upTo: true,
       },
       id: "14u-2",
+      name: "A WONDERFUL DREAM",
       text: "A WONDERFUL DREAM {E} — Remove up to 3 damage from chosen Princess character.",
       type: "activated",
     },

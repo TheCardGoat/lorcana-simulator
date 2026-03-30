@@ -34,5 +34,21 @@
   "lorcana.effect.resolve.scrySelection.detail": "Beendete das Sortieren der Karten fuer {sourceCardId}: {selection}.",
   "lorcana.effect.resolve.revealTopCard": "{playerId} hat {revealedCardId} vom Deck von {targetPlayerId} aufgedeckt.",
   "lorcana.effect.resolve.revealTopCard.autoBottom": "Aufgedeckt {revealedCardId} — auf den unteren Teil des Decks von {targetPlayerId} gelegt.",
-  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} hat Option {choiceIndex} fuer {revealedCardId} gewaehlt."
+  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} hat Option {choiceIndex} fuer {revealedCardId} gewaehlt.",
+  "lorcana.bag.resolve.cancelled": "Effekt von {sourceId} abgebrochen ({cause}).",
+  "lorcana.bag.resolve.cancelled.named": "{abilityName} von {sourceId} abgebrochen ({cause}).",
+  "lorcana.effect.cancelled": "Effekt von {sourceCardId} abgebrochen ({cause}).",
+  "lorcana.outcome.combatDamage": "{attackerId} hat {attackerDamage} Schaden an {defenderId} zugefuegt. {defenderId} hat {defenderDamage} Schaden an {attackerId} zugefuegt.",
+  "lorcana.outcome.effectDamage": "{sourceId} hat {amount} Schaden an {targetId} zugefuegt.",
+  "lorcana.outcome.cardBanished": "{cardId} wurde verbannt.",
+  "lorcana.outcome.cardsDrawn": "Zog {amount} Karte(n).",
+  "lorcana.outcome.cardsDrawn.detail": "Zog {amount} Karte(n): {cardIds}.",
+  "lorcana.outcome.cardReturnedToHand": "{cardId} wurde auf die Hand zurueckgelegt.",
+  "lorcana.outcome.loreGained": "{playerId} hat {amount} Legendenpunkte erhalten.",
+  "lorcana.outcome.loreLost": "{playerId} hat {amount} Legendenpunkte verloren.",
+  "lorcana.outcome.cardExerted": "{cardId} wurde erschoepft.",
+  "lorcana.outcome.cardReadied": "{cardId} wurde bereitgemacht.",
+  "lorcana.outcome.cardsMilled": "Hat {amount} Karte(n) gemahlen.",
+  "lorcana.move.playCard.shift": "Spielte {cardId} durch Verwandlung auf {shiftTargetId}.",
+  "lorcana.move.playCard.sing": "Spielte {cardId} durch Singen mit {singerIds}."
 }

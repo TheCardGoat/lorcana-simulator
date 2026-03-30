@@ -42,6 +42,7 @@ export const captainAmeliaFirstInCommand: CharacterCard = {
         type: "gain-keyword",
       },
       id: "1xb-1",
+      name: "DISCIPLINE",
       text: "DISCIPLINE During your turn, this character gains Evasive.",
       type: "static",
     },

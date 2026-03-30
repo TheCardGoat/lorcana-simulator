@@ -55,9 +55,11 @@ describe("Auto Resolve", () => {
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(quester.lore);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
-        resolveOptional: true,
-      }),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          resolveOptional: true,
+        }),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(quester.lore + 1);
   });
@@ -88,7 +90,9 @@ describe("Auto Resolve", () => {
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
 
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(2);

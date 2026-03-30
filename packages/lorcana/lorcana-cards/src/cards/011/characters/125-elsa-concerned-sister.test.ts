@@ -4,17 +4,19 @@ import { scroogesCountingHouseEbenezersOffice } from "../locations/134-scrooges-
 import { elsaConcernedSister } from "./125-elsa-concerned-sister";
 
 describe("Elsa - Concerned Sister", () => {
-  it("CLEAR THE WAY - plays a location from hand when the ability resolves", () => {
+  it("CLEAR THE WAY - reduces the cost of the next location you play this turn", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [elsaConcernedSister, scroogesCountingHouseEbenezersOffice],
-      inkwell: elsaConcernedSister.cost + scroogesCountingHouseEbenezersOffice.cost,
+      inkwell: elsaConcernedSister.cost,
       deck: 2,
     });
 
-    // CLEAR THE WAY triggers on play; the play-card bag effect auto-resolves
-    // (only one location in hand) and plays the location immediately.
     expect(testEngine.asPlayerOne().playCard(elsaConcernedSister)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getCardZone(elsaConcernedSister)).toBe("play");
+    expect(testEngine.asPlayerOne().canPlayCard(scroogesCountingHouseEbenezersOffice)).toBe(true);
+    expect(
+      testEngine.asPlayerOne().playCard(scroogesCountingHouseEbenezersOffice),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getCardZone(scroogesCountingHouseEbenezersOffice)).toBe("play");
   });
 });

@@ -5,8 +5,10 @@ import type { LorcanaEngineBase, LorcanaProjectedBoardView } from "@tcg/lorcana-
 import type {
   ExecutableMoveEntry,
   ExecutableMovePresentationCategoryId,
+  LorcanaActiveEffectSummary,
   LorcanaCardTextEntrySnapshot,
   LorcanaPlayerSide,
+  LorcanaPlayerSummary,
   LorcanaPlayerTimerSummary,
   LorcanaSimulatorMoveParams,
   MoveCategorySummary,
@@ -105,6 +107,154 @@ function hasSelfEnterExertedRestriction(cardId: string, cards: CardSnapshotMap):
   }
 
   return !searchableText.includes("unless") && !searchableText.includes("if ");
+}
+
+function formatPlayerRestrictionLabel(restriction: string): string {
+  switch (restriction) {
+    case "cant-play-actions":
+      return "Can't play actions";
+    case "cant-play-items":
+      return "Can't play items";
+    case "cant-sing":
+      return "Can't sing";
+    default:
+      return restriction
+        .split("-")
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join(" ");
+  }
+}
+
+function formatPlayerEffectDuration(
+  effect: LorcanaProjectedBoardView["activeEffects"][number],
+): string | undefined {
+  const payload = effect.payload;
+  const rawDuration =
+    payload &&
+    typeof payload === "object" &&
+    "duration" in payload &&
+    typeof payload.duration === "string" &&
+    payload.duration.trim().length > 0
+      ? payload.duration.trim()
+      : undefined;
+
+  switch (rawDuration) {
+    case "next-play-this-turn":
+      return "For the next play this turn";
+    case "this-turn":
+      return "This turn";
+    case "until-start-of-next-turn":
+      return "Until the start of next turn";
+    default:
+      if (typeof effect.expiresAtTurn === "number") {
+        return `Active through turn ${effect.expiresAtTurn}`;
+      }
+      return undefined;
+  }
+}
+
+function buildPlayerActiveEffects(
+  ownerId: string,
+  snapshot: LorcanaProjectedBoardView,
+  cardSnapshotsById: CardSnapshotMap,
+): LorcanaActiveEffectSummary[] | undefined {
+  const effects: LorcanaActiveEffectSummary[] = [];
+
+  for (const effect of snapshot.activeEffects) {
+    if (effect.targetPlayerId !== ownerId) {
+      continue;
+    }
+
+    const sourceCard = effect.sourceId ? (cardSnapshotsById[effect.sourceId] ?? null) : null;
+    const sourceLabel = sourceCard?.label;
+    const duration = formatPlayerEffectDuration(effect);
+    const payload = effect.payload;
+
+    if (
+      effect.type === "player-cost-reduction" &&
+      payload &&
+      typeof payload === "object" &&
+      "amount" in payload &&
+      typeof payload.amount === "number"
+    ) {
+      const cardType =
+        "cardType" in payload && typeof payload.cardType === "string" ? payload.cardType : "card";
+      const label = `Cost -${payload.amount}`;
+      const description = [`Next ${cardType} costs ${payload.amount} less`];
+      if (sourceLabel) {
+        description.push(`From ${sourceLabel}`);
+      }
+      if (duration) {
+        description.push(duration);
+      }
+
+      effects.push({
+        id: effect.id,
+        type: effect.type,
+        label,
+        description: description.join(" · "),
+        priority: 4,
+        sourceCardId: sourceCard?.cardId,
+        sourceLabel,
+        sourceSet: sourceCard?.set,
+        sourceCardNumber: sourceCard?.cardNumber,
+        sourceInkType: sourceCard?.inkType,
+        targetPlayerId: ownerId,
+        amount: payload.amount,
+        startsAtTurn: effect.startsAtTurn,
+        expiresAtTurn: effect.expiresAtTurn,
+      });
+      continue;
+    }
+
+    if (
+      effect.type === "player-restriction" &&
+      payload &&
+      typeof payload === "object" &&
+      "restriction" in payload &&
+      typeof payload.restriction === "string"
+    ) {
+      const label = formatPlayerRestrictionLabel(payload.restriction);
+      const description = [label];
+      if (sourceLabel) {
+        description.push(`From ${sourceLabel}`);
+      }
+      if (duration) {
+        description.push(duration);
+      }
+
+      effects.push({
+        id: effect.id,
+        type: effect.type,
+        label,
+        description: description.join(" · "),
+        priority: 4,
+        sourceCardId: sourceCard?.cardId,
+        sourceLabel,
+        sourceSet: sourceCard?.set,
+        sourceCardNumber: sourceCard?.cardNumber,
+        sourceInkType: sourceCard?.inkType,
+        targetPlayerId: ownerId,
+        restriction: payload.restriction,
+        startsAtTurn: effect.startsAtTurn,
+        expiresAtTurn: effect.expiresAtTurn,
+      });
+    }
+  }
+
+  if (effects.length === 0) {
+    return undefined;
+  }
+
+  const deduped = new Map<string, LorcanaActiveEffectSummary>();
+  for (const effect of effects) {
+    const key = `${effect.type}:${effect.label}:${effect.sourceCardId ?? "none"}`;
+    if (!deduped.has(key)) {
+      deduped.set(key, effect);
+    }
+  }
+
+  return [...deduped.values()].sort((left, right) => left.label.localeCompare(right.label));
 }
 
 function supportsBodyguardPlayChoice(cardId: string, cards: CardSnapshotMap): boolean {
@@ -464,19 +614,40 @@ function buildEntriesForAvailableMove(
 
         if (singerOptions.length > 0) {
           for (const option of singerOptions) {
-            if (option.kind !== "card") {
+            if (option.kind === "card") {
+              const singerId = String(option.cardId);
+              const params = {
+                cardId: id,
+                cost: "sing",
+                singer: singerId,
+              } as LorcanaSimulatorMoveParams["playCard"];
+              const label = getMoveOptionLabel("playCard", params, cards);
+              entries.push({
+                id: `singCard:${id}:${singerId}`,
+                label,
+                moveId: "playCard",
+                params,
+                presentation: {
+                  kind: "targeted",
+                  categoryId: "sing-card",
+                  categoryLabel: getMoveCategoryLabel("singCard"),
+                  optionLabel: label,
+                },
+              });
               continue;
             }
 
-            const singerId = String(option.cardId);
+            if (option.kind !== "singTogether") {
+              continue;
+            }
+
             const params = {
               cardId: id,
-              cost: "sing",
-              singer: singerId,
+              cost: "singTogether",
             } as LorcanaSimulatorMoveParams["playCard"];
             const label = getMoveOptionLabel("playCard", params, cards);
             entries.push({
-              id: `singCard:${id}:${singerId}`,
+              id: `singCard:${id}:singTogether`,
               label,
               moveId: "playCard",
               params,
@@ -484,7 +655,13 @@ function buildEntriesForAvailableMove(
                 kind: "targeted",
                 categoryId: "sing-card",
                 categoryLabel: getMoveCategoryLabel("singCard"),
-                optionLabel: label,
+                optionLabel: "Sing Together",
+                selectionMode: "singTogether",
+                candidateCards: option.singers.map((singer) => ({
+                  cardId: String(singer.cardId),
+                  value: singer.value,
+                })),
+                requiredValue: option.requiredTotal,
               },
             });
           }
@@ -683,12 +860,15 @@ function buildEntriesForAvailableMove(
     case "questWithAll": {
       const questMove = availableMoves.find((availableMove) => availableMove.moveId === "quest");
       const questCardIds = questMove?.selectableCardIds ?? [];
-      if (questCardIds.length > 1) {
+      if (questCardIds.length > 0) {
         let totalLore = 0;
         for (const cardId of questCardIds) {
           totalLore += cards[String(cardId)]?.loreValue ?? 0;
         }
-        const label = m["sim.actions.label.questWithAll"]({ lore: totalLore });
+        const label = m["sim.actions.label.questWithAll"]({
+          count: questCardIds.length,
+          lore: totalLore,
+        });
         entries.push({
           id: "questWithAll",
           label,
@@ -835,7 +1015,7 @@ export function buildMoveCategorySummaries(
       }
       case "questWithAll": {
         const questMove = availableMoves.find((m) => m.moveId === "quest");
-        if (questMove && questMove.selectableCardIds.length > 1) {
+        if (questMove && questMove.selectableCardIds.length > 0) {
           summaries.push({
             categoryId: "quest-all",
             categoryLabel: getMoveCategoryLabel("questWithAll"),
@@ -1284,15 +1464,8 @@ export function arePendingResolutionMovesEqual(
 export function getPlayerSummary(
   side: LorcanaPlayerSide | null,
   snapshot: LorcanaProjectedBoardView | null,
-): {
-  lore: number;
-  deckCount: number;
-  handCount: number;
-  discardCount: number;
-  inkwellCount: number;
-  availableInk: number | null;
-  timer?: LorcanaPlayerTimerSummary;
-} | null {
+  cardSnapshotsById: CardSnapshotMap = {},
+): LorcanaPlayerSummary | null {
   if (!side || !snapshot) {
     return null;
   }
@@ -1313,6 +1486,10 @@ export function getPlayerSummary(
         timeoutCount: timerEntry.timeoutCount,
       }
     : undefined;
+  const activeEffects = buildPlayerActiveEffects(ownerId, snapshot, cardSnapshotsById);
+  const effectSourceCardIds = activeEffects
+    ? ([...new Set(activeEffects.map((effect) => effect.sourceCardId).filter(Boolean))] as string[])
+    : snapshot.playerEffectSourceIds?.[ownerId];
 
   return {
     lore: snapshot.players[ownerId]?.lore ?? 0,
@@ -1321,6 +1498,8 @@ export function getPlayerSummary(
     discardCount: getZoneCardCount(snapshot, side, "discard"),
     inkwellCount: getZoneCardCount(snapshot, side, "inkwell"),
     availableInk: getAvailableInkForSide(snapshot, side),
+    activeEffects,
+    effectSourceCardIds,
     timer,
   };
 }

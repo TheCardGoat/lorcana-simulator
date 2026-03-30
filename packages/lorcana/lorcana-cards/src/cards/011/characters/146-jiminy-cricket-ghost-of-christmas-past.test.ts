@@ -64,7 +64,7 @@ describe("Jiminy Cricket - Ghost of Christmas Past", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(jiminyCricketGhostOfChristmasPast, {
           resolveOptional: true,
           targets: [simbaProtectiveCub],
         }),
@@ -96,7 +96,7 @@ describe("Jiminy Cricket - Ghost of Christmas Past", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, {
+        testEngine.asPlayerOne().resolvePendingByCard(jiminyCricketGhostOfChristmasPast, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

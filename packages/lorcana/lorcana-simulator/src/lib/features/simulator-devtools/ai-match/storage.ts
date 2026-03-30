@@ -1,4 +1,5 @@
 import { createDefaultAutomatedMatchConfig } from "./config.js";
+import { getSafeAutomatedActionStrategyOption } from "@tcg/lorcana-engine";
 import type { AutomatedMatchConfig } from "./types.js";
 
 export type AutomatedMatchStorage = Pick<Storage, "getItem" | "removeItem" | "setItem">;
@@ -35,8 +36,8 @@ function normalizeStoredAutomatedMatchConfig(
     playerTwoDeckText,
     playerOneFixtureId: value.playerOneFixtureId?.trim() || undefined,
     playerTwoFixtureId: value.playerTwoFixtureId?.trim() || undefined,
-    playerOneStrategyId,
-    playerTwoStrategyId,
+    playerOneStrategyId: getSafeAutomatedActionStrategyOption(playerOneStrategyId).id,
+    playerTwoStrategyId: getSafeAutomatedActionStrategyOption(playerTwoStrategyId).id,
     seed,
   };
 }

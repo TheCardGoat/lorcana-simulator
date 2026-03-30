@@ -33,7 +33,7 @@ describe("Rhino - One-Sixteenth Wolf", () => {
 
       const bagId = bagEffects[0]!.id;
       expect(
-        testEngine.asPlayerOne().resolveBag(bagId, {
+        testEngine.asPlayerOne().resolvePendingByCard(rhinoOnesixteenthWolf, {
           targets: [opponentCharacter],
         }),
       ).toBeSuccessfulCommand();

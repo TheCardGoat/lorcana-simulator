@@ -35,14 +35,23 @@ import {
   hasReturnFromDiscardCandidates,
   isReturnFromDiscardEffect,
 } from "../runtime-moves/resolution/action-effects/return-from-discard-effect";
-import { buildResolutionSelectionContext } from "../runtime-moves/resolution/action-effects/selection-context";
 import { cardHasName, hasKeyword } from "../card-utils";
 import { compareOperator } from "../rules/operator-utils";
 import { getLorcanaCardName, traceLorcanaRuntimeStep } from "../runtime-trace";
 import { passesFilter, resolveCandidateTargets } from "../targeting/runtime";
-import { countDamagedCharactersInPlay, evaluateCondition } from "../rules/condition-evaluator";
-import type { ConditionEvaluationContext } from "../rules/condition-evaluator";
+import {
+  buildPlayZoneCardTypeCache,
+  countDamagedCharactersInPlay,
+  evaluateCondition,
+} from "../rules/condition-evaluator";
+import type {
+  ConditionEvaluationContext,
+  PlayZoneCardTypeCache,
+} from "../rules/condition-evaluator";
 import type { LorcanaCardDerived } from "../types/projected-board";
+import { projectLorcanaCardDerived } from "../projection/card-derived";
+import { createProjectionState } from "../rules/derived-state";
+import { buildStaticEffectRegistry } from "../rules/static-effect-registry";
 
 export type TriggerWindow =
   | "challenge-declaration"
@@ -79,6 +88,7 @@ type TriggeredEventInput = Omit<PendingTriggeredEvent, "id">;
 
 type TriggerMatchCandidate = {
   abilityId: string;
+  abilityIndex?: number;
   controllerId: PlayerId;
   sourceId: CardInstanceId;
   cardPlayed: CardPlayedPayload;
@@ -95,6 +105,7 @@ type RegisterAbilityParams = {
   sourceId: CardInstanceId;
   cardPlayed: CardPlayedPayload;
   ability: TriggerRegistrationAbility;
+  abilityIndex?: number;
   lifecycle:
     | {
         kind: "floating";
@@ -335,6 +346,13 @@ function shouldAllowSnapshotCandidate(
     return true;
   }
 
+  // A card entering play cannot observe its own entry through a non-SELF trigger.
+  // "Whenever you play a character" requires the observer to already be in play.
+  // Only explicit "When you play this character" (on: "SELF") abilities should fire.
+  if (event.event === "play") {
+    return candidate.ability.trigger?.on === "SELF";
+  }
+
   // Only apply self-trigger filtering for zone-change events (banish, ink, return-to-hand).
   // For other events (e.g., remove-damage), a card CAN observe its own state changes.
   if (!ZONE_CHANGE_EVENTS.has(event.event)) {
@@ -427,7 +445,7 @@ function collectTriggeredCandidatesFromCard(args: {
   const temporaryAbilityEntries = Object.entries(meta?.temporaryAbilities ?? {});
   const currentTurn = getCurrentTurn(ctx);
   // Use the full derived card projection to check for Support. The cards API now projects from
-  // a plain state snapshot (no Immer proxy overhead), so this correctly handles Support granted
+  // a plain state snapshot (no Mutative proxy overhead), so this correctly handles Support granted
   // via conditional static abilities (e.g., "characters with strength ≥ N gain Support").
   const derived = zone === "play" ? getDerivedRuntimeCard(ctx, sourceId) : undefined;
   const hasDerivedSupport = zone === "play" && Boolean(derived?.hasSupport);
@@ -450,6 +468,7 @@ function collectTriggeredCandidatesFromCard(args: {
 
     candidates.push({
       abilityId: ability.id ?? `${sourceId}:printed-trigger:${abilityIndex}`,
+      abilityIndex,
       controllerId,
       sourceId,
       cardPlayed: sourcePayload,
@@ -582,6 +601,20 @@ export function snapshotTriggeredCandidatesForCard(
     controllerId,
     zone,
   }).map((candidate) => cloneTriggeredEventCandidate(candidate));
+}
+
+/**
+ * Snapshot all printed + floating trigger candidates from the current board state.
+ * Call this BEFORE a batch effect (e.g. banish-all, AoE damage) starts moving cards
+ * so that observer triggers (like "whenever one of your other characters is banished")
+ * are captured while the observers are still in play.
+ */
+export function snapshotBoardTriggerCandidates(
+  ctx: TriggerRuntimeContext,
+): TriggeredEventCandidate[] {
+  return [...collectPrintedTriggerCandidates(ctx), ...collectFloatingTriggerCandidates(ctx)].map(
+    (candidate) => cloneTriggeredEventCandidate(candidate),
+  );
 }
 
 function relationMatches(
@@ -744,9 +777,28 @@ function queryMatchesSubject(
           break;
         }
         case "strength-comparison": {
-          const runtimeCard = ctx.cards.require(subjectCardId) as DerivedRuntimeCard;
           const baseStrength = definition.cardType === "character" ? definition.strength : 0;
-          const strength = Number(runtimeCard.strength ?? baseStrength ?? 0);
+          // Build a fresh registry from the current state so static modifiers (e.g. Grumpy's +1)
+          // are included when the subject card has just entered play.
+          const getDefById = (id: CardInstanceId) =>
+            ctx.cards.getDefinition(id) as LorcanaCardDefinition | undefined;
+          const freshRegistry = buildStaticEffectRegistry(
+            createProjectionState(ctx.framework.state, ctx.G),
+            getDefById,
+          );
+          const runtimeCard = ctx.cards.require(subjectCardId) as DerivedRuntimeCard;
+          const projected = projectLorcanaCardDerived({
+            definition,
+            meta: (runtimeCard.meta ?? {}) as LorcanaCardMeta,
+            state: createProjectionState(ctx.framework.state, ctx.G),
+            cardInstanceId: subjectCardId,
+            ownerID: ownerId as PlayerId,
+            controllerID: (runtimeCard.controllerID ?? ownerId) as PlayerId,
+            zoneID: runtimeCard.zoneID ?? "play",
+            getDefinitionByInstanceId: getDefById,
+            registry: freshRegistry,
+          });
+          const strength = Number(projected.strength ?? baseStrength ?? 0);
           if (typeof filter.value !== "number") {
             return false;
           }
@@ -1386,99 +1438,6 @@ function shouldSkipOptionalMillSequenceWithInsufficientDeck(
   return deckCards.length < millAmount;
 }
 
-function hasNoValidTargetsForOptionalEffect(
-  ctx: TriggerRuntimeContext,
-  candidate: TriggerMatchCandidate,
-  optionalEffect: Record<string, unknown>,
-): boolean {
-  const innerEffect = optionalEffect.effect;
-  if (!innerEffect || typeof innerEffect !== "object") {
-    return false;
-  }
-  const innerRecord = innerEffect as Record<string, unknown>;
-
-  // For banish effects, use resolveCandidateTargets directly since
-  // buildResolutionSelectionContext doesn't handle "banish" effect types.
-  if (
-    innerRecord.type === "banish" &&
-    innerRecord.target &&
-    typeof innerRecord.target === "object"
-  ) {
-    const fakeCardPlayed = {
-      cardId: candidate.sourceId,
-      playerId: candidate.controllerId,
-      cardType: "character" as const,
-      costType: "standard" as const,
-    };
-    const candidates = resolveCandidateTargets(ctx, fakeCardPlayed, innerRecord.target as never, {
-      controllerId: candidate.controllerId,
-      sourceCardId: candidate.sourceId,
-    });
-    return candidates.length === 0;
-  }
-
-  const selectionContext = buildResolutionSelectionContext({
-    origin: "bag",
-    requestId: "skip-check",
-    sourceCardId: candidate.sourceId,
-    chooserId: candidate.controllerId,
-    cardPlayed: {
-      cardId: candidate.sourceId,
-      cardType: "character",
-      costType: "free",
-      playerId: candidate.controllerId,
-    },
-    effect: innerEffect,
-    resolutionInput: {},
-    ctx,
-  });
-
-  return !!(
-    selectionContext &&
-    (selectionContext.kind === "target-selection" || selectionContext.kind === "discard-choice") &&
-    selectionContext.cardCandidateIds.length === 0 &&
-    selectionContext.playerCandidateIds.length === 0
-  );
-}
-
-function shouldSkipOptionalEffectWithNoValidTargets(
-  ctx: TriggerRuntimeContext,
-  candidate: TriggerMatchCandidate,
-): boolean {
-  const effect = candidate.ability.effect;
-  if (!effect || typeof effect !== "object") {
-    return false;
-  }
-  const effectRecord = effect as unknown as Record<string, unknown>;
-
-  // Direct optional effect: the ability's top-level effect is optional
-  if (effectRecord.type === "optional") {
-    return hasNoValidTargetsForOptionalEffect(ctx, candidate, effectRecord);
-  }
-
-  // Sequence where the first step is an optional targeted effect:
-  // e.g. "you may banish chosen item of yours to draw a card"
-  // If the optional first step has no valid targets, the entire sequence
-  // should be suppressed — there is nothing meaningful for the player to do.
-  if (effectRecord.type === "sequence") {
-    const steps = Array.isArray(effectRecord.steps) ? effectRecord.steps : [];
-    const firstStep = steps[0];
-    if (
-      firstStep &&
-      typeof firstStep === "object" &&
-      (firstStep as Record<string, unknown>).type === "optional"
-    ) {
-      return hasNoValidTargetsForOptionalEffect(
-        ctx,
-        candidate,
-        firstStep as Record<string, unknown>,
-      );
-    }
-  }
-
-  return false;
-}
-
 function challengeParticipantMatches(args: {
   ctx: TriggerRuntimeContext;
   candidate: TriggerMatchCandidate;
@@ -1587,8 +1546,9 @@ function evaluateTriggeredAbilityCondition(args: {
   condition: Condition | undefined;
   resolutionInput: PendingActionResolutionInput;
   triggerEvent?: string;
+  zoneTypeCache?: PlayZoneCardTypeCache;
 }): boolean {
-  const { ctx, candidate, condition, resolutionInput, triggerEvent } = args;
+  const { ctx, candidate, condition, resolutionInput, triggerEvent, zoneTypeCache } = args;
   if (!condition) {
     return true;
   }
@@ -1602,6 +1562,7 @@ function evaluateTriggeredAbilityCondition(args: {
           condition: entry,
           resolutionInput,
           triggerEvent,
+          zoneTypeCache,
         }),
       );
     case "or":
@@ -1612,6 +1573,7 @@ function evaluateTriggeredAbilityCondition(args: {
           condition: entry,
           resolutionInput,
           triggerEvent,
+          zoneTypeCache,
         }),
       );
     case "not":
@@ -1621,6 +1583,7 @@ function evaluateTriggeredAbilityCondition(args: {
         condition: condition.condition,
         resolutionInput,
         triggerEvent,
+        zoneTypeCache,
       });
     case "during-turn":
     case "turn":
@@ -1653,7 +1616,9 @@ function evaluateTriggeredAbilityCondition(args: {
       const opponentIds = ctx.framework.state.playerIds.filter(
         (playerId) => playerId !== candidate.controllerId,
       );
-      return opponentIds.some((playerId) => countDamagedCharactersInPlay(ctx, playerId) > 0);
+      return opponentIds.some(
+        (playerId) => countDamagedCharactersInPlay(ctx, playerId, zoneTypeCache) > 0,
+      );
     }
     case "trigger-subject-had-card-under": {
       const snapshotCount = resolutionInput.eventSnapshot?.cardsUnderCountBeforeBanish;
@@ -1682,6 +1647,7 @@ function evaluateTriggeredAbilityCondition(args: {
         playerId: candidate.controllerId,
         sourceCardId: candidate.sourceId,
         resolutionInput,
+        zoneTypeCache,
       };
       return evaluateCondition(condition, conditionCtx);
     }
@@ -1719,6 +1685,7 @@ function evaluateTriggeredAbilityCondition(args: {
         playerId: candidate.controllerId,
         sourceCardId: candidate.sourceId,
         resolutionInput,
+        zoneTypeCache,
       };
       return evaluateCondition(condition, conditionCtx);
     }
@@ -1736,6 +1703,7 @@ function triggerMatchesEvent(
   ctx: TriggerRuntimeContext,
   candidate: TriggerMatchCandidate,
   event: PendingTriggeredEvent,
+  zoneTypeCache?: PlayZoneCardTypeCache,
 ): boolean {
   const trigger = candidate.ability.trigger;
   const supportedEvents = [
@@ -1830,6 +1798,7 @@ function triggerMatchesEvent(
       condition: triggerCondition,
       resolutionInput: resolvedResolutionInput,
       triggerEvent,
+      zoneTypeCache,
     })
   ) {
     return false;
@@ -1841,6 +1810,7 @@ function triggerMatchesEvent(
     condition: candidate.ability.condition,
     resolutionInput: resolvedResolutionInput,
     triggerEvent,
+    zoneTypeCache,
   });
 }
 
@@ -1970,6 +1940,7 @@ function collectFloatingTriggerCandidates(ctx: TriggerRuntimeContext): TriggerMa
     )
     .map((entry) => ({
       abilityId: entry.abilityId,
+      abilityIndex: entry.abilityIndex,
       controllerId: entry.controllerId,
       sourceId: entry.sourceId,
       cardPlayed: {
@@ -2007,6 +1978,7 @@ function enqueueMatchedTrigger(
   return enqueueBagEffect(ctx, {
     kind: "triggered-ability",
     abilityId: candidate.abilityId,
+    abilityIndex: candidate.abilityIndex,
     abilityKey,
     abilityName: candidate.ability.name,
     controllerId: candidate.controllerId,
@@ -2055,6 +2027,7 @@ function enqueueDueDelayedRegistrations(
     enqueueBagEffect(ctx, {
       kind: "triggered-ability",
       abilityId: registration.abilityId,
+      abilityIndex: registration.abilityIndex,
       abilityKey,
       abilityName: registration.ability.name,
       controllerId: registration.controllerId,
@@ -2202,6 +2175,7 @@ export function registerAbility(
   const entry: TriggerRegistration = {
     id: registrationId,
     abilityId: params.ability.id ?? registrationId,
+    abilityIndex: params.abilityIndex,
     sourceId: params.sourceId,
     controllerId: params.controllerId,
     cardPlayed: {
@@ -2251,6 +2225,7 @@ export function finalizeResolutionBoundary(
     ];
     const deduplicatedDiscardBatches = new Set<string>();
     const deduplicatedSingBatches = new Set<string>();
+    const zoneTypeCache = buildPlayZoneCardTypeCache(ctx);
 
     for (const event of events) {
       const eventCandidates: TriggerMatchCandidate[] = (event.triggerCandidates ?? [])
@@ -2267,7 +2242,7 @@ export function finalizeResolutionBoundary(
         }
         seenCandidates.add(candidateKey);
 
-        if (!triggerMatchesEvent(ctx, candidate, event)) {
+        if (!triggerMatchesEvent(ctx, candidate, event, zoneTypeCache)) {
           continue;
         }
 
@@ -2305,10 +2280,6 @@ export function finalizeResolutionBoundary(
         }
 
         if (shouldSkipOptionalMillSequenceWithInsufficientDeck(ctx, candidate)) {
-          continue;
-        }
-
-        if (shouldSkipOptionalEffectWithNoValidTargets(ctx, candidate)) {
           continue;
         }
 

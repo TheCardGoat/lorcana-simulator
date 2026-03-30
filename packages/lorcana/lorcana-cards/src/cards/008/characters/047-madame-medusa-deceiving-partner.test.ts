@@ -39,7 +39,7 @@ describe("Madame Medusa - Deceiving Partner", () => {
         testEngine.asPlayerOne().playCard(madameMedusaDeceivingPartner),
       ).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(madameMedusaDeceivingPartner, {
           resolveOptional: true,
           targets: [alliedCharacter, opponentCharacterCost2],
         }),
@@ -63,7 +63,7 @@ describe("Madame Medusa - Deceiving Partner", () => {
         testEngine.asPlayerOne().playCard(madameMedusaDeceivingPartner),
       ).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(madameMedusaDeceivingPartner, {
           resolveOptional: true,
           targets: [alliedCharacter, dormouseEasilyAgitated],
         }),
@@ -89,7 +89,7 @@ describe("Madame Medusa - Deceiving Partner", () => {
         testEngine.asPlayerOne().playCard(madameMedusaDeceivingPartner),
       ).toBeSuccessfulCommand();
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(madameMedusaDeceivingPartner, {
           resolveOptional: false,
         }),
       ).toBeSuccessfulCommand();

@@ -38,7 +38,9 @@ describe("Simba - Adventurous Successor", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [ally] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(simbaAdventurousSuccessor, { targets: [ally] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(ally)).toBe(strengthBefore + 2);
@@ -57,9 +59,9 @@ describe("Simba - Adventurous Successor", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolveBag(bagEffect!.id, { targets: [simbaAdventurousSuccessor] }),
+        testEngine.asPlayerOne().resolvePendingByCard(simbaAdventurousSuccessor, {
+          targets: [simbaAdventurousSuccessor],
+        }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(simbaAdventurousSuccessor)).toBe(
@@ -86,7 +88,9 @@ describe("Simba - Adventurous Successor", () => {
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [ally] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(simbaAdventurousSuccessor, { targets: [ally] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardStrength(ally)).toBe(strengthBefore + 2);
@@ -118,7 +122,9 @@ describe("Simba - Adventurous Successor", () => {
       expect(bagEffect).toBeDefined();
 
       expect(
-        testEngine.asPlayerOne().resolveBag(bagEffect!.id, { targets: [opponent] }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(simbaAdventurousSuccessor, { targets: [opponent] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardStrength(opponent)).toBe(strengthBefore + 2);

@@ -80,7 +80,7 @@ function resolveTowerTrigger(
   options: { resolveOptional?: boolean; targets?: CardInput[] },
 ) {
   expect(
-    testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+    testEngine.asPlayerOne().resolvePendingByCard(darkwingTowerIcyHeadquarters, {
       resolveOptional: options.resolveOptional,
       targets: options.targets,
     }),
@@ -248,7 +248,7 @@ describe("Darkwing Tower - Icy Headquarters", () => {
       }),
     ).toBeSuccessfulCommand();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id, {
+      testEngine.asPlayerOne().resolvePendingByCard(darkwingTowerIcyHeadquarters, {
         targets: [towerResident],
       }),
     ).toBeSuccessfulCommand();

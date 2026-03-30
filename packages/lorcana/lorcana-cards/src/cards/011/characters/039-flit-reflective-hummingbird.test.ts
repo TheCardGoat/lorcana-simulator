@@ -22,7 +22,7 @@ describe("Flit - Reflective Hummingbird", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(flitReflectiveHummingbird, {
           resolveOptional: true,
           targets: [simbaProtectiveCub, goofyKnightForADay],
         }),
@@ -49,7 +49,9 @@ describe("Flit - Reflective Hummingbird", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(flitReflectiveHummingbird, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getDamage(simbaProtectiveCub)).toBe(2);
@@ -72,7 +74,7 @@ describe("Flit - Reflective Hummingbird", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(flitReflectiveHummingbird, {
           resolveOptional: true,
           targets: [simbaProtectiveCub, goofyKnightForADay],
         }),

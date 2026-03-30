@@ -10,6 +10,7 @@ import {
   resolveTemporaryEffectWindow,
 } from "../../effects/temporary-effects";
 import { hasStaticCardRestriction } from "../../rules/static-ability-utils";
+import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
 import { getEffectTargetSelectionInput } from "./selection-state";
 
@@ -42,6 +43,7 @@ export function resolveReadyEffect(
       : undefined;
 
   let readiedAny = false;
+  const registry = getOrBuildMoveRegistry(ctx);
 
   for (const targetId of resolvedTargets) {
     const currentMeta = ctx.cards.require(targetId).meta ?? {};
@@ -50,7 +52,7 @@ export function resolveReadyEffect(
       state: ctx.framework.state,
       cardId: targetId,
       restriction: "cant-ready",
-      getDefinitionByInstanceId: (id) => ctx.cards.getDefinition(id),
+      registry,
     });
 
     if (cantReadyByAnyMeans) {

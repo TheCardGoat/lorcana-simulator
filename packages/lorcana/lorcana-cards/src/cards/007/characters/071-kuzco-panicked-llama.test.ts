@@ -45,7 +45,9 @@ describe("Kuzco - Panicked Llama", () => {
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
 
       // Choose mode 0: each player draws a card
-      expect(testEngine.asPlayerTwo().resolveNextBag({ choiceIndex: 0 })).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(kuzcoPanickedLlama, { choiceIndex: 0 }),
+      ).toBeSuccessfulCommand();
 
       // P1 draws 1 from mandatory draw at start of their turn, P2 drew 1 from ALLOW ME effect
       // P2 started with deck=3, drew 1 mandatory at start of turn + 1 from the ability
@@ -72,7 +74,9 @@ describe("Kuzco - Panicked Llama", () => {
 
       // P2 (controller) resolves bag with mode 1
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
-      expect(testEngine.asPlayerTwo().resolveNextBag({ choiceIndex: 1 })).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(kuzcoPanickedLlama, { choiceIndex: 1 }),
+      ).toBeSuccessfulCommand();
 
       // P2 resolves their pending discard (handCardTwo)
       expect(
@@ -117,7 +121,9 @@ describe("Kuzco - Panicked Llama", () => {
 
       // P2 (controller) resolves bag with mode 1 (discard)
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
-      expect(testEngine.asPlayerTwo().resolveNextBag({ choiceIndex: 1 })).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(kuzcoPanickedLlama, { choiceIndex: 1 }),
+      ).toBeSuccessfulCommand();
 
       // P2 resolves their pending discard
       expect(

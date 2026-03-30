@@ -34,5 +34,21 @@
   "lorcana.effect.resolve.scrySelection.detail": "A termine l'ordre des cartes pour {sourceCardId} : {selection}.",
   "lorcana.effect.resolve.revealTopCard": "{playerId} a revele {revealedCardId} du deck de {targetPlayerId}.",
   "lorcana.effect.resolve.revealTopCard.autoBottom": "Révélé {revealedCardId} — mis au fond du deck de {targetPlayerId}.",
-  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} a choisi l'option {choiceIndex} pour {revealedCardId}."
+  "lorcana.effect.resolve.choiceSelection.withReveal": "{playerId} a choisi l'option {choiceIndex} pour {revealedCardId}.",
+  "lorcana.bag.resolve.cancelled": "Effet de {sourceId} annule ({cause}).",
+  "lorcana.bag.resolve.cancelled.named": "{abilityName} de {sourceId} annule ({cause}).",
+  "lorcana.effect.cancelled": "Effet de {sourceCardId} annule ({cause}).",
+  "lorcana.outcome.combatDamage": "{attackerId} a inflige {attackerDamage} degats a {defenderId}. {defenderId} a inflige {defenderDamage} degats a {attackerId}.",
+  "lorcana.outcome.effectDamage": "{sourceId} a inflige {amount} degats a {targetId}.",
+  "lorcana.outcome.cardBanished": "{cardId} a ete banni.",
+  "lorcana.outcome.cardsDrawn": "A pioche {amount} carte(s).",
+  "lorcana.outcome.cardsDrawn.detail": "A pioche {amount} carte(s) : {cardIds}.",
+  "lorcana.outcome.cardReturnedToHand": "{cardId} est retourne en main.",
+  "lorcana.outcome.loreGained": "{playerId} a gagne {amount} lore.",
+  "lorcana.outcome.loreLost": "{playerId} a perdu {amount} lore.",
+  "lorcana.outcome.cardExerted": "{cardId} a ete incline.",
+  "lorcana.outcome.cardReadied": "{cardId} a ete redresse.",
+  "lorcana.outcome.cardsMilled": "A defausse {amount} carte(s) du deck.",
+  "lorcana.move.playCard.shift": "A joue {cardId} en changeant sur {shiftTargetId}.",
+  "lorcana.move.playCard.sing": "A joue {cardId} en chantant avec {singerIds}."
 }

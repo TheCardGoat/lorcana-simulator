@@ -79,7 +79,9 @@ describe("Lumiere - Fired Up", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(benjaGuardianOfTheDragonGem, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -102,7 +104,9 @@ describe("Lumiere - Fired Up", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(benjaGuardianOfTheDragonGem, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -138,7 +142,9 @@ describe("Lumiere - Fired Up", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(benjaGuardianOfTheDragonGem, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(
@@ -172,7 +178,9 @@ describe("Lumiere - Fired Up", () => {
       ).toBeSuccessfulCommand();
 
       expect(
-        testEngine.asPlayerTwo().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(benjaGuardianOfTheDragonGem, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(

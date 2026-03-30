@@ -26,11 +26,9 @@ describe("Microbots", () => {
 
     expect(testEngine.asPlayerOne().playCard(microbotsInHand)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    const [microbotsTrigger] = testEngine.asPlayerOne().getBagEffects();
     expect(
-      testEngine.asPlayerOne().resolveBag(testEngine.asPlayerOne().getBagEffects()[0]!.id),
-    ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({
+      testEngine.asPlayerOne().resolvePendingByCard(microbotsTrigger!.sourceId, {
         targets: [weakenedTarget],
       }),
     ).toBeSuccessfulCommand();

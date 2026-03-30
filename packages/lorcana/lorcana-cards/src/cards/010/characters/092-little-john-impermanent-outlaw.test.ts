@@ -84,7 +84,9 @@ describe("Little John - Impermanent Outlaw", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(littleJohnImpermanentOutlaw, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCard(littleJohnImpermanentOutlaw).exerted).toBe(false);
@@ -111,7 +113,9 @@ describe("Little John - Impermanent Outlaw", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(littleJohnImpermanentOutlaw, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCard(littleJohnImpermanentOutlaw).exerted).toBe(false);
@@ -145,7 +149,9 @@ describe("Little John - Impermanent Outlaw", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(littleJohnImpermanentOutlaw, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCard(littleJohnImpermanentOutlaw).exerted).toBe(false);
@@ -171,7 +177,9 @@ describe("Little John - Impermanent Outlaw", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(littleJohnImpermanentOutlaw, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCard(littleJohnImpermanentOutlaw).exerted).toBe(true);

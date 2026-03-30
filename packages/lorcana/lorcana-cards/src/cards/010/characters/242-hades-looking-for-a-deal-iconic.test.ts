@@ -22,7 +22,10 @@ describe("Hades - Looking for a Deal (Iconic)", () => {
     expect(testEngine.asPlayerOne().playCard(hadesLookingForADealIconic)).toBeSuccessfulCommand();
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [chosenId] }),
+      testEngine.asPlayerOne().resolvePendingByCard(hadesLookingForADealIconic, {
+        resolveOptional: true,
+        targets: [chosenId],
+      }),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().respondWithChoice(0)).toBeSuccessfulCommand();
 
@@ -49,7 +52,10 @@ describe("Hades - Looking for a Deal (Iconic)", () => {
     expect(testEngine.asPlayerOne().playCard(hadesLookingForADealIconic)).toBeSuccessfulCommand();
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [chosenId] }),
+      testEngine.asPlayerOne().resolvePendingByCard(hadesLookingForADealIconic, {
+        resolveOptional: true,
+        targets: [chosenId],
+      }),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().respondWithChoice(1)).toBeSuccessfulCommand();
 
@@ -76,7 +82,10 @@ describe("Hades - Looking for a Deal (Iconic)", () => {
     expect(testEngine.asPlayerOne().playCard(hadesLookingForADealIconic)).toBeSuccessfulCommand();
 
     expect(
-      testEngine.asPlayerOne().resolveNextBag({ resolveOptional: true, targets: [wardedId] }),
+      testEngine.asPlayerOne().resolvePendingByCard(hadesLookingForADealIconic, {
+        resolveOptional: true,
+        targets: [wardedId],
+      }),
     ).not.toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(hadesLookingForADealIconic)).toBe("play");

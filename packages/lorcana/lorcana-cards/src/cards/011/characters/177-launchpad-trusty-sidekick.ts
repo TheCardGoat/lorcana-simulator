@@ -33,6 +33,7 @@ export const launchpadTrustySidekick: CharacterCard = {
   abilities: [
     {
       id: "1ll-1",
+      name: "WHAT DID YOU NEED?",
       cost: {
         exert: true,
       },

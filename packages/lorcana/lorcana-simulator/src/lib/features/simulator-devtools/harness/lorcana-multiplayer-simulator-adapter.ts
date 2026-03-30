@@ -8,6 +8,7 @@
  */
 
 import {
+  stripPrivateFields,
   type DeepReadonly,
   type EnginePacketUpdate,
   type LorcanaCard,
@@ -29,6 +30,7 @@ import {
   PLAYER_TWO,
   normalizeBrowserTransportConfig,
 } from "@tcg/lorcana-engine/testing";
+import type { MoveLog } from "@tcg/lorcana-engine";
 import {
   LORCANA_ZONE_IDS,
   LORCANA_SIMULATOR_VIEWS,
@@ -54,6 +56,15 @@ const OWNER_BY_SIDE = {
   playerOne: PLAYER_ONE,
   playerTwo: PLAYER_TWO,
 } as const;
+
+export function selectFallbackMoveLogWindow<T>(
+  fallbackMoveLogs: readonly T[],
+  rawEntryCount: number,
+  limit: number,
+): T[] {
+  const skipCount = Math.max(0, rawEntryCount - limit);
+  return fallbackMoveLogs.slice(skipCount);
+}
 
 function parseBaseZone(zoneId?: string): LorcanaZoneId | null {
   if (!zoneId) {
@@ -344,9 +355,16 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
     const moveExecutedLogs = gameLogEntries.filter(
       (entry) => entry.defaultMessage?.key === "move.executed",
     );
+    const allFallbackMoveLogs =
+      gameLogEntries.length === 0 ? this.#getFilteredMoveLogHistory(view) : [];
 
     // Calculate how many entries to skip for cursor positioning
     const skipCount = Math.max(0, allRawEntries.length - limit);
+    const fallbackMoveLogs = selectFallbackMoveLogWindow(
+      allFallbackMoveLogs,
+      allRawEntries.length,
+      limit,
+    );
     let moveExecutedCursor = 0;
 
     // Fast-forward cursor past entries we're skipping
@@ -354,11 +372,11 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
     for (let i = 0; i < skipCount; i++) {
       const skippedEntry = allRawEntries[i];
       const actorId = String(skippedEntry.playerId);
-      while (moveExecutedCursor < moveExecutedLogs.length) {
+      for (; moveExecutedCursor < moveExecutedLogs.length; moveExecutedCursor += 1) {
         const candidate = moveExecutedLogs[moveExecutedCursor];
         const candidateValues = candidate.defaultMessage?.values ?? {};
-        moveExecutedCursor += 1;
         if (candidateValues.move === skippedEntry.moveId && candidateValues.playerId === actorId) {
+          moveExecutedCursor += 1;
           break;
         }
       }
@@ -373,22 +391,27 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
       const actorSide = this.#resolveSideFromOwner(entry.playerId);
       const actorId = String(entry.playerId);
       const moveId = assertLorcanaSimulatorMoveId(entry.moveId);
+      const fallbackMoveLog = fallbackMoveLogs[index];
 
       let matchingMoveLogEntry: MoveLogRelatedEntrySnapshot | undefined;
 
-      while (moveExecutedCursor < moveExecutedLogs.length && !matchingMoveLogEntry) {
+      for (
+        ;
+        moveExecutedCursor < moveExecutedLogs.length && !matchingMoveLogEntry;
+        moveExecutedCursor += 1
+      ) {
         const candidate = moveExecutedLogs[moveExecutedCursor];
         const candidateValues = candidate.defaultMessage?.values ?? {};
-
-        moveExecutedCursor += 1;
 
         if (candidateValues.move === moveId && candidateValues.playerId === actorId) {
           matchingMoveLogEntry = {
             sourceEventSeqs: [...candidate.sourceEventSeqs],
             defaultMessage: snapshotDefaultMessage(candidate.defaultMessage),
           };
+          moveExecutedCursor += 1;
         }
       }
+
       let relatedLogEntries: MoveLogRelatedEntrySnapshot[] = [];
 
       if (matchingMoveLogEntry) {
@@ -408,6 +431,10 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
 
       // Find the typed log entry from the game log entries that match this move
       const typedLogEntry = (() => {
+        if (fallbackMoveLog) {
+          return fallbackMoveLog as MoveLogEntrySnapshot["typedLogEntry"];
+        }
+
         if (!matchingMoveLogEntry) return undefined;
         const moveSourceSeqs = new Set<number>(matchingMoveLogEntry.sourceEventSeqs);
         for (const logEntry of gameLogEntries) {
@@ -720,6 +747,17 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
           ];
       }
     });
+  }
+
+  #getFilteredMoveLogHistory(view: LorcanaSimulatorView): MoveLog[] {
+    const viewerId =
+      view === "playerOne" ? String(PLAYER_ONE) : view === "playerTwo" ? String(PLAYER_TWO) : null;
+
+    return this.#engine
+      .getServerEngine()
+      .getMoveLogHistory()
+      .map((log) => (view === "authoritative" ? log : stripPrivateFields(log, viewerId)))
+      .filter((log) => log.type !== "turnStart" && log.type !== "gameEnd");
   }
 
   #buildCardReferenceResolver(

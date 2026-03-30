@@ -2,7 +2,7 @@
  * MatchRuntime Time API Factories
  */
 
-import type { Draft } from "immer";
+import type { Draft } from "mutative";
 import type { MatchState, ClockPauseReason } from "./types";
 import type { TimeOperationsAPI, TimeQueryAPI } from "./match-runtime.types";
 

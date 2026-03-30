@@ -9,7 +9,7 @@ import CardGrantSourceBadges from "@/design-system/simulator/cards/CardGrantSour
 import CardTagStrip from "@/design-system/simulator/cards/CardTagStrip.svelte";
 import {
 	getLorcanaCardTagGroups,
-	type LorcanaCardStatModifier,
+	type LorcanaCardStatBadge,
 } from "./card-tags.js";
 
 type CardSize =
@@ -45,6 +45,7 @@ interface CardFaceProps {
 	isDrying?: boolean;
 	damage?: number;
 	tagCollapseMode?: "none" | "hover-stack";
+	hideSupplementalBadges?: boolean;
 }
 
 let {
@@ -66,6 +67,7 @@ let {
 	isDrying = false,
 	damage = 0,
 	tagCollapseMode = "none",
+	hideSupplementalBadges = false,
 }: CardFaceProps = $props();
 
 // Image loading state
@@ -80,6 +82,9 @@ const dispatch = createEventDispatcher<{
 }>();
 
 function getCost(): string {
+  if (card?.playCost !== undefined) {
+    return String(card.playCost);
+  }
 	if (card?.cost !== undefined) {
 		return String(card.cost);
 	}
@@ -123,55 +128,68 @@ function handleImageError() {
 	imageError = true;
 }
 
-function handleStatModifierClick(event: MouseEvent) {
-	event.stopPropagation();
-}
-
-function getModifierToneClass(tone: LorcanaCardStatModifier["tone"]): string {
+function getBadgeToneClass(tone: LorcanaCardStatBadge["tone"]): string {
 	switch (tone) {
 		case "success":
-			return "border-emerald-300/65 bg-emerald-500/88 text-emerald-50";
+			return "border-emerald-400/35 bg-emerald-500/16 text-emerald-100";
 		case "warning":
-			return "border-amber-200/75 bg-amber-500/90 text-amber-950";
-		case "danger":
-			return "border-rose-300/65 bg-rose-500/88 text-rose-50";
-		case "info":
-			return "border-sky-300/65 bg-sky-500/88 text-sky-50";
+			return "border-amber-400/35 bg-amber-500/18 text-amber-50";
 		default:
-			return "border-slate-100/20 bg-slate-950/82 text-slate-50";
+			return "border-sky-400/35 bg-sky-500/16 text-sky-100";
 	}
+}
+
+function groupEffectSources(cardSnapshot: LorcanaCardSnapshot | undefined) {
+  const grouped = new Map<
+    string,
+    {
+      sourceCardId: string;
+      sourceLabel: string;
+      sourceSet?: string;
+      sourceCardNumber?: number;
+      sourceInkType?: string[];
+      grants: string[];
+    }
+  >();
+
+  for (const effect of cardSnapshot?.activeEffects ?? []) {
+    if (!effect.sourceCardId || !effect.sourceLabel) {
+      continue;
+    }
+
+    const existing = grouped.get(effect.sourceCardId);
+    if (existing) {
+      if (!existing.grants.includes(effect.label)) {
+        existing.grants.push(effect.label);
+      }
+      continue;
+    }
+
+    grouped.set(effect.sourceCardId, {
+      sourceCardId: effect.sourceCardId,
+      sourceLabel: effect.sourceLabel,
+      sourceSet: effect.sourceSet,
+      sourceCardNumber: effect.sourceCardNumber,
+      sourceInkType: effect.sourceInkType,
+      grants: [effect.label],
+    });
+  }
+
+  return [...grouped.values()];
 }
 
 const tagGroups = $derived(
-	card ? getLorcanaCardTagGroups(card) : { tags: [], statModifiers: [] },
+	card ? getLorcanaCardTagGroups(card) : { tags: [], statModifiers: [], statBadges: [] },
 );
 const cardTags = $derived(tagGroups.tags.filter((tag) => tag.id !== "damage"));
-const statModifiers = $derived(tagGroups.statModifiers);
-const modifierChipClass = $derived.by(() => {
-	if (size === "micro" || size === "tiny") {
-		return "min-h-5 min-w-[2.15rem] gap-0.75 rounded-md px-1 py-0.5 text-[0.54rem]";
-	}
-
-	if (size === "small") {
-		return "min-h-6 min-w-[2.45rem] gap-0.75 rounded-md px-1.5 py-0.5 text-[0.6rem]";
-	}
-
-	return "min-h-6 min-w-[2.7rem] gap-1 rounded-md px-1.5 py-0.5 text-[0.68rem]";
-});
-const modifierIconClass = $derived(
-	size === "micro" || size === "tiny" ? "h-2.25 w-2.25" : "h-2.75 w-2.75",
+const statBadges = $derived(tagGroups.statBadges);
+const effectSourceGroups = $derived(groupEffectSources(card));
+const badgeSizeClass = $derived(
+	size === "micro" || size === "tiny" ? "h-5 w-5" : "h-6 w-6",
 );
-const modifierValueClass = $derived.by(() => {
-	if (size === "micro" || size === "tiny") {
-		return "text-[0.66rem]";
-	}
-
-	if (size === "small") {
-		return "text-[0.74rem]";
-	}
-
-	return "text-[0.82rem]";
-});
+const badgeValueClass = $derived(
+	size === "micro" || size === "tiny" ? "text-[0.56rem]" : "text-[0.62rem]",
+);
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -256,49 +274,49 @@ const modifierValueClass = $derived.by(() => {
         </div>
       {/if}
 
-      {#if card?.grantSources && card.grantSources.length > 0}
+      {#if effectSourceGroups.length > 0}
         <div class="pointer-events-none absolute right-1.5 top-1.5 z-20">
-          <CardGrantSourceBadges sources={card.grantSources} />
+          <CardGrantSourceBadges sources={effectSourceGroups.slice(0, 2)} />
         </div>
       {/if}
 
-      {#if statModifiers.length > 0}
+      {#if statBadges.length > 0}
         <div
-          data-testid="card-face-stat-modifiers"
-          class="pointer-events-none absolute right-1.5 bottom-1.5 z-20 flex max-w-[72%] flex-row items-end justify-end gap-1"
+          data-testid="card-face-stat-badges"
+          class="stat-badges-overlap pointer-events-none absolute right-1.5 bottom-1.5 z-20 flex max-w-[50%] flex-row items-end justify-end"
         >
-          {#each statModifiers as modifier (modifier.id)}
+          {#each statBadges as badge (badge.id)}
             <Tooltip.Root>
               <Tooltip.Trigger>
                 {#snippet child({ props })}
                   <button
                     type="button"
                     {...props}
-                    data-testid={`card-face-stat-modifier-${modifier.stat}`}
-                    class={`pointer-events-auto inline-flex items-center justify-end border shadow-[0_6px_12px_rgba(15,23,42,0.28)] backdrop-blur-sm ${modifierChipClass} ${getModifierToneClass(modifier.tone)}`}
-                    aria-label={modifier.label}
-                    onclick={handleStatModifierClick}>
-                    <img src={modifier.iconUrl} alt="" class={`${modifierIconClass} shrink-0 brightness-0 invert`} />
-                    <span class={`leading-none font-black tracking-[-0.03em] tabular-nums ${modifierValueClass}`}>
-                      {modifier.signedValue}
+                    data-testid={`card-face-stat-badge-${badge.stat}`}
+                    class={`pointer-events-auto relative flex items-center justify-center rounded-full border backdrop-blur-sm ${badgeSizeClass} ${getBadgeToneClass(badge.tone)}`}
+                    aria-label={badge.label}
+                    onclick={(event) => event.stopPropagation()}
+                  >
+                    <img src={badge.iconUrl} alt="" class="absolute inset-0 m-auto h-full w-full opacity-75" />
+                    <span class={`relative leading-none font-bold tabular-nums ${badgeValueClass}`}>
+                      {badge.currentValue}
                     </span>
                   </button>
                 {/snippet}
               </Tooltip.Trigger>
               <Tooltip.Content
                 side="top"
-                sideOffset={8}
-                class="max-w-[220px] rounded-lg border border-white/10 bg-slate-950/95 px-2.5 py-2 text-[0.7rem] leading-snug text-slate-100 shadow-xl"
+                sideOffset={6}
+                class="rounded-lg border border-white/10 bg-slate-950/95 px-2.5 py-1.5 text-[0.7rem] leading-snug text-slate-100 shadow-xl"
               >
-                <div class="font-semibold">{modifier.label}</div>
-                <div class="mt-1 text-slate-300">{modifier.tooltip}</div>
+                <div class="font-semibold">{badge.label}</div>
               </Tooltip.Content>
             </Tooltip.Root>
           {/each}
         </div>
       {/if}
 
-      {#if cardTags.length > 0}
+      {#if !hideSupplementalBadges && cardTags.length > 0}
         <div
           data-testid="card-face-tag-strip"
           class="pointer-events-none absolute inset-x-1.5 bottom-1.5 z-20"
@@ -421,16 +439,17 @@ const modifierValueClass = $derived.by(() => {
     border-color: #f59e0b;
   }
 
-  /* Exerted State (90° rotation) */
+  /* Exerted State */
   .card-face--exerted {
-    transform: rotate(90deg) !important;
+    transform: rotate(20deg) scale(0.96) !important;
   }
 
   .card-face--exerted .card-frame {
     border-color: rgba(245, 158, 11, 0.5);
     box-shadow:
       0 4px 12px rgba(0, 0, 0, 0.3),
-      inset 0 -8px 16px rgba(245, 158, 11, 0.15);
+      0 0 0 1px rgba(245, 158, 11, 0.16),
+      inset 0 -8px 16px rgba(245, 158, 11, 0.18);
   }
 
   /* Ghost State */
@@ -523,5 +542,9 @@ const modifierValueClass = $derived.by(() => {
       animation: none !important;
       transition: none !important;
     }
+  }
+
+  .stat-badges-overlap :global(> * + *) {
+    margin-left: -6px;
   }
 </style>

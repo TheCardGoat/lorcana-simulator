@@ -1,6 +1,11 @@
 import { describe, expect, it } from "bun:test";
 
-import { LorcanaMultiplayerTestEngine, createMockAction, createMockCharacter } from "./testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockAction,
+  createMockCharacter,
+  createMockSong,
+} from "./testing";
 
 const questableCharacter = createMockCharacter({
   id: "am-questable",
@@ -150,6 +155,62 @@ const wardedOpponent = createMockCharacter({
       keyword: "Ward",
       text: "Ward",
       type: "keyword",
+    },
+  ],
+});
+
+const singerFive = createMockCharacter({
+  id: "am-singer-five",
+  name: "Singer Five",
+  cost: 3,
+  abilities: [
+    {
+      id: "am-singer-five-kw",
+      keyword: "Singer",
+      text: "Singer 5",
+      type: "keyword",
+      value: 5,
+    },
+  ],
+});
+
+const helperSinger = createMockCharacter({
+  id: "am-helper-singer",
+  name: "Helper Singer",
+  cost: 3,
+});
+
+const voicelessSinger = createMockCharacter({
+  id: "am-voiceless-singer",
+  name: "Voiceless Singer",
+  cost: 4,
+  abilities: [
+    {
+      id: "am-voiceless-singer-static",
+      name: "VOICELESS",
+      text: "VOICELESS This character can't {E} to sing songs.",
+      type: "static",
+      effect: {
+        type: "restriction",
+        restriction: "cant-sing",
+        target: "SELF",
+      },
+    },
+  ],
+});
+
+const singTogetherSong = createMockSong({
+  id: "am-sing-together-song",
+  name: "Big Chorus",
+  cost: 8,
+  text: "Sing Together 8. Draw a card.",
+  abilities: [
+    {
+      id: "am-sing-together-song-kw",
+      keyword: "SingTogether",
+      text: "Sing Together 8",
+      type: "keyword",
+      value: 8,
     },
   ],
 });
@@ -382,6 +443,27 @@ describe("LorcanaEngineBase.getAvailableMoves", () => {
     expect(passTurnMove).toBeDefined();
     expect(passTurnMove!.selectableCardIds).toEqual([]);
   });
+
+  it("returns singCard when a song is only playable via Sing Together", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [singTogetherSong],
+        play: [singerFive, helperSinger],
+        deck: 1,
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    const moves = testEngine.asPlayerOne().getAvailableMoves();
+    const singMove = moves.find((move) => move.moveId === "singCard");
+
+    expect(singMove).toBeDefined();
+    expect(singMove?.selectableCardIds).toEqual([
+      testEngine.findCardInstanceId(singTogetherSong, "hand", "player_one"),
+    ]);
+  });
 });
 
 describe("LorcanaEngineBase.getMoveOptions", () => {
@@ -595,5 +677,67 @@ describe("LorcanaEngineBase.getMoveOptions", () => {
     const options = p1.getMoveOptions("quest", cardId);
 
     expect(options).toEqual([]);
+  });
+
+  it("returns a Sing Together option with only eligible singers", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [singTogetherSong],
+        play: [
+          singerFive,
+          helperSinger,
+          { card: questableCharacter, exerted: true },
+          { card: freshCharacter, isDrying: true },
+          voicelessSinger,
+        ],
+        deck: 1,
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    const p1 = testEngine.asPlayerOne();
+    const songId = testEngine.findCardInstanceId(singTogetherSong, "hand", "player_one");
+    const singerFiveId = testEngine.findCardInstanceId(singerFive, "play", "player_one");
+    const helperSingerId = testEngine.findCardInstanceId(helperSinger, "play", "player_one");
+
+    const options = p1.getMoveOptions("singCard", songId);
+
+    expect(options).toEqual([
+      {
+        kind: "singTogether",
+        requiredTotal: 8,
+        singers: [
+          { cardId: singerFiveId, value: 5 },
+          { cardId: helperSingerId, value: 3 },
+        ],
+      },
+    ]);
+  });
+
+  it("keeps singCard options limited to single singers for songs without Sing Together", () => {
+    const simpleSong = createMockSong({
+      id: "am-simple-song",
+      name: "Simple Song",
+      cost: 5,
+      text: "Draw a card.",
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [simpleSong],
+        play: [singerFive, helperSinger],
+        deck: 1,
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    const p1 = testEngine.asPlayerOne();
+    const songId = testEngine.findCardInstanceId(simpleSong, "hand", "player_one");
+    const singerFiveId = testEngine.findCardInstanceId(singerFive, "play", "player_one");
+
+    expect(p1.getMoveOptions("singCard", songId)).toEqual([{ kind: "card", cardId: singerFiveId }]);
   });
 });

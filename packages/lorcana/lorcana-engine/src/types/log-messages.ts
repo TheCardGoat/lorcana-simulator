@@ -116,6 +116,22 @@ export interface ResolveBagPendingLogValues extends ResolveBagCompletedLogValues
 
 export interface ResolveBagPendingNamedLogValues extends ResolveBagCompletedNamedLogValues {}
 
+export type ResolveBagCancelledCause = "no-valid-targets" | "condition-not-met" | "restriction";
+
+export interface ResolveBagCancelledLogValues extends ResolveBagCompletedLogValues {
+  cause: ResolveBagCancelledCause;
+}
+
+export interface ResolveBagCancelledNamedLogValues extends ResolveBagCompletedNamedLogValues {
+  cause: ResolveBagCancelledCause;
+}
+
+export interface EffectCancelledLogValues {
+  playerId: PlayerId;
+  sourceCardId: CardInstanceId;
+  cause: "no-valid-targets";
+}
+
 export interface ResolveDiscardChoiceLogValues {
   playerId: PlayerId;
   sourceCardId: CardInstanceId;
@@ -183,6 +199,83 @@ export interface ResolveChoiceWithRevealLogValues {
   choiceIndex: number;
 }
 
+// =============================================================================
+// Outcome Log Values — projected from domain events via LogProjector
+// =============================================================================
+
+export interface CombatDamageLogValues {
+  playerId: PlayerId;
+  attackerId: CardInstanceId;
+  defenderId: CardInstanceId;
+  attackerDamage: number;
+  defenderDamage: number;
+}
+
+export interface EffectDamageLogValues {
+  playerId: PlayerId;
+  sourceId: CardInstanceId;
+  targetId: CardInstanceId;
+  amount: number;
+}
+
+export interface CardBanishedLogValues {
+  playerId: PlayerId;
+  cardId: CardInstanceId;
+}
+
+export interface CardsDrawnLogValues {
+  playerId: PlayerId;
+  amount: number;
+}
+
+export interface CardsDrawnDetailLogValues {
+  playerId: PlayerId;
+  amount: number;
+  cardIds: CardInstanceId[];
+}
+
+export interface CardReturnedToHandLogValues {
+  playerId: PlayerId;
+  cardId: CardInstanceId;
+}
+
+export interface LoreGainedLogValues {
+  playerId: PlayerId;
+  amount: number;
+}
+
+export interface LoreLostLogValues {
+  playerId: PlayerId;
+  amount: number;
+}
+
+export interface OutcomeCardExertedLogValues {
+  playerId: PlayerId;
+  cardId: CardInstanceId;
+}
+
+export interface OutcomeCardReadiedLogValues {
+  playerId: PlayerId;
+  cardId: CardInstanceId;
+}
+
+export interface CardsMilledLogValues {
+  playerId: PlayerId;
+  amount: number;
+}
+
+export interface PlayCardShiftLogValues {
+  playerId: PlayerId;
+  cardId: CardInstanceId;
+  shiftTargetId: CardInstanceId;
+}
+
+export interface PlayCardSingLogValues {
+  playerId: PlayerId;
+  cardId: CardInstanceId;
+  singerIds: CardInstanceId[];
+}
+
 export interface LorcanaLogMessageMap {
   "lorcana.setup.firstPlayerChosen": FirstPlayerChosenLogValues;
   "lorcana.setup.mulligan.count": SetupMulliganCountLogValues;
@@ -208,6 +301,9 @@ export interface LorcanaLogMessageMap {
   "lorcana.bag.resolve.skipped.named": ResolveBagSkippedNamedLogValues;
   "lorcana.bag.resolve.pending": ResolveBagPendingLogValues;
   "lorcana.bag.resolve.pending.named": ResolveBagPendingNamedLogValues;
+  "lorcana.bag.resolve.cancelled": ResolveBagCancelledLogValues;
+  "lorcana.bag.resolve.cancelled.named": ResolveBagCancelledNamedLogValues;
+  "lorcana.effect.cancelled": EffectCancelledLogValues;
   "lorcana.effect.resolve.discardChoice": ResolveDiscardChoiceLogValues;
   "lorcana.effect.resolve.targetSelection": ResolveTargetSelectionLogValues;
   "lorcana.effect.resolve.choiceSelection": ResolveChoiceSelectionLogValues;
@@ -219,6 +315,19 @@ export interface LorcanaLogMessageMap {
   "lorcana.effect.resolve.revealTopCard": RevealTopCardLogValues;
   "lorcana.effect.resolve.revealTopCard.autoBottom": RevealTopCardAutoBottomLogValues;
   "lorcana.effect.resolve.choiceSelection.withReveal": ResolveChoiceWithRevealLogValues;
+  "lorcana.outcome.combatDamage": CombatDamageLogValues;
+  "lorcana.outcome.effectDamage": EffectDamageLogValues;
+  "lorcana.outcome.cardBanished": CardBanishedLogValues;
+  "lorcana.outcome.cardsDrawn": CardsDrawnLogValues;
+  "lorcana.outcome.cardsDrawn.detail": CardsDrawnDetailLogValues;
+  "lorcana.outcome.cardReturnedToHand": CardReturnedToHandLogValues;
+  "lorcana.outcome.loreGained": LoreGainedLogValues;
+  "lorcana.outcome.loreLost": LoreLostLogValues;
+  "lorcana.outcome.cardExerted": OutcomeCardExertedLogValues;
+  "lorcana.outcome.cardReadied": OutcomeCardReadiedLogValues;
+  "lorcana.outcome.cardsMilled": CardsMilledLogValues;
+  "lorcana.move.playCard.shift": PlayCardShiftLogValues;
+  "lorcana.move.playCard.sing": PlayCardSingLogValues;
 }
 
 export type LorcanaLogMessageKey = keyof LorcanaLogMessageMap & string;
@@ -258,6 +367,9 @@ export const LORCANA_LOG_TRANSLATION_KEYS = {
   "lorcana.bag.resolve.skipped.named": "lorcana.bag.resolve.skipped.named",
   "lorcana.bag.resolve.pending": "lorcana.bag.resolve.pending",
   "lorcana.bag.resolve.pending.named": "lorcana.bag.resolve.pending.named",
+  "lorcana.bag.resolve.cancelled": "lorcana.bag.resolve.cancelled",
+  "lorcana.bag.resolve.cancelled.named": "lorcana.bag.resolve.cancelled.named",
+  "lorcana.effect.cancelled": "lorcana.effect.cancelled",
   "lorcana.effect.resolve.discardChoice": "lorcana.effect.resolve.discardChoice",
   "lorcana.effect.resolve.targetSelection": "lorcana.effect.resolve.targetSelection",
   "lorcana.effect.resolve.choiceSelection": "lorcana.effect.resolve.choiceSelection",
@@ -273,6 +385,19 @@ export const LORCANA_LOG_TRANSLATION_KEYS = {
     "lorcana.effect.resolve.revealTopCard.autoBottom",
   "lorcana.effect.resolve.choiceSelection.withReveal":
     "lorcana.effect.resolve.choiceSelection.withReveal",
+  "lorcana.outcome.combatDamage": "lorcana.outcome.combatDamage",
+  "lorcana.outcome.effectDamage": "lorcana.outcome.effectDamage",
+  "lorcana.outcome.cardBanished": "lorcana.outcome.cardBanished",
+  "lorcana.outcome.cardsDrawn": "lorcana.outcome.cardsDrawn",
+  "lorcana.outcome.cardsDrawn.detail": "lorcana.outcome.cardsDrawn.detail",
+  "lorcana.outcome.cardReturnedToHand": "lorcana.outcome.cardReturnedToHand",
+  "lorcana.outcome.loreGained": "lorcana.outcome.loreGained",
+  "lorcana.outcome.loreLost": "lorcana.outcome.loreLost",
+  "lorcana.outcome.cardExerted": "lorcana.outcome.cardExerted",
+  "lorcana.outcome.cardReadied": "lorcana.outcome.cardReadied",
+  "lorcana.outcome.cardsMilled": "lorcana.outcome.cardsMilled",
+  "lorcana.move.playCard.shift": "lorcana.move.playCard.shift",
+  "lorcana.move.playCard.sing": "lorcana.move.playCard.sing",
 } as const satisfies Record<LorcanaLogMessageKey, LorcanaParaglideMessageKey>;
 
 export const LORCANA_LOG_TRANSLATION_VALUE_KEYS = {
@@ -300,6 +425,9 @@ export const LORCANA_LOG_TRANSLATION_VALUE_KEYS = {
   "lorcana.bag.resolve.skipped.named": ["sourceId", "abilityName"],
   "lorcana.bag.resolve.pending": ["sourceId"],
   "lorcana.bag.resolve.pending.named": ["sourceId", "abilityName"],
+  "lorcana.bag.resolve.cancelled": ["sourceId", "cause"],
+  "lorcana.bag.resolve.cancelled.named": ["sourceId", "abilityName", "cause"],
+  "lorcana.effect.cancelled": ["sourceCardId", "cause"],
   "lorcana.effect.resolve.discardChoice": ["sourceCardId", "targets"],
   "lorcana.effect.resolve.targetSelection": ["sourceCardId", "targets"],
   "lorcana.effect.resolve.choiceSelection": ["sourceCardId", "choiceIndex"],
@@ -315,6 +443,19 @@ export const LORCANA_LOG_TRANSLATION_VALUE_KEYS = {
     "playerId",
     "revealedCardId",
   ],
+  "lorcana.outcome.combatDamage": ["attackerId", "defenderId", "attackerDamage", "defenderDamage"],
+  "lorcana.outcome.effectDamage": ["sourceId", "targetId", "amount"],
+  "lorcana.outcome.cardBanished": ["cardId"],
+  "lorcana.outcome.cardsDrawn": ["amount"],
+  "lorcana.outcome.cardsDrawn.detail": ["amount", "cardIds"],
+  "lorcana.outcome.cardReturnedToHand": ["cardId"],
+  "lorcana.outcome.loreGained": ["playerId", "amount"],
+  "lorcana.outcome.loreLost": ["playerId", "amount"],
+  "lorcana.outcome.cardExerted": ["cardId"],
+  "lorcana.outcome.cardReadied": ["cardId"],
+  "lorcana.outcome.cardsMilled": ["amount"],
+  "lorcana.move.playCard.shift": ["cardId", "shiftTargetId"],
+  "lorcana.move.playCard.sing": ["cardId", "singerIds"],
 } as const satisfies {
   [K in LorcanaLogMessageKey]: readonly (keyof LorcanaLogMessageMap[K] & string)[];
 };

@@ -1,4 +1,5 @@
 import type { CardInstanceId, DeepReadonly, PlayerId } from "#core";
+import type { StaticEffectRegistry } from "../rules/static-effect-registry";
 
 // Re-export the type for consumers
 export type { ProjectedLorcanaCardDerived } from "../types/projected-board";
@@ -26,9 +27,11 @@ import {
   getActiveTemporaryKeywordNames,
   getActiveTemporaryMap,
   getDerivedHasQuestRestriction,
+  getAppliedCostReductions,
   type DerivedStateContext,
 } from "../rules/derived-state";
 import { getGrantedActivatedAbilities } from "../runtime-moves/rules/static-ability-utils";
+import { getShiftRules } from "../runtime-moves/rules/play-card-rules";
 
 // Type alias for compatibility, they are structurally identical
 type ProjectionState = DerivedStateContext;
@@ -68,6 +71,8 @@ export function createDefaultProjectedLorcanaCardDerived(args?: {
     willpower: projection?.willpower ?? definition?.willpower ?? 0,
     lore: projection?.lore ?? definition?.lore ?? 0,
     canBePutInInkwell: projection?.canBePutInInkwell ?? false,
+    shiftInkCost: projection?.shiftInkCost,
+    shiftPlayCost: projection?.shiftPlayCost,
     hasSupport: projection?.hasSupport ?? false,
     hasReckless: projection?.hasReckless ?? false,
     hasRush: projection?.hasRush ?? false,
@@ -92,11 +97,12 @@ export function projectLorcanaCardDerived(args: {
   controllerID?: PlayerId;
   zoneID?: string;
   actorPlayerId?: PlayerId;
-  getDefinitionByInstanceId?: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  registry: StaticEffectRegistry | undefined;
 }): ProjectedLorcanaCardDerived {
   const { definition, meta, state, cardInstanceId, ownerID, controllerID, zoneID, actorPlayerId } =
     args;
-  const { getDefinitionByInstanceId } = args;
+  const { getDefinitionByInstanceId, registry } = args;
   const currentTurn = state.ctx.status?.turn ?? 1;
   const derived = createDefaultProjectedLorcanaCardDerived();
 
@@ -119,9 +125,21 @@ export function projectLorcanaCardDerived(args: {
     cardInstanceId,
     getDefinitionByInstanceId,
   );
-  derived.strength = deriveStrength(definition, state, cardInstanceId, getDefinitionByInstanceId);
-  derived.willpower = deriveWillpower(definition, state, cardInstanceId, getDefinitionByInstanceId);
-  derived.lore = deriveLore(definition, state, cardInstanceId, getDefinitionByInstanceId);
+  derived.strength = deriveStrength(
+    definition,
+    state,
+    cardInstanceId,
+    getDefinitionByInstanceId,
+    registry,
+  );
+  derived.willpower = deriveWillpower(
+    definition,
+    state,
+    cardInstanceId,
+    getDefinitionByInstanceId,
+    registry,
+  );
+  derived.lore = deriveLore(definition, state, cardInstanceId, getDefinitionByInstanceId, registry);
   derived.playCost = derivePlayCost({
     definition,
     state,
@@ -130,14 +148,31 @@ export function projectLorcanaCardDerived(args: {
     zoneID,
     actorPlayerId,
     getDefinitionByInstanceId,
+    registry,
   });
+  const shiftRules = definition ? getShiftRules(definition) : undefined;
+  if (shiftRules && !shiftRules.unsupportedReason && typeof shiftRules.inkCost === "number") {
+    derived.shiftInkCost = shiftRules.inkCost;
+    const shiftReduction = getAppliedCostReductions({
+      definition,
+      state,
+      cardInstanceId,
+      ownerID,
+      zoneID,
+      actorPlayerId,
+      getDefinitionByInstanceId,
+      playMethod: "shift",
+      registry,
+    });
+    derived.shiftPlayCost = Math.max(0, shiftRules.inkCost - shiftReduction.reductionAmount);
+  }
   const staticClassifications = getActiveStaticClassificationGrants({
     definition,
     state,
     controllerId: controllerID ?? ownerID,
     zoneID,
     cardInstanceId,
-    getDefinitionByInstanceId,
+    registry,
   });
   derived.classifications = [
     ...new Set([...(definition?.classifications ?? []), ...staticClassifications]),
@@ -164,7 +199,7 @@ export function projectLorcanaCardDerived(args: {
     controllerId: controllerID ?? ownerID,
     zoneID,
     cardInstanceId,
-    getDefinitionByInstanceId,
+    registry,
   });
   const staticKeywordLosses = getActiveStaticKeywordLosses({
     definition,
@@ -172,7 +207,7 @@ export function projectLorcanaCardDerived(args: {
     controllerId: controllerID ?? ownerID,
     zoneID,
     cardInstanceId,
-    getDefinitionByInstanceId,
+    registry,
   });
   derived.keywords = [
     ...new Set([
@@ -220,7 +255,7 @@ export function projectLorcanaCardDerived(args: {
     ? meta?.temporaryRestrictionStarts
     : undefined;
 
-  if (cardInstanceId && getDefinitionByInstanceId && zoneID?.startsWith("play")) {
+  if (cardInstanceId && getDefinitionByInstanceId && registry && zoneID?.startsWith("play")) {
     const grantedAbilities = getGrantedActivatedAbilities({
       state: {
         priority: state.ctx.priority,
@@ -229,6 +264,7 @@ export function projectLorcanaCardDerived(args: {
       },
       cardId: cardInstanceId,
       getDefinitionByInstanceId,
+      registry,
     });
     // Filter out self-grants: keyword-derived abilities (e.g. Boost) have sourceId === cardId
     // because the card grants the activated ability to itself. Those entries are already
@@ -257,7 +293,7 @@ export function projectLorcanaCardDerived(args: {
       controllerId: controllerID ?? ownerID,
       zoneID,
       cardInstanceId,
-      getDefinitionByInstanceId,
+      registry,
     });
     if (keywordSources.length > 0) {
       derived.keywordGrantSources = keywordSources;
@@ -274,7 +310,7 @@ export function projectLorcanaCardDerived(args: {
         state,
         cardInstanceId,
         stat,
-        getDefinitionByInstanceId,
+        registry,
       });
       for (const source of sources) {
         statSources.push({

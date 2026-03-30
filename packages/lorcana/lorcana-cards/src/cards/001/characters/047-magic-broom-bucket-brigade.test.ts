@@ -44,7 +44,7 @@ describe("Magic Broom - Bucket Brigade", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicBroomBucketBrigade, {
           resolveOptional: true,
           targets: [discardId],
         }),
@@ -85,7 +85,7 @@ describe("Magic Broom - Bucket Brigade", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({
+        testEngine.asPlayerOne().resolvePendingByCard(magicBroomBucketBrigade, {
           resolveOptional: true,
           targets: [opponentDiscardId],
         }),
@@ -126,7 +126,9 @@ describe("Magic Broom - Bucket Brigade", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
       expect(
-        testEngine.asPlayerOne().resolveNextBag({ resolveOptional: false }),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(magicBroomBucketBrigade, { resolveOptional: false }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("discard");

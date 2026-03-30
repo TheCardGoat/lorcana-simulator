@@ -4,8 +4,8 @@
  * Context builders and utility functions.
  */
 
-import { current as immerCurrent } from "immer";
-import type { Draft } from "immer";
+import { current as snapshotCurrent } from "mutative";
+import type { Draft } from "mutative";
 import type { GameEvent, MatchState, MoveInput } from "./types";
 import type {
   MatchRuntimeConfig,
@@ -26,6 +26,7 @@ import { createTimeQueryAPI, createTimeOperationsForDraft } from "./match-runtim
 import { createRandomAPIForDraft } from "./match-runtime.random-apis";
 import { createZoneQueryAPI } from "./match-runtime.zone-apis";
 import { createZoneOperations } from "./zone-operations";
+import { buildZoneRegistry } from "./zone-registry";
 import {
   createCardRuntimeAPI,
   createFrameworkReadAPI,
@@ -85,6 +86,7 @@ function createReadContextBase(
   effectiveGameEnded: boolean,
   runtimeCardCache?: StateScopedValueCache<unknown>,
 ): Omit<MoveValidationContext<MoveInput>, keyof MoveInputView> {
+  const zoneRegistry = buildZoneRegistry(config.zones, state.ctx.playerIds);
   const cardsApi = createCardQueryAPIForState(
     state,
     staticResources,
@@ -94,7 +96,7 @@ function createReadContextBase(
     true,
   );
   const frameworkState = createFrameworkStateSnapshot(state, effectiveGameEnded);
-  const zones = createZoneQueryAPI(state, cardsApi);
+  const zones = createZoneQueryAPI(state, cardsApi, zoneRegistry);
   const time = createTimeQueryAPI(state);
   const framework = createFrameworkReadAPI(frameworkState, zones, time, cardsApi);
 
@@ -121,9 +123,10 @@ function createWriteContextBase(
   useSnapshotForReads?: boolean,
 ): RuntimeLifecycleContext {
   // When useSnapshotForReads is true (lifecycle/trigger contexts), project from a plain snapshot
-  // to avoid Immer proxy overhead. Move execution contexts use the live draft so that reads
+  // to avoid Mutative proxy overhead. Move execution contexts use the live draft so that reads
   // after in-move mutations reflect the current state.
-  const readState = useSnapshotForReads ? immerCurrent(draft) : draft;
+  const readState = useSnapshotForReads ? snapshotCurrent(draft) : draft;
+  const zoneRegistry = buildZoneRegistry(config.zones, readState.ctx.playerIds);
   const cardsApi = createCardQueryAPIForState(
     readState,
     staticResources,
@@ -134,7 +137,7 @@ function createWriteContextBase(
   );
   const cardRuntimeApi = createCardRuntimeAPI(draft, cardsApi);
   const random = createRandomAPIForDraft(draft);
-  const zones = createZoneOperations(draft, emitGameEvent, {
+  const zones = createZoneOperations(draft, zoneRegistry, emitGameEvent, {
     cardQuery: cardsApi,
     random: random.random,
   });
@@ -227,7 +230,7 @@ export function buildLifecycleContext(
   playerId: string | undefined = draft.ctx.priority.holder,
   moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
   runtimeCardCache?: StateScopedValueCache<unknown>,
-  /** When true, card projections use a plain snapshot of the draft (no Immer proxy overhead).
+  /** When true, card projections use a plain snapshot of the draft (no Mutative proxy overhead).
    * Only safe for read-only lifecycle hooks (trigger collection) — NOT for move execution. */
   useSnapshotForReads?: boolean,
 ): RuntimeLifecycleContext {

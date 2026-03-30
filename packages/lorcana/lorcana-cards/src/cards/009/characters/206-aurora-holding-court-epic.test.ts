@@ -20,7 +20,7 @@ describe("Aurora - Holding Court (Epic)", () => {
 
     // Quest with Aurora
     testEngine.asPlayerOne().quest(auroraId);
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(auroraHoldingCourtEpic);
 
     // Now can play Queen (cost reduced by 1)
     expect(testEngine.asPlayerOne().canPlayCard(queenId)).toBe(true);
@@ -45,7 +45,7 @@ describe("Aurora - Holding Court (Epic)", () => {
 
     // Quest with Aurora
     testEngine.asPlayerOne().quest(auroraId);
-    testEngine.asPlayerOne().resolveNextBag();
+    testEngine.asPlayerOne().resolvePendingByCard(auroraHoldingCourtEpic);
 
     // Now can play Mulan (cost reduced by 1)
     expect(testEngine.asPlayerOne().canPlayCard(mulanId)).toBe(true);

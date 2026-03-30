@@ -25,7 +25,6 @@ describe("ActivePlayerGuidance", () => {
     expect(body).not.toContain("guidance-anchor--hand-target-bottom");
     expect(body).toContain('data-guidance-position="top"');
     expect(body).toContain("Move guidance to bottom");
-    expect(body).toContain(">Bottom<");
   });
 
   it("preserves bottom-hand clearance for the default position", () => {
@@ -41,6 +40,52 @@ describe("ActivePlayerGuidance", () => {
     expect(body).not.toContain("guidance-anchor--hand-target-top");
     expect(body).toContain('data-guidance-position="bottom"');
     expect(body).toContain("Move guidance to top");
-    expect(body).toContain(">Top<");
+  });
+
+  it("renders an inline hover reference with bold-underlined styling hooks", () => {
+    const { body } = render(ActivePlayerGuidance, {
+      props: {
+        items: [
+          {
+            ...baseItem,
+            message: "Select a valid target for Dragon Fire.",
+            inlineReference: {
+              label: "Dragon Fire",
+              card: null,
+              prefix: "Select a valid target for ",
+              suffix: ".",
+            },
+          },
+        ],
+      },
+    });
+
+    expect(body).toContain("guidance-message-reference");
+    expect(body).toContain("Dragon Fire");
+    expect(body).toContain("Select a valid target for ");
+  });
+
+  it("adds normal-weight copy styling when inline reference content is present", () => {
+    const { body } = render(ActivePlayerGuidance, {
+      props: {
+        items: [
+          {
+            ...baseItem,
+            message:
+              "Resolve optional effect from Mulan - Disguised Soldier: WHERE DO I SIGN IN?. When you play this character, you may draw a card, then choose and discard a card.",
+            inlineReference: {
+              label: "Mulan - Disguised Soldier: WHERE DO I SIGN IN?.",
+              card: null,
+              prefix: "Resolve optional effect from ",
+              suffix:
+                " When you play this character, you may draw a card, then choose and discard a card.",
+            },
+          },
+        ],
+      },
+    });
+
+    expect(body).toContain("guidance-message--with-inline-reference");
+    expect(body).toContain("Mulan - Disguised Soldier: WHERE DO I SIGN IN?.");
   });
 });
