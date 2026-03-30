@@ -18,7 +18,7 @@
     maybeUseSimulatorCardContext,
     type SimulatorCardContextValue,
   } from "@/features/simulator/context/simulator-card-context.svelte.js";
-  import {SimulatorLayoutModeObserver} from "@/features/simulator/model/layout-mode.svelte.js";
+  import { SimulatorLayoutModeObserver } from "@/features/simulator/model/layout-mode.svelte.js";
   import {
     maybeUseLorcanaSidebarPresenter,
     type LorcanaSidebarPresenter,
@@ -30,7 +30,14 @@
 
   // Size scale factors (based on full card 734x1024)
   // These scale the actual dimensions to the desired display size
-  type CardSize = "micro" | "tiny" | "small" | "small-plus" | "medium" | "large" | "x-large";
+  type CardSize =
+    | "micro"
+    | "tiny"
+    | "small"
+    | "small-plus"
+    | "medium"
+    | "large"
+    | "x-large";
   const SIZE_SCALES: Record<CardSize, number> = {
     micro: 1 / 12,
     tiny: 1 / 8,
@@ -115,7 +122,9 @@
   // Derived values from card if available
   const damage = $derived(propDamage ?? card?.damage ?? 0);
   const isDryingState = $derived(isDrying || card?.isDrying || false);
-  const isExertedState = $derived(isExerted || card?.readyState === "exerted" || false);
+  const isExertedState = $derived(
+    isExerted || card?.readyState === "exerted" || false,
+  );
   const cardInteraction = useCardInteractionContext();
   const simulatorCardContextFallback: Pick<
     SimulatorCardContextValue,
@@ -162,9 +171,10 @@
       : interactionMeta,
   );
   const shouldUseTouchInspect = $derived(layout.current === "mobile");
-  const isTouchInspectCard = $derived.by(() =>
-    Boolean(card) &&
-    simulatorCardContext.inspectedCard?.cardId === card?.cardId,
+  const isTouchInspectCard = $derived.by(
+    () =>
+      Boolean(card) &&
+      simulatorCardContext.inspectedCard?.cardId === card?.cardId,
   );
   const isDesktopInspectCard = $derived.by(
     () =>
@@ -177,7 +187,9 @@
       sidebar.actionSelectionSession.phase === "choose-target",
   );
   const shouldRenderHoverCard = $derived(
-    showHoverCard && !isChallengeTargetSelectionActive && (!shouldUseTouchInspect || isTouchInspectCard),
+    showHoverCard &&
+      !isChallengeTargetSelectionActive &&
+      (!shouldUseTouchInspect || isTouchInspectCard),
   );
   const hoverContextMessage = $derived(
     shouldRenderHoverCard && isTouchInspectCard && card
@@ -192,11 +204,8 @@
   const shouldRenderPopover = $derived(
     showHoverCard && isTouchInspectCard && !isChallengeTargetSelectionActive,
   );
-  const isPreviewOpen = $derived(
-    isTouchInspectCard,
-  );
+  const isPreviewOpen = $derived(isTouchInspectCard);
   const hideSupplementalBadges = $derived(layout.current === "mobile");
-
 
   // Calculate actual display dimensions based on image format and size
   const { width, height } = $derived(CARD_IMAGE_DIMENSIONS[imageFormat]);
@@ -227,9 +236,18 @@
     if (!card) {
       return;
     }
+    event.stopPropagation();
 
-    if (showHoverCard && clickOpensHover && !sidebar.actionSelectionSession && !simulatorCardContext.canSelectCard(card, resolvedInteractionMeta)) {
-      simulatorCardContext.openCardInspect({ card, meta: resolvedInteractionMeta });
+    if (
+      showHoverCard &&
+      clickOpensHover &&
+      !sidebar.actionSelectionSession &&
+      !simulatorCardContext.canSelectCard(card, resolvedInteractionMeta)
+    ) {
+      simulatorCardContext.openCardInspect({
+        card,
+        meta: resolvedInteractionMeta,
+      });
       return;
     }
 
@@ -244,7 +262,9 @@
     });
   }
 
-  function handleCardFacePointerEnter(event: CustomEvent<{ event: MouseEvent }>): void {
+  function handleCardFacePointerEnter(
+    event: CustomEvent<{ event: MouseEvent }>,
+  ): void {
     handlePointerEnter(event.detail.event);
   }
 
@@ -252,13 +272,21 @@
     handlePointerLeave();
   }
 
-  function handleCardFaceSelect(event: CustomEvent<{ event: MouseEvent }>): void {
+  function handleCardFaceSelect(
+    event: CustomEvent<{ event: MouseEvent }>,
+  ): void {
     handleSelect(event.detail.event);
   }
 
-  function handleCardFaceContextMenu(event: CustomEvent<{ event: MouseEvent }>): void {
+  function handleCardFaceContextMenu(
+    event: CustomEvent<{ event: MouseEvent }>,
+  ): void {
     if (!card) return;
-    cardInteraction?.handleContextMenu?.({ card, event: event.detail.event, meta: resolvedInteractionMeta });
+    cardInteraction?.handleContextMenu?.({
+      card,
+      event: event.detail.event,
+      meta: resolvedInteractionMeta,
+    });
   }
 
   function handleHoverCardClose(): void {
@@ -300,7 +328,10 @@
       return;
     }
 
-    if (simulatorCardContext.inspectedCard.cardId !== card.cardId && hoverCardOpen) {
+    if (
+      simulatorCardContext.inspectedCard.cardId !== card.cardId &&
+      hoverCardOpen
+    ) {
       hoverCardOpen = false;
     }
   });
@@ -345,9 +376,7 @@
     aspectRatio={CARD_IMAGE_ASPECT_RATIOS[imageFormat]}
   />
 {:else if card}
-  <Popover.Root
-    bind:open={() => isTouchInspectCard, handlePopoverOpenChange}
-  >
+  <Popover.Root bind:open={() => isTouchInspectCard, handlePopoverOpenChange}>
     <div bind:this={mobileCardAnchor}>
       <CardFace
         {card}
@@ -399,7 +428,9 @@
             actions={hoverShowActions ? hoverActions : []}
             contextMessage={hoverContextMessage}
             onAction={(action) => {
-              const wasHandled = sidebar.handleCardActionClick(action, { skipConfirmation: true });
+              const wasHandled = sidebar.handleCardActionClick(action, {
+                skipConfirmation: true,
+              });
               if (wasHandled) {
                 simulatorCardContext.closeCardInspect();
               }
