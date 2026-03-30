@@ -108,7 +108,7 @@
     showHoverCard = true,
     hoverShowActions = false,
     hoverAvailableInk = 0,
-    clickOpensHover = false,
+    clickOpensHover = true,
     onDragStart: _onDragStart,
   }: LorcanaCardProps = $props();
 
@@ -163,7 +163,6 @@
   );
   const shouldUseTouchInspect = $derived(layout.current === "mobile");
   const isTouchInspectCard = $derived.by(() =>
-    shouldUseTouchInspect &&
     Boolean(card) &&
     simulatorCardContext.inspectedCard?.cardId === card?.cardId,
   );
@@ -181,20 +180,20 @@
     showHoverCard && !isChallengeTargetSelectionActive && (!shouldUseTouchInspect || isTouchInspectCard),
   );
   const hoverContextMessage = $derived(
-    shouldRenderHoverCard && hoverCardOpen && card
+    shouldRenderHoverCard && isTouchInspectCard && card
       ? sidebar.getActionSessionCardReason(card.cardId)
       : null,
   );
   const hoverActions = $derived(
-    shouldRenderHoverCard && hoverCardOpen && hoverShowActions && card
+    shouldRenderHoverCard && isTouchInspectCard && hoverShowActions && card
       ? sidebar.getCardActionViews(card)
       : [],
   );
   const shouldRenderPopover = $derived(
-    showHoverCard && shouldUseTouchInspect && isTouchInspectCard && !isChallengeTargetSelectionActive,
+    showHoverCard && isTouchInspectCard && !isChallengeTargetSelectionActive,
   );
   const isPreviewOpen = $derived(
-    shouldUseTouchInspect ? isTouchInspectCard : hoverCardOpen,
+    isTouchInspectCard,
   );
   const hideSupplementalBadges = $derived(layout.current === "mobile");
 
@@ -229,7 +228,7 @@
       return;
     }
 
-    if (clickOpensHover && !sidebar.actionSelectionSession && !simulatorCardContext.canSelectCard(card, resolvedInteractionMeta)) {
+    if (showHoverCard && clickOpensHover && !sidebar.actionSelectionSession && !simulatorCardContext.canSelectCard(card, resolvedInteractionMeta)) {
       simulatorCardContext.openCardInspect({ card, meta: resolvedInteractionMeta });
       return;
     }
@@ -263,14 +262,7 @@
   }
 
   function handleHoverCardClose(): void {
-    if (shouldUseTouchInspect || isDesktopInspectCard) {
-      simulatorCardContext.closeCardInspect();
-    }
-
-    if (shouldUseTouchInspect) {
-      return;
-    }
-
+    simulatorCardContext.closeCardInspect();
     hoverCardOpen = false;
   }
 
@@ -295,11 +287,11 @@
   });
 
   $effect(() => {
-    if (!card || shouldUseTouchInspect) {
+    if (!card) {
       return;
     }
 
-    if (isDesktopInspectCard) {
+    if (isTouchInspectCard) {
       hoverCardOpen = true;
       return;
     }
@@ -353,159 +345,91 @@
     aspectRatio={CARD_IMAGE_ASPECT_RATIOS[imageFormat]}
   />
 {:else if card}
-  {#if shouldUseTouchInspect}
-    <Popover.Root
-      bind:open={() => isTouchInspectCard, handlePopoverOpenChange}
-    >
-      <div bind:this={mobileCardAnchor}>
-        <CardFace
-          {card}
-          {displayWidth}
-          {displayHeight}
-          {useContainerSize}
-          {size}
-          {imageFormat}
-          {isSelected}
-          isExerted={isExertedState}
-          {isGhost}
-          {isPlayable}
-          {isInvalidTarget}
-          {isBanishedPreview}
-          {isQuesting}
-          isDrying={isDryingState}
-          {damage}
-          {tagCollapseMode}
-          {hideSupplementalBadges}
-          aspectRatio={CARD_IMAGE_ASPECT_RATIOS[imageFormat]}
-          on:pointerenter={handleCardFacePointerEnter}
-          on:pointerleave={handleCardFacePointerLeave}
-          on:select={handleCardFaceSelect}
-          on:contextmenu={handleCardFaceContextMenu}
-        />
-      </div>
-      {#if shouldRenderPopover}
-        <Popover.Content
-          customAnchor={mobileCardAnchor}
-          align="start"
-          sideOffset={8}
-          collisionPadding={12}
-          sticky="always"
-          updatePositionStrategy="always"
-          trapFocus={false}
-          class="z-[70] overflow-hidden border-0 bg-transparent p-0"
-          style="--hover-card-max-height: calc(var(--bits-popover-content-available-height) - 1rem); width: min(22rem, calc(var(--bits-popover-content-available-width) - 1rem)); max-width: calc(var(--bits-popover-content-available-width) - 1rem); max-height: var(--hover-card-max-height);"
-          onEscapeKeydown={() => simulatorCardContext.closeCardInspect()}
-          onInteractOutside={() => simulatorCardContext.closeCardInspect()}
+  <Popover.Root
+    bind:open={() => isTouchInspectCard, handlePopoverOpenChange}
+  >
+    <div bind:this={mobileCardAnchor}>
+      <CardFace
+        {card}
+        {displayWidth}
+        {displayHeight}
+        {useContainerSize}
+        {size}
+        {imageFormat}
+        {isSelected}
+        isExerted={isExertedState}
+        {isGhost}
+        {isPlayable}
+        {isInvalidTarget}
+        {isBanishedPreview}
+        {isQuesting}
+        isDrying={isDryingState}
+        {damage}
+        {tagCollapseMode}
+        {hideSupplementalBadges}
+        aspectRatio={CARD_IMAGE_ASPECT_RATIOS[imageFormat]}
+        on:pointerenter={handleCardFacePointerEnter}
+        on:pointerleave={handleCardFacePointerLeave}
+        on:select={handleCardFaceSelect}
+        on:contextmenu={handleCardFaceContextMenu}
+      />
+    </div>
+    {#if shouldRenderPopover}
+      <Popover.Content
+        customAnchor={mobileCardAnchor}
+        align="start"
+        sideOffset={8}
+        collisionPadding={12}
+        sticky="always"
+        updatePositionStrategy="always"
+        trapFocus={false}
+        class="z-[70] overflow-hidden border-0 bg-transparent p-0"
+        style="--hover-card-max-height: calc(var(--bits-popover-content-available-height) - 1rem); width: min(22rem, calc(var(--bits-popover-content-available-width) - 1rem)); max-width: calc(var(--bits-popover-content-available-width) - 1rem); max-height: var(--hover-card-max-height);"
+        onEscapeKeydown={() => simulatorCardContext.closeCardInspect()}
+        onInteractOutside={() => simulatorCardContext.closeCardInspect()}
+      >
+        <ScrollArea.Root
+          orientation="vertical"
+          class="max-h-[var(--hover-card-max-height)] overflow-hidden rounded-2xl"
+          viewportClass="max-h-[var(--hover-card-max-height)]"
+          scrollbarYClasses="w-3 pr-0.5"
         >
-          <ScrollArea.Root
-            orientation="vertical"
-            class="max-h-[var(--hover-card-max-height)] overflow-hidden rounded-2xl"
-            viewportClass="max-h-[var(--hover-card-max-height)]"
-            scrollbarYClasses="w-3 pr-0.5"
+          <CardHoverCardContent
+            {card}
+            actions={hoverShowActions ? hoverActions : []}
+            contextMessage={hoverContextMessage}
+            onAction={(action) => {
+              const wasHandled = sidebar.handleCardActionClick(action, { skipConfirmation: true });
+              if (wasHandled) {
+                simulatorCardContext.closeCardInspect();
+              }
+            }}
           >
-            <CardHoverCardContent
-              {card}
-              actions={hoverShowActions ? hoverActions : []}
-              contextMessage={hoverContextMessage}
-              onAction={(action) => {
-                const wasHandled = sidebar.handleCardActionClick(action, { skipConfirmation: true });
-                if (wasHandled) {
-                  simulatorCardContext.closeCardInspect();
-                }
-              }}
-            >
-              {#snippet headerActions()}
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
-                    onclick={handleOpenPreview}
-                    aria-label={`Open full preview for ${card.label}`}
-                    title="Open preview"
-                  >
-                    <EyeIcon class="size-4" />
-                  </button>
-                  <button
-                    type="button"
-                    class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
-                    onclick={() => simulatorCardContext.closeCardInspect()}
-                    aria-label={`Close ${card.label} details`}
-                    title="Close"
-                  >
-                    <XIcon class="size-4" />
-                  </button>
-                </div>
-              {/snippet}
-            </CardHoverCardContent>
-          </ScrollArea.Root>
-        </Popover.Content>
-      {/if}
-    </Popover.Root>
-  {:else}
-    <HoverCard.Root bind:open={hoverCardOpen} openDelay={200}>
-      <HoverCard.Trigger class="block">
-        <CardFace
-          {card}
-          {displayWidth}
-          {displayHeight}
-          {useContainerSize}
-          {size}
-          {imageFormat}
-          {isSelected}
-          isExerted={isExertedState}
-          {isGhost}
-          {isPlayable}
-          {isInvalidTarget}
-          {isBanishedPreview}
-          {isQuesting}
-          isDrying={isDryingState}
-          {damage}
-          {tagCollapseMode}
-          {hideSupplementalBadges}
-          aspectRatio={CARD_IMAGE_ASPECT_RATIOS[imageFormat]}
-          on:pointerenter={handleCardFacePointerEnter}
-          on:pointerleave={handleCardFacePointerLeave}
-          on:select={handleCardFaceSelect}
-          on:contextmenu={handleCardFaceContextMenu}
-        />
-      </HoverCard.Trigger>
-      {#if shouldRenderHoverCard}
-        <HoverCard.Content
-          class="z-[70] w-fit overflow-hidden border-0 bg-transparent p-0"
-          style="--hover-card-max-height: calc(var(--bits-link-preview-content-available-height, 100vh) - 1rem); width: min(22rem, calc(var(--bits-link-preview-content-available-width, 100vw) - 1rem)); max-width: calc(var(--bits-link-preview-content-available-width, 100vw) - 1rem); max-height: var(--hover-card-max-height);"
-          onEscapeKeydown={handleHoverCardClose}
-          onInteractOutside={handleHoverCardClose}
-        >
-          <ScrollArea.Root
-            orientation="vertical"
-            class="max-h-[var(--hover-card-max-height)] overflow-hidden rounded-2xl"
-            viewportClass="max-h-[var(--hover-card-max-height)]"
-            scrollbarYClasses="w-3 pr-0.5"
-          >
-            <CardHoverCardContent
-              {card}
-              actions={hoverShowActions ? hoverActions : []}
-              contextMessage={hoverContextMessage}
-              onAction={(action) => {
-                sidebar.handleCardActionClick(action, { skipConfirmation: true });
-                handleHoverCardClose();
-              }}
-            >
-              {#snippet headerActions()}
+            {#snippet headerActions()}
+              <div class="flex items-center gap-2">
                 <button
                   type="button"
                   class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
-                  onclick={handleHoverCardClose}
+                  onclick={handleOpenPreview}
+                  aria-label={`Open full preview for ${card.label}`}
+                  title="Open preview"
+                >
+                  <EyeIcon class="size-4" />
+                </button>
+                <button
+                  type="button"
+                  class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
+                  onclick={() => simulatorCardContext.closeCardInspect()}
                   aria-label={`Close ${card.label} details`}
                   title="Close"
                 >
                   <XIcon class="size-4" />
                 </button>
-              {/snippet}
-            </CardHoverCardContent>
-          </ScrollArea.Root>
-        </HoverCard.Content>
-      {/if}
-    </HoverCard.Root>
-  {/if}
+              </div>
+            {/snippet}
+          </CardHoverCardContent>
+        </ScrollArea.Root>
+      </Popover.Content>
+    {/if}
+  </Popover.Root>
 {/if}
