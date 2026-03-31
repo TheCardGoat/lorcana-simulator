@@ -494,6 +494,52 @@ export function deriveLore(
   );
 }
 
+export function getEffectiveMoveCost(
+  definition: LorcanaCardDefinition | undefined,
+  state: DerivedStateContext,
+  cardInstanceId: CardInstanceId,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
+): number {
+  return clampCharacteristicForRules(
+    deriveMoveCost(definition, state, cardInstanceId, getDefinitionByInstanceId, registry),
+  );
+}
+
+export function deriveMoveCost(
+  definition: LorcanaCardDefinition | undefined,
+  state: DerivedStateContext,
+  cardInstanceId: CardInstanceId | undefined,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
+): number {
+  if (!definition || definition.cardType !== "location" || !cardInstanceId) {
+    return 0;
+  }
+
+  const baseMoveCost = normalizeNumber(definition.moveCost);
+  const modifier =
+    getActiveStatModifierTotal(state, cardInstanceId, "moveCost", getDefinitionByInstanceId) +
+    (registry
+      ? getStaticStatModifierTotal({
+          state,
+          cardInstanceId,
+          stat: "moveCost",
+          registry,
+        })
+      : 0);
+  return applyStaticStatFloor(
+    baseMoveCost + modifier,
+    registry
+      ? getStaticStatFloor({
+          cardInstanceId,
+          stat: "moveCost",
+          registry,
+        })
+      : undefined,
+  );
+}
+
 export function deriveCanBePutInInkwell(args: {
   definition?: LorcanaCardDefinition;
   ownerID?: PlayerId;
