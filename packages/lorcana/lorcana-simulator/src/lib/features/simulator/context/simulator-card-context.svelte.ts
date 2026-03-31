@@ -240,14 +240,14 @@ class SimulatorCardController implements SimulatorCardContextValue {
       return true;
     }
 
-    if (
-      ownerSide &&
-      card.zoneId === "play" &&
-      card.ownerSide === ownerSide &&
-      this.#game.challengeReadyCardIds().includes(card.cardId)
-    ) {
-      return true;
-    }
+    //if (
+    //  ownerSide &&
+    //  card.zoneId === "play" &&
+    //  card.ownerSide === ownerSide &&
+    //  this.#game.challengeReadyCardIds().includes(card.cardId)
+    //) {
+    //  return true;
+    //}
 
     return false;
   }
