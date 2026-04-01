@@ -837,6 +837,7 @@ export function buildCardSnapshotMap(
       actionSubtype:
         definition?.cardType === "action" ? (definition.actionSubtype ?? undefined) : undefined,
       cardsUnderCount: projectedCard.cardsUnder?.length ?? 0,
+      cardsUnderIds: projectedCard.cardsUnder ? [...projectedCard.cardsUnder] : undefined,
       playedViaShift: projectedCard.playedViaShift === true ? true : undefined,
       classifications:
         definition?.cardType === "character" ? definition.classifications : undefined,

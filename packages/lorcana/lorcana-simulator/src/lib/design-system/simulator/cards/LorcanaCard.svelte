@@ -238,12 +238,6 @@
     }
     event.stopPropagation();
 
-    console.log(
-      showHoverCard,
-      clickOpensHover,
-      !sidebar.actionSelectionSession,
-      !simulatorCardContext.canSelectCard(card, resolvedInteractionMeta),
-    );
     if (
       showHoverCard &&
       clickOpensHover &&

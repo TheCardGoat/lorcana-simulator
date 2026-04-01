@@ -457,7 +457,25 @@
 			? "1 character here"
 			: `${resolvedLocationOccupants.length} characters here`,
 	);
+	const resolvedCardsUnder = $derived.by(() => {
+		if (!card.cardsUnderIds) {
+			return [];
+		}
+
+		return card.cardsUnderIds
+			.map((id) => board?.cardSnapshotsById[id])
+			.filter(
+				(c): c is LorcanaCardSnapshot =>
+					Boolean(c) && !c?.isMasked,
+			);
+	});
+	const cardsUnderCountLabel = $derived(
+		resolvedCardsUnder.length === 1
+			? "1 card under"
+			: `${resolvedCardsUnder.length} cards under`,
+	);
 	const showLocationOccupants = $derived(card.cardType === "location");
+	const showCardsUnder = $derived(resolvedCardsUnder.length > 0);
 	const hasTextBoxContent = $derived(
 		hasStructuredText || Boolean(cardText),
 	);
@@ -832,6 +850,72 @@
 		</section>
 	{/if}
 
+	{#if showCardsUnder}
+		<section
+			class="location-occupants-section cards-under-section"
+			aria-label={cardsUnderCountLabel}
+		>
+			<div class="location-occupants-header">
+				<div class="location-occupants-copy">
+					<span class="location-occupants-eyebrow"
+						>Cards Under</span
+					>
+					<span class="location-occupants-title"
+						>{cardsUnderCountLabel}</span
+					>
+				</div>
+				<span class="location-occupants-count"
+					>{resolvedCardsUnder.length}</span
+				>
+			</div>
+
+			<div
+				class="location-occupants-list"
+				data-testid="cards-under-list"
+			>
+				{#each resolvedCardsUnder as underCard (underCard.cardId)}
+					<article class="location-occupant-card">
+						<div
+							class="location-occupant-main"
+						>
+							<button
+								type="button"
+								class="location-occupant-name-button"
+								onclick={() =>
+									handleCardUnderClick(
+										underCard,
+									)}
+								aria-label={`Inspect ${underCard.label} on the board`}
+							>
+								<span
+									class="location-occupant-dot"
+									style="--occupant-ink-rgb: {getInkRgb(
+										normalizeInk(
+											underCard
+												.inkType?.[0] ??
+												'amber',
+										),
+									)
+										.replace(
+											'rgb(',
+											'',
+										)
+										.replace(
+											')',
+											'',
+										)};"
+								></span>
+								<span
+									class="location-occupant-name"
+									>{underCard.label}</span
+								>
+							</button>
+						</div>
+					</article>
+				{/each}
+			</div>
+		</section>
+	{/if}
 	<!-- Text Box -->
 	{#if hasTextBoxContent}
 		<div class="text-box">
