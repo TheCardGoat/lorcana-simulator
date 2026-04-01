@@ -462,6 +462,11 @@
 			return [];
 		}
 
+		console.log(
+			"Card under: ",
+			board?.cardSnapshotsById[card.cardsUnderIds[0]],
+		);
+
 		return card.cardsUnderIds
 			.map((id) => board?.cardSnapshotsById[id])
 			.filter(

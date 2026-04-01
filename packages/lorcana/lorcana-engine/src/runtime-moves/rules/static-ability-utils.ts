@@ -1476,7 +1476,7 @@ export function getGrantedActivatedAbilities(args: {
           text: ability.text ?? `Boost ${ability.value} {I}`,
           usesPerTurn: 1,
           cost: { ink: ability.value },
-          effect: { type: "put-under", source: "top-of-deck", under: "self" },
+          effect: { type: "put-under", source: "top-of-deck", under: "self", facedown: true },
         },
         sourceId: cardId,
       });
