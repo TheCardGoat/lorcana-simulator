@@ -2173,12 +2173,12 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
     const validLimboPermissions = pendingPlayFromUnder.filter(
       (p) => p.expiresAtTurn >= currentTurn && p.controllerId === ctx.playerId,
     );
-    const limboCardsWithPermission: CardInstanceId[] = [];
+    const limboCardsWithPermission: string[] = [];
     for (const permission of validLimboPermissions) {
       const sourceItemCard = (ctx.cards.require(String(permission.sourceItemId)).meta ??
         {}) as LorcanaCardMeta;
       const underCardIds = Array.isArray(sourceItemCard?.cardsUnder)
-        ? (sourceItemCard.cardsUnder as CardInstanceId[])
+        ? sourceItemCard.cardsUnder
         : [];
       for (const underCardId of underCardIds) {
         if (!limboCardsWithPermission.includes(underCardId)) {
@@ -2211,6 +2211,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       }
 
       const isHandCard = handCards.includes(candidateId);
+      const isLimboCardWithPermission = limboCardsWithPermission.includes(candidateId);
       const standardCostReduction = computeCostReduction(
         ctx,
         ctx.G.turnMetadata,
@@ -2231,7 +2232,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         return true;
       }
 
-      if (!isHandCard) {
+      if (!isHandCard || !isLimboCardWithPermission) {
         continue;
       }
 

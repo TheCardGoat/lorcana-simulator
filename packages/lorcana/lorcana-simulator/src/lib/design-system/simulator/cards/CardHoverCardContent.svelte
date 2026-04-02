@@ -1,4 +1,5 @@
 <script lang="ts">
+	import * as Popover from "$lib/design-system/primitives/popover/index.js";
 	import type { Snippet } from "svelte";
 	import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
 	import ChevronUpIcon from "@lucide/svelte/icons/chevron-up";
@@ -508,15 +509,16 @@
 		}
 	}
 
-	function handleCardUnderClick(underCard: LorcanaCardSnapshot): void {
-		const actionsForCard = sidebar.getCardActionViews(underCard);
-		const playAction = actionsForCard.find(
-			(a) => a.categoryId === "play-card" && a.enabled,
-		);
-		if (playAction) {
-			onAction?.(playAction);
-		} else {
-			simulatorCardContext?.openGlobalPreview(underCard);
+	function handleCardUnderEnter(underCard: LorcanaCardSnapshot): void {
+		simulatorCardContext?.setExternalPreviewCard(underCard);
+	}
+
+	function handleCardUnderLeave(underCard: LorcanaCardSnapshot): void {
+		if (
+			simulatorCardContext?.previewCard?.cardId ===
+			underCard.cardId
+		) {
+			simulatorCardContext.setExternalPreviewCard(null);
 		}
 	}
 </script>
@@ -894,42 +896,155 @@
 				data-testid="cards-under-list"
 			>
 				{#each resolvedCardsUnder as underCard (underCard.cardId)}
+					{@const underCardActions =
+						sidebar.getCardActionViews(
+							underCard,
+						)}
 					<article class="location-occupant-card">
 						<div
 							class="location-occupant-main"
 						>
-							<button
-								type="button"
-								class="location-occupant-name-button"
-								onclick={() =>
-									handleCardUnderClick(
-										underCard,
-									)}
-								aria-label={`Inspect ${underCard.label} on the board`}
-							>
-								<span
-									class="location-occupant-dot"
-									style="--occupant-ink-rgb: {getInkRgb(
-										normalizeInk(
-											underCard
-												.inkType?.[0] ??
-												'amber',
-										),
-									)
-										.replace(
-											'rgb(',
-											'',
-										)
-										.replace(
-											')',
-											'',
-										)};"
-								></span>
-								<span
-									class="location-occupant-name"
-									>{underCard.label}</span
+							<Popover.Root>
+								<Popover.Trigger
 								>
-							</button>
+									{#snippet child({
+										props,
+									})}
+										<button
+											type="button"
+											class="location-occupant-name-button"
+											{...props}
+											onpointerenter={() =>
+												handleCardUnderEnter(
+													underCard,
+												)}
+											onpointerleave={() =>
+												handleCardUnderLeave(
+													underCard,
+												)}
+											onfocus={() =>
+												handleCardUnderEnter(
+													underCard,
+												)}
+											onblur={() =>
+												handleCardUnderLeave(
+													underCard,
+												)}
+											aria-label={`Actions for ${underCard.label}`}
+										>
+											<span
+												class="location-occupant-dot"
+												style="--occupant-ink-rgb: {getInkRgb(
+													normalizeInk(
+														underCard
+															.inkType?.[0] ??
+															'amber',
+													),
+												)
+													.replace(
+														'rgb(',
+														'',
+													)
+													.replace(
+														')',
+														'',
+													)};"
+
+											></span>
+											<span
+												class="location-occupant-name"
+												>{underCard.label}</span
+											>
+										</button>
+									{/snippet}
+								</Popover.Trigger>
+								<Popover.Content
+									align="start"
+									side="right"
+									sideOffset={12}
+									class="z-[80] min-w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-900/95 p-2 shadow-2xl backdrop-blur-md"
+								>
+									<div
+										class="flex flex-col gap-1.5"
+									>
+										<header
+											class="mb-1 border-b border-white/5 pb-1.5 px-1"
+										>
+											<p
+												class="text-[0.65rem] font-bold uppercase tracking-wider text-slate-400"
+											>
+												Available
+												Actions
+											</p>
+										</header>
+										{#if underCardActions.length > 0}
+											<div
+												class="flex flex-col gap-1"
+											>
+												{#each underCardActions as subAction (subAction.id)}
+													{@const ActionIcon =
+														getCardActionCategoryIcon(
+															subAction.categoryId,
+														)}
+													<button
+														type="button"
+														class="action-chip w-full justify-start py-1.5"
+														class:action-chip--disabled={!subAction.enabled}
+														disabled={!subAction.enabled}
+														onclick={() => {
+															const wasHandled =
+																sidebar.handleCardActionClick(
+																	subAction,
+																);
+															if (
+																wasHandled
+															) {
+																simulatorCardContext?.closeCardInspect();
+															}
+														}}
+													>
+														<span
+															class="action-chip__icon-shell"
+															data-action-icon={subAction.categoryId}
+														>
+															<ActionIcon
+																class="action-chip__icon"
+															/>
+														</span>
+														<span
+															class="action-chip__content"
+														>
+															<span
+																class="action-chip__label"
+																>{subAction.label}</span
+															>
+														</span>
+													</button>
+												{/each}
+											</div>
+										{:else}
+											<p
+												class="px-2 py-4 text-center text-xs italic text-slate-500"
+											>
+												No
+												actions
+												available
+											</p>
+										{/if}
+										<button
+											type="button"
+											class="mt-1 w-full rounded-lg bg-white/5 py-1.5 text-center text-[0.7rem] font-medium text-slate-300 transition-colors hover:bg-white/10"
+											onclick={() =>
+												simulatorCardContext?.openGlobalPreview(
+													underCard,
+												)}
+										>
+											View
+											Details
+										</button>
+									</div>
+								</Popover.Content>
+							</Popover.Root>
 						</div>
 					</article>
 				{/each}

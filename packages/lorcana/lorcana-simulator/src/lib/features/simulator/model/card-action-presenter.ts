@@ -299,7 +299,7 @@ export function buildCardActionViews(options: {
 
     if (
       categoryId === "shift-card" &&
-      card.zoneId === "hand" &&
+      (card.zoneId === "hand" || card.zoneId === "limbo") &&
       typeof card.shiftInkCost === "number"
     ) {
       actions.push(buildBlockedAction(card, categoryId, getShiftBlockedReason(card)));

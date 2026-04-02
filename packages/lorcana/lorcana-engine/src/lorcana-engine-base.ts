@@ -3594,6 +3594,29 @@ export abstract class LorcanaEngineBase {
             if (!playCardIds.includes(underCardId) && this.canPlayCard(underCardId)) {
               playCardIds.push(underCardId);
             }
+
+            const definition = this.getCardDefinitionByInstanceId(underCardId);
+            const card = definition as LorcanaCard;
+            // Check shift — need at least one valid shift target on board
+            if (hasShift(definition)) {
+              const shiftRules = getShiftRules(card);
+              if (shiftRules) {
+                const playCandidates = playerBoard.play.map((pid) => pid as CardInstanceId);
+                const shiftTargets = resolveShiftTargetCandidates(
+                  shiftRules,
+                  playCandidates,
+                  (cid) => this.getCardDefinitionByInstanceId(cid) as LorcanaCard,
+                );
+                const hasValidShiftTarget = shiftTargets.some((targetId) =>
+                  this.canPlayCard(underCardId, {
+                    cost: { cost: "shift", shiftTarget: targetId },
+                  }),
+                );
+                if (hasValidShiftTarget) {
+                  shiftCardIds.push(underCardId);
+                }
+              }
+            }
           }
         }
 
