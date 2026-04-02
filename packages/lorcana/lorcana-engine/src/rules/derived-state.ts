@@ -380,7 +380,7 @@ export function matchesLegacyStaticStatTarget(args: {
 function getStaticStatModifierTotal(args: {
   state: DerivedStateContext;
   cardInstanceId?: CardInstanceId;
-  stat: "strength" | "willpower" | "lore";
+  stat: "strength" | "willpower" | "lore" | "moveCost";
   registry: StaticEffectRegistry;
 }): number {
   const { cardInstanceId, stat, registry } = args;
@@ -421,7 +421,7 @@ export function getStaticStatModifierSources(args: {
 
 function getStaticStatFloor(args: {
   cardInstanceId?: CardInstanceId;
-  stat: "strength" | "willpower" | "lore";
+  stat: "strength" | "willpower" | "lore" | "moveCost";
   registry: StaticEffectRegistry;
 }): number | undefined {
   const { cardInstanceId, stat, registry } = args;

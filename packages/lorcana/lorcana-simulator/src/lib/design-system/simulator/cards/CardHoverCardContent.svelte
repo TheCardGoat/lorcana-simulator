@@ -23,7 +23,10 @@
 	import { buildSimulatorAssetUrl } from "$lib/config/public-url-config.js";
 	import type { LorcanaInkName } from "@/features/simulator/model/lorcana-colors.js";
 	import { getCardActionCategoryIcon } from "@/features/simulator/model/action-icons.js";
-	import { maybeUseLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
+	import {
+		maybeUseLorcanaBoardPresenter,
+		useLorcanaSidebarPresenter,
+	} from "@/features/simulator/context/game-context.svelte.js";
 	import { maybeUseSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
 
 	interface CardHoverCardContentProps {
@@ -79,6 +82,7 @@
 	const BOOST_PATTERN = /^Boost (\d+)(?: \{I\})?$/i;
 	const SHIFT_PATTERN =
 		/^(Shift|Puppy Shift|Universal Shift) (\d+)(?: \{I\})?$/i;
+	const sidebar = useLorcanaSidebarPresenter();
 
 	function isKeywordTitle(title: string): boolean {
 		const normalized = title.trim();
@@ -381,7 +385,7 @@
 	);
 	const statModifierSources = $derived.by(() => {
 		const sources = new Map<
-			"strength" | "willpower" | "lore",
+			"strength" | "willpower" | "lore" | "moveCost",
 			string
 		>();
 		for (const source of card.grantSources ?? []) {
@@ -501,6 +505,18 @@
 			occupant.cardId
 		) {
 			simulatorCardContext.setExternalPreviewCard(null);
+		}
+	}
+
+	function handleCardUnderClick(underCard: LorcanaCardSnapshot): void {
+		const actionsForCard = sidebar.getCardActionViews(underCard);
+		const playAction = actionsForCard.find(
+			(a) => a.categoryId === "play-card" && a.enabled,
+		);
+		if (playAction) {
+			onAction?.(playAction);
+		} else {
+			simulatorCardContext?.openGlobalPreview(underCard);
 		}
 	}
 </script>
@@ -652,7 +668,6 @@
 
 			<div class="stats-row stats-row--compact">
 				{#if card.moveCost !== undefined}
-					{console.log(card.text, card.moveCost)}
 					<div class="stat-wrapper">
 						<div
 							class="stat-box stat-move-cost"

@@ -292,7 +292,7 @@ export function buildCardActionViews(options: {
       continue;
     }
 
-    if (categoryId === "play-card" && card.zoneId === "hand") {
+    if (categoryId === "play-card" && (card.zoneId === "hand" || card.zoneId === "limbo")) {
       actions.push(buildBlockedAction(card, categoryId, "This card cannot be played right now."));
       continue;
     }
