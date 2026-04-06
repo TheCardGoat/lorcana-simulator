@@ -380,7 +380,7 @@ export function matchesLegacyStaticStatTarget(args: {
 function getStaticStatModifierTotal(args: {
   state: DerivedStateContext;
   cardInstanceId?: CardInstanceId;
-  stat: "strength" | "willpower" | "lore";
+  stat: "strength" | "willpower" | "lore" | "moveCost";
   registry: StaticEffectRegistry;
 }): number {
   const { cardInstanceId, stat, registry } = args;
@@ -421,7 +421,7 @@ export function getStaticStatModifierSources(args: {
 
 function getStaticStatFloor(args: {
   cardInstanceId?: CardInstanceId;
-  stat: "strength" | "willpower" | "lore";
+  stat: "strength" | "willpower" | "lore" | "moveCost";
   registry: StaticEffectRegistry;
 }): number | undefined {
   const { cardInstanceId, stat, registry } = args;
@@ -488,6 +488,52 @@ export function deriveLore(
       ? getStaticStatFloor({
           cardInstanceId,
           stat: "lore",
+          registry,
+        })
+      : undefined,
+  );
+}
+
+export function getEffectiveMoveCost(
+  definition: LorcanaCardDefinition | undefined,
+  state: DerivedStateContext,
+  cardInstanceId: CardInstanceId,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
+): number {
+  return clampCharacteristicForRules(
+    deriveMoveCost(definition, state, cardInstanceId, getDefinitionByInstanceId, registry),
+  );
+}
+
+export function deriveMoveCost(
+  definition: LorcanaCardDefinition | undefined,
+  state: DerivedStateContext,
+  cardInstanceId: CardInstanceId | undefined,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
+): number {
+  if (!definition || definition.cardType !== "location" || !cardInstanceId) {
+    return 0;
+  }
+
+  const baseMoveCost = normalizeNumber(definition.moveCost);
+  const modifier =
+    getActiveStatModifierTotal(state, cardInstanceId, "moveCost", getDefinitionByInstanceId) +
+    (registry
+      ? getStaticStatModifierTotal({
+          state,
+          cardInstanceId,
+          stat: "moveCost",
+          registry,
+        })
+      : 0);
+  return applyStaticStatFloor(
+    baseMoveCost + modifier,
+    registry
+      ? getStaticStatFloor({
+          cardInstanceId,
+          stat: "moveCost",
           registry,
         })
       : undefined,

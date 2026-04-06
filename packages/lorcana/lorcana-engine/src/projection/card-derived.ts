@@ -16,6 +16,7 @@ import {
   getActiveStaticClassificationGrants,
   deriveCanBePutInInkwell,
   deriveLore,
+  deriveMoveCost,
   derivePlayCost,
   deriveStrength,
   deriveWillpower,
@@ -140,6 +141,13 @@ export function projectLorcanaCardDerived(args: {
     registry,
   );
   derived.lore = deriveLore(definition, state, cardInstanceId, getDefinitionByInstanceId, registry);
+  derived.moveCost = deriveMoveCost(
+    definition,
+    state,
+    cardInstanceId,
+    getDefinitionByInstanceId,
+    registry,
+  );
   derived.playCost = derivePlayCost({
     definition,
     state,
@@ -305,7 +313,7 @@ export function projectLorcanaCardDerived(args: {
       sourceId: string;
       sourceDefinitionId?: string;
     }> = [];
-    for (const stat of ["strength", "willpower", "lore"] as const) {
+    for (const stat of ["strength", "willpower", "lore", "moveCost"] as const) {
       const sources = getStaticStatModifierSources({
         state,
         cardInstanceId,

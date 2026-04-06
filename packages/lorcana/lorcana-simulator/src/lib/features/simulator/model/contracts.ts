@@ -138,6 +138,7 @@ export interface LorcanaCardSnapshot {
   atLocationId?: string;
   atLocationLabel?: string;
   cardsUnderCount?: number;
+  cardsUnderIds?: string[];
   playedViaShift?: boolean;
   facePresentation: CardFacePresentation;
   activeEffects?: LorcanaActiveEffectSummary[];

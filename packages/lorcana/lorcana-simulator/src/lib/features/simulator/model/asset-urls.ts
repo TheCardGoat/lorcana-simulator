@@ -23,7 +23,11 @@ export function getStatIconUrl(stat: "strength" | "defense"): string {
   return buildSimulatorAssetUrl(`symbols/${stat}.svg`);
 }
 
-export function getStatSmallIconUrl(stat: "strength" | "defense"): string {
+export function getStatSmallIconUrl(stat: "strength" | "defense" | "moveCost"): string {
+  if (stat === "moveCost") {
+    return "/symbols/move-cost.png";
+  }
+
   return buildSimulatorAssetUrl(
     `symbols/${stat === "defense" ? "willpower-2" : "strength-simple-2"}.svg`,
   );

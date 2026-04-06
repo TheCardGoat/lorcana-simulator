@@ -59,6 +59,7 @@ function moveTopDeckCardUnderTarget(
   ctx: PlayCardExecutionContext,
   ownerId: PlayerId,
   targetId: CardInstanceId,
+  effect: PutUnderEffect,
 ): boolean {
   const deckCards = ctx.framework.zones.getCards({
     zone: "deck",
@@ -81,7 +82,7 @@ function moveTopDeckCardUnderTarget(
     state: undefined,
     damage: undefined,
     isDrying: undefined,
-    publicFaceState: undefined,
+    publicFaceState: effect.facedown ? "faceDown" : "faceUp",
     atLocationId: undefined,
     playedViaShift: undefined,
     playedCostType: undefined,
@@ -95,6 +96,7 @@ function moveDiscardCardUnderTarget(
   cardId: CardInstanceId,
   ownerId: PlayerId,
   targetId: CardInstanceId,
+  effect: PutUnderEffect,
 ): boolean {
   const discardCards = ctx.framework.zones.getCards({
     zone: "discard",
@@ -116,7 +118,7 @@ function moveDiscardCardUnderTarget(
     state: undefined,
     damage: undefined,
     isDrying: undefined,
-    publicFaceState: undefined,
+    publicFaceState: effect.facedown ? "faceDown" : "faceUp",
     atLocationId: undefined,
     playedViaShift: undefined,
     playedCostType: undefined,
@@ -129,6 +131,7 @@ function moveThisCardUnderTarget(
   ctx: PlayCardExecutionContext,
   cardId: CardInstanceId,
   targetId: CardInstanceId,
+  effect: PutUnderEffect,
 ): boolean {
   const currentZone = ctx.framework.zones.getCardZone(cardId);
   if (!currentZone?.startsWith("play")) {
@@ -147,7 +150,7 @@ function moveThisCardUnderTarget(
     state: undefined,
     damage: undefined,
     isDrying: undefined,
-    publicFaceState: undefined,
+    publicFaceState: effect.facedown ? "faceDown" : "faceUp",
     atLocationId: undefined,
     playedViaShift: undefined,
     playedCostType: undefined,
@@ -191,7 +194,7 @@ export function resolvePutUnderEffect(
   let movedCardId: CardInstanceId | undefined;
 
   if (effect.source === "this-card") {
-    const moved = moveThisCardUnderTarget(ctx, cardPlayed.cardId, targetId);
+    const moved = moveThisCardUnderTarget(ctx, cardPlayed.cardId, targetId, effect);
     if (moved) {
       movedCardId = cardPlayed.cardId;
     }
@@ -201,7 +204,7 @@ export function resolvePutUnderEffect(
       playerId: ownerId,
     }) as CardInstanceId[];
     movedCardId = deckCards.at(-1);
-    moveTopDeckCardUnderTarget(ctx, ownerId, targetId);
+    moveTopDeckCardUnderTarget(ctx, ownerId, targetId, effect);
   } else if (effect.source === "discard") {
     const selectedTargets = resolutionInput.targets;
     const selectedCardId = Array.isArray(selectedTargets)
@@ -218,7 +221,7 @@ export function resolvePutUnderEffect(
           return;
         }
       }
-      const moved = moveDiscardCardUnderTarget(ctx, selectedCardId, ownerId, targetId);
+      const moved = moveDiscardCardUnderTarget(ctx, selectedCardId, ownerId, targetId, effect);
       if (moved) {
         movedCardId = selectedCardId;
       }

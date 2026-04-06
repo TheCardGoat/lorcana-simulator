@@ -2168,6 +2168,26 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       zone: "hand",
       playerId: ctx.playerId,
     });
+    const currentTurn = ctx.framework.state.status.turn ?? 1;
+    const pendingPlayFromUnder = ctx.G.turnMetadata?.pendingPlayFromUnder ?? [];
+    const validLimboPermissions = pendingPlayFromUnder.filter(
+      (p) => p.expiresAtTurn >= currentTurn && p.controllerId === ctx.playerId,
+    );
+    const limboCardsWithPermission: string[] = [];
+    for (const permission of validLimboPermissions) {
+      const sourceItemCard = (ctx.cards.require(String(permission.sourceItemId)).meta ??
+        {}) as LorcanaCardMeta;
+      const underCardIds = Array.isArray(sourceItemCard?.cardsUnder)
+        ? sourceItemCard.cardsUnder
+        : [];
+      for (const underCardId of underCardIds) {
+        if (!limboCardsWithPermission.includes(underCardId)) {
+          limboCardsWithPermission.push(underCardId);
+        }
+      }
+    }
+
+    const playableCandidates = [...handCards, ...limboCardsWithPermission];
     const availableInk = getAvailableInk(ctx, ctx.playerId as PlayerId);
     const playCards = ctx.framework.zones.getCards({
       zone: "play",
@@ -2184,18 +2204,19 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
 
     const availableRegistry = getOrBuildMoveRegistry(ctx);
 
-    for (const handCardId of handCards) {
-      const cardDef = getCardDefinitionForEnumeration(handCardId, ctx);
+    for (const candidateId of playableCandidates) {
+      const cardDef = getCardDefinitionForEnumeration(candidateId, ctx);
       if (!cardDef) {
         continue;
       }
 
-      const currentTurn = ctx.framework.state.status.turn ?? 1;
+      const isHandCard = handCards.includes(candidateId);
+      const isLimboCardWithPermission = limboCardsWithPermission.includes(candidateId);
       const standardCostReduction = computeCostReduction(
         ctx,
         ctx.G.turnMetadata,
         ctx.playerId as PlayerId,
-        handCardId as CardInstanceId,
+        candidateId as CardInstanceId,
         cardDef,
         currentTurn,
         availableRegistry,
@@ -2211,11 +2232,15 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         return true;
       }
 
+      if (!isHandCard || !isLimboCardWithPermission) {
+        continue;
+      }
+
       const shiftCostReduction = computeCostReduction(
         ctx,
         ctx.G.turnMetadata,
         ctx.playerId as PlayerId,
-        handCardId as CardInstanceId,
+        candidateId as CardInstanceId,
         cardDef,
         currentTurn,
         availableRegistry,

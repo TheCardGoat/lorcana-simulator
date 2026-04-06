@@ -60,7 +60,12 @@ export interface ChallengeState {
  * Supported continuous-effect stat keys.
  * Keep this union broad enough for future stat-mod effect coverage.
  */
-export type ContinuousEffectStat = "strength" | "willpower" | "lore" | "singer-threshold";
+export type ContinuousEffectStat =
+  | "strength"
+  | "willpower"
+  | "lore"
+  | "singer-threshold"
+  | "moveCost";
 
 /**
  * Continuous effect instance for stat modifiers.

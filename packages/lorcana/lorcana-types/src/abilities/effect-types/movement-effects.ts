@@ -119,6 +119,7 @@ export interface PutUnderEffect {
   source: "top-of-deck" | "hand" | "discard" | "this-card";
   under: CharacterTarget | LocationTarget | "self";
   cardType?: CardType;
+  facedown?: boolean;
 }
 
 /**

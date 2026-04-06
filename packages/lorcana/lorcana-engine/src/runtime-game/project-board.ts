@@ -585,15 +585,32 @@ function projectPlayerBoard(args: {
   );
 
   // Limbo is projected for card lookup and previews, even though it is not rendered as a board lane.
-  for (const cardId of limboZone?.cards ?? []) {
-    registerCard(
-      buildVisibleCard({
-        cardId,
-        zone: "limbo",
-        rawBoard,
-        rawCards,
-      }),
-    );
+  for (const [index, cardId] of (limboZone?.cards ?? []).entries()) {
+    const isFacedown = rawBoard.cards[cardId]?.meta?.publicFaceState === "faceDown";
+    if (isFacedown) {
+      registerCard(
+        buildHiddenCard({
+          state,
+          zone: "limbo",
+          ownerId: playerId,
+          slotIndex: index,
+          rawCardId: cardId,
+          rawBoard,
+          staticResources,
+          runtimeCardCache,
+          registry,
+        }),
+      );
+    } else {
+      registerCard(
+        buildVisibleCard({
+          cardId,
+          zone: "limbo",
+          rawBoard,
+          rawCards,
+        }),
+      );
+    }
   }
 
   const deckTop = topDeckCardId
