@@ -1,6 +1,11 @@
 import { getLogger } from "@logtape/logtape";
 import type { CardInstanceId, MoveInput, PlayerId, RuntimeValidationResult } from "#core";
-import type { LorcanaCard, LorcanaCardTarget, LorcanaTargetDSL } from "@tcg/lorcana-types";
+import type {
+  LorcanaCard,
+  LorcanaCardTarget,
+  LorcanaFilter,
+  LorcanaTargetDSL,
+} from "@tcg/lorcana-types";
 import type { MoveEnumerationContext, MoveValidationContext } from "#core";
 import type { LorcanaG } from "../../types";
 import { hasKeyword } from "../../card-utils";
@@ -906,7 +911,26 @@ function collectChosenCardTargetDescriptors(
       ? undefined
       : normalizeTargetDescriptor(effectRecord.target);
   if (!defersTargetSelection && normalizedTarget?.selector === "chosen") {
-    descriptors.push(normalizedTarget as LorcanaCardTarget);
+    const targetDescriptor = normalizedTarget as LorcanaCardTarget;
+    // When the target is a string enum (e.g. CHOSEN_CHARACTER) it carries no
+    // filter of its own.  Some effects attach an additional filter at the effect
+    // level (e.g. Into the Unknown's `filter: [{type:"exerted"}]`).  Merge it
+    // into the descriptor so target candidates are filtered correctly.
+    const effectLevelFilters = (() => {
+      const f = effectRecord.filter;
+      if (Array.isArray(f)) return f as LorcanaFilter[];
+      if (f && typeof f === "object") return [f as LorcanaFilter];
+      return undefined;
+    })();
+    if (
+      effectLevelFilters &&
+      !targetDescriptor.filter &&
+      !targetDescriptor.filters
+    ) {
+      descriptors.push({ ...targetDescriptor, filter: effectLevelFilters });
+    } else {
+      descriptors.push(targetDescriptor);
+    }
   }
   const moveCharacterTarget =
     typeof effectRecord.character === "object" &&

@@ -42,6 +42,7 @@ export const cheshireCatPerplexingFeline: CharacterCard = {
             owner: "any",
             zones: ["play"],
             cardTypes: ["character"],
+            filter: [{ type: "damaged" }],
           },
           type: "deal-damage",
         },

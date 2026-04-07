@@ -64,6 +64,7 @@ export function mergeTargetPreferences(
 
   return {
     actorPlayerScore: (left.actorPlayerScore ?? 0) + (right.actorPlayerScore ?? 0),
+    alliedScore: (left.alliedScore ?? 0) + (right.alliedScore ?? 0),
     alliedRoleWeights: mergeRoleWeights(left.alliedRoleWeights, right.alliedRoleWeights),
     damagedAlliedScore: (left.damagedAlliedScore ?? 0) + (right.damagedAlliedScore ?? 0),
     damagedOpposingScore: (left.damagedOpposingScore ?? 0) + (right.damagedOpposingScore ?? 0),
@@ -209,6 +210,12 @@ export function scoreAutomatedActionTarget(args: {
   );
 
   if (alliedTarget) {
+    if ((preference.alliedScore ?? 0) !== 0) {
+      contributors.push({
+        key: "alliedBase",
+        value: preference.alliedScore ?? 0,
+      });
+    }
     if ((card.damage ?? 0) > 0 && (preference.damagedAlliedScore ?? 0) !== 0) {
       contributors.push({
         key: "damagedAlly",

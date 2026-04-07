@@ -1307,6 +1307,12 @@ function buildTargetVariants(args: {
     );
 
     if (pool.length === 0 || boundedCombinations.length > 0) {
+      // If there are required selections but no candidates exist, signal that the
+      // action is unplayable rather than returning an empty selection that the engine
+      // will reject at execution time.
+      if (pool.length === 0 && minSelections > 0) {
+        return null;
+      }
       return boundedCombinations.length > 0 ? boundedCombinations : [[]];
     }
   }
@@ -1327,7 +1333,12 @@ function buildTargetVariants(args: {
     ...analysis.playerCandidates.map((playerId) => String(playerId) as AutomatedActionTargetId),
   ];
   if (analysis.requiresExplicitSelection && rawPool.length === 0) {
-    return [[]];
+    // No valid targets exist. If targets are required (minSelections > 0), the
+    // action cannot be played — return null so the candidate is skipped entirely.
+    // If selections are optional (minSelections === 0, e.g. "up to N"), return an
+    // empty selection so the AI can still choose to play the card without picking
+    // any targets.
+    return analysis.minSelections > 0 ? null : [[]];
   }
   const priorityContext = buildTargetPriorityContext({
     adapter,

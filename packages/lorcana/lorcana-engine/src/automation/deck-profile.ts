@@ -70,6 +70,8 @@ export type DeckAwareMatchupModifier = {
 
 export type AutomatedActionCardTargetPreference = {
   actorPlayerScore?: number;
+  /** Flat score applied to every allied card target regardless of role or state. */
+  alliedScore?: number;
   alliedRoleWeights?: RoleWeightMap;
   damagedAlliedScore?: number;
   damagedOpposingScore?: number;
@@ -740,6 +742,9 @@ const CARD_OVERRIDES: Record<string, DeckAwareCardOverride> = {
       highLoreOpposingMultiplier: 1,
       lowStrengthOpposingScore: 2,
       opposingRoleWeights: { drawEngine: 2, evasiveThreat: 2, mustAnswerThreat: 4, tempoThreat: 2 },
+      // Strongly penalise targeting own characters with a damage spell so that
+      // allied targets are only chosen when no opposing characters exist.
+      alliedScore: -20,
     },
   },
   "7im": {
