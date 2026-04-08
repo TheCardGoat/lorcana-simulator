@@ -396,7 +396,7 @@ function getStaticStatModifierTotal(args: {
 export function getStaticStatModifierSources(args: {
   state: DerivedStateContext;
   cardInstanceId?: CardInstanceId;
-  stat: "strength" | "willpower" | "lore";
+  stat: "strength" | "willpower" | "lore" | "moveCost";
   registry: StaticEffectRegistry | undefined;
 }): Array<{
   stat: string;
