@@ -51,7 +51,7 @@ export const goliathClanLeader: CharacterCard = {
         condition: {
           type: "resource-count",
           what: "cards-in-hand",
-          controller: "active",
+          controller: "you",
           comparison: "greater-than",
           value: 2,
         },
@@ -62,25 +62,25 @@ export const goliathClanLeader: CharacterCard = {
             type: "difference",
             left: {
               type: "cards-in-hand",
-              controller: "active",
+              controller: "you",
             },
             right: 2,
           },
-          target: "CURRENT_TURN",
+          target: "CONTROLLER",
         },
         else: {
           type: "conditional",
           condition: {
             type: "resource-count",
             what: "cards-in-hand",
-            controller: "active",
+            controller: "you",
             comparison: "less-than",
             value: 2,
           },
           then: {
             type: "draw-until-hand-size",
             size: 2,
-            target: "CURRENT_TURN",
+            target: "CONTROLLER",
           },
         },
       },

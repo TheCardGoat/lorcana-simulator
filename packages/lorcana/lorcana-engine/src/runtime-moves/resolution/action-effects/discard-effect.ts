@@ -144,7 +144,12 @@ export function resolveDiscardEffect(
         ]
       : effect.target === "CURRENT_TURN"
         ? (() => {
-            const currentTurnPlayerId = resolveCurrentTurnPlayerId(ctx);
+            // Prefer triggerContext.playerId (the player whose turn fired the trigger)
+            // over the generic currentPlayer/priority.holder, which may be wrong when
+            // a non-turn-player (e.g. card controller) resolves the bag.
+            const currentTurnPlayerId =
+              (resolutionInput.triggerContext?.playerId as PlayerId | undefined) ??
+              resolveCurrentTurnPlayerId(ctx);
             return currentTurnPlayerId ? [currentTurnPlayerId] : [];
           })()
         : resolveTargetPlayerIds(
