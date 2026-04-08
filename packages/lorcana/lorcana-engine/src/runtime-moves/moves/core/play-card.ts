@@ -2211,6 +2211,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       }
 
       const isHandCard = handCards.includes(candidateId);
+      const isLimboCardWithPermission = limboCardsWithPermission.includes(candidateId);
       const standardCostReduction = computeCostReduction(
         ctx,
         ctx.G.turnMetadata,
@@ -2231,7 +2232,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         return true;
       }
 
-      if (!isHandCard) {
+      if (!isHandCard && !isLimboCardWithPermission) {
         continue;
       }
 

@@ -465,7 +465,7 @@ describe("LorcanaEngineBase.getAvailableMoves", () => {
     ]);
   });
 
-  // Regression tests for THE-879: alternative cost checks (sing/shift) were dead code
+  // Regression tests for THE-879/THE-895: alternative cost checks (sing/shift) were dead code
   // due to `!isHandCard || !isLimboCardWithPermission` always being true.
   // The bug caused `available()` to skip all alternative cost checks, so playCard was
   // reported as unavailable even when sing/shift could be used.
@@ -563,6 +563,57 @@ describe("LorcanaEngineBase.getAvailableMoves", () => {
     expect(shiftMove?.selectableCardIds).toContain(
       testEngine.findCardInstanceId(shiftableCharacter, "hand", "player_one"),
     );
+  });
+
+  it("blocks playing a second card when ink is exhausted after paying for the first", () => {
+    const threeDropA = createMockCharacter({
+      id: "am-three-drop-a",
+      name: "Three Drop A",
+      cost: 3,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+    const threeDropB = createMockCharacter({
+      id: "am-three-drop-b",
+      name: "Three Drop B",
+      cost: 3,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [threeDropA, threeDropB],
+        deck: 1,
+        inkwell: 4,
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    const p1 = testEngine.asPlayerOne();
+
+    // Player should be able to play one 3-cost card with 4 ink
+    const movesBeforePlay = p1.getAvailableMoves();
+    const playMoveBefore = movesBeforePlay.find((m) => m.moveId === "playCard");
+    expect(playMoveBefore).toBeDefined();
+
+    // Play the first card
+    const cardAId = testEngine.findCardInstanceId(threeDropA, "hand", "player_one");
+    p1.playCard(cardAId);
+
+    // After playing a 3-cost card with 4 ink, only 1 ink remains
+    // The second 3-cost card should not be playable
+    const movesAfterPlay = p1.getAvailableMoves();
+    const playMoveAfter = movesAfterPlay.find((m) => m.moveId === "playCard");
+    const secondCardId = testEngine.findCardInstanceId(threeDropB, "hand", "player_one");
+
+    if (playMoveAfter) {
+      expect(playMoveAfter.selectableCardIds).not.toContain(secondCardId);
+    }
   });
 });
 
