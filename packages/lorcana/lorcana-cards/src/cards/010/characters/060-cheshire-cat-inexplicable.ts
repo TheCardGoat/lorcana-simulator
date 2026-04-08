@@ -48,6 +48,7 @@ export const cheshireCatInexplicable: CharacterCard = {
       },
       effect: {
         type: "optional",
+        chooser: "CONTROLLER",
         effect: {
           type: "move-damage",
           amount: 2,

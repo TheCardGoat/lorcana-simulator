@@ -38,14 +38,17 @@ export const herculesSpectralDemigod: CharacterCard = {
     {
       id: "16g-2",
       name: "SUPERHUMAN STRENGTH",
+      condition: {
+        type: "has-card-under",
+      },
       effect: {
         modifier: 3,
         stat: "strength",
         target: "SELF",
         type: "modify-stat",
       },
-      type: "action",
-      text: "SUPERHUMAN STRENGTH While there’s a card under this character, he gets +3 {S}.",
+      type: "static",
+      text: "SUPERHUMAN STRENGTH While there's a card under this character, he gets +3 {S}.",
     },
   ],
   i18n: herculesSpectralDemigodI18n,

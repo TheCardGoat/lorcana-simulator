@@ -3,6 +3,7 @@ import type { CardSelectionFilter, DiscardEffect, LorcanaTargetDSL } from "@tcg/
 import type { CardPlayedPayload, TargetResolutionSelectionContext } from "../../../types";
 import { queueTriggeredEvent } from "../../effects/triggered-abilities";
 import { applyReplacementEffects } from "../../effects/replacement-effects";
+import { resolveCurrentTurnPlayerId } from "../../../targeting/runtime";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import { createPendingActionEffect, enqueuePendingActionEffect } from "./pending-action-effects";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
@@ -141,13 +142,23 @@ export function resolveDiscardEffect(
               ),
           ),
         ]
-      : resolveTargetPlayerIds(
-          ctx,
-          cardPlayed,
-          effect.target,
-          getCombinedSelectionInput(resolutionInput),
-          resolutionInput.eventSnapshot,
-        );
+      : effect.target === "CURRENT_TURN"
+        ? (() => {
+            // Prefer triggerContext.playerId (the player whose turn fired the trigger)
+            // over the generic currentPlayer/priority.holder, which may be wrong when
+            // a non-turn-player (e.g. card controller) resolves the bag.
+            const currentTurnPlayerId =
+              (resolutionInput.triggerContext?.playerId as PlayerId | undefined) ??
+              resolveCurrentTurnPlayerId(ctx);
+            return currentTurnPlayerId ? [currentTurnPlayerId] : [];
+          })()
+        : resolveTargetPlayerIds(
+            ctx,
+            cardPlayed,
+            effect.target,
+            getCombinedSelectionInput(resolutionInput),
+            resolutionInput.eventSnapshot,
+          );
 
   const discardAll = resolvedInput.discardAll === true;
   const amount = discardAll
