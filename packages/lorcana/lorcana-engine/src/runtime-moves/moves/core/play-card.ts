@@ -2232,7 +2232,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         return true;
       }
 
-      if (!isHandCard || !isLimboCardWithPermission) {
+      if (!isHandCard && !isLimboCardWithPermission) {
         continue;
       }
 
