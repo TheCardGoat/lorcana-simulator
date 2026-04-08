@@ -456,7 +456,12 @@ function buildScrySelectionContext(
 ): ScryResolutionSelectionContext | undefined {
   const eventSnapshot = asRecord(args.resolutionInput.eventSnapshot ?? null);
   const revealedCardIds = getStringArray(eventSnapshot, "revealedCardIds") as CardInstanceId[];
-  const amount = getRecordNumber(args.effect, "amount");
+  // `amount` may be a static number or a dynamic AmountExpr object (e.g. source-attribute).
+  // When cards are already revealed (stored in eventSnapshot), their count IS the resolved
+  // amount — use it as the fallback so dynamic-amount scry effects (like Pete's FOREBODING
+  // GLANCE which uses { type: "source-attribute", attribute: "cards-under-them" }) don't
+  // return undefined here and silently block the scry-selection UI.
+  const amount = getRecordNumber(args.effect, "amount") ?? revealedCardIds.length;
   const destinations = Array.isArray(args.effect.destinations)
     ? args.effect.destinations
         .map((destination) => asRecord(destination))

@@ -84,6 +84,53 @@ describe("Pete - Ghost of Christmas Future", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
+    it("scry-selection pending effect has a populated selectionContext (regression: dynamic amount broke UI)", () => {
+      // Regression test for THE-883: when scry amount is a dynamic expression
+      // (source-attribute: cards-under-them), buildScrySelectionContext was calling
+      // getRecordNumber on the AmountExpr object and getting undefined, causing the
+      // selectionContext to be missing on the pending effect — the UI couldn't render
+      // the card arrangement screen and the game got stuck.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: peteGhostOfChristmasFuture, isDrying: false }],
+        deck: [deckCard1, deckCard2, deckCard3],
+        inkwell: 10,
+      });
+
+      // Activate Boost to put 1 card under Pete
+      expect(
+        testEngine.asPlayerOne().activateAbility(peteGhostOfChristmasFuture, { ability: "Boost" }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.getCardsUnder(peteGhostOfChristmasFuture)).toHaveLength(1);
+
+      // Quest triggers FOREBODING GLANCE
+      expect(testEngine.asPlayerOne().quest(peteGhostOfChristmasFuture)).toBeSuccessfulCommand();
+
+      // Resolve the bag to create the scry-selection pending effect
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(peteGhostOfChristmasFuture),
+      ).toBeSuccessfulCommand();
+
+      // The pending effect MUST have a selectionContext of kind "scry-selection"
+      // with amount = 1 (number of cards under Pete) and destination rules.
+      // Without the fix, selectionContext was undefined because getRecordNumber
+      // returned undefined for the AmountExpr object.
+      const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
+      expect(pendingEffects).toHaveLength(1);
+      const pendingEffect = pendingEffects[0]!;
+      expect(pendingEffect.selectionContext).toBeDefined();
+      expect(pendingEffect.selectionContext?.kind).toBe("scry-selection");
+
+      const scryCtx = pendingEffect.selectionContext as {
+        kind: string;
+        amount: number;
+        revealedCardIds: string[];
+        destinationRules: unknown[];
+      };
+      expect(scryCtx.amount).toBe(1);
+      expect(scryCtx.revealedCardIds).toHaveLength(1);
+      expect(scryCtx.destinationRules).toHaveLength(2); // hand + deck-bottom
+    });
+
     it("with 1 card under him, looks at 1 card and player can put it in hand", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [{ card: peteGhostOfChristmasFuture, isDrying: false }],
