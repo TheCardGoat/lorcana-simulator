@@ -66,6 +66,7 @@ export type MoveOptionAbility = {
   kind: "ability";
   abilityIndex: number;
   abilityLabel: string;
+  discardCostCount?: number;
 };
 
 export type MoveOption = MoveOptionTarget | MoveOptionAbility | MoveOptionSingTogether;

@@ -224,10 +224,7 @@ function getChallengeBlockedReason(card: LorcanaCardSnapshot): string {
   return "No legal challenge targets right now.";
 }
 
-function getMoveBlockedReason(card: LorcanaCardSnapshot): string {
-  if (card.readyState === "exerted") {
-    return "This character is exerted.";
-  }
+function getMoveBlockedReason(_card: LorcanaCardSnapshot): string {
   return "No legal locations to move to right now.";
 }
 

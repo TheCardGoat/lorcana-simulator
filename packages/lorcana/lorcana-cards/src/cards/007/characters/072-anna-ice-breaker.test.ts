@@ -1,58 +1,68 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   AnnaIceBreaker,
-//   DoloresMadrigalWithinEarshot,
-//   DonaldDuckFlusteredSorcerer,
-//   TheQueenJealousBeauty,
-// } from "@lorcanito/lorcana-engine/cards/007";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Anna - Ice Breaker", () => {
-//   It("Support (Whenever this character quests, you may add their {S} to another chosen character’s {S} this turn.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [annaIceBreaker],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(annaIceBreaker);
-//     Expect(cardUnderTest.hasSupport).toBe(true);
-//   });
-//
-//   It("WINTER AMBUSH When you play this character, chosen opposing character can’t ready at the start of their next turn.", async () => {
-//     Const play = [
-//       DonaldDuckFlusteredSorcerer,
-//       TheQueenJealousBeauty,
-//       DoloresMadrigalWithinEarshot,
-//     ];
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: annaIceBreaker.cost,
-//         Hand: [annaIceBreaker],
-//         Deck: 5,
-//       },
-//       {
-//         Play: play,
-//         Deck: 5,
-//       },
-//     );
-//
-//     For (const card of play) {
-//       Await testEngine.tapCard(card);
-//     }
-//
-//     Await testEngine.playCard(annaIceBreaker, {
-//       Targets: [doloresMadrigalWithinEarshot],
-//     });
-//
-//     Await testEngine.passTurn();
-//
-//     Expect(testEngine.getCardModel(doloresMadrigalWithinEarshot).exerted).toBe(
-//       True,
-//     );
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { annaIceBreaker } from "./072-anna-ice-breaker";
+
+const opponentCharacter = createMockCharacter({
+  id: "opp-char",
+  name: "Opponent Character",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Anna - Ice Breaker", () => {
+  describe("WINTER AMBUSH — When you play this character, chosen opposing character can't ready at the start of their next turn.", () => {
+    it("triggers when played and prompts for target selection", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [annaIceBreaker],
+          inkwell: annaIceBreaker.cost,
+          deck: 2,
+        },
+        {
+          play: [opponentCharacter],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(annaIceBreaker)).toBeSuccessfulCommand();
+
+      // Triggered ability should be on the stack
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+    });
+
+    it("applies cant-ready restriction to the chosen opposing character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [annaIceBreaker],
+          inkwell: annaIceBreaker.cost,
+          deck: 2,
+        },
+        {
+          play: [{ card: opponentCharacter, exerted: true }],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(annaIceBreaker)).toBeSuccessfulCommand();
+
+      // Resolve the triggered ability targeting the opponent's character
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(annaIceBreaker, { targets: [opponentCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      // The opponent character should have the cant-ready restriction
+      expect(testEngine.asPlayerTwo()).toHaveRestriction({
+        card: opponentCharacter,
+        restriction: "cant-ready",
+      });
+
+      // Pass player one's turn — at start of player two's turn, the character should NOT ready
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.isExerted(opponentCharacter)).toBe(true);
+    });
+  });
+});

@@ -40,7 +40,13 @@ export const annaIceBreaker: CharacterCard = {
       effect: {
         duration: "until-start-of-next-turn",
         restriction: "cant-ready",
-        target: "SELF",
+        target: {
+          cardTypes: ["character"],
+          count: 1,
+          owner: "opponent",
+          selector: "chosen",
+          zones: ["play"],
+        },
         type: "restriction",
       },
       id: "pj2-2",

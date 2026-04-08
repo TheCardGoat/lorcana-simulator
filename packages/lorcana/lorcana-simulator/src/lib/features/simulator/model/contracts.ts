@@ -377,9 +377,10 @@ export type ExecutableMovePresentation =
       categoryId: ExecutableMovePresentationCategoryId;
       categoryLabel: string;
       optionLabel: string;
-      selectionMode?: "singTogether";
+      selectionMode?: "singTogether" | "discard-cost";
       candidateCards?: Array<{ cardId: string; value: number }>;
       requiredValue?: number;
+      discardCostCount?: number;
     };
 
 export type CardActionCategoryId =

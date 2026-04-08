@@ -3867,10 +3867,22 @@ export abstract class LorcanaEngineBase {
           ) {
             const ability = allAbilities[abilityIndex];
             const label = ability.name || ability.text || `Ability ${abilityIndex + 1}`;
+            const abilityCost = (ability as { cost?: { discardCards?: unknown; discardCard?: unknown } }).cost ?? {};
+            const rawDiscardCount =
+              typeof abilityCost.discardCards === "number"
+                ? abilityCost.discardCards
+                : typeof abilityCost.discardCard === "number"
+                  ? abilityCost.discardCard
+                  : 0;
+            const discardCostCount =
+              Number.isFinite(rawDiscardCount) && rawDiscardCount > 0
+                ? Math.floor(rawDiscardCount)
+                : 0;
             options.push({
               kind: "ability",
               abilityIndex,
               abilityLabel: label,
+              ...(discardCostCount > 0 ? { discardCostCount } : {}),
             });
           }
         }

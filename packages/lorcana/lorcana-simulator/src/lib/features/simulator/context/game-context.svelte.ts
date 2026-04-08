@@ -2613,6 +2613,55 @@ function canConfirmSingTogetherSelection(session: ActionSelectionSession): boole
   return getSingTogetherSelectionTotal(session, move) >= metadata.requiredValue;
 }
 
+function isDiscardCostSelectionMove(move: ExecutableMoveEntry | null | undefined): boolean {
+  return (
+    move?.moveId === "activateAbility" &&
+    move.presentation.kind === "targeted" &&
+    move.presentation.selectionMode === "discard-cost" &&
+    typeof move.presentation.discardCostCount === "number" &&
+    move.presentation.discardCostCount > 0
+  );
+}
+
+function getDiscardCostCount(move: ExecutableMoveEntry | null | undefined): number {
+  if (!isDiscardCostSelectionMove(move)) {
+    return 0;
+  }
+  return (move?.presentation as { discardCostCount?: number }).discardCostCount ?? 0;
+}
+
+function canConfirmDiscardCostSelection(
+  session: ActionSelectionSession,
+  move: ExecutableMoveEntry | null | undefined,
+): boolean {
+  const requiredCount = getDiscardCostCount(move);
+  return requiredCount > 0 && session.selectedCardIds.length === requiredCount;
+}
+
+function getDiscardCostSelectionMove(session: ActionSelectionSession): ExecutableMoveEntry | null {
+  const selectedMove =
+    session.selectedMoveId != null
+      ? (session.candidateMoves.find((move) => move.id === session.selectedMoveId) ?? null)
+      : null;
+  if (isDiscardCostSelectionMove(selectedMove)) {
+    return selectedMove;
+  }
+
+  if (!session.sourceCardId) {
+    return null;
+  }
+
+  const discardCostMoves = getSourceMovesForActionSelectionSession(
+    session,
+    session.sourceCardId,
+  ).filter((move) => isDiscardCostSelectionMove(move));
+  return discardCostMoves.length === 1 ? (discardCostMoves[0] ?? null) : null;
+}
+
+function isDiscardCostSelectionSession(session: ActionSelectionSession): boolean {
+  return session.categoryId === "activate-ability" && getDiscardCostSelectionMove(session) !== null;
+}
+
 function getUniqueOrderedIds(values: Array<string | null | undefined>): string[] {
   const seen = new Set<string>();
   const orderedIds: string[] = [];
@@ -4415,6 +4464,13 @@ export class LorcanaSidebarPresenter {
     }
 
     if (session.phase === "choose-target" && session.sourceCardId) {
+      if (isDiscardCostSelectionSession(session)) {
+        const localSide = this.ownerSide;
+        return Object.values(this.#game.cardSnapshotsById())
+          .filter((c) => c.zoneId === "hand" && c.ownerSide === localSide)
+          .map((c) => c.cardId);
+      }
+
       if (isSingTogetherSelectionSession(session)) {
         const metadata = getSingTogetherSelectionMetadata(getSingTogetherSelectionMove(session));
         return metadata ? metadata.candidateCards.map((candidate) => candidate.cardId) : [];
@@ -4979,7 +5035,8 @@ export class LorcanaSidebarPresenter {
       canCancel: true,
       canConfirm:
         (session.phase === "confirm" && currentMove !== null) ||
-        (session.phase === "choose-target" && canConfirmSingTogetherSelection(session)),
+        (session.phase === "choose-target" && canConfirmSingTogetherSelection(session)) ||
+        (session.phase === "choose-target" && canConfirmDiscardCostSelection(session, currentMove)),
     };
   }
 
@@ -5206,6 +5263,27 @@ export class LorcanaSidebarPresenter {
 
       const sourceMoves = getSourceMovesForActionSelectionSession(session, action.cardId);
       const singleMove = sourceMoves.length === 1 ? sourceMoves[0] : null;
+      this.pendingMulliganDangerConfirm = null;
+      this.#secondLayerCategoryLabel = null;
+      this.#game.setPendingError(null);
+
+      if (singleMove && isDiscardCostSelectionMove(singleMove)) {
+        this.#setActionSelectionSession({
+          ...session,
+          sourceCardId: action.cardId,
+          selectedMoveId: singleMove.id,
+          selectedCardIds: [],
+          phase: "choose-target",
+        });
+        const discardCount = getDiscardCostCount(singleMove);
+        this.#game.setStatusMessage(
+          discardCount === 1
+            ? "Choose a card from your hand to discard."
+            : `Choose ${discardCount} cards from your hand to discard.`,
+        );
+        return true;
+      }
+
       this.#setActionSelectionSession({
         ...session,
         sourceCardId: action.cardId,
@@ -5216,9 +5294,6 @@ export class LorcanaSidebarPresenter {
             : "executing"
           : "choose-option",
       });
-      this.pendingMulliganDangerConfirm = null;
-      this.#secondLayerCategoryLabel = null;
-      this.#game.setPendingError(null);
 
       if (singleMove) {
         if (session.confirmationRequired) {
@@ -5438,15 +5513,26 @@ export class LorcanaSidebarPresenter {
     });
 
     const moveParams = (() => {
-      if (!isSingTogetherSelectionMove(move) || session.selectedCardIds.length === 0) {
-        return move.params;
+      if (isSingTogetherSelectionMove(move) && session.selectedCardIds.length > 0) {
+        const playCardParams = move.params as LorcanaSimulatorMoveParams["playCard"];
+        return {
+          ...playCardParams,
+          singers: [...session.selectedCardIds],
+        } satisfies LorcanaSimulatorMoveParams["playCard"];
       }
 
-      const playCardParams = move.params as LorcanaSimulatorMoveParams["playCard"];
-      return {
-        ...playCardParams,
-        singers: [...session.selectedCardIds],
-      } satisfies LorcanaSimulatorMoveParams["playCard"];
+      if (isDiscardCostSelectionMove(move) && session.selectedCardIds.length > 0) {
+        const activateParams = move.params as LorcanaSimulatorMoveParams["activateAbility"];
+        return {
+          ...activateParams,
+          costs: {
+            ...(activateParams.costs ?? {}),
+            discardCards: [...session.selectedCardIds],
+          },
+        } satisfies LorcanaSimulatorMoveParams["activateAbility"];
+      }
+
+      return move.params;
     })();
 
     this.#capturePendingResolutionSourceHint(move);
@@ -6890,6 +6976,48 @@ export class LorcanaSidebarPresenter {
     }
 
     if (session.phase === "choose-target" && session.sourceCardId) {
+      if (isDiscardCostSelectionSession(session)) {
+        const discardCostMove = getDiscardCostSelectionMove(session);
+        const discardCount = getDiscardCostCount(discardCostMove);
+
+        if (!discardCostMove || discardCount <= 0) {
+          this.#game.setPendingError("Invalid discard cost selection state.");
+          return false;
+        }
+
+        // Only allow cards from the active player's hand
+        const localSide = this.ownerSide;
+        const cardSnapshot = this.#game.cardSnapshotsById()[card.cardId];
+        if (!cardSnapshot || cardSnapshot.zoneId !== "hand" || cardSnapshot.ownerSide !== localSide) {
+          this.#game.setPendingError("You can only discard cards from your hand.");
+          return false;
+        }
+
+        const nextSelectedCardIds = session.selectedCardIds.includes(card.cardId)
+          ? session.selectedCardIds.filter((selectedCardId) => selectedCardId !== card.cardId)
+          : session.selectedCardIds.length < discardCount
+            ? [...session.selectedCardIds, card.cardId]
+            : session.selectedCardIds;
+
+        const nextSession = {
+          ...session,
+          targetCardId: null,
+          selectedCardIds: nextSelectedCardIds,
+        } satisfies ActionSelectionSession;
+
+        this.#setActionSelectionSession(nextSession);
+        this.#game.setPendingError(null);
+        const selectedCount = nextSelectedCardIds.length;
+        this.#game.setStatusMessage(
+          discardCount === 1
+            ? selectedCount === 1
+              ? "Card selected. Confirm to activate the ability."
+              : "Choose a card from your hand to discard."
+            : `${selectedCount}/${discardCount} cards selected for discard.`,
+        );
+        return true;
+      }
+
       if (isSingTogetherSelectionSession(session)) {
         const singTogetherMove = getSingTogetherSelectionMove(session);
         const singTogetherMetadata = getSingTogetherSelectionMetadata(singTogetherMove);
@@ -7058,6 +7186,24 @@ export class LorcanaSidebarPresenter {
     const move = session.candidateMoves.find((candidateMove) => candidateMove.id === moveId);
     if (!move) {
       return false;
+    }
+
+    if (isDiscardCostSelectionMove(move)) {
+      this.#setActionSelectionSession({
+        ...session,
+        selectedCardIds: [],
+        selectedMoveId: move.id,
+        targetCardId: null,
+        phase: "choose-target",
+      });
+      this.#game.setPendingError(null);
+      const discardCount = getDiscardCostCount(move);
+      this.#game.setStatusMessage(
+        discardCount === 1
+          ? "Choose a card from your hand to discard."
+          : `Choose ${discardCount} cards from your hand to discard.`,
+      );
+      return true;
     }
 
     const singTogetherMetadata = getSingTogetherSelectionMetadata(move);
@@ -7274,6 +7420,12 @@ export class LorcanaSidebarPresenter {
     const move = this.currentActionSelectionMove;
     if (!session || !move) {
       return false;
+    }
+
+    if (session.phase === "choose-target" && isDiscardCostSelectionSession(session)) {
+      return canConfirmDiscardCostSelection(session, move)
+        ? this.#executeActionSelectionMove(session, move)
+        : false;
     }
 
     if (session.phase === "choose-target" && isSingTogetherSelectionSession(session)) {

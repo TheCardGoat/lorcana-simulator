@@ -787,6 +787,7 @@ function buildEntriesForAvailableMove(
           const label = option.abilityLabel?.trim().length
             ? `${getCardLabel(id, cards)}: ${option.abilityLabel.trim()}`
             : getMoveOptionLabel("activateAbility", params, cards);
+          const discardCostCount = option.discardCostCount ?? 0;
           entries.push({
             id: `activateAbility:${id}:${option.abilityIndex}`,
             label,
@@ -797,6 +798,9 @@ function buildEntriesForAvailableMove(
               categoryId: "activate-ability",
               categoryLabel: getMoveCategoryLabel("activateAbility"),
               optionLabel: label,
+              ...(discardCostCount > 0
+                ? { selectionMode: "discard-cost" as const, discardCostCount }
+                : {}),
             },
           });
         }
