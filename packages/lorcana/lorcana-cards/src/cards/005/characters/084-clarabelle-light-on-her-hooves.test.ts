@@ -1,5 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { clarabelleClumsyGuest } from "./086-clarabelle-clumsy-guest";
+import { clarabelleContentedWallflower } from "./090-clarabelle-contented-wallflower";
 import { clarabelleLightOnHerHooves } from "./084-clarabelle-light-on-her-hooves";
 
 const drawnCards = Array.from({ length: 6 }, (_, index) =>
@@ -11,6 +13,84 @@ const drawnCards = Array.from({ length: 6 }, (_, index) =>
 );
 
 describe("Clarabelle - Light on Her Hooves", () => {
+  describe("Shift 5 - Can be played on top of a Clarabelle character for 5 ink", () => {
+    it("can shift onto a Clarabelle character for 5 ink", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [clarabelleLightOnHerHooves],
+        play: [{ card: clarabelleClumsyGuest, isDrying: false }],
+        inkwell: 5,
+        deck: 1,
+      });
+
+      const shiftTarget = testEngine.findCardInstanceId(clarabelleClumsyGuest, "play");
+
+      const result = testEngine.asPlayerOne().playCard(clarabelleLightOnHerHooves, {
+        cost: { cost: "shift", shiftTarget },
+      });
+
+      expect(result).toBeSuccessfulCommand();
+      expect(testEngine.getCard(clarabelleLightOnHerHooves).zone).toBe("play");
+    });
+
+    it("can shift onto a different Clarabelle variant", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [clarabelleLightOnHerHooves],
+        play: [{ card: clarabelleContentedWallflower, isDrying: false }],
+        inkwell: 5,
+        deck: 1,
+      });
+
+      const shiftTarget = testEngine.findCardInstanceId(clarabelleContentedWallflower, "play");
+
+      const result = testEngine.asPlayerOne().playCard(clarabelleLightOnHerHooves, {
+        cost: { cost: "shift", shiftTarget },
+      });
+
+      expect(result).toBeSuccessfulCommand();
+      expect(testEngine.getCard(clarabelleLightOnHerHooves).zone).toBe("play");
+    });
+
+    it("cannot shift without enough ink", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [clarabelleLightOnHerHooves],
+        play: [{ card: clarabelleClumsyGuest, isDrying: false }],
+        inkwell: 4,
+        deck: 1,
+      });
+
+      const shiftTarget = testEngine.findCardInstanceId(clarabelleClumsyGuest, "play");
+
+      const result = testEngine.asPlayerOne().playCard(clarabelleLightOnHerHooves, {
+        cost: { cost: "shift", shiftTarget },
+      });
+
+      expect(result).not.toBeSuccessfulCommand();
+    });
+
+    it("regression: cannot shift onto a non-Clarabelle character", () => {
+      const nonClarabelle = createMockCharacter({
+        id: "non-clarabelle",
+        name: "Not Clarabelle",
+        cost: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [clarabelleLightOnHerHooves],
+        play: [{ card: nonClarabelle, isDrying: false }],
+        inkwell: 5,
+        deck: 1,
+      });
+
+      const shiftTarget = testEngine.findCardInstanceId(nonClarabelle, "play");
+
+      const result = testEngine.asPlayerOne().playCard(clarabelleLightOnHerHooves, {
+        cost: { cost: "shift", shiftTarget },
+      });
+
+      expect(result).not.toBeSuccessfulCommand();
+    });
+  });
+
   describe("KEEP IN STEP - At the end of your turn, if chosen opponent has more cards in their hand than you, you may draw cards until you have the same number.", () => {
     it("draws until the controller has the same number of cards in hand as the opponent", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
