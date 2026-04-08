@@ -6,6 +6,7 @@ import {
   createMockAction,
 } from "@tcg/lorcana-engine/testing";
 import { bambiEtherealFawn } from "./024-bambi-ethereal-fawn";
+import type { ScryResolutionSelectionContext } from "@tcg/lorcana-engine";
 
 const underCard = createMockCharacter({
   id: "bambi-under-card",
@@ -118,6 +119,83 @@ describe("Bambi - Ethereal Fawn", () => {
       expect(testEngine.asPlayerOne().quest(bambiEtherealFawn)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne().getCardZone(deckCharacter)).toBe("deck");
+    });
+
+    it("scry-selection pending effect has a valid selectionContext when amount is variable (cards-under-self)", () => {
+      // Regression test for THE-884: COME SEE! locked the game because
+      // buildScrySelectionContext read `amount` as a static number from the
+      // raw effect definition. When `amount` is `{ type: "cards-under-self" }`,
+      // getRecordNumber returns undefined, causing the context builder to return
+      // undefined and leaving the client with no way to render the selection UI.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: bambiEtherealFawn, cardsUnder: [underCard] }],
+        deck: [deckCharacter],
+      });
+
+      expect(testEngine.asPlayerOne().quest(bambiEtherealFawn)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(bambiEtherealFawn),
+      ).toBeSuccessfulCommand();
+
+      const [pendingEffect] = testEngine.asPlayerOne().getPendingEffects();
+      expect(pendingEffect).toBeDefined();
+      expect(pendingEffect?.selectionContext).toBeDefined();
+      expect(pendingEffect?.selectionContext?.kind).toBe("scry-selection");
+
+      const scryContext = pendingEffect?.selectionContext as
+        | ScryResolutionSelectionContext
+        | undefined;
+      // amount must equal the number of cards actually revealed (1 card under = 1 revealed)
+      expect(scryContext?.amount).toBe(1);
+      expect(scryContext?.revealedCardIds).toHaveLength(1);
+    });
+
+    it("triggers on challenge-exert and produces a valid scry-selection selectionContext", () => {
+      // Regression test for THE-884: effect also fires when Bambi challenges
+      // (exert occurs via challenge, not just quest). The selectionContext must
+      // be defined so the client can render the card selection UI.
+      const opponent = createMockCharacter({
+        id: "bambi-challenge-opponent",
+        name: "Opponent Character",
+        cost: 2,
+        strength: 1,
+        willpower: 10,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: bambiEtherealFawn, cardsUnder: [underCard] }],
+          deck: [deckCharacter],
+        },
+        {
+          play: [{ card: opponent, exerted: true }],
+          deck: 2,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(bambiEtherealFawn, opponent),
+      ).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(bambiEtherealFawn),
+      ).toBeSuccessfulCommand();
+
+      const [pendingEffect] = testEngine.asPlayerOne().getPendingEffects();
+      expect(pendingEffect).toBeDefined();
+      expect(pendingEffect?.selectionContext).toBeDefined();
+      expect(pendingEffect?.selectionContext?.kind).toBe("scry-selection");
+
+      const scryContext = pendingEffect?.selectionContext as
+        | ScryResolutionSelectionContext
+        | undefined;
+      expect(scryContext?.amount).toBe(1);
+      expect(scryContext?.revealedCardIds).toHaveLength(1);
     });
   });
 });

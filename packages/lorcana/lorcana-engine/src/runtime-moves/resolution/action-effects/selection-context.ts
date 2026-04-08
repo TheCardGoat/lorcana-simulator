@@ -456,7 +456,14 @@ function buildScrySelectionContext(
 ): ScryResolutionSelectionContext | undefined {
   const eventSnapshot = asRecord(args.resolutionInput.eventSnapshot ?? null);
   const revealedCardIds = getStringArray(eventSnapshot, "revealedCardIds") as CardInstanceId[];
-  const amount = getRecordNumber(args.effect, "amount");
+  // `amount` in the effect definition may be a variable expression (e.g.
+  // `{ type: "cards-under-self" }`) rather than a static number. In that case
+  // getRecordNumber returns undefined.  When the scry has already been
+  // initiated, the looked-at cards are stored in eventSnapshot.revealedCardIds,
+  // so falling back to their count is both correct and sufficient for the UI.
+  const amount =
+    getRecordNumber(args.effect, "amount") ??
+    (revealedCardIds.length > 0 ? revealedCardIds.length : undefined);
   const destinations = Array.isArray(args.effect.destinations)
     ? args.effect.destinations
         .map((destination) => asRecord(destination))
