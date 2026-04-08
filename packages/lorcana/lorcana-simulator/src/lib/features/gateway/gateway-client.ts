@@ -32,6 +32,13 @@ export interface GatewayClientOptions {
   url: string;
   /** Optional short-lived ticket for authentication (appended as ?ticket=<id>). */
   ticket?: string;
+  /**
+   * Called before each reconnect attempt to obtain a fresh short-lived ticket.
+   * Return null to reconnect without a ticket (anonymous / best-effort).
+   * Without this callback the original ticket is reused, which will be expired
+   * and result in the server sending `authenticated: false` in the welcome message.
+   */
+  refreshTicket?: () => Promise<string | null>;
   /** Ping interval in ms. Default: 30_000 */
   pingIntervalMs?: number;
   /** Max reconnect attempts before giving up. Default: Infinity */
@@ -54,9 +61,11 @@ export class GatewayClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private intentionalClose = false;
   private readonly options: Required<
-    Omit<GatewayClientOptions, "ticket" | "onGameMessage" | "onOpen">
+    Omit<GatewayClientOptions, "ticket" | "refreshTicket" | "onGameMessage" | "onOpen">
   > &
-    Pick<GatewayClientOptions, "ticket" | "onGameMessage" | "onOpen">;
+    Pick<GatewayClientOptions, "ticket" | "refreshTicket" | "onGameMessage" | "onOpen">;
+  /** Current ticket, updated by refreshTicket before each reconnect. */
+  private currentTicket: string | undefined;
 
   private _state: GatewayClientState = {
     status: "idle",
@@ -72,6 +81,7 @@ export class GatewayClient {
   constructor(options: GatewayClientOptions) {
     this.options = {
       ticket: undefined,
+      refreshTicket: undefined,
       pingIntervalMs: DEFAULT_PING_INTERVAL_MS,
       maxReconnectAttempts: Number.POSITIVE_INFINITY,
       onStateChange: () => {},
@@ -79,6 +89,7 @@ export class GatewayClient {
       onOpen: undefined,
       ...options,
     };
+    this.currentTicket = options.ticket;
   }
 
   get state(): Readonly<GatewayClientState> {
@@ -136,11 +147,11 @@ export class GatewayClient {
       lastPongTime: null,
     });
 
-    // Append ticket as query parameter for authentication
+    // Append current ticket as query parameter for authentication
     let wsUrl = this.options.url;
-    if (this.options.ticket) {
+    if (this.currentTicket) {
       const separator = wsUrl.includes("?") ? "&" : "?";
-      wsUrl = `${wsUrl}${separator}ticket=${encodeURIComponent(this.options.ticket)}`;
+      wsUrl = `${wsUrl}${separator}ticket=${encodeURIComponent(this.currentTicket)}`;
     }
     const ws = new WebSocket(wsUrl);
 
@@ -238,7 +249,18 @@ export class GatewayClient {
     this.updateState({ status: "reconnecting", reconnectAttempts: attempts + 1 });
 
     this.reconnectTimer = setTimeout(() => {
-      this.createSocket();
+      if (this.intentionalClose) return;
+      if (this.options.refreshTicket) {
+        // Fetch a fresh ticket before reconnecting so the server's welcome
+        // message carries authenticated: true instead of false.
+        void this.options.refreshTicket().then((ticket) => {
+          if (this.intentionalClose) return;
+          this.currentTicket = ticket ?? undefined;
+          this.createSocket();
+        });
+      } else {
+        this.createSocket();
+      }
     }, delay);
   }
 

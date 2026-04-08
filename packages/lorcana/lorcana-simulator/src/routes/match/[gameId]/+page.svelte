@@ -15,6 +15,7 @@
   import { authSession } from "$lib/auth/session.svelte.js";
   import { GatewayClientStore } from "@/features/gateway/gateway-client.svelte.js";
   import { fetchGatewayTicket } from "@/features/gateway/fetch-ticket.js";
+  import UnauthenticatedPlayerOverlay from "@/features/gateway/ui/UnauthenticatedPlayerOverlay.svelte";
   import {
     clearPracticeSession,
     loadPracticeSession,
@@ -189,6 +190,11 @@
           }
         }
       },
+      undefined,
+      // Provide a refreshTicket callback so reconnections fetch a fresh ticket
+      // rather than reusing the original (now-expired) one — which is what caused
+      // the "Authentication Lost" overlay to appear permanently after reconnects.
+      isQuickMatch ? undefined : fetchGatewayTicket,
     );
 
     const welcomePromise = new Promise<void>((resolve) => {
@@ -413,5 +419,18 @@
         onReturnToMatchmaking={handleReturnToMatchmaking}
       />
     {/key}
+
+    <!--
+      Show the authentication-lost overlay whenever the gateway is connected
+      but reports unauthenticated. This covers the case where the session ticket
+      expired during a reconnect — the refreshTicket callback will fetch a new
+      one on the next reconnect, but if the welcome message still comes back
+      unauthenticated (e.g. the session cookie itself expired), we surface a
+      clear sign-in prompt instead of silently blocking gameplay (THE-880).
+      Not shown for quick-match (anonymous) sessions.
+    -->
+    {#if gateway && gateway.status === "connected" && !gateway.authenticated && !data.spectate}
+      <UnauthenticatedPlayerOverlay callbackPath={`/match/${getGameId()}`} />
+    {/if}
   {/if}
 </main>

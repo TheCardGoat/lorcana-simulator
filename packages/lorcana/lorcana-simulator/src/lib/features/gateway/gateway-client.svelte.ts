@@ -27,10 +27,12 @@ export class GatewayClientStore {
     ticket?: string,
     onGameMessage?: (msg: { type: string; [key: string]: unknown }) => void,
     onOpen?: () => void,
+    refreshTicket?: () => Promise<string | null>,
   ) {
     this.client = new GatewayClient({
       url,
       ticket,
+      refreshTicket,
       onStateChange: (state) => this.sync(state),
       onGameMessage,
       onOpen,
