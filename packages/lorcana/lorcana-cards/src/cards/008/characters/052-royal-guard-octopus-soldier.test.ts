@@ -144,6 +144,38 @@ describe("Royal Guard - Octopus Soldier", () => {
     });
   });
 
+  it("regression: HEAVILY ARMED should trigger on turn-start mandatory draw", () => {
+    // Bug: Royal Guard was not gaining Challenger +1 on the mandatory turn draw.
+    // The drawForTurn function was not emitting the draw trigger event.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: royalGuardOctopusSoldier, exerted: false, isDrying: false }],
+        deck: 5,
+      },
+      {
+        deck: 5,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().hasKeyword(royalGuardOctopusSoldier, "Challenger")).toBe(false);
+
+    // P1 passes, P2 passes — P1 is now on their second turn and gets the mandatory turn draw
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    // The turn-draw should have queued a HEAVILY ARMED trigger
+    const bagEffects = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffects.length).toBeGreaterThan(0);
+    for (const effect of bagEffects) {
+      testEngine.asPlayerOne().resolveBag(effect!.id);
+    }
+
+    expect(testEngine.asPlayerOne().hasKeyword(royalGuardOctopusSoldier, "Challenger")).toBe(true);
+    expect(testEngine.asPlayerOne().getKeywordValue(royalGuardOctopusSoldier, "Challenger")).toBe(
+      1,
+    );
+  });
+
   it("regression: HEAVILY ARMED should trigger on draws from abilities, not just from card effects", () => {
     // Bug: Royal Guard was not gaining Challenger +1 on ability-added draw triggers.
     // Any draw event should trigger HEAVILY ARMED, including draws from abilities.

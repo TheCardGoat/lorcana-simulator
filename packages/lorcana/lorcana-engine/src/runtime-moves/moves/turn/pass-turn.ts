@@ -261,13 +261,30 @@ function drawForTurn(ctx: PassTurnExecutionContext, playerId: PlayerId, turnNumb
 
   const deckCards = ctx.framework.zones.getCards({ zone: "deck", playerId });
   const deckHasCards = Array.isArray(deckCards) && deckCards.length > 0;
-  ctx.framework.zones.drawCards({
+  const drawnCards = ctx.framework.zones.drawCards({
     from: { zone: "deck", playerId },
     to: { zone: "hand", playerId },
     count: 1,
   });
+  const drawnCardIds = Array.isArray(drawnCards) ? (drawnCards as CardInstanceId[]) : [];
   if (deckHasCards) {
-    recordCardDrawnThisTurn(ctx, playerId);
+    drawnCardIds.forEach((cardId) => {
+      recordCardDrawnThisTurn(ctx, playerId);
+      emitTriggeredLorcanaEvent(
+        ctx,
+        "cardsDrawn",
+        {
+          playerId,
+          amount: 1,
+          cardIds: [cardId],
+        },
+        {
+          event: "draw",
+          playerId,
+          subjectCardId: cardId,
+        },
+      );
+    });
   }
 }
 
@@ -515,7 +532,23 @@ export function continuePendingTurnTransition(ctx: PassTurnExecutionContext): vo
           }
         }
 
-        drawForTurn(ctx, nextPlayer, turnNumber);
+        const drawTriggerWindowQueued = transitionState.drawTriggerWindowQueued === true;
+        if (!drawTriggerWindowQueued) {
+          drawForTurn(ctx, nextPlayer, turnNumber);
+          finalizeResolutionBoundary(ctx, {
+            playerId: nextPlayer,
+            window: "start-of-turn",
+          });
+          transitionState = {
+            ...transitionState,
+            drawTriggerWindowQueued: true,
+          };
+          ctx.G.pendingTurnTransition = transitionState;
+          if (hasPendingBagItems(ctx) || ctx.framework.state.priority.pendingChoice) {
+            return;
+          }
+        }
+
         ctx.framework.status.setPhase("main");
         ctx.G.pendingTurnTransition = undefined;
         return;

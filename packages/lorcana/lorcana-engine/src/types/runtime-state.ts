@@ -396,6 +396,7 @@ export interface PendingTurnTransitionState {
   turnNumber?: number;
   triggerWindowQueued?: boolean;
   drawStepStarted?: boolean;
+  drawTriggerWindowQueued?: boolean;
 }
 
 export interface TemporaryPlayerRestrictionsState {
