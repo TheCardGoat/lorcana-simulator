@@ -24,6 +24,8 @@ export const clarabelleLightOnHerHooves: CharacterCard = {
   text: [
     {
       title: "Shift 5",
+      description:
+        "(You may pay 5 {I} to play this on top of one of your characters named Clarabelle.)",
     },
     {
       title: "KEEP IN STEP",
@@ -33,6 +35,16 @@ export const clarabelleLightOnHerHooves: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally"],
   abilities: [
+    {
+      id: "RGJ-2",
+      keyword: "Shift",
+      cost: {
+        ink: 5,
+      },
+      shiftTarget: "Clarabelle",
+      type: "keyword",
+      text: "**Shift 5** (You may pay 5 {I} to play this on top of one of your characters named Clarabelle.)",
+    },
     {
       id: "RGJ-1",
       name: "KEEP IN STEP",
