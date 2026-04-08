@@ -3,6 +3,7 @@ import type { CardSelectionFilter, DiscardEffect, LorcanaTargetDSL } from "@tcg/
 import type { CardPlayedPayload, TargetResolutionSelectionContext } from "../../../types";
 import { queueTriggeredEvent } from "../../effects/triggered-abilities";
 import { applyReplacementEffects } from "../../effects/replacement-effects";
+import { resolveCurrentTurnPlayerId } from "../../../targeting/runtime";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import { createPendingActionEffect, enqueuePendingActionEffect } from "./pending-action-effects";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
@@ -141,13 +142,18 @@ export function resolveDiscardEffect(
               ),
           ),
         ]
-      : resolveTargetPlayerIds(
-          ctx,
-          cardPlayed,
-          effect.target,
-          getCombinedSelectionInput(resolutionInput),
-          resolutionInput.eventSnapshot,
-        );
+      : effect.target === "CURRENT_TURN"
+        ? (() => {
+            const currentTurnPlayerId = resolveCurrentTurnPlayerId(ctx);
+            return currentTurnPlayerId ? [currentTurnPlayerId] : [];
+          })()
+        : resolveTargetPlayerIds(
+            ctx,
+            cardPlayed,
+            effect.target,
+            getCombinedSelectionInput(resolutionInput),
+            resolutionInput.eventSnapshot,
+          );
 
   const discardAll = resolvedInput.discardAll === true;
   const amount = discardAll

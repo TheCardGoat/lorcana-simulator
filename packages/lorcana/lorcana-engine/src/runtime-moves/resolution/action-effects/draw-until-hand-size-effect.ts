@@ -1,6 +1,7 @@
 import type { DrawUntilHandSizeEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
+import { resolveCurrentTurnPlayerId } from "../../../targeting/runtime";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 
@@ -19,12 +20,14 @@ export function resolveDrawUntilHandSizeEffect(
   effect: DrawUntilHandSizeEffect,
   resolutionInput: ActionResolutionInput,
 ): void {
-  const targetPlayerIds = resolveTargetPlayerIds(
-    ctx,
-    cardPlayed,
-    effect.target ?? "CONTROLLER",
-    resolutionInput.targets,
-  );
+  const effectTarget = effect.target ?? "CONTROLLER";
+  const targetPlayerIds =
+    effectTarget === "CURRENT_TURN"
+      ? (() => {
+          const currentTurnPlayerId = resolveCurrentTurnPlayerId(ctx);
+          return currentTurnPlayerId ? [currentTurnPlayerId] : [];
+        })()
+      : resolveTargetPlayerIds(ctx, cardPlayed, effectTarget, resolutionInput.targets);
   const targetSize =
     typeof effect.size === "number" && Number.isFinite(effect.size) && effect.size >= 0
       ? Math.floor(effect.size)

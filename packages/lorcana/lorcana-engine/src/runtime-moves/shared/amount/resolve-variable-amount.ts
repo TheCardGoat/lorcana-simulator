@@ -204,11 +204,21 @@ function listCardsInScope(
 function resolveOpponentScopedValue(
   context: VariableAmountResolutionContext,
   valueByPlayer: (playerId: PlayerId) => number,
-  controller: "you" | "opponent" | "opponents",
+  controller: "you" | "opponent" | "opponents" | "active",
 ): number {
   const controllerId = getControllerId(context);
   if (!controllerId) {
     return 0;
+  }
+
+  if (controller === "active") {
+    const activePlayerId =
+      context.ctx.framework.state.currentPlayer ?? context.ctx.framework.state.priority.holder;
+    const activeId =
+      typeof activePlayerId === "string" && activePlayerId.length > 0
+        ? (activePlayerId as PlayerId)
+        : controllerId;
+    return valueByPlayer(activeId);
   }
 
   if (controller === "you") {
@@ -539,7 +549,8 @@ function resolveForEachCounter(
       return resolveOpponentScopedValue(
         context,
         (playerId) => context.ctx.framework.zones.getCards({ zone: "hand", playerId }).length,
-        (counterRecord.controller as "you" | "opponent" | "opponents" | undefined) ?? "you",
+        (counterRecord.controller as "you" | "opponent" | "opponents" | "active" | undefined) ??
+          "you",
       );
     case "cards-in-discard":
       return resolveOpponentScopedValue(

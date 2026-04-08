@@ -1,6 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { herculesSpectralDemigod } from "./117-hercules-spectral-demigod";
+
+const deckCard = createMockCharacter({
+  id: "hercules-deck-card",
+  name: "Deck Card",
+  cost: 1,
+});
 
 describe("Hercules - Spectral Demigod", () => {
   it("should have base strength 0 without cards under", () => {
@@ -27,5 +33,25 @@ describe("Hercules - Spectral Demigod", () => {
 
     const deckAfter = testEngine.asPlayerOne().getZonesCardCount().deck;
     expect(deckAfter).toBe(deckBefore - 1);
+  });
+
+  describe("SUPERHUMAN STRENGTH", () => {
+    it("gets +3 strength when there is a card under him", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: herculesSpectralDemigod, cardsUnder: [deckCard] }],
+      });
+
+      const hercules = testEngine.asPlayerOne().getCard(herculesSpectralDemigod);
+      expect(hercules.strength).toBe(3);
+    });
+
+    it("does not get +3 strength when there is no card under him", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [herculesSpectralDemigod],
+      });
+
+      const hercules = testEngine.asPlayerOne().getCard(herculesSpectralDemigod);
+      expect(hercules.strength).toBe(0);
+    });
   });
 });

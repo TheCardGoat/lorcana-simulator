@@ -363,7 +363,7 @@ export type TriggerTargetAttributeKey =
 
 export type TargetLocationAttributeKey = "lore";
 
-export type CountController = "you" | "opponent" | "opponents";
+export type CountController = "you" | "opponent" | "opponents" | "active";
 
 export type VariableAmountOperand = number | VariableAmount;
 

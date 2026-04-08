@@ -494,8 +494,8 @@ export interface ResourceCountCondition {
   type: "resource-count";
   /** What to count - REQUIRED */
   what: CountableResource;
-  /** Whose resources to count - REQUIRED */
-  controller: "you" | "opponent" | "any";
+  /** Whose resources to count - REQUIRED. Use "active" for the current turn player. */
+  controller: "you" | "opponent" | "any" | "active";
   /** Comparison operator - REQUIRED */
   comparison: ComparisonOperator;
   /** Value to compare against - REQUIRED */
@@ -1226,7 +1226,7 @@ export function hasCharacterCount(
 export function resourceCount(
   what: CountableResource,
   value: number,
-  controller: "you" | "opponent" | "any" = "you",
+  controller: "you" | "opponent" | "any" | "active" = "you",
   comparison: ComparisonOperator = "greater-or-equal",
 ): ResourceCountCondition {
   return {
