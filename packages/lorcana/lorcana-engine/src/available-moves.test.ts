@@ -464,6 +464,106 @@ describe("LorcanaEngineBase.getAvailableMoves", () => {
       testEngine.findCardInstanceId(singTogetherSong, "hand", "player_one"),
     ]);
   });
+
+  // Regression tests for THE-879: alternative cost checks (sing/shift) were dead code
+  // due to `!isHandCard || !isLimboCardWithPermission` always being true.
+  // The bug caused `available()` to skip all alternative cost checks, so playCard was
+  // reported as unavailable even when sing/shift could be used.
+  it("returns singCard when a song is in hand with no ink but a ready singer in play", () => {
+    const song = createMockSong({
+      id: "am-regression-sing-song",
+      name: "Regression Sing Song",
+      cost: 5,
+      text: "Draw a card.",
+    });
+    const singer = createMockCharacter({
+      id: "am-regression-sing-singer",
+      name: "Regression Singer",
+      cost: 3,
+      abilities: [
+        {
+          id: "am-regression-sing-singer-kw",
+          keyword: "Singer",
+          text: "Singer 5",
+          type: "keyword",
+          value: 5,
+        },
+      ],
+    });
+
+    // Player has 0 ink (cannot play song via standard) but has a ready Singer 5 in play
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [song],
+        play: [singer],
+        inkwell: 0,
+        deck: 1,
+      },
+      { deck: 1 },
+    );
+
+    const moves = testEngine.asPlayerOne().getAvailableMoves();
+    const singMove = moves.find((m) => m.moveId === "singCard");
+
+    // Song should appear in singCard (regression: was missing because alternative cost check was dead code)
+    expect(singMove).toBeDefined();
+    expect(singMove?.selectableCardIds).toContain(
+      testEngine.findCardInstanceId(song, "hand", "player_one"),
+    );
+  });
+
+  it("returns shiftCard when a card is shiftable with less ink than standard cost", () => {
+    // Shiftable character: cost 6, Shift 4 (shift into same name)
+    const shiftableCharacter = createMockCharacter({
+      id: "am-regression-shift-stitch-rs",
+      name: "Stitch",
+      version: "Rock Star",
+      cost: 6,
+      strength: 3,
+      willpower: 5,
+      lore: 3,
+      classifications: ["Floodborn", "Hero", "Alien"],
+      abilities: [
+        {
+          cost: { ink: 4 },
+          id: "am-regression-shift-stitch-rs-kw",
+          keyword: "Shift",
+          text: "Shift 4 {I}",
+          type: "keyword",
+        },
+      ],
+    });
+    const shiftTarget = createMockCharacter({
+      id: "am-regression-shift-stitch-base",
+      name: "Stitch",
+      version: "Carefree Surfer",
+      cost: 3,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+      classifications: ["Storyborn", "Hero", "Alien"],
+    });
+
+    // Player has 4 ink (enough for Shift 4 but not for standard cost 6)
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [shiftableCharacter],
+        play: [shiftTarget],
+        inkwell: 4,
+        deck: 1,
+      },
+      { deck: 1 },
+    );
+
+    const moves = testEngine.asPlayerOne().getAvailableMoves();
+    const shiftMove = moves.find((m) => m.moveId === "shiftCard");
+
+    // Shift should appear in shiftCard (regression: was missing because alternative cost check was dead code)
+    expect(shiftMove).toBeDefined();
+    expect(shiftMove?.selectableCardIds).toContain(
+      testEngine.findCardInstanceId(shiftableCharacter, "hand", "player_one"),
+    );
+  });
 });
 
 describe("LorcanaEngineBase.getMoveOptions", () => {
